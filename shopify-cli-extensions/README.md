@@ -2,6 +2,20 @@
 
 `shopify-cli-extensions` is an add-on to the Shopify CLI. Today, its main purpose is to power the experience of `shopify extension serve`, `shopify extension build` and augment `shopify extension create`. However, we will consider expanding its responsibilities in future.
 
+## Getting started
+
+To run the tests, simply execute the following shell command:
+
+```sh
+make test
+```
+
+To run the server, simply execute the following shell command:
+
+```sh
+make run
+```
+
 ## Technical Design
 
 - _Vault Project_: https://vault.shopify.io/projects/20476

@@ -8,18 +8,26 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type api struct {
 	manifest *Manifest
-	*http.ServeMux
+	*mux.Router
 }
 
 func NewApi(manifest *Manifest) *api {
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 	api := &api{manifest, mux}
 
-	mux.HandleFunc("/manifest", http.HandlerFunc(api.GenerateManifest))
+	mux.HandleFunc("/manifest", api.GenerateManifest)
+	mux.PathPrefix("/assets/").Handler(
+		http.StripPrefix(
+			"/assets/",
+			http.FileServer(http.Dir(manifest.Development.BuildDir)),
+		),
+	)
 
 	return api
 }

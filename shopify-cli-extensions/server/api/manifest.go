@@ -1,10 +1,13 @@
 package api
 
-func NewManifest() *Manifest {
+func NewManifest(buildDir string) *Manifest {
 	return &Manifest{
 		Assets: make([]Asset, 0),
 		User: User{
 			Metafields: make([]Metafield, 0),
+		},
+		Development: Development{
+			BuildDir: buildDir,
 		},
 		App: make(App),
 	}
@@ -33,6 +36,7 @@ type Development struct {
 	Renderer Renderer `json:"renderer"`
 	Hidden   bool     `json:"hidden"`
 	Focused  bool     `json:"focused"`
+	BuildDir string   `json:"-"`
 }
 
 type Renderer struct {
