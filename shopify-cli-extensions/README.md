@@ -91,7 +91,7 @@ On top of being responsible for build process coordination, `shopify-extensions`
 - `PATCH /extensions` will enable clients to update extension settings (e.g. whether they are visible) and provide additional information that is only available at runtime (e.g. more information on the app)
 - `GET /extensions/:uuid` will respond with an error page if accessed via HTTP instead of HTTPS. Otherwise, it will either redirect to the location where the extension is mounted or display further instructions.
 
-In order for the client to perform hot-reloading of extensions, it needs to establish a web socket connection through `/extensions`. It will then receive a message for every time any build process fails or finishes successfully.
+In order for the host (Web/Mobile Admin or Checkout) to perform hot-reloading of extensions, it needs to establish a web socket connection through `/extensions`. It will then receive a message for every time any build process fails or finishes successfully.
 
 ##### Integration with Shopify CLI
 
