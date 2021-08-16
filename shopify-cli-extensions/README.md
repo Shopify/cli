@@ -43,7 +43,7 @@ The prototype can be found here: https://github.com/Shopify/app-extension-experi
 
 ### Scope
 
-Our goal is to produce a statically linked binary with zero dependencies that is responsible for
+Our goal is to produce a statically linked command line tool, `shopify-extensions` that has zero dependencies. Its main responsibilities are
 
 1. executing the JavaScript compilation and bundle generation using ESBuild,
 2. serving build artifacts to the client via a HTTP API,
@@ -65,42 +65,46 @@ Furthermore, we picked ESBuild for the following reasons:
 - ESBuild can provide build times 10-100x faster than Webpack,
 - ESBuild can transpile the extension JS bundle without pulling in any additional dependencies (ex. Babel and its plugins)
 
-During our prototype we observed speed improvements of 200x. Compile time dropped from 6 seconds to 35 milliseconds.
+During our prototype we observed speed improvements of 175x. Compile time dropped from 6 seconds to 35 milliseconds.
 
 #### Compiling and bundling JavaScript
 
-The build process will have the following major components:
+The build process runs independently from `shopify-extensions` but is coordinated by the latter. Meaning, `shopify-extensions` will be responsible for starting, stopping and monitoring the build processes. The API contract, between the build process and `shopify extensions` is simple:
 
-- A `build.js` file which will contain the configuration needed to build the extension with esbuild
-- An `npm|yarn run build` command, which will call the `build.js` file
-- A Go function that will spin up a Node process that will call on `npm|yarn run build`
-- This will require a Golang wrapper to be able to interface with both `npm` and `yarn` seamlessly
+- the build process is started through a `build` script in `package.json`, which is invoked through either `yarn` or `npm`,
+- the build process is expected to run continuously until terminated,
+- the build process is expected to watch the extension source directory (`src/` by default) for changes and recompile automatically,
+- the build process is expected to write any produced artifacts into a configurable build directory (`build/` by default),
+- the build process is expected to signal build failures by writing to standard error.
 
-Developers will have the ability to fully customize the build process by either tweaking the `build.js` file or changing the `build` script in the `package.json` file to something else entirely.
+The default build process will be based on ESBuild and configured through `./build.js`. However, as long as developers satisfy above constraints, they can freely customize the build process by either editing `./build.js` or completely overriding the build script in `./package.json`.
+
+Process orchestration in `shopify-extensions` CLI is accomplished using Go routines and [`exec.CommandContext`](https://pkg.go.dev/os/exec#example-Command) using `CommandContext` instead of `Command` allows us to use Go's [`context`](https://pkg.go.dev/context) package for managing process termination.
+To detect updates to the build artifacts produced by the external build process, we are using [`fsnotify`](https://pkg.go.dev/github.com/fsnotify/fsnotify), a cross-platform file-system watcher implementation.
+`shopify-extensions` will be designed from the get go to support multiple extensions.
 
 #### Serving build artifacts
 
-The server process will be built in Go due to its proven high performance and ability to handle multiple threads of work, which will make it easy to run multiple extensions at once (with an eye for future-proofing this tool).
+On top of being responsible for build process coordination, `shopify-extensions` will also implement an HTTP and Websocket API to serve build artifacts and aid hot reloading:
 
-The server will be responsible for two major things:
+- `GET /extensions` will return the list of extensions under development and support upgrading the connection to a web socket connection to enable clients to subscribe to build status updates,
+- `PATCH /extensions` will enable clients to update extension settings (e.g. whether they are visible) and provide additional information that is only available at runtime (e.g. more information on the app)
+- `GET /extensions/:uuid` will respond with an error page if accessed via HTTP instead of HTTPS. Otherwise, it will either redirect to the location where the extension is mounted or display further instructions.
 
-- Parsing configuration options from the Shopify CLI via STDIN (could be via persisted file in the future, or if there is time)
-- Watching for changes in the `/build` directory, building (more on build process below), and serving the changes.
-
-The server will expose several REST APIs (TBD):
-
-`GET /extensions/`: list of extensions available in the current project / workspace.
-`GET /extensions/:uuid`: get a single extension by registration UUID, redirects to tunnel
-`GET /extensions/:uuid/stats|data`: get stats or data for an extension given a UUID
+In order for the client to perform hot-reloading of extensions, it needs to establish a web socket connection through `/extensions`. It will then receive a message for every time any build process fails or finishes successfully.
 
 ##### Integration with Shopify CLI
 
 Various pieces for integration with the Shopify CLI are still a work in process. In a nutshell, the desired vision for integrating with the Shopify CLI is as follows:
 
-- during the Shopify CLI installation, we will download the OS and CPU architecture appropriate binary of `shopify-cli-extensions` from Github and place it next to the `shopify` bin stub that is being created by the Shopify CLI through `ext/shopify-cli/extconf.rb`,
+- during the Shopify CLI installation, we will download the OS and CPU architecture appropriate binary of `shopify-extensions` from Github and place it next to the `shopify` bin stub that is being created by the Shopify CLI through `ext/shopify-cli/extconf.rb`,
 - The Shopify CLI will be responsible for parsing the `.env` and `shopify-cli.yml` files for the relevant data the `shopify-cli-extensions` package will need.
+- all configuration information required by `shopify-extensions` will be forwarded from the Ruby process via standard input in YAML format when it starts `shopify-extensions`.
+
+#### Scaffolding
+
+`shopify-extensions` isn't just responsible for carrying out the majority of work when a developer run `shopify extensions server`, it's also responsible for generating an initial project structure when developers run `shopify extension create`. To that end, the binary will inline all assets in `templates/` and organize them in a virtual file system. Asset embedding is natively supported by Go through [`embed`](https://pkg.go.dev/embed). Asset embedding allows us to meet our goal of shipping a binary that has no external dependencies. It further avoids calls to Github during the creation of an extension, which results in faster project bootstrapping and reduces the number of potential failure points.
 
 ### Open questions / issues
 
 - We may need to support both `ArgoServe` (legacy way of serving extensions) and the `shopify-cli-extensions` package for a pre-determined period of time to give Partners enough time to move to the new version
-- Need to look into includig extension templates as part of the `shopify-cli-extensions` binary, so that the executable always has access to a compatible template in order to avoid compatibility issues when changes to the template are made
