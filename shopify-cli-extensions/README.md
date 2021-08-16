@@ -74,7 +74,7 @@ The build process runs independently from `shopify-extensions` but is coordinate
 - the build process is started through a `build` script in `package.json`, which is invoked through either `yarn` or `npm`,
 - the build process is expected to run continuously until terminated,
 - the build process is expected to watch the extension source directory (`src/` by default) for changes and recompile automatically,
-- the build process is expected to write any produced artifacts into a configurable build directory (`build/` by default),
+- the build process is expected to read from the configurable source directory (`src/` by default) and write any produced artifacts into a configurable build directory (`build/` by default),
 - the build process is expected to signal build failures by writing to standard error.
 
 The default build process will be based on ESBuild and configured through `./build.js`. However, as long as developers satisfy above constraints, they can freely customize the build process by either editing `./build.js` or completely overriding the build script in `./package.json`.
