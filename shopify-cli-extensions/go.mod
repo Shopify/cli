@@ -1,4 +1,4 @@
-module github.com/Shopify/shopify-cli-extensions/server
+module github.com/Shopify/shopify-cli-extensions
 
 go 1.16
 

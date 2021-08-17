@@ -13,7 +13,13 @@ make test
 To run the server, simply execute the following shell command:
 
 ```sh
-make run
+make run serve api/testdata/build
+```
+
+Subsequently, you should be able to retrieve sample assets as follows:
+
+```sh
+curl http://localhost:8000/extensions/assets/index.js
 ```
 
 ## Technical Design
