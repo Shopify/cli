@@ -14,19 +14,18 @@ import (
 )
 
 type api struct {
-	extension *core.Extension
+	*core.ExtensionService
 	*mux.Router
 }
 
-func NewApi(extension *core.Extension) *api {
-	mux := mux.NewRouter()
-	api := &api{extension, mux}
+func NewApi(service *core.ExtensionService) *api {
+	api := &api{service, mux.NewRouter()}
 
-	mux.HandleFunc("/manifest", api.GenerateManifest)
-	mux.PathPrefix("/assets/").Handler(
+	api.HandleFunc("/manifest", api.GenerateManifest)
+	api.PathPrefix("/assets/").Handler(
 		http.StripPrefix(
 			"/assets/",
-			http.FileServer(http.Dir(extension.Development.BuildDir)),
+			http.FileServer(http.Dir(service.Extensions[0].Development.BuildDir)),
 		),
 	)
 
@@ -36,5 +35,5 @@ func NewApi(extension *core.Extension) *api {
 func (api *api) GenerateManifest(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
-	encoder.Encode(api.extension)
+	encoder.Encode(api.Extensions[0])
 }

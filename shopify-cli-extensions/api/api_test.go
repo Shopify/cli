@@ -20,7 +20,7 @@ func TestGenerateManifest(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(core.NewExtension(buildDir))
+	api := NewApi(core.NewExtensionService(buildDir))
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -54,7 +54,7 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(core.NewExtension(buildDir))
+	api := NewApi(core.NewExtensionService(buildDir))
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
