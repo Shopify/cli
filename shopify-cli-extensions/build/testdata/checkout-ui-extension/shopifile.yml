@@ -1,0 +1,12 @@
+---
+extension_points:
+  - Checkout::Feature::Render
+entry:
+  main: "./src/index.tsx"
+out_dir: "./build/"
+build:
+  env:
+    SOME_VAR: bar
+serve:
+  env:
+    SOME_VAR: foo

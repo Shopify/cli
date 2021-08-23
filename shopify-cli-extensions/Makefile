@@ -15,3 +15,7 @@ test:
 .PHONY: run
 run:
 	go run . $(RUN_ARGS)
+
+.PHONY: build-node-package
+build-node-package:
+	cd packages/shopify-cli-extensions; yarn install; yarn build
