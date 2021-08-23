@@ -9,15 +9,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
 )
 
 type api struct {
-	extension *Extension
+	extension *core.Extension
 	*mux.Router
 }
 
-func NewApi(extension *Extension) *api {
+func NewApi(extension *core.Extension) *api {
 	mux := mux.NewRouter()
 	api := &api{extension, mux}
 

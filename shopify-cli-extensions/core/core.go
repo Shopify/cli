@@ -1,4 +1,4 @@
-package api
+package core
 
 func NewExtension(buildDir string) *Extension {
 	return &Extension{

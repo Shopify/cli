@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/Shopify/shopify-cli-extensions/core"
 )
 
 const (
@@ -18,14 +20,14 @@ func TestGenerateManifest(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(NewExtension(buildDir))
+	api := NewApi(core.NewExtension(buildDir))
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected ok status – received: %d", rec.Code)
 	}
 
-	extension := Extension{}
+	extension := core.Extension{}
 	if err := json.Unmarshal(rec.Body.Bytes(), &extension); err != nil {
 		t.Error(err)
 	}
@@ -52,7 +54,7 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(NewExtension(buildDir))
+	api := NewApi(core.NewExtension(buildDir))
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
