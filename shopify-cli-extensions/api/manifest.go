@@ -1,7 +1,7 @@
 package api
 
-func NewManifest(buildDir string) *Manifest {
-	return &Manifest{
+func NewExtension(buildDir string) *Extension {
+	return &Extension{
 		Assets: make([]Asset, 0),
 		User: User{
 			Metafields: make([]Metafield, 0),
@@ -13,7 +13,9 @@ func NewManifest(buildDir string) *Manifest {
 	}
 }
 
-type Manifest struct {
+type Extensions []Extension
+
+type Extension struct {
 	Type        string      `json:"type"`
 	UUID        string      `json:"uuid"`
 	Assets      []Asset     `json:"assets"`

@@ -32,7 +32,7 @@ func serve(args ...string) {
 		panic("serve requires a path to be specified")
 	}
 
-	api := api.NewApi(api.NewManifest(args[0]))
+	api := api.NewApi(api.NewExtension(args[0]))
 
 	mux := http.NewServeMux()
 	mux.Handle("/extensions/", http.StripPrefix("/extensions", api))

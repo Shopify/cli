@@ -18,29 +18,29 @@ func TestGenerateManifest(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(NewManifest(buildDir))
+	api := NewApi(NewExtension(buildDir))
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected ok status – received: %d", rec.Code)
 	}
 
-	manifest := Manifest{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &manifest); err != nil {
+	extension := Extension{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &extension); err != nil {
 		t.Error(err)
 	}
 
-	t.Logf("%+v\n", manifest)
+	t.Logf("%+v\n", extension)
 
-	if manifest.Assets == nil {
+	if extension.Assets == nil {
 		t.Error("Expected assets to not be null")
 	}
 
-	if manifest.App == nil {
+	if extension.App == nil {
 		t.Error("Expected app to not be null")
 	}
 
-	if manifest.User.Metafields == nil {
+	if extension.User.Metafields == nil {
 		t.Error("Expected user metafields to not be null")
 	}
 }
@@ -52,7 +52,7 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(NewManifest(buildDir))
+	api := NewApi(NewExtension(buildDir))
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
