@@ -4,17 +4,23 @@
 
 ## Getting started
 
+### Test
+
 To run the tests, simply execute the following shell command:
 
 ```sh
 make test
 ```
 
+### Set up test extension
+
 To set up a test extension for build purposes, run:
 
 ```sh
 make run setup-test-extension
 ```
+
+### Serve
 
 To run the server, simply execute the following shell command:
 
@@ -26,6 +32,31 @@ Subsequently, you should be able to retrieve sample assets as follows:
 
 ```sh
 curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js
+```
+
+### Create
+
+To create a new extension project, execute the `make run create` command. The command is in the format of `make run create TYPE RENDERER_LIBRARY TEMPLATE_NAME ROOT_DIRECTORY`
+
+**RENDERER_LIBRARY**
+
+- @shopify/checkout-ui-extensions
+
+**TYPE**
+
+- checkout_ui_extension
+
+**TEMPLATE_NAME**
+
+- typescript
+- javascript
+- typescript-react
+- javascript-react
+
+For example:
+
+```sh
+make run create checkout_ui_extension @shopify/checkout-ui-extensions typescript-react extensions/checkout_ui_extension_ts
 ```
 
 ## Technical Design
