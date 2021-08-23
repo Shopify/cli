@@ -21,7 +21,7 @@ type api struct {
 func NewApi(service *core.ExtensionService) *api {
 	api := &api{service, mux.NewRouter()}
 
-	api.HandleFunc("/manifest", api.GenerateManifest)
+	api.HandleFunc("/", api.extensionsHandler)
 	api.PathPrefix("/assets/").Handler(
 		http.StripPrefix(
 			"/assets/",
@@ -32,8 +32,13 @@ func NewApi(service *core.ExtensionService) *api {
 	return api
 }
 
-func (api *api) GenerateManifest(rw http.ResponseWriter, r *http.Request) {
+func (api *api) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
-	encoder.Encode(api.Extensions[0])
+	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
+}
+
+type extensionsResponse struct {
+	Extensions []core.Extension `json:"extensions"`
+	Version    string           `json:"version"`
 }

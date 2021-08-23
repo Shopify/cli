@@ -13,8 +13,8 @@ const (
 	buildDir = "testdata/build"
 )
 
-func TestGenerateManifest(t *testing.T) {
-	req, err := http.NewRequest("GET", "/manifest", nil)
+func TestGetExtensions(t *testing.T) {
+	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,12 +27,19 @@ func TestGenerateManifest(t *testing.T) {
 		t.Errorf("Expected ok status – received: %d", rec.Code)
 	}
 
-	extension := core.Extension{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &extension); err != nil {
-		t.Error(err)
+	service := core.ExtensionService{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &service); err != nil {
+		t.Logf("%+v\n", rec.Body.String())
+		t.Fatal(err)
 	}
 
-	t.Logf("%+v\n", extension)
+	t.Logf("%+v\n", service)
+
+	if len(service.Extensions) != 1 {
+		t.Errorf("Expected one extension got %d", len(service.Extensions))
+	}
+
+	extension := service.Extensions[0]
 
 	if extension.Assets == nil {
 		t.Error("Expected assets to not be null")

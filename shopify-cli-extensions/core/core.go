@@ -18,8 +18,8 @@ func NewExtensionService(buildDir string) *ExtensionService {
 }
 
 type ExtensionService struct {
-	Extensions []Extension `json:"extensions"`
-	Version    string      `json:"version"`
+	Extensions []Extension
+	Version    string
 }
 
 func (s *ExtensionService) Add(extension Extension) {
