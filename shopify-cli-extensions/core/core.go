@@ -1,18 +1,19 @@
 package core
 
 func NewExtensionService(buildDir string) *ExtensionService {
-	service := ExtensionService{Version: "0.1.0"}
-
-	service.Add(Extension{
-		Assets: make([]Asset, 0),
-		User: User{
-			Metafields: make([]Metafield, 0),
-		},
-		Development: Development{
-			BuildDir: buildDir,
-		},
-		App: make(App),
-	})
+	service := ExtensionService{
+		Version: "0.1.0",
+		Extensions: []Extension{{
+			Assets: make([]Asset, 0),
+			User: User{
+				Metafields: make([]Metafield, 0),
+			},
+			Development: Development{
+				BuildDir: buildDir,
+			},
+			App: make(App),
+		}},
+	}
 
 	return &service
 }
@@ -20,10 +21,6 @@ func NewExtensionService(buildDir string) *ExtensionService {
 type ExtensionService struct {
 	Extensions []Extension
 	Version    string
-}
-
-func (s *ExtensionService) Add(extension Extension) {
-	s.Extensions = append(s.Extensions, extension)
 }
 
 type Extension struct {
