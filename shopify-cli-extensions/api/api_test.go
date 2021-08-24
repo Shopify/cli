@@ -55,7 +55,7 @@ func TestGetExtensions(t *testing.T) {
 }
 
 func TestServeAssets(t *testing.T) {
-	req, err := http.NewRequest("GET", "/assets/index.js", nil)
+	req, err := http.NewRequest("GET", "/00000000-0000-0000-0000-000000000000/assets/index.js", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

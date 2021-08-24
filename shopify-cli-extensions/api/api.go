@@ -7,6 +7,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
@@ -22,12 +23,16 @@ func NewApi(service *core.ExtensionService) *api {
 	api := &api{service, mux.NewRouter()}
 
 	api.HandleFunc("/", api.extensionsHandler)
-	api.PathPrefix("/assets/").Handler(
-		http.StripPrefix(
-			"/assets/",
-			http.FileServer(http.Dir(service.Extensions[0].Development.BuildDir)),
-		),
-	)
+	for _, extension := range api.Extensions {
+		prefix := fmt.Sprintf("/%s/assets/", extension.UUID)
+
+		api.PathPrefix(prefix).Handler(
+			http.StripPrefix(
+				prefix,
+				http.FileServer(http.Dir(extension.Development.BuildDir)),
+			),
+		)
+	}
 
 	return api
 }

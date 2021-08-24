@@ -4,7 +4,10 @@ func NewExtensionService(buildDir string) *ExtensionService {
 	service := ExtensionService{
 		Version: "0.1.0",
 		Extensions: []Extension{{
-			Assets: make([]Asset, 0),
+			UUID: "00000000-0000-0000-0000-000000000000",
+			Assets: []Asset{
+				AssetFromUrl("http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js"),
+			},
 			User: User{
 				Metafields: make([]Metafield, 0),
 			},
@@ -31,6 +34,10 @@ type Extension struct {
 	User        User        `json:"user"`
 	App         App         `json:"app"`
 	Version     string      `json:"version"`
+}
+
+func AssetFromUrl(url string) Asset {
+	return Asset{Url{Url: url}}
 }
 
 type Asset struct {
