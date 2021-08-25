@@ -1,24 +1,39 @@
 package core
 
-func NewExtensionService(buildDir string) *ExtensionService {
+import (
+	"fmt"
+	"io"
+
+	"gopkg.in/yaml.v3"
+)
+
+func NewExtensionService(extensions []Extension) *ExtensionService {
+	for index, extension := range extensions {
+		extensions[index].Assets = []Asset{
+			AssetFromUrl(
+				fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s", "localhost", 8000, extension.UUID, "index.js"),
+			),
+		}
+		extensions[index].App = make(App)
+	}
+
 	service := ExtensionService{
-		Version: "0.1.0",
-		Extensions: []Extension{{
-			UUID: "00000000-0000-0000-0000-000000000000",
-			Assets: []Asset{
-				AssetFromUrl("http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js"),
-			},
-			User: User{
-				Metafields: make([]Metafield, 0),
-			},
-			Development: Development{
-				BuildDir: buildDir,
-			},
-			App: make(App),
-		}},
+		Version:    "0.1.0",
+		Extensions: extensions,
 	}
 
 	return &service
+}
+
+func LoadConfig(r io.Reader) (config *Config, err error) {
+	config = &Config{}
+	decoder := yaml.NewDecoder(r)
+	err = decoder.Decode(config)
+	return
+}
+
+type Config struct {
+	Extensions []Extension `yaml:"extensions"`
 }
 
 type ExtensionService struct {
@@ -27,13 +42,13 @@ type ExtensionService struct {
 }
 
 type Extension struct {
-	Type        string      `json:"type"`
-	UUID        string      `json:"uuid"`
-	Assets      []Asset     `json:"assets"`
-	Development Development `json:"development"`
-	User        User        `json:"user"`
-	App         App         `json:"app"`
-	Version     string      `json:"version"`
+	Type        string      `json:"type" yaml:"type"`
+	UUID        string      `json:"uuid" yaml:"uuid"`
+	Assets      []Asset     `json:"assets" yaml:"-"`
+	Development Development `json:"development" yaml:"development"`
+	User        User        `json:"user" yaml:"user"`
+	App         App         `json:"app" yaml:"-"`
+	Version     string      `json:"version" yaml:"version"`
 }
 
 func AssetFromUrl(url string) Asset {
@@ -53,7 +68,7 @@ type Development struct {
 	Renderer Renderer `json:"renderer"`
 	Hidden   bool     `json:"hidden"`
 	Focused  bool     `json:"focused"`
-	BuildDir string   `json:"-"`
+	BuildDir string   `json:"-" yaml:"build_dir"`
 }
 
 type Renderer struct {
@@ -62,16 +77,16 @@ type Renderer struct {
 }
 
 type User struct {
-	Metafields []Metafield `json:"metafields"`
+	Metafields []Metafield `json:"metafields" yaml:"metafields"`
 }
 
 type Metafield struct {
-	Namespace string `json:"namespace"`
-	Key       string `json:"key"`
+	Namespace string `json:"namespace" yaml:"namespace"`
+	Key       string `json:"key" yaml:"key"`
 }
 
 type App map[string]interface{}
 
 type Url struct {
-	Url string `json:"url"`
+	Url string `json:"url" yaml:"url"`
 }

@@ -2,16 +2,35 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 )
 
-const (
-	buildDir = "testdata/build"
+var (
+	config *core.Config
 )
+
+func init() {
+	configFile, err := os.Open("testdata/shopifile.yml")
+	if err != nil {
+		panic(fmt.Errorf("unable to open file: %w", err))
+	}
+	defer configFile.Close()
+
+	config, err = core.LoadConfig(configFile)
+	if err != nil {
+		panic(fmt.Errorf("unable to load config: %w", err))
+	}
+
+	if len(config.Extensions) < 1 {
+		panic("tests won't run without extensions")
+	}
+}
 
 func TestGetExtensions(t *testing.T) {
 	req, err := http.NewRequest("GET", "/", nil)
@@ -20,7 +39,7 @@ func TestGetExtensions(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(core.NewExtensionService(buildDir))
+	api := NewApi(core.NewExtensionService(config.Extensions))
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -61,7 +80,7 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := NewApi(core.NewExtensionService(buildDir))
+	api := NewApi(core.NewExtensionService(config.Extensions))
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {

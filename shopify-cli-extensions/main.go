@@ -9,11 +9,13 @@ import (
 )
 
 func main() {
-	cmd, args := os.Args[1], os.Args[2:]
+	config, err := core.LoadConfig(os.Stdin)
+	if err != nil {
+		panic(err)
+	}
 
-	// temp value that would be replaced by actual config
-	config := make(map[string]string)
-	cli := newCli(config)
+	cmd, args := os.Args[1], os.Args[2:]
+	cli := CLI{config}
 
 	switch cmd {
 	case "build":
@@ -26,11 +28,7 @@ func main() {
 }
 
 type CLI struct {
-	config map[string]string
-}
-
-func newCli(config map[string]string) *CLI {
-	return &CLI{config: config}
+	config *core.Config
 }
 
 func (cli *CLI) build(args ...string) {
@@ -42,14 +40,8 @@ func (cli *CLI) create(args ...string) {
 }
 
 func (cli *CLI) serve(args ...string) {
-	if len(args) != 1 {
-		panic("serve requires a path to be specified")
-	}
-
-	api := api.NewApi(core.NewExtensionService(args[0]))
-
+	api := api.NewApi(core.NewExtensionService(cli.config.Extensions))
 	mux := http.NewServeMux()
 	mux.Handle("/extensions/", http.StripPrefix("/extensions", api))
-
 	http.ListenAndServe(":8000", mux)
 }
