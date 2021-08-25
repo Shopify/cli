@@ -36,7 +36,8 @@ function getPlugins() {
   const plugins = [];
 
   if (graphqlAvailable()) {
-    plugins.push(require('@luckycatfactory/esbuild-graphql-loader'));
+    const {default: graphqlLoader} = require('@luckycatfactory/esbuild-graphql-loader');
+    plugins.push(graphqlLoader());
   }
 
   return plugins;
@@ -44,7 +45,7 @@ function getPlugins() {
 
 function graphqlAvailable() {
   try {
-    require.resolve('graphql') && require.resolve('graphl-tag');
+    require.resolve('graphql') && require.resolve('graphql-tag');
     return true;
   } catch {
     return false;
