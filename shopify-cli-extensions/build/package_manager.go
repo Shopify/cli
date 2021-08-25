@@ -44,12 +44,14 @@ func yarn(workingDir string) *PackageManager {
 	}
 }
 
-func (pm *PackageManager) RunScript(ctx context.Context, script string, args ...string) error {
+func (pm *PackageManager) RunScript(ctx context.Context, script string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, pm.name, pm.formatArgs(script, args...)...)
 	cmd.Dir = pm.workingDir
-	if err := cmd.Run(); err != nil {
-		return err
+	stdout, err := cmd.Output()
+	cmd.Run()
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	return string(stdout), nil
 }

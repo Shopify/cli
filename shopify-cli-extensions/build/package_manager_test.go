@@ -1,7 +1,9 @@
 package build
 
 import (
+	"context"
 	"errors"
+	"log"
 	"reflect"
 	"testing"
 )
@@ -43,5 +45,27 @@ func TestYarnFormatter(t *testing.T) {
 	expected_output := []string{"test.js", "foo", "bar"}
 	if !reflect.DeepEqual(actual_output, expected_output) {
 		t.Errorf("Unexpected YARN format. Expected: %s, actual: %s", expected_output, actual_output)
+	}
+}
+
+func TestRunScript(t *testing.T) {
+	pm := &PackageManager{
+		name: "bash",
+		formatArgs: func(script string, args ...string) []string {
+			return []string{script}
+		},
+		workingDir: "testdata",
+	}
+
+	stdout, err := pm.RunScript(context.TODO(), "test.sh")
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	log.Printf("***STDOUT %s", stdout)
+
+	if stdout != "Hello world!\n" {
+		t.Errorf("Unexpected output from test file: %v", stdout)
 	}
 }

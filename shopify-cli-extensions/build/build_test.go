@@ -9,10 +9,15 @@ import (
 
 func TestBuild(t *testing.T) {
 	runnerWasCalled := false
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
+	fakeRunner := func(ctx context.Context, script string, args ...string) (string, error) {
+		if script != "build" {
+			t.Errorf("Expected script to be build, got %v", script)
+		}
+
 		runnerWasCalled = true
-		return nil
+		return "", nil
 	}
+
 	builder := Builder{ScriptRunnerFunc(fakeRunner)}
 	err := builder.Build(context.TODO())
 
@@ -26,9 +31,10 @@ func TestBuild(t *testing.T) {
 }
 
 func TestBuildErrors(t *testing.T) {
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
-		return errors.New("Error")
+	fakeRunner := func(ctx context.Context, script string, args ...string) (string, error) {
+		return "", errors.New("Error")
 	}
+
 	builder := Builder{ScriptRunnerFunc(fakeRunner)}
 	err := builder.Build(context.TODO())
 
@@ -38,9 +44,13 @@ func TestBuildErrors(t *testing.T) {
 }
 
 func TestDevelop(t *testing.T) {
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
-		return nil
+	fakeRunner := func(ctx context.Context, script string, args ...string) (string, error) {
+		if script != "develop" {
+			t.Errorf("Expected script to be develop, got %v", script)
+		}
+		return "", nil
 	}
+
 	builder := Builder{ScriptRunnerFunc(fakeRunner)}
 
 	d := time.Now().Add(1 * time.Millisecond)
