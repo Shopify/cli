@@ -14,13 +14,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type api struct {
+type extensionsApi struct {
 	*core.ExtensionService
 	*mux.Router
 }
 
-func NewApi(service *core.ExtensionService) *api {
-	api := &api{service, mux.NewRouter()}
+func New(config *core.Config) http.Handler {
+	mux := mux.NewRouter()
+
+	mux.Handle("/extensions/", http.StripPrefix("/extensions", newExtensionsApi(config)))
+	mux.Handle("/", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		http.Redirect(rw, r, "/extensions", http.StatusMovedPermanently)
+	}))
+
+	return mux
+}
+
+func newExtensionsApi(config *core.Config) *extensionsApi {
+	api := &extensionsApi{core.NewExtensionService(config.Extensions), mux.NewRouter()}
 
 	api.HandleFunc("/", api.extensionsHandler)
 	for _, extension := range api.Extensions {
@@ -37,7 +48,7 @@ func NewApi(service *core.ExtensionService) *api {
 	return api
 }
 
-func (api *api) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
+func (api *extensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
