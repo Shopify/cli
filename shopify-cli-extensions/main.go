@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
+	"github.com/Shopify/shopify-cli-extensions/build"
 	"github.com/Shopify/shopify-cli-extensions/core"
 )
 
@@ -33,7 +36,17 @@ type CLI struct {
 }
 
 func (cli *CLI) build(args ...string) {
-	panic("not implemented")
+	for _, e := range cli.config.Extensions {
+		b := build.NewBuilder(e.Development.BuildDir)
+
+		log.Printf("Building %s, id: %s", e.Type, e.UUID)
+
+		if err := b.Build(context.TODO()); err != nil {
+			log.Printf("Extension %s failed to build. Error: %s", e.UUID, err)
+		} else {
+			log.Printf("Extension %s built successfully!", e.UUID)
+		}
+	}
 }
 
 func (cli *CLI) create(args ...string) {
