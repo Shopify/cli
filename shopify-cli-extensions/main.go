@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -43,5 +44,10 @@ func (cli *CLI) serve(args ...string) {
 	api := api.NewApi(core.NewExtensionService(cli.config.Extensions))
 	mux := http.NewServeMux()
 	mux.Handle("/extensions/", http.StripPrefix("/extensions", api))
+	mux.Handle("/", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		http.Redirect(rw, r, "/extensions", http.StatusMovedPermanently)
+	}))
+
+	fmt.Println("Shopify CLI Extensions Server is now available at http://localhost:8000/")
 	http.ListenAndServe(":8000", mux)
 }
