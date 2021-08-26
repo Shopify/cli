@@ -19,3 +19,7 @@ run:
 .PHONY: build-node-package
 build-node-package:
 	cd packages/shopify-cli-extensions; yarn install; yarn build
+
+.PHONY: setup-test-extension
+setup-test-extension:
+	cd build/testdata/checkout-ui-extension; rm -rf node_modules; rm yarn.lock; yarn install

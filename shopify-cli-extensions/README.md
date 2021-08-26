@@ -10,6 +10,12 @@ To run the tests, simply execute the following shell command:
 make test
 ```
 
+To set up a test extension for build purposes, run:
+
+```sh
+make run setup-test-extension
+```
+
 To run the server, simply execute the following shell command:
 
 ```sh
