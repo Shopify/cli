@@ -10,25 +10,38 @@ import (
 
 func main() {
 	cmd, args := os.Args[1], os.Args[2:]
+
+	// temp value that would be replaced by actual config
+	config := make(map[string]string)
+	cli := newCli(config)
+
 	switch cmd {
 	case "build":
-		build(args...)
+		cli.build(args...)
 	case "create":
-		create(args...)
+		cli.create(args...)
 	case "serve":
-		serve(args...)
+		cli.serve(args...)
 	}
 }
 
-func build(args ...string) {
+type CLI struct {
+	config map[string]string
+}
+
+func newCli(config map[string]string) *CLI {
+	return &CLI{config: config}
+}
+
+func (cli *CLI) build(args ...string) {
 	panic("not implemented")
 }
 
-func create(args ...string) {
+func (cli *CLI) create(args ...string) {
 	panic("not implemented")
 }
 
-func serve(args ...string) {
+func (cli *CLI) serve(args ...string) {
 	if len(args) != 1 {
 		panic("serve requires a path to be specified")
 	}
