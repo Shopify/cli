@@ -14,24 +14,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type extensionsApi struct {
-	*core.ExtensionService
-	*mux.Router
-}
-
 func New(config *core.Config) http.Handler {
 	mux := mux.NewRouter()
 
-	mux.Handle("/extensions/", http.StripPrefix("/extensions", newExtensionsApi(config)))
-	mux.Handle("/", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, "/extensions", http.StatusMovedPermanently)
-	}))
+	})
+	configureExtensionsApi(config, mux.PathPrefix("/extensions").Subrouter())
 
 	return mux
 }
 
-func newExtensionsApi(config *core.Config) *extensionsApi {
-	api := &extensionsApi{core.NewExtensionService(config.Extensions), mux.NewRouter()}
+func configureExtensionsApi(config *core.Config, router *mux.Router) *extensionsApi {
+	api := &extensionsApi{core.NewExtensionService(config.Extensions), router}
 
 	api.HandleFunc("/", api.extensionsHandler)
 	for _, extension := range api.Extensions {
@@ -46,6 +41,11 @@ func newExtensionsApi(config *core.Config) *extensionsApi {
 	}
 
 	return api
+}
+
+type extensionsApi struct {
+	*core.ExtensionService
+	*mux.Router
 }
 
 func (api *extensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
