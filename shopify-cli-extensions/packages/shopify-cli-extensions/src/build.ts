@@ -3,7 +3,7 @@ import {getConfigs} from './configs';
 
 export function build({mode}) {
   const isDevelopment = mode === 'development';
-  const {entry, build = {}, serve = {}, outDir} = getConfigs();
+  const {entries, build = {}, serve = {}, buildDir} = getConfigs();
   const commandConfigs = isDevelopment ? serve : build;
   const define = Object.keys(commandConfigs).reduce(
     (acc, key) => ({
@@ -16,7 +16,7 @@ export function build({mode}) {
   esBuild({
     bundle: true,
     define,
-    entryPoints: entry,
+    entryPoints: entries,
     loader: {
       '.esnext': 'ts',
       '.js': 'jsx',
@@ -24,7 +24,7 @@ export function build({mode}) {
     logLevel: 'info',
     legalComments: 'linked',
     minify: !isDevelopment,
-    outdir: outDir,
+    outdir: buildDir,
     plugins: getPlugins(),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],

@@ -51,22 +51,12 @@ func (cli *CLI) build(args ...string) {
 }
 
 func (cli *CLI) create(args ...string) {
-	if len(args) != 4 {
-		panic("create requires a target path, a template and a renderer")
-	}
-	extension := core.Extension{
-		Development: core.Development{
-			BuildDir: "build",
-			Renderer: core.Renderer{Name: args[1]},
-			RootDir:  args[3],
-			Template: args[2],
-			Entry:    make(map[string]string),
-		},
-		Type: args[0],
-	}
+	extension := cli.config.Extensions[0]
+	extension.Development.Entries = make(map[string]string)
+
 	err := create.NewExtensionProject(extension)
 	if err != nil {
-		panic("failed to create a new extension")
+		panic(fmt.Errorf("failed to create a new extension: %w", err))
 	}
 }
 

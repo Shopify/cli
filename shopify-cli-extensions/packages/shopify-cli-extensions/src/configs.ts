@@ -5,20 +5,24 @@ export interface CommandOptions {
   env?: {[key: string]: string};
 }
 
-export interface Configs {
-  extensionPoints?: string[];
-  entry: {[key: string]: string};
-  outDir: string;
-  build?: CommandOptions;
-  serve?: CommandOptions;
-  [key: string]: string | string[] | object;
+export interface Shopifile {
+  extensions?: {development: Configs};
 }
 
-const REQUIRED_CONFIGS = ['out_dir', 'entry'];
+export interface Configs {
+  extensionPoints?: string[];
+  entries: {[key: string]: string};
+  buildDir: string;
+  build?: CommandOptions;
+  serve?: CommandOptions;
+}
+
+const REQUIRED_CONFIGS = ['build_dir', 'entries'];
 
 export function getConfigs() {
   try {
-    const configs = load(readFileSync('shopifile.yml', 'utf8'));
+    const shopifile: Shopifile = load(readFileSync('shopifile.yml', 'utf8'));
+    const configs = shopifile?.extensions[0].development;
     const jsonConfigs = Object.keys(configs).reduce(
       (acc, key) => ({
         ...acc,

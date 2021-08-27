@@ -69,9 +69,9 @@ type Development struct {
 	Hidden   bool              `json:"hidden"`
 	Focused  bool              `json:"focused"`
 	BuildDir string            `json:"-" yaml:"build_dir"`
-	RootDir  string            `json:"-"`
+	RootDir  string            `json:"-" yaml:"root_dir"`
 	Template string            `json:"-"`
-	Entry    map[string]string `json:"-"`
+	Entries  map[string]string `json:"-"`
 }
 
 type Renderer struct {

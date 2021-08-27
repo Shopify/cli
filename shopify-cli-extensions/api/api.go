@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
@@ -35,7 +36,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router) *extensions
 		api.PathPrefix(prefix).Handler(
 			http.StripPrefix(
 				prefix,
-				http.FileServer(http.Dir(extension.Development.BuildDir)),
+				http.FileServer(http.Dir(filepath.Join(extension.Development.RootDir, extension.Development.BuildDir))),
 			),
 		)
 	}

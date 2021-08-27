@@ -1,12 +1,19 @@
 ---
-extension_points:
-  - Checkout::Feature::Render
-entry:
-  main: "./src/index.tsx"
-out_dir: "./build/"
-build:
-  env:
-    SOME_VAR: bar
-serve:
-  env:
-    SOME_VAR: foo
+extensions:
+  - development:
+      entries:
+        main: "src/index.tsx"
+      build_dir: "build"
+      # build:
+      #   env:
+      #     CUSTOM_VAR: bar
+      # develop:
+      #   env:
+      #     CUSTOM_VAR: foo
+      extension_points:
+        - Checkout::Feature::Render
+      # metafields:
+      #   - namespace: my-namespace
+      #     key: my-key
+      #   - namespace: my-namespace
+      #     key: my-key-2

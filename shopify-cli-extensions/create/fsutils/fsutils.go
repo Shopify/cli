@@ -1,4 +1,4 @@
-package fsUtils
+package fsutils
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -17,7 +18,7 @@ func NewFS(embeddedFS *embed.FS, root string) *FS {
 }
 
 func (fs *FS) CopyFile(filePath, targetPath string) error {
-	content, err := fs.embeddedFS.ReadFile(JoinPaths(fs.root, filePath))
+	content, err := fs.ReadFile(filepath.Join(fs.root, filePath))
 	if err != nil {
 		return err
 	}
@@ -27,10 +28,10 @@ func (fs *FS) CopyFile(filePath, targetPath string) error {
 func (fs *FS) Execute(op *Operation) error {
 	dirPath := fs.root
 	if op.SourceDir != "" {
-		dirPath = JoinPaths(fs.root, op.SourceDir)
+		dirPath = filepath.Join(fs.root, op.SourceDir)
 	}
 
-	entries, err := fs.embeddedFS.ReadDir(dirPath)
+	entries, err := fs.ReadDir(dirPath)
 
 	if err != nil {
 		return err
@@ -42,7 +43,7 @@ func (fs *FS) Execute(op *Operation) error {
 		if entry.IsDir() {
 			relativeDir := fileName
 			if op.SourceDir != "" {
-				relativeDir = JoinPaths(op.SourceDir, fileName)
+				relativeDir = filepath.Join(op.SourceDir, fileName)
 			}
 
 			if err := fs.Execute(&Operation{
@@ -53,8 +54,8 @@ func (fs *FS) Execute(op *Operation) error {
 				return err
 			}
 		} else {
-			filePath := JoinPaths(dirPath, fileName)
-			targetPath := JoinPaths(op.TargetDir, fileName)
+			filePath := filepath.Join(dirPath, fileName)
+			targetPath := filepath.Join(op.TargetDir, fileName)
 
 			if err := op.OnEachFile(filePath, targetPath); err != nil {
 				return err
@@ -69,18 +70,13 @@ func CopyFileContent(targetPath string, content []byte) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	if _, err := io.Copy(file, bytes.NewReader(content)); err != nil {
 		return err
 	}
 
-	defer file.Close()
-
 	return nil
-}
-
-func JoinPaths(args ...string) string {
-	return strings.Join(append([]string{}, args...), "/")
 }
 
 func FormatContent(targetPath string, content []byte) ([]byte, error) {
@@ -103,6 +99,10 @@ func MakeDir(dirPath string) error {
 	return os.MkdirAll(dirPath, 0755)
 }
 
+func RemoveDir(dirPath string) error {
+	return os.Remove(dirPath)
+}
+
 func OpenFileForAppend(filePath string) (*os.File, error) {
 	return os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0600)
 }
@@ -116,6 +116,6 @@ type Operation struct {
 type OnEachFile func(filePath string, targetPath string) error
 
 type FS struct {
-	embeddedFS *embed.FS
-	root       string
+	*embed.FS
+	root string
 }

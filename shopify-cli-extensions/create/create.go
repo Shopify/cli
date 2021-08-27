@@ -3,11 +3,14 @@ package create
 import (
 	"bytes"
 	"embed"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"github.com/Shopify/shopify-cli-extensions/create/fsUtils"
+	"github.com/Shopify/shopify-cli-extensions/create/fsutils"
 )
 
 //go:embed templates/* templates/.shopify-cli.yml.tpl
@@ -16,106 +19,197 @@ var templateRoot = "templates"
 var templateFileExtension = ".tpl"
 var defaultSourceDir = "src"
 
-func NewExtensionProject(extension core.Extension) error {
+func NewExtensionProject(extension core.Extension) (err error) {
+	fs := fsutils.NewFS(&templates, templateRoot)
 	project := &project{
 		&extension,
-		fsUtils.NewFS(&templates, templateRoot),
 		strings.ToUpper(extension.Type),
 		strings.Contains(extension.Development.Template, "react"),
 		strings.Contains(extension.Development.Template, "typescript"),
 	}
 
-	if err := fsUtils.MakeDir(extension.Development.RootDir); err != nil {
-		return err
-	}
-
-	if err := project.createMainEntry(); err != nil {
-		return err
-	}
-
-	if err := project.mergeTemplates(); err != nil {
-		return err
-	}
-
-	return project.mergeYamlFiles()
-}
-
-func (project *project) createMainEntry() error {
-	if err := fsUtils.MakeDir(fsUtils.JoinPaths(project.Development.RootDir, defaultSourceDir)); err != nil {
-		return err
-	}
-
-	project.Development.Entry["main"] = fsUtils.JoinPaths(defaultSourceDir, project.getMainFileName())
-
-	return project.fs.CopyFile(
-		fsUtils.JoinPaths(project.Type, project.getMainTemplate()),
-		fsUtils.JoinPaths(project.Development.RootDir, project.Development.Entry["main"]),
+	setup := NewProcess(
+		MakeDir(extension.Development.BuildDir),
+		CreateMainEntry(fs, project),
+		MergeTemplates(fs, project),
+		MergeYamlFiles(fs, project),
 	)
+
+	return setup.Run()
 }
 
-func (project *project) mergeTemplates() error {
-	return project.fs.Execute(&fsUtils.Operation{
-		SourceDir:  "",
-		TargetDir:  project.Development.RootDir,
-		OnEachFile: project.executeTemplate,
-	})
+type Task struct {
+	Run  func() error
+	Undo func() error
 }
 
-func (project *project) mergeYamlFiles() error {
-	return project.fs.Execute(&fsUtils.Operation{
-		SourceDir:  project.Type,
-		TargetDir:  project.Development.RootDir,
-		OnEachFile: project.joinYaml,
-	})
+func NewProcess(tasks ...Task) Process {
+	return Process{
+		tasks:  tasks,
+		status: make([]string, len(tasks)),
+	}
 }
 
-func (project *project) joinYaml(filePath, targetPath string) error {
-	if !strings.HasSuffix(targetPath, ".yml") {
-		return nil
+func MakeDir(path string) Task {
+	return Task{
+		Run: func() error {
+			return fsutils.MakeDir(path)
+		},
+		Undo: func() error {
+			return fsutils.RemoveDir(path)
+		},
 	}
-
-	targetFile, err := fsUtils.OpenFileForAppend(targetPath)
-
-	if err != nil {
-		return project.fs.CopyFile(filePath, targetPath)
-	}
-
-	content, err := templates.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	newContent := strings.Replace(string(content), "---", "", 1)
-
-	if _, err = targetFile.WriteString(newContent); err != nil {
-		return err
-	}
-
-	defer targetFile.Close()
-	return nil
 }
 
-func (project *project) executeTemplate(filePath string, targetPath string) error {
-	if !strings.HasSuffix(targetPath, templateFileExtension) {
-		return nil
+func CreateMainEntry(fs *fsutils.FS, project *project) Task {
+	filePath := filepath.Join(project.Development.RootDir, defaultSourceDir)
+	mainFile := getMainFileName(project)
+
+	return Task{
+		Run: func() error {
+			if err := fsutils.MakeDir(filePath); err != nil {
+				return err
+			}
+
+			project.Development.Entries["main"] = filepath.Join(defaultSourceDir, mainFile)
+
+			return fs.CopyFile(
+				filepath.Join(project.Type, getMainTemplate(project)),
+				filepath.Join(project.Development.RootDir, project.Development.Entries["main"]),
+			)
+		},
+		Undo: func() error {
+			return fsutils.RemoveDir(filePath)
+		},
 	}
-
-	targetFilePath := strings.TrimSuffix(targetPath, templateFileExtension)
-
-	content, err := project.mergeTemplateWithData(filePath)
-	if err != nil {
-		return err
-	}
-
-	formattedContent, err := fsUtils.FormatContent(targetFilePath, content.Bytes())
-	if err != nil {
-		return err
-	}
-
-	return fsUtils.CopyFileContent(targetFilePath, formattedContent)
 }
 
-func (project *project) mergeTemplateWithData(filePath string) (*bytes.Buffer, error) {
+func MergeTemplates(fs *fsutils.FS, project *project) Task {
+	newFilePaths := make([]string, 0)
+	return Task{
+		Run: func() error {
+			return fs.Execute(&fsutils.Operation{
+				SourceDir: "",
+				TargetDir: project.Development.RootDir,
+				OnEachFile: func(filePath, targetPath string) (err error) {
+					if !strings.HasSuffix(targetPath, templateFileExtension) {
+						return
+					}
+
+					targetFilePath := strings.TrimSuffix(targetPath, templateFileExtension)
+
+					content, err := mergeTemplateWithData(project, filePath)
+					if err != nil {
+						return
+					}
+
+					formattedContent, err := fsutils.FormatContent(targetFilePath, content.Bytes())
+					if err != nil {
+						return
+					}
+					newFilePaths = append(newFilePaths, targetFilePath)
+					return fsutils.CopyFileContent(targetFilePath, formattedContent)
+				},
+			})
+		},
+		Undo: func() (err error) {
+			for _, filePath := range newFilePaths {
+				if err = os.Remove(filePath); err != nil {
+					return
+				}
+			}
+			return
+		},
+	}
+}
+
+type files struct {
+	content  string
+	filePath string
+}
+
+func MergeYamlFiles(fs *fsutils.FS, project *project) Task {
+	filesToRestore := make([]files, 0)
+	return Task{
+		Run: func() error {
+			return fs.Execute(&fsutils.Operation{
+				SourceDir: project.Type,
+				TargetDir: project.Development.RootDir,
+				OnEachFile: func(filePath, targetPath string) (err error) {
+					if !strings.HasSuffix(targetPath, ".yml") {
+						return
+					}
+
+					targetFile, err := fsutils.OpenFileForAppend(targetPath)
+
+					if err != nil {
+						return fs.CopyFile(filePath, targetPath)
+					}
+
+					content, err := templates.ReadFile(filePath)
+					if err != nil {
+						return
+					}
+
+					oldContent, err := os.ReadFile(targetPath)
+
+					if err != nil {
+						return
+					}
+
+					filesToRestore = append(filesToRestore, files{string(oldContent), targetPath})
+
+					newContent := strings.Replace(string(content), "---", "", 1)
+
+					if _, err = targetFile.WriteString(newContent); err != nil {
+						_, err = targetFile.Write(oldContent)
+						return
+					}
+
+					defer targetFile.Close()
+					return
+				},
+			})
+		},
+		Undo: func() (err error) {
+			for _, file := range filesToRestore {
+				return os.WriteFile(file.filePath, []byte(file.content), 0600)
+			}
+			return
+		},
+	}
+}
+
+type Process struct {
+	tasks  []Task
+	status []string
+}
+
+func (p *Process) Run() (err error) {
+	for taskId, task := range p.tasks {
+		if err = task.Run(); err != nil {
+			p.status[taskId] = "fail"
+			if undoErr := p.Undo(); undoErr != nil {
+				fmt.Printf("Failed to undo with error: %v\n", undoErr)
+			}
+			return
+		}
+		p.status[taskId] = "success"
+	}
+	return
+}
+
+func (p *Process) Undo() (err error) {
+	for taskId := range p.status {
+		taskId = len(p.status) - 1 - taskId
+		if p.status[taskId] == "fail" {
+			return p.tasks[taskId].Undo()
+		}
+	}
+	return
+}
+
+func mergeTemplateWithData(project *project, filePath string) (*bytes.Buffer, error) {
 	var templateContent bytes.Buffer
 	content, err := templates.ReadFile(filePath)
 	if err != nil {
@@ -135,7 +229,7 @@ func (project *project) mergeTemplateWithData(filePath string) (*bytes.Buffer, e
 	return &templateContent, nil
 }
 
-func (project *project) getMainFileName() string {
+func getMainFileName(project *project) string {
 	if project.React && project.TypeScript {
 		return "index.tsx"
 	}
@@ -147,7 +241,7 @@ func (project *project) getMainFileName() string {
 	return "index.js"
 }
 
-func (project *project) getMainTemplate() string {
+func getMainTemplate(project *project) string {
 	if project.React {
 		return "react.js"
 	}
@@ -156,7 +250,6 @@ func (project *project) getMainTemplate() string {
 
 type project struct {
 	*core.Extension
-	fs            *fsUtils.FS
 	FormattedType string
 	React         bool
 	TypeScript    bool
