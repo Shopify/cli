@@ -3,8 +3,8 @@ package build
 import (
 	"context"
 	"errors"
-	"log"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -63,9 +63,27 @@ func TestRunScript(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	log.Printf("***STDOUT %s", stdout)
-
 	if stdout != "Hello world!\n" {
 		t.Errorf("Unexpected output from test file: %v", stdout)
+	}
+}
+
+func TestRunScriptErrorIfDirectoryNotFound(t *testing.T) {
+	pm := &PackageManager{
+		name: "bash",
+		formatArgs: func(script string, args ...string) []string {
+			return []string{script}
+		},
+		workingDir: "doesnotexist123",
+	}
+
+	_, err := pm.RunScript(context.TODO(), "test.sh")
+
+	if err == nil {
+		t.Error("Expected operation to be unsuccessful")
+	}
+
+	if !strings.Contains(err.Error(), "no such file or directory") {
+		t.Errorf("Expected error to include 'no such file or directory', got: %v", err)
 	}
 }

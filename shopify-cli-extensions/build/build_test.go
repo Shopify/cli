@@ -19,10 +19,14 @@ func TestBuild(t *testing.T) {
 	}
 
 	builder := Builder{ScriptRunnerFunc(fakeRunner)}
-	err := builder.Build(context.TODO())
+	result := builder.Build(context.TODO())
 
-	if err != nil {
-		t.Errorf("Expected error to be nil, got %s", err)
+	if !result.Success {
+		t.Error("Expected Build operation to be successful")
+	}
+
+	if result.Error != nil {
+		t.Errorf("Expected error to be nil, got %s", result.Error)
 	}
 
 	if !runnerWasCalled {
@@ -36,10 +40,14 @@ func TestBuildErrors(t *testing.T) {
 	}
 
 	builder := Builder{ScriptRunnerFunc(fakeRunner)}
-	err := builder.Build(context.TODO())
+	result := builder.Build(context.TODO())
 
-	if err == nil {
-		t.Errorf("Unexpected error %v", err)
+	if result.Success {
+		t.Error("Expected Build operation to fail with errors")
+	}
+
+	if result.Error == nil {
+		t.Errorf("Expected error to not be nil")
 	}
 }
 
@@ -57,9 +65,13 @@ func TestDevelop(t *testing.T) {
 	ctx, cancel := context.WithDeadline(context.Background(), d)
 	defer cancel()
 
-	err := builder.Develop(ctx, "testdata", func(result Result) {})
+	result := builder.Develop(ctx, "testdata", func(result Result) {})
 
-	if err != nil {
-		t.Errorf("Unexpected error %v", err)
+	if !result.Success {
+		t.Error("Expected Develop to be successful")
+	}
+
+	if result.Error != nil {
+		t.Errorf("Unexpected error %v", result.Error)
 	}
 }

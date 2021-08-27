@@ -1,7 +1,10 @@
 package build
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"os"
 	"os/exec"
 )
 
@@ -47,11 +50,19 @@ func yarn(workingDir string) *PackageManager {
 func (pm *PackageManager) RunScript(ctx context.Context, script string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, pm.name, pm.formatArgs(script, args...)...)
 	cmd.Dir = pm.workingDir
-	stdout, err := cmd.Output()
-	cmd.Run()
-	if err != nil {
-		return "", err
+
+	if _, err := os.Stat(pm.workingDir); os.IsNotExist(err) {
+		return "", errors.New(err.Error())
 	}
 
-	return string(stdout), nil
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", errors.New(stderr.String())
+	}
+
+	return stdout.String(), nil
 }

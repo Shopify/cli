@@ -13,6 +13,12 @@ import (
 	"github.com/Shopify/shopify-cli-extensions/create"
 )
 
+var ctx context.Context
+
+func init() {
+	ctx = context.Background()
+}
+
 func main() {
 	config, err := core.LoadConfig(os.Stdin)
 	if err != nil {
@@ -37,16 +43,30 @@ type CLI struct {
 }
 
 func (cli *CLI) build(args ...string) {
+	build_errors := 0
+
 	for _, e := range cli.config.Extensions {
 		b := build.NewBuilder(e.Development.BuildDir)
 
 		log.Printf("Building %s, id: %s", e.Type, e.UUID)
 
-		if err := b.Build(context.TODO()); err != nil {
-			log.Printf("Extension %s failed to build. Error: %s", e.UUID, err)
-		} else {
+		result := b.Build(ctx)
+
+		if result.Success {
 			log.Printf("Extension %s built successfully!", e.UUID)
+		} else {
+			build_errors += 1
+			log.Printf("Extension %s failed to build: %s", e.UUID, result.Error.Error())
 		}
+	}
+
+	switch {
+	case build_errors == 1:
+		log.Println("There was an error during build, please check your logs for more information.")
+		os.Exit(1)
+	case build_errors > 1:
+		log.Printf("There were %d errors during build, please check your logs for more information.", build_errors)
+		os.Exit(1)
 	}
 }
 
