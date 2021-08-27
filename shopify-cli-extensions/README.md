@@ -36,7 +36,27 @@ curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/asset
 
 ### Create
 
-To create a new extension project, execute the `make run create` command. The command is in the format of `make run create TYPE RENDERER_LIBRARY TEMPLATE_NAME ROOT_DIRECTORY`
+To create a new extension project, simply execute the following shell command:
+
+```sh
+make run serve < testdata/shopifile.yml
+```
+
+This will create a new extension inside the `api/testdata` folder. You can update `testdata/shopifile.yml` if you want to test different options.
+
+The YAML file is in the format of
+
+```yml
+extensions:
+  - uuid: 00000000-0000-0000-0000-000000000000
+    type: TYPE
+    development:
+      root_dir: "api/testdata"
+      build_dir: "build"
+      template: TEMPLATE_NAME
+      renderer:
+        name: RENDERER_LIBRARY
+```
 
 **RENDERER_LIBRARY**
 
@@ -52,12 +72,6 @@ To create a new extension project, execute the `make run create` command. The co
 - javascript
 - typescript-react
 - javascript-react
-
-For example:
-
-```sh
-make run create checkout_ui_extension @shopify/checkout-ui-extensions typescript-react extensions/checkout_ui_extension_ts
-```
 
 ## Technical Design
 

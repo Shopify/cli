@@ -1,5 +1,16 @@
 ---
 extensions:
+ - development:
+    entries:
+      main: "src/index.tsx"
+    build_dir: "build"
+    # build:
+    #   env:
+    #     CUSTOM_VAR: bar
+    # develop:
+    #   env:
+    #     CUSTOM_VAR: foo
+extensions:
   - extension_points:
       - Checkout::Feature::Render
     user:

@@ -29,7 +29,7 @@ func NewExtensionProject(extension core.Extension) (err error) {
 	}
 
 	setup := NewProcess(
-		MakeDir(extension.Development.BuildDir),
+		MakeDir(extension.Development.RootDir),
 		CreateMainEntry(fs, project),
 		MergeTemplates(fs, project),
 		MergeYamlFiles(fs, project),
@@ -63,7 +63,6 @@ func MakeDir(path string) Task {
 
 func CreateMainEntry(fs *fsutils.FS, project *project) Task {
 	filePath := filepath.Join(project.Development.RootDir, defaultSourceDir)
-	mainFile := getMainFileName(project)
 
 	return Task{
 		Run: func() error {
@@ -71,7 +70,7 @@ func CreateMainEntry(fs *fsutils.FS, project *project) Task {
 				return err
 			}
 
-			project.Development.Entries["main"] = filepath.Join(defaultSourceDir, mainFile)
+			project.Development.Entries["main"] = filepath.Join(defaultSourceDir, getMainFileName(project))
 
 			return fs.CopyFile(
 				filepath.Join(project.Type, getMainTemplate(project)),
@@ -159,6 +158,7 @@ func MergeYamlFiles(fs *fsutils.FS, project *project) Task {
 
 					filesToRestore = append(filesToRestore, files{string(oldContent), targetPath})
 
+					// TODO: Update this with logic to merge the content by key
 					newContent := strings.Replace(string(content), "---", "", 1)
 
 					if _, err = targetFile.WriteString(newContent); err != nil {

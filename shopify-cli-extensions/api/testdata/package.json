@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@shopify/checkout-ui-extensions-react": "latest",
+    "react": "^17.0.0"
+  },
+  "devDependencies": {
+    "@shopify/shopify-cli-extensions": "latest",
+    "typescript": "^4.1.0"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "shopify-cli-extensions build",
+    "develop": "shopify-cli-extensions develop"
+  }
+}
