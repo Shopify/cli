@@ -11,7 +11,9 @@
     "build": "tsc --build tsconfig.json",
     "check": "prettier --check \"*.(ts|json)\"",
     "format": "prettier --write \"*.(ts|json)\"",
-    "clean": "git clean --exclude node_modules -xdf ./; rm -rf ./build"
+    "clean": "git clean --exclude node_modules -xdf ./; rm -rf ./build",
+    "version-bump": "npm version --preid=alpha",
+    "deploy": "npm publish"
   },
   "publishConfig": {
     "access": "public",
