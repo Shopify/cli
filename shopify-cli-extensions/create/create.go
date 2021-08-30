@@ -70,6 +70,7 @@ func CreateMainEntry(fs *fsutils.FS, project *project) Task {
 				return err
 			}
 
+			project.Development.Entries = make(map[string]string)
 			project.Development.Entries["main"] = filepath.Join(defaultSourceDir, getMainFileName(project))
 
 			return fs.CopyFile(

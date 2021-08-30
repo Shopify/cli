@@ -52,8 +52,6 @@ func (cli *CLI) build(args ...string) {
 
 func (cli *CLI) create(args ...string) {
 	extension := cli.config.Extensions[0]
-	extension.Development.Entries = make(map[string]string)
-
 	err := create.NewExtensionProject(extension)
 	if err != nil {
 		panic(fmt.Errorf("failed to create a new extension: %w", err))
