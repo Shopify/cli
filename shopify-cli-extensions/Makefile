@@ -33,4 +33,4 @@ integration-test:
 	./shopify-extensions create < testdata/shopifile.yml
 	cd tmp/checkout_ui_extension; yarn link "@shopify/shopify-cli-extensions" || true && yarn install
 	cd tmp/checkout_ui_extension; cat shopifile.yml | ruby -e "require 'yaml'; puts({'extensions' => [{'development' => YAML.load(STDIN.read).merge({'root_dir' => '.'}), 'type' => 'checkout_ui_extension'}]}.to_yaml)" | ../../shopify-extensions build
-	[[ -f tmp/checkout_ui_extension/build/main.js ]] 
+	test -f tmp/checkout_ui_extension/build/main.js
