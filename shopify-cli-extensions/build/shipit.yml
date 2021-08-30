@@ -5,11 +5,4 @@ deploy:
   pre:
     - cd packages/shopify-cli-extensions; yarn run build
   override:
-    - cd packages/shopify-cli-extensions; yarn run deploy --dist-tag=$NPM_DIST_TAG
-  variables:
-    - name: NPM_DIST_TAG
-      title: Select the dist tag for npm, defaults to "latest"
-      select:
-        - latest
-        - next
-      default: latest
+    - cd packages/shopify-cli-extensions; yarn run deploy --dist-tag=next
