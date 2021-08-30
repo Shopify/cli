@@ -4,7 +4,7 @@ extensions:
     user:
       metafields: []
     development:
-      root_dir: "api/testdata"
+      root_dir: "testdata/extensions/checkout_ui_extension"
       build_dir: "build"
       template: "typescript-react"
       renderer:
@@ -14,7 +14,7 @@ extensions:
     user:
       metafields: []
     development:
-      root_dir: "api/testdata"
+      root_dir: "testdata/extensions/checkout_ui_extension"
       build_dir: "build"
       template: "typescript-react"
       renderer:
