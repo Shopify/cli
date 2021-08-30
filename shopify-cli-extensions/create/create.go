@@ -123,7 +123,7 @@ func MergeTemplates(fs *fsutils.FS, project *project) Task {
 }
 
 type files struct {
-	content  string
+	content  []byte
 	filePath string
 }
 
@@ -156,13 +156,12 @@ func MergeYamlFiles(fs *fsutils.FS, project *project) Task {
 						return
 					}
 
-					filesToRestore = append(filesToRestore, files{string(oldContent), targetPath})
+					filesToRestore = append(filesToRestore, files{oldContent, targetPath})
 
 					// TODO: Update this with logic to merge the content by key
 					newContent := strings.Replace(string(content), "---", "", 1)
 
 					if _, err = targetFile.WriteString(newContent); err != nil {
-						_, err = targetFile.Write(oldContent)
 						return
 					}
 
@@ -173,7 +172,7 @@ func MergeYamlFiles(fs *fsutils.FS, project *project) Task {
 		},
 		Undo: func() (err error) {
 			for _, file := range filesToRestore {
-				return os.WriteFile(file.filePath, []byte(file.content), 0600)
+				return os.WriteFile(file.filePath, file.content, 0600)
 			}
 			return
 		},
