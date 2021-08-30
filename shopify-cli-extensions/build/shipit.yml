@@ -1,8 +1,0 @@
-dependencies:
-  override:
-    - cd packages/shopify-cli-extensions; yarn install --frozen-lockfile --no-progress
-deploy:
-  pre:
-    - cd packages/shopify-cli-extensions; yarn run build
-  override:
-    - cd packages/shopify-cli-extensions; yarn run deploy --dist-tag=next
