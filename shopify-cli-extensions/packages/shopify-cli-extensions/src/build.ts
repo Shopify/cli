@@ -3,7 +3,9 @@ import {getConfigs} from './configs';
 
 export function build({mode}) {
   const isDevelopment = mode === 'development';
-  const {entries, build = {}, serve = {}, buildDir} = getConfigs();
+  const {
+    development: {entries, build = {}, serve = {}, buildDir},
+  } = getConfigs();
   const commandConfigs = isDevelopment ? serve : build;
   const define = Object.keys(commandConfigs).reduce(
     (acc, key) => ({
