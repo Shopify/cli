@@ -6,7 +6,7 @@ export interface CommandOptions {
 }
 
 export interface Shopifile {
-  extensions?: {development: Configs};
+  development?: Configs;
 }
 
 export interface Configs {
@@ -21,12 +21,11 @@ const REQUIRED_CONFIGS = ['build_dir', 'entries'];
 
 export function getConfigs() {
   try {
-    const shopifile: Shopifile = load(readFileSync('shopifile.yml', 'utf8'));
-    const configs = shopifile?.extensions[0].development;
-    const jsonConfigs = Object.keys(configs).reduce(
+    const {development}: Shopifile = load(readFileSync('shopifile.yml', 'utf8'));
+    const jsonConfigs = Object.keys(development).reduce(
       (acc, key) => ({
         ...acc,
-        [toCamelCase(key)]: configs[key],
+        [toCamelCase(key)]: development[key],
       }),
       {},
     );
