@@ -21,7 +21,7 @@ func New(config *core.Config) http.Handler {
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, "/extensions", http.StatusMovedPermanently)
 	})
-	configureExtensionsApi(config, mux.PathPrefix("/extensions").Subrouter())
+	configureExtensionsApi(config, mux)
 
 	return mux
 }
@@ -29,15 +29,13 @@ func New(config *core.Config) http.Handler {
 func configureExtensionsApi(config *core.Config, router *mux.Router) *extensionsApi {
 	api := &extensionsApi{core.NewExtensionService(config.Extensions), router}
 
-	api.HandleFunc("/", api.extensionsHandler)
+	api.HandleFunc("/extensions/", api.extensionsHandler)
 	for _, extension := range api.Extensions {
-		prefix := fmt.Sprintf("/%s/assets/", extension.UUID)
+		prefix := fmt.Sprintf("/extensions/%s/assets/", extension.UUID)
+		buildDir := filepath.Join(extension.Development.RootDir, extension.Development.BuildDir)
 
 		api.PathPrefix(prefix).Handler(
-			http.StripPrefix(
-				prefix,
-				http.FileServer(http.Dir(filepath.Join(extension.Development.RootDir, extension.Development.BuildDir))),
-			),
+			http.StripPrefix(prefix, http.FileServer(http.Dir(buildDir))),
 		)
 	}
 

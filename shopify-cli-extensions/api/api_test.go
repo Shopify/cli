@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"github.com/gorilla/mux"
 )
 
 var (
@@ -34,13 +33,13 @@ func init() {
 }
 
 func TestGetExtensions(t *testing.T) {
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequest("GET", "/extensions/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
 
-	api := configureExtensionsApi(config, mux.NewRouter())
+	api := New(config)
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -75,13 +74,13 @@ func TestGetExtensions(t *testing.T) {
 }
 
 func TestServeAssets(t *testing.T) {
-	req, err := http.NewRequest("GET", "/00000000-0000-0000-0000-000000000000/assets/index.js", nil)
+	req, err := http.NewRequest("GET", "/extensions/00000000-0000-0000-0000-000000000000/assets/index.js", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
 
-	api := configureExtensionsApi(config, mux.NewRouter())
+	api := New(config)
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
