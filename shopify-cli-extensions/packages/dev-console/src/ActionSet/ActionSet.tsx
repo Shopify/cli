@@ -1,0 +1,180 @@
+import React, {useCallback, useMemo, useState} from 'react';
+import {
+  CircleAlertMajor,
+  DeleteMinor,
+  DuplicateMinor,
+  HideMinor,
+  MobileMajor,
+  RefreshMinor,
+  ViewMinor,
+} from '@shopify/polaris-icons';
+import {Button, Icon, Link, Stack} from '@shopify/polaris';
+import {useI18n} from '@shopify/react-i18n';
+import copyToClipboard from 'copy-to-clipboard';
+import QRCode from 'qrcode.react';
+
+import {useLocalExtensions} from 'hooks/useLocalExtensions';
+import {useToast} from 'hooks/useToast';
+import {ExtensionManifestData} from 'types';
+import en from './translations/en.json';
+
+import * as rowStyles from '../ExtensionRow/ExtensionRow.css';
+
+import {Action} from './Action';
+import {PopoverAction} from './PopoverAction';
+import * as styles from './ActionSet.css';
+
+export interface ActionSetProps {
+  className?: string;
+  selected?: boolean;
+  extension: ExtensionManifestData;
+  activeMobileQRCode?: boolean;
+  onShowMobileQRCode?: (extension: ExtensionManifestData) => void;
+}
+
+export function ActionSet(props: ActionSetProps) {
+  const [i18n] = useI18n({
+    id: 'ActionSet',
+    fallback: en,
+  });
+  const {extension, className, activeMobileQRCode, onShowMobileQRCode} = props;
+  const {
+    refresh,
+    hide,
+    show,
+    remove,
+    generateMobileQRCode,
+  } = useLocalExtensions();
+
+  const handleShowHide = useCallback(() => {
+    if (extension.hidden) {
+      show([extension]);
+    } else {
+      hide([extension]);
+    }
+  }, [extension, hide, show]);
+
+  const refreshExtension = useCallback(() => refresh([extension]), [
+    extension,
+    refresh,
+  ]);
+
+  const removeExtension = () => remove([extension]);
+
+  const showToast = useToast();
+  const [mobileQRCode, setMobileQRCode] = useState<string | null>(null);
+  const [mobileQRCodeState, setMobileQRCodeState] = useState<
+    null | 'loading' | 'error'
+  >(null);
+
+  const closeMobileQRCodePopover = useCallback(() => {
+    setMobileQRCode(null);
+    setMobileQRCodeState(null);
+  }, []);
+
+  const showMobileQRCode = useCallback(async () => {
+    setMobileQRCodeState('loading');
+    try {
+      setMobileQRCode(await generateMobileQRCode([extension]));
+      setMobileQRCodeState(null);
+    } catch (_) {
+      setMobileQRCodeState('error');
+    }
+    onShowMobileQRCode?.(extension);
+  }, [extension, generateMobileQRCode, onShowMobileQRCode]);
+
+  const onButtonClick = useCallback(() => {
+    if (mobileQRCode && copyToClipboard(mobileQRCode)) {
+      showToast({
+        content: i18n.translate('qrcode.copied'),
+      });
+    }
+  }, [mobileQRCode, showToast, i18n]);
+
+  const popoverContent = useMemo(() => {
+    if (mobileQRCode) {
+      return (
+        <div>
+          <div className={styles.CopyLink}>
+            <Button
+              icon={DuplicateMinor}
+              plain
+              monochrome
+              onClick={onButtonClick}
+            >
+              {i18n.translate('qrcode.copy')}
+            </Button>
+          </div>
+          <QRCode value={mobileQRCode!} />
+          <div className={styles.PopoverContent}>
+            <p>
+              {i18n.translate('qrcode.content', {
+                thisExtension: <b>{i18n.translate('qrcode.thisExtension')}</b>,
+              })}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    if (mobileQRCodeState === 'error') {
+      return (
+        <div className={styles.PopoverContent}>
+          <Stack alignment="center" vertical>
+            <Icon source={CircleAlertMajor} color="subdued" />
+            <p>{i18n.translate('qrcode.loadError')}</p>
+            <p>
+              <Link monochrome onClick={showMobileQRCode}>
+                {i18n.translate('qrcode.tryAgain')}
+              </Link>
+            </p>
+          </Stack>
+        </div>
+      );
+    }
+
+    return null;
+  }, [i18n, showMobileQRCode, onButtonClick, mobileQRCode, mobileQRCodeState]);
+
+  return (
+    <>
+      <td>
+        <div className={styles.ActionGroup}>
+          <div className={`${extension.hidden ? rowStyles.ForceVisible : ''}`}>
+            <Action
+              source={extension.hidden ? HideMinor : ViewMinor}
+              accessibilityLabel={
+                extension.hidden
+                  ? i18n.translate('show')
+                  : i18n.translate('hide')
+              }
+              onAction={handleShowHide}
+              className={className}
+            />
+          </div>
+          <PopoverAction
+            source={MobileMajor}
+            accessibilityLabel={i18n.translate('qrcode.action')}
+            onAction={showMobileQRCode}
+            active={activeMobileQRCode === true}
+            onClose={closeMobileQRCodePopover}
+            content={popoverContent}
+            className={className}
+            loading={mobileQRCodeState === 'loading'}
+          />
+          <Action
+            source={DeleteMinor}
+            accessibilityLabel={i18n.translate('remove')}
+            onAction={removeExtension}
+            className={className}
+          />
+          <Action
+            source={RefreshMinor}
+            accessibilityLabel={i18n.translate('refresh')}
+            onAction={refreshExtension}
+            className={className}
+          />
+        </div>
+      </td>
+    </>
+  );
+}

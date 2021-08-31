@@ -1,0 +1,65 @@
+@import '../theme';
+
+.DevToolRow {
+  border-bottom: 1px solid $dark;
+
+  td {
+    padding: 1rem;
+  }
+
+  .ActionSet,
+  label {
+    vertical-align: middle;
+  }
+
+  .ActionSet {
+    visibility: hidden;
+  }
+
+  &:hover {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% - 0.6rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
+
+    .ActionSet {
+      visibility: visible;
+    }
+  }
+
+  .Url {
+    color: $text;
+  }
+}
+
+.ForceVisible {
+  .ActionSet {
+    visibility: visible;
+  }
+}
+
+.Hidden {
+  text-decoration: line-through;
+  color: $subdued;
+
+  .Url {
+    color: $subdued;
+  }
+}
+
+.Status {
+  font-size: 13px;
+  border-radius: 10px;
+  padding: 0.25rem 1rem 0.5rem;
+  white-space: nowrap;
+
+  &.Connected {
+    background: $connected;
+  }
+
+  &.Disconnected {
+    background: $disconnected;
+  }
+
+  &.BuildError {
+    background: $error;
+  }
+}

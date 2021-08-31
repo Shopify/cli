@@ -1,0 +1,17 @@
+@import '../theme';
+
+.CopyLink {
+  font-family: $dev-tool-font;
+  text-align: right;
+}
+
+.PopoverContent {
+  font-family: $dev-tool-font;
+  width: 128px;
+  word-wrap: break-word;
+}
+
+.ActionGroup {
+  display: flex;
+  justify-content: flex-end;
+}
