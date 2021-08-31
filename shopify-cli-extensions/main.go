@@ -46,7 +46,7 @@ func (cli *CLI) build(args ...string) {
 	build_errors := 0
 
 	for _, e := range cli.config.Extensions {
-		b := build.NewBuilder(e.Development.BuildDir)
+		b := build.NewBuilder(e.Development.RootDir)
 
 		log.Printf("Building %s, id: %s", e.Type, e.UUID)
 
