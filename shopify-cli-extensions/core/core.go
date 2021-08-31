@@ -14,7 +14,7 @@ func NewExtensionService(extensions []Extension) *ExtensionService {
 
 		for entry := range keys {
 			name := keys[entry].String()
-			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s", "localhost", 8000, extension.UUID, name+".js")
+			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s.js", "localhost", 8000, extension.UUID, name)
 			extensions[index].Assets = append(extensions[index].Assets, Asset{Url: assetUrl, Name: name})
 		}
 

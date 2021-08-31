@@ -64,6 +64,14 @@ func TestGetExtensions(t *testing.T) {
 		t.Error("Expected assets to not be null")
 	}
 
+	if extension.Assets[0].Name != "main" {
+		t.Errorf("expect an asset with the name main, got %s", extension.Assets[0].Name)
+	}
+
+	if extension.Assets[0].Url != "http://localhost:8000/extensions/"+extension.UUID+"/assets/main.js" {
+		t.Errorf("expect a main asset url, got %s", extension.Assets[0].Url)
+	}
+
 	if extension.App == nil {
 		t.Error("Expected app to not be null")
 	}
