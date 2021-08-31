@@ -7,3 +7,5 @@ extensions:
     development:
       root_dir: "testdata"
       build_dir: "build"
+      entries:
+        main: "src/index.tsx"

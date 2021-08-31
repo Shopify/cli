@@ -9,6 +9,8 @@ extensions:
       template: "typescript-react"
       renderer:
         name: "@shopify/checkout-ui-extensions"
+      entries:
+        main: "src/index.tsx"
   - uuid: 00000000-0000-0000-0000-000000000001
     type: checkout_ui_extension
     user:
@@ -19,3 +21,5 @@ extensions:
       template: "typescript-react"
       renderer:
         name: "@shopify/checkout-ui-extensions"
+      entries:
+        main: "src/index.tsx"

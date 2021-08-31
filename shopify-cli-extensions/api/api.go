@@ -32,8 +32,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router) *extensions
 	api.HandleFunc("/extensions/", api.extensionsHandler)
 	for _, extension := range api.Extensions {
 		prefix := fmt.Sprintf("/extensions/%s/assets/", extension.UUID)
-		buildDir := filepath.Join(extension.Development.RootDir, extension.Development.BuildDir)
-
+		buildDir := filepath.Join(".", extension.Development.RootDir, extension.Development.BuildDir)
 		api.PathPrefix(prefix).Handler(
 			http.StripPrefix(prefix, http.FileServer(http.Dir(buildDir))),
 		)
