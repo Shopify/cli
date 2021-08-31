@@ -1,16 +1,20 @@
 import {build as esBuild} from 'esbuild';
 import {getConfigs} from './configs';
 
-export function build({mode}) {
+export interface Options {
+  mode: 'development' | 'production';
+}
+
+export function build({mode}: Options) {
   const isDevelopment = mode === 'development';
   const {
     development: {entries, build = {}, serve = {}, buildDir},
   } = getConfigs();
-  const commandConfigs = isDevelopment ? serve : build;
-  const define = Object.keys(commandConfigs).reduce(
+  const {env = {}} = isDevelopment ? serve : build;
+  const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,
-      [`process.env.${key}`]: JSON.stringify(commandConfigs[key]),
+      [`process.env.${key}`]: JSON.stringify(env[key]),
     }),
     {'process.env.NODE_ENV': JSON.stringify(mode)},
   );

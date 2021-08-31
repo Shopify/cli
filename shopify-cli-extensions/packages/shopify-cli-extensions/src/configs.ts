@@ -26,13 +26,17 @@ interface RequiredConfigs {
   [key: string]: RequiredConfigs | boolean;
 }
 
+interface Indexable {
+  [key: string]: any;
+}
+
 const REQUIRED_CONFIGS = {development: {build_dir: true, entries: {main: true}}};
 
 export function getConfigs() {
   try {
     const configs = load(readFileSync('shopifile.yml', 'utf8'));
     if (!isValidConfigs(configs, REQUIRED_CONFIGS)) {
-      return;
+      throw new Error('Invalid configuration');
     }
     return jsonConfigs(configs);
   } catch (e) {
@@ -41,14 +45,14 @@ export function getConfigs() {
   }
 }
 
-function toCamelCase(str) {
-  return str.replace(/_./g, (x) => x.toUpperCase()[1]);
+function toCamelCase(str: string) {
+  return str.replace(/_./g, (substr: string) => substr.toUpperCase()[1]);
 }
 
 function isValidConfigs(
   configs: any,
   requiredConfigs: RequiredConfigs,
-  paths = [],
+  paths: string[] = [],
 ): configs is Shopifile {
   Object.keys(requiredConfigs).forEach((key) => {
     console.log(`checking ${key}, ${requiredConfigs}, ${paths.join('.')}`);
@@ -63,7 +67,7 @@ function isValidConfigs(
   return true;
 }
 
-function jsonConfigs(configs: Shopifile): Configs {
+function jsonConfigs<T extends Indexable>(configs: T): T {
   return Object.keys(configs).reduce((acc, key) => {
     const formattedKey = toCamelCase(key);
     const value = configs[key];
@@ -77,5 +81,5 @@ function jsonConfigs(configs: Shopifile): Configs {
       ...acc,
       [formattedKey]: jsonConfigs(value),
     };
-  }, {} as Configs);
+  }, {} as T);
 }
