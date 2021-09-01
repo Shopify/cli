@@ -3,17 +3,19 @@ package core
 import (
 	"fmt"
 	"io"
-	"reflect"
 
 	"gopkg.in/yaml.v3"
 )
 
 func NewExtensionService(extensions []Extension) *ExtensionService {
 	for index, extension := range extensions {
-		keys := reflect.ValueOf(extensions[index].Development.Entries).MapKeys()
+		keys := make([]string, 0, len(extensions[index].Development.Entries))
+		for key := range extensions[index].Development.Entries {
+			keys = append(keys, key)
+		}
 
 		for entry := range keys {
-			name := keys[entry].String()
+			name := keys[entry]
 			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s.js", "localhost", 8000, extension.UUID, name)
 			extensions[index].Assets = append(extensions[index].Assets, Asset{Url: assetUrl, Name: name})
 		}
