@@ -4649,10 +4649,10 @@ vite-jest@^0.0.3:
     jest-transform-stub "^2.0.0"
     magic-string "^0.25.7"
 
-vite-tsconfig-paths@^3.3.13:
-  version "3.3.13"
-  resolved "https://registry.yarnpkg.com/vite-tsconfig-paths/-/vite-tsconfig-paths-3.3.13.tgz#a9e60aa3759799f3035581de8e4bb00215f039f6"
-  integrity sha512-G7OO+1g2H6xVN61RIp1xFjvciqJoF5cGKcWfP6ZOZFeA8QRy2X7yaGUZLhXtKxNLEsR2MthDm7KwSNTKQHzwvA==
+vite-tsconfig-paths@^3.3.14:
+  version "3.3.14"
+  resolved "https://registry.yarnpkg.com/vite-tsconfig-paths/-/vite-tsconfig-paths-3.3.14.tgz#4f1e099e04105952dbdef1c70f72fc5ae9047575"
+  integrity sha512-Z501YCOTTwBk+zDq0furrD+O+X/zawKIo8L3eE0GVSr700AvWAArnlUHOzoRJQw0fJLfd+61rD7jkT20Jh8gtA==
   dependencies:
     debug "^4.1.1"
     globrex "^0.1.2"

@@ -1,5 +1,7 @@
-export default {
-  preset: 'vite-jest',
+import type {Config} from '@jest/types';
+
+const config: Config.InitialOptions = {
+  preset: 'ts-jest',
 
   globals: {
     'ts-jest': {
@@ -21,6 +23,9 @@ export default {
   moduleDirectories: ['node_modules', 'src'],
 
   transform: {
+    "^.+\\.css.ts$": "<rootDir>/tests/css-transform.js",
     "^.+\\.(ts|tsx)$": "ts-jest",
   }
 };
+
+export default config;

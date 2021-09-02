@@ -6,6 +6,7 @@ import {
   HideMinor,
   DeleteMinor,
 } from '@shopify/polaris-icons';
+import {mockExtensions} from '@/dev-console-utils/testing';
 
 import {mount} from 'tests/mount';
 
@@ -24,27 +25,16 @@ const mockApp = {
   },
 };
 
-const mockExtensions = jest.fn();
+const mockExtensionsFn = jest.fn();
 
-jest.mock('components/Extensions', () => ({
-  ...jest.requireActual('components/Extensions'),
+jest.mock('@/state', () => ({
+  ...jest.requireActual('@/state'),
   useLocalExtensions() {
-    return mockExtensions();
+    return mockExtensionsFn();
   },
 }));
 
-const defaultExtension = {
-  apiKey: 'asdf123',
-  identifier: 'TYPE',
-  scriptUrl: 'https://u.rl/data',
-  name: 'Excellent extension',
-  app: mockApp,
-  stats: 'https://myshopify.io/stats',
-  data: 'https://myshopify.io/data',
-  mobile: 'https://myshopify.io/mobile',
-  rendererVersion: '0.10.0',
-  uuid: '12345',
-};
+const defaultExtension = mockExtensions()[0];
 
 const defaultLocalExtensions = {
   extensions: [],
@@ -56,18 +46,18 @@ describe('UIExtensionsDevTool', () => {
     const extensions = [
       {
         ...defaultExtension,
-        apiKey: 'asdf123',
         identifier: 'TYPE',
       },
       {
         ...defaultExtension,
-        apiKey: 'jkl789',
         identifier: 'TYPE',
       },
     ];
-    mockExtensions.mockReturnValue({...defaultLocalExtensions, extensions});
 
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {consoleState: {extensions}}
+    );
 
     const rows = container.findAll(ExtensionRow);
 
@@ -93,7 +83,7 @@ describe('UIExtensionsDevTool', () => {
 
     const refresh = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [selectedExtension, unselectedExtension],
       refresh,
@@ -127,7 +117,7 @@ describe('UIExtensionsDevTool', () => {
 
     const remove = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [selectedExtension, unselectedExtension],
       remove,
@@ -160,7 +150,7 @@ describe('UIExtensionsDevTool', () => {
       },
     ];
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions,
     });
@@ -197,7 +187,7 @@ describe('UIExtensionsDevTool', () => {
       identifier: 'TYPE',
     };
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [toggleExtension, otherExtension],
     });
@@ -240,19 +230,17 @@ describe('UIExtensionsDevTool', () => {
   it('calls to set focused to true for the current extension and set all others to false when onHighlight for a row is triggered', async () => {
     const focusExtension = {
       ...defaultExtension,
-      apiKey: 'asdf123',
       identifier: 'TYPE',
     };
 
     const prevFocusedExtension = {
       ...defaultExtension,
-      apiKey: 'jkl789',
       identifier: 'TYPE',
       focused: true,
     };
 
     const add = jest.fn();
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [focusExtension, prevFocusedExtension],
       add,
@@ -289,7 +277,7 @@ describe('UIExtensionsDevTool', () => {
 
     const add = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [extension1, extension2],
       add,
@@ -325,7 +313,7 @@ describe('UIExtensionsDevTool', () => {
 
     const show = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [selectedExtension, unselectedExtension],
       show,
@@ -361,7 +349,7 @@ describe('UIExtensionsDevTool', () => {
 
     const hide = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       ...defaultLocalExtensions,
       extensions: [selectedExtension, unselectedExtension],
       hide,
@@ -384,7 +372,7 @@ describe('UIExtensionsDevTool', () => {
   it('calls to hide Dev Tool when close button is clicked', async () => {
     const setVisible = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       extensions: [],
       devConsole: {
         ...defaultLocalExtensions.devConsole,

@@ -1,7 +1,6 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import {
   CircleAlertMajor,
-  DeleteMinor,
   DuplicateMinor,
   HideMinor,
   MobileMajor,
@@ -12,10 +11,10 @@ import {Button, Icon, Link, Stack} from '@shopify/polaris';
 import {useI18n} from '@shopify/react-i18n';
 import copyToClipboard from 'copy-to-clipboard';
 import QRCode from 'qrcode.react';
+import {ExtensionPayload} from '@/dev-console-utils';
 
-import {useLocalExtensions} from 'hooks/useLocalExtensions';
-import {useToast} from 'hooks/useToast';
-import {ExtensionManifestData} from 'types';
+import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
+import {useToast} from '@/hooks/useToast';
 import en from './translations/en.json';
 
 import * as rowStyles from '../ExtensionRow/ExtensionRow.css';
@@ -27,9 +26,9 @@ import * as styles from './ActionSet.css';
 export interface ActionSetProps {
   className?: string;
   selected?: boolean;
-  extension: ExtensionManifestData;
+  extension: ExtensionPayload;
   activeMobileQRCode?: boolean;
-  onShowMobileQRCode?: (extension: ExtensionManifestData) => void;
+  onShowMobileQRCode?: (extension: ExtensionPayload) => void;
 }
 
 export function ActionSet(props: ActionSetProps) {
@@ -42,24 +41,22 @@ export function ActionSet(props: ActionSetProps) {
     refresh,
     hide,
     show,
-    remove,
     generateMobileQRCode,
-  } = useLocalExtensions();
+  } = useDevConsoleInternal();
+  const hidden = extension.development.hidden;
 
   const handleShowHide = useCallback(() => {
-    if (extension.hidden) {
+    if (hidden) {
       show([extension]);
     } else {
       hide([extension]);
     }
-  }, [extension, hide, show]);
+  }, [extension, hidden, hide, show]);
 
   const refreshExtension = useCallback(() => refresh([extension]), [
     extension,
     refresh,
   ]);
-
-  const removeExtension = () => remove([extension]);
 
   const showToast = useToast();
   const [mobileQRCode, setMobileQRCode] = useState<string | null>(null);
@@ -139,11 +136,11 @@ export function ActionSet(props: ActionSetProps) {
     <>
       <td>
         <div className={styles.ActionGroup}>
-          <div className={`${extension.hidden ? rowStyles.ForceVisible : ''}`}>
+          <div className={`${hidden ? rowStyles.ForceVisible : ''}`}>
             <Action
-              source={extension.hidden ? HideMinor : ViewMinor}
+              source={hidden ? HideMinor : ViewMinor}
               accessibilityLabel={
-                extension.hidden
+                hidden
                   ? i18n.translate('show')
                   : i18n.translate('hide')
               }
@@ -160,12 +157,6 @@ export function ActionSet(props: ActionSetProps) {
             content={popoverContent}
             className={className}
             loading={mobileQRCodeState === 'loading'}
-          />
-          <Action
-            source={DeleteMinor}
-            accessibilityLabel={i18n.translate('remove')}
-            onAction={removeExtension}
-            className={className}
           />
           <Action
             source={RefreshMinor}

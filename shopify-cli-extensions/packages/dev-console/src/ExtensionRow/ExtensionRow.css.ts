@@ -1,5 +1,5 @@
 import {style, globalStyle} from '@vanilla-extract/css';
-import {raw, color, border} from 'theme.css';
+import {raw, color, border} from '@/theme.css';
 
 export const ActionSet = style({
   verticalAlign: 'middle',

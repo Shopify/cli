@@ -5,15 +5,13 @@ import {
   ToolsMajor,
   ViewMinor,
   HideMinor,
-  DeleteMinor,
   MobileMajor,
 } from '@shopify/polaris-icons';
 import {useI18n} from '@shopify/react-i18n';
 
-import {ExtensionManifestData} from 'types';
-import {useLocalExtensions} from 'hooks/useLocalExtensions';
-import {ToastProvider} from 'hooks/useToast';
-import {getLocalExtensionKey} from 'utils';
+import {ExtensionPayload} from '@/dev-console-utils';
+import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
+import {ToastProvider} from '@/hooks/useToast';
 
 import {Checkbox} from './CheckBox';
 import {ExtensionRow} from './ExtensionRow';
@@ -25,157 +23,102 @@ import en from './translations/en.json';
 // Hiding content until there are more options in the side nav
 const DISPLAY_SIDENAV = false;
 
+function getUuid({uuid}: {uuid: string}) {
+  return uuid;
+}
+
 export function UIExtensionsDevTool() {
   const [i18n] = useI18n({
     id: 'UIExtensionsDevTool',
     fallback: en,
 });
-  const [selectedExtensionsKeys, setSelectedExtensionsKeys] = useState<
-    string[]
-  >([]);
+  const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<
+    Set<string>
+  >(new Set());
   const {
     extensions,
     refresh,
-    remove,
-    show: showExtensions,
+    show,
     hide,
-    add,
-  } = useLocalExtensions();
+    focus,
+    unfocus,
+  } = useDevConsoleInternal();
 
-  const allSelected = selectedExtensionsKeys.length === extensions.length;
-
-  const selectExtensions = useCallback(
-    (extensions: ExtensionManifestData[]) => {
-      const newSelectedKeys = extensions
-        .map(getLocalExtensionKey)
-        .filter((key) => !selectedExtensionsKeys.includes(key));
-
-      setSelectedExtensionsKeys([
-        ...selectedExtensionsKeys,
-        ...newSelectedKeys,
-      ]);
-    },
-    [selectedExtensionsKeys],
-  );
-
-  const unselectExtensions = useCallback(
-    (extensions: ExtensionManifestData[]) => {
-      const unselectedKeys = extensions.map(getLocalExtensionKey);
-
-      setSelectedExtensionsKeys(
-        selectedExtensionsKeys.filter((key) => !unselectedKeys.includes(key)),
-      );
-    },
-    [selectedExtensionsKeys],
-  );
+  const allSelected = selectedExtensionsSet.size === extensions.length;
 
   const toggleSelectAll = () => {
     if (allSelected) {
-      unselectExtensions(extensions);
+      setSelectedExtensionsSet(new Set([]));
     } else {
-      selectExtensions(extensions);
+      setSelectedExtensionsSet(new Set(extensions.map(getUuid)));
     }
   };
 
   const toggleSelect = useCallback(
-    (extension: ExtensionManifestData) => {
-      if (selectedExtensionsKeys.includes(getLocalExtensionKey(extension))) {
-        unselectExtensions([extension]);
-        return;
-      }
-      selectExtensions([extension]);
+    (extension: ExtensionPayload) => {
+      setSelectedExtensionsSet(set => {
+        // if delete === false, extension not selected; therefore select it instead
+        if (!set.delete(extension.uuid)) set.add(extension.uuid);
+        return set;
+      })
     },
-    [selectExtensions, selectedExtensionsKeys, unselectExtensions],
+    [],
   );
 
-  const getSelectedExtensionManifests = useCallback(
+  const selectedExtensions = useMemo(
     () =>
       extensions.filter((extension) =>
-        selectedExtensionsKeys.includes(getLocalExtensionKey(extension)),
+        selectedExtensionsSet.has(extension.uuid),
       ),
-    [extensions, selectedExtensionsKeys],
+    [extensions, selectedExtensionsSet],
   );
 
   const refreshSelectedExtensions = () =>
-    refresh(getSelectedExtensionManifests());
-
-  const onHighlight = (extension: ExtensionManifestData) => {
-    const key = getLocalExtensionKey(extension);
-    add(
-      extensions.map((extension) => ({
-        ...extension,
-        focused: getLocalExtensionKey(extension) === key,
-      })),
-    );
-  };
-
-  const onClearHighlight = () =>
-    add(extensions.map((extension) => ({...extension, focused: false})));
-
-  const showAction = useMemo(() => {
-    const hideSelectedExtensions = () => hide(getSelectedExtensionManifests());
-
-    return (
-      <Action
-        source={ViewMinor}
-        accessibilityLabel={i18n.translate('bulkActions.hide')}
-        onAction={hideSelectedExtensions}
-      />
-    );
-  }, [i18n, hide, getSelectedExtensionManifests]);
-
-  const hideAction = useMemo(() => {
-    const showSelectedExtensions = () =>
-      showExtensions(getSelectedExtensionManifests());
-
-    return (
-      <Action
-        source={HideMinor}
-        accessibilityLabel={i18n.translate('bulkActions.show')}
-        onAction={showSelectedExtensions}
-      />
-    );
-  }, [i18n, showExtensions, getSelectedExtensionManifests]);
+    refresh(selectedExtensions);
 
   const [
     activeMobileQRCodeExtension,
     setActiveMobileQRCodeExtension,
-  ] = useState<ExtensionManifestData>();
+  ] = useState<ExtensionPayload>();
 
   const actionHeaderMarkup = useMemo(() => {
-    if (!selectedExtensionsKeys.length) return null;
-
-    const selectedExtensionManifests = getSelectedExtensionManifests();
-
-    const deleteSelectedExtensions = () => remove(selectedExtensionManifests);
+    if (!selectedExtensions.length) return null;
 
     const selectedExtensionsVisible: boolean =
-      selectedExtensionManifests.findIndex(
-        (extensionManifest) => !extensionManifest.hidden,
+      selectedExtensions.findIndex(
+        (extension) => !extension.development.hidden,
       ) !== -1;
 
     return (
       <>
-        {selectedExtensionsVisible ? showAction : hideAction}
+        {toggleViewAction()}
         <Action
           className={styles.Hidden}
           source={MobileMajor}
           accessibilityLabel=""
           onAction={() => null}
         />
-        <Action
-          source={DeleteMinor}
-          accessibilityLabel={i18n.translate('extensionList.delete')}
-          onAction={deleteSelectedExtensions}
-        />
       </>
     );
+
+    function toggleViewAction() {
+      return selectedExtensionsVisible
+        ? <Action
+            source={ViewMinor}
+            accessibilityLabel={i18n.translate('bulkActions.hide')}
+            onAction={() => hide(selectedExtensions)}
+          />
+        : <Action
+            source={HideMinor}
+            accessibilityLabel={i18n.translate('bulkActions.show')}
+            onAction={() => show(selectedExtensions)}
+          />
+        ;
+    }
   }, [
-    getSelectedExtensionManifests,
-    selectedExtensionsKeys,
-    showAction,
-    hideAction,
-    remove,
+    selectedExtensions,
+    show,
+    hide,
     i18n,
   ]);
 
@@ -244,20 +187,18 @@ export function UIExtensionsDevTool() {
                     </thead>
                     <tbody>
                       {extensions.map((extension) => {
-                        const key = getLocalExtensionKey(extension);
+                        const uuid = extension.uuid;
                         return (
                           <ExtensionRow
-                            key={key}
+                            key={uuid}
                             extension={extension}
                             onSelect={toggleSelect}
-                            selected={selectedExtensionsKeys.includes(key)}
-                            onHighlight={onHighlight}
-                            onClearHighlight={onClearHighlight}
+                            selected={selectedExtensionsSet.has(uuid)}
+                            onHighlight={focus}
+                            onClearHighlight={unfocus}
                             activeMobileQRCode={
                               activeMobileQRCodeExtension !== undefined &&
-                              getLocalExtensionKey(
-                                activeMobileQRCodeExtension,
-                              ) === key
+                              activeMobileQRCodeExtension.uuid === uuid
                             }
                             onShowMobileQRCode={setActiveMobileQRCodeExtension}
                           />

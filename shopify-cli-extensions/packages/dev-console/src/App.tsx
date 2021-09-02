@@ -5,6 +5,7 @@ import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
 import * as styles from './theme.css'
 import {UIExtensionsDevTool} from './UIExtensionsDevTool';
+import {LocalExtensionsProvider} from '@/dev-console-utils';
 
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
 
@@ -21,7 +22,9 @@ function App() {
     <div className={styles.Theme}>
       <I18nContext.Provider value={i18nManager}>
         <AppProvider i18n={enTranslations}>
-          <UIExtensionsDevTool />
+          <LocalExtensionsProvider host="ws://localhost:8000/extensions/">
+            <UIExtensionsDevTool />
+          </LocalExtensionsProvider>
         </AppProvider>
       </I18nContext.Provider>
     </div>

@@ -19,7 +19,8 @@
     "rootDir": ".",
     "paths": {
       "tests/*": ["tests/*"],
-      "*": ["src/*"]
+      "dev-console-utils": ["src/dev-console-utils/*"],
+      "@/*": ["src/*"],
     }
   },
   "include": ["src/**/*", "tests/**/*", "./**/*.json"]

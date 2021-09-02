@@ -1,5 +1,5 @@
 import {style} from '@vanilla-extract/css';
-import {font} from 'theme.css';
+import {font} from '@/theme.css';
 
 export const CopyLink = style({
   fontFamily: font,

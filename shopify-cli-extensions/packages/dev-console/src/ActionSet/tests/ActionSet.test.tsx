@@ -8,65 +8,29 @@ import {
 } from '@shopify/polaris-icons';
 import {Icon, Popover} from '@shopify/polaris';
 import QRCode from 'qrcode.react';
+import {mockExtensions} from '@/dev-console-utils/testing';
 
 import {mount} from 'tests/mount';
 
-import {ToastProvider} from 'hooks/useToast';
+import {ToastProvider} from '@/hooks/useToast';
 import {Action} from '../Action';
 import {ActionSet} from '../ActionSet';
 
-const mockApp = {
-  id: 'mock',
-  apiKey: 'mock',
-  applicationUrl: 'mock',
-  title: 'mock',
-  icon: {
-    transformedSrc: 'mock',
-  },
-};
-
 jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
-const mockExtensions = jest.fn();
+const mockExtensionsFn = jest.fn();
 
-jest.mock('components/Extensions', () => ({
-  ...jest.requireActual('components/Extensions'),
+jest.mock('@/state', () => ({
+  ...jest.requireActual('@/state'),
   useLocalExtensions() {
-    return mockExtensions();
+    return mockExtensionsFn();
   },
 }));
 
-jest.mock('@web-utilities/shop', () => ({
-  ...jest.requireActual('@web-utilities/shop'),
-  useShop() {
-    return {
-      shopDomain: 'shop1.myshopify.io',
-    };
-  },
-}));
-
-const defaultExtension = {
-  apiKey: 'asdf123',
-  extensionId: 12345,
-  identifier: 'TYPE',
-  scriptUrl: 'https://u.rl/data',
-  name: 'Excellent extension',
-  app: mockApp,
-  stats: 'https://myshopify.io/stats',
-  data: 'https://myshopify.io/stats',
-  mobile: 'https://myshopify.io/mobile',
-  uuid: '12345',
-  rendererVersion: '0.10.0',
-};
+const defaultExtension = mockExtensions()[0];
 
 describe('ActionSet', () => {
   it('calls refresh with given extension when refresh button is clicked', async () => {
-    const refresh = jest.fn();
-
-    mockExtensions.mockReturnValue({
-      refresh,
-    });
-
     const container = await mount(
       <ToastProvider>
         <table>
@@ -81,16 +45,11 @@ describe('ActionSet', () => {
 
     container.find(Action, {source: RefreshMinor})?.trigger('onAction');
 
-    expect(refresh).toHaveBeenCalledWith([defaultExtension]);
+    // refresh
+    expect(container.context.console.send).toHaveBeenCalledWith([defaultExtension]);
   });
 
   it('calls remove with given extension when remove button is clicked', async () => {
-    const remove = jest.fn();
-
-    mockExtensions.mockReturnValue({
-      remove,
-    });
-
     const container = await mount(
       <ToastProvider>
         <table>
@@ -105,7 +64,8 @@ describe('ActionSet', () => {
 
     container.find(Action, {source: DeleteMinor})?.trigger('onAction');
 
-    expect(remove).toHaveBeenCalledWith([defaultExtension]);
+    // remove
+    expect(container.context.console.send).toHaveBeenCalledWith([defaultExtension]);
   });
 
   it('calls show with given extension when show button is clicked', async () => {
@@ -116,7 +76,7 @@ describe('ActionSet', () => {
 
     const show = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       show,
       hide: jest.fn(),
     });
@@ -146,7 +106,7 @@ describe('ActionSet', () => {
 
     const hide = jest.fn();
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       hide,
       show: jest.fn(),
     });
@@ -174,7 +134,7 @@ describe('ActionSet', () => {
       'https://shop1.myshopify.io/admin/extensions-dev/mobile',
     );
 
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       generateMobileQRCode,
     });
 
@@ -203,7 +163,7 @@ describe('ActionSet', () => {
     const generateMobileQRCode = jest.fn(() => {
       throw new Error('dummy error');
     });
-    mockExtensions.mockReturnValue({
+    mockExtensionsFn.mockReturnValue({
       generateMobileQRCode,
     });
 

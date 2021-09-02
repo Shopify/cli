@@ -5,7 +5,8 @@
     "start": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview",
-    "test": "vite-jest"
+    "test": "jest",
+    "clean": "git clean --exclude node_modules -xdf ./"
   },
   "dependencies": {
     "@shopify/css-utilities": "^2.0.3",
@@ -34,7 +35,7 @@
     "typescript": "^4.3.2",
     "vite": "^2.4.4",
     "vite-jest": "^0.0.3",
-    "vite-tsconfig-paths": "^3.3.13"
+    "vite-tsconfig-paths": "^3.3.14"
   },
   "resolutions": {
     "@types/react": "16.14.0"

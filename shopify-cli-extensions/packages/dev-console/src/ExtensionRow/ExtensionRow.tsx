@@ -1,18 +1,18 @@
 import React, {MouseEvent, useCallback, useMemo} from 'react';
 import {useI18n} from '@shopify/react-i18n';
+import {ExtensionPayload} from '@/dev-console-utils';
 
 import {Checkbox} from '../CheckBox';
 import {ActionSet, ActionSetProps} from '../ActionSet';
 
 import * as styles from './ExtensionRow.css';
-import {ExtensionManifestData, Status} from '../types';
 import en from './translations/en.json';
 
 export type ExtensionRowProps = {
-  extension: ExtensionManifestData;
+  extension: ExtensionPayload;
   selected?: boolean;
-  onSelect(extension: ExtensionManifestData): void;
-  onHighlight(extension: ExtensionManifestData): void;
+  onSelect(extension: ExtensionPayload): void;
+  onHighlight(extension: ExtensionPayload): void;
   onClearHighlight(): void;
 } & Pick<ActionSetProps, 'activeMobileQRCode' | 'onShowMobileQRCode'>;
 
@@ -32,8 +32,7 @@ export function ExtensionRow({
     identifier,
     name,
     scriptUrl,
-    status = Status.Connected,
-    hidden,
+    development: {hidden, status}
   } = extension;
 
   const scriptHost = useMemo(() => {
@@ -51,7 +50,7 @@ export function ExtensionRow({
   );
 
   const textClass = hidden ? styles.Hidden : undefined;
-  const statusClass = status ? styles[status] : styles.BuildError;
+  const statusClass = status ? styles[status as string] : styles.BuildError;
 
   return (
     <tr
