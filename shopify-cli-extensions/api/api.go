@@ -13,9 +13,11 @@ import (
 	"net/http"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 func New(config *core.Config, ctx context.Context) *ExtensionsApi {
@@ -50,6 +52,40 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context
 }
 
 func (api *ExtensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
+
+	if websocket.IsWebSocketUpgrade(r) {
+		requestTime := time.Now()
+
+		upgrader := websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}
+
+		websocket, err := upgrader.Upgrade(rw, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer websocket.Close()
+
+		for notification := range api.notifier.updates {
+			if requestTime.After(notification.Timestamp) {
+				continue
+			}
+			encoder := json.NewEncoder(rw)
+			encoder.Encode(extensionsResponse{api.Extensions, api.Version})
+			websocket.WriteJSON(&notification)
+		}
+		return
+	}
+
+	api.extensionsJSONHandler(rw, r)
+}
+
+func (api *ExtensionsApi) extensionsJSONHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
@@ -64,6 +100,7 @@ func (api *ExtensionsApi) PrintOutStatus() {
 func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) error {
 	log.Print("***NOTIFY EVENT")
 	success := api.notifier.whenOpen(func() {
+		statusUpdate.Timestamp = time.Now()
 		api.notifier.updates <- statusUpdate
 	})
 	if !success {
@@ -88,6 +125,7 @@ func newNotifier(ctx context.Context) *notifier {
 		open:    true,
 		mu:      sync.Mutex{},
 	}
+
 	go func() {
 		<-ctx.Done()
 		notifier.mu.Lock()
@@ -131,6 +169,7 @@ type ExtensionsApi struct {
 type StatusUpdate struct {
 	Type       string           `json:"type"`
 	Extensions []core.Extension `json:"extensions"`
+	Timestamp  time.Time        `json:"timestamp"`
 }
 
 type extensionsResponse struct {

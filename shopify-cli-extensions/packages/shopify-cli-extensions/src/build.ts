@@ -28,7 +28,7 @@ export function build({mode}: Options) {
       '.js': 'jsx',
     },
     logLevel: 'info',
-    legalComments: 'linked',
+    legalComments: isDevelopment ? 'none' : 'linked',
     minify: !isDevelopment,
     outdir: buildDir,
     plugins: getPlugins(),
