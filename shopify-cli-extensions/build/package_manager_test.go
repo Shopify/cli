@@ -49,27 +49,28 @@ func TestYarnFormatter(t *testing.T) {
 }
 
 func TestRunScript(t *testing.T) {
-	pm := &PackageManager{
+	var buffer strings.Builder
+
+	pm := PackageManager{
 		name: "bash",
 		formatArgs: func(script string, args ...string) []string {
 			return []string{script}
 		},
-		workingDir: "testdata",
+		workingDir: "testdata/build",
+		stdout:     &buffer,
 	}
 
-	stdout, err := pm.RunScript(context.TODO(), "test.sh")
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+	if err := pm.RunScript(context.TODO(), "test.sh"); err != nil {
+		t.Error("Expected RunScript to be successful")
 	}
 
-	if stdout != "Hello world!\n" {
-		t.Errorf("Unexpected output from test file: %v", stdout)
+	if buffer.String() != "Hello world!\n" {
+		t.Errorf("Incorrect output, got: %s", buffer.String())
 	}
 }
 
 func TestRunScriptErrorIfDirectoryNotFound(t *testing.T) {
-	pm := &PackageManager{
+	pm := PackageManager{
 		name: "bash",
 		formatArgs: func(script string, args ...string) []string {
 			return []string{script}
@@ -77,7 +78,7 @@ func TestRunScriptErrorIfDirectoryNotFound(t *testing.T) {
 		workingDir: "doesnotexist123",
 	}
 
-	_, err := pm.RunScript(context.TODO(), "test.sh")
+	err := pm.RunScript(context.TODO(), "test.sh")
 
 	if err == nil {
 		t.Error("Expected operation to be unsuccessful")

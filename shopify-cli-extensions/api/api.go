@@ -62,6 +62,7 @@ func (api *ExtensionsApi) PrintOutStatus() {
 }
 
 func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) error {
+	log.Print("***NOTIFY EVENT")
 	success := api.notifier.whenOpen(func() {
 		api.notifier.updates <- statusUpdate
 	})
