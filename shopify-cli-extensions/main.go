@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
@@ -79,6 +78,7 @@ func (cli *CLI) create(args ...string) {
 }
 
 func (cli *CLI) serve(args ...string) {
-	fmt.Println("Shopify CLI Extensions Server is now available at http://localhost:8000/")
-	http.ListenAndServe(":8000", api.New(cli.config))
+	log.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/", cli.config.Port)
+	api := api.New(cli.config, ctx)
+	go api.Start(ctx)
 }

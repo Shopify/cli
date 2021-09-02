@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,7 +40,7 @@ func TestGetExtensions(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := New(config)
+	api := New(config, context.TODO())
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -68,7 +69,7 @@ func TestGetExtensions(t *testing.T) {
 		t.Errorf("expect an asset with the name main, got %s", extension.Assets[0].Name)
 	}
 
-	if extension.Assets[0].Url != "http://localhost:8000/extensions/"+extension.UUID+"/assets/main.js" {
+	if extension.Assets[0].Url != fmt.Sprintf("http://localhost:8000/extensions/%s/assets/main.js", extension.UUID) {
 		t.Errorf("expect a main asset url, got %s", extension.Assets[0].Url)
 	}
 
@@ -88,11 +89,38 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := New(config)
+	api := New(config, context.TODO())
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
 		t.Error("Unexpected body")
 		t.Log(rec.Body)
+	}
+}
+
+func TestNotify(t *testing.T) {
+	api := New(config, context.TODO())
+	expectedUpdate := StatusUpdate{Type: "Some message", Extensions: config.Extensions}
+
+	go api.Notify(expectedUpdate)
+
+	update := <-api.notifier.updates
+
+	if update.Type != expectedUpdate.Type {
+		t.Errorf("Unexpected Type in update event, received %v, expected %v", update.Type, expectedUpdate.Type)
+	}
+
+	expectedResult, err := json.Marshal(expectedUpdate.Extensions)
+	if err != nil {
+		t.Error("Cannot convert Extensions in expected update event to JSON", err)
+	}
+
+	result, err := json.Marshal(update.Extensions)
+	if err != nil {
+		t.Error("Cannot convert Extensions in update event to JSON", err)
+	}
+
+	if string(result) != string(expectedResult) {
+		t.Errorf("Unexpected extensions in update event, received %v, expected %v", string(result), string(expectedResult))
 	}
 }

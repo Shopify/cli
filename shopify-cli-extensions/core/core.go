@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewExtensionService(extensions []Extension) *ExtensionService {
+func NewExtensionService(extensions []Extension, port int) *ExtensionService {
 	for index, extension := range extensions {
 		keys := make([]string, 0, len(extensions[index].Development.Entries))
 		for key := range extensions[index].Development.Entries {
@@ -16,7 +16,7 @@ func NewExtensionService(extensions []Extension) *ExtensionService {
 
 		for entry := range keys {
 			name := keys[entry]
-			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s.js", "localhost", 8000, extension.UUID, name)
+			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s.js", "localhost", port, extension.UUID, name)
 			extensions[index].Assets = append(extensions[index].Assets, Asset{Url: assetUrl, Name: name})
 		}
 
@@ -26,6 +26,7 @@ func NewExtensionService(extensions []Extension) *ExtensionService {
 	service := ExtensionService{
 		Version:    "0.1.0",
 		Extensions: extensions,
+		Port:       port,
 	}
 
 	return &service
@@ -40,11 +41,13 @@ func LoadConfig(r io.Reader) (config *Config, err error) {
 
 type Config struct {
 	Extensions []Extension `yaml:"extensions"`
+	Port       int
 }
 
 type ExtensionService struct {
 	Extensions []Extension
 	Version    string
+	Port       int
 }
 
 type Extension struct {
