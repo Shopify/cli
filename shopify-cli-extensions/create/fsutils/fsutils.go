@@ -18,7 +18,8 @@ func NewFS(embeddedFS *embed.FS, root string) *FS {
 }
 
 func (fs *FS) CopyFile(filePath, targetPath string) error {
-	content, err := fs.ReadFile(filepath.Join(fs.root, filePath))
+	normalizedPath := strings.Replace(filePath, fs.root+"/", "", 1)
+	content, err := fs.ReadFile(filepath.Join(fs.root, normalizedPath))
 	if err != nil {
 		return err
 	}
@@ -31,10 +32,10 @@ func (fs *FS) Execute(op *Operation) error {
 		dirPath = filepath.Join(fs.root, op.SourceDir)
 	}
 
-	entries, err := fs.ReadDir(dirPath)
+	entries, readDirErr := fs.ReadDir(dirPath)
 
-	if err != nil {
-		return err
+	if readDirErr != nil && !op.SkipEmpty {
+		return readDirErr
 	}
 
 	for _, entry := range entries {
@@ -111,6 +112,7 @@ type Operation struct {
 	SourceDir  string
 	TargetDir  string
 	OnEachFile OnEachFile
+	SkipEmpty  bool
 }
 
 type OnEachFile func(filePath string, targetPath string) error

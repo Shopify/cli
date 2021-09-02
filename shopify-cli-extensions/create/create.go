@@ -3,7 +3,7 @@ package create
 import (
 	"bytes"
 	"embed"
-	"fmt"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/Shopify/shopify-cli-extensions/create/fsutils"
+	"github.com/Shopify/shopify-cli-extensions/create/process"
 )
 
 //go:embed templates/* templates/.shopify-cli.yml.tpl
@@ -28,30 +29,18 @@ func NewExtensionProject(extension core.Extension) (err error) {
 		strings.Contains(extension.Development.Template, "typescript"),
 	}
 
-	setup := NewProcess(
+	setup := process.NewProcess(
 		MakeDir(extension.Development.RootDir),
-		CreateMainEntry(fs, project),
+		CreateSourceFiles(fs, project),
 		MergeTemplates(fs, project),
-		MergeYamlFiles(fs, project),
+		MergeYamlAndJsonFiles(fs, project),
 	)
 
 	return setup.Run()
 }
 
-type Task struct {
-	Run  func() error
-	Undo func() error
-}
-
-func NewProcess(tasks ...Task) Process {
-	return Process{
-		tasks:  tasks,
-		status: make([]string, len(tasks)),
-	}
-}
-
-func MakeDir(path string) Task {
-	return Task{
+func MakeDir(path string) process.Task {
+	return process.Task{
 		Run: func() error {
 			return fsutils.MakeDir(path)
 		},
@@ -61,32 +50,52 @@ func MakeDir(path string) Task {
 	}
 }
 
-func CreateMainEntry(fs *fsutils.FS, project *project) Task {
-	filePath := filepath.Join(project.Development.RootDir, defaultSourceDir)
+func CreateSourceFiles(fs *fsutils.FS, project *project) process.Task {
+	sourceDirPath := filepath.Join(project.Development.RootDir, defaultSourceDir)
 
-	return Task{
-		Run: func() error {
-			if err := fsutils.MakeDir(filePath); err != nil {
+	return process.Task{
+		Run: func() (err error) {
+			if err := fsutils.MakeDir(sourceDirPath); err != nil {
 				return err
 			}
 
 			project.Development.Entries = make(map[string]string)
 			project.Development.Entries["main"] = filepath.Join(defaultSourceDir, getMainFileName(project))
 
-			return fs.CopyFile(
+			// Create main index file
+			err = fs.CopyFile(
 				filepath.Join(project.Type, getMainTemplate(project)),
 				filepath.Join(project.Development.RootDir, project.Development.Entries["main"]),
 			)
+
+			if err != nil {
+				return
+			}
+
+			// Copy additional files inside template source
+			err = fs.Execute(&fsutils.Operation{
+				SourceDir: filepath.Join(project.Type, defaultSourceDir),
+				TargetDir: sourceDirPath,
+				OnEachFile: func(filePath, targetPath string) (err error) {
+					return fs.CopyFile(
+						filePath,
+						targetPath,
+					)
+				},
+				SkipEmpty: true,
+			})
+			return
 		},
 		Undo: func() error {
-			return fsutils.RemoveDir(filePath)
+			// TODO: Figure out if we should recursively remove all files inside src or not
+			return fsutils.RemoveDir(sourceDirPath)
 		},
 	}
 }
 
-func MergeTemplates(fs *fsutils.FS, project *project) Task {
+func MergeTemplates(fs *fsutils.FS, project *project) process.Task {
 	newFilePaths := make([]string, 0)
-	return Task{
+	return process.Task{
 		Run: func() error {
 			return fs.Execute(&fsutils.Operation{
 				SourceDir: "",
@@ -110,6 +119,7 @@ func MergeTemplates(fs *fsutils.FS, project *project) Task {
 					newFilePaths = append(newFilePaths, targetFilePath)
 					return fsutils.CopyFileContent(targetFilePath, formattedContent)
 				},
+				SkipEmpty: false,
 			})
 		},
 		Undo: func() (err error) {
@@ -123,52 +133,47 @@ func MergeTemplates(fs *fsutils.FS, project *project) Task {
 	}
 }
 
-type files struct {
-	content  []byte
-	filePath string
-}
-
-func MergeYamlFiles(fs *fsutils.FS, project *project) Task {
+func MergeYamlAndJsonFiles(fs *fsutils.FS, project *project) process.Task {
 	filesToRestore := make([]files, 0)
-	return Task{
+	return process.Task{
 		Run: func() error {
 			return fs.Execute(&fsutils.Operation{
 				SourceDir: project.Type,
 				TargetDir: project.Development.RootDir,
 				OnEachFile: func(filePath, targetPath string) (err error) {
-					if !strings.HasSuffix(targetPath, ".yml") {
+					if !strings.HasSuffix(targetPath, ".json") && !strings.HasSuffix(targetPath, ".yml") {
 						return
 					}
 
-					targetFile, err := fsutils.OpenFileForAppend(targetPath)
+					targetFile, openErr := fsutils.OpenFileForAppend(targetPath)
 
-					if err != nil {
+					if openErr != nil {
 						return fs.CopyFile(filePath, targetPath)
 					}
 
-					content, err := templates.ReadFile(filePath)
-					if err != nil {
-						return
-					}
-
-					oldContent, err := os.ReadFile(targetPath)
-
-					if err != nil {
-						return
-					}
-
-					filesToRestore = append(filesToRestore, files{oldContent, targetPath})
-
-					// TODO: Update this with logic to merge the content by key
-					newContent := strings.Replace(string(content), "---", "", 1)
-
-					if _, err = targetFile.WriteString(newContent); err != nil {
-						return
-					}
-
 					defer targetFile.Close()
+
+					newContent, err := templates.ReadFile(filePath)
+					if err != nil {
+						return
+					}
+
+					originalContent, err := os.ReadFile(targetPath)
+
+					if err != nil {
+						return
+					}
+
+					filesToRestore = append(filesToRestore, files{originalContent, targetPath})
+					formattedContent, err := getFormattedMergedContent(targetPath, originalContent, newContent, fs)
+
+					if err = os.WriteFile(targetPath, formattedContent, 0600); err != nil {
+						return
+					}
+
 					return
 				},
+				SkipEmpty: false,
 			})
 		},
 		Undo: func() (err error) {
@@ -180,32 +185,53 @@ func MergeYamlFiles(fs *fsutils.FS, project *project) Task {
 	}
 }
 
-type Process struct {
-	tasks  []Task
-	status []string
-}
-
-func (p *Process) Run() (err error) {
-	for taskId, task := range p.tasks {
-		if err = task.Run(); err != nil {
-			p.status[taskId] = "fail"
-			if undoErr := p.Undo(); undoErr != nil {
-				fmt.Printf("Failed to undo with error: %v\n", undoErr)
-			}
+func getFormattedMergedContent(targetPath string, originalContent []byte, newContent []byte, fs *fsutils.FS) (content []byte, err error) {
+	if strings.HasSuffix(targetPath, ".yml") {
+		content, err = mergeYaml(originalContent, newContent, fs)
+		if err != nil {
 			return
 		}
-		p.status[taskId] = "success"
+	} else if strings.HasSuffix(targetPath, ".json") {
+		content, err = mergeJson(originalContent, newContent, fs)
+		if err != nil {
+			return
+		}
 	}
+
+	content, err = fsutils.FormatContent(targetPath, content)
 	return
 }
 
-func (p *Process) Undo() (err error) {
-	for taskId := range p.status {
-		taskId = len(p.status) - 1 - taskId
-		if p.status[taskId] == "fail" {
-			return p.tasks[taskId].Undo()
-		}
+func mergeYaml(originalContent []byte, newContent []byte, fs *fsutils.FS) (content []byte, err error) {
+	originalStr := string(originalContent)
+	// TODO: Actually merge the YAML
+	newStr := strings.Replace(string(newContent), "---", "", 1)
+
+	content = []byte(originalStr)
+	content = append(content, []byte(newStr)...)
+	return
+}
+
+func mergeJson(originalContent []byte, newContent []byte, fs *fsutils.FS) (content []byte, err error) {
+	var result packageJSON
+	var newResult packageJSON
+	if err = json.Unmarshal(originalContent, &result); err != nil {
+		return
 	}
+
+	if err = json.Unmarshal(newContent, &newResult); err != nil {
+		return
+	}
+
+	for k, v := range newResult.Dependencies {
+		result.Dependencies[k] = v
+	}
+	for k, v := range newResult.DevDependencies {
+		result.DevDependencies[k] = v
+	}
+
+	content, err = json.Marshal(result)
+
 	return
 }
 
@@ -253,4 +279,16 @@ type project struct {
 	FormattedType string
 	React         bool
 	TypeScript    bool
+}
+
+type files struct {
+	content  []byte
+	filePath string
+}
+
+type packageJSON struct {
+	DevDependencies map[string]string `json:"devDependencies"`
+	Dependencies    map[string]string `json:"dependencies"`
+	License         string            `json:"license"`
+	Scripts         map[string]string `json:"scripts"`
 }

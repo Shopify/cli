@@ -12,17 +12,19 @@ To run the tests, simply execute the following shell command:
 make test
 ```
 
-## Set up test extension
+### Bootstrap an extension
 
-To set up a test extension for build purposes, run:
+To bootstrap an extension and install of its node dependencies, run:
 
 ```sh
-make run setup-test-extension
+make run bootstrap
 ```
 
-## Serve
+This will create a `checkout_ui_extension` in the `tmp` folder, install the node dependencies and then build the extension.
 
-To run the server, simply execute the following shell command:
+### Serve
+
+After [boostrapping an extension](#bootstrap-an-extension), you can run the server by execute the following shell command:
 
 ```sh
 make run serve < testdata/shopifile.yml
@@ -42,7 +44,7 @@ To create a new extension project, simply execute the following shell command:
 make run serve < testdata/shopifile.yml
 ```
 
-This will create a new extension inside the `api/testdata` folder. You can update `testdata/shopifile.yml` if you want to test different options.
+This will create a new extension inside the `tmp/checkout_ui_extension` folder. You can update `testdata/shopifile.yml` if you want to test different options.
 
 The YAML file is in the format of
 

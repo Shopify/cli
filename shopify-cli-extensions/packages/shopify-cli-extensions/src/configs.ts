@@ -30,7 +30,19 @@ interface Indexable {
   [key: string]: any;
 }
 
-const REQUIRED_CONFIGS = {development: {build_dir: true, entries: {main: true}}};
+const REQUIRED_CONFIGS: RequiredConfigs = {
+  development: {
+    build_dir: true,
+    entries: {main: true},
+  },
+};
+
+const RESERVE_PATHS = flattenPaths({
+  development: {
+    build: {env: true},
+    develop: {env: true},
+  },
+});
 
 export function getConfigs() {
   try {
@@ -55,9 +67,9 @@ function isValidConfigs(
   paths: string[] = [],
 ): configs is Shopifile {
   Object.keys(requiredConfigs).forEach((key) => {
-    console.log(`checking ${key}, ${requiredConfigs}, ${paths.join('.')}`);
+    const isRequired = requiredConfigs[key] !== false;
     const value = configs[key];
-    if (value === undefined || value === null) {
+    if ((value === undefined || value === null) && isRequired) {
       throw `Invalid configuration. Missing \`${paths.concat(key).join('.')}\``;
     }
     if (!Array.isArray(value) && typeof value === 'object') {
@@ -67,9 +79,14 @@ function isValidConfigs(
   return true;
 }
 
-function jsonConfigs<T extends Indexable>(configs: T): T {
+function jsonConfigs<T extends Indexable>(
+  configs: T,
+  paths: string[] = [],
+  formatter = toCamelCase,
+): T {
   return Object.keys(configs).reduce((acc, key) => {
-    const formattedKey = toCamelCase(key);
+    const shouldReserveKey = RESERVE_PATHS.includes(paths.concat(key).join('.'));
+    const formattedKey = formatter(key);
     const value = configs[key];
     if (Array.isArray(value) || typeof value !== 'object') {
       return {
@@ -79,7 +96,24 @@ function jsonConfigs<T extends Indexable>(configs: T): T {
     }
     return {
       ...acc,
-      [formattedKey]: jsonConfigs(value),
+      [formattedKey]: jsonConfigs(
+        value,
+        paths.concat(key),
+        shouldReserveKey ? (k) => k : formatter,
+      ),
     };
   }, {} as T);
+}
+
+function flattenPaths(config: RequiredConfigs, paths: string[] = []): string[] {
+  return Object.keys(config).reduce((acc, key) => {
+    const value = config[key];
+    if (!value) {
+      return acc;
+    }
+    if (typeof value === 'object') {
+      return [...acc, ...flattenPaths(value, paths.concat(key))];
+    }
+    return [...acc, paths.concat(key).join('.')];
+  }, [] as string[]);
 }
