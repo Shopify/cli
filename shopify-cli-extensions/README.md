@@ -1,10 +1,10 @@
 # Shopify CLI Extensions
 
-`shopify-cli-extensions` is an add-on to the Shopify CLI. Today, its main purpose is to power the experience of `shopify extension serve`, `shopify extension build` and augment `shopify extension create`. However, we will consider expanding its responsibilities in future.
+`shopify-extensions` is an add-on to the Shopify CLI, which is installed automatically when installing the CLI. It is not meant to be invoked directly. Instead, invocation of `shopify-extensions` occurs through `shopify extension`. Today, `shopify-extensions`' main purpose is to power the experience of `shopify extension serve`, `shopify extension build` and augment `shopify extension create`.
 
-## Getting started
+The information below is mainly targeting contributors rather than users. If you want to learn more about how to build extensions and how to use the Shopify CLI in general, please consult the [official documentation](https://shopify.dev/apps/tools/cli).
 
-### Test
+## Test
 
 To run the tests, simply execute the following shell command:
 
@@ -12,7 +12,7 @@ To run the tests, simply execute the following shell command:
 make test
 ```
 
-### Set up test extension
+## Set up test extension
 
 To set up a test extension for build purposes, run:
 
@@ -20,7 +20,7 @@ To set up a test extension for build purposes, run:
 make run setup-test-extension
 ```
 
-### Serve
+## Serve
 
 To run the server, simply execute the following shell command:
 
@@ -34,7 +34,7 @@ Subsequently, you should be able to retrieve sample assets as follows:
 curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js
 ```
 
-### Create
+## Create
 
 To create a new extension project, simply execute the following shell command:
 
