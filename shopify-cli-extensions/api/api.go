@@ -9,11 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
@@ -36,10 +34,12 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context
 	api := &ExtensionsApi{
 		core.NewExtensionService(config.Extensions, config.Port),
 		router,
-		newNotifier(ctx),
-		false,
+		make(map[*websocket.Conn]func(status StatusUpdate)),
+		sync.Mutex{},
 	}
+
 	api.HandleFunc("/extensions/", api.extensionsHandler)
+
 	for _, extension := range api.Extensions {
 		prefix := fmt.Sprintf("/extensions/%s/assets/", extension.UUID)
 		buildDir := filepath.Join(".", extension.Development.RootDir, extension.Development.BuildDir)
@@ -52,10 +52,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context
 }
 
 func (api *ExtensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
-
 	if websocket.IsWebSocketUpgrade(r) {
-		requestTime := time.Now()
-
 		upgrader := websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -66,20 +63,32 @@ func (api *ExtensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Requ
 
 		websocket, err := upgrader.Upgrade(rw, r, nil)
 		if err != nil {
-			log.Println(err)
 			return
 		}
-		defer websocket.Close()
 
-		for notification := range api.notifier.updates {
-			if requestTime.After(notification.Timestamp) {
-				continue
-			}
-			encoder := json.NewEncoder(rw)
-			encoder.Encode(extensionsResponse{api.Extensions, api.Version})
-			websocket.WriteJSON(&notification)
+		notifications := make(chan StatusUpdate)
+
+		notify := func(notification StatusUpdate) {
+			notifications <- notification
 		}
-		return
+
+		go func() {
+			for notification := range notifications {
+				encoder := json.NewEncoder(rw)
+				encoder.Encode(extensionsResponse{api.Extensions, api.Version})
+				websocket.WriteJSON(&notification)
+			}
+		}()
+
+		api.registerClient(websocket, notify)
+
+		websocket.SetCloseHandler(func(code int, text string) error {
+			close(notifications)
+			api.unregisterClient(websocket)
+			return nil
+		})
+
+		websocket.WriteJSON(StatusUpdate{Type: "Connected", Extensions: api.Extensions})
 	}
 
 	api.extensionsJSONHandler(rw, r)
@@ -91,50 +100,33 @@ func (api *ExtensionsApi) extensionsJSONHandler(rw http.ResponseWriter, r *http.
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
 }
 
-func (api *ExtensionsApi) PrintOutStatus() {
-	for update := range api.notifier.updates {
-		log.Printf("Received update: , %v\n", update)
+func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
+	for _, notify := range api.connections {
+		notify(statusUpdate)
 	}
 }
 
-func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) error {
-	log.Print("***NOTIFY EVENT")
-	success := api.notifier.whenOpen(func() {
-		statusUpdate.Timestamp = time.Now()
-		api.notifier.updates <- statusUpdate
-	})
-	if !success {
-		return fmt.Errorf("channel has been closed")
-	}
-	return nil
+func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify func(update StatusUpdate)) bool {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+	api.connections[connection] = notify
+	return true
 }
 
-func (notifier *notifier) whenOpen(callback func()) bool {
-	notifier.mu.Lock()
-	defer notifier.mu.Unlock()
-	if notifier.open {
-		callback()
-		return true
+func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn) {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+	if api.connections == nil {
+		return
 	}
-	return false
+	connection.Close()
+	delete(api.connections, connection)
 }
 
-func newNotifier(ctx context.Context) *notifier {
-	notifier := notifier{
-		updates: make(chan StatusUpdate, 1),
-		open:    true,
-		mu:      sync.Mutex{},
+func (api *ExtensionsApi) Shutdown() {
+	for connection := range api.connections {
+		api.unregisterClient(connection)
 	}
-
-	go func() {
-		<-ctx.Done()
-		notifier.mu.Lock()
-		notifier.open = false
-		close(notifier.updates)
-		notifier.mu.Unlock()
-	}()
-
-	return &notifier
 }
 
 func (api *ExtensionsApi) Start(ctx context.Context) error {
@@ -153,23 +145,16 @@ func (api *ExtensionsApi) Start(ctx context.Context) error {
 	}
 }
 
-type notifier struct {
-	open    bool
-	updates chan StatusUpdate
-	mu      sync.Mutex
-}
-
 type ExtensionsApi struct {
 	*core.ExtensionService
 	*mux.Router
-	notifier *notifier
-	open     bool
+	connections map[*websocket.Conn]func(status StatusUpdate)
+	mu          sync.Mutex
 }
 
 type StatusUpdate struct {
 	Type       string           `json:"type"`
 	Extensions []core.Extension `json:"extensions"`
-	Timestamp  time.Time        `json:"timestamp"`
 }
 
 type extensionsResponse struct {

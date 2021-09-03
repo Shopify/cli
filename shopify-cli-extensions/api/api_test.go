@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -101,26 +102,31 @@ func TestServeAssets(t *testing.T) {
 func TestNotify(t *testing.T) {
 	api := New(config, context.TODO())
 	expectedUpdate := StatusUpdate{Type: "Some message", Extensions: config.Extensions}
+	notificationReceived := false
 
-	go api.Notify(expectedUpdate)
+	api.registerClient(&websocket.Conn{}, func(update StatusUpdate) {
+		notificationReceived = true
 
-	update := <-api.notifier.updates
+		if update.Type != expectedUpdate.Type {
+			t.Errorf("Unexpected Type in update event, received %v, expected %v", update.Type, expectedUpdate.Type)
+		}
+		result, err := json.Marshal(update.Extensions)
+		if err != nil {
+			t.Error("Cannot convert Extensions in update event to JSON", err)
+		}
 
-	if update.Type != expectedUpdate.Type {
-		t.Errorf("Unexpected Type in update event, received %v, expected %v", update.Type, expectedUpdate.Type)
-	}
+		expectedResult, err := json.Marshal(expectedUpdate.Extensions)
+		if err != nil {
+			t.Error("Cannot convert Extensions in update event to JSON", err)
+		}
 
-	expectedResult, err := json.Marshal(expectedUpdate.Extensions)
-	if err != nil {
-		t.Error("Cannot convert Extensions in expected update event to JSON", err)
-	}
+		if string(result) != string(expectedResult) {
+			t.Errorf("Unexpected extensions in update event, received %v, expected %v", string(result), string(expectedResult))
+		}
+	})
 
-	result, err := json.Marshal(update.Extensions)
-	if err != nil {
-		t.Error("Cannot convert Extensions in update event to JSON", err)
-	}
-
-	if string(result) != string(expectedResult) {
-		t.Errorf("Unexpected extensions in update event, received %v, expected %v", string(result), string(expectedResult))
+	api.Notify(expectedUpdate)
+	if !notificationReceived {
+		t.Error("notification callback never triggered")
 	}
 }
