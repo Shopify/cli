@@ -106,10 +106,10 @@ func (cli *CLI) monitor(active_workers int, ch chan build.Result, action string,
 
 		if result.Success {
 			log.Printf("[%s] event for extension: %s", action, result.UUID)
-			go a.Notify(api.StatusUpdate{Type: "Success", Extensions: []core.Extension{e}})
+			go a.Notify(api.StatusUpdate{Type: "success", Extensions: []core.Extension{e}})
 		} else {
 			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
-			go a.Notify(api.StatusUpdate{Type: "Success", Extensions: []core.Extension{e}})
+			go a.Notify(api.StatusUpdate{Type: "error", Extensions: []core.Extension{e}})
 		}
 	}
 

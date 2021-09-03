@@ -99,34 +99,80 @@ func TestServeAssets(t *testing.T) {
 	}
 }
 
-func TestNotify(t *testing.T) {
+func TestWebsocketNotify(t *testing.T) {
 	api := New(config, context.TODO())
+	ctx, cancel := context.WithCancel(context.Background())
+	go api.Start(ctx)
+	defer cancel()
+
+	firstConnection := createWebsocket(t, api.Port)
+	secondConnection := createWebsocket(t, api.Port)
+
+	// First message received is the connected message which can be ignored
+	firstConnection.ReadJSON(&StatusUpdate{})
+	secondConnection.ReadJSON(&StatusUpdate{})
+
 	expectedUpdate := StatusUpdate{Type: "Some message", Extensions: config.Extensions}
-	notificationReceived := false
-
-	api.registerClient(&websocket.Conn{}, func(update StatusUpdate) {
-		notificationReceived = true
-
-		if update.Type != expectedUpdate.Type {
-			t.Errorf("Unexpected Type in update event, received %v, expected %v", update.Type, expectedUpdate.Type)
-		}
-		result, err := json.Marshal(update.Extensions)
-		if err != nil {
-			t.Error("Cannot convert Extensions in update event to JSON", err)
-		}
-
-		expectedResult, err := json.Marshal(expectedUpdate.Extensions)
-		if err != nil {
-			t.Error("Cannot convert Extensions in update event to JSON", err)
-		}
-
-		if string(result) != string(expectedResult) {
-			t.Errorf("Unexpected extensions in update event, received %v, expected %v", string(result), string(expectedResult))
-		}
-	})
-
 	api.Notify(expectedUpdate)
-	if !notificationReceived {
-		t.Error("notification callback never triggered")
+
+	err := verifyWebsocketMessage(firstConnection, expectedUpdate)
+
+	if err != nil {
+		t.Error(err)
 	}
+
+	err = verifyWebsocketMessage(secondConnection, expectedUpdate)
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestWebsocketConnectedMessage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	api := New(config, ctx)
+	go api.Start(ctx)
+	defer cancel()
+
+	ws := createWebsocket(t, api.Port)
+	err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions})
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage StatusUpdate) error {
+	message := StatusUpdate{}
+
+	ws.ReadJSON(&message)
+
+	if message.Type != expectedMessage.Type {
+		return fmt.Errorf("Could not connect to websocket")
+	}
+
+	result, err := json.Marshal(message.Extensions)
+
+	if err != nil {
+		return fmt.Errorf("Converting Extensions in message to JSON failed with error: %v", err)
+	}
+
+	expectedResult, err := json.Marshal(expectedMessage.Extensions)
+	if err != nil {
+		return fmt.Errorf("Converting Extensions in expected message to JSON failed with error: %v", err)
+	}
+
+	if string(result) != string(expectedResult) {
+		return fmt.Errorf("Unexpected extensions in message, received %v, expected %v", string(result), string(expectedResult))
+	}
+
+	return nil
+}
+
+func createWebsocket(t *testing.T, port int) *websocket.Conn {
+	ws, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://localhost:%d/extensions/", port), nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	return ws
 }

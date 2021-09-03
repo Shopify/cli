@@ -30,6 +30,29 @@ func New(config *core.Config, ctx context.Context) *ExtensionsApi {
 	return api
 }
 
+func (api *ExtensionsApi) Start(ctx context.Context) error {
+	httpServer := http.Server{Addr: fmt.Sprintf(":%d", api.Port), Handler: api}
+	startupFailed := make(chan error)
+
+	go func() {
+		startupFailed <- httpServer.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		api.shutdown()
+		return httpServer.Shutdown(ctx)
+	case err := <-startupFailed:
+		return err
+	}
+}
+
+func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
+	for _, notify := range api.connections {
+		notify(statusUpdate)
+	}
+}
+
 func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context.Context) *ExtensionsApi {
 	api := &ExtensionsApi{
 		core.NewExtensionService(config.Extensions, config.Port),
@@ -53,57 +76,55 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context
 
 func (api *ExtensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
 	if websocket.IsWebSocketUpgrade(r) {
-		upgrader := websocket.Upgrader{
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		}
+		api.extensionsWebsocketHandler(rw, r)
+	} else {
+		api.extensionsJSONHandler(rw, r)
+	}
+}
 
-		websocket, err := upgrader.Upgrade(rw, r, nil)
-		if err != nil {
-			return
-		}
-
-		notifications := make(chan StatusUpdate)
-
-		notify := func(notification StatusUpdate) {
-			notifications <- notification
-		}
-
-		go func() {
-			for notification := range notifications {
-				encoder := json.NewEncoder(rw)
-				encoder.Encode(extensionsResponse{api.Extensions, api.Version})
-				websocket.WriteJSON(&notification)
-			}
-		}()
-
-		api.registerClient(websocket, notify)
-
-		websocket.SetCloseHandler(func(code int, text string) error {
-			close(notifications)
-			api.unregisterClient(websocket)
-			return nil
-		})
-
-		websocket.WriteJSON(StatusUpdate{Type: "Connected", Extensions: api.Extensions})
+func (api *ExtensionsApi) extensionsWebsocketHandler(rw http.ResponseWriter, r *http.Request) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 
-	api.extensionsJSONHandler(rw, r)
+	websocket, err := upgrader.Upgrade(rw, r, nil)
+	if err != nil {
+		return
+	}
+
+	notifications := make(chan StatusUpdate)
+
+	notify := func(notification StatusUpdate) {
+		notifications <- notification
+	}
+
+	go func() {
+		for notification := range notifications {
+			encoder := json.NewEncoder(rw)
+			encoder.Encode(extensionsResponse{api.Extensions, api.Version})
+			websocket.WriteJSON(&notification)
+		}
+	}()
+
+	api.registerClient(websocket, notify)
+
+	websocket.SetCloseHandler(func(code int, text string) error {
+		close(notifications)
+		api.unregisterClient(websocket)
+		return nil
+	})
+
+	websocket.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
 }
 
 func (api *ExtensionsApi) extensionsJSONHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
-}
-
-func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
-	for _, notify := range api.connections {
-		notify(statusUpdate)
-	}
 }
 
 func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify func(update StatusUpdate)) bool {
@@ -123,25 +144,9 @@ func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn) {
 	delete(api.connections, connection)
 }
 
-func (api *ExtensionsApi) Shutdown() {
+func (api *ExtensionsApi) shutdown() {
 	for connection := range api.connections {
 		api.unregisterClient(connection)
-	}
-}
-
-func (api *ExtensionsApi) Start(ctx context.Context) error {
-	httpServer := http.Server{Addr: fmt.Sprintf(":%d", api.Port), Handler: api}
-	startupFailed := make(chan error)
-
-	go func() {
-		startupFailed <- httpServer.ListenAndServe()
-	}()
-
-	select {
-	case <-ctx.Done():
-		return httpServer.Shutdown(ctx)
-	case err := <-startupFailed:
-		return err
 	}
 }
 
