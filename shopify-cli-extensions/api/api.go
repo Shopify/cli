@@ -48,17 +48,17 @@ func (api *ExtensionsApi) Start(ctx context.Context) error {
 }
 
 func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
-	for _, notify := range api.connections {
-		notify(statusUpdate)
-	}
+	api.connections.Range(func(_, notify interface{}) bool {
+		notify.(notificationHandler)(statusUpdate)
+		return true
+	})
 }
 
 func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context.Context) *ExtensionsApi {
 	api := &ExtensionsApi{
 		core.NewExtensionService(config.Extensions, config.Port),
 		router,
-		make(map[*websocket.Conn]func(status StatusUpdate)),
-		sync.Mutex{},
+		sync.Map{},
 	}
 
 	api.HandleFunc("/extensions/", api.extensionsHandler)
@@ -98,10 +98,6 @@ func (api *ExtensionsApi) extensionsWebsocketHandler(rw http.ResponseWriter, r *
 
 	notifications := make(chan StatusUpdate)
 
-	notify := func(notification StatusUpdate) {
-		notifications <- notification
-	}
-
 	go func() {
 		for notification := range notifications {
 			encoder := json.NewEncoder(rw)
@@ -110,7 +106,9 @@ func (api *ExtensionsApi) extensionsWebsocketHandler(rw http.ResponseWriter, r *
 		}
 	}()
 
-	api.registerClient(websocket, notify)
+	api.registerClient(websocket, func(update StatusUpdate) {
+		notifications <- update
+	})
 
 	websocket.SetCloseHandler(func(code int, text string) error {
 		close(notifications)
@@ -127,34 +125,27 @@ func (api *ExtensionsApi) extensionsJSONHandler(rw http.ResponseWriter, r *http.
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
 }
 
-func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify func(update StatusUpdate)) bool {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-	api.connections[connection] = notify
+func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify notificationHandler) bool {
+	api.connections.Store(connection, notify)
 	return true
 }
 
 func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn) {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-	if api.connections == nil {
-		return
-	}
 	connection.Close()
-	delete(api.connections, connection)
+	api.connections.Delete(connection)
 }
 
 func (api *ExtensionsApi) shutdown() {
-	for connection := range api.connections {
-		api.unregisterClient(connection)
-	}
+	api.connections.Range(func(connection, _ interface{}) bool {
+		api.unregisterClient(connection.(*websocket.Conn))
+		return true
+	})
 }
 
 type ExtensionsApi struct {
 	*core.ExtensionService
 	*mux.Router
-	connections map[*websocket.Conn]func(status StatusUpdate)
-	mu          sync.Mutex
+	connections sync.Map
 }
 
 type StatusUpdate struct {
@@ -166,3 +157,5 @@ type extensionsResponse struct {
 	Extensions []core.Extension `json:"extensions"`
 	Version    string           `json:"version"`
 }
+
+type notificationHandler func(StatusUpdate)
