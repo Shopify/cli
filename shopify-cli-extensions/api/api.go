@@ -33,6 +33,7 @@ func New(config *core.Config, ctx context.Context) *ExtensionsApi {
 func (api *ExtensionsApi) Start(ctx context.Context) error {
 	httpServer := http.Server{Addr: fmt.Sprintf(":%d", api.Port), Handler: api}
 	startupFailed := make(chan error)
+	defer close(startupFailed)
 
 	go func() {
 		startupFailed <- httpServer.ListenAndServe()
