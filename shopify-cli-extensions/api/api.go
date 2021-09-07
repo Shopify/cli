@@ -6,7 +6,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,17 +17,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func New(config *core.Config, ctx context.Context) *ExtensionsApi {
+func New(config *core.Config) *ExtensionsApi {
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, "/extensions/", http.StatusTemporaryRedirect)
 	})
 
-	api := configureExtensionsApi(config, mux, ctx)
+	api := configureExtensionsApi(config, mux)
 
 	return api
 }
+
 func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
 	api.connections.Range(func(_, notify interface{}) bool {
 		notify.(notificationHandler)(statusUpdate)
@@ -36,7 +36,14 @@ func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
 	})
 }
 
-func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context.Context) *ExtensionsApi {
+func (api *ExtensionsApi) Shutdown() {
+	api.connections.Range(func(connection, _ interface{}) bool {
+		api.unregisterClient(connection.(*websocket.Conn))
+		return true
+	})
+}
+
+func configureExtensionsApi(config *core.Config, router *mux.Router) *ExtensionsApi {
 	api := &ExtensionsApi{
 		core.NewExtensionService(config),
 		router,
@@ -80,6 +87,12 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 
 	notifications := make(chan StatusUpdate)
 
+	websocket.SetCloseHandler(func(code int, text string) error {
+		close(notifications)
+		api.unregisterClient(websocket)
+		return nil
+	})
+
 	go func() {
 		for notification := range notifications {
 			encoder := json.NewEncoder(rw)
@@ -90,12 +103,6 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 
 	api.registerClient(websocket, func(update StatusUpdate) {
 		notifications <- update
-	})
-
-	websocket.SetCloseHandler(func(code int, text string) error {
-		close(notifications)
-		api.unregisterClient(websocket)
-		return nil
 	})
 
 	websocket.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
@@ -115,13 +122,6 @@ func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify noti
 func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn) {
 	connection.Close()
 	api.connections.Delete(connection)
-}
-
-func (api *ExtensionsApi) shutdown() {
-	api.connections.Range(func(connection, _ interface{}) bool {
-		api.unregisterClient(connection.(*websocket.Conn))
-		return true
-	})
 }
 
 type ExtensionsApi struct {

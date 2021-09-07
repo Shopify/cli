@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -42,7 +41,7 @@ func TestGetExtensions(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := New(config, context.TODO())
+	api := New(config)
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -91,7 +90,7 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := New(config, context.TODO())
+	api := New(config)
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
@@ -101,7 +100,7 @@ func TestServeAssets(t *testing.T) {
 }
 
 func TestWebsocketNotify(t *testing.T) {
-	api := New(config, context.TODO())
+	api := New(config)
 	server := httptest.NewServer(api)
 
 	firstConnection, err := createWebsocket(server)
@@ -130,8 +129,8 @@ func TestWebsocketNotify(t *testing.T) {
 	}
 }
 
-func TestWebsocketConnectedMessage(t *testing.T) {
-	api := New(config, context.TODO())
+func TestWebsocketConnection(t *testing.T) {
+	api := New(config)
 	server := httptest.NewServer(api)
 	ws, err := createWebsocket(server)
 	if err != nil {
@@ -140,6 +139,13 @@ func TestWebsocketConnectedMessage(t *testing.T) {
 
 	if err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions}); err != nil {
 		t.Error(err)
+	}
+
+	api.Shutdown()
+
+	_, _, err = ws.ReadMessage()
+	if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+		t.Error("Expected connection to be terminated")
 	}
 }
 

@@ -43,7 +43,7 @@ type CLI struct {
 }
 
 func (cli *CLI) build(args ...string) {
-	api := api.New(cli.config, ctx)
+	api := api.New(cli.config)
 	build_workers := len(cli.config.Extensions)
 	build_chan := make(chan build.Result)
 
@@ -71,7 +71,7 @@ func (cli *CLI) create(args ...string) {
 
 func (cli *CLI) serve(args ...string) {
 	log.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/", cli.config.Port)
-	api := api.New(cli.config, ctx)
+	api := api.New(cli.config)
 
 	develop_workers := len(cli.config.Extensions)
 	watch_workers := len(cli.config.Extensions)
