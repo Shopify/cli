@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
 	"github.com/Shopify/shopify-cli-extensions/build"
@@ -44,21 +45,37 @@ type CLI struct {
 
 func (cli *CLI) build(args ...string) {
 	api := api.New(cli.config)
-	build_workers := len(cli.config.Extensions)
+
+	var wg sync.WaitGroup
 	build_chan := make(chan build.Result)
 
+	errors := 0
 	for _, e := range cli.config.Extensions {
 		b := build.NewBuilder(e)
-		log.Printf("Building %s, id: %s", e.Type, e.UUID)
 
+		wg.Add(1)
 		go b.Build(ctx, func(result build.Result) {
+			defer wg.Done()
 			build_chan <- result
+
+			if !result.Success {
+				errors++
+				log.Printf("[Build] Error: %s, Extension: %s", result.Error, result.UUID)
+			} else {
+				log.Printf("[Build] Success! Extension: %s", result.UUID)
+			}
 		})
 
-		go cli.monitor(build_workers, build_chan, "Build", api, e)
+		go cli.monitor(wg, build_chan, "Build", api, e)
 	}
 
-	<-build_chan
+	wg.Wait()
+
+	if errors > 0 {
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
 }
 
 func (cli *CLI) create(args ...string) {
@@ -73,8 +90,7 @@ func (cli *CLI) serve(args ...string) {
 	log.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/", cli.config.Port)
 	api := api.New(cli.config)
 
-	develop_workers := len(cli.config.Extensions)
-	watch_workers := len(cli.config.Extensions)
+	var wg sync.WaitGroup
 
 	develop_chan := make(chan build.Result)
 	watch_chan := make(chan build.Result)
@@ -82,17 +98,18 @@ func (cli *CLI) serve(args ...string) {
 	for _, e := range cli.config.Extensions {
 		b := build.NewBuilder(e)
 
+		wg.Add(1)
 		go b.Develop(ctx, func(result build.Result) {
 			develop_chan <- result
 		})
 
-		go cli.monitor(develop_workers, develop_chan, "Develop", api, e)
+		go cli.monitor(wg, develop_chan, "Develop", api, e)
 
 		go b.Watch(ctx, func(result build.Result) {
 			watch_chan <- result
 		})
 
-		go cli.monitor(watch_workers, watch_chan, "Watch", api, e)
+		go cli.monitor(wg, watch_chan, "Watch", api, e)
 	}
 
 	addr := fmt.Sprintf(":%d", cli.config.Port)
@@ -100,14 +117,13 @@ func (cli *CLI) serve(args ...string) {
 		panic(err)
 	}
 
-	<-develop_chan
-	<-watch_chan
+	wg.Wait()
 }
 
-func (cli *CLI) monitor(active_workers int, ch chan build.Result, action string, a *api.ExtensionsApi, e core.Extension) {
-	for result := range ch {
-		active_workers--
+func (cli *CLI) monitor(wg sync.WaitGroup, ch chan build.Result, action string, a *api.ExtensionsApi, e core.Extension) {
+	defer wg.Done()
 
+	for result := range ch {
 		if result.Success {
 			log.Printf("[%s] event for extension: %s", action, result.UUID)
 			go a.Notify(api.StatusUpdate{Type: "success", Extensions: []core.Extension{e}})
@@ -115,9 +131,5 @@ func (cli *CLI) monitor(active_workers int, ch chan build.Result, action string,
 			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
 			go a.Notify(api.StatusUpdate{Type: "error", Extensions: []core.Extension{e}})
 		}
-	}
-
-	if active_workers == 0 {
-		close(ch)
 	}
 }

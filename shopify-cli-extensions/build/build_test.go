@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -43,6 +44,9 @@ func TestBuild(t *testing.T) {
 		return nil
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	builder := Builder{ScriptRunnerFunc(fakeRunner), config.Extensions[0]}
 	builder.Build(context.TODO(), func(result Result) {
 		if !result.Success {
@@ -63,6 +67,9 @@ func TestBuildErrors(t *testing.T) {
 	fakeRunner := func(ctx context.Context, script string, args ...string) error {
 		return errors.New("Error")
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
 
 	builder := Builder{ScriptRunnerFunc(fakeRunner), config.Extensions[0]}
 	builder.Build(context.TODO(), func(result Result) {

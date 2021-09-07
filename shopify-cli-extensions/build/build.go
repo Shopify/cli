@@ -33,9 +33,9 @@ func (b *Builder) Build(ctx context.Context, yield func(result Result)) {
 
 	if err != nil {
 		yield(Result{false, err, b.Extension.UUID})
-		return
+	} else {
+		yield(Result{true, nil, b.Extension.UUID})
 	}
-	yield(Result{true, nil, b.Extension.UUID})
 }
 
 // development build
