@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
@@ -101,12 +102,17 @@ func TestServeAssets(t *testing.T) {
 
 func TestWebsocketNotify(t *testing.T) {
 	api := New(config, context.TODO())
-	ctx, cancel := context.WithCancel(context.Background())
-	go api.Start(ctx)
-	defer cancel()
+	server := httptest.NewServer(api)
 
-	firstConnection := createWebsocket(t, api.Port)
-	secondConnection := createWebsocket(t, api.Port)
+	firstConnection, err := createWebsocket(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	secondConnection, err := createWebsocket(server)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// First message received is the connected message which can be ignored
 	firstConnection.ReadJSON(&StatusUpdate{})
@@ -115,29 +121,24 @@ func TestWebsocketNotify(t *testing.T) {
 	expectedUpdate := StatusUpdate{Type: "Some message", Extensions: config.Extensions}
 	api.Notify(expectedUpdate)
 
-	err := verifyWebsocketMessage(firstConnection, expectedUpdate)
-
-	if err != nil {
+	if err := verifyWebsocketMessage(firstConnection, expectedUpdate); err != nil {
 		t.Error(err)
 	}
 
-	err = verifyWebsocketMessage(secondConnection, expectedUpdate)
-
-	if err != nil {
+	if err = verifyWebsocketMessage(secondConnection, expectedUpdate); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestWebsocketConnectedMessage(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	api := New(config, ctx)
-	go api.Start(ctx)
-	defer cancel()
-
-	ws := createWebsocket(t, api.Port)
-	err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions})
-
+	api := New(config, context.TODO())
+	server := httptest.NewServer(api)
+	ws, err := createWebsocket(server)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions}); err != nil {
 		t.Error(err)
 	}
 }
@@ -169,10 +170,8 @@ func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage StatusUpdate) er
 	return nil
 }
 
-func createWebsocket(t *testing.T, port int) *websocket.Conn {
-	ws, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://localhost:%d/extensions/", port), nil)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	return ws
+func createWebsocket(server *httptest.Server) (*websocket.Conn, error) {
+	url := "ws" + strings.TrimPrefix(server.URL, "http") + "/extensions/"
+	connection, _, err := websocket.DefaultDialer.Dial(url, nil)
+	return connection, err
 }

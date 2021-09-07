@@ -7,7 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewExtensionService(extensions []Extension, port int) *ExtensionService {
+func NewExtensionService(config *Config) *ExtensionService {
+	extensions := config.Extensions
 	for index, extension := range extensions {
 		keys := make([]string, 0, len(extensions[index].Development.Entries))
 		for key := range extensions[index].Development.Entries {
@@ -16,7 +17,7 @@ func NewExtensionService(extensions []Extension, port int) *ExtensionService {
 
 		for entry := range keys {
 			name := keys[entry]
-			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s.js", "localhost", port, extension.UUID, name)
+			assetUrl := fmt.Sprintf("http://%s:%d/extensions/%s/assets/%s.js", "localhost", config.Port, extension.UUID, name)
 			extensions[index].Assets = append(extensions[index].Assets, Asset{Url: assetUrl, Name: name})
 		}
 
@@ -26,7 +27,6 @@ func NewExtensionService(extensions []Extension, port int) *ExtensionService {
 	service := ExtensionService{
 		Version:    "0.1.0",
 		Extensions: extensions,
-		Port:       port,
 	}
 
 	return &service
@@ -47,7 +47,6 @@ type Config struct {
 type ExtensionService struct {
 	Extensions []Extension
 	Version    string
-	Port       int
 }
 
 type Extension struct {

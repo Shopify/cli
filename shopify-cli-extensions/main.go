@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
@@ -94,7 +95,10 @@ func (cli *CLI) serve(args ...string) {
 		go cli.monitor(watch_workers, watch_chan, "Watch", api, e)
 	}
 
-	go api.Start(ctx)
+	addr := fmt.Sprintf(":%d", cli.config.Port)
+	if err := http.ListenAndServe(addr, api); err != nil {
+		panic(err)
+	}
 
 	<-develop_chan
 	<-watch_chan

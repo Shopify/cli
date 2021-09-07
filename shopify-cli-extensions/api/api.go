@@ -22,32 +22,13 @@ func New(config *core.Config, ctx context.Context) *ExtensionsApi {
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, "/extensions", http.StatusMovedPermanently)
+		http.Redirect(rw, r, "/extensions/", http.StatusTemporaryRedirect)
 	})
 
 	api := configureExtensionsApi(config, mux, ctx)
 
 	return api
 }
-
-func (api *ExtensionsApi) Start(ctx context.Context) error {
-	httpServer := http.Server{Addr: fmt.Sprintf(":%d", api.Port), Handler: api}
-	startupFailed := make(chan error)
-	defer close(startupFailed)
-
-	go func() {
-		startupFailed <- httpServer.ListenAndServe()
-	}()
-
-	select {
-	case <-ctx.Done():
-		api.shutdown()
-		return httpServer.Shutdown(ctx)
-	case err := <-startupFailed:
-		return err
-	}
-}
-
 func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
 	api.connections.Range(func(_, notify interface{}) bool {
 		notify.(notificationHandler)(statusUpdate)
@@ -57,7 +38,7 @@ func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
 
 func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context.Context) *ExtensionsApi {
 	api := &ExtensionsApi{
-		core.NewExtensionService(config.Extensions, config.Port),
+		core.NewExtensionService(config),
 		router,
 		sync.Map{},
 	}
