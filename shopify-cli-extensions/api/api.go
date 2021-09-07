@@ -77,13 +77,13 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, ctx context
 
 func (api *ExtensionsApi) extensionsHandler(rw http.ResponseWriter, r *http.Request) {
 	if websocket.IsWebSocketUpgrade(r) {
-		api.extensionsWebsocketHandler(rw, r)
+		api.sendStatusUpdates(rw, r)
 	} else {
-		api.extensionsJSONHandler(rw, r)
+		api.listExtensions(rw, r)
 	}
 }
 
-func (api *ExtensionsApi) extensionsWebsocketHandler(rw http.ResponseWriter, r *http.Request) {
+func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -120,7 +120,7 @@ func (api *ExtensionsApi) extensionsWebsocketHandler(rw http.ResponseWriter, r *
 	websocket.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
 }
 
-func (api *ExtensionsApi) extensionsJSONHandler(rw http.ResponseWriter, r *http.Request) {
+func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
