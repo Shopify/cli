@@ -48,11 +48,11 @@ bootstrap:
 	make build
 	make build-node-package
 	cd packages/shopify-cli-extensions; npm link --force
-	./shopify-extensions create < testdata/shopifile.yml
+	./shopify-extensions create testdata/shopifile.yml
 	cd tmp/checkout_ui_extension; npm link "@shopify/shopify-cli-extensions" && npm install
 	cd tmp/checkout_ui_extension; cat shopifile.yml | \
 		ruby -ryaml -e "puts({'extensions' => [{'development' => YAML.load(STDIN.read).merge({'root_dir' => '.'}), 'type' => 'checkout_ui_extension'}]}.to_yaml)" | \
-		../../shopify-extensions build
+		../../shopify-extensions build -
 	test -f tmp/checkout_ui_extension/build/main.js
 
 .PHONY: integration-test
@@ -61,10 +61,10 @@ integration-test:
 	make build
 	make build-node-package
 	cd packages/shopify-cli-extensions; npm link --force
-	./shopify-extensions create < testdata/shopifile.integration.yml
+	./shopify-extensions create testdata/shopifile.integration.yml
 	cd tmp/integration_test; npm link "@shopify/shopify-cli-extensions" && npm install
 	cd tmp/integration_test; cat shopifile.yml | \
 		ruby -ryaml -e "puts({'extensions' => [{'development' => YAML.load(STDIN.read).merge({'root_dir' => '.'}), 'type' => 'integration_test'}]}.to_yaml)" | \
-		../../shopify-extensions build
+		../../shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
 
