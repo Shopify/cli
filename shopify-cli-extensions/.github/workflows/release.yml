@@ -30,8 +30,4 @@ jobs:
       - name: Build and package executable
         run: GOOS=${{ matrix.goos}} GOARCH=${{ matrix.goarch }} make package
       - name: Release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: shopify-extensions-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
-          tag: ${{ github.ref }}
+        run: echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token && gh release upload `basename ${{ github.ref }}` shopify-extensions-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
