@@ -17,7 +17,8 @@ import (
 
 var ctx context.Context
 
-const version = "0.1.0"
+//go:generate sh -c "git tag -l | sort | tail -n 1 | xargs -I {} sed -r -i '' 's/^const version = .*$/const version = \"{}\"/' main.go"
+const version = "v0.0.0"
 
 func init() {
 	ctx = context.Background()

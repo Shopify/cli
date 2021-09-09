@@ -12,11 +12,10 @@ endif
 
 .PHONY: build
 build:
-	@echo Building executable
 	go build -o ${executable}
 
 .PHONY: package
-package: build
+package:
 ifeq ($(GOOS),)
 	@echo Requires GOOS to be set >&2
 	exit 1
@@ -26,8 +25,13 @@ ifeq ($(GOARCH),)
 	@echo Requires GOARCH to be set >&2
 	exit 1
 endif
+	@echo Run code generation
+	go generate
 
-	@echo Packaging executable
+	@echo Build executable
+	go build -o ${executable}
+
+	@echo Package executable
 	tar czf shopify-extensions-$(GOOS)-$(GOARCH).tar.gz ${executable}
 
 .PHONY: test
