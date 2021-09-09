@@ -1,4 +1,5 @@
-# .github/workflows/release.yaml
+name: Release
+
 on:
   release:
     types: [created, edited]
@@ -20,11 +21,17 @@ jobs:
             goarch: arm64
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: wangyoucao577/go-release-action@v1.20
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup build toolchain
+        uses: actions/setup-go@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          goos: ${{ matrix.goos }}
-          goarch: ${{ matrix.goarch }}
-          goversion: 1.17
-          binary_name: shopify-extensions
+          go-version: 1.17
+      - name: Build and package executable
+        run: GOOS=${{ matrix.goos}} GOARCH=${{ matrix.goarch }} make package
+      - name: Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: shopify-extensions-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+          tag: ${{ github.ref }}

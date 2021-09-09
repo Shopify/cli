@@ -4,9 +4,31 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
   $(eval $(RUN_ARGS):;@:)
 endif
 
+ifeq ($(GOOS),windows)
+	executable := shopify-extensions.exe
+else
+	executable := shopify-extensions
+endif
+
 .PHONY: build
 build:
-	go build -o shopify-extensions .
+	@echo Building executable
+	go build -o ${executable}
+
+.PHONY: package
+package: build
+ifeq ($(GOOS),)
+	@echo Requires GOOS to be set >&2
+	exit 1
+endif
+
+ifeq ($(GOARCH),)
+	@echo Requires GOARCH to be set >&2
+	exit 1
+endif
+
+	@echo Packaging executable
+	tar czf shopify-extensions-$(GOOS)-$(GOARCH).tar.gz ${executable}
 
 .PHONY: test
 test:
@@ -45,4 +67,4 @@ integration-test:
 		ruby -ryaml -e "puts({'extensions' => [{'development' => YAML.load(STDIN.read).merge({'root_dir' => '.'}), 'type' => 'integration_test'}]}.to_yaml)" | \
 		../../shopify-extensions build
 	test -f tmp/integration_test/build/main.js
-	
+
