@@ -17,7 +17,7 @@ import (
 
 var ctx context.Context
 
-//go:generate sh -c "git tag -l | sort | tail -n 1 | xargs -I {} sed -r -i '' 's/^const version = .*$/const version = \"{}\"/' main.go"
+//go:generate make update-version
 const version = "v0.0.0"
 
 func init() {

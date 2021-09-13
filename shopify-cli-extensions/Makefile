@@ -6,8 +6,10 @@ endif
 
 ifeq ($(GOOS),windows)
 	executable := shopify-extensions.exe
+	canonical_name := shopify-extensions-$(GOOS)-$(GOARCH).exe
 else
 	executable := shopify-extensions
+	canonical_name := shopify-extensions-$(GOOS)-$(GOARCH)
 endif
 
 .PHONY: build
@@ -32,7 +34,8 @@ endif
 	go build -o ${executable}
 
 	@echo Package executable
-	tar czf shopify-extensions-$(GOOS)-$(GOARCH).tar.gz ${executable}
+	md5sum ${executable} > ${canonical_name}.md5
+	gzip ${executable} && mv ${executable}.gz ${canonical_name}.gz
 
 .PHONY: test
 test:
@@ -72,3 +75,6 @@ integration-test:
 		../../shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
 
+.PHONY: update-version
+update-version:
+	git tag -l | sort | tail -n 1 | xargs -I {} ruby -i -pe 'sub(/^const version = .*$$/, "const version = \"{}\"")' -- main.go
