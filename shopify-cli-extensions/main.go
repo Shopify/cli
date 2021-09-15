@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
 	"github.com/Shopify/shopify-cli-extensions/build"
@@ -123,7 +125,15 @@ func (cli *CLI) serve(args ...string) {
 	}
 
 	addr := fmt.Sprintf(":%d", cli.config.Port)
-	if err := http.ListenAndServe(addr, api); err != nil {
+
+	server := &http.Server{Addr: addr, Handler: api}
+
+	onInterrupt(func() {
+		api.Shutdown()
+		server.Shutdown(ctx)
+	})
+
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		panic(err)
 	}
 
@@ -163,4 +173,14 @@ func loadConfigFrom(path string) (config *core.Config, err error) {
 	}
 
 	return
+}
+
+func onInterrupt(handle func()) {
+	interrupt := make(chan os.Signal)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-interrupt
+		handle()
+		os.Exit(0)
+	}()
 }

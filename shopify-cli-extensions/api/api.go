@@ -104,11 +104,12 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 	ws.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
 
 	go func() {
-		defer ws.Close()
+		// TODO: Handle messages from the client
+		// Currently we don't do anything with the messages
+		// but the code is needed to establish a two-way connection
 		for {
 			_, _, err := ws.ReadMessage()
 			if err != nil {
-				log.Println("client connection closed")
 				break
 			}
 		}
@@ -120,13 +121,10 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 
 		ws.SetWriteDeadline(time.Now().Add(1 * time.Second))
 		err := ws.WriteJSON(&notification)
-		log.Println("Writing update message")
 		if err != nil {
 			break
 		}
 	}
-
-	log.Println("Socket closed")
 }
 
 func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request) {
