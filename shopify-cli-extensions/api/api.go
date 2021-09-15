@@ -8,9 +8,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
@@ -80,32 +82,51 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		},
 	}
 
-	websocket, err := upgrader.Upgrade(rw, r, nil)
+	ws, err := upgrader.Upgrade(rw, r, nil)
 	if err != nil {
 		return
 	}
 
 	notifications := make(chan StatusUpdate)
 
-	websocket.SetCloseHandler(func(code int, text string) error {
+	ws.SetCloseHandler(func(code int, text string) error {
+		log.Println("close handler")
 		close(notifications)
-		api.unregisterClient(websocket)
+		api.unregisterClient(ws)
 		return nil
 	})
 
-	go func() {
-		for notification := range notifications {
-			encoder := json.NewEncoder(rw)
-			encoder.Encode(extensionsResponse{api.Extensions, api.Version})
-			websocket.WriteJSON(&notification)
-		}
-	}()
-
-	api.registerClient(websocket, func(update StatusUpdate) {
+	api.registerClient(ws, func(update StatusUpdate) {
 		notifications <- update
 	})
 
-	websocket.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
+	ws.SetWriteDeadline(time.Now().Add(1 * time.Second))
+	ws.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
+
+	go func() {
+		defer ws.Close()
+		for {
+			_, _, err := ws.ReadMessage()
+			if err != nil {
+				log.Println("client connection closed")
+				break
+			}
+		}
+	}()
+
+	for notification := range notifications {
+		encoder := json.NewEncoder(rw)
+		encoder.Encode(extensionsResponse{api.Extensions, api.Version})
+
+		ws.SetWriteDeadline(time.Now().Add(1 * time.Second))
+		err := ws.WriteJSON(&notification)
+		log.Println("Writing update message")
+		if err != nil {
+			break
+		}
+	}
+
+	log.Println("Socket closed")
 }
 
 func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request) {
@@ -120,6 +141,12 @@ func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify noti
 }
 
 func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn) {
+	duration := 1 * time.Second
+	deadline := time.Now().Add(duration)
+	connection.SetWriteDeadline(deadline)
+	connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(1000, "server stopped"))
+
+	<-time.After(duration)
 	connection.Close()
 	api.connections.Delete(connection)
 }

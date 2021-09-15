@@ -3,11 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/websocket"
@@ -141,11 +143,32 @@ func TestWebsocketConnection(t *testing.T) {
 		t.Error(err)
 	}
 
+	ws.SetCloseHandler(func(code int, text string) error {
+		ws.Close()
+		log.Println("close handler")
+		return nil
+	})
+
 	api.Shutdown()
 
 	_, _, err = ws.ReadMessage()
-	if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-		t.Error("Expected connection to be terminated")
+	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+		t.Errorf("Expected connection to be terminated: %v", err)
+	}
+}
+
+func TestWebsocketClientClose(t *testing.T) {
+	api := New(config)
+	server := httptest.NewServer(api)
+	ws, err := createWebsocket(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(1*time.Second))
+	err = ws.Close()
+	if err != nil {
+		t.Errorf("Expected closing socket to work: %v", err)
 	}
 }
 
