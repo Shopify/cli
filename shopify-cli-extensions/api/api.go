@@ -88,22 +88,22 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 
 	notifications := make(chan StatusUpdate)
 
-	closeConnection := func(closeCode int, message string) error {
-		close(notifications)
+	close := func(closeCode int, message string) error {
 		api.unregisterClient(connection, closeCode, message)
+		close(notifications)
 		return nil
 	}
 
-	connection.SetCloseHandler(closeConnection)
+	connection.SetCloseHandler(close)
 
 	api.registerClient(connection, func(update StatusUpdate) {
 		notifications <- update
-	}, closeConnection)
+	}, close)
 
 	err = api.writeJSONMessage(connection, &StatusUpdate{Type: "connected", Extensions: api.Extensions})
 
 	if err != nil {
-		closeConnection(websocket.CloseNoStatusReceived, "cannot establish connection to client")
+		close(websocket.CloseNoStatusReceived, "cannot establish connection to client")
 		return
 	}
 

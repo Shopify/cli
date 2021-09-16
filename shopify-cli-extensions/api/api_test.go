@@ -150,15 +150,8 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 
 	api.Shutdown()
 
-	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
-	<-time.After(time.Second * 1)
-	api.Notify(StatusUpdate{Type: "Some message"})
-
-	_, message, err := ws.ReadMessage()
-	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-		notification := StatusUpdate{}
-		json.Unmarshal(message, &notification)
-		t.Errorf("Expected connection to be terminated but the read error returned: %v and the connection received the notification: %v", err, notification)
+	if err := verifyConnectionShutdown(api, ws); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -170,19 +163,14 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ws.ReadJSON(&StatusUpdate{})
+	if err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions}); err != nil {
+		t.Error(err)
+	}
 
 	ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(1000, "client close connection"))
 
-	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
-	<-time.After(time.Second * 1)
-	api.Notify(StatusUpdate{Type: "Some message"})
-
-	_, message, err := ws.ReadMessage()
-	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-		notification := StatusUpdate{}
-		json.Unmarshal(message, &notification)
-		t.Errorf("Expected connection to be terminated but the read error returned: %v and the connection received the notification: %v", err, notification)
+	if err := verifyConnectionShutdown(api, ws); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -211,6 +199,21 @@ func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage StatusUpdate) er
 		return fmt.Errorf("Unexpected extensions in message, received %v, expected %v", string(result), string(expectedResult))
 	}
 
+	return nil
+}
+
+func verifyConnectionShutdown(api *ExtensionsApi, ws *websocket.Conn) error {
+	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
+	// Currently the test will fail without the wait since the channel and connection is still open
+	<-time.After(time.Second * 1)
+
+	api.Notify(StatusUpdate{Type: "Some message"})
+	_, message, err := ws.ReadMessage()
+	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+		notification := StatusUpdate{}
+		json.Unmarshal(message, &notification)
+		return fmt.Errorf("Expected connection to be terminated but the read error returned: %v and the connection received the notification: %v", err, notification)
+	}
 	return nil
 }
 
