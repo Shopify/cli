@@ -131,7 +131,7 @@ func TestWebsocketNotify(t *testing.T) {
 	}
 }
 
-func TestWebsocketConnection(t *testing.T) {
+func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 	api := New(config)
 	server := httptest.NewServer(api)
 	ws, err := createWebsocket(server)
@@ -145,19 +145,24 @@ func TestWebsocketConnection(t *testing.T) {
 
 	ws.SetCloseHandler(func(code int, text string) error {
 		ws.Close()
-		log.Println("close handler")
 		return nil
 	})
 
 	api.Shutdown()
 
-	_, _, err = ws.ReadMessage()
+	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
+	<-time.After(time.Second * 1)
+	api.Notify(StatusUpdate{Type: "Some message"})
+
+	_, message, err := ws.ReadMessage()
 	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-		t.Errorf("Expected connection to be terminated: %v", err)
+		notification := StatusUpdate{}
+		json.Unmarshal(message, &notification)
+		t.Errorf("Expected connection to be terminated but the read error returned: %v and the connection received the notification: %v", err, notification)
 	}
 }
 
-func TestWebsocketClientClose(t *testing.T) {
+func TestWebsocketConnectionClientClose(t *testing.T) {
 	api := New(config)
 	server := httptest.NewServer(api)
 	ws, err := createWebsocket(server)
@@ -165,10 +170,19 @@ func TestWebsocketClientClose(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(1*time.Second))
-	err = ws.Close()
-	if err != nil {
-		t.Errorf("Expected closing socket to work: %v", err)
+	ws.ReadJSON(&StatusUpdate{})
+
+	ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(1000, "client close connection"))
+
+	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
+	<-time.After(time.Second * 1)
+	api.Notify(StatusUpdate{Type: "Some message"})
+
+	_, message, err := ws.ReadMessage()
+	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+		notification := StatusUpdate{}
+		json.Unmarshal(message, &notification)
+		t.Errorf("Expected connection to be terminated but the read error returned: %v and the connection received the notification: %v", err, notification)
 	}
 }
 
@@ -178,6 +192,7 @@ func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage StatusUpdate) er
 	ws.ReadJSON(&message)
 
 	if message.Type != expectedMessage.Type {
+		log.Printf("%v, %v", message, expectedMessage)
 		return fmt.Errorf("Could not connect to websocket")
 	}
 

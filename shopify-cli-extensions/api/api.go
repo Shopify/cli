@@ -8,7 +8,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -32,15 +31,15 @@ func New(config *core.Config) *ExtensionsApi {
 }
 
 func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
-	api.connections.Range(func(_, notify interface{}) bool {
-		notify.(notificationHandler)(statusUpdate)
+	api.connections.Range(func(_, clientHandlers interface{}) bool {
+		clientHandlers.(client).notify(statusUpdate)
 		return true
 	})
 }
 
 func (api *ExtensionsApi) Shutdown() {
-	api.connections.Range(func(connection, _ interface{}) bool {
-		api.unregisterClient(connection.(*websocket.Conn))
+	api.connections.Range(func(_, clientHandlers interface{}) bool {
+		clientHandlers.(client).close(1000, "server shut down")
 		return true
 	})
 }
@@ -82,45 +81,39 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		},
 	}
 
-	ws, err := upgrader.Upgrade(rw, r, nil)
+	connection, err := upgrader.Upgrade(rw, r, nil)
 	if err != nil {
 		return
 	}
 
 	notifications := make(chan StatusUpdate)
 
-	ws.SetCloseHandler(func(code int, text string) error {
-		log.Println("close handler")
+	closeConnection := func(closeCode int, message string) error {
 		close(notifications)
-		api.unregisterClient(ws)
+		api.unregisterClient(connection, closeCode, message)
 		return nil
-	})
+	}
 
-	api.registerClient(ws, func(update StatusUpdate) {
+	connection.SetCloseHandler(closeConnection)
+
+	api.registerClient(connection, func(update StatusUpdate) {
 		notifications <- update
-	})
+	}, closeConnection)
 
-	ws.SetWriteDeadline(time.Now().Add(1 * time.Second))
-	ws.WriteJSON(StatusUpdate{Type: "connected", Extensions: api.Extensions})
+	err = api.writeJSONMessage(connection, &StatusUpdate{Type: "connected", Extensions: api.Extensions})
 
-	go func() {
-		// TODO: Handle messages from the client
-		// Currently we don't do anything with the messages
-		// but the code is needed to establish a two-way connection
-		for {
-			_, _, err := ws.ReadMessage()
-			if err != nil {
-				break
-			}
-		}
-	}()
+	if err != nil {
+		closeConnection(websocket.CloseNoStatusReceived, "cannot establish connection to client")
+		return
+	}
+
+	go handleClientMessages(connection)
 
 	for notification := range notifications {
 		encoder := json.NewEncoder(rw)
 		encoder.Encode(extensionsResponse{api.Extensions, api.Version})
 
-		ws.SetWriteDeadline(time.Now().Add(1 * time.Second))
-		err := ws.WriteJSON(&notification)
+		err = api.writeJSONMessage(connection, &notification)
 		if err != nil {
 			break
 		}
@@ -133,20 +126,39 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 	encoder.Encode(extensionsResponse{api.Extensions, api.Version})
 }
 
-func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify notificationHandler) bool {
-	api.connections.Store(connection, notify)
+func (api *ExtensionsApi) registerClient(connection *websocket.Conn, notify notificationHandler, close closeHandler) bool {
+	api.connections.Store(connection, client{notify, close})
 	return true
 }
 
-func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn) {
+func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn, closeCode int, message string) {
 	duration := 1 * time.Second
 	deadline := time.Now().Add(duration)
-	connection.SetWriteDeadline(deadline)
-	connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(1000, "server stopped"))
 
+	connection.SetWriteDeadline(deadline)
+	connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(closeCode, message))
+
+	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
 	<-time.After(duration)
 	connection.Close()
 	api.connections.Delete(connection)
+}
+
+func (api *ExtensionsApi) writeJSONMessage(connection *websocket.Conn, statusUpdate *StatusUpdate) error {
+	connection.SetWriteDeadline(time.Now().Add(1 * time.Second))
+	return connection.WriteJSON(statusUpdate)
+}
+
+func handleClientMessages(connection *websocket.Conn) {
+	// TODO: Handle messages from the client
+	// Currently we don't do anything with the messages
+	// but the code is needed to establish a two-way connection
+	for {
+		_, _, err := connection.ReadMessage()
+		if err != nil {
+			break
+		}
+	}
 }
 
 type ExtensionsApi struct {
@@ -165,4 +177,11 @@ type extensionsResponse struct {
 	Version    string           `json:"version"`
 }
 
+type client struct {
+	notify notificationHandler
+	close  closeHandler
+}
+
 type notificationHandler func(StatusUpdate)
+
+type closeHandler func(code int, text string) error
