@@ -101,6 +101,19 @@ extensions:
 - typescript-react
 - javascript-react
 
+## Manual integration testing
+
+The easiest way to test the integration with the [Shopify CLI](https://github.com/Shopify/shopify-cli) is to clone the aforementioned repository and
+
+1. run `rake extensions:install` to download the latest extension server binary and place it in `ext/shopify-extensions`, followed by
+2. running `config feature extension_server_beta --enable` to obtain the necessary feature flag.
+
+Afterwards, the following three commands will be executed by the new extension server:
+
+- `shopify extension create`
+- `shopify extension serve`
+- `shopify extension build`
+
 ## DevConsole
 
 ### Build
