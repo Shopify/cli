@@ -21,6 +21,8 @@ var (
 )
 
 var apiRoot = "/extensions/"
+var secureHost = "123.ngrok-url"
+var localhost = "localhost:8000"
 
 func init() {
 	configFile, err := os.Open("testdata/shopifile.yml")
@@ -40,18 +42,17 @@ func init() {
 }
 
 func TestGetExtensions(t *testing.T) {
-	host := "123.ngrok-url"
 	api := New(config, apiRoot)
 	response := extensionsResponse{}
 
-	getJSONResponse(api, t, host, "/extensions/", &response)
+	getJSONResponse(api, t, secureHost, "/extensions/", &response)
 
 	if response.App == nil || response.App["api_key"] != "app_api_key" {
 		t.Errorf("Expected app to have api_key \"app_api_key\" but got %v", response.App)
 	}
 
-	if len(response.Extensions) != 2 {
-		t.Errorf("Expected 2 extension got %d", len(response.Extensions))
+	if len(response.Extensions) != 3 {
+		t.Errorf("Expected 3 extension got %d", len(response.Extensions))
 	}
 
 	if response.Version != "0.1.0" {
@@ -88,11 +89,11 @@ func TestGetExtensions(t *testing.T) {
 }
 
 func TestGetSingleExtension(t *testing.T) {
-	host := "123.ngrok-url"
+	host := secureHost
 	api := New(config, apiRoot)
 	response := singleExtensionResponse{}
 
-	getJSONResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000000", &response)
+	getJSONResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000000", &response)
 
 	if response.Version != "0.1.0" {
 		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
@@ -136,18 +137,99 @@ func TestGetSingleExtension(t *testing.T) {
 }
 
 func TestServeAssets(t *testing.T) {
-	req, err := http.NewRequest("GET", "/extensions/00000000-0000-0000-0000-000000000000/assets/main.js", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rec := httptest.NewRecorder()
-
 	api := New(config, apiRoot)
-	api.ServeHTTP(rec, req)
+	response := getHTMLResponse(api, t, localhost, "/extensions/00000000-0000-0000-0000-000000000000/assets/main.js")
 
-	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
+	if response != "console.log(\"Hello World!\");\n" {
 		t.Error("Unexpected body")
-		t.Log(rec.Body)
+	}
+}
+
+func TestCheckoutTunnelError(t *testing.T) {
+	host := "localhost:8000"
+	api := New(config, apiRoot)
+	response := getHTMLResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000000")
+
+	message := "Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL/extensions/00000000-0000-0000-0000-000000000000</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL."
+
+	t.Logf("response: %s", response)
+
+	if !strings.Contains(response, message) {
+		t.Errorf("expected message to contain %s", message)
+	}
+}
+
+func TestAdminTunnelError(t *testing.T) {
+	host := "localhost:8000"
+	api := New(config, apiRoot)
+	response := getHTMLResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000001")
+
+	instructions := "Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL/extensions/00000000-0000-0000-0000-000000000001</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL."
+
+	t.Logf("response: %s", response)
+
+	if !strings.Contains(response, instructions) {
+		t.Errorf("expected instructions to contain %s", instructions)
+	}
+}
+
+func TestPostPurchaseTunnelError(t *testing.T) {
+	host := "localhost:8000"
+	api := New(config, apiRoot)
+	response := getHTMLResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000002")
+
+	instructions := "Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL/extensions/</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL"
+
+	t.Logf("response: %s", response)
+
+	if !strings.Contains(response, instructions) {
+		t.Errorf("expected instructions to contain %s", instructions)
+	}
+}
+
+func TestCheckoutRedirect(t *testing.T) {
+	api := New(config, apiRoot)
+	rec := getHTMLRequest(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000000")
+
+	if rec.Code != http.StatusPermanentRedirect {
+		t.Errorf("expected redirect status – received: %d", rec.Code)
+	}
+
+	redirectUrl, err := rec.Result().Location()
+
+	expectedUrl := "https://test-shop.myshopify.com/cart/1234?dev=https://123.ngrok-url/extensions/"
+
+	if err != nil || redirectUrl.String() != expectedUrl {
+		t.Errorf("Expected redirect url to be %s but received: %s", expectedUrl, redirectUrl.String())
+	}
+}
+
+func TestAdminRedirect(t *testing.T) {
+	api := New(config, apiRoot)
+	rec := getHTMLRequest(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000001")
+
+	if rec.Code != http.StatusPermanentRedirect {
+		t.Errorf("Expected redirect status – received: %d", rec.Code)
+	}
+
+	redirectUrl, err := rec.Result().Location()
+	expectedUrl := "https://test-shop.myshopify.com/admin/extensions-dev?url=https://123.ngrok-url/extensions/00000000-0000-0000-0000-000000000001"
+
+	if err != nil || redirectUrl.String() != expectedUrl {
+		t.Errorf("Expected redirect url to be %s but received: %s", expectedUrl, redirectUrl.String())
+	}
+}
+
+func TestPostPurchaseIndex(t *testing.T) {
+	api := New(config, apiRoot)
+	response := getHTMLResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000002")
+
+	t.Logf("response: %s", response)
+
+	instructions := "Create a checkout and append <code>?dev=https://123.ngrok-url/extensions/00000000-0000-0000-0000-000000000002</code> to the URL to start developing your extension."
+
+	if !strings.Contains(response, instructions) {
+		t.Errorf("expected instructions to contain %s", instructions)
 	}
 }
 
@@ -172,6 +254,7 @@ func TestWebsocketNotify(t *testing.T) {
 	expectedExtensions := []core.Extension{
 		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
 		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
 	api.Notify(api.Extensions)
@@ -196,6 +279,7 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 	expectedExtensions := []core.Extension{
 		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
 		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
 	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions); err != nil {
@@ -225,6 +309,7 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 	expectedExtensions := []core.Extension{
 		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
 		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
 	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions); err != nil {
@@ -509,7 +594,8 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"hidden": false,
 			"resource": {"url": ""},
 			"root": {"url": "%v/extensions/00000000-0000-0000-0000-000000000000"},
-			"status": "success"
+			"status": "success",
+			"resource": {"url": "cart/1234"}
 		  },
 		  "type": "checkout_ui_extension",
 		  "user": {"metafields": [{"namespace": "another-namespace", "key": "another-key"}]},
@@ -660,6 +746,32 @@ func getJSONResponse(api *ExtensionsApi, t *testing.T, host, requestUri string, 
 
 	t.Logf("%+v\n", response)
 	return response
+}
+
+func getHTMLRequest(api *ExtensionsApi, t *testing.T, host, requestUri string) *httptest.ResponseRecorder {
+	req, err := http.NewRequest("GET", requestUri, nil)
+	req.Header.Add("accept", "text/html")
+	req.Host = host
+	req.RequestURI = requestUri
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+
+	api.ServeHTTP(rec, req)
+	return rec
+}
+
+func getHTMLResponse(api *ExtensionsApi, t *testing.T, host, requestUri string) string {
+	rec := getHTMLRequest(api, t, host, requestUri)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected ok status – received: %d", rec.Code)
+		t.Log(rec.Body)
+	}
+
+	return rec.Body.String()
 }
 
 func getExpectedExtensionWithUrls(extension core.Extension, host string) core.Extension {

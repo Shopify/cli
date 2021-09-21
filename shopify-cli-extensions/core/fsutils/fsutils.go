@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"html/template"
 	"io"
 	"os"
 	"path/filepath"
@@ -17,9 +18,18 @@ func NewFS(embeddedFS *embed.FS, root string) *FS {
 	}
 }
 
+func (fs *FS) FileExists(filePath string) bool {
+	normalizedPath := fs.normalizePath(filePath)
+	file, err := fs.Open(normalizedPath)
+	if err != nil {
+		return false
+	}
+	file.Close()
+	return true
+}
+
 func (fs *FS) CopyFile(filePath, targetPath string) error {
-	normalizedPath := strings.Replace(filePath, fs.root+"/", "", 1)
-	content, err := fs.ReadFile(filepath.Join(fs.root, normalizedPath))
+	content, err := fs.ReadFile(fs.normalizePath(filePath))
 	if err != nil {
 		return err
 	}
@@ -66,6 +76,26 @@ func (fs *FS) Execute(op *Operation) error {
 	return nil
 }
 
+func (fs *FS) MergeTemplateData(templateData interface{}, filePath string) (*bytes.Buffer, error) {
+	var templateContent bytes.Buffer
+	content, err := fs.ReadFile(fs.normalizePath(filePath))
+	if err != nil {
+		return &templateContent, err
+	}
+
+	fileTemplate := template.New(filePath)
+	fileTemplate, err = fileTemplate.Parse(string(content))
+	if err != nil {
+		return &templateContent, err
+	}
+
+	if err = fileTemplate.Execute(&templateContent, templateData); err != nil {
+		return &templateContent, err
+	}
+
+	return &templateContent, nil
+}
+
 func CopyFileContent(targetPath string, content []byte) error {
 	file, err := os.Create(targetPath)
 	if err != nil {
@@ -106,6 +136,13 @@ func RemoveDir(dirPath string) error {
 
 func OpenFileForAppend(filePath string) (*os.File, error) {
 	return os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0600)
+}
+
+func (fs *FS) normalizePath(filePath string) string {
+	if strings.HasPrefix(filePath, fs.root+"/") {
+		return filePath
+	}
+	return filepath.Join(fs.root, filePath)
 }
 
 type Operation struct {

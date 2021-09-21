@@ -1,4 +1,5 @@
 port: 8000
+store: test-shop.myshopify.com
 app:
   api_key: app_api_key
 extensions:
@@ -14,8 +15,22 @@ extensions:
         name: "@shopify/checkout-ui-extensions"
       entries:
         main: "src/index.tsx"
+      resource:
+        url: "cart/1234"
   - uuid: 00000000-0000-0000-0000-000000000001
-    type: checkout_ui_extension
+    type: product_subscription
+    user:
+      metafields: []
+    development:
+      root_dir: "tmp/checkout_ui_extension"
+      build_dir: "build"
+      template: "typescript-react"
+      renderer:
+        name: "@shopify/admin-ui-extensions"
+      entries:
+        main: "src/index.tsx"
+  - uuid: 00000000-0000-0000-0000-000000000002
+    type: checkout_post_purchase
     user:
       metafields: []
     development:

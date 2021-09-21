@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Shopify/shopify-cli-extensions/api/root"
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -223,6 +224,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 	api := &ExtensionsApi{
 		core.NewExtensionService(config, apiRoot),
 		router,
+		root.New(config, apiRoot),
 		sync.Map{},
 		apiRoot,
 		sync.Map{},
@@ -265,7 +267,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	connection := &websocketConnection{upgradedConnection, api.getApiRootFromRequest(r)}
+	connection := &websocketConnection{upgradedConnection, api.GetApiRootUrlFromRequest(r)}
 	notifications := make(chan notification)
 
 	close := func(closeCode int, message string) error {
@@ -302,17 +304,6 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 
 }
 
-func (api *ExtensionsApi) getApiRootFromRequest(r *http.Request) string {
-	var protocol string
-	if isSecureRequest(r) {
-		protocol = "https"
-	} else {
-		protocol = "http"
-	}
-
-	return fmt.Sprintf("%s://%s%s", protocol, r.Host, api.apiRoot)
-}
-
 func getExtensionsWithUrl(extensions []core.Extension, rootUrl string) []core.Extension {
 	updatedCopy := []core.Extension{}
 	for _, extension := range extensions {
@@ -327,7 +318,7 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 
 	encoder.Encode(extensionsResponse{
 		&Response{api.App, api.Version},
-		getExtensionsWithUrl(api.Extensions, api.getApiRootFromRequest(r)),
+		getExtensionsWithUrl(api.Extensions, api.GetApiRootUrlFromRequest(r)),
 	})
 }
 
@@ -351,7 +342,13 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 
 	for _, extension := range api.Extensions {
 		if extension.UUID == uuid {
-			extensionWithUrls := setExtensionUrls(extension, api.getApiRootFromRequest(r))
+			extensionWithUrls := setExtensionUrls(extension, api.GetApiRootUrlFromRequest(r))
+
+			if strings.HasPrefix(r.Header.Get("accept"), "text/html") {
+				api.HandleHTMLRequest(rw, r, &extensionWithUrls)
+				return
+			}
+
 			rw.Header().Add("Content-Type", "application/json")
 			encoder := json.NewEncoder(rw)
 			encoder.Encode(singleExtensionResponse{&Response{api.App, api.Version}, extensionWithUrls})
@@ -444,14 +441,6 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 	return extension
 }
 
-func isSecureRequest(r *http.Request) bool {
-	// TODO: Find a better way to handle this - looks like there's no easy way to get the request protocol
-	re := regexp.MustCompile(`:([0-9])+$`)
-	hasPort := re.MatchString(r.Host)
-	return !strings.HasPrefix(r.Host, "localhost") && !hasPort
-
-}
-
 func formatData(data map[string]interface{}, formatter func(str string) string) map[string]interface{} {
 	formattedData := make(map[string]interface{})
 	forEachValueInMap(data, func(key string, value interface{}) {
@@ -482,6 +471,7 @@ func mergeWithOverwrite(source interface{}, destination interface{}) error {
 type ExtensionsApi struct {
 	*core.ExtensionService
 	*mux.Router
+	*root.RootHandler
 	connections sync.Map
 	apiRoot     string
 	updates     sync.Map

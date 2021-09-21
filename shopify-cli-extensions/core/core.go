@@ -55,6 +55,7 @@ type ExtensionService struct {
 	Port       int
 	Store      string
 	Version    string
+	PublicUrl  string
 }
 
 type Extension struct {

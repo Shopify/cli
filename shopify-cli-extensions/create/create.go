@@ -1,16 +1,14 @@
 package create
 
 import (
-	"bytes"
 	"embed"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"github.com/Shopify/shopify-cli-extensions/create/fsutils"
+	"github.com/Shopify/shopify-cli-extensions/core/fsutils"
 	"github.com/Shopify/shopify-cli-extensions/create/process"
 )
 
@@ -107,7 +105,7 @@ func MergeTemplates(fs *fsutils.FS, project *project) process.Task {
 
 					targetFilePath := strings.TrimSuffix(targetPath, templateFileExtension)
 
-					content, err := mergeTemplateWithData(project, filePath)
+					content, err := fs.MergeTemplateData(project, filePath)
 					if err != nil {
 						return
 					}
@@ -233,26 +231,6 @@ func mergeJson(originalContent []byte, newContent []byte, fs *fsutils.FS) (conte
 	content, err = json.Marshal(result)
 
 	return
-}
-
-func mergeTemplateWithData(project *project, filePath string) (*bytes.Buffer, error) {
-	var templateContent bytes.Buffer
-	content, err := templates.ReadFile(filePath)
-	if err != nil {
-		return &templateContent, err
-	}
-
-	fileTemplate := template.New(filePath)
-	fileTemplate, err = fileTemplate.Parse(string(content))
-	if err != nil {
-		return &templateContent, err
-	}
-
-	if err = fileTemplate.Execute(&templateContent, project); err != nil {
-		return &templateContent, err
-	}
-
-	return &templateContent, nil
 }
 
 func getMainFileName(project *project) string {
