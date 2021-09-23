@@ -56,8 +56,6 @@ type CLI struct {
 }
 
 func (cli *CLI) build(args ...string) {
-	api := api.New(cli.config)
-
 	var wg sync.WaitGroup
 	build_chan := make(chan build.Result)
 
@@ -78,7 +76,7 @@ func (cli *CLI) build(args ...string) {
 			}
 		})
 
-		go cli.monitor(wg, build_chan, "Build", api, e)
+		go cli.monitor(wg, build_chan, "Build", e)
 	}
 
 	wg.Wait()
@@ -99,8 +97,13 @@ func (cli *CLI) create(args ...string) {
 }
 
 func (cli *CLI) serve(args ...string) {
-	log.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/", cli.config.Port)
-	api := api.New(cli.config)
+	if cli.config.PublicUrl != "" {
+		log.Printf("Shopify CLI Extensions Server is now available at %s", cli.config.PublicUrl)
+	} else {
+		log.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/", cli.config.Port)
+	}
+
+	api := api.New(cli.config, "/extensions/")
 
 	var wg sync.WaitGroup
 
@@ -115,13 +118,13 @@ func (cli *CLI) serve(args ...string) {
 			develop_chan <- result
 		})
 
-		go cli.monitor(wg, develop_chan, "Develop", api, e)
+		go cli.monitorAndNotify(wg, develop_chan, "Develop", api, e)
 
 		go b.Watch(ctx, func(result build.Result) {
 			watch_chan <- result
 		})
 
-		go cli.monitor(wg, watch_chan, "Watch", api, e)
+		go cli.monitorAndNotify(wg, watch_chan, "Watch", api, e)
 	}
 
 	addr := fmt.Sprintf(":%d", cli.config.Port)
@@ -140,7 +143,7 @@ func (cli *CLI) serve(args ...string) {
 	wg.Wait()
 }
 
-func (cli *CLI) monitor(wg sync.WaitGroup, ch chan build.Result, action string, a *api.ExtensionsApi, e core.Extension) {
+func (cli *CLI) monitorAndNotify(wg sync.WaitGroup, ch chan build.Result, action string, a *api.ExtensionsApi, e core.Extension) {
 	defer wg.Done()
 
 	for result := range ch {
@@ -150,6 +153,18 @@ func (cli *CLI) monitor(wg sync.WaitGroup, ch chan build.Result, action string, 
 		} else {
 			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
 			go a.Notify(api.StatusUpdate{Type: "error", Extensions: []core.Extension{e}})
+		}
+	}
+}
+
+func (cli *CLI) monitor(wg sync.WaitGroup, ch chan build.Result, action string, e core.Extension) {
+	defer wg.Done()
+
+	for result := range ch {
+		if result.Success {
+			log.Printf("[%s] event for extension: %s", action, result.UUID)
+		} else {
+			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
 		}
 	}
 }

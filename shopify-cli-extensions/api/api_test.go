@@ -19,6 +19,8 @@ var (
 	config *core.Config
 )
 
+var apiRoot = "/extensions/"
+
 func init() {
 	configFile, err := os.Open("testdata/shopifile.yml")
 	if err != nil {
@@ -38,12 +40,13 @@ func init() {
 
 func TestGetExtensions(t *testing.T) {
 	req, err := http.NewRequest("GET", "/extensions/", nil)
+	req.Host = "localhost:8000"
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
 
-	api := New(config)
+	api := New(config, apiRoot)
 	api.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -62,18 +65,83 @@ func TestGetExtensions(t *testing.T) {
 		t.Errorf("Expected one extension got %d", len(service.Extensions))
 	}
 
+	if service.Version != "0.1.0" {
+		t.Errorf("expect service version to be 0.1.0 but got %s", service.Version)
+	}
+
 	extension := service.Extensions[0]
 
 	if extension.Assets == nil {
-		t.Error("Expected assets to not be null")
+		t.Error("expect assets to not be null")
 	}
 
-	if extension.Assets[0].Name != "main" {
-		t.Errorf("expect an asset with the name main, got %s", extension.Assets[0].Name)
+	if extension.Assets["main"].Name != "main" {
+		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
 	}
 
-	if extension.Assets[0].Url != fmt.Sprintf("http://localhost:8000/extensions/%s/assets/main.js", extension.UUID) {
-		t.Errorf("expect a main asset url, got %s", extension.Assets[0].Url)
+	if extension.Assets["main"].Url != fmt.Sprintf("http://localhost:8000/extensions/%s/assets/main.js", extension.UUID) {
+		t.Errorf("expect a main asset url, got %s", extension.Assets["main"].Url)
+	}
+
+	if extension.Development.Root.Url != fmt.Sprintf("http://localhost:8000/extensions/%s", extension.UUID) {
+		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
+	}
+
+	if extension.App == nil {
+		t.Error("Expected app to not be null")
+	}
+
+	if extension.User.Metafields == nil {
+		t.Error("Expected user metafields to not be null")
+	}
+}
+
+func TestGetSingleExtension(t *testing.T) {
+	requestUri := "/extensions/00000000-0000-0000-0000-000000000000"
+	req, err := http.NewRequest("GET", requestUri, nil)
+	req.Host = "localhost:8000"
+	req.RequestURI = requestUri
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+
+	api := New(config, apiRoot)
+	api.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected ok status – received: %d", rec.Code)
+	}
+
+	response := singleExtensionResponse{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Logf("%+v\n", rec.Body.String())
+		t.Fatal(err)
+	}
+
+	t.Logf("%+v\n", response)
+
+	if response.Version != "0.1.0" {
+		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
+	}
+
+	extension := response.Extension
+
+	if extension.Assets == nil {
+		t.Error("expect assets to not be null")
+	}
+
+	if extension.Assets["main"].Name != "main" {
+		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
+	}
+
+	if extension.Assets["main"].Url != fmt.Sprintf("http://localhost:8000/extensions/%s/assets/main.js", extension.UUID) {
+		t.Errorf("expect a main asset url, got %s", extension.Assets["main"].Url)
+	}
+
+	if extension.Development.Root.Url != fmt.Sprintf("http://localhost:8000/extensions/%s", extension.UUID) {
+		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
 	}
 
 	if extension.App == nil {
@@ -92,7 +160,7 @@ func TestServeAssets(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 
-	api := New(config)
+	api := New(config, apiRoot)
 	api.ServeHTTP(rec, req)
 
 	if rec.Body.String() != "console.log(\"Hello World!\");\n" {
@@ -102,7 +170,7 @@ func TestServeAssets(t *testing.T) {
 }
 
 func TestWebsocketNotify(t *testing.T) {
-	api := New(config)
+	api := New(config, apiRoot)
 	server := httptest.NewServer(api)
 
 	firstConnection, err := createWebsocket(server)
@@ -132,7 +200,7 @@ func TestWebsocketNotify(t *testing.T) {
 }
 
 func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
-	api := New(config)
+	api := New(config, apiRoot)
 	server := httptest.NewServer(api)
 	ws, err := createWebsocket(server)
 	if err != nil {
@@ -156,7 +224,7 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 }
 
 func TestWebsocketConnectionClientClose(t *testing.T) {
-	api := New(config)
+	api := New(config, apiRoot)
 	server := httptest.NewServer(api)
 	ws, err := createWebsocket(server)
 	if err != nil {
