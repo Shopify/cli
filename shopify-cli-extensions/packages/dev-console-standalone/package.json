@@ -1,5 +1,5 @@
 {
-  "name": "vite-project",
+  "name": "dev-console-standalone",
   "version": "0.0.0",
   "scripts": {
     "start": "vite",

@@ -18,7 +18,7 @@ export const DevConsoleContext = createContext<DevConsoleContextValue>({
   addListener: (_: any) => () => {},
 });
 
-export function LocalExtensionsProvider({children, host}: React.PropsWithChildren<{host: string}>) {
+export function DevConsoleProvider({children, host}: React.PropsWithChildren<{host: string}>) {
   const [state, update] = useConsoleReducer();
   const [send, setSend] = useState(() => noop);
   const listenersRef = useRef<Listener[]>([]);

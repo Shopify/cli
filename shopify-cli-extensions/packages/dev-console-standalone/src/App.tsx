@@ -1,13 +1,13 @@
 import React from 'react';
-import '@shopify/polaris/dist/styles.css';
 
+import '@shopify/polaris/dist/styles.css';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
+import {I18nContext, I18nManager} from '@shopify/react-i18n';
+import {DevConsoleProvider} from '@/dev-console-utils';
+
 import * as styles from './theme.css'
 import {UIExtensionsDevTool} from './UIExtensionsDevTool';
-import {LocalExtensionsProvider} from '@/dev-console-utils';
-
-import {I18nContext, I18nManager} from '@shopify/react-i18n';
 
 function App() {
   const locale = 'en';
@@ -22,9 +22,9 @@ function App() {
     <div className={styles.Theme}>
       <I18nContext.Provider value={i18nManager}>
         <AppProvider i18n={enTranslations}>
-          <LocalExtensionsProvider host="ws://localhost:8000/extensions/">
+          <DevConsoleProvider host="ws://localhost:8000/extensions/">
             <UIExtensionsDevTool />
-          </LocalExtensionsProvider>
+          </DevConsoleProvider>
         </AppProvider>
       </I18nContext.Provider>
     </div>
