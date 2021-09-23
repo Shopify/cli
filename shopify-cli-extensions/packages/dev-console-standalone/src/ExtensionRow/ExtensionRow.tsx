@@ -1,6 +1,6 @@
 import React, {MouseEvent, useCallback, useMemo} from 'react';
 import {useI18n} from '@shopify/react-i18n';
-import {ExtensionPayload} from '@/dev-console-utils';
+import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
 
 import {Checkbox} from '../CheckBox';
 import {ActionSet, ActionSetProps} from '../ActionSet';
@@ -29,12 +29,13 @@ export function ExtensionRow({
     fallback: en,
   });
   const {
-    identifier,
-    name,
-    scriptUrl,
+    assets,
     development: {hidden, status}
   } = extension;
 
+  const name = assets[0].name;
+
+  const scriptUrl = assets[0].url;
   const scriptHost = useMemo(() => {
     if (!scriptUrl) return null;
     const url = new URL(scriptUrl.toString());
@@ -50,7 +51,7 @@ export function ExtensionRow({
   );
 
   const textClass = hidden ? styles.Hidden : undefined;
-  const statusClass = status ? styles[status as string] : styles.BuildError;
+  const statusClass = status ? (styles as any)[status] : styles.BuildError;
 
   return (
     <tr
@@ -63,7 +64,7 @@ export function ExtensionRow({
         <Checkbox label="" checked={selected} onChange={() => handleSelect()} />
       </td>
       <td className={textClass}>{name}</td>
-      <td className={textClass}>{identifier}</td>
+      <td className={textClass}>{extension.type}</td>
       <td className={textClass}>
         <a className={styles.Url} href={scriptHost || '#'}>
           {scriptHost}

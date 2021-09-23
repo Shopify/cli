@@ -4,7 +4,7 @@ import '@shopify/polaris/dist/styles.css';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
-import {DevConsoleProvider} from '@/dev-console-utils';
+import {DevConsoleProvider} from '@shopify/ui-extensions-dev-console';
 
 import * as styles from './theme.css'
 import {UIExtensionsDevTool} from './UIExtensionsDevTool';

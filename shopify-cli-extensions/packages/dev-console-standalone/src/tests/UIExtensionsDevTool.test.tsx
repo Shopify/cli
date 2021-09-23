@@ -6,57 +6,21 @@ import {
   HideMinor,
   DeleteMinor,
 } from '@shopify/polaris-icons';
-import {mockExtensions} from '@/dev-console-utils/testing';
+import {mockExtension} from '@shopify/ui-extensions-dev-console/testing';
 
 import {mount} from 'tests/mount';
 
 import {UIExtensionsDevTool} from '../UIExtensionsDevTool';
 import {ExtensionRow} from '../ExtensionRow';
 import {Action} from '../ActionSet/Action';
-import * as styles from '../UIExtensionsDevTool.css';
-
-const mockApp = {
-  id: 'mock',
-  apiKey: 'mock',
-  applicationUrl: 'mock',
-  title: 'mock',
-  icon: {
-    transformedSrc: 'mock',
-  },
-};
-
-const mockExtensionsFn = jest.fn();
-
-jest.mock('@/state', () => ({
-  ...jest.requireActual('@/state'),
-  useLocalExtensions() {
-    return mockExtensionsFn();
-  },
-}));
-
-const defaultExtension = mockExtensions()[0];
-
-const defaultLocalExtensions = {
-  extensions: [],
-  devConsole: {visible: {console: false}},
-};
 
 describe('UIExtensionsDevTool', () => {
   it('renders ExtensionRow based on localStorage', async () => {
-    const extensions = [
-      {
-        ...defaultExtension,
-        identifier: 'TYPE',
-      },
-      {
-        ...defaultExtension,
-        identifier: 'TYPE',
-      },
-    ];
+    const extensions = [mockExtension()];
 
     const container = await mount(
       <UIExtensionsDevTool />,
-      {consoleState: {extensions}}
+      {console: {state: {extensions}}}
     );
 
     const rows = container.findAll(ExtensionRow);
@@ -69,27 +33,13 @@ describe('UIExtensionsDevTool', () => {
   });
 
   it('calls refresh with selected extensions', async () => {
-    const selectedExtension = {
-      ...defaultExtension,
-      apiKey: 'jkl789',
-      identifier: 'TYPE',
-    };
+    const selectedExtension = mockExtension();
+    const unselectedExtension = mockExtension();
 
-    const unselectedExtension = {
-      ...defaultExtension,
-      apiKey: 'asdf123',
-      identifier: 'TYPE',
-    };
-
-    const refresh = jest.fn();
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [selectedExtension, unselectedExtension],
-      refresh,
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}}
+    );
 
     container.act(() => {
       container
@@ -99,31 +49,17 @@ describe('UIExtensionsDevTool', () => {
 
     container.find(Action, {source: RefreshMinor})?.trigger('onAction');
 
-    expect(refresh).toHaveBeenCalledWith([selectedExtension]);
+    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
   });
 
   it('calls remove with selected extensions', async () => {
-    const selectedExtension = {
-      ...defaultExtension,
-      apiKey: 'jkl789',
-      identifier: 'TYPE',
-    };
+    const selectedExtension = mockExtension();
+    const unselectedExtension = mockExtension();
 
-    const unselectedExtension = {
-      ...defaultExtension,
-      apiKey: 'asdf123',
-      identifier: 'TYPE',
-    };
-
-    const remove = jest.fn();
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [selectedExtension, unselectedExtension],
-      remove,
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}},
+    );
 
     container.act(() => {
       container
@@ -133,27 +69,14 @@ describe('UIExtensionsDevTool', () => {
 
     container.find(Action, {source: DeleteMinor})?.trigger('onAction');
 
-    expect(remove).toHaveBeenCalledWith([selectedExtension]);
+    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
   });
 
   it('toggles selection of all extensions when select all checkbox is clicked', async () => {
     const extensions = [
-      {
-        ...defaultExtension,
-        apiKey: 'asdf123',
-        identifier: 'TYPE',
-      },
-      {
-        ...defaultExtension,
-        apiKey: 'jkl789',
-        identifier: 'TYPE',
-      },
+      mockExtension(),
+      mockExtension(),
     ];
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions,
-    });
 
     const container = await mount(<UIExtensionsDevTool />);
 
@@ -175,24 +98,13 @@ describe('UIExtensionsDevTool', () => {
   });
 
   it('toggles selection of individual extensions when onSelect for a row is triggered', async () => {
-    const toggleExtension = {
-      ...defaultExtension,
-      apiKey: 'asdf123',
-      identifier: 'TYPE',
-    };
+    const toggleExtension = mockExtension();
+    const otherExtension = mockExtension();
 
-    const otherExtension = {
-      ...defaultExtension,
-      apiKey: 'jkl789',
-      identifier: 'TYPE',
-    };
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [toggleExtension, otherExtension],
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [toggleExtension, otherExtension]}}}
+    );
 
     container.act(() => {
       container
@@ -228,25 +140,13 @@ describe('UIExtensionsDevTool', () => {
   });
 
   it('calls to set focused to true for the current extension and set all others to false when onHighlight for a row is triggered', async () => {
-    const focusExtension = {
-      ...defaultExtension,
-      identifier: 'TYPE',
-    };
+    const focusExtension = mockExtension();
+    const prevFocusedExtension = mockExtension();
 
-    const prevFocusedExtension = {
-      ...defaultExtension,
-      identifier: 'TYPE',
-      focused: true,
-    };
-
-    const add = jest.fn();
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [focusExtension, prevFocusedExtension],
-      add,
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [focusExtension, prevFocusedExtension]}}}
+    );
 
     container.act(() => {
       container
@@ -254,36 +154,20 @@ describe('UIExtensionsDevTool', () => {
         ?.trigger('onHighlight', focusExtension);
     });
 
-    expect(add).toHaveBeenCalledWith([
+    expect(container.context.console.send).toHaveBeenCalledWith([
       {...focusExtension, focused: true},
       {...prevFocusedExtension, focused: false},
     ]);
   });
 
   it('clear focus state of all extensions when onClearHighlight for a row is triggered', async () => {
-    const extension1 = {
-      ...defaultExtension,
-      apiKey: 'asdf123',
-      identifier: 'TYPE',
-      focused: true,
-    };
+    const extension1 = mockExtension({focused: true} as any);
+    const extension2 = mockExtension({focused: true} as any);
 
-    const extension2 = {
-      ...defaultExtension,
-      apiKey: 'jkl789',
-      identifier: 'TYPE',
-      focused: true,
-    };
-
-    const add = jest.fn();
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [extension1, extension2],
-      add,
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [extension1, extension2]}}}
+    );
 
     container.act(() => {
       container
@@ -291,35 +175,22 @@ describe('UIExtensionsDevTool', () => {
         ?.trigger('onClearHighlight');
     });
 
-    expect(add).toHaveBeenCalledWith([
+    expect(container.context.console.send).toHaveBeenCalledWith([
       {...extension1, focused: false},
       {...extension2, focused: false},
     ]);
   });
 
   it('calls show with selected extensions', async () => {
-    const selectedExtension = {
-      ...defaultExtension,
-      apiKey: 'jkl789',
-      identifier: 'TYPE',
-      hidden: true,
-    };
+    const selectedExtension = mockExtension();
+    selectedExtension.development.hidden = true;
 
-    const unselectedExtension = {
-      ...defaultExtension,
-      apiKey: 'asdf123',
-      identifier: 'TYPE',
-    };
+    const unselectedExtension = mockExtension();
 
-    const show = jest.fn();
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [selectedExtension, unselectedExtension],
-      show,
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}}
+    );
 
     container.act(() => {
       container
@@ -331,31 +202,18 @@ describe('UIExtensionsDevTool', () => {
       container.find(Action, {source: HideMinor})?.trigger('onAction');
     });
 
-    expect(show).toHaveBeenCalledWith([selectedExtension]);
+    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
   });
 
   it('calls hide with selected extensions', async () => {
-    const selectedExtension = {
-      ...defaultExtension,
-      apiKey: 'jkl789',
-      identifier: 'TYPE',
-    };
+    const selectedExtension = mockExtension();
+    const unselectedExtension = mockExtension();
 
-    const unselectedExtension = {
-      ...defaultExtension,
-      apiKey: 'asdf123',
-      identifier: 'TYPE',
-    };
+    const container = await mount(
+      <UIExtensionsDevTool />,
+      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}}
+    );
 
-    const hide = jest.fn();
-
-    mockExtensionsFn.mockReturnValue({
-      ...defaultLocalExtensions,
-      extensions: [selectedExtension, unselectedExtension],
-      hide,
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
     container.act(() => {
       container
         .find(ExtensionRow, {extension: selectedExtension})
@@ -366,25 +224,6 @@ describe('UIExtensionsDevTool', () => {
       container.find(Action, {source: ViewMinor})?.trigger('onAction');
     });
 
-    expect(hide).toHaveBeenCalledWith([selectedExtension]);
-  });
-
-  it('calls to hide Dev Tool when close button is clicked', async () => {
-    const setVisible = jest.fn();
-
-    mockExtensionsFn.mockReturnValue({
-      extensions: [],
-      devConsole: {
-        ...defaultLocalExtensions.devConsole,
-        setVisible,
-      },
-    });
-
-    const container = await mount(<UIExtensionsDevTool />);
-    container.act(() => {
-      container.find('button', {className: styles.Cancel})?.trigger('onClick');
-    });
-
-    expect(setVisible).toHaveBeenCalledWith({console: false});
+    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
   });
 });

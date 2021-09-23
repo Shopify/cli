@@ -1,5 +1,6 @@
-import {DevServerResponse} from '../types';
 import {useReducer} from 'react';
+
+import {DevServerResponse} from '../types';
 
 import {ConsoleState} from './types';
 
@@ -11,14 +12,19 @@ export function useConsoleReducer() {
 
 function consoleReducer(state: ConsoleState, response: DevServerResponse): ConsoleState {
   if (response.event === 'dispatch') return state;
-  const extensions = response.data.extensions;
-  const map = groupByKey('uuid', extensions);
+  
   switch (response.event) {
     case 'connected':
-      return {extensions};
+      return {...state, ...response.data};
     case 'update':
-      const updated = state.extensions.map(extension => map.get(extension.uuid) || extension);
-      return {extensions: updated};
+      const {extensions, ...app} = response.data;
+      const updatedState = {...state, ...app};
+      if (extensions) {
+        const map = groupByKey('uuid', extensions);
+        const updated = (state.extensions || []).map(extension => map.get(extension.uuid) || extension);
+        updatedState.extensions = updated;
+      }
+      return updatedState;
     default:
       return state;
   }

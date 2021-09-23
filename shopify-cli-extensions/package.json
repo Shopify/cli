@@ -1,0 +1,5 @@
+{
+  "name": "shopify-cli-extensions",
+  "private": true,
+  "workspaces": ["packages/*"]
+}

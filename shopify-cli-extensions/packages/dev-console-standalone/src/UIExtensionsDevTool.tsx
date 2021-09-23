@@ -8,8 +8,8 @@ import {
   MobileMajor,
 } from '@shopify/polaris-icons';
 import {useI18n} from '@shopify/react-i18n';
+import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
 
-import {ExtensionPayload} from '@/dev-console-utils';
 import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {ToastProvider} from '@/hooks/useToast';
 
@@ -31,12 +31,12 @@ export function UIExtensionsDevTool() {
   const [i18n] = useI18n({
     id: 'UIExtensionsDevTool',
     fallback: en,
-});
+  });
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<
     Set<string>
   >(new Set());
   const {
-    extensions,
+    state: {extensions},
     refresh,
     show,
     hide,

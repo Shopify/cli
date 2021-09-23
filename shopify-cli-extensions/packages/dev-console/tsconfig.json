@@ -2,11 +2,12 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["vite/client", "jest"],
+    "types": ["jest"],
     "allowJs": false,
-    "composite": true,
     "skipLibCheck": false,
     "esModuleInterop": true,
+    "declaration": true,
+    "composite": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -16,15 +17,9 @@
     "isolatedModules": true,
     "noEmit": false,
     "jsx": "react",
-    "baseUrl": ".",
-    "rootDir": "..",
-    "paths": {
-      "tests/*": ["tests/*"],
-      "@/*": ["src/*"],
-      "@shopify/ui-extensions-dev-console/testing": ["../dev-console/src/testing"],
-      "@shopify/ui-extensions-dev-console": ["../dev-console/src"],
-    }
+    "outDir": "dist",
+    "baseUrl": "src",
+    "rootDir": "src"
   },
-  "include": ["src/**/*", "tests/**/*", "src/**/*.json"],
-  "references": [{"path": "../dev-console"}]
+  "include": ["src/**/*", "src/testing/**/*"]
 }

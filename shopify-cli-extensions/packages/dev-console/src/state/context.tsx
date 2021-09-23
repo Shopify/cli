@@ -1,4 +1,11 @@
-import React, {createContext, useEffect, useContext, useState, useRef, useCallback} from 'react';
+import React, {
+  createContext,
+  useEffect,
+  useContext,
+  useState,
+  useRef,
+  useCallback
+} from 'react';
 
 import {DevServerCall, DevServerResponse} from '../types';
 import {Console, ConsoleState, Listener} from './types';
@@ -7,12 +14,14 @@ import {useConsoleReducer, initialConsoleState} from './reducer';
 type UnsubscribeFn = () => void;
 
 export interface DevConsoleContextValue {
+  host: string;
   state: ConsoleState;
   send: (data: DevServerCall) => void;
   addListener: (listener: Listener) => UnsubscribeFn;
 }
 
 export const DevConsoleContext = createContext<DevConsoleContextValue>({
+  host: '',
   state: initialConsoleState,
   send: noop,
   addListener: (_: any) => () => {},
@@ -56,7 +65,7 @@ export function DevConsoleProvider({children, host}: React.PropsWithChildren<{ho
   }, []);
 
   return (
-    <DevConsoleContext.Provider value={{state, send, addListener}}>
+    <DevConsoleContext.Provider value={{host, state, send, addListener}}>
       {children}
     </DevConsoleContext.Provider>
   );
@@ -72,7 +81,7 @@ export function useDevConsole(): Console {
   const {state, send} = useContext(DevConsoleContext);
 
   return {
-    extensions: state.extensions,
+    state,
     update: (extensions) => send({event: 'update', data: extensions}),
     dispatch: (action) => send({event: 'dispatch', data: action}),
   };

@@ -12,7 +12,7 @@ export type DevServerCall = {
 
 export type DevServerResponse = {
   event: 'update' | 'connected';
-  data: {extensions: ExtensionPayload[]};
+  data: {extensions?: ExtensionPayload[]; app?: App};
 } | {
   event: 'dispatch';
   data: ConsoleAction;
@@ -29,6 +29,7 @@ export interface Action<T extends string = string, P = never> {
 }
 
 export interface ExtensionPayload {
+  type: string;
   assets: {name: string; url: string;}[];
   development: {
     hidden: boolean;
@@ -66,18 +67,3 @@ export interface App {
   supportEmail?: string;
   supportLocales?: string[];
 }
-
-// old
-// ExtensionManifest {
-//   rendererVersion => .renderer.version
-//   argoVersion => .version ??
-//   identifier
-//   scriptUrl => .assets[0].url ??
-//   name => .assets[0].name ??
-//   resourceUrl => .development.resource.url
-//   uuid => .uuid
-//   stats
-//   data
-
-//   // mobile: string; // no new endpoints anymore
-// }

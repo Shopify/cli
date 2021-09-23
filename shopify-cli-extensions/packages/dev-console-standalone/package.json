@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "dev-console-standalone",
   "version": "0.0.0",
   "scripts": {
@@ -9,9 +10,9 @@
     "clean": "git clean --exclude node_modules -xdf ./"
   },
   "dependencies": {
-    "@shopify/css-utilities": "^2.0.3",
     "@shopify/polaris": "^6.6.0",
     "@shopify/polaris-icons": "^4.6.2",
+    "@shopify/ui-extensions-dev-console": "0.0.0",
     "@shopify/react-i18n": "^6.1.0",
     "@vanilla-extract/css": "^1.2.3",
     "@vanilla-extract/vite-plugin": "^1.2.0",

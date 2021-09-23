@@ -1,7 +1,7 @@
-import {ConsoleAction, ExtensionPayload} from '../types';
+import {App, ConsoleAction, ExtensionPayload} from '../types';
 
 export interface Console {
-  extensions: ExtensionPayload[];
+  state: ConsoleState;
   update(
     extensions: ({uuid: string} & Partial<ExtensionPayload>)[],
   ): void;
@@ -9,6 +9,7 @@ export interface Console {
 }
 
 export interface ConsoleState {
+  app?: App;
   extensions: ExtensionPayload[];
 }
 

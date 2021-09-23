@@ -11,7 +11,7 @@ import {Button, Icon, Link, Stack} from '@shopify/polaris';
 import {useI18n} from '@shopify/react-i18n';
 import copyToClipboard from 'copy-to-clipboard';
 import QRCode from 'qrcode.react';
-import {ExtensionPayload} from '@/dev-console-utils';
+import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
 
 import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {useToast} from '@/hooks/useToast';
@@ -38,12 +38,14 @@ export function ActionSet(props: ActionSetProps) {
   });
   const {extension, className, activeMobileQRCode, onShowMobileQRCode} = props;
   const {
+    state: {app},
+    host,
     refresh,
     hide,
     show,
-    generateMobileQRCode,
   } = useDevConsoleInternal();
   const hidden = extension.development.hidden;
+
 
   const handleShowHide = useCallback(() => {
     if (hidden) {
@@ -70,15 +72,14 @@ export function ActionSet(props: ActionSetProps) {
   }, []);
 
   const showMobileQRCode = useCallback(async () => {
-    setMobileQRCodeState('loading');
-    try {
-      setMobileQRCode(await generateMobileQRCode([extension]));
+    if (app) {
+      setMobileQRCode(host);
       setMobileQRCodeState(null);
-    } catch (_) {
+    } else {
       setMobileQRCodeState('error');
     }
     onShowMobileQRCode?.(extension);
-  }, [extension, generateMobileQRCode, onShowMobileQRCode]);
+  }, [extension, onShowMobileQRCode]);
 
   const onButtonClick = useCallback(() => {
     if (mobileQRCode && copyToClipboard(mobileQRCode)) {
