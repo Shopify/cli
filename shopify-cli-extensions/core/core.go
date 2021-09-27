@@ -10,9 +10,13 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 	for index := range config.Extensions {
 		config.Extensions[index].Assets = make(map[string]Asset)
 	}
+	// TODO: Improve this when we need to read more app configs,
+	// for now we only know and care about api_key
+	app := make(App)
+	app["api_key"] = config.App.ApiKey
 
 	service := ExtensionService{
-		App:        make(App),
+		App:        app,
 		Version:    "0.1.0",
 		Extensions: config.Extensions,
 		Port:       config.Port,
@@ -29,8 +33,12 @@ func LoadConfig(r io.Reader) (config *Config, err error) {
 	return
 }
 
+type appYaml struct {
+	ApiKey string `yaml:"api_key"`
+}
+
 type Config struct {
-	App        App         `json:"app" yaml:"-"`
+	App        appYaml     `yaml:"app"`
 	Extensions []Extension `yaml:"extensions"`
 	Port       int
 	PublicUrl  string `yaml:"public_url"`
@@ -38,7 +46,7 @@ type Config struct {
 }
 
 type ExtensionService struct {
-	App        App `json:"app" yaml:"-"`
+	App        App
 	Extensions []Extension
 	Port       int
 	Store      string
@@ -69,6 +77,7 @@ type Development struct {
 	RootDir  string            `json:"-" yaml:"root_dir"`
 	Template string            `json:"-"`
 	Entries  map[string]string `json:"-"`
+	Status   string            `json:"status"`
 }
 
 type Renderer struct {

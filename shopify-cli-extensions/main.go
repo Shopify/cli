@@ -148,12 +148,13 @@ func (cli *CLI) monitorAndNotify(wg sync.WaitGroup, ch chan build.Result, action
 
 	for result := range ch {
 		if result.Success {
+			e.Development.Status = "success"
 			log.Printf("[%s] event for extension: %s", action, result.UUID)
-			go a.Notify(api.StatusUpdate{Type: "success", Extensions: []core.Extension{e}})
 		} else {
+			e.Development.Status = "error"
 			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
-			go a.Notify(api.StatusUpdate{Type: "error", Extensions: []core.Extension{e}})
 		}
+		go a.Notify([]core.Extension{e})
 	}
 }
 

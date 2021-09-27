@@ -8,6 +8,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -20,6 +21,8 @@ import (
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/iancoleman/strcase"
+	"github.com/imdario/mergo"
 )
 
 func New(config *core.Config, apiRoot string) *ExtensionsApi {
@@ -34,7 +37,7 @@ func New(config *core.Config, apiRoot string) *ExtensionsApi {
 	return api
 }
 
-func (api *ExtensionsApi) Notify(statusUpdate StatusUpdate) {
+func (api *ExtensionsApi) notifyClients(statusUpdate StatusUpdate) {
 	api.connections.Range(func(_, clientHandlers interface{}) bool {
 		clientHandlers.(client).notify(statusUpdate)
 		return true
@@ -48,12 +51,43 @@ func (api *ExtensionsApi) Shutdown() {
 	})
 }
 
+func (api *ExtensionsApi) Notify(extensions []core.Extension) {
+	for _, extension := range extensions {
+		updateData, found := api.updates.Load(extension.UUID)
+		if found {
+			if err := mergo.Merge(&updateData, &extensions); err != nil {
+				log.Printf("failed to merge update data %v", err)
+			}
+		} else {
+			api.updates.Store(extension.UUID, extension)
+		}
+	}
+
+	updatedExtensions := make([]core.Extension, 0)
+	for index := range api.Extensions {
+		updateData, found := api.updates.LoadAndDelete(api.Extensions[index].UUID)
+		if found {
+			err := mergo.Merge(&api.Extensions[index], updateData)
+			if err != nil {
+				log.Printf("failed to merge update data %v", err)
+			}
+			updatedExtensions = append(updatedExtensions, api.Extensions[index])
+		}
+	}
+	if len(updatedExtensions) == 0 {
+		return
+	}
+
+	api.notifyClients(StatusUpdate{Event: "update", Extensions: updatedExtensions})
+}
+
 func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot string) *ExtensionsApi {
 	api := &ExtensionsApi{
 		core.NewExtensionService(config, apiRoot),
 		router,
 		sync.Map{},
 		apiRoot,
+		sync.Map{},
 	}
 
 	api.HandleFunc(apiRoot, api.extensionsHandler)
@@ -107,14 +141,14 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		notifications <- update
 	}, close)
 
-	err = api.writeJSONMessage(connection, &StatusUpdate{Type: "connected", Extensions: api.Extensions})
+	err = api.writeJSONMessage(connection, &StatusUpdate{Event: "connected", Extensions: api.Extensions})
 
 	if err != nil {
 		close(websocket.CloseNoStatusReceived, "cannot establish connection to client")
 		return
 	}
 
-	go handleClientMessages(connection)
+	go api.handleClientMessages(connection)
 
 	for notification := range notifications {
 		err = api.writeJSONMessage(connection, &notification)
@@ -204,17 +238,45 @@ func (api *ExtensionsApi) unregisterClient(connection *websocket.Conn, closeCode
 
 func (api *ExtensionsApi) writeJSONMessage(connection *websocket.Conn, statusUpdate *StatusUpdate) error {
 	connection.SetWriteDeadline(time.Now().Add(1 * time.Second))
-	return connection.WriteJSON(statusUpdate)
+	websocketMessage := WebsocketMessage{
+		Event: statusUpdate.Event,
+		Data: WebsocketData{
+			Extensions: statusUpdate.Extensions,
+			App:        formatData(api.App, strcase.ToLowerCamel),
+		},
+		Version: api.Version,
+	}
+
+	return connection.WriteJSON(websocketMessage)
 }
 
-func handleClientMessages(connection *websocket.Conn) {
-	// TODO: Handle messages from the client
-	// Currently we don't do anything with the messages
-	// but the code is needed to establish a two-way connection
+func (api *ExtensionsApi) handleClientMessages(connection *websocket.Conn) {
 	for {
-		_, _, err := connection.ReadMessage()
+		_, message, err := connection.ReadMessage()
 		if err != nil {
 			break
+		}
+
+		jsonMessage := WebsocketMessage{}
+
+		err = json.Unmarshal(message, &jsonMessage)
+		if err != nil {
+			log.Printf("failed to read client JSON message %v", err)
+		}
+
+		switch jsonMessage.Event {
+		case "update":
+			if jsonMessage.Data.App != nil {
+				app := formatData(jsonMessage.Data.App, strcase.ToSnake)
+				if app["api_key"] == api.App["api_key"] {
+					mergeData(api.App, app)
+					go api.notifyClients(StatusUpdate{Event: "update", Extensions: []core.Extension{}})
+				}
+			}
+			go api.Notify(jsonMessage.Data.Extensions)
+
+		case "dispatch":
+
 		}
 	}
 }
@@ -241,16 +303,52 @@ func isSecureRequest(r *http.Request) bool {
 	return !strings.HasPrefix(r.Host, "localhost")
 }
 
+func mergeData(source map[string]interface{}, data map[string]interface{}) {
+	forEachValueInMap(data, func(key string, value interface{}) {
+		source[key] = value
+	})
+}
+
+func formatData(data map[string]interface{}, formatter func(str string) string) map[string]interface{} {
+	formattedData := make(map[string]interface{})
+	forEachValueInMap(data, func(key string, value interface{}) {
+		formattedData[formatter(key)] = value
+	})
+	return formattedData
+}
+
+func forEachValueInMap(data map[string]interface{}, onEachValue func(key string, value interface{})) {
+	keys := make([]string, 0, len(data))
+	for key := range data {
+		keys = append(keys, key)
+	}
+	for entry := range keys {
+		onEachValue(keys[entry], data[keys[entry]])
+	}
+}
+
 type ExtensionsApi struct {
 	*core.ExtensionService
 	*mux.Router
 	connections sync.Map
 	apiRoot     string
+	updates     sync.Map
 }
 
 type StatusUpdate struct {
-	Type       string           `json:"type"`
+	Event      string           `json:"event"`
 	Extensions []core.Extension `json:"extensions"`
+}
+
+type WebsocketData struct {
+	Extensions []core.Extension `json:"extensions"`
+	App        core.App         `json:"app"`
+}
+
+type WebsocketMessage struct {
+	Event   string        `json:"event"`
+	Data    WebsocketData `json:"data"`
+	Version string        `json:"version"`
 }
 
 type extensionsResponse struct {

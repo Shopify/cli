@@ -39,41 +39,24 @@ func init() {
 }
 
 func TestGetExtensions(t *testing.T) {
-	req, err := http.NewRequest("GET", "/extensions/", nil)
-	req.Host = "localhost:8000"
-	if err != nil {
-		t.Fatal(err)
-	}
-	rec := httptest.NewRecorder()
-
 	api := New(config, apiRoot)
-	api.ServeHTTP(rec, req)
+	response := extensionsResponse{}
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("Expected ok status – received: %d", rec.Code)
+	getJSONResponse(api, t, "/extensions/", &response)
+
+	if response.App == nil || response.App["api_key"] != "app_api_key" {
+		t.Errorf("Expected app to have api_key \"app_api_key\" but got %v", response.App)
 	}
 
-	service := core.ExtensionService{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &service); err != nil {
-		t.Logf("%+v\n", rec.Body.String())
-		t.Fatal(err)
+	if len(response.Extensions) != 2 {
+		t.Errorf("Expected 2 extension got %d", len(response.Extensions))
 	}
 
-	t.Logf("%+v\n", service)
-
-	if service.App == nil {
-		t.Error("Expected app to not be null")
+	if response.Version != "0.1.0" {
+		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
 	}
 
-	if len(service.Extensions) != 1 {
-		t.Errorf("Expected one extension got %d", len(service.Extensions))
-	}
-
-	if service.Version != "0.1.0" {
-		t.Errorf("expect service version to be 0.1.0 but got %s", service.Version)
-	}
-
-	extension := service.Extensions[0]
+	extension := response.Extensions[0]
 
 	if extension.Assets == nil {
 		t.Error("expect assets to not be null")
@@ -97,30 +80,10 @@ func TestGetExtensions(t *testing.T) {
 }
 
 func TestGetSingleExtension(t *testing.T) {
-	requestUri := "/extensions/00000000-0000-0000-0000-000000000000"
-	req, err := http.NewRequest("GET", requestUri, nil)
-	req.Host = "localhost:8000"
-	req.RequestURI = requestUri
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	rec := httptest.NewRecorder()
-
 	api := New(config, apiRoot)
-	api.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("Expected ok status – received: %d", rec.Code)
-	}
-
 	response := singleExtensionResponse{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
-		t.Logf("%+v\n", rec.Body.String())
-		t.Fatal(err)
-	}
 
-	t.Logf("%+v\n", response)
+	getJSONResponse(api, t, "/extensions/00000000-0000-0000-0000-000000000000", &response)
 
 	if response.Version != "0.1.0" {
 		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
@@ -184,11 +147,15 @@ func TestWebsocketNotify(t *testing.T) {
 	}
 
 	// First message received is the connected message which can be ignored
-	firstConnection.ReadJSON(&StatusUpdate{})
-	secondConnection.ReadJSON(&StatusUpdate{})
+	firstConnection.ReadJSON(&WebsocketMessage{})
+	secondConnection.ReadJSON(&WebsocketMessage{})
 
-	expectedUpdate := StatusUpdate{Type: "Some message", Extensions: config.Extensions}
-	api.Notify(expectedUpdate)
+	expectedUpdate := WebsocketMessage{
+		Event: "update",
+		Data:  WebsocketData{Extensions: api.Extensions, App: api.App},
+	}
+
+	api.Notify(api.Extensions)
 
 	if err := verifyWebsocketMessage(firstConnection, expectedUpdate); err != nil {
 		t.Error(err)
@@ -207,7 +174,12 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions}); err != nil {
+	expectedMessage := WebsocketMessage{
+		Event: "connected",
+		Data:  WebsocketData{Extensions: api.Extensions, App: api.App},
+	}
+
+	if err := verifyWebsocketMessage(ws, expectedMessage); err != nil {
 		t.Error(err)
 	}
 
@@ -231,7 +203,12 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := verifyWebsocketMessage(ws, StatusUpdate{Type: "connected", Extensions: api.Extensions}); err != nil {
+	expectedMessage := WebsocketMessage{
+		Event: "connected",
+		Data:  WebsocketData{Extensions: api.Extensions, App: api.App},
+	}
+
+	if err := verifyWebsocketMessage(ws, expectedMessage); err != nil {
 		t.Error(err)
 	}
 
@@ -242,23 +219,148 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 	}
 }
 
-func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage StatusUpdate) error {
-	message := StatusUpdate{}
+func TestWebsocketClientUpdateAppEvent(t *testing.T) {
+	api := New(config, apiRoot)
+	server := httptest.NewServer(api)
+
+	ws, err := createWebsocket(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// First message received is the connected message which can be ignored
+	ws.ReadJSON(&WebsocketMessage{})
+
+	duration := 1 * time.Second
+	deadline := time.Now().Add(duration)
+
+	ws.SetWriteDeadline(deadline)
+	ws.WriteJSON(WebsocketMessage{Event: "update", Data: WebsocketData{
+		App: map[string]interface{}{
+			"apiKey": "app_api_key",
+			"title":  "my app",
+		},
+	}})
+
+	<-time.After(duration)
+
+	expectedUpdate := WebsocketMessage{
+		Event: "update",
+		Data: WebsocketData{
+			Extensions: []core.Extension{},
+			App: map[string]interface{}{
+				"api_key": "app_api_key",
+				"title":   "my app",
+			}},
+	}
+
+	if err := verifyWebsocketMessage(ws, expectedUpdate); err != nil {
+		t.Error(err)
+	}
+
+	response := extensionsResponse{}
+	getJSONResponse(api, t, "/extensions/", &response)
+
+	if response.App == nil {
+		t.Error("Expected app to not be null")
+	}
+
+	if response.App["api_key"] != "app_api_key" {
+		t.Errorf("expected App[\"api_key\"] to be `\"app_api_key\"` but got %v", api.App["api_key"])
+	}
+
+	if response.App["title"] != "my app" {
+		t.Errorf("expected App[\"title\"] to be updated to `\"my app\"` but got %v", api.App["title"])
+	}
+}
+
+func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
+	api := New(config, apiRoot)
+	server := httptest.NewServer(api)
+
+	ws, err := createWebsocket(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// First message received is the connected message which can be ignored
+	ws.ReadJSON(&WebsocketMessage{})
+
+	updatedExtensions := append([]core.Extension{}, api.Extensions[0])
+	updatedExtensions[0].Development.Hidden = true
+	updatedExtensions[0].Development.Status = "error"
+
+	expectedUpdate := WebsocketMessage{
+		Event: "update",
+		Data:  WebsocketData{Extensions: updatedExtensions, App: api.App},
+	}
+
+	duration := 1 * time.Second
+	deadline := time.Now().Add(duration)
+
+	ws.SetWriteDeadline(deadline)
+	ws.WriteJSON(WebsocketMessage{Event: "update", Data: WebsocketData{
+		Extensions: append([]core.Extension{}, core.Extension{
+			UUID: "00000000-0000-0000-0000-000000000000",
+			Development: core.Development{
+				Status: "error",
+				Hidden: true,
+			},
+		}, core.Extension{
+			UUID: "NON_MATCHING_UUID",
+			Development: core.Development{
+				Status: "error",
+				Hidden: true,
+			},
+		}),
+	}})
+
+	<-time.After(duration)
+
+	if err := verifyWebsocketMessage(ws, expectedUpdate); err != nil {
+		t.Error(err)
+	}
+
+	updated := singleExtensionResponse{}
+	getJSONResponse(api, t, "/extensions/00000000-0000-0000-0000-000000000000", &updated)
+
+	if !updated.Extension.Development.Hidden {
+		t.Errorf("expected extension Development.Hidden to be true but got %v", updated.Extension.Development.Hidden)
+	}
+
+	if updated.Extension.Development.Status != "error" {
+		t.Errorf("expected extension Development.Status to be \"error\" but got %v", updated.Extension.Development.Hidden)
+	}
+
+	unchanged := singleExtensionResponse{}
+	getJSONResponse(api, t, "/extensions/00000000-0000-0000-0000-000000000001", &unchanged)
+
+	if unchanged.Extension.Development.Hidden {
+		t.Errorf("expected extension Development.Hidden to be unchanged but got %v", unchanged.Extension.Development.Hidden)
+	}
+
+	if unchanged.Extension.Development.Status != "" {
+		t.Errorf("expected extension Development.Status to be unchanged but got %v", unchanged.Extension.Development.Status)
+	}
+}
+
+func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage WebsocketMessage) error {
+	message := WebsocketMessage{}
 
 	ws.ReadJSON(&message)
 
-	if message.Type != expectedMessage.Type {
-		log.Printf("%v, %v", message, expectedMessage)
+	if message.Event != expectedMessage.Event {
+		log.Printf("message received: %v, message expected: %v", message, expectedMessage)
 		return fmt.Errorf("Could not connect to websocket")
 	}
 
-	result, err := json.Marshal(message.Extensions)
+	result, err := json.Marshal(message.Data.Extensions)
 
 	if err != nil {
 		return fmt.Errorf("Converting Extensions in message to JSON failed with error: %v", err)
 	}
 
-	expectedResult, err := json.Marshal(expectedMessage.Extensions)
+	expectedResult, err := json.Marshal(expectedMessage.Data.Extensions)
 	if err != nil {
 		return fmt.Errorf("Converting Extensions in expected message to JSON failed with error: %v", err)
 	}
@@ -275,7 +377,7 @@ func verifyConnectionShutdown(api *ExtensionsApi, ws *websocket.Conn) error {
 	// Currently the test will fail without the wait since the channel and connection is still open
 	<-time.After(time.Second * 1)
 
-	api.Notify(StatusUpdate{Type: "Some message"})
+	api.Notify([]core.Extension{})
 	_, message, err := ws.ReadMessage()
 	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 		notification := StatusUpdate{}
@@ -289,4 +391,29 @@ func createWebsocket(server *httptest.Server) (*websocket.Conn, error) {
 	url := "ws" + strings.TrimPrefix(server.URL, "http") + "/extensions/"
 	connection, _, err := websocket.DefaultDialer.Dial(url, nil)
 	return connection, err
+}
+
+func getJSONResponse(api *ExtensionsApi, t *testing.T, requestUri string, response interface{}) interface{} {
+	req, err := http.NewRequest("GET", requestUri, nil)
+	req.Host = "localhost:8000"
+	req.RequestURI = requestUri
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+
+	api.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected ok status – received: %d", rec.Code)
+	}
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Logf("%+v\n", rec.Body.String())
+		t.Fatal(err)
+	}
+
+	t.Logf("%+v\n", response)
+	return response
 }
