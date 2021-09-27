@@ -61,6 +61,10 @@ func TestGetExtensions(t *testing.T) {
 
 	t.Logf("%+v\n", service)
 
+	if service.App == nil {
+		t.Error("Expected app to not be null")
+	}
+
 	if len(service.Extensions) != 1 {
 		t.Errorf("Expected one extension got %d", len(service.Extensions))
 	}
@@ -85,10 +89,6 @@ func TestGetExtensions(t *testing.T) {
 
 	if extension.Development.Root.Url != fmt.Sprintf("http://localhost:8000/extensions/%s", extension.UUID) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
-	}
-
-	if extension.App == nil {
-		t.Error("Expected app to not be null")
 	}
 
 	if extension.User.Metafields == nil {
@@ -126,6 +126,10 @@ func TestGetSingleExtension(t *testing.T) {
 		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
 	}
 
+	if response.App == nil {
+		t.Error("Expected app to not be null")
+	}
+
 	extension := response.Extension
 
 	if extension.Assets == nil {
@@ -142,10 +146,6 @@ func TestGetSingleExtension(t *testing.T) {
 
 	if extension.Development.Root.Url != fmt.Sprintf("http://localhost:8000/extensions/%s", extension.UUID) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
-	}
-
-	if extension.App == nil {
-		t.Error("Expected app to not be null")
 	}
 
 	if extension.User.Metafields == nil {

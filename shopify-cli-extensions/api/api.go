@@ -146,6 +146,7 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 	}
 
 	encoder.Encode(extensionsResponse{
+		api.App,
 		api.Extensions,
 		api.Version,
 	})
@@ -175,7 +176,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 
 			rw.Header().Add("Content-Type", "application/json")
 			encoder := json.NewEncoder(rw)
-			encoder.Encode(singleExtensionResponse{extension, api.Version})
+			encoder.Encode(singleExtensionResponse{api.App, extension, api.Version})
 			return
 		}
 	}
@@ -253,11 +254,13 @@ type StatusUpdate struct {
 }
 
 type extensionsResponse struct {
+	App        core.App         `json:"app" yaml:"-"`
 	Extensions []core.Extension `json:"extensions"`
 	Version    string           `json:"version"`
 }
 
 type singleExtensionResponse struct {
+	App       core.App       `json:"app" yaml:"-"`
 	Extension core.Extension `json:"extension"`
 	Version   string         `json:"version"`
 }

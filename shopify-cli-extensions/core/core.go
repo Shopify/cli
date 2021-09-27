@@ -9,10 +9,10 @@ import (
 func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 	for index := range config.Extensions {
 		config.Extensions[index].Assets = make(map[string]Asset)
-		config.Extensions[index].App = make(App)
 	}
 
 	service := ExtensionService{
+		App:        make(App),
 		Version:    "0.1.0",
 		Extensions: config.Extensions,
 		Port:       config.Port,
@@ -30,17 +30,19 @@ func LoadConfig(r io.Reader) (config *Config, err error) {
 }
 
 type Config struct {
+	App        App         `json:"app" yaml:"-"`
 	Extensions []Extension `yaml:"extensions"`
 	Port       int
-	Store      string
 	PublicUrl  string `yaml:"public_url"`
+	Store      string
 }
 
 type ExtensionService struct {
+	App        App `json:"app" yaml:"-"`
 	Extensions []Extension
-	Version    string
 	Port       int
 	Store      string
+	Version    string
 }
 
 type Extension struct {
@@ -49,7 +51,6 @@ type Extension struct {
 	Assets      map[string]Asset `json:"assets" yaml:"-"`
 	Development Development      `json:"development" yaml:"development"`
 	User        User             `json:"user" yaml:"user"`
-	App         App              `json:"app" yaml:"-"`
 	Version     string           `json:"version" yaml:"version"`
 }
 
