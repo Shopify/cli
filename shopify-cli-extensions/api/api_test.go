@@ -3,16 +3,17 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/gorilla/websocket"
+	"github.com/iancoleman/strcase"
 )
 
 var (
@@ -165,25 +166,21 @@ func TestWebsocketNotify(t *testing.T) {
 	}
 
 	// First message received is the connected message which can be ignored
-	firstConnection.ReadJSON(&WebsocketMessage{})
-	secondConnection.ReadJSON(&WebsocketMessage{})
+	firstConnection.ReadJSON(&websocketMessage{})
+	secondConnection.ReadJSON(&websocketMessage{})
 
 	expectedExtensions := []core.Extension{
 		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
 		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
 	}
-	expectedUpdate := WebsocketMessage{
-		Event: "update",
-		Data:  WebsocketData{Extensions: expectedExtensions, App: api.App},
-	}
 
 	api.Notify(api.Extensions)
 
-	if err := verifyWebsocketMessage(firstConnection, expectedUpdate); err != nil {
+	if err := verifyWebsocketMessage(firstConnection, "update", api.Version, api.App, expectedExtensions); err != nil {
 		t.Error(err)
 	}
 
-	if err = verifyWebsocketMessage(secondConnection, expectedUpdate); err != nil {
+	if err = verifyWebsocketMessage(secondConnection, "update", api.Version, api.App, expectedExtensions); err != nil {
 		t.Error(err)
 	}
 }
@@ -196,13 +193,12 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], server.URL), getExpectedExtensionWithUrls(api.Extensions[1], server.URL)}
-	expectedMessage := WebsocketMessage{
-		Event: "connected",
-		Data:  WebsocketData{Extensions: expectedExtensions, App: api.App},
+	expectedExtensions := []core.Extension{
+		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
 	}
 
-	if err := verifyWebsocketMessage(ws, expectedMessage); err != nil {
+	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions); err != nil {
 		t.Error(err)
 	}
 
@@ -231,12 +227,7 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
 	}
 
-	expectedMessage := WebsocketMessage{
-		Event: "connected",
-		Data:  WebsocketData{Extensions: expectedExtensions, App: api.App},
-	}
-
-	if err := verifyWebsocketMessage(ws, expectedMessage); err != nil {
+	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions); err != nil {
 		t.Error(err)
 	}
 
@@ -257,32 +248,18 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 	}
 
 	// First message received is the connected message which can be ignored
-	ws.ReadJSON(&WebsocketMessage{})
+	ws.ReadJSON(&websocketMessage{})
 
 	duration := 1 * time.Second
 	deadline := time.Now().Add(duration)
 
 	ws.SetWriteDeadline(deadline)
-	ws.WriteJSON(WebsocketMessage{Event: "update", Data: WebsocketData{
-		App: map[string]interface{}{
-			"apiKey": "app_api_key",
-			"title":  "my app",
-		},
-	}})
+	data := []byte(`{"app": {"apiKey": "app_api_key", "title":  "my app"}}`)
+	ws.WriteJSON(websocketClientMessage{Event: "update", Data: data})
 
 	<-time.After(duration)
 
-	expectedUpdate := WebsocketMessage{
-		Event: "update",
-		Data: WebsocketData{
-			Extensions: []core.Extension{},
-			App: map[string]interface{}{
-				"api_key": "app_api_key",
-				"title":   "my app",
-			}},
-	}
-
-	if err := verifyWebsocketMessage(ws, expectedUpdate); err != nil {
+	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, []core.Extension{}); err != nil {
 		t.Error(err)
 	}
 
@@ -316,40 +293,25 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	}
 
 	// First message received is the connected message which can be ignored
-	ws.ReadJSON(&WebsocketMessage{})
+	ws.ReadJSON(&websocketMessage{})
 
 	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], server.URL)}
 	updatedExtensions[0].Development.Hidden = true
 	updatedExtensions[0].Development.Status = "error"
 
-	expectedUpdate := WebsocketMessage{
-		Event: "update",
-		Data:  WebsocketData{Extensions: updatedExtensions, App: api.App},
-	}
-
 	duration := 1 * time.Second
 	deadline := time.Now().Add(duration)
 
 	ws.SetWriteDeadline(deadline)
-	ws.WriteJSON(WebsocketMessage{Event: "update", Data: WebsocketData{
-		Extensions: append([]core.Extension{}, core.Extension{
-			UUID: "00000000-0000-0000-0000-000000000000",
-			Development: core.Development{
-				Status: "error",
-				Hidden: true,
-			},
-		}, core.Extension{
-			UUID: "NON_MATCHING_UUID",
-			Development: core.Development{
-				Status: "error",
-				Hidden: true,
-			},
-		}),
-	}})
+	data := []byte(`{"extensions": [
+		{"uuid": "00000000-0000-0000-0000-000000000000", "development": {"status": "error", "hidden": true}},
+		{"uuid": "NON_MATCHING_UUID", "development": {"status": "error", "hidden": true}}
+	]}`)
+	ws.WriteJSON(websocketClientMessage{Event: "update", Data: data})
 
 	<-time.After(duration)
 
-	if err := verifyWebsocketMessage(ws, expectedUpdate); err != nil {
+	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions); err != nil {
 		t.Error(err)
 	}
 
@@ -406,32 +368,32 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	}
 
 	// First message received is the connected message which can be ignored
-	ws.ReadJSON(&WebsocketMessage{})
+	ws.ReadJSON(&websocketMessage{})
 
 	duration := 1 * time.Second
 	deadline := time.Now().Add(duration)
 
 	ws.SetWriteDeadline(deadline)
-	ws.WriteJSON(WebsocketMessage{Event: "update", Data: WebsocketData{
-		Extensions: append([]core.Extension{}, core.Extension{
-			UUID: "00000000-0000-0000-0000-000000000000",
-			Development: core.Development{
-				Hidden: false,
-			},
-		}),
-	}})
+	data := []byte(`{
+		"extensions": [
+		  {
+			"uuid": "00000000-0000-0000-0000-000000000000",
+			"development": {"hidden": false}
+		  }
+		]
+	  }`)
+	err = ws.WriteJSON(websocketClientMessage{Event: "update", Data: data})
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	<-time.After(duration)
 
 	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], server.URL)}
 	updatedExtensions[0].Development.Hidden = false
 
-	expectedUpdate := WebsocketMessage{
-		Event: "update",
-		Data:  WebsocketData{Extensions: updatedExtensions, App: api.App},
-	}
-
-	if err := verifyWebsocketMessage(ws, expectedUpdate); err != nil {
+	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions); err != nil {
 		t.Error(err)
 	}
 
@@ -447,29 +409,204 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	}
 }
 
-func verifyWebsocketMessage(ws *websocket.Conn, expectedMessage WebsocketMessage) error {
-	message := WebsocketMessage{}
+func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
+	api := New(config, apiRoot)
+	server := httptest.NewServer(api)
 
-	ws.ReadJSON(&message)
+	initialResponse := extensionsResponse{}
+	getJSONResponse(api, t, server.URL, "/extensions/", &initialResponse)
 
-	if message.Event != expectedMessage.Event {
-		log.Printf("message received: %v, message expected: %v", message, expectedMessage)
-		return fmt.Errorf("Could not connect to websocket")
+	ws, err := createWebsocket(server)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	result, err := json.Marshal(message.Data.Extensions)
+	// First message received is the connected message which can be ignored
+	ws.ReadJSON(&websocketMessage{})
+
+	duration := 1 * time.Second
+	deadline := time.Now().Add(duration)
+
+	ws.SetWriteDeadline(deadline)
+
+	data := []byte(`{
+		"type": "focus",
+		"customData": "foo",
+		"app": {
+		  "apiKey": "app_api_key",
+		  "customData": "bar"
+		},
+		"extensions": [
+		  {
+			"uuid": "00000000-0000-0000-0000-000000000000",
+			"customData": "baz",
+			"development": {"status": "success"},
+			"user": {"metafields": [{"namespace": "another-namespace", "key": "another-key"}]}
+		  }
+		]
+	  }`)
+	err = ws.WriteJSON(websocketClientMessage{Event: "dispatch", Data: data})
+
+	if err != nil {
+		t.Error(err)
+	}
+	<-time.After(duration)
+
+	message := websocketMessage{}
+	if err := ws.ReadJSON(&message); err != nil {
+		t.Errorf("failed to read message with error: %v", err)
+	}
+
+	if message.Version != api.Version {
+		t.Errorf("expecting version to be %v but got: %v", api.Version, message.Version)
+	}
+
+	if message.Event != "dispatch" {
+		t.Errorf("expecting to receive event \"dispatch\" but got: %v", message.Event)
+	}
+
+	if message.Data["type"] != "focus" {
+		t.Errorf("expecting to receive data `type: \"focus\"` but got: %v", message.Data["type"])
+	}
+
+	if message.Data["customData"] != "foo" {
+		t.Errorf("expecting to receive data `customData: \"foo\"` but got: %v", message.Data["customData"])
+	}
+
+	expectedApp := `{
+		"apiKey": "app_api_key",
+		"customData": "bar"
+	  }`
+	app, err := json.Marshal(message.Data["app"])
+
+	if err != nil {
+		t.Errorf("converting app in message to JSON failed with error: %v", err)
+	}
+
+	matchApp, err := isEqualJSON(expectedApp, string(app))
+	if err != nil {
+		t.Error(err)
+	}
+	if !matchApp {
+		t.Errorf("unexpected app in message, received %v, expected %v", string(app), expectedApp)
+	}
+
+	extensions, err := json.Marshal(message.Data["extensions"])
+
+	if err != nil {
+		t.Errorf("converting extensions in message to JSON failed with error: %v", err)
+	}
+	expectedExtensions := fmt.Sprintf(`[
+		{
+		  "customData": "baz",
+		  "assets": {
+			"main": {
+			  "name": "main",
+			  "url": "%v/extensions/00000000-0000-0000-0000-000000000000/assets/main.js"
+			}
+		  },
+		  "development": {
+			"hidden": false,
+			"resource": {"url": ""},
+			"root": {"url": "%v/extensions/00000000-0000-0000-0000-000000000000"},
+			"status": "success"
+		  },
+		  "type": "checkout_ui_extension",
+		  "user": {"metafields": [{"namespace": "another-namespace", "key": "another-key"}]},
+		  "uuid": "00000000-0000-0000-0000-000000000000",
+		  "version": ""
+		}
+	  ]`, server.URL, server.URL)
+
+	match, err := isEqualJSON(expectedExtensions, string(extensions))
+	if err != nil {
+		t.Error(err)
+	}
+	if !match {
+		t.Errorf("unexpected extensions in message, received %v, expected %v", string(extensions), expectedExtensions)
+	}
+
+	response := extensionsResponse{}
+	getJSONResponse(api, t, server.URL, "/extensions/", &response)
+
+	if !reflect.DeepEqual(response, initialResponse) {
+		t.Error("Expected api data not to be mutated but it was modified")
+	}
+}
+
+// https://gist.github.com/turtlemonvh/e4f7404e28387fadb8ad275a99596f67
+func isEqualJSON(s1, s2 string) (bool, error) {
+	var o1 interface{}
+	var o2 interface{}
+
+	var err error
+	err = json.Unmarshal([]byte(s1), &o1)
+	if err != nil {
+		return false, fmt.Errorf("Error mashalling string 1 :: %s", err.Error())
+	}
+	err = json.Unmarshal([]byte(s2), &o2)
+	if err != nil {
+		return false, fmt.Errorf("Error mashalling string 2 :: %s", err.Error())
+	}
+
+	return reflect.DeepEqual(o1, o2), nil
+}
+
+func verifyWebsocketMessage(ws *websocket.Conn, event string, version string, expectedApp core.App, expectedExtensions interface{}) error {
+	message := websocketMessage{}
+	duration := 1 * time.Second
+	deadline := time.Now().Add(duration)
+
+	ws.SetReadDeadline(deadline)
+	if err := ws.ReadJSON(&message); err != nil {
+		return fmt.Errorf("failed to read message with error: %v", err)
+	}
+
+	if message.Version != version {
+		return fmt.Errorf("expecting version to be %v but got: %v", version, message.Version)
+	}
+
+	if message.Event != event {
+		return fmt.Errorf("expecting to receive event %v but got: %v", message.Event, event)
+	}
+
+	expectedAppResult, err := json.Marshal(formatData(expectedApp, strcase.ToLowerCamel))
+	if err != nil {
+		return err
+	}
+	app, err := json.Marshal(message.Data["app"])
+
+	if err != nil {
+		return fmt.Errorf("converting app in message to JSON failed with error: %v", err)
+	}
+
+	match, err := isEqualJSON(string(expectedAppResult), string(app))
+	if err != nil {
+		return err
+	}
+	if !match {
+		return fmt.Errorf("unexpected app in message, received %v, expected %v", string(app), string(expectedAppResult))
+	}
+
+	extensions, err := json.Marshal(message.Data["extensions"])
 
 	if err != nil {
 		return fmt.Errorf("converting extensions in message to JSON failed with error: %v", err)
 	}
 
-	expectedResult, err := json.Marshal(expectedMessage.Data.Extensions)
+	expectedResult, err := json.Marshal(expectedExtensions)
+	if err != nil {
+		return fmt.Errorf("converting extensions in message to JSON failed with error: %v", err)
+	}
+
+	match, err = isEqualJSON(string(expectedResult), string(extensions))
+
 	if err != nil {
 		return fmt.Errorf("converting extensions in expected message to JSON failed with error: %v", err)
 	}
 
-	if string(result) != string(expectedResult) {
-		return fmt.Errorf("unexpected extensions in message, received %v, expected %v", string(result), string(expectedResult))
+	if !match {
+		return fmt.Errorf("unexpected extensions in message, received %v, expected %v", string(extensions), string(expectedResult))
 	}
 
 	return nil
@@ -487,7 +624,7 @@ func verifyConnectionShutdown(api *ExtensionsApi, ws *websocket.Conn) error {
 	ws.SetReadDeadline(time.Time{})
 	_, message, err := ws.ReadMessage()
 	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-		notification := StatusUpdate{}
+		notification := notification{}
 		json.Unmarshal(message, &notification)
 		return fmt.Errorf("Expected connection to be terminated but the read error returned: %v and the connection received the notification: %v", err, notification)
 	}

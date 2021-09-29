@@ -38,14 +38,146 @@ func New(config *core.Config, apiRoot string) *ExtensionsApi {
 }
 
 func (api *ExtensionsApi) sendUpdateEvent(extensions []core.Extension) {
+	api.notifyClients(func(rootUrl string) (message notification, err error) {
+		return api.getNotification("update", extensions, rootUrl)
+	})
+}
+
+func (api *ExtensionsApi) notifyClients(createNotification func(rootUrl string) (message notification, err error)) {
 	api.connections.Range(func(connection, clientHandlers interface{}) bool {
-		rootUrl := connection.(*websocketConnection).rootUrl
-		clientHandlers.(client).notify(StatusUpdate{
-			Event:      "update",
-			Extensions: getExtensionsWithUrl(extensions, rootUrl),
-		})
+		notification, err := createNotification(connection.(*websocketConnection).rootUrl)
+		if err != nil {
+			log.Printf("failed to construct notification with error: %v", err)
+			return false
+		}
+		clientHandlers.(client).notify(notification)
 		return true
 	})
+}
+
+func (api *ExtensionsApi) getNotification(event string, extensions []core.Extension, rootUrl string) (message notification, err error) {
+	extensionsWithUrls := getExtensionsWithUrl(extensions, rootUrl)
+	app := formatData(api.App, strcase.ToLowerCamel)
+
+	data, err := api.getNotificationData(extensionsWithUrls, app)
+	if err != nil {
+		return
+	}
+	message = notification{Event: event, Data: data}
+	return
+}
+
+func (api *ExtensionsApi) getNotificationData(extensions interface{}, app interface{}) (data map[string]interface{}, err error) {
+	data = make(map[string]interface{})
+	extensionData, err := getJSONRawMessage(extensions)
+	if err != nil {
+		return
+	}
+	appData, err := getJSONRawMessage(app)
+	if err != nil {
+		return
+	}
+
+	data["extensions"] = extensionData
+	data["app"] = appData
+	return
+}
+
+// Returns a notification that combines arbitrary data
+// with the API's own data for app and extensions
+func (api *ExtensionsApi) getDispatchNotification(rawData json.RawMessage, rootUrl string) (message notification, err error) {
+	dispatchData := make(map[string]interface{})
+	if err = json.Unmarshal(rawData, &dispatchData); err != nil {
+		return
+	}
+
+	data := websocketData{}
+	if err = json.Unmarshal(rawData, &data); err != nil {
+		return
+	}
+
+	mergedApp, _ := api.getMergedAppMap(data.App, false)
+	extensions := api.getMergedExtensionsMap(data.Extensions, rootUrl)
+
+	appAndExtensions, err := api.getNotificationData(extensions, mergedApp)
+
+	if err != nil {
+		return
+	}
+
+	err = mergo.MapWithOverwrite(&dispatchData, &appAndExtensions)
+	if err != nil {
+		return
+	}
+
+	message = notification{Event: "dispatch", Data: dispatchData}
+	return
+}
+
+func getJSONRawMessage(data interface{}) (result json.RawMessage, err error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	result = json.RawMessage(jsonData)
+	return
+}
+
+func interfaceToMap(data interface{}) (result map[string]interface{}, err error) {
+	converted, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("error converting to JSON %v", err)
+		return
+	}
+	if err = json.Unmarshal(converted, &result); err != nil {
+		log.Printf("error converting to map %v", err)
+		return
+	}
+	return
+}
+
+func (api *ExtensionsApi) getMergedAppMap(additionalInfo map[string]interface{}, overwrite bool) (app map[string]interface{}, updated bool) {
+	app = formatData(api.App, strcase.ToLowerCamel)
+	if additionalInfo["apiKey"] == app["apiKey"] {
+		if err := mergo.MapWithOverwrite(&app, additionalInfo); err != nil {
+			log.Printf("error merging app info, %v", err)
+			return
+		}
+
+		if overwrite {
+			if err := mergo.MapWithOverwrite(&api.App, formatData(app, strcase.ToSnake)); err != nil {
+				log.Printf("error merging app info, %v", err)
+				return
+			}
+		}
+		updated = true
+	}
+	return
+}
+
+func (api *ExtensionsApi) getMergedExtensionsMap(extensions []map[string]interface{}, rootUrl string) []map[string]interface{} {
+	targetExtensions := make(map[string]map[string]interface{})
+	for _, extension := range extensions {
+		targetExtensions[fmt.Sprintf("%v", extension["uuid"])] = extension
+	}
+
+	results := make([]map[string]interface{}, 0)
+	for _, extension := range api.Extensions {
+		if target, found := targetExtensions[extension.UUID]; found {
+			extensionWithUrls := setExtensionUrls(extension, rootUrl)
+			extensionData, err := interfaceToMap(extensionWithUrls)
+			if err != nil {
+				continue
+			}
+			err = mergo.MapWithOverwrite(&extensionData, &target)
+			if err != nil {
+				log.Printf("failed to merge update data %v", err)
+				continue
+			}
+			results = append(results, extensionData)
+		}
+	}
+	return results
 }
 
 func (api *ExtensionsApi) Shutdown() {
@@ -134,7 +266,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 	}
 
 	connection := &websocketConnection{upgradedConnection, api.getApiRootFromRequest(r)}
-	notifications := make(chan StatusUpdate)
+	notifications := make(chan notification)
 
 	close := func(closeCode int, message string) error {
 		api.unregisterClient(connection, closeCode, message)
@@ -144,12 +276,15 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 
 	connection.SetCloseHandler(close)
 
-	api.registerClient(connection, func(update StatusUpdate) {
+	api.registerClient(connection, func(update notification) {
 		notifications <- update
 	}, close)
 
-	err = api.writeJSONMessage(connection, &StatusUpdate{Event: "connected", Extensions: getExtensionsWithUrl(api.Extensions, connection.rootUrl)})
-
+	notification, err := api.getNotification("connected", api.Extensions, connection.rootUrl)
+	if err != nil {
+		close(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
+	}
+	err = api.writeJSONMessage(connection, &notification)
 	if err != nil {
 		close(websocket.CloseNoStatusReceived, "cannot establish connection to client")
 		return
@@ -245,18 +380,10 @@ func (api *ExtensionsApi) unregisterClient(connection *websocketConnection, clos
 	api.connections.Delete(connection)
 }
 
-func (api *ExtensionsApi) writeJSONMessage(connection *websocketConnection, statusUpdate *StatusUpdate) error {
+func (api *ExtensionsApi) writeJSONMessage(connection *websocketConnection, statusUpdate *notification) error {
+	message := websocketMessage{Event: statusUpdate.Event, Data: statusUpdate.Data, Version: api.Version}
 	connection.SetWriteDeadline(time.Now().Add(1 * time.Second))
-	websocketMessage := WebsocketMessage{
-		Event: statusUpdate.Event,
-		Data: WebsocketData{
-			Extensions: statusUpdate.Extensions,
-			App:        formatData(api.App, strcase.ToLowerCamel),
-		},
-		Version: api.Version,
-	}
-
-	return connection.WriteJSON(websocketMessage)
+	return connection.WriteJSON(message)
 }
 
 func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
@@ -266,7 +393,7 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 			break
 		}
 
-		jsonMessage := WebsocketMessage{}
+		jsonMessage := websocketClientMessage{}
 
 		err = json.Unmarshal(message, &jsonMessage)
 		if err != nil {
@@ -275,20 +402,20 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 
 		switch jsonMessage.Event {
 		case "update":
-			if jsonMessage.Data.App != nil {
-				app := formatData(jsonMessage.Data.App, strcase.ToSnake)
-				if app["api_key"] == api.App["api_key"] {
-					err := mergo.MapWithOverwrite(&api.App, app)
-					if err != nil {
-						break
-					}
-					go api.sendUpdateEvent([]core.Extension{})
-				}
+			data := updateData{}
+			if err := json.Unmarshal(jsonMessage.Data, &data); err != nil {
+				break
 			}
-			go api.Notify(jsonMessage.Data.Extensions)
+			_, updated := api.getMergedAppMap(data.App, true)
+			if updated {
+				go api.sendUpdateEvent([]core.Extension{})
+			}
+			go api.Notify(data.Extensions)
 
 		case "dispatch":
-
+			go api.notifyClients(func(rootUrl string) (message notification, err error) {
+				return api.getDispatchNotification(jsonMessage.Data, rootUrl)
+			})
 		}
 	}
 }
@@ -360,20 +487,30 @@ type ExtensionsApi struct {
 	updates     sync.Map
 }
 
-type StatusUpdate struct {
-	Event      string           `json:"event"`
-	Extensions []core.Extension `json:"extensions"`
+type notification struct {
+	Event string                 `json:"event"`
+	Data  map[string]interface{} `json:"data"`
 }
 
-type WebsocketData struct {
-	Extensions []core.Extension `json:"extensions"`
+type websocketClientMessage struct {
+	Event string
+	Data  json.RawMessage
+}
+
+type updateData struct {
 	App        core.App         `json:"app"`
+	Extensions []core.Extension `json:"extensions"`
 }
 
-type WebsocketMessage struct {
-	Event   string        `json:"event"`
-	Data    WebsocketData `json:"data"`
-	Version string        `json:"version"`
+type websocketData struct {
+	Extensions []map[string]interface{}
+	App        map[string]interface{}
+}
+
+type websocketMessage struct {
+	Event   string                 `json:"event"`
+	Version string                 `json:"version"`
+	Data    map[string]interface{} `json:"data"`
 }
 
 type Response struct {
@@ -401,6 +538,6 @@ type client struct {
 	close  closeHandler
 }
 
-type notificationHandler func(StatusUpdate)
+type notificationHandler func(notification)
 
 type closeHandler func(code int, text string) error
