@@ -1,10 +1,8 @@
-import {App, ConsoleAction, ExtensionPayload} from '../types';
+import {App, ConsoleAction, ExtensionPayload, DevServerUpdateCall} from '../types';
 
 export interface Console {
   state: ConsoleState;
-  update(
-    extensions: ({uuid: string} & Partial<ExtensionPayload>)[],
-  ): void;
+  update(data: DevServerUpdateCall['data']): void;
   dispatch(acion: ConsoleAction): void;
 }
 

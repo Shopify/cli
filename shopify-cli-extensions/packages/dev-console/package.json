@@ -22,6 +22,8 @@
     "@types/react": "16.14.0",
     "@types/react-dom": "^16.9.11",
     "jest": "^27.1.0",
+    "jest-websocket-mock": "^2.2.1",
+    "mock-socket": "^9.0.5",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
     "tsc": "^2.0.3",

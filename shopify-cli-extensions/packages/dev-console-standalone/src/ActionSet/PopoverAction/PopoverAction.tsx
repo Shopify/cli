@@ -15,16 +15,8 @@ export interface PopoverActionProps extends ActionProps {
 }
 
 export function PopoverAction(props: PopoverActionProps) {
-  const {
-    className,
-    accessibilityLabel,
-    source,
-    onAction,
-    active,
-    onClose,
-    content,
-    loading,
-  } = props;
+  const {className, accessibilityLabel, source, onAction, active, onClose, content, loading} =
+    props;
   const [i18n] = useI18n({
     id: 'PopoverAction',
     fallback: en,
@@ -32,9 +24,7 @@ export function PopoverAction(props: PopoverActionProps) {
 
   const loadingMarkup = (
     <div className={styles.LoadingAction}>
-      <Spinner
-        accessibilityLabel={i18n.translate('loading')}
-        size="small" />
+      <Spinner accessibilityLabel={i18n.translate('loading')} size="small" />
     </div>
   );
   const popoverMarkup = (

@@ -4,10 +4,12 @@ import React, {
   useContext,
   useState,
   useRef,
-  useCallback
+  useMemo,
+  useCallback,
 } from 'react';
 
 import {DevServerCall, DevServerResponse} from '../types';
+
 import {Console, ConsoleState, Listener} from './types';
 import {useConsoleReducer, initialConsoleState} from './reducer';
 
@@ -36,7 +38,7 @@ export function DevConsoleProvider({children, host}: React.PropsWithChildren<{ho
     listenersRef.current = listenersRef.current.concat(listener);
 
     return function unsubscribe() {
-      listenersRef.current = listenersRef.current.filter(aListener => aListener !== listener);
+      listenersRef.current = listenersRef.current.filter((aListener) => aListener !== listener);
     };
   }, []);
 
@@ -48,7 +50,7 @@ export function DevConsoleProvider({children, host}: React.PropsWithChildren<{ho
       if (response.event === 'update' || response.event === 'connected') {
         update(response);
       } else if (response.event === 'dispatch') {
-        listenersRef.current.forEach(listener => listener(response.data));
+        listenersRef.current.forEach((listener) => listener(response.data));
       } else {
         throw new Error(`Unhandled event type ${(response as any).event}`);
       }
@@ -61,20 +63,19 @@ export function DevConsoleProvider({children, host}: React.PropsWithChildren<{ho
 
     return () => {
       websocket.close();
-    }
-  }, []);
+    };
+  }, [host, update]);
 
-  return (
-    <DevConsoleContext.Provider value={{host, state, send, addListener}}>
-      {children}
-    </DevConsoleContext.Provider>
-  );
+  const value = useMemo(() => ({host, state, send, addListener}), [addListener, host, send, state]);
+
+  return <DevConsoleContext.Provider value={value}>{children}</DevConsoleContext.Provider>;
 }
 
-export function useListener(listener: () => void) {
+export function useListener(listener: Listener, deps: React.DependencyList = []) {
   const {addListener} = useContext(DevConsoleContext);
 
-  useEffect(() => addListener(listener), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => addListener(listener), deps);
 }
 
 export function useDevConsole(): Console {
@@ -82,7 +83,7 @@ export function useDevConsole(): Console {
 
   return {
     state,
-    update: (extensions) => send({event: 'update', data: extensions}),
+    update: (data) => send({event: 'update', data}),
     dispatch: (action) => send({event: 'dispatch', data: action}),
   };
 }

@@ -3,11 +3,7 @@
 .OuterContainer {
   height: 100vh;
   background: $background;
-
-  &.DevToolVisible {
-    overflow: auto;
-    // height: calc(100vh - #{$dev-tool-height});
-  }
+  overflow: auto;
 }
 
 .Hidden {
@@ -22,7 +18,6 @@
   color: $text;
   font-family: $dev-tool-font;
   
-  // height: $dev-tool-height;
   overflow: hidden;
   border-radius: 10px 10px 0 0;
 

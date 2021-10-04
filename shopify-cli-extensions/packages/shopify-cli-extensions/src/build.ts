@@ -1,4 +1,5 @@
 import {build as esBuild} from 'esbuild';
+
 import {getConfigs} from './configs';
 
 export interface Options {
@@ -51,6 +52,7 @@ function getPlugins() {
 
 function graphqlAvailable() {
   try {
+    // eslint-disable-next-line babel/no-unused-expressions
     require.resolve('graphql') && require.resolve('graphql-tag');
     return true;
   } catch {

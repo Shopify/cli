@@ -12,13 +12,13 @@ import {useI18n} from '@shopify/react-i18n';
 import copyToClipboard from 'copy-to-clipboard';
 import QRCode from 'qrcode.react';
 import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
-
 import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {useToast} from '@/hooks/useToast';
-import en from './translations/en.json';
 
+// eslint-disable-next-line @shopify/strict-component-boundaries
 import * as rowStyles from '../ExtensionRow/ExtensionRow.css';
 
+import en from './translations/en.json';
 import {Action} from './Action';
 import {PopoverAction} from './PopoverAction';
 import * as styles from './ActionSet.css';
@@ -46,7 +46,6 @@ export function ActionSet(props: ActionSetProps) {
   } = useDevConsoleInternal();
   const hidden = extension.development.hidden;
 
-
   const handleShowHide = useCallback(() => {
     if (hidden) {
       show([extension]);
@@ -55,16 +54,11 @@ export function ActionSet(props: ActionSetProps) {
     }
   }, [extension, hidden, hide, show]);
 
-  const refreshExtension = useCallback(() => refresh([extension]), [
-    extension,
-    refresh,
-  ]);
+  const refreshExtension = useCallback(() => refresh([extension]), [extension, refresh]);
 
   const showToast = useToast();
   const [mobileQRCode, setMobileQRCode] = useState<string | null>(null);
-  const [mobileQRCodeState, setMobileQRCodeState] = useState<
-    null | 'loading' | 'error'
-  >(null);
+  const [mobileQRCodeState, setMobileQRCodeState] = useState<null | 'loading' | 'error'>(null);
 
   const closeMobileQRCodePopover = useCallback(() => {
     setMobileQRCode(null);
@@ -79,7 +73,7 @@ export function ActionSet(props: ActionSetProps) {
       setMobileQRCodeState('error');
     }
     onShowMobileQRCode?.(extension);
-  }, [extension, onShowMobileQRCode]);
+  }, [extension, onShowMobileQRCode, host, app]);
 
   const onButtonClick = useCallback(() => {
     if (mobileQRCode && copyToClipboard(mobileQRCode)) {
@@ -92,14 +86,9 @@ export function ActionSet(props: ActionSetProps) {
   const popoverContent = useMemo(() => {
     if (mobileQRCode) {
       return (
-        <div>
+        <>
           <div className={styles.CopyLink}>
-            <Button
-              icon={DuplicateMinor}
-              plain
-              monochrome
-              onClick={onButtonClick}
-            >
+            <Button icon={DuplicateMinor} plain monochrome onClick={onButtonClick}>
               {i18n.translate('qrcode.copy')}
             </Button>
           </div>
@@ -111,7 +100,7 @@ export function ActionSet(props: ActionSetProps) {
               })}
             </p>
           </div>
-        </div>
+        </>
       );
     }
     if (mobileQRCodeState === 'error') {
@@ -140,11 +129,7 @@ export function ActionSet(props: ActionSetProps) {
           <div className={`${hidden ? rowStyles.ForceVisible : ''}`}>
             <Action
               source={hidden ? HideMinor : ViewMinor}
-              accessibilityLabel={
-                hidden
-                  ? i18n.translate('show')
-                  : i18n.translate('hide')
-              }
+              accessibilityLabel={hidden ? i18n.translate('show') : i18n.translate('hide')}
               onAction={handleShowHide}
               className={className}
             />

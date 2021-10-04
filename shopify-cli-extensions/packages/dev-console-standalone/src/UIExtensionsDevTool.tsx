@@ -9,7 +9,6 @@ import {
 } from '@shopify/polaris-icons';
 import {useI18n} from '@shopify/react-i18n';
 import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
-
 import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {ToastProvider} from '@/hooks/useToast';
 
@@ -17,6 +16,7 @@ import {Checkbox} from './CheckBox';
 import {ExtensionRow} from './ExtensionRow';
 import {Action} from './ActionSet/Action';
 import * as styles from './UIExtensionsDevTool.css';
+// eslint-disable-next-line @shopify/strict-component-boundaries
 import * as actionSetStyles from './ActionSet/ActionSet.css';
 import en from './translations/en.json';
 
@@ -32,9 +32,7 @@ export function UIExtensionsDevTool() {
     id: 'UIExtensionsDevTool',
     fallback: en,
   });
-  const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<
-    Set<string>
-  >(new Set());
+  const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set());
   const {
     state: {extensions},
     refresh,
@@ -54,40 +52,29 @@ export function UIExtensionsDevTool() {
     }
   };
 
-  const toggleSelect = useCallback(
-    (extension: ExtensionPayload) => {
-      setSelectedExtensionsSet(set => {
-        // if delete === false, extension not selected; therefore select it instead
-        if (!set.delete(extension.uuid)) set.add(extension.uuid);
-        return set;
-      })
-    },
-    [],
-  );
+  const toggleSelect = useCallback((extension: ExtensionPayload) => {
+    setSelectedExtensionsSet((set) => {
+      // if delete === false, extension not selected; therefore select it instead
+      if (!set.delete(extension.uuid)) set.add(extension.uuid);
+      return new Set(set);
+    });
+  }, []);
 
   const selectedExtensions = useMemo(
-    () =>
-      extensions.filter((extension) =>
-        selectedExtensionsSet.has(extension.uuid),
-      ),
+    () => extensions.filter((extension) => selectedExtensionsSet.has(extension.uuid)),
     [extensions, selectedExtensionsSet],
   );
 
-  const refreshSelectedExtensions = () =>
-    refresh(selectedExtensions);
+  const refreshSelectedExtensions = () => refresh(selectedExtensions);
 
-  const [
-    activeMobileQRCodeExtension,
-    setActiveMobileQRCodeExtension,
-  ] = useState<ExtensionPayload>();
+  const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] =
+    useState<ExtensionPayload>();
 
   const actionHeaderMarkup = useMemo(() => {
     if (!selectedExtensions.length) return null;
 
     const selectedExtensionsVisible: boolean =
-      selectedExtensions.findIndex(
-        (extension) => !extension.development.hidden,
-      ) !== -1;
+      selectedExtensions.findIndex((extension) => !extension.development.hidden) !== -1;
 
     return (
       <>
@@ -102,25 +89,21 @@ export function UIExtensionsDevTool() {
     );
 
     function toggleViewAction() {
-      return selectedExtensionsVisible
-        ? <Action
-            source={ViewMinor}
-            accessibilityLabel={i18n.translate('bulkActions.hide')}
-            onAction={() => hide(selectedExtensions)}
-          />
-        : <Action
-            source={HideMinor}
-            accessibilityLabel={i18n.translate('bulkActions.show')}
-            onAction={() => show(selectedExtensions)}
-          />
-        ;
+      return selectedExtensionsVisible ? (
+        <Action
+          source={ViewMinor}
+          accessibilityLabel={i18n.translate('bulkActions.hide')}
+          onAction={() => hide(selectedExtensions)}
+        />
+      ) : (
+        <Action
+          source={HideMinor}
+          accessibilityLabel={i18n.translate('bulkActions.show')}
+          onAction={() => show(selectedExtensions)}
+        />
+      );
     }
-  }, [
-    selectedExtensions,
-    show,
-    hide,
-    i18n,
-  ]);
+  }, [selectedExtensions, show, hide, i18n]);
 
   const ConsoleSidenav = () =>
     DISPLAY_SIDENAV ? (
@@ -140,76 +123,72 @@ export function UIExtensionsDevTool() {
     <ToastProvider>
       <div className={styles.OuterContainer}>
         <div className={styles.DevTool}>
-            <header className={styles.Header}>
-              <section className={styles.HeaderLeft}>
-                <div>
-                  <ToolsMajor />
-                </div>
-                <h1>&nbsp;{i18n.translate('title')}</h1>
+          <header className={styles.Header}>
+            <section className={styles.HeaderLeft}>
+              <ToolsMajor />
+              <h1>&nbsp;{i18n.translate('title')}</h1>
+            </section>
+          </header>
+          <main>
+            <ConsoleSidenav />
+            {extensions.length > 0 && (
+              <section className={styles.ExtensionList}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        <Checkbox
+                          label={
+                            allSelected
+                              ? i18n.translate('bulkActions.deselectAll')
+                              : i18n.translate('bulkActions.selectAll')
+                          }
+                          checked={allSelected}
+                          onChange={toggleSelectAll}
+                          labelHidden
+                        />
+                      </th>
+                      <th>{i18n.translate('extensionList.name')}</th>
+                      <th>{i18n.translate('extensionList.type')}</th>
+                      <th>{i18n.translate('extensionList.servedFrom')}</th>
+                      <th>{i18n.translate('extensionList.status')}</th>
+                      <th>
+                        <div className={actionSetStyles.ActionGroup}>
+                          {actionHeaderMarkup}
+                          <Action
+                            source={RefreshMinor}
+                            accessibilityLabel={i18n.translate('extensionList.refresh')}
+                            onAction={refreshSelectedExtensions}
+                          />
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {extensions.map((extension) => {
+                      const uuid = extension.uuid;
+                      return (
+                        <ExtensionRow
+                          key={uuid}
+                          extension={extension}
+                          onSelect={toggleSelect}
+                          selected={selectedExtensionsSet.has(uuid)}
+                          onHighlight={focus}
+                          onClearHighlight={unfocus}
+                          activeMobileQRCode={
+                            activeMobileQRCodeExtension !== undefined &&
+                            activeMobileQRCodeExtension.uuid === uuid
+                          }
+                          onShowMobileQRCode={setActiveMobileQRCodeExtension}
+                        />
+                      );
+                    })}
+                  </tbody>
+                </table>
               </section>
-            </header>
-            <main>
-              <ConsoleSidenav />
-              {extensions.length > 0 && (
-                <section className={styles.ExtensionList}>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>
-                          <Checkbox
-                            label={
-                              allSelected
-                                ? i18n.translate('bulkActions.deselectAll')
-                                : i18n.translate('bulkActions.selectAll')
-                            }
-                            checked={allSelected}
-                            onChange={toggleSelectAll}
-                            labelHidden
-                          />
-                        </th>
-                        <th>{i18n.translate('extensionList.name')}</th>
-                        <th>{i18n.translate('extensionList.type')}</th>
-                        <th>{i18n.translate('extensionList.servedFrom')}</th>
-                        <th>{i18n.translate('extensionList.status')}</th>
-                        <th>
-                          <div className={actionSetStyles.ActionGroup}>
-                            {actionHeaderMarkup}
-                            <Action
-                              source={RefreshMinor}
-                              accessibilityLabel={i18n.translate(
-                                'extensionList.refresh',
-                              )}
-                              onAction={refreshSelectedExtensions}
-                            />
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {extensions.map((extension) => {
-                        const uuid = extension.uuid;
-                        return (
-                          <ExtensionRow
-                            key={uuid}
-                            extension={extension}
-                            onSelect={toggleSelect}
-                            selected={selectedExtensionsSet.has(uuid)}
-                            onHighlight={focus}
-                            onClearHighlight={unfocus}
-                            activeMobileQRCode={
-                              activeMobileQRCodeExtension !== undefined &&
-                              activeMobileQRCodeExtension.uuid === uuid
-                            }
-                            onShowMobileQRCode={setActiveMobileQRCodeExtension}
-                          />
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </section>
-              )}
-            </main>
-          </div>
+            )}
+          </main>
+        </div>
       </div>
     </ToastProvider>
   );

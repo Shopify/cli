@@ -1,27 +1,21 @@
 import React from 'react';
 import {Checkbox} from '@shopify/polaris';
-import {
-  RefreshMinor,
-  ViewMinor,
-  HideMinor,
-  DeleteMinor,
-} from '@shopify/polaris-icons';
 import {mockExtension} from '@shopify/ui-extensions-dev-console/testing';
-
 import {mount} from 'tests/mount';
+import {mockI18n} from 'tests/mock-i18n';
 
 import {UIExtensionsDevTool} from '../UIExtensionsDevTool';
 import {ExtensionRow} from '../ExtensionRow';
 import {Action} from '../ActionSet/Action';
+import en from '../translations/en.json';
+
+const i18n = mockI18n(en);
 
 describe('UIExtensionsDevTool', () => {
   it('renders ExtensionRow based on localStorage', async () => {
     const extensions = [mockExtension()];
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions}}}
-    );
+    const container = await mount(<UIExtensionsDevTool />, {console: {state: {extensions}}});
 
     const rows = container.findAll(ExtensionRow);
 
@@ -36,10 +30,9 @@ describe('UIExtensionsDevTool', () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}}
-    );
+    const container = await mount(<UIExtensionsDevTool />, {
+      console: {state: {extensions: [selectedExtension, unselectedExtension]}},
+    });
 
     container.act(() => {
       container
@@ -47,64 +40,41 @@ describe('UIExtensionsDevTool', () => {
         ?.trigger('onSelect', selectedExtension);
     });
 
-    container.find(Action, {source: RefreshMinor})?.trigger('onAction');
+    container
+      .find(Action, {accessibilityLabel: i18n.translate('extensionList.refresh')})
+      ?.trigger('onAction');
 
-    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
-  });
-
-  it('calls remove with selected extensions', async () => {
-    const selectedExtension = mockExtension();
-    const unselectedExtension = mockExtension();
-
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}},
-    );
-
-    container.act(() => {
-      container
-        .find(ExtensionRow, {extension: selectedExtension})
-        ?.trigger('onSelect', selectedExtension);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      event: 'dispatch',
+      data: {type: 'refresh', payload: [selectedExtension.uuid]},
     });
-
-    container.find(Action, {source: DeleteMinor})?.trigger('onAction');
-
-    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
   });
 
   it('toggles selection of all extensions when select all checkbox is clicked', async () => {
-    const extensions = [
-      mockExtension(),
-      mockExtension(),
-    ];
+    const extensions = [mockExtension(), mockExtension()];
 
-    const container = await mount(<UIExtensionsDevTool />);
+    const container = await mount(<UIExtensionsDevTool />, {console: {state: {extensions}}});
 
     container.act(() => {
       container.find(Checkbox)?.trigger('onChange');
     });
 
-    expect(container.findAll(ExtensionRow, {selected: true})).toHaveLength(
-      extensions.length,
-    );
+    expect(container.findAll(ExtensionRow, {selected: true})).toHaveLength(extensions.length);
 
     container.act(() => {
       container.find(Checkbox)?.trigger('onChange');
     });
 
-    expect(container.findAll(ExtensionRow, {selected: false})).toHaveLength(
-      extensions.length,
-    );
+    expect(container.findAll(ExtensionRow, {selected: false})).toHaveLength(extensions.length);
   });
 
   it('toggles selection of individual extensions when onSelect for a row is triggered', async () => {
     const toggleExtension = mockExtension();
     const otherExtension = mockExtension();
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [toggleExtension, otherExtension]}}}
-    );
+    const container = await mount(<UIExtensionsDevTool />, {
+      console: {state: {extensions: [toggleExtension, otherExtension]}},
+    });
 
     container.act(() => {
       container
@@ -139,14 +109,13 @@ describe('UIExtensionsDevTool', () => {
     });
   });
 
-  it('calls to set focused to true for the current extension and set all others to false when onHighlight for a row is triggered', async () => {
+  it('calls to set focused to true for the current extension', async () => {
     const focusExtension = mockExtension();
     const prevFocusedExtension = mockExtension();
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [focusExtension, prevFocusedExtension]}}}
-    );
+    const container = await mount(<UIExtensionsDevTool />, {
+      console: {state: {extensions: [focusExtension, prevFocusedExtension]}},
+    });
 
     container.act(() => {
       container
@@ -154,31 +123,28 @@ describe('UIExtensionsDevTool', () => {
         ?.trigger('onHighlight', focusExtension);
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith([
-      {...focusExtension, focused: true},
-      {...prevFocusedExtension, focused: false},
-    ]);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {payload: focusExtension.uuid, type: 'focus'},
+      event: 'dispatch',
+    });
   });
 
   it('clear focus state of all extensions when onClearHighlight for a row is triggered', async () => {
     const extension1 = mockExtension({focused: true} as any);
     const extension2 = mockExtension({focused: true} as any);
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [extension1, extension2]}}}
-    );
-
-    container.act(() => {
-      container
-        .find(ExtensionRow, {extension: extension1})
-        ?.trigger('onClearHighlight');
+    const container = await mount(<UIExtensionsDevTool />, {
+      console: {state: {extensions: [extension1, extension2]}},
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith([
-      {...extension1, focused: false},
-      {...extension2, focused: false},
-    ]);
+    container.act(() => {
+      container.find(ExtensionRow, {extension: extension1})?.trigger('onClearHighlight');
+    });
+
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {type: 'unfocus'},
+      event: 'dispatch',
+    });
   });
 
   it('calls show with selected extensions', async () => {
@@ -187,10 +153,9 @@ describe('UIExtensionsDevTool', () => {
 
     const unselectedExtension = mockExtension();
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}}
-    );
+    const container = await mount(<UIExtensionsDevTool />, {
+      console: {state: {extensions: [selectedExtension, unselectedExtension]}},
+    });
 
     container.act(() => {
       container
@@ -199,20 +164,24 @@ describe('UIExtensionsDevTool', () => {
     });
 
     container.act(() => {
-      container.find(Action, {source: HideMinor})?.trigger('onAction');
+      container
+        .find(Action, {accessibilityLabel: i18n.translate('bulkActions.show')})
+        ?.trigger('onAction');
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {extensions: [{development: {hidden: false}, uuid: selectedExtension.uuid}]},
+      event: 'update',
+    });
   });
 
   it('calls hide with selected extensions', async () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
 
-    const container = await mount(
-      <UIExtensionsDevTool />,
-      {console: {state: {extensions: [selectedExtension, unselectedExtension]}}}
-    );
+    const container = await mount(<UIExtensionsDevTool />, {
+      console: {state: {extensions: [selectedExtension, unselectedExtension]}},
+    });
 
     container.act(() => {
       container
@@ -221,9 +190,14 @@ describe('UIExtensionsDevTool', () => {
     });
 
     container.act(() => {
-      container.find(Action, {source: ViewMinor})?.trigger('onAction');
+      container
+        .find(Action, {accessibilityLabel: i18n.translate('bulkActions.hide')})
+        ?.trigger('onAction');
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith([selectedExtension]);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {extensions: [{development: {hidden: true}, uuid: selectedExtension.uuid}]},
+      event: 'update',
+    });
   });
 });

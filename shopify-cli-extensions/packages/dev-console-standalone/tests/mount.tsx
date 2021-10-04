@@ -18,7 +18,10 @@ export const mount = createMount<MountOptions, Context>({
     const context = {
       console: {
         host: 'www.example-host.com:8000/extensions/',
-        state: options.console?.state ?? {app: mockApp(), extensions: mockExtensions()},
+        state: options.console?.state ?? {
+          app: mockApp(),
+          extensions: mockExtensions(),
+        },
         send: options.console?.send ?? jest.fn(),
         addListener: options.console?.addListener ?? jest.fn(),
       },
@@ -27,9 +30,11 @@ export const mount = createMount<MountOptions, Context>({
   },
   render(element, context) {
     const locale = 'en';
+    // eslint-disable-next-line react/jsx-no-constructed-context-values
     const i18nManager = new I18nManager({
       locale,
       onError(error) {
+        // eslint-disable-next-line no-console
         console.log(error);
       },
     });
@@ -37,11 +42,9 @@ export const mount = createMount<MountOptions, Context>({
     return (
       <I18nContext.Provider value={i18nManager}>
         <AppProvider i18n={enTranslations}>
-          <DevConsoleContext.Provider value={context.console}>
-            {element}
-          </DevConsoleContext.Provider>
+          <DevConsoleContext.Provider value={context.console}>{element}</DevConsoleContext.Provider>
         </AppProvider>
       </I18nContext.Provider>
     );
-  }
+  },
 });

@@ -1,5 +1,9 @@
-import {DevConsoleContext, ExtensionPayload, useDevConsole} from '@shopify/ui-extensions-dev-console';
-import { useContext } from 'react';
+import {
+  DevConsoleContext,
+  ExtensionPayload,
+  useDevConsole,
+} from '@shopify/ui-extensions-dev-console';
+import {useContext} from 'react';
 
 export function useDevConsoleInternal() {
   const devConsole = useDevConsole();
@@ -10,17 +14,26 @@ export function useDevConsoleInternal() {
     ...devConsole,
     host,
 
-    // update actions
+    // update events
     hide: (extensions: ExtensionPayload[]) =>
-      update(extensions.map((extension) => ({uuid: extension.uuid, hidden: false}))),
+      update({
+        extensions: extensions.map((extension) => ({
+          uuid: extension.uuid,
+          development: {hidden: true},
+        })),
+      }),
     show: (extensions: ExtensionPayload[]) =>
-      update(extensions.map((extension) => ({uuid: extension.uuid, hidden: true}))),
+      update({
+        extensions: extensions.map((extension) => ({
+          uuid: extension.uuid,
+          development: {hidden: false},
+        })),
+      }),
 
-    // event actions
+    // dispatch events
     refresh: (extensions: ExtensionPayload[]) =>
-      dispatch({type: 'refresh', payload: extensions.map(extension => extension.uuid)}),
-    focus: (extension: ExtensionPayload) =>
-      dispatch({type: 'focus', payload: extension.uuid}),
+      dispatch({type: 'refresh', payload: extensions.map((extension) => extension.uuid)}),
+    focus: (extension: ExtensionPayload) => dispatch({type: 'focus', payload: extension.uuid}),
     unfocus: () => dispatch({type: 'unfocus'}),
   };
 }

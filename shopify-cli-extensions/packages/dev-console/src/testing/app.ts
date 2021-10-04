@@ -9,5 +9,5 @@ export function mockApp(): App {
     icon: {
       transformedSrc: 'www.transformed-src.com',
     },
-  }
-};
+  };
+}

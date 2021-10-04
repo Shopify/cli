@@ -1,23 +1,18 @@
 import React from 'react';
-import {
-  RefreshMinor,
-  ViewMinor,
-  HideMinor,
-  CircleAlertMajor,
-} from '@shopify/polaris-icons';
-import {Icon, Popover} from '@shopify/polaris';
+import {Popover} from '@shopify/polaris';
 import QRCode from 'qrcode.react';
-import {mockExtensions} from '@shopify/ui-extensions-dev-console/testing';
-
+import {mockExtension, mockExtensions} from '@shopify/ui-extensions-dev-console/testing';
 import {mount} from 'tests/mount';
-
 import {ToastProvider} from '@/hooks/useToast';
+import {mockI18n} from 'tests/mock-i18n';
+
+import en from './translations/en.json';
 import {Action} from './Action';
 import {ActionSet} from './ActionSet';
 
 jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
-const defaultExtension = mockExtensions()[0];
+const i18n = mockI18n(en);
 
 describe('ActionSet', () => {
   function Wrapper({children}: React.PropsWithChildren<{}>) {
@@ -25,9 +20,7 @@ describe('ActionSet', () => {
       <ToastProvider>
         <table>
           <tbody>
-            <tr>
-              {children}
-            </tr>
+            <tr>{children}</tr>
           </tbody>
         </table>
       </ToastProvider>
@@ -35,70 +28,89 @@ describe('ActionSet', () => {
   }
 
   it('calls refresh with given extension when refresh button is clicked', async () => {
+    const extension = mockExtension();
+
     const container = await mount(
-      <Wrapper><ActionSet extension={defaultExtension} /></Wrapper>,
+      <Wrapper>
+        <ActionSet extension={extension} />
+      </Wrapper>,
     );
 
-    container.find(Action, {source: RefreshMinor})?.trigger('onAction');
+    container.find(Action, {accessibilityLabel: i18n.translate('refresh')})?.trigger('onAction');
 
-    // refresh
-    expect(container.context.console.send).toHaveBeenCalledWith([defaultExtension]);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {payload: [extension.uuid], type: 'refresh'},
+      event: 'dispatch',
+    });
   });
 
   it('calls show with given extension when show button is clicked', async () => {
-    const extension = {
-      ...defaultExtension,
-      hidden: true,
-    };
+    const extension = mockExtension({development: {hidden: true}});
 
     const container = await mount(
-      <Wrapper><ActionSet extension={extension} /></Wrapper>,
+      <Wrapper>
+        <ActionSet extension={extension} />
+      </Wrapper>,
     );
 
-    container.find(Action, {source: HideMinor})?.trigger('onAction');
+    container.find(Action, {accessibilityLabel: i18n.translate('show')})?.trigger('onAction');
 
-    expect(container.context.console.send).toHaveBeenCalledWith([extension]);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {extensions: [{development: {hidden: false}, uuid: extension.uuid}]},
+      event: 'update',
+    });
   });
 
   it('calls hide with given extension when hide button is clicked', async () => {
-    const extension = {
-      ...defaultExtension,
-      hidden: false,
-    };
+    const extension = mockExtension({development: {hidden: false}});
 
     const container = await mount(
-      <Wrapper><ActionSet extension={extension} /></Wrapper>
+      <Wrapper>
+        <ActionSet extension={extension} />
+      </Wrapper>,
     );
 
-    container.find(Action, {source: ViewMinor})?.trigger('onAction');
+    container.find(Action, {accessibilityLabel: i18n.translate('hide')})?.trigger('onAction');
 
-    expect(container.context.console.send).toHaveBeenCalledWith([extension]);
+    expect(container.context.console.send).toHaveBeenCalledWith({
+      data: {extensions: [{development: {hidden: true}, uuid: extension.uuid}]},
+      event: 'update',
+    });
   });
 
   it('renders QRCode with mobile deep-link url', async () => {
+    const host = 'www.example-host.com:8000/extensions/';
+    const extension = mockExtension();
+
     const container = await mount(
-      <Wrapper><ActionSet activeMobileQRCode extension={defaultExtension} /></Wrapper>,
+      <Wrapper>
+        <ActionSet activeMobileQRCode extension={extension} />
+      </Wrapper>,
+      {console: {host}},
     );
 
     await container.find(Popover)?.find(Action)?.trigger('onAction');
 
     const qrCodeElement = container?.find(QRCode);
 
-    expect(qrCodeElement?.prop('value')).toStrictEqual(
-      'https://shop1.myshopify.io/admin/extensions-dev/mobile',
-    );
+    expect(qrCodeElement?.prop('value')).toStrictEqual(host);
   });
 
   it('renders error popover when failing to generate mobile QR code', async () => {
     const container = await mount(
-      <Wrapper><ActionSet activeMobileQRCode extension={defaultExtension} /></Wrapper>,
+      <Wrapper>
+        <ActionSet activeMobileQRCode extension={mockExtension()} />
+      </Wrapper>,
+      // skip app mock
+      {console: {state: {extensions: mockExtensions()}}},
     );
 
-    await container.find(Popover)?.find(Action)?.trigger('onAction');
+    await container
+      .find(Action, {accessibilityLabel: i18n.translate('qrcode.action')})
+      ?.trigger('onAction');
 
-    expect(container).toContainReactComponent(Icon, {
-      source: CircleAlertMajor,
-      color: 'subdued',
+    expect(container).toContainReactComponent('p', {
+      children: i18n.translate('qrcode.loadError'),
     });
   });
 });

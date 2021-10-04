@@ -10,12 +10,7 @@ export interface ActionProps {
   onAction: () => void;
 }
 
-export function Action({
-  accessibilityLabel,
-  className,
-  onAction,
-  source,
-}: ActionProps) {
+export function Action({accessibilityLabel, className, onAction, source}: ActionProps) {
   const onClick = (event: MouseEvent) => {
     event.stopPropagation();
     onAction();

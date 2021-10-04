@@ -1,6 +1,6 @@
 {
   "statuses": {
-    "Connected": "Connected",
+    "success": "Connected",
     "Disconnected": "Disconnected",
     "BuildError": "Build Error"
   }

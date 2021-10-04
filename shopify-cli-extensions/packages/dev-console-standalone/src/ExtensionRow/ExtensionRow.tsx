@@ -30,12 +30,11 @@ export function ExtensionRow({
   });
   const {
     assets,
-    development: {hidden, status}
+    development: {hidden, status},
   } = extension;
 
-  const name = assets[0].name;
+  const {name, url: scriptUrl} = assets.main;
 
-  const scriptUrl = assets[0].url;
   const scriptHost = useMemo(() => {
     if (!scriptUrl) return null;
     const url = new URL(scriptUrl.toString());
@@ -51,7 +50,7 @@ export function ExtensionRow({
   );
 
   const textClass = hidden ? styles.Hidden : undefined;
-  const statusClass = status ? (styles as any)[status] : styles.BuildError;
+  const statusClass = status ? (styles as any)[status] : styles.error;
 
   return (
     <tr

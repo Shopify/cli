@@ -2,3 +2,4 @@ shopify-extensions
 node_modules
 .DS_Store
 tmp/
+yarn-error.log

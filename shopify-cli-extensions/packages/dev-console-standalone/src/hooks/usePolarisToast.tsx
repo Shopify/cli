@@ -3,14 +3,9 @@
 import React, {ComponentPropsWithoutRef} from 'react';
 import {Toast as PolarisToast} from '@shopify/polaris';
 
-export type ToastOptions = Partial<
-  ComponentPropsWithoutRef<typeof PolarisToast>
->;
+export type ToastOptions = Partial<ComponentPropsWithoutRef<typeof PolarisToast>>;
 
-export function usePolarisToast(): [
-  React.ComponentType,
-  (toast?: ToastOptions) => void,
-] {
+export function usePolarisToast(): [React.ComponentType, (toast?: ToastOptions) => void] {
   const [toast, setToast] = React.useState<ToastOptions | null>(null);
 
   const remove = React.useCallback(() => {

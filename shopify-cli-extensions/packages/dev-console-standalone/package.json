@@ -12,8 +12,8 @@
   "dependencies": {
     "@shopify/polaris": "^6.6.0",
     "@shopify/polaris-icons": "^4.6.2",
-    "@shopify/ui-extensions-dev-console": "0.0.0",
     "@shopify/react-i18n": "^6.1.0",
+    "@shopify/ui-extensions-dev-console": "0.0.0",
     "@vanilla-extract/css": "^1.2.3",
     "@vanilla-extract/vite-plugin": "^1.2.0",
     "copy-to-clipboard": "^3.3.1",

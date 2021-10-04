@@ -50,16 +50,16 @@
   border-radius: 10px;
   padding: 0.25rem 1rem 0.5rem;
   white-space: nowrap;
+}
 
-  &.Connected {
-    background: $connected;
-  }
+.success {
+  background: $connected;
+}
 
-  &.Disconnected {
-    background: $disconnected;
-  }
+.disconnected {
+  background: $disconnected;
+}
 
-  &.BuildError {
-    background: $error;
-  }
+.error {
+  background: $error;
 }

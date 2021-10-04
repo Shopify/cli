@@ -1,5 +1,6 @@
-import {border, color, font} from './theme.css';
 import {style, globalStyle} from '@vanilla-extract/css';
+
+import {border, color, font} from './theme.css';
 
 export const OuterContainer = style({
   height: '100vh',
@@ -39,7 +40,6 @@ export const Header = style({
 
 globalStyle(`${Header} svg`, {fill: color.text});
 
-// TODO: What does this do?
 export const Cancel = style({
   background: 'transparent',
   border: 'none',
@@ -109,6 +109,6 @@ globalStyle(`${ExtensionList} th`, {
   top: 0,
   zIndex: 2,
   padding: '1rem',
-  background: color.background
+  background: color.background,
 });
 globalStyle(`${ExtensionList} svg`, {fill: color.subdued});

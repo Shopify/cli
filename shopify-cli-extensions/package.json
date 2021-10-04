@@ -1,5 +1,14 @@
 {
   "name": "shopify-cli-extensions",
   "private": true,
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe"
+  },
+  "devDependencies": {
+    "@shopify/eslint-plugin": "^40.4.0",
+    "eslint": "^7.32.0"
+  }
 }

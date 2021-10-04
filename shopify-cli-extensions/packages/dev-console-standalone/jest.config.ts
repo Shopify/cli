@@ -10,7 +10,7 @@ const config: Config.InitialOptions = {
     },
   },
 
-  setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 
@@ -26,9 +26,9 @@ const config: Config.InitialOptions = {
   moduleDirectories: ['node_modules', 'src'],
 
   transform: {
-    "^.+\\.css.ts$": "<rootDir>/tests/css-transform.js",
-    "^.+\\.(ts|tsx)$": "ts-jest",
-  }
+    '^.+\\.css.ts$': '<rootDir>/tests/css-transform.js',
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
 };
 
 export default config;

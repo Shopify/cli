@@ -1,5 +1,6 @@
-import {load} from 'js-yaml';
 import {readFileSync} from 'fs';
+
+import {load} from 'js-yaml';
 
 export interface CommandOptions {
   env?: {[key: string]: string};
@@ -51,8 +52,8 @@ export function getConfigs() {
       throw new Error('Invalid configuration');
     }
     return jsonConfigs(configs);
-  } catch (e) {
-    console.log(`Failed with error: ${e}`);
+  } catch (error) {
+    console.log(`Failed with error: ${error}`);
     process.exit(1);
   }
 }
@@ -70,7 +71,7 @@ function isValidConfigs(
     const isRequired = requiredConfigs[key] !== false;
     const value = configs[key];
     if ((value === undefined || value === null) && isRequired) {
-      throw `Invalid configuration. Missing \`${paths.concat(key).join('.')}\``;
+      throw new Error(`Invalid configuration. Missing \`${paths.concat(key).join('.')}\``);
     }
     if (!Array.isArray(value) && typeof value === 'object') {
       isValidConfigs(value, requiredConfigs[key] as RequiredConfigs, paths.concat(key));
@@ -99,7 +100,7 @@ function jsonConfigs<T extends Indexable>(
       [formattedKey]: jsonConfigs(
         value,
         paths.concat(key),
-        shouldReserveKey ? (k) => k : formatter,
+        shouldReserveKey ? (key) => key : formatter,
       ),
     };
   }, {} as T);

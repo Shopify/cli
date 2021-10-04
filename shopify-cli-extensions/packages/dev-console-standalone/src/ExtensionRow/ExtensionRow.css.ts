@@ -11,10 +11,12 @@ export const Url = style({color: color.text});
 export const DevToolRow = style({
   borderBottom: `1px solid ${color.dark}`,
 
-  selectors: {  
+  selectors: {
     '&:hover': {
       cursor: 'pointer',
-      backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% - 0.6rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:%23${raw.color.backgroundHover.slice(1)};' /></svg>")`,
+      backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% - 0.6rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:%23${raw.color.backgroundHover.slice(
+        1,
+      )};' /></svg>")`,
     },
   },
 });
@@ -34,9 +36,9 @@ export const Hidden = style({
 
 globalStyle(`${Hidden} ${Url}`, {color: color.subdued});
 
-export const Connected = style({background: color.connected});
-export const Disconnected = style({background: color.disconnected});
-export const BuildError = style({background: color.error});
+export const success = style({background: color.connected});
+export const disconnected = style({background: color.disconnected});
+export const error = style({background: color.error});
 
 export const Status = style({
   fontSize: '13px',
