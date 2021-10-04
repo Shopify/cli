@@ -2,6 +2,7 @@ package core
 
 import (
 	"io"
+	"reflect"
 
 	"gopkg.in/yaml.v3"
 )
@@ -75,7 +76,6 @@ type Development struct {
 	Resource Url               `json:"resource"`
 	Renderer Renderer          `json:"-" yaml:"renderer"`
 	Hidden   bool              `json:"hidden"`
-	Focused  bool              `json:"focused"`
 	BuildDir string            `json:"-" yaml:"build_dir"`
 	RootDir  string            `json:"-" yaml:"root_dir"`
 	Template string            `json:"-"`
@@ -101,4 +101,14 @@ type App map[string]interface{}
 
 type Url struct {
 	Url string `json:"url" yaml:"url"`
+}
+
+func (t Extension) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	if typ.Kind() == reflect.Bool {
+		return func(dst, src reflect.Value) error {
+			dst.SetBool(src.Bool())
+			return nil
+		}
+	}
+	return nil
 }

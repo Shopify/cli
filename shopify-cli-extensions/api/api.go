@@ -59,7 +59,8 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 	for _, extension := range extensions {
 		updateData, found := api.updates.Load(extension.UUID)
 		if found {
-			if err := mergo.MergeWithOverwrite(&updateData, &extensions); err != nil {
+			castedData := updateData.(core.Extension)
+			if err := mergeWithOverwrite(&castedData, &extensions); err != nil {
 				log.Printf("failed to merge update data %v", err)
 			}
 		} else {
@@ -71,7 +72,8 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 	for index := range api.Extensions {
 		updateData, found := api.updates.LoadAndDelete(api.Extensions[index].UUID)
 		if found {
-			err := mergo.MergeWithOverwrite(&api.Extensions[index], updateData)
+			castedData := updateData.(core.Extension)
+			err := mergeWithOverwrite(&api.Extensions[index], &castedData)
 			if err != nil {
 				log.Printf("failed to merge update data %v", err)
 			}
@@ -276,7 +278,10 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 			if jsonMessage.Data.App != nil {
 				app := formatData(jsonMessage.Data.App, strcase.ToSnake)
 				if app["api_key"] == api.App["api_key"] {
-					mergeData(api.App, app)
+					err := mergo.MapWithOverwrite(&api.App, app)
+					if err != nil {
+						break
+					}
 					go api.sendUpdateEvent([]core.Extension{})
 				}
 			}
@@ -290,7 +295,7 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 
 func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 	extension := core.Extension{}
-	err := mergo.MergeWithOverwrite(&extension, &original)
+	err := mergeWithOverwrite(&extension, &original)
 	if err != nil {
 		return original
 	}
@@ -320,12 +325,6 @@ func isSecureRequest(r *http.Request) bool {
 
 }
 
-func mergeData(source map[string]interface{}, data map[string]interface{}) {
-	forEachValueInMap(data, func(key string, value interface{}) {
-		source[key] = value
-	})
-}
-
 func formatData(data map[string]interface{}, formatter func(str string) string) map[string]interface{} {
 	formattedData := make(map[string]interface{})
 	forEachValueInMap(data, func(key string, value interface{}) {
@@ -342,6 +341,15 @@ func forEachValueInMap(data map[string]interface{}, onEachValue func(key string,
 	for entry := range keys {
 		onEachValue(keys[entry], data[keys[entry]])
 	}
+}
+
+func mergeWithOverwrite(source interface{}, destination interface{}) error {
+	// Allow overwriting existing data and allow setting booleans to false
+	// There is a weird quirk in the library where false is treated as empty
+	// We need to use a custom transformer to fix this issue because universally allowing
+	// overwriting with empty values leads to unexpected results overriding arrays and maps
+	// https://github.com/imdario/mergo/issues/89#issuecomment-562954181
+	return mergo.Merge(source, destination, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
 }
 
 type ExtensionsApi struct {
