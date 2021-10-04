@@ -6,7 +6,9 @@ extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: checkout_ui_extension
     user:
-      metafields: []
+      metafields:
+        - namespace: my-namespace
+          key: my-key
     development:
       root_dir: "testdata"
       build_dir: "build"
@@ -15,7 +17,9 @@ extensions:
   - uuid: 00000000-0000-0000-0000-000000000001
     type: checkout_ui_extension
     user:
-      metafields: []
+      metafields:
+        - namespace: my-namespace
+          key: my-key
     development:
       root_dir: "testdata"
       build_dir: "build"

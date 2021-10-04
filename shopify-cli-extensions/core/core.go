@@ -7,8 +7,11 @@ import (
 )
 
 func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
-	for index := range config.Extensions {
-		config.Extensions[index].Assets = make(map[string]Asset)
+	// Create a copy so we don't mutate the configs
+	extensions := []Extension{}
+	for _, extension := range config.Extensions {
+		extension.Assets = make(map[string]Asset)
+		extensions = append(extensions, extension)
 	}
 	// TODO: Improve this when we need to read more app configs,
 	// for now we only know and care about api_key
@@ -18,7 +21,7 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 	service := ExtensionService{
 		App:        app,
 		Version:    "0.1.0",
-		Extensions: config.Extensions,
+		Extensions: extensions,
 		Port:       config.Port,
 		Store:      config.Store,
 	}
