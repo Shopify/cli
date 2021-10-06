@@ -3,14 +3,14 @@ import {createMount} from '@shopify/react-testing';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
-import {DevConsoleContext, DevConsoleContextValue} from '@shopify/ui-extensions-dev-console';
+import {DevServerContext, DevServerContextValue} from '@shopify/ui-extensions-dev-console';
 import {mockApp, mockExtensions} from '@shopify/ui-extensions-dev-console/testing';
 
 interface MountOptions {
-  console?: Partial<DevConsoleContextValue>;
+  console?: Partial<DevServerContextValue>;
 }
 interface Context {
-  console: DevConsoleContextValue;
+  console: DevServerContextValue;
 }
 
 export const mount = createMount<MountOptions, Context>({
@@ -18,10 +18,8 @@ export const mount = createMount<MountOptions, Context>({
     const context = {
       console: {
         host: 'www.example-host.com:8000/extensions/',
-        state: options.console?.state ?? {
-          app: mockApp(),
-          extensions: mockExtensions(),
-        },
+        app: options.console && 'app' in options.console ? options.console.app : mockApp(),
+        extensions: options.console?.extensions ?? mockExtensions(),
         send: options.console?.send ?? jest.fn(),
         addListener: options.console?.addListener ?? jest.fn(),
       },
@@ -42,7 +40,7 @@ export const mount = createMount<MountOptions, Context>({
     return (
       <I18nContext.Provider value={i18nManager}>
         <AppProvider i18n={enTranslations}>
-          <DevConsoleContext.Provider value={context.console}>{element}</DevConsoleContext.Provider>
+          <DevServerContext.Provider value={context.console}>{element}</DevServerContext.Provider>
         </AppProvider>
       </I18nContext.Provider>
     );

@@ -5,7 +5,7 @@ import {useI18n} from '@shopify/react-i18n';
 import {Action, ActionProps} from '../Action';
 
 import en from './translations/en.json';
-import * as styles from './PopoverAction.css';
+import * as styles from './PopoverAction.module.scss';
 
 export interface PopoverActionProps extends ActionProps {
   active: boolean;

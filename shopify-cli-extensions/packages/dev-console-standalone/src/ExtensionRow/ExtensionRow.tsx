@@ -5,7 +5,7 @@ import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
 import {Checkbox} from '../CheckBox';
 import {ActionSet, ActionSetProps} from '../ActionSet';
 
-import * as styles from './ExtensionRow.css';
+import * as styles from './ExtensionRow.module.scss';
 import en from './translations/en.json';
 
 export type ExtensionRowProps = {

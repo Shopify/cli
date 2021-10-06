@@ -5,8 +5,8 @@ import {AppProvider} from '@shopify/polaris';
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
 import {DevConsoleProvider} from '@shopify/ui-extensions-dev-console';
 
-import * as styles from './theme.css';
-import {UIExtensionsDevTool} from './UIExtensionsDevTool';
+import * as styles from './theme.module.css';
+import {DevConsole} from './DevConsole';
 
 function App() {
   const locale = 'en';
@@ -27,7 +27,7 @@ function App() {
       <I18nContext.Provider value={i18nManager}>
         <AppProvider i18n={enTranslations}>
           <DevConsoleProvider host="ws://localhost:8000/extensions/">
-            <UIExtensionsDevTool />
+            <DevConsole />
           </DevConsoleProvider>
         </AppProvider>
       </I18nContext.Provider>

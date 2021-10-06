@@ -1,22 +1,16 @@
-@import '../theme';
-
 .DevToolRow {
-  border-bottom: 1px solid $dark;
+  border-bottom: 1px solid var(--dc-dark);
 
   td {
     padding: 1rem;
   }
 
-  .ActionSet,
   label {
     vertical-align: middle;
   }
 
-  .ActionSet {
-    visibility: hidden;
-  }
-
   &:hover {
+    $background-hover: #4e4f51;
     cursor: pointer;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% - 0.6rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
 
@@ -26,40 +20,47 @@
   }
 
   .Url {
-    color: $text;
+    color: var(--dc-text);
   }
 }
 
-.ForceVisible {
-  .ActionSet {
-    visibility: visible;
-  }
+.ActionSet {
+  vertical-align: middle;
+  visibility: hidden;
+} 
+
+.ForceVisible .ActionSet {
+  visibility: visible;
 }
 
 .Hidden {
   text-decoration: line-through;
-  color: $subdued;
+  color: var(--dc-subdued);
 
   .Url {
-    color: $subdued;
+    color: var(--dc-subdued);
   }
 }
 
 .Status {
+  --dc-connected: #00a47c;
+  --dc-disconnected: #b98900;
+  --dc-error: #d92800;
+
   font-size: 13px;
-  border-radius: 10px;
+  border-radius: var(--dc-border-radius);
   padding: 0.25rem 1rem 0.5rem;
   white-space: nowrap;
 }
 
 .success {
-  background: $connected;
+  background: var(--dc-connected);
 }
 
 .disconnected {
-  background: $disconnected;
+  background: var(--dc-disconnected);
 }
 
 .error {
-  background: $error;
+  background: var(--dc-error);
 }

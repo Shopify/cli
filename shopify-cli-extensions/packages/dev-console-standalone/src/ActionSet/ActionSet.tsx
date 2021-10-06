@@ -16,12 +16,12 @@ import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {useToast} from '@/hooks/useToast';
 
 // eslint-disable-next-line @shopify/strict-component-boundaries
-import * as rowStyles from '../ExtensionRow/ExtensionRow.css';
+import * as rowStyles from '../ExtensionRow/ExtensionRow.module.scss';
 
 import en from './translations/en.json';
 import {Action} from './Action';
 import {PopoverAction} from './PopoverAction';
-import * as styles from './ActionSet.css';
+import * as styles from './ActionSet.module.scss';
 
 export interface ActionSetProps {
   className?: string;
@@ -37,13 +37,7 @@ export function ActionSet(props: ActionSetProps) {
     fallback: en,
   });
   const {extension, className, activeMobileQRCode, onShowMobileQRCode} = props;
-  const {
-    state: {app},
-    host,
-    refresh,
-    hide,
-    show,
-  } = useDevConsoleInternal();
+  const {app, host, refresh, hide, show} = useDevConsoleInternal();
   const hidden = extension.development.hidden;
 
   const handleShowHide = useCallback(() => {

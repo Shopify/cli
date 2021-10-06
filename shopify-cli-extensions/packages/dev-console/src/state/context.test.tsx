@@ -66,7 +66,7 @@ describe('useDevConsole()', () => {
       server.server.emit('message', JSON.stringify(data));
     });
 
-    expect(devConsole.state.extensions).toStrictEqual(extensions);
+    expect(devConsole.extensions).toStrictEqual(extensions);
 
     destroy();
   });
@@ -92,7 +92,7 @@ describe('useDevConsole()', () => {
       server.server.emit('message', JSON.stringify(updateData));
     });
 
-    expect(devConsole.state.extensions).toStrictEqual([firstExtension, updatedExtension]);
+    expect(devConsole.extensions).toStrictEqual([firstExtension, updatedExtension]);
 
     destroy();
   });

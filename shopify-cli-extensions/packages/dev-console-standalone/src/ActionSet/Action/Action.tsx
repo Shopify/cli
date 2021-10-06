@@ -1,7 +1,7 @@
 import React, {MouseEvent} from 'react';
 import {Icon, IconSource} from '@shopify/polaris';
 
-import * as styles from './Action.css';
+import * as styles from './Action.module.scss';
 
 export interface ActionProps {
   className?: string;

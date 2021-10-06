@@ -101,8 +101,7 @@ describe('ActionSet', () => {
       <Wrapper>
         <ActionSet activeMobileQRCode extension={mockExtension()} />
       </Wrapper>,
-      // skip app mock
-      {console: {state: {extensions: mockExtensions()}}},
+      {console: {app: undefined, extensions: mockExtensions()}},
     );
 
     await container

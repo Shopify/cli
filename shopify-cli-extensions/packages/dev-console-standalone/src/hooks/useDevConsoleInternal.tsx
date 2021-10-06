@@ -1,17 +1,17 @@
 import {
-  DevConsoleContext,
+  DevServerContext,
   ExtensionPayload,
   useDevConsole,
 } from '@shopify/ui-extensions-dev-console';
 import {useContext} from 'react';
 
 export function useDevConsoleInternal() {
-  const devConsole = useDevConsole();
-  const {host} = useContext(DevConsoleContext);
-  const {dispatch, update} = devConsole;
+  const devServer = useDevConsole();
+  const {host} = useContext(DevServerContext);
+  const {dispatch, update} = devServer;
 
   return {
-    ...devConsole,
+    ...devServer,
     host,
 
     // update events

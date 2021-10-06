@@ -23,11 +23,6 @@ export type DevServerCall =
       data: ConsoleAction;
     };
 
-export interface DevServerUpdateResponse {
-  event: 'update' | 'connected';
-  data: {extensions?: ExtensionPayload[]; app?: App};
-}
-
 export type DevServerResponse =
   | {
       event: 'update' | 'connected';

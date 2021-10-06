@@ -1,7 +1,8 @@
 import {App, ConsoleAction, ExtensionPayload, DevServerUpdateCall} from '../types';
 
 export interface Console {
-  state: ConsoleState;
+  app?: App;
+  extensions: ExtensionPayload[];
   update(data: DevServerUpdateCall['data']): void;
   dispatch(acion: ConsoleAction): void;
 }

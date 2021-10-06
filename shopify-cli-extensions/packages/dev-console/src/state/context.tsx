@@ -8,23 +8,24 @@ import React, {
   useCallback,
 } from 'react';
 
-import {DevServerCall, DevServerResponse} from '../types';
+import {App, DevServerCall, DevServerResponse, ExtensionPayload} from '../types';
 
-import {Console, ConsoleState, Listener} from './types';
+import {Console, Listener} from './types';
 import {useConsoleReducer, initialConsoleState} from './reducer';
 
 type UnsubscribeFn = () => void;
 
-export interface DevConsoleContextValue {
+export interface DevServerContextValue {
   host: string;
-  state: ConsoleState;
+  app?: App;
+  extensions: ExtensionPayload[];
   send: (data: DevServerCall) => void;
   addListener: (listener: Listener) => UnsubscribeFn;
 }
 
-export const DevConsoleContext = createContext<DevConsoleContextValue>({
+export const DevServerContext = createContext<DevServerContextValue>({
   host: '',
-  state: initialConsoleState,
+  ...initialConsoleState,
   send: noop,
   addListener: (_: any) => () => {},
 });
@@ -66,23 +67,27 @@ export function DevConsoleProvider({children, host}: React.PropsWithChildren<{ho
     };
   }, [host, update]);
 
-  const value = useMemo(() => ({host, state, send, addListener}), [addListener, host, send, state]);
+  const value = useMemo(
+    () => ({host, ...state, send, addListener}),
+    [addListener, host, send, state],
+  );
 
-  return <DevConsoleContext.Provider value={value}>{children}</DevConsoleContext.Provider>;
+  return <DevServerContext.Provider value={value}>{children}</DevServerContext.Provider>;
 }
 
 export function useListener(listener: Listener, deps: React.DependencyList = []) {
-  const {addListener} = useContext(DevConsoleContext);
+  const {addListener} = useContext(DevServerContext);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => addListener(listener), deps);
 }
 
 export function useDevConsole(): Console {
-  const {state, send} = useContext(DevConsoleContext);
+  const {extensions, app, send} = useContext(DevServerContext);
 
   return {
-    state,
+    app,
+    extensions,
     update: (data) => send({event: 'update', data}),
     dispatch: (action) => send({event: 'dispatch', data: action}),
   };

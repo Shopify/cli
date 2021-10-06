@@ -9,8 +9,7 @@
     "clean": "git clean --exclude node_modules -xdf ./"
   },
   "dependencies": {
-    "@shopify/react-i18n": "^6.1.0",
-    "@vanilla-extract/vite-plugin": "^1.2.0"
+    "@shopify/react-i18n": "^6.1.0"
   },
   "peerDependencies": {
     "react": "16.14.0"

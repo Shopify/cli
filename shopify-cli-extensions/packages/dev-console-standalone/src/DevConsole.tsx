@@ -15,9 +15,9 @@ import {ToastProvider} from '@/hooks/useToast';
 import {Checkbox} from './CheckBox';
 import {ExtensionRow} from './ExtensionRow';
 import {Action} from './ActionSet/Action';
-import * as styles from './UIExtensionsDevTool.css';
+import * as styles from './DevConsole.module.scss';
 // eslint-disable-next-line @shopify/strict-component-boundaries
-import * as actionSetStyles from './ActionSet/ActionSet.css';
+import * as actionSetStyles from './ActionSet/ActionSet.module.scss';
 import en from './translations/en.json';
 
 // Hiding content until there are more options in the side nav
@@ -27,20 +27,13 @@ function getUuid({uuid}: {uuid: string}) {
   return uuid;
 }
 
-export function UIExtensionsDevTool() {
+export function DevConsole() {
   const [i18n] = useI18n({
-    id: 'UIExtensionsDevTool',
+    id: 'DevConsole',
     fallback: en,
   });
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set());
-  const {
-    state: {extensions},
-    refresh,
-    show,
-    hide,
-    focus,
-    unfocus,
-  } = useDevConsoleInternal();
+  const {extensions, refresh, show, hide, focus, unfocus} = useDevConsoleInternal();
 
   const allSelected = selectedExtensionsSet.size === extensions.length;
 

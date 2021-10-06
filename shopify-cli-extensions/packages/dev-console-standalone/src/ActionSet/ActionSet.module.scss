@@ -1,12 +1,10 @@
-@import '../theme';
-
 .CopyLink {
-  font-family: $dev-tool-font;
+  font-family: var(--dc-font);
   text-align: right;
 }
 
 .PopoverContent {
-  font-family: $dev-tool-font;
+  font-family: var(--dc-font);
   width: 128px;
   word-wrap: break-word;
 }

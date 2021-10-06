@@ -4,18 +4,18 @@ import {mockExtension} from '@shopify/ui-extensions-dev-console/testing';
 import {mount} from 'tests/mount';
 import {mockI18n} from 'tests/mock-i18n';
 
-import {UIExtensionsDevTool} from '../UIExtensionsDevTool';
+import {DevConsole} from '../DevConsole';
 import {ExtensionRow} from '../ExtensionRow';
 import {Action} from '../ActionSet/Action';
 import en from '../translations/en.json';
 
 const i18n = mockI18n(en);
 
-describe('UIExtensionsDevTool', () => {
+describe('DevConsole', () => {
   it('renders ExtensionRow based on localStorage', async () => {
     const extensions = [mockExtension()];
 
-    const container = await mount(<UIExtensionsDevTool />, {console: {state: {extensions}}});
+    const container = await mount(<DevConsole />, {console: {extensions}});
 
     const rows = container.findAll(ExtensionRow);
 
@@ -30,8 +30,8 @@ describe('UIExtensionsDevTool', () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
 
-    const container = await mount(<UIExtensionsDevTool />, {
-      console: {state: {extensions: [selectedExtension, unselectedExtension]}},
+    const container = await mount(<DevConsole />, {
+      console: {extensions: [selectedExtension, unselectedExtension]},
     });
 
     container.act(() => {
@@ -53,7 +53,7 @@ describe('UIExtensionsDevTool', () => {
   it('toggles selection of all extensions when select all checkbox is clicked', async () => {
     const extensions = [mockExtension(), mockExtension()];
 
-    const container = await mount(<UIExtensionsDevTool />, {console: {state: {extensions}}});
+    const container = await mount(<DevConsole />, {console: {extensions}});
 
     container.act(() => {
       container.find(Checkbox)?.trigger('onChange');
@@ -72,8 +72,8 @@ describe('UIExtensionsDevTool', () => {
     const toggleExtension = mockExtension();
     const otherExtension = mockExtension();
 
-    const container = await mount(<UIExtensionsDevTool />, {
-      console: {state: {extensions: [toggleExtension, otherExtension]}},
+    const container = await mount(<DevConsole />, {
+      console: {extensions: [toggleExtension, otherExtension]},
     });
 
     container.act(() => {
@@ -113,8 +113,8 @@ describe('UIExtensionsDevTool', () => {
     const focusExtension = mockExtension();
     const prevFocusedExtension = mockExtension();
 
-    const container = await mount(<UIExtensionsDevTool />, {
-      console: {state: {extensions: [focusExtension, prevFocusedExtension]}},
+    const container = await mount(<DevConsole />, {
+      console: {extensions: [focusExtension, prevFocusedExtension]},
     });
 
     container.act(() => {
@@ -133,8 +133,8 @@ describe('UIExtensionsDevTool', () => {
     const extension1 = mockExtension({focused: true} as any);
     const extension2 = mockExtension({focused: true} as any);
 
-    const container = await mount(<UIExtensionsDevTool />, {
-      console: {state: {extensions: [extension1, extension2]}},
+    const container = await mount(<DevConsole />, {
+      console: {extensions: [extension1, extension2]},
     });
 
     container.act(() => {
@@ -153,8 +153,8 @@ describe('UIExtensionsDevTool', () => {
 
     const unselectedExtension = mockExtension();
 
-    const container = await mount(<UIExtensionsDevTool />, {
-      console: {state: {extensions: [selectedExtension, unselectedExtension]}},
+    const container = await mount(<DevConsole />, {
+      console: {extensions: [selectedExtension, unselectedExtension]},
     });
 
     container.act(() => {
@@ -179,8 +179,8 @@ describe('UIExtensionsDevTool', () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
 
-    const container = await mount(<UIExtensionsDevTool />, {
-      console: {state: {extensions: [selectedExtension, unselectedExtension]}},
+    const container = await mount(<DevConsole />, {
+      console: {extensions: [selectedExtension, unselectedExtension]},
     });
 
     container.act(() => {

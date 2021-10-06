@@ -1,8 +1,6 @@
-@import './theme';
-
 .OuterContainer {
   height: 100vh;
-  background: $background;
+  background: var(--dc-background);
   overflow: auto;
 }
 
@@ -15,11 +13,11 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  color: $text;
-  font-family: $dev-tool-font;
+  color: var(--dc-text);
+  font-family: var(--dc-font);
   
   overflow: hidden;
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 
   h1 {
     font-weight: 700;
@@ -37,13 +35,13 @@
 }
 
 .Header {
-  border-bottom: 1px solid $dark;
+  border-bottom: 1px solid var(--dc-dark);
   display: flex;
   justify-content: space-between;
   padding: 1.5rem 2rem 1rem;
 
   svg {
-    fill: $text;
+    fill: var(--dc-text);
   }
 
   .HeaderLeft {
@@ -59,7 +57,7 @@
 }
 
 .SideBar {
-  background: $dark;
+  background: var(--dc-dark);
   width: 24rem;
 
   ul {
@@ -68,7 +66,7 @@
   }
 
   svg {
-    fill: $text;
+    fill: var(--dc-text);
   }
 }
 
@@ -76,14 +74,14 @@
   position: relative;
   margin: 0.5rem 1rem;
   padding: 0.5rem 1rem;
-  border-radius: 10px;
+  border-radius: var(--dc-border-radius);
   display: flex;
   align-items: center;
 
   &:focus,
   &:hover {
-    background: $background;
-    color: $active;
+    background: var(--dc-background);
+    color: var(--dc-active);
     cursor: pointer;
 
     &::before {
@@ -92,13 +90,13 @@
       left: -1rem;
       width: 3px;
       height: 3rem;
-      background: $active;
+      background: var(--dc-active);
       border-radius: 4px;
       margin-right: 1rem;
     }
 
     svg {
-      fill: $active;
+      fill: var(--dc-active);
     }
   }
 }
@@ -115,12 +113,12 @@
   }
 
   hr {
-    color: $subdued;
+    color: var(--dc-subdued);
   }
 
   tr {
     line-height: 3rem;
-    border-bottom: 1px solid $dark;
+    border-bottom: 1px solid var(--dc-dark);
   }
 
   th {
@@ -128,11 +126,11 @@
     top: 0;
     z-index: 2;
     padding: 1rem;
-    background: $background;
+    background: var(--dc-background);
   }
 
   svg {
-    fill: $subdued;
+    fill: var(--dc-subdued);
   }
 }
 
