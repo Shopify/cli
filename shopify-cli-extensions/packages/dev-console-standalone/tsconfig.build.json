@@ -2,12 +2,11 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "tests/*": ["tests/*"],
       "@/*": ["src/*"],
-      "@shopify/ui-extensions-dev-console/testing": ["../dev-console/src/testing"],
       "@shopify/ui-extensions-dev-console": ["../dev-console/src"],
     }
   },
-  "include": ["src/**/*", "tests/**/*", "src/**/*.json"],
+  "exclude": ["tests/**/*", "src/**/*.test.tsx", "src/**/*.test.ts"],
+  "include": ["src/**/*", "src/**/*.json"],
   "references": [{"path": "../dev-console"}]
 }

@@ -6,13 +6,18 @@ type DeepPartial<T> = {
 
 let id = 0;
 
+function pad(num: number) {
+  return `00000000000${num}`.slice(-12);
+}
+
 export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): ExtensionPayload {
+  const uuid = `00000000-0000-0000-0000-${pad(id++)}`;
   return {
     type: 'purchase_option',
     assets: {
       main: {
         name: 'main',
-        url: 'http://localhost:8000/extensions/00000000-0000-0000-0000-000000000001/assets/main.js',
+        url: `http://localhost:8000/extensions/${uuid}/assets/main.js`,
       },
     } as any,
     development: {
@@ -22,7 +27,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         url: 'resourceUrl',
       },
       root: {
-        url: 'http://localhost:8000/extensions/00000000-0000-0000-0000-000000000001',
+        url: `http://localhost:8000/extensions/${uuid}`,
       },
       renderer: {
         name: 'render name',
@@ -30,7 +35,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
       },
       ...((obj.development || {}) as any),
     },
-    uuid: `0000-${id++}`,
+    uuid,
     version: 'extension version',
     ...obj,
   };

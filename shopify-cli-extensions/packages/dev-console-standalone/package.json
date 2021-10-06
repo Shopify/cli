@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "start": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --project tsconfig.build.json && vite build",
     "serve": "vite preview",
     "test": "jest",
     "clean": "git clean --exclude node_modules -xdf ./"

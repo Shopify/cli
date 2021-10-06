@@ -1,5 +1,8 @@
+*.js
+!.eslintrc.js
+*.d.ts
 node_modules
 .DS_Store
 dist
-*.local
+tsconfig.tsbuildinfo
 yarn-error.log
