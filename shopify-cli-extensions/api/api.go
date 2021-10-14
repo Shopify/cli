@@ -206,6 +206,15 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 		updateData, found := api.updates.LoadAndDelete(api.Extensions[index].UUID)
 		if found {
 			castedData := updateData.(core.Extension)
+
+			if castedData.Development.Status == "success" {
+				for entry := range api.Extensions[index].Assets {
+					api.Extensions[index].Assets[entry] = core.Asset{
+						Name:            api.Extensions[index].Assets[entry].Name,
+						RawSearchParams: fmt.Sprintf("?timestamp=%d", time.Now().Unix()),
+					}
+				}
+			}
 			err := mergeWithOverwrite(&api.Extensions[index], &castedData)
 			if err != nil {
 				log.Printf("failed to merge update data %v", err)
@@ -426,18 +435,17 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 
 	extension.Development.Root.Url = fmt.Sprintf("%s%s", rootUrl, extension.UUID)
 
-	keys := make([]string, 0, len(extension.Development.Entries))
-	for key := range extension.Development.Entries {
-		keys = append(keys, key)
-	}
+	for entry := range extension.Assets {
+		name := extension.Assets[entry].Name
+		rawSearchParams := extension.Assets[entry].RawSearchParams
 
-	for entry := range keys {
-		name := keys[entry]
-		extension.Assets[name] = core.Asset{
-			Url:  fmt.Sprintf("%s/assets/%s.js", extension.Development.Root.Url, name),
-			Name: name,
+		extension.Assets[entry] = core.Asset{
+			RawSearchParams: rawSearchParams,
+			Url:             fmt.Sprintf("%s/assets/%s.js%s", extension.Development.Root.Url, name, rawSearchParams),
+			Name:            name,
 		}
 	}
+
 	return extension
 }
 

@@ -12,6 +12,16 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 	extensions := []Extension{}
 	for _, extension := range config.Extensions {
 		extension.Assets = make(map[string]Asset)
+		keys := make([]string, 0, len(extension.Development.Entries))
+
+		for key := range extension.Development.Entries {
+			keys = append(keys, key)
+		}
+
+		for entry := range keys {
+			name := keys[entry]
+			extension.Assets[name] = Asset{Name: name}
+		}
 		extensions = append(extensions, extension)
 	}
 	// TODO: Improve this when we need to read more app configs,
@@ -68,8 +78,9 @@ type Extension struct {
 }
 
 type Asset struct {
-	Name string `json:"name" yaml:"name"`
-	Url  string `json:"url" yaml:"url"`
+	Name            string `json:"name" yaml:"name"`
+	Url             string `json:"url" yaml:"url"`
+	RawSearchParams string `json:"-" yaml:"-"`
 }
 
 type Development struct {
