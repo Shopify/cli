@@ -38,6 +38,6 @@ extensions:
       build_dir: "build"
       template: "typescript-react"
       renderer:
-        name: "@shopify/checkout-ui-extensions"
+        name: "@shopify/post-purchase-ui-extensions"
       entries:
         main: "src/index.tsx"
