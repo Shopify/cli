@@ -34,8 +34,8 @@ export type DevServerResponse =
     };
 
 export type ConsoleAction =
-  | Action<'refresh', string[]>
-  | Action<'focus', string>
+  | Action<'refresh', {uuid: string}[]>
+  | Action<'focus', {uuid: string}[]>
   | BaseAction<'unfocus'>;
 
 export interface BaseAction<T extends string> {

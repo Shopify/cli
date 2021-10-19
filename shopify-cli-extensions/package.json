@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "cd packages/dev-console-standalone; yarn start",
+    "start": "cd packages/dev-console-app; yarn start",
     "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe"
   },
   "devDependencies": {

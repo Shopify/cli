@@ -39,7 +39,7 @@ describe('ActionSet', () => {
     container.find(Action, {accessibilityLabel: i18n.translate('refresh')})?.trigger('onAction');
 
     expect(container.context.console.send).toHaveBeenCalledWith({
-      data: {payload: [extension.uuid], type: 'refresh'},
+      data: {payload: [{uuid: extension.uuid}], type: 'refresh'},
       event: 'dispatch',
     });
   });

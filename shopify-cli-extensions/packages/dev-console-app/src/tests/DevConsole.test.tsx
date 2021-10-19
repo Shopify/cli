@@ -46,7 +46,7 @@ describe('DevConsole', () => {
 
     expect(container.context.console.send).toHaveBeenCalledWith({
       event: 'dispatch',
-      data: {type: 'refresh', payload: [selectedExtension.uuid]},
+      data: {type: 'refresh', payload: [{uuid: selectedExtension.uuid}]},
     });
   });
 
@@ -124,7 +124,7 @@ describe('DevConsole', () => {
     });
 
     expect(container.context.console.send).toHaveBeenCalledWith({
-      data: {payload: focusExtension.uuid, type: 'focus'},
+      data: {payload: [{uuid: focusExtension.uuid}], type: 'focus'},
       event: 'dispatch',
     });
   });

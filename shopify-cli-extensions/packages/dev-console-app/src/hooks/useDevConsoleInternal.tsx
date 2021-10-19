@@ -32,8 +32,9 @@ export function useDevConsoleInternal() {
 
     // dispatch events
     refresh: (extensions: ExtensionPayload[]) =>
-      dispatch({type: 'refresh', payload: extensions.map((extension) => extension.uuid)}),
-    focus: (extension: ExtensionPayload) => dispatch({type: 'focus', payload: extension.uuid}),
+      dispatch({type: 'refresh', payload: extensions.map(({uuid}) => ({uuid}))}),
+    focus: (extension: ExtensionPayload) =>
+      dispatch({type: 'focus', payload: [{uuid: extension.uuid}]}),
     unfocus: () => dispatch({type: 'unfocus'}),
   };
 }
