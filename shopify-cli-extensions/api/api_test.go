@@ -79,8 +79,8 @@ func TestGetExtensions(t *testing.T) {
 
 	metafields := core.Metafield{Namespace: "my-namespace", Key: "my-key"}
 
-	if extension.User.Metafields[0] != metafields {
-		t.Errorf("expected user metafields to be %v but got %v", metafields, extension.User.Metafields[0])
+	if extension.Metafields[0] != metafields {
+		t.Errorf("expected metafields to be %v but got %v", metafields, extension.Metafields[0])
 	}
 
 	if api.Extensions[0].Development.Root.Url != "" || api.Extensions[0].Assets["main"].Url != "" {
@@ -121,14 +121,14 @@ func TestGetSingleExtension(t *testing.T) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
 	}
 
-	if extension.User.Metafields == nil {
-		t.Errorf("expected user metafields to be an an array")
+	if extension.Metafields == nil {
+		t.Errorf("expected metafields to be an an array")
 	}
 
 	metafields := core.Metafield{Namespace: "my-namespace", Key: "my-key"}
 
-	if extension.User.Metafields[0] != metafields {
-		t.Errorf("expected user metafields to be %v but got %v", metafields, extension.User.Metafields[0])
+	if extension.Metafields[0] != metafields {
+		t.Errorf("expected metafields to be %v but got %v", metafields, extension.Metafields[0])
 	}
 
 	if api.Extensions[0].Development.Root.Url != "" || api.Extensions[0].Assets["main"].Url != "" {
@@ -605,7 +605,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"uuid": "00000000-0000-0000-0000-000000000000",
 			"customData": "baz",
 			"development": {"status": "success"},
-			"user": {"metafields": [{"namespace": "another-namespace", "key": "another-key"}]}
+			"metafields": [{"namespace": "another-namespace", "key": "another-key"}]
 		  }
 		]
 	  }`)
@@ -677,9 +677,10 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"resource": {"url": "cart/1234"}
 		  },
 		  "type": "checkout_ui_extension",
-		  "user": {"metafields": [{"namespace": "another-namespace", "key": "another-key"}]},
+		  "metafields": [{"namespace": "another-namespace", "key": "another-key"}],
 		  "uuid": "00000000-0000-0000-0000-000000000000",
-		  "version": ""
+		  "version": "",
+		  "extensionPoints": null
 		}
 	  ]`, server.URL, server.URL)
 

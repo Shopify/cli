@@ -1,9 +1,8 @@
 ---
 extension_points:
   - Checkout::Feature::Render
-  # user:
-  #   metafields:
-  #     - namespace: my-namespace
-  #     key: my-key
-  #     - namespace: my-namespace
-  #     key: my-key-2
+# metafields:
+#   - namespace: my-namespace
+#     key: my-key
+#   - namespace: my-namespace
+#     key: my-key-2

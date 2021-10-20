@@ -1,4 +1,5 @@
 {
+    "name": "{{ .Type }}",
     "license": "MIT",
     "dependencies": {
       {{ if .React }}"{{ .Development.Renderer.Name }}-react": "latest",{{ end }}

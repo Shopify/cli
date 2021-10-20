@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -29,7 +30,12 @@ type Result struct {
 
 // production build
 func (b *Builder) Build(ctx context.Context, yield func(result Result)) {
-	err := b.RunScript(ctx, "build")
+	err := b.createBuildDir()
+	if err != nil {
+		yield(Result{false, err, b.Extension.UUID})
+	}
+
+	err = b.RunScript(ctx, "build")
 
 	if err != nil {
 		yield(Result{false, err, b.Extension.UUID})
@@ -40,7 +46,12 @@ func (b *Builder) Build(ctx context.Context, yield func(result Result)) {
 
 // development build
 func (b *Builder) Develop(ctx context.Context, yield func(result Result)) {
-	err := b.RunScript(ctx, "develop")
+	err := b.createBuildDir()
+	if err != nil {
+		yield(Result{false, err, b.Extension.UUID})
+	}
+
+	err = b.RunScript(ctx, "develop")
 
 	if err != nil {
 		yield(Result{false, err, b.Extension.UUID})
@@ -84,4 +95,12 @@ type ScriptRunnerFunc func(ctx context.Context, script string, args ...string) e
 
 func (f ScriptRunnerFunc) RunScript(ctx context.Context, script string, args ...string) error {
 	return f(ctx, script, args...)
+}
+
+func (b *Builder) createBuildDir() error {
+	build_dir := filepath.Join(".", b.Extension.Development.RootDir, b.Extension.Development.BuildDir)
+	if _, err := os.Stat(build_dir); os.IsNotExist(err) {
+		return os.MkdirAll(build_dir, 0755)
+	}
+	return nil
 }

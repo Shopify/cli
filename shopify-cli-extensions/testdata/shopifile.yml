@@ -5,8 +5,9 @@ app:
 extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: checkout_ui_extension
-    user:
-      metafields: []
+    metafields:
+      - namespace: my-namespace
+        key: my-key
     development:
       root_dir: "tmp/checkout_ui_extension"
       build_dir: "build"
@@ -19,8 +20,6 @@ extensions:
         url: "cart/1234"
   - uuid: 00000000-0000-0000-0000-000000000001
     type: product_subscription
-    user:
-      metafields: []
     development:
       root_dir: "tmp/checkout_ui_extension"
       build_dir: "build"
@@ -31,8 +30,9 @@ extensions:
         main: "src/index.tsx"
   - uuid: 00000000-0000-0000-0000-000000000002
     type: checkout_post_purchase
-    user:
-      metafields: []
+    metafields:
+      - namespace: my-namespace
+        key: my-key
     development:
       root_dir: "tmp/checkout_ui_extension"
       build_dir: "build"

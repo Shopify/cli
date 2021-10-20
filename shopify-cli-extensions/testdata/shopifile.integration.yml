@@ -1,8 +1,6 @@
 extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: integration_test
-    user:
-      metafields: []
     development:
       root_dir: "tmp/integration_test"
       build_dir: "build"

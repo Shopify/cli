@@ -69,12 +69,13 @@ type ExtensionService struct {
 }
 
 type Extension struct {
-	Type        string           `json:"type" yaml:"type"`
-	UUID        string           `json:"uuid" yaml:"uuid"`
-	Assets      map[string]Asset `json:"assets" yaml:"-"`
-	Development Development      `json:"development" yaml:"development"`
-	User        User             `json:"user" yaml:"user"`
-	Version     string           `json:"version" yaml:"version"`
+	Assets          map[string]Asset `json:"assets" yaml:"-"`
+	Development     Development      `json:"development" yaml:"development,omitempty"`
+	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty"`
+	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
+	Type            string           `json:"type" yaml:"type,omitempty"`
+	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
+	Version         string           `json:"version" yaml:"version,omitempty"`
 }
 
 type Asset struct {
@@ -83,25 +84,27 @@ type Asset struct {
 	RawSearchParams string `json:"-" yaml:"-"`
 }
 
+type commandConfig struct {
+	Env map[string]string `json:"-" yaml:"env,omitempty"`
+}
+
 type Development struct {
-	Root     Url               `json:"root"`
-	Resource Url               `json:"resource"`
-	Renderer Renderer          `json:"-" yaml:"renderer"`
-	Hidden   bool              `json:"hidden"`
-	BuildDir string            `json:"-" yaml:"build_dir"`
-	RootDir  string            `json:"-" yaml:"root_dir"`
-	Template string            `json:"-"`
-	Entries  map[string]string `json:"-"`
-	Status   string            `json:"status"`
+	Build    commandConfig     `json:"-" yaml:"build,omitempty"`
+	BuildDir string            `json:"-" yaml:"build_dir,omitempty"`
+	Develop  commandConfig     `json:"-" yaml:"develop,omitempty"`
+	Entries  map[string]string `json:"-" yaml:"entries,omitempty"`
+	Resource Url               `json:"resource" yaml:"resource,omitempty"`
+	Renderer Renderer          `json:"-" yaml:"renderer,omitempty"`
+	Root     Url               `json:"root" yaml:"root,omitempty"`
+	RootDir  string            `json:"-" yaml:"root_dir,omitempty"`
+	Hidden   bool              `json:"hidden" yaml:"-"`
+	Status   string            `json:"status" yaml:"-"`
+	Template string            `json:"-" yaml:"template,omitempty"`
 }
 
 type Renderer struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
-}
-
-type User struct {
-	Metafields []Metafield `json:"metafields" yaml:"metafields"`
 }
 
 type Metafield struct {

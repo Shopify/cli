@@ -3,12 +3,16 @@ package fsutils
 import (
 	"bytes"
 	"embed"
-	"encoding/json"
 	"html/template"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+)
+
+const (
+	JSON string = ".json"
+	YAML string = ".yml"
 )
 
 func NewFS(embeddedFS *embed.FS, root string) *FS {
@@ -36,44 +40,47 @@ func (fs *FS) CopyFile(filePath, targetPath string) error {
 	return CopyFileContent(targetPath, content)
 }
 
-func (fs *FS) Execute(op *Operation) error {
+func (fs *FS) Execute(op *Operation) (err error) {
 	dirPath := fs.root
 	if op.SourceDir != "" {
 		dirPath = filepath.Join(fs.root, op.SourceDir)
 	}
 
-	entries, readDirErr := fs.ReadDir(dirPath)
+	entries, err := fs.ReadDir(dirPath)
 
-	if readDirErr != nil && !op.SkipEmpty {
-		return readDirErr
+	if err != nil {
+		return
 	}
 
 	for _, entry := range entries {
 		fileName := entry.Name()
-
 		if entry.IsDir() {
+			if !op.Recursive {
+				continue
+			}
+
 			relativeDir := fileName
 			if op.SourceDir != "" {
 				relativeDir = filepath.Join(op.SourceDir, fileName)
 			}
 
-			if err := fs.Execute(&Operation{
+			if err = fs.Execute(&Operation{
 				SourceDir:  relativeDir,
 				TargetDir:  op.TargetDir,
 				OnEachFile: op.OnEachFile,
 			}); err != nil {
-				return err
+				return
 			}
 		} else {
 			filePath := filepath.Join(dirPath, fileName)
 			targetPath := filepath.Join(op.TargetDir, fileName)
 
-			if err := op.OnEachFile(filePath, targetPath); err != nil {
-				return err
+			if err = op.OnEachFile(filePath, targetPath); err != nil {
+				return
 			}
 		}
 	}
-	return nil
+	return
 }
 
 func (fs *FS) MergeTemplateData(templateData interface{}, filePath string) (*bytes.Buffer, error) {
@@ -110,22 +117,6 @@ func CopyFileContent(targetPath string, content []byte) error {
 	return nil
 }
 
-func FormatContent(targetPath string, content []byte) ([]byte, error) {
-	if strings.HasSuffix(targetPath, ".json") {
-		return FormatJSON(content)
-	}
-
-	return content, nil
-}
-
-func FormatJSON(bytes []byte) ([]byte, error) {
-	var result map[string]interface{}
-	if err := json.Unmarshal(bytes, &result); err != nil {
-		return nil, err
-	}
-	return json.MarshalIndent(result, "", "  ")
-}
-
 func MakeDir(dirPath string) error {
 	return os.MkdirAll(dirPath, 0755)
 }
@@ -149,7 +140,7 @@ type Operation struct {
 	SourceDir  string
 	TargetDir  string
 	OnEachFile OnEachFile
-	SkipEmpty  bool
+	Recursive  bool
 }
 
 type OnEachFile func(filePath string, targetPath string) error
