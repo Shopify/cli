@@ -1,106 +1,81 @@
 package build
 
 import (
-	"context"
-	"log"
+	"errors"
 	"os"
-	"os/exec"
-	"path/filepath"
+	"sync"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"github.com/fsnotify/fsnotify"
 )
 
-func NewBuilder(extension core.Extension) *Builder {
-	working_dir := filepath.Join(".", extension.Development.RootDir, extension.Development.BuildDir)
-	pm := FindPackageManager(exec.LookPath, working_dir)
-	return &Builder{pm, extension}
+func Build(extension core.Extension, report ResultHandler) {
+	script, err := script(extension.BuildDir(), "build")
+	if err != nil {
+		report(Result{false, err.Error(), extension})
+		return
+	}
+
+	ensureBuildDirectoryExists(extension)
+
+	output, err := script.CombinedOutput()
+	if err != nil {
+		report(Result{false, string(output), extension})
+		return
+	}
+
+	if err := verifyAssets(extension); err != nil {
+		report(Result{false, err.Error(), extension})
+		return
+	}
+
+	report(Result{true, string(output), extension})
 }
 
-type Builder struct {
-	ScriptRunner
-	Extension core.Extension
-}
-
-type Result struct {
-	Success bool
-	Error   error
-	UUID    string
-}
-
-// production build
-func (b *Builder) Build(ctx context.Context, yield func(result Result)) {
-	err := b.createBuildDir()
+func Watch(extension core.Extension, report ResultHandler) {
+	script, err := script(extension.BuildDir(), "develop")
 	if err != nil {
-		yield(Result{false, err, b.Extension.UUID})
+		report(Result{false, err.Error(), extension})
+		return
 	}
 
-	err = b.RunScript(ctx, "build")
+	stdout, _ := script.StdoutPipe()
+	stderr, _ := script.StderrPipe()
 
-	if err != nil {
-		yield(Result{false, err, b.Extension.UUID})
-	} else {
-		yield(Result{true, nil, b.Extension.UUID})
-	}
-}
+	ensureBuildDirectoryExists(extension)
 
-// development build
-func (b *Builder) Develop(ctx context.Context, yield func(result Result)) {
-	err := b.createBuildDir()
-	if err != nil {
-		yield(Result{false, err, b.Extension.UUID})
-	}
+	script.Start()
 
-	err = b.RunScript(ctx, "develop")
+	logProcessors := sync.WaitGroup{}
+	logProcessors.Add(2)
 
-	if err != nil {
-		yield(Result{false, err, b.Extension.UUID})
-	}
-}
-
-func (b *Builder) Watch(ctx context.Context, yield func(result Result)) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		yield(Result{false, err, b.Extension.UUID})
-	}
-	defer watcher.Close()
-
-	watch_dir := filepath.Join(".", b.Extension.Development.RootDir, b.Extension.Development.BuildDir)
-	if err = watcher.Add(watch_dir); err != nil {
-		yield(Result{false, err, b.Extension.UUID})
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Println("Terminating watcher")
-			yield(Result{true, nil, b.Extension.UUID})
-		case event := <-watcher.Events:
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				log.Printf("file system event: %v\n", event)
-				yield(Result{true, nil, b.Extension.UUID})
+	go processLogs(stdout, logProcessingHandlers{
+		onCompletion: func() { logProcessors.Done() },
+		onMessage: func(message string) {
+			if err := verifyAssets(extension); err != nil {
+				report(Result{false, err.Error(), extension})
+			} else {
+				report(Result{true, message, extension})
 			}
-		case err = <-watcher.Errors:
-			log.Printf("file system error: %v\n", err)
-			yield(Result{false, err, b.Extension.UUID})
-		}
+		},
+	})
+
+	go processLogs(stderr, logProcessingHandlers{
+		onCompletion: func() { logProcessors.Done() },
+		onMessage: func(message string) {
+			report(Result{false, message, extension})
+		},
+	})
+
+	script.Wait()
+	logProcessors.Wait()
+}
+
+type ResultHandler func(result Result)
+
+func ensureBuildDirectoryExists(ext core.Extension) {
+	if _, err := os.Stat(ext.BuildDir()); errors.Is(err, os.ErrNotExist) {
+		os.MkdirAll(ext.BuildDir(), rwxr_xr_x)
 	}
 }
 
-type ScriptRunner interface {
-	RunScript(ctx context.Context, script string, args ...string) error
-}
-
-type ScriptRunnerFunc func(ctx context.Context, script string, args ...string) error
-
-func (f ScriptRunnerFunc) RunScript(ctx context.Context, script string, args ...string) error {
-	return f(ctx, script, args...)
-}
-
-func (b *Builder) createBuildDir() error {
-	build_dir := filepath.Join(".", b.Extension.Development.RootDir, b.Extension.Development.BuildDir)
-	if _, err := os.Stat(build_dir); os.IsNotExist(err) {
-		return os.MkdirAll(build_dir, 0755)
-	}
-	return nil
-}
+const rwxr_xr_x = 0755

@@ -1,7 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"io"
+	"path/filepath"
 	"reflect"
 
 	"gopkg.in/yaml.v3"
@@ -76,6 +78,14 @@ type Extension struct {
 	Type            string           `json:"type" yaml:"type,omitempty"`
 	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
 	Version         string           `json:"version" yaml:"version,omitempty"`
+}
+
+func (e Extension) String() string {
+	return fmt.Sprintf("%s (%s)", e.UUID, e.Type)
+}
+
+func (e Extension) BuildDir() string {
+	return filepath.Join(".", e.Development.RootDir, e.Development.BuildDir)
 }
 
 type Asset struct {

@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
@@ -56,32 +54,27 @@ type CLI struct {
 }
 
 func (cli *CLI) build(args ...string) {
-	var wg sync.WaitGroup
-	build_chan := make(chan build.Result)
+	builds := len(cli.config.Extensions)
+	results := make(chan build.Result)
 
-	errors := 0
-	for _, e := range cli.config.Extensions {
-		b := build.NewBuilder(e)
-
-		wg.Add(1)
-		go b.Build(ctx, func(result build.Result) {
-			defer wg.Done()
-			build_chan <- result
-
-			if !result.Success {
-				errors++
-				log.Printf("[Build] Error: %s, Extension: %s", result.Error, result.UUID)
-			} else {
-				log.Printf("[Build] Success! Extension: %s", result.UUID)
-			}
+	for _, extension := range cli.config.Extensions {
+		go build.Build(extension, func(result build.Result) {
+			results <- result
 		})
-
-		go cli.monitor(wg, build_chan, "Build", e)
 	}
 
-	wg.Wait()
+	failedBuilds := 0
+	for i := 0; i < builds; i++ {
+		result := <-results
+		if !result.Success {
+			fmt.Fprintln(os.Stderr, result)
+			failedBuilds += 1
+		} else {
+			fmt.Println(result)
+		}
+	}
 
-	if errors > 0 {
+	if failedBuilds > 0 {
 		os.Exit(1)
 	} else {
 		os.Exit(0)
@@ -98,38 +91,25 @@ func (cli *CLI) create(args ...string) {
 }
 
 func (cli *CLI) serve(args ...string) {
-	if cli.config.PublicUrl != "" {
-		log.Printf("Shopify CLI Extensions Server is now available at %s", cli.config.PublicUrl)
-	} else {
-		log.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/", cli.config.Port)
-	}
-
 	api := api.New(cli.config, "/extensions/")
 
-	var wg sync.WaitGroup
+	for _, extension := range cli.config.Extensions {
+		go build.Watch(extension, func(result build.Result) {
+			extension := result.Extension
 
-	develop_chan := make(chan build.Result)
-	watch_chan := make(chan build.Result)
+			if result.Success {
+				extension.Development.Status = "success"
+				fmt.Println(result)
+			} else {
+				extension.Development.Status = "error"
+				fmt.Fprintln(os.Stderr, result)
+			}
 
-	for _, e := range cli.config.Extensions {
-		b := build.NewBuilder(e)
-
-		wg.Add(1)
-		go b.Develop(ctx, func(result build.Result) {
-			develop_chan <- result
+			api.Notify([]core.Extension{extension})
 		})
-
-		go cli.monitorAndNotify(wg, develop_chan, "Develop", api, e)
-
-		go b.Watch(ctx, func(result build.Result) {
-			watch_chan <- result
-		})
-
-		go cli.monitorAndNotify(wg, watch_chan, "Watch", api, e)
 	}
 
 	addr := fmt.Sprintf(":%d", cli.config.Port)
-
 	server := &http.Server{Addr: addr, Handler: api}
 
 	onInterrupt(func() {
@@ -137,37 +117,14 @@ func (cli *CLI) serve(args ...string) {
 		server.Shutdown(ctx)
 	})
 
+	if cli.config.PublicUrl != "" {
+		fmt.Printf("Shopify CLI Extensions Server is now available at %s\n", cli.config.PublicUrl)
+	} else {
+		fmt.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/\n", cli.config.Port)
+	}
+
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		panic(err)
-	}
-
-	wg.Wait()
-}
-
-func (cli *CLI) monitorAndNotify(wg sync.WaitGroup, ch chan build.Result, action string, a *api.ExtensionsApi, e core.Extension) {
-	defer wg.Done()
-
-	for result := range ch {
-		if result.Success {
-			e.Development.Status = "success"
-			log.Printf("[%s] event for extension: %s", action, result.UUID)
-		} else {
-			e.Development.Status = "error"
-			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
-		}
-		go a.Notify([]core.Extension{e})
-	}
-}
-
-func (cli *CLI) monitor(wg sync.WaitGroup, ch chan build.Result, action string, e core.Extension) {
-	defer wg.Done()
-
-	for result := range ch {
-		if result.Success {
-			log.Printf("[%s] event for extension: %s", action, result.UUID)
-		} else {
-			log.Printf("[%s] error for extension %s, error: %s", action, result.UUID, result.Error.Error())
-		}
 	}
 }
 

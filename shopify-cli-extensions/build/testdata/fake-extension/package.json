@@ -1,0 +1,10 @@
+{
+  "name": "checkout-ui-extension",
+  "version": "1.0.0",
+  "main": "build/main.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "touch build/main.js build/main.js.LEGAL.txt",
+    "develop": "../scripts/develop.sh"
+  }
+}

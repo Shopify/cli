@@ -1,4 +1,4 @@
-import {build as esBuild} from 'esbuild';
+import {build as esBuild, BuildFailure, BuildResult, formatMessages} from 'esbuild';
 
 import {getConfigs} from './configs';
 
@@ -20,6 +20,18 @@ export function build({mode}: Options) {
     {'process.env.NODE_ENV': JSON.stringify(mode)},
   );
 
+  const onRebuild = async (failure: BuildFailure | null, result: BuildResult | null) => {
+    if (failure) {
+      const errors = await formatMessages(failure.errors, {kind: 'error'});
+      const warnings = await formatMessages(failure.warnings, {kind: 'warning'});
+      console.error(failure.message);
+      if (errors.length > 0) console.error(errors.join('\n'));
+      if (warnings.length > 0) console.error(errors.join('\n'));
+    } else {
+      console.log(`Build succeeded`);
+    }
+  };
+
   esBuild({
     bundle: true,
     define,
@@ -28,14 +40,14 @@ export function build({mode}: Options) {
       '.esnext': 'ts',
       '.js': 'jsx',
     },
-    logLevel: 'info',
+    logLevel: isDevelopment ? 'silent' : 'info',
     legalComments: isDevelopment ? 'none' : 'linked',
     minify: !isDevelopment,
     outdir: buildDir,
     plugins: getPlugins(),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-    watch: isDevelopment,
+    watch: isDevelopment ? {onRebuild} : false,
   }).catch((_e) => process.exit(1));
 }
 

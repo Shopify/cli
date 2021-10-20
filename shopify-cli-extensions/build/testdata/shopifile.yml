@@ -5,5 +5,7 @@ extensions:
     user:
       metafields: []
     development:
-      root_dir: "testdata"
-      build_dir: "build"
+      root_dir: 'testdata/fake-extension'
+      build_dir: 'build'
+      entries:
+        main: 'src/index.tsx'

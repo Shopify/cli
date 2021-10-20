@@ -1,20 +1,15 @@
 package build
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"os"
-	"sync"
+	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 )
 
-var (
-	config *core.Config
-)
+var config *core.Config
 
 func init() {
 	configFile, err := os.Open("testdata/shopifile.yml")
@@ -34,90 +29,55 @@ func init() {
 }
 
 func TestBuild(t *testing.T) {
-	runnerWasCalled := false
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
-		if script != "build" {
-			t.Errorf("Expected script to be build, got %v", script)
-		}
+	extension := config.Extensions[0]
 
-		runnerWasCalled = true
-		return nil
+	err := os.RemoveAll(extension.BuildDir())
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	builder := Builder{ScriptRunnerFunc(fakeRunner), config.Extensions[0]}
-	builder.Build(context.TODO(), func(result Result) {
+	Build(extension, func(result Result) {
 		if !result.Success {
-			t.Error("Expected Build operation to be successful")
-		}
-
-		if result.Error != nil {
-			t.Errorf("Expected error to be nil, got %s", result.Error)
+			t.Error("expected extension to build successfully")
+			t.Error(result.Message)
 		}
 	})
 
-	if !runnerWasCalled {
-		t.Error("Runner not invoked")
-	}
-}
-
-func TestBuildErrors(t *testing.T) {
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
-		return errors.New("Error")
+	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js")); err != nil {
+		t.Error("expected main.js to exist")
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	builder := Builder{ScriptRunnerFunc(fakeRunner), config.Extensions[0]}
-	builder.Build(context.TODO(), func(result Result) {
-		if result.Success {
-			t.Error("Expected Build operation to fail with errors")
-		}
-
-		if result.Error == nil {
-			t.Errorf("Expected error to not be nil")
-		}
-	})
-}
-
-func TestDevelop(t *testing.T) {
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
-		if script != "develop" {
-			t.Errorf("Expected script to be develop, got %v", script)
-		}
-		return nil
+	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js.LEGAL.txt")); err != nil {
+		t.Error("expected main.js.LEGAL.txt to exist")
 	}
-
-	builder := Builder{ScriptRunnerFunc(fakeRunner), config.Extensions[0]}
-
-	builder.Develop(context.TODO(), func(result Result) {
-		if !result.Success {
-			t.Error("Expected Develop to be successful")
-		}
-
-		if result.Error != nil {
-			t.Errorf("Unexpected error: %v", result.Error)
-		}
-	})
 }
 
 func TestWatch(t *testing.T) {
-	fakeRunner := func(ctx context.Context, script string, args ...string) error {
-		return nil
+	extension := config.Extensions[0]
+
+	err := os.Remove(filepath.Join(extension.BuildDir(), "main.js"))
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	builder := Builder{ScriptRunnerFunc(fakeRunner), config.Extensions[0]}
-
-	d := time.Now().Add(5 * time.Millisecond)
-	ctx, cancel := context.WithDeadline(context.Background(), d)
-	defer cancel()
-
-	go builder.Watch(ctx, func(result Result) {
-		if !result.Success {
-			t.Error("Expected Watch to be successful")
-		}
+	results := []Result{}
+	Watch(extension, func(result Result) {
+		results = append(results, result)
 	})
+
+	if len(results) != 2 {
+		t.Fatal("expected 2 results")
+	}
+
+	if results[0].Success {
+		t.Error("expected first build to fail")
+	}
+
+	if !results[1].Success {
+		t.Error("expected second build to succeed")
+	}
+
+	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js")); err != nil {
+		t.Error("expected main.js to exist")
+	}
 }
