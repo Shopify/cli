@@ -19,24 +19,23 @@ declare global {
     }
 
     /**
-     * This helper type allows us to account for nullish payloads on the emit function.
-     * In practice, this will allow TypeScript to type-check the event being emitted
-     * and, if the payload isn't required, the second argument won't be necessary.
+     * Extension server client class options. These are used to configure
+     * the client class.
      */
-    type EmitArgs<Event extends keyof ExtensionServer.OutboundEvents> =
-      ExtensionServer.OutboundEvents[Event] extends void
-        ? [event: Event]
-        : [event: Event, payload: ExtensionServer.OutboundEvents[Event]];
-
     interface Options {
-      connection: WebSocket.Options;
+      url: string;
+      connection?: WebSocket.Options;
     }
 
+    /**
+     * Extension server client class. This class will be used to connect and
+     * communicate with the extension server.
+     */
     interface Client {
       /**
        * Reconnecting WebSocket Client
        */
-      readonly connection: WebSocket.Client;
+      connection: WebSocket.Client;
 
       /**
        * Function to add an event listener to messages coming from
@@ -58,7 +57,13 @@ declare global {
       dispatch<Event extends keyof OutboundEvents>(...args: EmitArgs<Event>): void;
     }
 
-    type StaticClient = Static<Client, [option: ExtensionServer.Options]>;
+    /**
+     * This defines how the ExtensionServer client's static class is defined and the constructor
+     * arguments it requires.
+     *
+     * @example const client = new ExtensionServer({ url: 'wss://localhost:1234' });
+     */
+    type StaticClient = Static<ExtensionServer.Client, [option?: ExtensionServer.Options]>;
 
     /**
      * The native WebSocket implementation has a some limitations and features like connecting timeout
@@ -66,6 +71,10 @@ declare global {
      * these features as well as some helpers to obtain a more natural API.
      */
     namespace WebSocket {
+      /**
+       * Reconnecting WebSocket class options. These are used to configure
+       * the WebSocket and how it handles the socket connection.
+       */
       interface Options {
         /**
          * This defines if we should automatically attempt to connect when the
@@ -187,8 +196,34 @@ declare global {
         reconnect(): void;
       }
 
-      type StaticClient = Static<Client, [url: string, options: WebSocket.Options]>;
+      /**
+       * This defines how the reconnecting WebSocket static class is defined and the constructor
+       * arguments it requires.
+       *
+       * @example const socket = new ReconnectWebSocket('wss://localhost:1234', { timeout: 1000 });
+       */
+      type StaticClient = Static<
+        WebSocket.Client,
+        [url: string, options?: Partial<WebSocket.Options>]
+      > & {
+        readonly CLOSED: number;
+        readonly CLOSING: number;
+        readonly CONNECTING: number;
+        readonly OPEN: number;
+      };
     }
+
+    // Utilities
+
+    /**
+     * This helper type allows us to account for nullish payloads on the emit function.
+     * In practice, this will allow TypeScript to type-check the event being emitted
+     * and, if the payload isn't required, the second argument won't be necessary.
+     */
+    type EmitArgs<Event extends keyof ExtensionServer.OutboundEvents> =
+      ExtensionServer.OutboundEvents[Event] extends void
+        ? [event: Event]
+        : [event: Event, payload: ExtensionServer.OutboundEvents[Event]];
 
     /**
      * This is a helper interface that allows us to define the static methods of a given
@@ -196,6 +231,7 @@ declare global {
      * and constructor variables.
      */
     interface Static<T = unknown, A extends Array<unknown> = any[]> {
+      prototype: T;
       new (...args: A): T;
     }
   }
