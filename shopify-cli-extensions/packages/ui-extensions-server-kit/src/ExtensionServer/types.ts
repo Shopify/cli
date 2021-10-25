@@ -160,7 +160,9 @@ declare global {
       type State = 'CONNECTING' | 'OPEN' | 'CLOSING' | 'CLOSED';
 
       /**
-       * The reconnecting WebSocket class.
+       * The reconnecting WebSocket class. This extends the native
+       * implementation and adds some convenient methods to
+       * interact with the socket.
        */
       interface Client extends WebSocket {
         /**
