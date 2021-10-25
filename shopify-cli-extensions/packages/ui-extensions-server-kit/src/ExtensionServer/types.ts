@@ -1,13 +1,64 @@
 declare global {
   namespace ExtensionServer {
     /**
-     * This is a helper interface that allows us to define the static methods of a given
-     * class. This is useful to define static methods, static properties
-     * and constructor variables.
+     * Events being received by the extension server where the keys are the event names
+     * and the values are the payload of the given action. In case no payload is
+     * required, a value of void should be used.
      */
-    interface Static<T = unknown, A extends Array<unknown> = any[]> {
-      new (...args: A): T;
+    interface InboundEvents {
+      //
     }
+
+    /**
+     * Events being sent to the extension server where the keys are the event names
+     * and the values are the payload of the given action. In case no payload is
+     * required, a value of void should be used.
+     */
+    interface OutboundEvents {
+      //
+    }
+
+    /**
+     * This helper type allows us to account for nullish payloads on the emit function.
+     * In practice, this will allow TypeScript to type-check the event being emitted
+     * and, if the payload isn't required, the second argument won't be necessary.
+     */
+    type EmitArgs<Event extends keyof ExtensionServer.OutboundEvents> =
+      ExtensionServer.OutboundEvents[Event] extends void
+        ? [event: Event]
+        : [event: Event, payload: ExtensionServer.OutboundEvents[Event]];
+
+    interface Options {
+      connection: WebSocket.Options;
+    }
+
+    interface Client {
+      /**
+       * Reconnecting WebSocket Client
+       */
+      readonly connection: WebSocket.Client;
+
+      /**
+       * Function to add an event listener to messages coming from
+       * the extension server connection.
+       */
+      on<Event extends keyof ExtensionServer.InboundEvents>(
+        event: Event,
+        cb: (payload: ExtensionServer.InboundEvents[Event]) => void,
+      ): () => void;
+
+      /**
+       * Function to emit an event to the extension server.
+       */
+      emit<Event extends keyof OutboundEvents>(...args: EmitArgs<Event>): void;
+
+      /**
+       * Function to dispatch an event to the extension server.
+       */
+      dispatch<Event extends keyof OutboundEvents>(...args: EmitArgs<Event>): void;
+    }
+
+    type StaticClient = Static<Client, [option: ExtensionServer.Options]>;
 
     /**
      * The native WebSocket implementation has a some limitations and features like connecting timeout
@@ -140,64 +191,13 @@ declare global {
     }
 
     /**
-     * Events being received by the extension server where the keys are the event names
-     * and the values are the payload of the given action. In case no payload is
-     * required, a value of void should be used.
+     * This is a helper interface that allows us to define the static methods of a given
+     * class. This is useful to define static methods, static properties
+     * and constructor variables.
      */
-    interface InboundEvents {
-      //
+    interface Static<T = unknown, A extends Array<unknown> = any[]> {
+      new (...args: A): T;
     }
-
-    /**
-     * Events being sent to the extension server where the keys are the event names
-     * and the values are the payload of the given action. In case no payload is
-     * required, a value of void should be used.
-     */
-    interface OutboundEvents {
-      //
-    }
-
-    /**
-     * This helper type allows us to account for nullish payloads on the emit function.
-     * In practice, this will allow TypeScript to type-check the event being emitted
-     * and, if the payload isn't required, the second argument won't be necessary.
-     */
-    type EmitArgs<Event extends keyof ExtensionServer.OutboundEvents> =
-      ExtensionServer.OutboundEvents[Event] extends void
-        ? [event: Event]
-        : [event: Event, payload: ExtensionServer.OutboundEvents[Event]];
-
-    interface Options {
-      connection: WebSocket.Options;
-    }
-
-    interface Client {
-      /**
-       * Reconnecting WebSocket Client
-       */
-      readonly connection: WebSocket.Client;
-
-      /**
-       * Function to add an event listener to messages coming from
-       * the extension server connection.
-       */
-      on<Event extends keyof ExtensionServer.InboundEvents>(
-        event: Event,
-        cb: (payload: ExtensionServer.InboundEvents[Event]) => void,
-      ): () => void;
-
-      /**
-       * Function to emit an event to the extension server.
-       */
-      emit<Event extends keyof OutboundEvents>(...args: EmitArgs<Event>): void;
-
-      /**
-      * Function to dispatch an event to the extension server.
-      */
-      dispatch<Event extends keyof OutboundEvents>(...args: EmitArgs<Event>): void;
-    }
-
-    type StaticClient = Static<Client, [option: ExtensionServer.Options]>;
   }
 }
 
