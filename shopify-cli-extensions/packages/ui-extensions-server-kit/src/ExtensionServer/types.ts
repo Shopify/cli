@@ -1,8 +1,3 @@
-/**
- * This definition allows TypeScript to understand that there'll be
- * a new global variable where the extension server client will
- * be created.
- */
 declare global {
   namespace ExtensionServer {
     /**
@@ -203,18 +198,6 @@ declare global {
     }
 
     type StaticClient = Static<Client, [option: ExtensionServer.Options]>;
-  }
-
-  const __EXTENSION_SERVER__: ExtensionServer.Client;
-
-  interface Window {
-    __EXTENSION_SERVER__: ExtensionServer.Client;
-  }
-
-  namespace NodeJS {
-    interface Global {
-      __EXTENSION_SERVER__: ExtensionServer.Client;
-    }
   }
 }
 
