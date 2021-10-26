@@ -79,21 +79,23 @@ describe('ActionSet', () => {
   });
 
   it('renders QRCode with mobile deep-link url', async () => {
-    const host = 'www.example-host.com:8000/extensions/';
     const extension = mockExtension();
+    const store = 'example.com';
 
     const container = await mount(
       <Wrapper>
         <ActionSet activeMobileQRCode extension={extension} />
       </Wrapper>,
-      {console: {host}},
+      {console: {store}},
     );
 
     await container.find(Popover)?.find(Action)?.trigger('onAction');
 
     const qrCodeElement = container?.find(QRCode);
 
-    expect(qrCodeElement?.prop('value')).toStrictEqual(host);
+    expect(qrCodeElement?.prop('value')).toStrictEqual(
+      `https://example.com/admin/extensions-dev/mobile?url=${extension.development.root.url}`,
+    );
   });
 
   it('renders error popover when failing to generate mobile QR code', async () => {

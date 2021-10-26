@@ -81,6 +81,8 @@ func (api *ExtensionsApi) getNotificationData(extensions interface{}, app interf
 
 	data["extensions"] = extensionData
 	data["app"] = appData
+	data["store"] = api.Store
+
 	return
 }
 
@@ -327,7 +329,7 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 	encoder := json.NewEncoder(rw)
 
 	encoder.Encode(extensionsResponse{
-		api.getReponse(r),
+		api.getResponse(r),
 		getExtensionsWithUrl(api.Extensions, api.GetApiRootUrlFromRequest(r)),
 	})
 }
@@ -361,7 +363,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 
 			rw.Header().Add("Content-Type", "application/json")
 			encoder := json.NewEncoder(rw)
-			encoder.Encode(singleExtensionResponse{api.getReponse(r), extensionWithUrls})
+			encoder.Encode(singleExtensionResponse{api.getResponse(r), extensionWithUrls})
 			return
 		}
 	}
@@ -477,12 +479,13 @@ func mergeWithOverwrite(source interface{}, destination interface{}) error {
 	return mergo.Merge(source, destination, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
 }
 
-func (api *ExtensionsApi) getReponse(r *http.Request) *Response {
+func (api *ExtensionsApi) getResponse(r *http.Request) *Response {
 	return &Response{
 		formatData(api.App, strcase.ToLowerCamel),
 		api.Version,
 		core.Url{Url: api.GetApiRootUrlFromRequest(r)},
 		core.Url{Url: api.GetWebsocketUrlFromRequest(r)},
+		api.Store,
 	}
 }
 
@@ -526,6 +529,7 @@ type updateData struct {
 type websocketData struct {
 	Extensions []map[string]interface{}
 	App        map[string]interface{}
+	Store      string
 }
 
 type websocketMessage struct {
@@ -539,6 +543,7 @@ type Response struct {
 	Version string   `json:"version"`
 	Root    core.Url `json:"root"`
 	Socket  core.Url `json:"socket"`
+	Store   string   `json:"store"`
 }
 
 type websocketConnection struct {

@@ -69,6 +69,10 @@ func TestGetExtensions(t *testing.T) {
 		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
 
+	if response.Store != "test-shop.myshopify.com" {
+		t.Errorf("expect service store to be test-shop.myshopify.com but got %s", response.Store)
+	}
+
 	extension := response.Extensions[0]
 
 	if extension.Assets == nil {
@@ -125,6 +129,10 @@ func TestGetSingleExtension(t *testing.T) {
 
 	if response.App == nil {
 		t.Error("Expected app to not be null")
+	}
+
+	if response.Store != "test-shop.myshopify.com" {
+		t.Errorf("expect service store to be test-shop.myshopify.com but got %s", response.Store)
 	}
 
 	extension := response.Extension
@@ -283,11 +291,11 @@ func TestWebsocketNotify(t *testing.T) {
 
 	api.Notify(api.Extensions)
 
-	if err := verifyWebsocketMessage(firstConnection, "update", api.Version, api.App, expectedExtensions); err != nil {
+	if err := verifyWebsocketMessage(firstConnection, "update", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
-	if err = verifyWebsocketMessage(secondConnection, "update", api.Version, api.App, expectedExtensions); err != nil {
+	if err = verifyWebsocketMessage(secondConnection, "update", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 }
@@ -385,7 +393,7 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
-	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions); err != nil {
+	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
@@ -415,7 +423,7 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
-	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions); err != nil {
+	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
@@ -447,7 +455,7 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 
 	<-time.After(duration)
 
-	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, []core.Extension{}); err != nil {
+	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, []core.Extension{}, api.Store); err != nil {
 		t.Error(err)
 	}
 
@@ -499,7 +507,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 
 	<-time.After(duration)
 
-	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions); err != nil {
+	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
@@ -581,7 +589,7 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], server.URL)}
 	updatedExtensions[0].Development.Hidden = false
 
-	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions); err != nil {
+	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
@@ -743,7 +751,13 @@ func isEqualJSON(s1, s2 string) (bool, error) {
 	return reflect.DeepEqual(o1, o2), nil
 }
 
-func verifyWebsocketMessage(ws *websocket.Conn, event string, version string, expectedApp core.App, expectedExtensions interface{}) error {
+func verifyWebsocketMessage(
+	ws *websocket.Conn, event string,
+	version string,
+	expectedApp core.App,
+	expectedExtensions interface{},
+	expectedStore string,
+) error {
 	message := websocketMessage{}
 	duration := 1 * time.Second
 	deadline := time.Now().Add(duration)
@@ -759,6 +773,10 @@ func verifyWebsocketMessage(ws *websocket.Conn, event string, version string, ex
 
 	if message.Event != event {
 		return fmt.Errorf("expecting to receive event %v but got: %v", message.Event, event)
+	}
+
+	if message.Data["store"] != "test-shop.myshopify.com" {
+		return fmt.Errorf("expect service store to be test-shop.myshopify.com but got %s", message.Data["store"])
 	}
 
 	expectedAppResult, err := json.Marshal(formatData(expectedApp, strcase.ToLowerCamel))

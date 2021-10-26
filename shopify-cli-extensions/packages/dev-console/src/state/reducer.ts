@@ -4,7 +4,7 @@ import {DevServerResponse} from '../types';
 
 import {ConsoleState} from './types';
 
-export const initialConsoleState: ConsoleState = {extensions: []};
+export const initialConsoleState: ConsoleState = {extensions: [], store: ''};
 
 export function useConsoleReducer() {
   return useReducer(consoleReducer, initialConsoleState);

@@ -19,6 +19,7 @@ export const mount = createMount<MountOptions, Context>({
       console: {
         host: 'www.example-host.com:8000/extensions/',
         app: options.console && 'app' in options.console ? options.console.app : mockApp(),
+        store: options.console?.store ?? '',
         extensions: options.console?.extensions ?? mockExtensions(),
         send: options.console?.send ?? jest.fn(),
         addListener: options.console?.addListener ?? jest.fn(),

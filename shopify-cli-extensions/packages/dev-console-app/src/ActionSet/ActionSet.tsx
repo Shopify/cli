@@ -37,7 +37,7 @@ export function ActionSet(props: ActionSetProps) {
     fallback: en,
   });
   const {extension, className, activeMobileQRCode, onShowMobileQRCode} = props;
-  const {app, host, refresh, hide, show} = useDevConsoleInternal();
+  const {app, store, refresh, hide, show} = useDevConsoleInternal();
   const hidden = extension.development.hidden;
 
   const handleShowHide = useCallback(() => {
@@ -61,13 +61,15 @@ export function ActionSet(props: ActionSetProps) {
 
   const showMobileQRCode = useCallback(async () => {
     if (app) {
-      setMobileQRCode(host);
+      setMobileQRCode(
+        `https://${store}/admin/extensions-dev/mobile?url=${extension.development.root.url}`,
+      );
       setMobileQRCodeState(null);
     } else {
       setMobileQRCodeState('error');
     }
     onShowMobileQRCode?.(extension);
-  }, [extension, onShowMobileQRCode, host, app]);
+  }, [extension, onShowMobileQRCode, store, app]);
 
   const onButtonClick = useCallback(() => {
     if (mobileQRCode && copyToClipboard(mobileQRCode)) {

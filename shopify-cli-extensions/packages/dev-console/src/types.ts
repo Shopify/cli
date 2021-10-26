@@ -26,7 +26,7 @@ export type DevServerCall =
 export type DevServerResponse =
   | {
       event: 'update' | 'connected';
-      data: {extensions?: ExtensionPayload[]; app?: App};
+      data: {extensions: ExtensionPayload[]; app?: App; store: string};
     }
   | {
       event: 'dispatch';

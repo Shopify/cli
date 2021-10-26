@@ -17,6 +17,7 @@ type UnsubscribeFn = () => void;
 
 export interface DevServerContextValue {
   host: string;
+  store: string;
   app?: App;
   extensions: ExtensionPayload[];
   send: (data: DevServerCall) => void;
@@ -83,10 +84,11 @@ export function useListener(listener: Listener, deps: React.DependencyList = [])
 }
 
 export function useDevConsole(): Console {
-  const {extensions, app, send} = useContext(DevServerContext);
+  const {extensions, app, store, send} = useContext(DevServerContext);
 
   return {
     app,
+    store,
     extensions,
     update: (data) => send({event: 'update', data}),
     dispatch: (action) => send({event: 'dispatch', data: action}),

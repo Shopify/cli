@@ -2,6 +2,7 @@ import {App, ConsoleAction, ExtensionPayload, DevServerUpdateCall} from '../type
 
 export interface Console {
   app?: App;
+  store: string;
   extensions: ExtensionPayload[];
   update(data: DevServerUpdateCall['data']): void;
   dispatch(acion: ConsoleAction): void;
@@ -9,6 +10,7 @@ export interface Console {
 
 export interface ConsoleState {
   app?: App;
+  store: string;
   extensions: ExtensionPayload[];
 }
 

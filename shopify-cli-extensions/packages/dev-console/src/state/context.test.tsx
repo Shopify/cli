@@ -61,7 +61,7 @@ describe('useDevConsole()', () => {
     wrapper.act(() => {
       const data: DevServerResponse = {
         event: 'connected',
-        data: {extensions},
+        data: {store: '', extensions},
       };
       server.server.emit('message', JSON.stringify(data));
     });
@@ -81,13 +81,13 @@ describe('useDevConsole()', () => {
     wrapper.act(() => {
       const connectedData: DevServerResponse = {
         event: 'connected',
-        data: {extensions: [firstExtension, extensionToUpdate]},
+        data: {store: '', extensions: [firstExtension, extensionToUpdate]},
       };
       server.server.emit('message', JSON.stringify(connectedData));
 
       const updateData: DevServerResponse = {
         event: 'update',
-        data: {extensions: [updatedExtension]},
+        data: {store: '', extensions: [updatedExtension]},
       };
       server.server.emit('message', JSON.stringify(updateData));
     });
