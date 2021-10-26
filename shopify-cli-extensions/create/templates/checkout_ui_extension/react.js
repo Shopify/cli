@@ -1,8 +1,6 @@
-import { render, Text } from "@shopify/checkout-ui-extensions-react";
+import React from 'react';
 
-render("Checkout::Feature::Render", ({ extensionPoint }) => (
-  <App extensionPoint={extensionPoint} />
-));
+render("Checkout::Feature::Render", App);
 
 function App({ extensionPoint }) {
   return <Text>Welcome to the {extensionPoint} extension!</Text>;

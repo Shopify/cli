@@ -57,10 +57,8 @@ bootstrap:
 	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/shopifile.yml
 	cd tmp/checkout_ui_extension; npm install && npm link "@shopify/shopify-cli-extensions"
-	cd tmp/checkout_ui_extension; cat shopifile.yml | \
-		ruby -ryaml -e "puts({'extensions' => [{'development' => YAML.load(STDIN.read).merge({'root_dir' => '.'}), 'type' => 'checkout_ui_extension'}]}.to_yaml)" | \
-		../../shopify-extensions build -
-	test -f tmp/checkout_ui_extension/build/main.js
+	cd tmp/product_subscription; npm install && npm link "@shopify/shopify-cli-extensions"
+	cd tmp/checkout_post_purchase; npm install && npm link "@shopify/shopify-cli-extensions"
 
 .PHONY: integration-test
 integration-test:

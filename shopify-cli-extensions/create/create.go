@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
@@ -246,10 +247,7 @@ func mergeYamlAndJsonFiles(fs *fsutils.FS, project *project) process.Task {
 func getFormattedMergedContent(targetPath string, originalContent []byte, newContent []byte, fs *fsutils.FS) (content []byte, err error) {
 	if strings.HasSuffix(targetPath, fsutils.YAML) {
 		if strings.HasSuffix(targetPath, configYamlFile) {
-			content, err = mergeYaml(originalContent, newContent, fs)
-			if err != nil {
-				return
-			}
+			return mergeConfigYaml(targetPath, originalContent, newContent, fs)
 		} else {
 			content, err = concatYaml(originalContent, newContent, fs)
 			if err != nil {
@@ -264,6 +262,21 @@ func getFormattedMergedContent(targetPath string, originalContent []byte, newCon
 	}
 
 	content, err = formatContent(targetPath, content)
+	return
+}
+
+func mergeConfigYaml(targetPath string, originalContent []byte, newContent []byte, fs *fsutils.FS) (content []byte, err error) {
+	content, err = mergeYaml(originalContent, newContent, fs)
+	if err != nil {
+		return
+	}
+
+	content, err = formatContent(targetPath, content)
+
+	// TODO: Improve this logic to get comments. Currently we just append them to the file
+	content = append(content, appendComments(originalContent)...)
+	content = append(content, appendComments(newContent)...)
+
 	return
 }
 
@@ -295,6 +308,16 @@ func mergeYaml(originalContent []byte, newContent []byte, fs *fsutils.FS) (conte
 	}
 
 	content, err = yaml.Marshal(&orgConfig)
+	return
+}
+
+func appendComments(additionalContent []byte) (content []byte) {
+	re := regexp.MustCompile(`(?m)\# (.+)\n`)
+	matches := re.FindAllString(string(additionalContent), -1)
+
+	for _, m := range matches {
+		content = append(content, []byte(m)...)
+	}
 	return
 }
 

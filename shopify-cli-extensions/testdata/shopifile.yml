@@ -21,7 +21,7 @@ extensions:
   - uuid: 00000000-0000-0000-0000-000000000001
     type: product_subscription
     development:
-      root_dir: "tmp/checkout_ui_extension"
+      root_dir: "tmp/product_subscription"
       build_dir: "build"
       template: "typescript-react"
       renderer:
@@ -34,7 +34,7 @@ extensions:
       - namespace: my-namespace
         key: my-key
     development:
-      root_dir: "tmp/checkout_ui_extension"
+      root_dir: "tmp/checkout_post_purchase"
       build_dir: "build"
       template: "typescript-react"
       renderer:

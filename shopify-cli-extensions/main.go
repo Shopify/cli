@@ -89,10 +89,11 @@ func (cli *CLI) build(args ...string) {
 }
 
 func (cli *CLI) create(args ...string) {
-	extension := cli.config.Extensions[0]
-	err := create.NewExtensionProject(extension)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a new extension: %w", err))
+	for _, extension := range cli.config.Extensions {
+		err := create.NewExtensionProject(extension)
+		if err != nil {
+			panic(fmt.Errorf("failed to create a new extension: %w", err))
+		}
 	}
 }
 
