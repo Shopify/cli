@@ -4,6 +4,14 @@
 
 The information below is mainly targeting contributors rather than users. If you want to learn more about how to build extensions and how to use the Shopify CLI in general, please consult the [official documentation](https://shopify.dev/apps/tools/cli).
 
+## Setup
+
+Install Go:
+
+```sh
+brew install go
+```
+
 ## Test
 
 To run the tests, simply execute the following shell command:
@@ -12,15 +20,15 @@ To run the tests, simply execute the following shell command:
 make test
 ```
 
-### Bootstrap an extension
+### Bootstrap extensions
 
-To bootstrap an extension and install of its node dependencies, run:
+To bootstrap extensions and install of node dependencies, run:
 
 ```sh
 make run bootstrap
 ```
 
-This will create a `checkout_ui_extension` in the `tmp` folder, install the node dependencies and then build the extension.
+This will create extensions in the `tmp` folder and install the node dependencies.
 
 ### Serve
 
@@ -53,8 +61,8 @@ extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: TYPE
     development:
-      root_dir: "api/testdata"
-      build_dir: "build"
+      root_dir: 'api/testdata'
+      build_dir: 'build'
       template: TEMPLATE_NAME
       renderer:
         name: RENDERER_LIBRARY
