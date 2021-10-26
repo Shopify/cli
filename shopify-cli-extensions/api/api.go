@@ -239,17 +239,17 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 		sync.Map{},
 	}
 
-	api.HandleFunc(apiRoot, api.extensionsHandler)
+	api.HandleFunc(apiRoot, handlerWithCors(api.extensionsHandler))
 
 	for _, extension := range api.Extensions {
 		assets := path.Join(apiRoot, extension.UUID, "assets")
 		buildDir := filepath.Join(".", extension.Development.RootDir, extension.Development.BuildDir)
 		api.PathPrefix(assets).Handler(
-			http.StripPrefix(assets, http.FileServer(http.Dir(buildDir))),
+			withCors(http.StripPrefix(assets, http.FileServer(http.Dir(buildDir)))),
 		)
 	}
 
-	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+}"), api.extensionRootHandler)
+	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+}"), handlerWithCors(api.extensionRootHandler))
 
 	return api
 }
@@ -474,6 +474,20 @@ func mergeWithOverwrite(source interface{}, destination interface{}) error {
 	// overwriting with empty values leads to unexpected results overriding arrays and maps
 	// https://github.com/imdario/mergo/issues/89#issuecomment-562954181
 	return mergo.Merge(source, destination, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
+}
+
+
+func withCors(h http.Handler) http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		h.ServeHTTP(rw, r)
+	}
+}
+
+func handlerWithCors(responseFunc func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
+	return withCors(http.HandlerFunc(responseFunc))
 }
 
 type ExtensionsApi struct {
