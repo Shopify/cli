@@ -33,7 +33,14 @@ export function DevConsole() {
     fallback: en,
   });
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set());
-  const {extensions, refresh, show, hide, focus, unfocus} = useDevConsoleInternal();
+  const {
+    state: {extensions},
+    refresh,
+    show,
+    hide,
+    focus,
+    unfocus,
+  } = useDevConsoleInternal();
 
   const allSelected = selectedExtensionsSet.size === extensions.length;
 

@@ -1,25 +1,22 @@
-import {DevServerContext, ExtensionPayload, useDevConsole} from '@shopify/ui-extensions-server-kit';
-import {useContext} from 'react';
+import {ExtensionPayload, useExtensionServerContext} from '@shopify/ui-extensions-dev-console';
 
 export function useDevConsoleInternal() {
-  const devServer = useDevConsole();
-  const {host} = useContext(DevServerContext);
-  const {dispatch, update} = devServer;
+  const extensionServer = useExtensionServerContext();
 
   return {
-    ...devServer,
-    host,
+    ...extensionServer,
+    host: extensionServer.client?.connection.url ?? '',
 
     // update events
     hide: (extensions: ExtensionPayload[]) =>
-      update({
+      extensionServer.client?.persist('update', {
         extensions: extensions.map((extension) => ({
           uuid: extension.uuid,
           development: {hidden: true},
         })),
       }),
     show: (extensions: ExtensionPayload[]) =>
-      update({
+      extensionServer.client?.persist('update', {
         extensions: extensions.map((extension) => ({
           uuid: extension.uuid,
           development: {hidden: false},
@@ -28,9 +25,12 @@ export function useDevConsoleInternal() {
 
     // dispatch events
     refresh: (extensions: ExtensionPayload[]) =>
-      dispatch({type: 'refresh', payload: extensions.map(({uuid}) => ({uuid}))}),
+      extensionServer.client?.emit(
+        'refresh',
+        extensions.map(({uuid}) => ({uuid})),
+      ),
     focus: (extension: ExtensionPayload) =>
-      dispatch({type: 'focus', payload: [{uuid: extension.uuid}]}),
-    unfocus: () => dispatch({type: 'unfocus'}),
+      extensionServer.client?.emit('focus', [{uuid: extension.uuid}]),
+    unfocus: () => extensionServer.client?.emit('unfocus'),
   };
 }
