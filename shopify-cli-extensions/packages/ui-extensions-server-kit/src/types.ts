@@ -1,53 +1,32 @@
-type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
+import './ExtensionServerClient/types';
+declare global {
+  namespace ExtensionServer {
+    interface InboundEvents {
+      connected: {extensions?: ExtensionPayload[]; app?: App};
+      update: {extensions?: ExtensionPayload[]; app?: App};
+      refresh: {uuid: string}[];
+      focus: {uuid: string}[];
+      unfocus: void;
+    }
 
-export interface DevServerUpdateCall {
-  event: 'update';
-  data: {
-    extensions?: ({uuid: string} & DeepPartial<ExtensionPayload>)[];
-    app?: DeepPartial<App>;
-  };
-}
-
-export type DevServerCall =
-  | {
-      event: 'update';
-      data: {
+    interface OutboundPersistEvents {
+      update: {
         extensions?: ({uuid: string} & DeepPartial<ExtensionPayload>)[];
         app?: DeepPartial<App>;
       };
     }
-  | {
-      event: 'dispatch';
-      data: ConsoleAction;
-    };
 
-export type DevServerResponse =
-  | {
-      event: 'update' | 'connected';
-      data: {extensions: ExtensionPayload[]; app?: App; store: string};
+    interface OutboundDispatchEvents {
+      refresh: {uuid: string}[];
+      focus: {uuid: string}[];
+      unfocus: void;
     }
-  | {
-      event: 'dispatch';
-      data: ConsoleAction;
-    };
-
-export type ConsoleAction =
-  | Action<'refresh', {uuid: string}[]>
-  | Action<'focus', {uuid: string}[]>
-  | BaseAction<'unfocus'>;
-
-export interface BaseAction<T extends string> {
-  type: T;
+  }
 }
-// @shopify/eslint-plugins doesn't allow any generic other than T
-// If this becomes a problem, consider modifying this rule
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface Action<T extends string = string, P = any> {
-  type: T;
-  payload: P;
-}
+
+type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
 
 export interface ExtensionPayload {
   type: string;
