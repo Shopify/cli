@@ -1,5 +1,3 @@
-node_modules
-.DS_Store
+*.d.ts
+!typings.d.ts
 dist
-tsconfig.tsbuildinfo
-yarn-error.log

@@ -6,10 +6,13 @@
   ],
   "scripts": {
     "start": "cd packages/dev-console-app; yarn start",
+    "test": "lerna run test",
+    "build": "lerna run build",
     "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe"
   },
   "devDependencies": {
     "@shopify/eslint-plugin": "^40.4.0",
-    "eslint": "^7.32.0"
+    "eslint": "^7.32.0",
+    "lerna": "^4.0.0"
   }
 }

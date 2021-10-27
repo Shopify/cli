@@ -14,6 +14,8 @@ const config: Config.InitialOptions = {
 
   testEnvironment: 'jsdom',
 
+  testPathIgnorePatterns: ['node_modules', 'dist'],
+
   moduleNameMapper: {
     'tests/(.*)': '<rootDir>/tests/$1',
   },
