@@ -1,5 +1,6 @@
 import {groupByKey} from '../../utilities';
 import type {ExtensionServerActions} from '../actions';
+
 import type {ExtensionServerState} from './types';
 
 export function extensionSeverReducer(state: ExtensionServerState, action: ExtensionServerActions) {

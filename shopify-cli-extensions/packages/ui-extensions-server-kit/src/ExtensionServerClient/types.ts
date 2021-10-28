@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention, @typescript-eslint/no-namespace */
 declare global {
   namespace ExtensionServer {
     /**
@@ -61,6 +62,11 @@ declare global {
       connection: WebSocket;
 
       /**
+       * API Client
+       */
+      api: API.Client;
+
+      /**
        * Function to add an event listener to messages coming from
        * the extension server connection.
        */
@@ -93,6 +99,82 @@ declare global {
      */
     type StaticClient = Static<ExtensionServer.Client, [option?: ExtensionServer.Options]>;
 
+    // API responses
+    namespace API {
+      interface Client {
+        url: string;
+        extensions(): Promise<ExtensionsResponse>;
+        extensionById(id: string): Promise<ExtensionResponse>;
+      }
+
+      interface BaseResponse {
+        app: App;
+        version: string;
+      }
+
+      interface ExtensionsResponse extends BaseResponse {
+        extensions: Extension[];
+      }
+
+      interface ExtensionResponse extends BaseResponse {
+        extension: Extension;
+      }
+
+      interface App {
+        api_key: string;
+        [key: string]: string;
+      }
+
+      interface Extension {
+        type: string;
+        uuid: string;
+        assets: Assets;
+        development: Development;
+        user: User;
+        version: string;
+      }
+
+      interface Assets {
+        [name: string]: Asset;
+      }
+
+      interface Asset {
+        name: string;
+        url: string;
+        raw_search_params?: string;
+      }
+
+      interface Development {
+        root: ResourceURL;
+        resource: ResourceURL;
+        renderer?: Renderer;
+        hidden: boolean;
+        build_dir?: string;
+        root_dir?: string;
+        template?: string;
+        entries?: {[key: string]: string};
+        status: string;
+      }
+
+      interface ResourceURL {
+        url: string;
+      }
+
+      interface Renderer {
+        name: string;
+        version: string;
+      }
+
+      interface User {
+        metafields: Metafield[] | null;
+      }
+
+      interface Metafield {
+        namespace: string;
+        key: string;
+      }
+    }
+
     // Utilities
 
     /**
@@ -110,7 +192,7 @@ declare global {
      * class. This is useful to define static methods, static properties
      * and constructor variables.
      */
-    interface Static<T = unknown, A extends Array<unknown> = any[]> {
+    interface Static<T = unknown, A extends unknown[] = any[]> {
       prototype: T;
       new (...args: A): T;
     }

@@ -1,3 +1,5 @@
+import { APIClient } from './APIClient';
+
 export class ExtensionServerClient implements ExtensionServer.Client {
   protected options: ExtensionServer.Options;
 
@@ -8,6 +10,8 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   public id = (Math.random() + 1).toString(36).substring(7);
 
   connection!: WebSocket;
+
+  api!: ExtensionServer.API.Client;
 
   constructor(options: ExtensionServer.Options) {
     this.options = {
@@ -22,6 +26,18 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     if (this.options.connection.automaticConnect) {
       this.connect();
     }
+
+    this.initializeApiClient();
+  }
+
+  protected initializeApiClient() {
+    let url = '';
+    if (this.options.connection.url) {
+      const socketUrl = new URL(this.options.connection.url);
+      socketUrl.protocol = socketUrl.protocol === 'ws:' ? 'http:' : 'https:';
+      url = socketUrl.origin;
+    }
+    this.api = new APIClient(url);
   }
 
   protected initializeConnection() {
@@ -70,6 +86,10 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         this.options.connection.url,
         this.options.connection.protocols,
       );
+
+      if (!this.api || this.api.url !== this.connection.url) {
+        this.initializeApiClient();
+      }
 
       this.initializeConnection();
     }
