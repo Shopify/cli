@@ -5,8 +5,15 @@ import (
 	"io"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	Checkout     string = "checkout"
+	Admin        string = "admin"
+	PostPurchase string = "post-purchase"
 )
 
 func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
@@ -24,6 +31,7 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 			name := keys[entry]
 			extension.Assets[name] = Asset{Name: name}
 		}
+		extension.Surface = GetSurface(&extension)
 		extensions = append(extensions, extension)
 	}
 	// TODO: Improve this when we need to read more app configs,
@@ -33,7 +41,7 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 
 	service := ExtensionService{
 		App:        app,
-		Version:    "0.1.0",
+		Version:    "3",
 		Extensions: extensions,
 		Port:       config.Port,
 		Store:      config.Store,
@@ -78,6 +86,7 @@ type Extension struct {
 	Type            string           `json:"type" yaml:"type,omitempty"`
 	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
 	Version         string           `json:"version" yaml:"version,omitempty"`
+	Surface         string           `json:"surface" yaml:"-"`
 }
 
 func (e Extension) String() string {
@@ -136,4 +145,14 @@ func (t Extension) Transformer(typ reflect.Type) func(dst, src reflect.Value) er
 		}
 	}
 	return nil
+}
+
+func GetSurface(extension *Extension) string {
+	if strings.Contains(extension.Development.Renderer.Name, "checkout") {
+		return Checkout
+	}
+	if strings.Contains(extension.Development.Renderer.Name, "post-purchase") {
+		return PostPurchase
+	}
+	return Admin
 }

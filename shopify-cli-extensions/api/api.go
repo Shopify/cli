@@ -27,7 +27,7 @@ import (
 )
 
 func New(config *core.Config, apiRoot string) *ExtensionsApi {
-	mux := mux.NewRouter().StrictSlash(true)
+	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, apiRoot, http.StatusTemporaryRedirect)
@@ -239,6 +239,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 		sync.Map{},
 	}
 
+	api.HandleFunc(strings.TrimSuffix(apiRoot, "/"), handlerWithCors(api.extensionsHandler))
 	api.HandleFunc(apiRoot, handlerWithCors(api.extensionsHandler))
 
 	for _, extension := range api.Extensions {
@@ -249,7 +250,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 		)
 	}
 
-	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+}"), handlerWithCors(api.extensionRootHandler))
+	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
 
 	return api
 }
@@ -326,7 +327,7 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 	encoder := json.NewEncoder(rw)
 
 	encoder.Encode(extensionsResponse{
-		&Response{api.App, api.Version},
+		api.getReponse(r),
 		getExtensionsWithUrl(api.Extensions, api.GetApiRootUrlFromRequest(r)),
 	})
 }
@@ -360,7 +361,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 
 			rw.Header().Add("Content-Type", "application/json")
 			encoder := json.NewEncoder(rw)
-			encoder.Encode(singleExtensionResponse{&Response{api.App, api.Version}, extensionWithUrls})
+			encoder.Encode(singleExtensionResponse{api.getReponse(r), extensionWithUrls})
 			return
 		}
 	}
@@ -476,6 +477,14 @@ func mergeWithOverwrite(source interface{}, destination interface{}) error {
 	return mergo.Merge(source, destination, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
 }
 
+func (api *ExtensionsApi) getReponse(r *http.Request) *Response {
+	return &Response{
+		formatData(api.App, strcase.ToLowerCamel),
+		api.Version,
+		core.Url{Url: api.GetApiRootUrlFromRequest(r)},
+		core.Url{Url: api.GetWebsocketUrlFromRequest(r)},
+	}
+}
 
 func withCors(h http.Handler) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -528,6 +537,8 @@ type websocketMessage struct {
 type Response struct {
 	App     core.App `json:"app" yaml:"-"`
 	Version string   `json:"version"`
+	Root    core.Url `json:"root"`
+	Socket  core.Url `json:"socket"`
 }
 
 type websocketConnection struct {

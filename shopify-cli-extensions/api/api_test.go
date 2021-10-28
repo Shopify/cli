@@ -47,16 +47,26 @@ func TestGetExtensions(t *testing.T) {
 
 	getJSONResponse(api, t, secureHost, "/extensions/", &response)
 
-	if response.App == nil || response.App["api_key"] != "app_api_key" {
-		t.Errorf("Expected app to have api_key \"app_api_key\" but got %v", response.App)
+	if response.App == nil || response.App["apiKey"] != "app_api_key" {
+		t.Errorf("Expected app to have apiKey \"app_api_key\" but got %v", response.App)
 	}
 
 	if len(response.Extensions) != 3 {
 		t.Errorf("Expected 3 extension got %d", len(response.Extensions))
 	}
 
-	if response.Version != "0.1.0" {
-		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
+	if response.Version != "3" {
+		t.Errorf("expect service version to be 3 but got %s", response.Version)
+	}
+
+	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.apiRoot)
+	if response.Root.Url != rootUrl {
+		t.Errorf("expect service root url to be %s but got %s", rootUrl, response.Root.Url)
+	}
+
+	socketUrl := fmt.Sprintf("wss://%s%s", secureHost, api.apiRoot)
+	if response.Socket.Url != socketUrl {
+		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
 
 	extension := response.Extensions[0]
@@ -95,8 +105,22 @@ func TestGetSingleExtension(t *testing.T) {
 
 	getJSONResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000000", &response)
 
-	if response.Version != "0.1.0" {
-		t.Errorf("expect service version to be 0.1.0 but got %s", response.Version)
+	if response.App == nil || response.App["apiKey"] != "app_api_key" {
+		t.Errorf("Expected app to have apiKey \"app_api_key\" but got %v", response.App)
+	}
+
+	if response.Version != "3" {
+		t.Errorf("expect service version to be 3 but got %s", response.Version)
+	}
+
+	rootUrl := fmt.Sprintf("https://%s%s", host, api.apiRoot)
+	if response.Root.Url != rootUrl {
+		t.Errorf("expect service root url to be %s but got %s", rootUrl, response.Root.Url)
+	}
+
+	socketUrl := fmt.Sprintf("wss://%s%s", host, api.apiRoot)
+	if response.Socket.Url != socketUrl {
+		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
 
 	if response.App == nil {
@@ -434,8 +458,8 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 		t.Error("Expected app to not be null")
 	}
 
-	if response.App["api_key"] != "app_api_key" {
-		t.Errorf("expected App[\"api_key\"] to be `\"app_api_key\"` but got %v", response.App["api_key"])
+	if response.App["apiKey"] != "app_api_key" {
+		t.Errorf("expected App[\"apiKey\"] to be `\"app_api_key\"` but got %v", response.App["apiKey"])
 	}
 
 	if response.App["title"] != "my app" {
@@ -680,7 +704,8 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 		  "metafields": [{"namespace": "another-namespace", "key": "another-key"}],
 		  "uuid": "00000000-0000-0000-0000-000000000000",
 		  "version": "",
-		  "extensionPoints": null
+		  "extensionPoints": null,
+		  "surface": "checkout"
 		}
 	  ]`, server.URL, server.URL)
 

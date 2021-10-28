@@ -44,7 +44,7 @@ func (root *RootHandler) HandleHTMLRequest(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if getSurface(extension) == postPurchase {
+	if extension.Surface == core.PostPurchase {
 		content, err := root.getIndexContent(templateData)
 		if err != nil {
 			root.handleError(rw, fmt.Errorf("failed to render index page: %v", err))
@@ -82,6 +82,17 @@ func (root *RootHandler) GetApiRootUrlFromRequest(r *http.Request) string {
 	return fmt.Sprintf("%s://%s%s", protocol, r.Host, root.ApiRoot)
 }
 
+func (root *RootHandler) GetWebsocketUrlFromRequest(r *http.Request) string {
+	var protocol string
+	if IsSecureRequest(r) {
+		protocol = "wss"
+	} else {
+		protocol = "ws"
+	}
+
+	return fmt.Sprintf("%s://%s%s", protocol, r.Host, root.ApiRoot)
+}
+
 func (root *RootHandler) getTunnelError(templateData *extensionHtmlTemplateData) (mergedContent []byte, err error) {
 	content, err := root.getTunnelErrorContent(templateData)
 
@@ -113,7 +124,7 @@ func (root *RootHandler) getRedirectUrl(r *http.Request, extension *core.Extensi
 		return
 	}
 
-	if getSurface(extension) == checkout {
+	if extension.Surface == core.Checkout {
 		if extension.Development.Resource.Url == "" {
 			err = fmt.Errorf("resource url is not defined")
 			return
@@ -140,16 +151,6 @@ func (root *RootHandler) handleError(rw http.ResponseWriter, errorMessage error)
 	rw.Write(content.Bytes())
 }
 
-func getSurface(extension *core.Extension) surface {
-	if strings.Contains(extension.Development.Renderer.Name, "checkout") {
-		return checkout
-	}
-	if strings.Contains(extension.Development.Renderer.Name, "post-purchase") {
-		return postPurchase
-	}
-	return admin
-}
-
 type apiConfig struct {
 	ApiRoot string
 	Port    int
@@ -170,11 +171,3 @@ type extensionHtmlTemplateData struct {
 type errorsTemplateData struct {
 	Error string
 }
-
-type surface int64
-
-const (
-	admin surface = iota
-	checkout
-	postPurchase
-)
