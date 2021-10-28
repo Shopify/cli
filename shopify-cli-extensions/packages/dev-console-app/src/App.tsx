@@ -22,11 +22,14 @@ function App() {
     [],
   );
 
+  const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:';
+  const host = (import.meta.env.VITE_WEBSOCKET_HOST as string) || location.host;
+
   return (
     <div className={styles.Theme}>
       <I18nContext.Provider value={i18nManager}>
         <AppProvider i18n={enTranslations}>
-          <DevConsoleProvider host="ws://localhost:8000/extensions/">
+          <DevConsoleProvider host={`${protocol}//${host}/extensions/`}>
             <DevConsole />
           </DevConsoleProvider>
         </AppProvider>

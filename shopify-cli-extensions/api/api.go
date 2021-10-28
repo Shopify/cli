@@ -6,6 +6,7 @@
 package api
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -26,11 +27,14 @@ import (
 	"github.com/imdario/mergo"
 )
 
+//go:embed dev-console-app/*
+var devConsoleApp embed.FS
+
 func New(config *core.Config, apiRoot string) *ExtensionsApi {
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, apiRoot, http.StatusTemporaryRedirect)
+		http.Redirect(rw, r, "/dev-console-app", http.StatusPermanentRedirect)
 	})
 
 	api := configureExtensionsApi(config, mux, apiRoot)
@@ -254,6 +258,12 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 
 	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
 
+	api.PathPrefix("/dev-console-app").Handler(http.FileServer(http.FS(devConsoleApp)))
+
+	api.PathPrefix("/assets/").Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		http.Redirect(rw, r, path.Join("/dev-console-app", r.URL.Path), http.StatusPermanentRedirect)
+	}))
+	
 	return api
 }
 

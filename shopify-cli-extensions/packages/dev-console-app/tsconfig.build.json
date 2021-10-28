@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "outDir": "../../api",
     "paths": {
       "@/*": ["src/*"],
       "@shopify/ui-extensions-dev-console": ["../dev-console/src"],
