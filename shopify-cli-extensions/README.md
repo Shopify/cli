@@ -70,7 +70,7 @@ To create new extension projects, simply execute the following shell command:
 make run create testdata/shopifile.yml
 ```
 
-This will create a new extension inside the `tmp/checkout_ui_extension` folder. You can update `testdata/shopifile.yml` if you want to test different options.
+This will create new extensions inside the `tmp` folder. You can update `testdata/shopifile.yml` if you want to test different options.
 
 The YAML file is in the format of
 
