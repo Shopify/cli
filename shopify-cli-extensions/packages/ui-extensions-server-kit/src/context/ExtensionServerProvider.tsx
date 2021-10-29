@@ -1,9 +1,12 @@
-import React, {useCallback, useRef, useState} from 'react';
-import {createConnectedAction, createUpdateAction} from '../state';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
+
+import {createConnectedAction, createUpdateAction, INITIAL_STATE} from '../state';
 import {ExtensionServerClient} from '../ExtensionServerClient';
-import {useIsomorphicLayoutEffect, useExtensionServerState} from '../hooks';
+import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect';
+import {useExtensionServerState} from '../hooks/useExtensionServerState';
+import {noop} from '../utilities';
+
 import {extensionServerContext} from './constants';
-import { noop } from '../utilities';
 import type {ExtensionServerProviderProps} from './types';
 
 export function ExtensionServerProvider({
@@ -38,9 +41,9 @@ export function ExtensionServerProvider({
     [dispatch],
   );
 
+  const context = useMemo(() => ({state, connect, client: client.current}), [connect, state]);
+
   return (
-    <extensionServerContext.Provider value={{state, connect, client: client.current}}>
-      {children}
-    </extensionServerContext.Provider>
+    <extensionServerContext.Provider value={context}>{children}</extensionServerContext.Provider>
   );
 }

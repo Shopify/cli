@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-namespace, @shopify/strict-component-boundaries */
 import './ExtensionServerClient/types';
+
 declare global {
   namespace ExtensionServer {
     interface InboundEvents {
