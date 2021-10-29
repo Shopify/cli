@@ -3,7 +3,7 @@
   "name": "@shopify/ui-extensions-dev-console-app",
   "version": "0.0.0",
   "scripts": {
-    "start": "VITE_WEBSOCKET_HOST='localhost:8000' vite",
+    "start": "vite",
     "build": "tsc --project tsconfig.build.json && vite build",
     "serve": "vite preview",
     "test": "jest",
