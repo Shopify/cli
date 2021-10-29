@@ -55,8 +55,8 @@ build-node-packages:
 .PHONY: bootstrap
 bootstrap:
 	mkdir -p tmp
-	make build
 	make build-node-packages
+	make build
 	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/shopifile.yml
 	cd tmp/checkout_ui_extension; npm install && npm link "@shopify/shopify-cli-extensions"
@@ -66,8 +66,8 @@ bootstrap:
 .PHONY: integration-test
 integration-test:
 	mkdir -p tmp
-	make build
 	make build-node-packages
+	make build
 	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/shopifile.integration.yml
 	cd tmp/integration_test; npm link "@shopify/shopify-cli-extensions" && npm install
