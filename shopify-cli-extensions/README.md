@@ -64,7 +64,7 @@ Once the PR for the new branch is merged, you can deploy the packages on [Shipit
 
 ## Create
 
-To create a new extension project, simply execute the following shell command:
+To create new extension projects, simply execute the following shell command:
 
 ```sh
 make run serve testdata/shopifile.yml
