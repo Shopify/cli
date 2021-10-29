@@ -3,11 +3,11 @@
   "name": "@shopify/ui-extensions-dev-console-app",
   "version": "0.1.0-alpha.0",
   "scripts": {
-    "start": "vite",
     "build": "tsc --project tsconfig.build.json && vite build",
+    "clean": "git clean --exclude node_modules -xdf ./",
     "serve": "vite preview",
-    "test": "jest",
-    "clean": "git clean --exclude node_modules -xdf ./"
+    "start": "vite",
+    "test": "jest"
   },
   "dependencies": {
     "@shopify/polaris": "^6.6.0",

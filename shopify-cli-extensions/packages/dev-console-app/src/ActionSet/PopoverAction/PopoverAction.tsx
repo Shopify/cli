@@ -15,16 +15,8 @@ export interface PopoverActionProps extends ActionProps {
 }
 
 export function PopoverAction(props: PopoverActionProps) {
-  const {
-    className,
-    accessibilityLabel,
-    source,
-    onAction,
-    active,
-    onClose,
-    content,
-    loading,
-  } = props;
+  const {className, accessibilityLabel, source, onAction, active, onClose, content, loading} =
+    props;
   const [i18n] = useI18n({
     id: 'PopoverAction',
     fallback: en,

@@ -5,8 +5,8 @@
   "types": "dist/index",
   "scripts": {
     "build": "tsc",
-    "test": "jest",
-    "clean": "git clean --exclude node_modules -xdf ./"
+    "clean": "git clean --exclude node_modules -xdf ./",
+    "test": "jest"
   },
   "dependencies": {
     "@shopify/react-i18n": "^6.1.0"

@@ -2,4 +2,5 @@
 *.d.ts
 !typings.d.ts
 !.eslintrc.js
+!css-transform.js
 dist

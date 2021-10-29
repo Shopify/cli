@@ -27,7 +27,7 @@ const config: Config.InitialOptions = {
   moduleDirectories: ['node_modules', 'src'],
 
   transform: {
-    '^.+\\.scss$': '<rootDir>/tests/css-transform.ts',
+    '^.+\\.scss$': '<rootDir>/tests/css-transform.js',
     '^.+\\.(ts|tsx)$': 'ts-jest',
   },
 };

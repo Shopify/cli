@@ -134,6 +134,7 @@ export function ActionSet(props: ActionSetProps) {
     mobileQRCode,
     mobileQRCodeState,
     extension.development.root.url,
+    isDevelopment,
   ]);
 
   return (
