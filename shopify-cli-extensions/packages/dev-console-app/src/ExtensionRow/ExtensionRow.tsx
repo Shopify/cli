@@ -14,7 +14,7 @@ export type ExtensionRowProps = {
   onSelect(extension: ExtensionPayload): void;
   onHighlight(extension: ExtensionPayload): void;
   onClearHighlight(): void;
-} & Pick<ActionSetProps, 'activeMobileQRCode' | 'onShowMobileQRCode'>;
+} & Pick<ActionSetProps, 'activeMobileQRCode' | 'onShowMobileQRCode' | 'onCloseMobileQRCode'>;
 
 export function ExtensionRow({
   extension,
@@ -50,7 +50,7 @@ export function ExtensionRow({
   );
 
   const textClass = hidden ? styles.Hidden : undefined;
-  const statusClass = status ? (styles as any)[status] : styles.error;
+  const statusClass = status ? (styles as any)[status || 'error'] : styles.error;
 
   return (
     <tr

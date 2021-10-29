@@ -17,7 +17,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
     assets: {
       main: {
         name: 'main',
-        url: `http://localhost:8000/extensions/${uuid}/assets/main.js`,
+        url: `https://secure-link.com/extensions/${uuid}/assets/main.js`,
       },
     } as any,
     development: {
@@ -27,7 +27,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         url: 'resourceUrl',
       },
       root: {
-        url: `http://localhost:8000/extensions/${uuid}`,
+        url: `https://secure-link.com/extensions/${uuid}`,
       },
       renderer: {
         name: 'render name',

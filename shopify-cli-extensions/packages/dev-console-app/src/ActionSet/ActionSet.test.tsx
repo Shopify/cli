@@ -15,6 +15,18 @@ jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 const i18n = mockI18n(en);
 
 describe('ActionSet', () => {
+  // Mocking location: https://remarkablemark.org/blog/2018/11/17/mock-window-location/
+  const originalLocation = window.location;
+
+  beforeAll(() => {
+    delete (window as any).location;
+    (window as any).location = {};
+  });
+
+  afterAll(() => {
+    (window as any).location = originalLocation;
+  });
+
   function Wrapper({children}: React.PropsWithChildren<{}>) {
     return (
       <ToastProvider>
@@ -79,6 +91,7 @@ describe('ActionSet', () => {
   });
 
   it('renders QRCode with mobile deep-link url', async () => {
+    (window as any).location = {hostname: 'secure-link.com'};
     const extension = mockExtension();
     const store = 'example.com';
 
@@ -99,6 +112,8 @@ describe('ActionSet', () => {
   });
 
   it('renders error popover when failing to generate mobile QR code', async () => {
+    (window as any).location = {hostname: 'secure-link.com'};
+
     const container = await mount(
       <Wrapper>
         <ActionSet activeMobileQRCode extension={mockExtension()} />
@@ -112,6 +127,25 @@ describe('ActionSet', () => {
 
     expect(container).toContainReactComponent('p', {
       children: i18n.translate('qrcode.loadError'),
+    });
+  });
+
+  it('renders error popover when server is unsecure', async () => {
+    (window as any).location = {hostname: 'localhost'};
+
+    const container = await mount(
+      <Wrapper>
+        <ActionSet activeMobileQRCode extension={mockExtension()} />
+      </Wrapper>,
+      {console: {app: undefined, extensions: mockExtensions()}},
+    );
+
+    await container
+      .find(Action, {accessibilityLabel: i18n.translate('qrcode.action')})
+      ?.trigger('onAction');
+
+    expect(container).toContainReactComponent('p', {
+      children: i18n.translate('qrcode.useSecureURL'),
     });
   });
 });
