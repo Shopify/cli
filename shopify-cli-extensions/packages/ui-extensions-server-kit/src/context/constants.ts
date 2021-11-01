@@ -7,6 +7,7 @@ import type {ExtensionServerContext} from './types';
 
 export const DEFAULT_VALUE: ExtensionServerContext = {
   connect: noop,
+  dispatch: noop,
   state: INITIAL_STATE,
 };
 

@@ -110,6 +110,8 @@ declare global {
       interface BaseResponse {
         app: App;
         version: string;
+        root: ResourceURL;
+        socket: ResourceURL;
       }
 
       interface ExtensionsResponse extends BaseResponse {
@@ -121,7 +123,7 @@ declare global {
       }
 
       interface App {
-        api_key: string;
+        apiKey: string;
         [key: string]: string;
       }
 
@@ -141,7 +143,7 @@ declare global {
       interface Asset {
         name: string;
         url: string;
-        raw_search_params?: string;
+        rawSearchParams?: string;
       }
 
       interface Development {

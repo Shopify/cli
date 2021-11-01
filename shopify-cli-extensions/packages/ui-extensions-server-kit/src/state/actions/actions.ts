@@ -1,4 +1,10 @@
-import type { ConnectedAction, UpdateAction } from './types';
+import type {
+  ConnectedAction,
+  UpdateAction,
+  RefreshAction,
+  FocusAction,
+  UnfocusAction,
+} from './types';
 
 export function createConnectedAction(payload: ConnectedAction['payload']): ConnectedAction {
   return {
@@ -10,6 +16,27 @@ export function createConnectedAction(payload: ConnectedAction['payload']): Conn
 export function createUpdateAction(payload: UpdateAction['payload']): UpdateAction {
   return {
     type: 'update',
+    payload,
+  };
+}
+
+export function createRefreshAction(payload: RefreshAction['payload']): RefreshAction {
+  return {
+    type: 'refresh',
+    payload,
+  };
+}
+
+export function createFocusAction(payload: FocusAction['payload']): FocusAction {
+  return {
+    type: 'focus',
+    payload,
+  };
+}
+
+export function createUnfocusAction(payload: UnfocusAction['payload']): UnfocusAction {
+  return {
+    type: 'unfocus',
     payload,
   };
 }

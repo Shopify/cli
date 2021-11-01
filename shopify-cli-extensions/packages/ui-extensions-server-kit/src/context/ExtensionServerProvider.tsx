@@ -1,6 +1,12 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 
-import {createConnectedAction, createUpdateAction, INITIAL_STATE} from '../state';
+import {
+  createConnectedAction,
+  createUpdateAction,
+  createRefreshAction,
+  createFocusAction,
+  createUnfocusAction,
+} from '../state';
 import {ExtensionServerClient} from '../ExtensionServerClient';
 import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect';
 import {useExtensionServerState} from '../hooks/useExtensionServerState';
@@ -31,17 +37,22 @@ export function ExtensionServerProvider({
     return client.current.connect(options) ?? noop;
   }, [options]);
 
-  useIsomorphicLayoutEffect(
-    () => client.current?.on('update', (payload) => dispatch(createUpdateAction(payload))),
-    [dispatch],
-  );
+  useIsomorphicLayoutEffect(() => {
+    const listeners = [
+      client.current?.on('update', (payload) => dispatch(createUpdateAction(payload))),
+      client.current?.on('connected', (payload) => dispatch(createConnectedAction(payload))),
+      client.current?.on('refresh', (payload) => dispatch(createRefreshAction(payload))),
+      client.current?.on('focus', (payload) => dispatch(createFocusAction(payload))),
+      client.current?.on('unfocus', (payload) => dispatch(createUnfocusAction(payload))),
+    ];
 
-  useIsomorphicLayoutEffect(
-    () => client.current?.on('connected', (payload) => dispatch(createConnectedAction(payload))),
-    [dispatch],
-  );
+    return () => listeners.forEach((unsubscribe) => unsubscribe?.());
+  }, [dispatch]);
 
-  const context = useMemo(() => ({state, connect, client: client.current}), [connect, state]);
+  const context = useMemo(
+    () => ({dispatch, state, connect, client: client.current}),
+    [dispatch, connect, state],
+  );
 
   return (
     <extensionServerContext.Provider value={context}>{children}</extensionServerContext.Provider>

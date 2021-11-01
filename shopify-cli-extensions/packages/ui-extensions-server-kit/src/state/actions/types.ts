@@ -8,4 +8,24 @@ export interface UpdateAction {
   payload: ExtensionServer.InboundEvents['update'];
 }
 
-export type ExtensionServerActions = ConnectedAction | UpdateAction;
+export interface RefreshAction {
+  type: 'refresh';
+  payload: ExtensionServer.InboundEvents['refresh'];
+}
+
+export interface FocusAction {
+  type: 'focus';
+  payload: ExtensionServer.InboundEvents['focus'];
+}
+
+export interface UnfocusAction {
+  type: 'unfocus';
+  payload: ExtensionServer.InboundEvents['unfocus'];
+}
+
+export type ExtensionServerActions =
+  | ConnectedAction
+  | UpdateAction
+  | RefreshAction
+  | FocusAction
+  | UnfocusAction;

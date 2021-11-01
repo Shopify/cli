@@ -36,6 +36,7 @@ export interface ExtensionPayload {
   development: {
     hidden: boolean;
     status: Status;
+    focused?: boolean;
     resource: {
       url: string;
     };
