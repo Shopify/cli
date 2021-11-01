@@ -44,11 +44,7 @@ export function build({mode}: Options) {
         return;
       }
       built = true;
-      if (result.errors.length || result.warnings.length) {
-        logErrors(result);
-      } else {
-        console.log(`Build succeeded`);
-      }
+      logResult(result);
     })
     .catch((_e) => process.exit(1));
 }
@@ -77,15 +73,21 @@ function graphqlAvailable() {
 async function onRebuild(failure: BuildFailure | null, _result: BuildResult | null) {
   if (failure) {
     console.error(failure.message);
-    logErrors(failure);
-  } else {
-    console.log(`Build succeeded`);
   }
+  logResult(failure);
 }
 
-async function logErrors(failure: BuildFailure | BuildResult) {
-  const errors = await formatMessages(failure.errors, {kind: 'error'});
-  const warnings = await formatMessages(failure.warnings, {kind: 'warning'});
+async function logResult(result: BuildResult | null) {
+  if (result?.errors.length || result?.warnings.length) {
+    logErrors(result);
+    return;
+  }
+  console.log(`Build succeeded`);
+}
+
+async function logErrors(result: BuildResult) {
+  const errors = await formatMessages(result.errors, {kind: 'error'});
+  const warnings = await formatMessages(result.warnings, {kind: 'warning'});
   if (errors.length > 0) console.error(errors.join('\n'));
   if (warnings.length > 0) console.error(errors.join('\n'));
 }
