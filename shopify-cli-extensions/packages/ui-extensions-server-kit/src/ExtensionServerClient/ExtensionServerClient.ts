@@ -27,19 +27,19 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
     if (this.options.connection.automaticConnect && this.options.connection.url) {
       this.connect();
-      this.initializeApiClient();
     }
+    this.initializeApiClient();
   }
 
   public connect(options?: ExtensionServer.Options) {
+    if (options) {
+      this.mergeOptions(options);
+    }
+
     if (
-      (this.options.connection.url || options?.connection.url) &&
+      this.options.connection.url &&
       (!this.connection || this.connection?.readyState === this.connection?.CLOSED)
     ) {
-      if (options) {
-        this.mergeOptions(options);
-      }
-
       this.connection?.close();
       this.connection = new WebSocket(
         this.options.connection.url,
