@@ -20,17 +20,7 @@ export function build({mode}: Options) {
     {'process.env.NODE_ENV': JSON.stringify(mode)},
   );
 
-  const onRebuild = async (failure: BuildFailure | null, result: BuildResult | null) => {
-    if (failure) {
-      const errors = await formatMessages(failure.errors, {kind: 'error'});
-      const warnings = await formatMessages(failure.warnings, {kind: 'warning'});
-      console.error(failure.message);
-      if (errors.length > 0) console.error(errors.join('\n'));
-      if (warnings.length > 0) console.error(errors.join('\n'));
-    } else {
-      console.log(`Build succeeded`);
-    }
-  };
+  let built = false;
 
   esBuild({
     bundle: true,
@@ -48,7 +38,19 @@ export function build({mode}: Options) {
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
     watch: isDevelopment ? {onRebuild} : false,
-  }).catch((_e) => process.exit(1));
+  })
+    .then((result) => {
+      if (built) {
+        return;
+      }
+      built = true;
+      if (result.errors.length || result.warnings.length) {
+        logErrors(result);
+      } else {
+        console.log(`Build succeeded`);
+      }
+    })
+    .catch((_e) => process.exit(1));
 }
 
 function getPlugins() {
@@ -70,4 +72,20 @@ function graphqlAvailable() {
   } catch {
     return false;
   }
+}
+
+async function onRebuild(failure: BuildFailure | null, _result: BuildResult | null) {
+  if (failure) {
+    console.error(failure.message);
+    logErrors(failure);
+  } else {
+    console.log(`Build succeeded`);
+  }
+}
+
+async function logErrors(failure: BuildFailure | BuildResult) {
+  const errors = await formatMessages(failure.errors, {kind: 'error'});
+  const warnings = await formatMessages(failure.warnings, {kind: 'warning'});
+  if (errors.length > 0) console.error(errors.join('\n'));
+  if (warnings.length > 0) console.error(errors.join('\n'));
 }
