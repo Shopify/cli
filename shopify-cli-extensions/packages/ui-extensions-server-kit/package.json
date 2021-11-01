@@ -1,10 +1,10 @@
 {
-  "name": "@shopify/ui-extensions-dev-console",
+  "name": "@shopify/ui-extensions-server-kit",
   "version": "0.0.0",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
-    "build": "tsc --outDir dist",
+    "build": "tsc",
     "test": "jest",
     "clean": "git clean --exclude node_modules -xdf ./"
   },

@@ -11,7 +11,7 @@ import {Button, Icon, Link, Stack} from '@shopify/polaris';
 import {useI18n} from '@shopify/react-i18n';
 import copyToClipboard from 'copy-to-clipboard';
 import QRCode from 'qrcode.react';
-import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit';
 import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {useToast} from '@/hooks/useToast';
 
@@ -75,8 +75,13 @@ export function ActionSet(props: ActionSetProps) {
     }
   }, [mobileQRCode, showToast, i18n]);
 
+  // We should be checking for development with the code below
+  // const isDevelopment = Boolean(import.meta.env.VITE_WEBSOCKET_HOST);
+  // Unfortunately, ts-jest is throwing errors. See issue for more details.
+  // https://github.com/kulshekhar/ts-jest/issues/1174
+  const isDevelopment = false;
   const popoverContent = useMemo(() => {
-    if (location.hostname === 'localhost') {
+    if (!isDevelopment && extension.development.root.url.includes('localhost')) {
       return (
         <div className={styles.PopoverContent}>
           <Stack alignment="center" vertical>
@@ -122,7 +127,14 @@ export function ActionSet(props: ActionSetProps) {
     }
 
     return null;
-  }, [i18n, showMobileQRCode, onButtonClick, mobileQRCode, mobileQRCodeState]);
+  }, [
+    i18n,
+    showMobileQRCode,
+    onButtonClick,
+    mobileQRCode,
+    mobileQRCodeState,
+    extension.development.root.url,
+  ]);
 
   return (
     <>

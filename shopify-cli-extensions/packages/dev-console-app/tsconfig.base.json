@@ -3,9 +3,7 @@
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["vite/client", "jest"],
-    "allowJs": false,
     "composite": true,
-    "skipLibCheck": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -14,10 +12,9 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
     "jsx": "react",
     "baseUrl": ".",
     "rootDir": ".."
   },
-  "references": [{"path": "../dev-console"}]
+  "references": [{"path": "../ui-extensions-server-kit"}]
 }

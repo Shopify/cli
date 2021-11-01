@@ -3,8 +3,8 @@ import {createMount} from '@shopify/react-testing';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
-import {DevServerContext, DevServerContextValue} from '@shopify/ui-extensions-dev-console';
-import {mockApp, mockExtensions} from '@shopify/ui-extensions-dev-console/testing';
+import {DevServerContext, DevServerContextValue} from '@shopify/ui-extensions-server-kit';
+import {mockApp, mockExtensions} from '@shopify/ui-extensions-server-kit/testing';
 
 interface MountOptions {
   console?: Partial<DevServerContextValue>;

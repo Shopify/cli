@@ -1,8 +1,4 @@
-import {
-  DevServerContext,
-  ExtensionPayload,
-  useDevConsole,
-} from '@shopify/ui-extensions-dev-console';
+import {DevServerContext, ExtensionPayload, useDevConsole} from '@shopify/ui-extensions-server-kit';
 import {useContext} from 'react';
 
 export function useDevConsoleInternal() {

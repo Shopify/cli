@@ -1,7 +1,7 @@
 import React from 'react';
 import {Popover} from '@shopify/polaris';
 import QRCode from 'qrcode.react';
-import {mockExtension, mockExtensions} from '@shopify/ui-extensions-dev-console/testing';
+import {mockExtension, mockExtensions} from '@shopify/ui-extensions-server-kit/testing';
 import {mount} from 'tests/mount';
 import {ToastProvider} from '@/hooks/useToast';
 import {mockI18n} from 'tests/mock-i18n';
@@ -15,18 +15,6 @@ jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 const i18n = mockI18n(en);
 
 describe('ActionSet', () => {
-  // Mocking location: https://remarkablemark.org/blog/2018/11/17/mock-window-location/
-  const originalLocation = window.location;
-
-  beforeAll(() => {
-    delete (window as any).location;
-    (window as any).location = {};
-  });
-
-  afterAll(() => {
-    (window as any).location = originalLocation;
-  });
-
   function Wrapper({children}: React.PropsWithChildren<{}>) {
     return (
       <ToastProvider>
@@ -91,7 +79,6 @@ describe('ActionSet', () => {
   });
 
   it('renders QRCode with mobile deep-link url', async () => {
-    (window as any).location = {hostname: 'secure-link.com'};
     const extension = mockExtension();
     const store = 'example.com';
 
@@ -112,8 +99,6 @@ describe('ActionSet', () => {
   });
 
   it('renders error popover when failing to generate mobile QR code', async () => {
-    (window as any).location = {hostname: 'secure-link.com'};
-
     const container = await mount(
       <Wrapper>
         <ActionSet activeMobileQRCode extension={mockExtension()} />
@@ -131,11 +116,14 @@ describe('ActionSet', () => {
   });
 
   it('renders error popover when server is unsecure', async () => {
-    (window as any).location = {hostname: 'localhost'};
-
+    const extension = mockExtension();
+    extension.development.root.url = extension.development.root.url.replace(
+      'https://secure-link.com',
+      'http://localhost',
+    );
     const container = await mount(
       <Wrapper>
-        <ActionSet activeMobileQRCode extension={mockExtension()} />
+        <ActionSet activeMobileQRCode extension={extension} />
       </Wrapper>,
       {console: {app: undefined, extensions: mockExtensions()}},
     );

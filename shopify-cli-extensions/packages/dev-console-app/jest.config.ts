@@ -19,8 +19,9 @@ const config: Config.InitialOptions = {
   moduleNameMapper: {
     'tests/(.*)': '<rootDir>/tests/$1',
     '^@/(.*)': '<rootDir>/src/$1',
-    '^@shopify/ui-extensions-dev-console/testing$': '<rootDir>/../dev-console/src/testing',
-    '^@shopify/ui-extensions-dev-console': '<rootDir>/../dev-console/src',
+    '^@shopify/ui-extensions-server-kit/testing$':
+      '<rootDir>/../ui-extensions-server-kit/src/testing',
+    '^@shopify/ui-extensions-server-kit': '<rootDir>/../ui-extensions-server-kit/src',
   },
 
   moduleDirectories: ['node_modules', 'src'],

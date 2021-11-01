@@ -41,8 +41,11 @@ endif
 test:
 	yarn install
 	yarn test
-	rm -rf api/dev-console-app
-	mkdir api/dev-console-app
+
+	# Create mock app folder to get go test running
+	rm -rf api/dev-console
+	mkdir api/dev-console
+	touch api/dev-console/index.html
 	go test ./...
 
 ifeq (serve-dev,$(firstword $(MAKECMDGOALS)))

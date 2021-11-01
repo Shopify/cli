@@ -1,6 +1,6 @@
 import React, {MouseEvent, useCallback, useMemo} from 'react';
 import {useI18n} from '@shopify/react-i18n';
-import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit';
 
 import {Checkbox} from '../CheckBox';
 import {ActionSet, ActionSetProps} from '../ActionSet';

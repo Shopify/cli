@@ -8,7 +8,7 @@ import {
   MobileMajor,
 } from '@shopify/polaris-icons';
 import {useI18n} from '@shopify/react-i18n';
-import {ExtensionPayload} from '@shopify/ui-extensions-dev-console';
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit';
 import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
 import {ToastProvider} from '@/hooks/useToast';
 
@@ -60,10 +60,8 @@ export function DevConsole() {
 
   const refreshSelectedExtensions = () => refresh(selectedExtensions);
 
-  const [
-    activeMobileQRCodeExtension,
-    setActiveMobileQRCodeExtension,
-  ] = useState<ExtensionPayload>();
+  const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] =
+    useState<ExtensionPayload>();
 
   const actionHeaderMarkup = useMemo(() => {
     if (!selectedExtensions.length) return null;

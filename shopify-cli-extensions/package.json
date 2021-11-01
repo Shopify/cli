@@ -5,10 +5,13 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "lerna run build",
+    "clean": "lerna run clean",
+    "deploy": "npm publish",
+    "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe",
     "start": "cd packages/dev-console-app; yarn start",
     "test": "lerna run test",
-    "build": "lerna run build",
-    "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe"
+    "version-bump": "lerna version --no-push --include-merged-tags"
   },
   "devDependencies": {
     "@shopify/eslint-plugin": "^40.4.0",

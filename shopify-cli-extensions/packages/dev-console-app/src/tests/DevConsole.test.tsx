@@ -1,6 +1,6 @@
 import React from 'react';
 import {Checkbox} from '@shopify/polaris';
-import {mockExtension} from '@shopify/ui-extensions-dev-console/testing';
+import {mockExtension} from '@shopify/ui-extensions-server-kit/testing';
 import {mount} from 'tests/mount';
 import {mockI18n} from 'tests/mock-i18n';
 

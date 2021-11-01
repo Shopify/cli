@@ -44,6 +44,14 @@ Subsequently, you should be able to retrieve sample assets as follows:
 curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js
 ```
 
+## DevConsole development
+
+Run the DevConsole app and Dev Server simultaneously when developing for the DevConsole.
+
+```sh
+make serve-dev
+```
+
 ## Create
 
 To create a new extension project, simply execute the following shell command:
@@ -82,3 +90,12 @@ extensions:
 - javascript
 - typescript-react
 - javascript-react
+
+## Node Package Commands
+
+`start`: Start up the DevConsole app
+`test`: Run Jest tests
+`build`: Builds the Dev Server Kit and Dev Console app
+`lint`: Runs linting
+`version-bump`: Version bump
+`deploy`: Publishes Dev Server Kit and Dev Conosle

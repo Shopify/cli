@@ -4,10 +4,10 @@
     "paths": {
       "tests/*": ["tests/*"],
       "@/*": ["src/*"],
-      "@shopify/ui-extensions-dev-console/testing": ["../dev-console/src/testing"],
-      "@shopify/ui-extensions-dev-console": ["../dev-console/src"],
+      "@shopify/ui-extensions-server-kit/testing": ["../ui-extensions-server-kit/src/testing"],
+      "@shopify/ui-extensions-server-kit": ["../ui-extensions-server-kit/src"],
     }
   },
   "include": ["src/**/*", "tests/**/*", "src/**/*.json"],
-  "references": [{"path": "../dev-console"}]
+  "references": [{"path": "../ui-extensions-server-kit"}]
 }

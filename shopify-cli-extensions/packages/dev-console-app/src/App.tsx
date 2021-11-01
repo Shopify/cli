@@ -3,7 +3,7 @@ import '@shopify/polaris/dist/styles.css';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
-import {DevConsoleProvider} from '@shopify/ui-extensions-dev-console';
+import {DevConsoleProvider} from '@shopify/ui-extensions-server-kit';
 
 import * as styles from './theme.module.css';
 import {DevConsole} from './DevConsole';

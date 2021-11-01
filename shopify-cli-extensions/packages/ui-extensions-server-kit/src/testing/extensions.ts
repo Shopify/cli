@@ -14,11 +14,15 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
   const uuid = `00000000-0000-0000-0000-${pad(id++)}`;
   return {
     type: 'purchase_option',
+    uuid,
+    version: 'extension version',
+    ...obj,
     assets: {
       main: {
         name: 'main',
         url: `https://secure-link.com/extensions/${uuid}/assets/main.js`,
       },
+      ...((obj.assets || {}) as any),
     } as any,
     development: {
       hidden: false,
@@ -35,9 +39,6 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
       },
       ...((obj.development || {}) as any),
     },
-    uuid,
-    version: 'extension version',
-    ...obj,
   };
 }
 
