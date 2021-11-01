@@ -5,39 +5,42 @@ app:
 extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: checkout_ui_extension
+    title: Checkout UI Test Extension
     metafields:
       - namespace: my-namespace
         key: my-key
     development:
-      root_dir: "tmp/checkout_ui_extension"
-      build_dir: "build"
-      template: "typescript-react"
+      root_dir: 'tmp/checkout_ui_extension'
+      build_dir: 'build'
+      template: 'typescript-react'
       renderer:
-        name: "@shopify/checkout-ui-extensions"
+        name: '@shopify/checkout-ui-extensions'
       entries:
-        main: "src/index.tsx"
+        main: 'src/index.tsx'
       resource:
-        url: "cart/1234"
+        url: 'cart/1234'
   - uuid: 00000000-0000-0000-0000-000000000001
     type: product_subscription
+    title: Product Subscription Test Extension
     development:
-      root_dir: "tmp/product_subscription"
-      build_dir: "build"
-      template: "typescript-react"
+      root_dir: 'tmp/product_subscription'
+      build_dir: 'build'
+      template: 'typescript-react'
       renderer:
-        name: "@shopify/admin-ui-extensions"
+        name: '@shopify/admin-ui-extensions'
       entries:
-        main: "src/index.tsx"
+        main: 'src/index.tsx'
   - uuid: 00000000-0000-0000-0000-000000000002
     type: checkout_post_purchase
+    title: Post Purchase Test Extension
     metafields:
       - namespace: my-namespace
         key: my-key
     development:
-      root_dir: "tmp/checkout_post_purchase"
-      build_dir: "build"
-      template: "typescript-react"
+      root_dir: 'tmp/checkout_post_purchase'
+      build_dir: 'build'
+      template: 'typescript-react'
       renderer:
-        name: "@shopify/post-purchase-ui-extensions"
+        name: '@shopify/post-purchase-ui-extensions'
       entries:
-        main: "src/index.tsx"
+        main: 'src/index.tsx'

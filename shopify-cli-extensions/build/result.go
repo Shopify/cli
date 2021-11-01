@@ -13,9 +13,5 @@ type Result struct {
 }
 
 func (r Result) String() string {
-	if r.Success {
-		return fmt.Sprintf("Successfully built Extension %s", r.Extension)
-	} else {
-		return fmt.Sprintf("Failed to build Extension %s\n%s", r.Extension, r.Message)
-	}
+	return fmt.Sprintf("%s\n%s", r.Extension, r.Message)
 }

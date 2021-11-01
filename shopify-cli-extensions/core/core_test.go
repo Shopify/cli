@@ -12,6 +12,8 @@ func TestLoadConfig(t *testing.T) {
 extensions:
 	- uuid: 123
 		type: checkout_ui_extension
+		title: Test Extension
+		name: Alternate Name
 `)
 
 	config, err := core.LoadConfig(strings.NewReader(serializedConfig))
@@ -32,6 +34,14 @@ extensions:
 
 	if extension.Type != "checkout_ui_extension" {
 		t.Errorf("invalid extension type – expected checkout_ui_extension got %s", extension.Type)
+	}
+
+	if extension.Title != "Test Extension" {
+		t.Errorf("invalid title - expected Test Extension go %s", extension.Title)
+	}
+
+	if extension.Name != "Alternate Name" {
+		t.Errorf("invalid name - expected Alternate Name go %s", extension.Name)
 	}
 }
 

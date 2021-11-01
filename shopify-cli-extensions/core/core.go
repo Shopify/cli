@@ -87,10 +87,18 @@ type Extension struct {
 	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
 	Version         string           `json:"version" yaml:"version,omitempty"`
 	Surface         string           `json:"surface" yaml:"-"`
+	Title           string           `json:"title,omitempty" yaml:"title,omitempty"`
+	Name            string           `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
 func (e Extension) String() string {
-	return fmt.Sprintf("%s (%s)", e.UUID, e.Type)
+	if e.Name != "" {
+		return e.Name
+	} else if e.Title != "" {
+		return e.Title
+	} else {
+		return fmt.Sprintf("%s (%s)", e.Type, e.UUID)
+	}
 }
 
 func (e Extension) BuildDir() string {
