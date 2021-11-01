@@ -14,6 +14,10 @@ declare global {
      * Events being sent to the extension server where the keys are the event names
      * and the values are the payload of the given action. In case no payload is
      * required, a value of void should be used.
+     *
+     * Persist events are those that will generate changes on the server, like
+     * update and connected events. Dispatch events are those that will
+     * simply be proxied to the clients connected to the server.
      */
     interface OutboundPersistEvents {
       //
@@ -88,6 +92,11 @@ declare global {
        */
       emit<Event extends keyof OutboundDispatchEvents>(...args: EmitArgs<Event>): void;
 
+      /**
+       * Function that opens a connection with the extensions server.
+       *
+       * @param options ExtensionServer.Options
+       */
       connect(options?: Options): () => void;
     }
 
