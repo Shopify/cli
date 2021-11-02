@@ -8,7 +8,7 @@
   "scripts": {
     "build": "lerna run build",
     "clean": "lerna run clean",
-    "deploy": "npm publish",
+    "deploy": "lerna publish from-package --yes",
     "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe",
     "start": "cd packages/dev-console-app; yarn start",
     "test": "lerna run test",
