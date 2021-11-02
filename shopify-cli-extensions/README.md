@@ -43,6 +43,19 @@ Subsequently, you should be able to retrieve sample assets as follows:
 ```sh
 curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js
 ```
+## Publish
+
+Choose version
+
+```sh
+yarn version-bump
+```
+
+Then push up bump, plus changes.
+
+```sh
+git push --follow-tags
+```
 
 ## DevConsole development
 
