@@ -68,10 +68,12 @@ export function DevConsoleProvider({children, host}: React.PropsWithChildren<{ho
     };
   }, [host, update]);
 
-  const value = useMemo(
-    () => ({host, ...state, send, addListener}),
-    [addListener, host, send, state],
-  );
+  const value = useMemo(() => ({host, ...state, send, addListener}), [
+    addListener,
+    host,
+    send,
+    state,
+  ]);
 
   return <DevServerContext.Provider value={value}>{children}</DevServerContext.Provider>;
 }

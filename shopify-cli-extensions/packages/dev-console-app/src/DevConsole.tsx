@@ -80,8 +80,10 @@ export function DevConsole() {
 
   const refreshSelectedExtensions = () => refresh(selectedExtensions);
 
-  const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] =
-    useState<ExtensionPayload>();
+  const [
+    activeMobileQRCodeExtension,
+    setActiveMobileQRCodeExtension,
+  ] = useState<ExtensionPayload>();
 
   const actionHeaderMarkup = useMemo(() => {
     if (!selectedExtensions.length) return null;

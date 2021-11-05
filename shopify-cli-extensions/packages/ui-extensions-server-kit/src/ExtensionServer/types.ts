@@ -222,17 +222,18 @@ declare global {
      * In practice, this will allow TypeScript to type-check the event being emitted
      * and, if the payload isn't required, the second argument won't be necessary.
      */
-    type EmitArgs<Event extends keyof ExtensionServer.OutboundEvents> =
-      ExtensionServer.OutboundEvents[Event] extends void
-        ? [event: Event]
-        : [event: Event, payload: ExtensionServer.OutboundEvents[Event]];
+    type EmitArgs<
+      Event extends keyof ExtensionServer.OutboundEvents
+    > = ExtensionServer.OutboundEvents[Event] extends void
+      ? [event: Event]
+      : [event: Event, payload: ExtensionServer.OutboundEvents[Event]];
 
     /**
      * This is a helper interface that allows us to define the static methods of a given
      * class. This is useful to define static methods, static properties
      * and constructor variables.
      */
-    interface Static<T = unknown, A extends Array<unknown> = any[]> {
+    interface Static<T = unknown, A extends unknown[] = any[]> {
       prototype: T;
       new (...args: A): T;
     }

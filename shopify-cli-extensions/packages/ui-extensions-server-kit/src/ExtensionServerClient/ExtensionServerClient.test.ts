@@ -1,4 +1,5 @@
 import WS from 'jest-websocket-mock';
+
 import {mockApp, mockExtensions} from '../testing';
 
 import {ExtensionServerClient} from './ExtensionServerClient';
@@ -32,14 +33,16 @@ describe('ExtensionServerClient', () => {
       const updateSpy = jest.fn();
       const unsubscribe = client.on('update', updateSpy);
 
-      const data: ExtensionServer.InboundEvents[keyof ExtensionServer.InboundEvents] = {app: mockApp()};
+      const data: ExtensionServer.InboundEvents[keyof ExtensionServer.InboundEvents] = {
+        app: mockApp(),
+      };
       socket.send({event: 'update', data});
 
       unsubscribe();
       socket.send({event: 'update', data});
 
-      expect(updateSpy).toBeCalledTimes(1);
-      expect(updateSpy).toBeCalledWith(data);
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(updateSpy).toHaveBeenCalledWith(data);
 
       socket.close();
     });
@@ -50,13 +53,13 @@ describe('ExtensionServerClient', () => {
       const unfocusSpy = jest.fn();
       const unsubscribe = client.on('unfocus', unfocusSpy);
 
-      socket.send({event: 'dispatch', data: {type: 'unfocus' }});
+      socket.send({event: 'dispatch', data: {type: 'unfocus'}});
 
       unsubscribe();
-      socket.send({event: 'dispatch', data: {type: 'unfocus' }});
+      socket.send({event: 'dispatch', data: {type: 'unfocus'}});
 
-      expect(unfocusSpy).toBeCalledTimes(1);
-      expect(unfocusSpy).toBeCalledWith(undefined);
+      expect(unfocusSpy).toHaveBeenCalledTimes(1);
+      expect(unfocusSpy).toHaveBeenCalledWith(undefined);
 
       socket.close();
     });

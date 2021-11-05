@@ -49,10 +49,11 @@ export function ExtensionServerProvider({
     return () => listeners.forEach((unsubscribe) => unsubscribe?.());
   }, [dispatch]);
 
-  const context = useMemo(
-    () => ({dispatch, state, connect, client: client.current}),
-    [dispatch, connect, state],
-  );
+  const context = useMemo(() => ({dispatch, state, connect, client: client.current}), [
+    dispatch,
+    connect,
+    state,
+  ]);
 
   return (
     <extensionServerContext.Provider value={context}>{children}</extensionServerContext.Provider>

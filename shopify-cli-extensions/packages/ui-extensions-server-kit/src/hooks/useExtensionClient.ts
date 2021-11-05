@@ -1,5 +1,7 @@
 import {useRef} from 'react';
+
 import {ExtensionServerClient} from '../ExtensionServerClient';
+
 import {useExtensionServerContext} from './useExtensionServerContext';
 import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect';
 
