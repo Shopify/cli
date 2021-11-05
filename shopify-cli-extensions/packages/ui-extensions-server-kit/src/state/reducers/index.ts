@@ -1,3 +1,3 @@
 export * from './constants';
-export * from './extensionSeverReducer';
+export * from './extensionServerReducer';
 export * from './types';

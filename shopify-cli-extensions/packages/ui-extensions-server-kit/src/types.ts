@@ -4,7 +4,7 @@ import './ExtensionServerClient/types';
 declare global {
   namespace ExtensionServer {
     interface InboundEvents {
-      connected: {extensions?: ExtensionPayload[]; app?: App};
+      connected: {extensions: ExtensionPayload[]; app?: App; store: string};
       update: {extensions?: ExtensionPayload[]; app?: App};
       refresh: {uuid: string}[];
       focus: {uuid: string}[];

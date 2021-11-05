@@ -1,7 +1,7 @@
 import {useReducer} from 'react';
 
-import {extensionSeverReducer, INITIAL_STATE} from '../state';
+import {extensionServerReducer, INITIAL_STATE} from '../state';
 
 export function useExtensionServerState() {
-  return useReducer(extensionSeverReducer, INITIAL_STATE);
+  return useReducer(extensionServerReducer, INITIAL_STATE);
 }

@@ -1,3 +1,4 @@
 export * from './groupByKey';
 export * from './noop';
-export * from './removeDuplicates';
+export * from './replaceUpdated';
+export * from './set';
