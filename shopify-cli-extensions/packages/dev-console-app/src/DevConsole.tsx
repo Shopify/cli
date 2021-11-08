@@ -143,7 +143,6 @@ export function DevConsole() {
                       </th>
                       <th>{i18n.translate('extensionList.name')}</th>
                       <th>{i18n.translate('extensionList.type')}</th>
-                      <th>{i18n.translate('extensionList.servedFrom')}</th>
                       <th>{i18n.translate('extensionList.status')}</th>
                       <th>
                         <div className={actionSetStyles.ActionGroup}>

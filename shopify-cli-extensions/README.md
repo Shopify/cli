@@ -35,7 +35,7 @@ This will create extensions in the `tmp` folder and install the node dependencie
 After [boostrapping an extension](#bootstrap-an-extension), you can run the server by execute the following shell command:
 
 ```sh
-make run serve < testdata/shopifile.yml
+make run serve testdata/shopifile.yml
 ```
 
 Subsequently, you should be able to retrieve sample assets as follows:
@@ -70,7 +70,7 @@ make serve-dev
 To create a new extension project, simply execute the following shell command:
 
 ```sh
-make run serve < testdata/shopifile.yml
+make run serve testdata/shopifile.yml
 ```
 
 This will create a new extension inside the `tmp/checkout_ui_extension` folder. You can update `testdata/shopifile.yml` if you want to test different options.

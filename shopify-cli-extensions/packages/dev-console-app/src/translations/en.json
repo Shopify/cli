@@ -5,7 +5,6 @@
     "title": "Local overrides",
     "name": "Name",
     "type": "Type",
-    "servedFrom": "Served from",
     "status": "Status",
     "refresh": "Refresh",
     "delete": "Delete"

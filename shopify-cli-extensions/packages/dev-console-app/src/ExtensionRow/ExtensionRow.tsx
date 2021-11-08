@@ -35,12 +35,6 @@ export function ExtensionRow({
 
   const {name, url: scriptUrl} = assets.main;
 
-  const scriptHost = useMemo(() => {
-    if (!scriptUrl) return null;
-    const url = new URL(scriptUrl.toString());
-    return `${url.protocol}//${url.host}`;
-  }, [scriptUrl]);
-
   const handleSelect = useCallback(
     (event?: MouseEvent) => {
       if (event) event.stopPropagation();
@@ -64,11 +58,6 @@ export function ExtensionRow({
       </td>
       <td className={textClass}>{name}</td>
       <td className={textClass}>{extension.type}</td>
-      <td className={textClass}>
-        <a className={styles.Url} href={scriptHost || '#'}>
-          {scriptHost}
-        </a>
-      </td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>
           {i18n.translate(`statuses.${status}`)}
