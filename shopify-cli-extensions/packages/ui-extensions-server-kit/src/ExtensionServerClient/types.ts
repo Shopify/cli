@@ -36,7 +36,7 @@ declare global {
         /**
          * The absolute URL of the WebSocket.
          */
-        url: string;
+        url?: string;
 
         /**
          * This defines if we should automatically attempt to connect when the
@@ -193,11 +193,10 @@ declare global {
      * In practice, this will allow TypeScript to type-check the event being emitted
      * and, if the payload isn't required, the second argument won't be necessary.
      */
-    type EmitArgs<
-      Event extends keyof ExtensionServer.OutboundDispatchEvents
-    > = ExtensionServer.OutboundDispatchEvents[Event] extends void
-      ? [event: Event]
-      : [event: Event, payload: ExtensionServer.OutboundDispatchEvents[Event]];
+    type EmitArgs<Event extends keyof ExtensionServer.OutboundDispatchEvents> =
+      ExtensionServer.OutboundDispatchEvents[Event] extends void
+        ? [event: Event]
+        : [event: Event, payload: ExtensionServer.OutboundDispatchEvents[Event]];
 
     /**
      * This is a helper interface that allows us to define the static methods of a given

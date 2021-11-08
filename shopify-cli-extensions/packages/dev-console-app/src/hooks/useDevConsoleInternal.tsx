@@ -1,11 +1,11 @@
-import {ExtensionPayload, useExtensionServerContext} from '@shopify/ui-extensions-dev-console';
+import {ExtensionPayload, useExtensionServerContext} from '@shopify/ui-extensions-server-kit';
 
 export function useDevConsoleInternal() {
   const extensionServer = useExtensionServerContext();
 
   return {
     ...extensionServer,
-    host: extensionServer.client?.connection.url ?? '',
+    host: extensionServer.client?.connection?.url ?? '',
 
     // update events
     hide: (extensions: ExtensionPayload[]) =>

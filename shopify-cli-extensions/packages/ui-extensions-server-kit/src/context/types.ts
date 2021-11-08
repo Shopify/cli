@@ -8,6 +8,6 @@ export interface ExtensionServerContext {
 }
 
 export interface ExtensionServerProviderProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   options: ExtensionServer.Options;
 }

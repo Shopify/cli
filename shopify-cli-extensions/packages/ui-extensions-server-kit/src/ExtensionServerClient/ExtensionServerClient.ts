@@ -1,4 +1,6 @@
 /* eslint-disable no-console */
+import {DeepPartial} from '../types';
+
 import {APIClient} from './APIClient';
 
 export class ExtensionServerClient implements ExtensionServer.Client {
@@ -14,21 +16,21 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   protected listeners: {[key: string]: Set<any>} = {};
 
-  constructor(options: ExtensionServer.Options) {
+  constructor(options: DeepPartial<ExtensionServer.Options> = {}) {
     this.id = (Math.random() + 1).toString(36).substring(7);
     this.options = {
       ...options,
       connection: {
         automaticConnect: true,
         protocols: [],
-        ...options.connection,
+        ...(options.connection ?? {}),
       },
-    };
+    } as ExtensionServer.Options;
 
+    this.initializeApiClient();
     if (this.options.connection.automaticConnect && this.options.connection.url) {
       this.connect();
     }
-    this.initializeApiClient();
   }
 
   public connect(options?: ExtensionServer.Options) {
@@ -36,17 +38,15 @@ export class ExtensionServerClient implements ExtensionServer.Client {
       this.mergeOptions(options);
     }
 
-    if (
-      this.options.connection.url &&
-      (!this.connection || this.connection?.readyState === this.connection?.CLOSED)
-    ) {
+    if (this.options.connection.url) {
       this.connection?.close();
+
       this.connection = new WebSocket(
         this.options.connection.url,
         this.options.connection.protocols,
       );
 
-      if (!this.api || this.api.url !== this.connection.url) {
+      if (this.api.url !== this.connection.url) {
         this.initializeApiClient();
       }
 
