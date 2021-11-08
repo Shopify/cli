@@ -2,6 +2,7 @@ import React, {useCallback, useMemo, useState} from 'react';
 import {
   CircleAlertMajor,
   DuplicateMinor,
+  ExternalMinor,
   HideMinor,
   MobileMajor,
   RefreshMinor,
@@ -48,6 +49,11 @@ export function ActionSet(props: ActionSetProps) {
       hide([extension]);
     }
   }, [extension, hidden, hide, show]);
+
+  const handleOpenRoot = useCallback(() => {
+    const roolUrl = extension.development.root.url;
+    window.open(roolUrl, '_blank');
+  }, [extension]);
 
   const refreshExtension = useCallback(() => refresh([extension]), [extension, refresh]);
 
@@ -141,6 +147,12 @@ export function ActionSet(props: ActionSetProps) {
     <>
       <td>
         <div className={styles.ActionGroup}>
+          <Action
+            source={ExternalMinor}
+            accessibilityLabel={i18n.translate('openRootUrl')}
+            onAction={handleOpenRoot}
+            className={className}
+          />
           <div className={`${hidden ? rowStyles.ForceVisible : ''}`}>
             <Action
               source={hidden ? HideMinor : ViewMinor}

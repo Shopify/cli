@@ -3,6 +3,7 @@
   "show": "Show",
   "hide": "Hide",
   "refresh": "Refresh",
+  "openRootUrl": "Open the root url of the extension",
   "qrcode": {
     "action": "Generate a QR code to view on mobile",
     "copy": "Copy link",
