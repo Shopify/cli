@@ -4,6 +4,7 @@
     "module": "commonjs",
     "target": "es2019",
     "rootDir": "./src",
+    "composite": true,
     "outDir": "./",
     "allowJs": false,
     "declaration": true,
