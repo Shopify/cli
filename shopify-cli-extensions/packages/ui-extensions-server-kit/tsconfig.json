@@ -21,7 +21,7 @@
     "baseUrl": "src",
     "rootDir": "src",
     "paths": {
-      "@shopify/shopify-cli-extensions-test-utils": ["../shopify-cli-extensions-test-utils/src"],
+      "@shopify/shopify-cli-extensions-test-utils": ["../../shopify-cli-extensions-test-utils/src"],
     }
   },
   "include": ["src/**/*", "src/testing/**/*"],
