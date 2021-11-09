@@ -40,7 +40,6 @@ endif
 .PHONY: test
 test:
 	yarn install
-	yarn build
 	yarn test
 
 	# Create mock app folder to get go test running
