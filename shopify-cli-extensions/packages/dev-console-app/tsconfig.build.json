@@ -5,9 +5,10 @@
     "paths": {
       "@/*": ["src/*"],
       "@shopify/ui-extensions-server-kit": ["../ui-extensions-server-kit/src"],
+      "@shopify/shopify-cli-extensions-test-utils": ["../shopify-cli-extensions-test-utils/src"],
     }
   },
   "exclude": ["tests/**/*", "src/**/*.test.tsx", "src/**/*.test.ts"],
   "include": ["src/**/*", "src/**/*.json"],
-  "references": [{"path": "../ui-extensions-server-kit"}]
+  "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../shopify-cli-extensions-test-utils"}]
 }
