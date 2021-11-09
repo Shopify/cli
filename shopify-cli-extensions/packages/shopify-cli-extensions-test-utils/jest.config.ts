@@ -18,8 +18,6 @@ const config: Config.InitialOptions = {
 
   moduleNameMapper: {
     'tests/(.*)': '<rootDir>/tests/$1',
-    '^@shopify/shopify-cli-extensions-test-utils':
-      '<rootDir>/../shopify-cli-extensions-test-utils/src',
   },
 
   moduleDirectories: ['node_modules', 'src'],

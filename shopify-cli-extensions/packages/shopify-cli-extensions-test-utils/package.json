@@ -1,6 +1,6 @@
 {
-  "name": "@shopify/ui-extensions-server-kit",
-  "version": "0.1.0-alpha.0",
+  "name": "@shopify/shopify-cli-extensions-test-utils",
+  "version": "0.1.0",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
@@ -8,15 +8,11 @@
     "clean": "git clean --exclude node_modules -xdf ./",
     "test": "jest"
   },
-  "dependencies": {
-    "@shopify/react-i18n": "^6.1.0"
-  },
   "peerDependencies": {
     "react": "16.14.0"
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@shopify/shopify-cli-extensions-test-utils": "0.1.0",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
     "@types/react": "16.14.0",

@@ -39,6 +39,22 @@ describe('ExtensionServerClient', () => {
 
       socket.close();
     });
+
+    it('initializes an API client with the given URL', () => {
+      const url = 'ws://initial.socket.com';
+
+      const client = new ExtensionServerClient({connection: {url}});
+
+      expect(client.api.url).toBe(url.replace('ws', 'http'));
+    });
+
+    it('initializes an API client with a secure URL', () => {
+      const url = 'wss://initial.socket.com';
+
+      const client = new ExtensionServerClient({connection: {url}});
+
+      expect(client.api.url).toBe(url.replace('wss', 'https'));
+    });
   });
 
   describe('on()', () => {
@@ -141,12 +157,65 @@ describe('ExtensionServerClient', () => {
   });
 
   describe('connect()', () => {
-    it.todo('updates the client options');
+    it('updates the client options', () => {
+      const client = new ExtensionServerClient();
 
-    it.todo('does not attempt to connect if the URL is empty');
+      client.connect({connection: {automaticConnect: false}});
 
-    it.todo('does not try to connect if there is an existing active connection');
+      expect(client.options).toMatchObject({
+        connection: {
+          automaticConnect: false,
+          protocols: [],
+        },
+      });
+    });
 
-    it.todo('initializes the API client if the URL was changed');
+    it('does not attempt to connect if the URL is undefined', () => {
+      const client = new ExtensionServerClient();
+
+      client.connect();
+
+      expect(client.connection).toBeUndefined();
+    });
+
+    it('does not attempt to connect if the URL is empty', () => {
+      const client = new ExtensionServerClient({connection: {url: ''}});
+
+      client.connect();
+
+      expect(client.connection).toBeUndefined();
+    });
+
+    it('creates a new connection if the URL has changed', async () => {
+      const initialURL = 'ws://initial.socket.com';
+      const initialSocket = new WS(initialURL);
+      const updatedURL = 'ws://updated.socket.com';
+      const updatedSocket = new WS(updatedURL);
+      const client = new ExtensionServerClient({connection: {url: initialURL}});
+
+      expect(initialSocket.server.clients()).toHaveLength(1);
+      expect(updatedSocket.server.clients()).toHaveLength(0);
+
+      client.connect({connection: {url: updatedURL}});
+      await initialSocket.closed;
+
+      expect(initialSocket.server.clients()).toHaveLength(0);
+      expect(updatedSocket.server.clients()).toHaveLength(1);
+
+      initialSocket.close();
+      updatedSocket.close();
+    });
+
+    it('initializes the API client if the URL was changed', () => {
+      const initialURL = 'ws://initial.socket.com';
+      const updatedURL = 'ws://updated.socket.com';
+      const client = new ExtensionServerClient({connection: {url: initialURL}});
+
+      expect(client.api.url).toBe(initialURL.replace('ws', 'http'));
+
+      client.connect({connection: {url: updatedURL}});
+
+      expect(client.api.url).toBe(updatedURL.replace('ws', 'http'));
+    });
   });
 });

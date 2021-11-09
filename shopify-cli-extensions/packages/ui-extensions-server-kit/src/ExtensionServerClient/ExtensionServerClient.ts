@@ -6,11 +6,11 @@ import {APIClient} from './APIClient';
 export class ExtensionServerClient implements ExtensionServer.Client {
   public id: string;
 
-  connection!: WebSocket;
+  public connection!: WebSocket;
 
-  api!: ExtensionServer.API.Client;
+  public api!: ExtensionServer.API.Client;
 
-  protected options: ExtensionServer.Options;
+  public options: ExtensionServer.Options;
 
   protected EVENT_THAT_WILL_MUTATE_THE_SERVER = ['update'];
 

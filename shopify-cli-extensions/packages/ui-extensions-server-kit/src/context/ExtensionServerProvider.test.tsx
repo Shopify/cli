@@ -1,7 +1,7 @@
 import WS from 'jest-websocket-mock';
+import {renderHook, withProviders} from '@shopify/shopify-cli-extensions-test-utils';
 
 import {mockApp, mockExtension} from '../testing';
-import {renderHook, withProviders} from '../testing/utilities';
 import {useExtensionServerContext} from '../hooks';
 import {createConnectedAction} from '../state';
 
@@ -12,25 +12,25 @@ describe('ExtensionServerProvider tests', () => {
     it('creates a new ExtensionServerClient instance', async () => {
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}};
 
-      const {result} = renderHook(
+      const wrapper = renderHook(
         useExtensionServerContext,
         withProviders(ExtensionServerProvider),
         {options},
       );
 
-      expect(result.client).toBeDefined();
+      expect(wrapper.result.client).toBeDefined();
     });
 
     it('does not start a new connection if an empty url is passed', async () => {
       const options = {connection: {url: ''}};
 
-      const {result} = renderHook(
+      const wrapper = renderHook(
         useExtensionServerContext,
         withProviders(ExtensionServerProvider),
         {options},
       );
 
-      expect(result.client!.connection).toBeUndefined();
+      expect(wrapper.result.client!.connection).toBeUndefined();
     });
   });
 
@@ -38,7 +38,7 @@ describe('ExtensionServerProvider tests', () => {
     it('starts a new connection by calling connect', async () => {
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}};
       const socket = new WS(options.connection.url, {jsonProtocol: true});
-      const {act, result} = renderHook(
+      const wrapper = renderHook(
         useExtensionServerContext,
         withProviders(ExtensionServerProvider),
         {
@@ -50,9 +50,9 @@ describe('ExtensionServerProvider tests', () => {
 
       expect(socket.server.clients()).toHaveLength(0);
 
-      act(({connect}) => connect(options));
+      wrapper.act(({connect}) => connect(options));
 
-      expect(result.client!.connection).toBeDefined();
+      expect(wrapper.result.client!.connection).toBeDefined();
       expect(socket.server.clients()).toHaveLength(1);
       socket.close();
     });

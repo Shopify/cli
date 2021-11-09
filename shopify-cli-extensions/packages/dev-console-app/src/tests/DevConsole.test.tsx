@@ -1,7 +1,9 @@
 import React from 'react';
 import {Checkbox} from '@shopify/polaris';
+import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit';
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing';
-import {mount} from 'tests/mount';
+import {render, withProviders} from '@shopify/shopify-cli-extensions-test-utils';
+import {DefaultProviders} from 'tests/DefaultProviders';
 import {mockI18n} from 'tests/mock-i18n';
 
 import {DevConsole} from '../DevConsole';
@@ -15,7 +17,9 @@ describe('DevConsole', () => {
   it('renders ExtensionRow based on localStorage', async () => {
     const extensions = [mockExtension()];
 
-    const container = await mount(<DevConsole />, {console: {extensions}});
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      state: {extensions, store: 'shop1.myshopify.io'},
+    });
 
     const rows = container.findAll(ExtensionRow);
 
@@ -29,9 +33,12 @@ describe('DevConsole', () => {
   it('calls refresh with selected extensions', async () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
+    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
+    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
 
-    const container = await mount(<DevConsole />, {
-      console: {extensions: [selectedExtension, unselectedExtension]},
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
     });
 
     container.act(() => {
@@ -44,16 +51,20 @@ describe('DevConsole', () => {
       .find(Action, {accessibilityLabel: i18n.translate('extensionList.refresh')})
       ?.trigger('onAction');
 
-    expect(container.context.console.send).toHaveBeenCalledWith({
-      event: 'dispatch',
-      data: {type: 'refresh', payload: [{uuid: selectedExtension.uuid}]},
-    });
+    expect(sendSpy).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'dispatch',
+        data: {type: 'refresh', payload: [{uuid: selectedExtension.uuid}]},
+      }),
+    );
   });
 
   it('toggles selection of all extensions when select all checkbox is clicked', async () => {
     const extensions = [mockExtension(), mockExtension()];
 
-    const container = await mount(<DevConsole />, {console: {extensions}});
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      state: {extensions, store: 'shop1.myshopify.io'},
+    });
 
     container.act(() => {
       container.find(Checkbox)?.trigger('onChange');
@@ -72,8 +83,8 @@ describe('DevConsole', () => {
     const toggleExtension = mockExtension();
     const otherExtension = mockExtension();
 
-    const container = await mount(<DevConsole />, {
-      console: {extensions: [toggleExtension, otherExtension]},
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      state: {extensions: [toggleExtension, otherExtension], store: 'shop1.myshopify.io'},
     });
 
     container.act(() => {
@@ -112,9 +123,12 @@ describe('DevConsole', () => {
   it('calls to set focused to true for the current extension', async () => {
     const focusExtension = mockExtension();
     const prevFocusedExtension = mockExtension();
+    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
+    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
 
-    const container = await mount(<DevConsole />, {
-      console: {extensions: [focusExtension, prevFocusedExtension]},
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [focusExtension, prevFocusedExtension], store: 'shop1.myshopify.io'},
     });
 
     container.act(() => {
@@ -123,38 +137,47 @@ describe('DevConsole', () => {
         ?.trigger('onHighlight', focusExtension);
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith({
-      data: {payload: [{uuid: focusExtension.uuid}], type: 'focus'},
-      event: 'dispatch',
-    });
+    expect(sendSpy).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'dispatch',
+        data: {type: 'focus', payload: [{uuid: focusExtension.uuid}]},
+      }),
+    );
   });
 
   it('clear focus state of all extensions when onClearHighlight for a row is triggered', async () => {
     const extension1 = mockExtension({focused: true} as any);
     const extension2 = mockExtension({focused: true} as any);
+    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
+    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
 
-    const container = await mount(<DevConsole />, {
-      console: {extensions: [extension1, extension2]},
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [extension1, extension2], store: 'shop1.myshopify.io'},
     });
 
     container.act(() => {
       container.find(ExtensionRow, {extension: extension1})?.trigger('onClearHighlight');
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith({
-      data: {type: 'unfocus'},
-      event: 'dispatch',
-    });
+    expect(sendSpy).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'dispatch',
+        data: {type: 'unfocus'},
+      }),
+    );
   });
 
   it('calls show with selected extensions', async () => {
+    const unselectedExtension = mockExtension();
     const selectedExtension = mockExtension();
     selectedExtension.development.hidden = true;
+    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
+    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
 
-    const unselectedExtension = mockExtension();
-
-    const container = await mount(<DevConsole />, {
-      console: {extensions: [selectedExtension, unselectedExtension]},
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
     });
 
     container.act(() => {
@@ -169,18 +192,23 @@ describe('DevConsole', () => {
         ?.trigger('onAction');
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith({
-      data: {extensions: [{development: {hidden: false}, uuid: selectedExtension.uuid}]},
-      event: 'update',
-    });
+    expect(sendSpy).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'update',
+        data: {extensions: [{uuid: selectedExtension.uuid, development: {hidden: false}}]},
+      }),
+    );
   });
 
   it('calls hide with selected extensions', async () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
+    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
+    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
 
-    const container = await mount(<DevConsole />, {
-      console: {extensions: [selectedExtension, unselectedExtension]},
+    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
     });
 
     container.act(() => {
@@ -195,9 +223,11 @@ describe('DevConsole', () => {
         ?.trigger('onAction');
     });
 
-    expect(container.context.console.send).toHaveBeenCalledWith({
-      data: {extensions: [{development: {hidden: true}, uuid: selectedExtension.uuid}]},
-      event: 'update',
-    });
+    expect(sendSpy).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'update',
+        data: {extensions: [{uuid: selectedExtension.uuid, development: {hidden: true}}]},
+      }),
+    );
   });
 });
