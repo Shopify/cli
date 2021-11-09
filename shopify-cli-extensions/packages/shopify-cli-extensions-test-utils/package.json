@@ -5,8 +5,7 @@
   "types": "dist/index",
   "scripts": {
     "build": "tsc",
-    "clean": "git clean --exclude node_modules -xdf ./",
-    "test": "jest"
+    "clean": "git clean --exclude node_modules -xdf ./"
   },
   "peerDependencies": {
     "react": "16.14.0"
