@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention, @typescript-eslint/no-namespace */
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace ExtensionServer {
     /**
@@ -160,8 +160,8 @@ declare global {
         resource: ResourceURL;
         renderer?: Renderer;
         hidden: boolean;
-        build_dir?: string;
-        root_dir?: string;
+        buildDir?: string;
+        rootDir?: string;
         template?: string;
         entries?: {[key: string]: string};
         status: string;
