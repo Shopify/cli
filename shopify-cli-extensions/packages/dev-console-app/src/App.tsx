@@ -9,9 +9,11 @@ import {BrowserRouter} from 'react-router-dom';
 import * as styles from './theme.module.css';
 import {DevConsole} from './DevConsole';
 
+const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:';
+const host = (import.meta.env.VITE_WEBSOCKET_HOST as string) || location.host;
 const extensionServerOptions = {
   connection: {
-    url: 'ws://localhost:8000/extensions/',
+    url: `${protocol}//${host}/extensions/`,
   },
 };
 
