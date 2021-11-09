@@ -25,10 +25,10 @@ make test
 To bootstrap extensions and install of node dependencies, run:
 
 ```sh
-make run bootstrap
+make bootstrap
 ```
 
-This will create extensions in the `tmp` folder and install the node dependencies.
+This will create extensions in the `tmp` folder and install the node dependencies. It will also build the Dev Console app.
 
 ### Serve
 
@@ -43,9 +43,12 @@ Subsequently, you should be able to retrieve sample assets as follows:
 ```sh
 curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js
 ```
-## Publish
 
-Choose version
+Going to root end point http://localhost:8000 will take you to the Dev Console app.
+
+## Publish UI Extension Server kit and Node Shopify CLI Extensions
+
+Create a new branch. Then do a version bump.
 
 ```sh
 yarn version-bump
@@ -57,13 +60,7 @@ Then push up bump, plus changes.
 git push --follow-tags
 ```
 
-## DevConsole development
-
-Run the DevConsole app and Dev Server simultaneously when developing for the DevConsole.
-
-```sh
-make serve-dev
-```
+Once the PR for the new branch is merged, you can deploy the packages on [Shipit](https://shipit.shopify.io/shopify/shopify-cli-extensions/production).
 
 ## Create
 
@@ -103,6 +100,35 @@ extensions:
 - javascript
 - typescript-react
 - javascript-react
+
+## DevConsole
+
+### Build
+
+The build process is taken care of in the dev server build step. You can also run it yourself.
+
+```sh
+make bootstrap
+
+# or
+yarn build
+```
+
+### Development
+
+The Dev Console needs a built dev server to connect to via a WebSocket.
+
+```sh
+# If you haven't already
+make bootstrap
+```
+
+Then, run the DevConsole app and Dev Server simultaneously when developing for the DevConsole.
+
+```sh
+# This will run `make run serve testdata/shopifile.yml` and `yarn start`
+make serve-dev testdata/shopifile.yml
+```
 
 ## Node Package Commands
 
