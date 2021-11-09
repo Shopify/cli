@@ -13,7 +13,7 @@ else
 endif
 
 .PHONY: build
-build:
+build: build-node-packages
 	go build -o ${executable}
 
 .PHONY: package
@@ -68,10 +68,7 @@ build-node-packages:
 	yarn build
 
 .PHONY: bootstrap
-bootstrap:
-	mkdir -p tmp
-	make build-node-packages
-	make build
+bootstrap: tmp build
 	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/shopifile.yml
 	cd tmp/checkout_ui_extension; npm install && npm link "@shopify/shopify-cli-extensions"
@@ -79,10 +76,7 @@ bootstrap:
 	cd tmp/checkout_post_purchase; npm install && npm link "@shopify/shopify-cli-extensions"
 
 .PHONY: integration-test
-integration-test:
-	mkdir -p tmp
-	make build-node-packages
-	make build
+integration-test: tmp build
 	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/shopifile.integration.yml
 	cd tmp/integration_test; npm link "@shopify/shopify-cli-extensions" && npm install
@@ -94,3 +88,6 @@ integration-test:
 .PHONY: update-version
 update-version:
 	git tag -l | sort | tail -n 1 | xargs -I {} ruby -i -pe 'sub(/^const version = .*$$/, "const version = \"{}\"")' -- main.go
+
+tmp:
+	mkdir tmp
