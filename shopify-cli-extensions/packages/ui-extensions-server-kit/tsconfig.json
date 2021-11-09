@@ -19,7 +19,11 @@
     "jsx": "react",
     "outDir": "dist",
     "baseUrl": "src",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      "@shopify/shopify-cli-extensions-test-utils": ["../shopify-cli-extensions-test-utils/src"],
+    }
   },
-  "include": ["src/**/*", "src/testing/**/*"]
+  "include": ["src/**/*", "src/testing/**/*"],
+  "references": [{"path": "../shopify-cli-extensions-test-utils"}]
 }
