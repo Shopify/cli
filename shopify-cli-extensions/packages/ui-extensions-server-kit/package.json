@@ -1,8 +1,11 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "main": "dist/index",
-  "types": "dist/index",
+  "types": "dist/index.d.ts",
+  "files": [
+    "**"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "git clean --exclude node_modules -xdf ./",
