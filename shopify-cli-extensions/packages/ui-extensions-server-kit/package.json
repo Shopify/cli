@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@shopify/shopify-cli-extensions-test-utils": "0.1.0",
+    "@shopify/shopify-cli-extensions-test-utils": "^0.1.1-alpha.0",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
     "@types/react": "16.14.0",

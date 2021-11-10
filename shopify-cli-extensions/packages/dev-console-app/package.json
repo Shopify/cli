@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-dev-console-app",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "scripts": {
     "build": "tsc --project tsconfig.build.json && vite build",
     "clean": "git clean --exclude node_modules -xdf ./",
@@ -13,7 +13,7 @@
     "@shopify/polaris": "^6.6.0",
     "@shopify/polaris-icons": "^4.6.2",
     "@shopify/react-i18n": "^6.1.0",
-    "@shopify/ui-extensions-server-kit": "^0.1.0-alpha.0",
+    "@shopify/ui-extensions-server-kit": "^0.1.0-alpha.2",
     "copy-to-clipboard": "^3.3.1",
     "history": "^5.0.1",
     "node-sass": "^6.0.1",
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@shopify/shopify-cli-extensions-test-utils": "0.1.0",
+    "@shopify/shopify-cli-extensions-test-utils": "^0.1.1-alpha.0",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
     "@types/qrcode.react": "^1.0.2",
