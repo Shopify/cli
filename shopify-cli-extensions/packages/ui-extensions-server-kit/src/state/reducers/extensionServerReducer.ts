@@ -12,7 +12,7 @@ export function extensionServerReducer(
       return {
         ...state,
         store: action.payload.store,
-        app: action.payload.app,
+        app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
         extensions: replaceUpdated(
           state.extensions,
           action.payload.extensions ?? [],

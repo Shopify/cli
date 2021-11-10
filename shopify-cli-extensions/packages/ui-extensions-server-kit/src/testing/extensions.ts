@@ -13,6 +13,8 @@ function pad(num: number) {
 export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): ExtensionPayload {
   const uuid = `00000000-0000-0000-0000-${pad(id++)}`;
   return {
+    title: 'My extension',
+    surface: 'admin',
     type: 'purchase_option',
     uuid,
     version: 'extension version',

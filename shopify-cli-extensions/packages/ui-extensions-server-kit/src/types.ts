@@ -50,6 +50,8 @@ export interface ExtensionPayload {
   };
   uuid: string;
   version: string;
+  surface: string;
+  title: string;
 }
 
 export enum Status {
