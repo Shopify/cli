@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -40,6 +42,7 @@ func NewExtensionProject(extension core.Extension) (err error) {
 		mergeExtensionTemplates(fs, project),
 		createSourceFiles(fs, project),
 		mergeYamlAndJsonFiles(fs, project),
+		installDependencies(extension.Development.RootDir),
 	)
 
 	return setup.Run()
@@ -433,4 +436,44 @@ type shopifyCLIYML struct {
 	ProjectType    string `yaml:"project_type"`
 	OrganizationId string `yaml:"organization_id"`
 	ExtensionType  string `yaml:"EXTENSION_TYPE"`
+}
+
+var LookPath = exec.LookPath
+var Command = func(dir, executable string, args ...string) (runner Runner) {
+	cmd := exec.Command(executable, args...)
+	cmd.Dir = dir
+	return cmd
+}
+
+type Runner interface {
+	Run() error
+}
+
+func installDependencies(path string) process.Task {
+	return process.Task{
+		Run: func() error {
+			var package_manager string
+			if yarn, err := LookPath("yarn"); err == nil {
+				package_manager = yarn
+			} else if npm, err := LookPath("npm"); err == nil {
+				package_manager = npm
+			} else {
+				return errors.New("Package manager not found")
+			}
+
+			err := Command(path, package_manager).Run()
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		Undo: func() error {
+			cmd := exec.Command("rm", "-rf", "node_modules")
+			cmd.Dir = path
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
 }

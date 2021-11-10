@@ -11,7 +11,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type dummyRunner struct{}
+
+func (r dummyRunner) Run() error { return nil }
+func makeDummyRunner(path, executable string, args ...string) Runner {
+	return dummyRunner{}
+}
+
 func TestMergeTemplatesYAML(t *testing.T) {
+	Command = makeDummyRunner
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
 	rootDir := "tmp/TestMergeTemplatesYML"
 	extension := core.Extension{
 		Type: "integration_test",
@@ -82,6 +93,10 @@ func TestMergeTemplatesYAML(t *testing.T) {
 }
 
 func TestMergeTemplatesJSON(t *testing.T) {
+	Command = makeDummyRunner
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
 	rootDir := "tmp/TestMergeTemplatesJSON"
 	extension := core.Extension{
 		Type: "integration_test",
@@ -153,6 +168,10 @@ func TestMergeTemplatesJSON(t *testing.T) {
 }
 
 func TestShopifyCliYAML(t *testing.T) {
+	Command = makeDummyRunner
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
 	rootDir := "tmp/TestShopifyCliYAML"
 	extension := core.Extension{
 		Type: "integration_test",
@@ -200,6 +219,10 @@ func TestShopifyCliYAML(t *testing.T) {
 }
 
 func TestCreateMainIndex(t *testing.T) {
+	Command = makeDummyRunner
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
 	rootDir := "tmp/TestCreateMainIndex"
 	extension := core.Extension{
 		Type: "integration_test",
@@ -234,6 +257,10 @@ func TestCreateMainIndex(t *testing.T) {
 }
 
 func TestCreateAdditionalSourceFiles(t *testing.T) {
+	Command = makeDummyRunner
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
 	rootDir := "tmp/TestCreateAdditionalSourceFiles"
 	extension := core.Extension{
 		Type: "integration_test",
@@ -253,7 +280,41 @@ func TestCreateAdditionalSourceFiles(t *testing.T) {
 	_, err = os.ReadFile(fmt.Sprintf("%s/src/Country.graphql", rootDir))
 
 	if err != nil {
-		t.Errorf("expect additiona source files from template to be present but got error %v", err)
+		t.Errorf("expect additional source files from template to be present but got error %v", err)
+	}
+
+	t.Cleanup(func() {
+		os.RemoveAll(rootDir)
+	})
+}
+
+func TestInstallDependencies(t *testing.T) {
+	runnerWasCalled := false
+	Command = func(path, executable string, args ...string) Runner {
+		runnerWasCalled = true
+		return dummyRunner{}
+	}
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
+	rootDir := "tmp/TestInstallDependencies"
+	extension := core.Extension{
+		Type: "integration_test",
+		Development: core.Development{
+			Template: "typescript-react",
+			RootDir:  rootDir,
+			Renderer: core.Renderer{Name: "@shopify/post-purchase-ui-extension"},
+		},
+	}
+
+	err := NewExtensionProject(extension)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if runnerWasCalled == false {
+		t.Fatal("Expected runner to be called")
 	}
 
 	t.Cleanup(func() {
