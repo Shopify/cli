@@ -216,8 +216,8 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 			if castedData.Development.Status == "success" {
 				for entry := range api.Extensions[index].Assets {
 					api.Extensions[index].Assets[entry] = core.Asset{
-						Name:            api.Extensions[index].Assets[entry].Name,
-						RawSearchParams: fmt.Sprintf("?timestamp=%d", time.Now().Unix()),
+						Name:        api.Extensions[index].Assets[entry].Name,
+						LastUpdated: time.Now().Unix(),
 					}
 				}
 			}
@@ -263,7 +263,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 	api.PathPrefix("/assets/").Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, path.Join("/dev-console", r.URL.Path), http.StatusPermanentRedirect)
 	}))
-	
+
 	return api
 }
 
@@ -450,12 +450,11 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 
 	for entry := range extension.Assets {
 		name := extension.Assets[entry].Name
-		rawSearchParams := extension.Assets[entry].RawSearchParams
 
 		extension.Assets[entry] = core.Asset{
-			RawSearchParams: rawSearchParams,
-			Url:             fmt.Sprintf("%s/assets/%s.js%s", extension.Development.Root.Url, name, rawSearchParams),
-			Name:            name,
+			LastUpdated: extension.Assets[entry].LastUpdated,
+			Url:         fmt.Sprintf("%s/assets/%s.js", extension.Development.Root.Url, name),
+			Name:        name,
 		}
 	}
 

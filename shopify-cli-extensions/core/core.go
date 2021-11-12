@@ -106,9 +106,9 @@ func (e Extension) BuildDir() string {
 }
 
 type Asset struct {
-	Name            string `json:"name" yaml:"name"`
-	Url             string `json:"url" yaml:"url"`
-	RawSearchParams string `json:"-" yaml:"-"`
+	Name        string `json:"name" yaml:"name"`
+	Url         string `json:"url" yaml:"url"`
+	LastUpdated int64  `json:"lastUpdated" yaml:"lastUpdated"`
 }
 
 type commandConfig struct {

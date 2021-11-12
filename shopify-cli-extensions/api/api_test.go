@@ -300,7 +300,7 @@ func TestWebsocketNotify(t *testing.T) {
 	}
 }
 
-func TestWebsocketNotifyBuildStatusWithReloadParam(t *testing.T) {
+func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
 	api := New(config, apiRoot)
 	server := httptest.NewServer(api)
 
@@ -327,8 +327,8 @@ func TestWebsocketNotifyBuildStatusWithReloadParam(t *testing.T) {
 		t.Errorf("expecting extensions Development.Status to be success but received %v", first_success[0].Development.Status)
 	}
 
-	if !strings.Contains(first_success[0].Assets["main"].Url, "?timestamp=") {
-		t.Errorf("expecting extension Assets[\"main\"].Url to contain timestamp param but received %v", first_success[0].Assets["main"].Url)
+	if first_success[0].Assets["main"].LastUpdated <= 0 {
+		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to contain timestamp but received %v", first_success[0].Assets["main"].LastUpdated)
 	}
 
 	duration := 1 * time.Second
@@ -347,13 +347,13 @@ func TestWebsocketNotifyBuildStatusWithReloadParam(t *testing.T) {
 		t.Errorf("expecting extension Development.Status to be success but received %v", second_success[0].Development.Status)
 	}
 
-	if !strings.Contains(second_success[0].Assets["main"].Url, "?timestamp=") {
-		t.Errorf("expecting extension Assets[\"main\"].Url to contain a timestamp param but received %v", second_success[0].Assets["main"].Url)
+	if second_success[0].Assets["main"].LastUpdated <= 0 {
+		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to contain timestamp but received %v", second_success[0].Assets["main"].LastUpdated)
 	}
 
-	if second_success[0].Assets["main"].Url == first_success[0].Assets["main"].Url {
-		t.Logf("previous extension Assets[\"main\"].Url %s", first_success[0].Assets["main"].Url)
-		t.Errorf("expecting extension Assets[\"main\"].Url to be updated with a new timestamp param but received %v", second_success[0].Assets["main"].Url)
+	if second_success[0].Assets["main"].LastUpdated == first_success[0].Assets["main"].LastUpdated {
+		t.Logf("previous extension Assets[\"main\"].LastUpdated %d", first_success[0].Assets["main"].LastUpdated)
+		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to be updated with a new timestamp but received %v", second_success[0].Assets["main"].LastUpdated)
 	}
 
 	<-time.After(duration)
@@ -698,7 +698,8 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 		  "assets": {
 			"main": {
 			  "name": "main",
-			  "url": "%v/extensions/00000000-0000-0000-0000-000000000000/assets/main.js"
+			  "url": "%v/extensions/00000000-0000-0000-0000-000000000000/assets/main.js",
+			  "lastUpdated": 0
 			}
 		  },
 		  "development": {
