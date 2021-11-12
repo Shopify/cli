@@ -71,7 +71,7 @@ export function ActionSet(props: ActionSetProps) {
       setMobileQRCodeState('error');
     }
     onShowMobileQRCode?.(extension);
-  }, [extension, onShowMobileQRCode, state]);
+  }, [extension, onShowMobileQRCode, state.store, state.app]);
 
   const onButtonClick = useCallback(() => {
     if (mobileQRCode && copyToClipboard(mobileQRCode)) {
