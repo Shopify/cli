@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {useLocation, useHistory} from 'react-router-dom';
 import {
   ChevronRightMinor,
   RefreshMinor,
@@ -44,16 +43,21 @@ export function DevConsole() {
     unfocus,
   } = useDevConsoleInternal();
 
-  const history = useHistory();
-  const location = useLocation();
+  const [connectionUrl, setConnectionUrl] = useState<string>('');
+
   useEffect(() => {
     const url = new URLSearchParams(location.search).get('url');
-    if (url) {
-      connect({connection: {url}});
-      history.replace({});
+    if (url && url !== connectionUrl) {
+      setConnectionUrl(url);
+    }
+  }, [connectionUrl]);
+
+  useEffect(() => {
+    if (connectionUrl) {
+      connect({connection: {url: connectionUrl}});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, location]);
+  }, [connectionUrl]);
 
   const allSelected = selectedExtensionsSet.size === extensions.length;
 
