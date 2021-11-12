@@ -73,7 +73,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     data: ExtensionServer.OutboundPersistEvents[TEvent],
   ): void {
     if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
-      return this.connection.send(JSON.stringify({event, data}));
+      return this.connection?.send(JSON.stringify({event, data}));
     }
 
     console.warn(
@@ -92,7 +92,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
       );
     }
 
-    this.connection.send(JSON.stringify({event: 'dispatch', data: {type: event, payload: data}}));
+    this.connection?.send(JSON.stringify({event: 'dispatch', data: {type: event, payload: data}}));
   }
 
   protected initializeApiClient() {
@@ -106,7 +106,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   }
 
   protected initializeConnection() {
-    this.connection.addEventListener('message', (message) => {
+    this.connection?.addEventListener('message', (message) => {
       try {
         const {event, data} = JSON.parse(message.data) as {
           event: string;

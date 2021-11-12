@@ -5,18 +5,18 @@ export function useDevConsoleInternal() {
 
   return {
     ...extensionServer,
-    host: extensionServer.client?.connection?.url ?? '',
+    host: extensionServer.client.connection?.url ?? '',
 
     // update events
     hide: (extensions: ExtensionPayload[]) =>
-      extensionServer.client?.persist('update', {
+      extensionServer.client.persist('update', {
         extensions: extensions.map((extension) => ({
           uuid: extension.uuid,
           development: {hidden: true},
         })),
       }),
     show: (extensions: ExtensionPayload[]) =>
-      extensionServer.client?.persist('update', {
+      extensionServer.client.persist('update', {
         extensions: extensions.map((extension) => ({
           uuid: extension.uuid,
           development: {hidden: false},
@@ -25,12 +25,12 @@ export function useDevConsoleInternal() {
 
     // dispatch events
     refresh: (extensions: ExtensionPayload[]) =>
-      extensionServer.client?.emit(
+      extensionServer.client.emit(
         'refresh',
         extensions.map(({uuid}) => ({uuid})),
       ),
     focus: (extension: ExtensionPayload) =>
-      extensionServer.client?.emit('focus', [{uuid: extension.uuid}]),
-    unfocus: () => extensionServer.client?.emit('unfocus'),
+      extensionServer.client.emit('focus', [{uuid: extension.uuid}]),
+    unfocus: () => extensionServer.client.emit('unfocus'),
   };
 }
