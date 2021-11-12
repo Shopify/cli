@@ -33,10 +33,8 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     }
   }
 
-  public connect(options?: ExtensionServer.Options) {
-    if (options) {
-      this.mergeOptions(options);
-    }
+  public connect(options: ExtensionServer.Options = {connection: {}}) {
+    this.mergeOptions(options);
 
     if (this.options.connection.url) {
       this.connection?.close();

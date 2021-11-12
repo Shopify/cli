@@ -22,7 +22,7 @@ describe('ExtensionServerProvider tests', () => {
     });
 
     it('does not start a new connection if an empty url is passed', async () => {
-      const options = {connection: {url: ''}};
+      const options = {connection: {}};
 
       const wrapper = renderHook(
         useExtensionServerContext,
@@ -30,7 +30,7 @@ describe('ExtensionServerProvider tests', () => {
         {options},
       );
 
-      expect(wrapper.result.client!.connection).toBeUndefined();
+      expect(wrapper.result.client.connection).toBeUndefined();
     });
   });
 
