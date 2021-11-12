@@ -74,23 +74,23 @@ declare global {
        * Function to add an event listener to messages coming from
        * the extension server connection.
        */
-      on<Event extends keyof ExtensionServer.InboundEvents>(
-        event: Event,
-        cb: EventListener<Event>,
+      on<TEvent extends keyof ExtensionServer.InboundEvents>(
+        event: TEvent,
+        cb: EventListener<TEvent>,
       ): EventUnsubscriber;
 
       /**
        * Function to emit an event that will persist changes to the extension server.
        */
-      persist<Event extends keyof OutboundPersistEvents>(
-        event: Event,
-        payload: OutboundPersistEvents[Event],
+      persist<TEvent extends keyof OutboundPersistEvents>(
+        event: TEvent,
+        payload: OutboundPersistEvents[TEvent],
       ): void;
 
       /**
        * Function to emit an event to the extension server.
        */
-      emit<Event extends keyof OutboundDispatchEvents>(...args: EmitArgs<Event>): void;
+      emit<TEvent extends keyof OutboundDispatchEvents>(...args: EmitArgs<TEvent>): void;
 
       /**
        * Function that opens a connection with the extensions server.
@@ -193,28 +193,29 @@ declare global {
      * In practice, this will allow TypeScript to type-check the event being emitted
      * and, if the payload isn't required, the second argument won't be necessary.
      */
-    type EmitArgs<Event extends keyof ExtensionServer.OutboundDispatchEvents> =
-      ExtensionServer.OutboundDispatchEvents[Event] extends void
-        ? [event: Event]
-        : [event: Event, payload: ExtensionServer.OutboundDispatchEvents[Event]];
+    type EmitArgs<TEvent extends keyof ExtensionServer.OutboundDispatchEvents> =
+      ExtensionServer.OutboundDispatchEvents[TEvent] extends void
+        ? [event: TEvent]
+        : [event: TEvent, payload: ExtensionServer.OutboundDispatchEvents[TEvent]];
 
     /**
      * This is a helper interface that allows us to define the static methods of a given
      * class. This is useful to define static methods, static properties
      * and constructor variables.
      */
-    interface Static<T = unknown, A extends unknown[] = any[]> {
+    interface Static<T = unknown, TArgs extends unknown[] = any[]> {
       prototype: T;
-      new (...args: A): T;
+      new (...args: TArgs): T;
     }
 
     /**
      * This helper creates a partial interface with exception to the defined key values.
      */
-    type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
+    type PartialExcept<TOject, TKey extends keyof TOject> = Partial<Omit<TOject, TKey>> &
+      Pick<TOject, TKey>;
 
-    type EventListener<Event extends keyof ExtensionServer.InboundEvents> = (
-      payload: ExtensionServer.InboundEvents[Event],
+    type EventListener<TEvent extends keyof ExtensionServer.InboundEvents> = (
+      payload: ExtensionServer.InboundEvents[TEvent],
     ) => void;
 
     type EventUnsubscriber = () => void;

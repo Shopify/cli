@@ -1,11 +1,11 @@
 import {useExtensionServerContext} from './useExtensionServerContext';
 import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect';
 
-export function useExtensionServerEvent<Event extends keyof ExtensionServer.InboundEvents>(
-  event: Event,
-  listener: ExtensionServer.EventListener<Event>,
+export function useExtensionServerEvent<TEvent extends keyof ExtensionServer.InboundEvents>(
+  event: TEvent,
+  listener: ExtensionServer.EventListener<TEvent>,
 ): void {
   const {client} = useExtensionServerContext();
 
-  useIsomorphicLayoutEffect(() => client?.on(event, listener), [client, event, listener]);
+  useIsomorphicLayoutEffect(() => client.on(event, listener), [client, event, listener]);
 }

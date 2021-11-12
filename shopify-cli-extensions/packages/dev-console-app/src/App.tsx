@@ -13,7 +13,8 @@ const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:';
 const host = (import.meta.env.VITE_WEBSOCKET_HOST as string) || location.host;
 const extensionServerOptions = {
   connection: {
-    url: `${protocol}//${host}/extensions/`,
+    url: `ws://localhost:8000/extensions/`,
+    // url: `${protocol}//${host}/extensions/`,
   },
 };
 

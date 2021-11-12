@@ -1,7 +1,7 @@
 /**
  * Deep sets an object in a type-safe way
  */
-export function set<T, V>(obj: T, pathFn: (o: T) => V, value: V) {
+export function set<TObject, TValue>(obj: TObject, pathFn: (o: TObject) => TValue, value: TValue) {
   const path: string[] = [];
   const proxy: any = new Proxy(
     {},
@@ -14,7 +14,7 @@ export function set<T, V>(obj: T, pathFn: (o: T) => V, value: V) {
   );
   pathFn(proxy);
 
-  const newObj: T = {...obj};
+  const newObj: TObject = {...obj};
   let current: any = newObj;
   const lastKey = path.pop()!;
 

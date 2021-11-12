@@ -11,7 +11,7 @@ import {ExtensionServerClient} from '../ExtensionServerClient';
 import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect';
 import {useExtensionServerState} from '../hooks/useExtensionServerState';
 
-import {extensionServerContext} from './constants';
+import {DEFAULT_VALUE, extensionServerContext} from './constants';
 import type {ExtensionServerProviderProps} from './types';
 
 export function ExtensionServerProvider({
@@ -20,7 +20,7 @@ export function ExtensionServerProvider({
 }: ExtensionServerProviderProps) {
   const [state, dispatch] = useExtensionServerState();
   const [options, setOptions] = useState(defaultOptions);
-  const [client] = useState<ExtensionServer.Client>(() => new ExtensionServerClient());
+  const [client] = useState<ExtensionServer.Client>(DEFAULT_VALUE.client);
 
   const connect = useCallback(
     (newOptions: ExtensionServer.Options = options) => {

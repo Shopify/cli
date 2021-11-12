@@ -1,7 +1,7 @@
 import type {ExtensionServerState, ExtensionServerActions} from '../state';
 
 export interface ExtensionServerContext {
-  client?: ExtensionServer.Client;
+  client: ExtensionServer.Client;
   state: ExtensionServerState;
   connect(options?: ExtensionServer.Options): void;
   dispatch(action: ExtensionServerActions): void;

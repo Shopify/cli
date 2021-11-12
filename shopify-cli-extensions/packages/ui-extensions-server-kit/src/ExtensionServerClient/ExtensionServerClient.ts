@@ -56,9 +56,9 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     return () => this.connection?.close();
   }
 
-  public on<Event extends keyof ExtensionServer.InboundEvents>(
-    event: Event,
-    listener: (payload: ExtensionServer.InboundEvents[Event]) => void,
+  public on<TEvent extends keyof ExtensionServer.InboundEvents>(
+    event: TEvent,
+    listener: (payload: ExtensionServer.InboundEvents[TEvent]) => void,
   ): () => void {
     if (!this.listeners[event]) {
       this.listeners[event] = new Set();
@@ -68,9 +68,9 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     return () => this.listeners[event].delete(listener);
   }
 
-  public persist<Event extends keyof ExtensionServer.OutboundPersistEvents>(
-    event: Event,
-    data: ExtensionServer.OutboundPersistEvents[Event],
+  public persist<TEvent extends keyof ExtensionServer.OutboundPersistEvents>(
+    event: TEvent,
+    data: ExtensionServer.OutboundPersistEvents[TEvent],
   ): void {
     if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
       return this.connection.send(JSON.stringify({event, data}));
@@ -81,8 +81,8 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     );
   }
 
-  public emit<Event extends keyof ExtensionServer.OutboundDispatchEvents>(
-    ...args: ExtensionServer.EmitArgs<Event>
+  public emit<TEvent extends keyof ExtensionServer.OutboundDispatchEvents>(
+    ...args: ExtensionServer.EmitArgs<TEvent>
   ): void {
     const [event, data] = args;
 
