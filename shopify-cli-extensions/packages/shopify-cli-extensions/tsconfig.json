@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["es2020"],
+    "target": "es2015",
     "module": "commonjs",
-    "target": "es2019",
     "rootDir": "./src",
     "composite": true,
     "outDir": "./",
-    "allowJs": false,
     "declaration": true,
     "strict": true,
     "moduleResolution": "node",
