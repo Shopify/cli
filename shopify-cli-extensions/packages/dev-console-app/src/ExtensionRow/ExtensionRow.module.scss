@@ -15,7 +15,7 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% - 0.6rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
 
     .ActionSet {
-      visibility: visible;
+      opacity: 1;
     }
   }
 
@@ -26,12 +26,13 @@
 
 .ActionSet {
   vertical-align: middle;
-  visibility: hidden;
+  opacity: 0;
 } 
 
 .ForceVisible .ActionSet {
-  visibility: visible;
+  opacity: 1;
 }
+
 
 .Hidden {
   text-decoration: line-through;

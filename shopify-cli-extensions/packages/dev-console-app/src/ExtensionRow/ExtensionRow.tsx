@@ -1,4 +1,4 @@
-import React, {MouseEvent, useCallback, useMemo} from 'react';
+import React, {MouseEvent, useCallback, useState} from 'react';
 import {useI18n} from '@shopify/react-i18n';
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit';
 
@@ -42,6 +42,7 @@ export function ExtensionRow({
     },
     [extension, onSelect],
   );
+  const [isFocus, setFocus] = useState(false);
 
   const textClass = hidden ? styles.Hidden : undefined;
   const statusClass = status ? (styles as any)[status || 'error'] : styles.error;
@@ -50,6 +51,12 @@ export function ExtensionRow({
     <tr
       className={styles.DevToolRow}
       onClick={handleSelect}
+      onFocus={() => {
+        setFocus(true);
+      }}
+      onBlur={() => {
+        setFocus(false);
+      }}
       onMouseEnter={() => onHighlight(extension)}
       onMouseLeave={onClearHighlight}
     >
@@ -64,7 +71,7 @@ export function ExtensionRow({
         </span>
       </td>
       <ActionSet
-        className={styles.ActionSet}
+        className={isFocus ? styles.ForceVisible : styles.ActionSet}
         selected={selected}
         extension={extension}
         {...actionSetProps}
