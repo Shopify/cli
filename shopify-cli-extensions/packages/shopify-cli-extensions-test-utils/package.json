@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "@shopify/shopify-cli-extensions-test-utils",
   "version": "0.1.1-alpha.0",
   "main": "dist/index",
