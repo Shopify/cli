@@ -118,9 +118,10 @@ declare global {
 
       interface BaseResponse {
         app: App;
-        version: string;
         root: ResourceURL;
         socket: ResourceURL;
+        store: string;
+        version: string;
       }
 
       interface ExtensionsResponse extends BaseResponse {
@@ -137,11 +138,15 @@ declare global {
       }
 
       interface Extension {
-        type: string;
-        uuid: string;
         assets: Assets;
         development: Development;
-        user: User;
+        extensionPoints: string[] | null;
+        surface: string;
+        name?: string;
+        title?: string;
+        type: string;
+        metafields: Metafield[] | null;
+        uuid: string;
         version: string;
       }
 
@@ -152,6 +157,7 @@ declare global {
       interface Asset {
         name: string;
         url: string;
+        lastUpdated: number;
         rawSearchParams?: string;
       }
 
@@ -174,10 +180,6 @@ declare global {
       interface Renderer {
         name: string;
         version: string;
-      }
-
-      interface User {
-        metafields: Metafield[] | null;
       }
 
       interface Metafield {

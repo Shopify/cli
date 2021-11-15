@@ -30,9 +30,15 @@ export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
+export interface ResourceURL {
+  name: string;
+  url: string;
+  lastUpdated: number;
+}
+
 export interface ExtensionPayload {
   type: string;
-  assets: {[name: string]: {name: string; url: string}};
+  assets: {[name: string]: ResourceURL};
   development: {
     hidden: boolean;
     status: Status;
