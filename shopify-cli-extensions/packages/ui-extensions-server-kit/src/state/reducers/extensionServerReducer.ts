@@ -1,5 +1,6 @@
-import {set, replaceUpdated} from '../../utilities';
+import {set, replaceUpdated, resourceURLtoString} from '../../utilities';
 import type {ExtensionServerActions} from '../actions';
+import type {ExtensionPayload} from '../../types';
 
 import type {ExtensionServerState} from './types';
 
@@ -9,27 +10,31 @@ export function extensionServerReducer(
 ) {
   switch (action.type) {
     case 'connected': {
+      const extensions = (action.payload.extensions ?? []).map((extension) => {
+        Object.keys(extension.assets).forEach(
+          (asset) => (extension.assets[asset].url = resourceURLtoString(extension.assets[asset])),
+        );
+        return extension;
+      });
       return {
         ...state,
         store: action.payload.store,
         app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
-        extensions: replaceUpdated(
-          state.extensions,
-          action.payload.extensions ?? [],
-          ({uuid}) => uuid,
-        ),
+        extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
       } as ExtensionServerState;
     }
 
     case 'update': {
+      const extensions = (action.payload.extensions ?? []).map((extension) => {
+        Object.keys(extension.assets).forEach(
+          (asset) => (extension.assets[asset].url = resourceURLtoString(extension.assets[asset])),
+        );
+        return extension;
+      });
       return {
         ...state,
         app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
-        extensions: replaceUpdated(
-          state.extensions,
-          action.payload.extensions ?? [],
-          ({uuid}) => uuid,
-        ),
+        extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
       } as ExtensionServerState;
     }
 
@@ -38,9 +43,15 @@ export function extensionServerReducer(
         ...state,
         extensions: state.extensions.map((extension) => {
           if (action.payload.some(({uuid}) => extension.uuid === uuid)) {
-            const url = new URL(extension.assets.main.url);
-            url.searchParams.set('timestamp', String(Date.now()));
-            return set(extension, (ext) => ext.assets.main.url, url.toString());
+            const assets: ExtensionPayload['assets'] = {};
+            Object.keys(extension.assets).forEach((asset) => {
+              const resourceURL = {...extension.assets[asset]};
+              resourceURL.lastUpdated = Date.now();
+              resourceURL.url = resourceURLtoString(resourceURL);
+
+              assets[asset] = resourceURL;
+            });
+            return set(extension, (ext) => ext.assets, assets);
           }
           return extension;
         }),

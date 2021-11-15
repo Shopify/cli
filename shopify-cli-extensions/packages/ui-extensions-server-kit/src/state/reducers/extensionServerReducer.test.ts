@@ -78,7 +78,7 @@ describe('extensionServerReducer()', () => {
 
     const state1 = extensionServerReducer(previousState, action);
     const url1 = new URL(state1.extensions[0].assets.main.url);
-    const timestamp1 = url1.searchParams.get('timestamp') || '';
+    const timestamp1 = url1.searchParams.get('lastUpdated') || '';
 
     expect(timestamp1.length).toBeGreaterThan(0);
 
@@ -87,7 +87,7 @@ describe('extensionServerReducer()', () => {
 
     const state2 = extensionServerReducer(state1, action);
     const url2 = new URL(state2.extensions[0].assets.main.url);
-    const timestamp2 = url2.searchParams.get('timestamp') || '';
+    const timestamp2 = url2.searchParams.get('lastUpdated') || '';
 
     expect(timestamp2.length).toBeGreaterThan(0);
     expect(timestamp1).not.toStrictEqual(timestamp2);
