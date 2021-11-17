@@ -71,7 +71,7 @@ export function ExtensionRow({
         </span>
       </td>
       <ActionSet
-        className={isFocus ? styles.ForceVisible : styles.ActionSet}
+        className={`${styles.ActionSet} ${isFocus ? styles.ForceVisible : ''}`}
         selected={selected}
         extension={extension}
         {...actionSetProps}
