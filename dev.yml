@@ -1,0 +1,8 @@
+name: shopify-cli-next
+
+up:
+  - node:
+      yarn: true
+      version: v16.13.2
+      packages:
+        - ./

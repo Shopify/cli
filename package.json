@@ -1,0 +1,63 @@
+{
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@rollup/plugin-alias": "^3.1.9",
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "@rollup/plugin-run": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.9.0",
+    "@typescript-eslint/parser": "^5.9.0",
+    "esbuild": "^0.14.11",
+    "eslint": "^8.6.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "fast-glob": "^3.2.10",
+    "pathe": "^0.2.0",
+    "picocolors": "^1.0.0",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.63.0",
+    "rollup-plugin-dts": "^4.1.0",
+    "rollup-plugin-esbuild": "^4.8.2",
+    "typescript": "^4.5.4",
+    "vitest": "^0.0.139"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "plugin:@shopify/typescript",
+      "plugin:@shopify/node",
+      "plugin:@shopify/jest",
+      "plugin:@shopify/prettier"
+    ],
+    "rules": {
+      "jest/valid-expect": "off",
+      "jest/no-expect-resolves": "off",
+      "@typescript-eslint/no-namespace": "off",
+      "@typescript-eslint/no-var-requires": "off",
+      "import/no-cycle": "off",
+      "callback-return": "off",
+      "no-undefined": "off",
+      "no-console": "error",
+      "require-await": "off",
+      "jest/no-if": "off",
+      "node/no-deprecated-api": "off",
+      "import/no-extraneous-dependencies": "off",
+      "jest/no-standalone-expect": "off",
+      "jest/consistent-test-it": [
+        "error",
+        {
+          "fn": "it"
+        }
+      ]
+    }
+  },
+  "prettier": "@shopify/prettier-config"
+}
