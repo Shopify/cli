@@ -1,0 +1,32 @@
+{
+    "name": "@shopify/shopify-cli-core",
+    "version": "0.5.0",
+    "description": "A CLI tool to build for the Shopify platform",
+    "keywords": [
+      "shopify",
+      "shopify-cli",
+      "shopify-cli-core"
+    ],
+    "license": "MIT",
+    "private": false,
+    "scripts": {
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "build": "rimraf dist && rollup -c",
+      "build:watch": "rollup -c --watch --watch.include=src/**",
+      "shopify": "rollup -c --plugin @rollup/plugin-run",
+      "lint": "prettier -c src/** && eslint src/**",
+      "lint:fix": "prettier src/** && eslint src/** --fix",
+      "tsc": "tsc --noEmit"
+    },
+    "type": "module",
+    "dependencies": {
+    },
+    "devDependencies": {},
+    "peerDependencies": {},
+    "files": [
+      "dist",
+      "*.d.ts",
+      "*.mjs"
+    ]
+  }
