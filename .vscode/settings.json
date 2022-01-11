@@ -23,6 +23,5 @@
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
-    "eslint.validate": ["javascript", "typescript"],
-    "prettier-eslint.eslintIntegration": false
+    "eslint.validate": ["javascript", "typescript"]
   }
