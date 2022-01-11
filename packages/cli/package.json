@@ -24,13 +24,18 @@
       "shopify": "./bin/shopify.mjs"
     },
     "dependencies": {
+      "@oclif/core": "^1",
+      "@oclif/plugin-help": "^5",
+      "@oclif/plugin-plugins": "^2.0.1"
     },
-    "devDependencies": {},
+    "devDependencies": {
+      "@oclif/test": "^2"
+    },
     "peerDependencies": {},
     "files": [
       "dist",
       "bin",
-      "*.d.ts",
-      "*.mjs"
+      "*.mjs",
+      "oclif.manifest.json"
     ]
   }
