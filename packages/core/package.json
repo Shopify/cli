@@ -19,7 +19,6 @@
       "lint:fix": "prettier src/** && eslint src/** --fix",
       "tsc": "tsc --noEmit"
     },
-    "type": "module",
     "dependencies": {
     },
     "devDependencies": {},
