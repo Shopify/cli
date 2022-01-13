@@ -4,7 +4,8 @@
     "@shopify/eslint-plugin": "^41.0.1",
     "@shopify/prettier-config": "^1.1.2",
     "@shopify/typescript-configs": "^5.1.0",
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^27.4.0",
+    "@types/node": "^17.0.8",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
     "@typescript-eslint/parser": "^5.9.0",
     "esbuild": "^0.14.11",
@@ -19,6 +20,9 @@
     "picocolors": "^1.0.0",
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
+    "ts-jest": "^27.1.2",
+    "ts-node": "^10.4.0",
+    "tslib": "^2.3.1",
     "typescript": "^4.5.4"
   },
   "workspaces": {
@@ -55,5 +59,9 @@
       ]
     }
   },
-  "prettier": "@shopify/prettier-config"
+  "prettier": "@shopify/prettier-config",
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  }
 }
