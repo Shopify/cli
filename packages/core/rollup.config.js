@@ -17,7 +17,7 @@ export default ({ watch }) => [
     input: entry,
     output: {
       dir: 'dist',
-      format: 'esm',
+      format: 'cjs',
       sourcemap: 'inline',
     },
     external,
@@ -40,7 +40,7 @@ export default ({ watch }) => [
     input: entry,
     output: {
       file: 'dist/index.d.ts',
-      format: 'esm',
+      format: 'cjs',
     },
     external,
     plugins: [

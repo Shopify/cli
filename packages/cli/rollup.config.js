@@ -16,7 +16,7 @@ export default ({ watch }) => [
     input: entries,
     output: {
       dir: 'dist',
-      format: 'esm',
+      format: 'cjs',
       sourcemap: 'inline',
     },
     external,
