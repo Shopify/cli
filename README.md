@@ -14,7 +14,7 @@ The repository is a monorepo that contains the following packages
 
 | Package | Description | CI |
 | --- | --- | --- |
-| [cli](packages/cli) | Contains the Shopify CLI | |
+| [cli](packages/cli) | Contains the Shopify CLI | [![cli](https://github.com/Shopify/shopify-cli-next/actions/workflows/cli.yml/badge.svg)](https://github.com/Shopify/shopify-cli-next/actions/workflows/cli.yml) |
 
 ## Help 🖐
 
