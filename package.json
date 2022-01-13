@@ -50,7 +50,7 @@
       "import/no-cycle": "off",
       "callback-return": "off",
       "no-undefined": "off",
-      "no-console": "error",
+      "no-console": "off",
       "require-await": "off",
       "jest/no-if": "off",
       "node/no-deprecated-api": "off",
