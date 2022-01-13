@@ -1,8 +1,9 @@
 {
-    "extends": "../../configurations/tsconfig.json",
-    "include": ["./src/**/*.ts"],
-    "exclude": ["./dist"],
-    "references": [
-        { "path": "../core" },
-    ]
+  "extends": "../../configurations/tsconfig.json",
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./dist"],
+  "references": [{"path": "../core"}],
+  "compilerOptions": {
+    "outDir": "./dist"
+  }
 }

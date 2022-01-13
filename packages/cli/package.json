@@ -1,49 +1,66 @@
 {
-    "name": "@shopify/shopify-cli",
-    "version": "0.5.0",
-    "description": "A CLI tool to build for the Shopify platform",
-    "keywords": [
-      "shopify",
-      "shopify-cli",
-      "shopify-partners"
+  "name": "@shopify/shopify-cli",
+  "version": "0.5.0",
+  "description": "A CLI tool to build for the Shopify platform",
+  "keywords": [
+    "shopify",
+    "shopify-cli",
+    "shopify-partners"
+  ],
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "jest",
+    "test:watch": "xxx",
+    "build": "shx rm -rf dist && tsc",
+    "build:watch": "tsc --watch",
+    "lint": "prettier -c src/** && eslint src/** --check",
+    "lint:fix": "prettier src/** && eslint src/**",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@oclif/core": "^1",
+    "@oclif/plugin-help": "^5",
+    "@oclif/plugin-plugins": "^2.0.1"
+  },
+  "devDependencies": {
+    "@oclif/test": "^2",
+    "eslint-config-oclif": "^4",
+    "eslint-config-oclif-typescript": "^1.0.2"
+  },
+  "peerDependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json"
+  ],
+  "types": "dist/index.d.ts",
+  "bin": {
+    "shopify": "./bin/shopify.mjs"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../package.json",
+      "oclif",
+      "oclif-typescript"
+    ]
+  },
+  "oclif": {
+    "bin": "shopify",
+    "commands": "./dist/commands",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
     ],
-    "license": "MIT",
-    "private": false,
-    "scripts": {
-      "test": "vitest run",
-      "test:watch": "vitest",
-      "build": "rimraf dist && rollup -c",
-      "build:watch": "rollup -c --watch --watch.include=src/**",
-      "shopify": "rollup -c --plugin @rollup/plugin-run",
-      "lint": "prettier -c src/** && eslint src/**",
-      "lint:fix": "prettier src/** && eslint src/** --fix",
-      "tsc": "tsc --noEmit"
-    },
-    "bin": {
-      "shopify": "./bin/shopify.mjs"
-    },
-    "dependencies": {
-      "@oclif/core": "^1",
-      "@oclif/plugin-help": "^5",
-      "@oclif/plugin-plugins": "^2.0.1"
-    },
-    "devDependencies": {
-      "@oclif/test": "^2",
-      "eslint-config-oclif": "^4",
-      "eslint-config-oclif-typescript": "^1.0.2"
-    },
-    "peerDependencies": {},
-    "files": [
-      "dist",
-      "bin",
-      "*.mjs",
-      "oclif.manifest.json"
-    ],
-    "eslintConfig": {
-      "extends": [
-        "../../package.json",
-        "oclif",
-        "oclif-typescript"
-      ]
+    "topicSeparator": " ",
+    "topics": {
+      "hello": {
+        "description": "Say hello to the world and others"
+      }
     }
   }
+}

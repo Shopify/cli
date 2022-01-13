@@ -1,7 +1,9 @@
 {
-    "extends": "../../configurations/tsconfig.json",
-    "include": ["./src/**/*.ts"],
-    "exclude": ["./dist"],
-    "references": [
-    ]
+  "extends": "../../configurations/tsconfig.json",
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./dist"],
+  "references": [],
+  "compilerOptions": {
+    "composite": true
+  }
 }
