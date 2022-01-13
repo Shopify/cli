@@ -1,3 +1,5 @@
-it('works', () => {
-  expect(true).toBeTruthy();
+describe('making it pass', () => {
+  it('works', () => {
+    expect(true).toBe(true);
+  });
 });
