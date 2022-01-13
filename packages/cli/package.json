@@ -1,6 +1,6 @@
 {
-  "name": "@shopify/shopify-cli",
-  "version": "0.5.0",
+  "name": "@shopify/cli",
+  "version": "0.1.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -25,7 +25,7 @@
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
     "test": "jest",
-    "test:watch": "xxx",
+    "test:watch": "jest --watch",
     "tsc": "tsc --noEmit"
   },
   "eslintConfig": {

@@ -1,4 +1,4 @@
-name: cli
+name: shopify-cli
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request: {}
 
 concurrency:
-  group: cli-${{ github.head_ref }}
+  group: shopify-cli-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
@@ -17,6 +17,8 @@ jobs:
     strategy:
       matrix:
         node: ['12', '14', '16']
+      matrix:
+        package: ['cli', 'core']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -27,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Build
-        working-directory: packages/cli
+        working-directory: packages/${{ matrix.package }}
         run: yarn run build
   test:
     name: Test with Node ${{ matrix.node }}
@@ -45,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Test
-        working-directory: packages/cli
+        working-directory: packages/${{ matrix.package }}
         run: yarn run test
   lint:
     name: Lint
@@ -60,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Lint
-        working-directory: packages/cli
+        working-directory: packages/${{ matrix.package }}
         run: yarn run lint
   type-check:
     name: Type-check
@@ -75,5 +77,5 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Type-check
-        working-directory: packages/cli
+        working-directory: packages/${{ matrix.package }}
         run: yarn run tsc
