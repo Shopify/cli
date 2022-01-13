@@ -64,8 +64,8 @@ jobs:
       - name: Lint
         working-directory: packages/${{ matrix.package }}
         run: yarn run lint
-  type-check: ${{ matrix.package }}
-    name: Type-check
+  type-check:
+    name: Type-check ${{ matrix.package }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
