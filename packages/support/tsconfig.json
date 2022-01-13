@@ -2,7 +2,6 @@
   "extends": "../../configurations/tsconfig.json",
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist", "**/*.test.ts"],
-  "references": [{"path": "../support"}],
   "compilerOptions": {
     "outDir": "./dist",
     "composite": true
