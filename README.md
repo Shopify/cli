@@ -3,18 +3,11 @@
   <h1>Shopify CLI</h1>
   <a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+  <a href="https://github.com/Shopify/shopify-cli-next/actions/workflows/shopify-cli.yml"><img src="https://github.com/Shopify/shopify-cli-next/actions/workflows/shopify-cli.yml/badge.svg"/></a>
 </div>
 
 
 Shopify CLI helps you build Shopify themes and apps. Use Shopify CLI to automate and enhance your local development workflow.
-
-## Packages
-
-The repository is a monorepo that contains the following packages
-
-| Package | Description | CI |
-| --- | --- | --- |
-| [cli](packages/cli) | Contains the Shopify CLI | [![cli](https://github.com/Shopify/shopify-cli-next/actions/workflows/cli.yml/badge.svg)](https://github.com/Shopify/shopify-cli-next/actions/workflows/cli.yml) |
 
 ## Help 🖐
 

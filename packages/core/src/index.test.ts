@@ -1,5 +1,5 @@
-import { assert, expect, it, suite, test } from 'vitest';
-
-test('it works', () => {
-  expect(true).toBeTruthy();
+describe('it works', () => {
+  it('is true', () => {
+    expect(true).toBe(true);
+  });
 });

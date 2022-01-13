@@ -1,29 +1,31 @@
 {
   "private": true,
   "devDependencies": {
-    "@rollup/plugin-alias": "^3.1.9",
-    "@rollup/plugin-commonjs": "^21.0.1",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.1.3",
-    "@rollup/plugin-run": "^2.1.0",
-    "@shopify/eslint-plugin": "^41.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.9.0",
-    "@typescript-eslint/parser": "^5.9.0",
+    "@shopify/prettier-config": "^1.1.2",
+    "@shopify/typescript-configs": "^5.1.0",
+    "@types/jest": "^27.4.0",
+    "@types/node": "^17.0.8",
     "esbuild": "^0.14.11",
     "eslint": "^8.6.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-unicorn": "^40.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.9.0",
+    "@typescript-eslint/parser": "^5.9.0",
+    "@shopify/eslint-plugin": "^41.0.1",
     "fast-glob": "^3.2.10",
+    "jest": "^27.0.6",
+    "lerna": "^4.0.0",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
-    "rollup": "^2.63.0",
-    "rollup-plugin-dts": "^4.1.0",
-    "rollup-plugin-esbuild": "^4.8.2",
-    "typescript": "^4.5.4",
-    "vitest": "^0.0.139"
+    "shx": "^0.3.3",
+    "ts-jest": "^27.1.2",
+    "ts-node": "^10.4.0",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.0"
   },
   "workspaces": {
     "packages": [
@@ -38,6 +40,9 @@
       "plugin:@shopify/prettier"
     ],
     "rules": {
+      "prettier/prettier": [
+        "error"
+      ],
       "jest/valid-expect": "off",
       "jest/no-expect-resolves": "off",
       "@typescript-eslint/no-namespace": "off",
@@ -59,5 +64,14 @@
       ]
     }
   },
-  "prettier": "@shopify/prettier-config"
+  "prettier": "@shopify/prettier-config",
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "globals": {
+      "ts-jest": {
+        "isolatedModules": false
+      }
+    }
+  }
 }
