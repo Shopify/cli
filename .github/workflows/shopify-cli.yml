@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         node: ['12', '14', '16']
-        package: ['support', 'cli', 'core', 'shopify-create-app']
+        package: ['support', 'cli', 'core', 'create-app', 'app']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         node: ['12', '14', '16']
-        package: ['support', 'cli', 'core', 'shopify-create-app']
+        package: ['support', 'cli', 'core', 'create-app', 'app']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['support', 'cli', 'core', 'shopify-create-app']
+        package: ['support', 'cli', 'core', 'create-app', 'app']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['support', 'cli', 'core', 'shopify-create-app']
+        package: ['support', 'cli', 'core', 'create-app', 'app']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
