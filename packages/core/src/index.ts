@@ -1,5 +1,6 @@
 import {path} from '@shopify/cli-support';
 
 function doSomething() {
-  const absolutePath = path.join('something', 'something');
+  console.log(`hello world: ${path.join('a', 'b')}`);
 }
+export default doSomething;

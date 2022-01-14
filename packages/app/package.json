@@ -20,12 +20,12 @@
   },
   "scripts": {
     "build": "shx rm -rf dist && tsc",
-    "build:watch": "tsc --watch",
+    "build:watch": "tsc -b --watch",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
     "test": "jest",
     "test:watch": "jest --watch",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc -b --noEmit"
   },
   "eslintConfig": {
     "extends": [
