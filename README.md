@@ -12,7 +12,7 @@ Shopify CLI helps you build Shopify themes and apps. Use Shopify CLI to automate
 ## Create an app
 
 ```
-npx @shopify/create-app init
+npx @shopify/create-app@latest init
 ```
 
 ## Help 🖐

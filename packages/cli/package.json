@@ -49,7 +49,7 @@
   "devDependencies": {
     "@oclif/test": "^2"
   },
-  "engineStrict": true,
+  "engine-strict": true,
   "engines": {
     "node": "^12 || ^14 || ^16"
   },
