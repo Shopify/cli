@@ -6,3 +6,21 @@ up:
       version: v16.13.2
       packages:
         - ./
+        - ./docs
+
+open:
+  app: http://localhost:3000
+
+commands:
+  docs:
+    desc: 'Commands to interact with the documentation website.'
+    subcommands:
+      server:
+        desc: Run docusaurus documentation local server
+        run: yarn --cwd docs run start --no-open
+
+      build:
+        desc: build and serve the static website
+        run: |
+          yarn --cwd docs run build
+          yarn --cwd docs run serve
