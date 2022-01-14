@@ -49,9 +49,15 @@
   "devDependencies": {
     "@oclif/test": "^2"
   },
+  "engineStrict": true,
   "engines": {
-    "node": ">=12.0.0"
+    "node": "^12 || ^14 || ^16"
   },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
   "oclif": {
     "bin": "shopify",
     "commands": "./dist/commands",
