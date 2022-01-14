@@ -40,5 +40,8 @@
     "darwin",
     "linux",
     "win32"
-  ]
+  ],
+  "dependencies": {
+    "pathe": "^0.2.0"
+  }
 }
