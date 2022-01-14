@@ -12,12 +12,13 @@ concurrency:
 
 jobs:
   build:
-    name: Build ${{ matrix.package }} with Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
+    name: Build ${{ matrix.package }} with Node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         node: ['12', '14', '16']
         package: ['support', 'cli', 'core', 'create-app', 'app', 'theme']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -31,12 +32,13 @@ jobs:
         working-directory: packages/${{ matrix.package }}
         run: yarn run build
   test:
-    name: Test ${{ matrix.package }} with Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
+    name: Test ${{ matrix.package }} with Node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         node: ['12', '14', '16']
         package: ['support', 'cli', 'core', 'create-app', 'app', 'theme']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -50,11 +52,12 @@ jobs:
         working-directory: packages/${{ matrix.package }}
         run: yarn run test
   features:
-    name: Features with Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
+    name: Features with Node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         node: ['12', '14', '16']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
