@@ -1,7 +1,7 @@
 {
   "references": [
     {"path": "./packages/cli"}
-    {"path": "./packages/create-shopify-app"},
+    {"path": "./packages/create-app"},
     {"path": "./packages/app"},
     {"path": "./packages/theme"},
     {"path": "./packages/core"},

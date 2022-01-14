@@ -1,5 +1,5 @@
 {
-  "name": "@shopify/create-shopify-app",
+  "name": "@shopify/create-app",
   "version": "0.1.2",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
@@ -12,7 +12,7 @@
   "license": "MIT",
   "types": "dist/index.d.ts",
   "bin": {
-    "create-shopify-app": "./bin/run"
+    "create-app": "./bin/run"
   },
   "files": [
     "/bin",
@@ -54,7 +54,7 @@
     "node": ">=12.0.0"
   },
   "oclif": {
-    "bin": "create-shopify-app",
+    "bin": "create-app",
     "commands": "./dist/commands",
     "plugins": [],
     "topicSeparator": " "

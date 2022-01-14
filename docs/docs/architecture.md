@@ -32,5 +32,5 @@ and that you can find the component you are looking for more easily. The image b
 | @shopify/cli-core | Contains models and utilities that are aware of the Shopify platform. They are shared across all the features | Authentication handler, Admin API Client, Session manager. |
 | @shopify/cli-app | Contains the logic for creating, building, serving, and deploying Shopify apps | Commands, App model, Deployment tool. |
 | @shopify/cli-theme |  Contains the logic for creating, building, and pushing themes. Note the logic in this package is Ruby. | Commands, Theme server and checker. |
-| @shopify/create-shopify-app | Contains an executable that guides the user through the process of creating a new Shopify app | Executable |
+| @shopify/create-app | Contains an executable that guides the user through the process of creating a new Shopify app | Executable |
 | @shopify/cli | Contains the CLI executable that glues all the commands provided by the features under it | Executable |
