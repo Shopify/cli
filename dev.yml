@@ -12,6 +12,10 @@ open:
   app: http://localhost:3000
 
 commands:
+  server:
+    depends-railgun: true
+    desc: Run docusaurus documentation local server
+    run: yarn --cwd docs run start --no-open
   docs:
     desc: 'Commands to interact with the documentation website.'
     subcommands:
