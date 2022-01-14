@@ -1,5 +1,9 @@
 {
   "private": true,
+  "scripts": {
+    "build": "lerna run build",
+    "release": "lerna version --conventional-commits"
+  },
   "devDependencies": {
     "@shopify/prettier-config": "^1.1.2",
     "@shopify/typescript-configs": "^5.1.0",

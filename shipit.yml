@@ -1,0 +1,12 @@
+ci:
+  require: []
+
+dependencies:
+  override:
+    - yarn install
+
+deploy:
+  pre:
+    - yarn run build
+  override:
+    - yarn run lerna publish from-package --yes
