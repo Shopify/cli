@@ -1,6 +1,7 @@
 {
+  "extends": "./configurations/tsconfig.json",
   "references": [
-    {"path": "./packages/cli"}
+    {"path": "./packages/cli"},
     {"path": "./packages/create-app"},
     {"path": "./packages/app"},
     {"path": "./packages/theme"},
