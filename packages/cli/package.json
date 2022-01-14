@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -41,10 +41,10 @@
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^2.0.1",
-    "@shopify/cli-app": "^0.1.2",
-    "@shopify/cli-core": "^0.1.2",
-    "@shopify/cli-support": "^0.1.2",
-    "@shopify/cli-theme": "^0.1.2"
+    "@shopify/cli-app": "^0.1.3",
+    "@shopify/cli-core": "^0.1.3",
+    "@shopify/cli-support": "^0.1.3",
+    "@shopify/cli-theme": "^0.1.3"
   },
   "devDependencies": {
     "@oclif/test": "^2"
