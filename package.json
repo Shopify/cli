@@ -38,9 +38,6 @@
   },
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "tsconfigRootDir": "configurations/"
-    },
     "extends": [
       "plugin:@shopify/typescript",
       "plugin:@shopify/prettier",
