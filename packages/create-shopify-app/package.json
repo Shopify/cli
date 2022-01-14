@@ -39,10 +39,13 @@
     ]
   },
   "dependencies": {
+    "@oclif/command": "^1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^2.0.1",
-    "@shopify/cli-support": "^0.1.1"
+    "@shopify/cli-support": "^0.1.1",
+    "@types/listr": "^0.14.4",
+    "listr": "^0.14.3"
   },
   "devDependencies": {
     "@oclif/test": "^2"
@@ -53,15 +56,7 @@
   "oclif": {
     "bin": "create-shopify-app",
     "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
-    ],
-    "topicSeparator": " ",
-    "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
-    }
+    "plugins": [],
+    "topicSeparator": " "
   }
 }

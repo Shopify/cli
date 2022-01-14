@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+if (!process.argv.includes("init")) {
+  process.argv.push('init');
+}
+
 const oclif = require('@oclif/core')
 
 const path = require('path')
