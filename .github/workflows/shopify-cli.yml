@@ -49,7 +49,7 @@ jobs:
       - name: Test
         working-directory: packages/${{ matrix.package }}
         run: yarn run test
-  test:
+  features:
     name: Features with Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
