@@ -17,7 +17,7 @@ module.exports = {
       additionalLanguages: ['ruby', 'sql'],
     },
     navbar: {
-      title: 'My Title',
+      title: 'Shopify CLI Next',
       items: [
         {
           href: 'https://github.com/shopify/shopify-cli-next',

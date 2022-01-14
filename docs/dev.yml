@@ -13,6 +13,3 @@ build:
   run: |
     yarn run build
     yarn run serve
-
-open:
-  app: http://localhost:3000
