@@ -4,6 +4,9 @@
   "exclude": ["./dist", "**/*.test.ts"],
   "references": [{"path": "../core"}, {"path": "../app"}, {"path": "../theme"}],
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "composite": true
   }
 }

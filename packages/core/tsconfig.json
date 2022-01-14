@@ -4,10 +4,10 @@
   "exclude": ["./dist", "**/*.test.ts"],
   "references": [{"path": "../support"}],
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
     "composite": true
   },
-  "paths": {
-    // "$s/*": ["src/*"]
-  }
+  "paths": {}
 }
