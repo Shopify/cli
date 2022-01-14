@@ -20,10 +20,6 @@
   "search.exclude": {
     "**/node_modules": true
   },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "eslint.validate": ["javascript", "typescript"]
+  "editor.formatOnSave": true
 }

@@ -33,11 +33,15 @@
     ]
   },
   "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "tsconfigRootDir": "configurations/"
+    },
     "extends": [
       "plugin:@shopify/typescript",
+      "plugin:@shopify/prettier",
       "plugin:@shopify/node",
-      "plugin:@shopify/jest",
-      "plugin:@shopify/prettier"
+      "plugin:@shopify/jest"
     ],
     "rules": {
       "prettier/prettier": [
@@ -64,14 +68,5 @@
       ]
     }
   },
-  "prettier": "@shopify/prettier-config",
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "globals": {
-      "ts-jest": {
-        "isolatedModules": false
-      }
-    }
-  }
+  "prettier": "@shopify/prettier-config"
 }

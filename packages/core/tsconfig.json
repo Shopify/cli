@@ -6,5 +6,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "composite": true
+  },
+  "paths": {
+    // "$s/*": ["src/*"]
   }
 }
