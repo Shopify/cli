@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "build": "lerna run build",
-    "release": "lerna version --conventional-commits"
+    "release": "lerna version --conventional-commits",
+    "prerelease": "bin/prerelease.mjs"
   },
   "devDependencies": {
     "@shopify/prettier-config": "^1.1.2",
