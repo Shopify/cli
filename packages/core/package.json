@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -33,7 +33,7 @@
     ]
   },
   "dependencies": {
-    "@shopify/cli-support": "^0.1.1"
+    "@shopify/cli-support": "^0.1.2"
   },
   "engineStrict": true,
   "engines": {
