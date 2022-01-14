@@ -20,6 +20,10 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "build": "shx rm -rf dist && tsc",
     "build:watch": "tsc --watch",
@@ -37,7 +41,8 @@
   "dependencies": {
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@oclif/plugin-plugins": "^2.0.1"
+    "@oclif/plugin-plugins": "^2.0.1",
+    "@shopify/cli-support": "0.1.0"
   },
   "devDependencies": {
     "@oclif/test": "^2"
