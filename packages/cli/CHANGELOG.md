@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- ac955a9: Remove the Bugsnag setup from the CLI used for development purposes
+
 ## 0.3.0
 
 ### Minor Changes

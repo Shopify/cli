@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.4.0
+
+### Minor Changes
+
+- ac955a9: Add Bugsnag to @shopify/create-app
+
 ## 0.3.0
 
 ### Minor Changes
