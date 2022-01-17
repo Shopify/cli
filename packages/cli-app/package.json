@@ -34,6 +34,8 @@
     ]
   },
   "dependencies": {
+    "@oclif/core": "^1",
+    "@oclif/plugin-help": "^5",
     "@shopify/cli-core": "^0.2.0",
     "@shopify/cli-support": "^0.2.0"
   },
@@ -45,5 +47,11 @@
     "darwin",
     "linux",
     "win32"
-  ]
+  ],
+  "oclif": {
+    "commands": "./dist/commands",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  }
 }

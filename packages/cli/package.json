@@ -42,15 +42,12 @@
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@oclif/plugin-plugins": "^2.0.1",
     "@shopify/cli-app": "^0.2.0",
     "@shopify/cli-core": "^0.2.0",
     "@shopify/cli-support": "^0.2.0",
     "@shopify/cli-theme": "^0.2.0"
   },
-  "devDependencies": {
-    "@oclif/test": "^2"
-  },
+  "devDependencies": {},
   "engine-strict": true,
   "engines": {
     "node": "^12 || ^14 || ^16"
@@ -62,15 +59,18 @@
   ],
   "oclif": {
     "bin": "shopify",
-    "commands": "./dist/commands",
     "plugins": [
       "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
+      "@shopify/cli-theme",
+      "@shopify/cli-app"
     ],
     "topicSeparator": " ",
     "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
+      "theme": {
+        "description": "Commands for creating, building, and publishing themes"
+      },
+      "app": {
+        "description": "Commands for creating, building, and publishing app"
       }
     }
   }
