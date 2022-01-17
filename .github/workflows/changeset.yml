@@ -1,0 +1,29 @@
+name: changeset
+
+on:
+  pull_request: {}
+
+concurrency:
+  group: changeset-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Changeset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: latest
+      - name: Set Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: '16'
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn install
+      - name: Build
+        run: yarn changeset status --since=main

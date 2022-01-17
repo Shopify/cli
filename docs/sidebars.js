@@ -11,6 +11,7 @@ module.exports = {
     'architecture',
     'principles',
     'testing-strategy',
+    'release',
     // {
     //   type: 'category',
     //   label: 'Navigation',
