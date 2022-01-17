@@ -27,6 +27,7 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
     "build:watch": "tsc -b --watch",
+    "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
     "test": "jest",

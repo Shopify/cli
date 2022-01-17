@@ -6,8 +6,7 @@ dependencies:
     - yarn install
 
 deploy:
-  pre:
-    - yarn run build
   override:
     - yarn run changeset publish
+  post:
     - yarn run upload-sourcemaps
