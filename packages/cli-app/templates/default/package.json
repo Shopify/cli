@@ -1,0 +1,15 @@
+{
+  "name": "NAME",
+  "private": true,
+  "scripts": {
+    "build": "shopify build",
+    "connect": "shopify build",
+    "dev": "shopify dev",
+    "lint": "shopify lint",
+    "test": "shopify test"
+  },
+  "dependencies": {
+    "@shopify/cli": "0.4.0"
+  },
+  "devDependencies": {}
+}

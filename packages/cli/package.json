@@ -11,7 +11,7 @@
   "license": "MIT",
   "types": "dist/index.d.ts",
   "bin": {
-    "shopify": "./bin/run"
+    "shopify": "./bin/shopify-run"
   },
   "files": [
     "/bin",

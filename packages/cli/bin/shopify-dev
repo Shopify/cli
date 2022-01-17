@@ -14,4 +14,4 @@ require('ts-node').register({project})
 oclif.settings.debug = true;
 
 // Start the CLI
-oclif.run().then(oclif.flush).catch(oclif.Errors.handle(error))
+oclif.run().then(oclif.flush).catch(oclif.Errors.handle)
