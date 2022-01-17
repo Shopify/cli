@@ -10,3 +10,4 @@ deploy:
     - yarn run build
   override:
     - yarn run lerna publish from-package --yes
+    - yarn run upload-sourcemaps

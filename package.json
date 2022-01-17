@@ -4,6 +4,7 @@
     "build": "lerna run build",
     "release": "lerna version --conventional-commits",
     "prerelease": "bin/prerelease.mjs",
+    "upload-sourcemaps": "bin/upload-sourcemaps.mjs",
     "features": "cucumber-js -p default"
   },
   "devDependencies": {
