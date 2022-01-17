@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-app",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "Utilities for loading, building, and publishing apps.",
   "keywords": [
@@ -36,8 +36,8 @@
   "dependencies": {
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@shopify/cli-core": "^0.2.0",
-    "@shopify/cli-support": "^0.2.0"
+    "@shopify/cli-core": "^0.3.0",
+    "@shopify/cli-support": "^0.3.0"
   },
   "engine-strict": true,
   "engines": {
