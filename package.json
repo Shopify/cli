@@ -1,8 +1,6 @@
 {
   "private": true,
   "scripts": {
-    "build": "lerna run build",
-    "release": "lerna version --conventional-commits",
     "prerelease": "bin/prerelease.mjs",
     "upload-sourcemaps": "bin/upload-sourcemaps.mjs",
     "features": "cucumber-js -p default"
@@ -30,7 +28,6 @@
     "eslint-plugin-unicorn": "^40.0.0",
     "fast-glob": "^3.2.10",
     "jest": "^27.0.6",
-    "lerna": "^4.0.0",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
     "prettier": "^2.5.1",
@@ -80,5 +77,8 @@
       ]
     }
   },
-  "prettier": "@shopify/prettier-config"
+  "prettier": "@shopify/prettier-config",
+  "dependencies": {
+    "@changesets/cli": "^2.19.0"
+  }
 }

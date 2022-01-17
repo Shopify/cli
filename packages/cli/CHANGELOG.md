@@ -1,24 +1,14 @@
-# Change Log
+# @shopify/cli
 
-All notable changes to this project will be documented in this file.
-See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+## 0.2.0
+### Minor Changes
 
-## [0.1.3](https://github.com/Shopify/shopify-cli-next/compare/@shopify/cli@0.1.2...@shopify/cli@0.1.3) (2022-01-14)
+- Move from Lerna to changeset
 
-**Note:** Version bump only for package @shopify/cli
+### Patch Changes
 
-
-
-
-
-## [0.1.2](https://github.com/Shopify/shopify-cli-next/compare/@shopify/cli@0.1.1...@shopify/cli@0.1.2) (2022-01-14)
-
-**Note:** Version bump only for package @shopify/cli
-
-
-
-
-
-## 0.1.1 (2022-01-14)
-
-**Note:** Version bump only for package @shopify/cli
+- Updated dependencies
+  - @shopify/cli-app@0.2.0
+  - @shopify/cli-core@0.2.0
+  - @shopify/cli-support@0.2.0
+  - @shopify/cli-theme@0.2.0

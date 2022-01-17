@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@1.6.3/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "linked": [
+    [
+      "@shopify/cli",
+      "@shopify/cli-app",
+      "@shopify/cli-core",
+      "@shopify/cli-support",
+      "@shopify/cli-theme",
+      "@shopify/create-app"
+    ]
+  ],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

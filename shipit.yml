@@ -9,5 +9,5 @@ deploy:
   pre:
     - yarn run build
   override:
-    - yarn run lerna publish from-package --yes
+    - yarn run changeset publish
     - yarn run upload-sourcemaps
