@@ -30,7 +30,7 @@
     "lint:fix": "prettier src/** && eslint src/** --fix",
     "test": "jest",
     "test:watch": "jest --watch",
-    "tsc": "tsc -b --noEmit"
+    "tsc": "tsc -b --incremental"
   },
   "eslintConfig": {
     "extends": [
