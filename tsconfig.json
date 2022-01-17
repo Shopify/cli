@@ -1,11 +1,11 @@
 {
   "extends": "./configurations/tsconfig.json",
   "references": [
-    {"path": "./packages/cli"},
     {"path": "./packages/create-app"},
-    {"path": "./packages/app"},
-    {"path": "./packages/theme"},
-    {"path": "./packages/core"},
-    {"path": "./packages/support"}
+    {"path": "./packages/cli"},
+    {"path": "./packages/cli-app"},
+    {"path": "./packages/cli-theme"},
+    {"path": "./packages/cli-core"},
+    {"path": "./packages/cli-support"}
   ]
 }

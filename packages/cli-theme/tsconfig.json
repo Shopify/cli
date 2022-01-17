@@ -2,7 +2,7 @@
   "extends": "../../configurations/tsconfig.json",
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist", "**/*.test.ts"],
-  "references": [{"path": "../support"}, {"path": "../core"}],
+  "references": [{"path": "../cli-support"}, {"path": "../cli-core"}],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
