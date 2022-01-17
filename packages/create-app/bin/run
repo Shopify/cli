@@ -5,5 +5,14 @@ if (!process.argv.includes("init")) {
 }
 
 const oclif = require('@oclif/core')
+const Bugsnag = require('@bugsnag/js')
 
-oclif.run().then(require('@oclif/core/flush')).catch(require('@oclif/core/handle'))
+// Set up error tracking
+Bugsnag.start({apiKey: "9e1e6889176fd0c795d5c659225e0fae", logger: null})
+
+// Start the CLI
+oclif.run().then(require('@oclif/core/flush')).catch((error) => {
+  return new Promise((resolve, reject) => {
+    Bugsnag.notify(error, null, resolve);
+  }).then(oclif.Errors.handle(error));
+})

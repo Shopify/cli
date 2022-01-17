@@ -12,7 +12,7 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
     "declaration": true,
-    "sourceMap": true,
+    "inlineSourceMap": true,
     "composite": true
   },
   "exclude": ["**/dist/**"]
