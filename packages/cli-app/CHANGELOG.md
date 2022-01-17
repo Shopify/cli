@@ -1,5 +1,11 @@
 # @shopify/cli-app
 
+## 0.5.0
+
+### Minor Changes
+
+- Fix the executable and add a templates folder
+
 ## 0.3.0
 
 ### Minor Changes

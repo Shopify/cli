@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -42,7 +42,7 @@
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@shopify/cli-app": "^0.3.0",
+    "@shopify/cli-app": "^0.5.0",
     "@shopify/cli-core": "^0.3.0",
     "@shopify/cli-support": "^0.3.0",
     "@shopify/cli-theme": "^0.3.0"
