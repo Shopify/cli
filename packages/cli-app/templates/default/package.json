@@ -9,7 +9,7 @@
     "test": "shopify test"
   },
   "dependencies": {
-    "@shopify/cli": "0.4.0"
+    "@shopify/cli": "0.5.0"
   },
   "devDependencies": {}
 }
