@@ -6,6 +6,7 @@ module.exports = {
   resetMocks: true,
   extensionsToTreatAsEsm: ['.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
+  testRegex: ['(\\.|/).+\\.test\\.[jt]sx?$'],
   globals: {
     'ts-jest': {
       useESM: true,
