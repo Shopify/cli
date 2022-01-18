@@ -7,12 +7,9 @@
     "**"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --emitDeclarationOnly && esbuild src/index.ts --bundle --outfile=dist/index.js --external:react --minify --format=cjs",
     "clean": "git clean --exclude node_modules -xdf ./",
     "test": "jest"
-  },
-  "dependencies": {
-    "@shopify/react-i18n": "^6.1.0"
   },
   "peerDependencies": {
     "react": "16.14.0"
