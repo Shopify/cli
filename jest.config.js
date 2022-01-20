@@ -14,6 +14,7 @@ module.exports = {
     },
   },
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^(\\.{1,2}/.*)\\.ts$': '$1',
   },
+  moduleDirectories: ['.', 'src'],
 };

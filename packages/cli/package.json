@@ -59,7 +59,6 @@
   ],
   "otheme": {
     "bin": "shopify",
-    "helpClass": "./src/help",
     "plugins": [
       "@oclif/plugin-help",
       "@shopify/theme",
