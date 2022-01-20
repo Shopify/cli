@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -42,15 +42,15 @@
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@shopify/cli-app": "^0.5.0",
-    "@shopify/cli-core": "^0.3.0",
-    "@shopify/cli-support": "^0.3.0",
-    "@shopify/cli-theme": "^0.3.0"
+    "@shopify/cli-app": "0.5.0",
+    "@shopify/cli-configs": "0.6.0",
+    "@shopify/cli-core": "0.3.0",
+    "@shopify/cli-theme": "0.3.0"
   },
   "devDependencies": {},
   "engine-strict": true,
   "engines": {
-    "node": "^12 || ^14 || ^16"
+    "node": ">=12.0.0"
   },
   "os": [
     "darwin",
@@ -59,6 +59,7 @@
   ],
   "oclif": {
     "bin": "shopify",
+    "helpClass": "./src/help",
     "plugins": [
       "@oclif/plugin-help",
       "@shopify/cli-theme",

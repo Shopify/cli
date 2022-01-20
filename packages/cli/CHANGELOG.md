@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @shopify/cli-configs@0.6.0
+
 ## 0.5.0
 
 ### Patch Changes

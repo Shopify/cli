@@ -34,14 +34,13 @@
     ]
   },
   "dependencies": {
-    "@shopify/cli-core": "^0.3.0",
-    "@shopify/cli-support": "^0.3.0",
+    "@shopify/cli-core": "0.3.0",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5"
   },
   "engine-strict": true,
   "engines": {
-    "node": "^12 || ^14 || ^16"
+    "node": ">=12.0.0"
   },
   "os": [
     "darwin",

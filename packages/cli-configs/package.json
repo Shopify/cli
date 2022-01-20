@@ -1,8 +1,8 @@
 {
-  "name": "@shopify/cli-support",
-  "version": "0.3.0",
+  "name": "@shopify/cli-configs",
+  "version": "0.6.0",
   "private": false,
-  "description": "A set of Shopify-agnostic utilities",
+  "description": "Base configuration files to configure the tools the CLI depends on (e.g. ESLint, Babel)",
   "keywords": [
     "shopify",
     "shopify-cli",
@@ -33,16 +33,14 @@
       "../../package.json"
     ]
   },
+  "dependencies": {},
   "engine-strict": true,
   "engines": {
-    "node": "^12 || ^14 || ^16"
+    "node": ">=12.0.0"
   },
   "os": [
     "darwin",
     "linux",
     "win32"
-  ],
-  "dependencies": {
-    "pathe": "^0.2.0"
-  }
+  ]
 }

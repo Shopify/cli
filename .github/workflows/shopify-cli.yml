@@ -19,12 +19,12 @@ jobs:
         node: ['12', '14', '16']
         package:
           [
-            'cli-support',
             'cli',
             'cli-core',
             'create-app',
             'cli-app',
             'cli-theme',
+            'cli-configs',
           ]
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
@@ -47,12 +47,12 @@ jobs:
         node: ['12', '14', '16']
         package:
           [
-            'cli-support',
             'cli',
             'cli-core',
             'create-app',
             'cli-app',
             'cli-theme',
+            'cli-configs',
           ]
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
@@ -92,12 +92,12 @@ jobs:
       matrix:
         package:
           [
-            'cli-support',
             'cli',
             'cli-core',
             'create-app',
             'cli-app',
             'cli-theme',
+            'cli-configs',
           ]
     steps:
       - uses: actions/checkout@v1
@@ -118,12 +118,12 @@ jobs:
       matrix:
         package:
           [
-            'cli-support',
             'cli',
             'cli-core',
             'create-app',
             'cli-app',
             'cli-theme',
+            'cli-configs',
           ]
     steps:
       - uses: actions/checkout@v1

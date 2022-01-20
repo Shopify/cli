@@ -7,7 +7,6 @@
       "@shopify/cli",
       "@shopify/cli-app",
       "@shopify/cli-core",
-      "@shopify/cli-support",
       "@shopify/cli-theme",
       "@shopify/create-app"
     ]
