@@ -11,6 +11,7 @@ module.exports = {
     'architecture',
     'principles',
     'testing-strategy',
+    'error-handling',
     'release',
     {
       type: 'category',
