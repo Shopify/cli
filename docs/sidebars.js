@@ -12,13 +12,12 @@ module.exports = {
     'principles',
     'testing-strategy',
     'release',
-    // {
-    //   type: 'category',
-    //   label: 'Navigation',
-    //   collapsible: true,
-    //   collapsed: true,
-    //   // Add these as an array
-    //   items: ['nav/nav', 'nav/text'],
-    // },
+    {
+      type: 'category',
+      label: 'Decision record',
+      collapsible: true,
+      collapsed: true,
+      items: ['decision-record/2022-01-20-oclif'],
+    },
   ],
 };
