@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
-  "version": "0.1.0-alpha.8",
+  "version": "0.1.0-alpha.9",
   "main": "index.js",
   "module": "index.mjs",
   "types": "index.d.ts",
