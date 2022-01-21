@@ -1,10 +1,3 @@
-import {
-  adminApiEnvironment,
-  partnersApiEnvironment,
-  storefrontRendererApiEnvironment,
-} from 'environment';
-import {AbortError, BugError} from 'errors';
-
 /**
  * Enum for the differnet APIs the CLI can interact with.
  * @readonly
