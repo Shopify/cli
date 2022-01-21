@@ -1,12 +1,25 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
   "version": "0.1.0-alpha.8",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "module": "index.mjs",
+  "types": "index.d.ts",
   "files": [
     "**"
   ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "require": "./index.js",
+      "import": "./index.mjs",
+      "types": "./index.d.ts"
+    },
+    "./testing": {
+      "require": "./testing.js",
+      "import": "./testing.mjs",
+      "types": "./testing.d.ts"
+    }
+  },
   "scripts": {
     "build": "yarn build:code && yarn build:types",
     "build:code": "vite build --config vite.config.ts",

@@ -1,3 +1,5 @@
 *.d.ts
 !typings.d.ts
+!index.d.ts
+!testing.d.ts
 dist
