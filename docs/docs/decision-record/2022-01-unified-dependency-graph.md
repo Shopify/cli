@@ -25,7 +25,7 @@ Because there's a **weak contract** between the Shopify CLI, which is globally i
 - Have dependencies been installed?
 - If not, do we install them? Do we tell users to install them?
 
-Moreover, blocks' CLIs don't have tests in place to detect when breaking changes are introduced and therefore we rely on humans detecting that when releasing new versions and reflecting that when following the [semantic versioning](https://semver.org/) scheme.
+Moreover, blocks' CLIs don't have tests in place to detect when breaking changes are introduced, and therefore, we rely on humans detecting them to decide whether the next version should be major or not.
 
 **While the setup gives contributors the flexibility to decouple their release schedule from the CLI's, we do it at the cost of presenting users with a setup that's error prone, and a burden to maintain.**
 
