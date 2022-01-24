@@ -1,5 +1,5 @@
 ---
-title: Typescript re-write
+title: 01.2022 Typescript re-write
 ---
 
 * **When:** January 2021
