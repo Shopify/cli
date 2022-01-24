@@ -50,7 +50,8 @@
     "@shopify/support": "0.5.2"
   },
   "devDependencies": {
-    "@oclif/test": "^2"
+    "@oclif/test": "^2",
+    "plop": "^3.0.5"
   },
   "engine-strict": true,
   "engines": {
