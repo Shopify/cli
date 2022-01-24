@@ -17,7 +17,7 @@ module.exports = {
       label: 'Decision record',
       collapsible: true,
       collapsed: true,
-      items: ['decision-record/2022-01-20-oclif'],
+      items: ['decision-record/2022-01-20-typescript-rewrite'],
     },
   ],
 };
