@@ -1,0 +1,26 @@
+{
+  "name": "{{app_name}}",
+  "version": "0.0.0",
+  "description": "{{description}}",
+  "main": "home/index.js",
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "build:watch": "tsc -b --watch",
+    "lint": "prettier -c src/** && eslint src/**",
+    "lint:fix": "prettier src/** && eslint src/** --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "tsc": "tsc -b --incremental"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+      "plugin:@shopify/cli"
+    ]
+  },
+  "dependencies": {
+    "@shopify/cli": "^{{cli_version}}"
+  },
+  "devDependencies": {},
+  "author": "{{author}}"
+}
