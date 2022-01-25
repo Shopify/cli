@@ -1,11 +1,15 @@
 package build
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"sync"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"gopkg.in/yaml.v3"
 )
 
 func Build(extension core.Extension, report ResultHandler) {
@@ -15,6 +19,9 @@ func Build(extension core.Extension, report ResultHandler) {
 		return
 	}
 
+	if err := configureScript(script, extension); err != nil {
+		report(Result{false, err.Error(), extension})
+	}
 	ensureBuildDirectoryExists(extension)
 
 	output, err := script.CombinedOutput()
@@ -41,6 +48,9 @@ func Watch(extension core.Extension, report ResultHandler) {
 	stdout, _ := script.StdoutPipe()
 	stderr, _ := script.StderrPipe()
 
+	if err := configureScript(script, extension); err != nil {
+		report(Result{false, err.Error(), extension})
+	}
 	ensureBuildDirectoryExists(extension)
 
 	script.Start()
@@ -76,6 +86,15 @@ func ensureBuildDirectoryExists(ext core.Extension) {
 	if _, err := os.Stat(ext.BuildDir()); errors.Is(err, os.ErrNotExist) {
 		os.MkdirAll(ext.BuildDir(), rwxr_xr_x)
 	}
+}
+
+func configureScript(script *exec.Cmd, extension core.Extension) error {
+	data, err := yaml.Marshal(extension)
+	if err != nil {
+		return fmt.Errorf("unable to serialize extension configuration information: %w", err)
+	}
+	script.Stdin = bytes.NewReader(data)
+	return nil
 }
 
 const rwxr_xr_x = 0755
