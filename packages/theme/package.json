@@ -34,9 +34,16 @@
     ]
   },
   "dependencies": {
-    "@shopify/core": "0.3.0",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5"
+  },
+  "peerDependencies": {
+    "@shopify/core": "0.3.0",
+    "@shopify/support": "0.3.0"
+  },
+  "devDependencies": {
+    "@shopify/core": "0.3.0",
+    "@shopify/support": "0.3.0"
   },
   "engine-strict": true,
   "engines": {

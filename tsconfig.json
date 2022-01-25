@@ -5,6 +5,7 @@
     {"path": "./packages/cli"},
     {"path": "./packages/app"},
     {"path": "./packages/theme"},
-    {"path": "./packages/core"}
+    {"path": "./packages/core"},
+    {"path": "./packages/support"}
   ]
 }

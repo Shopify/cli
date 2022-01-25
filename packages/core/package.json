@@ -34,6 +34,12 @@
     ]
   },
   "dependencies": {},
+  "devDependencies": {
+    "@shopify/support": "0.3.0"
+  },
+  "peerDependencies": {
+    "@shopify/support": "0.3.0"
+  },
   "engine-strict": true,
   "engines": {
     "node": ">=12.0.0"

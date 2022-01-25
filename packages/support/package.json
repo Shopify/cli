@@ -1,8 +1,8 @@
 {
-  "name": "@shopify/app",
-  "version": "0.5.0",
+  "name": "@shopify/support",
+  "version": "0.3.0",
   "private": false,
-  "description": "Utilities for loading, building, and publishing apps.",
+  "description": "A set of Shopify-agnostic utilities and extensions for the CLI.",
   "keywords": [
     "shopify",
     "shopify-cli",
@@ -11,7 +11,6 @@
   "license": "MIT",
   "types": "dist/index.d.ts",
   "files": [
-    "/templates",
     "/dist",
     "/npm-shrinkwrap.json"
   ],
@@ -34,18 +33,7 @@
       "../../package.json"
     ]
   },
-  "dependencies": {
-    "@oclif/core": "^1",
-    "@oclif/plugin-help": "^5"
-  },
-  "peerDependencies": {
-    "@shopify/core": "0.3.0",
-    "@shopify/support": "0.3.0"
-  },
-  "devDependencies": {
-    "@shopify/core": "0.3.0",
-    "@shopify/support": "0.3.0"
-  },
+  "dependencies": {},
   "engine-strict": true,
   "engines": {
     "node": ">=12.0.0"
@@ -54,11 +42,5 @@
     "darwin",
     "linux",
     "win32"
-  ],
-  "oclif": {
-    "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help"
-    ]
-  }
+  ]
 }
