@@ -3,9 +3,10 @@ import path from 'path';
 import {defineConfig} from 'vite';
 import reactRefresh from '@vitejs/plugin-react-refresh';
 
+import {createEntryFiles} from './scripts/createEntryFiles';
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [reactRefresh()],
   build: {
     outDir: './dist',
     lib: {
@@ -34,4 +35,14 @@ export default defineConfig({
       },
     },
   },
+
+  plugins: [
+    reactRefresh(),
+    createEntryFiles({
+      files: {
+        index: './dist/index',
+        testing: './dist/testing/index',
+      },
+    }),
+  ],
 });
