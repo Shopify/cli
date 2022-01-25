@@ -84,6 +84,8 @@
   },
   "prettier": "@shopify/prettier-config",
   "dependencies": {
-    "@changesets/cli": "^2.19.0"
+    "@changesets/cli": "^2.19.0",
+    "@types/shelljs": "^0.8.11",
+    "shelljs": "^0.8.5"
   }
 }

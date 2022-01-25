@@ -4,8 +4,8 @@ const featureToRun = process.env.FEATURE;
 const common = [
   '--require-module ts-node/register',
   '--require features/world/**/*.ts',
-  '--require features/step-definitions/**/*.ts',
-  '--require features/shared/**/*.ts',
+  '--require features/steps/**/*.ts',
+  '--require features/lib/**/*.ts',
   '--format-options \'{"colorsEnabled": true}\'',
   '--format progress',
   '--format node_modules/cucumber-pretty',
