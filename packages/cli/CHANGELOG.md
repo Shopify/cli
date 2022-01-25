@@ -5,14 +5,14 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @shopify/cli-configs@0.6.0
+  - @shopify/configs@0.6.0
 
 ## 0.5.0
 
 ### Patch Changes
 
 - Updated dependencies
-  - @shopify/cli-app@0.5.0
+  - @shopify/@0.5.0
 
 ## 0.4.0
 
@@ -29,9 +29,9 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @shopify/cli-theme@0.3.0
-  - @shopify/cli-app@0.3.0
-  - @shopify/cli-core@0.3.0
+  - @shopify/theme@0.3.0
+  - @shopify/@0.3.0
+  - @shopify/core@0.3.0
   - @shopify/cli-support@0.3.0
 
 ## 0.2.0
@@ -43,7 +43,7 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @shopify/cli-app@0.2.0
-  - @shopify/cli-core@0.2.0
+  - @shopify/@0.2.0
+  - @shopify/core@0.2.0
   - @shopify/cli-support@0.2.0
-  - @shopify/cli-theme@0.2.0
+  - @shopify/theme@0.2.0

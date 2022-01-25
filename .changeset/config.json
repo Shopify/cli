@@ -5,9 +5,9 @@
   "linked": [
     [
       "@shopify/cli",
-      "@shopify/cli-app",
-      "@shopify/cli-core",
-      "@shopify/cli-theme",
+      "@shopify/app",
+      "@shopify/core",
+      "@shopify/theme",
       "@shopify/create-app"
     ]
   ],

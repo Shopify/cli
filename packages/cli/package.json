@@ -42,10 +42,9 @@
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@shopify/cli-app": "0.5.0",
-    "@shopify/cli-configs": "0.6.0",
-    "@shopify/cli-core": "0.3.0",
-    "@shopify/cli-theme": "0.3.0"
+    "@shopify/app": "0.5.0",
+    "@shopify/core": "0.3.0",
+    "@shopify/theme": "0.3.0"
   },
   "devDependencies": {},
   "engine-strict": true,
@@ -57,13 +56,13 @@
     "linux",
     "win32"
   ],
-  "oclif": {
+  "otheme": {
     "bin": "shopify",
     "helpClass": "./src/help",
     "plugins": [
       "@oclif/plugin-help",
-      "@shopify/cli-theme",
-      "@shopify/cli-app"
+      "@shopify/theme",
+      "@shopify/app"
     ],
     "topicSeparator": " ",
     "topics": {
