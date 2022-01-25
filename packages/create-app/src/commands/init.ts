@@ -1,8 +1,8 @@
 import Listr from 'listr';
 import {Command} from '@oclif/core';
-import path from "node:path";
-import minimist from "minimist";
-import {Plop, run} from "plop";
+import {path} from '@shopify/support';
+import minimist from 'minimist';
+import {Plop, run} from 'plop';
 const args = process.argv.slice(2);
 const argv = minimist(args);
 
@@ -40,19 +40,26 @@ export default class Init extends Command {
     const plopWorkflow = [
       {
         title: 'Creating from Basic App Template',
-        task: () => Plop.launch({
-          cwd: process.cwd(),
-          configPath: path.join(__dirname, '../../templates/app-plopfile.js'),
-          require: argv.require,
-          completion: argv.completion
-        }, env => {
-          const options = {
-            ...env,
-            dest: process.cwd()
-          }
-          return run(options, undefined, true)
-        })
-      }
+        task: () =>
+          Plop.launch(
+            {
+              cwd: process.cwd(),
+              configPath: path.join(
+                __dirname,
+                '../../templates/app-plopfile.js',
+              ),
+              require: argv.require,
+              completion: argv.completion,
+            },
+            (env) => {
+              const options = {
+                ...env,
+                dest: process.cwd(),
+              };
+              return run(options, undefined, true);
+            },
+          ),
+      },
     ];
 
     const tasks = new Listr(plopWorkflow);
