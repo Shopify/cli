@@ -19,7 +19,7 @@
     ]
   },
   "dependencies": {
-    "@shopify/cli": "^{{cli_version}}"
+    "@shopify/cli": "{{shopify_cli_version}}"
   },
   "devDependencies": {},
   "author": "{{author}}"

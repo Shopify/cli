@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@oclif/test": "^2",
-    "plop": "^3.0.5"
+    "plop": "^2.7.6"
   },
   "engine-strict": true,
   "engines": {

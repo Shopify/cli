@@ -1,7 +1,14 @@
-export default function (plop) {
+const path = require('path');
+
+module.exports = function (plop) {
   plop.setGenerator('app', {
     description: 'Shopify app',
     prompts: [
+      {
+        type: 'input',
+        name: 'silent',
+        message: 'swallows init from argv'
+      },
       {
         type: 'input',
         name: 'app_name',
@@ -16,20 +23,17 @@ export default function (plop) {
         type: 'input',
         name: 'author',
         message: 'Who is the app author?'
-      },
+      }
     ],
     actions: [
       {
         type: 'addMany',
-        base: __dirname,
-        destination: process.cwd(),
-        templateFiles: './**/*'
-      },
-      {
-        type: 'modify',
-        path: 'package.json',
-        pattern: /{{SHOPIFY_CLI_VERSION}}/,
-        template: process.env.npm_package_version
+        base: path.join(__dirname, 'app'),
+        destination: path.join(process.cwd(), '{{dashCase app_name}}'),
+        templateFiles: path.join(__dirname, 'app/(**/*|*)'),
+        data: {
+          shopify_cli_version: "^0.0.0"
+        }
       }
     ]
   });
