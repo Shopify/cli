@@ -39,6 +39,10 @@ and think about the message you'd expect.
 Also think about what steps you'd expect the CLI to tell you to try to fix or workaround the issue.
 Then craft the error, and make sure we have [tests](/testing-strategy) in place to ensure there are no future regressions in that scenario.
 
+:::tip Showing stacktraces
+If users want to opt into seeing the stacktraces, they can call the CLI with the environment variable `SHOPIFY_CONFIG=1`.
+:::
+
 ### Don't catch `AbortError` and `BugError` errors
 
 Those errors are designed to bubble up and reach the CLI's root where the error handler will output them to the user following a conventional formatting and report them to the error tracking platform.

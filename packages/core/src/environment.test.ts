@@ -9,9 +9,9 @@ import {
 import {Environment} from './network/service';
 
 describe('isDebug', () => {
-  it('returns true when SHOPIFY_CLI_CONFIG is debug', () => {
+  it('returns true when SHOPIFY_CONFIG is debug', () => {
     // Given
-    const env = {SHOPIFY_CLI_CONFIG: 'debug'};
+    const env = {SHOPIFY_CONFIG: 'debug'};
 
     // When
     const got = isDebug(env);
@@ -22,7 +22,7 @@ describe('isDebug', () => {
 });
 
 describe('isRelease', () => {
-  it("returns true when SHOPIFY_CLI_CONFIG isn't defined", () => {
+  it("returns true when SHOPIFY_CONFIG isn't defined", () => {
     // Given
     const env = {};
 
@@ -37,7 +37,7 @@ describe('isRelease', () => {
 describe('partnersApiEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_PARTNERS_API_ENV: 'local'};
+    const env = {SHOPIFY_PARTNERS_API_ENV: 'local'};
 
     // When
     const got = partnersApiEnvironment(env);
@@ -48,7 +48,7 @@ describe('partnersApiEnvironment', () => {
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_PARTNERS_API_ENV: 'spin'};
+    const env = {SHOPIFY_PARTNERS_API_ENV: 'spin'};
 
     // When
     const got = partnersApiEnvironment(env);
@@ -59,7 +59,7 @@ describe('partnersApiEnvironment', () => {
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_PARTNERS_API_ENV: 'production'};
+    const env = {SHOPIFY_PARTNERS_API_ENV: 'production'};
 
     // When
     const got = partnersApiEnvironment(env);
@@ -83,7 +83,7 @@ describe('partnersApiEnvironment', () => {
 describe('adminApiEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_ADMIN_API_ENV: 'local'};
+    const env = {SHOPIFY_ADMIN_API_ENV: 'local'};
 
     // When
     const got = adminApiEnvironment(env);
@@ -94,7 +94,7 @@ describe('adminApiEnvironment', () => {
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_ADMIN_API_ENV: 'spin'};
+    const env = {SHOPIFY_ADMIN_API_ENV: 'spin'};
 
     // When
     const got = adminApiEnvironment(env);
@@ -105,7 +105,7 @@ describe('adminApiEnvironment', () => {
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_ADMIN_API_ENV: 'production'};
+    const env = {SHOPIFY_ADMIN_API_ENV: 'production'};
 
     // When
     const got = adminApiEnvironment(env);
@@ -129,7 +129,7 @@ describe('adminApiEnvironment', () => {
 describe('storefrontRendererApiEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_STOREFRONT_RENDERER_API_ENV: 'local'};
+    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'local'};
 
     // When
     const got = storefrontRendererApiEnvironment(env);
@@ -140,7 +140,7 @@ describe('storefrontRendererApiEnvironment', () => {
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_STOREFRONT_RENDERER_API_ENV: 'spin'};
+    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'spin'};
 
     // When
     const got = storefrontRendererApiEnvironment(env);
@@ -151,7 +151,7 @@ describe('storefrontRendererApiEnvironment', () => {
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_STOREFRONT_RENDERER_API_ENV: 'production'};
+    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'production'};
 
     // When
     const got = storefrontRendererApiEnvironment(env);
@@ -175,7 +175,7 @@ describe('storefrontRendererApiEnvironment', () => {
 describe('identityEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_IDENTITY_ENV: 'local'};
+    const env = {SHOPIFY_IDENTITY_ENV: 'local'};
 
     // When
     const got = identityEnvironment(env);
@@ -186,7 +186,7 @@ describe('identityEnvironment', () => {
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_IDENTITY_ENV: 'spin'};
+    const env = {SHOPIFY_IDENTITY_ENV: 'spin'};
 
     // When
     const got = identityEnvironment(env);
@@ -197,7 +197,7 @@ describe('identityEnvironment', () => {
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_CLI_IDENTITY_ENV: 'production'};
+    const env = {SHOPIFY_IDENTITY_ENV: 'production'};
 
     // When
     const got = identityEnvironment(env);

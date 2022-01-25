@@ -20,7 +20,7 @@ function serviceEnvironment(value: undefined | string): Environment {
 /**
  * Returns true if the CLI is running in debug mode.
  * @param env The environment variables from the environment of the current process.
- * @returns true if SHOPIFY_CLI_CONFIG is debug
+ * @returns true if SHOPIFY_CONFIG is debug
  */
 export function isDebug(env = process.env): boolean {
   return env[constants.environmentVariables.config] === 'debug';
@@ -29,7 +29,7 @@ export function isDebug(env = process.env): boolean {
 /**
  * Returns true if the CLI is running in release mode.
  * @param env The environment variables from the environment of the current process.
- * @returns true if SHOPIFY_CLI_CONFIG isn't debug
+ * @returns true if SHOPIFY_CONFIG isn't debug
  */
 export function isRelease(env = process.env): boolean {
   return env[constants.environmentVariables.config] !== 'debug';

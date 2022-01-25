@@ -1,6 +1,6 @@
 const constants = {
   environmentVariables: {
-    debug: 'SHOPIFY_CLI_DEBUG',
+    debug: 'SHOPIFY_DEBUG',
   },
 };
 export default constants;
