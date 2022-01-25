@@ -1,6 +1,6 @@
 {
   "name": "@shopify/core",
-  "version": "0.3.0",
+  "version": "0.5.2",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -35,10 +35,10 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@shopify/support": "0.3.0"
+    "@shopify/support": "0.5.2"
   },
   "peerDependencies": {
-    "@shopify/support": "0.3.0"
+    "@shopify/support": "0.5.2"
   },
   "engine-strict": true,
   "engines": {

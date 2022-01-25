@@ -6,8 +6,9 @@
     [
       "@shopify/cli",
       "@shopify/app",
-      "@shopify/core",
       "@shopify/theme",
+      "@shopify/core",
+      "@shopify/support",
       "@shopify/create-app"
     ]
   ],

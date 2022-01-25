@@ -1,5 +1,13 @@
 # @shopify/core
 
+## 0.5.2
+
+### Patch Changes
+
+- Add @shopify/support and fix dependencies' setup
+- Updated dependencies
+  - @shopify/support@0.5.2
+
 ## 0.3.0
 
 ### Minor Changes

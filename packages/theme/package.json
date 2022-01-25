@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "0.3.0",
+  "version": "0.5.2",
   "private": false,
   "description": "Utilities building and publishing themes",
   "keywords": [
@@ -38,12 +38,12 @@
     "@oclif/plugin-help": "^5"
   },
   "peerDependencies": {
-    "@shopify/core": "0.3.0",
-    "@shopify/support": "0.3.0"
+    "@shopify/core": "0.5.2",
+    "@shopify/support": "0.5.2"
   },
   "devDependencies": {
-    "@shopify/core": "0.3.0",
-    "@shopify/support": "0.3.0"
+    "@shopify/core": "0.5.2",
+    "@shopify/support": "0.5.2"
   },
   "engine-strict": true,
   "engines": {

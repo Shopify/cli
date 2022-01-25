@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 0.5.2
+
+### Patch Changes
+
+- Add @shopify/support and fix dependencies' setup
+- Updated dependencies
+  - @shopify/app@0.5.2
+  - @shopify/core@0.5.2
+  - @shopify/support@0.5.2
+  - @shopify/theme@0.5.2
+
 ## 0.5.1
 
 ### Patch Changes
