@@ -34,6 +34,7 @@
     ]
   },
   "dependencies": {
+    "find-up": "^5.0.0",
     "pathe": "^0.2.0"
   },
   "engine-strict": true,

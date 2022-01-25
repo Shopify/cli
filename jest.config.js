@@ -15,6 +15,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.ts$': '$1',
+    '@shopify/support': '<rootDir>/../support/src/index.ts',
   },
-  moduleDirectories: ['.', 'src'],
+  moduleDirectories: ['node_modules', '<rootDir>'],
 };

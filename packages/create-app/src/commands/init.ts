@@ -1,42 +1,25 @@
 import Listr from 'listr';
-import {Command} from '@oclif/core';
+import {Command, Flags} from '@oclif/core';
 import {path} from '@shopify/support';
 import minimist from 'minimist';
 import {Plop, run} from 'plop';
+import {template as templatePath} from 'utils/paths';
+
 const args = process.argv.slice(2);
 const argv = minimist(args);
 
 export default class Init extends Command {
   static description = 'Create a new Shopify app';
-  static flags = {};
+  static flags = {
+    name: Flags.string({
+      char: 'n',
+      description: 'The name of the app to be initialized',
+      hidden: false,
+    }),
+  };
 
   async run(): Promise<void> {
-    const gitWorkflow = [
-      {
-        title: 'Git',
-        task: () => {
-          return new Listr(
-            [
-              {
-                title: 'Cloning the template',
-                task: () => new Promise((resolve) => setTimeout(resolve, 3000)),
-              },
-            ],
-            {concurrent: true},
-          );
-        },
-      },
-      {
-        title: 'Initializing the content',
-        task: () => new Promise((resolve) => setTimeout(resolve, 3000)),
-      },
-      {
-        title: 'Installing dependencies',
-        task: () => new Promise((resolve) => setTimeout(resolve, 3000)),
-      },
-    ];
-    gitWorkflow; // TypeScript linting error without this
-
+    const _templatePath = await templatePath('app');
     const plopWorkflow = [
       {
         title: 'Creating from Basic App Template',

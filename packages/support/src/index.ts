@@ -1,4 +1,3 @@
 // Path
 export * as path from 'pathe';
-
-export {};
+export {findPathUp} from "./path";
