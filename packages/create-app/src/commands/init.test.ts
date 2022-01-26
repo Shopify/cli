@@ -12,12 +12,13 @@ describe('Init', function () {
   it('initializes the template using the service', async function () {
     // Given
     const templatePath = '/path/to/template';
+    const appName = 'MyApp';
     templateMock.mockReturnValue(Promise.resolve(templatePath));
 
     // When
-    await Init.run(['--name', 'MyApp']);
+    await Init.run(['--name', appName]);
 
     // Then
-    expect(initMock).toHaveBeenCalledWith('name', templatePath);
+    expect(initMock).toHaveBeenCalledWith(appName, templatePath);
   });
 });

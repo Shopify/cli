@@ -14,7 +14,8 @@ export default class Init extends Command {
 
   async run(): Promise<void> {
     const templatePath = await template('app');
-    const name = 'name';
+    const {flags} = await this.parse(Init);
+    const name = flags.name ?? 'name';
     await init(name, templatePath);
   }
 }
