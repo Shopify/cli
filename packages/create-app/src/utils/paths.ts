@@ -1,5 +1,16 @@
-import {findPathUp} from '@shopify/support';
+import {findPathUp, BugError} from '@shopify/support';
 
-export async function template(name: string): Promise<string | undefined> {
-  return findPathUp(`templates/${name}`, __dirname, 'directory');
+export async function template(name: string): Promise<string> {
+  const templatePath = await findPathUp(
+    `templates/${name}`,
+    __dirname,
+    'directory',
+  );
+  if (templatePath) {
+    return templatePath;
+  } else {
+    throw new BugError(
+      `Couldn't find the template ${name} in @shopify/create-app.`,
+    );
+  }
 }
