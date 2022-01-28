@@ -22,7 +22,16 @@
       "../../package.json"
     ]
   },
-  "dependencies": {},
+  "dependencies": {
+    "@oclif/core": "^1",
+    "@oclif/plugin-help": "^5",
+    "toml": "^3.0.0",
+    "zod": "^3.11.6"
+  },
+  "peerDependencies": {
+    "@shopify/cli-kit": "0.5.2",
+    "@shopify/support": "0.5.2"
+  },
   "devDependencies": {
     "@shopify/cli-kit": "0.12.0",
     "@shopify/cli-testing": "0.1.0"
