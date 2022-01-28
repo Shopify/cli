@@ -1,8 +1,9 @@
 import {Command, Flags} from '@oclif/core';
+import {path} from '@shopify/support';
+
 import {template} from '../utils/paths';
 import initService from '../services/init';
 import initPrompt from '../prompts/init';
-import {path} from '@shopify/support';
 
 export default class Init extends Command {
   static description = 'Create a new Shopify app';

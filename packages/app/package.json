@@ -21,8 +21,8 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
-    "build:watch": "tsc -b --watch",
+    "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
+    "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
