@@ -11,7 +11,7 @@ module.exports = function (plop) {
       },
       {
         type: 'input',
-        name: 'app_name',
+        name: 'name',
         message: 'What is the name of your app?'
       },
       {
@@ -29,7 +29,7 @@ module.exports = function (plop) {
       {
         type: 'addMany',
         base: path.join(__dirname, 'app'),
-        destination: path.join(process.cwd(), '{{dashCase app_name}}'),
+        destination: path.join(process.cwd(), '{{dashCase name}}'),
         templateFiles: path.join(__dirname, 'app/(**/*|*)'),
         data: {
           shopify_cli_version: "^0.0.0"

@@ -2,20 +2,21 @@ import {Plop, run} from 'plop';
 import {path} from '@shopify/support';
 import Listr from 'listr';
 import minimist from 'minimist';
+// import {cliVersion as getCliVersion} from "../utils/versions";
 
 interface InitOptions {
-  name: string;
+  name?: string;
   directory: string;
   templatePath: string;
 }
 
-async function init(options: InitOptions) {
-  console.log(options);
+async function init(_: InitOptions) {
+  // const cliVersion = await getCliVersion();
   const args = process.argv.slice(2);
   const argv = minimist(args);
   const plopWorkflow = [
     {
-      title: 'Creating from Basic App Template',
+      title: 'Creating app',
       task: () =>
         Plop.launch(
           {

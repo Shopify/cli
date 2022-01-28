@@ -3,7 +3,6 @@ import {path} from '@shopify/support';
 
 import {template} from '../utils/paths';
 import initService from '../services/init';
-import initPrompt from '../prompts/init';
 
 export default class Init extends Command {
   static description = 'Create a new Shopify app';
@@ -24,12 +23,8 @@ export default class Init extends Command {
     const templatePath = await template('app');
     const {flags} = await this.parse(Init);
     const directory = flags.path ? path.resolve(flags.path) : process.cwd();
-    const response = await initPrompt({
-      name: flags.name,
-      directory,
-    });
     await initService({
-      name: response.name,
+      name: flags.name,
       templatePath,
       directory,
     });
