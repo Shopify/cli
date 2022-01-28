@@ -60,13 +60,13 @@
     "linux",
     "win32"
   ],
-  "otheme": {
+  "oclif": {
     "bin": "shopify",
     "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-not-found",
       "@shopify/theme",
-      "@shopify/app"
+      "@shopify/app",
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found"
     ],
     "topicSeparator": " ",
     "topics": {
