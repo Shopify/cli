@@ -7,7 +7,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": "./src",
-    "composite": true
-  },
-  "paths": {}
+    "composite": true,
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+  }
 }

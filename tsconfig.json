@@ -7,5 +7,6 @@
     {"path": "./packages/theme"},
     {"path": "./packages/core"},
     {"path": "./packages/support"}
-  ]
+  ],
+  "files": []
 }

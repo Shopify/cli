@@ -18,4 +18,5 @@ module.exports = {
     '@shopify/(.*)': '<rootDir>/../$1/src/index.ts',
   },
   moduleDirectories: ['node_modules', '<rootDir>/src'],
+  testPathIgnorePatterns: ["dist/"]
 };

@@ -9,6 +9,7 @@
     "shopify-partners"
   ],
   "license": "MIT",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "/dist",
@@ -19,8 +20,8 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
-    "build:watch": "tsc -b tsconfig.dist.json --watch",
+    "build": "shx rm -rf dist && tsc -b",
+    "build:watch": "tsc -b --watch",
     "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
@@ -36,7 +37,7 @@
   "dependencies": {
     "find-up": "^5.0.0",
     "inquirer": "^8.2.0",
-    "pathe": "^0.2.0"
+    "pathe": "0.2.0"
   },
   "engine-strict": true,
   "engines": {

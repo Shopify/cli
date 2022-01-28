@@ -3,7 +3,7 @@ import {
   partnersApiEnvironment,
   storefrontRendererApiEnvironment,
 } from 'environment';
-import {AbortError, BugError} from 'errors';
+import {AbortError, BugError} from '@shopify/support';
 import {Environment, Service} from 'network/service';
 
 export function applicationId(service: Service): string {

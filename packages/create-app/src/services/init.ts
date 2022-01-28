@@ -3,10 +3,14 @@ import {path} from '@shopify/support';
 import Listr from 'listr';
 import minimist from 'minimist';
 
-async function init(name: string, templatePath: string) {
-  console.log(name);
-  console.log(templatePath);
+interface InitOptions {
+  name: string;
+  directory: string;
+  templatePath: string;
+}
 
+async function init(options: InitOptions) {
+  console.log(options);
   const args = process.argv.slice(2);
   const argv = minimist(args);
   const plopWorkflow = [

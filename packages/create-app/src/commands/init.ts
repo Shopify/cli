@@ -1,13 +1,20 @@
 import {Command, Flags} from '@oclif/core';
 import {template} from 'utils/paths';
-import init from 'services/init';
+import initService from 'services/init';
+import initPrompt from 'prompts/init';
+import {path} from '@shopify/support';
 
 export default class Init extends Command {
   static description = 'Create a new Shopify app';
   static flags = {
     name: Flags.string({
       char: 'n',
-      description: 'The name of the app to be initialized',
+      description: 'The name of the app to be initialized.',
+      hidden: false,
+    }),
+    path: Flags.string({
+      char: 'p',
+      description: 'The path to the directory where the app will be created.',
       hidden: false,
     }),
   };
@@ -15,7 +22,15 @@ export default class Init extends Command {
   async run(): Promise<void> {
     const templatePath = await template('app');
     const {flags} = await this.parse(Init);
-    const name = flags.name ?? 'name';
-    await init(name, templatePath);
+    const directory = flags.path ? path.resolve(flags.path) : process.cwd();
+    const response = await initPrompt({
+      name: flags.name,
+      directory,
+    });
+    await initService({
+      name: response.name,
+      templatePath,
+      directory,
+    });
   }
 }

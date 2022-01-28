@@ -7,6 +7,6 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": "src",
-    "composite": true
+    "composite": false
   }
 }
