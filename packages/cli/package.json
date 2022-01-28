@@ -24,8 +24,8 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
-    "build:watch": "tsc -b --watch",
+    "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
+    "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
@@ -42,10 +42,13 @@
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
+    "@oclif/plugin-not-found": "^2.2.4",
     "@shopify/app": "0.5.2",
     "@shopify/core": "0.5.2",
+    "@shopify/support": "0.5.2",
     "@shopify/theme": "0.5.2",
-    "@shopify/support": "0.5.2"
+    "add": "^2.0.6",
+    "yarn": "^1.22.17"
   },
   "devDependencies": {},
   "engine-strict": true,
@@ -57,12 +60,13 @@
     "linux",
     "win32"
   ],
-  "otheme": {
+  "oclif": {
     "bin": "shopify",
     "plugins": [
-      "@oclif/plugin-help",
       "@shopify/theme",
-      "@shopify/app"
+      "@shopify/app",
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found"
     ],
     "topicSeparator": " ",
     "topics": {

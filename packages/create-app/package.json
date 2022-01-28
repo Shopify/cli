@@ -12,7 +12,7 @@
   "license": "MIT",
   "types": "dist/index.d.ts",
   "bin": {
-    "create-app": "./bin/run"
+    "create-app": "./bin/create-app-run"
   },
   "files": [
     "/bin",
@@ -25,8 +25,8 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
-    "build:watch": "tsc -b --watch",
+    "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
+    "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
@@ -47,7 +47,8 @@
     "@oclif/plugin-plugins": "^2.0.1",
     "@types/listr": "^0.14.4",
     "listr": "^0.14.3",
-    "@shopify/support": "0.5.2"
+    "@shopify/support": "0.5.2",
+    "plop": "^2.7.6"
   },
   "devDependencies": {
     "@oclif/test": "^2"
@@ -63,8 +64,6 @@
   ],
   "oclif": {
     "bin": "create-app",
-    "commands": "./dist/commands",
-    "plugins": [],
-    "topicSeparator": " "
+    "commands": "./dist/commands"
   }
 }

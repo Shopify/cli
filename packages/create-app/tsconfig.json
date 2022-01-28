@@ -1,12 +1,15 @@
 {
   "extends": "../../configurations/tsconfig.json",
   "include": ["./src/**/*.ts"],
-  "exclude": ["./dist", "**/*.test.ts"],
-  "references": [],
+  "exclude": ["./dist"],
+  "references": [{"path": "../support"}],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": "./src",
-    "composite": true
+    // We don't use src/ here because oclif's usage of ts-node
+    // doesn't support it an leads to "command not found" errors
+    // because it can't resolve the imports.
+    "baseUrl": ".",
+    "composite": false
   }
 }
