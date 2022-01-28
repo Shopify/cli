@@ -11,6 +11,6 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": "./src"
+    "baseUrl": "."
   }
 }

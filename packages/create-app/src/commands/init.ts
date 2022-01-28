@@ -1,7 +1,7 @@
 import {Command, Flags} from '@oclif/core';
-import {template} from 'utils/paths';
-import initService from 'services/init';
-import initPrompt from 'prompts/init';
+import {template} from '../utils/paths';
+import initService from '../services/init';
+import initPrompt from '../prompts/init';
 import {path} from '@shopify/support';
 
 export default class Init extends Command {

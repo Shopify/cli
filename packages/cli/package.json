@@ -42,10 +42,13 @@
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
+    "@oclif/plugin-not-found": "^2.2.4",
     "@shopify/app": "0.5.2",
     "@shopify/core": "0.5.2",
+    "@shopify/support": "0.5.2",
     "@shopify/theme": "0.5.2",
-    "@shopify/support": "0.5.2"
+    "add": "^2.0.6",
+    "yarn": "^1.22.17"
   },
   "devDependencies": {},
   "engine-strict": true,
@@ -61,6 +64,7 @@
     "bin": "shopify",
     "plugins": [
       "@oclif/plugin-help",
+      "@oclif/plugin-not-found",
       "@shopify/theme",
       "@shopify/app"
     ],

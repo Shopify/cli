@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "declaration": true,
     "inlineSourceMap": true,
-    "isolatedModules": false,
+    "isolatedModules": false
   },
   "exclude": ["**/dist/**"]
 }

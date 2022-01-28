@@ -1,6 +1,6 @@
-import {template} from 'utils/paths';
-import initService from 'services/init';
-import initPrompt from 'prompts/init';
+import {template} from '../utils/paths';
+import initService from '../services/init';
+import initPrompt from '../prompts/init';
 
 import Init from './init';
 
