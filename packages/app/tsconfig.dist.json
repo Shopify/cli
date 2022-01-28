@@ -1,4 +1,5 @@
 {
     "extends": "./tsconfig.json",
     "exclude": ["./**/*.test.ts"],
+    "references": [{"path": "../core"}, {"path": "../support"}],
 }
