@@ -12,7 +12,7 @@
   "license": "MIT",
   "types": "dist/index.d.ts",
   "bin": {
-    "create-app": "./bin/run"
+    "create-app": "./bin/create-app-run"
   },
   "files": [
     "/bin",
