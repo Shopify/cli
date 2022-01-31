@@ -79,7 +79,7 @@ module.exports = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
-            'https://github.com/shopify/shopify-cli-next/edit/main/docusaurus/',
+            'https://github.com/shopify/shopify-cli-next/edit/main/docs/',
         },
         blog: false,
         sitemap: false,
