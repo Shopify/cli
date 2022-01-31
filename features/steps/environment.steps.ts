@@ -19,55 +19,43 @@ After(async function () {
   if (this.temporaryDirectory) {
     rimraf.sync(this.temporaryDirectory);
   }
-});
-
-AfterAll(function () {
-  if (cliDirectory) {
-    rimraf.sync(cliDirectory);
+  if (this.cliDirectory) {
+    rimraf.sync(this.cliDirectory);
   }
-  if (createAppDirectory) {
-    rimraf.sync(createAppDirectory);
+  if (this.createAppDirectory) {
+    rimraf.sync(this.createAppDirectory);
   }
 });
-
-let cliDirectory: string | undefined;
 
 Given('I install the Shopify CLI', {timeout: 60 * 1000}, async function () {
-  if (cliDirectory) {
-    this.cliDirectory = cliDirectory;
-    this.cliExecutable = path.join(cliDirectory, 'bin/shopify-run');
+  if (this.cliDirectory) {
     return;
   }
-  cliDirectory = tmp.dirSync().name;
+  this.cliDirectory = tmp.dirSync().name;
 
-  await installCLI(cliPackagePath, 'shopify', cliDirectory, ['bin', 'dist']);
-
-  this.cliDirectory = cliDirectory;
-  this.cliExecutable = path.join(cliDirectory, 'bin/shopify-run');
-});
-
-let createAppDirectory: string | undefined;
-
-Given('I install the create-app CLI', {timeout: 60 * 1000}, async function () {
-  if (createAppDirectory) {
-    this.createAppDirectory = createAppDirectory;
-    this.createAppExecutable = path.join(
-      createAppDirectory,
-      'bin/create-app-run',
-    );
-    return;
-  }
-  createAppDirectory = tmp.dirSync().name;
-
-  await installCLI(createAppDevPackagePath, 'create-app', createAppDirectory, [
+  await installCLI(cliPackagePath, 'shopify', this.cliDirectory, [
     'bin',
-    'templates',
     'dist',
   ]);
 
-  this.createAppDirectory = createAppDirectory;
+  this.cliExecutable = path.join(this.cliDirectory, 'bin/shopify-run');
+});
+
+Given('I install the create-app CLI', {timeout: 60 * 1000}, async function () {
+  if (this.createAppDirectory) {
+    return;
+  }
+  this.createAppDirectory = tmp.dirSync().name;
+
+  await installCLI(
+    createAppDevPackagePath,
+    'create-app',
+    this.createAppDirectory,
+    ['bin', 'templates', 'dist'],
+  );
+
   this.createAppExecutable = path.join(
-    createAppDirectory,
+    this.createAppDirectory,
     'bin/create-app-run',
   );
 });
