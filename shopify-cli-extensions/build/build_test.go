@@ -12,7 +12,7 @@ import (
 var config *core.Config
 
 func init() {
-	configFile, err := os.Open("testdata/shopifile.yml")
+	configFile, err := os.Open("testdata/extension.config.yml")
 	if err != nil {
 		panic(fmt.Errorf("unable to open file: %w", err))
 	}

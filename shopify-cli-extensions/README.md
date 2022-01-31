@@ -35,7 +35,7 @@ This will create extensions in the `tmp` folder and install the node dependencie
 After [boostrapping an extension](#bootstrap-an-extension), you can run the server by execute the following shell command:
 
 ```sh
-make run serve testdata/shopifile.yml
+make run serve testdata/extension.config.yml
 ```
 
 Subsequently, you should be able to retrieve sample assets as follows:
@@ -67,10 +67,10 @@ Once the PR for the new branch is merged, you can deploy the packages on [Shipit
 To create new extension projects, simply execute the following shell command:
 
 ```sh
-make run create testdata/shopifile.yml
+make run create testdata/extension.config.yml
 ```
 
-This will create new extensions inside the `tmp` folder. You can update `testdata/shopifile.yml` if you want to test different options.
+This will create new extensions inside the `tmp` folder. You can update `testdata/extension.config.yml` if you want to test different options.
 
 The YAML file is in the format of
 
@@ -139,8 +139,8 @@ make bootstrap
 Then, run the DevConsole app and Dev Server simultaneously when developing for the DevConsole.
 
 ```sh
-# This will run `make run serve testdata/shopifile.yml` and `yarn start`
-make serve-dev testdata/shopifile.yml
+# This will run `make run serve testdata/extension.config.yml` and `yarn start`
+make serve-dev testdata/extension.config.yml
 ```
 
 ## Node Package Commands

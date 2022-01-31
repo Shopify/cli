@@ -39,7 +39,7 @@ func TestMergeTemplatesYAML(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	file, err := os.ReadFile(fmt.Sprintf("%s/shopifile.yml", rootDir))
+	file, err := os.ReadFile(fmt.Sprintf("%s/extension.config.yml", rootDir))
 
 	if err != nil {
 		t.Error(err)

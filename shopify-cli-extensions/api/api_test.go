@@ -25,7 +25,7 @@ var secureHost = "123.ngrok-url"
 var localhost = "localhost:8000"
 
 func init() {
-	configFile, err := os.Open("testdata/shopifile.yml")
+	configFile, err := os.Open("testdata/extension.config.yml")
 	if err != nil {
 		panic(fmt.Errorf("unable to open file: %w", err))
 	}

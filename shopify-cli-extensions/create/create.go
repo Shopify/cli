@@ -24,7 +24,7 @@ var templates embed.FS
 
 const (
 	cliConfigYamlFile string = ".shopify-cli.yml"
-	configYamlFile    string = "shopifile.yml"
+	configYamlFile    string = "extension.config.yml"
 	defaultBuildDir   string = "build"
 	defaultSourceDir  string = "src"
 	templateRoot      string = "templates"
