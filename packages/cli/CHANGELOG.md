@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 0.6.0
+
+### Minor Changes
+
+- 7b69661: Remove the @shopify/support package
+
 ## 0.5.2
 
 ### Patch Changes

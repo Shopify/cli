@@ -1,5 +1,12 @@
 # @shopify/create-app
 
+## 0.6.0
+
+### Minor Changes
+
+- 011cd5e: Implement the create-app workflow
+- 7b69661: Bundle the CLI using Rollup
+
 ## 0.5.2
 
 ### Patch Changes
