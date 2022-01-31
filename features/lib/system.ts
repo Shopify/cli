@@ -10,9 +10,13 @@ import {isDebug} from './environment';
  * @param command The command to be executed.
  * @returns A promise that resolves or rejects when the command execution finishes.
  */
-export const exec = async (command: string) => {
+export const exec = async (command: string, cwd?: string) => {
   return new Promise<void>((resolve, reject) => {
-    const childProcess = shell.exec(command, {async: true, silent: true});
+    const childProcess = shell.exec(command, {
+      async: true,
+      silent: true,
+      cwd,
+    });
     let errorOutput = '';
     childProcess.stdout?.on('data', (stdout) => {
       if (isDebug) {
