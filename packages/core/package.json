@@ -20,6 +20,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
+    "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
     "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",

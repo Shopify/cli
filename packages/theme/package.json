@@ -14,6 +14,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
+    "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
     "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
@@ -28,12 +29,11 @@
       "../../package.json"
     ]
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "@shopify/core": "0.5.2",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5"
-  },
-  "devDependencies": {
-    "@shopify/core": "0.5.2"
   },
   "oclif": {
     "commands": "./dist/commands",

@@ -1,26 +1,17 @@
 {
   "name": "@shopify/app",
   "version": "0.5.2",
-  "private": false,
+  "private": true,
   "description": "Utilities for loading, building, and publishing apps.",
-  "keywords": [
-    "shopify",
-    "shopify-cli",
-    "shopify-partners"
-  ],
-  "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "files": [
     "/templates",
     "/dist",
     "/npm-shrinkwrap.json"
   ],
-  "publishConfig": {
-    "access": "public",
-    "@shopify:registry": "https://registry.npmjs.org"
-  },
   "scripts": {
+    "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
     "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
@@ -35,26 +26,14 @@
       "../../package.json"
     ]
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "@shopify/core": "0.5.2",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5"
   },
-  "devDependencies": {
-    "@shopify/core": "0.5.2"
-  },
-  "engine-strict": true,
-  "engines": {
-    "node": ">=12.0.0"
-  },
-  "os": [
-    "darwin",
-    "linux",
-    "win32"
-  ],
   "oclif": {
     "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help"
-    ]
+    "plugins": []
   }
 }

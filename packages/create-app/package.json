@@ -25,7 +25,8 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
+    "clean": "shx rm -rf dist",
+    "build": "shx rm -rf dist && rollup -c",
     "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
@@ -40,17 +41,15 @@
     ]
   },
   "dependencies": {
-    "@bugsnag/js": "^7.14.1",
-    "@oclif/command": "^1",
-    "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@oclif/plugin-plugins": "^2.0.1",
-    "@types/listr": "^0.14.4",
-    "listr": "^0.14.3",
+    "@oclif/core": "^1",
+    "@bugsnag/js": "^7.14.1",
     "plop": "^2.7.6"
   },
   "devDependencies": {
-    "@oclif/test": "^2"
+    "@shopify/core": "0.5.2",
+    "@types/listr": "^0.14.4",
+    "listr": "^0.14.3"
   },
   "engine-strict": true,
   "engines": {
