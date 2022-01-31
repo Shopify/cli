@@ -1,13 +1,11 @@
 ---
-id: error-handling
 title: Error handling
-slug: /errors-handling
 ---
 
 Errors **can happen and will happen** and thus we need must design our code to handle them gracefully and present users with clear and actionable error messages.
 Cryptic errors that expose internals of the CLI frustrate developers and increase the support toil.
 To help with that,
-`@shopify/cli-core` provides a set of errors that should be used according to the principles in the following sections.
+`@shopify/core` provides a set of errors that should be used according to the principles in the following sections.
 
 ### Raise an `AbortError` or `BugError` to terminate the execution
 
@@ -20,7 +18,7 @@ Aborts don't get reported.
 **Never** exit the execution by using the `process` APIs.
 
 ```ts
-import { BugError } from "@shopify/cli-core"
+import { BugError } from "@shopify/core"
 
 export function authenticate() {
   // We found an abort scenario

@@ -1,7 +1,5 @@
 ---
-id: release
 title: Release
-slug: /release
 ---
 
 # Release process

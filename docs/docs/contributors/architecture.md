@@ -1,7 +1,5 @@
 ---
-id: architecture
 title: Architecture
-slug: /architecture
 ---
 
 The Shopify CLI is written in [Typescript](https://www.typescriptlang.org/) and targets Node versions above 12.

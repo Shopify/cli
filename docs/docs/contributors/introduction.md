@@ -1,7 +1,5 @@
 ---
-id: introduction
 title: Introduction
-slug: /
 ---
 
 The [Shopify CLI](https://github.com/shopify/shopify-cli-next) is the tool developers use to build apps and storefronts for the [Shopify platform](https://shopify.dev).

@@ -24,6 +24,12 @@ module.exports = {
           label: 'GitHub',
           position: 'right',
         },
+        {
+          type: 'doc',
+          docId: 'core/introduction',
+          position: 'left',
+          label: '@shopify/core',
+        },
       ],
     },
     footer: {
@@ -76,7 +82,6 @@ module.exports = {
             'https://github.com/shopify/shopify-cli-next/edit/main/docusaurus/',
         },
         blog: false,
-        pages: false,
         sitemap: false,
       },
     ],
