@@ -33,10 +33,7 @@ Given('I install the Shopify CLI', {timeout: 60 * 1000}, async function () {
   }
   this.cliDirectory = tmp.dirSync().name;
 
-  await installCLI(cliPackagePath, 'shopify', this.cliDirectory, [
-    'bin',
-    'dist',
-  ]);
+  await installCLI(cliPackagePath, 'shopify', this.cliDirectory, ['bin']);
 
   this.cliExecutable = path.join(this.cliDirectory, 'bin/shopify-run');
 });
@@ -51,7 +48,7 @@ Given('I install the create-app CLI', {timeout: 60 * 1000}, async function () {
     createAppDevPackagePath,
     'create-app',
     this.createAppDirectory,
-    ['bin', 'templates', 'dist'],
+    ['templates'],
   );
 
   this.createAppExecutable = path.join(
@@ -76,7 +73,10 @@ async function installCLI(
   into: string,
   additionalFolders: string[] = [],
 ) {
-  await exec('yarn build', packagePath);
+  await exec('yarn build', packagePath, {
+    ...process.env,
+    SHOPIFY_DIST_DIR: path.join(into, 'dist'),
+  });
   const packageJsonDependencies = {};
   packageJsonDependencies[`@shopify/${name}`] = `file:${packagePath}`;
   const packageJson = {
@@ -88,7 +88,7 @@ async function installCLI(
   const packageJsonPath = path.join(into, 'package.json');
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
   await exec('yarn install', into);
-  additionalFolders.forEach((folder) => {
+  ['bin', ...additionalFolders].forEach((folder) => {
     shell.cp('-R', path.join(packagePath, folder), path.join(into, folder));
   });
 }

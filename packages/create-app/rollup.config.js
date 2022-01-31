@@ -7,6 +7,13 @@ import stripShebang from 'rollup-plugin-strip-shebang';
 
 const moduleType = 'cjs';
 
+let distDir;
+if (process.env.SHOPIFY_DIST_DIR) {
+  distDir = process.env.SHOPIFY_DIST_DIR;
+} else {
+  distDir = path.join(__dirname, 'dist');
+}
+
 const plugins = [
   stripShebang(),
   resolve({
@@ -29,7 +36,7 @@ const configuration = () => [
     input: path.join(__dirname, 'src/commands/init.ts'),
     output: [
       {
-        file: path.join(__dirname, 'dist/commands/init.js'),
+        file: path.join(distDir, 'commands/init.js'),
         format: moduleType,
         exports: 'auto',
       },
