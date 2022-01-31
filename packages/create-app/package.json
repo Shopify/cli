@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "keywords": [
@@ -17,6 +17,7 @@
   "files": [
     "/bin",
     "/dist",
+    "templates",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],

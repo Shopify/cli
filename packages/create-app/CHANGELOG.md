@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.7.0
+
+### Minor Changes
+
+- Add missing template to "files"
+
 ## 0.6.0
 
 ### Minor Changes
