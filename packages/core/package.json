@@ -9,10 +9,10 @@
     "shopify-partners"
   ],
   "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "files": [
-    "/dist",
+    "/src",
     "/npm-shrinkwrap.json"
   ],
   "publishConfig": {
@@ -34,12 +34,8 @@
       "../../package.json"
     ]
   },
-  "dependencies": {},
   "devDependencies": {
-    "@shopify/support": "0.5.2"
-  },
-  "peerDependencies": {
-    "@shopify/support": "0.5.2"
+    "pathe": "^0.2.0"
   },
   "engine-strict": true,
   "engines": {

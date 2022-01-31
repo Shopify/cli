@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import {findPathUp, BugError} from '@shopify/support';
+import {findPathUp, BugError} from '@shopify/core';
 
 export async function cliVersion(): Promise<string> {
   const path =

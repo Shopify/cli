@@ -1,5 +1,5 @@
 import {Plop, run} from 'plop';
-import {path} from '@shopify/support';
+import {path} from '@shopify/core';
 import Listr from 'listr';
 import minimist from 'minimist';
 // import {cliVersion as getCliVersion} from "../utils/versions";

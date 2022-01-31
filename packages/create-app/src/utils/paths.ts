@@ -1,4 +1,4 @@
-import {findPathUp, BugError} from '@shopify/support';
+import {findPathUp, BugError} from '@shopify/core';
 
 export async function template(name: string): Promise<string> {
   const templatePath = await findPathUp(

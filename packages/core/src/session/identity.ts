@@ -1,5 +1,4 @@
-import {AbortError, BugError} from '@shopify/support';
-
+import {AbortError, BugError} from '../errors';
 import {
   adminApiEnvironment,
   partnersApiEnvironment,
