@@ -1,6 +1,8 @@
 import path from 'pathe';
 
-export const createAppDevPath = path.join(
+export const createAppDevPackagePath = path.join(
   __dirname,
-  '../../packages/create-app/bin/gestalt-dev',
+  '../../packages/create-app',
 );
+
+export const cliPackagePath = path.join(__dirname, '../../packages/cli');

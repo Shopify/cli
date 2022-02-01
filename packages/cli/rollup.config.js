@@ -7,6 +7,8 @@ import fg from 'fast-glob';
 
 const moduleType = 'cjs';
 
+const distDir = process.env.SHOPIFY_DIST_DIR || path.join(__dirname, 'dist');
+
 const plugins = [
   resolve({
     preferBuiltins: true,
@@ -27,7 +29,7 @@ const configuration = () => [
   // CLI
   {
     input: path.join(__dirname, 'src/index.ts'),
-    output: [{file: path.join(__dirname, 'dist/index.js'), format: moduleType}],
+    output: [{file: path.join(distDir, 'index.js'), format: moduleType}],
     plugins,
     external: [...external],
   },
@@ -36,7 +38,7 @@ const configuration = () => [
     input: path.join(__dirname, '../core/src/index.ts'),
     output: [
       {
-        file: path.join(__dirname, 'dist/@shopify/core/index.js'),
+        file: path.join(distDir, '@shopify/core/index.js'),
         format: moduleType,
       },
     ],
@@ -50,8 +52,8 @@ const configuration = () => [
     ]);
     return commands.map((commandPath) => {
       const outputPath = path.join(
-        __dirname,
-        'dist/commands',
+        distDir,
+        'commands',
         commandPath.split('src/commands')[1].replace('.ts', '.js'),
       );
       return {
