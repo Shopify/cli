@@ -34,7 +34,7 @@ let cliExecutable: string | undefined;
 let createAppDirectory: string | undefined;
 let createAppExecutable: string | undefined;
 
-BeforeAll({timeout: 60 * 1000}, async function () {
+BeforeAll({timeout: 2 * 60 * 1000}, async function () {
   console.debug(
     'Building @shopify/cli & @shopify/create-app for running the tests',
   );
