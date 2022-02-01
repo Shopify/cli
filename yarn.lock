@@ -1246,9 +1246,9 @@
     tslib "^2"
 
 "@oclif/core@^1", "@oclif/core@^1.0.10", "@oclif/core@^1.1.1":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.2.0.tgz#f1110b1fe868e439f94f8b4ffad5dd8acf862294"
-  integrity sha512-h1n8NEAUzaL3+wky7W1FMeySmJWQpYX1LhWMltFY/ScvmapZzee7D9kzy/XI/ZIWWfz2ZYCTMD1wOKXO6ueynw==
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.2.1.tgz#d6c9bb0d61feb2f36e3cee0b6c38e49256a23848"
+  integrity sha512-f/U7yvfsEdHazhlGkB6XZldzQvoHJA7Ge0l9xpXsJG1Txj9EZhnuXJgOm4p+vyGXkODnH8x5rNkxwFMsJvPiUA==
   dependencies:
     "@oclif/linewrap" "^1.0.0"
     "@oclif/screen" "^3.0.2"
