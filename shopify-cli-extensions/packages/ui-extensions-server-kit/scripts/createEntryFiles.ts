@@ -35,7 +35,7 @@ export function createEntryFiles(options: CreateEntryFilesOptions): Plugin {
             );
           }
           if (format === 'es') {
-            writeFileSync(cwd(`${key}.mjs`), `export * from './${relative(cwd(), path)}.es';\n`);
+            writeFileSync(cwd(`${key}.mjs`), `export * from './${relative(cwd(), path)}.es.js';\n`);
           }
         });
       });
