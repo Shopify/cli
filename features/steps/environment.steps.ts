@@ -2,7 +2,7 @@
 // @ts-nocheck
 import fs from 'fs';
 
-import {Given, After, AfterAll} from '@cucumber/cucumber';
+import {Given, After, BeforeAll, AfterAll} from '@cucumber/cucumber';
 import tmp from 'tmp';
 import rimraf from 'rimraf';
 import shell from 'shelljs';
@@ -13,6 +13,8 @@ import {exec} from '../lib/system';
 
 Given('I have a working directory', function () {
   this.temporaryDirectory = tmp.dirSync().name;
+  this.cliExecutable = cliExecutable;
+  this.createAppExecutable = createAppExecutable;
 });
 
 After(async function () {
@@ -27,34 +29,33 @@ After(async function () {
   }
 });
 
-Given('I install the Shopify CLI', {timeout: 60 * 1000}, async function () {
-  if (this.cliDirectory) {
-    return;
-  }
-  this.cliDirectory = tmp.dirSync().name;
+let cliDirectory: string | undefined;
+let cliExecutable: string | undefined;
+let createAppDirectory: string | undefined;
+let createAppExecutable: string | undefined;
 
-  await installCLI(cliPackagePath, 'shopify', this.cliDirectory, ['bin']);
+BeforeAll({timeout: 60 * 1000}, async function () {
+  console.debug(
+    'Building @shopify/cli & @shopify/create-app for running the tests',
+  );
+  cliDirectory = tmp.dirSync().name;
+  cliExecutable = path.join(cliDirectory, 'bin/shopify-run');
+  createAppDirectory = tmp.dirSync().name;
+  createAppExecutable = path.join(createAppDirectory, 'bin/create-app-run');
 
-  this.cliExecutable = path.join(this.cliDirectory, 'bin/shopify-run');
+  await installCLI(createAppDevPackagePath, 'create-app', createAppDirectory, [
+    'templates',
+  ]);
+  await installCLI(cliPackagePath, 'shopify', cliDirectory, ['bin']);
 });
 
-Given('I install the create-app CLI', {timeout: 60 * 1000}, async function () {
-  if (this.createAppDirectory) {
-    return;
+AfterAll(function () {
+  if (cliDirectory) {
+    rimraf.sync(cliDirectory);
   }
-  this.createAppDirectory = tmp.dirSync().name;
-
-  await installCLI(
-    createAppDevPackagePath,
-    'create-app',
-    this.createAppDirectory,
-    ['templates'],
-  );
-
-  this.createAppExecutable = path.join(
-    this.createAppDirectory,
-    'bin/create-app-run',
-  );
+  if (createAppDirectory) {
+    rimraf.sync(createAppDirectory);
+  }
 });
 
 /**

@@ -7,12 +7,7 @@ import fg from 'fast-glob';
 
 const moduleType = 'cjs';
 
-let distDir;
-if (process.env.SHOPIFY_DIST_DIR) {
-  distDir = process.env.SHOPIFY_DIST_DIR;
-} else {
-  distDir = path.join(__dirname, 'dist');
-}
+const distDir = process.env.SHOPIFY_DIST_DIR || path.join(__dirname, 'dist');
 
 const plugins = [
   resolve({
