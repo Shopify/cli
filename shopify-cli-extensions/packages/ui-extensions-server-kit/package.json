@@ -21,7 +21,7 @@
     }
   },
   "scripts": {
-    "build": "yarn build:code && yarn build:types",
+    "build": "rm -f tsconfig.tsbuildinfo && yarn build:code && yarn build:types",
     "build:code": "vite build --config vite.config.ts",
     "build:types": "tsc --emitDeclarationOnly",
     "clean": "git clean --exclude node_modules -xdf ./",
