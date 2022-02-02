@@ -96,8 +96,5 @@
       ]
     }
   },
-  "prettier": "@shopify/prettier-config",
-  "dependencies": {
-    "rollup-plugin-node-externals": "^3.1.2"
-  }
+  "prettier": "@shopify/prettier-config"
 }

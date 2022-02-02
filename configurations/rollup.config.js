@@ -4,7 +4,6 @@ import json from '@rollup/plugin-json';
 import path from 'pathe';
 import stripShebang from 'rollup-plugin-strip-shebang';
 import commonjs from '@rollup/plugin-commonjs';
-import externals from 'rollup-plugin-node-externals';
 
 export const distDir = (packagePath) => {
   return process.env.SHOPIFY_DIST_DIR || path.join(packagePath, 'dist');
@@ -27,9 +26,6 @@ export const plugins = (packagePath) => {
     json(),
     commonjs({
       include: /node_modules/,
-    }),
-    externals({
-      prefixedBuiltins: true,
     }),
   ];
 };

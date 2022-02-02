@@ -6134,13 +6134,6 @@ rollup-plugin-multi-input@^1.3.1:
     fast-glob "^3.0.0"
     lodash "^4.17.11"
 
-rollup-plugin-node-externals@^3.1.2:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-node-externals/-/rollup-plugin-node-externals-3.1.2.tgz#1604aa28384a8771735168fe900d6f00f450d0fa"
-  integrity sha512-2y5lNDI2QNLTntYDOcLzyEVJYszDyQkd2WiRTGQ/6Hdfgt/fSQb5V5trsgBMEkxs2eaunQ0aAW29Ki6jMNutIg==
-  dependencies:
-    find-up "^6.2.0"
-
 rollup-plugin-strip-shebang@^1.2.10:
   version "1.2.10"
   resolved "https://registry.yarnpkg.com/rollup-plugin-strip-shebang/-/rollup-plugin-strip-shebang-1.2.10.tgz#55ec25b8a056d13044d10e11f6dbb7839a926a34"
