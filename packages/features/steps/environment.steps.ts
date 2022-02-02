@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import fs from 'fs';
-import shell from 'shelljs';
 
+import shell from 'shelljs';
 import {Given, After, BeforeAll, AfterAll} from '@cucumber/cucumber';
 import tmp from 'tmp';
 import rimraf from 'rimraf';
