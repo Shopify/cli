@@ -1,8 +1,9 @@
 import path from 'pathe';
+import alias from '@rollup/plugin-alias';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const additionalExternal = ['@oclif/core', '@shopify/core'];
+const additionalExternal = ['@oclif/core'];
 
 const configuration = () => [
   {
@@ -14,7 +15,17 @@ const configuration = () => [
         exports: 'auto',
       },
     ],
-    plugins: plugins(__dirname),
+    plugins: [
+      alias({
+        entries: [
+          {
+            find: '@shopify/core',
+            replacement: path.join(__dirname, '../core/src/index.ts'),
+          },
+        ],
+      }),
+      ...plugins(__dirname),
+    ],
     external: [...external, ...additionalExternal],
   },
 ];

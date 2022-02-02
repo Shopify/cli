@@ -9,8 +9,7 @@ if (!process.argv.includes("init")) {
     process.argv.push('init');
 }
 
-console.log("Bundling @shopify/core and @shopify/create-app");
-execSync("yarn build", {cwd: path.join(path.dirname(fileURLToPath(import.meta.url)), "../../core"), stdio: 'ignore'})
+console.log("Bundling @shopify/create-app");
 execSync("yarn build", {cwd: path.join(path.dirname(fileURLToPath(import.meta.url)), ".."), stdio: 'ignore'})
 
 settings.debug = true;

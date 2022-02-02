@@ -34,7 +34,7 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && rollup -c",
-    "prepublishOnly": "yarn run build",
+    "prepublishOnly": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
     "test": "shx rm -rf dist && vitest run",
@@ -48,9 +48,10 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
-    "@oclif/core": "0.5.10",
-    "inquirer": "^8.2.0",
-    "@shopify/core": "0.5.2"
+    "@oclif/core": "0.5.10"
+  },
+  "devDependency": {
+    "inquirer": "^8.2.0"
   },
   "engine-strict": true,
   "engines": {

@@ -16,12 +16,15 @@ export const plugins = (packagePath) => {
       preferBuiltins: true,
       moduleDirectories: [
         path.join(packagePath, 'node_modules'),
+        path.join(packagePath, '../core/node_modules'),
         path.join(packagePath, '../../node_modules'),
       ],
     }),
     esbuild({
       target: 'ES2020',
+      sourceMap: true,
       tsconfig: path.join(packagePath, 'tsconfig.dist.json'),
+      minify: process.env.NODE_ENV === 'production',
     }),
     json(),
     commonjs({
