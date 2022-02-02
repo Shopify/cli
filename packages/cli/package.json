@@ -3,6 +3,12 @@
   "version": "0.6.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
+  "type": "module",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "keywords": [
     "shopify",
     "shopify-cli",
@@ -25,13 +31,12 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && rollup -c",
-    "build:watch": "tsc -b tsconfig.dist.json --watch",
     "prepublishOnly": "yarn run build",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "tsc": "tsc -b --incremental"
+    "test": "shx rm -rf dist && vitest run",
+    "test:watch": "vitest watch",
+    "tsc": "tsc -b"
   },
   "eslintConfig": {
     "extends": [
@@ -40,18 +45,15 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
-    "@oclif/core": "^1",
-    "@oclif/plugin-help": "^5",
-    "@oclif/plugin-not-found": "^2.3.1"
+    "@oclif/core": "0.5.10",
+    "@shopify/core": "0.5.2"
   },
   "devDependencies": {
-    "@shopify/app": "0.5.2",
-    "@shopify/core": "0.5.2",
-    "@shopify/theme": "0.5.2"
+    "@shopify/core": "0.5.2"
   },
   "engine-strict": true,
   "engines": {
-    "node": ">=12.0.0"
+    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
   },
   "os": [
     "darwin",
@@ -61,20 +63,6 @@
   "oclif": {
     "bin": "shopify",
     "commands": "dist/commands",
-    "plugins": [
-      "@shopify/theme",
-      "@shopify/app",
-      "@oclif/plugin-help",
-      "@oclif/plugin-not-found"
-    ],
-    "topicSeparator": " ",
-    "topics": {
-      "theme": {
-        "description": "Commands for creating, building, and publishing themes"
-      },
-      "app": {
-        "description": "Commands for creating, building, and publishing app"
-      }
-    }
+    "plugins": []
   }
 }

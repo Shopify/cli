@@ -1,15 +1,16 @@
-import {findPathUp, BugError} from '@shopify/core';
+import {fileURLToPath} from 'url';
+
+import {path, error} from '@shopify/core';
 
 export async function template(name: string): Promise<string> {
-  const templatePath = await findPathUp(
-    `templates/${name}`,
-    __dirname,
-    'directory',
-  );
+  const templatePath = await path.findUp(`templates/${name}`, {
+    cwd: path.dirname(fileURLToPath(import.meta.url)),
+    type: 'directory',
+  });
   if (templatePath) {
     return templatePath;
   } else {
-    throw new BugError(
+    throw new error.Bug(
       `Couldn't find the template ${name} in @shopify/create-app.`,
     );
   }

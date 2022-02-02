@@ -7,7 +7,7 @@ Cryptic errors that expose internals of the CLI frustrate developers and increas
 To help with that,
 `@shopify/core` provides a set of errors that should be used according to the principles in the following sections.
 
-### Raise an `AbortError` or `BugError` to terminate the execution
+### Raise an `Abort` or `Bug` to terminate the execution
 
 If you come across an scenario that needs aborting,
 first explore if it's possible to change the execution path to avoid ending in that scenario.
@@ -18,11 +18,11 @@ Aborts don't get reported.
 **Never** exit the execution by using the `process` APIs.
 
 ```ts
-import { BugError } from "@shopify/core"
+import { error } from "@shopify/core"
 
 export function authenticate() {
   // We found an abort scenario
-  throw new BugError("We couldn't access the macOS Keychain to store your credentials.")
+  throw new error.Bug("We couldn't access the macOS Keychain to store your credentials.")
 }
 ```
 
@@ -41,7 +41,7 @@ Then craft the error, and make sure we have [tests](/testing-strategy) in place 
 If users want to opt into seeing the stacktraces, they can call the CLI with the environment variable `SHOPIFY_CONFIG=1`.
 :::
 
-### Don't catch `AbortError` and `BugError` errors
+### Don't catch `Abort` and `Bug` errors
 
 Those errors are designed to bubble up and reach the CLI's root where the error handler will output them to the user following a conventional formatting and report them to the error tracking platform.
 If you have the need to raise errors that you expect the caller to catch,

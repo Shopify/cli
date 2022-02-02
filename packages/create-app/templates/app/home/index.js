@@ -1,1 +1,1 @@
-console.log("Hello from {{snakeCase name}}!");
+console.log('Hello from {{name}}!');

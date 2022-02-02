@@ -1,4 +1,4 @@
-import {AbortError, BugError} from '../errors';
+import {Abort, Bug} from '../error';
 import {
   adminApiEnvironment,
   partnersApiEnvironment,
@@ -15,9 +15,7 @@ export function applicationId(service: Service): string {
       } else if (environment === Environment.Production) {
         return '7ee65a63608843c577db8b23c4d7316ea0a01bd2f7594f8a9c06ea668c1b775c';
       } else {
-        throw new AbortError(
-          `Spin is not yet supported for the Shopify Admin API`,
-        );
+        throw new Abort(`Spin is not yet supported for the Shopify Admin API`);
       }
     }
     case Service.PartnersApi: {
@@ -27,7 +25,7 @@ export function applicationId(service: Service): string {
       } else if (environment === Environment.Production) {
         return '271e16d403dfa18082ffb3d197bd2b5f4479c3fc32736d69296829cbb28d41a6';
       } else {
-        throw new AbortError(`Spin is not yet supported for the Partners API`);
+        throw new Abort(`Spin is not yet supported for the Partners API`);
       }
     }
     case Service.StorefrontRendererApi: {
@@ -37,10 +35,10 @@ export function applicationId(service: Service): string {
       } else if (environment === Environment.Production) {
         return 'ee139b3d-5861-4d45-b387-1bc3ada7811c';
       } else {
-        throw new AbortError(`Spin is not yet supported for the Partners API`);
+        throw new Abort(`Spin is not yet supported for the Partners API`);
       }
     }
     default:
-      throw new BugError(`Application id for service of type: ${service}`);
+      throw new Bug(`Application id for service of type: ${service}`);
   }
 }

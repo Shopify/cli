@@ -1,3 +1,5 @@
+import {it, describe, expect} from 'vitest';
+
 import {cliVersion} from './versions';
 
 describe('cliVersion', () => {

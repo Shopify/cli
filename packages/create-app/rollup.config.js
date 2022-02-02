@@ -1,43 +1,21 @@
-import esbuild from 'rollup-plugin-esbuild';
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
 import path from 'pathe';
-import stripShebang from 'rollup-plugin-strip-shebang';
 
-const moduleType = 'cjs';
+import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const distDir = process.env.SHOPIFY_DIST_DIR || path.join(__dirname, 'dist');
-
-const plugins = [
-  stripShebang(),
-  resolve({
-    preferBuiltins: true,
-  }),
-  // https://www.npmjs.com/package/rollup-plugin-esbuild
-  esbuild({
-    target: 'node12',
-    tsconfig: path.join(__dirname, 'tsconfig.json'),
-  }),
-  json(),
-  commonjs(),
-];
-
-const external = ['@oclif/core', '@oclif/plugin-help'];
+const additionalExternal = ['@oclif/core', '@shopify/core'];
 
 const configuration = () => [
-  // create-app
   {
     input: path.join(__dirname, 'src/commands/init.ts'),
     output: [
       {
-        file: path.join(distDir, 'commands/init.js'),
-        format: moduleType,
+        file: path.join(distDir(__dirname), 'commands/init.js'),
+        format: 'esm',
         exports: 'auto',
       },
     ],
-    plugins,
-    external: [...external],
+    plugins: plugins(__dirname),
+    external: [...external, ...additionalExternal],
   },
 ];
 
