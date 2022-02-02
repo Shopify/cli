@@ -13,7 +13,7 @@
 - Add @shopify/support and fix dependencies' setup
 - Updated dependencies
   - @shopify/app@0.5.2
-  - @shopify/core@0.5.2
+  - @shopify/cli-kit@0.5.2
   - @shopify/support@0.5.2
   - @shopify/theme@0.5.2
 
@@ -48,7 +48,7 @@
 - Updated dependencies
   - @shopify/theme@0.3.0
   - @shopify/@0.3.0
-  - @shopify/core@0.3.0
+  - @shopify/cli-kit@0.3.0
   - @shopify/cli-support@0.3.0
 
 ## 0.2.0
@@ -61,6 +61,6 @@
 
 - Updated dependencies
   - @shopify/@0.2.0
-  - @shopify/core@0.2.0
+  - @shopify/cli-kit@0.2.0
   - @shopify/cli-support@0.2.0
   - @shopify/theme@0.2.0

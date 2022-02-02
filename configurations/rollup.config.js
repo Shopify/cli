@@ -16,7 +16,7 @@ export const plugins = (packagePath) => {
       preferBuiltins: true,
       moduleDirectories: [
         path.join(packagePath, 'node_modules'),
-        path.join(packagePath, '../core/node_modules'),
+        path.join(packagePath, '../cli-kit/node_modules'),
         path.join(packagePath, '../../node_modules'),
       ],
     }),

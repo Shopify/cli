@@ -6,7 +6,7 @@ import {defineConfig} from 'vite';
 const resolvePath = (path: string) => resolve(__dirname, path);
 
 export const alias: AliasOptions = {
-  '@shopify/core': resolvePath('./packages/core/src/'),
+  '@shopify/cli-kit': resolvePath('./packages/cli-kit/src/'),
 };
 
 export default defineConfig({

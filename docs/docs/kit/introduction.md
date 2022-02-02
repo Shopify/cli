@@ -2,7 +2,7 @@
 title: Introduction
 ---
 
-`@shopify/core` is a set of **utilities, principles, and conventions for building and extending** the Shopify CLI.
+`@shopify/cli-kit` is a set of **utilities, principles, and conventions for building and extending** the Shopify CLI.
 It plays a role similar to [Polaris](https://polaris.shopify.com/) but in the context of a CLI －
 achieving a **consistent developer experience** (DX) across the board.
 

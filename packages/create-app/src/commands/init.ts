@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core';
-import {path} from '@shopify/core';
+import {path} from '@shopify/cli-kit';
 
 import {template} from '../utils/paths';
 import initPrompt from '../prompts/init';

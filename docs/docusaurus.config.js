@@ -26,9 +26,9 @@ module.exports = {
         },
         {
           type: 'doc',
-          docId: 'core/introduction',
+          docId: 'kit/introduction',
           position: 'left',
-          label: '@shopify/core',
+          label: '@shopify/cli-kit',
         },
       ],
     },

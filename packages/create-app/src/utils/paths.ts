@@ -1,6 +1,6 @@
 import {fileURLToPath} from 'url';
 
-import {path, error} from '@shopify/core';
+import {path, error} from '@shopify/cli-kit';
 
 export async function template(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {

@@ -16,7 +16,7 @@
   ],
   "license": "MIT",
   "bin": {
-    "shopify": "./bin/shopify-run"
+    "shopify": "./bin/shopify-run.js"
   },
   "files": [
     "/bin",
@@ -46,7 +46,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "0.5.10",
-    "@shopify/core": "0.5.2"
+    "@shopify/cli-kit": "0.5.2"
   },
   "engine-strict": true,
   "engines": {

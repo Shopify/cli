@@ -1,4 +1,4 @@
-import {string, path, template, fs, system, output} from '@shopify/core';
+import {string, path, template, fs, system, output} from '@shopify/cli-kit';
 
 import {cliVersion} from '../utils/versions';
 

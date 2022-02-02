@@ -91,7 +91,7 @@ async function installCLI(
   };
   const packageJsonPath = path.join(into, 'package.json');
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
-  await exec('yarn install', {cwd: into});
+  // await exec('yarn install', {cwd: into});
   ['bin', ...additionalFolders].forEach((folder) => {
     shell.cp('-R', path.join(packagePath, folder), path.join(into, folder));
   });

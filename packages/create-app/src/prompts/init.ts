@@ -1,4 +1,4 @@
-import {ui} from '@shopify/core';
+import {ui} from '@shopify/cli-kit';
 
 interface InitOptions {
   name?: string;

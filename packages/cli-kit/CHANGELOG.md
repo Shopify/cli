@@ -1,4 +1,4 @@
-# @shopify/core
+# @shopify/cli-kit
 
 ## 0.5.2
 

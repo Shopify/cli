@@ -19,8 +19,8 @@ const configuration = () => [
       alias({
         entries: [
           {
-            find: '@shopify/core',
-            replacement: path.join(__dirname, '../core/src/index.ts'),
+            find: '@shopify/cli-kit',
+            replacement: path.join(__dirname, '../cli-kit/src/index.ts'),
           },
         ],
       }),
