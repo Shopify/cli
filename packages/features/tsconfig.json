@@ -7,7 +7,7 @@
     "module": "commonjs",
     "target": "ES2019",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "baseUrl": "."
   }
 }
