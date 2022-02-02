@@ -49,9 +49,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "0.5.10",
-    "inquirer": "^8.2.0"
-  },
-  "devDependencies": {
+    "inquirer": "^8.2.0",
     "@shopify/core": "0.5.2"
   },
   "engine-strict": true,
