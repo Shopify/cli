@@ -8,3 +8,4 @@ export * as fs from './fs';
 export * as output from './output';
 export * as dependency from './dependency';
 export * as version from './version';
+export * as os from './os';

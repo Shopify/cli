@@ -1,21 +1,32 @@
-import {string, path, template, fs, system, output} from '@shopify/cli-kit';
+import {
+  string,
+  path,
+  template,
+  fs,
+  system,
+  output,
+  version,
+  os,
+} from '@shopify/cli-kit';
 
-import {cliVersion} from '../utils/versions';
+import {template as getTemplatePath} from '../utils/paths';
 
 interface InitOptions {
   name: string;
   description: string;
   directory: string;
-  templatePath: string;
 }
 
 async function init(options: InitOptions) {
+  const user = (await os.username()) ?? '';
+  const templatePath = await getTemplatePath('app');
+  const cliVersion = await version.latestNpmPackageVersion('@shopify/cli');
   const outputDirectory = path.join(
     options.directory,
     string.hyphenize(options.name),
   );
   console.log('Creating the app...');
-  createApp({...options, outputDirectory});
+  createApp({...options, outputDirectory, templatePath, cliVersion, user});
   output.success(
     output.content`App successfully created at ${output.token.path(
       outputDirectory,
@@ -24,7 +35,12 @@ async function init(options: InitOptions) {
 }
 
 async function createApp(
-  options: InitOptions & {outputDirectory: string},
+  options: InitOptions & {
+    outputDirectory: string;
+    templatePath: string;
+    cliVersion: string;
+    user: string;
+  },
 ): Promise<void> {
   const templateFiles: string[] = await path.glob(
     path.join(options.templatePath, '**/*'),
@@ -39,7 +55,9 @@ async function createApp(
   const templateData = {
     name: options.name,
     description: options.description,
-    cliVersion,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    shopify_cli_version: options.cliVersion,
+    author: options.user,
   };
 
   sortedTemplateFiles.forEach(async (templateItemPath) => {

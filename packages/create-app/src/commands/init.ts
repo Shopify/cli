@@ -1,7 +1,6 @@
 import {Command, Flags} from '@oclif/core';
 import {path} from '@shopify/cli-kit';
 
-import {template} from '../utils/paths';
 import initPrompt from '../prompts/init';
 import initService from '../services/init';
 
@@ -26,8 +25,6 @@ export default class Init extends Command {
   };
 
   async run(): Promise<void> {
-    console.log(JSON.stringify(process.env));
-    const templatePath = await template('app');
     const {flags} = await this.parse(Init);
     const directory = flags.path ? path.resolve(flags.path) : process.cwd();
     const promptAnswers = await initPrompt({
@@ -37,7 +34,6 @@ export default class Init extends Command {
     await initService({
       name: promptAnswers.name,
       description: promptAnswers.description,
-      templatePath,
       directory,
     });
   }

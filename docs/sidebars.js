@@ -36,6 +36,7 @@ module.exports = {
         'kit/modules/error',
         'kit/modules/authentication',
         'kit/modules/version',
+        'kit/modules/os',
       ],
     },
   ],

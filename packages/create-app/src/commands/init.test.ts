@@ -1,6 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
 
-import {template} from '../utils/paths';
 import initService from '../services/init';
 import initPrompt from '../prompts/init';
 
@@ -10,7 +9,6 @@ vi.mock('../utils/paths');
 vi.mock('../services/init');
 vi.mock('../prompts/init');
 
-const templateMock = vi.mocked(template);
 const initServiceMock = vi.mocked(initService);
 const initPromptMock = vi.mocked(initPrompt);
 
@@ -22,7 +20,6 @@ describe('Init', function () {
     const appName = 'MyApp';
     const description = 'Description';
 
-    templateMock.mockReturnValue(Promise.resolve(templatePath));
     initPromptMock.mockReturnValue(
       Promise.resolve({name: appName, description}),
     );
@@ -33,7 +30,6 @@ describe('Init', function () {
     // Then
     expect(initServiceMock).toHaveBeenCalledWith({
       name: appName,
-      templatePath,
       directory,
       description,
     });

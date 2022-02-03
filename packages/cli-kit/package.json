@@ -60,6 +60,7 @@
     "param-case": "^3.0.4",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
-    "term-size": "^3.0.1"
+    "term-size": "^3.0.1",
+    "username": "^6.0.0"
   }
 }
