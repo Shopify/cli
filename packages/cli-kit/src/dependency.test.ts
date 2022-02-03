@@ -1,16 +1,19 @@
 import {describe, it, expect} from 'vitest';
 
 import {Bug} from './error';
-import {createDependencyManager, DependencyManager} from './dependency';
+import {
+  dependencyManagerUsedForCreating,
+  DependencyManager,
+} from './dependency';
 
-describe('createDependencyManager', () => {
+describe('dependencyManagerUsedForCreating', () => {
   it('returns npm if the lifecycle event says npx', () => {
     // Given
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const env = {npm_lifecycle_event: 'npx'};
 
     // When
-    const got = createDependencyManager(env);
+    const got = dependencyManagerUsedForCreating(env);
 
     // Then
     expect(got).toBe(DependencyManager.Npm);
@@ -22,7 +25,7 @@ describe('createDependencyManager', () => {
     const env = {npm_config_user_agent: 'yarn/1.22.17'};
 
     // When
-    const got = createDependencyManager(env);
+    const got = dependencyManagerUsedForCreating(env);
 
     // Then
     expect(got).toBe(DependencyManager.Yarn);
@@ -33,7 +36,7 @@ describe('createDependencyManager', () => {
     const env = {PNPM_HOME: '/path/to/pnpm'};
 
     // When
-    const got = createDependencyManager(env);
+    const got = dependencyManagerUsedForCreating(env);
 
     // Then
     expect(got).toBe(DependencyManager.Pnpm);
@@ -41,7 +44,7 @@ describe('createDependencyManager', () => {
 
   it('throws an bug error when the package manager cannot be determined', () => {
     expect(() => {
-      createDependencyManager({});
+      dependencyManagerUsedForCreating({});
     }).toThrow(
       new Bug(
         "Couldn't determine the dependency used to run the create workflow",

@@ -24,10 +24,18 @@ module.exports = {
     'kit/introduction',
     'kit/principles',
     'kit/naming-conventions',
-    'kit/authentication',
-    'kit/api-clients',
-    'kit/error-handling',
-    'kit/output',
-    'kit/dependency',
+    {
+      type: 'category',
+      label: 'Modules',
+      collapsible: true,
+      collapsed: true,
+      items: [
+        'kit/modules/dependency',
+        'kit/modules/api',
+        'kit/modules/dependency',
+        'kit/modules/error',
+        'kit/modules/authentication',
+      ],
+    },
   ],
 };

@@ -1,5 +1,5 @@
 ---
-title: Dependency
+title: dependency
 ---
 
 The `dependency` module provides utilities for interacting with the dependency management area of the environment.
@@ -21,7 +21,7 @@ To determine the dependency manager used to run the command,
 ```ts
 import { dependencty } from "@shopify/cli-kit"
 
-const dependencyManager = createDependencyManager(); // dependency.DependencyManager
+const dependencyManager = dependencyManagerUsedForCreating(); // dependency.DependencyManager
 ```
 
 With that information the `create` command can use the same dependency manager to install the dependencies of the generated project.

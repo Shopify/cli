@@ -11,7 +11,9 @@ export enum DependencyManager {
  * @param env {Object} The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function createDependencyManager(env = process.env): DependencyManager {
+export function dependencyManagerUsedForCreating(
+  env = process.env,
+): DependencyManager {
   if (env.npm_lifecycle_event === 'npx') {
     return DependencyManager.Npm;
     // has key PNPM_HOME
