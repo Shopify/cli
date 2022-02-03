@@ -1,3 +1,5 @@
+import pc from 'picocolors';
+
 export const success = (content: string) => {
-  console.log(`🎉 ${content}`);
+  console.log(pc.green(`🎉 ${content}`));
 };
