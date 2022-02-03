@@ -1,3 +1,5 @@
+import {it, describe, expect} from 'vitest';
+
 import {template as templatePath} from './paths';
 
 describe('template', () => {

@@ -19,6 +19,27 @@ open:
   app: http://localhost:3000
 
 commands:
+  shopify:
+    desc: 'Runs the Shopify CLI'
+    run: packages/cli/bin/shopify-dev.js
+  create-app:
+    desc: 'Runs the create-app CLI'
+    run: packages/create-app/bin/create-app-dev.js
+  test:
+    desc: 'Runs the tests'
+    run: yarn run test
+  build:
+    desc: 'Build the project'
+    run: yarn run build
+  lint:
+    desc: 'Lint the project'
+    run: yarn run lint
+  lint:fix:
+    desc: 'Fix the lint issues in the project'
+    run: yarn run lint:fix
+  tsc:
+    desc: 'Type-check the project'
+    run: yarn run tsc
   server:
     depends-railgun: true
     desc: Run docusaurus documentation local server

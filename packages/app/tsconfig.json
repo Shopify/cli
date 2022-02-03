@@ -2,11 +2,15 @@
   "extends": "../../configurations/tsconfig.json",
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist"],
+  "references": [{"path": "../cli-kit"}],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
+    "baseUrl": "src",
     "composite": true,
-    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+    "tsBuildInfoFile": ".build/tsconfig.build.tsbuildinfo",
+    "paths": {
+      "@shopify/cli-kit": ["../cli-kit/src"]
+    }
   }
 }

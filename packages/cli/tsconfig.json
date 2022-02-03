@@ -2,6 +2,7 @@
   "extends": "../../configurations/tsconfig.json",
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist"],
+  "references": [{"path": "../cli-kit"}],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

@@ -1,0 +1,24 @@
+{
+  "name": "@shopify/features",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "true",
+    "build": "true",
+    "lint": "prettier -c **/*.ts && eslint **/*.ts",
+    "lint:fix": "prettier **/*.ts && eslint **/*.ts --fix",
+    "test": "cucumber-js -p default",
+    "tsc": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^8.0.0-rc.2",
+    "@types/cucumber": "^7.0.0",
+    "cucumber-junit-formatter": "^0.2.2",
+    "cucumber-pretty": "^6.0.1"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../package.json"
+    ]
+  }
+}

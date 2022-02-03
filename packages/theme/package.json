@@ -3,8 +3,7 @@
   "version": "0.5.2",
   "private": true,
   "description": "Utilities building and publishing themes",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "type": "module",
   "files": [
     "/dist",
     "/npm-shrinkwrap.json"
@@ -15,14 +14,12 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "shx rm -rf dist && tsc -b tsconfig.dist.json",
-    "build:watch": "tsc -b tsconfig.dist.json --watch",
-    "prepublishOnly": "yarn run build",
+    "build": "true",
     "lint": "prettier -c src/** && eslint src/**",
     "lint:fix": "prettier src/** && eslint src/** --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "tsc": "tsc -b --incremental"
+    "test": "shx rm -rf dist && vitest run",
+    "test:watch": "vitest watch",
+    "tsc": "tsc -b"
   },
   "eslintConfig": {
     "extends": [
@@ -31,9 +28,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@shopify/core": "0.5.2",
-    "@oclif/core": "^1",
-    "@oclif/plugin-help": "^5"
+    "@shopify/cli-kit": "0.5.2"
   },
   "oclif": {
     "commands": "./dist/commands",

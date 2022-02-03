@@ -2,3 +2,4 @@ node_modules
 *.md
 bin
 dist
+*.d.ts

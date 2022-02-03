@@ -2,8 +2,6 @@
 title: 01.2022 Typescript re-write
 ---
 
-* **When:** January 2021
-
 As you might all know, for the past months the team has put a lot of thought into how the developer experience (DX) using the CLI for building for Shopify should be. It's been a long process of gathering context and different points of view and we finally settled on a decision that I'd like to share with you.
 
 First, we think the **CLI should make easy things easy, and hard things possible**. Unfortunately, the easy things are not easy at the moment. Building for Shopify requires doing a lot of plumbing yourself which involves making decisions, forming opinions, setting up your project's workspace. Users often end up spending their time figuring out cryptic errors and understanding some complexity and internal details of the platform that they get exposed to. **We need their mental energy to go into building.**

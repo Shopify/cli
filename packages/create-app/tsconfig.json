@@ -2,13 +2,14 @@
   "extends": "../../configurations/tsconfig.json",
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist"],
+  "references": [{"path": "../cli-kit"}],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    // We don't use src/ here because oclif's usage of ts-node
-    // doesn't support it an leads to "command not found" errors
-    // because it can't resolve the imports.
     "baseUrl": ".",
-    "composite": false
+    "composite": false,
+    "paths": {
+      "@shopify/cli-kit": ["../cli-kit/src"]
+    }
   }
 }

@@ -1,14 +1,21 @@
 import fs from 'fs';
+import {fileURLToPath} from 'url';
 
-import {findPathUp, BugError} from '@shopify/core';
+import {path, error} from '@shopify/cli-kit';
 
 export async function cliVersion(): Promise<string> {
-  const path =
-    (await findPathUp('@shopify/cli/package.json', __dirname, 'file')) ??
-    (await findPathUp('packages/cli/package.json', __dirname, 'file'));
-  if (!path) {
-    throw new BugError("Couldn't determine the version of the CLI");
+  const cliPackageJsonpath =
+    (await path.findUp('@shopify/cli/package.json', {
+      cwd: path.dirname(fileURLToPath(import.meta.url)),
+      type: 'file',
+    })) ??
+    (await path.findUp('packages/cli/package.json', {
+      cwd: path.dirname(fileURLToPath(import.meta.url)),
+      type: 'file',
+    }));
+  if (!cliPackageJsonpath) {
+    throw new error.Bug("Couldn't determine the version of the CLI");
   }
-  const packageJson = JSON.parse(fs.readFileSync(path, 'utf-8'));
+  const packageJson = JSON.parse(fs.readFileSync(cliPackageJsonpath, 'utf-8'));
   return packageJson.version;
 }

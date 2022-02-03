@@ -1,0 +1,64 @@
+{
+  "name": "@shopify/cli-kit",
+  "version": "0.5.2",
+  "private": false,
+  "description": "A set of utilities, interfaces, and models that are common across all the platform features",
+  "keywords": [
+    "shopify",
+    "shopify-cli",
+    "shopify-partners"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "/src",
+    "/npm-shrinkwrap.json"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "clean": "shx rm -rf dist",
+    "build": "shx rm -rf dist && rollup -c",
+    "prepublishOnly": "yarn run build",
+    "lint": "prettier -c src/** && eslint src/**",
+    "lint:fix": "prettier src/** && eslint src/** --fix",
+    "test": "shx rm -rf dist && vitest run",
+    "test:watch": "vitest watch",
+    "tsc": "tsc -b"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../package.json"
+    ]
+  },
+  "engine-strict": true,
+  "engines": {
+    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "devDependencies": {
+    "@types/inquirer": "^8.2.0",
+    "camelcase": "^6.3.0",
+    "fast-glob": "^3.2.11",
+    "find-up": "^6.2.0",
+    "inquirer": "^8.2.0",
+    "liquidjs": "^9.34.0",
+    "param-case": "^3.0.4",
+    "pathe": "^0.2.0",
+    "picocolors": "^1.0.0",
+    "term-size": "^3.0.1"
+  }
+}

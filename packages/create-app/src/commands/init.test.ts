@@ -1,13 +1,18 @@
+import {describe, it, expect, vi} from 'vitest';
+
 import {template} from '../utils/paths';
 import initService from '../services/init';
+import initPrompt from '../prompts/init';
 
 import Init from './init';
 
-jest.mock('utils/paths');
-jest.mock('services/init');
+vi.mock('../utils/paths');
+vi.mock('../services/init');
+vi.mock('../prompts/init');
 
-const templateMock = template as jest.Mock;
-const initServiceMock = initService as jest.Mock;
+const templateMock = vi.mocked(template);
+const initServiceMock = vi.mocked(initService);
+const initPromptMock = vi.mocked(initPrompt);
 
 describe('Init', function () {
   it('initializes the template using the service', async function () {
@@ -15,7 +20,12 @@ describe('Init', function () {
     const templatePath = '/path/to/template';
     const directory = '/path/to/output';
     const appName = 'MyApp';
+    const description = 'Description';
+
     templateMock.mockReturnValue(Promise.resolve(templatePath));
+    initPromptMock.mockReturnValue(
+      Promise.resolve({name: appName, description}),
+    );
 
     // When
     await Init.run(['--name', appName, '--path', directory]);
@@ -25,6 +35,10 @@ describe('Init', function () {
       name: appName,
       templatePath,
       directory,
+      description,
+    });
+    expect(initPromptMock).toHaveBeenCalledWith({
+      name: appName,
     });
   });
 });

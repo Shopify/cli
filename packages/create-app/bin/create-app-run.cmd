@@ -1,3 +1,3 @@
 @echo off
 
-node "%~dp0\create-app-run" %*
+node "%~dp0\create-app-run.js" %*

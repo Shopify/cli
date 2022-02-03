@@ -1,50 +1,63 @@
-// import {Plop, run} from 'plop';
-// import {path} from '@shopify/core';
-// import Listr from 'listr';
-// import minimist from 'minimist';
-// import {cliVersion as getCliVersion} from "../utils/versions";
+import {string, path, template, fs, system, output} from '@shopify/cli-kit';
+
+import {cliVersion} from '../utils/versions';
 
 interface InitOptions {
-  name?: string;
+  name: string;
+  description: string;
   directory: string;
   templatePath: string;
 }
 
-async function init(_: InitOptions) {
-  // // const cliVersion = await getCliVersion();
-  // const args = process.argv.slice(2);
-  // const argv = minimist(args);
-  // const plopWorkflow = [
-  //   {
-  //     title: 'Creating app',
-  //     task: () =>
-  //       Plop.launch(
-  //         {
-  //           cwd: process.cwd(),
-  //           configPath: path.join(__dirname, '../../templates/app-plopfile.js'),
-  //           require: argv.require,
-  //           completion: argv.completion,
-  //         },
-  //         (env) => {
-  //           const options = {
-  //             ...env,
-  //             dest: process.cwd(),
-  //           };
-  //           return run(options, undefined, true);
-  //         },
-  //       ),
-  //   },
-  // ];
-  // const tasks = new Listr([]);
-  // tasks
-  //   .run()
-  //   .then(() => {
-  //     console.log('The app has been successfully created');
-  //   })
-  //   .catch((err) => {
-  //     console.error(err);
-  //   });
-  console.log('it works');
+async function init(options: InitOptions) {
+  const outputDirectory = path.join(
+    options.directory,
+    string.hyphenize(options.name),
+  );
+  console.log('Creating the app...');
+  createApp({...options, outputDirectory});
+  output.success(
+    output.content`App successfully created at ${output.token.path(
+      outputDirectory,
+    )}`,
+  );
+}
+
+async function createApp(
+  options: InitOptions & {outputDirectory: string},
+): Promise<void> {
+  const templateFiles: string[] = await path.glob(
+    path.join(options.templatePath, '**/*'),
+  );
+  // We sort them topologically to start creating
+  // them from the most nested paths.
+  const sortedTemplateFiles = templateFiles
+    .map((path) => path.split('/'))
+    .sort((lhs, rhs) => (lhs.length < rhs.length ? 1 : -1))
+    .map((components) => components.join('/'));
+
+  const templateData = {
+    name: options.name,
+    description: options.description,
+    cliVersion,
+  };
+
+  sortedTemplateFiles.forEach(async (templateItemPath) => {
+    const outputPath = await template(
+      path.join(
+        options.outputDirectory,
+        path.relative(options.templatePath, templateItemPath),
+      ),
+    )(templateData);
+    if (fs.isDirectory(templateItemPath)) {
+      await system.mkdir(outputPath);
+    } else {
+      await system.mkdir(path.dirname(outputPath));
+      const content = await fs.readFile(templateItemPath);
+      const contentOutput = await template(content)(templateData);
+      await fs.write(outputPath, contentOutput);
+    }
+  });
 }
 
 export default init;
