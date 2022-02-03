@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.11.0
+
+### Minor Changes
+
+- Print the env. variables when creating apps
+
 ## 0.10.0
 
 ### Minor Changes
