@@ -1,4 +1,3 @@
-import {string} from 'index';
 import pc from 'picocolors';
 
 enum ContentTokenType {
