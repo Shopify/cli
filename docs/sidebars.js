@@ -27,5 +27,6 @@ module.exports = {
     'kit/authentication',
     'kit/api-clients',
     'kit/error-handling',
+    'kit/output',
   ],
 };

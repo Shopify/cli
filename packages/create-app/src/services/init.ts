@@ -16,7 +16,11 @@ async function init(options: InitOptions) {
   );
   console.log('Creating the app...');
   createApp({...options, outputDirectory});
-  output.success(`App successfully created at ${outputDirectory}`);
+  output.success(
+    output.content`App successfully created at ${output.token.path(
+      outputDirectory,
+    )}`,
+  );
 }
 
 async function createApp(
