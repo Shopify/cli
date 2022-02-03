@@ -28,7 +28,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@shopify/cli-kit": "0.5.2"
+    "@shopify/cli-kit": "0.8.0"
   },
   "oclif": {
     "commands": "./dist/commands",

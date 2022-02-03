@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 0.8.0
+
+### Minor Changes
+
+- b07c608: Rename @shopify/core to @shopify/cli-kit and finish up the create-app workflow
+
+### Patch Changes
+
+- Updated dependencies [b07c608]
+  - @shopify/cli-kit@0.8.0
+
 ## 0.6.0
 
 ### Minor Changes
