@@ -7,6 +7,7 @@ import {
   output,
   version,
   os,
+  ui,
 } from '@shopify/cli-kit';
 
 import {template as getTemplatePath} from '../utils/paths';
@@ -25,14 +26,34 @@ async function init(options: InitOptions) {
     options.directory,
     string.hyphenize(options.name),
   );
-  console.log('Creating the app...');
-  createApp({...options, outputDirectory, templatePath, cliVersion, user});
+  await ui.list([
+    {
+      title: 'Creating the app',
+      task: () => {
+        return createApp({
+          ...options,
+          outputDirectory,
+          templatePath,
+          cliVersion,
+          user,
+        });
+      },
+    },
+    {
+      title: 'Installing dependencies',
+      task: () => {
+        return installDependencies();
+      },
+    },
+  ]);
   output.success(
     output.content`App successfully created at ${output.token.path(
       outputDirectory,
     )}`,
   );
 }
+
+async function installDependencies(): Promise<void> {}
 
 async function createApp(
   options: InitOptions & {
@@ -68,9 +89,9 @@ async function createApp(
       ),
     )(templateData);
     if (fs.isDirectory(templateItemPath)) {
-      await system.mkdir(outputPath);
+      await fs.mkdir(outputPath);
     } else {
-      await system.mkdir(path.dirname(outputPath));
+      await fs.mkdir(path.dirname(outputPath));
       const content = await fs.readFile(templateItemPath);
       const contentOutput = await template(content)(templateData);
       await fs.write(outputPath, contentOutput);
@@ -79,3 +100,8 @@ async function createApp(
 }
 
 export default init;
+
+// TODO: Install the dependencies
+// TODO: Use Listr to show progress
+// TODO: Write unit tests for the service
+// TODO: Write acceptance tests

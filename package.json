@@ -97,5 +97,8 @@
       ]
     }
   },
-  "prettier": "@shopify/prettier-config"
+  "prettier": "@shopify/prettier-config",
+  "resolutions": {
+    "mimic-fn": "2.1.0"
+  }
 }
