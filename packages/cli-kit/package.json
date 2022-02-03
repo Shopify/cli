@@ -51,13 +51,15 @@
   ],
   "devDependencies": {
     "camelcase": "^6.3.0",
+    "enquirer": "^2.3.6",
     "fast-glob": "^3.2.11",
     "find-up": "^6.2.0",
+    "find-versions": "^5.0.0",
+    "latest-version": "^6.0.0",
     "liquidjs": "^9.34.0",
     "param-case": "^3.0.4",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
-    "term-size": "^3.0.1",
-    "enquirer": "^2.3.6"
+    "term-size": "^3.0.1"
   }
 }

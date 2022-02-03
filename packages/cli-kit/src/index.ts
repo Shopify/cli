@@ -7,3 +7,4 @@ export * as path from './path';
 export * as fs from './fs';
 export * as output from './output';
 export * as dependency from './dependency';
+export * as version from './version';
