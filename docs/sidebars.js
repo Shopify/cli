@@ -28,5 +28,6 @@ module.exports = {
     'kit/api-clients',
     'kit/error-handling',
     'kit/output',
+    'kit/dependency',
   ],
 };
