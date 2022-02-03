@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.10.0
+
+### Minor Changes
+
+- Fix prompts not working when bundling the code
+
 ## 0.9.0
 
 ### Minor Changes

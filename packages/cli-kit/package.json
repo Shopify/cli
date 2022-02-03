@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -50,15 +50,14 @@
     "win32"
   ],
   "devDependencies": {
-    "@types/inquirer": "^8.2.0",
     "camelcase": "^6.3.0",
     "fast-glob": "^3.2.11",
     "find-up": "^6.2.0",
-    "inquirer": "^8.2.0",
     "liquidjs": "^9.34.0",
     "param-case": "^3.0.4",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
-    "term-size": "^3.0.1"
+    "term-size": "^3.0.1",
+    "enquirer": "^2.3.6"
   }
 }

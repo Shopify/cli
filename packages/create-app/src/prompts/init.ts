@@ -14,20 +14,22 @@ const init = async (
   options: InitOptions,
   prompt = ui.prompt,
 ): Promise<InitOutput> => {
-  return prompt([
-    {
+  const questions: ui.Question[] = [];
+  if (!options.name) {
+    questions.push({
       type: 'input',
       name: 'name',
       message: 'How would you like to name the app?',
-      when: () => !options.name,
-    },
-    {
+    });
+  }
+  if (!options.description) {
+    questions.push({
       type: 'input',
       name: 'description',
       message: "What's the application for?",
-      when: () => !options.description,
-    },
-  ]);
+    });
+  }
+  return prompt(questions);
 };
 
 export default init;

@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 0.10.0
+
+### Minor Changes
+
+- Fix prompts not working when bundling the code
+
 ## 0.8.0
 
 ### Minor Changes

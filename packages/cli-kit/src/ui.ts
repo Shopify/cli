@@ -1,9 +1,11 @@
-import inquirer from 'inquirer';
-import type {Answers, QuestionCollection} from 'inquirer';
+import enquirer from 'enquirer';
 
-export const prompt = <T extends Answers = Answers>(
-  questions: QuestionCollection<T>,
-  initialAnswers?: Partial<T>,
-): Promise<T> => {
-  return inquirer.prompt(questions, initialAnswers);
+export interface Question {
+  type: 'input';
+  name: string;
+  message: string;
+}
+
+export const prompt = <T>(questions: Question[]): Promise<T> => {
+  return enquirer.prompt(questions);
 };

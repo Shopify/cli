@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "type": "module",
@@ -46,7 +46,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "0.5.10",
-    "@shopify/cli-kit": "0.8.0"
+    "@shopify/cli-kit": "0.10.0"
   },
   "engine-strict": true,
   "engines": {
