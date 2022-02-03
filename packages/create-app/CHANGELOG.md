@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.9.0
+
+### Minor Changes
+
+- Fix missing readable-stream dependency
+
 ## 0.8.0
 
 ### Minor Changes

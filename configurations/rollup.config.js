@@ -33,7 +33,7 @@ export const plugins = (packagePath) => {
   ];
 };
 
-export const external = ['readable-stream', 'chalk', 'glob'];
+export const external = [];
 
 const configuration = () => [
   // create-app
