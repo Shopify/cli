@@ -11,3 +11,4 @@ export * as version from './version';
 export * as os from './os';
 export * as environment from './environment';
 export * as session from './session/index';
+export * as schema from './schema';

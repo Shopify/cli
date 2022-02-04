@@ -1,57 +1,106 @@
-import fs from "fs";
-import toml from "toml";
-import {FatalError, path} from "@shopify/support";
-import { configurationFileNames} from "../constants";
-import { z } from "zod";
+import {fs, error, path, schema} from '@shopify/cli-kit';
 
-const AppConfigurationSchema = z.object({
-    name: z.string()
+import {blocks, configurationFileNames} from '../constants';
+
+const AppConfigurationSchema = schema.z.object({
+  name: schema.z.string(),
 });
 
-type AppConfiguration = z.infer<typeof AppConfigurationSchema>
+type AppConfiguration = schema.z.infer<typeof AppConfigurationSchema>;
 
-type ScriptConfiguration = {
-    name: string;
+const UIExtensionConfigurationSchema = schema.z.object({
+  name: schema.z.string(),
+});
+
+type UIExtensionConfiguration = schema.z.infer<
+  typeof UIExtensionConfigurationSchema
+>;
+
+const ScriptConfigurationSchema = schema.z.object({
+  name: schema.z.string(),
+});
+
+type ScriptConfiguration = schema.z.infer<typeof ScriptConfigurationSchema>;
+
+interface Script {
+  configuration: ScriptConfiguration;
+  directory: string;
 }
 
-type Script = {
-    configuration: ScriptConfiguration
-    directory: string
+interface UIExtension {
+  configuration: UIExtensionConfiguration;
+  directory: string;
 }
 
-type UIExtensionConfiguration = {
-    name: string;
-}
-
-type UIExtension = {
-    configuration: UIExtensionConfiguration;
-    directory: string;
-}
-
-type App = {
-    directory: string;
-    configuration: AppConfiguration
-    scripts: Script[]
-    uiExtensions: UIExtension[]
+interface App {
+  directory: string;
+  configuration: AppConfiguration;
+  scripts: Script[];
+  uiExtensions: UIExtension[];
 }
 
 export async function load(directory: string): Promise<App> {
-    if (!fs.existsSync(directory)) {
-        throw new FatalError(`Couldn't find directory ${directory}`)
-    }
-    const appConfigurationPath = path.join(directory, configurationFileNames.app);
-    if (!fs.existsSync(appConfigurationPath)) {
-        throw new FatalError(`Couldn't find the app configuration file at ${appConfigurationPath}`)
-    }
-    const appConfigurationContent = fs.readFileSync(appConfigurationPath, "utf-8");
-    const appConfigurationObject = toml.parse(appConfigurationContent);
-    const appConfiguration = AppConfigurationSchema.parse(appConfigurationObject);
+  if (!fs.exists(directory)) {
+    throw new error.Abort(`Couldn't find directory ${directory}`);
+  }
+  const configurationPath = path.join(directory, configurationFileNames.app);
+  const configurationObject = loadConfigurationFile(configurationPath);
+  const configuration = AppConfigurationSchema.parse(configurationObject);
+  const scripts = await loadScripts(directory);
+  const uiExtensions = await loadExtensions(directory);
 
+  return {
+    directory,
+    configuration,
+    scripts,
+    uiExtensions,
+  };
+}
 
-    return {
-        directory: directory,
-        configuration: appConfiguration,
-        scripts: [],
-        uiExtensions: []
-    }
+function loadConfigurationFile(path: string): object {
+  if (!fs.exists(path)) {
+    throw new error.Abort(`Couldn't find the configuration file at ${path}`);
+  }
+  const configurationContent = fs.read(path);
+  return schema.toml.parse(configurationContent);
+}
+
+async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
+  const extensionsPath = path.join(
+    rootDirectory,
+    `${blocks.uiExtensions.directoryName}/*`,
+  );
+  return (await path.glob(extensionsPath, {onlyDirectories: true})).map(
+    (directory: string) => {
+      const configurationPath = path.join(
+        directory,
+        blocks.uiExtensions.configurationName,
+      );
+      const configurationObject = loadConfigurationFile(configurationPath);
+      const configuration =
+        UIExtensionConfigurationSchema.parse(configurationObject);
+
+      return {directory, configuration};
+    },
+  );
+}
+
+async function loadScripts(rootDirectory: string): Promise<Script[]> {
+  const scriptsPath = path.join(
+    rootDirectory,
+    `${blocks.scripts.directoryName}/*`,
+  );
+  return (await path.glob(scriptsPath, {onlyDirectories: true})).map(
+    (directory: string) => {
+      const configurationPath = path.join(
+        directory,
+        blocks.scripts.configurationName,
+      );
+      const configurationObject = loadConfigurationFile(configurationPath);
+      const configuration =
+        ScriptConfigurationSchema.parse(configurationObject);
+
+      return {directory, configuration};
+    },
+  );
 }

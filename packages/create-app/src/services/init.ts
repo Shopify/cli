@@ -106,7 +106,7 @@ async function createApp(
       await fs.mkdir(path.dirname(outputPath));
       const content = await fs.readFile(templateItemPath);
       const contentOutput = await template(content)(templateData);
-      await fs.write(outputPath, contentOutput);
+      fs.write(outputPath, contentOutput);
     }
   });
 }

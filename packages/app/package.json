@@ -25,6 +25,7 @@
   "dependencies": {
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
+    "fast-glob": "^3.2.11",
     "toml": "^3.0.0",
     "zod": "^3.11.6"
   },
