@@ -3,13 +3,16 @@ import {
   path,
   template,
   fs,
-  system,
   output,
   version,
   os,
   ui,
+  dependency,
 } from '@shopify/cli-kit';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import cliPackageVersion from '../../../cli/package.json';
 import {template as getTemplatePath} from '../utils/paths';
 
 interface InitOptions {
@@ -21,7 +24,7 @@ interface InitOptions {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? '';
   const templatePath = await getTemplatePath('app');
-  const cliVersion = await version.latestNpmPackageVersion('@shopify/cli');
+  const cliVersion = cliPackageVersion.version;
   const outputDirectory = path.join(
     options.directory,
     string.hyphenize(options.name),
@@ -29,7 +32,7 @@ async function init(options: InitOptions) {
   await ui.list([
     {
       title: 'Creating the app',
-      task: () => {
+      task: async () => {
         return createApp({
           ...options,
           outputDirectory,
@@ -41,8 +44,8 @@ async function init(options: InitOptions) {
     },
     {
       title: 'Installing dependencies',
-      task: () => {
-        return installDependencies();
+      task: async () => {
+        return installDependencies(outputDirectory);
       },
     },
   ]);
@@ -53,7 +56,12 @@ async function init(options: InitOptions) {
   );
 }
 
-async function installDependencies(): Promise<void> {}
+async function installDependencies(directory: string): Promise<void> {
+  await dependency.install(
+    directory,
+    dependency.dependencyManagerUsedForCreating(),
+  );
+}
 
 async function createApp(
   options: InitOptions & {
@@ -101,7 +109,5 @@ async function createApp(
 
 export default init;
 
-// TODO: Install the dependencies
-// TODO: Use Listr to show progress
 // TODO: Write unit tests for the service
 // TODO: Write acceptance tests

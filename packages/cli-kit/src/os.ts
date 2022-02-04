@@ -28,6 +28,9 @@ const cleanWindowsCommand = (value: string) => value.replace(/^.*\\/, '');
 
 const makeUsernameFromId = (userId: string) => `no-username-${userId}`;
 
+// This code has been vendored from https://github.com/sindresorhus/username
+// because adding it as a transtive dependency causes conflicts with other
+// packages that haven't been yet migrated to the latest version.
 export const username = async (): Promise<string | null> => {
   const environmentVariable = getEnvironmentVariable();
   if (environmentVariable) {

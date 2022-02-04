@@ -1,9 +1,10 @@
 import {Bug} from './error';
+import {exec} from './system';
 
 export enum DependencyManager {
-  Npm,
-  Yarn,
-  Pnpm,
+  Npm = 'npm',
+  Yarn = 'yarn',
+  Pnpm = 'pnpm',
 }
 
 /**
@@ -26,4 +27,17 @@ export function dependencyManagerUsedForCreating(
       "Couldn't determine the dependency used to run the create workflow",
     );
   }
+}
+
+/**
+ * Installs the dependencies in the given directory.
+ * @param directory {string} The directory that contains the package.json
+ * @param dependencyManager {DependencyManager} The dependency manager to use to install the dependencies.
+ * @returns
+ */
+export async function install(
+  directory: string,
+  dependencyManager: DependencyManager,
+) {
+  return exec(dependencyManager, ['install'], {cwd: directory});
 }
