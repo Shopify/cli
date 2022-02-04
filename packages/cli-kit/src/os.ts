@@ -1,1 +1,3 @@
-export {username} from 'username';
+export const username = async () => {
+  return '';
+};

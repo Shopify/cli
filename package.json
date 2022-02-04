@@ -96,6 +96,6 @@
   },
   "prettier": "@shopify/prettier-config",
   "resolutions": {
-    "mimic-fn": "2.1.0"
+    "onetime": "5.1.2"
   }
 }
