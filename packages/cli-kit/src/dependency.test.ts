@@ -1,10 +1,17 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, vi} from 'vitest';
+
 
 import {Bug} from './error';
 import {
   dependencyManagerUsedForCreating,
   DependencyManager,
+  install,
 } from './dependency';
+import {exec} from './system';
+
+
+vi.mock("./system")
+const mockedExec = vi.mocked(exec)
 
 describe('dependencyManagerUsedForCreating', () => {
   it('returns npm if the lifecycle event says npx', () => {
@@ -52,3 +59,17 @@ describe('dependencyManagerUsedForCreating', () => {
     );
   });
 });
+
+describe("install", () => {
+  it("runs the install command", async () => {
+    // Given
+    const dependencyManager = DependencyManager.Npm
+    const directory = "/path/to/project"
+
+    // When
+    await install(directory, dependencyManager);
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith(dependencyManager, ["install"], {cwd: directory})
+  })
+})

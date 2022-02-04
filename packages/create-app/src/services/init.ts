@@ -4,7 +4,6 @@ import {
   template,
   fs,
   output,
-  version,
   os,
   ui,
   dependency,

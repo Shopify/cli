@@ -1,12 +1,18 @@
 {
-  "name": "@shopify/app",
-  "version": "0.5.2",
+  "name": "@shopify/cli-testing",
+  "version": "0.1.0",
   "private": true,
-  "description": "Utilities for loading, building, and publishing apps.",
+  "description": "A set of utilities for writing unit tests",
   "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
-    "/templates",
-    "/dist",
+    "/src",
     "/npm-shrinkwrap.json"
   ],
   "scripts": {
@@ -23,13 +29,14 @@
       "../../package.json"
     ]
   },
-  "dependencies": {},
-  "devDependencies": {
-    "@shopify/cli-kit": "0.10.0",
-    "@shopify/cli-testing": "0.1.0"
+  "engine-strict": true,
+  "engines": {
+    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
   },
-  "oclif": {
-    "commands": "./dist/commands",
-    "plugins": []
-  }
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "devDependencies": {}
 }
