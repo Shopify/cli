@@ -5,7 +5,6 @@
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
-    "/templates",
     "/dist",
     "/npm-shrinkwrap.json"
   ],
