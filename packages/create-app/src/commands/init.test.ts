@@ -15,7 +15,6 @@ const initPromptMock = vi.mocked(initPrompt);
 describe('Init', function () {
   it('initializes the template using the service', async function () {
     // Given
-    const templatePath = '/path/to/template';
     const directory = '/path/to/output';
     const appName = 'MyApp';
     const description = 'Description';
