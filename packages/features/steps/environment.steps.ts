@@ -3,7 +3,13 @@
 import fs from 'fs';
 
 import shell from 'shelljs';
-import {Given, After, BeforeAll, AfterAll} from '@cucumber/cucumber';
+import {
+  Given,
+  After,
+  BeforeAll,
+  AfterAll,
+  setDefaultTimeout,
+} from '@cucumber/cucumber';
 import tmp from 'tmp';
 import rimraf from 'rimraf';
 import path from 'pathe';
@@ -14,6 +20,13 @@ import {exec} from '../lib/system';
 let sharedTemporaryDirectory: string | undefined;
 let createAppExecutable: string | undefined;
 let cliExecutable: string | undefined;
+
+// In the case of debug we want to disable
+// the timeouts to be able to sleep the
+// execution and debug things.
+if (process.env.DEBUG === '1') {
+  setDefaultTimeout(-1);
+}
 
 Given('I have a working directory', function () {
   this.temporaryDirectory = tmp.dirSync().name;
