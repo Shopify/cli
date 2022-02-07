@@ -35,18 +35,17 @@ let createAppDirectory: string | undefined;
 let createAppExecutable: string | undefined;
 
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
-  console.debug(
-    'Building @shopify/cli & @shopify/create-app for running the tests',
-  );
-  cliDirectory = tmp.dirSync().name;
-  cliExecutable = path.join(cliDirectory, 'bin/shopify-run.js');
-  createAppDirectory = tmp.dirSync().name;
-  createAppExecutable = path.join(createAppDirectory, 'bin/create-app-run.js');
-
-  await installCLI(createAppDevPackagePath, 'create-app', createAppDirectory, [
-    'templates',
-  ]);
-  await installCLI(cliPackagePath, 'shopify', cliDirectory, ['bin']);
+  // console.debug(
+  //   'Building @shopify/cli & @shopify/create-app for running the tests',
+  // );
+  // cliDirectory = tmp.dirSync().name;
+  // cliExecutable = path.join(cliDirectory, 'bin/shopify-run.js');
+  // createAppDirectory = tmp.dirSync().name;
+  // createAppExecutable = path.join(createAppDirectory, 'bin/create-app-run.js');
+  // await installCLI(createAppDevPackagePath, 'create-app', createAppDirectory, [
+  //   'templates',
+  // ]);
+  // await installCLI(cliPackagePath, 'shopify', cliDirectory, ['bin']);
 });
 
 AfterAll(function () {

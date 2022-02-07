@@ -20,3 +20,13 @@ export class Abort extends Fatal {}
  * A bug error is an error that represents a bug and therefore should be reported.
  */
 export class Bug extends Fatal {}
+
+/**
+ * A function that handles errors that blow up in the CLI.
+ * @param error Error to be handled.
+ * @returns A promise that resolves with the error passed.
+ */
+export function handler(error: Error): Promise<Error> {
+  console.log(error);
+  return Promise.resolve(error);
+}
