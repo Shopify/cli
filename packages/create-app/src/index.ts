@@ -1,10 +1,17 @@
-import {run, flush, Errors} from '@oclif/core';
-import Bugsnag from '@bugsnag/js';
+import {run, flush, settings, Errors} from '@oclif/core';
 import {error as kitError, environment} from '@shopify/cli-kit';
 
 function runCreateApp() {
-  if (!process.argv.includes('init')) {
-    process.argv.push('init');
+  const initIndex = process.argv.findIndex((arg) => arg.includes('init'));
+  if (initIndex === -1) {
+    const initIndex =
+      process.argv.findIndex((arg) => arg.includes('bin/create-app-run.js')) +
+      1;
+    process.argv.splice(initIndex, 0, 'init');
+  }
+
+  if (environment.isDebug()) {
+    settings.debug = true;
   }
 
   // Start the CLI

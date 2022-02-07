@@ -7,4 +7,4 @@ echo "Building..."
 yarn --cwd $DIRECTORY/../cli-kit build &> /dev/null
 yarn --cwd $DIRECTORY/.. build &> /dev/null
 
-$DIRECTORY/shopify-run.js
+$DIRECTORY/shopify-run.js $@

@@ -6,4 +6,4 @@ DIRECTORY=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 echo "Building..."
 yarn --cwd $DIRECTORY/.. build &> /dev/null
 
-$DIRECTORY/create-app-run.js
+$DIRECTORY/create-app-run.js $@

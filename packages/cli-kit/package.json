@@ -50,7 +50,6 @@
     "win32"
   ],
   "devDependencies": {
-    "camelcase": "^6.3.0",
     "enquirer": "^2.3.6",
     "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
@@ -59,9 +58,11 @@
     "latest-version": "^6.0.0",
     "liquidjs": "^9.34.0",
     "listr2": "^4.0.2",
-    "param-case": "^3.0.4",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
     "term-size": "^3.0.1"
+  },
+  "dependencies": {
+    "change-case": "^4.1.2"
   }
 }

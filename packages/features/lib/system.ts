@@ -26,12 +26,12 @@ export const exec = async (command: string, options?: ExecOptions) => {
 
     childProcess.stdout?.on('data', (stdout) => {
       if (isDebug) {
-        console.log(stdout);
+        process.stdout.write(stdout);
       }
     });
     childProcess.stderr?.on('data', (stderr) => {
       if (isDebug) {
-        console.error(stderr);
+        process.stderr.write(stderr);
       }
       errorOutput = errorOutput.concat(stderr);
     });

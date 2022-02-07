@@ -30,6 +30,9 @@ async function cliDependencies() {
 }
 
 async function pack(outputDirectory) {
+    let cliExecutablePath;
+    let createAppExecutablePath;
+
     await tempy.directory.task(async (temporaryDirectory) => {
         const clisDirectory = path.join(outputDirectory, "clis");
         if (fs.existsSync(clisDirectory)) {
@@ -83,8 +86,12 @@ async function pack(outputDirectory) {
         await fs.promises.mkdir(path.dirname(createAppPath), {recursive: true})
         await execa("tar", ["-zx", "-f", createAppPackPath], {cwd: unpackPath})
         await fs.promises.rename(path.join(unpackPath, "package"), createAppPath)
+
+        cliExecutablePath = path.join(cliPath, "bin/shopify-run.js")
+        createAppExecutablePath = path.join(createAppPath, "bin/create-app-run.js")
     })
 
+    return {cliExecutablePath, createAppExecutablePath}
 }
 
 export default pack;
