@@ -107,6 +107,3 @@ async function createApp(
 }
 
 export default init;
-
-// TODO: Write unit tests for the service
-// TODO: Write acceptance tests
