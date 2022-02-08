@@ -40,6 +40,5 @@ export async function install(
 ) {
   await exec(dependencyManager, ['install'], {
     cwd: directory,
-    stdio: 'inherit',
   });
 }

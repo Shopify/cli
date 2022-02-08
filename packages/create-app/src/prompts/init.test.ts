@@ -6,12 +6,13 @@ describe('init', () => {
   it('when name and description are not passed', async () => {
     const prompt = vi.fn();
     const answers = {name: 'app', description: 'description'};
+    const options = {};
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers));
 
     // When
-    const got = await init({}, prompt);
+    const got = await init(options, prompt);
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
@@ -26,18 +27,19 @@ describe('init', () => {
         message: "What's the application for?",
       },
     ]);
-    expect(got).toBe(answers);
+    expect(got).toEqual({...options, ...answers});
   });
 
   it('when name is passed', async () => {
     const prompt = vi.fn();
     const answers = {name: 'app', description: 'description'};
+    const options = {name: 'app'};
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers));
 
     // When
-    const got = await init({name: 'app'}, prompt);
+    const got = await init(options, prompt);
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
@@ -47,18 +49,19 @@ describe('init', () => {
         message: "What's the application for?",
       },
     ]);
-    expect(got).toBe(answers);
+    expect(got).toEqual({...options, ...answers});
   });
 
   it('when description is passed', async () => {
     const prompt = vi.fn();
     const answers = {name: 'app', description: 'description'};
+    const options = {description: 'description'};
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers));
 
     // When
-    const got = await init({description: 'description'}, prompt);
+    const got = await init(options, prompt);
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
@@ -68,6 +71,6 @@ describe('init', () => {
         message: 'How would you like to name the app?',
       },
     ]);
-    expect(got).toBe(answers);
+    expect(got).toEqual({...options, ...answers});
   });
 });
