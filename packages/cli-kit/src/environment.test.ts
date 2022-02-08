@@ -2,7 +2,6 @@ import {expect, it, describe} from 'vitest';
 
 import {
   isDebug,
-  isRelease,
   partnersApiEnvironment,
   adminApiEnvironment,
   storefrontRendererApiEnvironment,
@@ -13,23 +12,10 @@ import {Environment} from './network/service';
 describe('isDebug', () => {
   it('returns true when SHOPIFY_CONFIG is debug', () => {
     // Given
-    const env = {SHOPIFY_CONFIG: 'debug'};
+    const env = {DEBUG: '1'};
 
     // When
     const got = isDebug(env);
-
-    // Then
-    expect(got).toBe(true);
-  });
-});
-
-describe('isRelease', () => {
-  it("returns true when SHOPIFY_CONFIG isn't defined", () => {
-    // Given
-    const env = {};
-
-    // When
-    const got = isRelease(env);
 
     // Then
     expect(got).toBe(true);

@@ -17,22 +17,20 @@ function serviceEnvironment(value: undefined | string): Environment {
   }
 }
 
+function isTruthy(variable: string | undefined): boolean {
+  if (!variable) {
+    return false;
+  }
+  return ['1', 'true', 'TRUE', 'yes', 'YES'].includes(variable);
+}
+
 /**
  * Returns true if the CLI is running in debug mode.
  * @param env The environment variables from the environment of the current process.
  * @returns true if SHOPIFY_CONFIG is debug
  */
 export function isDebug(env = process.env): boolean {
-  return env[constants.environmentVariables.config] === 'debug';
-}
-
-/**
- * Returns true if the CLI is running in release mode.
- * @param env The environment variables from the environment of the current process.
- * @returns true if SHOPIFY_CONFIG isn't debug
- */
-export function isRelease(env = process.env): boolean {
-  return env[constants.environmentVariables.config] !== 'debug';
+  return isTruthy(env[constants.environmentVariables.debug]);
 }
 
 /**

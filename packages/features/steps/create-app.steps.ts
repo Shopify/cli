@@ -1,9 +1,18 @@
-import {When} from '@cucumber/cucumber';
-import path from 'pathe';
+import {Then} from '@cucumber/cucumber';
 
 import {exec} from '../lib/system';
 
-When(/I create an app named (.+)/, function (appName: string) {
-  const appPath = path.join(this.temporaryDirectory, appName);
-  exec(`${this.createAppExecutable} --name ${appName} --path ${appPath}`);
-});
+Then(
+  /I create an app named (.+)/,
+  {timeout: 2 * 60 * 1000},
+  async function (appName: string) {
+    await exec(this.createAppExecutable, [
+      '--name',
+      appName,
+      '--path',
+      this.temporaryDirectory,
+      '--description',
+      'Description',
+    ]);
+  },
+);

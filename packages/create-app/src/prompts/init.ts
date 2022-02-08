@@ -29,7 +29,8 @@ const init = async (
       message: "What's the application for?",
     });
   }
-  return prompt(questions);
+  const promptOutput: InitOutput = await prompt(questions);
+  return {...options, ...promptOutput};
 };
 
 export default init;

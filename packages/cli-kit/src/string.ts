@@ -1,2 +1,2 @@
-export {default as camelize} from 'camelcase';
-export {paramCase as hyphenize} from 'param-case';
+export {camelCase as camelize} from 'change-case';
+export {paramCase as hyphenize} from 'change-case';

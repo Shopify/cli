@@ -1,5 +1,5 @@
 ---
-title: Output
+title: output
 ---
 
 The module `output` provides a set of utilities for presenting information to the user.

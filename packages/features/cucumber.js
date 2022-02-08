@@ -2,6 +2,7 @@ const isCI = process.env.NODE_ENV === 'ci';
 const featureToRun = process.env.FEATURE;
 
 const common = [
+  '--publish-quiet',
   '--require-module ts-node/register',
   '--require world/**/*.ts',
   '--require steps/**/*.ts',

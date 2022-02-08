@@ -21,10 +21,10 @@ open:
 commands:
   shopify:
     desc: 'Runs the Shopify CLI'
-    run: packages/cli/bin/shopify-dev.js
+    run: packages/cli/bin/dev
   create-app:
     desc: 'Runs the create-app CLI'
-    run: packages/create-app/bin/create-app-dev.js
+    run: packages/create-app/bin/dev
   test:
     desc: 'Runs the tests'
     run: yarn run test

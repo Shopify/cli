@@ -9,4 +9,8 @@ export const write = async (path: PathLike, data: string) => {
   return fs.promises.writeFile(path, data);
 };
 
+export async function mkdir(path: fs.PathLike) {
+  return fs.promises.mkdir(path, {recursive: true});
+}
+
 export const isDirectory = (path: string) => fs.lstatSync(path).isDirectory();

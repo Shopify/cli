@@ -1,12 +1,28 @@
-import {run} from '@oclif/core';
+import {run, flush, settings, Errors} from '@oclif/core';
+import {error as kitError, environment} from '@shopify/cli-kit';
 
-/**
- * Invokes the `testcli-modern` CLI with args programmatically.
- *
- * @param {...string} args - args to pass to CLI.
- *
- * @returns {Promise<void>}
- */
-export default async function testcli(...args: any[]) {
-  return run(args, import.meta.url);
+function runCreateApp() {
+  const initIndex = process.argv.findIndex((arg) => arg.includes('init'));
+  if (initIndex === -1) {
+    const initIndex =
+      process.argv.findIndex((arg) => arg.includes('bin/create-app-run.js')) +
+      1;
+    process.argv.splice(initIndex, 0, 'init');
+  }
+
+  if (environment.isDebug()) {
+    settings.debug = true;
+  }
+
+  // Start the CLI
+  run(undefined, import.meta.url)
+    .then(flush)
+    .catch((error: Error): Promise<void | Error> => {
+      const oclifHandle = Errors.handle;
+      const kitHandle = kitError.handler;
+      // eslint-disable-next-line promise/no-nesting
+      return kitHandle(error).then(oclifHandle);
+    });
 }
+
+export default runCreateApp;

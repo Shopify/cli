@@ -1,5 +1,5 @@
 ---
-title: Error handling
+title: error
 ---
 
 Errors **can happen and will happen** and thus we need must design our code to handle them gracefully and present users with clear and actionable error messages.

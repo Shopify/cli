@@ -5,7 +5,6 @@
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
-    "/templates",
     "/dist",
     "/npm-shrinkwrap.json"
   ],
@@ -25,7 +24,8 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@shopify/cli-kit": "0.10.0"
+    "@shopify/cli-kit": "0.10.0",
+    "@shopify/cli-testing": "0.1.0"
   },
   "oclif": {
     "commands": "./dist/commands",

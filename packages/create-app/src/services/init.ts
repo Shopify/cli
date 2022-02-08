@@ -1,21 +1,53 @@
-import {string, path, template, fs, system, output} from '@shopify/cli-kit';
+import {
+  string,
+  path,
+  template,
+  fs,
+  output,
+  os,
+  ui,
+  dependency,
+} from '@shopify/cli-kit';
 
-import {cliVersion} from '../utils/versions';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import cliPackageVersion from '../../../cli/package.json';
+import {template as getTemplatePath} from '../utils/paths';
 
 interface InitOptions {
   name: string;
   description: string;
   directory: string;
-  templatePath: string;
 }
 
 async function init(options: InitOptions) {
+  const user = (await os.username()) ?? '';
+  const templatePath = await getTemplatePath('app');
+  const cliVersion = cliPackageVersion.version;
   const outputDirectory = path.join(
     options.directory,
     string.hyphenize(options.name),
   );
-  console.log('Creating the app...');
-  createApp({...options, outputDirectory});
+  await ui.list([
+    {
+      title: 'Creating the app',
+      task: async () => {
+        return createApp({
+          ...options,
+          outputDirectory,
+          templatePath,
+          cliVersion,
+          user,
+        });
+      },
+    },
+    {
+      title: 'Installing dependencies',
+      task: async () => {
+        return installDependencies(outputDirectory);
+      },
+    },
+  ]);
   output.success(
     output.content`App successfully created at ${output.token.path(
       outputDirectory,
@@ -23,8 +55,20 @@ async function init(options: InitOptions) {
   );
 }
 
+async function installDependencies(directory: string): Promise<void> {
+  await dependency.install(
+    directory,
+    dependency.dependencyManagerUsedForCreating(),
+  );
+}
+
 async function createApp(
-  options: InitOptions & {outputDirectory: string},
+  options: InitOptions & {
+    outputDirectory: string;
+    templatePath: string;
+    cliVersion: string;
+    user: string;
+  },
 ): Promise<void> {
   const templateFiles: string[] = await path.glob(
     path.join(options.templatePath, '**/*'),
@@ -39,7 +83,9 @@ async function createApp(
   const templateData = {
     name: options.name,
     description: options.description,
-    cliVersion,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    shopify_cli_version: options.cliVersion,
+    author: options.user,
   };
 
   sortedTemplateFiles.forEach(async (templateItemPath) => {
@@ -50,9 +96,9 @@ async function createApp(
       ),
     )(templateData);
     if (fs.isDirectory(templateItemPath)) {
-      await system.mkdir(outputPath);
+      await fs.mkdir(outputPath);
     } else {
-      await system.mkdir(path.dirname(outputPath));
+      await fs.mkdir(path.dirname(outputPath));
       const content = await fs.readFile(templateItemPath);
       const contentOutput = await template(content)(templateData);
       await fs.write(outputPath, contentOutput);

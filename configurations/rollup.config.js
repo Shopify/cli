@@ -14,6 +14,7 @@ export const plugins = (packagePath) => {
     stripShebang(),
     resolve({
       preferBuiltins: true,
+      dedupe: [],
       moduleDirectories: [
         path.join(packagePath, 'node_modules'),
         path.join(packagePath, '../cli-kit/node_modules'),

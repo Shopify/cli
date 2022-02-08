@@ -1,6 +1,6 @@
 const constants = {
   environmentVariables: {
-    config: 'SHOPIFY_CONFIG',
+    debug: 'DEBUG',
     partnersApiEnv: 'SHOPIFY_PARTNERS_API_ENV',
     adminApiEnv: 'SHOPIFY_ADMIN_API_ENV',
     storefrontRendererApiEnv: 'SHOPIFY_STOREFRONT_RENDERER_API_ENV',

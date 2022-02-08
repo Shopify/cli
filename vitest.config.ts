@@ -7,6 +7,7 @@ const resolvePath = (path: string) => resolve(__dirname, path);
 
 export const alias: AliasOptions = {
   '@shopify/cli-kit': resolvePath('./packages/cli-kit/src/'),
+  '@shopify/cli-testing': resolvePath('./packages/cli-testing/src/'),
 };
 
 export default defineConfig({
