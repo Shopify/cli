@@ -7,12 +7,13 @@
  * or bundling the CLI in a portable format like a Deno binary.
  */
 import { program } from "commander";
-import {execa} from "execa";
 import tempy from 'tempy';
 import pathe from "pathe";
 import path from "path/posix";
 import { fileURLToPath } from 'url';
 import fs from "fs";
+
+import execa from "execa";
 
 const cliPackages = await ["cli-kit", "cli", "create-app"]
 const rootDirectory = path.dirname(path.dirname(fileURLToPath(import.meta.url)));

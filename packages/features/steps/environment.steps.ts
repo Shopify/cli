@@ -2,7 +2,6 @@
 // @ts-nocheck
 import fs from 'fs';
 
-import shell from 'shelljs';
 import {
   Given,
   After,
@@ -46,12 +45,9 @@ After(async function () {
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
   sharedTemporaryDirectory = tmp.dirSync().name;
   console.log('Building CLIs before running tests...');
-  await exec(
-    `${path.join(
-      __dirname,
-      '../../../bin/pack.js',
-    )} ${sharedTemporaryDirectory}`,
-  );
+  await exec(path.join(__dirname, '../../../bin/pack.js'), [
+    sharedTemporaryDirectory,
+  ]);
   cliExecutable = path.join(
     sharedTemporaryDirectory,
     'clis/cli/bin/shopify-run.js',

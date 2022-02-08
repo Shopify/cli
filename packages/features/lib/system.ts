@@ -1,6 +1,8 @@
-import shell from 'shelljs';
+import pc from 'picocolors';
 
 import {isDebug} from './environment';
+
+const execa = require('execa');
 
 interface ExecOptions {
   cwd?: string;
@@ -15,32 +17,30 @@ interface ExecOptions {
  * @param command The command to be executed.
  * @returns A promise that resolves or rejects when the command execution finishes.
  */
-export const exec = async (command: string, options?: ExecOptions) => {
-  return new Promise<void>((resolve, reject) => {
-    const childProcess = shell.exec(command, {
-      async: true,
-      silent: true,
-      ...options,
-    });
-    let errorOutput = '';
-
-    childProcess.stdout?.on('data', (stdout) => {
+export const exec = async (
+  command: string,
+  args: string[] = [],
+  options?: ExecOptions,
+) => {
+  try {
+    const _options: any = {...options};
+    const commandProcess = execa(command, args, _options);
+    const shortCommand = command.split('/').at(-1);
+    commandProcess.stdout.on('data', (data: string) => {
       if (isDebug) {
-        process.stdout.write(stdout);
+        process.stdout.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`));
       }
     });
-    childProcess.stderr?.on('data', (stderr) => {
+    commandProcess.stderr.on('data', (data: string) => {
       if (isDebug) {
-        process.stderr.write(stderr);
-      }
-      errorOutput = errorOutput.concat(stderr);
-    });
-    childProcess.on('exit', (exitCode) => {
-      if (exitCode === 0) {
-        resolve();
-      } else {
-        reject(new Error(errorOutput));
+        process.stderr.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`));
       }
     });
-  });
+    await commandProcess;
+  } catch (error: any) {
+    if (isDebug) {
+      console.error(error.message);
+      throw error;
+    }
+  }
 };

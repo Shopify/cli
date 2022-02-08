@@ -17,7 +17,6 @@ export function dependencyManagerUsedForCreating(
 ): DependencyManager {
   if (env.npm_lifecycle_event === 'npx') {
     return DependencyManager.Npm;
-    // has key PNPM_HOME
   } else if (env.npm_config_user_agent?.includes('yarn')) {
     return DependencyManager.Yarn;
   } else if (env.PNPM_HOME) {
@@ -39,5 +38,8 @@ export async function install(
   directory: string,
   dependencyManager: DependencyManager,
 ) {
-  return exec(dependencyManager, ['install'], {cwd: directory});
+  await exec(dependencyManager, ['install'], {
+    cwd: directory,
+    stdio: 'inherit',
+  });
 }
