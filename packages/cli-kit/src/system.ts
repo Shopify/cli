@@ -1,6 +1,4 @@
 import fs from 'fs';
-import os from 'os';
-import path from 'path';
 
 export {execa as exec} from 'execa';
 
@@ -13,5 +11,5 @@ export function rmdir(path: fs.PathLike) {
 }
 
 export function mkTmpDir(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir()));
+  return fs.mkdtempSync('tmp-');
 }
