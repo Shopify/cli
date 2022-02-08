@@ -7,6 +7,7 @@ import {
   os,
   ui,
   dependency,
+  system,
 } from '@shopify/cli-kit';
 import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 
