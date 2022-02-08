@@ -5,8 +5,7 @@ function runCreateApp() {
   const initIndex = process.argv.findIndex((arg) => arg.includes('init'));
   if (initIndex === -1) {
     const initIndex =
-      process.argv.findIndex((arg) => arg.includes('bin/create-app-run.js')) +
-      1;
+      process.argv.findIndex((arg) => arg.includes('bin/create-app')) + 1;
     process.argv.splice(initIndex, 0, 'init');
   }
 
