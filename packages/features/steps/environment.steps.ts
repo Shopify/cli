@@ -35,7 +35,7 @@ Given('I have a working directory', function () {
 
 After(async function () {
   if (this.temporaryDirectory) {
-    rimraf.sync(this.temporaryDirectory);
+    rimraf.sync(this.temporaryDirectory, {force: true});
   }
 });
 
