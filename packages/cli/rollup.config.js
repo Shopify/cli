@@ -9,7 +9,7 @@ const cliExternal = [
   '@shopify/cli-kit',
   '@bugsnag/js',
 ];
-const features = ['app', 'theme'];
+const features = ['app', 'theme', 'hydrogen'];
 
 const featureCommands = features.flatMap((feature) => {
   return fg.sync([
