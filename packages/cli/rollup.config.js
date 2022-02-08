@@ -3,7 +3,7 @@ import fg from 'fast-glob';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const additionalExternal = ['@oclif/core'];
+const cliExternal = [...external, '@oclif/core', '@shopify/cli-kit'];
 const features = ['app', 'theme'];
 
 const configuration = () => [
@@ -12,7 +12,7 @@ const configuration = () => [
     input: path.join(__dirname, 'src/index.ts'),
     output: [{file: path.join(distDir(__dirname), 'index.js'), format: 'esm'}],
     plugins: plugins(__dirname),
-    external: [...external, ...additionalExternal],
+    external: cliExternal,
   },
   ...features.flatMap((feature) => {
     const commands = fg.sync([
@@ -29,7 +29,7 @@ const configuration = () => [
         input: commandPath,
         output: [{file: outputPath, format: 'esm', exports: 'default'}],
         plugins: plugins(__dirname),
-        external: [...external, ...additionalExternal],
+        external: cliExternal,
       };
     });
   }),
