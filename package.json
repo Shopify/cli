@@ -2,8 +2,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prerelease": "bin/prerelease.mjs",
-    "upload-sourcemaps": "bin/upload-sourcemaps.mjs",
+    "prerelease": "bin/prerelease.js",
+    "upload-sourcemaps": "bin/upload-sourcemaps.js",
     "features": "cucumber-js -p default",
     "lint": "yarn workspaces run lint",
     "lint:fix": "yarn workspaces run lint:fix",
