@@ -34,7 +34,7 @@ module.exports = {
         'kit/modules/api',
         'kit/modules/dependency',
         'kit/modules/error',
-        'kit/modules/authentication',
+        'kit/modules/session',
         'kit/modules/version',
         'kit/modules/os',
       ],

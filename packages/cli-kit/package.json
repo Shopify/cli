@@ -50,6 +50,7 @@
     "win32"
   ],
   "devDependencies": {
+    "conf": "^10.1.1",
     "enquirer": "^2.3.6",
     "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
@@ -60,9 +61,7 @@
     "listr2": "^4.0.2",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
-    "term-size": "^3.0.1"
-  },
-  "dependencies": {
+    "term-size": "^3.0.1",
     "change-case": "^4.1.2"
   }
 }
