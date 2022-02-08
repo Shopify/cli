@@ -27,6 +27,5 @@ export class Bug extends Fatal {}
  * @returns A promise that resolves with the error passed.
  */
 export function handler(error: Error): Promise<Error> {
-  console.log(error);
   return Promise.resolve(error);
 }
