@@ -3,7 +3,12 @@ import fg from 'fast-glob';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const cliExternal = [...external, '@oclif/core', '@shopify/cli-kit'];
+const cliExternal = [
+  ...external,
+  '@oclif/core',
+  '@shopify/cli-kit',
+  '@bugsnag/js',
+];
 const features = ['app', 'theme'];
 
 const configuration = () => [
