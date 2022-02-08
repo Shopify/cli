@@ -4,7 +4,7 @@ set -e
 DIRECTORY=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "Building..."
-yarn --cwd $DIRECTORY/../cli-kit build &> /dev/null
-yarn --cwd $DIRECTORY/.. build &> /dev/null
+yarn --cwd $DIRECTORY/../../cli-kit build  &> /dev/null
+yarn --cwd $DIRECTORY/.. build  &> /dev/null
 
 $DIRECTORY/shopify-run.js $@
