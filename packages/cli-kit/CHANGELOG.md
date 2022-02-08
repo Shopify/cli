@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 0.12.0
+
+### Minor Changes
+
+- cb12e51: Add utility for fetching the current user
+- a999af0: Add utility to fetch the latest version of a given NPM package
+- bed0951: Add a utility to obtain the dependency manager used to run the create workflow
+
 ## 0.10.0
 
 ### Minor Changes

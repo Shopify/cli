@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.12.0
+
+### Minor Changes
+
+- cb12e51: Populate the author when generating a new app
+
 ## 0.11.0
 
 ### Minor Changes
