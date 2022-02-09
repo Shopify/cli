@@ -1,4 +1,4 @@
-import {fs, error, path, schema} from '@shopify/cli-kit';
+import {file, error, path, schema, toml} from '@shopify/cli-kit';
 
 import {blocks, configurationFileNames} from '../constants';
 
@@ -40,7 +40,7 @@ interface App {
 }
 
 export async function load(directory: string): Promise<App> {
-  if (!fs.exists(directory)) {
+  if (!file.exists(directory)) {
     throw new error.Abort(`Couldn't find directory ${directory}`);
   }
   const configurationPath = path.join(directory, configurationFileNames.app);
@@ -58,11 +58,11 @@ export async function load(directory: string): Promise<App> {
 }
 
 function loadConfigurationFile(path: string): object {
-  if (!fs.exists(path)) {
+  if (!file.exists(path)) {
     throw new error.Abort(`Couldn't find the configuration file at ${path}`);
   }
-  const configurationContent = fs.read(path);
-  return schema.toml.parse(configurationContent);
+  const configurationContent = file.read(path);
+  return toml.parse(configurationContent);
 }
 
 async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {

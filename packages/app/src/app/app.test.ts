@@ -1,5 +1,5 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {fs, path, system} from '@shopify/cli-kit';
+import {file, path} from '@shopify/cli-kit';
 
 import {configurationFileNames} from '../constants';
 
@@ -9,12 +9,12 @@ describe('load', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = system.mkTmpDir();
+    tmpDir = file.mkTmpDir();
   });
 
   afterEach(() => {
     if (tmpDir) {
-      system.rmdir(tmpDir);
+      file.rmdir(tmpDir);
     }
   });
 
@@ -39,7 +39,7 @@ describe('load', () => {
         name = "my_app"
         `;
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    fs.write(appConfigurationPath, appConfiguration);
+    file.write(appConfigurationPath, appConfiguration);
 
     // When
     const app = await load(tmpDir);
@@ -58,7 +58,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      fs.write(appConfigurationPath, appConfiguration);
+      file.write(appConfigurationPath, appConfiguration);
 
       const uiExtensionConfigurationPath = path.join(
         tmpDir,
@@ -66,7 +66,7 @@ describe('load', () => {
         'my-extension',
         '.shopify.ui-extension.toml',
       );
-      system.mkdir(path.dirname(uiExtensionConfigurationPath));
+      file.mkdir(path.dirname(uiExtensionConfigurationPath));
 
       // When
       await expect(load(tmpDir)).rejects.toThrow(
@@ -83,7 +83,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      fs.write(appConfigurationPath, appConfiguration);
+      file.write(appConfigurationPath, appConfiguration);
 
       const uiExtensionConfiguration = `
         name = "my_extension"
@@ -94,8 +94,8 @@ describe('load', () => {
         'my-extension',
         '.shopify.ui-extension.toml',
       );
-      system.mkdir(path.dirname(uiExtensionConfigurationPath));
-      fs.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       // When
       const app = await load(tmpDir);
@@ -113,7 +113,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      fs.write(appConfigurationPath, appConfiguration);
+      file.write(appConfigurationPath, appConfiguration);
 
       let uiExtensionConfiguration = `
         name = "my_extension_1"
@@ -124,8 +124,8 @@ describe('load', () => {
         'my-extension-1',
         '.shopify.ui-extension.toml',
       );
-      system.mkdir(path.dirname(uiExtensionConfigurationPath));
-      fs.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       uiExtensionConfiguration = `
         name = "my_extension_2"
@@ -136,8 +136,8 @@ describe('load', () => {
         'my-extension-2',
         '.shopify.ui-extension.toml',
       );
-      system.mkdir(path.dirname(uiExtensionConfigurationPath));
-      fs.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       // When
       const app = await load(tmpDir);
@@ -159,7 +159,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      fs.write(appConfigurationPath, appConfiguration);
+      file.write(appConfigurationPath, appConfiguration);
 
       const scriptConfigurationPath = path.join(
         tmpDir,
@@ -167,7 +167,7 @@ describe('load', () => {
         'my-script',
         '.shopify.script.toml',
       );
-      system.mkdir(path.dirname(scriptConfigurationPath));
+      file.mkdir(path.dirname(scriptConfigurationPath));
 
       // When
       await expect(load(tmpDir)).rejects.toThrow(
@@ -184,7 +184,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      fs.write(appConfigurationPath, appConfiguration);
+      file.write(appConfigurationPath, appConfiguration);
 
       const scriptConfiguration = `
         name = "my_script"
@@ -195,8 +195,8 @@ describe('load', () => {
         'my-script',
         '.shopify.script.toml',
       );
-      system.mkdir(path.dirname(scriptConfigurationPath));
-      fs.write(scriptConfigurationPath, scriptConfiguration);
+      file.mkdir(path.dirname(scriptConfigurationPath));
+      file.write(scriptConfigurationPath, scriptConfiguration);
 
       // When
       const app = await load(tmpDir);
@@ -214,7 +214,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      fs.write(appConfigurationPath, appConfiguration);
+      file.write(appConfigurationPath, appConfiguration);
 
       let scriptConfiguration = `
         name = "my_script_1"
@@ -225,8 +225,8 @@ describe('load', () => {
         'my-script-1',
         '.shopify.script.toml',
       );
-      system.mkdir(path.dirname(scriptConfigurationPath));
-      fs.write(scriptConfigurationPath, scriptConfiguration);
+      file.mkdir(path.dirname(scriptConfigurationPath));
+      file.write(scriptConfigurationPath, scriptConfiguration);
 
       scriptConfiguration = `
         name = "my_script_2"
@@ -237,8 +237,8 @@ describe('load', () => {
         'my-script-2',
         '.shopify.script.toml',
       );
-      system.mkdir(path.dirname(scriptConfigurationPath));
-      fs.write(scriptConfigurationPath, scriptConfiguration);
+      file.mkdir(path.dirname(scriptConfigurationPath));
+      file.write(scriptConfigurationPath, scriptConfiguration);
 
       // When
       const app = await load(tmpDir);

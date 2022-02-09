@@ -2,12 +2,11 @@ import {
   string,
   path,
   template,
-  fs,
+  file,
   output,
   os,
   ui,
   dependency,
-  system,
 } from '@shopify/cli-kit';
 import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 
@@ -101,13 +100,13 @@ async function createApp(
         path.relative(options.templatePath, templateItemPath),
       ),
     )(templateData);
-    if (fs.isDirectory(templateItemPath)) {
-      await fs.mkdir(outputPath);
+    if (file.isDirectory(templateItemPath)) {
+      file.mkdir(outputPath);
     } else {
-      await fs.mkdir(path.dirname(outputPath));
-      const content = await fs.readFile(templateItemPath);
+      file.mkdir(path.dirname(outputPath));
+      const content = file.read(templateItemPath);
       const contentOutput = await template(content)(templateData);
-      fs.write(outputPath, contentOutput);
+      file.write(outputPath, contentOutput);
     }
   });
 }
