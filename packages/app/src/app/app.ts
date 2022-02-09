@@ -44,8 +44,10 @@ export async function load(directory: string): Promise<App> {
     throw new error.Abort(`Couldn't find directory ${directory}`);
   }
   const configurationPath = path.join(directory, configurationFileNames.app);
-  const configurationObject = loadConfigurationFile(configurationPath);
-  const configuration = AppConfigurationSchema.parse(configurationObject);
+  const configuration = parseConfigurationFile(
+    AppConfigurationSchema,
+    configurationPath,
+  );
   const scripts = await loadScripts(directory);
   const uiExtensions = await loadExtensions(directory);
 
@@ -65,6 +67,15 @@ function loadConfigurationFile(path: string): object {
   return toml.parse(configurationContent);
 }
 
+function parseConfigurationFile(schema: any, path: string) {
+  const configurationObject = loadConfigurationFile(path);
+  const parseResult = schema.safeParse(configurationObject);
+  if (!parseResult.success) {
+    throw new error.Abort(`Invalid schema in ${path}`);
+  }
+  return parseResult.data;
+}
+
 async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
   const extensionsPath = path.join(
     rootDirectory,
@@ -76,10 +87,10 @@ async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
         directory,
         blocks.uiExtensions.configurationName,
       );
-      const configurationObject = loadConfigurationFile(configurationPath);
-      const configuration =
-        UIExtensionConfigurationSchema.parse(configurationObject);
-
+      const configuration = parseConfigurationFile(
+        UIExtensionConfigurationSchema,
+        configurationPath,
+      );
       return {directory, configuration};
     },
   );
@@ -96,9 +107,10 @@ async function loadScripts(rootDirectory: string): Promise<Script[]> {
         directory,
         blocks.scripts.configurationName,
       );
-      const configurationObject = loadConfigurationFile(configurationPath);
-      const configuration =
-        ScriptConfigurationSchema.parse(configurationObject);
+      const configuration = parseConfigurationFile(
+        ScriptConfigurationSchema,
+        configurationPath,
+      );
 
       return {directory, configuration};
     },

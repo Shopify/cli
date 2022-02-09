@@ -33,6 +33,18 @@ describe('load', () => {
     );
   });
 
+  it('throws an error when the configuration file is invalid', async () => {
+    // Given
+    const appConfiguration = `
+        wrong = "my_app"
+        `;
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
+    file.write(appConfigurationPath, appConfiguration);
+
+    // When/Then
+    await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
+  });
+
   it('loads the app when its configuration is valid and has no blocks', async () => {
     // Given
     const appConfiguration = `
@@ -72,6 +84,33 @@ describe('load', () => {
       await expect(load(tmpDir)).rejects.toThrow(
         /Couldn't find the configuration file/,
       );
+    });
+
+    it('throws an error if the configuration file is invalid', async () => {
+      // Given
+      const appConfiguration = `
+          name = "my_app"
+          `;
+      const appConfigurationPath = path.join(
+        tmpDir,
+        configurationFileNames.app,
+      );
+      file.write(appConfigurationPath, appConfiguration);
+
+      const uiExtensionConfiguration = `
+        wrong = "my_extension"
+          `;
+      const uiExtensionConfigurationPath = path.join(
+        tmpDir,
+        'ui-extensions',
+        'my-extension',
+        '.shopify.ui-extension.toml',
+      );
+      file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
     });
 
     it('loads the app when it has an extension', async () => {
@@ -173,6 +212,33 @@ describe('load', () => {
       await expect(load(tmpDir)).rejects.toThrow(
         /Couldn't find the configuration file/,
       );
+    });
+
+    it('throws an error if the configuration file is invalid', async () => {
+      // Given
+      const appConfiguration = `
+          name = "my_app"
+          `;
+      const appConfigurationPath = path.join(
+        tmpDir,
+        configurationFileNames.app,
+      );
+      file.write(appConfigurationPath, appConfiguration);
+
+      const scriptConfiguration = `
+        wrong = "my_script_2"
+      `;
+      const scriptConfigurationPath = path.join(
+        tmpDir,
+        'scripts',
+        'my-script',
+        '.shopify.script.toml',
+      );
+      file.mkdir(path.dirname(scriptConfigurationPath));
+      file.write(scriptConfigurationPath, scriptConfiguration);
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
     });
 
     it('loads the app when it has an script', async () => {
