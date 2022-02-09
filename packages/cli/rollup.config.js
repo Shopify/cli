@@ -11,33 +11,37 @@ const cliExternal = [
 ];
 const features = ['app', 'theme'];
 
+const featureCommands = features.flatMap((feature) => {
+  return fg.sync([
+    path.join(__dirname, `../${feature}/src/commands/**/*.ts`),
+    `!${path.join(__dirname, `../${feature}/src/commands/**/*.test.ts`)}`,
+  ]);
+});
+
 const configuration = () => [
   // CLI
   {
-    input: path.join(__dirname, 'src/index.ts'),
-    output: [{file: path.join(distDir(__dirname), 'index.js'), format: 'esm'}],
+    input: [path.join(__dirname, 'src/index.ts'), ...featureCommands],
+    output: [
+      {
+        dir: distDir(__dirname),
+        format: 'esm',
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.facadeModuleId.includes('src/commands')) {
+            // Preserves the commands/... path
+            return `commands/${chunkInfo.facadeModuleId
+              .split('src/commands')
+              .at(-1)
+              .replace('ts', 'js')}`;
+          } else {
+            return '[name].js';
+          }
+        },
+      },
+    ],
     plugins: plugins(__dirname),
     external: cliExternal,
   },
-  ...features.flatMap((feature) => {
-    const commands = fg.sync([
-      path.join(__dirname, `../${feature}/src/commands/**/*.ts`),
-      `!${path.join(__dirname, `../${feature}/src/commands/**/*.test.ts`)}`,
-    ]);
-    return commands.map((commandPath) => {
-      const outputPath = path.join(
-        distDir(__dirname),
-        'commands',
-        commandPath.split('src/commands')[1].replace('.ts', '.js'),
-      );
-      return {
-        input: commandPath,
-        output: [{file: outputPath, format: 'esm', exports: 'default'}],
-        plugins: plugins(__dirname),
-        external: cliExternal,
-      };
-    });
-  }),
 ];
 
 export default configuration;
