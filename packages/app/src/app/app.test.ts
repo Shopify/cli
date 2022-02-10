@@ -23,17 +23,24 @@ describe('load', () => {
     await file.write(appConfigurationPath, appConfiguration);
   };
 
-  let writeBlockConfig = async ({blockType, blockConfiguration, name}) => {
+  let blockConfigurationPath = ({blockType, name}) => {
     let block = blocks[blockType];
-    const blockConfigurationPath = path.join(
+    return path.join(
       tmpDir,
       block.directoryName,
       name,
       block.configurationName,
     );
-    await file.mkdir(path.dirname(blockConfigurationPath));
-    await file.write(blockConfigurationPath, blockConfiguration);
   }
+
+  let makeBlockDir = async ({blockType, name}) => {
+    await file.mkdir(path.dirname(blockConfigurationPath({blockType, name})));
+  };
+
+  let writeBlockConfig = async ({blockType, blockConfiguration, name}) => {
+    await makeBlockDir({blockType, name});
+    await file.write(blockConfigurationPath({blockType, name}), blockConfiguration);
+  };
 
   it("throws an error if the directory doesn't exist", async () => {
     // Given
@@ -102,14 +109,7 @@ describe('load', () => {
     describe('with extensions', async () => {
       it("throws an error if the configuration file doesn't exist", async () => {
         // Given
-
-        const uiExtensionConfigurationPath = path.join(
-          tmpDir,
-          'ui-extensions',
-          'my-extension',
-          configurationFileNames.uiExtension,
-        );
-        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+        makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'});
 
         // When
         await expect(load(tmpDir)).rejects.toThrow(
@@ -167,13 +167,7 @@ describe('load', () => {
     describe('with scripts', () => {
       it("throws an error if the configuration file doesn't exist", async () => {
         // Given
-        const scriptConfigurationPath = path.join(
-          tmpDir,
-          'scripts',
-          'my-script',
-          configurationFileNames.script,
-        );
-        await file.mkdir(path.dirname(scriptConfigurationPath));
+        makeBlockDir({blockType: 'scripts', name: 'my-script'});
 
         // When
         await expect(load(tmpDir)).rejects.toThrow(
