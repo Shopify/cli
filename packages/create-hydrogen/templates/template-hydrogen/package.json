@@ -14,7 +14,7 @@
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.jsx",
     "build:worker": "cross-env WORKER=true vite build --outDir dist/worker --ssr worker.js",
     "serve": "node --enable-source-maps server",
-    "preview": "npx @shopify/hydrogen-cli@latest preview"
+    "preview": "npx @shopify/cli@latest hydrogen preview"
   },
   "prettier": "@shopify/prettier-config",
   "devDependencies": {
@@ -35,7 +35,6 @@
   "dependencies": {
     "@headlessui/react": "^1.4.1",
     "@shopify/hydrogen": "^0.10.1",
-    "@shopify/hydrogen-cli": "^0.10.1",
     "body-parser": "^1.19.1",
     "compression": "^1.7.4",
     "express": "^4.17.1",

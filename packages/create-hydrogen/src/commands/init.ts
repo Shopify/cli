@@ -9,6 +9,8 @@ import {prompt} from 'enquirer';
 import {yellow} from 'kolorist';
 import minimist from 'minimist';
 
+// @ts-ignore
+import cliPackageJson from '../../../cli/package.json';
 import {copy} from '../scripts/utils';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,7 +27,7 @@ const renameFiles = {
 
 export default class Init extends Command {
   async run(): Promise<void> {
-    let targetDir = argv._[0];
+    let targetDir = argv._[1];
     if (!targetDir) {
       /**
        * @type {{ projectName: string }}
@@ -118,11 +120,12 @@ export default class Init extends Command {
       write(file);
     }
 
-    const pkg = JSON.stringify(
+    const pkg = JSON.parse(
       fs.readFileSync(path.join(templateDir, `package.json`), 'utf-8'),
     );
 
     pkg.name = packageName;
+    pkg.dependencies[cliPackageJson.name] = cliPackageJson.version;
 
     /**
      * When the user is running a LOCAL version of hydrogen external from the
