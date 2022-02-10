@@ -8,13 +8,13 @@ import {load} from './app';
 describe('load', () => {
   let tmpDir: string;
 
-  beforeEach(() => {
-    tmpDir = file.mkTmpDir();
+  beforeEach(async () => {
+    tmpDir = await file.mkTmpDir();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     if (tmpDir) {
-      file.rmdir(tmpDir);
+      await file.rmdir(tmpDir);
     }
   });
 
@@ -39,7 +39,7 @@ describe('load', () => {
         wrong = "my_app"
         `;
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    file.write(appConfigurationPath, appConfiguration);
+    await file.write(appConfigurationPath, appConfiguration);
 
     // When/Then
     await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
@@ -51,7 +51,7 @@ describe('load', () => {
         name = "my_app"
         `;
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    file.write(appConfigurationPath, appConfiguration);
+    await file.write(appConfigurationPath, appConfiguration);
 
     // When
     const app = await load(tmpDir);
@@ -60,7 +60,7 @@ describe('load', () => {
     expect(app.configuration.name).toBe('my_app');
   });
 
-  describe('with extensions', () => {
+  describe('with extensions', async () => {
     it("throws an error if the configuration file doesn't exist", async () => {
       // Given
       const appConfiguration = `
@@ -70,7 +70,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       const uiExtensionConfigurationPath = path.join(
         tmpDir,
@@ -78,7 +78,7 @@ describe('load', () => {
         'my-extension',
         '.shopify.ui-extension.toml',
       );
-      file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
 
       // When
       await expect(load(tmpDir)).rejects.toThrow(
@@ -95,7 +95,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       const uiExtensionConfiguration = `
         wrong = "my_extension"
@@ -106,8 +106,8 @@ describe('load', () => {
         'my-extension',
         '.shopify.ui-extension.toml',
       );
-      file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       // When
       await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
@@ -122,7 +122,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       const uiExtensionConfiguration = `
         name = "my_extension"
@@ -133,8 +133,8 @@ describe('load', () => {
         'my-extension',
         '.shopify.ui-extension.toml',
       );
-      file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       // When
       const app = await load(tmpDir);
@@ -152,7 +152,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       let uiExtensionConfiguration = `
         name = "my_extension_1"
@@ -163,8 +163,8 @@ describe('load', () => {
         'my-extension-1',
         '.shopify.ui-extension.toml',
       );
-      file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       uiExtensionConfiguration = `
         name = "my_extension_2"
@@ -175,8 +175,8 @@ describe('load', () => {
         'my-extension-2',
         '.shopify.ui-extension.toml',
       );
-      file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
       // When
       const app = await load(tmpDir);
@@ -198,7 +198,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       const scriptConfigurationPath = path.join(
         tmpDir,
@@ -206,7 +206,7 @@ describe('load', () => {
         'my-script',
         '.shopify.script.toml',
       );
-      file.mkdir(path.dirname(scriptConfigurationPath));
+      await file.mkdir(path.dirname(scriptConfigurationPath));
 
       // When
       await expect(load(tmpDir)).rejects.toThrow(
@@ -223,7 +223,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       const scriptConfiguration = `
         wrong = "my_script_2"
@@ -234,8 +234,8 @@ describe('load', () => {
         'my-script',
         '.shopify.script.toml',
       );
-      file.mkdir(path.dirname(scriptConfigurationPath));
-      file.write(scriptConfigurationPath, scriptConfiguration);
+      await file.mkdir(path.dirname(scriptConfigurationPath));
+      await file.write(scriptConfigurationPath, scriptConfiguration);
 
       // When
       await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
@@ -250,7 +250,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       const scriptConfiguration = `
         name = "my_script"
@@ -261,8 +261,8 @@ describe('load', () => {
         'my-script',
         '.shopify.script.toml',
       );
-      file.mkdir(path.dirname(scriptConfigurationPath));
-      file.write(scriptConfigurationPath, scriptConfiguration);
+      await file.mkdir(path.dirname(scriptConfigurationPath));
+      await file.write(scriptConfigurationPath, scriptConfiguration);
 
       // When
       const app = await load(tmpDir);
@@ -280,7 +280,7 @@ describe('load', () => {
         tmpDir,
         configurationFileNames.app,
       );
-      file.write(appConfigurationPath, appConfiguration);
+      await file.write(appConfigurationPath, appConfiguration);
 
       let scriptConfiguration = `
         name = "my_script_1"
@@ -291,8 +291,8 @@ describe('load', () => {
         'my-script-1',
         '.shopify.script.toml',
       );
-      file.mkdir(path.dirname(scriptConfigurationPath));
-      file.write(scriptConfigurationPath, scriptConfiguration);
+      await file.mkdir(path.dirname(scriptConfigurationPath));
+      await file.write(scriptConfigurationPath, scriptConfiguration);
 
       scriptConfiguration = `
         name = "my_script_2"
@@ -303,8 +303,8 @@ describe('load', () => {
         'my-script-2',
         '.shopify.script.toml',
       );
-      file.mkdir(path.dirname(scriptConfigurationPath));
-      file.write(scriptConfigurationPath, scriptConfiguration);
+      await file.mkdir(path.dirname(scriptConfigurationPath));
+      await file.write(scriptConfigurationPath, scriptConfiguration);
 
       // When
       const app = await load(tmpDir);

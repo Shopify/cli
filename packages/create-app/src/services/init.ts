@@ -100,13 +100,13 @@ async function createApp(
         path.relative(options.templatePath, templateItemPath),
       ),
     )(templateData);
-    if (file.isDirectory(templateItemPath)) {
-      file.mkdir(outputPath);
+    if (await file.isDirectory(templateItemPath)) {
+      await file.mkdir(outputPath);
     } else {
-      file.mkdir(path.dirname(outputPath));
-      const content = file.read(templateItemPath);
+      await file.mkdir(path.dirname(outputPath));
+      const content = await file.read(templateItemPath);
       const contentOutput = await template(content)(templateData);
-      file.write(outputPath, contentOutput);
+      await file.write(outputPath, contentOutput);
     }
   });
 }

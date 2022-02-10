@@ -40,11 +40,11 @@ interface App {
 }
 
 export async function load(directory: string): Promise<App> {
-  if (!file.exists(directory)) {
+  if (!(await file.exists(directory))) {
     throw new error.Abort(`Couldn't find directory ${directory}`);
   }
   const configurationPath = path.join(directory, configurationFileNames.app);
-  const configuration = parseConfigurationFile(
+  const configuration = await parseConfigurationFile(
     AppConfigurationSchema,
     configurationPath,
   );
@@ -59,16 +59,16 @@ export async function load(directory: string): Promise<App> {
   };
 }
 
-function loadConfigurationFile(path: string): object {
-  if (!file.exists(path)) {
+async function loadConfigurationFile(path: string): Promise<object> {
+  if (!(await file.exists(path))) {
     throw new error.Abort(`Couldn't find the configuration file at ${path}`);
   }
-  const configurationContent = file.read(path);
+  const configurationContent = await file.read(path);
   return toml.parse(configurationContent);
 }
 
-function parseConfigurationFile(schema: any, path: string) {
-  const configurationObject = loadConfigurationFile(path);
+async function parseConfigurationFile(schema: any, path: string) {
+  const configurationObject = await loadConfigurationFile(path);
   const parseResult = schema.safeParse(configurationObject);
   if (!parseResult.success) {
     throw new error.Abort(`Invalid schema in ${path}`);
@@ -81,19 +81,22 @@ async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
     rootDirectory,
     `${blocks.uiExtensions.directoryName}/*`,
   );
-  return (await path.glob(extensionsPath, {onlyDirectories: true})).map(
-    (directory: string) => {
-      const configurationPath = path.join(
-        directory,
-        blocks.uiExtensions.configurationName,
-      );
-      const configuration = parseConfigurationFile(
-        UIExtensionConfigurationSchema,
-        configurationPath,
-      );
-      return {directory, configuration};
-    },
+  const directories = await path.glob(extensionsPath, {onlyDirectories: true});
+  return Promise.all(
+    directories.map(async (directory) => loadExtension(directory)),
   );
+}
+
+async function loadExtension(directory: string): Promise<UIExtension> {
+  const configurationPath = path.join(
+    directory,
+    blocks.uiExtensions.configurationName,
+  );
+  const configuration = await parseConfigurationFile(
+    UIExtensionConfigurationSchema,
+    configurationPath,
+  );
+  return {directory, configuration};
 }
 
 async function loadScripts(rootDirectory: string): Promise<Script[]> {
@@ -101,18 +104,21 @@ async function loadScripts(rootDirectory: string): Promise<Script[]> {
     rootDirectory,
     `${blocks.scripts.directoryName}/*`,
   );
-  return (await path.glob(scriptsPath, {onlyDirectories: true})).map(
-    (directory: string) => {
-      const configurationPath = path.join(
-        directory,
-        blocks.scripts.configurationName,
-      );
-      const configuration = parseConfigurationFile(
-        ScriptConfigurationSchema,
-        configurationPath,
-      );
-
-      return {directory, configuration};
-    },
+  const directories = await path.glob(scriptsPath, {onlyDirectories: true});
+  return Promise.all(
+    directories.map(async (directory) => loadScript(directory)),
   );
+}
+
+async function loadScript(directory: string): Promise<Script> {
+  const configurationPath = path.join(
+    directory,
+    blocks.scripts.configurationName,
+  );
+  const configuration = await parseConfigurationFile(
+    ScriptConfigurationSchema,
+    configurationPath,
+  );
+
+  return {directory, configuration};
 }
