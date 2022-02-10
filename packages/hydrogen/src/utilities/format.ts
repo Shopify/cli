@@ -1,10 +1,13 @@
 import {extname} from 'path';
 
 import prettier from 'prettier';
-// TODO
-// import shopifyPrettierConfiguration from '@shopify/prettier-config/index.json';
 
-const DEFAULT_PRETTIER_CONFIG = {};
+const DEFAULT_PRETTIER_CONFIG = {
+  arrowParens: 'always',
+  singleQuote: true,
+  bracketSpacing: false,
+  trailingComma: 'all',
+};
 
 /**
  * Format a string using prettier.
@@ -16,7 +19,6 @@ const DEFAULT_PRETTIER_CONFIG = {};
 export async function formatFile(content: string, options: {path: string}) {
   const ext = extname(options.path);
   const prettierConfig = {
-    // TODO: Search for local project config with fallback to Shopify
     ...DEFAULT_PRETTIER_CONFIG,
     parser: 'babel',
   };

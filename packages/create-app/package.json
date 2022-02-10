@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
-    "@oclif/core": "0.5.10"
+    "@oclif/core": "1.3.3"
   },
   "engine-strict": true,
   "engines": {
