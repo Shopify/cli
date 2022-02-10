@@ -1,8 +1,9 @@
 import {extname} from 'path';
 
 import prettier from 'prettier';
+import type {Options} from 'prettier';
 
-const DEFAULT_PRETTIER_CONFIG = {
+const DEFAULT_PRETTIER_CONFIG: Options = {
   arrowParens: 'always',
   singleQuote: true,
   bracketSpacing: false,
@@ -18,7 +19,7 @@ const DEFAULT_PRETTIER_CONFIG = {
  */
 export async function formatFile(content: string, options: {path: string}) {
   const ext = extname(options.path);
-  const prettierConfig = {
+  const prettierConfig: Options = {
     ...DEFAULT_PRETTIER_CONFIG,
     parser: 'babel',
   };
