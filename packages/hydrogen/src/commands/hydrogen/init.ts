@@ -34,7 +34,6 @@ export default class Init extends Command {
 
   async run() {
     const {args, flags} = await this.parse(Init);
-
     const name =
       args.name ??
       (await this.interface.ask('What do you want to name this app?', {

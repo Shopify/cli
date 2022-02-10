@@ -1,43 +1,43 @@
 import path from 'pathe';
-import alias from '@rollup/plugin-alias';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const createAppExternal = [...external, '@oclif/core'];
-const createAppPlugins = [
-  alias({
-    entries: [
-      {
-        find: '@shopify/cli-kit',
-        replacement: path.join(__dirname, '../cli-kit/src/index.ts'),
-      },
-    ],
-  }),
-  ...plugins(__dirname),
+const hydrogenExternal = [/@miniflare/, /prettier/];
+
+const cliExternal = [
+  ...hydrogenExternal,
+  ...external,
+  '@oclif/core',
+  '@shopify/cli-kit',
+  '@bugsnag/js',
 ];
 
 const configuration = () => [
+  // CLI
   {
-    input: path.join(__dirname, 'src/index.ts'),
+    input: [
+      path.join(__dirname, 'src/index.ts'),
+      path.join(__dirname, `../hydrogen/src/commands/hydrogen/init.ts`),
+    ],
     output: [
       {
-        file: path.join(distDir(__dirname), 'index.js'),
+        dir: distDir(__dirname),
         format: 'esm',
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.facadeModuleId.includes('src/commands')) {
+            // Preserves the commands/... path
+            return `commands/${chunkInfo.facadeModuleId
+              .split('src/commands/hydrogen')
+              .slice(-1)[0]
+              .replace('ts', 'js')}`;
+          } else {
+            return '[name].js';
+          }
+        },
       },
     ],
-    plugins: createAppPlugins,
-    external: createAppExternal,
-  },
-  {
-    input: path.join(__dirname, 'src/commands/init.ts'),
-    output: [
-      {
-        file: path.join(distDir(__dirname), 'commands/init.js'),
-        format: 'esm',
-      },
-    ],
-    plugins: createAppPlugins,
-    external: createAppExternal,
+    plugins: plugins(__dirname),
+    external: cliExternal,
   },
 ];
 

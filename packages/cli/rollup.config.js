@@ -14,13 +14,17 @@ const cliExternal = [
 
 const features = ['app', 'theme', 'hydrogen'];
 
-const featureCommands = features.flatMap((feature) => {
-  return fg.sync([
-    path.join(__dirname, `../${feature}/src/commands/*/*.ts`),
-    path.join(__dirname, `../${feature}/src/commands/*.ts`),
-    `!${path.join(__dirname, `../${feature}/src/commands/**/*.test.ts`)}`,
-  ]);
-});
+const featureCommands = features
+  .flatMap((feature) => {
+    return fg.sync([
+      path.join(__dirname, `../${feature}/src/commands/*/*.ts`),
+      path.join(__dirname, `../${feature}/src/commands/*.ts`),
+      `!${path.join(__dirname, `../${feature}/src/commands/**/*.test.ts`)}`,
+    ]);
+  })
+  .filter((commandPath) => {
+    return !commandPath.includes('/commands/hydrogen/init');
+  });
 
 const configuration = () => [
   // CLI

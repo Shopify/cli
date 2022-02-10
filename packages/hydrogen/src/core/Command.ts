@@ -14,7 +14,7 @@ export {Flags};
 
 export default abstract class extends Command {
   readonly fs: FileSystem = new FileSystem();
-  readonly store: Storage = new Storage();
+  readonly store: Storage = new Storage({projectName: '@shopify/cli'});
   readonly package: Package = new Package();
   readonly interface: Interface = new Interface();
   readonly workspace: Workspace = new Workspace();
