@@ -95,7 +95,7 @@ describe('load', () => {
           tmpDir,
           'ui-extensions',
           'my-extension',
-          '.shopify.ui-extension.toml',
+          configurationFileNames.uiExtension,
         );
         await file.mkdir(path.dirname(uiExtensionConfigurationPath));
 
@@ -114,7 +114,7 @@ describe('load', () => {
           tmpDir,
           'ui-extensions',
           'my-extension',
-          '.shopify.ui-extension.toml',
+          configurationFileNames.uiExtension,
         );
         await file.mkdir(path.dirname(uiExtensionConfigurationPath));
         await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
@@ -132,7 +132,7 @@ describe('load', () => {
           tmpDir,
           'ui-extensions',
           'my-extension',
-          '.shopify.ui-extension.toml',
+          configurationFileNames.uiExtension,
         );
         await file.mkdir(path.dirname(uiExtensionConfigurationPath));
         await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
@@ -153,7 +153,7 @@ describe('load', () => {
           tmpDir,
           'ui-extensions',
           'my-extension-1',
-          '.shopify.ui-extension.toml',
+          configurationFileNames.uiExtension,
         );
         await file.mkdir(path.dirname(uiExtensionConfigurationPath));
         await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
@@ -165,7 +165,7 @@ describe('load', () => {
           tmpDir,
           'ui-extensions',
           'my-extension-2',
-          '.shopify.ui-extension.toml',
+          configurationFileNames.uiExtension,
         );
         await file.mkdir(path.dirname(uiExtensionConfigurationPath));
         await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
@@ -187,7 +187,7 @@ describe('load', () => {
           tmpDir,
           'scripts',
           'my-script',
-          '.shopify.script.toml',
+          configurationFileNames.script,
         );
         await file.mkdir(path.dirname(scriptConfigurationPath));
 
@@ -206,7 +206,7 @@ describe('load', () => {
           tmpDir,
           'scripts',
           'my-script',
-          '.shopify.script.toml',
+          configurationFileNames.script,
         );
         await file.mkdir(path.dirname(scriptConfigurationPath));
         await file.write(scriptConfigurationPath, scriptConfiguration);
@@ -224,7 +224,7 @@ describe('load', () => {
           tmpDir,
           'scripts',
           'my-script',
-          '.shopify.script.toml',
+          configurationFileNames.script,
         );
         await file.mkdir(path.dirname(scriptConfigurationPath));
         await file.write(scriptConfigurationPath, scriptConfiguration);
@@ -245,7 +245,7 @@ describe('load', () => {
           tmpDir,
           'scripts',
           'my-script-1',
-          '.shopify.script.toml',
+          configurationFileNames.script,
         );
         await file.mkdir(path.dirname(scriptConfigurationPath));
         await file.write(scriptConfigurationPath, scriptConfiguration);
@@ -257,7 +257,7 @@ describe('load', () => {
           tmpDir,
           'scripts',
           'my-script-2',
-          '.shopify.script.toml',
+          configurationFileNames.script,
         );
         await file.mkdir(path.dirname(scriptConfigurationPath));
         await file.write(scriptConfigurationPath, scriptConfiguration);
