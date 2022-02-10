@@ -13,7 +13,7 @@ import tmp from 'tmp';
 import rimraf from 'rimraf';
 import path from 'pathe';
 
-import pack from '../../../bin/pack.cjs';
+import pack from '../../../bin/export';
 import {exec} from '../lib/system';
 
 let sharedTemporaryDirectory: string | undefined;
