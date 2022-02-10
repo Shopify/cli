@@ -1,6 +1,6 @@
 import {file, error, path, schema, toml} from '@shopify/cli-kit';
 
-import {blocks, configurationFileNames} from '../constants';
+import {blocks, configurationFileNames, genericConfigurationFileNames} from '../constants';
 
 const AppConfigurationSchema = schema.z.object({
   name: schema.z.string(),
@@ -51,7 +51,7 @@ export async function load(directory: string): Promise<App> {
   );
   const scripts = await loadScripts(directory);
   const uiExtensions = await loadExtensions(directory);
-  const yarnLockPath = path.join(directory, 'yarn.lock');
+  const yarnLockPath = path.join(directory, genericConfigurationFileNames.yarn.lockfile);
   const yarnLockExists = await file.exists(yarnLockPath);
 
   return {

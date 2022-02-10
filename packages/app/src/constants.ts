@@ -14,3 +14,9 @@ export const blocks = {
     configurationName: configurationFileNames.script,
   },
 };
+
+export const genericConfigurationFileNames = {
+  yarn: {
+    lockfile: 'yarn.lock',
+  },
+}
