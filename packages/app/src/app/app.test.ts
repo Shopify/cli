@@ -1,7 +1,7 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {file, path} from '@shopify/cli-kit';
 
-import {configurationFileNames} from '../constants';
+import {configurationFileNames, genericConfigurationFileNames} from '../constants';
 
 import {load} from './app';
 
@@ -73,7 +73,7 @@ describe('load', () => {
 
       it('knows yarn is package manager when yarn.lock is present', async () => {
         // Given
-        const yarnLockPath = path.join(tmpDir, 'yarn.lock');
+        const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile);
         await file.write(yarnLockPath, '');
 
         // When
