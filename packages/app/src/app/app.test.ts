@@ -45,306 +45,228 @@ describe('load', () => {
     await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
   });
 
-  it('loads the app when its configuration is valid and has no blocks', async () => {
-    // Given
-    const appConfiguration = `
-        name = "my_app"
-        `;
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    await file.write(appConfigurationPath, appConfiguration);
-
-    // When
-    const app = await load(tmpDir);
-
-    // Then
-    expect(app.configuration.name).toBe('my_app');
-  });
-
-  it('defaults to assuming npm as package manager', async () => {
-    // Given
-    const appConfiguration = `
-        name = "my_app"
-        `;
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    await file.write(appConfigurationPath, appConfiguration);
-
-    // When
-    const app = await load(tmpDir);
-
-    // Then
-    expect(app.packageManager).toBe('npm');
-  });
-
-  it('knows yarn is package manager when yarn.lock is present', async () => {
-    // Given
-    const appConfiguration = `
-        name = "my_app"
-        `;
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    await file.write(appConfigurationPath, appConfiguration);
-    const yarnLockPath = path.join(tmpDir, 'yarn.lock');
-    await file.write(yarnLockPath, appConfiguration);
-
-    // When
-    const app = await load(tmpDir);
-
-    // Then
-    expect(app.packageManager).toBe('yarn');
-  });
-
-  describe('with extensions', async () => {
-    it("throws an error if the configuration file doesn't exist", async () => {
-      // Given
+  describe('given a valid configuration', () => {
+    beforeEach(async () => {
       const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
+        name = "my_app"
+        `;
+      const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
       await file.write(appConfigurationPath, appConfiguration);
-
-      const uiExtensionConfigurationPath = path.join(
-        tmpDir,
-        'ui-extensions',
-        'my-extension',
-        '.shopify.ui-extension.toml',
-      );
-      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-
-      // When
-      await expect(load(tmpDir)).rejects.toThrow(
-        /Couldn't find the configuration file/,
-      );
     });
 
-    it('throws an error if the configuration file is invalid', async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
+    describe('and no blocks', () => {
+      it('loads the app', async () => {
+        // When
+        const app = await load(tmpDir);
 
-      const uiExtensionConfiguration = `
+        // Then
+        expect(app.configuration.name).toBe('my_app');
+      });
+
+      it('defaults to assuming npm as package manager', async () => {
+        // When
+        const app = await load(tmpDir);
+
+        // Then
+        expect(app.packageManager).toBe('npm');
+      });
+
+      it('knows yarn is package manager when yarn.lock is present', async () => {
+        // Given
+        const yarnLockPath = path.join(tmpDir, 'yarn.lock');
+        await file.write(yarnLockPath, '');
+
+        // When
+        const app = await load(tmpDir);
+
+        // Then
+        expect(app.packageManager).toBe('yarn');
+      });
+    });
+
+    describe('with extensions', async () => {
+      it("throws an error if the configuration file doesn't exist", async () => {
+        // Given
+
+        const uiExtensionConfigurationPath = path.join(
+          tmpDir,
+          'ui-extensions',
+          'my-extension',
+          '.shopify.ui-extension.toml',
+        );
+        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+
+        // When
+        await expect(load(tmpDir)).rejects.toThrow(
+          /Couldn't find the configuration file/,
+        );
+      });
+
+      it('throws an error if the configuration file is invalid', async () => {
+        // Given
+        const uiExtensionConfiguration = `
         wrong = "my_extension"
           `;
-      const uiExtensionConfigurationPath = path.join(
-        tmpDir,
-        'ui-extensions',
-        'my-extension',
-        '.shopify.ui-extension.toml',
-      );
-      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        const uiExtensionConfigurationPath = path.join(
+          tmpDir,
+          'ui-extensions',
+          'my-extension',
+          '.shopify.ui-extension.toml',
+        );
+        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
-      // When
-      await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
-    });
+        // When
+        await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
+      });
 
-    it('loads the app when it has an extension', async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
-
-      const uiExtensionConfiguration = `
+      it('loads the app when it has an extension', async () => {
+        // Given
+        const uiExtensionConfiguration = `
         name = "my_extension"
           `;
-      const uiExtensionConfigurationPath = path.join(
-        tmpDir,
-        'ui-extensions',
-        'my-extension',
-        '.shopify.ui-extension.toml',
-      );
-      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        const uiExtensionConfigurationPath = path.join(
+          tmpDir,
+          'ui-extensions',
+          'my-extension',
+          '.shopify.ui-extension.toml',
+        );
+        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
-      // When
-      const app = await load(tmpDir);
+        // When
+        const app = await load(tmpDir);
 
-      // Then
-      expect(app.uiExtensions[0].configuration.name).toBe('my_extension');
-    });
+        // Then
+        expect(app.uiExtensions[0].configuration.name).toBe('my_extension');
+      });
 
-    it('loads the app with several extensions', async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
-
-      let uiExtensionConfiguration = `
+      it('loads the app with several extensions', async () => {
+        // Given
+        let uiExtensionConfiguration = `
         name = "my_extension_1"
           `;
-      let uiExtensionConfigurationPath = path.join(
-        tmpDir,
-        'ui-extensions',
-        'my-extension-1',
-        '.shopify.ui-extension.toml',
-      );
-      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        let uiExtensionConfigurationPath = path.join(
+          tmpDir,
+          'ui-extensions',
+          'my-extension-1',
+          '.shopify.ui-extension.toml',
+        );
+        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
-      uiExtensionConfiguration = `
+        uiExtensionConfiguration = `
         name = "my_extension_2"
           `;
-      uiExtensionConfigurationPath = path.join(
-        tmpDir,
-        'ui-extensions',
-        'my-extension-2',
-        '.shopify.ui-extension.toml',
-      );
-      await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-      await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        uiExtensionConfigurationPath = path.join(
+          tmpDir,
+          'ui-extensions',
+          'my-extension-2',
+          '.shopify.ui-extension.toml',
+        );
+        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
+        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
 
-      // When
-      const app = await load(tmpDir);
+        // When
+        const app = await load(tmpDir);
 
-      // Then
-      expect(app.uiExtensions).toHaveLength(2);
-      expect(app.uiExtensions[0].configuration.name).toBe('my_extension_1');
-      expect(app.uiExtensions[1].configuration.name).toBe('my_extension_2');
-    });
-  });
-
-  describe('with scripts', () => {
-    it("throws an error if the configuration file doesn't exist", async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
-
-      const scriptConfigurationPath = path.join(
-        tmpDir,
-        'scripts',
-        'my-script',
-        '.shopify.script.toml',
-      );
-      await file.mkdir(path.dirname(scriptConfigurationPath));
-
-      // When
-      await expect(load(tmpDir)).rejects.toThrow(
-        /Couldn't find the configuration file/,
-      );
+        // Then
+        expect(app.uiExtensions).toHaveLength(2);
+        expect(app.uiExtensions[0].configuration.name).toBe('my_extension_1');
+        expect(app.uiExtensions[1].configuration.name).toBe('my_extension_2');
+      });
     });
 
-    it('throws an error if the configuration file is invalid', async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
+    describe('with scripts', () => {
+      it("throws an error if the configuration file doesn't exist", async () => {
+        // Given
+        const scriptConfigurationPath = path.join(
+          tmpDir,
+          'scripts',
+          'my-script',
+          '.shopify.script.toml',
+        );
+        await file.mkdir(path.dirname(scriptConfigurationPath));
 
-      const scriptConfiguration = `
-        wrong = "my_script_2"
-      `;
-      const scriptConfigurationPath = path.join(
-        tmpDir,
-        'scripts',
-        'my-script',
-        '.shopify.script.toml',
-      );
-      await file.mkdir(path.dirname(scriptConfigurationPath));
-      await file.write(scriptConfigurationPath, scriptConfiguration);
+        // When
+        await expect(load(tmpDir)).rejects.toThrow(
+          /Couldn't find the configuration file/,
+        );
+      });
 
-      // When
-      await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
-    });
+      it('throws an error if the configuration file is invalid', async () => {
+        // Given
+        const scriptConfiguration = `
+          wrong = "my_script_2"
+        `;
+        const scriptConfigurationPath = path.join(
+          tmpDir,
+          'scripts',
+          'my-script',
+          '.shopify.script.toml',
+        );
+        await file.mkdir(path.dirname(scriptConfigurationPath));
+        await file.write(scriptConfigurationPath, scriptConfiguration);
 
-    it('loads the app when it has an script', async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
+        // When
+        await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
+      });
 
-      const scriptConfiguration = `
+      it('loads the app when it has an script', async () => {
+        // Given
+        const scriptConfiguration = `
         name = "my_script"
           `;
-      const scriptConfigurationPath = path.join(
-        tmpDir,
-        'scripts',
-        'my-script',
-        '.shopify.script.toml',
-      );
-      await file.mkdir(path.dirname(scriptConfigurationPath));
-      await file.write(scriptConfigurationPath, scriptConfiguration);
+        const scriptConfigurationPath = path.join(
+          tmpDir,
+          'scripts',
+          'my-script',
+          '.shopify.script.toml',
+        );
+        await file.mkdir(path.dirname(scriptConfigurationPath));
+        await file.write(scriptConfigurationPath, scriptConfiguration);
 
-      // When
-      const app = await load(tmpDir);
+        // When
+        const app = await load(tmpDir);
 
-      // Then
-      expect(app.scripts[0].configuration.name).toBe('my_script');
-    });
+        // Then
+        expect(app.scripts[0].configuration.name).toBe('my_script');
+      });
 
-    it('loads the app with several scripts', async () => {
-      // Given
-      const appConfiguration = `
-          name = "my_app"
-          `;
-      const appConfigurationPath = path.join(
-        tmpDir,
-        configurationFileNames.app,
-      );
-      await file.write(appConfigurationPath, appConfiguration);
-
-      let scriptConfiguration = `
+      it('loads the app with several scripts', async () => {
+        // Given
+        let scriptConfiguration = `
         name = "my_script_1"
           `;
-      let scriptConfigurationPath = path.join(
-        tmpDir,
-        'scripts',
-        'my-script-1',
-        '.shopify.script.toml',
-      );
-      await file.mkdir(path.dirname(scriptConfigurationPath));
-      await file.write(scriptConfigurationPath, scriptConfiguration);
+        let scriptConfigurationPath = path.join(
+          tmpDir,
+          'scripts',
+          'my-script-1',
+          '.shopify.script.toml',
+        );
+        await file.mkdir(path.dirname(scriptConfigurationPath));
+        await file.write(scriptConfigurationPath, scriptConfiguration);
 
-      scriptConfiguration = `
+        scriptConfiguration = `
         name = "my_script_2"
           `;
-      scriptConfigurationPath = path.join(
-        tmpDir,
-        'scripts',
-        'my-script-2',
-        '.shopify.script.toml',
-      );
-      await file.mkdir(path.dirname(scriptConfigurationPath));
-      await file.write(scriptConfigurationPath, scriptConfiguration);
+        scriptConfigurationPath = path.join(
+          tmpDir,
+          'scripts',
+          'my-script-2',
+          '.shopify.script.toml',
+        );
+        await file.mkdir(path.dirname(scriptConfigurationPath));
+        await file.write(scriptConfigurationPath, scriptConfiguration);
 
-      // When
-      const app = await load(tmpDir);
+        // When
+        const app = await load(tmpDir);
 
-      // Then
-      expect(app.scripts).toHaveLength(2);
-      expect(app.scripts[0].configuration.name).toBe('my_script_1');
-      expect(app.scripts[1].configuration.name).toBe('my_script_2');
+        // Then
+        expect(app.scripts).toHaveLength(2);
+        expect(app.scripts[0].configuration.name).toBe('my_script_1');
+        expect(app.scripts[1].configuration.name).toBe('my_script_2');
+      });
     });
   });
 });
