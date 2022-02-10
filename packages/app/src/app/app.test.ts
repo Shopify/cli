@@ -60,6 +60,38 @@ describe('load', () => {
     expect(app.configuration.name).toBe('my_app');
   });
 
+  it('defaults to assuming npm as package manager', async () => {
+    // Given
+    const appConfiguration = `
+        name = "my_app"
+        `;
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
+    await file.write(appConfigurationPath, appConfiguration);
+
+    // When
+    const app = await load(tmpDir);
+
+    // Then
+    expect(app.packageManager).toBe('npm');
+  });
+
+  it('knows yarn is package manager when yarn.lock is present', async () => {
+    // Given
+    const appConfiguration = `
+        name = "my_app"
+        `;
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
+    await file.write(appConfigurationPath, appConfiguration);
+    const yarnLockPath = path.join(tmpDir, 'yarn.lock');
+    await file.write(yarnLockPath, appConfiguration);
+
+    // When
+    const app = await load(tmpDir);
+
+    // Then
+    expect(app.packageManager).toBe('yarn');
+  });
+
   describe('with extensions', async () => {
     it("throws an error if the configuration file doesn't exist", async () => {
       // Given

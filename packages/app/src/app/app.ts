@@ -34,6 +34,7 @@ interface UIExtension {
 
 interface App {
   directory: string;
+  packageManager: string;
   configuration: AppConfiguration;
   scripts: Script[];
   uiExtensions: UIExtension[];
@@ -50,12 +51,15 @@ export async function load(directory: string): Promise<App> {
   );
   const scripts = await loadScripts(directory);
   const uiExtensions = await loadExtensions(directory);
+  const yarnLockPath = path.join(directory, 'yarn.lock');
+  const yarnLockExists = await file.exists(yarnLockPath);
 
   return {
     directory,
     configuration,
     scripts,
     uiExtensions,
+    packageManager: yarnLockExists ? 'yarn' : 'npm',
   };
 }
 
