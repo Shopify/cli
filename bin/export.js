@@ -35,7 +35,7 @@ async function pack(outputDirectory) {
     let createAppExecutablePath;
 
     await tempy.directory.task(async (temporaryDirectory) => {
-        const clisDirectory = path.join(outputDirectory, "clis");
+        const clisDirectory = path.join(outputDirectory, "shopify");
         if (fs.existsSync(clisDirectory)) {
             throw new Error(`The directory ${clisDirectory} already exists`)
         }
@@ -45,6 +45,10 @@ async function pack(outputDirectory) {
         const cliKitPackPath = path.join(temporaryDirectory, "cli-kit.tar.gz");
         await execa("yarn", ["pack", "--filename", cliKitPackPath], {cwd: path.join(rootDirectory, "packages/cli-kit") })
 
+        console.log("📦 Packing @shopify/cli...")
+        const cliPackPath = path.join(temporaryDirectory, "cli.tar.gz");
+        await execa("yarn", ["pack", "--filename", cliPackPath], {cwd: path.join(rootDirectory, "packages/cli") })
+
         console.log("📦 Packing @shopify/create-app...")
         const createAppPackPath = path.join(temporaryDirectory, "create-app.tar.gz");
         await execa("yarn", ["pack", "--filename", createAppPackPath], {cwd: path.join(rootDirectory, "packages/create-app") })
@@ -52,10 +56,6 @@ async function pack(outputDirectory) {
         console.log("📦 Packing @shopify/create-hydrogen...")
         const createHydrogenPackPath = path.join(temporaryDirectory, "create-hydrogen.tar.gz");
         await execa("yarn", ["pack", "--filename", createHydrogenPackPath], {cwd: path.join(rootDirectory, "packages/create-hydrogen") })
-
-        console.log("📦 Packing @shopify/cli...")
-        const cliPackPath = path.join(temporaryDirectory, "cli.tar.gz");
-        await execa("yarn", ["pack", "--filename", cliPackPath], {cwd: path.join(rootDirectory, "packages/cli") })
 
         // Output in ./clis
         const clisPackageJsonPath = path.join(clisDirectory, "package.json");
