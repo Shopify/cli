@@ -1,7 +1,7 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {file, path} from '@shopify/cli-kit';
 
-import {configurationFileNames, genericConfigurationFileNames} from '../constants';
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '../constants';
 
 import {load} from './app';
 
@@ -21,6 +21,18 @@ describe('load', () => {
   let writeConfig = async (appConfiguration) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
     await file.write(appConfigurationPath, appConfiguration);
+  };
+
+  let writeBlockConfig = async ({blockType, blockConfiguration, name}) => {
+    let block = blocks[blockType];
+    const blockConfigurationPath = path.join(
+      tmpDir,
+      block.directoryName,
+      name,
+      block.configurationName,
+    );
+    await file.mkdir(path.dirname(blockConfigurationPath));
+    await file.write(blockConfigurationPath, blockConfiguration);
   }
 
   it("throws an error if the directory doesn't exist", async () => {
@@ -107,17 +119,10 @@ describe('load', () => {
 
       it('throws an error if the configuration file is invalid', async () => {
         // Given
-        const uiExtensionConfiguration = `
-        wrong = "my_extension"
+        const blockConfiguration = `
+          wrong = "my_extension"
           `;
-        const uiExtensionConfigurationPath = path.join(
-          tmpDir,
-          'ui-extensions',
-          'my-extension',
-          configurationFileNames.uiExtension,
-        );
-        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my-extension'});
 
         // When
         await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
@@ -125,17 +130,10 @@ describe('load', () => {
 
       it('loads the app when it has an extension', async () => {
         // Given
-        const uiExtensionConfiguration = `
-        name = "my_extension"
+        const blockConfiguration = `
+          name = "my_extension"
           `;
-        const uiExtensionConfigurationPath = path.join(
-          tmpDir,
-          'ui-extensions',
-          'my-extension',
-          configurationFileNames.uiExtension,
-        );
-        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my-extension'});
 
         // When
         const app = await load(tmpDir);
@@ -146,29 +144,15 @@ describe('load', () => {
 
       it('loads the app with several extensions', async () => {
         // Given
-        let uiExtensionConfiguration = `
-        name = "my_extension_1"
+        let blockConfiguration = `
+          name = "my_extension_1"
           `;
-        let uiExtensionConfigurationPath = path.join(
-          tmpDir,
-          'ui-extensions',
-          'my-extension-1',
-          configurationFileNames.uiExtension,
-        );
-        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my_extension_1'});
 
-        uiExtensionConfiguration = `
-        name = "my_extension_2"
+        blockConfiguration = `
+          name = "my_extension_2"
           `;
-        uiExtensionConfigurationPath = path.join(
-          tmpDir,
-          'ui-extensions',
-          'my-extension-2',
-          configurationFileNames.uiExtension,
-        );
-        await file.mkdir(path.dirname(uiExtensionConfigurationPath));
-        await file.write(uiExtensionConfigurationPath, uiExtensionConfiguration);
+        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my_extension_2'});
 
         // When
         const app = await load(tmpDir);
@@ -199,17 +183,10 @@ describe('load', () => {
 
       it('throws an error if the configuration file is invalid', async () => {
         // Given
-        const scriptConfiguration = `
-          wrong = "my_script_2"
+        const blockConfiguration = `
+          wrong = "my-script"
         `;
-        const scriptConfigurationPath = path.join(
-          tmpDir,
-          'scripts',
-          'my-script',
-          configurationFileNames.script,
-        );
-        await file.mkdir(path.dirname(scriptConfigurationPath));
-        await file.write(scriptConfigurationPath, scriptConfiguration);
+        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script'});
 
         // When
         await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
@@ -217,58 +194,37 @@ describe('load', () => {
 
       it('loads the app when it has an script', async () => {
         // Given
-        const scriptConfiguration = `
-        name = "my_script"
+        const blockConfiguration = `
+          name = "my-script"
           `;
-        const scriptConfigurationPath = path.join(
-          tmpDir,
-          'scripts',
-          'my-script',
-          configurationFileNames.script,
-        );
-        await file.mkdir(path.dirname(scriptConfigurationPath));
-        await file.write(scriptConfigurationPath, scriptConfiguration);
+        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script'});
 
         // When
         const app = await load(tmpDir);
 
         // Then
-        expect(app.scripts[0].configuration.name).toBe('my_script');
+        expect(app.scripts[0].configuration.name).toBe('my-script');
       });
 
       it('loads the app with several scripts', async () => {
         // Given
-        let scriptConfiguration = `
-        name = "my_script_1"
+        let blockConfiguration = `
+          name = "my-script-1"
           `;
-        let scriptConfigurationPath = path.join(
-          tmpDir,
-          'scripts',
-          'my-script-1',
-          configurationFileNames.script,
-        );
-        await file.mkdir(path.dirname(scriptConfigurationPath));
-        await file.write(scriptConfigurationPath, scriptConfiguration);
+        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script-1'});
 
-        scriptConfiguration = `
-        name = "my_script_2"
+        blockConfiguration = `
+          name = "my-script-2"
           `;
-        scriptConfigurationPath = path.join(
-          tmpDir,
-          'scripts',
-          'my-script-2',
-          configurationFileNames.script,
-        );
-        await file.mkdir(path.dirname(scriptConfigurationPath));
-        await file.write(scriptConfigurationPath, scriptConfiguration);
+        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script-2'});
 
         // When
         const app = await load(tmpDir);
 
         // Then
         expect(app.scripts).toHaveLength(2);
-        expect(app.scripts[0].configuration.name).toBe('my_script_1');
-        expect(app.scripts[1].configuration.name).toBe('my_script_2');
+        expect(app.scripts[0].configuration.name).toBe('my-script-1');
+        expect(app.scripts[1].configuration.name).toBe('my-script-2');
       });
     });
   });
