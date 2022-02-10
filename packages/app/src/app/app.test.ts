@@ -18,6 +18,11 @@ describe('load', () => {
     }
   });
 
+  let writeConfig = async (appConfiguration) => {
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
+    await file.write(appConfigurationPath, appConfiguration);
+  }
+
   it("throws an error if the directory doesn't exist", async () => {
     // Given
     const directory = '/tmp/doesnt/exist';
@@ -38,8 +43,7 @@ describe('load', () => {
     const appConfiguration = `
         wrong = "my_app"
         `;
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    await file.write(appConfigurationPath, appConfiguration);
+    writeConfig(appConfiguration);
 
     // When/Then
     await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
@@ -50,8 +54,7 @@ describe('load', () => {
       const appConfiguration = `
         name = "my_app"
         `;
-      const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-      await file.write(appConfigurationPath, appConfiguration);
+      writeConfig(appConfiguration);
     });
 
     describe('and no blocks', () => {
