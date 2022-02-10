@@ -27,6 +27,7 @@ and that you can find the component you are looking for more easily. The image b
 | Package | Description | Examples |
 | ------- | ----------- | ------ |
 | @shopify/create-app | Contains an executable that guides the user through the process of creating a new Shopify app | Executable |
+| @shopify/create-hydrogen | Contains an executable that guides the user through the process of creating a new Hydrogen storefront | Executable |
 | @shopify/cli | Contains the CLI executable that glues all the commands provided by the features under it | Executable |
 | @shopify/app | Contains the logic for creating, building, serving, and deploying Shopify apps | Commands, App model, Deployment tool. |
 | @shopify/theme |  Contains the logic for creating, building, and pushing themes. Note the logic in this package is Ruby. | Commands, Theme server and checker. |

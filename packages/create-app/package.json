@@ -18,10 +18,11 @@
   "license": "MIT",
   "types": "dist/index.d.ts",
   "bin": {
-    "create-app": "./bin/create-app-run.js"
+    "create-app": "./bin/run.js"
   },
   "files": [
-    "/bin",
+    "/bin/run.js",
+    "/bin/run.cmd",
     "/dist",
     "templates",
     "/npm-shrinkwrap.json",
@@ -35,8 +36,8 @@
     "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
-    "lint": "prettier -c src/** && eslint src/**",
-    "lint:fix": "prettier src/** && eslint src/** --fix",
+    "lint": "prettier -c src/** && eslint src/**/*.ts",
+    "lint:fix": "prettier src/** && eslint src/**/*.ts --fix",
     "test": "shx rm -rf dist && vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc -b"

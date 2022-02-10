@@ -11,8 +11,8 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "true",
-    "lint": "prettier -c src/** && eslint src/**",
-    "lint:fix": "prettier src/** && eslint src/** --fix",
+    "lint": "prettier -c src/** && eslint src/**/*.ts",
+    "lint:fix": "prettier src/** && eslint src/**/*.ts --fix",
     "test": "shx rm -rf dist && vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc -b"
@@ -26,9 +26,5 @@
   "devDependencies": {
     "@shopify/cli-kit": "0.12.0",
     "@shopify/cli-testing": "0.1.0"
-  },
-  "oclif": {
-    "commands": "./dist/commands",
-    "plugins": []
   }
 }

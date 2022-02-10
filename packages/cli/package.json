@@ -16,10 +16,11 @@
   ],
   "license": "MIT",
   "bin": {
-    "shopify": "./bin/shopify-run.js"
+    "shopify": "./bin/run.js"
   },
   "files": [
-    "/bin",
+    "/bin/run.cmd",
+    "/bin/run.js",
     "/dist",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
@@ -32,8 +33,8 @@
     "clean": "shx rm -rf dist",
     "build": "shx rm -rf dist && rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
-    "lint": "prettier -c src/** && eslint src/**",
-    "lint:fix": "prettier src/** && eslint src/** --fix",
+    "lint": "prettier -c src/** && eslint src/**/*.ts",
+    "lint:fix": "prettier src/** && eslint src/**/*.ts --fix",
     "test": "shx rm -rf dist && vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc -b"
@@ -46,7 +47,9 @@
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
     "@oclif/core": "0.5.10",
-    "@shopify/cli-kit": "0.12.0"
+    "@oclif/plugin-help": "^5.1.11",
+    "@shopify/cli-kit": "0.12.0",
+    "@shopify/hydrogen": "0.5.2"
   },
   "engine-strict": true,
   "engines": {
@@ -60,6 +63,13 @@
   "oclif": {
     "bin": "shopify",
     "commands": "dist/commands",
-    "plugins": []
+    "plugins": [
+      "@oclif/plugin-help"
+    ],
+    "topics": {
+      "hydrogen": { "description": "Build Hydrogen storefronts" },
+      "theme": { "description": "Build Liquid themes" },
+      "app": { "description": "Build Shopify apps" }
+    }
   }
 }

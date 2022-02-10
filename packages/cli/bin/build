@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+DIRECTORY=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+echo "Building..."
+yarn --cwd $DIRECTORY/../../cli-kit build
+yarn --cwd $DIRECTORY/.. build

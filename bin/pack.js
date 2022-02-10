@@ -6,7 +6,6 @@
  * of the context of this repository. This is useful for running e2e tests
  * or bundling the CLI in a portable format like a Deno binary.
  */
-import { program } from "commander";
 import tempy from 'tempy';
 import pathe from "pathe";
 import path from "path/posix";
@@ -15,7 +14,7 @@ import fs from "fs";
 
 import execa from "execa";
 
-const cliPackages = await ["cli-kit", "cli", "create-app"]
+const cliPackages = await ["cli-kit", "cli", "create-app", "create-hydrogen", "hydrogen"]
 const rootDirectory = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 async function cliDependencies() {
@@ -27,6 +26,7 @@ async function cliDependencies() {
     const dependenciesEntries = packageJsons.flatMap((packageJson) => Object.entries(packageJson.dependencies ?? {}))
     const dependencies = Object.fromEntries(dependenciesEntries);
     delete dependencies["@shopify/cli-kit"]
+    delete dependencies["@shopify/hydrogen"]
     return dependencies;
 }
 
@@ -48,6 +48,10 @@ async function pack(outputDirectory) {
         console.log("📦 Packing @shopify/create-app...")
         const createAppPackPath = path.join(temporaryDirectory, "create-app.tar.gz");
         await execa("yarn", ["pack", "--filename", createAppPackPath], {cwd: path.join(rootDirectory, "packages/create-app") })
+
+        console.log("📦 Packing @shopify/create-hydrogen...")
+        const createHydrogenPackPath = path.join(temporaryDirectory, "create-hydrogen.tar.gz");
+        await execa("yarn", ["pack", "--filename", createHydrogenPackPath], {cwd: path.join(rootDirectory, "packages/create-hydrogen") })
 
         console.log("📦 Packing @shopify/cli...")
         const cliPackPath = path.join(temporaryDirectory, "cli.tar.gz");
@@ -88,8 +92,14 @@ async function pack(outputDirectory) {
         await execa("tar", ["-zx", "-f", createAppPackPath], {cwd: unpackPath})
         await fs.promises.rename(path.join(unpackPath, "package"), createAppPath)
 
-        cliExecutablePath = path.join(cliPath, "bin/shopify-run.js")
-        createAppExecutablePath = path.join(createAppPath, "bin/create-app-run.js")
+        console.log("📦 Unpacking @shopify/create-hydrogen under cli")
+        const createHydrogenPath = path.join(clisDirectory, "create-hydrogen");
+        await fs.promises.mkdir(path.dirname(createHydrogenPath), {recursive: true})
+        await execa("tar", ["-zx", "-f", createHydrogenPackPath], {cwd: unpackPath})
+        await fs.promises.rename(path.join(unpackPath, "package"), createHydrogenPath)
+
+        cliExecutablePath = path.join(cliPath, "bin/run.js")
+        createAppExecutablePath = path.join(createAppPath, "bin/run.js")
     })
 
     return {cliExecutablePath, createAppExecutablePath}
@@ -99,10 +109,10 @@ export default pack;
 
 const runningAsScript = import.meta.url.endsWith(path.basename(process.argv[1]));
 if (runningAsScript) {
-    program
-        .argument('<output>', 'The directory to export the CLI into')
-        .action(pack)
-    await program.parseAsync(process.argv);
+    if (process.argv.length !== 3) {
+        console.log("The output directory is missing: pack.js ~/output")
+    }
+    pack(process.argv[2])
 }
 
 

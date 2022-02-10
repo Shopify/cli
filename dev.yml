@@ -25,6 +25,12 @@ commands:
   create-app:
     desc: 'Runs the create-app CLI'
     run: packages/create-app/bin/dev
+  create-hydrogen:
+    desc: 'Runs the create-hydrogen CLI'
+    run: packages/create-hydrogen/bin/dev
+  clean:
+    desc: 'Clean the packages'
+    run: yarn run clean
   test:
     desc: 'Runs the tests'
     run: yarn run test
