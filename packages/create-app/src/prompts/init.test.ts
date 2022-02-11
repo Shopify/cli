@@ -3,9 +3,9 @@ import {describe, it, expect, vi} from 'vitest';
 import init from './init';
 
 describe('init', () => {
-  it('when name and description are not passed', async () => {
+  it('when name is not passed', async () => {
     const prompt = vi.fn();
-    const answers = {name: 'app', description: 'description'};
+    const answers = {name: 'app'};
     const options = {};
 
     // Given
@@ -19,12 +19,8 @@ describe('init', () => {
       {
         type: 'input',
         name: 'name',
-        message: 'How would you like to name the app?',
-      },
-      {
-        type: 'input',
-        name: 'description',
-        message: "What's the application for?",
+        message: "Your app's working name?",
+        default: 'app',
       },
     ]);
     expect(got).toEqual({...options, ...answers});
@@ -32,7 +28,7 @@ describe('init', () => {
 
   it('when name is passed', async () => {
     const prompt = vi.fn();
-    const answers = {name: 'app', description: 'description'};
+    const answers = {name: 'app'};
     const options = {name: 'app'};
 
     // Given
@@ -42,35 +38,7 @@ describe('init', () => {
     const got = await init(options, prompt);
 
     // Then
-    expect(prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'description',
-        message: "What's the application for?",
-      },
-    ]);
-    expect(got).toEqual({...options, ...answers});
-  });
-
-  it('when description is passed', async () => {
-    const prompt = vi.fn();
-    const answers = {name: 'app', description: 'description'};
-    const options = {description: 'description'};
-
-    // Given
-    prompt.mockResolvedValue(Promise.resolve(answers));
-
-    // When
-    const got = await init(options, prompt);
-
-    // Then
-    expect(prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'name',
-        message: 'How would you like to name the app?',
-      },
-    ]);
+    expect(prompt).toHaveBeenCalledWith([]);
     expect(got).toEqual({...options, ...answers});
   });
 });

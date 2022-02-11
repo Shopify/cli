@@ -1,3 +1,7 @@
+---
+title: version
+---
+
 The `version` module from `@shopify/cli-kit` provides models and utilities for reading and working with versions.
 
 

@@ -17,11 +17,8 @@ describe('Init', function () {
     // Given
     const directory = '/path/to/output';
     const appName = 'MyApp';
-    const description = 'Description';
 
-    initPromptMock.mockReturnValue(
-      Promise.resolve({name: appName, description}),
-    );
+    initPromptMock.mockReturnValue(Promise.resolve({name: appName}));
 
     // When
     await Init.run(['--name', appName, '--path', directory]);
@@ -30,7 +27,6 @@ describe('Init', function () {
     expect(initServiceMock).toHaveBeenCalledWith({
       name: appName,
       directory,
-      description,
     });
     expect(initPromptMock).toHaveBeenCalledWith({
       name: appName,

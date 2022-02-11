@@ -31,7 +31,7 @@ const configuration = () => [
             // Preserves the commands/... path
             return `commands/${chunkInfo.facadeModuleId
               .split('src/commands')
-              .at(-1)
+              .pop()
               .replace('ts', 'js')}`;
           } else {
             return '[name].js';

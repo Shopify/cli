@@ -2,12 +2,10 @@ import {ui} from '@shopify/cli-kit';
 
 interface InitOptions {
   name?: string;
-  description?: string;
 }
 
 interface InitOutput {
   name: string;
-  description: string;
 }
 
 const init = async (
@@ -19,14 +17,8 @@ const init = async (
     questions.push({
       type: 'input',
       name: 'name',
-      message: 'How would you like to name the app?',
-    });
-  }
-  if (!options.description) {
-    questions.push({
-      type: 'input',
-      name: 'description',
-      message: "What's the application for?",
+      message: "Your app's working name?",
+      default: 'app',
     });
   }
   const promptOutput: InitOutput = await prompt(questions);

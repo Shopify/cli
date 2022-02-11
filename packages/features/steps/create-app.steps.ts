@@ -11,8 +11,6 @@ Then(
       appName,
       '--path',
       this.temporaryDirectory,
-      '--description',
-      'Description',
     ]);
   },
 );

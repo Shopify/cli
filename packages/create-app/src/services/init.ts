@@ -8,6 +8,7 @@ import {
   ui,
   dependency,
 } from '@shopify/cli-kit';
+import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -16,7 +17,6 @@ import {template as getTemplatePath} from '../utils/paths';
 
 interface InitOptions {
   name: string;
-  description: string;
   directory: string;
 }
 
@@ -24,42 +24,46 @@ async function init(options: InitOptions) {
   const user = (await os.username()) ?? '';
   const templatePath = await getTemplatePath('app');
   const cliVersion = cliPackageVersion.version;
-  const outputDirectory = path.join(
-    options.directory,
-    string.hyphenize(options.name),
-  );
+  const dependencyManager = dependency.dependencyManagerUsedForCreating();
+  const hyphenizedName = string.hyphenize(options.name);
+  const outputDirectory = path.join(options.directory, hyphenizedName);
   await ui.list([
     {
-      title: 'Creating the app',
-      task: async () => {
-        return createApp({
+      title: `Initializing your app ${hyphenizedName}`,
+      task: async (_, task) => {
+        await createApp({
           ...options,
           outputDirectory,
           templatePath,
           cliVersion,
           user,
+          dependencyManager,
         });
+        task.title = 'Initialized';
       },
     },
     {
       title: 'Installing dependencies',
       task: async () => {
-        return installDependencies(outputDirectory);
+        return installDependencies(outputDirectory, dependencyManager);
       },
     },
   ]);
-  output.success(
-    output.content`App successfully created at ${output.token.path(
-      outputDirectory,
-    )}`,
-  );
+  output.message(output.content`
+  ${hyphenizedName} is ready to build! ✨
+    Docs: ${output.token.link(
+      'Quick start guide',
+      'https://shopify.dev/apps/getting-started',
+    )}
+    Inspiration ${output.token.command(`${dependencyManager} shopify help`)}
+  `);
 }
 
-async function installDependencies(directory: string): Promise<void> {
-  await dependency.install(
-    directory,
-    dependency.dependencyManagerUsedForCreating(),
-  );
+async function installDependencies(
+  directory: string,
+  dependencyManager: DependencyManager,
+): Promise<void> {
+  await dependency.install(directory, dependencyManager);
 }
 
 async function createApp(
@@ -68,6 +72,7 @@ async function createApp(
     templatePath: string;
     cliVersion: string;
     user: string;
+    dependencyManager: string;
   },
 ): Promise<void> {
   const templateFiles: string[] = await path.glob(
@@ -82,10 +87,10 @@ async function createApp(
 
   const templateData = {
     name: options.name,
-    description: options.description,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     shopify_cli_version: options.cliVersion,
     author: options.user,
+    dependencyManager: options.dependencyManager,
   };
 
   sortedTemplateFiles.forEach(async (templateItemPath) => {

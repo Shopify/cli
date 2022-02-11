@@ -1,3 +1,7 @@
+---
+title: os
+---
+
 The `os` module from `@shopify/cli-kit` provides utilities for reading information and interacting with the operative system in which the CLI is running:
 
 ### Get the username

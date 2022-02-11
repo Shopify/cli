@@ -16,5 +16,4 @@ The following **tokens** are supported:
 
 - `path`: To represent paths to files and directories.
 - `command`: To represent a shell command.
-
-
+- `link`: To represent a URL - `output.token.link("Shopify", "https://shopify.com")`
