@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.14.0
+
+### Minor Changes
+
+- Some visual improvements in the create-app workflow
+
 ## 0.13.0
 
 ### Minor Changes
