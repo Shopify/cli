@@ -17,7 +17,6 @@ import {template as getTemplatePath} from '../utils/paths';
 
 interface InitOptions {
   name: string;
-  description: string;
   directory: string;
 }
 
@@ -89,7 +88,6 @@ async function createApp(
 
   const templateData = {
     name: options.name,
-    description: options.description,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     shopify_cli_version: options.cliVersion,
     author: options.user,
