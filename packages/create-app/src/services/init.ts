@@ -25,15 +25,13 @@ async function init(options: InitOptions) {
   const templatePath = await getTemplatePath('app');
   const cliVersion = cliPackageVersion.version;
   const dependencyManager = dependency.dependencyManagerUsedForCreating();
-  const outputDirectory = path.join(
-    options.directory,
-    string.hyphenize(options.name),
-  );
+  const hyphenizedName = string.hyphenize(options.name);
+  const outputDirectory = path.join(options.directory, hyphenizedName);
   await ui.list([
     {
-      title: 'Initiated',
-      task: async () => {
-        return createApp({
+      title: `Initializing your app ${hyphenizedName}`,
+      task: async (_, task) => {
+        await createApp({
           ...options,
           outputDirectory,
           templatePath,
@@ -41,6 +39,7 @@ async function init(options: InitOptions) {
           user,
           dependencyManager,
         });
+        task.title = 'Initialized';
       },
     },
     {
@@ -51,7 +50,7 @@ async function init(options: InitOptions) {
     },
   ]);
   output.message(output.content`
-  ${string.hyphenize(options.name)} is ready to build! ✨
+  ${hyphenizedName} is ready to build! ✨
     Docs: ${output.token.link(
       'Quick start guide',
       'https://shopify.dev/apps/getting-started',
