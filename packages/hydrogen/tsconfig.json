@@ -8,6 +8,9 @@
     "rootDir": "src",
     "baseUrl": ".",
     "composite": true,
-    "tsBuildInfoFile": ".build/tsconfig.build.tsbuildinfo"
+    "tsBuildInfoFile": ".build/tsconfig.build.tsbuildinfo",
+    "paths": {
+      "@shopify/cli-kit": ["../cli-kit/src"]
+    }
   }
 }

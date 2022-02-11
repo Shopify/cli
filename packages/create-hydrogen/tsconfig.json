@@ -7,6 +7,9 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
-    "composite": false
+    "composite": false,
+    "paths": {
+      "@shopify/cli-kit": ["../cli-kit/src"]
+    }
   }
 }
