@@ -50,6 +50,7 @@
     "win32"
   ],
   "devDependencies": {
+    "change-case": "^4.1.2",
     "conf": "^10.1.1",
     "enquirer": "^2.3.6",
     "execa": "^6.0.0",
@@ -62,6 +63,6 @@
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
     "term-size": "^3.0.1",
-    "change-case": "^4.1.2"
+    "terminal-link": "^3.0.0"
   }
 }

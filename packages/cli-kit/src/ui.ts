@@ -5,6 +5,7 @@ export interface Question {
   type: 'input';
   name: string;
   message: string;
+  default?: string;
 }
 
 export const prompt = <T>(questions: Question[]): Promise<T> => {

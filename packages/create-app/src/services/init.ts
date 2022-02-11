@@ -8,6 +8,7 @@ import {
   ui,
   dependency,
 } from '@shopify/cli-kit';
+import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -24,13 +25,14 @@ async function init(options: InitOptions) {
   const user = (await os.username()) ?? '';
   const templatePath = await getTemplatePath('app');
   const cliVersion = cliPackageVersion.version;
+  const dependencyManager = dependency.dependencyManagerUsedForCreating();
   const outputDirectory = path.join(
     options.directory,
     string.hyphenize(options.name),
   );
   await ui.list([
     {
-      title: 'Creating the app',
+      title: 'Initiated',
       task: async () => {
         return createApp({
           ...options,
@@ -38,28 +40,32 @@ async function init(options: InitOptions) {
           templatePath,
           cliVersion,
           user,
+          dependencyManager,
         });
       },
     },
     {
       title: 'Installing dependencies',
       task: async () => {
-        return installDependencies(outputDirectory);
+        return installDependencies(outputDirectory, dependencyManager);
       },
     },
   ]);
-  output.success(
-    output.content`App successfully created at ${output.token.path(
-      outputDirectory,
-    )}`,
-  );
+  output.message(output.content`
+  ${string.hyphenize(options.name)} is ready to build! ✨
+    Docs: ${output.token.link(
+      'Quick start guide',
+      'https://shopify.dev/apps/getting-started',
+    )}
+    Inspiration ${output.token.command(`${dependencyManager} shopify help`)}
+  `);
 }
 
-async function installDependencies(directory: string): Promise<void> {
-  await dependency.install(
-    directory,
-    dependency.dependencyManagerUsedForCreating(),
-  );
+async function installDependencies(
+  directory: string,
+  dependencyManager: DependencyManager,
+): Promise<void> {
+  await dependency.install(directory, dependencyManager);
 }
 
 async function createApp(
@@ -68,6 +74,7 @@ async function createApp(
     templatePath: string;
     cliVersion: string;
     user: string;
+    dependencyManager: string;
   },
 ): Promise<void> {
   const templateFiles: string[] = await path.glob(
@@ -86,6 +93,7 @@ async function createApp(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     shopify_cli_version: options.cliVersion,
     author: options.user,
+    dependencyManager: options.dependencyManager,
   };
 
   sortedTemplateFiles.forEach(async (templateItemPath) => {
