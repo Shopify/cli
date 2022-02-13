@@ -7,7 +7,17 @@ import {load} from './app';
 
 describe('load', () => {
   let tmpDir: string;
-  const missingName = '[{"code":"invalid_type","expected":"string","received":"undefined","path":["name"],"message":"Required"}]'
+  // Zod-generated validation message
+  const missingName = [
+    {
+      "code":"invalid_type",
+      "expected":"string",
+      "received":"undefined",
+      "path":["name"],
+      "message":"Required",
+    }
+  ];
+  const missingNameMessage = JSON.stringify(missingName, null, 2);
 
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir();
@@ -66,7 +76,7 @@ describe('load', () => {
     writeConfig(appConfiguration);
 
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow(missingName);
+    await expect(load(tmpDir)).rejects.toThrow(missingNameMessage);
   });
 
   describe('given a valid configuration', () => {
@@ -138,7 +148,7 @@ describe('load', () => {
         writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my-extension'});
 
         // When
-        await expect(load(tmpDir)).rejects.toThrow(missingName);
+        await expect(load(tmpDir)).rejects.toThrow(missingNameMessage);
       });
 
       it('loads the app when it has an extension', async () => {
@@ -196,7 +206,7 @@ describe('load', () => {
         writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script'});
 
         // When
-        await expect(load(tmpDir)).rejects.toThrowError(missingName);
+        await expect(load(tmpDir)).rejects.toThrowError(missingNameMessage);
       });
 
       it('loads the app when it has an script', async () => {
