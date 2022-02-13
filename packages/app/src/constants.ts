@@ -19,4 +19,7 @@ export const genericConfigurationFileNames = {
   yarn: {
     lockfile: 'yarn.lock',
   },
+  pnpm: {
+    lockfile: 'pnpm-lock.yaml',
+  },
 }

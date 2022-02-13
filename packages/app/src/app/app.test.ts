@@ -104,6 +104,18 @@ describe('load', () => {
         // Then
         expect(app.packageManager).toBe('yarn');
       });
+
+      it('knows yarn is package manager when yarn.lock is present', async () => {
+        // Given
+        const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile);
+        await file.write(pnpmLockPath, '');
+
+        // When
+        const app = await load(tmpDir);
+
+        // Then
+        expect(app.packageManager).toBe('pnpm');
+      });
     });
 
     describe('with extensions', async () => {

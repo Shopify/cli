@@ -55,13 +55,18 @@ export async function load(directory: string): Promise<App> {
   const uiExtensions = await loadExtensions(directory);
   const yarnLockPath = path.join(directory, genericConfigurationFileNames.yarn.lockfile);
   const yarnLockExists = await file.exists(yarnLockPath);
+  const pnpmLockPath = path.join(directory, genericConfigurationFileNames.pnpm.lockfile);
+  const pnpmLockExists = await file.exists(pnpmLockPath);
+  const packageManager = yarnLockExists ? 'yarn' :
+    pnpmLockExists ? 'pnpm' :
+    'npm';
 
   return {
     directory,
     configuration,
     scripts,
     uiExtensions,
-    packageManager: yarnLockExists ? 'yarn' : 'npm',
+    packageManager: packageManager,
   };
 }
 
