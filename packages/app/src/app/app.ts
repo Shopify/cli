@@ -32,9 +32,11 @@ interface UIExtension {
   directory: string;
 }
 
+type PackageManager = "npm" | "yarn" | "pnpm"
+
 interface App {
   directory: string;
-  packageManager: string;
+  packageManager: PackageManager;
   configuration: AppConfiguration;
   scripts: Script[];
   uiExtensions: UIExtension[];
