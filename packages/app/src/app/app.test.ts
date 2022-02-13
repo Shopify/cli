@@ -7,6 +7,7 @@ import {load} from './app';
 
 describe('load', () => {
   let tmpDir: string;
+  const missingName = '[{"code":"invalid_type","expected":"string","received":"undefined","path":["name"],"message":"Required"}]'
 
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir();
@@ -65,7 +66,7 @@ describe('load', () => {
     writeConfig(appConfiguration);
 
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
+    await expect(load(tmpDir)).rejects.toThrow(missingName);
   });
 
   describe('given a valid configuration', () => {
@@ -137,7 +138,7 @@ describe('load', () => {
         writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my-extension'});
 
         // When
-        await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
+        await expect(load(tmpDir)).rejects.toThrow(missingName);
       });
 
       it('loads the app when it has an extension', async () => {
@@ -195,7 +196,7 @@ describe('load', () => {
         writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script'});
 
         // When
-        await expect(load(tmpDir)).rejects.toThrow(/Invalid schema/);
+        await expect(load(tmpDir)).rejects.toThrowError(missingName);
       });
 
       it('loads the app when it has an script', async () => {

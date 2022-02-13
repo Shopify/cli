@@ -82,7 +82,7 @@ async function parseConfigurationFile(schema: any, path: string) {
   const configurationObject = await loadConfigurationFile(path);
   const parseResult = schema.safeParse(configurationObject);
   if (!parseResult.success) {
-    throw new error.Abort(`Invalid schema in ${path}`);
+    throw new error.Abort(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues)}`);
   }
   return parseResult.data;
 }
