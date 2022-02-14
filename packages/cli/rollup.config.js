@@ -17,12 +17,18 @@ const features = ['app', 'theme', 'hydrogen'];
 const featureCommands = features
   .flatMap((feature) => {
     return fg.sync([
-      path.join(__dirname, `../${feature}/src/commands/*/*.ts`),
-      path.join(__dirname, `../${feature}/src/commands/*.ts`),
-      `!${path.join(__dirname, `../${feature}/src/commands/**/*.test.ts`)}`,
+      path.join(__dirname, `../${feature}/src/cli/commands/*/*.ts`),
+      path.join(__dirname, `../${feature}/src/cli/commands/*.ts`),
+      `!${path.join(__dirname, `../${feature}/src/cli/commands/**/*.test.ts`)}`,
     ]);
   })
   .filter((commandPath) => {
+    /**
+     * The @shopify/create-hydrogen package was originally implemented
+     * to delegate the creation flow to the @shopify/hydrogen package.
+     * This filter leaves the "shopify hydrogen init" out of the final
+     * set of commands.
+     */
     return !commandPath.includes('/commands/hydrogen/init');
   });
 
@@ -35,10 +41,10 @@ const configuration = () => [
         dir: distDir(__dirname),
         format: 'esm',
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.facadeModuleId.includes('src/commands')) {
+          if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
             return `commands/${chunkInfo.facadeModuleId
-              .split('src/commands')
+              .split('src/cli/commands')
               .pop()
               .replace('ts', 'js')}`;
           } else {
