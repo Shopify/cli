@@ -15,7 +15,6 @@ import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import cliPackage from '../../../cli/package.json';
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import appPackage from '../../../app/package.json';

@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@shopify/cli": "{{shopify_cli_version}}",
-    "@shopify/app": "{{shopify_app_version}}"
+    "@shopify/app": "{{shopify_app_version}}",
+    "react": "17.0.2"
   },
   "devDependencies": {},
   "author": "{{author}}"

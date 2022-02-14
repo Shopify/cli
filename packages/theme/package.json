@@ -7,10 +7,6 @@
   "files": [
     "/dist"
   ],
-  "publishConfig": {
-    "access": "public",
-    "@shopify:registry": "https://registry.npmjs.org"
-  },
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "true",
