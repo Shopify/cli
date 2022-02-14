@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
+import {output} from '@shopify/cli-kit';
 
 export interface FileResult {
   path: string;
@@ -93,7 +94,7 @@ export class Interface {
         const [label, ...values] = msg;
         const spacer = [INDENT, INDENT].join('');
 
-        console.log(chalk.cyan([spacer, label, ...values].join(spacer)));
+        output.message(chalk.cyan([spacer, label, ...values].join(spacer)));
       });
       return;
     }
@@ -104,10 +105,12 @@ export class Interface {
       : '';
     const combinedMessage = [type, styledText].join('');
 
-    console.log(options.strong ? chalk.bold(combinedMessage) : combinedMessage);
+    output.message(
+      options.strong ? chalk.bold(combinedMessage) : combinedMessage,
+    );
 
     if (options.breakAfter) {
-      console.log('');
+      output.message('');
     }
   }
 

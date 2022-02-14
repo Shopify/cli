@@ -41,17 +41,19 @@ export const token = {
 
 // output.content`Something ${output.token.command(Something)}`
 
-class Message {
+class TokenizedString {
   value: string;
   constructor(value: string) {
     this.value = value;
   }
 }
 
+type Message = string | TokenizedString;
+
 export function content(
   strings: TemplateStringsArray,
   ...keys: (ContentToken | string)[]
-): Message {
+): TokenizedString {
   let output = ``;
   strings.forEach((string, i) => {
     output += string;
@@ -79,13 +81,28 @@ export function content(
       }
     }
   });
-  return new Message(output);
+  return new TokenizedString(output);
 }
 
 export const success = (content: Message) => {
-  console.log(pc.green(`🎉 ${content.value}`));
+  // eslint-disable-next-line no-console
+  console.log(pc.green(`🎉 ${stringifyMessage(content)}`));
 };
 
 export const message = (content: Message) => {
-  console.log(content.value);
+  // eslint-disable-next-line no-console
+  console.log(stringifyMessage(content));
 };
+
+export const error = (content: Message) => {
+  // eslint-disable-next-line no-console
+  console.error(stringifyMessage(content));
+};
+
+function stringifyMessage(message: Message): string {
+  if (message instanceof TokenizedString) {
+    return message.value;
+  } else {
+    return message;
+  }
+}

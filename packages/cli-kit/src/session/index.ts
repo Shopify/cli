@@ -1,3 +1,1 @@
-export async function ensureAuthenticated() {
-  console.log('authenticated');
-}
+export async function ensureAuthenticated() {}
