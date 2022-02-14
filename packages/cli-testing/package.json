@@ -19,7 +19,7 @@
     "clean": "shx rm -rf dist",
     "build": "true",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
-    "lint:fix": "prettier src/** && eslint src/**/*.ts --fix",
+    "lint:fix": "prettier src/** -w && eslint src/**/*.ts --fix",
     "test": "shx rm -rf dist && vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc -b"

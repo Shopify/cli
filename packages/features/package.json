@@ -6,7 +6,7 @@
     "clean": "true",
     "build": "true",
     "lint": "prettier -c **/*.ts && eslint **/*.ts",
-    "lint:fix": "prettier **/*.ts && eslint **/*.ts --fix",
+    "lint:fix": "prettier **/*.ts -w && eslint **/*.ts --fix",
     "test": "cucumber-js -p default",
     "tsc": "tsc --noEmit"
   },
