@@ -10,6 +10,7 @@ const configuration = () => [
       {
         file: path.join(distDir(__dirname), 'index.js'),
         format: 'esm',
+        sourcemap: true,
       },
     ],
     plugins: plugins(__dirname),
@@ -21,6 +22,7 @@ const configuration = () => [
       {
         file: path.join(distDir(__dirname), 'index.d.ts'),
         format: 'esm',
+        sourcemap: true,
       },
     ],
     plugins: [

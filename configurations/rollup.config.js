@@ -29,7 +29,6 @@ export const plugins = (packagePath, additionalAliases = []) => {
     }),
     esbuild({
       target: 'ES2020',
-      sourceMap: true,
       tsconfig: path.join(packagePath, 'tsconfig.json'),
     }),
     commonjs({
@@ -40,19 +39,3 @@ export const plugins = (packagePath, additionalAliases = []) => {
 };
 
 export const external = [];
-
-const configuration = () => [
-  {
-    input: path.join(__dirname, 'src/index.ts'),
-    output: [
-      {
-        file: path.join(distDir, 'index.js'),
-        format: 'esm',
-      },
-    ],
-    plugins,
-    external: [...external],
-  },
-];
-
-export default configuration;

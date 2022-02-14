@@ -40,6 +40,7 @@ const configuration = () => [
       {
         dir: distDir(__dirname),
         format: 'esm',
+        sourcemap: true,
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
