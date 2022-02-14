@@ -38,7 +38,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "shx rm -rf dist && rollup -c && tsc -p tsconfig.dist.json",
+    "build": "shx rm -rf dist && rm -f tsconfig.dist.tsbuildinfo && rollup -c && tsc -p tsconfig.dist.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
     "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
