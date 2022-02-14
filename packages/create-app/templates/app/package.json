@@ -10,7 +10,8 @@
     "push": "shopify app push"
   },
   "dependencies": {
-    "@shopify/cli": "{{shopify_cli_version}}"
+    "@shopify/cli": "{{shopify_cli_version}}",
+    "@shopify/app": "{{shopify_app_version}}"
   },
   "devDependencies": {},
   "author": "{{author}}"
