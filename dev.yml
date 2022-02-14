@@ -19,6 +19,9 @@ open:
   app: http://localhost:3000
 
 commands:
+  export:
+    desc: 'Exports the CLIs into the given directory'
+    run: bin/export.js
   shopify:
     desc: 'Runs the Shopify CLI'
     run: yarn shopify
