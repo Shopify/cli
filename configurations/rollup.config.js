@@ -4,32 +4,43 @@ import json from '@rollup/plugin-json';
 import path from 'pathe';
 import stripShebang from 'rollup-plugin-strip-shebang';
 import commonjs from '@rollup/plugin-commonjs';
+import alias from '@rollup/plugin-alias';
 
 export const distDir = (packagePath) => {
   return process.env.SHOPIFY_DIST_DIR || path.join(packagePath, 'dist');
 };
 
-export const plugins = (packagePath) => {
+export const plugins = (packagePath, additionalAliases = []) => {
   return [
+    json(),
+    alias({
+      // Including these transitive dependencies is necessary to prevent
+      // runtime errors when the dependent packages try to import them.
+      entries: [
+        ...Object.entries(additionalAliases).map((find, replacement) => ({
+          find,
+          replacement,
+        })),
+      ],
+    }),
     stripShebang(),
     resolve({
       preferBuiltins: true,
-      dedupe: [],
       moduleDirectories: [
         path.join(packagePath, 'node_modules'),
-        path.join(packagePath, '../cli-kit/node_modules'),
         path.join(packagePath, '../../node_modules'),
+        path.join(packagePath, '../cli-kit/node_modules'),
+        path.join(packagePath, '../hydrogen/node_modules'),
       ],
     }),
     esbuild({
       target: 'ES2020',
       sourceMap: true,
-      tsconfig: path.join(packagePath, 'tsconfig.dist.json'),
-      minify: process.env.NODE_ENV === 'production',
+      tsconfig: path.join(packagePath, 'tsconfig.json'),
     }),
-    json(),
     commonjs({
-      include: /node_modules/,
+      include: [/node_modules/],
+      requireReturnsDefault: 'auto',
     }),
   ];
 };
@@ -37,14 +48,12 @@ export const plugins = (packagePath) => {
 export const external = [];
 
 const configuration = () => [
-  // create-app
   {
     input: path.join(__dirname, 'src/index.ts'),
     output: [
       {
         file: path.join(distDir, 'index.js'),
         format: 'esm',
-        exports: 'auto',
       },
     ],
     plugins,

@@ -13,7 +13,7 @@ import tmp from 'tmp';
 import rimraf from 'rimraf';
 import path from 'pathe';
 
-import pack from '../../../bin/pack.cjs';
+import pack from '../../../bin/export';
 import {exec} from '../lib/system';
 
 let sharedTemporaryDirectory: string | undefined;
@@ -48,13 +48,10 @@ BeforeAll({timeout: 2 * 60 * 1000}, async function () {
   await exec(path.join(__dirname, '../../../bin/pack.js'), [
     sharedTemporaryDirectory,
   ]);
-  cliExecutable = path.join(
-    sharedTemporaryDirectory,
-    'clis/cli/bin/shopify-run.js',
-  );
+  cliExecutable = path.join(sharedTemporaryDirectory, 'clis/cli/bin/run.js');
   createAppExecutable = path.join(
     sharedTemporaryDirectory,
-    'clis/create-app/bin/create-app-run.js',
+    'clis/create-app/bin/run.js',
   );
 });
 

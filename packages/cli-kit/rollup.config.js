@@ -9,7 +9,6 @@ const configuration = () => [
       {
         file: path.join(distDir(__dirname), 'index.js'),
         format: 'esm',
-        exports: 'auto',
       },
     ],
     plugins: plugins(__dirname),

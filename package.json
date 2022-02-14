@@ -29,7 +29,6 @@
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
     "@typescript-eslint/parser": "^5.9.0",
-    "commander": "^9.0.0",
     "cross-env": "^7.0.3",
     "cucumber-junit-formatter": "^0.2.2",
     "cucumber-pretty": "^6.0.1",
@@ -40,7 +39,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-unicorn": "^40.0.0",
     "execa": "^5.1.1",
-    "fast-glob": "^3.2.10",
+    "fast-glob": "^3.2.11",
     "pathe": "0.2.0",
     "picocolors": "^1.0.0",
     "prettier": "^2.5.1",
@@ -84,8 +83,5 @@
       "import/no-extraneous-dependencies": "off"
     }
   },
-  "prettier": "@shopify/prettier-config",
-  "resolutions": {
-    "onetime": "5.1.2"
-  }
+  "prettier": "@shopify/prettier-config"
 }

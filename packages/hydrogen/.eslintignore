@@ -1,0 +1,9 @@
+src/commands/hydrogen/add/eslint/templates/eslintrc-js.ts
+src/commands/hydrogen/add/shopifyConfig/templates/shopify-config-js.ts
+src/commands/hydrogen/add/shopifyProvider/templates/shopify-config-js.ts
+src/commands/hydrogen/preview/mini-oxygen/server.ts
+src/core/Command.ts
+src/core/Config.ts
+src/utilities/format.ts
+src/utilities/merge.ts
+src/tests/utilities.ts

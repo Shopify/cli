@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         node: ['12.22.0', '14.13.1', '16']
-        package: ['cli', 'theme', 'app', 'cli-kit', 'cli-testing', 'create-app', 'features']
+        package: ['cli', 'theme', 'hydrogen', 'app', 'cli-kit', 'cli-testing', 'create-app', 'create-hydrogen', 'features']
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v1
@@ -37,7 +37,7 @@ jobs:
     strategy:
       matrix:
         node: ['12.22.0', '14.13.1', '16']
-        package: ['cli', 'theme', 'app', 'cli-kit', 'cli-testing', 'create-app', 'features']
+        package: ['cli', 'theme', 'hydrogen', 'app', 'cli-kit', 'cli-testing', 'create-app', 'create-hydrogen', 'features']
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v1
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['cli', 'theme', 'app', 'cli-kit', 'cli-testing', 'create-app', 'features']
+        package: ['cli', 'theme', 'hydrogen', 'app', 'cli-kit', 'cli-testing', 'create-app', 'create-hydrogen', 'features']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['cli', 'theme', 'app', 'cli-kit', 'cli-testing', 'create-app', 'features']
+        package: ['cli', 'theme', 'hydrogen', 'app', 'cli-kit', 'cli-testing', 'create-app', 'create-hydrogen', 'features']
     steps:
       - uses: actions/checkout@v1
       - name: Set Node.js

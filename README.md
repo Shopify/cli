@@ -9,11 +9,20 @@
 
 Shopify CLI helps you build Shopify themes and apps. Use Shopify CLI to automate and enhance your local development workflow.
 
-## Create an app
+## Create
+
+#### App
 
 ```
 npx @shopify/create-app@latest
 yarn create @shopify/app
+```
+
+#### Hydrogen storefront
+
+```
+npx @shopify/create-hydrogen@latest
+yarn create @shopify/hydrogen
 ```
 
 ## Help 🖐
