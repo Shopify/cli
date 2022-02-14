@@ -25,7 +25,7 @@ const configuration = () => [
         format: 'esm',
         sourcemap: true,
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.facadeModuleId.includes('src/commands')) {
+          if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
             return `commands/${chunkInfo.facadeModuleId
               .split('src/cli/commands/hydrogen')
