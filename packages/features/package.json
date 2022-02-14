@@ -19,6 +19,9 @@
   "eslintConfig": {
     "extends": [
       "../../package.json"
-    ]
+    ],
+    "rules": {
+      "no-console": "off"
+    }
   }
 }
