@@ -45,6 +45,7 @@ export class Package {
       if (pkgJson) {
         this.syncInternal({...pkgJson, name: val});
       }
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       this.log(error as string);
     }
@@ -58,6 +59,7 @@ export class Package {
       if (pkgJson) {
         this.syncInternal(pkgJson);
       }
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       this.log(error as string);
     }

@@ -36,6 +36,7 @@
     "eslint": "^8.6.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-no-catch-all": "^1.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-unicorn": "^40.0.0",
     "execa": "^5.1.1",
@@ -63,6 +64,9 @@
   },
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "no-catch-all"
+    ],
     "extends": [
       "plugin:@shopify/typescript",
       "plugin:@shopify/prettier",
@@ -72,6 +76,7 @@
       "prettier/prettier": [
         "error"
       ],
+      "no-catch-all/no-catch-all": "error",
       "no-console": "error",
       "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/no-var-requires": "off",

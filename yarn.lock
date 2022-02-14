@@ -3246,6 +3246,11 @@ eslint-plugin-jsx-a11y@^6.5.0:
     language-tags "^1.0.5"
     minimatch "^3.0.4"
 
+eslint-plugin-no-catch-all@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-no-catch-all/-/eslint-plugin-no-catch-all-1.1.0.tgz#f2e8950cc2b0bdde5faa4ab339d0986c6ae32fb0"
+  integrity sha512-VkP62jLTmccPrFGN/W6V7a3SEwdtTZm+Su2k4T3uyJirtkm0OMMm97h7qd8pRFAHus/jQg9FpUpLRc7sAylBEQ==
+
 eslint-plugin-node@^11.1.0:
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-node/-/eslint-plugin-node-11.1.0.tgz#c95544416ee4ada26740a30474eefc5402dc671d"
