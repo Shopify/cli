@@ -23,7 +23,6 @@
     "/bin/run.cmd",
     "/dist",
     "templates",
-    "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
   "publishConfig": {

@@ -12,7 +12,7 @@ const cliExternal = [
   '@bugsnag/js',
 ];
 
-const features = ['app', 'theme', 'hydrogen'];
+const features = ['theme', 'hydrogen'];
 
 const featureCommands = features
   .flatMap((feature) => {

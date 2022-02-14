@@ -5,8 +5,7 @@
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
   "files": [
-    "/dist",
-    "/npm-shrinkwrap.json"
+    "/dist"
   ],
   "publishConfig": {
     "access": "public",
