@@ -66,20 +66,25 @@ run:
 build-node-packages:
 	yarn install
 	yarn build
+	chmod +x packages/shopify-cli-extensions/cli.js
 
 .PHONY: bootstrap
 bootstrap: tmp build
-	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/extension.config.yml
-	cd tmp/checkout_ui_extension; npm install && npm link "@shopify/shopify-cli-extensions"
-	cd tmp/product_subscription; npm install && npm link "@shopify/shopify-cli-extensions"
-	cd tmp/checkout_post_purchase; npm install && npm link "@shopify/shopify-cli-extensions"
+	cd tmp/checkout_ui_extension; yarn install
+	cd tmp/checkout_ui_extension; rm -r node_modules/@shopify/shopify-cli-extensions
+	cd tmp/checkout_ui_extension; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
+	cd tmp/product_subscription; yarn install
+	cd tmp/product_subscription; rm -r node_modules/@shopify/shopify-cli-extensions
+	cd tmp/product_subscription; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
+	cd tmp/checkout_post_purchase; yarn install
+	cd tmp/checkout_post_purchase; rm -r node_modules/@shopify/shopify-cli-extensions
+	cd tmp/checkout_post_purchase; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
 
 .PHONY: integration-test
 integration-test: tmp build
-	cd packages/shopify-cli-extensions; npm link --force
 	./shopify-extensions create testdata/extension.config.integration.yml
-	cd tmp/integration_test; npm install
+	cd tmp/integration_test; yarn install
 	cd tmp/integration_test; rm -r node_modules/@shopify/shopify-cli-extensions
 	cd tmp/integration_test; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
 	cd tmp/integration_test; cat extension.config.yml | \
@@ -95,7 +100,7 @@ tmp:
 	mkdir tmp
 
 clean:
-	( test -d node_modules && npm run clean ) || true
+	( test -d node_modules && yarn run clean ) || true
 	( test -d tmp && rm -r tmp/ ) || true
 
 clobber: clean
