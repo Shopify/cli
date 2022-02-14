@@ -22,4 +22,4 @@ export const genericConfigurationFileNames = {
   pnpm: {
     lockfile: 'pnpm-lock.yaml',
   },
-}
+};

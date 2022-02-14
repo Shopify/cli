@@ -1,6 +1,10 @@
 import {file, error, path, schema, toml} from '@shopify/cli-kit';
 
-import {blocks, configurationFileNames, genericConfigurationFileNames} from '../constants';
+import {
+  blocks,
+  configurationFileNames,
+  genericConfigurationFileNames,
+} from '../constants';
 
 const AppConfigurationSchema = schema.z.object({
   name: schema.z.string(),
@@ -32,7 +36,7 @@ interface UIExtension {
   directory: string;
 }
 
-type PackageManager = "npm" | "yarn" | "pnpm"
+type PackageManager = 'npm' | 'yarn' | 'pnpm';
 
 interface App {
   directory: string;
@@ -53,20 +57,31 @@ export async function load(directory: string): Promise<App> {
   );
   const scripts = await loadScripts(directory);
   const uiExtensions = await loadExtensions(directory);
-  const yarnLockPath = path.join(directory, genericConfigurationFileNames.yarn.lockfile);
+  const yarnLockPath = path.join(
+    directory,
+    genericConfigurationFileNames.yarn.lockfile,
+  );
   const yarnLockExists = await file.exists(yarnLockPath);
-  const pnpmLockPath = path.join(directory, genericConfigurationFileNames.pnpm.lockfile);
+  const pnpmLockPath = path.join(
+    directory,
+    genericConfigurationFileNames.pnpm.lockfile,
+  );
   const pnpmLockExists = await file.exists(pnpmLockPath);
-  const packageManager = yarnLockExists ? 'yarn' :
-    pnpmLockExists ? 'pnpm' :
-    'npm';
+  let packageManager: PackageManager;
+  if (yarnLockExists) {
+    packageManager = 'yarn';
+  } else if (pnpmLockExists) {
+    packageManager = 'pnpm';
+  } else {
+    packageManager = 'npm';
+  }
 
   return {
     directory,
     configuration,
     scripts,
     uiExtensions,
-    packageManager: packageManager,
+    packageManager,
   };
 }
 
@@ -82,7 +97,13 @@ async function parseConfigurationFile(schema: any, path: string) {
   const configurationObject = await loadConfigurationFile(path);
   const parseResult = schema.safeParse(configurationObject);
   if (!parseResult.success) {
-    throw new error.Abort(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`);
+    throw new error.Abort(
+      `Invalid schema in ${path}:\n${JSON.stringify(
+        parseResult.error.issues,
+        null,
+        2,
+      )}`,
+    );
   }
   return parseResult.data;
 }

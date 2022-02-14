@@ -1,7 +1,11 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {file, path} from '@shopify/cli-kit';
 
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '../constants';
+import {
+  configurationFileNames,
+  blocks,
+  genericConfigurationFileNames,
+} from '../constants';
 
 import {load} from './app';
 
@@ -10,12 +14,12 @@ describe('load', () => {
   // Zod-generated validation message
   const missingName = [
     {
-      "code":"invalid_type",
-      "expected":"string",
-      "received":"undefined",
-      "path":["name"],
-      "message":"Required",
-    }
+      code: 'invalid_type',
+      expected: 'string',
+      received: 'undefined',
+      path: ['name'],
+      message: 'Required',
+    },
   ];
   const missingNameMessage = JSON.stringify(missingName, null, 2);
 
@@ -29,28 +33,31 @@ describe('load', () => {
     }
   });
 
-  let writeConfig = async (appConfiguration) => {
+  const writeConfig = async (appConfiguration) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
     await file.write(appConfigurationPath, appConfiguration);
   };
 
-  let blockConfigurationPath = ({blockType, name}) => {
-    let block = blocks[blockType];
+  const blockConfigurationPath = ({blockType, name}) => {
+    const block = blocks[blockType];
     return path.join(
       tmpDir,
       block.directoryName,
       name,
       block.configurationName,
     );
-  }
+  };
 
-  let makeBlockDir = async ({blockType, name}) => {
+  const makeBlockDir = async ({blockType, name}) => {
     await file.mkdir(path.dirname(blockConfigurationPath({blockType, name})));
   };
 
-  let writeBlockConfig = async ({blockType, blockConfiguration, name}) => {
+  const writeBlockConfig = async ({blockType, blockConfiguration, name}) => {
     await makeBlockDir({blockType, name});
-    await file.write(blockConfigurationPath({blockType, name}), blockConfiguration);
+    await file.write(
+      blockConfigurationPath({blockType, name}),
+      blockConfiguration,
+    );
   };
 
   it("throws an error if the directory doesn't exist", async () => {
@@ -106,7 +113,10 @@ describe('load', () => {
 
       it('knows yarn is package manager when yarn.lock is present', async () => {
         // Given
-        const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile);
+        const yarnLockPath = path.join(
+          tmpDir,
+          genericConfigurationFileNames.yarn.lockfile,
+        );
         await file.write(yarnLockPath, '');
 
         // When
@@ -118,7 +128,10 @@ describe('load', () => {
 
       it('knows yarn is package manager when yarn.lock is present', async () => {
         // Given
-        const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile);
+        const pnpmLockPath = path.join(
+          tmpDir,
+          genericConfigurationFileNames.pnpm.lockfile,
+        );
         await file.write(pnpmLockPath, '');
 
         // When
@@ -145,7 +158,11 @@ describe('load', () => {
         const blockConfiguration = `
           wrong = "my_extension"
           `;
-        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my-extension'});
+        writeBlockConfig({
+          blockType: 'uiExtensions',
+          blockConfiguration,
+          name: 'my-extension',
+        });
 
         // When
         await expect(load(tmpDir)).rejects.toThrow(missingNameMessage);
@@ -156,7 +173,11 @@ describe('load', () => {
         const blockConfiguration = `
           name = "my_extension"
           `;
-        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my-extension'});
+        writeBlockConfig({
+          blockType: 'uiExtensions',
+          blockConfiguration,
+          name: 'my-extension',
+        });
 
         // When
         const app = await load(tmpDir);
@@ -170,12 +191,20 @@ describe('load', () => {
         let blockConfiguration = `
           name = "my_extension_1"
           `;
-        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my_extension_1'});
+        writeBlockConfig({
+          blockType: 'uiExtensions',
+          blockConfiguration,
+          name: 'my_extension_1',
+        });
 
         blockConfiguration = `
           name = "my_extension_2"
           `;
-        writeBlockConfig({blockType: 'uiExtensions', blockConfiguration, name: 'my_extension_2'});
+        writeBlockConfig({
+          blockType: 'uiExtensions',
+          blockConfiguration,
+          name: 'my_extension_2',
+        });
 
         // When
         const app = await load(tmpDir);
@@ -203,7 +232,11 @@ describe('load', () => {
         const blockConfiguration = `
           wrong = "my-script"
         `;
-        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script'});
+        writeBlockConfig({
+          blockType: 'scripts',
+          blockConfiguration,
+          name: 'my-script',
+        });
 
         // When
         await expect(load(tmpDir)).rejects.toThrowError(missingNameMessage);
@@ -214,7 +247,11 @@ describe('load', () => {
         const blockConfiguration = `
           name = "my-script"
           `;
-        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script'});
+        writeBlockConfig({
+          blockType: 'scripts',
+          blockConfiguration,
+          name: 'my-script',
+        });
 
         // When
         const app = await load(tmpDir);
@@ -228,12 +265,20 @@ describe('load', () => {
         let blockConfiguration = `
           name = "my-script-1"
           `;
-        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script-1'});
+        writeBlockConfig({
+          blockType: 'scripts',
+          blockConfiguration,
+          name: 'my-script-1',
+        });
 
         blockConfiguration = `
           name = "my-script-2"
           `;
-        writeBlockConfig({blockType: 'scripts', blockConfiguration, name: 'my-script-2'});
+        writeBlockConfig({
+          blockType: 'scripts',
+          blockConfiguration,
+          name: 'my-script-2',
+        });
 
         // When
         const app = await load(tmpDir);
