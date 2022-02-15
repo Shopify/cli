@@ -26,11 +26,10 @@
   "peerDependencies": {
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@shopify/cli-kit": "0.5.2",
+    "@shopify/cli-kit": "0.12.0",
     "@shopify/support": "0.5.2"
   },
   "devDependencies": {
-    "@shopify/cli-kit": "0.12.0",
     "@shopify/cli-testing": "0.1.0"
   }
 }
