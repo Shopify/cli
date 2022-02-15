@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   main:
+    name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     strategy:
@@ -41,6 +42,7 @@ jobs:
       - name: Type-check
         run: npx nx affected --target=tsc --parallel=3
   pr:
+    name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     strategy:
