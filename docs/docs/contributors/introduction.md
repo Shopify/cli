@@ -9,8 +9,7 @@ This website contains documentation that's useful for contributors of the projec
 
 If you'd like to contribute to this project, the following system dependencies need to be present in the environment.
 
-- [Node](https://nodejs.org/en/)
-  - Supported versions: `^12.20.0 || ^14.13.1 || >=16.0.0`
+- [Node](https://nodejs.org/en/) (v14 or higher)
 - [Yarn](https://yarnpkg.com/)
 
 ### Set up
