@@ -2,12 +2,14 @@
     "extends": "../../configurations/tsconfig.json",
     "include": ["./src/framework/**/*.ts"],
     "exclude": ["./dist"],
+    "references": [{"path": "../cli-kit"}, {"path": "../cli-testing"}],
     "compilerOptions": {
       "outDir": "dist",
       "rootDir": "src",
       "baseUrl": "src",
       "paths": {
-        "@shopify/cli-kit": ["../cli-kit/src"]
+        "@shopify/cli-kit": ["../cli-kit/src"],
+        "@shopify/cli-testing": ["../cli-testing/src"]
       }
     }
   }
