@@ -8,6 +8,6 @@
     "target": "ES2019",
     "outDir": "dist",
     "rootDir": ".",
-    "baseUrl": "."
+    "baseUrl": "src"
   }
 }

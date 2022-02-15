@@ -13,7 +13,7 @@
     "build": "true",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
     "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
-    "test": "shx rm -rf dist && vitest run",
+    "test": "vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc -b"
   },

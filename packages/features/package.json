@@ -16,6 +16,11 @@
     "cucumber-junit-formatter": "^0.2.2",
     "cucumber-pretty": "^6.0.1"
   },
+  "peerDependencies": {
+    "@shopify/cli": "0.12.0",
+    "@shopify/create-app": "0.14.0",
+    "@shopify/create-hydrogen": "0.13.0"
+  },
   "eslintConfig": {
     "extends": [
       "../../package.json"

@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-DIRECTORY=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-$DIRECTORY/build &> /dev/null
-
-$DIRECTORY/run.js $@

@@ -6,9 +6,6 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
-    "paths": {
-      "@shopify/cli-kit": ["../cli-kit/src"]
-    }
+    "baseUrl": "src"
   }
 }

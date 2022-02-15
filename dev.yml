@@ -21,31 +21,31 @@ open:
 commands:
   shopify:
     desc: 'Runs the Shopify CLI'
-    run: yarn dev:shopify
+    run: yarn shopify
   create-app:
     desc: 'Runs the create-app CLI'
-    run: yarn dev:create-app
+    run: yarn create-app
   create-hydrogen:
     desc: 'Runs the create-hydrogen CLI'
-    run: yarn dev:create-hydrogen
+    run: yarn create-hydrogen
   clean:
     desc: 'Clean the packages'
     run: yarn run clean
   test:
     desc: 'Runs the tests'
-    run: yarn run test
+    run: yarn run test:affected
   build:
     desc: 'Build the project'
-    run: yarn run build
+    run: yarn run build:affected
   lint:
     desc: 'Lint the project'
-    run: yarn run lint
+    run: yarn run lint:affected
   lint:fix:
     desc: 'Fix the lint issues in the project'
-    run: yarn run lint:fix
+    run: yarn run lint:fix:affected
   tsc:
     desc: 'Type-check the project'
-    run: yarn run tsc
+    run: yarn run tsc:affected
   server:
     depends-railgun: true
     desc: Run docusaurus documentation local server
