@@ -6,11 +6,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
-    "composite": true,
-    "tsBuildInfoFile": ".build/tsconfig.build.tsbuildinfo",
-    "paths": {
-      "@shopify/cli-kit": ["../cli-kit/src"]
-    }
+    "baseUrl": "src",
+    "composite": true
   }
 }

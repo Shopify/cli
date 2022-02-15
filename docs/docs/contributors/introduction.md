@@ -24,21 +24,13 @@ you can go through the steps below to have your environment setup to work with t
 
 You can run the CLIs through the following `package.json` scripts:
 
-- `yarn dev:shopify`: Builds and runs the Shopify CLI.
-- `yarn dev:create-app`: Builds and runs the create-app CLI.
-- `yarn dev:create-hydrogen`: Builds and runs the create-hydrogen CLI.
+- `yarn shopify`: Builds and runs the Shopify CLI.
+- `yarn create-app`: Builds and runs the create-app CLI.
+- `yarn create-hydrogen`: Builds and runs the create-hydrogen CLI.
 
 :::tip For first-party contributors
 The project is configured with a `dev.yml` so the above steps become `dev up`, `dev clone`, and `dev shopify|create-app|create-hydrogen` for running the various CLIs.
 :::
-
-Running the CLI involves transpiling and bundling through [Rollup](https://rollupjs.org).
-Unfortunately Rollup doesn't have incremental builds and this results in clean builds every time the command is invoked.
-If you've previously built a CLI and want to run it, there are also `package.json` scripts to run previously built CLIs:
-
-- `yarn run:shopify`: Runs the Shopify ClI (without building).
-- `yarn run:create-app`: Runs the create-app CLI (without building).
-- `yarn run:create-hydrogen`: Runs the create-hydrogen CLI (without building).
 
 ### More automation
 

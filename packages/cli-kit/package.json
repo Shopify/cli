@@ -27,11 +27,16 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "shx rm -rf dist && rollup -c",
+    "build": "rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
+<<<<<<< HEAD
     "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
     "test": "shx rm -rf dist && vitest run",
+=======
+    "lint:fix": "prettier src/** -w && eslint src/**/*.ts --fix",
+    "test": "vitest run",
+>>>>>>> 8c7f7f7 (Some fixes)
     "test:watch": "vitest watch",
     "tsc": "tsc -b"
   },
