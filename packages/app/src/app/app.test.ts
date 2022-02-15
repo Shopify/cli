@@ -10,7 +10,7 @@ import {
 import {load} from './app';
 
 describe('load', () => {
-  type BlockType = 'uiExtensions' | 'scripts'
+  type BlockType = 'uiExtensions' | 'scripts';
 
   let tmpDir: string;
   // Zod-generated validation message
@@ -40,7 +40,13 @@ describe('load', () => {
     await file.write(appConfigurationPath, appConfiguration);
   };
 
-  const blockConfigurationPath = ({blockType, name}: {blockType: BlockType, name: string}) => {
+  const blockConfigurationPath = ({
+    blockType,
+    name,
+  }: {
+    blockType: BlockType;
+    name: string;
+  }) => {
     const block = blocks[blockType];
     return path.join(
       tmpDir,
@@ -50,11 +56,25 @@ describe('load', () => {
     );
   };
 
-  const makeBlockDir = async ({blockType, name}: {blockType: BlockType, name: string}) => {
+  const makeBlockDir = async ({
+    blockType,
+    name,
+  }: {
+    blockType: BlockType;
+    name: string;
+  }) => {
     await file.mkdir(path.dirname(blockConfigurationPath({blockType, name})));
   };
 
-  const writeBlockConfig = async ({blockType, blockConfiguration, name}: {blockType: BlockType, blockConfiguration: string, name: string}) => {
+  const writeBlockConfig = async ({
+    blockType,
+    blockConfiguration,
+    name,
+  }: {
+    blockType: BlockType;
+    blockConfiguration: string;
+    name: string;
+  }) => {
     await makeBlockDir({blockType, name});
     await file.write(
       blockConfigurationPath({blockType, name}),
