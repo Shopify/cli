@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import del from 'del';
 
 export async function read(path: string): Promise<string> {
   return fs.readFile(path, {encoding: 'utf-8'});
@@ -13,7 +14,7 @@ export async function mkdir(path: string): Promise<void> {
 }
 
 export async function rmdir(path: string): Promise<void> {
-  return fs.rm(path, {recursive: true});
+  await del(path);
 }
 
 export async function mkTmpDir(): Promise<string> {
