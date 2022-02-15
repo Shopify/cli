@@ -49,6 +49,9 @@
     "@oclif/plugin-plugins": "2.1.0",
     "@oclif/plugin-help": "^5.1.11"
   },
+  "devDependencies": {
+    "@shopify/cli-kit": "0.12.0"
+  },
   "engine-strict": true,
   "engines": {
     "node": "^14.13.1 || ^16.0.0 || ^17.0.0"
