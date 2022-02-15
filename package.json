@@ -7,10 +7,19 @@
     "features": "cucumber-js -p default",
     "lint": "yarn workspaces run lint",
     "lint:fix": "yarn workspaces run lint:fix",
-    "build": "yarn workspaces run build",
     "test": "yarn workspaces run test",
     "tsc": "yarn workspaces run tsc",
-    "clean": "yarn workspaces run clean"
+    "clean": "yarn workspaces run clean",
+    "build": "yarn workspaces run build",
+    "build:shopify": "packages/cli/bin/build",
+    "build:create-app": "packages/create-app/bin/build",
+    "build:create-hydrogen": "packages/create-hydrogen/bin/build",
+    "dev:shopify": "packages/cli/bin/dev",
+    "dev:create-app": "packages/create-app/bin/dev",
+    "dev:create-hydrogen": "packages/create-hydrogen/bin/dev",
+    "run:shopify": "packages/cli/bin/run.js",
+    "run:create-app": "packages/create-app/bin/run.js",
+    "run:create-hydrogen": "packages/create-hydrogen/bin/run.js"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.0",
