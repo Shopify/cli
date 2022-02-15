@@ -32,10 +32,9 @@
     "lint": "prettier -c src/** && eslint src/**/*.ts",
 <<<<<<< HEAD
     "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
-    "test": "shx rm -rf dist && vitest run",
+    "test": "vitest run",
 =======
     "lint:fix": "prettier src/** -w && eslint src/**/*.ts --fix",
-    "test": "vitest run",
 >>>>>>> 8c7f7f7 (Some fixes)
     "test:watch": "vitest watch",
     "tsc": "tsc -b"
