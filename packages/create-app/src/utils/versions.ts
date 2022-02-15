@@ -15,6 +15,6 @@ export async function cliVersion(): Promise<string> {
   if (!cliPackageJsonpath) {
     throw new error.Bug("Couldn't determine the version of the CLI");
   }
-  const packageJson = JSON.parse(file.read(cliPackageJsonpath));
+  const packageJson = JSON.parse(await file.read(cliPackageJsonpath));
   return packageJson.version;
 }
