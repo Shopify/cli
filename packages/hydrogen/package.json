@@ -1,7 +1,7 @@
 {
-  "name": "@shopify/hydrogen",
+  "name": "@shopify/cli-hydrogen",
   "version": "0.5.2",
-  "private": true,
+  "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
   "files": [
@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "true",
+    "build": "rollup -c",
+    "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
     "lint:fix": "prettier src/** -w && eslint src/**/*.ts --fix",
     "test": "vitest run",
@@ -31,8 +32,10 @@
     "@types/prettier": "^2.4.4",
     "prettier": "^2.5.1"
   },
+  "peerDependencies": {
+    "@shopify/cli-kit": "0.12.0"
+  },
   "devDependencies": {
-    "@shopify/cli-kit": "0.12.0",
     "@shopify/cli-testing": "0.1.0",
     "@babel/core": "^7.17.2",
     "@shopify/ast-utilities": "^1.2.0",
@@ -69,5 +72,8 @@
     "typescript": "^4.2.3",
     "unconfig": "^0.3.1",
     "vite": "^2.7.1"
+  },
+  "oclif": {
+    "commands": "dist/commands"
   }
 }

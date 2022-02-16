@@ -1,6 +1,8 @@
 import degit from 'degit';
 import {underline, yellow} from 'chalk';
 
+import cliPackageJson from '../../../../../cli/package.json';
+import cliHydrogenPackageJson from '../../../../package.json';
 import Command, {Flags} from '../../core/Command';
 
 export enum Template {
@@ -107,6 +109,11 @@ export default class Init extends Command {
 
     // Refresh package.json
     this.package.name = name;
+    const cliDependencies: {[key: string]: string} = {};
+    cliDependencies[cliHydrogenPackageJson.name] =
+      cliHydrogenPackageJson.version;
+    cliDependencies[cliPackageJson.name] = cliPackageJson.version;
+    this.package.addDependencies(cliDependencies);
 
     if (flags.local) {
       this.package.install('@shopify/hydrogen', {

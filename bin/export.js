@@ -27,7 +27,7 @@ async function cliDependencies() {
     const dependencies = Object.fromEntries(dependenciesEntries);
     delete dependencies["@shopify/cli-kit"]
     delete dependencies["@shopify/app"]
-    delete dependencies["@shopify/hydrogen"]
+    delete dependencies["@shopify/cli-hydrogen"]
     return dependencies;
 }
 
@@ -49,6 +49,10 @@ async function pack(outputDirectory) {
         console.log("📦 Packing @shopify/app...")
         const appPackPath = path.join(temporaryDirectory, "app.tar.gz");
         await execa("yarn", ["pack", "--filename", appPackPath], {cwd: path.join(rootDirectory, "packages/app") })
+
+        console.log("📦 Packing @shopify/cli-hydrogen...")
+        const cliHydrogenPackPath = path.join(temporaryDirectory, "cli-hydrogen.tar.gz");
+        await execa("yarn", ["pack", "--filename", cliHydrogenPackPath], {cwd: path.join(rootDirectory, "packages/hydrogen") })
 
         console.log("📦 Packing @shopify/cli...")
         const cliPackPath = path.join(temporaryDirectory, "cli.tar.gz");
@@ -72,7 +76,7 @@ async function pack(outputDirectory) {
             name: "@shopify/clis",
             dependencies: await cliDependencies()
         }
-        await fs.promises.writeFile(clisPackageJsonPath, JSON.stringify(packageJson), 'utf-8')
+        await fs.promises.writeFile(clisPackageJsonPath, JSON.stringify(packageJson, null, 4), 'utf-8')
         console.log("⬇️  Installing dependencies...")
         await execa("yarn", ["install"], {cwd: clisDirectory })
 
@@ -90,6 +94,12 @@ async function pack(outputDirectory) {
         await fs.promises.mkdir(path.dirname(clisNodeModulesShopifyAppPath), {recursive: true})
         await execa("tar", ["-zx", "-f", appPackPath], {cwd: unpackPath})
         await fs.promises.rename(path.join(unpackPath, "package"), clisNodeModulesShopifyAppPath)
+
+        console.log("📦 Unpacking @shopify/cli-hydrogen under node_modules/@shopify/cli-hydrogen")
+        const clisNodeModulesShopifyCliHydrogenPath = path.join(clisNodeModulesPath, "@shopify/cli-hydrogen");
+        await fs.promises.mkdir(path.dirname(clisNodeModulesShopifyCliHydrogenPath), {recursive: true})
+        await execa("tar", ["-zx", "-f", cliHydrogenPackPath], {cwd: unpackPath})
+        await fs.promises.rename(path.join(unpackPath, "package"), clisNodeModulesShopifyCliHydrogenPath)
 
         console.log("📦 Unpacking @shopify/cli under cli")
         const cliPath = path.join(clisDirectory, "cli");
