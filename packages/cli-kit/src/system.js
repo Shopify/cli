@@ -1,0 +1,2 @@
+export {execa as exec} from 'execa';
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3lzdGVtLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsic3lzdGVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sRUFBQyxLQUFLLElBQUksSUFBSSxFQUFDLE1BQU0sT0FBTyxDQUFDIn0=

@@ -1,0 +1,3 @@
+export {camelCase as camelize} from 'change-case';
+export {paramCase as hyphenize} from 'change-case';
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3RyaW5nLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsic3RyaW5nLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sRUFBQyxTQUFTLElBQUksUUFBUSxFQUFDLE1BQU0sYUFBYSxDQUFDO0FBQ2xELE9BQU8sRUFBQyxTQUFTLElBQUksU0FBUyxFQUFDLE1BQU0sYUFBYSxDQUFDIn0=

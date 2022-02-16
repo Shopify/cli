@@ -33,7 +33,7 @@
     "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "tsc": "tsc -b"
+    "tsc": "tsc"
   },
   "eslintConfig": {
     "extends": [
