@@ -3,12 +3,11 @@
  * @readonly
  * @enum {number}
  */
-export enum Service {
-  PartnersApi = 'partners-api',
-  StorefrontRendererApi = 'storefront-renderer-api',
-  AdminApi = 'admin-api',
-  IdentityApi = 'identity-api',
-}
+export type Service =
+  | 'partners-api'
+  | 'storefront-renderer-api'
+  | 'admin-api'
+  | 'identity';
 
 /**
  * Enum that represents the environment to use for a given service.
