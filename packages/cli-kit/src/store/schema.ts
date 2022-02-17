@@ -19,9 +19,11 @@ import type {Schema} from 'conf';
 //           },
 //         },
 //         storefrontRenderer: {
-//           accessToken: 'foo',
-//           expiresAt: '2025-11-13T20:20:39+00:00',
-//           scopes: ['a', 'b'],
+//          'storefront-renderer.shopify.com': {
+//             accessToken: 'foo',
+//             expiresAt: '2025-11-13T20:20:39+00:00',
+//             scopes: ['a', 'b'],
+//           }
 //         },
 //       },
 //     },
