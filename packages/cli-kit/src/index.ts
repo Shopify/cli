@@ -13,3 +13,4 @@ export * as environment from './environment';
 export * as session from './session/index';
 export * as schema from './schema';
 export * as toml from './toml';
+export * as store from './store';
