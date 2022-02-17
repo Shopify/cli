@@ -1,24 +1,31 @@
+import {fileURLToPath} from 'url';
+
 import path from 'pathe';
+import fg from 'fast-glob';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const hydrogenExternal = [/@miniflare/, /prettier/];
+import hydrogenPkg from './package.json';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const cliExternal = [
-  ...hydrogenExternal,
   ...external,
+  ...Object.keys(hydrogenPkg.dependencies ?? {}),
   '@oclif/core',
   '@shopify/cli-kit',
   '@bugsnag/js',
 ];
 
+const featureCommands = fg.sync([
+  path.join(__dirname, `/src/cli/commands/*/*.ts`),
+  path.join(__dirname, `/src/cli/commands/*.ts`),
+  `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
+]);
 const configuration = () => [
   // CLI
   {
-    input: [
-      path.join(__dirname, 'src/index.ts'),
-      path.join(__dirname, `../hydrogen/src/cli/commands/hydrogen/init.ts`),
-    ],
+    input: [...featureCommands],
     output: [
       {
         dir: distDir(__dirname),
@@ -28,8 +35,8 @@ const configuration = () => [
           if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
             return `commands/${chunkInfo.facadeModuleId
-              .split('src/cli/commands/hydrogen')
-              .slice(-1)[0]
+              .split('src/cli/commands')
+              .pop()
               .replace('ts', 'js')}`;
           } else {
             return '[name].js';

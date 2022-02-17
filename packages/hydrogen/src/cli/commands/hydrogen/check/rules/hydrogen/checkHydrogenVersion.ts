@@ -5,7 +5,7 @@ import addHydrogen from '../../../add/hydrogen';
 import Command from '../../../../../core/Command';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import hydrogenPkg from '../../../../../../package.json';
+import hydrogenPkg from '../../../../../../../package.json';
 
 export const HYDROGEN_MIN_VERSION = hydrogenPkg.version;
 

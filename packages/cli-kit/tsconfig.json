@@ -3,6 +3,7 @@
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist"],
   "compilerOptions": {
+    "composite": true,
     "outDir": "dist",
     "baseUrl": "src",
   }

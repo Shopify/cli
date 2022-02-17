@@ -38,6 +38,16 @@ export class Package {
     this.log = Debug('hydrogenCLI:package');
   }
 
+  addDependencies(dependencies: {[key: string]: string}) {
+    this.internal = {
+      ...this.internal,
+      dependencies: new Map([
+        ...Object.entries(dependencies),
+        ...Array.from(this.internal.dependencies?.entries() ?? []),
+      ]),
+    };
+  }
+
   set name(val: string) {
     try {
       const pkgJson: PackageJson = readJsonSync(join(val, 'package.json'));

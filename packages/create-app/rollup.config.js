@@ -23,6 +23,7 @@ const configuration = () => [
       {
         file: path.join(distDir(__dirname), 'index.js'),
         format: 'esm',
+        sourcemap: true,
       },
     ],
     plugins: createAppPlugins,
@@ -34,6 +35,7 @@ const configuration = () => [
       {
         file: path.join(distDir(__dirname), 'commands/init.js'),
         format: 'esm',
+        sourcemap: true,
       },
     ],
     plugins: createAppPlugins,

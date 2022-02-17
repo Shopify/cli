@@ -14,7 +14,10 @@ import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import cliPackageVersion from '../../../cli/package.json';
+import cliPackage from '../../../cli/package.json';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import appPackage from '../../../app/package.json';
 import {template as getTemplatePath} from '../utils/paths';
 
 interface InitOptions {
@@ -25,7 +28,9 @@ interface InitOptions {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? '';
   const templatePath = await getTemplatePath('app');
-  const cliVersion = cliPackageVersion.version;
+  const cliPackageVersion = cliPackage.version;
+  const appPackageVersion = appPackage.version;
+
   const dependencyManager = dependency.dependencyManagerUsedForCreating();
   const hyphenizedName = string.hyphenize(options.name);
   const outputDirectory = path.join(options.directory, hyphenizedName);
@@ -38,7 +43,8 @@ async function init(options: InitOptions) {
             ...options,
             outputDirectory,
             templatePath,
-            cliVersion,
+            cliPackageVersion,
+            appPackageVersion,
             user,
             dependencyManager,
           });
@@ -83,7 +89,8 @@ async function createApp(
   options: InitOptions & {
     outputDirectory: string;
     templatePath: string;
-    cliVersion: string;
+    cliPackageVersion: string;
+    appPackageVersion: string;
     user: string;
     dependencyManager: string;
   },
@@ -101,7 +108,9 @@ async function createApp(
   const templateData = {
     name: options.name,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    shopify_cli_version: options.cliVersion,
+    shopify_cli_version: options.cliPackageVersion,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    shopify_app_version: options.appPackageVersion,
     author: options.user,
     dependencyManager: options.dependencyManager,
   };

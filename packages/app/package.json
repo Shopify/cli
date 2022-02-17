@@ -1,16 +1,45 @@
 {
   "name": "@shopify/app",
   "version": "0.5.2",
-  "private": true,
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
-    "/dist",
-    "/npm-shrinkwrap.json"
+    "/dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
+  "exports": {
+    "./ui-extensions/admin": {
+      "import": "./dist/framework/ui-extensions/admin/index.js",
+      "types": "./dist/framework/ui-extensions/admin/index.d.ts"
+    },
+    "./ui-extensions/admin/react": {
+      "import": "./dist/framework/ui-extensions/admin/react.js",
+      "types": "./dist/framework/ui-extensions/admin/react.d.ts"
+    },
+    "./checkout": {
+      "import": "./dist/framework/ui-extensions/checkout/index.js",
+      "types": "./dist/framework/ui-extensions/checkout/index.d.ts"
+    },
+    "./checkout/react": {
+      "import": "./dist/framework/ui-extensions/checkout/react.js",
+      "types": "./dist/framework/ui-extensions/checkout/react.d.ts"
+    },
+    "./post-purchase": {
+      "import": "./dist/framework/ui-extensions/post-purchase/index.js",
+      "types": "./dist/framework/ui-extensions/post-purchase/index.d.ts"
+    },
+    "./post-purchase/react": {
+      "import": "./dist/framework/ui-extensions/post-purchase/react.js",
+      "types": "./dist/framework/ui-extensions/post-purchase/react.d.ts"
+    }
+  },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "true",
+    "build": "rollup -c && tsc -p tsconfig.dist.json",
+    "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
     "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
     "test": "vitest run",
@@ -22,14 +51,23 @@
       "../../package.json"
     ]
   },
-  "dependencies": {},
+  "dependencies": {
+    "@shopify/admin-ui-extensions": "^1.0.1",
+    "@shopify/admin-ui-extensions-react": "^1.0.1",
+    "@shopify/checkout-ui-extensions": "^0.13.0",
+    "@shopify/checkout-ui-extensions-react": "^0.13.0",
+    "@shopify/post-purchase-ui-extensions": "^0.13.2",
+    "@shopify/post-purchase-ui-extensions-react": "^0.13.2"
+  },
   "peerDependencies": {
     "@oclif/core": "^1",
-    "@oclif/plugin-help": "^5",
-    "@shopify/cli-kit": "0.12.0",
-    "@shopify/support": "0.5.2"
+    "react": ">=17.0.0 <18.0.0",
+    "@shopify/cli-kit": "0.12.0"
   },
   "devDependencies": {
     "@shopify/cli-testing": "0.1.0"
+  },
+  "oclif": {
+    "commands": "dist/commands"
   }
 }
