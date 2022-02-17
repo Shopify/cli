@@ -10,5 +10,4 @@ export const cliKit = new Conf({
   schema,
   migrations,
   projectName: 'shopify-cli-kit',
-  projectVersion: cliKitPackageJson.version,
 });
