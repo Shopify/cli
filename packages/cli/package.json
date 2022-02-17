@@ -46,6 +46,11 @@
     "@oclif/plugin-help": "^5.1.11",
     "@shopify/cli-kit": "0.12.0"
   },
+  "devDependencies": {
+    "@shopify/cli-testing": "0.1.0",
+    "@shopify/app": "0.5.2",
+    "@shopify/cli-hydrogen": "0.5.2"
+  },
   "engine-strict": true,
   "engines": {
     "node": "^14.13.1 || ^16.0.0 || ^17.0.0"
