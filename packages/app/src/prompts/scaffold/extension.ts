@@ -20,7 +20,7 @@ const scaffoldExtensionPrompt = async (
     questions.push({
       type: 'input',
       name: 'name',
-      message: "Your extensions's working name?",
+      message: "Your extension's working name?",
       default: 'extension',
     });
   }
