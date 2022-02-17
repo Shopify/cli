@@ -23,5 +23,8 @@
     "rules": {
       "no-console": "off"
     }
+  },
+  "nx": {
+    "implicitDependencies": ["@shopify/cli"]
   }
 }

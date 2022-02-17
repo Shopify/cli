@@ -69,5 +69,8 @@
       "theme": { "description": "Build Liquid themes" },
       "app": { "description": "Build Shopify apps" }
     }
+  },
+  "nx": {
+    "implicitDependencies": ["@shopify/app", "@shopify/cli-hydrogen"]
   }
 }
