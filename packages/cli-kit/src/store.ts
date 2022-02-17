@@ -1,7 +1,5 @@
 import Conf from 'conf';
 
-import cliKitPackageJson from '../package.json';
-
 import schema from './store/schema';
 
 const migrations = {};
