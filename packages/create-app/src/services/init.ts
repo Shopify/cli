@@ -1,5 +1,4 @@
 import {Writable} from 'node:stream';
-
 import {
   string,
   path,
