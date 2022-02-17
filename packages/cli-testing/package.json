@@ -36,6 +36,5 @@
     "darwin",
     "linux",
     "win32"
-  ],
-  "devDependencies": {}
+  ]
 }

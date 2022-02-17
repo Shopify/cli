@@ -14,6 +14,5 @@
     "@shopify/app": "{{shopify_app_version}}",
     "react": "17.0.2"
   },
-  "devDependencies": {},
   "author": "{{author}}"
 }

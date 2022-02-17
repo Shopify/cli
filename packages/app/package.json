@@ -64,9 +64,6 @@
     "react": ">=17.0.0 <18.0.0",
     "@shopify/cli-kit": "0.12.0"
   },
-  "devDependencies": {
-    "@shopify/cli-testing": "0.1.0"
-  },
   "oclif": {
     "commands": "dist/commands"
   }

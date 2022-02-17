@@ -1,2 +1,4 @@
 **/templates/**
 docs/**
+**/dist/**
+.build/
