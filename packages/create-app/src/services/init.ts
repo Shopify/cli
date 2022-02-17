@@ -34,20 +34,22 @@ async function init(options: InitOptions) {
   const dependencyManager = dependency.dependencyManagerUsedForCreating();
   const hyphenizedName = string.hyphenize(options.name);
   const outputDirectory = path.join(options.directory, hyphenizedName);
-  await ui.list([
-    {
-      title: `Initializing your app ${hyphenizedName}`,
-      task: async (_, task) => {
-        await createApp({
-          ...options,
-          outputDirectory,
-          templatePath,
-          cliPackageVersion,
-          appPackageVersion,
-          user,
-          dependencyManager,
-        });
-        task.title = 'Initialized';
+  await ui.list(
+    [
+      {
+        title: `Initializing your app ${hyphenizedName}`,
+        task: async (_, task) => {
+          await createApp({
+            ...options,
+            outputDirectory,
+            templatePath,
+            cliPackageVersion,
+            appPackageVersion,
+            user,
+            dependencyManager,
+          });
+          task.title = 'Initialized';
+        },
       },
       {
         title: 'Installing dependencies',
