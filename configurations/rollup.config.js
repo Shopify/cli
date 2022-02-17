@@ -26,12 +26,6 @@ export const plugins = (packagePath, additionalAliases = []) => {
     stripShebang(),
     resolve({
       preferBuiltins: true,
-      moduleDirectories: [
-        path.join(packagePath, 'node_modules'),
-        path.join(packagePath, '../../node_modules'),
-        path.join(packagePath, '../cli-kit/node_modules'),
-        path.join(packagePath, '../hydrogen/node_modules'),
-      ],
     }),
     esbuild({
       target: 'ES2020',
