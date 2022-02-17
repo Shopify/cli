@@ -3,6 +3,7 @@ import {path} from '@shopify/cli-kit';
 
 import {extensions} from '../../../constants';
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension';
+import { load as loadApp, App } from '../../../app/app';
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an App Extension'
@@ -23,16 +24,23 @@ export default class AppScaffoldExtension extends Command {
       hidden: false,
       description: 'name of your extension',
     }),
+    path: Flags.string({
+      char: 'p',
+      hidden: true,
+      description: 'the path to your app directory'
+    }),
   };
 
   static args = [{name: 'file'}]
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(AppScaffoldExtension)
+    const directory = flags.path ? path.resolve(flags.path) : process.cwd();
+    const parentApp: App = await loadApp(directory);
     const promptAnswers = await scaffoldExtensionPrompt({
       type: flags.type,
       name: flags.name,
     });
-    this.log(JSON.stringify(promptAnswers));
+    this.log(JSON.stringify([promptAnswers, parentApp]));
   }
 }
