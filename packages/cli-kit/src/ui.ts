@@ -22,6 +22,13 @@ interface ListTask {
   task: (ctx: Context, task: Task) => Promise<void>;
 }
 
-export const list = (tasks: ListTask[]) => {
-  return new Listr(tasks).run();
+interface ListOptions {
+  concurrent?: boolean;
+}
+
+export const list = async (
+  tasks: ListTask[],
+  options?: ListOptions,
+): Promise<void> => {
+  await new Listr(tasks, options).run();
 };

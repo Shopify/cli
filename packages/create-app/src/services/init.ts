@@ -27,28 +27,32 @@ async function init(options: InitOptions) {
   const dependencyManager = dependency.dependencyManagerUsedForCreating();
   const hyphenizedName = string.hyphenize(options.name);
   const outputDirectory = path.join(options.directory, hyphenizedName);
-  await ui.list([
-    {
-      title: `Initializing your app ${hyphenizedName}`,
-      task: async (_, task) => {
-        await createApp({
-          ...options,
-          outputDirectory,
-          templatePath,
-          cliVersion,
-          user,
-          dependencyManager,
-        });
-        task.title = 'Initialized';
+  await ui.list(
+    [
+      {
+        title: `Initializing your app ${hyphenizedName}`,
+        task: async (_, task) => {
+          await createApp({
+            ...options,
+            outputDirectory,
+            templatePath,
+            cliVersion,
+            user,
+            dependencyManager,
+          });
+          task.title = 'Initialized';
+        },
       },
-    },
-    {
-      title: 'Installing dependencies',
-      task: async () => {
-        return installDependencies(outputDirectory, dependencyManager);
+      {
+        title: 'Installing dependencies',
+        task: async () => {
+          await installDependencies(outputDirectory, dependencyManager);
+        },
       },
-    },
-  ]);
+    ],
+    {concurrent: false},
+  );
+
   output.message(output.content`
   ${hyphenizedName} is ready to build! ✨
     Docs: ${output.token.link(
@@ -92,23 +96,24 @@ async function createApp(
     author: options.user,
     dependencyManager: options.dependencyManager,
   };
-
-  sortedTemplateFiles.forEach(async (templateItemPath) => {
-    const outputPath = await template(
-      path.join(
-        options.outputDirectory,
-        path.relative(options.templatePath, templateItemPath),
-      ),
-    )(templateData);
-    if (await file.isDirectory(templateItemPath)) {
-      await file.mkdir(outputPath);
-    } else {
-      await file.mkdir(path.dirname(outputPath));
-      const content = await file.read(templateItemPath);
-      const contentOutput = await template(content)(templateData);
-      await file.write(outputPath, contentOutput);
-    }
-  });
+  await Promise.all(
+    sortedTemplateFiles.map(async (templateItemPath) => {
+      const outputPath = await template(
+        path.join(
+          options.outputDirectory,
+          path.relative(options.templatePath, templateItemPath),
+        ),
+      )(templateData);
+      if (await file.isDirectory(templateItemPath)) {
+        await file.mkdir(outputPath);
+      } else {
+        await file.mkdir(path.dirname(outputPath));
+        const content = await file.read(templateItemPath);
+        const contentOutput = await template(content)(templateData);
+        await file.write(outputPath, contentOutput);
+      }
+    }),
+  );
 }
 
 export default init;

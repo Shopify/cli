@@ -1,4 +1,5 @@
 import {Bug} from './error';
+import {exists} from './file';
 import {exec} from './system';
 
 export enum DependencyManager {
