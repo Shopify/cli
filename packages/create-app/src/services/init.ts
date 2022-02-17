@@ -1,3 +1,5 @@
+import {Writable} from 'node:stream';
+
 import {
   string,
   path,
@@ -45,8 +47,14 @@ async function init(options: InitOptions) {
       },
       {
         title: 'Installing dependencies',
-        task: async () => {
-          await installDependencies(outputDirectory, dependencyManager);
+        task: async (_, task) => {
+          const stdout = new Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString();
+              next();
+            },
+          });
+          await installDependencies(outputDirectory, dependencyManager, stdout);
         },
       },
     ],
@@ -66,8 +74,9 @@ async function init(options: InitOptions) {
 async function installDependencies(
   directory: string,
   dependencyManager: DependencyManager,
+  stdout: Writable,
 ): Promise<void> {
-  await dependency.install(directory, dependencyManager);
+  await dependency.install(directory, dependencyManager, stdout);
 }
 
 async function createApp(

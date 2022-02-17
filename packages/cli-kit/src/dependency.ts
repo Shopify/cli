@@ -1,6 +1,8 @@
+import type {Writable} from 'node:stream';
+
 import {Bug} from './error';
-import {exists} from './file';
 import {exec} from './system';
+import type {ExecOptions} from './system';
 
 export enum DependencyManager {
   Npm = 'npm',
@@ -38,8 +40,8 @@ export function dependencyManagerUsedForCreating(
 export async function install(
   directory: string,
   dependencyManager: DependencyManager,
+  stdout?: Writable,
 ) {
-  await exec(dependencyManager, ['install'], {
-    cwd: directory,
-  });
+  const options: ExecOptions = {cwd: directory, stdout};
+  await exec(dependencyManager, ['install'], options);
 }

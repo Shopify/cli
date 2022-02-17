@@ -14,6 +14,7 @@ export const prompt = <T>(questions: Question[]): Promise<T> => {
 
 export interface Task {
   title: string;
+  output: string;
 }
 export interface Context {}
 
