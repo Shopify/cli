@@ -9,7 +9,7 @@ import {
   AfterAll,
   setDefaultTimeout,
 } from '@cucumber/cucumber';
-import tmp from 'tmp';
+import tempy from 'tempy';
 import rimraf from 'rimraf';
 import path from 'pathe';
 
@@ -27,7 +27,7 @@ if (process.env.DEBUG === '1') {
 }
 
 Given('I have a working directory', function () {
-  this.temporaryDirectory = tmp.dirSync().name;
+  this.temporaryDirectory = tempy.directory();
   this.cliExecutable = cliExecutable;
   this.createAppExecutable = createAppExecutable;
 });
@@ -42,7 +42,7 @@ After(async function () {
  * Before running the acceptance tests, we
  */
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
-  sharedTemporaryDirectory = tmp.dirSync().name;
+  sharedTemporaryDirectory = tempy.directory();
   console.log('Building CLIs before running tests...');
   await exec(path.join(__dirname, '../../../bin/export.js'), [
     sharedTemporaryDirectory,
