@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "0.12.0",
+  "version": "0.15.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "type": "module",
@@ -65,9 +65,15 @@
     ],
     "topicSeparator": " ",
     "topics": {
-      "hydrogen": { "description": "Build Hydrogen storefronts" },
-      "theme": { "description": "Build Liquid themes" },
-      "app": { "description": "Build Shopify apps" }
+      "hydrogen": {
+        "description": "Build Hydrogen storefronts"
+      },
+      "theme": {
+        "description": "Build Liquid themes"
+      },
+      "app": {
+        "description": "Build Shopify apps"
+      }
     }
   }
 }

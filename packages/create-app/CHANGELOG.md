@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.15.0
+
+### Minor Changes
+
+- a1d1bd7: Show the output from the package manager when installing dependencies
+
 ## 0.14.0
 
 ### Minor Changes

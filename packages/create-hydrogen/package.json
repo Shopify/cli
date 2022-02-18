@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "private": false,
   "description": "A CLI tool to create a new Hydrogen storefront",
   "type": "module",

@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 0.15.0
+
+### Minor Changes
+
+- 15c4491: Add Hydrogen commands to the CLI
+
 ## 0.12.0
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @shopify/app
 
+## 0.15.0
+
+### Minor Changes
+
+- 4189370: Include ui-extensions runtime APIs
+
 ## 0.5.2
 
 ### Patch Changes
