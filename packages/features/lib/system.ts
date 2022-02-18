@@ -24,7 +24,7 @@ export const exec = async (
 ) => {
   const _options: any = {...options, stdout: undefined, stderr: undefined};
   const commandProcess = execa(command, args, _options);
-  const shortCommand = command.split('/').at(-1);
+  const shortCommand = command.split('/').slice(-1).pop();
   commandProcess.stdout.on('data', (data: string) => {
     if (isDebug) {
       process.stdout.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`));
