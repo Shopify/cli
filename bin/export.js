@@ -52,7 +52,7 @@ async function pack(outputDirectory) {
 
         console.log("📦 Packing @shopify/cli-hydrogen...")
         const cliHydrogenPackPath = path.join(temporaryDirectory, "cli-hydrogen.tar.gz");
-        await execa("yarn", ["pack", "--filename", cliHydrogenPackPath], {cwd: path.join(rootDirectory, "packages/hydrogen") })
+        await execa("yarn", ["pack", "--filename", cliHydrogenPackPath], {cwd: path.join(rootDirectory, "packages/cli-hydrogen") })
 
         console.log("📦 Packing @shopify/cli...")
         const cliPackPath = path.join(temporaryDirectory, "cli.tar.gz");

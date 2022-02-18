@@ -117,7 +117,7 @@ export default class Init extends Command {
 
     if (flags.local) {
       this.package.install('@shopify/hydrogen', {
-        version: 'file:../../Shopify/hydrogen/packages/hydrogen',
+        version: 'file:../../Shopify/hydrogen/packages/cli-hydrogen',
       });
     }
 
