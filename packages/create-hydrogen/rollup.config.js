@@ -6,7 +6,7 @@ const createHydrogenExternal = [
   ...external,
   '@oclif/core',
   '@shopify/cli-kit',
-  '@shopify/cli-hydrogen/commands/init',
+  '@shopify/cli-hydrogen/commands/hydrogen/init',
 ];
 const createHydrogenPlugins = [...plugins(__dirname)];
 
