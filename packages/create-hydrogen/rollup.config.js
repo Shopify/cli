@@ -5,12 +5,7 @@ import {external, plugins, distDir} from '../../configurations/rollup.config';
 
 const hydrogenExternal = [/@miniflare/, /prettier/];
 
-const cliExternal = [
-  ...hydrogenExternal,
-  ...external,
-  '@oclif/core',
-  '@bugsnag/js',
-];
+const cliExternal = [...hydrogenExternal, ...external, '@oclif/core'];
 const createHydrogenPlugins = [
   alias({
     entries: [

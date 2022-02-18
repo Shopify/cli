@@ -60,7 +60,7 @@
     "@shopify/post-purchase-ui-extensions-react": "^0.13.2"
   },
   "peerDependencies": {
-    "@oclif/core": "^1",
+    "@oclif/core": "1.3.3",
     "react": ">=17.0.0 <18.0.0",
     "@shopify/cli-kit": "0.12.0"
   },
