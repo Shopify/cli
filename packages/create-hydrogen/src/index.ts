@@ -1,4 +1,5 @@
 import {run, flush, settings, Errors} from '@oclif/core';
+import {args} from '@oclif/core/lib/parser';
 import {error as kitError, environment} from '@shopify/cli-kit';
 
 function runCreateHydrogen() {
@@ -6,7 +7,10 @@ function runCreateHydrogen() {
   if (initIndex === -1) {
     const initIndex =
       process.argv.findIndex(
-        (arg) => arg.includes('bin/create-hydrogen') || arg.includes('bin/dev'),
+        (arg) =>
+          arg.includes('bin/create-hydrogen') ||
+          arg.includes('bin/dev') ||
+          arg.includes('bin/run'),
       ) + 1;
     process.argv.splice(initIndex, 0, 'init');
   }

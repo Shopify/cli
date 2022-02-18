@@ -1,11 +1,9 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "private": false,
   "description": "A CLI tool to create a new Hydrogen storefront",
   "type": "module",
-  "main": "src/index.js",
-  "module": "src/index.js",
   "keywords": [
     "shopify",
     "shopify-cli",
@@ -61,7 +59,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+    "node": "^14.13.1 || ^16.0.0 || ^17.0.0"
   },
   "os": [
     "darwin",
