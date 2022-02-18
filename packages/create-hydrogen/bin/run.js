@@ -1,5 +1,5 @@
 #!/usr/bin/env node --no-warnings
 
-import runCreateApp from "@shopify/create-hydrogen";
+import runCreateHydrogen from "@shopify/create-hydrogen";
 
 runCreateHydrogen();
