@@ -1,5 +1,6 @@
 import degit from 'degit';
 import {underline, yellow} from 'chalk';
+import {ui} from '@shopify/cli-kit';
 
 import cliPackageJson from '../../../../../cli/package.json';
 import cliHydrogenPackageJson from '../../../../package.json';
@@ -36,20 +37,42 @@ export default class Init extends Command {
 
   async run() {
     const {args, flags} = await this.parse(Init);
-    const name =
-      args.name ??
-      (await this.interface.ask('What do you want to name this app?', {
-        validate: validateProjectName,
-        default: 'snow-devil',
-        name: 'name',
-      }));
+    const questions: ui.Question[] = [];
+    let name = args.name;
+    if (!name) {
+      name = (
+        await ui.prompt<{name: string}>([
+          {
+            name: 'name',
+            type: 'input',
+            default: 'snow-devil',
+            message: 'What do you want to name this app?',
+          },
+        ])
+      ).name;
+    }
+    let root = args.root;
+    if (!root) {
+      root = (
+        await ui.prompt<{root: string}>([
+          {
+            name: 'root',
+            type: 'input',
+            default: `./${name}`,
+            message: 'Where do you want to generate this app?',
+          },
+        ])
+      ).root;
+    }
 
-    const root =
-      flags.root ??
-      (await this.interface.ask('Where do you want to generate this app?', {
-        default: `./${name}`,
+    if (!args.root) {
+      questions.push({
         name: 'root',
-      }));
+        type: 'input',
+        default: 'snow-devil',
+        message: 'Where do you want to generate this app?',
+      });
+    }
 
     this.name = name;
     this.root = root || name;

@@ -2,5 +2,6 @@
     "name": "create-hydrogen",
     "root": "packages/create-hydrogen",
     "sourceRoot": "packages/create-hydrogen/src",
-    "projectType": "library"
+    "projectType": "library",
+    "implicitDependencies": ["cli-hydrogen"]
 }
