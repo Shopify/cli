@@ -13,7 +13,6 @@ import tmp from 'tmp';
 import rimraf from 'rimraf';
 import path from 'pathe';
 
-import pack from '../../../bin/export';
 import {exec} from '../lib/system';
 
 let sharedTemporaryDirectory: string | undefined;
@@ -45,13 +44,13 @@ After(async function () {
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
   sharedTemporaryDirectory = tmp.dirSync().name;
   console.log('Building CLIs before running tests...');
-  await exec(path.join(__dirname, '../../../bin/pack.js'), [
+  await exec(path.join(__dirname, '../../../bin/export.js'), [
     sharedTemporaryDirectory,
   ]);
-  cliExecutable = path.join(sharedTemporaryDirectory, 'clis/cli/bin/run.js');
+  cliExecutable = path.join(sharedTemporaryDirectory, 'shopify/cli/bin/run.js');
   createAppExecutable = path.join(
     sharedTemporaryDirectory,
-    'clis/create-app/bin/run.js',
+    'shopify/create-app/bin/run.js',
   );
 });
 

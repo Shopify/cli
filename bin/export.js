@@ -14,7 +14,7 @@ import fs from "fs";
 
 import execa from "execa";
 
-const cliPackages = await ["cli", "create-app", "create-hydrogen", "hydrogen", "app", "cli-kit"]
+const cliPackages = await ["cli", "create-app", "create-hydrogen", "cli-hydrogen", "app", "cli-kit"]
 const rootDirectory = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 async function cliDependencies() {

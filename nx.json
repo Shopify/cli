@@ -7,9 +7,6 @@
       "options": {
         "cacheableOperations": [
           "build",
-          "tsc",
-          "test",
-          "lint",
           "package",
           "prepare"
         ]
