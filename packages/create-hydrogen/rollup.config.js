@@ -17,7 +17,7 @@ const configuration = () => [
   {
     input: [
       path.join(__dirname, 'src/index.ts'),
-      path.join(__dirname, `../hydrogen/src/cli/commands/hydrogen/init.ts`),
+      path.join(__dirname, `../cli-hydrogen/src/cli/commands/hydrogen/init.ts`),
     ],
     output: [
       {
