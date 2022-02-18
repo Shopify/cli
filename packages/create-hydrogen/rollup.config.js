@@ -1,4 +1,5 @@
 import path from 'pathe';
+import alias from '@rollup/plugin-alias';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
@@ -9,6 +10,17 @@ const cliExternal = [
   ...external,
   '@oclif/core',
   '@bugsnag/js',
+];
+const createHydrogenPlugins = [
+  alias({
+    entries: [
+      {
+        find: '@shopify/cli-kit',
+        replacement: path.join(__dirname, '../cli-kit/src/index.ts'),
+      },
+    ],
+  }),
+  ...plugins(__dirname),
 ];
 
 const configuration = () => [
@@ -36,7 +48,7 @@ const configuration = () => [
         },
       },
     ],
-    plugins: plugins(__dirname),
+    plugins: createHydrogenPlugins,
     external: cliExternal,
   },
 ];
