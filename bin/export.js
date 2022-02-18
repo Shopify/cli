@@ -7,7 +7,7 @@
  * or bundling the CLI in a portable format like a Deno binary.
  */
 import tempy from 'tempy';
-import pathe from "pathe";
+import path from "pathe";
 import { fileURLToPath } from 'url';
 import fs from "fs";
 
