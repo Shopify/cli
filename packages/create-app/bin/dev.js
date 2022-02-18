@@ -1,5 +1,5 @@
 #!/usr/bin/env node --no-warnings
 
-import runCreateApp from "@shopify/create-app";
+import runCreateApp from "../dist/index.js";
 
 runCreateApp();

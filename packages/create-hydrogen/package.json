@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": false,
   "description": "A CLI tool to create a new Hydrogen storefront",
   "type": "module",
@@ -13,7 +13,12 @@
     "shopify-apps"
   ],
   "license": "MIT",
-  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "bin": {
     "create-app": "./bin/run.js"
   },
