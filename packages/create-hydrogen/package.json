@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": false,
   "description": "A CLI tool to create a new Hydrogen storefront",
   "type": "module",
@@ -20,7 +20,7 @@
     }
   },
   "bin": {
-    "create-app": "./bin/run.js"
+    "create-hydrogen": "./bin/run.js"
   },
   "files": [
     "/templates",
