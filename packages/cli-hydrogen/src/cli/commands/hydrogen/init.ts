@@ -100,7 +100,6 @@ export default class Init extends Command {
     const templateSource: string = TEMPLATE_MAP[template];
 
     const emitter = degit(templateSource, {
-      cache: true,
       force: true,
       verbose: true,
     });
