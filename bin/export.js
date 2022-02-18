@@ -8,7 +8,6 @@
  */
 import tempy from 'tempy';
 import pathe from "pathe";
-import path from "path/posix";
 import { fileURLToPath } from 'url';
 import fs from "fs";
 
