@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.17.0
+
+### Minor Changes
+
+- Add logs to create-app
+
 ## 0.16.0
 
 ### Minor Changes
