@@ -1385,7 +1385,7 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nrwl/cli@13.8.2", "@nrwl/cli@latest":
+"@nrwl/cli@13.8.2", "@nrwl/cli@^13.8.2":
   version "13.8.2"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-13.8.2.tgz#d4fa10d633565d15a4171ed5e558649e8f44ba79"
   integrity sha512-wpSKo/78y1oNeBhwHIRYaqDddNhzdOmTOkYNf+J6wuaeaEMlnrJFgDrTyy14ysgPFiW0vzb5AdrDb6W2tGigYQ==
@@ -1425,7 +1425,7 @@
     rxjs "^6.5.4"
     tslib "^2.3.0"
 
-"@nrwl/js@^13.8.1":
+"@nrwl/js@^13.8.2":
   version "13.8.2"
   resolved "https://registry.yarnpkg.com/@nrwl/js/-/js-13.8.2.tgz#5e47221997ffcfbdb9e30999e5b61f86008c6306"
   integrity sha512-C8HzOpIhphvgzJ2AyvKw0vnqa2FnjsUWTjDWJLvfP5bhKFi2QKh1YgNR1WJXL+ybZFabduUnb1/3bguqVOReuQ==
@@ -1455,7 +1455,7 @@
     tmp "~0.2.1"
     tslib "^2.3.0"
 
-"@nrwl/tao@13.8.2", "@nrwl/tao@latest":
+"@nrwl/tao@13.8.2", "@nrwl/tao@^13.8.2":
   version "13.8.2"
   resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-13.8.2.tgz#871ddad20de93ca68efb11721c1a9f7cabaa138f"
   integrity sha512-68GsErwpOQDZPunJrpXDpauQo40dP66dO7uHQUu1Jf+css0uu1dfXtIR4CrAikvLJ57fZZw09l1xFrI9+OfXjA==
@@ -1474,7 +1474,7 @@
     tslib "^2.3.0"
     yargs-parser "20.0.0"
 
-"@nrwl/workspace@13.8.2", "@nrwl/workspace@latest":
+"@nrwl/workspace@13.8.2", "@nrwl/workspace@^13.8.2":
   version "13.8.2"
   resolved "https://registry.yarnpkg.com/@nrwl/workspace/-/workspace-13.8.2.tgz#5ced9238bdfc633f5186a6e5b0e0150e0dd74120"
   integrity sha512-ku+KO1xU4ff7KttpcSPGh/OmHFGidQKOhJFdULVLusKYR2+VrlbtFvKWZlaRm26HcE6dw/bYszTFd+wFN6rNqw==

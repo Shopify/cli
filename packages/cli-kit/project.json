@@ -1,0 +1,6 @@
+{
+    "name": "cli-kit",
+    "root": "packages/cli-kit",
+    "sourceRoot": "packages/cli-kit/src",
+    "projectType": "library"
+}

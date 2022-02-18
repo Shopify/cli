@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "projects": {
+    "cli": "packages/cli",
+    "cli-testing": "packages/cli-testing",
+    "cli-kit": "packages/cli-kit",
+    "app": "packages/app",
+    "cli-hydrogen": "packages/cli-hydrogen",
+    "theme": "packages/theme",
+    "features": "packages/features",
+    "create-app": "packages/create-app",
+    "create-hydrogen": "packages/create-hydrogen"
+  }
+}

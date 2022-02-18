@@ -1,0 +1,6 @@
+{
+    "name": "app",
+    "root": "packages/app",
+    "sourceRoot": "packages/app/src",
+    "projectType": "library"
+}

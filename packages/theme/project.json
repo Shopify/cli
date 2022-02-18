@@ -1,0 +1,6 @@
+{
+    "name": "theme",
+    "root": "packages/theme",
+    "sourceRoot": "packages/theme/src",
+    "projectType": "library"
+}
