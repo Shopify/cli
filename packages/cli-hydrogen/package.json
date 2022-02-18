@@ -1,12 +1,22 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
   "files": [
     "/dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
+  "exports": {
+    "./commands/init": {
+      "import": "./dist/commands/init.js",
+      "types": "./dist/commands/init.d.ts"
+    }
+  },
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "rollup -c",

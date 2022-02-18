@@ -15,6 +15,7 @@
       "inlineSourceMap": true,
       "isolatedModules": false,
       "paths": {
+        "@shopify/cli-hydrogen/commands/init": ["../../cli-hydrogen/src/commands/init.ts"],
         "@shopify/cli-kit": ["../../cli-kit/src/index.ts"],
         "@shopify/cli-testing": ["../../cli-testing/src/index.ts"]
       }
