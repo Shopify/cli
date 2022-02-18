@@ -8,7 +8,6 @@ const cliExternal = [
   ...hydrogenExternal,
   ...external,
   '@oclif/core',
-  '@shopify/cli-kit',
   '@bugsnag/js',
 ];
 
