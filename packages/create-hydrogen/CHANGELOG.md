@@ -1,5 +1,11 @@
 # @shopify/create-hydrogen
 
+## 0.27.0
+
+### Minor Changes
+
+- Fix create-hydrogen
+
 ## 0.26.0
 
 ### Minor Changes

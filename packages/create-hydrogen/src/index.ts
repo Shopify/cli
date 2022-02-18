@@ -1,5 +1,4 @@
 import {run, flush, settings, Errors} from '@oclif/core';
-import {args} from '@oclif/core/lib/parser';
 import {error as kitError, environment} from '@shopify/cli-kit';
 
 function runCreateHydrogen() {
