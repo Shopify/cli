@@ -1,12 +1,13 @@
 import {run, flush, settings, Errors} from '@oclif/core';
 import {error as kitError, environment} from '@shopify/cli-kit';
 
-console.log(JSON.stringify(process.argv));
 function runCreateApp() {
   const initIndex = process.argv.findIndex((arg) => arg.includes('init'));
   if (initIndex === -1) {
     const initIndex =
-      process.argv.findIndex((arg) => arg.includes('bin/run')) + 1;
+      process.argv.findIndex(
+        (arg) => arg.includes('bin/create-app') || arg.includes('bin/dev'),
+      ) + 1;
     process.argv.splice(initIndex, 0, 'init');
   }
 

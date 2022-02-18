@@ -1,5 +1,5 @@
 #!/usr/bin/env node --no-warnings
 
-import runCreateApp from "../dist/index.js";
+import runCreateHydrogen from "../dist/index.js";
 
 runCreateHydrogen();
