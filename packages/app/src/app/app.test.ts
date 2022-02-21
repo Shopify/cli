@@ -23,7 +23,6 @@ describe('load', () => {
       message: 'Required',
     },
   ];
-  const missingNameMessage = JSON.stringify(missingName, null, 2);
 
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir();
@@ -105,7 +104,7 @@ describe('load', () => {
     writeConfig(appConfiguration);
 
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow(missingNameMessage);
+    await expect(load(tmpDir)).rejects.toThrow();
   });
 
   describe('given a valid configuration', () => {
@@ -113,7 +112,7 @@ describe('load', () => {
       const appConfiguration = `
         name = "my_app"
         `;
-      writeConfig(appConfiguration);
+      await writeConfig(appConfiguration);
     });
 
     describe('and no blocks', () => {
@@ -164,7 +163,7 @@ describe('load', () => {
       });
     });
 
-    describe('with extensions', async () => {
+    describe('with extensions', () => {
       it("throws an error if the configuration file doesn't exist", async () => {
         // Given
         makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'});
@@ -180,14 +179,14 @@ describe('load', () => {
         const blockConfiguration = `
           wrong = "my_extension"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'uiExtensions',
           blockConfiguration,
           name: 'my-extension',
         });
 
         // When
-        await expect(load(tmpDir)).rejects.toThrow(missingNameMessage);
+        await expect(load(tmpDir)).rejects.toThrow();
       });
 
       it('loads the app when it has an extension', async () => {
@@ -195,7 +194,7 @@ describe('load', () => {
         const blockConfiguration = `
           name = "my_extension"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'uiExtensions',
           blockConfiguration,
           name: 'my-extension',
@@ -213,7 +212,7 @@ describe('load', () => {
         let blockConfiguration = `
           name = "my_extension_1"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'uiExtensions',
           blockConfiguration,
           name: 'my_extension_1',
@@ -222,7 +221,7 @@ describe('load', () => {
         blockConfiguration = `
           name = "my_extension_2"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'uiExtensions',
           blockConfiguration,
           name: 'my_extension_2',
@@ -254,22 +253,22 @@ describe('load', () => {
         const blockConfiguration = `
           wrong = "my-script"
         `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'scripts',
           blockConfiguration,
           name: 'my-script',
         });
 
         // When
-        await expect(load(tmpDir)).rejects.toThrowError(missingNameMessage);
+        await expect(load(tmpDir)).rejects.toThrowError();
       });
 
-      it('loads the app when it has an script', async () => {
+      it('loads the app when it has a script', async () => {
         // Given
         const blockConfiguration = `
           name = "my-script"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'scripts',
           blockConfiguration,
           name: 'my-script',
@@ -287,7 +286,7 @@ describe('load', () => {
         let blockConfiguration = `
           name = "my-script-1"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'scripts',
           blockConfiguration,
           name: 'my-script-1',
@@ -296,7 +295,7 @@ describe('load', () => {
         blockConfiguration = `
           name = "my-script-2"
           `;
-        writeBlockConfig({
+        await writeBlockConfig({
           blockType: 'scripts',
           blockConfiguration,
           name: 'my-script-2',

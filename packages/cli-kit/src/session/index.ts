@@ -73,6 +73,7 @@ interface OAuthSession {
  * @param options {OAuthApplications} An object containing the applications we need to be authenticated with.
  * @returns {OAuthSession} An instance with the access tokens organized by application.
  */
+// eslint-disable-next-line require-await
 export async function ensureAuthenticated(
   applications: OAuthApplications,
 ): Promise<OAuthSession> {

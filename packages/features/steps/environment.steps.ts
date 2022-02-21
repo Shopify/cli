@@ -13,6 +13,7 @@ import tempy from 'tempy';
 import rimraf from 'rimraf';
 import path from 'pathe';
 
+import {directories} from '../lib/constants';
 import {exec} from '../lib/system';
 
 let sharedTemporaryDirectory: string | undefined;
@@ -32,7 +33,7 @@ Given('I have a working directory', function () {
   this.createAppExecutable = createAppExecutable;
 });
 
-After(async function () {
+After(function () {
   if (this.temporaryDirectory) {
     rimraf.sync(this.temporaryDirectory, {force: true});
   }
@@ -44,13 +45,11 @@ After(async function () {
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
   sharedTemporaryDirectory = tempy.directory();
   console.log('Building CLIs before running tests...');
-  await exec(path.join(__dirname, '../../../bin/export.js'), [
-    sharedTemporaryDirectory,
-  ]);
-  cliExecutable = path.join(sharedTemporaryDirectory, 'shopify/cli/bin/run.js');
+  await exec('yarn', 'build', {cwd: directories.root});
+  cliExecutable = path.join(directories.root, 'packages/cli/bin/dev.js');
   createAppExecutable = path.join(
-    sharedTemporaryDirectory,
-    'shopify/create-app/bin/run.js',
+    directories.root,
+    'packages/create-app/bin/dev.js',
   );
 });
 

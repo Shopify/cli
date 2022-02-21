@@ -18,7 +18,8 @@ export async function rmdir(path: string): Promise<void> {
 }
 
 export async function mkTmpDir(): Promise<string> {
-  return fs.mkdtemp('tmp-');
+  const directory = await fs.mkdtemp('tmp-');
+  return directory;
 }
 
 export async function isDirectory(path: string): Promise<boolean> {
@@ -29,6 +30,7 @@ export async function exists(path: string): Promise<boolean> {
   try {
     await fs.promises.access(path);
     return true;
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false;
   }

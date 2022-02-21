@@ -19,9 +19,6 @@ open:
   app: http://localhost:3000
 
 commands:
-  export:
-    desc: 'Exports the CLIs into the given directory'
-    run: bin/export.js
   graph:
     desc: 'Shows the graph of the project'
     run: yarn nx graph

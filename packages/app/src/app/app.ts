@@ -114,9 +114,7 @@ async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
     `${blocks.uiExtensions.directoryName}/*`,
   );
   const directories = await path.glob(extensionsPath, {onlyDirectories: true});
-  return Promise.all(
-    directories.map(async (directory) => loadExtension(directory)),
-  );
+  return Promise.all(directories.map((directory) => loadExtension(directory)));
 }
 
 async function loadExtension(directory: string): Promise<UIExtension> {
@@ -137,9 +135,7 @@ async function loadScripts(rootDirectory: string): Promise<Script[]> {
     `${blocks.scripts.directoryName}/*`,
   );
   const directories = await path.glob(scriptsPath, {onlyDirectories: true});
-  return Promise.all(
-    directories.map(async (directory) => loadScript(directory)),
-  );
+  return Promise.all(directories.map((directory) => loadScript(directory)));
 }
 
 async function loadScript(directory: string): Promise<Script> {

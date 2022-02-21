@@ -4,7 +4,7 @@
  * @returns A promise that resolves after a long period.
  */
 const sleep = async () => {
-  return new Promise((resolve) => {
+  await new Promise((resolve) => {
     setInterval(resolve, 60 * 60 * 1000);
   });
 };
