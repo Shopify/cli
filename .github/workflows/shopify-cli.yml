@@ -10,6 +10,9 @@ concurrency:
   group: shopify-cli-${{ github.head_ref }}
   cancel-in-progress: true
 
+env:
+  DEBUG: 1
+
 jobs:
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
