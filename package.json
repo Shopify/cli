@@ -25,6 +25,7 @@
     "@changesets/cli": "^2.19.0",
     "@cucumber/cucumber": "^8.0.0-rc.2",
     "@nrwl/cli": "^13.8.2",
+    "@nrwl/eslint-plugin-nx": "^13.8.3",
     "@nrwl/js": "^13.8.2",
     "@nrwl/tao": "^13.8.2",
     "@nrwl/workspace": "^13.8.2",
@@ -80,7 +81,8 @@
     "parser": "@typescript-eslint/parser",
     "plugins": [
       "no-catch-all",
-      "jest"
+      "jest",
+      "@nrwl/nx"
     ],
     "extends": [
       "plugin:@shopify/typescript",
@@ -133,7 +135,23 @@
         }
       ],
       "jest/no-disabled-tests": "error",
-      "jest/prefer-expect-resolves": "error"
+      "jest/prefer-expect-resolves": "error",
+      "@nrwl/nx/enforce-module-boundaries": [
+        "error",
+        {
+          "allow": [],
+          "depConstraints": [
+            {
+              "sourceTag": "scope:feature",
+              "onlyDependOnLibsWithTargs": ["scope:foundation"]
+            },
+            {
+              "sourceTag": "scope:cli",
+              "onlyDependOnLibsWithTargs": ["scope:foundation", "features"]
+            }
+          ]
+        }
+      ]
     }
   },
   "prettier": "@shopify/prettier-config"

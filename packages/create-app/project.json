@@ -2,5 +2,6 @@
     "name": "create-app",
     "root": "packages/create-app",
     "sourceRoot": "packages/create-app/src",
-    "projectType": "library"
+    "projectType": "library",
+    "tags": ["scope:create-cli"]
 }
