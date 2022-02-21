@@ -1,4 +1,4 @@
-#!/usr/bin/env node --no-warnings
+#!/usr/bin/env NODE_OPTIONS=--no-warnings node
 
 import runCreateHydrogen from "@shopify/create-hydrogen";
 
