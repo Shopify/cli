@@ -13,23 +13,11 @@ describe('load', () => {
   type BlockType = 'uiExtensions' | 'scripts';
 
   let tmpDir: string;
-  // Zod-generated validation message
-  const missingName = [
-    {
-      code: 'invalid_type',
-      expected: 'string',
-      received: 'undefined',
-      path: ['name'],
-      message: 'Required',
-    },
-  ];
-
+  const appConfiguration = `
+  name = "my_app"
+  `;
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir();
-    const appConfiguration = `
-    name = "my_app"
-    `;
-    await writeConfig(appConfiguration);
   });
 
   afterEach(async () => {
@@ -112,6 +100,9 @@ describe('load', () => {
   });
 
   it('loads the app when the configuration is valid and has no blocks', async () => {
+    // Given
+    await writeConfig(appConfiguration);
+
     // When
     const app = await load(tmpDir);
 
@@ -120,6 +111,9 @@ describe('load', () => {
   });
 
   it('defaults to npm as package manager when the configuration is valid', async () => {
+    // Given
+    await writeConfig(appConfiguration);
+
     // When
     const app = await load(tmpDir);
 
@@ -129,6 +123,7 @@ describe('load', () => {
 
   it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
+    await writeConfig(appConfiguration);
     const yarnLockPath = path.join(
       tmpDir,
       genericConfigurationFileNames.yarn.lockfile,
@@ -144,6 +139,7 @@ describe('load', () => {
 
   it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
+    await writeConfig(appConfiguration);
     const pnpmLockPath = path.join(
       tmpDir,
       genericConfigurationFileNames.pnpm.lockfile,
@@ -184,6 +180,7 @@ describe('load', () => {
 
   it('loads the app when it has an extension with a valid configuration', async () => {
     // Given
+    await writeConfig(appConfiguration);
     const blockConfiguration = `
       name = "my_extension"
       `;
@@ -202,6 +199,8 @@ describe('load', () => {
 
   it('loads the app with several extensions that have valid configurations', async () => {
     // Given
+    await writeConfig(appConfiguration);
+
     let blockConfiguration = `
       name = "my_extension_1"
       `;
@@ -256,6 +255,7 @@ describe('load', () => {
 
   it('loads the app when it has a script with a valid configuration', async () => {
     // Given
+    await writeConfig(appConfiguration);
     const blockConfiguration = `
       name = "my-script"
       `;
@@ -274,6 +274,7 @@ describe('load', () => {
 
   it('loads the app with several scripts that have valid configurations', async () => {
     // Given
+    await writeConfig(appConfiguration);
     let blockConfiguration = `
       name = "my-script-1"
       `;
