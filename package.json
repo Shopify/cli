@@ -45,9 +45,10 @@
     "cucumber-junit-formatter": "^0.2.2",
     "cucumber-pretty": "^6.0.1",
     "esbuild": "^0.14.11",
-    "eslint": "^8.6.0",
+    "eslint": "^8.9.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-jest": "^26.1.1",
     "eslint-plugin-no-catch-all": "^1.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-unicorn": "^40.0.0",
@@ -78,7 +79,8 @@
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
     "plugins": [
-      "no-catch-all"
+      "no-catch-all",
+      "jest"
     ],
     "extends": [
       "plugin:@shopify/typescript",
@@ -123,7 +125,15 @@
             }
           ]
         }
-      ]
+      ],
+      "jest/max-nested-describe": [
+        "error",
+        {
+          "max": 1
+        }
+      ],
+      "jest/no-disabled-tests": "error",
+      "jest/prefer-expect-resolves": "error"
     }
   },
   "prettier": "@shopify/prettier-config"
