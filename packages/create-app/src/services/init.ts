@@ -23,13 +23,15 @@ interface InitOptions {
   name: string;
   directory: string;
   dependencyManager: string | undefined;
+  shopifyCliVersion: string | undefined;
+  shopifyAppVersion: string | undefined;
 }
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? '';
   const templatePath = await getTemplatePath('app');
-  const cliPackageVersion = cliPackage.version;
-  const appPackageVersion = appPackage.version;
+  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version;
+  const appPackageVersion = options.shopifyAppVersion ?? appPackage.version;
 
   const dependencyManager = inferDependencyManager(options.dependencyManager);
   const hyphenizedName = string.hyphenize(options.name);
