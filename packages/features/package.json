@@ -7,7 +7,7 @@
     "build": "true",
     "lint": "prettier -c **/*.ts && eslint **/*.ts",
     "lint:fix": "prettier -w **/*.ts && eslint **/*.ts --fix",
-    "test": "cucumber-js -p default",
+    "test": "true",
     "tsc": "tsc --noEmit"
   },
   "devDependencies": {
