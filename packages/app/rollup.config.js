@@ -15,8 +15,7 @@ const cliExternal = [
 ];
 
 const featureCommands = fg.sync([
-  path.join(__dirname, `/src/cli/commands/*/*.ts`),
-  path.join(__dirname, `/src/cli/commands/*.ts`),
+  path.join(__dirname, `/src/cli/commands/app/**/*.ts`),
   `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
 ]);
 const configuration = () => [

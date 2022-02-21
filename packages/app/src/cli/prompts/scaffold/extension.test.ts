@@ -25,7 +25,7 @@ describe('extension prompt', () => {
       },
       {
         type: 'select',
-        name: 'type',
+        name: 'extensionType',
         message: "Type of extension?",
         choices: extensions.types,
       },
@@ -48,7 +48,7 @@ describe('extension prompt', () => {
     expect(prompt).toHaveBeenCalledWith([
       {
         type: 'select',
-        name: 'type',
+        name: 'extensionType',
         message: "Type of extension?",
         choices: extensions.types,
       },

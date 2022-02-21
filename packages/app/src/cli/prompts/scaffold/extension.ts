@@ -3,12 +3,12 @@ import {extensions, ExtensionTypes} from '../../constants';
 
 interface ScaffoldExtensionOptions {
   name?: string;
-  type?: ExtensionTypes;
+  extensionType?: ExtensionTypes;
 }
 
 interface ScaffoldExtensionOutput {
   name: string;
-  type: ExtensionTypes;
+  extensionType: ExtensionTypes;
 }
 
 const scaffoldExtensionPrompt = async (
@@ -24,10 +24,10 @@ const scaffoldExtensionPrompt = async (
       default: 'extension',
     });
   }
-  if (!options.type) {
+  if (!options.extensionType) {
     questions.push({
       type: 'select',
-      name: 'type',
+      name: 'extensionType',
       message: "Type of extension?",
       choices: extensions.types,
     });
