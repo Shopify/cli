@@ -1,6 +1,5 @@
 import type {Writable} from 'node:stream';
 
-import {Bug} from './error';
 import {exec} from './system';
 import type {ExecOptions} from './system';
 
@@ -9,6 +8,9 @@ export enum DependencyManager {
   Yarn = 'yarn',
   Pnpm = 'pnpm',
 }
+export const dependencyManager = Object.entries(DependencyManager).map(
+  ([_, value]) => `${value}`,
+);
 
 /**
  * Returns the dependency manager used to run the create workflow.
@@ -25,9 +27,7 @@ export function dependencyManagerUsedForCreating(
   } else if (env.PNPM_HOME) {
     return DependencyManager.Pnpm;
   } else {
-    throw new Bug(
-      "Couldn't determine the dependency used to run the create workflow",
-    );
+    return DependencyManager.Npm;
   }
 }
 

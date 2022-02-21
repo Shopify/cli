@@ -48,13 +48,11 @@ describe('dependencyManagerUsedForCreating', () => {
   });
 
   it('throws an bug error when the package manager cannot be determined', () => {
-    expect(() => {
-      dependencyManagerUsedForCreating({});
-    }).toThrow(
-      new Bug(
-        "Couldn't determine the dependency used to run the create workflow",
-      ),
-    );
+    // When
+    const got = dependencyManagerUsedForCreating({});
+
+    // Then
+    expect(got).toBe(DependencyManager.Npm);
   });
 });
 

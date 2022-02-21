@@ -20,6 +20,12 @@
         "projects": "dependencies"
       }
     ],
+    "test": [
+      {
+        "target": "build",
+        "projects": "dependencies"
+      }
+    ],
     "prepare": [
       {
         "target": "prepare",
