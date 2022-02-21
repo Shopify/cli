@@ -1,4 +1,5 @@
-#!/usr/bin/env NODE_OPTIONS=--no-warnings node
+#!/usr/bin/env node
+process.removeAllListeners('warning');
 
 import runCreateApp from "../dist/index.js";
 
