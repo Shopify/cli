@@ -8,6 +8,9 @@ export enum DependencyManager {
   Yarn = 'yarn',
   Pnpm = 'pnpm',
 }
+export const dependencyManager = Object.entries(DependencyManager).map(
+  ([_, value]) => `${value}`,
+);
 
 /**
  * Returns the dependency manager used to run the create workflow.

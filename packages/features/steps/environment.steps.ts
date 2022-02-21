@@ -45,7 +45,7 @@ After(function () {
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
   sharedTemporaryDirectory = tempy.directory();
   console.log('Building CLIs before running tests...');
-  await exec('yarn', 'build', {cwd: directories.root});
+  await exec('yarn', ['build'], {cwd: directories.root});
   cliExecutable = path.join(directories.root, 'packages/cli/bin/dev.js');
   createAppExecutable = path.join(
     directories.root,

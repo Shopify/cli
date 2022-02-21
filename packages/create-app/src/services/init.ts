@@ -10,7 +10,6 @@ import {
   ui,
   dependency,
 } from '@shopify/cli-kit';
-import {DependencyManager} from '@shopify/cli-kit/src/dependency';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -23,6 +22,7 @@ import {template as getTemplatePath} from '../utils/paths';
 interface InitOptions {
   name: string;
   directory: string;
+  dependencyManager: string | undefined;
 }
 
 async function init(options: InitOptions) {
@@ -31,7 +31,7 @@ async function init(options: InitOptions) {
   const cliPackageVersion = cliPackage.version;
   const appPackageVersion = appPackage.version;
 
-  const dependencyManager = dependency.dependencyManagerUsedForCreating();
+  const dependencyManager = inferDependencyManager(options.dependencyManager);
   const hyphenizedName = string.hyphenize(options.name);
   const outputDirectory = path.join(options.directory, hyphenizedName);
   await ui.list(
@@ -52,7 +52,7 @@ async function init(options: InitOptions) {
         },
       },
       {
-        title: 'Installing dependencies',
+        title: `Installing dependencies with ${dependencyManager}`,
         task: async (_, task) => {
           const stdout = new Writable({
             write(chunk, encoding, next) {
@@ -77,9 +77,21 @@ async function init(options: InitOptions) {
   `);
 }
 
+function inferDependencyManager(
+  optionsDependencyManager: string | undefined,
+): dependency.DependencyManager {
+  if (
+    optionsDependencyManager &&
+    dependency.dependencyManager.includes(optionsDependencyManager)
+  ) {
+    return optionsDependencyManager as dependency.DependencyManager;
+  }
+  return dependency.dependencyManagerUsedForCreating();
+}
+
 async function installDependencies(
   directory: string,
-  dependencyManager: DependencyManager,
+  dependencyManager: dependency.DependencyManager,
   stdout: Writable,
 ): Promise<void> {
   await dependency.install(directory, dependencyManager, stdout);
