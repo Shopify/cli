@@ -78,4 +78,11 @@ describe('initialize an extension', async () => {
     const scaffoldedExtension2 = (await loadApp(tmpDir)).uiExtensions[1];
     expect(scaffoldedExtension2.configuration.name).toBe(name2);
   });
+
+  it('errors when trying to re-scaffold an existing extension', async () => {
+    const name = "my-ext-1";
+    const extensionType = "checkout-post-purchase";
+    await createFromTemplate({name, extensionType});
+    await expect(createFromTemplate({name, extensionType})).rejects.toThrow(`Extension ${name} already exists!`);
+  });
 });

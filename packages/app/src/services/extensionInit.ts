@@ -59,6 +59,9 @@ async function extensionInit({
     blocks.uiExtensions.directoryName,
     hyphenizedName,
   )
+  if (await file.exists(extensionDirectory)) {
+    throw new error.Abort(`Extension ${hyphenizedName} already exists!`)
+  }
   await file.mkdir(extensionDirectory)
   await Promise.all(
     [
