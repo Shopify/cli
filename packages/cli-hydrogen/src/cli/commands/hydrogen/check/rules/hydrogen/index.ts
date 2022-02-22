@@ -1,1 +1,1 @@
-export {checkHydrogenVersion} from './checkHydrogenVersion';
+export {checkHydrogenVersion} from './checkHydrogenVersion'

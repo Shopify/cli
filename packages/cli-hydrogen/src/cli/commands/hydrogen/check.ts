@@ -1,128 +1,128 @@
 // import type {Env} from 'types';
-import chalk from 'chalk';
+import chalk from 'chalk'
 
-import {HelpfulError} from '../../utilities';
-import {CheckResult} from '../../types';
-import Command from '../../core/Command';
+import {HelpfulError} from '../../utilities'
+import {CheckResult} from '../../types'
+import Command from '../../core/Command'
 
 import {
   checkHydrogenVersion,
   checkEslintConfig,
   checkNodeVersion,
-} from './check/rules';
+} from './check/rules'
 
 export default class Check extends Command {
-  static description = 'Check a hydrogen app for common problems.';
+  static description = 'Check a hydrogen app for common problems.'
 
-  static examples = [`$ shopify hydrogen check`];
+  static examples = [`$ shopify hydrogen check`]
 
   static flags = {
     ...Command.flags,
-  };
+  }
 
-  static args = [];
+  static args = []
 
   async run(): Promise<void> {
-    this.interface.say('Running checks...');
+    this.interface.say('Running checks...')
 
-    let results;
+    let results
 
     try {
       results = [
         ...(await checkNodeVersion.call(this)),
         ...(await checkHydrogenVersion.call(this)),
         ...(await checkEslintConfig.call(this)),
-      ];
+      ]
     } catch (error) {
-      throw new HelpfulError({title: 'Error running checks'});
+      throw new HelpfulError({title: 'Error running checks'})
     }
 
-    displayCheckResults.call(this, results);
+    displayCheckResults.call(this, results)
 
-    const failedChecks = results.filter(({success}) => !success);
+    const failedChecks = results.filter(({success}) => !success)
 
     if (failedChecks.length) {
       this.interface.say(
         `${chalk.red.bold(`• ${failedChecks.length} errors `)}${chalk.dim(
           `found in ${results.length} checks`,
         )}`,
-      );
+      )
     } else {
       this.interface.say(
         `${chalk.green.bold(`• No errors `)}${chalk.dim(
           `found in ${results.length} checks`,
         )}`,
-      );
+      )
     }
 
-    await fixChecks.call(this, results);
-    console.log();
+    await fixChecks.call(this, results)
+    console.log()
   }
 }
 
 function displayCheckResults(this: Command, allCheckResults: CheckResult[]) {
-  const indent = '          ';
+  const indent = '          '
   const checksBySection = allCheckResults.reduce((acc, {type, ...rest}) => {
     if (!acc[type]) {
-      acc[type] = [];
+      acc[type] = []
     }
-    acc[type].push({type, ...rest});
-    return acc;
-  }, {} as {[key: string]: CheckResult[]});
+    acc[type].push({type, ...rest})
+    return acc
+  }, {} as {[key: string]: CheckResult[]})
 
-  [...Object.entries(checksBySection)].forEach(([section, sectionResults]) => {
+  ;[...Object.entries(checksBySection)].forEach(([section, sectionResults]) => {
     const allChecksStatusEmoji = statusEmoji(
       sectionResults.every(({success}) => success),
-    );
+    )
 
-    console.log();
+    console.log()
     this.interface.say(
       `${allChecksStatusEmoji} ${chalk.cyan.bold.underline(section)}`,
-    );
-    console.log();
+    )
+    console.log()
 
     sectionResults.forEach(({description, link, success, fix, id}) => {
-      const docsLink = link ? chalk.dim(`${indent}${link}\n`) : '';
-      const idText = id ? chalk.dim(id) : '';
-      const fixedText = success ? '' : statusFixable(fix);
+      const docsLink = link ? chalk.dim(`${indent}${link}\n`) : ''
+      const idText = id ? chalk.dim(id) : ''
+      const fixedText = success ? '' : statusFixable(fix)
       const lines = [
         [statusEmoji(success), description, idText, fixedText].join(' '),
         docsLink,
-      ];
+      ]
 
-      this.interface.say(lines.join('\n'));
-    });
-  });
-  console.log();
+      this.interface.say(lines.join('\n'))
+    })
+  })
+  console.log()
 }
 
 async function fixChecks(this: Command, results: CheckResult[]) {
-  let changedFiles = new Map();
+  let changedFiles = new Map()
 
   const allFixableResults: CheckResult[] = results.filter(
     ({fix, success}) =>
       !success && fix !== undefined && typeof fix === 'function',
-  );
+  )
 
   if (allFixableResults.length === 0) {
-    this.interface.say(`No fixable checks`);
+    this.interface.say(`No fixable checks`)
 
-    return;
+    return
   }
 
-  console.log();
-  console.log();
+  console.log()
+  console.log()
   await this.interface.say(
     `${allFixableResults.length} failed checks might be automatically fixable.`,
-  );
-  console.log();
+  )
+  console.log()
   const wantsFix = await this.interface.ask(
     `Do you want to apply automatic fixes to ${allFixableResults.length} failed checks?`,
     {boolean: true, name: 'fix', default: false},
-  );
+  )
 
   if (!wantsFix) {
-    return;
+    return
   }
 
   for await (const {description, files} of runFixers(
@@ -135,24 +135,24 @@ async function fixChecks(this: Command, results: CheckResult[]) {
   )) {
     this.interface.say(
       [statusEmoji(true), description, chalk.green('fixed')].join(' '),
-    );
+    )
 
-    changedFiles = new Map([...changedFiles, ...files]);
+    changedFiles = new Map([...changedFiles, ...files])
   }
 
   const cleanUpPromises = Array.from(changedFiles).map(
     async ([path, content]) => {
       const action = (await this.fs.hasFile(path))
         ? chalk.red(`{red overwrote`)
-        : chalk.green(`{green wrote}`);
+        : chalk.green(`{green wrote}`)
 
-      await this.fs.write(path, content);
+      await this.fs.write(path, content)
 
-      this.interface.say(`${action}${stripPath(path)}`);
+      this.interface.say(`${action}${stripPath(path)}`)
     },
-  );
+  )
 
-  await Promise.all(cleanUpPromises);
+  await Promise.all(cleanUpPromises)
 }
 
 async function* runFixers(
@@ -161,21 +161,21 @@ async function* runFixers(
 ) {
   for (const {fix, description} of allFixableResults) {
     try {
-      await fix(context);
+      await fix(context)
     } finally {
-      yield {description, files: []};
+      yield {description, files: []}
     }
   }
 }
 
 function statusEmoji(success: boolean) {
-  return success ? '✓' : `✕`;
+  return success ? '✓' : `✕`
 }
 
 function statusFixable(fix: CheckResult['fix']) {
-  return typeof fix === 'function' ? chalk.cyan(` (fixable) `) : ' ';
+  return typeof fix === 'function' ? chalk.cyan(` (fixable) `) : ' '
 }
 
 function stripPath(path: string) {
-  return path.replace(`${process.cwd()}`, '');
+  return path.replace(`${process.cwd()}`, '')
 }

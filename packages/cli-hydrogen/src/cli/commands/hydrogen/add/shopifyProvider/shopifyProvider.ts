@@ -3,12 +3,12 @@ import {
   addImportSpecifier,
   addImportStatement,
   wrapJsxChildren,
-} from '@shopify/ast-utilities/javascript';
+} from '@shopify/ast-utilities/javascript'
 
-import Command from '../../../../core/Command';
+import Command from '../../../../core/Command'
 
 export async function addShopifyProvider(this: Command) {
-  const {fs} = this;
+  const {fs} = this
 
   if (await fs.hasFile('src/App.server.jsx')) {
     await fs.write(
@@ -23,6 +23,6 @@ export async function addShopifyProvider(this: Command) {
           'Suspense',
         ),
       ),
-    );
+    )
   }
 }

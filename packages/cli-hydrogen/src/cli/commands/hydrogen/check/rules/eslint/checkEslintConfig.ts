@@ -1,13 +1,13 @@
-import {CheckResult} from '../../../../../types';
-import addEslint from '../../../add/eslint';
-import Command from '../../../../../core/Command';
+import {CheckResult} from '../../../../../types'
+import addEslint from '../../../add/eslint'
+import Command from '../../../../../core/Command'
 
 export async function checkEslintConfig(this: Command): Promise<CheckResult[]> {
   const eslintConfig = await this.workspace.loadConfig<{extends: string[]}>(
     'eslint',
-  );
+  )
 
-  const hasEslintConfig = Boolean(eslintConfig);
+  const hasEslintConfig = Boolean(eslintConfig)
 
   const hasHydrogenConfig =
     hasEslintConfig &&
@@ -15,11 +15,11 @@ export async function checkEslintConfig(this: Command): Promise<CheckResult[]> {
       eslintConfig.config.extends?.filter((extended: string) =>
         extended.includes('plugin:hydrogen'),
       ).length,
-    );
+    )
 
   const hasHydrogenEslintPackage = Boolean(
     await this.package.hasDependency('eslint-plugin-hydrogen'),
-  );
+  )
 
   return [
     {
@@ -38,5 +38,5 @@ export async function checkEslintConfig(this: Command): Promise<CheckResult[]> {
       link: 'https://shopify.dev/custom-storefronts/hydrogen/lint',
       fix: addEslint,
     },
-  ];
+  ]
 }

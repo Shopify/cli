@@ -2,7 +2,7 @@ export const configurationFileNames = {
   app: '.shopify.app.toml',
   uiExtension: '.shopify.ui-extension.toml',
   script: '.shopify.script.toml',
-};
+}
 
 export const blocks = {
   uiExtensions: {
@@ -13,7 +13,7 @@ export const blocks = {
     directoryName: 'scripts',
     configurationName: configurationFileNames.script,
   },
-};
+}
 
 export const genericConfigurationFileNames = {
   yarn: {
@@ -22,7 +22,7 @@ export const genericConfigurationFileNames = {
   pnpm: {
     lockfile: 'pnpm-lock.yaml',
   },
-};
+}
 
 export const extensions = {
   types: [
@@ -30,5 +30,5 @@ export const extensions = {
     'product-subscription',
     'checkout-post-purchase',
   ],
-};
-export type ExtensionTypes = typeof extensions.types[number];
+}
+export type ExtensionTypes = typeof extensions.types[number]

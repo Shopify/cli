@@ -1,22 +1,22 @@
 export const deepCopy = <T>(obj: T): T => {
   if (typeof obj === 'object') {
-    const copyArray = (arr: any[]): any => arr.map((val) => deepCopy(val));
-    if (obj instanceof Array) return copyArray(obj);
-    const newObj = {} as T;
+    const copyArray = (arr: any[]): any => arr.map((val) => deepCopy(val))
+    if (obj instanceof Array) return copyArray(obj)
+    const newObj = {} as T
     for (const key in obj) {
-      const val = obj[key];
+      const val = obj[key]
       if (val instanceof Array) {
-        newObj[key] = copyArray(val);
+        newObj[key] = copyArray(val)
       } else if (typeof val === 'object') {
-        newObj[key] = deepCopy(val);
+        newObj[key] = deepCopy(val)
       } else {
-        newObj[key] = val;
+        newObj[key] = val
       }
     }
-    return newObj;
+    return newObj
   }
-  return obj;
-};
+  return obj
+}
 
 /**
  * Does a shallow merge of object `from` to object `to`.
@@ -32,24 +32,24 @@ export function merge<
   T extends object,
   R extends F & T = F & T,
 >(from: F, to: T): R {
-  const mergedInto = deepCopy(to) as R;
+  const mergedInto = deepCopy(to) as R
   for (const key in from) {
-    const curKey = key as unknown as keyof R;
-    const hasKey = mergedInto.hasOwnProperty(key);
-    const fromVal = from[key];
+    const curKey = key as unknown as keyof R
+    const hasKey = mergedInto.hasOwnProperty(key)
+    const fromVal = from[key]
     if (Array.isArray(fromVal)) {
       if (!hasKey || !(mergedInto[curKey] instanceof Array))
-        mergedInto[curKey] = [] as unknown as R[typeof curKey];
+        mergedInto[curKey] = [] as unknown as R[typeof curKey]
 
-      (mergedInto[curKey] as unknown as any[]).push(...fromVal);
+      ;(mergedInto[curKey] as unknown as any[]).push(...fromVal)
     } else if (typeof fromVal === 'object') {
       if (!hasKey || !(typeof mergedInto[curKey] === 'object'))
-        mergedInto[curKey] = {} as unknown as R[typeof curKey];
+        mergedInto[curKey] = {} as unknown as R[typeof curKey]
 
-      Object.assign(mergedInto[curKey], fromVal);
+      Object.assign(mergedInto[curKey], fromVal)
     } else {
-      mergedInto[curKey] = fromVal as unknown as R[typeof curKey];
+      mergedInto[curKey] = fromVal as unknown as R[typeof curKey]
     }
   }
-  return mergedInto;
+  return mergedInto
 }

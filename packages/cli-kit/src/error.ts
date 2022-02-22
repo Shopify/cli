@@ -3,10 +3,10 @@
  * There shouldn't be code that catches fatal errors.
  */
 export class Fatal extends Error {
-  tryMessage: string | null;
+  tryMessage: string | null
   constructor(message: string, tryMessage: string | null = null) {
-    super(message);
-    this.tryMessage = tryMessage;
+    super(message)
+    this.tryMessage = tryMessage
   }
 }
 
@@ -27,5 +27,5 @@ export class Bug extends Fatal {}
  * @returns A promise that resolves with the error passed.
  */
 export function handler(error: Error): Promise<Error> {
-  return Promise.resolve(error);
+  return Promise.resolve(error)
 }

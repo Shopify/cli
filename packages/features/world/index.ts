@@ -1,15 +1,15 @@
-import {setWorldConstructor} from '@cucumber/cucumber';
+import {setWorldConstructor} from '@cucumber/cucumber'
 
 export interface WorldConstructorParams {
-  temporaryDirectory: string;
+  temporaryDirectory: string
 }
 
 export class World {
-  public temporaryDirectory: string;
+  public temporaryDirectory: string
 
   constructor({temporaryDirectory}: WorldConstructorParams) {
-    this.temporaryDirectory = temporaryDirectory;
+    this.temporaryDirectory = temporaryDirectory
   }
 }
 
-setWorldConstructor(World);
+setWorldConstructor(World)

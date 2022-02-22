@@ -1,5 +1,5 @@
-import Command from '../../../../core/Command';
+import Command from '../../../../core/Command'
 
 export async function addHydrogen(this: Command) {
-  this.package.install('@shopify/hydrogen');
+  this.package.install('@shopify/hydrogen')
 }

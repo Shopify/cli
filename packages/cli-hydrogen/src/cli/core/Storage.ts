@@ -1,1 +1,1 @@
-export {default as Storage} from 'conf';
+export {default as Storage} from 'conf'

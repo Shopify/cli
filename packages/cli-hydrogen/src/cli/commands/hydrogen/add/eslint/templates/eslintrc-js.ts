@@ -5,5 +5,5 @@ module.exports = {
     'plugin:hydrogen/recommended',
   ],
 };
-  `;
+  `
 }

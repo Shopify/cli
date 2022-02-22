@@ -1,1 +1,1 @@
-export {checkNodeVersion} from './checkNodeVersion';
+export {checkNodeVersion} from './checkNodeVersion'

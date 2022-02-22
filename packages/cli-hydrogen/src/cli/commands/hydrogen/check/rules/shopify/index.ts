@@ -1,1 +1,1 @@
-export {checkShopify} from './checkShopify';
+export {checkShopify} from './checkShopify'

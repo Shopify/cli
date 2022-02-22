@@ -1,36 +1,36 @@
-import {Service} from '../network/service';
+import {Service} from '../network/service'
 
 /**
  * A scope supported by the Shopify Admin API.
  */
-type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string;
+type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
 
 /**
  * It represents the options to authenticate against the Shopify Admin API.
  */
 interface AdminAPIOAuthOptions {
   /** fqdn of the Shopify instance */
-  fqdn: string;
+  fqdn: string
   /** List of scopes to request permissions for */
-  scopes: AdminAPIScope[];
+  scopes: AdminAPIScope[]
 }
 
 /**
  * A scope supported by the Partners API.
  */
-type PartnersAPIScope = 'cli' | string;
+type PartnersAPIScope = 'cli' | string
 interface PartnersAPIOAuthOptions {
   /** List of scopes to request permissions for */
-  scopes: PartnersAPIScope[];
+  scopes: PartnersAPIScope[]
 }
 
 /**
  * A scope supported by the Storefront Renderer API.
  */
-type StorefrontRendererScope = 'devtools' | string;
+type StorefrontRendererScope = 'devtools' | string
 interface StorefrontRendererAPIOAuthOptions {
   /** List of scopes to request permissions for */
-  scopes: StorefrontRendererScope[];
+  scopes: StorefrontRendererScope[]
 }
 
 /**
@@ -39,9 +39,9 @@ interface StorefrontRendererAPIOAuthOptions {
  * flow.
  */
 interface OAuthApplications {
-  adminApi?: AdminAPIOAuthOptions[];
-  partnersApi?: PartnersAPIOAuthOptions;
-  storefrontRendererApi?: StorefrontRendererAPIOAuthOptions;
+  adminApi?: AdminAPIOAuthOptions[]
+  partnersApi?: PartnersAPIOAuthOptions
+  storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
 }
 
 /**
@@ -49,11 +49,11 @@ interface OAuthApplications {
  */
 interface OAuthToken {
   /** List of scopes the token has access to */
-  scopes: string[];
+  scopes: string[]
   /** Expiration date */
-  expiresAt: Date;
+  expiresAt: Date
   /** Access token */
-  accessToken: string;
+  accessToken: string
 }
 
 /**
@@ -62,10 +62,10 @@ interface OAuthToken {
  */
 interface OAuthSession {
   adminApi?: {
-    [key: string]: OAuthToken;
-  };
-  partnersApi?: OAuthToken;
-  storefrontRendererApi?: OAuthToken;
+    [key: string]: OAuthToken
+  }
+  partnersApi?: OAuthToken
+  storefrontRendererApi?: OAuthToken
 }
 
 /**
@@ -77,5 +77,5 @@ interface OAuthSession {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
 ): Promise<OAuthSession> {
-  return {};
+  return {}
 }

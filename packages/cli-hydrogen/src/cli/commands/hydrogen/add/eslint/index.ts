@@ -1,1 +1,1 @@
-export {addEslint as default} from './eslint';
+export {addEslint as default} from './eslint'

@@ -1,5 +1,5 @@
-import constants from './constants';
-import {Environment} from './network/service';
+import constants from './constants'
+import {Environment} from './network/service'
 
 /**
  * Given an environment variable that represents the environment to use for a given serve,
@@ -9,19 +9,19 @@ import {Environment} from './network/service';
  */
 function serviceEnvironment(value: undefined | string): Environment {
   if (value === 'local') {
-    return Environment.Local;
+    return Environment.Local
   } else if (value === 'spin') {
-    return Environment.Spin;
+    return Environment.Spin
   } else {
-    return Environment.Production;
+    return Environment.Production
   }
 }
 
 function isTruthy(variable: string | undefined): boolean {
   if (!variable) {
-    return false;
+    return false
   }
-  return ['1', 'true', 'TRUE', 'yes', 'YES'].includes(variable);
+  return ['1', 'true', 'TRUE', 'yes', 'YES'].includes(variable)
 }
 
 /**
@@ -30,7 +30,7 @@ function isTruthy(variable: string | undefined): boolean {
  * @returns true if SHOPIFY_CONFIG is debug
  */
 export function isDebug(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.debug]);
+  return isTruthy(env[constants.environmentVariables.debug])
 }
 
 /**
@@ -38,7 +38,7 @@ export function isDebug(env = process.env): boolean {
  * @param env The environment variables from the environment of the current process.
  */
 export function partnersApiEnvironment(env = process.env): Environment {
-  return serviceEnvironment(env[constants.environmentVariables.partnersApiEnv]);
+  return serviceEnvironment(env[constants.environmentVariables.partnersApiEnv])
 }
 
 /**
@@ -46,7 +46,7 @@ export function partnersApiEnvironment(env = process.env): Environment {
  * @param env The environment variables from the environment of the current process.
  */
 export function adminApiEnvironment(env = process.env): Environment {
-  return serviceEnvironment(env[constants.environmentVariables.adminApiEnv]);
+  return serviceEnvironment(env[constants.environmentVariables.adminApiEnv])
 }
 
 /**
@@ -58,7 +58,7 @@ export function storefrontRendererApiEnvironment(
 ): Environment {
   return serviceEnvironment(
     env[constants.environmentVariables.storefrontRendererApiEnv],
-  );
+  )
 }
 
 /**
@@ -66,5 +66,5 @@ export function storefrontRendererApiEnvironment(
  * @param env The environment variables from the environment of the current process.
  */
 export function identityEnvironment(env = process.env): Environment {
-  return serviceEnvironment(env[constants.environmentVariables.identityEnv]);
+  return serviceEnvironment(env[constants.environmentVariables.identityEnv])
 }

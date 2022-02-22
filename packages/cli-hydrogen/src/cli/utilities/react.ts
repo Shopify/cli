@@ -1,15 +1,15 @@
-import {pascalCase} from 'change-case';
+import {pascalCase} from 'change-case'
 
-import {ComponentType} from '../types';
+import {ComponentType} from '../types'
 
 function getReactComponentTypeSuffix(component: ComponentType) {
   switch (component) {
     case ComponentType.Client:
-      return 'client';
+      return 'client'
     case ComponentType.Server:
-      return 'server';
+      return 'server'
     default:
-      return null;
+      return null
   }
 }
 
@@ -20,14 +20,14 @@ export function componentName(
 ) {
   return [name, getReactComponentTypeSuffix(type), extension]
     .filter((fp) => fp)
-    .join('.');
+    .join('.')
 }
 
 export function validComponentName(name: string) {
-  const suggested = pascalCase(name);
+  const suggested = pascalCase(name)
   if (name === suggested) {
-    return true;
+    return true
   }
 
-  return `Invalid component name. Try ${suggested} instead.`;
+  return `Invalid component name. Try ${suggested} instead.`
 }

@@ -1,4 +1,4 @@
-import path from 'pathe';
+import path from 'pathe'
 
 export const directories = {
   root: path.join(__dirname, '../../..'),
@@ -7,7 +7,7 @@ export const directories = {
     app: path.join(__dirname, '../../../packages/app'),
     hydrogen: path.join(__dirname, '../../../packages/hydrogen'),
   },
-};
+}
 
 export const executables = {
   cli: path.join(__dirname, '../../../packages/cli/bin/dev.js'),
@@ -16,4 +16,4 @@ export const executables = {
     __dirname,
     '../../../packages/create-hydrogen/bin/dev.js',
   ),
-};
+}

@@ -1,1 +1,1 @@
-export declare function ensureAuthenticated(): Promise<void>;
+export declare function ensureAuthenticated(): Promise<void>

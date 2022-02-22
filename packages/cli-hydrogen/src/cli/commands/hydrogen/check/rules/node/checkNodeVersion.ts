@@ -1,13 +1,13 @@
-import semver from 'semver';
+import semver from 'semver'
 
-import {CheckResult} from '../../../../../types';
-import Command from '../../../../../core/Command';
+import {CheckResult} from '../../../../../types'
+import Command from '../../../../../core/Command'
 
-const NODE_MIN_VERSION = '>=12.0.0';
+const NODE_MIN_VERSION = '>=12.0.0'
 
 export async function checkNodeVersion(this: Command): Promise<CheckResult[]> {
-  const nodeVersion = await this.package.nodeVersion();
-  const normalizedVersion = semver.coerce(nodeVersion)?.version;
+  const nodeVersion = await this.package.nodeVersion()
+  const normalizedVersion = semver.coerce(nodeVersion)?.version
 
   return [
     {
@@ -20,5 +20,5 @@ export async function checkNodeVersion(this: Command): Promise<CheckResult[]> {
           semver.satisfies(normalizedVersion, NODE_MIN_VERSION)),
       link: 'https://shopify.dev/custom-storefronts/hydrogen/support',
     },
-  ];
+  ]
 }

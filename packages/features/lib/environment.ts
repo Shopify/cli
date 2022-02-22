@@ -5,10 +5,10 @@
  */
 function isTruthy(value: string | undefined): boolean {
   if (!value) {
-    return false;
+    return false
   }
-  return ['TRUE', 'true', 'YES', 'yes', '1'].includes(value);
+  return ['TRUE', 'true', 'YES', 'yes', '1'].includes(value)
 }
 
 /** Returns true if acceptance tests are run with DEBUG=1 */
-export const isDebug = isTruthy(process.env.DEBUG);
+export const isDebug = isTruthy(process.env.DEBUG)

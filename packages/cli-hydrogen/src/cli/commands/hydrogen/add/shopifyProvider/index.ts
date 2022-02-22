@@ -1,1 +1,1 @@
-export {addShopifyProvider as default} from './shopifyProvider';
+export {addShopifyProvider as default} from './shopifyProvider'

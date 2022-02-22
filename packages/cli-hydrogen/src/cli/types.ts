@@ -6,17 +6,17 @@ export enum ComponentType {
 
 export interface CheckResult {
   /** unique id of the check **/
-  id: string;
+  id: string
   /** category type for grouping common checks **/
-  type: 'Setup' | 'Dependencies' | 'Deployment' | 'Performance';
+  type: 'Setup' | 'Dependencies' | 'Deployment' | 'Performance'
   /** short description of the check **/
-  description: string;
+  description: string
   /** indicates whether the current project meets the requirements of the check **/
-  success: boolean;
+  success: boolean
   /** link to learn more about the check **/
-  link?: string;
+  link?: string
   /** optional function to correct the problems in the current project **/
-  fix?: (context: any) => void;
+  fix?: (context: any) => void
 }
 
-export type Loggable = string | (() => string);
+export type Loggable = string | (() => string)
