@@ -88,7 +88,7 @@ integration-test: tmp build
 	cd tmp/integration_test; rm -r node_modules/@shopify/shopify-cli-extensions
 	cd tmp/integration_test; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
 	cd tmp/integration_test; cat extension.config.yml | \
-		ruby -ryaml -e "puts({'extensions' => [YAML.load(STDIN.read).merge({'type' => 'integration_test'})]}.to_yaml)" | \
+		ruby ../../support/merge_config.rb | \
 		../../shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
 
