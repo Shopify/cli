@@ -7,8 +7,8 @@ import {isTruthy} from './utilities';
  * When ran in a Spin environment, it returns the fqdn of the instance.
  * @returns {string} fqdn of the Spin environment.
  */
-export async function fqdn(): Promise<string> {
-  const spinInstance = await instance();
+export async function fqdn(env = process.env): Promise<string> {
+  const spinInstance = await instance(env);
   const showResponse = await show(spinInstance === undefined);
   return showResponse.fqdn;
 }
