@@ -17,9 +17,9 @@ export const captureOutput = async (
   command: string,
   args: string[],
 ): Promise<string> => {
-  const result = await execa(command, args);
-  return result.stdout;
-};
+  const result = await execa(command, args)
+  return result.stdout
+}
 
 export const exec = async (
   command: string,

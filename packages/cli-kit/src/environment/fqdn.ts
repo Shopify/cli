@@ -1,44 +1,44 @@
-import {Abort} from '../error';
+import {Abort} from '../error'
 
 import {
   partners as partnersEnvironment,
   shopify as shopifyEnvironment,
   identity as identityEnvironment,
-} from './service';
-import {isSpin, fqdn as spinFqdn} from './spin';
+} from './service'
+import {isSpin, fqdn as spinFqdn} from './spin'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",
-);
+)
 export const CouldntObtainIdentitySpinFQDNError = new Abort(
   "Couldn't obtain the Spin FQDN for Identity when the CLI is not running from a Spin environment.",
-);
+)
 export const CouldntObtainShopifySpinFQDNError = new Abort(
   "Couldn't obtain the Spin FQDN for Shopify when the CLI is not running from a Spin environment.",
-);
+)
 export const NotProvidedStoreFQDNError = new Abort(
   "Couldn't obtain the Shopify FQDN because the store FQDN was not provided.",
-);
+)
 
 /**
  * It returns the Partners' API service we should interact with.
  * @returns {string} Fully-qualified domain of the partners service we should interact with.
  */
 export async function partners(): Promise<string> {
-  const environment = partnersEnvironment();
-  const productionFqdn = 'partners.shopify.com';
+  const environment = partnersEnvironment()
+  const productionFqdn = 'partners.shopify.com'
   switch (environment) {
     case 'local':
-      return 'partners.myshopify.io';
+      return 'partners.myshopify.io'
     case 'spin':
       if (isSpin()) {
-        const fqdn = await spinFqdn();
-        return `partners.${fqdn}`;
+        const fqdn = await spinFqdn()
+        return `partners.${fqdn}`
       } else {
-        throw CouldntObtainPartnersSpinFQDNError;
+        throw CouldntObtainPartnersSpinFQDNError
       }
     default:
-      return productionFqdn;
+      return productionFqdn
   }
 }
 
@@ -47,20 +47,20 @@ export async function partners(): Promise<string> {
  * @returns {string} Fully-qualified domain of the Identity service we should interact with.
  */
 export async function identity(): Promise<string> {
-  const environment = identityEnvironment();
-  const productionFqdn = 'accounts.shopify.com';
+  const environment = identityEnvironment()
+  const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
-      return 'identity.myshopify.io';
+      return 'identity.myshopify.io'
     case 'spin':
       if (isSpin()) {
-        const fqdn = await spinFqdn();
-        return `identity.${fqdn}`;
+        const fqdn = await spinFqdn()
+        return `identity.${fqdn}`
       } else {
-        throw CouldntObtainIdentitySpinFQDNError;
+        throw CouldntObtainIdentitySpinFQDNError
       }
     default:
-      return productionFqdn;
+      return productionFqdn
   }
 }
 
@@ -72,22 +72,22 @@ export async function identity(): Promise<string> {
 export async function shopify(
   options: {storeFqdn?: string} = {},
 ): Promise<string> {
-  const environment = shopifyEnvironment();
+  const environment = shopifyEnvironment()
   switch (environment) {
     case 'local':
-      return 'shopify.myshopify.io';
+      return 'shopify.myshopify.io'
     case 'spin':
       if (isSpin()) {
-        const fqdn = await spinFqdn();
-        return `identity.${fqdn}`;
+        const fqdn = await spinFqdn()
+        return `identity.${fqdn}`
       } else {
-        throw CouldntObtainShopifySpinFQDNError;
+        throw CouldntObtainShopifySpinFQDNError
       }
     default:
       if (options.storeFqdn) {
-        return options.storeFqdn;
+        return options.storeFqdn
       } else {
-        throw NotProvidedStoreFQDNError;
+        throw NotProvidedStoreFQDNError
       }
   }
 }

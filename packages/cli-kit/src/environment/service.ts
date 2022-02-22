@@ -1,5 +1,5 @@
-import {Environment} from '../network/service';
-import constants from '../constants';
+import {Environment} from '../network/service'
+import constants from '../constants'
 
 /**
  * Given an environment variable that represents the environment to use for a given serve,
@@ -9,11 +9,11 @@ import constants from '../constants';
  */
 function service(value: undefined | string): Environment {
   if (value === 'local') {
-    return Environment.Local;
+    return Environment.Local
   } else if (value === 'spin') {
-    return Environment.Spin;
+    return Environment.Spin
   } else {
-    return Environment.Production;
+    return Environment.Production
   }
 }
 
@@ -22,7 +22,7 @@ function service(value: undefined | string): Environment {
  * @param env The environment variables from the environment of the current process.
  */
 export function partners(env = process.env): Environment {
-  return service(env[constants.environmentVariables.partnersEnv]);
+  return service(env[constants.environmentVariables.partnersEnv])
 }
 
 /**
@@ -30,7 +30,7 @@ export function partners(env = process.env): Environment {
  * @param env The environment variables from the environment of the current process.
  */
 export function shopify(env = process.env): Environment {
-  return service(env[constants.environmentVariables.shopifyEnv]);
+  return service(env[constants.environmentVariables.shopifyEnv])
 }
 
 /**
@@ -38,5 +38,5 @@ export function shopify(env = process.env): Environment {
  * @param env The environment variables from the environment of the current process.
  */
 export function identity(env = process.env): Environment {
-  return service(env[constants.environmentVariables.identityEnv]);
+  return service(env[constants.environmentVariables.identityEnv])
 }

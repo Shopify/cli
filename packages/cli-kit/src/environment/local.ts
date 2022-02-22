@@ -1,6 +1,6 @@
-import constants from '../constants';
+import constants from '../constants'
 
-import {isTruthy} from './utilities';
+import {isTruthy} from './utilities'
 
 /**
  * Returns true if the CLI is running in debug mode.
@@ -8,5 +8,5 @@ import {isTruthy} from './utilities';
  * @returns true if SHOPIFY_CONFIG is debug
  */
 export function isDebug(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.debug]);
+  return isTruthy(env[constants.environmentVariables.debug])
 }

@@ -1,16 +1,16 @@
-import constants from '../constants';
-import {captureOutput} from '../system';
+import constants from '../constants'
+import {captureOutput} from '../system'
 
-import {isTruthy} from './utilities';
+import {isTruthy} from './utilities'
 
 /**
  * When ran in a Spin environment, it returns the fqdn of the instance.
  * @returns {string} fqdn of the Spin environment.
  */
 export async function fqdn(env = process.env): Promise<string> {
-  const spinInstance = await instance(env);
-  const showResponse = await show(spinInstance === undefined);
-  return showResponse.fqdn;
+  const spinInstance = await instance(env)
+  const showResponse = await show(spinInstance === undefined)
+  return showResponse.fqdn
 }
 
 /**
@@ -20,9 +20,9 @@ export async function fqdn(env = process.env): Promise<string> {
  * @throws Any error raised from the underlying Spin CLI.
  */
 export async function show(latest: boolean): Promise<{fqdn: string}> {
-  const args = latest ? ['show', '--latest', '--json'] : ['show', '--json'];
-  const output = await captureOutput('spin', args);
-  return JSON.parse(output);
+  const args = latest ? ['show', '--latest', '--json'] : ['show', '--json']
+  const output = await captureOutput('spin', args)
+  return JSON.parse(output)
 }
 
 /**
@@ -31,7 +31,7 @@ export async function show(latest: boolean): Promise<{fqdn: string}> {
  * @returns {boolean} True if the CLI is running in a Spin environment.
  */
 export function isSpin(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.spin]);
+  return isTruthy(env[constants.environmentVariables.spin])
 }
 
 /**
@@ -40,7 +40,7 @@ export function isSpin(env = process.env): boolean {
  * @returns {string | undefined} The value of the SPIN_INSTANCE environment variable.
  */
 export function instance(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinInstance];
+  return env[constants.environmentVariables.spinInstance]
 }
 
 /**
@@ -49,7 +49,7 @@ export function instance(env = process.env): string | undefined {
  * @returns {string | undefined} The value of the SPIN_WORKSPACE environment variable.
  */
 export function workspace(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinWorkspace];
+  return env[constants.environmentVariables.spinWorkspace]
 }
 
 /**
@@ -58,7 +58,7 @@ export function workspace(env = process.env): string | undefined {
  * @returns {string | undefined} The value of the SPIN_NAMESPACE environment variable.
  */
 export function namespace(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinNamespace];
+  return env[constants.environmentVariables.spinNamespace]
 }
 
 /**
@@ -67,5 +67,5 @@ export function namespace(env = process.env): string | undefined {
  * @returns {string | undefined} The value of the SPIN_HOST environment variable.
  */
 export function host(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinHost];
+  return env[constants.environmentVariables.spinHost]
 }

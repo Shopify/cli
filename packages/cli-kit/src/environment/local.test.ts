@@ -1,16 +1,16 @@
-import {expect, it, describe} from 'vitest';
+import {expect, it, describe} from 'vitest'
 
-import {isDebug} from './local';
+import {isDebug} from './local'
 
 describe('isDebug', () => {
   it('returns true when DEBUG is 1', () => {
     // Given
-    const env = {DEBUG: '1'};
+    const env = {DEBUG: '1'}
 
     // When
-    const got = isDebug(env);
+    const got = isDebug(env)
 
     // Then
-    expect(got).toBe(true);
-  });
-});
+    expect(got).toBe(true)
+  })
+})

@@ -98,8 +98,8 @@ export const error = (content: Message) => {
 
 export const warning = (content: Message) => {
   // eslint-disable-next-line no-console
-  console.warn(pc.yellow(stringifyMessage(content)));
-};
+  console.warn(pc.yellow(stringifyMessage(content)))
+}
 
 function stringifyMessage(message: Message): string {
   if (message instanceof TokenizedString) {

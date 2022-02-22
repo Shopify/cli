@@ -1,1 +1,1 @@
-import {expect, it, describe} from 'vitest';
+import {expect, it, describe} from 'vitest'
