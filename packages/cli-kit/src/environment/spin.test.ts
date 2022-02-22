@@ -5,20 +5,21 @@ import {captureOutput} from '../system';
 import {show, fqdn, isSpin, instance, workspace, namespace, host} from './spin';
 
 vi.mock('../system');
+const mockedCaptureOutput = vi.mocked(captureOutput);
 
 describe('fqdn', () => {
   it('shows the latest when SPIN_INSTANCE is not present', async () => {
     // Given
     const env = {};
     const showResponse = {fqdn: 'fqdn'};
-    vi.mocked(captureOutput).mockResolvedValue(JSON.stringify(showResponse));
+    mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse));
 
     // When
     const got = await fqdn(env);
 
     // Then
     expect(got).toEqual('fqdn');
-    expect(vi.mocked(captureOutput)).toHaveBeenCalledWith('spin', [
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', [
       'show',
       '--latest',
       '--json',
@@ -28,14 +29,14 @@ describe('fqdn', () => {
     // Given
     const env = {SPIN_INSTANCE: 'instance'};
     const showResponse = {fqdn: 'fqdn'};
-    vi.mocked(captureOutput).mockResolvedValue(JSON.stringify(showResponse));
+    mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse));
 
     // When
     const got = await fqdn(env);
 
     // Then
     expect(got).toEqual('fqdn');
-    expect(vi.mocked(captureOutput)).toHaveBeenCalledWith('spin', [
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', [
       'show',
       '--json',
     ]);
@@ -46,14 +47,14 @@ describe('show', () => {
   test("calls 'spin show' with --latest when latest is true", async () => {
     // Given
     const showResponse = {fqdn: 'fqdn'};
-    vi.mocked(captureOutput).mockResolvedValue(JSON.stringify(showResponse));
+    mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse));
 
     // When
     const got = await show(true);
 
     // Then
     expect(got).toEqual(showResponse);
-    expect(vi.mocked(captureOutput)).toHaveBeenCalledWith('spin', [
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', [
       'show',
       '--latest',
       '--json',
@@ -63,14 +64,14 @@ describe('show', () => {
   test("calls 'spin show' without --latest when latest is false", async () => {
     // Given
     const showResponse = {fqdn: 'fqdn'};
-    vi.mocked(captureOutput).mockResolvedValue(JSON.stringify(showResponse));
+    mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse));
 
     // When
     const got = await show(false);
 
     // Then
     expect(got).toEqual(showResponse);
-    expect(vi.mocked(captureOutput)).toHaveBeenCalledWith('spin', [
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', [
       'show',
       '--json',
     ]);
