@@ -14,7 +14,7 @@ function runCreateHydrogen() {
     process.argv.splice(initIndex, 0, 'init')
   }
 
-  if (environment.isDebug()) {
+  if (environment.local.isDebug()) {
     settings.debug = true
   }
 
