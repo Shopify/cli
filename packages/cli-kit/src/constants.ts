@@ -1,10 +1,14 @@
 const constants = {
   environmentVariables: {
     debug: 'DEBUG',
-    partnersApiEnv: 'SHOPIFY_PARTNERS_API_ENV',
-    adminApiEnv: 'SHOPIFY_ADMIN_API_ENV',
-    storefrontRendererApiEnv: 'SHOPIFY_STOREFRONT_RENDERER_API_ENV',
+    partnersEnv: 'SHOPIFY_PARTNERS_ENV',
+    shopifyEnv: 'SHOPIFY_SHOPIFY_ENV',
     identityEnv: 'SHOPIFY_IDENTITY_ENV',
+    spin: 'SPIN',
+    spinInstance: 'SPIN_INSTANCE',
+    spinWorkspace: 'SPIN_WORKSPACE',
+    spinNamespace: 'SPIN_NAMESPACE',
+    spinHost: 'SPIN_HOST',
   },
 }
 

@@ -7,6 +7,20 @@ export interface ExecOptions {
   stderr?: Writable
 }
 
+/**
+ * Runs a command asynchronously, aggregates the stdout data, and returns it.
+ * @param command {string} Command to be executed.
+ * @param args {string[]} Arguments to pass to the command.
+ * @returns A promise that resolves with the aggregatted stdout of the command.
+ */
+export const captureOutput = async (
+  command: string,
+  args: string[],
+): Promise<string> => {
+  const result = await execa(command, args)
+  return result.stdout
+}
+
 export const exec = async (
   command: string,
   args: string[],

@@ -4,9 +4,8 @@ import {external, plugins, distDir} from '../../configurations/rollup.config';
 
 const createHydrogenExternal = [
   ...external,
-  '@oclif/core',
-  '@shopify/cli-kit',
   '@shopify/cli-hydrogen/commands/hydrogen/init',
+  '@shopify/cli-kit',
 ];
 const createHydrogenPlugins = [...plugins(__dirname)];
 

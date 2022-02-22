@@ -1,4 +1,4 @@
-import {Service} from '../network/service'
+import {Service} from './network/service'
 
 /**
  * A scope supported by the Shopify Admin API.

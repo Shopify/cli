@@ -27,8 +27,9 @@ export default function config(packagePath) {
     },
     // @ts-ignore
     test: {
-      isolate: false,
+      isolate: true,
       clearMocks: true,
+      mockReset: true,
       setupFiles: [path.join(__dirname, './vitest.setup.js')],
     },
   });

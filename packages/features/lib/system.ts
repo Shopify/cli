@@ -22,17 +22,21 @@ export const exec = async (
   args: string[] = [],
   options?: ExecOptions,
 ) => {
+  if (isDebug) {
+    console.log(pc.gray(`Running: ${command} ${args.join(' ')}`))
+  }
+
   const _options: any = {...options, stdout: undefined, stderr: undefined}
   const commandProcess = execa(command, args, _options)
   const shortCommand = command.split('/').slice(-1).pop()
   commandProcess.stdout.on('data', (data: string) => {
     if (isDebug) {
-      process.stdout.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
+      console.log(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
     }
   })
   commandProcess.stderr.on('data', (data: string) => {
     if (isDebug) {
-      process.stderr.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
+      console.log(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
     }
   })
   await commandProcess

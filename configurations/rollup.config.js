@@ -33,9 +33,8 @@ export const plugins = (packagePath, additionalAliases = []) => {
     }),
     commonjs({
       include: [/node_modules/],
-      requireReturnsDefault: 'auto',
     }),
   ]
 }
 
-export const external = []
+export const external = ['@oclif/core', '@bugsnag/js']

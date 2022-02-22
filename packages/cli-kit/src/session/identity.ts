@@ -1,15 +1,15 @@
 import {Abort, Bug} from '../error'
 import {
-  adminApiEnvironment,
-  partnersApiEnvironment,
-  storefrontRendererApiEnvironment,
-} from '../environment'
-import {Environment, Service} from '../network/service'
+  shopify as shopifyEnvironment,
+  partners as partnersEnvironment,
+} from '../environment/service'
+import {Environment} from '../network/service'
+import type {API} from '../network/api'
 
-export function applicationId(service: Service): string {
-  switch (service) {
-    case 'admin-api': {
-      const environment = adminApiEnvironment()
+export function applicationId(api: API): string {
+  switch (api) {
+    case 'admin': {
+      const environment = shopifyEnvironment()
       if (environment === Environment.Local) {
         return 'e92482cebb9bfb9fb5a0199cc770fde3de6c8d16b798ee73e36c9d815e070e52'
       } else if (environment === Environment.Production) {
@@ -18,8 +18,8 @@ export function applicationId(service: Service): string {
         throw new Abort(`Spin is not yet supported for the Shopify Admin API`)
       }
     }
-    case 'partners-api': {
-      const environment = partnersApiEnvironment()
+    case 'partners': {
+      const environment = partnersEnvironment()
       if (environment === Environment.Local) {
         return 'df89d73339ac3c6c5f0a98d9ca93260763e384d51d6038da129889c308973978'
       } else if (environment === Environment.Production) {
@@ -28,8 +28,8 @@ export function applicationId(service: Service): string {
         throw new Abort(`Spin is not yet supported for the Partners API`)
       }
     }
-    case 'storefront-renderer-api': {
-      const environment = storefrontRendererApiEnvironment()
+    case 'storefront-renderer': {
+      const environment = shopifyEnvironment()
       if (environment === Environment.Local) {
         return '46f603de-894f-488d-9471-5b721280ff49'
       } else if (environment === Environment.Production) {
@@ -39,6 +39,6 @@ export function applicationId(service: Service): string {
       }
     }
     default:
-      throw new Bug(`Application id for service of type: ${service}`)
+      throw new Bug(`Application id for API of type: ${api}`)
   }
 }

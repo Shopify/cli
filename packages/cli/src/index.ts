@@ -4,7 +4,7 @@ import Bugsnag from '@bugsnag/js'
 import {error as kitError, environment} from '@shopify/cli-kit'
 
 function runCLI() {
-  if (environment.isDebug()) {
+  if (environment.local.isDebug()) {
     settings.debug = true
   } else {
     Bugsnag.start({apiKey: '9e1e6889176fd0c795d5c659225e0fae', logger: null})
