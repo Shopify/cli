@@ -30,5 +30,5 @@ export const extensions = {
     'product-subscription',
     'checkout-post-purchase',
   ],
-}
+};
 export type ExtensionTypes = typeof extensions.types[number];

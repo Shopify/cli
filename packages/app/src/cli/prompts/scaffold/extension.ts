@@ -28,7 +28,7 @@ const scaffoldExtensionPrompt = async (
     questions.push({
       type: 'select',
       name: 'extensionType',
-      message: "Type of extension?",
+      message: 'Type of extension?',
       choices: extensions.types,
     });
   }

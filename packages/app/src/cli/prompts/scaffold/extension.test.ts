@@ -26,7 +26,7 @@ describe('extension prompt', () => {
       {
         type: 'select',
         name: 'extensionType',
-        message: "Type of extension?",
+        message: 'Type of extension?',
         choices: extensions.types,
       },
     ]);
@@ -49,7 +49,7 @@ describe('extension prompt', () => {
       {
         type: 'select',
         name: 'extensionType',
-        message: "Type of extension?",
+        message: 'Type of extension?',
         choices: extensions.types,
       },
     ]);
