@@ -40,7 +40,6 @@ export function merge<
     if (Array.isArray(fromVal)) {
       if (!hasKey || !(mergedInto[curKey] instanceof Array))
         mergedInto[curKey] = [] as unknown as R[typeof curKey]
-
       ;(mergedInto[curKey] as unknown as any[]).push(...fromVal)
     } else if (typeof fromVal === 'object') {
       if (!hasKey || !(typeof mergedInto[curKey] === 'object'))
