@@ -3,7 +3,7 @@ import alias from '@rollup/plugin-alias';
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const createAppExternal = [...external, '@oclif/core'];
+const createAppExternal = [...external];
 const createAppPlugins = [
   alias({
     entries: [
@@ -21,7 +21,7 @@ const configuration = () => [
     input: path.join(__dirname, 'src/index.ts'),
     output: [
       {
-        file: path.join(distDir(__dirname), 'index.js'),
+        dir: distDir(__dirname),
         format: 'esm',
         sourcemap: true,
       },

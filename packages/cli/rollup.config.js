@@ -3,13 +3,7 @@ import path from 'pathe';
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
 const hydrogenExternal = [/@miniflare/, /prettier/];
-const cliExternal = [
-  ...external,
-  ...hydrogenExternal,
-  '@oclif/core',
-  '@shopify/cli-kit',
-  '@bugsnag/js',
-];
+const cliExternal = [...external, ...hydrogenExternal];
 
 const configuration = () => [
   // CLI

@@ -1,3 +1,5 @@
-export * as service from './environment/service'
-export * as fqdn from './environment/service'
-export * as local from './environment/local'
+import * as local from './environment/local'
+import * as service from './environment/service'
+import * as fqdn from './environment/fqdn'
+
+export {local, service, fqdn}

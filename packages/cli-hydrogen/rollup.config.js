@@ -12,9 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cliExternal = [
   ...external,
   ...Object.keys(hydrogenPkg.dependencies ?? {}),
-  '@oclif/core',
   '@shopify/cli-kit',
-  '@bugsnag/js',
 ];
 
 const featureCommands = fg.sync([
