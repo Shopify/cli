@@ -23,3 +23,12 @@ export const genericConfigurationFileNames = {
     lockfile: 'pnpm-lock.yaml',
   },
 };
+
+export const extensions = {
+  types: [
+    'theme-app-extension',
+    'product-subscription',
+    'checkout-post-purchase',
+  ],
+};
+export type ExtensionTypes = typeof extensions.types[number];

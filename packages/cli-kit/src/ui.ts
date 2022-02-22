@@ -2,10 +2,11 @@ import enquirer from 'enquirer';
 import {Listr} from 'listr2';
 
 export interface Question {
-  type: 'input';
+  type: 'input' | 'select';
   name: string;
   message: string;
   default?: string;
+  choices?: string[];
 }
 
 export const prompt = <T>(questions: Question[]): Promise<T> => {

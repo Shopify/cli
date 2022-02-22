@@ -38,7 +38,7 @@ interface UIExtension {
 
 type PackageManager = 'npm' | 'yarn' | 'pnpm';
 
-interface App {
+export interface App {
   directory: string;
   packageManager: PackageManager;
   configuration: AppConfiguration;
