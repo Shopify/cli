@@ -25,7 +25,11 @@ export async function store(
   identifier: string,
   content: string,
 ): Promise<void> {
+<<<<<<< HEAD
   await keytar.setPassword(constants.keychain.service, identifier, content)
+=======
+  await keytar.setPassword(constants.keychain.service, identifier, content);
+>>>>>>> affed9a (Implement secure-store)
 }
 
 /**
@@ -37,6 +41,11 @@ export async function remove(identifier: string): Promise<boolean> {
   const result = await keytar.deletePassword(
     constants.keychain.service,
     identifier,
+<<<<<<< HEAD
   )
   return result
+=======
+  );
+  return result;
+>>>>>>> affed9a (Implement secure-store)
 }
