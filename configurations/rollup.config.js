@@ -1,14 +1,14 @@
-import esbuild from 'rollup-plugin-esbuild';
-import resolve from '@rollup/plugin-node-resolve';
-import json from '@rollup/plugin-json';
-import path from 'pathe';
-import stripShebang from 'rollup-plugin-strip-shebang';
-import commonjs from '@rollup/plugin-commonjs';
-import alias from '@rollup/plugin-alias';
+import esbuild from 'rollup-plugin-esbuild'
+import resolve from '@rollup/plugin-node-resolve'
+import json from '@rollup/plugin-json'
+import path from 'pathe'
+import stripShebang from 'rollup-plugin-strip-shebang'
+import commonjs from '@rollup/plugin-commonjs'
+import alias from '@rollup/plugin-alias'
 
 export const distDir = (packagePath) => {
-  return process.env.SHOPIFY_DIST_DIR || path.join(packagePath, 'dist');
-};
+  return process.env.SHOPIFY_DIST_DIR || path.join(packagePath, 'dist')
+}
 
 export const plugins = (packagePath, additionalAliases = []) => {
   return [
@@ -35,7 +35,7 @@ export const plugins = (packagePath, additionalAliases = []) => {
       include: [/node_modules/],
       requireReturnsDefault: 'auto',
     }),
-  ];
-};
+  ]
+}
 
-export const external = [];
+export const external = []

@@ -1,6 +1,6 @@
 interface TemplateOptions {
-  storeDomain: string;
-  storefrontToken: string;
+  storeDomain: string
+  storefrontToken: string
 }
 
 export default function ({storeDomain, storefrontToken}: TemplateOptions) {
@@ -12,5 +12,5 @@ export default {
   storefrontApiVersion: "unstable",
 };
 
-`;
+`
 }

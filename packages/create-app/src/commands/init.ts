@@ -1,9 +1,9 @@
-import {Command, Flags} from '@oclif/core';
-import {path} from '@shopify/cli-kit';
-import {DependencyManager} from '@shopify/cli-kit/src/dependency';
+import {Command, Flags} from '@oclif/core'
+import {path} from '@shopify/cli-kit'
+import {DependencyManager} from '@shopify/cli-kit/src/dependency'
 
-import initPrompt from '../prompts/init';
-import initService from '../services/init';
+import initPrompt from '../prompts/init'
+import initService from '../services/init'
 
 export default class Init extends Command {
   static flags = {
@@ -34,20 +34,20 @@ export default class Init extends Command {
       env: 'SHOPIFY_FLAG_SHOPIFY_APP_VERSION',
       hidden: false,
     }),
-  };
+  }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(Init);
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd();
+    const {flags} = await this.parse(Init)
+    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const promptAnswers = await initPrompt({
       name: flags.name,
-    });
+    })
     await initService({
       name: promptAnswers.name,
       dependencyManager: flags['dependency-manager'],
       shopifyCliVersion: flags['shopify-cli-version'],
       shopifyAppVersion: flags['shopify-app-version'],
       directory,
-    });
+    })
   }
 }

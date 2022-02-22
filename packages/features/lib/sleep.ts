@@ -5,8 +5,8 @@
  */
 const sleep = async () => {
   await new Promise((resolve) => {
-    setInterval(resolve, 60 * 60 * 1000);
-  });
-};
+    setInterval(resolve, 60 * 60 * 1000)
+  })
+}
 
-export default sleep;
+export default sleep

@@ -1,12 +1,12 @@
-import pc from 'picocolors';
+import pc from 'picocolors'
 
-import {isDebug} from './environment';
+import {isDebug} from './environment'
 
-const execa = require('execa');
+const execa = require('execa')
 
 interface ExecOptions {
-  cwd?: string;
-  env?: NodeJS.ProcessEnv;
+  cwd?: string
+  env?: NodeJS.ProcessEnv
 }
 
 /**
@@ -22,18 +22,18 @@ export const exec = async (
   args: string[] = [],
   options?: ExecOptions,
 ) => {
-  const _options: any = {...options, stdout: undefined, stderr: undefined};
-  const commandProcess = execa(command, args, _options);
-  const shortCommand = command.split('/').slice(-1).pop();
+  const _options: any = {...options, stdout: undefined, stderr: undefined}
+  const commandProcess = execa(command, args, _options)
+  const shortCommand = command.split('/').slice(-1).pop()
   commandProcess.stdout.on('data', (data: string) => {
     if (isDebug) {
-      process.stdout.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`));
+      process.stdout.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
     }
-  });
+  })
   commandProcess.stderr.on('data', (data: string) => {
     if (isDebug) {
-      process.stderr.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`));
+      process.stderr.write(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
     }
-  });
-  await commandProcess;
-};
+  })
+  await commandProcess
+}

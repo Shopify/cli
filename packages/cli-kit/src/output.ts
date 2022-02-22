@@ -1,5 +1,5 @@
-import pc from 'picocolors';
-import terminalLink from 'terminal-link';
+import pc from 'picocolors'
+import terminalLink from 'terminal-link'
 
 enum ContentTokenType {
   Command,
@@ -8,101 +8,98 @@ enum ContentTokenType {
 }
 
 interface ContentMetadata {
-  link?: string;
+  link?: string
 }
 
 class ContentToken {
-  type: ContentTokenType;
-  value: string;
-  metadata: ContentMetadata;
+  type: ContentTokenType
+  value: string
+  metadata: ContentMetadata
 
   constructor(
     value: string,
     metadata: ContentMetadata = {},
     type: ContentTokenType,
   ) {
-    this.type = type;
-    this.value = value;
-    this.metadata = metadata;
+    this.type = type
+    this.value = value
+    this.metadata = metadata
   }
 }
 
 export const token = {
   command: (value: string) => {
-    return new ContentToken(value, {}, ContentTokenType.Command);
+    return new ContentToken(value, {}, ContentTokenType.Command)
   },
   path: (value: string) => {
-    return new ContentToken(value, {}, ContentTokenType.Path);
+    return new ContentToken(value, {}, ContentTokenType.Path)
   },
   link: (value: string, link: string) => {
-    return new ContentToken(value, {link}, ContentTokenType.Link);
+    return new ContentToken(value, {link}, ContentTokenType.Link)
   },
-};
+}
 
 // output.content`Something ${output.token.command(Something)}`
 
 class TokenizedString {
-  value: string;
+  value: string
   constructor(value: string) {
-    this.value = value;
+    this.value = value
   }
 }
 
-type Message = string | TokenizedString;
+type Message = string | TokenizedString
 
 export function content(
   strings: TemplateStringsArray,
   ...keys: (ContentToken | string)[]
 ): TokenizedString {
-  let output = ``;
+  let output = ``
   strings.forEach((string, i) => {
-    output += string;
+    output += string
     if (i >= keys.length) {
-      return;
+      return
     }
-    const token = keys[i];
+    const token = keys[i]
     if (typeof token === 'string') {
-      output += token;
+      output += token
     } else {
-      const enumToken = token as ContentToken;
+      const enumToken = token as ContentToken
       switch (enumToken.type) {
         case ContentTokenType.Command:
-          output += pc.bold(pc.yellow(enumToken.value));
-          break;
+          output += pc.bold(pc.yellow(enumToken.value))
+          break
         case ContentTokenType.Path:
-          output += pc.italic(enumToken.value);
-          break;
+          output += pc.italic(enumToken.value)
+          break
         case ContentTokenType.Link:
-          output += terminalLink(
-            enumToken.value,
-            enumToken.metadata.link ?? '',
-          );
-          break;
+          output += terminalLink(enumToken.value, enumToken.metadata.link ?? '')
+          break
       }
     }
-  });
-  return new TokenizedString(output);
+  })
+  return new TokenizedString(output)
 }
 
 export const success = (content: Message) => {
   // eslint-disable-next-line no-console
-  console.log(pc.green(`🎉 ${stringifyMessage(content)}`));
-};
+  console.log(pc.green(`🎉 ${stringifyMessage(content)}`))
+}
 
 export const message = (content: Message) => {
   // eslint-disable-next-line no-console
-  console.log(stringifyMessage(content));
-};
+  console.log(stringifyMessage(content))
+}
 
 export const error = (content: Message) => {
   // eslint-disable-next-line no-console
-  console.error(stringifyMessage(content));
-};
+  console.error(stringifyMessage(content))
+}
 
 function stringifyMessage(message: Message): string {
   if (message instanceof TokenizedString) {
-    return message.value;
+    return message.value
   } else {
-    return message;
+    return message
   }
 }

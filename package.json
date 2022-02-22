@@ -25,6 +25,7 @@
     "@changesets/cli": "^2.19.0",
     "@cucumber/cucumber": "^8.0.0-rc.2",
     "@nrwl/cli": "^13.8.2",
+    "@nrwl/eslint-plugin-nx": "^13.8.3",
     "@nrwl/js": "^13.8.2",
     "@nrwl/tao": "^13.8.2",
     "@nrwl/workspace": "^13.8.2",
@@ -33,7 +34,6 @@
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.1.3",
     "@shopify/eslint-plugin": "^41.0.1",
-    "@shopify/prettier-config": "^1.1.2",
     "@shopify/typescript-configs": "^5.1.0",
     "@types/cucumber": "^7.0.0",
     "@types/node": "^17.0.8",
@@ -45,9 +45,10 @@
     "cucumber-junit-formatter": "^0.2.2",
     "cucumber-pretty": "^6.0.1",
     "esbuild": "^0.14.11",
-    "eslint": "^8.6.0",
+    "eslint": "^8.9.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-jest": "^26.1.1",
     "eslint-plugin-no-catch-all": "^1.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-unicorn": "^40.0.0",
@@ -78,7 +79,9 @@
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
     "plugins": [
-      "no-catch-all"
+      "no-catch-all",
+      "jest",
+      "@nrwl/nx"
     ],
     "extends": [
       "plugin:@shopify/typescript",
@@ -100,8 +103,66 @@
       "node/no-deprecated-api": "off",
       "import/no-extraneous-dependencies": "off",
       "no-return-await": "error",
-      "no-await-in-loop": "error"
+      "no-await-in-loop": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          "paths": [
+            {
+              "name": "path",
+              "message": "Please use: import { path } from '@shopify/cli-kit'"
+            },
+            {
+              "name": "node:path",
+              "message": "Please use: import { path } from '@shopify/cli-kit'"
+            },
+            {
+              "name": "child_process",
+              "message": "Please use: import { system } from '@shopify/cli-kit'"
+            },
+            {
+              "name": "node:child_process",
+              "message": "Please use: import { system } from '@shopify/cli-kit'"
+            }
+          ]
+        }
+      ],
+      "jest/max-nested-describe": [
+        "error",
+        {
+          "max": 1
+        }
+      ],
+      "jest/no-disabled-tests": "error",
+      "jest/prefer-expect-resolves": "error",
+      "@nrwl/nx/enforce-module-boundaries": [
+        "error",
+        {
+          "allow": [],
+          "depConstraints": [
+            {
+              "sourceTag": "scope:feature",
+              "onlyDependOnLibsWithTargs": [
+                "scope:foundation"
+              ]
+            },
+            {
+              "sourceTag": "scope:cli",
+              "onlyDependOnLibsWithTargs": [
+                "scope:foundation",
+                "features"
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
-  "prettier": "@shopify/prettier-config"
+  "prettier": {
+    "arrowParens": "always",
+    "singleQuote": true,
+    "bracketSpacing": false,
+    "trailingComma": "all",
+    "semi": false
+  }
 }

@@ -1,1 +1,1 @@
-export {addHydrogen as default} from './hydrogen';
+export {addHydrogen as default} from './hydrogen'

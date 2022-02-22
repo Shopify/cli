@@ -1,19 +1,19 @@
-import {describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi} from 'vitest'
 
-import {extensions} from '../../constants';
-import scaffoldExtensionPrompt from './extension';
+import {extensions} from '../../constants'
+import scaffoldExtensionPrompt from './extension'
 
 describe('extension prompt', () => {
   it('when name is not passed', async () => {
-    const prompt = vi.fn();
-    const answers = {name: 'ext'};
-    const options = {};
+    const prompt = vi.fn()
+    const answers = {name: 'ext'}
+    const options = {}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(answers));
+    prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt);
+    const got = await scaffoldExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
@@ -29,20 +29,20 @@ describe('extension prompt', () => {
         message: 'Type of extension?',
         choices: extensions.types,
       },
-    ]);
-    expect(got).toEqual({...options, ...answers});
-  });
+    ])
+    expect(got).toEqual({...options, ...answers})
+  })
 
   it('when name is passed', async () => {
-    const prompt = vi.fn();
-    const answers = {};
-    const options = {name: 'my-special-extension'};
+    const prompt = vi.fn()
+    const answers = {}
+    const options = {name: 'my-special-extension'}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(answers));
+    prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt);
+    const got = await scaffoldExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
@@ -52,7 +52,7 @@ describe('extension prompt', () => {
         message: 'Type of extension?',
         choices: extensions.types,
       },
-    ]);
-    expect(got).toEqual({...options, ...answers});
-  });
-});
+    ])
+    expect(got).toEqual({...options, ...answers})
+  })
+})

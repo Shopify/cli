@@ -1,4 +1,4 @@
-import {expect, it, describe} from 'vitest';
+import {expect, it, describe} from 'vitest'
 
 import {
   isDebug,
@@ -6,202 +6,202 @@ import {
   adminApiEnvironment,
   storefrontRendererApiEnvironment,
   identityEnvironment,
-} from './environment';
-import {Environment} from './network/service';
+} from './environment'
+import {Environment} from './network/service'
 
 describe('isDebug', () => {
   it('returns true when SHOPIFY_CONFIG is debug', () => {
     // Given
-    const env = {DEBUG: '1'};
+    const env = {DEBUG: '1'}
 
     // When
-    const got = isDebug(env);
+    const got = isDebug(env)
 
     // Then
-    expect(got).toBe(true);
-  });
-});
+    expect(got).toBe(true)
+  })
+})
 
 describe('partnersApiEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_PARTNERS_API_ENV: 'local'};
+    const env = {SHOPIFY_PARTNERS_API_ENV: 'local'}
 
     // When
-    const got = partnersApiEnvironment(env);
+    const got = partnersApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Local);
-  });
+    expect(got).toBe(Environment.Local)
+  })
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_PARTNERS_API_ENV: 'spin'};
+    const env = {SHOPIFY_PARTNERS_API_ENV: 'spin'}
 
     // When
-    const got = partnersApiEnvironment(env);
+    const got = partnersApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Spin);
-  });
+    expect(got).toBe(Environment.Spin)
+  })
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_PARTNERS_API_ENV: 'production'};
+    const env = {SHOPIFY_PARTNERS_API_ENV: 'production'}
 
     // When
-    const got = partnersApiEnvironment(env);
+    const got = partnersApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
+    expect(got).toBe(Environment.Production)
+  })
 
   it("returns Production when the environment variable doesn't exist", () => {
     // Given
-    const env = {};
+    const env = {}
 
     // When
-    const got = partnersApiEnvironment(env);
+    const got = partnersApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
-});
+    expect(got).toBe(Environment.Production)
+  })
+})
 
 describe('adminApiEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_ADMIN_API_ENV: 'local'};
+    const env = {SHOPIFY_ADMIN_API_ENV: 'local'}
 
     // When
-    const got = adminApiEnvironment(env);
+    const got = adminApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Local);
-  });
+    expect(got).toBe(Environment.Local)
+  })
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_ADMIN_API_ENV: 'spin'};
+    const env = {SHOPIFY_ADMIN_API_ENV: 'spin'}
 
     // When
-    const got = adminApiEnvironment(env);
+    const got = adminApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Spin);
-  });
+    expect(got).toBe(Environment.Spin)
+  })
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_ADMIN_API_ENV: 'production'};
+    const env = {SHOPIFY_ADMIN_API_ENV: 'production'}
 
     // When
-    const got = adminApiEnvironment(env);
+    const got = adminApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
+    expect(got).toBe(Environment.Production)
+  })
 
   it("returns Production when the environment variable doesn't exist", () => {
     // Given
-    const env = {};
+    const env = {}
 
     // When
-    const got = adminApiEnvironment(env);
+    const got = adminApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
-});
+    expect(got).toBe(Environment.Production)
+  })
+})
 
 describe('storefrontRendererApiEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'local'};
+    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'local'}
 
     // When
-    const got = storefrontRendererApiEnvironment(env);
+    const got = storefrontRendererApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Local);
-  });
+    expect(got).toBe(Environment.Local)
+  })
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'spin'};
+    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'spin'}
 
     // When
-    const got = storefrontRendererApiEnvironment(env);
+    const got = storefrontRendererApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Spin);
-  });
+    expect(got).toBe(Environment.Spin)
+  })
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'production'};
+    const env = {SHOPIFY_STOREFRONT_RENDERER_API_ENV: 'production'}
 
     // When
-    const got = storefrontRendererApiEnvironment(env);
+    const got = storefrontRendererApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
+    expect(got).toBe(Environment.Production)
+  })
 
   it("returns Production when the environment variable doesn't exist", () => {
     // Given
-    const env = {};
+    const env = {}
 
     // When
-    const got = storefrontRendererApiEnvironment(env);
+    const got = storefrontRendererApiEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
-});
+    expect(got).toBe(Environment.Production)
+  })
+})
 
 describe('identityEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
     // Given
-    const env = {SHOPIFY_IDENTITY_ENV: 'local'};
+    const env = {SHOPIFY_IDENTITY_ENV: 'local'}
 
     // When
-    const got = identityEnvironment(env);
+    const got = identityEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Local);
-  });
+    expect(got).toBe(Environment.Local)
+  })
 
   it('returns Spin when the environment variable points to the spin environment', () => {
     // Given
-    const env = {SHOPIFY_IDENTITY_ENV: 'spin'};
+    const env = {SHOPIFY_IDENTITY_ENV: 'spin'}
 
     // When
-    const got = identityEnvironment(env);
+    const got = identityEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Spin);
-  });
+    expect(got).toBe(Environment.Spin)
+  })
 
   it('returns Production when the environment variable points to the production environment', () => {
     // Given
-    const env = {SHOPIFY_IDENTITY_ENV: 'production'};
+    const env = {SHOPIFY_IDENTITY_ENV: 'production'}
 
     // When
-    const got = identityEnvironment(env);
+    const got = identityEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
+    expect(got).toBe(Environment.Production)
+  })
 
   it("returns Production when the environment variable doesn't exist", () => {
     // Given
-    const env = {};
+    const env = {}
 
     // When
-    const got = identityEnvironment(env);
+    const got = identityEnvironment(env)
 
     // Then
-    expect(got).toBe(Environment.Production);
-  });
-});
+    expect(got).toBe(Environment.Production)
+  })
+})

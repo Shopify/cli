@@ -1,1 +1,1 @@
-export * from '@shopify/checkout-ui-extensions';
+export * from '@shopify/checkout-ui-extensions'

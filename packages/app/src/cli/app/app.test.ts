@@ -1,314 +1,299 @@
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {file, path} from '@shopify/cli-kit';
+import {describe, it, expect, beforeEach, afterEach} from 'vitest'
+import {file, path} from '@shopify/cli-kit'
 
 import {
   configurationFileNames,
   blocks,
   genericConfigurationFileNames,
-} from '../constants';
+} from '../constants'
 
-import {load} from './app';
+import {load} from './app'
 
 describe('load', () => {
-  type BlockType = 'uiExtensions' | 'scripts';
+  type BlockType = 'uiExtensions' | 'scripts'
 
-  let tmpDir: string;
-  // Zod-generated validation message
-  const missingName = [
-    {
-      code: 'invalid_type',
-      expected: 'string',
-      received: 'undefined',
-      path: ['name'],
-      message: 'Required',
-    },
-  ];
-
+  let tmpDir: string
+  const appConfiguration = `
+  name = "my_app"
+  `
   beforeEach(async () => {
-    tmpDir = await file.mkTmpDir();
-  });
+    tmpDir = await file.mkTmpDir()
+  })
 
   afterEach(async () => {
     if (tmpDir) {
-      await file.rmdir(tmpDir);
+      await file.rmdir(tmpDir)
     }
-  });
+  })
 
   const writeConfig = async (appConfiguration: string) => {
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app);
-    await file.write(appConfigurationPath, appConfiguration);
-  };
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
+    await file.write(appConfigurationPath, appConfiguration)
+  }
 
   const blockConfigurationPath = ({
     blockType,
     name,
   }: {
-    blockType: BlockType;
-    name: string;
+    blockType: BlockType
+    name: string
   }) => {
-    const block = blocks[blockType];
-    return path.join(
-      tmpDir,
-      block.directoryName,
-      name,
-      block.configurationName,
-    );
-  };
+    const block = blocks[blockType]
+    return path.join(tmpDir, block.directoryName, name, block.configurationName)
+  }
 
   const makeBlockDir = async ({
     blockType,
     name,
   }: {
-    blockType: BlockType;
-    name: string;
+    blockType: BlockType
+    name: string
   }) => {
-    await file.mkdir(path.dirname(blockConfigurationPath({blockType, name})));
-  };
+    await file.mkdir(path.dirname(blockConfigurationPath({blockType, name})))
+  }
 
   const writeBlockConfig = async ({
     blockType,
     blockConfiguration,
     name,
   }: {
-    blockType: BlockType;
-    blockConfiguration: string;
-    name: string;
+    blockType: BlockType
+    blockConfiguration: string
+    name: string
   }) => {
-    await makeBlockDir({blockType, name});
+    await makeBlockDir({blockType, name})
     await file.write(
       blockConfigurationPath({blockType, name}),
       blockConfiguration,
-    );
-  };
+    )
+  }
 
   it("throws an error if the directory doesn't exist", async () => {
     // Given
-    const directory = '/tmp/doesnt/exist';
+    const directory = '/tmp/doesnt/exist'
 
     // When/Then
-    await expect(load(directory)).rejects.toThrow(/Couldn't find directory/);
-  });
+    await expect(load(directory)).rejects.toThrow(/Couldn't find directory/)
+  })
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // When/Then
     await expect(load(tmpDir)).rejects.toThrow(
       /Couldn't find the configuration file/,
-    );
-  });
+    )
+  })
 
   it('throws an error when the configuration file is invalid', async () => {
     // Given
     const appConfiguration = `
         wrong = "my_app"
-        `;
-    writeConfig(appConfiguration);
+        `
+    writeConfig(appConfiguration)
 
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow();
-  });
+    await expect(load(tmpDir)).rejects.toThrow()
+  })
 
-  describe('given a valid configuration', () => {
-    beforeEach(async () => {
-      const appConfiguration = `
-        name = "my_app"
-        `;
-      await writeConfig(appConfiguration);
-    });
+  it('loads the app when the configuration is valid and has no blocks', async () => {
+    // Given
+    await writeConfig(appConfiguration)
 
-    describe('and no blocks', () => {
-      it('loads the app', async () => {
-        // When
-        const app = await load(tmpDir);
+    // When
+    const app = await load(tmpDir)
 
-        // Then
-        expect(app.configuration.name).toBe('my_app');
-      });
+    // Then
+    expect(app.configuration.name).toBe('my_app')
+  })
 
-      it('defaults to assuming npm as package manager', async () => {
-        // When
-        const app = await load(tmpDir);
+  it('defaults to npm as package manager when the configuration is valid', async () => {
+    // Given
+    await writeConfig(appConfiguration)
 
-        // Then
-        expect(app.packageManager).toBe('npm');
-      });
+    // When
+    const app = await load(tmpDir)
 
-      it('knows yarn is package manager when yarn.lock is present', async () => {
-        // Given
-        const yarnLockPath = path.join(
-          tmpDir,
-          genericConfigurationFileNames.yarn.lockfile,
-        );
-        await file.write(yarnLockPath, '');
+    // Then
+    expect(app.packageManager).toBe('npm')
+  })
 
-        // When
-        const app = await load(tmpDir);
+  it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const yarnLockPath = path.join(
+      tmpDir,
+      genericConfigurationFileNames.yarn.lockfile,
+    )
+    await file.write(yarnLockPath, '')
 
-        // Then
-        expect(app.packageManager).toBe('yarn');
-      });
+    // When
+    const app = await load(tmpDir)
 
-      it('knows yarn is package manager when yarn.lock is present', async () => {
-        // Given
-        const pnpmLockPath = path.join(
-          tmpDir,
-          genericConfigurationFileNames.pnpm.lockfile,
-        );
-        await file.write(pnpmLockPath, '');
+    // Then
+    expect(app.packageManager).toBe('yarn')
+  })
 
-        // When
-        const app = await load(tmpDir);
+  it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const pnpmLockPath = path.join(
+      tmpDir,
+      genericConfigurationFileNames.pnpm.lockfile,
+    )
+    await file.write(pnpmLockPath, '')
 
-        // Then
-        expect(app.packageManager).toBe('pnpm');
-      });
-    });
+    // When
+    const app = await load(tmpDir)
 
-    describe('with extensions', () => {
-      it("throws an error if the configuration file doesn't exist", async () => {
-        // Given
-        makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'});
+    // Then
+    expect(app.packageManager).toBe('pnpm')
+  })
 
-        // When
-        await expect(load(tmpDir)).rejects.toThrow(
-          /Couldn't find the configuration file/,
-        );
-      });
+  it("throws an error if the extension configuration file doesn't exist", async () => {
+    // Given
+    makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'})
 
-      it('throws an error if the configuration file is invalid', async () => {
-        // Given
-        const blockConfiguration = `
-          wrong = "my_extension"
-          `;
-        await writeBlockConfig({
-          blockType: 'uiExtensions',
-          blockConfiguration,
-          name: 'my-extension',
-        });
+    // When
+    await expect(load(tmpDir)).rejects.toThrow(
+      /Couldn't find the configuration file/,
+    )
+  })
 
-        // When
-        await expect(load(tmpDir)).rejects.toThrow();
-      });
+  it('throws an error if the extension configuration file is invalid', async () => {
+    // Given
+    const blockConfiguration = `
+      wrong = "my_extension"
+      `
+    await writeBlockConfig({
+      blockType: 'uiExtensions',
+      blockConfiguration,
+      name: 'my-extension',
+    })
 
-      it('loads the app when it has an extension', async () => {
-        // Given
-        const blockConfiguration = `
-          name = "my_extension"
-          `;
-        await writeBlockConfig({
-          blockType: 'uiExtensions',
-          blockConfiguration,
-          name: 'my-extension',
-        });
+    // When
+    await expect(load(tmpDir)).rejects.toThrow()
+  })
 
-        // When
-        const app = await load(tmpDir);
+  it('loads the app when it has an extension with a valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my_extension"
+      `
+    await writeBlockConfig({
+      blockType: 'uiExtensions',
+      blockConfiguration,
+      name: 'my-extension',
+    })
 
-        // Then
-        expect(app.uiExtensions[0].configuration.name).toBe('my_extension');
-      });
+    // When
+    const app = await load(tmpDir)
 
-      it('loads the app with several extensions', async () => {
-        // Given
-        let blockConfiguration = `
-          name = "my_extension_1"
-          `;
-        await writeBlockConfig({
-          blockType: 'uiExtensions',
-          blockConfiguration,
-          name: 'my_extension_1',
-        });
+    // Then
+    expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
+  })
 
-        blockConfiguration = `
-          name = "my_extension_2"
-          `;
-        await writeBlockConfig({
-          blockType: 'uiExtensions',
-          blockConfiguration,
-          name: 'my_extension_2',
-        });
+  it('loads the app with several extensions that have valid configurations', async () => {
+    // Given
+    await writeConfig(appConfiguration)
 
-        // When
-        const app = await load(tmpDir);
+    let blockConfiguration = `
+      name = "my_extension_1"
+      `
+    await writeBlockConfig({
+      blockType: 'uiExtensions',
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
 
-        // Then
-        expect(app.uiExtensions).toHaveLength(2);
-        expect(app.uiExtensions[0].configuration.name).toBe('my_extension_1');
-        expect(app.uiExtensions[1].configuration.name).toBe('my_extension_2');
-      });
-    });
+    blockConfiguration = `
+      name = "my_extension_2"
+      `
+    await writeBlockConfig({
+      blockType: 'uiExtensions',
+      blockConfiguration,
+      name: 'my_extension_2',
+    })
 
-    describe('with scripts', () => {
-      it("throws an error if the configuration file doesn't exist", async () => {
-        // Given
-        makeBlockDir({blockType: 'scripts', name: 'my-script'});
+    // When
+    const app = await load(tmpDir)
 
-        // When
-        await expect(load(tmpDir)).rejects.toThrow(
-          /Couldn't find the configuration file/,
-        );
-      });
+    // Then
+    expect(app.uiExtensions).toHaveLength(2)
+    expect(app.uiExtensions[0].configuration.name).toBe('my_extension_1')
+    expect(app.uiExtensions[1].configuration.name).toBe('my_extension_2')
+  })
 
-      it('throws an error if the configuration file is invalid', async () => {
-        // Given
-        const blockConfiguration = `
-          wrong = "my-script"
-        `;
-        await writeBlockConfig({
-          blockType: 'scripts',
-          blockConfiguration,
-          name: 'my-script',
-        });
+  it("throws an error if the configuration file doesn't exist", async () => {
+    // Given
+    makeBlockDir({blockType: 'scripts', name: 'my-script'})
 
-        // When
-        await expect(load(tmpDir)).rejects.toThrowError();
-      });
+    // When
+    await expect(load(tmpDir)).rejects.toThrow(
+      /Couldn't find the configuration file/,
+    )
+  })
 
-      it('loads the app when it has a script', async () => {
-        // Given
-        const blockConfiguration = `
-          name = "my-script"
-          `;
-        await writeBlockConfig({
-          blockType: 'scripts',
-          blockConfiguration,
-          name: 'my-script',
-        });
+  it('throws an error if the script configuration file is invalid', async () => {
+    // Given
+    const blockConfiguration = `
+      wrong = "my-script"
+    `
+    await writeBlockConfig({
+      blockType: 'scripts',
+      blockConfiguration,
+      name: 'my-script',
+    })
 
-        // When
-        const app = await load(tmpDir);
+    // When
+    await expect(load(tmpDir)).rejects.toThrowError()
+  })
 
-        // Then
-        expect(app.scripts[0].configuration.name).toBe('my-script');
-      });
+  it('loads the app when it has a script with a valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my-script"
+      `
+    await writeBlockConfig({
+      blockType: 'scripts',
+      blockConfiguration,
+      name: 'my-script',
+    })
 
-      it('loads the app with several scripts', async () => {
-        // Given
-        let blockConfiguration = `
-          name = "my-script-1"
-          `;
-        await writeBlockConfig({
-          blockType: 'scripts',
-          blockConfiguration,
-          name: 'my-script-1',
-        });
+    // When
+    const app = await load(tmpDir)
 
-        blockConfiguration = `
-          name = "my-script-2"
-          `;
-        await writeBlockConfig({
-          blockType: 'scripts',
-          blockConfiguration,
-          name: 'my-script-2',
-        });
+    // Then
+    expect(app.scripts[0].configuration.name).toBe('my-script')
+  })
 
-        // When
-        const app = await load(tmpDir);
+  it('loads the app with several scripts that have valid configurations', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    let blockConfiguration = `
+      name = "my-script-1"
+      `
+    await writeBlockConfig({
+      blockType: 'scripts',
+      blockConfiguration,
+      name: 'my-script-1',
+    })
 
-        // Then
-        expect(app.scripts).toHaveLength(2);
-        expect(app.scripts[0].configuration.name).toBe('my-script-1');
-        expect(app.scripts[1].configuration.name).toBe('my-script-2');
-      });
-    });
-  });
-});
+    blockConfiguration = `
+      name = "my-script-2"
+      `
+    await writeBlockConfig({
+      blockType: 'scripts',
+      blockConfiguration,
+      name: 'my-script-2',
+    })
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.scripts).toHaveLength(2)
+    expect(app.scripts[0].configuration.name).toBe('my-script-1')
+    expect(app.scripts[1].configuration.name).toBe('my-script-2')
+  })
+})

@@ -1,4 +1,4 @@
-import type {Schema} from 'conf';
+import type {Schema} from 'conf'
 
 // Example of valid content
 //  {
@@ -170,6 +170,6 @@ const schema: Schema<{sessions: unknown}> = {
       },
     },
   },
-};
+}
 
-export default schema;
+export default schema

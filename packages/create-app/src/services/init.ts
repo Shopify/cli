@@ -1,4 +1,4 @@
-import {Writable} from 'stream';
+import {Writable} from 'stream'
 
 import {
   string,
@@ -9,33 +9,35 @@ import {
   os,
   ui,
   dependency,
-} from '@shopify/cli-kit';
+} from '@shopify/cli-kit'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import cliPackage from '../../../cli/package.json';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import cliPackage from '../../../cli/package.json'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import appPackage from '../../../app/package.json';
-import {template as getTemplatePath} from '../utils/paths';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import appPackage from '../../../app/package.json'
+import {template as getTemplatePath} from '../utils/paths'
 
 interface InitOptions {
-  name: string;
-  directory: string;
-  dependencyManager: string | undefined;
-  shopifyCliVersion: string | undefined;
-  shopifyAppVersion: string | undefined;
+  name: string
+  directory: string
+  dependencyManager: string | undefined
+  shopifyCliVersion: string | undefined
+  shopifyAppVersion: string | undefined
 }
 
 async function init(options: InitOptions) {
-  const user = (await os.username()) ?? '';
-  const templatePath = await getTemplatePath('app');
-  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version;
-  const appPackageVersion = options.shopifyAppVersion ?? appPackage.version;
+  const user = (await os.username()) ?? ''
+  const templatePath = await getTemplatePath('app')
+  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version
+  const appPackageVersion = options.shopifyAppVersion ?? appPackage.version
 
-  const dependencyManager = inferDependencyManager(options.dependencyManager);
-  const hyphenizedName = string.hyphenize(options.name);
-  const outputDirectory = path.join(options.directory, hyphenizedName);
+  const dependencyManager = inferDependencyManager(options.dependencyManager)
+  const hyphenizedName = string.hyphenize(options.name)
+  const outputDirectory = path.join(options.directory, hyphenizedName)
   await ui.list(
     [
       {
@@ -49,8 +51,8 @@ async function init(options: InitOptions) {
             appPackageVersion,
             user,
             dependencyManager,
-          });
-          task.title = 'Initialized';
+          })
+          task.title = 'Initialized'
         },
       },
       {
@@ -58,16 +60,16 @@ async function init(options: InitOptions) {
         task: async (_, task) => {
           const stdout = new Writable({
             write(chunk, encoding, next) {
-              task.output = chunk.toString();
-              next();
+              task.output = chunk.toString()
+              next()
             },
-          });
-          await installDependencies(outputDirectory, dependencyManager, stdout);
+          })
+          await installDependencies(outputDirectory, dependencyManager, stdout)
         },
       },
     ],
     {concurrent: false},
-  );
+  )
 
   output.message(output.content`
   ${hyphenizedName} is ready to build! ✨
@@ -76,7 +78,7 @@ async function init(options: InitOptions) {
       'https://shopify.dev/apps/getting-started',
     )}
     Inspiration ${output.token.command(`${dependencyManager} shopify help`)}
-  `);
+  `)
 }
 
 function inferDependencyManager(
@@ -86,9 +88,9 @@ function inferDependencyManager(
     optionsDependencyManager &&
     dependency.dependencyManager.includes(optionsDependencyManager)
   ) {
-    return optionsDependencyManager as dependency.DependencyManager;
+    return optionsDependencyManager as dependency.DependencyManager
   }
-  return dependency.dependencyManagerUsedForCreating();
+  return dependency.dependencyManagerUsedForCreating()
 }
 
 async function installDependencies(
@@ -96,28 +98,28 @@ async function installDependencies(
   dependencyManager: dependency.DependencyManager,
   stdout: Writable,
 ): Promise<void> {
-  await dependency.install(directory, dependencyManager, stdout);
+  await dependency.install(directory, dependencyManager, stdout)
 }
 
 async function createApp(
   options: InitOptions & {
-    outputDirectory: string;
-    templatePath: string;
-    cliPackageVersion: string;
-    appPackageVersion: string;
-    user: string;
-    dependencyManager: string;
+    outputDirectory: string
+    templatePath: string
+    cliPackageVersion: string
+    appPackageVersion: string
+    user: string
+    dependencyManager: string
   },
 ): Promise<void> {
   const templateFiles: string[] = await path.glob(
     path.join(options.templatePath, '**/*'),
-  );
+  )
   // We sort them topologically to start creating
   // them from the most nested paths.
   const sortedTemplateFiles = templateFiles
     .map((path) => path.split('/'))
     .sort((lhs, rhs) => (lhs.length < rhs.length ? 1 : -1))
-    .map((components) => components.join('/'));
+    .map((components) => components.join('/'))
 
   const templateData = {
     name: options.name,
@@ -127,7 +129,7 @@ async function createApp(
     shopify_app_version: options.appPackageVersion,
     author: options.user,
     dependencyManager: options.dependencyManager,
-  };
+  }
   await Promise.all(
     sortedTemplateFiles.map(async (templateItemPath) => {
       const outputPath = await template(
@@ -135,17 +137,17 @@ async function createApp(
           options.outputDirectory,
           path.relative(options.templatePath, templateItemPath),
         ),
-      )(templateData);
+      )(templateData)
       if (await file.isDirectory(templateItemPath)) {
-        await file.mkdir(outputPath);
+        await file.mkdir(outputPath)
       } else {
-        await file.mkdir(path.dirname(outputPath));
-        const content = await file.read(templateItemPath);
-        const contentOutput = await template(content)(templateData);
-        await file.write(outputPath, contentOutput);
+        await file.mkdir(path.dirname(outputPath))
+        const content = await file.read(templateItemPath)
+        const contentOutput = await template(content)(templateData)
+        await file.write(outputPath, contentOutput)
       }
     }),
-  );
+  )
 }
 
-export default init;
+export default init

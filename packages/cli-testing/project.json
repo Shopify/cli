@@ -2,5 +2,6 @@
     "name": "cli-testing",
     "root": "packages/cli-testing",
     "sourceRoot": "packages/cli-testing/src",
-    "projectType": "library"
+    "projectType": "library",
+    "tags": ["scope:foundation"]
 }

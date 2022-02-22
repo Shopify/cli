@@ -1,1 +1,1 @@
-export {default} from '@shopify/cli-hydrogen/commands/hydrogen/init';
+export {default} from '@shopify/cli-hydrogen/commands/hydrogen/init'

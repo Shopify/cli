@@ -7,7 +7,7 @@ export type Service =
   | 'partners-api'
   | 'storefront-renderer-api'
   | 'admin-api'
-  | 'identity';
+  | 'identity'
 
 /**
  * Enum that represents the environment to use for a given service.

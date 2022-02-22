@@ -6,6 +6,6 @@ const constants = {
     storefrontRendererApiEnv: 'SHOPIFY_STOREFRONT_RENDERER_API_ENV',
     identityEnv: 'SHOPIFY_IDENTITY_ENV',
   },
-};
+}
 
-export default constants;
+export default constants

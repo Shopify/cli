@@ -1,1 +1,1 @@
-export * from '@shopify/post-purchase-ui-extensions';
+export * from '@shopify/post-purchase-ui-extensions'

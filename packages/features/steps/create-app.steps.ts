@@ -1,7 +1,7 @@
-import {Then} from '@cucumber/cucumber';
+import {Then} from '@cucumber/cucumber'
 
-import {executables, directories} from '../lib/constants';
-import {exec} from '../lib/system';
+import {executables, directories} from '../lib/constants'
+import {exec} from '../lib/system'
 
 Then(
   /I create an app named (.+) with (.+) as dependency manager/,
@@ -18,6 +18,6 @@ Then(
       `file:${directories.packages.cli}`,
       '--shopify-app-version',
       `file:${directories.packages.app}`,
-    ]);
+    ])
   },
-);
+)

@@ -1,7 +1,7 @@
-import type {Writable} from 'node:stream';
+import type {Writable} from 'node:stream'
 
-import {exec} from './system';
-import type {ExecOptions} from './system';
+import {exec} from './system'
+import type {ExecOptions} from './system'
 
 export enum DependencyManager {
   Npm = 'npm',
@@ -10,7 +10,7 @@ export enum DependencyManager {
 }
 export const dependencyManager = Object.entries(DependencyManager).map(
   ([_, value]) => `${value}`,
-);
+)
 
 /**
  * Returns the dependency manager used to run the create workflow.
@@ -21,13 +21,13 @@ export function dependencyManagerUsedForCreating(
   env = process.env,
 ): DependencyManager {
   if (env.npm_lifecycle_event === 'npx') {
-    return DependencyManager.Npm;
+    return DependencyManager.Npm
   } else if (env.npm_config_user_agent?.includes('yarn')) {
-    return DependencyManager.Yarn;
+    return DependencyManager.Yarn
   } else if (env.PNPM_HOME) {
-    return DependencyManager.Pnpm;
+    return DependencyManager.Pnpm
   } else {
-    return DependencyManager.Npm;
+    return DependencyManager.Npm
   }
 }
 
@@ -42,6 +42,6 @@ export async function install(
   dependencyManager: DependencyManager,
   stdout?: Writable,
 ) {
-  const options: ExecOptions = {cwd: directory, stdout};
-  await exec(dependencyManager, ['install'], options);
+  const options: ExecOptions = {cwd: directory, stdout}
+  await exec(dependencyManager, ['install'], options)
 }

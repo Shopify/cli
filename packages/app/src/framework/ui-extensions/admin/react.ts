@@ -1,1 +1,1 @@
-export * from '@shopify/admin-ui-extensions-react';
+export * from '@shopify/admin-ui-extensions-react'

@@ -1,4 +1,4 @@
-import latestVersion from 'latest-version';
+import latestVersion from 'latest-version'
 
 /**
  * Returns the latest available version of an NPM package.
@@ -6,5 +6,5 @@ import latestVersion from 'latest-version';
  * @returns A promise to get the latest available version of a package.
  */
 export async function latestNpmPackageVersion(name: string) {
-  return latestVersion(name);
+  return latestVersion(name)
 }

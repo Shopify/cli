@@ -1,1 +1,1 @@
-export {addShopifyConfig as default} from './shopifyConfig';
+export {addShopifyConfig as default} from './shopifyConfig'
