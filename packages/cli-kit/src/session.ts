@@ -1,4 +1,8 @@
+<<<<<<< HEAD:packages/cli-kit/src/session/index.ts
 import {Service} from '../network/service'
+=======
+import {Service} from './network/service';
+>>>>>>> ec7d653 (Split up @shopif/cli-kit/environment into smaller modules and add spin-related utilities):packages/cli-kit/src/session.ts
 
 /**
  * A scope supported by the Shopify Admin API.

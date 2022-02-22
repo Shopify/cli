@@ -19,7 +19,7 @@ import type {Schema} from 'conf'
 //           },
 //         },
 //         storefrontRenderer: {
-//          'storefront-renderer.shopify.com': {
+//          'my-shop.shopify.com': {
 //             accessToken: 'foo',
 //             expiresAt: '2025-11-13T20:20:39+00:00',
 //             scopes: ['a', 'b'],
@@ -78,7 +78,7 @@ const schema: Schema<{sessions: unknown}> = {
             admin: {
               type: 'object',
               description:
-                'It stores sessions for interactiwh with the Shopify Admin API.' +
+                'It stores sessions for interact with the Shopify Admin API.' +
                 ' Each key in the object is the fqdn of the store instance.',
               additionalProperties: {
                 type: 'object',

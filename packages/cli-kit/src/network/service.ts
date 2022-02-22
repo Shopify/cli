@@ -3,11 +3,7 @@
  * @readonly
  * @enum {number}
  */
-export type Service =
-  | 'partners-api'
-  | 'storefront-renderer-api'
-  | 'admin-api'
-  | 'identity'
+export type Service = 'shopify' | 'admin' | 'identity'
 
 /**
  * Enum that represents the environment to use for a given service.
