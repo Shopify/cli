@@ -61,7 +61,7 @@ async function extensionInit({
   await file.mkdir(extensionDirectory)
   await Promise.all(
     [
-      {filename: blocks.uiExtensions.configurationName},
+      {filename: 'config.toml', alias: blocks.uiExtensions.configurationName},
       {filename: `${extensionType}.jsx`, alias: 'index.jsx'},
     ].map((fileDetails) =>
       writeFromTemplate({
