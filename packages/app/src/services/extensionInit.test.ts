@@ -1,36 +1,15 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {file, output, path} from '@shopify/cli-kit'
 
 import {App, load as loadApp} from '../cli/app/app'
 import {configurationFileNames, ExtensionTypes} from '../cli/constants'
 
 import extensionInit from './extensionInit'
 
-class MockLog {
-  contents: string
-
-  constructor() {
-    this.contents = ''
-  }
-
-  log(message: string) {
-    this.contents += `${message}\n`
-  }
-
-  clear() {
-    this.contents = ''
-  }
-
-  toFunc() {
-    return this.log.bind(this)
-  }
-}
-
 describe('initialize an extension', () => {
   let tmpDir: string
-  let log: MockLog
 
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir()
@@ -39,9 +18,9 @@ describe('initialize an extension', () => {
       name = "my_app"
       `
     await file.write(appConfigurationPath, appConfiguration)
-    log = new MockLog()
   })
   afterEach(async () => {
+    vi.clearAllMocks()
     if (tmpDir) {
       await file.rmdir(tmpDir)
     }
@@ -59,16 +38,18 @@ describe('initialize an extension', () => {
       name,
       extensionType,
       parentApp: await loadApp(tmpDir),
-      log: log.toFunc(),
     })
   }
 
   it('successfully scaffolds the extension when no other extensions exist', async () => {
+    vi.spyOn(output, 'message').mockImplementation(() => {})
     const name = 'my-ext-1'
     const extensionType = 'checkout-post-purchase'
     await createFromTemplate({name, extensionType})
-    expect(log.contents).toContain('Generating .shopify.ui-extension.toml')
-    expect(log.contents).toContain('Generating index.jsx')
+    expect(output.message).toBeCalledWith(
+      output.content`Generating ${configurationFileNames.uiExtension}`,
+    )
+    expect(output.message).toBeCalledWith(output.content`Generating index.jsx`)
     const scaffoldedExtension = (await loadApp(tmpDir)).uiExtensions[0]
     expect(scaffoldedExtension.configuration.name).toBe(name)
   })

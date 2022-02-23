@@ -1,6 +1,6 @@
 import {fileURLToPath} from 'url'
 
-import {string, path, template, file, error} from '@shopify/cli-kit'
+import {error, file, output, path, string, template} from '@shopify/cli-kit'
 
 import {blocks, ExtensionTypes} from '../cli/constants'
 import {load as loadApp, App} from '../cli/app/app'
@@ -21,7 +21,6 @@ interface WriteFromTemplateOptions {
   promptAnswers: any
   filename: string
   alias?: string
-  log(message: string): void
   directory: string
 }
 async function writeFromTemplate({
@@ -29,10 +28,9 @@ async function writeFromTemplate({
   filename,
   alias,
   directory,
-  log,
 }: WriteFromTemplateOptions) {
   const _alias = alias || filename
-  log(`Generating ${_alias} in ${directory}`)
+  output.message(output.content`Generating ${_alias}`)
   const templatePath = await getTemplatePath('extensions')
   const templateItemPath = path.join(templatePath, filename)
   const content = await file.read(templateItemPath)
@@ -45,13 +43,11 @@ interface ExtensionInitOptions {
   name: string
   extensionType: ExtensionTypes
   parentApp: App
-  log(message: string): void
 }
 async function extensionInit({
   name,
   extensionType,
   parentApp,
-  log,
 }: ExtensionInitOptions) {
   const hyphenizedName = string.hyphenize(name)
   const extensionDirectory = path.join(
@@ -70,7 +66,6 @@ async function extensionInit({
     ].map((fileDetails) =>
       writeFromTemplate({
         ...fileDetails,
-        log,
         directory: extensionDirectory,
         promptAnswers: {
           name,
