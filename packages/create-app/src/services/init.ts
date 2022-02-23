@@ -113,6 +113,7 @@ async function createApp(
 ): Promise<void> {
   const templateFiles: string[] = await path.glob(
     path.join(options.templatePath, '**/*'),
+    {dot: true},
   )
   // We sort them topologically to start creating
   // them from the most nested paths.

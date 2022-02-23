@@ -7,7 +7,7 @@ Then(
   /I create an app named (.+) with (.+) as dependency manager/,
   {timeout: 2 * 60 * 1000},
   async function (appName: string, dependencyManager: string) {
-    await exec(executables.createApp, [
+    const {stdout} = await exec(executables.createApp, [
       '--name',
       appName,
       '--path',
@@ -19,5 +19,7 @@ Then(
       '--shopify-app-version',
       `file:${directories.packages.app}`,
     ])
+    const hyphenatedAppName = stdout.match(/Initializing your app ([\w-]+)/)[1]
+    this.appDirectory = `${this.temporaryDirectory}/${hyphenatedAppName}`
   },
 )
