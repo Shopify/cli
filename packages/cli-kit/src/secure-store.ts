@@ -1,6 +1,6 @@
-import keytar from 'keytar';
+import keytar from 'keytar'
 
-import constants from './constants';
+import constants from './constants'
 
 /**
  * Fetches secured content from the system's keychain.
@@ -11,8 +11,8 @@ export async function fetch(identifier: string): Promise<string | null> {
   const content = await keytar.getPassword(
     constants.keychain.service,
     identifier,
-  );
-  return content;
+  )
+  return content
 }
 
 /**
@@ -25,7 +25,7 @@ export async function store(
   identifier: string,
   content: string,
 ): Promise<void> {
-  await keytar.setPassword(constants.keychain.service, identifier, content);
+  await keytar.setPassword(constants.keychain.service, identifier, content)
 }
 
 /**
@@ -37,6 +37,6 @@ export async function remove(identifier: string): Promise<boolean> {
   const result = await keytar.deletePassword(
     constants.keychain.service,
     identifier,
-  );
-  return result;
+  )
+  return result
 }
