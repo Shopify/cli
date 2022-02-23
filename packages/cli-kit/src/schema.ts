@@ -1,1 +1,1 @@
-export {z} from 'zod'
+export {z as define} from 'zod'

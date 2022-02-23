@@ -6,25 +6,25 @@ import {
   genericConfigurationFileNames,
 } from '../constants'
 
-const AppConfigurationSchema = schema.z.object({
-  name: schema.z.string(),
+const AppConfigurationSchema = schema.define.object({
+  name: schema.define.string(),
 })
 
-type AppConfiguration = schema.z.infer<typeof AppConfigurationSchema>
+type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
-const UIExtensionConfigurationSchema = schema.z.object({
-  name: schema.z.string(),
+const UIExtensionConfigurationSchema = schema.define.object({
+  name: schema.define.string(),
 })
 
-type UIExtensionConfiguration = schema.z.infer<
+type UIExtensionConfiguration = schema.define.infer<
   typeof UIExtensionConfigurationSchema
 >
 
-const ScriptConfigurationSchema = schema.z.object({
-  name: schema.z.string(),
+const ScriptConfigurationSchema = schema.define.object({
+  name: schema.define.string(),
 })
 
-type ScriptConfiguration = schema.z.infer<typeof ScriptConfigurationSchema>
+type ScriptConfiguration = schema.define.infer<typeof ScriptConfigurationSchema>
 
 interface Script {
   configuration: ScriptConfiguration
