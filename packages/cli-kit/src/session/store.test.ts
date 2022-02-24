@@ -13,6 +13,7 @@ import type {Session} from './schema'
 vi.mock('../secure-store')
 const mockedSecureStore = vi.mocked(secureStore)
 const mockedSecureFetch = vi.mocked(secureFetch)
+const mockedSecureRemove = vi.mocked(secureFetch)
 
 describe('store', () => {
   it('serializes the session as a JSON when storing it', () => {
@@ -53,7 +54,7 @@ describe('fetch', () => {
     expect(got).toBeUndefined()
   })
 
-  it('returns undefined when the content does not match the schema', async () => {
+  it('returns the session when the format is valid', async () => {
     // Given
     const session = testSession()
     mockedSecureFetch.mockResolvedValue(JSON.stringify(session))
@@ -63,6 +64,16 @@ describe('fetch', () => {
 
     // Then
     expect(got).toEqual(session)
+  })
+})
+
+describe('remove', () => {
+  it('removes the session from the secure store', () => {
+    // When
+    remove()
+
+    // Then
+    expect(mockedSecureRemove).toHaveBeenCalledWith(identifier)
   })
 })
 
