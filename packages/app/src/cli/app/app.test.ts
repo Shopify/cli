@@ -178,6 +178,7 @@ describe('load', () => {
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
+      extensionType = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -198,6 +199,7 @@ describe('load', () => {
 
     let blockConfiguration = `
       name = "my_extension_1"
+      extensionType = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -207,6 +209,7 @@ describe('load', () => {
 
     blockConfiguration = `
       name = "my_extension_2"
+      extensionType = "product-subscription"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',

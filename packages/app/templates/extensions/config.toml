@@ -1,7 +1,7 @@
 # This file stores configurations for your Shopify app extension.
 
 name = "{{name}}"
-extension_type = "{{extensionType}}"
+extensionType = "{{extensionType}}"
 
 # [[metafield]]
 # namespace = "my-namespace"

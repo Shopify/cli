@@ -4,6 +4,7 @@ import {
   blocks,
   configurationFileNames,
   genericConfigurationFileNames,
+  extensions,
 } from '../constants'
 
 const AppConfigurationSchema = schema.define.object({
@@ -14,6 +15,7 @@ type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
+  extensionType: schema.define.enum(extensions.types),
 })
 
 type UIExtensionConfiguration = schema.define.infer<
