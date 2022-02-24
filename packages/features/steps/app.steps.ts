@@ -1,7 +1,13 @@
-import {When} from '@cucumber/cucumber'
+import {When, Then} from '@cucumber/cucumber'
+import {strict as assert} from 'assert'
 
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
+
+interface UIExtensionConfiguration {
+  name: string
+  extensionType: string
+}
 
 When(
   /I create an extension named (.+) of type (.+)/,
@@ -20,3 +26,21 @@ When(
     ])
   },
 )
+
+Then(
+  /I have an extension named (.+) of type (.+)/,
+  {},
+  async function (appName: string, extensionType: string) {
+    const {stdout} = await exec(executables.cli, [
+      'app',
+      'info',
+      '--path',
+      this.appDirectory,
+    ])
+    const results = JSON.parse(stdout)
+    const extension = results.uiExtensions.find((extension: {configuration: UIExtensionConfiguration}) => {
+      return extension.configuration.name === appName
+    })
+    if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(results, null, 2)}`)
+    assert.equal(extension.configuration.extensionType, extensionType)
+  })
