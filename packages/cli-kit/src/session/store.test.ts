@@ -1,4 +1,4 @@
-import {describe, test, expect, vi, it, beforeEach} from 'vitest'
+import {describe, expect, vi, it, beforeEach, afterEach} from 'vitest'
 
 import {
   store as secureStore,
@@ -7,13 +7,10 @@ import {
 } from '../secure-store'
 
 import {store, fetch, remove, identifier} from './store'
-import {SessionSchema} from './schema'
-import type {Session} from './schema'
 
-vi.mock('../secure-store')
 const mockedSecureStore = vi.mocked(secureStore)
 const mockedSecureFetch = vi.mocked(secureFetch)
-const mockedSecureRemove = vi.mocked(secureFetch)
+const mockedSecureRemove = vi.mocked(secureRemove)
 
 describe('store', () => {
   it('serializes the session as a JSON when storing it', () => {
