@@ -41,16 +41,16 @@ const ApplicationsSchema = define.object({
   /**
    * Exchanged tokens for Admin applications.
    */
-  admin: define.object({}).catchall(ApplicationTokenSchema),
+  adminApi: define.object({}).catchall(ApplicationTokenSchema),
   /**
    * Exchanged tokens for Partner applications.
    */
-  partners: define.object({}).catchall(ApplicationTokenSchema),
+  partnersApi: define.object({}).catchall(ApplicationTokenSchema),
 
   /**
    * Exchanged tokens for Storefront Renderer applications.
    */
-  storefrontRenderer: define.object({}).catchall(ApplicationTokenSchema),
+  storefrontRendererApi: define.object({}).catchall(ApplicationTokenSchema),
 })
 
 /**
@@ -65,7 +65,7 @@ const ApplicationsSchema = define.object({
  *   }
  *
  */
-const SessionSchema = define.object({}).catchall(
+export const SessionSchema = define.object({}).catchall(
   define.object({
     /**
      * It contains the identity token. Before usint it, we exchange it
