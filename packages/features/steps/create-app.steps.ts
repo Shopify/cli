@@ -18,6 +18,8 @@ Then(
       `file:${directories.packages.cli}`,
       '--shopify-app-version',
       `file:${directories.packages.app}`,
+      '--shopify-cli-kit-version',
+      `file:${directories.packages.cliKit}`,
     ])
     const hyphenatedAppName = stdout.match(/Initializing your app ([\w-]+)/)[1]
     this.appDirectory = `${this.temporaryDirectory}/${hyphenatedAppName}`

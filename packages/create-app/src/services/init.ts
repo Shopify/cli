@@ -27,6 +27,7 @@ interface InitOptions {
   dependencyManager: string | undefined
   shopifyCliVersion: string | undefined
   shopifyAppVersion: string | undefined
+  shopifyCliKitVersion: string | undefined
 }
 
 async function init(options: InitOptions) {
@@ -34,6 +35,7 @@ async function init(options: InitOptions) {
   const templatePath = await getTemplatePath('app')
   const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version
   const appPackageVersion = options.shopifyAppVersion ?? appPackage.version
+  const cliKitOverridenVersion = options.shopifyCliKitVersion
 
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
@@ -49,6 +51,7 @@ async function init(options: InitOptions) {
             templatePath,
             cliPackageVersion,
             appPackageVersion,
+            cliKitOverridenVersion,
             user,
             dependencyManager,
           })
@@ -107,6 +110,7 @@ async function createApp(
     templatePath: string
     cliPackageVersion: string
     appPackageVersion: string
+    cliKitOverridenVersion: string | undefined
     user: string
     dependencyManager: string
   },
@@ -128,6 +132,8 @@ async function createApp(
     shopify_cli_version: options.cliPackageVersion,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     shopify_app_version: options.appPackageVersion,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    cli_kit_version_overriden_version: options.cliKitOverridenVersion,
     author: options.user,
     dependencyManager: options.dependencyManager,
   }

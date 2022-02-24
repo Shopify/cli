@@ -27,12 +27,17 @@ export default class Init extends Command {
     'shopify-cli-version': Flags.string({
       char: 's',
       env: 'SHOPIFY_FLAG_SHOPIFY_CLI_VERSION',
-      hidden: false,
+      hidden: true,
+    }),
+    'shopify-cli-kit-version': Flags.string({
+      char: 's',
+      env: 'SHOPIFY_FLAG_SHOPIFY_CLI_KIT_VERSION',
+      hidden: true,
     }),
     'shopify-app-version': Flags.string({
       char: 'a',
       env: 'SHOPIFY_FLAG_SHOPIFY_APP_VERSION',
-      hidden: false,
+      hidden: true,
     }),
   }
 
@@ -47,6 +52,7 @@ export default class Init extends Command {
       dependencyManager: flags['dependency-manager'],
       shopifyCliVersion: flags['shopify-cli-version'],
       shopifyAppVersion: flags['shopify-app-version'],
+      shopifyCliKitVersion: flags['shopify-cli-kit-version'],
       directory,
     })
   }

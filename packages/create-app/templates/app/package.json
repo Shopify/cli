@@ -14,5 +14,13 @@
     "@shopify/app": "{{shopify_app_version}}",
     "react": "17.0.2"
   },
+  {% if cli_kit_version_overriden_version %}
+  "overrides": {
+    "@shopify/cli-kit": "{{cli_kit_version_overriden_version}}"
+  },
+  "resolutions": {
+    "@shopify/cli-kit": "{{cli_kit_version_overriden_version}}"
+  },
+  {% endif %}
   "author": "{{author}}"
 }
