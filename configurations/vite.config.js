@@ -28,7 +28,6 @@ export default function config(packagePath) {
     test: {
       clearMocks: true,
       mockReset: true,
-      restoreMocks: true,
       setupFiles: [path.join(__dirname, './vitest.setup.js')],
     },
   })

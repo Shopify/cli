@@ -8,9 +8,7 @@ import {
 
 import {store, fetch, remove, identifier} from './store'
 
-const mockedSecureStore = vi.mocked(secureStore)
-const mockedSecureFetch = vi.mocked(secureFetch)
-const mockedSecureRemove = vi.mocked(secureRemove)
+vi.mock('../secure-store')
 
 describe('store', () => {
   it('serializes the session as a JSON when storing it', () => {
@@ -21,7 +19,7 @@ describe('store', () => {
     store(session)
 
     // Then
-    expect(mockedSecureStore).toHaveBeenCalledWith(
+    expect(vi.mocked(secureStore)).toHaveBeenCalledWith(
       identifier,
       JSON.stringify(session),
     )
@@ -31,7 +29,7 @@ describe('store', () => {
 describe('fetch', () => {
   it('returns undefined when no session exists in the secure store', async () => {
     // Given
-    mockedSecureFetch.mockResolvedValue(null)
+    vi.mocked(secureFetch).mockResolvedValue(null)
 
     // When
     const got = await fetch()
@@ -42,7 +40,9 @@ describe('fetch', () => {
 
   it('returns undefined when the content does not match the schema', async () => {
     // Given
-    mockedSecureFetch.mockResolvedValue(JSON.stringify({invalid: 'format'}))
+    vi.mocked(secureFetch).mockResolvedValue(
+      JSON.stringify({invalid: 'format'}),
+    )
 
     // When
     const got = await fetch()
@@ -54,7 +54,7 @@ describe('fetch', () => {
   it('returns the session when the format is valid', async () => {
     // Given
     const session = testSession()
-    mockedSecureFetch.mockResolvedValue(JSON.stringify(session))
+    vi.mocked(secureFetch).mockResolvedValue(JSON.stringify(session))
 
     // When
     const got = await fetch()
@@ -70,7 +70,7 @@ describe('remove', () => {
     remove()
 
     // Then
-    expect(mockedSecureRemove).toHaveBeenCalledWith(identifier)
+    expect(vi.mocked(secureRemove)).toHaveBeenCalledWith(identifier)
   })
 })
 
