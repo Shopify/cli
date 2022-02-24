@@ -1,12 +1,17 @@
 import {define} from '../schema'
 
+const DateSchema = define.preprocess((arg) => {
+  if (typeof arg === 'string' || arg instanceof Date) return new Date(arg)
+  return null
+}, define.date())
+
 /**
  * The schema represents an Identity token.
  */
 const IdentityTokenSchema = define.object({
   accessToken: define.string(),
   refreshToken: define.string(),
-  expiresAt: define.date(),
+  expiresAt: DateSchema,
   scopes: define.array(define.string()),
 })
 
@@ -16,7 +21,7 @@ const IdentityTokenSchema = define.object({
  */
 const ApplicationTokenSchema = define.object({
   accessToken: define.string(),
-  expiresAt: define.date(),
+  expiresAt: DateSchema,
   scopes: define.array(define.string()),
 })
 
