@@ -1,7 +1,9 @@
-import path from 'pathe';
-import dts from 'rollup-plugin-dts';
+import path from 'pathe'
+import dts from 'rollup-plugin-dts'
 
-import {external, plugins, distDir} from '../../configurations/rollup.config';
+import {external, plugins, distDir} from '../../configurations/rollup.config'
+
+const cliKitExternal = [...external]
 
 const configuration = () => [
   {
@@ -14,7 +16,7 @@ const configuration = () => [
       },
     ],
     plugins: plugins(__dirname),
-    external: [...external],
+    external: cliKitExternal,
   },
   {
     input: path.join(__dirname, 'src/index.ts'),
@@ -33,8 +35,8 @@ const configuration = () => [
         },
       }),
     ],
-    external: [...external],
+    external: cliKitExternal,
   },
-];
+]
 
-export default configuration;
+export default configuration

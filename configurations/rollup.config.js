@@ -37,4 +37,4 @@ export const plugins = (packagePath, additionalAliases = []) => {
   ]
 }
 
-export const external = ['@oclif/core', '@bugsnag/js']
+export const external = ['@oclif/core', '@bugsnag/js', 'keytar']

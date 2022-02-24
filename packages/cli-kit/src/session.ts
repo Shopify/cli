@@ -1,5 +1,6 @@
 import {SessionSchema} from './session/schema'
 import type {Session} from './session/schema'
+import {store as sessionStore} from './session/store'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -57,6 +58,5 @@ interface OAuthApplications {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
 ): Promise<Session> {
-  console.log('Running')
   return {}
 }
