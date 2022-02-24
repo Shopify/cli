@@ -17,18 +17,18 @@ interface ExecOptions {
  * @param command The command to be executed.
  * @returns A promise that resolves or rejects when the command execution finishes.
  */
-export const exec = async (
+export function exec(
   command: string,
   args: string[] = [],
   options?: ExecOptions,
-) => {
+) {
   if (isDebug) {
     console.log(pc.gray(`Running: ${command} ${args.join(' ')}`))
   }
 
   const _options: any = {...options, stdout: undefined, stderr: undefined}
-  const commandProcess = execa(command, args, _options)
   const shortCommand = command.split('/').slice(-1).pop()
+  const commandProcess = execa(command, args, _options)
   commandProcess.stdout.on('data', (data: string) => {
     if (isDebug) {
       console.log(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
@@ -39,5 +39,5 @@ export const exec = async (
       console.log(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
     }
   })
-  await commandProcess
+  return commandProcess
 }

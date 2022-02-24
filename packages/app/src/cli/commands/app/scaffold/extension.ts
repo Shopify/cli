@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {file, path} from '@shopify/cli-kit'
+import {file, output, path} from '@shopify/cli-kit'
 
 import {extensions} from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
@@ -43,8 +43,7 @@ export default class AppScaffoldExtension extends Command {
     await extensionInitService({
       ...promptAnswers,
       parentApp,
-      log: this.log.bind(this),
     })
-    this.log(`Extension ${name} generated successfully!`)
+    output.message(output.content`Extension ${name} generated successfully!`)
   }
 }
