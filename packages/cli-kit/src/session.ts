@@ -1,4 +1,6 @@
-import {Service} from './network/service'
+import {SessionSchema} from './session/schema'
+import type {Session} from './session/schema'
+import {store as sessionStore} from './session/store'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -9,8 +11,6 @@ type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
  * It represents the options to authenticate against the Shopify Admin API.
  */
 interface AdminAPIOAuthOptions {
-  /** fqdn of the Shopify instance */
-  fqdn: string
   /** List of scopes to request permissions for */
   scopes: AdminAPIScope[]
 }
@@ -33,39 +33,20 @@ interface StorefrontRendererAPIOAuthOptions {
   scopes: StorefrontRendererScope[]
 }
 
+interface ShopifyOAuthOptions {
+  storeFqdn?: string
+  storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
+  adminApi?: AdminAPIOAuthOptions
+}
+
 /**
  * It represents the authentication requirements and
  * is the input necessary to trigger the authentication
  * flow.
  */
 interface OAuthApplications {
-  adminApi?: AdminAPIOAuthOptions[]
+  shopify?: ShopifyOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
-  storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
-}
-
-/**
- * It represents an oauth token.
- */
-interface OAuthToken {
-  /** List of scopes the token has access to */
-  scopes: string[]
-  /** Expiration date */
-  expiresAt: Date
-  /** Access token */
-  accessToken: string
-}
-
-/**
- * It represents the output object of the authentication flow.
- * This object can then be used by API clients to send authenticated requests.
- */
-interface OAuthSession {
-  adminApi?: {
-    [key: string]: OAuthToken
-  }
-  partnersApi?: OAuthToken
-  storefrontRendererApi?: OAuthToken
 }
 
 /**
@@ -76,6 +57,6 @@ interface OAuthSession {
 // eslint-disable-next-line require-await
 export async function ensureAuthenticated(
   applications: OAuthApplications,
-): Promise<OAuthSession> {
+): Promise<Session> {
   return {}
 }

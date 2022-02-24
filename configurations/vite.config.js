@@ -1,8 +1,7 @@
-import path from 'path';
+import path from 'pathe'
+import {defineConfig} from 'vite'
 
-import {defineConfig} from 'vite';
-
-import {plugins} from './rollup.config';
+import {plugins} from './rollup.config'
 
 const aliases = {
   '@shopify/cli-kit': path.join(__dirname, '../packages/cli-kit/src/index.ts'),
@@ -10,7 +9,7 @@ const aliases = {
     __dirname,
     '../packages/cli-testing/src/index.ts',
   ),
-};
+}
 
 export default function config(packagePath) {
   return defineConfig({
@@ -27,10 +26,9 @@ export default function config(packagePath) {
     },
     // @ts-ignore
     test: {
-      isolate: true,
       clearMocks: true,
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest.setup.js')],
     },
-  });
+  })
 }

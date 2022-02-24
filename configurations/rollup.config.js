@@ -37,4 +37,12 @@ export const plugins = (packagePath, additionalAliases = []) => {
   ]
 }
 
-export const external = ['@oclif/core', '@bugsnag/js']
+export const external = [
+  '@oclif/core',
+  '@bugsnag/js',
+  /**
+   * Keytar contains some native code that leads to issues with Rollup.
+   * Because of that we make it an external dependency of @shopify/cli-kit
+   */
+  'keytar',
+]

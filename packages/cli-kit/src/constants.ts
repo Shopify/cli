@@ -10,6 +10,9 @@ const constants = {
     spinNamespace: 'SPIN_NAMESPACE',
     spinHost: 'SPIN_HOST',
   },
+  keychain: {
+    service: 'shopify-cli',
+  },
 }
 
 export default constants
