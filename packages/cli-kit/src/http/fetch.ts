@@ -1,6 +1,6 @@
-import nodeFetch from 'node-fetch'
-import type {RequestInfo, RequestInit, Response} from 'node-fetch'
+import crossFetch from 'cross-fetch'
 
+type Response = ReturnType<typeof crossFetch>
 /**
  * An interface that abstracts way node-fetch. When Node has built-in
  * support for "fetch" in the standard library, we can drop the node-fetch
@@ -12,8 +12,8 @@ import type {RequestInfo, RequestInit, Response} from 'node-fetch'
  * @param init {RequestInit} An object containing any custom settings that you want to apply to the request
  * @returns A promise that resolves with the response.
  */
-async function fetch(url: RequestInfo, init?: RequestInit): Promise<Response> {
-  const response = await nodeFetch(url, init)
+async function fetch(url: RequestInfo, init?: RequestInit): Response {
+  const response = await crossFetch(url, init)
   return response
 }
 

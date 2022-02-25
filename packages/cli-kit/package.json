@@ -65,7 +65,7 @@
     "latest-version": "^6.0.0",
     "liquidjs": "^9.34.0",
     "listr2": "^4.0.2",
-    "node-fetch": "^3.2.0",
+    "cross-fetch": "^3.1.5",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",
     "term-size": "^3.0.1",
