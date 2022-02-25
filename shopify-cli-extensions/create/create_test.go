@@ -52,10 +52,6 @@ func TestMergeTemplatesYAML(t *testing.T) {
 		t.Error(err)
 	}
 
-	if config.Development.BuildDir != "build" {
-		t.Errorf("expect build directory to be set to \"build\" but it was set to %v", config.Development.BuildDir)
-	}
-
 	if len(config.ExtensionPoints) != 1 {
 		t.Errorf("expect extension points to have length of 1 but received %v", len(config.ExtensionPoints))
 	}
