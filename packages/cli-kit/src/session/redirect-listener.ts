@@ -10,7 +10,7 @@ export const AuthenticationError = (message: string) => {
   return new Abort(message)
 }
 export const MissingCodeError = new Bug(
-  `The authentication cannot contiue because the redirect doesn't include the code.`,
+  `The authentication cannot continue because the redirect doesn't include the code.`,
 )
 
 export const redirectResponseBody =
