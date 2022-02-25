@@ -4,7 +4,7 @@ import {file, output, path} from '@shopify/cli-kit'
 import {extensions} from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../app/app'
-import extensionInitService from '../../../../services/extensionInit'
+import scaffoldExtensionService from '../../../services/scaffold/extension'
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an App Extension'
@@ -40,7 +40,7 @@ export default class AppScaffoldExtension extends Command {
       name: flags.name,
     })
     const {extensionType, name} = promptAnswers
-    await extensionInitService({
+    await scaffoldExtensionService({
       ...promptAnswers,
       parentApp,
     })
