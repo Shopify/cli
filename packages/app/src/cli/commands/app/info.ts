@@ -1,5 +1,6 @@
 import {Command, Flags} from '@oclif/core'
 import {output, path} from '@shopify/cli-kit'
+
 import {load as loadApp, App} from '../../app/app'
 
 export default class AppInfo extends Command {

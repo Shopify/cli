@@ -1,23 +1,23 @@
-import {fileURLToPath} from 'url';
+import {fileURLToPath} from 'url'
 
-import path from 'pathe';
-import fg from 'fast-glob';
+import path from 'pathe'
+import fg from 'fast-glob'
 
-import {external, plugins, distDir} from '../../configurations/rollup.config';
+import {external, plugins, distDir} from '../../configurations/rollup.config'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const cliExternal = [
   ...external,
   '@oclif/core',
   '@shopify/cli-kit',
   '@bugsnag/js',
-];
+]
 
 const featureCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/app/**/*.ts`),
   `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
-]);
+])
 const configuration = () => [
   // CLI
   {
@@ -33,9 +33,9 @@ const configuration = () => [
             return `commands/${chunkInfo.facadeModuleId
               .split('src/cli/commands')
               .pop()
-              .replace('ts', 'js')}`;
+              .replace('ts', 'js')}`
           } else {
-            return '[name].js';
+            return '[name].js'
           }
         },
       },
@@ -43,6 +43,6 @@ const configuration = () => [
     plugins: plugins(__dirname),
     external: cliExternal,
   },
-];
+]
 
-export default configuration;
+export default configuration
