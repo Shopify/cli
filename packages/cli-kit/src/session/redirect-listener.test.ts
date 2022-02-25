@@ -30,7 +30,7 @@ describe('RedirectListener', () => {
     await subject.start()
 
     // Then
-    const listenCalls = vi.mocked(listenSpy).calls
+    const listenCalls = listenSpy.calls
     expect(listenCalls.length).toBe(1)
     expect(listenCalls[0][0]).toBe(3000)
     expect(listenCalls[0][1]).toBe('localhost')
@@ -53,7 +53,7 @@ describe('RedirectListener', () => {
     })
 
     // When/Then
-    await subject.stop()
+    await expect(subject.stop()).resolves
   })
 
   it('stops error when the server fails to stop', async () => {

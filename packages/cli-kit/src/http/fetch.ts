@@ -2,11 +2,11 @@ import crossFetch from 'cross-fetch'
 
 type Response = ReturnType<typeof crossFetch>
 /**
- * An interface that abstracts way node-fetch. When Node has built-in
- * support for "fetch" in the standard library, we can drop the node-fetch
+ * An interface that abstracts way cross-fetch. When Node has built-in
+ * support for "fetch" in the standard library, we can drop the cross-fetch
  * dependency from here.
- * Note that we are exposing types from "node-fetch". The reason being is that
- * they are consistent with the Web API so if we drop node-fetch in the future
+ * Note that we are exposing types from "cross-fetch". The reason being is that
+ * they are consistent with the Web API so if we drop cross-fetch in the future
  * it won't require changes from the callers.
  * @param url {RequestInfo} This defines the resource that you wish to fetch.
  * @param init {RequestInit} An object containing any custom settings that you want to apply to the request
