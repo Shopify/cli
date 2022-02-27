@@ -52,20 +52,27 @@ export async function load(directory: string): Promise<App> {
   if (!(await file.exists(directory))) {
     throw new error.Abort(`Couldn't find directory ${directory}`)
   }
-  const configurationPath = path.join(directory, configurationFileNames.app)
+  const configurationPath = await path.findUp(configurationFileNames.app, {
+    cwd: directory,
+    type: 'file',
+  })
   const configuration = await parseConfigurationFile(
     AppConfigurationSchema,
     configurationPath,
   )
-  const scripts = await loadScripts(directory)
-  const uiExtensions = await loadExtensions(directory)
+  const appDirectory = configurationPath.replace(
+    new RegExp(`${configurationFileNames.app}$`),
+    '',
+  )
+  const scripts = await loadScripts(appDirectory)
+  const uiExtensions = await loadExtensions(appDirectory)
   const yarnLockPath = path.join(
-    directory,
+    appDirectory,
     genericConfigurationFileNames.yarn.lockfile,
   )
   const yarnLockExists = await file.exists(yarnLockPath)
   const pnpmLockPath = path.join(
-    directory,
+    appDirectory,
     genericConfigurationFileNames.pnpm.lockfile,
   )
   const pnpmLockExists = await file.exists(pnpmLockPath)
@@ -79,7 +86,7 @@ export async function load(directory: string): Promise<App> {
   }
 
   return {
-    directory,
+    directory: appDirectory,
     configuration,
     scripts,
     uiExtensions,
