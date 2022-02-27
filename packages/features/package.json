@@ -16,6 +16,9 @@
     "cucumber-junit-formatter": "^0.2.2",
     "cucumber-pretty": "^6.0.1"
   },
+  "engines": {
+    "node": "^14.13.1 || ^16.0.0 || ^17.0.0"
+  },
   "eslintConfig": {
     "extends": [
       "../../package.json"
