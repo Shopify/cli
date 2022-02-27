@@ -1,4 +1,4 @@
-import {file, error, path, schema, toml} from '@shopify/cli-kit'
+import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
 
 import {
   blocks,
@@ -92,7 +92,12 @@ async function loadConfigurationFile(path: string): Promise<object> {
     throw new error.Abort(`Couldn't find the configuration file at ${path}`)
   }
   const configurationContent = await file.read(path)
-  return toml.parse(configurationContent)
+  // Convert snake_case keys to camelCase before returning
+  return Object.fromEntries(
+    Object.entries(
+      toml.parse(configurationContent)
+    ).map((kv) => [string.camelize(kv[0]), kv[1]])
+  )
 }
 
 async function parseConfigurationFile(schema: any, path: string) {
