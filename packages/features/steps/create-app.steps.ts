@@ -1,5 +1,6 @@
-import {When, Then} from '@cucumber/cucumber'
 import {strict as assert} from 'assert'
+
+import {When, Then} from '@cucumber/cucumber'
 
 import {executables, directories} from '../lib/constants'
 import {exec} from '../lib/system'
@@ -40,4 +41,5 @@ Then(
     const results = JSON.parse(stdout)
     assert.equal(results.configuration.name, appName)
     assert.equal(results.packageManager, dependencyManager)
-  })
+  },
+)

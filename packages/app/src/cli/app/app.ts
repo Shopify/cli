@@ -94,9 +94,10 @@ async function loadConfigurationFile(path: string): Promise<object> {
   const configurationContent = await file.read(path)
   // Convert snake_case keys to camelCase before returning
   return Object.fromEntries(
-    Object.entries(
-      toml.parse(configurationContent)
-    ).map((kv) => [string.camelize(kv[0]), kv[1]])
+    Object.entries(toml.parse(configurationContent)).map((kv) => [
+      string.camelize(kv[0]),
+      kv[1],
+    ]),
   )
 }
 

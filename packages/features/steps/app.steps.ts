@@ -1,5 +1,6 @@
-import {When, Then} from '@cucumber/cucumber'
 import {strict as assert} from 'assert'
+
+import {When, Then} from '@cucumber/cucumber'
 
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
@@ -38,9 +39,15 @@ Then(
       this.appDirectory,
     ])
     const results = JSON.parse(stdout)
-    const extension = results.uiExtensions.find((extension: {configuration: UIExtensionConfiguration}) => {
-      return extension.configuration.name === appName
-    })
-    if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(results, null, 2)}`)
+    const extension = results.uiExtensions.find(
+      (extension: {configuration: UIExtensionConfiguration}) => {
+        return extension.configuration.name === appName
+      },
+    )
+    if (!extension)
+      assert.fail(
+        `Extension not created! Config:\n${JSON.stringify(results, null, 2)}`,
+      )
     assert.equal(extension.configuration.extensionType, extensionType)
-  })
+  },
+)
