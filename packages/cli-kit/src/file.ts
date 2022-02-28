@@ -1,16 +1,32 @@
 import fs from 'fs-extra'
 import del from 'del'
 
+/**
+ * It reads a file and returns its content as a string using the
+ * utf-8 encoding
+ * @param path {string} Path to the file to read.
+ * @returns {Promise<string>} A promise that resolves with the content of the file.
+ */
 export async function read(path: string): Promise<string> {
-  return fs.readFile(path, {encoding: 'utf-8'})
+  const content = await fs.readFile(path, {encoding: 'utf-8'})
+  return content
+}
+
+/**
+ * Copies a file
+ * @param from {string} Path to the directory or file to be copied.
+ * @param to {string} Destination path.
+ */
+export async function copy(from: string, to: string): Promise<void> {
+  await fs.copy(from, to)
 }
 
 export async function write(path: string, data: string): Promise<void> {
-  return fs.writeFile(path, data)
+  await fs.writeFile(path, data)
 }
 
 export async function mkdir(path: string): Promise<void> {
-  return fs.mkdirp(path)
+  await fs.mkdirp(path)
 }
 
 export async function rmdir(path: string): Promise<void> {
