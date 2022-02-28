@@ -8,3 +8,7 @@ import latestVersion from 'latest-version'
 export async function latestNpmPackageVersion(name: string) {
   return latestVersion(name)
 }
+
+export function currentVersion(name: string) {
+  return '0.16.0' // TODO
+}

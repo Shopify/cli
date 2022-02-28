@@ -87,3 +87,4 @@ export const SessionSchema = define.object({}).catchall(
 )
 
 export type Session = define.infer<typeof SessionSchema>
+export type ApplicationToken = define.infer<typeof ApplicationTokenSchema>
