@@ -1,3 +1,4 @@
-import * as adminAPI from './api/admin-api'
+import * as admin from './api/admin'
+import * as partners from './api/partners'
 
-export {adminAPI}
+export {admin, partners}

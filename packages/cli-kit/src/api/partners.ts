@@ -1,0 +1,16 @@
+import {ApplicationToken} from 'session/schema'
+import {request, gql} from 'graphql-request'
+
+import {partners} from '../environment/fqdn'
+
+import {buildHeaders} from './common'
+
+export async function query<T>(
+  query: any,
+  token: ApplicationToken,
+  variables: any,
+): Promise<T> {
+  const url = await partners()
+  const headers = buildHeaders(token.accessToken)
+  return request<T>(url, query, variables, headers)
+}
