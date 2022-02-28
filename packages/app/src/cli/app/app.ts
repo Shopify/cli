@@ -56,6 +56,11 @@ export async function load(directory: string): Promise<App> {
     cwd: directory,
     type: 'file',
   })
+  if (!configurationPath) {
+    throw new error.Abort(
+      `Couldn't find the configuration file for ${directory}, are you in an app directory?`,
+    )
+  }
   const configuration = await parseConfigurationFile(
     AppConfigurationSchema,
     configurationPath,

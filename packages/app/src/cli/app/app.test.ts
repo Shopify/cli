@@ -49,9 +49,9 @@ describe('load', () => {
     blockType: BlockType
     name: string
   }) => {
-    return await file.mkdir(
-      path.dirname(blockConfigurationPath({blockType, name})),
-    )
+    const dirname = path.dirname(blockConfigurationPath({blockType, name}))
+    await file.mkdir(dirname)
+    return dirname
   }
 
   const writeBlockConfig = async ({
