@@ -34,7 +34,7 @@ async function writeFromTemplate({
   const templatePath = await getTemplatePath('extensions')
   const templateItemPath = path.join(templatePath, filename)
   const content = await file.read(templateItemPath)
-  const contentOutput = await template(content)(promptAnswers)
+  const contentOutput = await template.create(content)(promptAnswers)
   const fullpath = path.join(directory, _alias)
   await file.write(fullpath, contentOutput)
 }
