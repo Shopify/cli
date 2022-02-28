@@ -109,17 +109,6 @@ async function createApp(
     dependencyManager: string
   },
 ): Promise<void> {
-  const templateFiles: string[] = await path.glob(
-    path.join(options.templatePath, '**/*'),
-    {dot: true},
-  )
-  // We sort them topologically to start creating
-  // them from the most nested paths.
-  const sortedTemplateFiles = templateFiles
-    .map((path) => path.split('/'))
-    .sort((lhs, rhs) => (lhs.length < rhs.length ? 1 : -1))
-    .map((components) => components.join('/'))
-
   const templateData = {
     name: options.name,
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -131,23 +120,10 @@ async function createApp(
     author: options.user,
     dependencyManager: options.dependencyManager,
   }
-  await Promise.all(
-    sortedTemplateFiles.map(async (templateItemPath) => {
-      const outputPath = await template(
-        path.join(
-          options.outputDirectory,
-          path.relative(options.templatePath, templateItemPath),
-        ),
-      )(templateData)
-      if (await file.isDirectory(templateItemPath)) {
-        await file.mkdir(outputPath)
-      } else {
-        await file.mkdir(path.dirname(outputPath))
-        const content = await file.read(templateItemPath)
-        const contentOutput = await template(content)(templateData)
-        await file.write(outputPath, contentOutput)
-      }
-    }),
+  await template.recursiveDirectoryCopy(
+    options.templatePath,
+    options.outputDirectory,
+    templateData,
   )
 }
 

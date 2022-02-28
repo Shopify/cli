@@ -1,7 +1,7 @@
 export * as ui from './ui'
 export * as error from './error'
 export * as system from './system'
-export * from './template'
+export * as template from './template'
 export * as string from './string'
 export * as path from './path'
 export * as file from './file'
