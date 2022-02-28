@@ -65,10 +65,7 @@ export async function load(directory: string): Promise<App> {
     AppConfigurationSchema,
     configurationPath,
   )
-  const appDirectory = configurationPath.replace(
-    new RegExp(`${configurationFileNames.app}$`),
-    '',
-  )
+  const appDirectory = path.dirname(configurationPath)
   const scripts = await loadScripts(appDirectory)
   const uiExtensions = await loadExtensions(appDirectory)
   const yarnLockPath = path.join(
