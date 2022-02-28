@@ -4,35 +4,23 @@
 
 The information below is mainly targeting contributors rather than users. If you want to learn more about how to build extensions and how to use the Shopify CLI in general, please consult the [official documentation](https://shopify.dev/apps/tools/cli).
 
-## Setup
+## Getting started
 
-Install Go:
+Install Go by running
 
 ```sh
 brew install go
 ```
 
-## Test
+and familiarize yourself with the `Makefile`. It defines several useful tasks for building and testing the project.
 
-To run the tests, simply execute the following shell command:
-
-```sh
-make test
-```
-
-### Bootstrap extensions
-
-To bootstrap extensions and install of node dependencies, run:
+To build the project, bootstrap some example extensions and install all of their dependencies, run:
 
 ```sh
 make bootstrap
 ```
 
-This will create extensions in the `tmp` folder and install the node dependencies. It will also build the Dev Console app.
-
-### Serve
-
-After [boostrapping an extension](#bootstrap-an-extension), you can run the server by execute the following shell command:
+This will create extensions in the `tmp/` folder and install the node dependencies. It will also build the Dev Console app. For more information on creating extensions, see [Creating Extensions](#creating-extensions). Next, you can run the server by executing the following shell command:
 
 ```sh
 make run serve testdata/extension.config.yml
@@ -46,9 +34,29 @@ curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/asset
 
 Going to root end point http://localhost:8000 will take you to the Dev Console app.
 
-## Publish UI Extension Server kit and Node Shopify CLI Extensions
+## Testing
 
-Create a new branch. Then do a version bump.
+To run the Go and JavaScript Unit tests, simply execute the following shell command:
+
+```sh
+make test
+```
+
+The project also provides integration tests, which can be executed as follows:
+
+```sh
+make integration-test
+```
+
+Both sets of tests are executed for all pull-requests and commits to the `main` branch. The automated integration test only tests the integration between the Go and the JavaScript layer. It does not test the integration with Shopify CLI. For information on how to manually test the full end to end flow, see [Testing the integration with the Shopify CLI](#testing-the-integration-with-the-shpoify-cli).
+
+## Releasing
+
+This project contains multiple publishable artifacts: a Go binary and and several Node packages.
+
+### Publishing the Node Packages
+
+To publish the UI Extension Server kit and Node Shopify CLI Extensions, create a new branch. Then do a version bump.
 
 ```sh
 yarn version-bump
@@ -61,8 +69,17 @@ git push --follow-tags
 ```
 
 Once the PR for the new branch is merged, you can deploy the packages on [Shipit](https://shipit.shopify.io/shopify/shopify-cli-extensions/production).
+Please choose `latest` as the distribution tag in ShipIt if you're deploying a stable version and `next` if you're deploying a pre-release version.
+These tags allow developers to reference our libraries without having to specify a particular version.
+[Npm Dist Tags](https://docs.npmjs.com/cli/v8/commands/npm-dist-tag) shouldn't be confused with Git Tags, which are created during the release process as well.
 
-## Create
+### Publishing the Go Binary
+
+Publishing the Go Binary is done through GitHub Releases, which also allows to create a Git tag in the process. Simply create a new [release](https://github.com/Shopify/shopify-cli-extensions/releases/new) and publish it. Subsequently, a GitHub Action will cross-compile the binaries and attach the resulting assets to the release.
+
+## Appendix
+
+### Creating Extensions
 
 To create new extension projects, simply execute the following shell command:
 
@@ -101,7 +118,7 @@ extensions:
 - typescript-react
 - javascript-react
 
-## Manual integration testing
+### Testing the integration with the Shopify CLI
 
 The easiest way to test the integration with the [Shopify CLI](https://github.com/Shopify/shopify-cli) is to clone the aforementioned repository and
 
@@ -114,9 +131,9 @@ Afterwards, the following three commands will be executed by the new extension s
 - `shopify extension serve`
 - `shopify extension build`
 
-## DevConsole
+### DevConsole
 
-### Build
+#### Build
 
 The build process is taken care of in the dev server build step. You can also run it yourself.
 
@@ -127,7 +144,7 @@ make bootstrap
 yarn build
 ```
 
-### Development
+#### Development
 
 The Dev Console needs a built dev server to connect to via a WebSocket.
 
@@ -143,11 +160,11 @@ Then, run the DevConsole app and Dev Server simultaneously when developing for t
 make serve-dev testdata/extension.config.yml
 ```
 
-## Node Package Commands
+#### Node Package Commands
 
-`start`: Start up the DevConsole app
-`test`: Run Jest tests
-`build`: Builds the Dev Server Kit and Dev Console app
-`lint`: Runs linting
-`version-bump`: Version bump
-`deploy`: Publishes Dev Server Kit and Dev Conosle
+- `start`: Start up the DevConsole app
+- `test`: Run Jest tests
+- `build`: Builds the Dev Server Kit and Dev Console app
+- `lint`: Runs linting
+- `version-bump`: Version bump
+- `deploy`: Publishes Dev Server Kit and Dev Console
