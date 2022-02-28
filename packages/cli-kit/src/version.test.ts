@@ -1,6 +1,8 @@
 import {describe, it, expect, vi} from 'vitest'
 import latestVersion from 'latest-version'
 
+import * as packageInfo from '../package.json'
+
 import {currentCLIKitVersion, latestNpmPackageVersion} from './version'
 
 vi.mock('latest-version')
@@ -21,18 +23,16 @@ describe('latestNpmPackageVersion', () => {
   })
 })
 
-// describe('currentPackageVersion', () => {
-//   it('returns the current version of the given package', () => {
-//     // Given
-//     const version = '0.11.1'
-//     vi.mock('../package.json', () => {
-//       return {version}
-//     })
+describe('currentPackageVersion', () => {
+  it('returns the current version of the given package', () => {
+    // Given
+    const version = '0.11.2'
+    vi.mock('../package.json')
+    vi.mocked(packageInfo).version = version
+    // When
+    const got = currentCLIKitVersion()
 
-//     // When
-//     const got = currentCLIKitVersion()
-
-//     // Then
-//     expect(got).toBe(version)
-//   })
-// })
+    // Then
+    expect(got).toBe(version)
+  })
+})
