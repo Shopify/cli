@@ -8,6 +8,7 @@ import {version as cliVersion} from '../../cli/package.json'
 const constants = {
   environmentVariables: {
     debug: 'DEBUG',
+    runAsUser: 'SHOPIFY_RUN_AS_USER',
     partnersEnv: 'SHOPIFY_PARTNERS_ENV',
     shopifyEnv: 'SHOPIFY_SHOPIFY_ENV',
     identityEnv: 'SHOPIFY_IDENTITY_ENV',
@@ -16,6 +17,11 @@ const constants = {
     spinWorkspace: 'SPIN_WORKSPACE',
     spinNamespace: 'SPIN_NAMESPACE',
     spinHost: 'SPIN_HOST',
+  },
+  paths: {
+    executables: {
+      dev: '/opt/dev/bin/dev',
+    },
   },
   /**
    * Versions are resolved at build time by Rollup's JSON plugin.
