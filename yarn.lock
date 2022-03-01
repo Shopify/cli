@@ -1385,7 +1385,7 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nrwl/cli@13.8.2", "@nrwl/cli@^13.8.2":
+"@nrwl/cli@13.8.2":
   version "13.8.2"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-13.8.2.tgz#d4fa10d633565d15a4171ed5e558649e8f44ba79"
   integrity sha512-wpSKo/78y1oNeBhwHIRYaqDddNhzdOmTOkYNf+J6wuaeaEMlnrJFgDrTyy14ysgPFiW0vzb5AdrDb6W2tGigYQ==
@@ -1396,7 +1396,7 @@
     v8-compile-cache "2.3.0"
     yargs-parser "20.0.0"
 
-"@nrwl/cli@13.8.3":
+"@nrwl/cli@13.8.3", "@nrwl/cli@^13.8.3":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-13.8.3.tgz#3b8441aa0693cae0e0027700079998c73fe46dbd"
   integrity sha512-6+OTs9aF5GzZUSmPziCThdPw2yXqhEw6JjYjOU9OUMZP1+6nPv7mCZkl9W2f6LEm9hAWIxHC1DsUjzWhdL1VGQ==
@@ -1484,7 +1484,7 @@
     tmp "~0.2.1"
     tslib "^2.3.0"
 
-"@nrwl/tao@13.8.2", "@nrwl/tao@^13.8.2":
+"@nrwl/tao@13.8.2":
   version "13.8.2"
   resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-13.8.2.tgz#871ddad20de93ca68efb11721c1a9f7cabaa138f"
   integrity sha512-68GsErwpOQDZPunJrpXDpauQo40dP66dO7uHQUu1Jf+css0uu1dfXtIR4CrAikvLJ57fZZw09l1xFrI9+OfXjA==
@@ -1503,7 +1503,7 @@
     tslib "^2.3.0"
     yargs-parser "20.0.0"
 
-"@nrwl/tao@13.8.3":
+"@nrwl/tao@13.8.3", "@nrwl/tao@^13.8.2":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-13.8.3.tgz#386e847af28a87850724092f7df75c7dcb53a9e8"
   integrity sha512-zLM2uP398iLkpuTODfAaA1K7NeTGLrkVCdE7GkasrIg9dzd82Fx6k7kZnGhfVAVgfZpbXo8twKg0vdhxlJNWyA==
