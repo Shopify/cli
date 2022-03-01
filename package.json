@@ -40,7 +40,7 @@
     "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
-    "@typescript-eslint/parser": "^5.9.0",
+    "@typescript-eslint/parser": "^5.13.0",
     "cross-env": "^7.0.3",
     "cucumber-junit-formatter": "^0.2.2",
     "cucumber-pretty": "^6.0.1",
