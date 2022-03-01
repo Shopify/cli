@@ -3,8 +3,7 @@ import {randomUUID} from 'crypto'
 import constants from '../constants'
 
 export function buildHeaders(token: string): {[key: string]: any} {
-  const version = constants.versions.cli
-  const userAgent = `Shopify CLI; v=${version}`
+  const userAgent = `Shopify CLI; v=${constants.versions.cli}`
 
   // Employee data not available yet
   const isEmployee = true

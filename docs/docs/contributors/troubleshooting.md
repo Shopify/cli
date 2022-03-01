@@ -18,8 +18,8 @@ vi.mock('my-module')
 // Option 2, customize the mocks for each module function
 vi.mock('my-module', () => {
   functionA: vi.fn(),
-  functionB: () => "value",
-  functionC: vi.fn(() => "value")
+  functionB: () => "foo",
+  functionC: vi.fn(() => "foo")
 })
 ```
 
@@ -35,7 +35,7 @@ But it doesn't work for us, looks like there is some bug that won't let us mock 
 
 ### Solution
 
-The correct approach would be:
+The correct (and cleaner!) approach would be:
 
 ```typescript
 const import {functionA} from 'my-module'
@@ -50,7 +50,7 @@ vi.mocked(functionA).mockImplementation(() => {foo: "bar"})
 // When the function returns a promise, we can also mock the resolved value
 vi.mocked(functionA).mockResolvedValue({foo: "bar"})
 
-// When the function doesn't retturn a promise we can just specify a return value
+// When the function doesn't return a promise we can just set a return value
 vi.mocked(functionA).mockReturnValue({foo: "bar"})
 ```
 
