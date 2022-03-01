@@ -8,6 +8,7 @@ import {version as cliVersion} from '../../cli/package.json'
 const constants = {
   environmentVariables: {
     debug: 'DEBUG',
+    runAsUser: 'SHOPIFY_RUN_AS_USER',
     partnersEnv: 'SHOPIFY_PARTNERS_ENV',
     shopifyEnv: 'SHOPIFY_SHOPIFY_ENV',
     identityEnv: 'SHOPIFY_IDENTITY_ENV',

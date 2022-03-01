@@ -18,7 +18,11 @@ export function isDebug(env = process.env): boolean {
  * a local environment (where dev is present) or a cloud environment (spin).
  * @returns {boolean} True if the CLI is used in a Shopify environment.
  */
-export async function isShopify(): Promise<boolean> {
+export async function isShopify(env = process.env): Promise<boolean> {
+  const runAsUser = isTruthy(env[constants.environmentVariables.runAsUser])
+  if (runAsUser) {
+    return false
+  }
   const devInstalled = await fileExists(constants.paths.executables.dev)
   return devInstalled || isSpin()
 }
