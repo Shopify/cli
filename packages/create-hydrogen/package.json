@@ -51,7 +51,7 @@
     "@bugsnag/js": "^7.14.1",
     "@shopify/cli-hydrogen": "0.7.0",
     "@shopify/cli-kit": "0.12.0",
-    "@oclif/core": "1.3.3"
+    "@oclif/core": "1.3.6"
   },
   "devDependencies": {
     "enquirer": "^2.3.6",
