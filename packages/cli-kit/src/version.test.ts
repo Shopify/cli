@@ -6,6 +6,8 @@ import * as packageInfo from '../package.json'
 import {currentCLIKitVersion, latestNpmPackageVersion} from './version'
 
 vi.mock('latest-version')
+vi.mock('../package.json')
+
 const mockedLatestVersion = vi.mocked(latestVersion)
 
 describe('latestNpmPackageVersion', () => {
@@ -27,8 +29,8 @@ describe('currentPackageVersion', () => {
   it('returns the current version of the given package', () => {
     // Given
     const version = '0.11.2'
-    vi.mock('../package.json')
     vi.mocked(packageInfo).version = version
+
     // When
     const got = currentCLIKitVersion()
 
