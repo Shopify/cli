@@ -40,7 +40,7 @@ interface RedirectListenerOptions {
  * to continue the authentication. Because of that, we need
  * an HTTP server that runs and listens to the request.
  */
-class RedirectListener {
+export class RedirectListener {
   private static createServer(callback: RedirectCallback): http.Server {
     return http.createServer((request, response) => {
       const requestUrl = request.url
@@ -105,4 +105,24 @@ class RedirectListener {
   }
 }
 
-export default RedirectListener
+export async function listenRedirect(
+  host: string,
+  port: number,
+): Promise<string> {
+  const result = await new Promise<string>((resolve, reject) => {
+    const redirectListener = new RedirectListener({
+      host,
+      port,
+      callback: (error, code) => {
+        redirectListener.stop()
+        if (error) {
+          reject(error)
+        } else {
+          resolve(code as string)
+        }
+      },
+    })
+    redirectListener.start()
+  })
+  return result
+}

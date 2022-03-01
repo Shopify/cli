@@ -2,7 +2,8 @@ import http from 'http'
 
 import {describe, it, expect, vi} from 'vitest'
 
-import RedirectListener, {
+import {
+  RedirectListener,
   redirectResponseBody,
   EmptyUrlError,
   AuthenticationError,

@@ -39,6 +39,9 @@ const constants = {
   keychain: {
     service: 'shopify-cli',
   },
+  session: {
+    expirationTimeMarginInMinutes: 4,
+  },
 }
 
 export default constants
