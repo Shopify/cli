@@ -22,6 +22,12 @@ const constants = {
    */
   versions: {
     cliKit: cliKitVersion,
+    /**
+     * cli-kit can resolve the version of cli at build time because
+     * the version of both packages is tied. If it wasn't, wen'd need
+     * to resolve the version at build time.
+     * Check out the linked configuration in .changeset/config.json
+     */
     cli: cliVersion,
   },
   keychain: {
