@@ -1385,17 +1385,6 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nrwl/cli@13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-13.8.2.tgz#d4fa10d633565d15a4171ed5e558649e8f44ba79"
-  integrity sha512-wpSKo/78y1oNeBhwHIRYaqDddNhzdOmTOkYNf+J6wuaeaEMlnrJFgDrTyy14ysgPFiW0vzb5AdrDb6W2tGigYQ==
-  dependencies:
-    "@nrwl/tao" "13.8.2"
-    chalk "4.1.0"
-    enquirer "~2.3.6"
-    v8-compile-cache "2.3.0"
-    yargs-parser "20.0.0"
-
 "@nrwl/cli@13.8.3", "@nrwl/cli@^13.8.3":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-13.8.3.tgz#3b8441aa0693cae0e0027700079998c73fe46dbd"
@@ -1483,25 +1472,6 @@
     "@phenomnomnominal/tsquery" "4.1.1"
     tmp "~0.2.1"
     tslib "^2.3.0"
-
-"@nrwl/tao@13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-13.8.2.tgz#871ddad20de93ca68efb11721c1a9f7cabaa138f"
-  integrity sha512-68GsErwpOQDZPunJrpXDpauQo40dP66dO7uHQUu1Jf+css0uu1dfXtIR4CrAikvLJ57fZZw09l1xFrI9+OfXjA==
-  dependencies:
-    chalk "4.1.0"
-    enquirer "~2.3.6"
-    fast-glob "3.2.7"
-    fs-extra "^9.1.0"
-    ignore "^5.0.4"
-    jsonc-parser "3.0.0"
-    nx "13.8.2"
-    rxjs "^6.5.4"
-    rxjs-for-await "0.0.2"
-    semver "7.3.4"
-    tmp "~0.2.1"
-    tslib "^2.3.0"
-    yargs-parser "20.0.0"
 
 "@nrwl/tao@13.8.3", "@nrwl/tao@^13.8.2":
   version "13.8.3"
@@ -6916,13 +6886,6 @@ nwsapi@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
-
-nx@13.8.2:
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/nx/-/nx-13.8.2.tgz#93e560925eb70802c1ce5b266863ae2fb9a532a7"
-  integrity sha512-raCluwNq9lK1sb71omgWfgXiQS8r+mnmXraL4p4aI7P07hEer2Oo8QI9ec4KbVc04HKkLOMkzg6YkZ94Glkc/g==
-  dependencies:
-    "@nrwl/cli" "13.8.2"
 
 nx@13.8.3:
   version "13.8.3"

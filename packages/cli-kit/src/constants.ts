@@ -17,6 +17,11 @@ const constants = {
     spinNamespace: 'SPIN_NAMESPACE',
     spinHost: 'SPIN_HOST',
   },
+  paths: {
+    executables: {
+      dev: '/opt/dev/bin/dev',
+    },
+  },
   /**
    * Versions are resolved at build time by Rollup's JSON plugin.
    */
