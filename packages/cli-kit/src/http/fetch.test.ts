@@ -1,5 +1,6 @@
 import {describe, test, expect, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
+import type {RequestInit, RequestInfo} from 'node-fetch'
 
 import fetch from './fetch'
 
