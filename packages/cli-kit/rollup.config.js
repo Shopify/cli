@@ -10,7 +10,7 @@ const configuration = () => [
     input: path.join(__dirname, 'src/index.ts'),
     output: [
       {
-        file: path.join(distDir(__dirname), 'index.js'),
+        dir: distDir(__dirname),
         format: 'esm',
         sourcemap: true,
       },
