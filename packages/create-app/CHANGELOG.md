@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.30.1
+
+### Patch Changes
+
+- New CLI version
+
 ## 0.24.0
 
 ### Minor Changes

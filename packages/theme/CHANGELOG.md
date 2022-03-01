@@ -1,5 +1,11 @@
 # @shopify/theme
 
+## 0.5.3
+
+### Patch Changes
+
+- New CLI version
+
 ## 0.5.2
 
 ### Patch Changes
