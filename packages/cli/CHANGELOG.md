@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 0.30.0
+
+### Minor Changes
+
+- Fix the releasing of @shopify/cli
+
 ## 0.29.1
 
 ### Patch Changes

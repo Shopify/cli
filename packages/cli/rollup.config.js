@@ -1,9 +1,9 @@
-import path from 'pathe';
+import path from 'pathe'
 
-import {external, plugins, distDir} from '../../configurations/rollup.config';
+import {external, plugins, distDir} from '../../configurations/rollup.config'
 
-const hydrogenExternal = [/@miniflare/, /prettier/];
-const cliExternal = [...external, ...hydrogenExternal];
+const hydrogenExternal = [/@miniflare/, /prettier/]
+const cliExternal = ['@shopify/cli-kit', ...external, ...hydrogenExternal]
 
 const configuration = () => [
   // CLI
@@ -19,6 +19,6 @@ const configuration = () => [
     plugins: plugins(__dirname),
     external: cliExternal,
   },
-];
+]
 
-export default configuration;
+export default configuration
