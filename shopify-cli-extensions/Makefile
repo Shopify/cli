@@ -104,4 +104,7 @@ clean:
 	( test -d tmp && rm -r tmp/ ) || true
 
 clobber: clean
-	git clean -fxd
+	find . -type d -name node_modules -prune -exec rm -rf {} \;	# Remove all subdirectories called 'node_modules'
+	rm -rf api/dev-console
+	rm packages/tsconfig.tsbuildinfo shopify-extensions
+	git clean -fd
