@@ -1,7 +1,5 @@
 import latestVersion from 'latest-version'
 
-import * as packageInfo from '../package.json'
-
 /**
  * Returns the latest available version of an NPM package.
  * @param name {string} The name of the NPM package.
@@ -9,12 +7,4 @@ import * as packageInfo from '../package.json'
  */
 export async function latestNpmPackageVersion(name: string) {
   return latestVersion(name)
-}
-
-/**
- * Returns the current version of cli-kit
- * @returns A String value of the cli-kit version
- */
-export function currentCLIKitVersion() {
-  return packageInfo.version
 }

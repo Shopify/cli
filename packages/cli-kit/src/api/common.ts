@@ -1,12 +1,9 @@
 import {randomUUID} from 'crypto'
 
-import {currentCLIKitVersion} from '../version'
+import constants from '../constants'
 
 export function buildHeaders(token: string): {[key: string]: any} {
-  const version = currentCLIKitVersion()
-
-  // This works if CLI and CLI-KIT versions are the same
-  // cli-kit can't know cli's version
+  const version = constants.versions.cli
   const userAgent = `Shopify CLI; v=${version}`
 
   // Employee data not available yet

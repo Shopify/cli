@@ -1,12 +1,9 @@
 import {describe, it, expect, vi} from 'vitest'
 import latestVersion from 'latest-version'
 
-import * as packageInfo from '../package.json'
-
-import {currentCLIKitVersion, latestNpmPackageVersion} from './version'
+import {latestNpmPackageVersion} from './version'
 
 vi.mock('latest-version')
-vi.mock('../package.json')
 
 const mockedLatestVersion = vi.mocked(latestVersion)
 
@@ -22,19 +19,5 @@ describe('latestNpmPackageVersion', () => {
     // Then
     expect(got).toBe(version)
     expect(mockedLatestVersion).toHaveBeenCalledWith('@shopify/cli')
-  })
-})
-
-describe('currentPackageVersion', () => {
-  it('returns the current version of the given package', () => {
-    // Given
-    const version = '0.11.2'
-    vi.mocked(packageInfo).version = version
-
-    // When
-    const got = currentCLIKitVersion()
-
-    // Then
-    expect(got).toBe(version)
   })
 })
