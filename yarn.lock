@@ -7444,17 +7444,17 @@ pkg-up@^3.1.0:
   dependencies:
     find-up "^3.0.0"
 
-playwright-chromium@^1.13.0:
-  version "1.19.1"
-  resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.19.1.tgz#2fed98583d699e0e44e132b3f670988a09a6992b"
-  integrity sha512-gObASFcY8oOAqlJw89UXM/i4GNLvxKADn4DgoEMkXPxG7ATaN3eIyuWg5fGeYjKbAR15SHi+fCmP8n43LWKVTg==
+playwright-chromium@^1.19.2:
+  version "1.19.2"
+  resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.19.2.tgz#0ee116dafad471d61fbbbc0da13a9d4222aa088e"
+  integrity sha512-4S6KiJgR6PCQmlm4IzArgt9aDkzijYXxVG1j3vRqdugXQ1mPA2QIFUmXmRJeDczVkbIR5N8opJSNMnNDFg4qVw==
   dependencies:
-    playwright-core "1.19.1"
+    playwright-core "1.19.2"
 
-playwright-core@1.19.1:
-  version "1.19.1"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.19.1.tgz#d41939730170d53df26f5c8c16f5821e6328b24d"
-  integrity sha512-+ByjhWX39PlINVRXr4ef9Kle85mk5QzA2WLioCoMQc3bSUtZpLV1mbeUDtRp/bvFw6YDIEyptj4QvzzRTXN3vg==
+playwright-core@1.19.2:
+  version "1.19.2"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.19.2.tgz#90b9209554f174c649abf495952fcb4335437218"
+  integrity sha512-OsL3sJZIo1UxKNWSP7zW7sk3FyUGG06YRHxHeBw51eIOxTCQRx5t+hXd0cvXashN2CHnd3hIZTs2aKa/im4hZQ==
   dependencies:
     commander "8.3.0"
     debug "4.3.3"
