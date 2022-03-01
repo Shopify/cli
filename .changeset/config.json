@@ -3,8 +3,8 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "linked": [["@shopify/cli", "@shopify/app", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit"]],
-  "access": "restricted",
+  "access": "public",
   "baseBranch": "main",
-  "updateInternalDependencies": "patch",
+  "updateInternalDependencies": "minor",
   "ignore": []
 }
