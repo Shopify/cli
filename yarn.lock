@@ -1407,18 +1407,6 @@
     v8-compile-cache "2.3.0"
     yargs-parser "20.0.0"
 
-"@nrwl/devkit@13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/devkit/-/devkit-13.8.2.tgz#1ff50b4e04628652a481462a07ccd81d74e04753"
-  integrity sha512-i1LC2ha/RnmwF3TJLgus1yKWG4uFWKMYwOlngIrS6Zi0qSx2tCKknhaMqLZxn84vw5C42u1vUzm9C483ueASRQ==
-  dependencies:
-    "@nrwl/tao" "13.8.2"
-    ejs "^3.1.5"
-    ignore "^5.0.4"
-    rxjs "^6.5.4"
-    semver "7.3.4"
-    tslib "^2.3.0"
-
 "@nrwl/devkit@13.8.3":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/devkit/-/devkit-13.8.3.tgz#93ff131897585f1e8eb5f3c45f79c67bf02186b6"
@@ -1449,23 +1437,6 @@
     "@swc/core-linux-x64-gnu" "^1.2.136"
     "@swc/core-linux-x64-musl" "^1.2.136"
 
-"@nrwl/jest@13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/jest/-/jest-13.8.2.tgz#a04ac832a902b6e1dd4d18e37544f424adb31f54"
-  integrity sha512-DzXtue41pvTcgWQHkRyCh0cgZME8Xj8Z42Ebw1S53yhBHx8/4zVPOelTlEhiV+GIAfUm3ef0+7tQJA1cT3DxHA==
-  dependencies:
-    "@jest/reporters" "27.2.2"
-    "@jest/test-result" "27.2.2"
-    "@nrwl/devkit" "13.8.2"
-    chalk "4.1.0"
-    identity-obj-proxy "3.0.0"
-    jest-config "27.2.2"
-    jest-resolve "27.2.2"
-    jest-util "27.2.0"
-    resolve.exports "1.1.0"
-    rxjs "^6.5.4"
-    tslib "^2.3.0"
-
 "@nrwl/jest@13.8.3":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/jest/-/jest-13.8.3.tgz#ae51a45636d0e902626e1704159ab80a076a2e94"
@@ -1483,15 +1454,15 @@
     rxjs "^6.5.4"
     tslib "^2.3.0"
 
-"@nrwl/js@^13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/js/-/js-13.8.2.tgz#5e47221997ffcfbdb9e30999e5b61f86008c6306"
-  integrity sha512-C8HzOpIhphvgzJ2AyvKw0vnqa2FnjsUWTjDWJLvfP5bhKFi2QKh1YgNR1WJXL+ybZFabduUnb1/3bguqVOReuQ==
+"@nrwl/js@^13.8.3":
+  version "13.8.3"
+  resolved "https://registry.yarnpkg.com/@nrwl/js/-/js-13.8.3.tgz#0acdcfc0679809e67e5f6a714cafd79977f06aee"
+  integrity sha512-fHwwZa6ZZFMsH+VHFNgXop0L9UQ8CKjeaQsdXYmG1Dxh/90zQ0f3nzNFDTrsQDhJPWu45VfiAKaD1AIpRb+Jcg==
   dependencies:
-    "@nrwl/devkit" "13.8.2"
-    "@nrwl/jest" "13.8.2"
-    "@nrwl/linter" "13.8.2"
-    "@nrwl/workspace" "13.8.2"
+    "@nrwl/devkit" "13.8.3"
+    "@nrwl/jest" "13.8.3"
+    "@nrwl/linter" "13.8.3"
+    "@nrwl/workspace" "13.8.3"
     "@parcel/watcher" "2.0.4"
     chalk "4.1.0"
     fast-glob "^3.2.7"
@@ -1501,17 +1472,6 @@
     minimatch "3.0.4"
     source-map-support "0.5.19"
     tree-kill "1.2.2"
-
-"@nrwl/linter@13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/linter/-/linter-13.8.2.tgz#dca4c8f1fb6fbcec5e0bd34abe8585add8143c3d"
-  integrity sha512-hX+xXnVj1G71CzYZsxigJRCw3+u8sIJ9JVHDN2Yqzkx1+2Xgu+tvytPMN+a7y2jRhRjKuDfLmjYGxSusx2EAYA==
-  dependencies:
-    "@nrwl/devkit" "13.8.2"
-    "@nrwl/jest" "13.8.2"
-    "@phenomnomnominal/tsquery" "4.1.1"
-    tmp "~0.2.1"
-    tslib "^2.3.0"
 
 "@nrwl/linter@13.8.3":
   version "13.8.3"
@@ -1562,38 +1522,7 @@
     tslib "^2.3.0"
     yargs-parser "20.0.0"
 
-"@nrwl/workspace@13.8.2", "@nrwl/workspace@^13.8.2":
-  version "13.8.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/workspace/-/workspace-13.8.2.tgz#5ced9238bdfc633f5186a6e5b0e0150e0dd74120"
-  integrity sha512-ku+KO1xU4ff7KttpcSPGh/OmHFGidQKOhJFdULVLusKYR2+VrlbtFvKWZlaRm26HcE6dw/bYszTFd+wFN6rNqw==
-  dependencies:
-    "@nrwl/cli" "13.8.2"
-    "@nrwl/devkit" "13.8.2"
-    "@nrwl/jest" "13.8.2"
-    "@nrwl/linter" "13.8.2"
-    "@parcel/watcher" "2.0.4"
-    chalk "4.1.0"
-    chokidar "^3.5.1"
-    cli-cursor "3.1.0"
-    cli-spinners "2.6.1"
-    dotenv "~10.0.0"
-    enquirer "~2.3.6"
-    figures "3.2.0"
-    flat "^5.0.2"
-    fs-extra "^9.1.0"
-    glob "7.1.4"
-    ignore "^5.0.4"
-    minimatch "3.0.4"
-    npm-run-path "^4.0.1"
-    open "^8.4.0"
-    rxjs "^6.5.4"
-    semver "7.3.4"
-    tmp "~0.2.1"
-    tslib "^2.3.0"
-    yargs "15.4.1"
-    yargs-parser "20.0.0"
-
-"@nrwl/workspace@13.8.3":
+"@nrwl/workspace@13.8.3", "@nrwl/workspace@^13.8.2":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/workspace/-/workspace-13.8.3.tgz#36f10f4e83ce3cef07fa9b0d9cee085d323d1352"
   integrity sha512-B2LpbJjxT+WqW0PMxzdy8rmyY0woQytOi4BazPzpcFqaO7zO5/XvLF7txhcvYgRn8n6o0lPsMD0P0Pgeri8oaQ==
