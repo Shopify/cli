@@ -12,14 +12,14 @@ export async function query<T>(
 ): Promise<T> {
   const version = await fetchApiVersion(token.accessToken, store)
   const url = adminUrl(store, version)
-  const headers = buildHeaders(token.accessToken)
+  const headers = await buildHeaders(token.accessToken)
   return request<T>(url, query, variables, headers)
 }
 
 async function fetchApiVersion(token: string, store: string): Promise<any> {
   const url = adminUrl(store, 'unstable')
   const query = apiVersionQuery()
-  const headers = buildHeaders(token)
+  const headers = await buildHeaders(token)
 
   const data = await request(url, query, {}, headers)
   return data.publicApiVersions

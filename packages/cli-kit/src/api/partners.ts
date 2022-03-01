@@ -11,6 +11,6 @@ export async function query<T>(
   variables: any,
 ): Promise<T> {
   const url = await partners()
-  const headers = buildHeaders(token.accessToken)
+  const headers = await buildHeaders(token.accessToken)
   return request<T>(url, query, variables, headers)
 }
