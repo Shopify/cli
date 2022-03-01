@@ -53,6 +53,7 @@
     "keytar": "^7.9.0"
   },
   "devDependencies": {
+    "node-fetch": "^3.2.1",
     "change-case": "^4.1.2",
     "conf": "^10.1.1",
     "del": "^6.0.0",
@@ -64,8 +65,9 @@
     "fs-extra": "^10.0.0",
     "graphql": "^16.3.0",
     "graphql-request": "^4.0.0",
+    "keytar": "^7.9.0",
     "latest-version": "^6.0.0",
-    "liquidjs": "^9.34.0",
+    "liquidjs": "^9.35.1",
     "listr2": "^4.0.2",
     "pathe": "^0.2.0",
     "picocolors": "^1.0.0",

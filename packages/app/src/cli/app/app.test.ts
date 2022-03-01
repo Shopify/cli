@@ -49,7 +49,9 @@ describe('load', () => {
     blockType: BlockType
     name: string
   }) => {
-    await file.mkdir(path.dirname(blockConfigurationPath({blockType, name})))
+    const dirname = path.dirname(blockConfigurationPath({blockType, name}))
+    await file.mkdir(dirname)
+    return dirname
   }
 
   const writeBlockConfig = async ({
@@ -61,11 +63,10 @@ describe('load', () => {
     blockConfiguration: string
     name: string
   }) => {
-    await makeBlockDir({blockType, name})
-    await file.write(
-      blockConfigurationPath({blockType, name}),
-      blockConfiguration,
-    )
+    const blockDir = await makeBlockDir({blockType, name})
+    const configPath = blockConfigurationPath({blockType, name})
+    await file.write(configPath, blockConfiguration)
+    return {blockDir, configPath}
   }
 
   it("throws an error if the directory doesn't exist", async () => {
@@ -178,6 +179,7 @@ describe('load', () => {
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
+      extension_type = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -192,12 +194,34 @@ describe('load', () => {
     expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
   })
 
+  it('loads the app from an extension directory when it has an extension with a valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my_extension"
+      extension_type = "checkout-post-purchase"
+      `
+    const {blockDir} = await writeBlockConfig({
+      blockType: 'uiExtensions',
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    const app = await load(blockDir)
+
+    // Then
+    expect(app.configuration.name).toBe('my_app')
+    expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
+  })
+
   it('loads the app with several extensions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
 
     let blockConfiguration = `
       name = "my_extension_1"
+      extension_type = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -207,6 +231,7 @@ describe('load', () => {
 
     blockConfiguration = `
       name = "my_extension_2"
+      extension_type = "product-subscription"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',

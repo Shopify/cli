@@ -1,9 +1,10 @@
-import {file, error, path, schema, toml} from '@shopify/cli-kit'
+import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
 
 import {
   blocks,
   configurationFileNames,
   genericConfigurationFileNames,
+  extensions,
 } from '../constants'
 
 const AppConfigurationSchema = schema.define.object({
@@ -14,6 +15,7 @@ type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
+  extensionType: schema.define.enum(extensions.types),
 })
 
 type UIExtensionConfiguration = schema.define.infer<
@@ -50,20 +52,29 @@ export async function load(directory: string): Promise<App> {
   if (!(await file.exists(directory))) {
     throw new error.Abort(`Couldn't find directory ${directory}`)
   }
-  const configurationPath = path.join(directory, configurationFileNames.app)
+  const configurationPath = await path.findUp(configurationFileNames.app, {
+    cwd: directory,
+    type: 'file',
+  })
+  if (!configurationPath) {
+    throw new error.Abort(
+      `Couldn't find the configuration file for ${directory}, are you in an app directory?`,
+    )
+  }
   const configuration = await parseConfigurationFile(
     AppConfigurationSchema,
     configurationPath,
   )
-  const scripts = await loadScripts(directory)
-  const uiExtensions = await loadExtensions(directory)
+  const appDirectory = path.dirname(configurationPath)
+  const scripts = await loadScripts(appDirectory)
+  const uiExtensions = await loadExtensions(appDirectory)
   const yarnLockPath = path.join(
-    directory,
+    appDirectory,
     genericConfigurationFileNames.yarn.lockfile,
   )
   const yarnLockExists = await file.exists(yarnLockPath)
   const pnpmLockPath = path.join(
-    directory,
+    appDirectory,
     genericConfigurationFileNames.pnpm.lockfile,
   )
   const pnpmLockExists = await file.exists(pnpmLockPath)
@@ -77,7 +88,7 @@ export async function load(directory: string): Promise<App> {
   }
 
   return {
-    directory,
+    directory: appDirectory,
     configuration,
     scripts,
     uiExtensions,
@@ -90,7 +101,13 @@ async function loadConfigurationFile(path: string): Promise<object> {
     throw new error.Abort(`Couldn't find the configuration file at ${path}`)
   }
   const configurationContent = await file.read(path)
-  return toml.parse(configurationContent)
+  // Convert snake_case keys to camelCase before returning
+  return Object.fromEntries(
+    Object.entries(toml.parse(configurationContent)).map((kv) => [
+      string.camelize(kv[0]),
+      kv[1],
+    ]),
+  )
 }
 
 async function parseConfigurationFile(schema: any, path: string) {

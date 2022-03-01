@@ -3,10 +3,10 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
 
-import {App, load as loadApp} from '../cli/app/app'
-import {configurationFileNames, ExtensionTypes} from '../cli/constants'
+import {App, load as loadApp} from '../../app/app'
+import {configurationFileNames, ExtensionTypes} from '../../constants'
 
-import extensionInit from './extensionInit'
+import extensionInit from './extension'
 
 describe('initialize an extension', () => {
   let tmpDir: string

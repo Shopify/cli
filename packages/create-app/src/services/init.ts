@@ -9,16 +9,9 @@ import {
   os,
   ui,
   dependency,
+  constants,
 } from '@shopify/cli-kit'
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import cliPackage from '../../../cli/package.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import appPackage from '../../../app/package.json'
 import {template as getTemplatePath} from '../utils/paths'
 
 interface InitOptions {
@@ -33,8 +26,9 @@ interface InitOptions {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath('app')
-  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version
-  const appPackageVersion = options.shopifyAppVersion ?? appPackage.version
+  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
+  const appPackageVersion =
+    options.shopifyAppVersion ?? constants.versions.cliKit
   const cliKitOverridenVersion = options.shopifyCliKitVersion
 
   const dependencyManager = inferDependencyManager(options.dependencyManager)

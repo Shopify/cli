@@ -24,7 +24,12 @@ export const genericConfigurationFileNames = {
   },
 }
 
-export const extensions = {
+interface ExtensionsType {
+  // Dependent code requires that extensions.types has at least 1 element.
+  // Otherwise it will be typed as string[] which doesn't guarantee a first element.
+  types: [string, ...string[]]
+}
+export const extensions: ExtensionsType = {
   types: [
     'theme-app-extension',
     'product-subscription',
