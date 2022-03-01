@@ -13,6 +13,10 @@ export const MissingCodeError = new Bug(
   `The authentication cannot continue because the redirect doesn't include the code.`,
 )
 
+export const MissingStateError = new Bug(
+  `The authentication cannot continue because the redirect doesn't include the state.`,
+)
+
 export const redirectResponseBody =
   'Continuing the authentication in your terminal...'
 
@@ -21,6 +25,7 @@ export const redirectResponseBody =
  */
 type RedirectCallback = (
   error: Error | undefined,
+  state: string | undefined,
   code: string | undefined,
 ) => void
 
@@ -52,7 +57,7 @@ export class RedirectListener {
 
       if (!requestUrl) {
         respond()
-        return callback(EmptyUrlError, undefined)
+        return callback(EmptyUrlError, undefined, undefined)
       }
       const queryObject = url.parse(requestUrl, true).query
 
@@ -61,16 +66,22 @@ export class RedirectListener {
         return callback(
           AuthenticationError(`${queryObject.error_description}`),
           undefined,
+          undefined,
         )
       }
 
       if (!queryObject.code) {
         respond()
-        return callback(MissingCodeError, undefined)
+        return callback(MissingCodeError, undefined, undefined)
+      }
+
+      if (!queryObject.state) {
+        respond()
+        return callback(MissingStateError, undefined, undefined)
       }
 
       respond()
-      return callback(undefined, `${queryObject.code}`)
+      return callback(undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
   }
 
@@ -108,21 +119,26 @@ export class RedirectListener {
 export async function listenRedirect(
   host: string,
   port: number,
-): Promise<string> {
-  const result = await new Promise<string>((resolve, reject) => {
-    const redirectListener = new RedirectListener({
-      host,
-      port,
-      callback: (error, code) => {
-        redirectListener.stop()
-        if (error) {
-          reject(error)
-        } else {
-          resolve(code as string)
-        }
-      },
-    })
-    redirectListener.start()
-  })
+): Promise<{code: string; state: string}> {
+  const result = await new Promise<{code: string; state: string}>(
+    (resolve, reject) => {
+      const redirectListener = new RedirectListener({
+        host,
+        port,
+        callback: (error, code, state) => {
+          redirectListener.stop()
+          if (error) {
+            reject(error)
+          } else {
+            resolve({
+              code: code as string,
+              state: state as string,
+            })
+          }
+        },
+      })
+      redirectListener.start()
+    },
+  )
   return result
 }

@@ -1,15 +1,17 @@
-import {output} from '@shopify/cli-kit'
+import crypto from 'crypto'
 
-import {SessionSchema} from './session/schema'
-import type {Session, IdentityToken} from './session/schema'
-import {store as storeSession, fetch as fetchSession} from './session/store'
+import {message as outputMessage} from './output'
 import {identity as getIdentityFqdn} from './environment/fqdn'
+import {clientId as getIdentityClientId} from './session/identity'
 import constants from './constants'
-import {fetch} from './http'
-import {random as randomString} from './string'
+import {Abort} from './error'
+import {randomHex} from './string'
 import {open} from './system'
 import {listenRedirect} from './session/redirect-listener'
 
+const MismatchStateError = new Abort(
+  "The state received from the authentication doesn't match the one that initiated the authentication process.",
+)
 /**
  * A scope supported by the Shopify Admin API.
  */
@@ -71,21 +73,32 @@ export async function ensureAuthenticated(
       constants.session.expirationTimeMarginInMinutes * 60 * 1000,
   )
   const identityFqdn = await getIdentityFqdn()
+  const identityClientId = getIdentityClientId()
   const scopes = ['openid'] // employee
-  const authorizationCode = authorize(identityFqdn, '', scopes)
-  output.message(`Code: ${authorizationCode}`)
+  const authorizationCode = await authorize(
+    identityFqdn,
+    identityClientId,
+    scopes,
+  )
+  outputMessage(`Code: ${authorizationCode}`)
 }
 
-async function authorize(
+export async function authorize(
   fqdn: string,
   clientId: string,
   scopes: string[],
+  state: string = randomHex(30),
 ): Promise<string> {
-  const url = `http://${fqdn}/authorize`
+  let url = `http://${fqdn}/oauth/authorize`
   const port = 3456
   const host = '127.0.0.1'
   const redirectUri = `http://${host}:${port}`
-  const state = randomString()
+  const codeVerifier = randomHex(30)
+  const codeChallenge = crypto
+    .createHash('sha256')
+    .update(codeVerifier)
+    .digest('base64')
+
   const params = {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     client_id: clientId,
@@ -95,26 +108,16 @@ async function authorize(
     state,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     response_type: 'code',
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    code_challenge_method: 'S256',
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    code_challenge: codeChallenge,
   }
+  url = `${url}?${new URLSearchParams(params).toString()}`
   open(url)
-  const code = await listenRedirect(host, port)
-  return code
-}
-
-async function post(
-  identityFqdn: string,
-  path: string,
-  params: object,
-): Promise<object> {
-  const res = (await (
-    await fetch(`https://${identityFqdn}/${path}`, {
-      method: 'POST',
-      body: JSON.stringify(params),
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': `Shopify CLI ${constants.versions.cli}`,
-      },
-    })
-  ).json()) as object
-  return res
+  const result = await listenRedirect(host, port)
+  if (result.state !== state) {
+    throw MismatchStateError
+  }
+  return result.code
 }

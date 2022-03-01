@@ -8,6 +8,7 @@ import {
   EmptyUrlError,
   AuthenticationError,
   MissingCodeError,
+  MissingStateError,
 } from './redirect-listener'
 
 describe('RedirectListener', () => {
@@ -77,29 +78,32 @@ describe('RedirectListener', () => {
     await expect(subject.stop()).rejects.toThrowError(stopError)
   })
 
-  it('notifies the callback when the redirect includes the code', () => {
+  it('notifies the callback when the redirect includes the code and the state', () => {
     // Given
     const createServerSpy: any = vi.spyOn(http, 'createServer')
     let receivedCode: string | undefined
+    let receivedState: string | undefined
     const subject = new RedirectListener({
       port: 3000,
       host: 'localhost',
       // eslint-disable-next-line node/handle-callback-err
-      callback: (_error, code) => {
+      callback: (_error, code, state) => {
         receivedCode = code
+        receivedState = state
       },
     })
     const createServerCallback = createServerSpy.calls[0][0]
     const responseWriteHeadMock: any = vi.fn()
     const responseEndMock: any = vi.fn()
     const response = {writeHead: responseWriteHeadMock, end: responseEndMock}
-    const request = {url: 'http://localhost:3000/oauth?code=foo'}
+    const request = {url: 'http://localhost:3000/oauth?code=foo&state=state'}
 
     // When
     createServerCallback(request, response)
 
     // Then
     expect(receivedCode).toBe('foo')
+    expect(receivedState).toBe('state')
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
       'Content-Type': 'text/html',
     })
@@ -191,6 +195,37 @@ describe('RedirectListener', () => {
 
     // Then
     expect(receivedError).toBe(MissingCodeError)
+    expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
+      'Content-Type': 'text/html',
+    })
+    expect(responseEndMock).toHaveBeenCalledWith(redirectResponseBody)
+  })
+
+  it('notifies errors when the redirect contains code but no state', () => {
+    // Given
+    const createServerSpy: any = vi.spyOn(http, 'createServer')
+    let receivedError: Error | undefined
+    const subject = new RedirectListener({
+      port: 3000,
+      host: 'localhost',
+
+      callback: (error, _code) => {
+        receivedError = error
+      },
+    })
+    const createServerCallback = createServerSpy.calls[0][0]
+    const responseWriteHeadMock: any = vi.fn()
+    const responseEndMock: any = vi.fn()
+    const response = {writeHead: responseWriteHeadMock, end: responseEndMock}
+    const request = {
+      url: 'http://localhost:3000/auth?code=code',
+    }
+
+    // When
+    createServerCallback(request, response)
+
+    // Then
+    expect(receivedError).toBe(MissingStateError)
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
       'Content-Type': 'text/html',
     })
