@@ -22,7 +22,7 @@ describe('isDebug', () => {
 })
 
 describe('isShopify', () => {
-  it('returns true when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
+  it('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '1'}
 
