@@ -45,7 +45,7 @@ describe('partners-api', () => {
     // Given
     const headers = {'custom-header': mockedToken.accessToken}
     vi.mocked(request).mockResolvedValue(mockedResult)
-    vi.mocked(buildHeaders).mockImplementation(() => headers)
+    vi.mocked(buildHeaders).mockResolvedValue(headers)
     vi.mocked(partners).mockResolvedValue(partnersURL)
 
     // When

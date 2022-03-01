@@ -1,6 +1,6 @@
-import {ApplicationToken} from 'session/schema'
 import {request, gql} from 'graphql-request'
 
+import {ApplicationToken} from '../session/schema'
 import {partners} from '../environment/fqdn'
 
 import {buildHeaders} from './common'
