@@ -36,7 +36,7 @@
     "@shopify/eslint-plugin": "^41.0.1",
     "@shopify/typescript-configs": "^5.1.0",
     "@types/cucumber": "^7.0.0",
-    "@types/node": "^17.0.8",
+    "@types/node": "^17.0.21",
     "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
