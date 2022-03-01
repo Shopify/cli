@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "0.30.1",
+  "version": "0.30.2",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "type": "module",
