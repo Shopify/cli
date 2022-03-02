@@ -18,6 +18,7 @@ describe('initialize an extension', () => {
       name = "my_app"
       `
     await file.write(appConfigurationPath, appConfiguration)
+    await file.mkdir(path.join(tmpDir, 'home'))
   })
   afterEach(async () => {
     vi.clearAllMocks()

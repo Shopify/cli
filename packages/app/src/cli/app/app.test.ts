@@ -7,7 +7,7 @@ import {
   genericConfigurationFileNames,
 } from '../constants'
 
-import {load} from './app'
+import {load, HomeNotFoundError} from './app'
 
 describe('load', () => {
   type BlockType = 'uiExtensions' | 'scripts'
@@ -29,6 +29,10 @@ describe('load', () => {
   const writeConfig = async (appConfiguration: string) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
     await file.write(appConfigurationPath, appConfiguration)
+  }
+
+  const mkdirHome = async () => {
+    await file.mkdir(path.join(tmpDir, 'home'))
   }
 
   const blockConfigurationPath = ({
@@ -89,7 +93,8 @@ describe('load', () => {
     const appConfiguration = `
         wrong = "my_app"
         `
-    writeConfig(appConfiguration)
+    await writeConfig(appConfiguration)
+    await mkdirHome()
 
     // When/Then
     await expect(load(tmpDir)).rejects.toThrow()
@@ -98,6 +103,7 @@ describe('load', () => {
   it('loads the app when the configuration is valid and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
 
     // When
     const app = await load(tmpDir)
@@ -109,6 +115,7 @@ describe('load', () => {
   it('defaults to npm as package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
 
     // When
     const app = await load(tmpDir)
@@ -120,6 +127,7 @@ describe('load', () => {
   it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
     const yarnLockPath = path.join(
       tmpDir,
       genericConfigurationFileNames.yarn.lockfile,
@@ -136,6 +144,7 @@ describe('load', () => {
   it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
     const pnpmLockPath = path.join(
       tmpDir,
       genericConfigurationFileNames.pnpm.lockfile,
@@ -177,6 +186,7 @@ describe('load', () => {
   it('loads the app when it has an extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
       extension_type = "checkout-post-purchase"
@@ -197,6 +207,7 @@ describe('load', () => {
   it('loads the app from an extension directory when it has an extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
       extension_type = "checkout-post-purchase"
@@ -218,6 +229,7 @@ describe('load', () => {
   it('loads the app with several extensions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
 
     let blockConfiguration = `
       name = "my_extension_1"
@@ -273,9 +285,21 @@ describe('load', () => {
     await expect(load(tmpDir)).rejects.toThrowError()
   })
 
+  it('throws an error if the home directory is missing', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // When
+    await expect(load(tmpDir)).rejects.toThrowError(
+      HomeNotFoundError(path.resolve(tmpDir, 'home')),
+    )
+  })
+
   it('loads the app when it has a script with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
+
     const blockConfiguration = `
       name = "my-script"
       `
@@ -295,6 +319,7 @@ describe('load', () => {
   it('loads the app with several scripts that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
+    await mkdirHome()
     let blockConfiguration = `
       name = "my-script-1"
       `
