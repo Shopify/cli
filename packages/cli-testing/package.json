@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-testing",
-  "version": "0.1.0",
+  "version": "0.30.2",
   "private": true,
   "description": "A set of utilities for writing unit tests",
   "type": "module",

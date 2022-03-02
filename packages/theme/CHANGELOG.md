@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 0.5.4
+
+### Patch Changes
+
+- Add scaffold to the package.json's scripts section of the app template
+
+## 0.5.3
+
+### Patch Changes
+
+- New CLI version
+
 ## 0.5.2
 
 ### Patch Changes

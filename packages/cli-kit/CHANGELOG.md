@@ -1,5 +1,23 @@
 # @shopify/cli-kit
 
+## 0.30.2
+
+### Patch Changes
+
+- Add scaffold to the package.json's scripts section of the app template
+
+## 0.30.1
+
+### Patch Changes
+
+- New CLI version
+
+## 0.29.1
+
+### Patch Changes
+
+- c31bb1e: Add a method that returns true if the CLI is run from a Shopify environment (local or cloud)
+
 ## 0.12.0
 
 ### Minor Changes
