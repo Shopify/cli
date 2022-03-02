@@ -31,6 +31,10 @@ const (
 	templateFileExt   string = ".tpl"
 )
 
+func ReadTemplateFile(path string) ([]byte, error) {
+    return templates.ReadFile(path)
+}
+
 func NewExtensionProject(extension core.Extension) (err error) {
 	fs := fsutils.NewFS(&templates, templateRoot)
 

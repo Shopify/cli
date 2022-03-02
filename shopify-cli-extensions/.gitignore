@@ -1,5 +1,6 @@
 shopify-extensions
 node_modules
+__debug_bin
 .DS_Store
 tmp/
 *.log

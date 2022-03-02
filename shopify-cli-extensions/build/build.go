@@ -9,8 +9,11 @@ import (
 	"sync"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"github.com/Shopify/shopify-cli-extensions/create"
 	"gopkg.in/yaml.v3"
 )
+
+const nextStepsTemplatePath = "templates/%s/next-steps.txt"
 
 func Build(extension core.Extension, report ResultHandler) {
 	script, err := script(extension.BuildDir(), "build")
@@ -58,6 +61,10 @@ func Watch(extension core.Extension, report ResultHandler) {
 	logProcessors := sync.WaitGroup{}
 	logProcessors.Add(2)
 
+	nextSteps, _ := create.ReadTemplateFile(fmt.Sprintf(nextStepsTemplatePath, extension.Type))
+
+	isInitialMessage := true
+
 	go processLogs(stdout, logProcessingHandlers{
 		onCompletion: func() { logProcessors.Done() },
 		onMessage: func(message string) {
@@ -65,6 +72,10 @@ func Watch(extension core.Extension, report ResultHandler) {
 				report(Result{false, err.Error(), extension})
 			} else {
 				report(Result{true, message, extension})
+				if isInitialMessage {
+					fmt.Fprintf(os.Stdout, "%s\n",  string(nextSteps))
+					isInitialMessage = false
+				}
 			}
 		},
 	})

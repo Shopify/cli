@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 )
@@ -13,5 +14,5 @@ type Result struct {
 }
 
 func (r Result) String() string {
-	return fmt.Sprintf("%s\n%s", r.Extension, r.Message)
+	return fmt.Sprintf("%s (%s)", r.Extension, strings.TrimSpace(r.Message))
 }
