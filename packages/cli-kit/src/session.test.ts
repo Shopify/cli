@@ -1,28 +1,24 @@
 import {vi, describe, expect, it} from 'vitest'
 
-import {authorize} from './session'
-import {open} from './system'
-import {listenRedirect} from './session/redirect-listener'
+import {ensureAuthenticated} from './session'
+import {clientId} from './session/identity'
+import {identity} from './environment/fqdn'
 
-vi.mock('./system')
-vi.mock('./session/redirect-listener')
+vi.mock('./environment/fqdn')
+vi.mock('./session/identity')
+vi.mock('./session/authorize')
 
-describe('authorize', () => {
-  it('authorizes the user through the browser', async () => {
+describe('ensureAuthenticated', () => {
+  // WIP
+  it('handles authentication', async () => {
     // Given
-    const fqdn = 'accounts.shopify.com'
-    const clientId = '1234'
-    const scopes = ['scope']
-    const state = 'state'
-    vi.mocked(listenRedirect).mockResolvedValue({
-      state: 'state',
-      code: 'code',
-    })
+    const oauth = {}
 
     // When
-    const got = await authorize(fqdn, clientId, scopes, state)
+    await ensureAuthenticated(oauth)
 
     // Then
-    expect(got).toEqual('code')
+    expect(identity).toBeCalled()
+    expect(clientId).toBeCalled()
   })
 })

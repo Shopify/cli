@@ -1,17 +1,9 @@
-import crypto from 'crypto'
-
+import {authorize} from './session/authorize'
 import {message as outputMessage} from './output'
 import {identity as getIdentityFqdn} from './environment/fqdn'
 import {clientId as getIdentityClientId} from './session/identity'
 import constants from './constants'
-import {Abort} from './error'
-import {randomHex} from './string'
-import {open} from './system'
-import {listenRedirect} from './session/redirect-listener'
 
-const MismatchStateError = new Abort(
-  "The state received from the authentication doesn't match the one that initiated the authentication process.",
-)
 /**
  * A scope supported by the Shopify Admin API.
  */
@@ -96,43 +88,4 @@ export async function ensureAuthenticated(
     scopes,
   )
   outputMessage(`Code: ${authorizationCode}`)
-}
-
-export async function authorize(
-  fqdn: string,
-  clientId: string,
-  scopes: string[],
-  state: string = randomHex(30),
-): Promise<string> {
-  let url = `http://${fqdn}/oauth/authorize`
-  const port = 3456
-  const host = '127.0.0.1'
-  const redirectUri = `http://${host}:${port}`
-  const codeVerifier = randomHex(30)
-  const codeChallenge = crypto
-    .createHash('sha256')
-    .update(codeVerifier)
-    .digest('base64')
-
-  const params = {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    client_id: clientId,
-    scope: scopes.join(' '),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    redirect_uri: redirectUri,
-    state,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    response_type: 'code',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    code_challenge_method: 'S256',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    code_challenge: codeChallenge,
-  }
-  url = `${url}?${new URLSearchParams(params).toString()}`
-  open(url)
-  const result = await listenRedirect(host, port)
-  if (result.state !== state) {
-    throw MismatchStateError
-  }
-  return result.code
 }
