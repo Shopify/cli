@@ -5,14 +5,11 @@ import fg from 'fast-glob'
 
 import {external, plugins, distDir} from '../../configurations/rollup.config'
 
+import {dependencies} from './package.json'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const cliExternal = [
-  ...external,
-  '@oclif/core',
-  '@shopify/cli-kit',
-  '@bugsnag/js',
-]
+const cliExternal = [...external, Object.keys(dependencies), '@shopify/cli-kit']
 
 const featureCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/app/**/*.ts`),
