@@ -65,20 +65,20 @@ interface OAuthApplications {
  * @returns {OAuthSession} An instance with the access tokens organized by application.
  */
 
-await ensureAuthenticated({
-  shopify: {
-    storeFqdn: 'myshop.myshopify.com',
-    storefrontRendererApi: {
-      scopes: [],
-    },
-    adminApi: {
-      scopes: [],
-    },
-  },
-  partnersApi: {
-    scopes: [],
-  },
-})
+// await ensureAuthenticated({
+//   shopify: {
+//     storeFqdn: 'myshop.myshopify.com',
+//     storefrontRendererApi: {
+//       scopes: [],
+//     },
+//     adminApi: {
+//       scopes: [],
+//     },
+//   },
+//   partnersApi: {
+//     scopes: [],
+//   },
+// })
 
 export async function ensureAuthenticated(
   applications: OAuthApplications,
