@@ -1,6 +1,6 @@
 import {ApplicationToken} from 'session/schema'
 import {test, vi, expect, describe} from 'vitest'
-import {request} from 'graphql-request'
+import {request as graphqlRequest} from 'graphql-request'
 
 import {partners} from '../environment/fqdn'
 
@@ -18,7 +18,7 @@ vi.mock('graphql-request', async () => {
 vi.mock('./common')
 vi.mock('../environment/fqdn')
 
-const mockedRequest = vi.mocked(request)
+const mockedRequest = vi.mocked(graphqlRequest)
 const mockedHeaders = vi.mocked(buildHeaders)
 const mockedResult = 'OK'
 const partnersURL = 'https://partners.shopify.com'
@@ -31,11 +31,11 @@ const mockedToken: ApplicationToken = {
 describe('partners-api', () => {
   test('calls the graphql client once', async () => {
     // Given
-    vi.mocked(request).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(partners).mockResolvedValue(partnersURL)
 
     // When
-    await partnersApi.query('query', mockedToken, {some: 'variables'})
+    await partnersApi.request('query', mockedToken, {some: 'variables'})
 
     // Then
     expect(mockedRequest).toHaveBeenCalledOnce()
@@ -44,12 +44,12 @@ describe('partners-api', () => {
   test('request is called with correct parameters', async () => {
     // Given
     const headers = {'custom-header': mockedToken.accessToken}
-    vi.mocked(request).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
     vi.mocked(partners).mockResolvedValue(partnersURL)
 
     // When
-    await partnersApi.query('query', mockedToken, {variables: 'variables'})
+    await partnersApi.request('query', mockedToken, {variables: 'variables'})
 
     // Then
     expect(mockedRequest).toHaveBeenLastCalledWith(
@@ -62,11 +62,11 @@ describe('partners-api', () => {
 
   test('buildHeaders is called with user token', async () => {
     // Given
-    vi.mocked(request).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(partners).mockResolvedValue(partnersURL)
 
     // When
-    await partnersApi.query('query', mockedToken, {})
+    await partnersApi.request('query', mockedToken, {})
 
     // Then
     expect(mockedHeaders).toHaveBeenCalledWith(mockedToken.accessToken)

@@ -1,19 +1,19 @@
-import {request, gql} from 'graphql-request'
+import {request as graphqlRequest, gql} from 'graphql-request'
 
 import {ApplicationToken} from '../session/schema'
 
 import {buildHeaders} from './common'
 
-export async function query<T>(
+export async function request<T>(
   query: any,
   token: ApplicationToken,
   store: string,
-  variables: any,
+  variables?: any,
 ): Promise<T> {
   const version = await fetchApiVersion(token.accessToken, store)
   const url = adminUrl(store, version)
   const headers = await buildHeaders(token.accessToken)
-  return request<T>(url, query, variables, headers)
+  return graphqlRequest<T>(url, query, variables, headers)
 }
 
 async function fetchApiVersion(token: string, store: string): Promise<any> {
@@ -21,7 +21,7 @@ async function fetchApiVersion(token: string, store: string): Promise<any> {
   const query = apiVersionQuery()
   const headers = await buildHeaders(token)
 
-  const data = await request(url, query, {}, headers)
+  const data = await graphqlRequest(url, query, {}, headers)
   return data.publicApiVersions
     .filter((item: any) => item.supported)
     .map((item: any) => item.handle)
