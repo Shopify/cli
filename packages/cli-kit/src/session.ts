@@ -1,6 +1,8 @@
-import {SessionSchema} from './session/schema'
-import type {Session} from './session/schema'
-import {store as sessionStore} from './session/store'
+import {authorize} from './session/authorize'
+import {message as outputMessage} from './output'
+import {identity as getIdentityFqdn} from './environment/fqdn'
+import {clientId as getIdentityClientId} from './session/identity'
+import constants from './constants'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -54,9 +56,36 @@ interface OAuthApplications {
  * @param options {OAuthApplications} An object containing the applications we need to be authenticated with.
  * @returns {OAuthSession} An instance with the access tokens organized by application.
  */
-// eslint-disable-next-line require-await
+
+// await ensureAuthenticated({
+//   shopify: {
+//     storeFqdn: 'myshop.myshopify.com',
+//     storefrontRendererApi: {
+//       scopes: [],
+//     },
+//     adminApi: {
+//       scopes: [],
+//     },
+//   },
+//   partnersApi: {
+//     scopes: [],
+//   },
+// })
+
 export async function ensureAuthenticated(
   applications: OAuthApplications,
-): Promise<Session> {
-  return {}
+): Promise<void> {
+  const expiresAtThreshold = new Date(
+    new Date().getTime() +
+      constants.session.expirationTimeMarginInMinutes * 60 * 1000,
+  )
+  const identityFqdn = await getIdentityFqdn()
+  const identityClientId = getIdentityClientId()
+  const scopes = ['openid'] // employee
+  const authorizationCode = await authorize(
+    identityFqdn,
+    identityClientId,
+    scopes,
+  )
+  outputMessage(`Code: ${authorizationCode}`)
 }

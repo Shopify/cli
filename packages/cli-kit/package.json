@@ -50,7 +50,8 @@
     "win32"
   ],
   "dependencies": {
-    "keytar": "^7.9.0"
+    "keytar": "^7.9.0",
+    "open": "^8.4.0"
   },
   "devDependencies": {
     "node-fetch": "^3.2.1",

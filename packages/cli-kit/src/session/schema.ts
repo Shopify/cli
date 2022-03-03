@@ -15,6 +15,8 @@ const IdentityTokenSchema = define.object({
   scopes: define.array(define.string()),
 })
 
+export type IdentityToken = define.infer<typeof IdentityTokenSchema>
+
 /**
  * The schema represents an application token.
  *

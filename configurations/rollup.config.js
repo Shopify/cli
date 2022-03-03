@@ -45,4 +45,10 @@ export const external = [
    * Because of that we make it an external dependency of @shopify/cli-kit
    */
   'keytar',
+  /**
+   * Open has transitive dependencies that use __dirname from ES modules causing
+   * runtime errors. Because of that we keep it as an external dependency until
+   * they fix it on their end.
+   */
+  'open',
 ]

@@ -1,6 +1,8 @@
 import type {Writable} from 'node:stream'
 import {execa} from 'execa'
 
+export {default as open} from 'open'
+
 export interface ExecOptions {
   cwd?: string
   stdout?: Writable

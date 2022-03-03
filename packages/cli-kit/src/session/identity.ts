@@ -2,9 +2,21 @@ import {Abort, Bug} from '../error'
 import {
   shopify as shopifyEnvironment,
   partners as partnersEnvironment,
+  identity as identityEnvironment,
 } from '../environment/service'
 import {Environment} from '../network/service'
 import type {API} from '../network/api'
+
+export function clientId(): string {
+  const environment = identityEnvironment()
+  if (environment === Environment.Local) {
+    return 'e5380e02-312a-7408-5718-e07017e9cf52'
+  } else if (environment === Environment.Production) {
+    return 'fbdb2649-e327-4907-8f67-908d24cfd7e3'
+  } else {
+    return 'e5380e02-312a-7408-5718-e07017e9cf52'
+  }
+}
 
 export function applicationId(api: API): string {
   switch (api) {
@@ -15,7 +27,7 @@ export function applicationId(api: API): string {
       } else if (environment === Environment.Production) {
         return '7ee65a63608843c577db8b23c4d7316ea0a01bd2f7594f8a9c06ea668c1b775c'
       } else {
-        throw new Abort(`Spin is not yet supported for the Shopify Admin API`)
+        return 'e92482cebb9bfb9fb5a0199cc770fde3de6c8d16b798ee73e36c9d815e070e52'
       }
     }
     case 'partners': {
@@ -25,7 +37,7 @@ export function applicationId(api: API): string {
       } else if (environment === Environment.Production) {
         return '271e16d403dfa18082ffb3d197bd2b5f4479c3fc32736d69296829cbb28d41a6'
       } else {
-        throw new Abort(`Spin is not yet supported for the Partners API`)
+        return 'df89d73339ac3c6c5f0a98d9ca93260763e384d51d6038da129889c308973978'
       }
     }
     case 'storefront-renderer': {
@@ -35,7 +47,7 @@ export function applicationId(api: API): string {
       } else if (environment === Environment.Production) {
         return 'ee139b3d-5861-4d45-b387-1bc3ada7811c'
       } else {
-        throw new Abort(`Spin is not yet supported for the Partners API`)
+        return '46f603de-894f-488d-9471-5b721280ff49'
       }
     }
     default:
