@@ -1,6 +1,6 @@
 # @shopify/app
 
-## 1.0.0
+## 0.31.0
 
 ### Minor Changes
 
@@ -10,7 +10,7 @@
 
 - Updated dependencies [e701cf5]
 - Updated dependencies [563f225]
-  - @shopify/cli-kit@1.0.0
+  - @shopify/cli-kit@0.31.0
 
 ## 0.30.2
 

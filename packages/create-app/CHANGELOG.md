@@ -1,6 +1,6 @@
 # @shopify/create-app
 
-## 1.0.0
+## 0.31.0
 
 ### Minor Changes
 
