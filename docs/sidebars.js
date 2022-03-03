@@ -31,6 +31,7 @@ module.exports = {
       collapsed: true,
       items: [
         'kit/modules/api',
+        'kit/modules/template',
         'kit/modules/dependency',
         'kit/modules/error',
         'kit/modules/os',
@@ -40,4 +41,4 @@ module.exports = {
       ],
     },
   ],
-};
+}

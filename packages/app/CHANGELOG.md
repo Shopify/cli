@@ -1,5 +1,30 @@
 # @shopify/app
 
+## 0.30.2
+
+### Patch Changes
+
+- Add scaffold to the package.json's scripts section of the app template
+- Updated dependencies
+  - @shopify/cli-kit@0.30.2
+
+## 0.30.1
+
+### Patch Changes
+
+- New CLI version
+- Updated dependencies
+  - @shopify/cli-kit@0.30.1
+
+## 0.29.1
+
+### Patch Changes
+
+- d61706c: Add command: app scaffold extension
+- e699434: Add app info command for basic loaded app information
+- Updated dependencies [c31bb1e]
+  - @shopify/cli-kit@0.29.1
+
 ## 0.15.0
 
 ### Minor Changes

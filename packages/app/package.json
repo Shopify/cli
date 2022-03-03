@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "0.15.0",
+  "version": "0.30.2",
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
@@ -62,10 +62,15 @@
   },
   "peerDependencies": {
     "@oclif/core": "1.3.3",
-    "react": ">=17.0.0 <18.0.0",
-    "@shopify/cli-kit": "0.12.0"
+    "@shopify/cli-kit": "0.30.2",
+    "react": ">=17.0.0 <18.0.0"
   },
   "oclif": {
     "commands": "dist/commands"
+  },
+  "devDependencies": {
+    "react-router": "^6.2.2",
+    "react-router-dom": "^6.2.2",
+    "vite-plugin-pages": "^0.21.2"
   }
 }

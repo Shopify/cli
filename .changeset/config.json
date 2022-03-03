@@ -2,9 +2,12 @@
   "$schema": "https://unpkg.com/@changesets/config@1.6.3/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "linked": [["@shopify/cli", "@shopify/app", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit"]],
-  "access": "restricted",
+  "linked": [["@shopify/cli", "@shopify/app", "@shopify/cli-hydrogen", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit", "@shopify/cli-testing"]],
+  "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [],
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "onlyUpdatePeerDependentsWhenOutOfRange": true
+  }
 }

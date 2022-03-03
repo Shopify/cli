@@ -4,6 +4,7 @@ import latestVersion from 'latest-version'
 import {latestNpmPackageVersion} from './version'
 
 vi.mock('latest-version')
+
 const mockedLatestVersion = vi.mocked(latestVersion)
 
 describe('latestNpmPackageVersion', () => {
