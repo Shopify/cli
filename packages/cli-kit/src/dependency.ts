@@ -20,11 +20,9 @@ export const dependencyManager = Object.entries(DependencyManager).map(
 export function dependencyManagerUsedForCreating(
   env = process.env,
 ): DependencyManager {
-  if (env.npm_lifecycle_event === 'npx') {
-    return DependencyManager.Npm
-  } else if (env.npm_config_user_agent?.includes('yarn')) {
+  if (env.npm_config_user_agent?.includes('yarn')) {
     return DependencyManager.Yarn
-  } else if (env.PNPM_HOME) {
+  } else if (env.npm_config_user_agent?.includes('pnpm')) {
     return DependencyManager.Pnpm
   } else {
     return DependencyManager.Npm

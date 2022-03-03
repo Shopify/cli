@@ -8,8 +8,6 @@ interface InitOutput {
   name: string
 }
 
-console.log(JSON.stringify(process.env))
-
 const init = async (
   options: InitOptions,
   prompt = ui.prompt,

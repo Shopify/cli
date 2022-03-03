@@ -12,18 +12,6 @@ vi.mock('./system')
 const mockedExec = vi.mocked(exec)
 
 describe('dependencyManagerUsedForCreating', () => {
-  it('returns npm if the lifecycle event says npx', () => {
-    // Given
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const env = {npm_lifecycle_event: 'npx'}
-
-    // When
-    const got = dependencyManagerUsedForCreating(env)
-
-    // Then
-    expect(got).toBe(DependencyManager.Npm)
-  })
-
   it('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
     // Given
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -36,9 +24,10 @@ describe('dependencyManagerUsedForCreating', () => {
     expect(got).toBe(DependencyManager.Yarn)
   })
 
-  it('returns pnpm if it contains the PNPM_HOME variable', () => {
+  it('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
     // Given
-    const env = {PNPM_HOME: '/path/to/pnpm'}
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const env = {npm_config_user_agent: 'pnpm'}
 
     // When
     const got = dependencyManagerUsedForCreating(env)
@@ -47,7 +36,7 @@ describe('dependencyManagerUsedForCreating', () => {
     expect(got).toBe(DependencyManager.Pnpm)
   })
 
-  it('throws an bug error when the package manager cannot be determined', () => {
+  it('returns npm when the package manager cannot be detected', () => {
     // When
     const got = dependencyManagerUsedForCreating({})
 

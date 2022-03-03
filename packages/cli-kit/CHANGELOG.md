@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 0.31.3
+
+### Patch Changes
+
+- Fix the detection of the package manager when creating an app
+
 ## 0.31.0
 
 ### Minor Changes
