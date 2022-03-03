@@ -4,7 +4,7 @@ import {
   blocks,
   configurationFileNames,
   genericConfigurationFileNames,
-  extensions,
+  uiExtensions,
 } from '../constants'
 
 export const HomeNotFoundError = (homeDirectory: string) => {
@@ -19,7 +19,7 @@ type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  extensionType: schema.define.enum(extensions.types),
+  uiExtensionType: schema.define.enum(uiExtensions.types),
 })
 
 type UIExtensionConfiguration = schema.define.infer<
@@ -76,7 +76,7 @@ export async function load(directory: string): Promise<App> {
   )
   const appDirectory = path.dirname(configurationPath)
   const scripts = await loadScripts(appDirectory)
-  const uiExtensions = await loadExtensions(appDirectory)
+  const uiExtensions = await loadUiExtensions(appDirectory)
   const yarnLockPath = path.join(
     appDirectory,
     genericConfigurationFileNames.yarn.lockfile,
@@ -144,16 +144,16 @@ async function parseConfigurationFile(schema: any, path: string) {
   return parseResult.data
 }
 
-async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
-  const extensionsPath = path.join(
+async function loadUiExtensions(rootDirectory: string): Promise<UIExtension[]> {
+  const uiExtensionsPath = path.join(
     rootDirectory,
     `${blocks.uiExtensions.directoryName}/*`,
   )
-  const directories = await path.glob(extensionsPath, {onlyDirectories: true})
-  return Promise.all(directories.map((directory) => loadExtension(directory)))
+  const directories = await path.glob(uiExtensionsPath, {onlyDirectories: true})
+  return Promise.all(directories.map((directory) => loadUiExtension(directory)))
 }
 
-async function loadExtension(directory: string): Promise<UIExtension> {
+async function loadUiExtension(directory: string): Promise<UIExtension> {
   const configurationPath = path.join(
     directory,
     blocks.uiExtensions.configurationName,

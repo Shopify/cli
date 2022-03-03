@@ -2,7 +2,7 @@ import {fileURLToPath} from 'url'
 
 import {error, file, output, path, string, template} from '@shopify/cli-kit'
 
-import {blocks, ExtensionTypes} from '../../constants'
+import {blocks, UiExtensionTypes} from '../../constants'
 import {load as loadApp, App} from '../../app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -31,7 +31,7 @@ async function writeFromTemplate({
 }: WriteFromTemplateOptions) {
   const _alias = alias || filename
   output.message(output.content`Generating ${_alias}`)
-  const templatePath = await getTemplatePath('extensions')
+  const templatePath = await getTemplatePath('ui-extensions')
   const templateItemPath = path.join(templatePath, filename)
   const content = await file.read(templateItemPath)
   const contentOutput = await template.create(content)(promptAnswers)
@@ -39,41 +39,41 @@ async function writeFromTemplate({
   await file.write(fullpath, contentOutput)
 }
 
-interface ExtensionInitOptions {
+interface UiExtensionInitOptions {
   name: string
-  extensionType: ExtensionTypes
+  uiExtensionType: UiExtensionTypes
   parentApp: App
 }
-async function extensionInit({
+async function uiExtensionInit({
   name,
-  extensionType,
+  uiExtensionType,
   parentApp,
-}: ExtensionInitOptions) {
+}: UiExtensionInitOptions) {
   const hyphenizedName = string.hyphenize(name)
-  const extensionDirectory = path.join(
+  const uiExtensionDirectory = path.join(
     parentApp.directory,
     blocks.uiExtensions.directoryName,
     hyphenizedName,
   )
-  if (await file.exists(extensionDirectory)) {
-    throw new error.Abort(`Extension ${hyphenizedName} already exists!`)
+  if (await file.exists(uiExtensionDirectory)) {
+    throw new error.Abort(`UI Extension ${hyphenizedName} already exists!`)
   }
-  await file.mkdir(extensionDirectory)
+  await file.mkdir(uiExtensionDirectory)
   await Promise.all(
     [
       {filename: 'config.toml', alias: blocks.uiExtensions.configurationName},
-      {filename: `${extensionType}.jsx`, alias: 'index.jsx'},
+      {filename: `${uiExtensionType}.jsx`, alias: 'index.jsx'},
     ].map((fileDetails) =>
       writeFromTemplate({
         ...fileDetails,
-        directory: extensionDirectory,
+        directory: uiExtensionDirectory,
         promptAnswers: {
           name,
-          extensionType,
+          uiExtensionType,
         },
       }),
     ),
   )
 }
 
-export default extensionInit
+export default uiExtensionInit

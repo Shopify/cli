@@ -1,26 +1,26 @@
 import {Command, Flags} from '@oclif/core'
 import {file, output, path} from '@shopify/cli-kit'
 
-import {extensions} from '../../../constants'
-import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
+import {uiExtensions} from '../../../constants'
+import scaffoldUiExtensionPrompt from '../../../prompts/scaffold/ui-extension'
 import {load as loadApp, App} from '../../../app/app'
-import scaffoldExtensionService from '../../../services/scaffold/extension'
+import scaffoldUiExtensionService from '../../../services/scaffold/ui-extension'
 
-export default class AppScaffoldExtension extends Command {
-  static description = 'Scaffold an App Extension'
+export default class AppScaffoldUiExtension extends Command {
+  static description = 'Scaffold a UI Extension'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
     type: Flags.string({
       char: 't',
       hidden: false,
-      description: 'extension type',
-      options: extensions.types,
+      description: 'UI Extension type',
+      options: uiExtensions.types,
     }),
     name: Flags.string({
       char: 'n',
       hidden: false,
-      description: 'name of your extension',
+      description: 'name of your UI Extension',
     }),
     path: Flags.string({
       char: 'p',
@@ -32,18 +32,18 @@ export default class AppScaffoldExtension extends Command {
   static args = [{name: 'file'}]
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(AppScaffoldExtension)
+    const {args, flags} = await this.parse(AppScaffoldUiExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const parentApp: App = await loadApp(directory)
-    const promptAnswers = await scaffoldExtensionPrompt({
-      extensionType: flags.type,
+    const promptAnswers = await scaffoldUiExtensionPrompt({
+      uiExtensionType: flags.type,
       name: flags.name,
     })
-    const {extensionType, name} = promptAnswers
-    await scaffoldExtensionService({
+    const {uiExtensionType, name} = promptAnswers
+    await scaffoldUiExtensionService({
       ...promptAnswers,
       parentApp,
     })
-    output.message(output.content`Extension ${name} generated successfully!`)
+    output.message(output.content`UI Extension ${name} generated successfully!`)
   }
 }
