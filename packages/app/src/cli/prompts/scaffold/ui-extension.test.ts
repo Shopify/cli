@@ -1,6 +1,5 @@
 import {describe, it, expect, vi} from 'vitest'
 
-
 import {uiExtensions} from '../../constants'
 import scaffoldUiExtensionPrompt from './ui-extension'
 
