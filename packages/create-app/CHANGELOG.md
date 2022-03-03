@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.31.1
+
+### Patch Changes
+
+- Fix create-app and create-hydrogen that fail because "open" is missing
+
 ## 0.31.0
 
 ### Minor Changes
