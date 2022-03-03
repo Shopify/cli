@@ -3,7 +3,7 @@ import {describe, it, expect, vi} from 'vitest'
 import {randomHex} from '../string'
 import {open} from '../system'
 
-import {authorize} from './authorize'
+import {authorize, MismatchStateError} from './authorize'
 import {listenRedirect} from './redirect-listener'
 
 vi.mock('../system')
@@ -42,17 +42,14 @@ describe('authorize', () => {
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'bad'})
 
     // When
-    let got
-    await authorize(
+    const auth = authorize(
       'fqdn.com',
       'clientId',
       ['scope1', 'scope2'],
       'state',
-    ).catch((error) => {
-      got = error
-    })
+    )
 
     // Then
-    expect(got).not.toBeUndefined()
+    await expect(auth).rejects.toThrowError(MismatchStateError)
   })
 })

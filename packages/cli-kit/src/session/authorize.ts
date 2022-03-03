@@ -6,7 +6,7 @@ import {Abort} from '../error'
 
 import {listenRedirect} from './redirect-listener'
 
-const MismatchStateError = new Abort(
+export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
 )
 
