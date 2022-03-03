@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.31.0
+
+### Minor Changes
+
+- 464c899: Create apps with license in the package.json as UNLICENSED
+
 ## 0.30.2
 
 ### Patch Changes
