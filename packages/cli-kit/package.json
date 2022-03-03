@@ -63,6 +63,8 @@
     "find-up": "^6.2.0",
     "find-versions": "^5.0.0",
     "fs-extra": "^10.0.0",
+    "graphql": "^16.3.0",
+    "graphql-request": "^4.0.0",
     "keytar": "^7.9.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.35.1",
