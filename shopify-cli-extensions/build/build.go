@@ -11,6 +11,8 @@ import (
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/Shopify/shopify-cli-extensions/create"
 	"gopkg.in/yaml.v3"
+
+	"text/template"
 )
 
 const nextStepsTemplatePath = "templates/%s/next-steps.txt"
@@ -41,7 +43,7 @@ func Build(extension core.Extension, report ResultHandler) {
 	report(Result{true, string(output), extension})
 }
 
-func Watch(extension core.Extension, report ResultHandler) {
+func Watch(extension core.Extension, integrationCtx core.IntegrationContext, report ResultHandler) {
 	script, err := script(extension.BuildDir(), "develop")
 	if err != nil {
 		report(Result{false, err.Error(), extension})
@@ -61,9 +63,8 @@ func Watch(extension core.Extension, report ResultHandler) {
 	logProcessors := sync.WaitGroup{}
 	logProcessors.Add(2)
 
-	nextSteps, _ := create.ReadTemplateFile(fmt.Sprintf(nextStepsTemplatePath, extension.Type))
-
-	isInitialMessage := true
+	templateBytes, _ := create.ReadTemplateFile(fmt.Sprintf(nextStepsTemplatePath, extension.Type))
+	nextStepsTemplate := string(templateBytes)
 
 	go processLogs(stdout, logProcessingHandlers{
 		onCompletion: func() { logProcessors.Done() },
@@ -72,9 +73,9 @@ func Watch(extension core.Extension, report ResultHandler) {
 				report(Result{false, err.Error(), extension})
 			} else {
 				report(Result{true, message, extension})
-				if isInitialMessage {
-					fmt.Fprintf(os.Stdout, "%s\n",  string(nextSteps))
-					isInitialMessage = false
+				if len(nextStepsTemplate) > 0 {
+					fmt.Fprintf(os.Stdout, "%s\n", generateNextSteps(nextStepsTemplate, extension, integrationCtx))
+					nextStepsTemplate = ""
 				}
 			}
 		},
@@ -89,6 +90,25 @@ func Watch(extension core.Extension, report ResultHandler) {
 
 	script.Wait()
 	logProcessors.Wait()
+}
+
+// Builds 'Next Steps'
+func generateNextSteps(rawTemplate string, ext core.Extension, ctx core.IntegrationContext) string {
+	type contextRoot struct { 	// Wraps top-level elements, allowing them to be referenced in next-steps.txt
+		core.Extension
+		core.IntegrationContext
+	}
+
+	var buf bytes.Buffer
+
+	templ := template.New("templ")
+	templ, err := templ.Parse(rawTemplate)
+	if err == nil {
+		contextRoot := &contextRoot{ ext, ctx }
+		templ.Execute(&buf, contextRoot)
+	}
+
+	return buf.String()
 }
 
 type ResultHandler func(result Result)

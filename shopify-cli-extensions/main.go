@@ -94,7 +94,7 @@ func (cli *CLI) serve(args ...string) {
 	api := api.New(cli.config, "/extensions/")
 
 	for _, extension := range cli.config.Extensions {
-		go build.Watch(extension, func(result build.Result) {
+		go build.Watch(extension, cli.config.IntegrationContext, func(result build.Result) {
 			extension := result.Extension
 
 			if result.Success {

@@ -1,5 +1,7 @@
 port: 8000
+public_url: https://example.ngrok.io
 store: test-shop.myshopify.com
+
 app:
   api_key: app_api_key
 extensions:

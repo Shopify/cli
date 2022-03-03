@@ -61,7 +61,7 @@ func TestWatch(t *testing.T) {
 	}
 
 	results := []Result{}
-	Watch(extension, func(result Result) {
+	Watch(extension, config.IntegrationContext, func(result Result) {
 		results = append(results, result)
 	})
 

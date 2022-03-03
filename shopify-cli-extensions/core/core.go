@@ -65,8 +65,12 @@ type Config struct {
 	App        appYaml     `yaml:"app"`
 	Extensions []Extension `yaml:"extensions"`
 	Port       int
+	IntegrationContext `yaml:",inline"`
+}
+
+type IntegrationContext struct {
 	PublicUrl  string `yaml:"public_url"`
-	Store      string
+	Store      string `yaml:"store"`
 }
 
 type ExtensionService struct {
