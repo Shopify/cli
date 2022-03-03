@@ -18,7 +18,8 @@
     "tsc": "nx run-many --target=tsc --all --skip-nx-cache",
     "tsc:affected": "nx affected --target=tsc --all",
     "build": "nx run-many --target=build --all --skip-nx-cache",
-    "build:affected": "nx affected --target=build --all"
+    "build:affected": "nx affected --target=build --all",
+    "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.0",
@@ -64,6 +65,7 @@
     "rollup-plugin-multi-input": "^1.3.1",
     "rollup-plugin-strip-shebang": "^1.2.10",
     "shx": "^0.3.3",
+    "simple-git": "^3.2.6",
     "tempy": "^1.0.1",
     "tmp": "^0.2.1",
     "ts-node": "^10.4.0",

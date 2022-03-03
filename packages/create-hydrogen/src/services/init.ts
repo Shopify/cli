@@ -9,47 +9,46 @@ import {
   os,
   ui,
   dependency,
-  constants,
 } from '@shopify/cli-kit'
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 // eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import cliPackage from '../../../cli/package.json'
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import appPackage from '../../../app/package.json'
 import {template as getTemplatePath} from '../utils/paths'
 
 interface InitOptions {
   name: string
+  template: string
   directory: string
   dependencyManager: string | undefined
   shopifyCliVersion: string | undefined
-  shopifyAppVersion: string | undefined
-  shopifyCliKitVersion: string | undefined
+  hydrogenVersion: string
+}
+
+const RENAME_MAP = {
+  _gitignore: '.gitignore',
 }
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
-  const templatePath = await getTemplatePath('app')
-  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
-  const appPackageVersion =
-    options.shopifyAppVersion ?? constants.versions.cliKit
-  const cliKitOverridenVersion = options.shopifyCliKitVersion
-
+  const templatePath = await getTemplatePath(options.template)
+  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version
+  const hydrogenPackageVersion = options.hydrogenVersion
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
   await ui.list(
     [
       {
-        title: `Initializing your app ${hyphenizedName}`,
+        title: `Initializing your hydrogen storefront ${hyphenizedName}`,
         task: async (_, task) => {
-          await createApp({
+          await createHydrogen({
             ...options,
             outputDirectory,
             templatePath,
             cliPackageVersion,
-            appPackageVersion,
-            cliKitOverridenVersion,
+            hydrogenPackageVersion,
             user,
             dependencyManager,
           })
@@ -74,11 +73,11 @@ async function init(options: InitOptions) {
 
   output.message(output.content`
   ${hyphenizedName} is ready to build! ✨
+    Run ${output.token.command(`${dependencyManager} dev`)} to start developing.
     Docs: ${output.token.link(
       'Quick start guide',
-      'https://shopify.dev/apps/getting-started',
+      'https://shopify.dev/custom-storefronts/hydrogen',
     )}
-    Inspiration ${output.token.command(`${dependencyManager} shopify help`)}
   `)
 }
 
@@ -94,6 +93,10 @@ function inferDependencyManager(
   return dependency.dependencyManagerUsedForCreating()
 }
 
+function initializeGit() {
+  return file.write('.gitignore', 'node_modules/')
+}
+
 async function installDependencies(
   directory: string,
   dependencyManager: dependency.DependencyManager,
@@ -102,13 +105,12 @@ async function installDependencies(
   await dependency.install(directory, dependencyManager, stdout)
 }
 
-async function createApp(
+async function createHydrogen(
   options: InitOptions & {
     outputDirectory: string
     templatePath: string
     cliPackageVersion: string
-    appPackageVersion: string
-    cliKitOverridenVersion: string | undefined
+    hydrogenPackageVersion: string
     user: string
     dependencyManager: string
   },
@@ -118,9 +120,7 @@ async function createApp(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     shopify_cli_version: options.cliPackageVersion,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    shopify_app_version: options.appPackageVersion,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    cli_kit_version_overriden_version: options.cliKitOverridenVersion,
+    hydrogen_version: options.hydrogenPackageVersion,
     author: options.user,
     dependencyManager: options.dependencyManager,
   }
