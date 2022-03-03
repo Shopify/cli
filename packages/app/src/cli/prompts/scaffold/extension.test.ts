@@ -1,6 +1,7 @@
 import {describe, it, expect, vi} from 'vitest'
 
 import {extensions} from '../../constants'
+
 import scaffoldExtensionPrompt from './extension'
 
 describe('extension prompt', () => {
