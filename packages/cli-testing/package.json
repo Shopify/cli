@@ -36,5 +36,8 @@
     "darwin",
     "linux",
     "win32"
-  ]
+  ],
+  "devDependencies": {
+    "tempy": "^2.0.0"
+  }
 }
