@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 1.0.0
+
+### Minor Changes
+
+- a9ae85a: Rename extensions to UI extensions consistently
+
+### Patch Changes
+
+- Updated dependencies [e701cf5]
+- Updated dependencies [563f225]
+  - @shopify/cli-kit@1.0.0
+
 ## 0.30.2
 
 ### Patch Changes
