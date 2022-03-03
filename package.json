@@ -102,7 +102,6 @@
       "require-await": "error",
       "node/no-deprecated-api": "off",
       "import/no-extraneous-dependencies": "off",
-      "no-return-await": "error",
       "no-await-in-loop": "error",
       "no-restricted-imports": [
         "error",

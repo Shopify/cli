@@ -22,21 +22,26 @@ describe('copy', () => {
     })
   })
 
-  it('copies the directory recursively', async () => {
+  it('copies the directory recursively including dot files', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const content = 'test'
       const from = join(tmpDir, 'from')
+      const fromChild = join(from, 'child')
       const to = join(tmpDir, 'to')
       await mkdir(from)
+      await mkdir(fromChild)
       await write(join(from, 'file'), content)
+      await write(join(fromChild, '.dotfile'), content)
 
       // When
       await copy(from, to)
 
       // Then
-      const got = await read(join(to, 'file'))
-      expect(got).toEqual(content)
+      await expect(read(join(to, 'file'))).resolves.toEqual(content)
+      await expect(read(join(to, 'child', '.dotfile'))).resolves.toEqual(
+        content,
+      )
     })
   })
 })
