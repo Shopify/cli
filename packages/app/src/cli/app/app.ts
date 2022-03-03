@@ -7,6 +7,10 @@ import {
   extensions,
 } from '../constants'
 
+export const HomeNotFoundError = (homeDirectory: string) => {
+  return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
+}
+
 const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
 })
@@ -38,6 +42,10 @@ interface UIExtension {
   directory: string
 }
 
+interface Home {
+  directory: string
+}
+
 type PackageManager = 'npm' | 'yarn' | 'pnpm'
 
 export interface App {
@@ -45,6 +53,7 @@ export interface App {
   packageManager: PackageManager
   configuration: AppConfiguration
   scripts: Script[]
+  home: Home
   uiExtensions: UIExtension[]
 }
 
@@ -86,14 +95,24 @@ export async function load(directory: string): Promise<App> {
   } else {
     packageManager = 'npm'
   }
+  const home = await loadHome(appDirectory)
 
   return {
     directory: appDirectory,
     configuration,
+    home,
     scripts,
     uiExtensions,
     packageManager,
   }
+}
+
+async function loadHome(appDirectory: string): Promise<Home> {
+  const homeDirectory = path.join(appDirectory, 'home')
+  if (!(await file.exists(homeDirectory))) {
+    throw HomeNotFoundError(homeDirectory)
+  }
+  return {directory: homeDirectory}
 }
 
 async function loadConfigurationFile(path: string): Promise<object> {
