@@ -158,7 +158,7 @@ describe('load', () => {
     expect(app.packageManager).toBe('pnpm')
   })
 
-  it("throws an error if the extension configuration file doesn't exist", async () => {
+  it("throws an error if the UI extension configuration file doesn't exist", async () => {
     // Given
     makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'})
 
@@ -168,7 +168,7 @@ describe('load', () => {
     )
   })
 
-  it('throws an error if the extension configuration file is invalid', async () => {
+  it('throws an error if the UI extension configuration file is invalid', async () => {
     // Given
     const blockConfiguration = `
       wrong = "my_extension"
@@ -183,13 +183,13 @@ describe('load', () => {
     await expect(load(tmpDir)).rejects.toThrow()
   })
 
-  it('loads the app when it has an extension with a valid configuration', async () => {
+  it('loads the app when it has a UI extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
-      extension_type = "checkout-post-purchase"
+      ui_extension_type = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -204,13 +204,13 @@ describe('load', () => {
     expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
   })
 
-  it('loads the app from an extension directory when it has an extension with a valid configuration', async () => {
+  it('loads the app from a UI extension directory when it has a UI extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
-      extension_type = "checkout-post-purchase"
+      ui_extension_type = "checkout-post-purchase"
       `
     const {blockDir} = await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -226,14 +226,14 @@ describe('load', () => {
     expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
   })
 
-  it('loads the app with several extensions that have valid configurations', async () => {
+  it('loads the app with several UI extensions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
 
     let blockConfiguration = `
       name = "my_extension_1"
-      extension_type = "checkout-post-purchase"
+      ui_extension_type = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -243,7 +243,7 @@ describe('load', () => {
 
     blockConfiguration = `
       name = "my_extension_2"
-      extension_type = "product-subscription"
+      ui_extension_type = "product-subscription"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',

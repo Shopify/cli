@@ -24,16 +24,16 @@ export const genericConfigurationFileNames = {
   },
 }
 
-interface ExtensionsType {
-  // Dependent code requires that extensions.types has at least 1 element.
+interface UiExtensionsType {
+  // Dependent code requires that uiExtensions.types has at least 1 element.
   // Otherwise it will be typed as string[] which doesn't guarantee a first element.
   types: [string, ...string[]]
 }
-export const extensions: ExtensionsType = {
+export const uiExtensions: UiExtensionsType = {
   types: [
     'theme-app-extension',
     'product-subscription',
     'checkout-post-purchase',
   ],
 }
-export type ExtensionTypes = typeof extensions.types[number]
+export type UiExtensionTypes = typeof uiExtensions.types[number]

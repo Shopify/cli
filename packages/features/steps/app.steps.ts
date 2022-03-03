@@ -7,31 +7,31 @@ import {exec} from '../lib/system'
 
 interface UIExtensionConfiguration {
   name: string
-  extensionType: string
+  uiExtensionType: string
 }
 
 When(
-  /I create an extension named (.+) of type (.+)/,
+  /I create a UI extension named (.+) of type (.+)/,
   {timeout: 2 * 60 * 1000},
-  async function (extensionName: string, extensionType: string) {
+  async function (uiExtensionName: string, uiExtensionType: string) {
     await exec(executables.cli, [
       'app',
       'scaffold',
-      'extension',
+      'ui-extension',
       '--name',
-      extensionName,
+      uiExtensionName,
       '--path',
       this.appDirectory,
       '--type',
-      extensionType,
+      uiExtensionType,
     ])
   },
 )
 
 Then(
-  /I have an extension named (.+) of type (.+)/,
+  /I have a UI extension named (.+) of type (.+)/,
   {},
-  async function (appName: string, extensionType: string) {
+  async function (appName: string, uiExtensionType: string) {
     const {stdout} = await exec(executables.cli, [
       'app',
       'info',
@@ -39,15 +39,15 @@ Then(
       this.appDirectory,
     ])
     const results = JSON.parse(stdout)
-    const extension = results.uiExtensions.find(
-      (extension: {configuration: UIExtensionConfiguration}) => {
-        return extension.configuration.name === appName
+    const uiExtension = results.uiExtensions.find(
+      (uiExtension: {configuration: UIExtensionConfiguration}) => {
+        return uiExtension.configuration.name === appName
       },
     )
-    if (!extension)
+    if (!uiExtension)
       assert.fail(
         `Extension not created! Config:\n${JSON.stringify(results, null, 2)}`,
       )
-    assert.equal(extension.configuration.extensionType, extensionType)
+    assert.equal(uiExtension.configuration.uiExtensionType, uiExtensionType)
   },
 )

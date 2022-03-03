@@ -1,10 +1,9 @@
 import {describe, it, expect, vi} from 'vitest'
 
-import {extensions} from '../../constants'
+import {uiExtensions} from '../../constants'
+import scaffoldUiExtensionPrompt from './ui-extension'
 
-import scaffoldExtensionPrompt from './extension'
-
-describe('extension prompt', () => {
+describe('UI extension prompt', () => {
   it('when name is not passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'ext'}
@@ -14,21 +13,21 @@ describe('extension prompt', () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await scaffoldUiExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
       {
         type: 'input',
         name: 'name',
-        message: "Your extension's working name?",
+        message: "Your UI extension's working name?",
         default: 'extension',
       },
       {
         type: 'select',
-        name: 'extensionType',
-        message: 'Type of extension?',
-        choices: extensions.types,
+        name: 'uiExtensionType',
+        message: 'Type of UI extension?',
+        choices: uiExtensions.types,
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -43,15 +42,15 @@ describe('extension prompt', () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await scaffoldUiExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
       {
         type: 'select',
-        name: 'extensionType',
-        message: 'Type of extension?',
-        choices: extensions.types,
+        name: 'uiExtensionType',
+        message: 'Type of UI extension?',
+        choices: uiExtensions.types,
       },
     ])
     expect(got).toEqual({...options, ...answers})
