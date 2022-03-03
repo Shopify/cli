@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.31.2
+
+### Patch Changes
+
+- Add some additional logs to figure how how to detect that the create-app is running through pnpmx
+
 ## 0.31.1
 
 ### Patch Changes
