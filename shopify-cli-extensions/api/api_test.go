@@ -252,19 +252,6 @@ func TestAdminRedirect(t *testing.T) {
 	}
 }
 
-func TestPostPurchaseIndex(t *testing.T) {
-	api := New(config, apiRoot)
-	response := getHTMLResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000002")
-
-	t.Logf("response: %s", response)
-
-	instructions := "Create a checkout and append <code>?dev=https://123.ngrok-url/extensions/00000000-0000-0000-0000-000000000002</code> to the URL to start developing your extension."
-
-	if !strings.Contains(response, instructions) {
-		t.Errorf("expected instructions to contain %s", instructions)
-	}
-}
-
 func TestWebsocketNotify(t *testing.T) {
 	api := New(config, apiRoot)
 	server := httptest.NewServer(api)

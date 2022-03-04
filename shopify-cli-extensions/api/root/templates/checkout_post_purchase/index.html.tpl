@@ -35,7 +35,6 @@
   <body>
   <div class="content">
       <p>This page is served by your local UI Extension development server. Instead of visiting this page directly, you will need to connect your local development environment to a real checkout environment.</p>
-      <p>Create a checkout and append <code>?dev={{ .Development.Root.Url }}</code> to the URL to start developing your extension.</p>
   </div>
   </body>
 </html>
