@@ -16,12 +16,16 @@
     "@shopify/app": "{{shopify_app_version}}",
     "react": "17.0.2"
   },
-  {% if cli_kit_version_overriden_version %}
+  {% if dependency_overrides %}
   "overrides": {
-    "@shopify/cli-kit": "{{cli_kit_version_overriden_version}}"
+    {% for dependency in dependency_overrides %}
+      "{{dependency[0]}}": "{{dependency[1]}}"{% unless forloop.last %},{% endunless %}
+    {% endfor %}
   },
   "resolutions": {
-    "@shopify/cli-kit": "{{cli_kit_version_overriden_version}}"
+    {% for dependency in dependency_overrides %}
+      "{{dependency[0]}}": "{{dependency[1]}}"{% unless forloop.last %},{% endunless %}
+    {% endfor %}
   },
   {% endif %}
   "author": "{{author}}"
