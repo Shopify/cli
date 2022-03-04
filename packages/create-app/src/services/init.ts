@@ -131,7 +131,8 @@ async function createApp(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     dependency_overrides: options.dependencyOverrides,
     author: options.user,
-    dependencyManager: options.dependencyManager,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    dependency_manager: options.dependencyManager,
   }
   await template.recursiveDirectoryCopy(
     options.templatePath,
