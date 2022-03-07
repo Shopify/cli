@@ -1,8 +1,12 @@
+import {identity} from './environment/fqdn'
+import {
+  exchangeAccessForApplicationTokens,
+  exchangeCodeForAccessToken,
+} from './session/exchange'
 import {authorize} from './session/authorize'
-import {message as outputMessage} from './output'
-import {identity as getIdentityFqdn} from './environment/fqdn'
-import {clientId as getIdentityClientId} from './session/identity'
 import constants from './constants'
+import {Session} from './session/schema'
+import * as secureStore from './session/store'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -13,6 +17,8 @@ type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
  * It represents the options to authenticate against the Shopify Admin API.
  */
 interface AdminAPIOAuthOptions {
+  /** Store to request permissions for */
+  storeFqdn?: string
   /** List of scopes to request permissions for */
   scopes: AdminAPIScope[]
 }
@@ -35,19 +41,14 @@ interface StorefrontRendererAPIOAuthOptions {
   scopes: StorefrontRendererScope[]
 }
 
-interface ShopifyOAuthOptions {
-  storeFqdn?: string
-  storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
-  adminApi?: AdminAPIOAuthOptions
-}
-
 /**
  * It represents the authentication requirements and
  * is the input necessary to trigger the authentication
  * flow.
  */
 interface OAuthApplications {
-  shopify?: ShopifyOAuthOptions
+  adminApi?: AdminAPIOAuthOptions
+  storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
 }
 
@@ -58,14 +59,12 @@ interface OAuthApplications {
  */
 
 // await ensureAuthenticated({
-//   shopify: {
+//   adminApi: {
 //     storeFqdn: 'myshop.myshopify.com',
-//     storefrontRendererApi: {
-//       scopes: [],
-//     },
-//     adminApi: {
-//       scopes: [],
-//     },
+//     scopes: [],
+//   },
+//   storefrontRendererApi: {
+//     scopes: [],
 //   },
 //   partnersApi: {
 //     scopes: [],
@@ -79,13 +78,31 @@ export async function ensureAuthenticated(
     new Date().getTime() +
       constants.session.expirationTimeMarginInMinutes * 60 * 1000,
   )
-  const identityFqdn = await getIdentityFqdn()
-  const identityClientId = getIdentityClientId()
-  const scopes = ['openid'] // employee
-  const authorizationCode = await authorize(
-    identityFqdn,
-    identityClientId,
-    scopes,
-  )
-  outputMessage(`Code: ${authorizationCode}`)
+
+  const fqdn = await identity()
+
+  const scopes = [
+    'openid',
+    'https://api.shopify.com/auth/shop.admin.graphql',
+    'https://api.shopify.com/auth/shop.admin.themes',
+    'https://api.shopify.com/auth/partners.collaborator-relationships.readonly',
+    'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
+    'https://api.shopify.com/auth/partners.app.cli.access',
+  ]
+  const store = 'isaacroldan.myshopify.com'
+
+  // const session = fetch()
+
+  const code = await authorize(scopes)
+  const identityToken = await exchangeCodeForAccessToken(code)
+  const result = await exchangeAccessForApplicationTokens(identityToken, store)
+
+  console.log(result)
+  // const session: Session = {
+  //   [fqdn]: {
+  //     identity: identityToken,
+  //     applications: result,
+  //   },
+  // }
+  // secureStore.store(session)
 }
