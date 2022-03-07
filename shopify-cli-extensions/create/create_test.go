@@ -316,3 +316,38 @@ func TestInstallDependencies(t *testing.T) {
 		os.RemoveAll(rootDir)
 	})
 }
+
+func TestCreateLocaleFiles(t *testing.T) {
+	Command = makeDummyRunner
+	LookPath = func(file string) (string, error) {
+		return file, nil
+	}
+	rootDir := "tmp/TestCreateLocalesFiles"
+	extension := core.Extension{
+		Type: "integration_test",
+		Development: core.Development{
+			Template: "typescript-react",
+			RootDir:  rootDir,
+			Renderer: core.Renderer{Name: "@shopify/checkout_ui_extension"},
+		},
+	}
+
+	err := NewExtensionProject(extension)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := os.ReadDir(fmt.Sprintf("%s/locales", rootDir))
+	if err != nil {
+		t.Error("expect a \"/locales\" directory to exist")
+	}
+
+	if len(files) == 0 {
+		t.Error("expect the locales directory to have locale files")
+	}
+
+	t.Cleanup(func() {
+		os.RemoveAll(rootDir)
+	})
+}

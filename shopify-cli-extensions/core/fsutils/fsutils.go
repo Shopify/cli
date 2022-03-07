@@ -66,7 +66,7 @@ func (fs *FS) Execute(op *Operation) (err error) {
 
 			if err = fs.Execute(&Operation{
 				SourceDir:  relativeDir,
-				TargetDir:  op.TargetDir,
+				TargetDir:  filepath.Join(op.TargetDir, fileName),
 				OnEachFile: op.OnEachFile,
 			}); err != nil {
 				return

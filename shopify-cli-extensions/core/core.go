@@ -31,6 +31,7 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 			name := keys[entry]
 			extension.Assets[name] = Asset{Name: name}
 		}
+
 		extension.Surface = GetSurface(&extension)
 		extensions = append(extensions, extension)
 	}
@@ -62,15 +63,15 @@ type appYaml struct {
 }
 
 type Config struct {
-	App        appYaml     `yaml:"app"`
-	Extensions []Extension `yaml:"extensions"`
-	Port       int
+	App                appYaml     `yaml:"app"`
+	Extensions         []Extension `yaml:"extensions"`
+	Port               int
 	IntegrationContext `yaml:",inline"`
 }
 
 type IntegrationContext struct {
-	PublicUrl  string `yaml:"public_url"`
-	Store      string `yaml:"store"`
+	PublicUrl string `yaml:"public_url"`
+	Store     string `yaml:"store"`
 }
 
 type ExtensionService struct {
@@ -82,10 +83,16 @@ type ExtensionService struct {
 	PublicUrl  string
 }
 
+type Localization struct {
+	DefaultLocale string                 `json:"defaultLocale" yaml:"default_locale"`
+	Translations  map[string]interface{} `json:"translations" yaml:"translations"`
+}
+
 type Extension struct {
 	Assets          map[string]Asset `json:"assets" yaml:"-"`
 	Development     Development      `json:"development" yaml:"development,omitempty"`
 	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty"`
+	Localization    *Localization    `json:"localization" yaml:"-"`
 	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
 	Type            string           `json:"type" yaml:"type,omitempty"`
 	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`

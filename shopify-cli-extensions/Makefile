@@ -91,6 +91,7 @@ integration-test: tmp build
 		ruby ../../support/merge_config.rb | \
 		../../shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
+	test -f tmp/integration_test/locales/en.default.json
 
 .PHONY: update-version
 update-version:

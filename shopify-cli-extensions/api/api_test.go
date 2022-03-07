@@ -100,6 +100,10 @@ func TestGetExtensions(t *testing.T) {
 	if api.Extensions[0].Development.Root.Url != "" || api.Extensions[0].Assets["main"].Url != "" {
 		t.Error("expect extension API data urls to not to be mutated")
 	}
+
+	if extension.Localization != nil {
+		t.Error("expect localization to be nil without defined locales")
+	}
 }
 
 func TestGetSingleExtension(t *testing.T) {
@@ -166,6 +170,11 @@ func TestGetSingleExtension(t *testing.T) {
 	if api.Extensions[0].Development.Root.Url != "" || api.Extensions[0].Assets["main"].Url != "" {
 		t.Error("expect extension API data urls to not to be mutated")
 	}
+
+	if extension.Localization != nil {
+		t.Error("expect localization to be nil without defined locales")
+	}
+
 }
 
 func TestServeAssets(t *testing.T) {
@@ -735,6 +744,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 		  "uuid": "00000000-0000-0000-0000-000000000000",
 		  "version": "",
 		  "extensionPoints": null,
+		  "localization": null,
 		  "surface": "checkout"
 		}
 	  ]`, server.URL, server.URL)
