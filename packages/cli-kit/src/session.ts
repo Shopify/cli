@@ -48,7 +48,7 @@ interface StorefrontRendererAPIOAuthOptions {
  * is the input necessary to trigger the authentication
  * flow.
  */
-interface OAuthApplications {
+export interface OAuthApplications {
   adminApi?: AdminAPIOAuthOptions
   storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
@@ -90,6 +90,8 @@ export async function ensureAuthenticated(
   const identityToken = await exchangeCodeForAccessToken(code)
 
   const exchangeScopes = generateExchangeScopes(applications)
+
+  // Temporary, just for testing purposes
   const store = applications.adminApi?.storeFqdn || 'isaacroldan.myshopify.com'
 
   // Exchange identity token for application tokens
@@ -107,7 +109,7 @@ export async function ensureAuthenticated(
     },
   }
   secureStore.store(session)
-  console.log(session)
+  // console.log(session)
 }
 
 // Scope Helpers

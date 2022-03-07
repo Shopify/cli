@@ -105,11 +105,8 @@ async function tokenRequest(params: {[key: string]: any}): Promise<unknown> {
   const fqdn = await identity()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-  // console.log(url)
-  // console.log(params)
 
   const res = await fetch(url.href, {method: 'POST'})
-  // console.log(res.body)
   if (!res.ok) {
     throw new Abort(`HTTP ${res.status}`)
   }
