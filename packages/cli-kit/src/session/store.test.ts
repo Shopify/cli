@@ -1,4 +1,4 @@
-import {describe, expect, vi, it, beforeEach, afterEach} from 'vitest'
+import {describe, expect, vi, it} from 'vitest'
 
 import {
   store as secureStore,

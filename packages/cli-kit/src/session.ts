@@ -89,7 +89,7 @@ export async function ensureAuthenticated(
   // Exchange code for identity token
   const identityToken = await exchangeCodeForAccessToken(code)
 
-  const exchangeScopes = generateExchangeScopes(applications)
+  const exchangeScopes = getExchangeScopes(applications)
 
   // Temporary, just for testing purposes
   const store = applications.adminApi?.storeFqdn || 'isaacroldan.myshopify.com'
@@ -122,7 +122,7 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   return allDefaultScopes(requestedScopes)
 }
 
-function generateExchangeScopes(apps: OAuthApplications): ExchangeScopes {
+function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
   const adminScope = apps.adminApi?.scopes || []
   const partnerScope = apps.partnersApi?.scopes || []
   const storefrontScopes = apps.storefrontRendererApi?.scopes || []

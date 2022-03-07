@@ -8,7 +8,6 @@ import {fetch} from '../http'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
-  ExchangeScopes,
 } from './exchange'
 import {applicationId, clientId} from './identity'
 import {IdentityToken} from './schema'
