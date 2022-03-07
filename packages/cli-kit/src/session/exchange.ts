@@ -4,13 +4,14 @@ import {fetch} from '../http'
 import {identity} from '../environment/fqdn'
 
 import {ApplicationToken, IdentityToken} from './schema'
-import {
-  applicationId,
-  defaultScopes,
-  clientId as getIdentityClientId,
-} from './identity'
+import {applicationId, clientId as getIdentityClientId} from './identity'
 import {CodeAuthResult} from './authorize'
 
+export interface ExchangeScopes {
+  admin: string[]
+  partners: string[]
+  storefront: string[]
+}
 /**
  * Given a valid authorization code, request an identity access token.
  * This token can then be used to get API specific tokens.
@@ -46,12 +47,17 @@ export async function exchangeCodeForAccessToken(
  */
 export async function exchangeAccessForApplicationTokens(
   identityToken: IdentityToken,
+  scopes: ExchangeScopes,
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
 
-  const partners = await requestApplicationToken('partners', token)
-  const storefront = await requestApplicationToken('storefront-renderer', token)
+  const partners = await requestAppToken('partners', token, scopes.partners)
+  const storefront = await requestAppToken(
+    'storefront-renderer',
+    token,
+    scopes.storefront,
+  )
 
   const result = {
     ...partners,
@@ -59,18 +65,18 @@ export async function exchangeAccessForApplicationTokens(
   }
 
   if (store) {
-    const admin = await requestApplicationToken('admin', token, store)
+    const admin = await requestAppToken('admin', token, scopes.admin, store)
     Object.assign(result, admin)
   }
   return result
 }
 
-async function requestApplicationToken(
+async function requestAppToken(
   api: API,
   token: string,
+  scopes: string[] = [],
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
-  const scopes = defaultScopes(api)
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
 
@@ -99,12 +105,14 @@ async function tokenRequest(params: {[key: string]: any}): Promise<unknown> {
   const fqdn = await identity()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-  const res = await fetch(url.href, {method: 'POST'})
+  // console.log(url)
+  // console.log(params)
 
+  const res = await fetch(url.href, {method: 'POST'})
+  // console.log(res.body)
   if (!res.ok) {
     throw new Abort(`HTTP ${res.status}`)
   }
-
   return res.json()
 }
 

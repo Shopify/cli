@@ -5,7 +5,7 @@ import {
   identity as identityEnvironment,
 } from '../environment/service'
 import {Environment} from '../network/service'
-import {allAPIs, API} from '../network/api'
+import {API} from '../network/api'
 
 export function clientId(): string {
   const environment = identityEnvironment()
@@ -52,45 +52,5 @@ export function applicationId(api: API): string {
     }
     default:
       throw new Bug(`Application id for API of type: ${api}`)
-  }
-}
-
-export function allScopes() {
-  return allAPIs.map(apiScopes).flat()
-}
-
-export function defaultScopes(api: API): string[] {
-  const scopes = ['openid']
-  const scopesForAPI = apiScopes(api).map(scopeTransform)
-  return scopes.concat(scopesForAPI)
-}
-
-function apiScopes(api: API): string[] {
-  switch (api) {
-    case 'admin':
-      return ['graphql', 'themes', 'collaborator']
-    case 'storefront-renderer':
-      return ['devtools']
-    case 'partners':
-      return ['cli']
-    default:
-      throw new Bug(`Unknown API: ${api}`)
-  }
-}
-
-export function scopeTransform(scope: string): string {
-  switch (scope) {
-    case 'graphql':
-      return 'https://api.shopify.com/auth/shop.admin.graphql'
-    case 'themes':
-      return 'https://api.shopify.com/auth/shop.admin.themes'
-    case 'collaborator':
-      return 'https://api.shopify.com/auth/partners.collaborator-relationships.readonly'
-    case 'cli':
-      return 'https://api.shopify.com/auth/partners.app.cli.access'
-    case 'devtools':
-      return 'https://api.shopify.com/auth/shop.storefront-renderer.devtools'
-    default:
-      return scope
   }
 }

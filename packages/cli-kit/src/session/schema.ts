@@ -32,12 +32,12 @@ const ApplicationTokenSchema = define.object({
  * @example
  * {
  *    "accounts.shopify.com": {
- *      "identity": {...}
+ *      "identity": {...} // IdentityTokenSchema
  *      "applications": {
  *        "${domain}-application-id": {  // Admin APIs includes domain in the key
  *          "accessToken": "...",
  *        },
- *        "$application-id": {
+ *        "$application-id": { // ApplicationTokenSchema
  *          "accessToken": "...",
  *        },
  *      }

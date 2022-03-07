@@ -1,7 +1,9 @@
+import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity} from './environment/fqdn'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
+  ExchangeScopes,
 } from './session/exchange'
 import {authorize} from './session/authorize'
 import constants from './constants'
@@ -79,30 +81,52 @@ export async function ensureAuthenticated(
       constants.session.expirationTimeMarginInMinutes * 60 * 1000,
   )
 
-  const fqdn = await identity()
+  const scopes = getFlattenScopes(applications)
 
-  const scopes = [
-    'openid',
-    'https://api.shopify.com/auth/shop.admin.graphql',
-    'https://api.shopify.com/auth/shop.admin.themes',
-    'https://api.shopify.com/auth/partners.collaborator-relationships.readonly',
-    'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
-    'https://api.shopify.com/auth/partners.app.cli.access',
-  ]
-  const store = 'isaacroldan.myshopify.com'
-
-  // const session = fetch()
-
+  // Authorize user via browser
   const code = await authorize(scopes)
-  const identityToken = await exchangeCodeForAccessToken(code)
-  const result = await exchangeAccessForApplicationTokens(identityToken, store)
 
-  console.log(result)
-  // const session: Session = {
-  //   [fqdn]: {
-  //     identity: identityToken,
-  //     applications: result,
-  //   },
-  // }
-  // secureStore.store(session)
+  // Exchange code for identity token
+  const identityToken = await exchangeCodeForAccessToken(code)
+
+  const exchangeScopes = generateExchangeScopes(applications)
+  const store = applications.adminApi?.storeFqdn || 'isaacroldan.myshopify.com'
+
+  // Exchange identity token for application tokens
+  const result = await exchangeAccessForApplicationTokens(
+    identityToken,
+    exchangeScopes,
+    store,
+  )
+
+  const fqdn = await identity()
+  const session: Session = {
+    [fqdn]: {
+      identity: identityToken,
+      applications: result,
+    },
+  }
+  secureStore.store(session)
+  console.log(session)
+}
+
+// Scope Helpers
+
+function getFlattenScopes(apps: OAuthApplications): string[] {
+  const admin = apps.adminApi?.scopes || []
+  const partner = apps.partnersApi?.scopes || []
+  const storefront = apps.storefrontRendererApi?.scopes || []
+  const requestedScopes = [...admin, ...partner, ...storefront]
+  return allDefaultScopes(requestedScopes)
+}
+
+function generateExchangeScopes(apps: OAuthApplications): ExchangeScopes {
+  const adminScope = apps.adminApi?.scopes || []
+  const partnerScope = apps.partnersApi?.scopes || []
+  const storefrontScopes = apps.storefrontRendererApi?.scopes || []
+  return {
+    admin: apiScopes('admin', adminScope),
+    partners: apiScopes('partners', partnerScope),
+    storefront: apiScopes('storefront-renderer', storefrontScopes),
+  }
 }
