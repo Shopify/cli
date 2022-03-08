@@ -1,0 +1,3 @@
+
+🔭 > To test your extension please visit the following URL:
+🔭 > {{.IntegrationContext.PublicUrl}}/extensions/{{.Extension.UUID}}

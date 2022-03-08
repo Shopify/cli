@@ -23,6 +23,7 @@ func New(config *core.Config, apiRoot string) *RootHandler {
 			ApiRoot: apiRoot,
 			Port:    config.Port,
 			Store:   config.Store,
+			IntegrationContext: config.IntegrationContext,
 		},
 	}
 }
@@ -155,6 +156,7 @@ type apiConfig struct {
 	ApiRoot string
 	Port    int
 	Store   string
+	core.IntegrationContext
 }
 
 type RootHandler struct {
