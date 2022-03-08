@@ -82,17 +82,15 @@ export async function ensureAuthenticated(
   )
 
   const scopes = getFlattenScopes(applications)
+  const exchangeScopes = getExchangeScopes(applications)
+  const store = applications.adminApi?.storeFqdn // || 'isaacroldan.myshopify.com' temporary for testing
+  const fqdn = await identity()
 
   // Authorize user via browser
   const code = await authorize(scopes)
 
   // Exchange code for identity token
   const identityToken = await exchangeCodeForAccessToken(code)
-
-  const exchangeScopes = getExchangeScopes(applications)
-
-  // Temporary, just for testing purposes
-  const store = applications.adminApi?.storeFqdn || 'isaacroldan.myshopify.com'
 
   // Exchange identity token for application tokens
   const result = await exchangeAccessForApplicationTokens(
@@ -101,7 +99,7 @@ export async function ensureAuthenticated(
     store,
   )
 
-  const fqdn = await identity()
+  // Store tokens in secure store
   const session: Session = {
     [fqdn]: {
       identity: identityToken,
@@ -109,7 +107,7 @@ export async function ensureAuthenticated(
     },
   }
   secureStore.store(session)
-  // console.log(session)
+  console.log(JSON.stringify(session, null, 4))
 }
 
 // Scope Helpers
