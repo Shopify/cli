@@ -6,13 +6,26 @@ The information below is mainly targeting contributors rather than users. If you
 
 ## Getting started
 
+Prerequisites:
+
+- [Go](https://go.dev/), version 1.17 or higher
+- The current [LTS version](https://nodejs.org/en/about/releases/) of [Node.JS](https://nodejs.org/en/)
+
 Install Go by running
 
 ```sh
 brew install go
 ```
 
-and familiarize yourself with the `Makefile`. It defines several useful tasks for building and testing the project.
+Install Node.JS by running:
+
+```sh
+brew install node
+```
+
+> **OPTIONAL**: If you are a Shopify employee, your machine may be configured to use `npm.shopify.io`. To avoid `yarn` errors, install the project by running `dev up`.
+
+Next, familiarize yourself with the `Makefile`. It defines several useful tasks for building and testing the project.
 
 To build the project, bootstrap some example extensions and install all of their dependencies, run:
 

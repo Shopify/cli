@@ -1,0 +1,11 @@
+name: shopify-cli-extensions
+
+type: go
+
+up:
+  - node:
+      version: v16.13.1
+      yarn: v1.22.17
+  - go:
+      version: 1.17.6
+      modules: true
