@@ -13,7 +13,9 @@ import (
 
 type dummyRunner struct{}
 
-func (r dummyRunner) Run() error { return nil }
+func (r dummyRunner) Run() error                      { return nil }
+func (r dummyRunner) CombinedOutput() ([]byte, error) { return []byte{}, nil }
+
 func makeDummyRunner(path, executable string, args ...string) Runner {
 	return dummyRunner{}
 }
@@ -95,7 +97,7 @@ func TestMergeTemplatesJSON(t *testing.T) {
 		Development: core.Development{
 			Template: "typescript-react",
 			RootDir:  rootDir,
-			Renderer: core.Renderer{Name: "@shopify/admin-ui-extension"},
+			Renderer: core.Renderer{Name: "@shopify/admin-ui-extension", Version: "latest"},
 		},
 	}
 
@@ -134,6 +136,7 @@ func TestMergeTemplatesJSON(t *testing.T) {
 		t.Errorf("expect \"@apollo/client\" dependency to match template config but received %v", config.Dependencies["@apollo/client"])
 	}
 
+	t.Log(config.Dependencies)
 	if config.Dependencies["@shopify/admin-ui-extension-react"] != "latest" {
 		t.Errorf("expect \"@shopify/admin-ui-extension-react\" dependency to match template config but received %v", config.Dependencies["@shopify/admin-ui-extension-react"])
 	}

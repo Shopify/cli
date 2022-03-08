@@ -17,6 +17,7 @@ extensions:
       template: 'typescript-react'
       renderer:
         name: '@shopify/checkout-ui-extensions'
+        version: '^0.14.0'
       entries:
         main: 'src/index.tsx'
       resource:
@@ -30,6 +31,7 @@ extensions:
       template: 'typescript-react'
       renderer:
         name: '@shopify/admin-ui-extensions'
+        version: '^1.0.1'
       entries:
         main: 'src/index.tsx'
   - uuid: 00000000-0000-0000-0000-000000000002
@@ -44,5 +46,6 @@ extensions:
       template: 'typescript-react'
       renderer:
         name: '@shopify/post-purchase-ui-extensions'
+        version: '^0.13.2'
       entries:
         main: 'src/index.tsx'

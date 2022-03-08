@@ -91,6 +91,7 @@ func (fs *FS) MergeTemplateData(templateData interface{}, filePath string) (*byt
 	}
 
 	fileTemplate := template.New(filePath)
+	fileTemplate.Funcs(templateHelpers)
 	fileTemplate, err = fileTemplate.Parse(string(content))
 	if err != nil {
 		return &templateContent, err
@@ -148,4 +149,10 @@ type OnEachFile func(filePath string, targetPath string) error
 type FS struct {
 	*embed.FS
 	root string
+}
+
+var templateHelpers template.FuncMap = template.FuncMap{
+	"raw": func(value string) template.HTML {
+		return template.HTML(value)
+	},
 }

@@ -4,10 +4,11 @@ extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: integration_test
     development:
-      root_dir: "tmp/integration_test"
-      build_dir: "build"
-      template: "typescript-react"
+      root_dir: tmp/integration_test
+      build_dir: build
+      template: typescript-react
       renderer:
         name: "@shopify/checkout-ui-extensions"
+        version: ~> 0.14.0
       entries:
-        main: "src/index.tsx"
+        main: src/index.tsx

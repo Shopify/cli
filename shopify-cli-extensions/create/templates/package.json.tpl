@@ -2,8 +2,8 @@
     "name": "{{ .Type }}",
     "license": "MIT",
     "dependencies": {
-      {{ if .React }}"{{ .Development.Renderer.Name }}-react": "latest",{{ end }}
-      {{ if .React }}"react": "^17.0.0"{{ else }}"{{ .Development.Renderer.Name }}": "latest"{{ end }}
+      {{ if .React }}"{{ .Development.Renderer.Name }}-react": "{{ raw .Development.Renderer.Version }}",{{ end }}
+      {{ if .React }}"react": "^17.0.0"{{ else }}"{{ .Development.Renderer.Name }}": "{{ raw .Development.Renderer.Version }}"{{ end }}
     },
     "devDependencies": {
       {{ if .TypeScript }}"typescript": "^4.1.0",{{ end }}
@@ -14,4 +14,3 @@
       "develop": "shopify-cli-extensions develop"
     }
   }
-  

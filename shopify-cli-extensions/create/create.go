@@ -362,12 +362,21 @@ func formatContent(targetPath string, content []byte) ([]byte, error) {
 	return content, nil
 }
 
-func formatJSON(bytes []byte) ([]byte, error) {
+func formatJSON(input []byte) ([]byte, error) {
 	var result map[string]interface{}
-	if err := json.Unmarshal(bytes, &result); err != nil {
+	if err := json.Unmarshal(input, &result); err != nil {
 		return nil, err
 	}
-	return json.MarshalIndent(result, "", "  ")
+
+	var output bytes.Buffer
+	encoder := json.NewEncoder(&output)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(result); err != nil {
+		return nil, err
+	}
+
+	return output.Bytes(), nil
 }
 
 func formatYaml(unformattedContent []byte, targetPath string) (content []byte, err error) {
@@ -451,6 +460,7 @@ var Command = func(dir, executable string, args ...string) (runner Runner) {
 
 type Runner interface {
 	Run() error
+	CombinedOutput() ([]byte, error)
 }
 
 func installDependencies(path string) process.Task {
@@ -462,21 +472,25 @@ func installDependencies(path string) process.Task {
 			} else if npm, err := LookPath("npm"); err == nil {
 				package_manager = npm
 			} else {
-				return errors.New("Package manager not found")
+				return errors.New("package manager not found")
 			}
 
-			err := Command(path, package_manager).Run()
+			cmd := Command(path, package_manager)
+			output, err := cmd.CombinedOutput()
+
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to install dependencies: %s", output)
 			}
 			return nil
 		},
 		Undo: func() error {
+			// TODO: Skip if directory doesn't exist
 			cmd := exec.Command("rm", "-rf", "node_modules")
 			cmd.Dir = path
 			if err := cmd.Run(); err != nil {
 				return err
 			}
+
 			return nil
 		},
 	}
