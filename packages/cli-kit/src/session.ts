@@ -1,13 +1,16 @@
+import {applicationId} from './session/identity'
+import {API} from './network/api'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity} from './environment/fqdn'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
   ExchangeScopes,
+  refreshAccessToken,
 } from './session/exchange'
 import {authorize} from './session/authorize'
 import constants from './constants'
-import {Session} from './session/schema'
+import {ApplicationToken, IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 
 /**
@@ -20,7 +23,7 @@ type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
  */
 interface AdminAPIOAuthOptions {
   /** Store to request permissions for */
-  storeFqdn?: string
+  storeFqdn: string
   /** List of scopes to request permissions for */
   scopes: AdminAPIScope[]
 }
@@ -76,15 +79,39 @@ export interface OAuthApplications {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
 ): Promise<void> {
-  const expiresAtThreshold = new Date(
-    new Date().getTime() +
-      constants.session.expirationTimeMarginInMinutes * 60 * 1000,
-  )
+  const fqdn = await identity()
 
+  const currentSession = (await secureStore.fetch()) || {}
+  const fqdnSession = currentSession[fqdn]
+
+  const needFullAuth =
+    !fqdnSession || !validateScopes(applications, fqdnSession.identity)
+  const isExpired = fqdnSession && validateToken(fqdnSession.identity)
+  const apisAreInvalid =
+    fqdnSession && validateApplications(applications, fqdnSession.applications)
+
+  let newSession = {}
+  if (needFullAuth) {
+    newSession = await executeCompleteFlow(applications, fqdn)
+  } else if (isExpired || apisAreInvalid) {
+    newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
+  } else {
+    // session is valid
+    return
+  }
+
+  const completeSession: Session = {...currentSession, ...newSession}
+  secureStore.store(completeSession)
+  console.log(JSON.stringify(completeSession, null, 4))
+}
+
+async function executeCompleteFlow(
+  applications: OAuthApplications,
+  fqdn: string,
+): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn // || 'isaacroldan.myshopify.com' temporary for testing
-  const fqdn = await identity()
 
   // Authorize user via browser
   const code = await authorize(scopes)
@@ -106,12 +133,79 @@ export async function ensureAuthenticated(
       applications: result,
     },
   }
-  secureStore.store(session)
-  console.log(JSON.stringify(session, null, 4))
+  return session
+}
+
+async function refreshTokens(
+  currentToken: IdentityToken,
+  applications: OAuthApplications,
+  fqdn: string,
+): Promise<Session> {
+  const identityToken = await refreshAccessToken(currentToken)
+  const exchangeScopes = getExchangeScopes(applications)
+  const applicationTokens = await exchangeAccessForApplicationTokens(
+    identityToken,
+    exchangeScopes,
+    applications.adminApi?.storeFqdn,
+  )
+  return {
+    [fqdn]: {
+      identity: identityToken,
+      applications: applicationTokens,
+    },
+  }
+}
+
+// Session validations
+function expireThreshold(): Date {
+  return new Date(
+    new Date().getTime() +
+      constants.session.expirationTimeMarginInMinutes * 60 * 1000,
+  )
+}
+
+function validateScopes(
+  applications: OAuthApplications,
+  identity: IdentityToken,
+) {
+  const newScopes = getFlattenScopes(applications)
+  const currentScopes = identity.scopes
+  return newScopes.every((scope) => currentScopes.includes(scope))
+}
+
+function validateToken(token: ApplicationToken): boolean {
+  if (!token) return false
+  return token.expiresAt < expireThreshold()
+}
+
+function validateApplications(
+  applications: OAuthApplications,
+  currentTokens: {[x: string]: ApplicationToken},
+) {
+  let tokensAreValid = true
+  if (applications.partnersApi) {
+    // make sure partners works
+    const appId = applicationId('partners')
+    const token = currentTokens[appId]
+    tokensAreValid &&= validateToken(token)
+  }
+
+  if (applications.storefrontRendererApi) {
+    const appId = applicationId('storefront-renderer')
+    const token = currentTokens[appId]
+    tokensAreValid &&= validateToken(token)
+  }
+
+  if (applications.adminApi) {
+    const appId = applicationId('admin')
+    const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
+    const token = currentTokens[realAppId]
+    tokensAreValid &&= validateToken(token)
+  }
+  return tokensAreValid
 }
 
 // Scope Helpers
-
 function getFlattenScopes(apps: OAuthApplications): string[] {
   const admin = apps.adminApi?.scopes || []
   const partner = apps.partnersApi?.scopes || []
