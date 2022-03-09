@@ -1,5 +1,5 @@
 import {allDefaultScopes, apiScopes} from './session/scopes'
-import {identity} from './environment/fqdn'
+import {identity as identityFqdn} from './environment/fqdn'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -84,7 +84,7 @@ export async function ensureAuthenticated(
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn // || 'isaacroldan.myshopify.com' temporary for testing
-  const fqdn = await identity()
+  const fqdn = await identityFqdn()
 
   // Authorize user via browser
   const code = await authorize(scopes)

@@ -1,7 +1,7 @@
 import {Abort} from '../error'
 import {API} from '../network/api'
 import {fetch} from '../http'
-import {identity} from '../environment/fqdn'
+import {identity as identityFqdn} from '../environment/fqdn'
 
 import {ApplicationToken, IdentityToken} from './schema'
 import {applicationId, clientId as getIdentityClientId} from './identity'
@@ -102,7 +102,7 @@ async function requestAppToken(
 }
 
 async function tokenRequest(params: {[key: string]: any}): Promise<unknown> {
-  const fqdn = await identity()
+  const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
 

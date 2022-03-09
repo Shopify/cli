@@ -1,7 +1,7 @@
 import {generateRandomChallengePair, randomHex} from '../string'
 import {open} from '../system'
 import {Abort} from '../error'
-import {identity} from '../environment/fqdn'
+import {identity as identityFqdn} from '../environment/fqdn'
 
 import {listenRedirect} from './redirect-listener'
 import {clientId} from './identity'
@@ -22,10 +22,10 @@ export async function authorize(
   const port = 3456
   const host = '127.0.0.1'
   const redirectUri = `http://${host}:${port}`
-  const identityFqdn = await identity()
+  const fqdn = await identityFqdn()
   const identityClientId = await clientId()
 
-  let url = `http://${identityFqdn}/oauth/authorize`
+  let url = `http://${fqdn}/oauth/authorize`
 
   const {codeVerifier, codeChallenge} = generateRandomChallengePair()
 
