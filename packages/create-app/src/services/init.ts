@@ -12,6 +12,10 @@ import {
   constants,
 } from '@shopify/cli-kit'
 
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import cliPackage from '../../../cli/package.json'
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+import appPackage from '../../../app/package.json'
 import {template as getTemplatePath} from '../utils/paths'
 
 interface InitOptions {

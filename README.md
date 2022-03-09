@@ -15,6 +15,7 @@ Shopify CLI helps you build Shopify themes and apps. Use Shopify CLI to automate
 
 ```
 npx @shopify/create-app@latest
+pnpm create @shopify/create-app@latest
 yarn create @shopify/app
 ```
 
@@ -22,6 +23,7 @@ yarn create @shopify/app
 
 ```
 npx @shopify/create-hydrogen@latest
+pnpm create @shopify/create-hydrogen@latest
 yarn create @shopify/hydrogen
 ```
 

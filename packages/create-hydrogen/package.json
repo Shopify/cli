@@ -1,14 +1,14 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "0.30.2",
+  "version": "0.32.0",
   "private": false,
-  "description": "A CLI tool to create a new Hydrogen storefront",
+  "description": "A CLI tool to create a new Shopify hydrogen app.",
   "type": "module",
   "keywords": [
     "shopify",
     "shopify-cli",
     "shopify-partners",
-    "shopify-apps"
+    "shopify-hydrogen"
   ],
   "license": "MIT",
   "exports": {
@@ -21,7 +21,6 @@
     "create-hydrogen": "./bin/run.js"
   },
   "files": [
-    "/templates",
     "/bin/run.js",
     "/bin/run.cmd",
     "/dist",
@@ -37,26 +36,26 @@
     "build": "rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint src/**/*.ts",
-    "lint:fix": "prettier src/** -w && eslint src/**/*.ts --fix",
+    "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "refresh-templates": "node ./scripts/refresh-templates.mjs"
   },
   "eslintConfig": {
     "extends": [
       "../../package.json"
-    ]
+    ],
+    "rules": {
+      "no-warning-comments": "off"
+    }
   },
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
-    "@shopify/cli-hydrogen": "0.30.2",
-    "@shopify/cli-kit": "0.30.2",
-    "@oclif/core": "1.3.6"
-  },
-  "devDependencies": {
-    "enquirer": "^2.3.6",
-    "kolorist": "^1.5.1",
-    "minimist": "^1.2.5"
+    "@shopify/cli-hydrogen": "0.31.3",
+    "@shopify/cli-kit": "0.31.3",
+    "@oclif/core": "1.3.6",
+    "open": "^8.4.0"
   },
   "engine-strict": true,
   "engines": {

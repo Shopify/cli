@@ -1,0 +1,14 @@
+{
+  "name": "{{name}}",
+  "version": "0.1.0",
+  "scripts": {},
+  "dependencies": {
+    "@shopify/cli": "{{shopify_cli_version}}",
+    "@shopify/hydrogen": "{{hydrogen_version}}"
+  },
+  "keywords": [
+    "template-hydrogen-minimal",
+    "shopify-hydrogen"
+  ],
+  "author": "{{author}}"
+}

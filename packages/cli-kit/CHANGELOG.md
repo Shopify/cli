@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 0.31.3
+
+### Patch Changes
+
+- Fix the detection of the package manager when creating an app
+
+## 0.31.0
+
+### Minor Changes
+
+- e701cf5: Add a GraphQL client to communicate with Admin and Partners API
+- 563f225: Add utility to scaffold projects from a Liquid-based template
+
 ## 0.30.2
 
 ### Patch Changes

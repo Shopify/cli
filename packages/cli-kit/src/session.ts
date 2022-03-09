@@ -1,7 +1,6 @@
 import {applicationId} from './session/identity'
-import {API} from './network/api'
 import {allDefaultScopes, apiScopes} from './session/scopes'
-import {identity} from './environment/fqdn'
+import {identity as identityFqdn} from './environment/fqdn'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -79,21 +78,21 @@ export interface OAuthApplications {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
 ): Promise<void> {
-  const fqdn = await identity()
+  const fqdn = await identityFqdn()
 
   const currentSession = (await secureStore.fetch()) || {}
   const fqdnSession = currentSession[fqdn]
 
   const needFullAuth =
     !fqdnSession || !validateScopes(applications, fqdnSession.identity)
-  const isExpired = fqdnSession && validateToken(fqdnSession.identity)
-  const apisAreInvalid =
+  const identityIsValid = fqdnSession && validateToken(fqdnSession.identity)
+  const appAreValid =
     fqdnSession && validateApplications(applications, fqdnSession.applications)
 
   let newSession = {}
   if (needFullAuth) {
     newSession = await executeCompleteFlow(applications, fqdn)
-  } else if (isExpired || apisAreInvalid) {
+  } else if (!identityIsValid || !appAreValid) {
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
   } else {
     // session is valid
@@ -111,7 +110,7 @@ async function executeCompleteFlow(
 ): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
-  const store = applications.adminApi?.storeFqdn // || 'isaacroldan.myshopify.com' temporary for testing
+  const store = applications.adminApi?.storeFqdn
 
   // Authorize user via browser
   const code = await authorize(scopes)
@@ -126,7 +125,6 @@ async function executeCompleteFlow(
     store,
   )
 
-  // Store tokens in secure store
   const session: Session = {
     [fqdn]: {
       identity: identityToken,
@@ -141,13 +139,17 @@ async function refreshTokens(
   applications: OAuthApplications,
   fqdn: string,
 ): Promise<Session> {
+  // Refresh Identity Token
   const identityToken = await refreshAccessToken(currentToken)
+
+  // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
   const applicationTokens = await exchangeAccessForApplicationTokens(
     identityToken,
     exchangeScopes,
     applications.adminApi?.storeFqdn,
   )
+
   return {
     [fqdn]: {
       identity: identityToken,
@@ -159,8 +161,7 @@ async function refreshTokens(
 // Session validations
 function expireThreshold(): Date {
   return new Date(
-    new Date().getTime() +
-      constants.session.expirationTimeMarginInMinutes * 60 * 1000,
+    Date.now() + constants.session.expirationTimeMarginInMinutes * 60 * 1000,
   )
 }
 
@@ -175,7 +176,7 @@ function validateScopes(
 
 function validateToken(token: ApplicationToken): boolean {
   if (!token) return false
-  return token.expiresAt < expireThreshold()
+  return token.expiresAt > expireThreshold()
 }
 
 function validateApplications(

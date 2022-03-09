@@ -1,5 +1,29 @@
 # @shopify/create-app
 
+## 0.31.3
+
+### Patch Changes
+
+- Fix the detection of the package manager when creating an app
+
+## 0.31.2
+
+### Patch Changes
+
+- Add some additional logs to figure how how to detect that the create-app is running through pnpmx
+
+## 0.31.1
+
+### Patch Changes
+
+- Fix create-app and create-hydrogen that fail because "open" is missing
+
+## 0.31.0
+
+### Minor Changes
+
+- 464c899: Create apps with license in the package.json as UNLICENSED
+
 ## 0.30.2
 
 ### Patch Changes

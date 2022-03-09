@@ -1,21 +1,27 @@
-import path from 'pathe';
+import path from 'pathe'
+import alias from '@rollup/plugin-alias'
 
-import {external, plugins, distDir} from '../../configurations/rollup.config';
+import {external, plugins, distDir} from '../../configurations/rollup.config'
 
-const createHydrogenExternal = [
-  ...external,
-  '@shopify/cli-hydrogen/commands/hydrogen/init',
-  '@shopify/cli-kit',
-];
-const createHydrogenPlugins = [...plugins(__dirname)];
+const createHydrogenExternal = [...external]
+const createHydrogenPlugins = [
+  alias({
+    entries: [
+      {
+        find: '@shopify/cli-kit',
+        replacement: path.join(__dirname, '../cli-kit/src/index.ts'),
+      },
+    ],
+  }),
+  ...plugins(__dirname),
+]
 
 const configuration = () => [
-  // CLI
   {
     input: path.join(__dirname, 'src/index.ts'),
     output: [
       {
-        file: path.join(distDir(__dirname), 'index.js'),
+        dir: distDir(__dirname),
         format: 'esm',
         sourcemap: true,
       },
@@ -35,6 +41,6 @@ const configuration = () => [
     plugins: createHydrogenPlugins,
     external: createHydrogenExternal,
   },
-];
+]
 
-export default configuration;
+export default configuration
