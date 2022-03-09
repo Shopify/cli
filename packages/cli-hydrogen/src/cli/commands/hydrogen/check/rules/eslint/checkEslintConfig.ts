@@ -3,23 +3,15 @@ import addEslint from '../../../add/eslint'
 import Command from '../../../../../core/Command'
 
 export async function checkEslintConfig(this: Command): Promise<CheckResult[]> {
-  const eslintConfig = await this.workspace.loadConfig<{extends: string[]}>(
-    'eslint',
-  )
+  const eslintConfig = await this.workspace.loadConfig<{extends: string[]}>('eslint')
 
   const hasEslintConfig = Boolean(eslintConfig)
 
   const hasHydrogenConfig =
     hasEslintConfig &&
-    Boolean(
-      eslintConfig.config.extends?.filter((extended: string) =>
-        extended.includes('plugin:hydrogen'),
-      ).length,
-    )
+    Boolean(eslintConfig.config.extends?.filter((extended: string) => extended.includes('plugin:hydrogen')).length)
 
-  const hasHydrogenEslintPackage = Boolean(
-    await this.package.hasDependency('eslint-plugin-hydrogen'),
-  )
+  const hasHydrogenEslintPackage = Boolean(await this.package.hasDependency('eslint-plugin-hydrogen'))
 
   return [
     {

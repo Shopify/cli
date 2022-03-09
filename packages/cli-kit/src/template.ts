@@ -20,11 +20,7 @@ export function create(templateContent: string) {
  * @param to {string} Output directory.
  * @param data {string} Data to feed the template engine.
  */
-export async function recursiveDirectoryCopy(
-  from: string,
-  to: string,
-  data: any,
-) {
+export async function recursiveDirectoryCopy(from: string, to: string, data: any) {
   const templateFiles: string[] = await glob(join(from, '**/*'), {dot: true})
 
   const sortedTemplateFiles = templateFiles
@@ -33,9 +29,7 @@ export async function recursiveDirectoryCopy(
     .map((components) => components.join('/'))
   await Promise.all(
     sortedTemplateFiles.map(async (templateItemPath) => {
-      const outputPath = await create(
-        join(to, relative(from, templateItemPath)),
-      )(data)
+      const outputPath = await create(join(to, relative(from, templateItemPath)))(data)
       if (await isDirectory(templateItemPath)) {
         await mkdir(outputPath)
       } else if (templateItemPath.endsWith('.liquid')) {

@@ -2,13 +2,7 @@
 // @ts-nocheck
 import fs from 'fs'
 
-import {
-  Given,
-  After,
-  BeforeAll,
-  AfterAll,
-  setDefaultTimeout,
-} from '@cucumber/cucumber'
+import {Given, After, BeforeAll, AfterAll, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
 import rimraf from 'rimraf'
 import path from 'pathe'

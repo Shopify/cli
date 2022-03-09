@@ -29,13 +29,7 @@ class Token {
    */
   scopes: string[]
 
-  constructor(options: {
-    fqdn: string
-    accessToken: string
-    refreshToken?: string
-    expiresAt: Date
-    scopes: string[]
-  }) {
+  constructor(options: {fqdn: string; accessToken: string; refreshToken?: string; expiresAt: Date; scopes: string[]}) {
     this.fqdn = options.fqdn
     this.accessToken = options.accessToken
     this.refreshToken = options.refreshToken

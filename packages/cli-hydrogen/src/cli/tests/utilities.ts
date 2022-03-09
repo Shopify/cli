@@ -4,43 +4,23 @@ import {spawn, exec} from 'child_process'
 import {createServer as createNodeServer} from 'http'
 
 import {paramCase} from 'change-case'
-import {
-  readFile,
-  mkdirp,
-  writeFile,
-  pathExists,
-  emptyDir,
-  remove,
-} from 'fs-extra'
+import {readFile, mkdirp, writeFile, pathExists, emptyDir, remove} from 'fs-extra'
 import playwright from 'playwright-chromium'
-import {
-  createServer as createViteServer,
-  build,
-  ViteDevServer,
-  UserConfig,
-} from 'vite'
+import {createServer as createViteServer, build, ViteDevServer, UserConfig} from 'vite'
 import sirv from 'sirv'
 import getPort from 'get-port'
 
 const INPUT_TIMEOUT = 500
 const execPromise = promisify(exec)
 
-export type Command =
-  | 'create'
-  | 'create component'
-  | 'create page'
-  | 'check'
-  | 'preview'
-  | 'dev'
+export type Command = 'create' | 'create component' | 'create page' | 'check' | 'preview' | 'dev'
 interface Input {
   [key: string]: string | boolean | null
 }
 
 interface App {
   output: Result
-  withServer: (
-    runner: (context: ServerContext) => Promise<void>,
-  ) => Promise<void>
+  withServer: (runner: (context: ServerContext) => Promise<void>) => Promise<void>
 }
 interface Context {
   fs: Sandbox
@@ -82,10 +62,7 @@ export enum KeyInput {
 const hydrogenCli = resolve(__dirname, '../../', 'bin', 'hydrogen')
 const fixtureRoot = resolve(__dirname, '../fixtures')
 
-export async function withCli(
-  runner: (context: Context) => void,
-  options?: Options,
-) {
+export async function withCli(runner: (context: Context) => void, options?: Options) {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const name = paramCase(expect.getState().currentTestName)
@@ -97,8 +74,7 @@ export async function withCli(
     await runner({
       fs,
       run: async (command: Command, input: Input) => {
-        const appName =
-          input && typeof input.name === 'string' ? input.name : 'snow-devil'
+        const appName = input && typeof input.name === 'string' ? input.name : 'snow-devil'
 
         const result = await runCliCommand(directory, command, input)
 
@@ -136,9 +112,7 @@ export async function withCli(
                 },
                 screenshot: async (suffix?: string) => {
                   await playrightPage.screenshot({
-                    path: `artifacts/${count++}-${name}${
-                      suffix ? `-${suffix}` : ''
-                    }.png`,
+                    path: `artifacts/${count++}-${name}${suffix ? `-${suffix}` : ''}.png`,
                   })
                 },
                 textContent: (el: string) => playrightPage.textContent(el),
@@ -175,11 +149,7 @@ async function createSandbox(directory: string) {
   return new Sandbox(directory)
 }
 
-async function runCliCommand(
-  directory: string,
-  command: Command,
-  input: Input,
-): Promise<Result> {
+async function runCliCommand(directory: string, command: Command, input: Input): Promise<Result> {
   const result = new Result()
   const userInput = inputFrom(input, command)
   const childProcess = await spawn(hydrogenCli, command.split(' '), {

@@ -20,10 +20,7 @@ const TEMPLATE_MAP = {
   [Template.Minimum]: 'Shopify/hydrogen/examples/template-hydrogen-minimum',
 }
 
-const init = async (
-  options: InitOptions,
-  prompt = ui.prompt,
-): Promise<InitOutput> => {
+const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
   const questions: ui.Question[] = []
   if (!options.name) {
     questions.push({

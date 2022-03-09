@@ -13,8 +13,5 @@ export const directories = {
 export const executables = {
   cli: path.resolve(__dirname, '../../../packages/cli/bin/dev.js'),
   createApp: path.resolve(__dirname, '../../../packages/create-app/bin/dev.js'),
-  createHydrogen: path.resolve(
-    __dirname,
-    '../../../packages/create-hydrogen/bin/dev.js',
-  ),
+  createHydrogen: path.resolve(__dirname, '../../../packages/create-hydrogen/bin/dev.js'),
 }

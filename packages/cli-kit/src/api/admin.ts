@@ -4,12 +4,7 @@ import {ApplicationToken} from '../session/schema'
 
 import {buildHeaders} from './common'
 
-export async function request<T>(
-  query: any,
-  token: ApplicationToken,
-  store: string,
-  variables?: any,
-): Promise<T> {
+export async function request<T>(query: any, token: ApplicationToken, store: string, variables?: any): Promise<T> {
   const version = await fetchApiVersion(token.accessToken, store)
   const url = adminUrl(store, version)
   const headers = await buildHeaders(token.accessToken)

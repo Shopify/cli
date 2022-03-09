@@ -19,11 +19,7 @@ describe('fqdn', () => {
 
     // Then
     expect(got).toEqual('fqdn')
-    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', [
-      'show',
-      '--latest',
-      '--json',
-    ])
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'])
   })
   it("doesn't show the latest when SPIN_INSTANCE is present", async () => {
     // Given
@@ -51,11 +47,7 @@ describe('show', () => {
 
     // Then
     expect(got).toEqual(showResponse)
-    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', [
-      'show',
-      '--latest',
-      '--json',
-    ])
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'])
   })
 
   test("calls 'spin show' without --latest when latest is false", async () => {

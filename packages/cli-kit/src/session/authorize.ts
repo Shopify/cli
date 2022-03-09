@@ -21,10 +21,7 @@ export async function authorize(
   const host = '127.0.0.1'
   const redirectUri = `http://${host}:${port}`
   const codeVerifier = randomHex(30)
-  const codeChallenge = crypto
-    .createHash('sha256')
-    .update(codeVerifier)
-    .digest('base64')
+  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64')
 
   /* eslint-disable @typescript-eslint/naming-convention */
   const params = {

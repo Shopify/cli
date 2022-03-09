@@ -69,9 +69,7 @@ export async function identity(): Promise<string> {
  * Note the same fqdn is sued for the Admin and the Storefront Renderer APIs.
  * @returns {string} Fully-qualified domain of the Shopify service we should interact with.
  */
-export async function shopify(
-  options: {storeFqdn?: string} = {},
-): Promise<string> {
+export async function shopify(options: {storeFqdn?: string} = {}): Promise<string> {
   const environment = shopifyEnvironment()
   switch (environment) {
     case 'local':

@@ -22,14 +22,7 @@ describe('Init', function () {
     initPromptMock.mockReturnValue(Promise.resolve({name, template}))
 
     // When
-    await Init.run([
-      '--name',
-      name,
-      '--path',
-      directory,
-      '--template',
-      template,
-    ])
+    await Init.run(['--name', name, '--path', directory, '--template', template])
 
     // Then
     expect(initServiceMock).toHaveBeenCalledWith(

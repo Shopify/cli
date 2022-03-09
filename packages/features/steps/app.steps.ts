@@ -28,26 +28,12 @@ When(
   },
 )
 
-Then(
-  /I have a UI extension named (.+) of type (.+)/,
-  {},
-  async function (appName: string, uiExtensionType: string) {
-    const {stdout} = await exec(executables.cli, [
-      'app',
-      'info',
-      '--path',
-      this.appDirectory,
-    ])
-    const results = JSON.parse(stdout)
-    const uiExtension = results.uiExtensions.find(
-      (uiExtension: {configuration: UIExtensionConfiguration}) => {
-        return uiExtension.configuration.name === appName
-      },
-    )
-    if (!uiExtension)
-      assert.fail(
-        `Extension not created! Config:\n${JSON.stringify(results, null, 2)}`,
-      )
-    assert.equal(uiExtension.configuration.uiExtensionType, uiExtensionType)
-  },
-)
+Then(/I have a UI extension named (.+) of type (.+)/, {}, async function (appName: string, uiExtensionType: string) {
+  const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory])
+  const results = JSON.parse(stdout)
+  const uiExtension = results.uiExtensions.find((uiExtension: {configuration: UIExtensionConfiguration}) => {
+    return uiExtension.configuration.name === appName
+  })
+  if (!uiExtension) assert.fail(`Extension not created! Config:\n${JSON.stringify(results, null, 2)}`)
+  assert.equal(uiExtension.configuration.uiExtensionType, uiExtensionType)
+})

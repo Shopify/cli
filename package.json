@@ -164,6 +164,7 @@
     "singleQuote": true,
     "bracketSpacing": false,
     "trailingComma": "all",
-    "semi": false
+    "semi": false,
+    "printWidth": 120
   }
 }

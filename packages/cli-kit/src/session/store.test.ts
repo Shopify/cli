@@ -1,10 +1,6 @@
 import {describe, expect, vi, it, beforeEach, afterEach} from 'vitest'
 
-import {
-  store as secureStore,
-  fetch as secureFetch,
-  remove as secureRemove,
-} from '../secure-store'
+import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 
 import {store, fetch, remove, identifier} from './store'
 
@@ -19,10 +15,7 @@ describe('store', () => {
     store(session)
 
     // Then
-    expect(vi.mocked(secureStore)).toHaveBeenCalledWith(
-      identifier,
-      JSON.stringify(session),
-    )
+    expect(vi.mocked(secureStore)).toHaveBeenCalledWith(identifier, JSON.stringify(session))
   })
 })
 
@@ -40,9 +33,7 @@ describe('fetch', () => {
 
   it('returns undefined when the content does not match the schema', async () => {
     // Given
-    vi.mocked(secureFetch).mockResolvedValue(
-      JSON.stringify({invalid: 'format'}),
-    )
+    vi.mocked(secureFetch).mockResolvedValue(JSON.stringify({invalid: 'format'}))
 
     // When
     const got = await fetch()

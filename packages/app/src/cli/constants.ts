@@ -30,10 +30,6 @@ interface UiExtensionsType {
   types: [string, ...string[]]
 }
 export const uiExtensions: UiExtensionsType = {
-  types: [
-    'theme-app-extension',
-    'product-subscription',
-    'checkout-post-purchase',
-  ],
+  types: ['theme-app-extension', 'product-subscription', 'checkout-post-purchase'],
 }
 export type UiExtensionTypes = typeof uiExtensions.types[number]

@@ -40,9 +40,7 @@ describe('init', () => {
     const got = await init(options, prompt)
 
     // Then
-    expect(prompt).not.toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({name: 'name'})]),
-    )
+    expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'name'})]))
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -84,9 +82,7 @@ describe('init', () => {
     const got = await init(options, prompt)
 
     // Then
-    expect(prompt).not.toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({name: 'template'})]),
-    )
+    expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'template'})]))
     expect(got).toEqual({...options, ...answers})
   })
 })

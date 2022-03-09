@@ -72,20 +72,13 @@ interface OAuthApplications {
 //   },
 // })
 
-export async function ensureAuthenticated(
-  applications: OAuthApplications,
-): Promise<void> {
+export async function ensureAuthenticated(applications: OAuthApplications): Promise<void> {
   const expiresAtThreshold = new Date(
-    new Date().getTime() +
-      constants.session.expirationTimeMarginInMinutes * 60 * 1000,
+    new Date().getTime() + constants.session.expirationTimeMarginInMinutes * 60 * 1000,
   )
   const identityFqdn = await getIdentityFqdn()
   const identityClientId = getIdentityClientId()
   const scopes = ['openid'] // employee
-  const authorizationCode = await authorize(
-    identityFqdn,
-    identityClientId,
-    scopes,
-  )
+  const authorizationCode = await authorize(identityFqdn, identityClientId, scopes)
   outputMessage(`Code: ${authorizationCode}`)
 }

@@ -20,12 +20,7 @@ describe('authorize', () => {
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'state'})
 
     // When
-    const got = await authorize(
-      'fqdn.com',
-      'clientId',
-      ['scope1', 'scope2'],
-      'state',
-    )
+    const got = await authorize('fqdn.com', 'clientId', ['scope1', 'scope2'], 'state')
 
     // Then
     const url =
@@ -42,12 +37,7 @@ describe('authorize', () => {
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'bad'})
 
     // When
-    const auth = authorize(
-      'fqdn.com',
-      'clientId',
-      ['scope1', 'scope2'],
-      'state',
-    )
+    const auth = authorize('fqdn.com', 'clientId', ['scope1', 'scope2'], 'state')
 
     // Then
     await expect(auth).rejects.toThrowError(MismatchStateError)
