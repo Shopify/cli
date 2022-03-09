@@ -1,11 +1,11 @@
-import {Abort, Bug} from '../error'
+import {Bug} from '../error'
 import {
   shopify as shopifyEnvironment,
   partners as partnersEnvironment,
   identity as identityEnvironment,
 } from '../environment/service'
 import {Environment} from '../network/service'
-import type {API} from '../network/api'
+import {API} from '../network/api'
 
 export function clientId(): string {
   const environment = identityEnvironment()
