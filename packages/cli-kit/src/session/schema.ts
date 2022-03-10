@@ -15,11 +15,8 @@ const IdentityTokenSchema = define.object({
   scopes: define.array(define.string()),
 })
 
-export type IdentityToken = define.infer<typeof IdentityTokenSchema>
-
 /**
  * The schema represents an application token.
- *
  */
 const ApplicationTokenSchema = define.object({
   accessToken: define.string(),
@@ -28,48 +25,25 @@ const ApplicationTokenSchema = define.object({
 })
 
 /**
- * This schema groups the exchanged tokens for
- * the different applications the CLI authenticates
- * with.
- *
- * @example
- *   {
- *      "admin": {
- *        "mystore.myshopify.com": {
- *          ...
- *        }
- *      },
- *      "partners": {...},
- *      "storefrontRenderer": {...}
- *   }
- *
- */
-const ApplicationsSchema = define.object({
-  /**
-   * Exchanged tokens for Admin applications.
-   */
-  adminApi: define.object({}).catchall(ApplicationTokenSchema),
-  /**
-   * Exchanged tokens for Partner applications.
-   */
-  partnersApi: define.object({}).catchall(ApplicationTokenSchema),
-
-  /**
-   * Exchanged tokens for Storefront Renderer applications.
-   */
-  storefrontRendererApi: define.object({}).catchall(ApplicationTokenSchema),
-})
-
-/**
  * This schema represents the format of the session
  * that we cache in the system to avoid unnecessary
  * token exchanges.
  *
  * @example
- *   {
- *      "accounts.shopify.com": {...}
- *      "identity.spin.com": {...}
- *   }
+ * {
+ *    "accounts.shopify.com": {
+ *      "identity": {...} // IdentityTokenSchema
+ *      "applications": {
+ *        "${domain}-application-id": {  // Admin APIs includes domain in the key
+ *          "accessToken": "...",
+ *        },
+ *        "$application-id": { // ApplicationTokenSchema
+ *          "accessToken": "...",
+ *        },
+ *      }
+ *    },
+ *    "identity.spin.com": {...}
+ *}
  *
  */
 export const SessionSchema = define.object({}).catchall(
@@ -84,9 +58,10 @@ export const SessionSchema = define.object({}).catchall(
      * It contains exchanged tokens for the applications the CLI
      * authenticates with. Tokens are scoped under the fqdn of the applications.
      */
-    applications: ApplicationsSchema,
+    applications: define.object({}).catchall(ApplicationTokenSchema),
   }),
 )
 
 export type Session = define.infer<typeof SessionSchema>
+export type IdentityToken = define.infer<typeof IdentityTokenSchema>
 export type ApplicationToken = define.infer<typeof ApplicationTokenSchema>

@@ -1,7 +1,8 @@
-import {describe, expect, vi, it, beforeEach, afterEach} from 'vitest'
+import {describe, expect, vi, it} from 'vitest'
 
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 
+import {ApplicationToken, Session} from './schema'
 import {store, fetch, remove, identifier} from './store'
 
 vi.mock('../secure-store')
@@ -65,7 +66,12 @@ describe('remove', () => {
   })
 })
 
-function testSession() {
+function testSession(): Session {
+  const testToken: ApplicationToken = {
+    accessToken: 'access',
+    expiresAt: new Date(),
+    scopes: [],
+  }
   return {
     'accounts.shopify.com': {
       identity: {
@@ -75,9 +81,9 @@ function testSession() {
         scopes: ['foo'],
       },
       applications: {
-        adminApi: {},
-        partnersApi: {},
-        storefrontRendererApi: {},
+        adminApi: testToken,
+        partnersApi: testToken,
+        storefrontRendererApi: testToken,
       },
     },
   }
