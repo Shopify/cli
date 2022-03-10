@@ -1,4 +1,4 @@
-import {applicationId} from './session/identity'
+import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
 import {
@@ -8,8 +8,7 @@ import {
   refreshAccessToken,
 } from './session/exchange'
 import {authorize} from './session/authorize'
-import constants from './constants'
-import {ApplicationToken, IdentityToken, Session} from './session/schema'
+import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 
 /**
@@ -82,17 +81,16 @@ export async function ensureAuthenticated(
 
   const currentSession = (await secureStore.fetch()) || {}
   const fqdnSession = currentSession[fqdn]
+  const scopes = getFlattenScopes(applications)
 
   const needFullAuth =
-    !fqdnSession || !validateScopes(applications, fqdnSession.identity)
-  const identityIsValid = fqdnSession && validateToken(fqdnSession.identity)
-  const appAreValid =
-    fqdnSession && validateApplications(applications, fqdnSession.applications)
+    !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
+  const sessionIsInvalid = !validateSession(applications, fqdnSession)
 
   let newSession = {}
   if (needFullAuth) {
     newSession = await executeCompleteFlow(applications, fqdn)
-  } else if (!identityIsValid || !appAreValid) {
+  } else if (sessionIsInvalid) {
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
   } else {
     // session is valid
@@ -101,12 +99,12 @@ export async function ensureAuthenticated(
 
   const completeSession: Session = {...currentSession, ...newSession}
   secureStore.store(completeSession)
-  console.log(JSON.stringify(completeSession, null, 4))
+  // console.log(JSON.stringify(completeSession, null, 4))
 }
 
 async function executeCompleteFlow(
   applications: OAuthApplications,
-  fqdn: string,
+  identityFqdn: string,
 ): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
@@ -126,7 +124,7 @@ async function executeCompleteFlow(
   )
 
   const session: Session = {
-    [fqdn]: {
+    [identityFqdn]: {
       identity: identityToken,
       applications: result,
     },
@@ -137,7 +135,7 @@ async function executeCompleteFlow(
 async function refreshTokens(
   currentToken: IdentityToken,
   applications: OAuthApplications,
-  fqdn: string,
+  identityFqdn: string,
 ): Promise<Session> {
   // Refresh Identity Token
   const identityToken = await refreshAccessToken(currentToken)
@@ -151,59 +149,11 @@ async function refreshTokens(
   )
 
   return {
-    [fqdn]: {
+    [identityFqdn]: {
       identity: identityToken,
       applications: applicationTokens,
     },
   }
-}
-
-// Session validations
-function expireThreshold(): Date {
-  return new Date(
-    Date.now() + constants.session.expirationTimeMarginInMinutes * 60 * 1000,
-  )
-}
-
-function validateScopes(
-  applications: OAuthApplications,
-  identity: IdentityToken,
-) {
-  const newScopes = getFlattenScopes(applications)
-  const currentScopes = identity.scopes
-  return newScopes.every((scope) => currentScopes.includes(scope))
-}
-
-function validateToken(token: ApplicationToken): boolean {
-  if (!token) return false
-  return token.expiresAt > expireThreshold()
-}
-
-function validateApplications(
-  applications: OAuthApplications,
-  currentTokens: {[x: string]: ApplicationToken},
-) {
-  let tokensAreValid = true
-  if (applications.partnersApi) {
-    // make sure partners works
-    const appId = applicationId('partners')
-    const token = currentTokens[appId]
-    tokensAreValid &&= validateToken(token)
-  }
-
-  if (applications.storefrontRendererApi) {
-    const appId = applicationId('storefront-renderer')
-    const token = currentTokens[appId]
-    tokensAreValid &&= validateToken(token)
-  }
-
-  if (applications.adminApi) {
-    const appId = applicationId('admin')
-    const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
-    const token = currentTokens[realAppId]
-    tokensAreValid &&= validateToken(token)
-  }
-  return tokensAreValid
 }
 
 // Scope Helpers
