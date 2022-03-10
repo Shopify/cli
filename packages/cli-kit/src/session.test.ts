@@ -2,10 +2,7 @@ import {vi, describe, expect, it} from 'vitest'
 
 import {store} from './session/store'
 import {ApplicationToken, IdentityToken, Session} from './session/schema'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
-} from './session/exchange'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './session/exchange'
 import {ensureAuthenticated, OAuthApplications} from './session'
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
