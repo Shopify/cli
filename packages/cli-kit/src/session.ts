@@ -90,13 +90,15 @@ export async function ensureAuthenticated(applications: OAuthApplications): Prom
   } else if (sessionIsInvalid) {
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
   } else {
+    console.log('CURRENT SESSION IS VALID; NOTHING HAPPENED')
     // session is valid
     return
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
   secureStore.store(completeSession)
-  // console.log(JSON.stringify(completeSession, null, 4))
+  console.log('NEW SESSION SAVED: ')
+  console.log(JSON.stringify(newSession, null, 4))
 }
 
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
