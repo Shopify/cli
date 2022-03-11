@@ -28,20 +28,20 @@ export function validateSession(
     // make sure partners works
     const appId = applicationId('partners')
     const token = session.applications[appId]
-    tokensAreValid &&= validateToken(token)
+    tokensAreValid = tokensAreValid && validateToken(token)
   }
 
   if (applications.storefrontRendererApi) {
     const appId = applicationId('storefront-renderer')
     const token = session.applications[appId]
-    tokensAreValid &&= validateToken(token)
+    tokensAreValid = tokensAreValid && validateToken(token)
   }
 
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
     const token = session.applications[realAppId]
-    tokensAreValid &&= validateToken(token)
+    tokensAreValid = tokensAreValid && validateToken(token)
   }
   return tokensAreValid
 }
