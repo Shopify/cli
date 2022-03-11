@@ -10,10 +10,7 @@ import {ApplicationToken, IdentityToken} from './schema'
  * @param identity
  * @returns
  */
-export function validateScopes(
-  requestedScopes: string[],
-  identity: IdentityToken,
-) {
+export function validateScopes(requestedScopes: string[], identity: IdentityToken) {
   const currentScopes = identity.scopes
   return requestedScopes.every((scope) => currentScopes.includes(scope))
 }
@@ -55,7 +52,5 @@ function validateToken(token: ApplicationToken): boolean {
 }
 
 function expireThreshold(): Date {
-  return new Date(
-    Date.now() + constants.session.expirationTimeMarginInMinutes * 60 * 1000,
-  )
+  return new Date(Date.now() + constants.session.expirationTimeMarginInMinutes * 60 * 1000)
 }
