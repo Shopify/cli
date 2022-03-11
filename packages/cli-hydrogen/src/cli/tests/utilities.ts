@@ -80,7 +80,7 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
         const result = await runCliCommand(directory, command, input)
 
         if (options?.debug) {
-          output.message(`${result}`)
+          output.info(`${result}`)
         }
 
         return {
@@ -240,7 +240,7 @@ async function createServer(_?: ServerOptions): Promise<Server> {
     },
     async stop() {
       if (!server) {
-        output.message('Attempted to stop the server, but it does not exist.')
+        output.info('Attempted to stop the server, but it does not exist.')
         return
       }
 

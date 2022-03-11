@@ -76,12 +76,68 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
   return new TokenizedString(output)
 }
 
-export const success = (content: Message) => {
-  console.log(colors.green(`🎉 ${stringifyMessage(content)}`))
+export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent'
+
+/**
+ * It maps a level to a numeric value.
+ * @param level {LogLevel} The level for which we'll return its numeric value.
+ * @returns The numeric value of the level.
+ */
+const logLevelValue = (level: LogLevel): number => {
+  switch (level) {
+    case 'trace':
+      return 10
+    case 'debug':
+      return 20
+    case 'info':
+      return 30
+    case 'warn':
+      return 40
+    case 'error':
+      return 50
+    case 'fatal':
+      return 60
+    default:
+      return 30
+  }
 }
 
-export const message = (content: Message) => {
-  console.log(stringifyMessage(content))
+const currentLogLevel = (): LogLevel => {
+  if (process.argv.includes('--verbose')) {
+    return 'debug'
+  } else {
+    return 'info'
+  }
+}
+
+const shouldOutput = (logLevel: LogLevel): boolean => {
+  const currentLogLevelValue = logLevelValue(currentLogLevel())
+  const messageLogLevelValue = logLevelValue(logLevel)
+  return messageLogLevelValue >= currentLogLevelValue
+}
+
+const message = (content: Message, level: LogLevel = 'info') => {
+  if (shouldOutput(level)) {
+    console.log(stringifyMessage(content))
+  }
+}
+
+export const success = (content: Message) => {
+  if (shouldOutput('info')) {
+    console.log(colors.green(`🎉 ${stringifyMessage(content)}`))
+  }
+}
+
+export const info = (content: Message) => {
+  message(content, 'info')
+}
+
+export const debug = (content: Message) => {
+  message(content, 'debug')
+}
+
+export const warn = (content: Message) => {
+  console.warn(colors.yellow(stringifyMessage(content)))
 }
 
 export const newline = () => {
@@ -89,21 +145,19 @@ export const newline = () => {
 }
 
 export const error = (content: Fatal) => {
-  const message = content.message || 'Unknown error'
-  const padding = '    '
-  const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
-  const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-  console.error(header)
-  console.error(padding + stringifyMessage(message))
-  if (content.tryMessage) {
-    console.error(`\n${padding}${colors.bold('What to try:')}`)
-    console.error(padding + content.tryMessage)
+  if (shouldOutput('error')) {
+    const message = content.message || 'Unknown error'
+    const padding = '    '
+    const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
+    const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+    console.error(header)
+    console.error(padding + stringifyMessage(message))
+    if (content.tryMessage) {
+      console.error(`\n${padding}${colors.bold('What to try:')}`)
+      console.error(padding + content.tryMessage)
+    }
+    console.error(footer)
   }
-  console.error(footer)
-}
-
-export const warning = (content: Message) => {
-  console.warn(colors.yellow(stringifyMessage(content)))
 }
 
 function stringifyMessage(message: Message): string {
