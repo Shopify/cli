@@ -1,5 +1,6 @@
-import {OAuthApplications} from 'session'
 import {expect, describe, it, vi, beforeAll, afterAll} from 'vitest'
+
+import {OAuthApplications} from '../session'
 
 import {applicationId} from './identity'
 import {IdentityToken} from './schema'
