@@ -8,8 +8,7 @@ import {MiniOxygen} from './preview/mini-oxygen/core'
 
 const port = 4000
 export default class Preview extends Command {
-  static description =
-    'Preview a hydrogen worker build in a worker environment.'
+  static description = 'Preview a hydrogen worker build in a worker environment.'
 
   static examples = [`$ shopify hydrogen preview`]
 
@@ -26,8 +25,7 @@ export default class Preview extends Command {
       throw new HelpfulError({
         title: 'worker.js not found',
         content: 'A worker build is required for this command.',
-        suggestion: () =>
-          `Run \`yarn run build\` to generate a worker build and try again.`,
+        suggestion: () => `Run \`yarn run build\` to generate a worker build and try again.`,
       })
     }
 
@@ -47,9 +45,7 @@ export default class Preview extends Command {
     const app = await mf.createServer({assets: files})
 
     app.listen(port, () => {
-      this.interface.say(
-        `\nStarted miniOxygen server. Listening at http://localhost:${port}\n`,
-      )
+      this.interface.say(`\nStarted miniOxygen server. Listening at http://localhost:${port}\n`)
     })
   }
 }

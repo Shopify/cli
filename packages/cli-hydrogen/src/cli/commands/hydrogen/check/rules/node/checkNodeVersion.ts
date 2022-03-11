@@ -15,9 +15,7 @@ export async function checkNodeVersion(this: Command): Promise<CheckResult[]> {
       type: 'Dependencies',
       description: 'Has min node version',
       success:
-        !nodeVersion ||
-        (normalizedVersion !== undefined &&
-          semver.satisfies(normalizedVersion, NODE_MIN_VERSION)),
+        !nodeVersion || (normalizedVersion !== undefined && semver.satisfies(normalizedVersion, NODE_MIN_VERSION)),
       link: 'https://shopify.dev/custom-storefronts/hydrogen/support',
     },
   ]

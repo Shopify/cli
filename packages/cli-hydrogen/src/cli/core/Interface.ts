@@ -51,15 +51,9 @@ export class Interface {
     this.debug = debug || false
   }
 
-  async ask<T = string>(
-    message: string,
-    options: CheckboxQuestionOptions<T>,
-  ): Promise<T[]>
+  async ask<T = string>(message: string, options: CheckboxQuestionOptions<T>): Promise<T[]>
 
-  async ask<T = string>(
-    message: string,
-    options: ChoiceQuestionOptions<T>,
-  ): Promise<T>
+  async ask<T = string>(message: string, options: ChoiceQuestionOptions<T>): Promise<T>
 
   async ask(message: string, options: BooleanQuestionOptions): Promise<boolean>
   async ask<T = string>(message: string, options?: BaseOptions): Promise<T>
@@ -100,14 +94,10 @@ export class Interface {
     }
 
     const styledText = options.error ? chalk.redBright`${message}` : message
-    const type = options.error
-      ? `${chalk.black.bgRedBright` error `}${INDENT}`
-      : ''
+    const type = options.error ? `${chalk.black.bgRedBright` error `}${INDENT}` : ''
     const combinedMessage = [type, styledText].join('')
 
-    output.message(
-      options.strong ? chalk.bold(combinedMessage) : combinedMessage,
-    )
+    output.message(options.strong ? chalk.bold(combinedMessage) : combinedMessage)
 
     if (options.breakAfter) {
       output.message('')
@@ -115,17 +105,10 @@ export class Interface {
   }
 
   printFile({path, overwritten, diff}: FileResult) {
-    const overwrote = overwritten
-      ? chalk.redBright`• Overwrote`
-      : chalk.greenBright`• Wrote new`
+    const overwrote = overwritten ? chalk.redBright`• Overwrote` : chalk.greenBright`• Wrote new`
 
-    const difference =
-      !overwritten || diff === undefined || false
-        ? ``
-        : chalk.cyanBright`• No change`
+    const difference = !overwritten || diff === undefined || false ? `` : chalk.cyanBright`• No change`
 
-    this.say(
-      [overwrote, difference, chalk.underline.whiteBright(path)].join(' '),
-    )
+    this.say([overwrote, difference, chalk.underline.whiteBright(path)].join(' '))
   }
 }

@@ -61,10 +61,7 @@ function createRequestMiddleware(mf: MiniOxygen): any {
   }
 }
 
-export async function createServer(
-  mf: MiniOxygen,
-  options: {assets: string[]} = {assets: []},
-) {
+export async function createServer(mf: MiniOxygen, options: {assets: string[]} = {assets: []}) {
   const app = connect()
 
   app.use(createAssetMiddleware(options.assets))

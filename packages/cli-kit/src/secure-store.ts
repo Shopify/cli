@@ -8,10 +8,7 @@ import constants from './constants'
  * @returns A promise that resolves with the content or null if it doesn't exist.
  */
 export async function fetch(identifier: string): Promise<string | null> {
-  const content = await keytar.getPassword(
-    constants.keychain.service,
-    identifier,
-  )
+  const content = await keytar.getPassword(constants.keychain.service, identifier)
   return content
 }
 
@@ -21,10 +18,7 @@ export async function fetch(identifier: string): Promise<string | null> {
  * @param content {string} The content to be stored.
  * @returns A promise that resolves when the storing completes.
  */
-export async function store(
-  identifier: string,
-  content: string,
-): Promise<void> {
+export async function store(identifier: string, content: string): Promise<void> {
   await keytar.setPassword(constants.keychain.service, identifier, content)
 }
 
@@ -34,9 +28,6 @@ export async function store(
  * @returns A promise that resolves with true if the content was deleted.
  */
 export async function remove(identifier: string): Promise<boolean> {
-  const result = await keytar.deletePassword(
-    constants.keychain.service,
-    identifier,
-  )
+  const result = await keytar.deletePassword(constants.keychain.service, identifier)
   return result
 }

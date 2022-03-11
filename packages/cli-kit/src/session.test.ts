@@ -1,21 +1,10 @@
-import {
-  vi,
-  describe,
-  expect,
-  it,
-  beforeAll,
-  afterEach,
-  beforeEach,
-} from 'vitest'
+import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
 
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes} from './session/scopes'
 import {store as secureStore, fetch as secureFetch} from './session/store'
 import {ApplicationToken, IdentityToken, Session} from './session/schema'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
-} from './session/exchange'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './session/exchange'
 import {ensureAuthenticated, OAuthApplications} from './session'
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
@@ -88,7 +77,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
   })
 
   afterEach(() => {
-    // There is an open issue where mocks are not resetted automatically after each test
+    // There is an open issue where mocks are not cleared automatically after each test
     // even if you call clearAllMocks() or with the clearMocks config
     // https://github.com/vitest-dev/vitest/issues/872
     vi.mocked(authorize).mockClear()

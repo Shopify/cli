@@ -3,9 +3,7 @@ import url from 'url'
 
 import {Abort, Bug} from '../error'
 
-export const EmptyUrlError = new Abort(
-  'We received the authentication redirect but the URL is empty',
-)
+export const EmptyUrlError = new Abort('We received the authentication redirect but the URL is empty')
 export const AuthenticationError = (message: string) => {
   return new Abort(message)
 }
@@ -17,17 +15,12 @@ export const MissingStateError = new Bug(
   `The authentication cannot continue because the redirect doesn't include the state.`,
 )
 
-export const redirectResponseBody =
-  'Continuing the authentication in your terminal...'
+export const redirectResponseBody = 'Continuing the authentication in your terminal...'
 
 /**
  * It represents the result of a redirect.
  */
-type RedirectCallback = (
-  error: Error | undefined,
-  state: string | undefined,
-  code: string | undefined,
-) => void
+type RedirectCallback = (error: Error | undefined, state: string | undefined, code: string | undefined) => void
 
 /**
  * Defines the interface of the options that
@@ -63,11 +56,7 @@ export class RedirectListener {
 
       if (queryObject.error && queryObject.error_description) {
         respond()
-        return callback(
-          AuthenticationError(`${queryObject.error_description}`),
-          undefined,
-          undefined,
-        )
+        return callback(AuthenticationError(`${queryObject.error_description}`), undefined, undefined)
       }
 
       if (!queryObject.code) {
@@ -116,29 +105,24 @@ export class RedirectListener {
   }
 }
 
-export async function listenRedirect(
-  host: string,
-  port: number,
-): Promise<{code: string; state: string}> {
-  const result = await new Promise<{code: string; state: string}>(
-    (resolve, reject) => {
-      const redirectListener = new RedirectListener({
-        host,
-        port,
-        callback: (error, code, state) => {
-          redirectListener.stop()
-          if (error) {
-            reject(error)
-          } else {
-            resolve({
-              code: code as string,
-              state: state as string,
-            })
-          }
-        },
-      })
-      redirectListener.start()
-    },
-  )
+export async function listenRedirect(host: string, port: number): Promise<{code: string; state: string}> {
+  const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
+    const redirectListener = new RedirectListener({
+      host,
+      port,
+      callback: (error, code, state) => {
+        redirectListener.stop()
+        if (error) {
+          reject(error)
+        } else {
+          resolve({
+            code: code as string,
+            state: state as string,
+          })
+        }
+      },
+    })
+    redirectListener.start()
+  })
   return result
 }

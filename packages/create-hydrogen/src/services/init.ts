@@ -1,15 +1,6 @@
 import {Writable} from 'stream'
 
-import {
-  string,
-  path,
-  template,
-  file,
-  output,
-  os,
-  ui,
-  dependency,
-} from '@shopify/cli-kit'
+import {string, path, template, file, output, os, ui, dependency} from '@shopify/cli-kit'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -74,20 +65,12 @@ async function init(options: InitOptions) {
   output.message(output.content`
   ${hyphenizedName} is ready to build! ✨
     Run ${output.token.command(`${dependencyManager} dev`)} to start developing.
-    Docs: ${output.token.link(
-      'Quick start guide',
-      'https://shopify.dev/custom-storefronts/hydrogen',
-    )}
+    Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}
   `)
 }
 
-function inferDependencyManager(
-  optionsDependencyManager: string | undefined,
-): dependency.DependencyManager {
-  if (
-    optionsDependencyManager &&
-    dependency.dependencyManager.includes(optionsDependencyManager)
-  ) {
+function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
+  if (optionsDependencyManager && dependency.dependencyManager.includes(optionsDependencyManager)) {
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()
@@ -122,13 +105,10 @@ async function createHydrogen(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     hydrogen_version: options.hydrogenPackageVersion,
     author: options.user,
-    dependencyManager: options.dependencyManager,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    dependency_manager: options.dependencyManager,
   }
-  await template.recursiveDirectoryCopy(
-    options.templatePath,
-    options.outputDirectory,
-    templateData,
-  )
+  await template.recursiveDirectoryCopy(options.templatePath, options.outputDirectory, templateData)
 }
 
 export default init

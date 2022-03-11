@@ -5,10 +5,7 @@ import {describe, it, expect, vi, afterAll, beforeAll} from 'vitest'
 import {identity} from '../environment/fqdn'
 import {fetch} from '../http'
 
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
-} from './exchange'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './exchange'
 import {applicationId, clientId} from './identity'
 import {IdentityToken} from './schema'
 
@@ -90,11 +87,7 @@ describe('exchange identity token for application tokens', () => {
       .mockResolvedValueOnce(response.clone())
 
     // When
-    const got = await exchangeAccessForApplicationTokens(
-      identityToken,
-      scopes,
-      'storeFQDN',
-    )
+    const got = await exchangeAccessForApplicationTokens(identityToken, scopes, 'storeFQDN')
 
     // Then
     const expected = {
@@ -128,11 +121,7 @@ describe('exchange identity token for application tokens', () => {
       .mockResolvedValueOnce(response.clone())
 
     // When
-    const got = await exchangeAccessForApplicationTokens(
-      identityToken,
-      scopes,
-      undefined,
-    )
+    const got = await exchangeAccessForApplicationTokens(identityToken, scopes, undefined)
 
     // Then
     const expected = {

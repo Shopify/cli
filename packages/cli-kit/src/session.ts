@@ -1,12 +1,16 @@
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
+<<<<<<< HEAD
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
   ExchangeScopes,
   refreshAccessToken,
 } from './session/exchange'
+=======
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, ExchangeScopes} from './session/exchange'
+>>>>>>> main
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
@@ -121,11 +125,7 @@ async function executeCompleteFlow(
   const identityToken = await exchangeCodeForAccessToken(code)
 
   // Exchange identity token for application tokens
-  const result = await exchangeAccessForApplicationTokens(
-    identityToken,
-    exchangeScopes,
-    store,
-  )
+  const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   const session: Session = {
     [identityFqdn]: {

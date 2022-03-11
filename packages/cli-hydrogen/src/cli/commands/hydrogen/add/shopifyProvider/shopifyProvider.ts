@@ -1,9 +1,4 @@
-import {
-  transform,
-  addImportSpecifier,
-  addImportStatement,
-  wrapJsxChildren,
-} from '@shopify/ast-utilities/javascript'
+import {transform, addImportSpecifier, addImportStatement, wrapJsxChildren} from '@shopify/ast-utilities/javascript'
 
 import Command from '../../../../core/Command'
 

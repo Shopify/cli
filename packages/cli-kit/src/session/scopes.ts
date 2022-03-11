@@ -21,11 +21,7 @@ export function allDefaultScopes(extraScopes: string[] = []): string[] {
  * @returns Array of scopes
  */
 export function apiScopes(api: API, extraScopes: string[] = []): string[] {
-  const scopes = [
-    'openid',
-    ...defaultApiScopes(api),
-    ...extraScopes.map(scopeTransform),
-  ].map(scopeTransform)
+  const scopes = ['openid', ...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
   return Array.from(new Set(scopes))
 }
 

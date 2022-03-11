@@ -13,8 +13,7 @@ export async function checkShopify(this: Command): Promise<CheckResult[]> {
     shopifyConfig.config.storeDomain.match(/.myshopify.com$/)?.length === 1
 
   const hasShopifyProvider =
-    (await fs.hasFile('src/App.server.jsx')) &&
-    (await fs.read('src/App.server.jsx'))?.includes('ShopifyServerProvider')
+    (await fs.hasFile('src/App.server.jsx')) && (await fs.read('src/App.server.jsx'))?.includes('ShopifyServerProvider')
 
   return [
     {

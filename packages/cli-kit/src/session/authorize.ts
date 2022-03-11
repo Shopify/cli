@@ -15,10 +15,7 @@ export interface CodeAuthResult {
   codeVerifier: string
 }
 
-export async function authorize(
-  scopes: string[],
-  state: string = randomHex(30),
-): Promise<CodeAuthResult> {
+export async function authorize(scopes: string[], state: string = randomHex(30)): Promise<CodeAuthResult> {
   const port = 3456
   const host = '127.0.0.1'
   const redirectUri = `http://${host}:${port}`

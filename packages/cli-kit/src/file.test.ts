@@ -39,9 +39,7 @@ describe('copy', () => {
 
       // Then
       await expect(read(join(to, 'file'))).resolves.toEqual(content)
-      await expect(read(join(to, 'child', '.dotfile'))).resolves.toEqual(
-        content,
-      )
+      await expect(read(join(to, 'child', '.dotfile'))).resolves.toEqual(content)
     })
   })
 })

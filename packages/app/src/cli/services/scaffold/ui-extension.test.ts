@@ -31,10 +31,7 @@ describe('initialize a UI extension', () => {
     name: string
     uiExtensionType: UiExtensionTypes
   }
-  const createFromTemplate = async ({
-    name,
-    uiExtensionType,
-  }: CreateFromTemplateOptions) => {
+  const createFromTemplate = async ({name, uiExtensionType}: CreateFromTemplateOptions) => {
     await uiExtensionInit({
       name,
       uiExtensionType,
@@ -47,9 +44,7 @@ describe('initialize a UI extension', () => {
     const name = 'my-ext-1'
     const uiExtensionType = 'checkout-post-purchase'
     await createFromTemplate({name, uiExtensionType})
-    expect(output.message).toBeCalledWith(
-      output.content`Generating ${configurationFileNames.uiExtension}`,
-    )
+    expect(output.message).toBeCalledWith(output.content`Generating ${configurationFileNames.uiExtension}`)
     expect(output.message).toBeCalledWith(output.content`Generating index.jsx`)
     const scaffoldedUiExtension = (await loadApp(tmpDir)).uiExtensions[0]
     expect(scaffoldedUiExtension.configuration.name).toBe(name)
@@ -69,8 +64,6 @@ describe('initialize a UI extension', () => {
     const name = 'my-ext-1'
     const uiExtensionType = 'checkout-post-purchase'
     await createFromTemplate({name, uiExtensionType})
-    await expect(createFromTemplate({name, uiExtensionType})).rejects.toThrow(
-      `UI Extension ${name} already exists!`,
-    )
+    await expect(createFromTemplate({name, uiExtensionType})).rejects.toThrow(`UI Extension ${name} already exists!`)
   })
 })

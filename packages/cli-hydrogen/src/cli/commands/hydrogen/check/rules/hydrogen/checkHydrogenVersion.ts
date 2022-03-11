@@ -9,13 +9,9 @@ import hydrogenPkg from '../../../../../../../package.json'
 
 export const HYDROGEN_MIN_VERSION = hydrogenPkg.version
 
-export async function checkHydrogenVersion(
-  this: Command,
-): Promise<CheckResult[]> {
+export async function checkHydrogenVersion(this: Command): Promise<CheckResult[]> {
   const h2Version = await this.package.hasDependency('@shopify/hydrogen')
-  const normalizedVersion = h2Version
-    ? semver.coerce(h2Version)?.version
-    : `@shopify/hydrogen not installed`
+  const normalizedVersion = h2Version ? semver.coerce(h2Version)?.version : `@shopify/hydrogen not installed`
   const latestHydrogen =
     typeof h2Version === 'string' &&
     typeof normalizedVersion === 'string' &&
