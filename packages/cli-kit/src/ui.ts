@@ -28,9 +28,6 @@ interface ListOptions {
   concurrent?: boolean
 }
 
-export const list = async (
-  tasks: ListTask[],
-  options?: ListOptions,
-): Promise<void> => {
+export const list = async (tasks: ListTask[], options?: ListOptions): Promise<void> => {
   await new Listr(tasks, options).run()
 }

@@ -13,14 +13,8 @@ function getReactComponentTypeSuffix(component: ComponentType) {
   }
 }
 
-export function componentName(
-  name: string,
-  type: ComponentType,
-  extension: string,
-) {
-  return [name, getReactComponentTypeSuffix(type), extension]
-    .filter((fp) => fp)
-    .join('.')
+export function componentName(name: string, type: ComponentType, extension: string) {
+  return [name, getReactComponentTypeSuffix(type), extension].filter((fp) => fp).join('.')
 }
 
 export function validComponentName(name: string) {

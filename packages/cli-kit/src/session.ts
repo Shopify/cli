@@ -1,10 +1,6 @@
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
-  ExchangeScopes,
-} from './session/exchange'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, ExchangeScopes} from './session/exchange'
 import {authorize} from './session/authorize'
 import constants from './constants'
 import {Session} from './session/schema'
@@ -73,12 +69,9 @@ export interface OAuthApplications {
 //   },
 // })
 
-export async function ensureAuthenticated(
-  applications: OAuthApplications,
-): Promise<void> {
+export async function ensureAuthenticated(applications: OAuthApplications): Promise<void> {
   const expiresAtThreshold = new Date(
-    new Date().getTime() +
-      constants.session.expirationTimeMarginInMinutes * 60 * 1000,
+    new Date().getTime() + constants.session.expirationTimeMarginInMinutes * 60 * 1000,
   )
 
   const scopes = getFlattenScopes(applications)
@@ -93,11 +86,7 @@ export async function ensureAuthenticated(
   const identityToken = await exchangeCodeForAccessToken(code)
 
   // Exchange identity token for application tokens
-  const result = await exchangeAccessForApplicationTokens(
-    identityToken,
-    exchangeScopes,
-    store,
-  )
+  const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   // Store tokens in secure store
   const session: Session = {

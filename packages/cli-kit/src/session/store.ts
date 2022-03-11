@@ -1,8 +1,4 @@
-import {
-  store as secureStore,
-  fetch as secureFetch,
-  remove as secureRemove,
-} from '../secure-store'
+import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 
 import {SessionSchema} from './schema'
 import type {Session} from './schema'

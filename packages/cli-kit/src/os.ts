@@ -6,14 +6,7 @@ import {execa} from 'execa'
 const getEnvironmentVariable = () => {
   const {env} = process
 
-  return (
-    env.SUDO_USER ||
-    env.C9_USER ||
-    env.LOGNAME ||
-    env.USER ||
-    env.LNAME ||
-    env.USERNAME
-  )
+  return env.SUDO_USER || env.C9_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME
 }
 
 const getUsernameFromOsUserInfo = (): string | null => {

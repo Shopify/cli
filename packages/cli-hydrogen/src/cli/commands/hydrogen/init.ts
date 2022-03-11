@@ -114,11 +114,8 @@ export default class Init extends Command {
 
     for (const sourceFile of files) {
       const fileName = this.fs.relativePath(sourceFile, rootTmp)
-      const finalFilename =
-        RENAME_MAP[fileName as keyof typeof RENAME_MAP] ?? fileName
-      const destPath = sourceFile
-        .replace(rootTmp, this.root)
-        .replace(fileName, finalFilename)
+      const finalFilename = RENAME_MAP[fileName as keyof typeof RENAME_MAP] ?? fileName
+      const destPath = sourceFile.replace(rootTmp, this.root).replace(fileName, finalFilename)
 
       const overwritten = await this.fs.hasFile(destPath)
       await this.fs.copy(sourceFile, destPath)
@@ -132,8 +129,7 @@ export default class Init extends Command {
     // Refresh package.json
     this.package.name = name
     const cliDependencies: {[key: string]: string} = {}
-    cliDependencies[cliHydrogenPackageJson.name] =
-      cliHydrogenPackageJson.version
+    cliDependencies[cliHydrogenPackageJson.name] = cliHydrogenPackageJson.version
     cliDependencies[cliPackageJson.name] = cliPackageJson.version
     this.package.addDependencies(cliDependencies)
 
@@ -147,27 +143,19 @@ export default class Init extends Command {
 
     console.log()
     this.interface.say(
-      `${underline('Success!')} Created app in ${yellow(
-        `/${this.fs.relativePath(this.root, process.cwd())}`,
-      )}.`,
+      `${underline('Success!')} Created app in ${yellow(`/${this.fs.relativePath(this.root, process.cwd())}`)}.`,
     )
     this.interface.say(`Run the following commands to get started:`)
     console.log()
     if (this.root !== process.cwd()) {
       this.interface.say([
-        [
-          ` • cd ${this.fs.relativePath(this.root, process.cwd())}`,
-          'change into the project directory',
-        ],
+        [` • cd ${this.fs.relativePath(this.root, process.cwd())}`, 'change into the project directory'],
       ])
     }
 
     const usesYarn = this.package.packageManager === 'npm'
     this.interface.say([
-      [
-        ` • ${usesYarn ? `yarn` : `npm install --legacy-peer-deps`}`,
-        '         install the dependencies',
-      ],
+      [` • ${usesYarn ? `yarn` : `npm install --legacy-peer-deps`}`, '         install the dependencies'],
       [` • ${usesYarn ? `yarn` : `npm run`} dev`, '     start the dev server'],
     ])
     console.log()
@@ -177,8 +165,7 @@ export default class Init extends Command {
 }
 
 function validateProjectName(name: string) {
-  const packageNameRegExp =
-    /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/
+  const packageNameRegExp = /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/
 
   if (packageNameRegExp.test(name)) {
     return true

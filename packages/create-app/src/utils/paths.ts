@@ -10,8 +10,6 @@ export async function template(name: string): Promise<string> {
   if (templatePath) {
     return templatePath
   } else {
-    throw new error.Bug(
-      `Couldn't find the template ${name} in @shopify/create-app.`,
-    )
+    throw new error.Bug(`Couldn't find the template ${name} in @shopify/create-app.`)
   }
 }

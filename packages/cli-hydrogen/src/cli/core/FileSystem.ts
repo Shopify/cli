@@ -1,15 +1,6 @@
 import {resolve, relative, dirname} from 'path'
 
-import {
-  appendFile,
-  readFile,
-  mkdirp,
-  copy as copyExtra,
-  CopyOptions,
-  remove,
-  writeFile,
-  ensureDir,
-} from 'fs-extra'
+import {appendFile, readFile, mkdirp, copy as copyExtra, CopyOptions, remove, writeFile, ensureDir} from 'fs-extra'
 import glob, {Options as GlobOptions} from 'fast-glob'
 
 export interface FS {

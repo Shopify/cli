@@ -91,27 +91,19 @@ export class Package {
       pkgJson.devDependencies[name] = version
     })
 
-    writeFileSync(
-      join(this._root, 'package.json'),
-      JSON.stringify(pkgJson, null, 2),
-    )
+    writeFileSync(join(this._root, 'package.json'), JSON.stringify(pkgJson, null, 2))
   }
 
   install(dependency: string, options: InstallOptions = {}) {
     if (options.dev) {
-      this.internal.devDependencies?.set(
-        dependency,
-        options.version || 'latest',
-      )
+      this.internal.devDependencies?.set(dependency, options.version || 'latest')
       return
     }
     this.internal.dependencies?.set(dependency, options.version || 'latest')
   }
 
   hasDependency(name: string): string | undefined {
-    const dep =
-      this.internal.dependencies?.get(name) ||
-      this.internal.devDependencies?.get(name)
+    const dep = this.internal.dependencies?.get(name) || this.internal.devDependencies?.get(name)
     return dep
   }
 

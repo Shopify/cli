@@ -16,11 +16,7 @@ class ContentToken {
   value: string
   metadata: ContentMetadata
 
-  constructor(
-    value: string,
-    metadata: ContentMetadata = {},
-    type: ContentTokenType,
-  ) {
+  constructor(value: string, metadata: ContentMetadata = {}, type: ContentTokenType) {
     this.type = type
     this.value = value
     this.metadata = metadata
@@ -50,10 +46,7 @@ class TokenizedString {
 
 type Message = string | TokenizedString
 
-export function content(
-  strings: TemplateStringsArray,
-  ...keys: (ContentToken | string)[]
-): TokenizedString {
+export function content(strings: TemplateStringsArray, ...keys: (ContentToken | string)[]): TokenizedString {
   let output = ``
   strings.forEach((string, i) => {
     output += string

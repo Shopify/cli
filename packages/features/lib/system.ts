@@ -17,11 +17,7 @@ interface ExecOptions {
  * @param command The command to be executed.
  * @returns A promise that resolves or rejects when the command execution finishes.
  */
-export function exec(
-  command: string,
-  args: string[] = [],
-  options?: ExecOptions,
-) {
+export function exec(command: string, args: string[] = [], options?: ExecOptions) {
   if (isDebug) {
     console.log(pc.gray(`Running: ${command} ${args.join(' ')}`))
   }

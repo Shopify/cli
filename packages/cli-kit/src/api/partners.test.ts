@@ -52,12 +52,7 @@ describe('partners-api', () => {
     await partnersApi.request('query', mockedToken, {variables: 'variables'})
 
     // Then
-    expect(mockedRequest).toHaveBeenLastCalledWith(
-      partnersURL,
-      'query',
-      {variables: 'variables'},
-      headers,
-    )
+    expect(mockedRequest).toHaveBeenLastCalledWith(partnersURL, 'query', {variables: 'variables'}, headers)
   })
 
   test('buildHeaders is called with user token', async () => {

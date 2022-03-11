@@ -1,16 +1,6 @@
 import {Writable} from 'stream'
 
-import {
-  string,
-  path,
-  template,
-  file,
-  output,
-  os,
-  ui,
-  dependency,
-  constants,
-} from '@shopify/cli-kit'
+import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
 
 // eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import cliPackage from '../../../cli/package.json'
@@ -83,21 +73,13 @@ async function init(options: InitOptions) {
 
   output.message(output.content`
   ${hyphenizedName} is ready to build! ✨
-    Docs: ${output.token.link(
-      'Quick start guide',
-      'https://shopify.dev/apps/getting-started',
-    )}
+    Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/apps/getting-started')}
     Inspiration ${output.token.command(`${dependencyManager} shopify help`)}
   `)
 }
 
-function inferDependencyManager(
-  optionsDependencyManager: string | undefined,
-): dependency.DependencyManager {
-  if (
-    optionsDependencyManager &&
-    dependency.dependencyManager.includes(optionsDependencyManager)
-  ) {
+function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
+  if (optionsDependencyManager && dependency.dependencyManager.includes(optionsDependencyManager)) {
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()
@@ -134,11 +116,7 @@ async function createApp(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     dependency_manager: options.dependencyManager,
   }
-  await template.recursiveDirectoryCopy(
-    options.templatePath,
-    options.outputDirectory,
-    templateData,
-  )
+  await template.recursiveDirectoryCopy(options.templatePath, options.outputDirectory, templateData)
 }
 
 export default init

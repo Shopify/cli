@@ -27,23 +27,17 @@ export const deepCopy = <T>(obj: T): T => {
  * * If the value of a key is an object it will extend `to` the
  *   key/values of that object.
  */
-export function merge<
-  F extends object,
-  T extends object,
-  R extends F & T = F & T,
->(from: F, to: T): R {
+export function merge<F extends object, T extends object, R extends F & T = F & T>(from: F, to: T): R {
   const mergedInto = deepCopy(to) as R
   for (const key in from) {
     const curKey = key as unknown as keyof R
     const hasKey = mergedInto.hasOwnProperty(key)
     const fromVal = from[key]
     if (Array.isArray(fromVal)) {
-      if (!hasKey || !(mergedInto[curKey] instanceof Array))
-        mergedInto[curKey] = [] as unknown as R[typeof curKey]
+      if (!hasKey || !(mergedInto[curKey] instanceof Array)) mergedInto[curKey] = [] as unknown as R[typeof curKey]
       ;(mergedInto[curKey] as unknown as any[]).push(...fromVal)
     } else if (typeof fromVal === 'object') {
-      if (!hasKey || !(typeof mergedInto[curKey] === 'object'))
-        mergedInto[curKey] = {} as unknown as R[typeof curKey]
+      if (!hasKey || !(typeof mergedInto[curKey] === 'object')) mergedInto[curKey] = {} as unknown as R[typeof curKey]
 
       Object.assign(mergedInto[curKey], fromVal)
     } else {

@@ -15,19 +15,12 @@ export interface ExecOptions {
  * @param args {string[]} Arguments to pass to the command.
  * @returns A promise that resolves with the aggregatted stdout of the command.
  */
-export const captureOutput = async (
-  command: string,
-  args: string[],
-): Promise<string> => {
+export const captureOutput = async (command: string, args: string[]): Promise<string> => {
   const result = await execa(command, args)
   return result.stdout
 }
 
-export const exec = async (
-  command: string,
-  args: string[],
-  options?: ExecOptions,
-) => {
+export const exec = async (command: string, args: string[], options?: ExecOptions) => {
   const commandProcess = execa(command, args, {
     cwd: options?.cwd,
   })

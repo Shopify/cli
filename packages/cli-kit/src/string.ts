@@ -15,11 +15,7 @@ export function generateRandomChallengePair() {
 }
 
 function base64URLEncode(str: Buffer) {
-  return str
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/[=]/g, '')
+  return str.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]/g, '')
 }
 
 function sha256(str: string) {

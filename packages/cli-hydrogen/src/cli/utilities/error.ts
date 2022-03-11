@@ -39,10 +39,7 @@ export class MissingDependencyError extends HelpfulError {
   }
 }
 
-export function logError(
-  error: Error & ErrorOptions,
-  log: (message: string, options?: any) => void,
-) {
+export function logError(error: Error & ErrorOptions, log: (message: string, options?: any) => void) {
   log(error.title ?? error.message ?? 'An unexpected error occurred', {
     error: true,
     breakAfter: true,
@@ -58,24 +55,14 @@ export function logError(
 
     if (error.suggestion) {
       log('What do I do next?', {strong: true})
-      log(
-        typeof error.suggestion === 'string'
-          ? error.suggestion
-          : error.suggestion(),
-        {breakAfter: true},
-      )
+      log(typeof error.suggestion === 'string' ? error.suggestion : error.suggestion(), {breakAfter: true})
     }
 
     log('Still experiencing issues?', {strong: true})
   }
-  log(
-    'Help us make Hydrogen better by reporting this error so we can improve this message and/or fix the error.',
-  )
+  log('Help us make Hydrogen better by reporting this error so we can improve this message and/or fix the error.')
   log('- Chat with us on Discord: https://discord.com/invite/ppSbThrFaS')
-  log(
-    '- Create an issue in GitHub: https://github.com/Shopify/hydrogen/issues/new',
-    {breakAfter: true},
-  )
+  log('- Create an issue in GitHub: https://github.com/Shopify/hydrogen/issues/new', {breakAfter: true})
 
   log('Error stack:', {strong: true})
   if (error.stack) {

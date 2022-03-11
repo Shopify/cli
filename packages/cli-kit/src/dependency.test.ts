@@ -1,11 +1,7 @@
 import {describe, it, expect, vi} from 'vitest'
 
 import {Bug} from './error'
-import {
-  dependencyManagerUsedForCreating,
-  DependencyManager,
-  install,
-} from './dependency'
+import {dependencyManagerUsedForCreating, DependencyManager, install} from './dependency'
 import {exec} from './system'
 
 vi.mock('./system')

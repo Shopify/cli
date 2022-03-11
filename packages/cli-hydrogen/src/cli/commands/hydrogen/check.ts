@@ -5,11 +5,7 @@ import {HelpfulError} from '../../utilities'
 import {CheckResult} from '../../types'
 import Command from '../../core/Command'
 
-import {
-  checkHydrogenVersion,
-  checkEslintConfig,
-  checkNodeVersion,
-} from './check/rules'
+import {checkHydrogenVersion, checkEslintConfig, checkNodeVersion} from './check/rules'
 
 export default class Check extends Command {
   static description = 'Check a hydrogen app for common problems.'
@@ -43,16 +39,10 @@ export default class Check extends Command {
 
     if (failedChecks.length) {
       this.interface.say(
-        `${chalk.red.bold(`• ${failedChecks.length} errors `)}${chalk.dim(
-          `found in ${results.length} checks`,
-        )}`,
+        `${chalk.red.bold(`• ${failedChecks.length} errors `)}${chalk.dim(`found in ${results.length} checks`)}`,
       )
     } else {
-      this.interface.say(
-        `${chalk.green.bold(`• No errors `)}${chalk.dim(
-          `found in ${results.length} checks`,
-        )}`,
-      )
+      this.interface.say(`${chalk.green.bold(`• No errors `)}${chalk.dim(`found in ${results.length} checks`)}`)
     }
 
     await fixChecks.call(this, results)
@@ -71,24 +61,17 @@ function displayCheckResults(this: Command, allCheckResults: CheckResult[]) {
   }, {} as {[key: string]: CheckResult[]})
 
   ;[...Object.entries(checksBySection)].forEach(([section, sectionResults]) => {
-    const allChecksStatusEmoji = statusEmoji(
-      sectionResults.every(({success}) => success),
-    )
+    const allChecksStatusEmoji = statusEmoji(sectionResults.every(({success}) => success))
 
     console.log()
-    this.interface.say(
-      `${allChecksStatusEmoji} ${chalk.cyan.bold.underline(section)}`,
-    )
+    this.interface.say(`${allChecksStatusEmoji} ${chalk.cyan.bold.underline(section)}`)
     console.log()
 
     sectionResults.forEach(({description, link, success, fix, id}) => {
       const docsLink = link ? chalk.dim(`${indent}${link}\n`) : ''
       const idText = id ? chalk.dim(id) : ''
       const fixedText = success ? '' : statusFixable(fix)
-      const lines = [
-        [statusEmoji(success), description, idText, fixedText].join(' '),
-        docsLink,
-      ]
+      const lines = [[statusEmoji(success), description, idText, fixedText].join(' '), docsLink]
 
       this.interface.say(lines.join('\n'))
     })
@@ -100,8 +83,7 @@ async function fixChecks(this: Command, results: CheckResult[]) {
   let changedFiles = new Map()
 
   const allFixableResults: CheckResult[] = results.filter(
-    ({fix, success}) =>
-      !success && fix !== undefined && typeof fix === 'function',
+    ({fix, success}) => !success && fix !== undefined && typeof fix === 'function',
   )
 
   if (allFixableResults.length === 0) {
@@ -112,9 +94,7 @@ async function fixChecks(this: Command, results: CheckResult[]) {
 
   console.log()
   console.log()
-  await this.interface.say(
-    `${allFixableResults.length} failed checks might be automatically fixable.`,
-  )
+  await this.interface.say(`${allFixableResults.length} failed checks might be automatically fixable.`)
   console.log()
   const wantsFix = await this.interface.ask(
     `Do you want to apply automatic fixes to ${allFixableResults.length} failed checks?`,
@@ -125,40 +105,28 @@ async function fixChecks(this: Command, results: CheckResult[]) {
     return
   }
 
-  for await (const {description, files} of runFixers(
-    allFixableResults as Required<CheckResult>[],
-    {
-      fs: this.fs,
-      package: this.package,
-      interface: this.interface,
-    },
-  )) {
-    this.interface.say(
-      [statusEmoji(true), description, chalk.green('fixed')].join(' '),
-    )
+  for await (const {description, files} of runFixers(allFixableResults as Required<CheckResult>[], {
+    fs: this.fs,
+    package: this.package,
+    interface: this.interface,
+  })) {
+    this.interface.say([statusEmoji(true), description, chalk.green('fixed')].join(' '))
 
     changedFiles = new Map([...changedFiles, ...files])
   }
 
-  const cleanUpPromises = Array.from(changedFiles).map(
-    async ([path, content]) => {
-      const action = (await this.fs.hasFile(path))
-        ? chalk.red(`{red overwrote`)
-        : chalk.green(`{green wrote}`)
+  const cleanUpPromises = Array.from(changedFiles).map(async ([path, content]) => {
+    const action = (await this.fs.hasFile(path)) ? chalk.red(`{red overwrote`) : chalk.green(`{green wrote}`)
 
-      await this.fs.write(path, content)
+    await this.fs.write(path, content)
 
-      this.interface.say(`${action}${stripPath(path)}`)
-    },
-  )
+    this.interface.say(`${action}${stripPath(path)}`)
+  })
 
   await Promise.all(cleanUpPromises)
 }
 
-async function* runFixers(
-  allFixableResults: Required<CheckResult>[],
-  context: any,
-) {
+async function* runFixers(allFixableResults: Required<CheckResult>[], context: any) {
   for (const {fix, description} of allFixableResults) {
     try {
       await fix(context)

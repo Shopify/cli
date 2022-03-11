@@ -23,12 +23,7 @@ interface WriteFromTemplateOptions {
   alias?: string
   directory: string
 }
-async function writeFromTemplate({
-  promptAnswers,
-  filename,
-  alias,
-  directory,
-}: WriteFromTemplateOptions) {
+async function writeFromTemplate({promptAnswers, filename, alias, directory}: WriteFromTemplateOptions) {
   const _alias = alias || filename
   output.message(output.content`Generating ${_alias}`)
   const templatePath = await getTemplatePath('ui-extensions')
@@ -44,17 +39,9 @@ interface UiExtensionInitOptions {
   uiExtensionType: UiExtensionTypes
   parentApp: App
 }
-async function uiExtensionInit({
-  name,
-  uiExtensionType,
-  parentApp,
-}: UiExtensionInitOptions) {
+async function uiExtensionInit({name, uiExtensionType, parentApp}: UiExtensionInitOptions) {
   const hyphenizedName = string.hyphenize(name)
-  const uiExtensionDirectory = path.join(
-    parentApp.directory,
-    blocks.uiExtensions.directoryName,
-    hyphenizedName,
-  )
+  const uiExtensionDirectory = path.join(parentApp.directory, blocks.uiExtensions.directoryName, hyphenizedName)
   if (await file.exists(uiExtensionDirectory)) {
     throw new error.Abort(`UI Extension ${hyphenizedName} already exists!`)
   }

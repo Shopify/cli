@@ -1,11 +1,7 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 
-import {
-  configurationFileNames,
-  blocks,
-  genericConfigurationFileNames,
-} from '../constants'
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '../constants'
 
 import {load, HomeNotFoundError} from './app'
 
@@ -35,24 +31,12 @@ describe('load', () => {
     await file.mkdir(path.join(tmpDir, 'home'))
   }
 
-  const blockConfigurationPath = ({
-    blockType,
-    name,
-  }: {
-    blockType: BlockType
-    name: string
-  }) => {
+  const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
     const block = blocks[blockType]
     return path.join(tmpDir, block.directoryName, name, block.configurationName)
   }
 
-  const makeBlockDir = async ({
-    blockType,
-    name,
-  }: {
-    blockType: BlockType
-    name: string
-  }) => {
+  const makeBlockDir = async ({blockType, name}: {blockType: BlockType; name: string}) => {
     const dirname = path.dirname(blockConfigurationPath({blockType, name}))
     await file.mkdir(dirname)
     return dirname
@@ -83,9 +67,7 @@ describe('load', () => {
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow(
-      /Couldn't find the configuration file/,
-    )
+    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
   it('throws an error when the configuration file is invalid', async () => {
@@ -128,10 +110,7 @@ describe('load', () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
-    const yarnLockPath = path.join(
-      tmpDir,
-      genericConfigurationFileNames.yarn.lockfile,
-    )
+    const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile)
     await file.write(yarnLockPath, '')
 
     // When
@@ -145,10 +124,7 @@ describe('load', () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
-    const pnpmLockPath = path.join(
-      tmpDir,
-      genericConfigurationFileNames.pnpm.lockfile,
-    )
+    const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile)
     await file.write(pnpmLockPath, '')
 
     // When
@@ -163,9 +139,7 @@ describe('load', () => {
     makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'})
 
     // When
-    await expect(load(tmpDir)).rejects.toThrow(
-      /Couldn't find the configuration file/,
-    )
+    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
   it('throws an error if the UI extension configuration file is invalid', async () => {
@@ -265,9 +239,7 @@ describe('load', () => {
     makeBlockDir({blockType: 'scripts', name: 'my-script'})
 
     // When
-    await expect(load(tmpDir)).rejects.toThrow(
-      /Couldn't find the configuration file/,
-    )
+    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
   it('throws an error if the script configuration file is invalid', async () => {
@@ -290,9 +262,7 @@ describe('load', () => {
     await writeConfig(appConfiguration)
 
     // When
-    await expect(load(tmpDir)).rejects.toThrowError(
-      HomeNotFoundError(path.resolve(tmpDir, 'home')),
-    )
+    await expect(load(tmpDir)).rejects.toThrowError(HomeNotFoundError(path.resolve(tmpDir, 'home')))
   })
 
   it('loads the app when it has a script with a valid configuration', async () => {

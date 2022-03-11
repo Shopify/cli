@@ -20,9 +20,7 @@ export interface ExchangeScopes {
  * @param identityFqdn
  * @returns {Promise<IdentityToken>} An instance with the identity access tokens.
  */
-export async function exchangeCodeForAccessToken(
-  codeData: CodeAuthResult,
-): Promise<IdentityToken> {
+export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
   /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
@@ -53,11 +51,7 @@ export async function exchangeAccessForApplicationTokens(
   const token = identityToken.accessToken
 
   const partners = await requestAppToken('partners', token, scopes.partners)
-  const storefront = await requestAppToken(
-    'storefront-renderer',
-    token,
-    scopes.storefront,
-  )
+  const storefront = await requestAppToken('storefront-renderer', token, scopes.storefront)
 
   const result = {
     ...partners,
