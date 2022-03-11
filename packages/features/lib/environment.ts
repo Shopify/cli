@@ -12,3 +12,6 @@ function isTruthy(value: string | undefined): boolean {
 
 /** Returns true if acceptance tests are run with DEBUG=1 */
 export const isDebug = isTruthy(process.env.DEBUG)
+
+/** Returns true if the acceptance tests are running on CI */
+export const isCI = isTruthy(process.env.CI)

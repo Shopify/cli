@@ -15,18 +15,14 @@
     "@shopify/cli": "{{shopify_cli_version}}",
     "@shopify/app": "{{shopify_app_version}}",
     "react": "17.0.2"
-  },
-  {% if dependency_overrides %}
+  },{% if dependency_overrides.size > 0 %}{% if dependency_overrides %}
   "overrides": {
     {% for dependency in dependency_overrides %}
-      "{{dependency[0]}}": "{{dependency[1]}}"{% unless forloop.last %},{% endunless %}
-    {% endfor %}
-  },
+    "{{dependency[0]}}": "{{dependency[1]}}"{% unless forloop.last %},{% endunless %}{% endfor %}
+  },{% endif %}{% endif %}{% if dependency_overrides.size > 0 %}{% if dependency_overrides %}
   "resolutions": {
     {% for dependency in dependency_overrides %}
-      "{{dependency[0]}}": "{{dependency[1]}}"{% unless forloop.last %},{% endunless %}
-    {% endfor %}
-  },
-  {% endif %}
+    "{{dependency[0]}}": "{{dependency[1]}}"{% unless forloop.last %},{% endunless %}{% endfor %}
+  },{% endif %}{% endif %}
   "author": "{{author}}"
 }
