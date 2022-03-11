@@ -76,6 +76,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
   return new TokenizedString(output)
 }
 
+/** Log levels */
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent'
 
 /**
@@ -102,7 +103,11 @@ const logLevelValue = (level: LogLevel): number => {
   }
 }
 
-const currentLogLevel = (): LogLevel => {
+/**
+ *
+ * @returns {LogLevel} It returns the log level set by the user.
+ */
+export const currentLogLevel = (): LogLevel => {
   if (process.argv.includes('--verbose')) {
     return 'debug'
   } else {
@@ -110,7 +115,7 @@ const currentLogLevel = (): LogLevel => {
   }
 }
 
-const shouldOutput = (logLevel: LogLevel): boolean => {
+export const shouldOutput = (logLevel: LogLevel): boolean => {
   const currentLogLevelValue = logLevelValue(currentLogLevel())
   const messageLogLevelValue = logLevelValue(logLevel)
   return messageLogLevelValue >= currentLogLevelValue
