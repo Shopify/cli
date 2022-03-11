@@ -20,9 +20,19 @@ interface InitOptions {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath('app')
-  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
-  const appPackageVersion = options.shopifyAppVersion ?? constants.versions.cliKit
-  const cliKitOverridenVersion = options.shopifyCliKitVersion
+  const cliPackageVersion = constants.versions.cli
+  const appPackageVersion = constants.versions.cliKit
+
+  const dependencyOverrides: {[key: string]: string} = {}
+  if (options.shopifyCliVersion) {
+    dependencyOverrides['@shopify/cli'] = options.shopifyCliVersion
+  }
+  if (options.shopifyAppVersion) {
+    dependencyOverrides['@shopify/app'] = options.shopifyAppVersion
+  }
+  if (options.shopifyCliKitVersion) {
+    dependencyOverrides['@shopify/cli-kit'] = options.shopifyCliKitVersion
+  }
 
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
@@ -38,9 +48,9 @@ async function init(options: InitOptions) {
             templatePath,
             cliPackageVersion,
             appPackageVersion,
-            cliKitOverridenVersion,
             user,
             dependencyManager,
+            dependencyOverrides,
           })
           task.title = 'Initialized'
         },
@@ -89,7 +99,7 @@ async function createApp(
     templatePath: string
     cliPackageVersion: string
     appPackageVersion: string
-    cliKitOverridenVersion: string | undefined
+    dependencyOverrides: {[key: string]: string}
     user: string
     dependencyManager: string
   },
@@ -101,9 +111,10 @@ async function createApp(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     shopify_app_version: options.appPackageVersion,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    cli_kit_version_overriden_version: options.cliKitOverridenVersion,
+    dependency_overrides: options.dependencyOverrides,
     author: options.user,
-    dependencyManager: options.dependencyManager,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    dependency_manager: options.dependencyManager,
   }
   await template.recursiveDirectoryCopy(options.templatePath, options.outputDirectory, templateData)
 }
