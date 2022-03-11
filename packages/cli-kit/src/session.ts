@@ -87,6 +87,8 @@ export async function ensureAuthenticated(
     !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
   const sessionIsInvalid = !validateSession(applications, fqdnSession)
 
+  console.log(needFullAuth, sessionIsInvalid)
+
   let newSession = {}
   if (needFullAuth) {
     newSession = await executeCompleteFlow(applications, fqdn)
@@ -94,9 +96,11 @@ export async function ensureAuthenticated(
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
   } else {
     // session is valid
+    console.log('RETURNING')
     return
   }
 
+  console.log('SAVING SESSION', newSession)
   const completeSession: Session = {...currentSession, ...newSession}
   secureStore.store(completeSession)
   // console.log(JSON.stringify(completeSession, null, 4))

@@ -8,12 +8,62 @@ import {validateScopes, validateSession} from './validate'
 const pastDate = new Date(2022, 1, 1, 9)
 const currentDate = new Date(2022, 1, 1, 10)
 const futureDate = new Date(2022, 1, 1, 11)
+const storeName = 'store.myshopify.io'
 
-const identity: IdentityToken = {
+const validIdentity: IdentityToken = {
   accessToken: 'access_token',
   refreshToken: 'refresh',
   expiresAt: futureDate,
   scopes: ['scope', 'scope2', 'scope3'],
+}
+
+const expiredIdentity: IdentityToken = {
+  accessToken: 'access_token',
+  refreshToken: 'refresh',
+  expiresAt: pastDate,
+  scopes: ['scope', 'scope2', 'scope3'],
+}
+
+const validApplications = {
+  partners: {
+    accessToken: 'access_token',
+    expiresAt: futureDate,
+    scopes: ['scope'],
+  },
+  'storefront-renderer': {
+    accessToken: 'access_token',
+    expiresAt: futureDate,
+    scopes: ['scope'],
+  },
+  [`${storeName}-admin`]: {
+    accessToken: 'access_token',
+    expiresAt: futureDate,
+    scopes: ['scope'],
+  },
+}
+
+const expiredApplications = {
+  partners: {
+    accessToken: 'access_token',
+    expiresAt: pastDate,
+    scopes: ['scope'],
+  },
+  'storefront-renderer': {
+    accessToken: 'access_token',
+    expiresAt: pastDate,
+    scopes: ['scope'],
+  },
+  [`${storeName}-admin`]: {
+    accessToken: 'access_token',
+    expiresAt: pastDate,
+    scopes: ['scope'],
+  },
+}
+
+const defaultApps: OAuthApplications = {
+  partnersApi: {scopes: []},
+  adminApi: {scopes: [], storeFqdn: storeName},
+  storefrontRendererApi: {scopes: []},
 }
 
 beforeAll(() => {
@@ -33,7 +83,7 @@ describe('validateScopes', () => {
     const requestedScopes = ['scope', 'scope2']
 
     // When
-    const got = validateScopes(requestedScopes, identity)
+    const got = validateScopes(requestedScopes, validIdentity)
 
     // Then
     expect(got).toBe(true)
@@ -44,7 +94,7 @@ describe('validateScopes', () => {
     const requestedScopes = ['scope4', 'scope5']
 
     // When
-    const got = validateScopes(requestedScopes, identity)
+    const got = validateScopes(requestedScopes, validIdentity)
 
     // Then
     expect(got).toBe(false)
@@ -52,17 +102,40 @@ describe('validateScopes', () => {
 })
 
 describe('validateSession', () => {
+  it('returns true if session is valid', () => {
+    // Given
+    const session = {
+      identity: validIdentity,
+      applications: validApplications,
+    }
+
+    // When
+    const got = validateSession(defaultApps, session)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
   it('returns false if there is no session', () => {
     // Given
-    const applications: OAuthApplications = {
-      partnersApi: {scopes: []},
-      adminApi: {scopes: [], storeFqdn: 'store.myshopify.io'},
-      storefrontRendererApi: {scopes: []},
-    }
     const session: any = undefined
 
     // When
-    const got = validateSession(applications, session)
+    const got = validateSession(defaultApps, session)
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  it('returns false if identity is expired', () => {
+    // Given
+    const session = {
+      identity: expiredIdentity,
+      applications: validApplications,
+    }
+
+    // When
+    const got = validateSession(defaultApps, session)
 
     // Then
     expect(got).toBe(false)
@@ -70,18 +143,12 @@ describe('validateSession', () => {
 
   it('returns false if requesting partners and is expired', () => {
     // Given
-    const applications: OAuthApplications = {
-      partnersApi: {scopes: ['scope']},
+    const applications = {
+      partnersApi: {scopes: []},
     }
     const session = {
-      identity,
-      applications: {
-        partners: {
-          accessToken: 'access_token',
-          expiresAt: pastDate,
-          scopes: ['scope'],
-        },
-      },
+      identity: validIdentity,
+      applications: expiredApplications,
     }
 
     // When
@@ -93,18 +160,12 @@ describe('validateSession', () => {
 
   it('returns false if requesting storefront and is expired', () => {
     // Given
-    const applications: OAuthApplications = {
-      storefrontRendererApi: {scopes: ['scope']},
+    const applications = {
+      storefrontRendererApi: {scopes: []},
     }
     const session = {
-      identity,
-      applications: {
-        'storefront-renderer': {
-          accessToken: 'access_token',
-          expiresAt: pastDate,
-          scopes: ['scope'],
-        },
-      },
+      identity: validIdentity,
+      applications: expiredApplications,
     }
 
     // When
@@ -116,19 +177,12 @@ describe('validateSession', () => {
 
   it('returns false if requesting admin and is expired', () => {
     // Given
-    const storeName = 'store.myshopify.io'
     const applications: OAuthApplications = {
-      adminApi: {scopes: ['scope'], storeFqdn: storeName},
+      adminApi: {scopes: [], storeFqdn: storeName},
     }
     const session = {
-      identity,
-      applications: {
-        [`${storeName}-admin`]: {
-          accessToken: 'access_token',
-          expiresAt: pastDate,
-          scopes: ['scope'],
-        },
-      },
+      identity: validIdentity,
+      applications: expiredApplications,
     }
 
     // When
@@ -138,21 +192,14 @@ describe('validateSession', () => {
     expect(got).toBe(false)
   })
 
-  it('returns false if requesting admin and token is missing for the store', () => {
+  it('returns false if session does not include requested store', () => {
     // Given
-    const storeName = 'store.myshopify.io'
     const applications: OAuthApplications = {
-      adminApi: {scopes: ['scope'], storeFqdn: storeName},
+      adminApi: {scopes: [], storeFqdn: 'NotMyStore'},
     }
     const session = {
-      identity,
-      applications: {
-        'notMyStore-admin': {
-          accessToken: 'access_token',
-          expiresAt: futureDate,
-          scopes: ['scope'],
-        },
-      },
+      identity: validIdentity,
+      applications: validApplications,
     }
 
     // When
