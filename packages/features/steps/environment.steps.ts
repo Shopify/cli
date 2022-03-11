@@ -17,8 +17,12 @@ if (process.env.DEBUG === '1') {
 }
 
 Given('I have a working directory', async function () {
-  const npmrc = '//registry.npmjs.org/'
   this.temporaryDirectory = tempy.directory()
+  // When we run the acceptance tests in CI, the .npmrc is scoped to the project.
+  // Because of that, the projects that we create from acceptance tests fail to
+  // install dependencies because the package manager doesn't know which package registry
+  // to resolve the packages from. This line mitigates the issue.
+  const npmrc = '//registry.npmjs.org/'
   await writeFile(path.join(this.temporaryDirectory, '.npmrc'), npmrc)
 })
 
