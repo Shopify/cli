@@ -122,7 +122,8 @@ async function createHydrogen(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     hydrogen_version: options.hydrogenPackageVersion,
     author: options.user,
-    dependencyManager: options.dependencyManager,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    dependency_manager: options.dependencyManager,
   }
   await template.recursiveDirectoryCopy(
     options.templatePath,
