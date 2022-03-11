@@ -70,9 +70,7 @@ export async function exchangeAccessForApplicationTokens(
  * @param currentToken
  * @returns
  */
-export async function refreshAccessToken(
-  currentToken: IdentityToken,
-): Promise<IdentityToken> {
+export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
   /* eslint-disable @typescript-eslint/naming-convention */
   const params = {

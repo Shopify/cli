@@ -1,16 +1,12 @@
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
-<<<<<<< HEAD
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
   ExchangeScopes,
   refreshAccessToken,
 } from './session/exchange'
-=======
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, ExchangeScopes} from './session/exchange'
->>>>>>> main
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
@@ -78,20 +74,15 @@ export interface OAuthApplications {
 //   },
 // })
 
-export async function ensureAuthenticated(
-  applications: OAuthApplications,
-): Promise<void> {
+export async function ensureAuthenticated(applications: OAuthApplications): Promise<void> {
   const fqdn = await identityFqdn()
 
   const currentSession = (await secureStore.fetch()) || {}
   const fqdnSession = currentSession[fqdn]
   const scopes = getFlattenScopes(applications)
 
-  const needFullAuth =
-    !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
+  const needFullAuth = !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
   const sessionIsInvalid = !validateSession(applications, fqdnSession)
-
-  console.log(needFullAuth, sessionIsInvalid)
 
   let newSession = {}
   if (needFullAuth) {
@@ -100,20 +91,15 @@ export async function ensureAuthenticated(
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
   } else {
     // session is valid
-    console.log('RETURNING')
     return
   }
 
-  console.log('SAVING SESSION', newSession)
   const completeSession: Session = {...currentSession, ...newSession}
   secureStore.store(completeSession)
   // console.log(JSON.stringify(completeSession, null, 4))
 }
 
-async function executeCompleteFlow(
-  applications: OAuthApplications,
-  identityFqdn: string,
-): Promise<Session> {
+async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -136,13 +122,9 @@ async function executeCompleteFlow(
   return session
 }
 
-async function refreshTokens(
-  currentToken: IdentityToken,
-  applications: OAuthApplications,
-  identityFqdn: string,
-): Promise<Session> {
+async function refreshTokens(token: IdentityToken, applications: OAuthApplications, fqdn: string): Promise<Session> {
   // Refresh Identity Token
-  const identityToken = await refreshAccessToken(currentToken)
+  const identityToken = await refreshAccessToken(token)
 
   // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
@@ -153,7 +135,7 @@ async function refreshTokens(
   )
 
   return {
-    [identityFqdn]: {
+    [fqdn]: {
       identity: identityToken,
       applications: applicationTokens,
     },
