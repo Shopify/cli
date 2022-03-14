@@ -18,8 +18,6 @@ vi.mock('graphql-request', async () => {
 vi.mock('./common')
 vi.mock('../environment/fqdn')
 
-const mockedRequest = vi.mocked(graphqlRequest)
-const mockedHeaders = vi.mocked(buildHeaders)
 const mockedResult = 'OK'
 const partnersURL = 'https://partners.shopify.com'
 const mockedToken: ApplicationToken = {
@@ -38,7 +36,7 @@ describe('partners-api', () => {
     await partnersApi.request('query', mockedToken, {some: 'variables'})
 
     // Then
-    expect(mockedRequest).toHaveBeenCalledOnce()
+    expect(graphqlRequest).toHaveBeenCalledOnce()
   })
 
   test('request is called with correct parameters', async () => {
@@ -52,7 +50,7 @@ describe('partners-api', () => {
     await partnersApi.request('query', mockedToken, {variables: 'variables'})
 
     // Then
-    expect(mockedRequest).toHaveBeenLastCalledWith(partnersURL, 'query', {variables: 'variables'}, headers)
+    expect(graphqlRequest).toHaveBeenLastCalledWith(partnersURL, 'query', {variables: 'variables'}, headers)
   })
 
   test('buildHeaders is called with user token', async () => {
@@ -64,6 +62,6 @@ describe('partners-api', () => {
     await partnersApi.request('query', mockedToken, {})
 
     // Then
-    expect(mockedHeaders).toHaveBeenCalledWith(mockedToken.accessToken)
+    expect(buildHeaders).toHaveBeenCalledWith(mockedToken.accessToken)
   })
 })

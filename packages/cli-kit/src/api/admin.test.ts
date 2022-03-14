@@ -15,8 +15,6 @@ vi.mock('graphql-request', async () => {
 
 vi.mock('./common')
 
-const mockedRequest = vi.mocked(graphqlRequest)
-const mockedHeaders = vi.mocked(buildHeaders)
 const mockedResult = {
   publicApiVersions: [
     {
@@ -49,7 +47,7 @@ describe('admin-api', () => {
     await admin.request('query', mockedToken, 'shop', {})
 
     // Then
-    expect(mockedRequest).toHaveBeenCalledTimes(2)
+    expect(graphqlRequest).toHaveBeenCalledTimes(2)
   })
 
   test('request is called with correct parameters', async () => {
@@ -62,7 +60,7 @@ describe('admin-api', () => {
     await admin.request('query', mockedToken, 'shop', {variables: 'variables'})
 
     // Then
-    expect(mockedRequest).toHaveBeenLastCalledWith(
+    expect(graphqlRequest).toHaveBeenLastCalledWith(
       'https://shop/admin/api/2022-01/graphql.json',
       'query',
       {variables: 'variables'},
