@@ -65,6 +65,25 @@ export async function exchangeAccessForApplicationTokens(
   return result
 }
 
+/**
+ * Given an expired access token, refresh it to get a new one.
+ * @param currentToken
+ * @returns
+ */
+export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
+  const clientId = await getIdentityClientId()
+  /* eslint-disable @typescript-eslint/naming-convention */
+  const params = {
+    grant_type: 'refresh_token',
+    access_token: currentToken.accessToken,
+    refresh_token: currentToken.refreshToken,
+    client_id: clientId,
+  }
+  /* eslint-enable @typescript-eslint/naming-convention */
+
+  return tokenRequest(params).then(buildIdentityToken)
+}
+
 async function requestAppToken(
   api: API,
   token: string,
