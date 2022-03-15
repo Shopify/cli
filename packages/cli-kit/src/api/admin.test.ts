@@ -76,6 +76,6 @@ describe('admin-api', () => {
     await admin.request('query', mockedToken, 'shop', {})
 
     // Then
-    expect(mockedHeaders).toHaveBeenCalledWith(mockedToken.accessToken)
+    expect(buildHeaders).toHaveBeenCalledWith(mockedToken.accessToken)
   })
 })

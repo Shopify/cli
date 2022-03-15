@@ -19,7 +19,8 @@ vi.mock('./common')
 vi.mock('../environment/fqdn')
 
 const mockedResult = 'OK'
-const partnersURL = 'https://partners.shopify.com'
+const partnersFQDN = 'partners.shopify.com'
+const url = 'https://partners.shopify.com/api/cli/graphql'
 const mockedToken: ApplicationToken = {
   accessToken: 'mytoken',
   expiresAt: new Date(),
@@ -30,7 +31,7 @@ describe('partners-api', () => {
   test('calls the graphql client once', async () => {
     // Given
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
-    vi.mocked(partners).mockResolvedValue(partnersURL)
+    vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
     await partnersApi.request('query', mockedToken, {some: 'variables'})
@@ -44,19 +45,19 @@ describe('partners-api', () => {
     const headers = {'custom-header': mockedToken.accessToken}
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
-    vi.mocked(partners).mockResolvedValue(partnersURL)
+    vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
     await partnersApi.request('query', mockedToken, {variables: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith(partnersURL, 'query', {variables: 'variables'}, headers)
+    expect(graphqlRequest).toHaveBeenLastCalledWith(url, 'query', {variables: 'variables'}, headers)
   })
 
   test('buildHeaders is called with user token', async () => {
     // Given
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
-    vi.mocked(partners).mockResolvedValue(partnersURL)
+    vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
     await partnersApi.request('query', mockedToken, {})
