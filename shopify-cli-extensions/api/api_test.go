@@ -170,9 +170,20 @@ func TestGetSingleExtension(t *testing.T) {
 
 func TestServeAssets(t *testing.T) {
 	api := New(config, apiRoot)
-	response := getHTMLResponse(api, t, localhost, "/extensions/00000000-0000-0000-0000-000000000000/assets/main.js")
+	response := getHTMLRequest(api, t, localhost, "/extensions/00000000-0000-0000-0000-000000000000/assets/main.js")
 
-	if response != "console.log(\"Hello World!\");\n" {
+	if response.Result().StatusCode != http.StatusOK {
+		t.Error("expected status code ok received")
+	}
+
+	cachePolicy := response.Result().Header["Cache-Control"]
+	if len(cachePolicy) == 0 {
+		t.Error("expected server to specify a cache policy")
+	} else if cachePolicy[0] != "no-cache" {
+		t.Errorf("expected cache policy to be no-cache not %s", cachePolicy[0])
+	}
+
+	if response.Body.String() != "console.log(\"Hello World!\");\n" {
 		t.Error("Unexpected body")
 	}
 }
