@@ -1,6 +1,6 @@
 import {applicationId} from './session/identity'
-import {Bug} from './error'
-import {validateScopes, validateSession} from './session/validate'
+import {Abort, Bug} from './error'
+import {validateScopes, validateSession, validateToken} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
 import {
@@ -138,7 +138,7 @@ export async function ensureAuthenticated(applications: OAuthApplications): Prom
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
-  await secureStore.store(completeSession)
+  await secureStore.storeSession(completeSession)
   return tokensFor(applications, completeSession, fqdn)
 }
 
@@ -183,6 +183,18 @@ async function refreshTokens(token: IdentityToken, applications: OAuthApplicatio
       applications: applicationTokens,
     },
   }
+}
+
+async function refreshPartnersToken(envToken: string) {
+  const currentToken = await secureStore.fetchPartnersToken()
+  const isValid = currentToken && validateToken(currentToken)
+  if (isValid) {
+    return currentToken.accessToken
+  }
+  const exchangeScopes = getExchangeScopes({partnersApi: {scopes: []}})
+  const newToken = await exchangeCustomPartnerToken(envToken, exchangeScopes.partners)
+  await secureStore.storePartnersToken(newToken)
+  return newToken.accessToken
 }
 
 async function tokensFor(applications: OAuthApplications, session: Session, fqdn: string): Promise<OAuthSession> {
