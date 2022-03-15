@@ -234,7 +234,7 @@ func TestCheckoutRedirect(t *testing.T) {
 	api := New(config, apiRoot)
 	rec := getHTMLRequest(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000000")
 
-	if rec.Code != http.StatusPermanentRedirect {
+	if rec.Code != http.StatusTemporaryRedirect {
 		t.Errorf("expected redirect status – received: %d", rec.Code)
 	}
 
@@ -251,7 +251,7 @@ func TestAdminRedirect(t *testing.T) {
 	api := New(config, apiRoot)
 	rec := getHTMLRequest(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000001")
 
-	if rec.Code != http.StatusPermanentRedirect {
+	if rec.Code != http.StatusTemporaryRedirect {
 		t.Errorf("Expected redirect status – received: %d", rec.Code)
 	}
 

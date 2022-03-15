@@ -61,7 +61,7 @@ func (root *RootHandler) HandleHTMLRequest(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	http.Redirect(rw, r, url, http.StatusPermanentRedirect)
+	http.Redirect(rw, r, url, http.StatusTemporaryRedirect)
 }
 
 func IsSecureRequest(r *http.Request) bool {

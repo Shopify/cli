@@ -34,7 +34,7 @@ func New(config *core.Config, apiRoot string) *ExtensionsApi {
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, "/dev-console", http.StatusPermanentRedirect)
+		http.Redirect(rw, r, "/dev-console", http.StatusTemporaryRedirect)
 	})
 
 	api := configureExtensionsApi(config, mux, apiRoot)
@@ -261,7 +261,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 	api.PathPrefix("/dev-console").Handler(http.FileServer(http.FS(devConsole)))
 
 	api.PathPrefix("/assets/").Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, path.Join("/dev-console", r.URL.Path), http.StatusPermanentRedirect)
+		http.Redirect(rw, r, path.Join("/dev-console", r.URL.Path), http.StatusTemporaryRedirect)
 	}))
 
 	return api
