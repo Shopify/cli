@@ -18,7 +18,7 @@ const IdentityTokenSchema = define.object({
 /**
  * The schema represents an application token.
  */
-const ApplicationTokenSchema = define.object({
+export const ApplicationTokenSchema = define.object({
   accessToken: define.string(),
   expiresAt: DateSchema,
   scopes: define.array(define.string()),

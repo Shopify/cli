@@ -84,6 +84,12 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
   return tokenRequest(params).then(buildIdentityToken)
 }
 
+export async function exchangeCustomPartnerToken(token: string, scopes: string[]): Promise<ApplicationToken> {
+  const appId = applicationId('partners')
+  const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
+  return newToken[appId]
+}
+
 async function requestAppToken(
   api: API,
   token: string,
@@ -104,6 +110,8 @@ async function requestAppToken(
     subject_token: token,
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
+
+  console.log(params)
   /* eslint-enable @typescript-eslint/naming-convention */
 
   let identifier = appId

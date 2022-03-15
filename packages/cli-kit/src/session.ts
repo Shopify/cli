@@ -6,12 +6,14 @@ import {identity as identityFqdn} from './environment/fqdn'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
+  exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
 } from './session/exchange'
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
+import {cliKit} from './store'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -64,19 +66,69 @@ export interface OAuthSession {
 }
 
 /**
+ * Ensure that we have a valid session to access the Partners API.
+ * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be returned.
+ * @returns {Promise<string>} The access token for the Partners API.
+ */
+export async function ensureAuthenticatedPartners(): Promise<string> {
+  const envToken = process.env.SHOPIFY_CLI_PARTNERS_TOKEN
+  if (envToken) {
+    return refreshPartnersToken(envToken)
+  }
+  const tokens = await ensureAuthenticated({partnersApi: {scopes: []}})
+  if (!tokens.partners) {
+    throw new Bug('No partners token found after ensuring authenticated')
+  }
+  return tokens.partners
+}
+
+/**
+ * Ensure that we have a valid session to access the Storefront API.
+ * @returns {Promise<string>} The access token for the Storefront API.
+ */
+export async function ensureAuthenticatedStorefront(): Promise<string> {
+  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes: []}})
+  if (!tokens.storefront) {
+    throw new Bug('No storefront token found after ensuring authenticated')
+  }
+  return tokens.storefront
+}
+
+/**
+ * Ensure that we have a valid Admin session for the given store.
+ * If the session is valid, the store will be saved as the `activeStore` for future usage.
+ * If no store is passed we will try to use the `activeStore` if there is any.
+ * @param store {string} Store fqdn to request auth for
+ * @returns {Promise<string>} The access token for the Admin API
+ */
+export async function ensureAuthenticatedAdmin(store?: string): Promise<string> {
+  const validStore = store || cliKit.get('activeStore')
+  if (!validStore) {
+    throw new Error('No valid store found')
+  }
+  const tokens = await ensureAuthenticated({adminApi: {scopes: [], storeFqdn: validStore}})
+  if (!tokens.admin) {
+    throw new Bug('No admin token found after ensuring authenticated')
+  }
+  cliKit.set('activeStore', store)
+  return tokens.admin
+}
+
+/**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
- * @param options {OAuthApplications} An object containing the applications we need to be authenticated with.
+ * @param applications {OAuthApplications} An object containing the applications we need to be authenticated with.
  * @returns {OAuthSession} An instance with the access tokens organized by application.
  */
 export async function ensureAuthenticated(applications: OAuthApplications): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
-  const currentSession = (await secureStore.fetch()) || {}
+  const currentSession = (await secureStore.fetchSession()) || {}
   const fqdnSession = currentSession[fqdn]
   const scopes = getFlattenScopes(applications)
 
   const needFullAuth = !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
   const sessionIsInvalid = !validateSession(applications, fqdnSession)
+  const envToken = process.env.SHOPIFY_CLI_PARTNERS_TOKEN
 
   let newSession = {}
   if (needFullAuth) {
