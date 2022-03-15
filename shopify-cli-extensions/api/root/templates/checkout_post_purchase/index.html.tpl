@@ -36,7 +36,9 @@
   <div class="content">
       <p>This page is served by your local UI Extension development server. Instead of visiting this page directly, you will need to connect your local development environment to a real checkout environment.<br>
       <br> 
-      If this is the first time you're testing a Post Purchase extension, please install the Chrome or Firefox browser extension from https://github.com/Shopify/post-purchase-devtools/releases. Once installed, simply enter your extension URL {{.PublicUrl}}/extensions/{{.UUID}}.</p>
+      If this is the first time you're testing a Post Purchase extension, please install the browser extension from <a href="https://github.com/Shopify/post-purchase-devtools/releases">https://github.com/Shopify/post-purchase-devtools/releases</a>.<br>
+      <br>
+      Once installed, simply enter your extension URL <a href="{{.PublicUrl}}/extensions/{{.UUID}}">{{.PublicUrl}}/extensions/{{.UUID}}</a>.</p>
   </div>
   </body>
 </html>

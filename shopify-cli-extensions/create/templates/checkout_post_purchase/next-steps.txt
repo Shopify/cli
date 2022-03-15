@@ -1,7 +1,6 @@
 
-🔭 > If this is the first time you're testing a Post Purchase extension,
-🔭 > please install the Chrome or Firefox browser extension from
-🔭 > https://github.com/Shopify/post-purchase-devtools/releases.
+🔭 > If this is the first time you're testing a Post Purchase extension, please install
+🔭 > the browser extension from https://github.com/Shopify/post-purchase-devtools/releases.
 
 🔭 > Once installed, simply enter your extension URL
 🔭 > {{.IntegrationContext.PublicUrl}}/extensions/{{.Extension.UUID}}.

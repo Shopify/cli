@@ -256,18 +256,22 @@ func TestPostPurchaseIndex(t *testing.T) {
 	api := New(config, apiRoot)
 	response := getHTMLResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000002")
 
-	staticContent := "This page is served by your local UI Extension development server. " + 
-	"Instead of visiting this page directly, you will need to connect your local development environment to a real checkout environment."
-	dynamicContent := "If this is the first time you're testing a Post Purchase extension, please install the Chrome or Firefox browser extension from https://github.com/Shopify/post-purchase-devtools/releases. " +
-	"Once installed, simply enter your extension URL https://example.ngrok.io/extensions/00000000-0000-0000-0000-000000000002."
+	contents := [...]string{
+		"This page is served by your local UI Extension development server. Instead of visiting this page directly, you will need to connect your local development environment to a real checkout environment.",
+		"If this is the first time you're testing a Post Purchase extension, please install the browser extension from <a href=\"https://github.com/Shopify/post-purchase-devtools/releases\">https://github.com/Shopify/post-purchase-devtools/releases</a>.",
+		"Once installed, simply enter your extension URL <a href=\"https://example.ngrok.io/extensions/00000000-0000-0000-0000-000000000002\">https://example.ngrok.io/extensions/00000000-0000-0000-0000-000000000002</a>.",
+	}
 
 	t.Logf("response: %s", response)
 
-	if !strings.Contains(response, staticContent) {
-	 	t.Errorf(`expected instructions to contain "%s"`, staticContent)
+	if !strings.Contains(response, contents[0]) {
+		t.Errorf(`expected instructions to contain "%s"`, contents[0])
 	}
-	if !strings.Contains(response, dynamicContent) {
-	 	t.Errorf(`expected instructions to contain "%s"`, dynamicContent)
+	if !strings.Contains(response, contents[1]) {
+		t.Errorf(`expected instructions to contain "%s"`, contents[1])
+	}
+	if !strings.Contains(response, contents[2]) {
+		t.Errorf(`expected instructions to contain "%s"`, contents[2])
 	}
 }
 
