@@ -64,7 +64,7 @@ it("writes", async () => {
 :::tip Given/When/Then
 We recommend grouping the test steps following [Gherkin](https://cucumber.io/docs/gherkin/reference/)'s blocks, given, when, and using code comments. That makes the code test easier to parse visually.
 :::
-:::caution Testing asynchronous code
+:::caution Tests and promises
 If inside your tests you call asynchronous functions and forget to `await` you might end up with false positives. Therefore we recommend that after writing your tests that you always make it fail.
 :::
 :::caution Vitest is in beta
