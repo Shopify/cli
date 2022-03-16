@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 0.33.1
+
+### Patch Changes
+
+- e1b7b31: Added complete Authentication flow
+
 ## 0.31.3
 
 ### Patch Changes
