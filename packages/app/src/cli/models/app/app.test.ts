@@ -1,7 +1,7 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '../constants'
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
 
 import {load, HomeNotFoundError} from './app'
 

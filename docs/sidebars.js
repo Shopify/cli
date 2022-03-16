@@ -9,6 +9,7 @@ module.exports = {
   contributors: [
     'contributors/introduction',
     'contributors/architecture',
+    'contributors/code-patterns',
     'contributors/principles',
     'contributors/testing-strategy',
     'contributors/release',

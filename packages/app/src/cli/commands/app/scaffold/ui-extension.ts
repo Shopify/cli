@@ -3,7 +3,7 @@ import {file, output, path} from '@shopify/cli-kit'
 
 import {uiExtensions} from '../../../constants'
 import scaffoldUiExtensionPrompt from '../../../prompts/scaffold/ui-extension'
-import {load as loadApp, App} from '../../../app/app'
+import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldUiExtensionService from '../../../services/scaffold/ui-extension'
 
 export default class AppScaffoldUiExtension extends Command {
