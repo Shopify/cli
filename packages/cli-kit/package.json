@@ -76,6 +76,7 @@
     "terminal-link": "^3.0.0",
     "toml": "^3.0.0",
     "zod": "^3.11.6",
-    "@shopify/cli-testing": "0.30.2"
+    "@shopify/cli-testing": "0.30.2",
+    "vitest": "0.6.0"
   }
 }

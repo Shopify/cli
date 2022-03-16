@@ -53,10 +53,7 @@
     "eslint-plugin-no-catch-all": "^1.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-unicorn": "^40.0.0",
-    "execa": "^5.1.1",
     "fast-glob": "^3.2.11",
-    "pathe": "0.2.0",
-    "picocolors": "^1.0.0",
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
     "rollup": "^2.68.0",
@@ -66,12 +63,12 @@
     "rollup-plugin-strip-shebang": "^1.2.10",
     "shx": "^0.3.3",
     "simple-git": "^3.2.6",
-    "tempy": "^1.0.1",
     "tmp": "^0.2.1",
     "ts-node": "^10.4.0",
     "tslib": "^2.3.1",
     "typescript": "^4.5.0",
-    "vitest": "0.6.0"
+    "pathe": "0.2.0",
+    "execa": "^5.1.1"
   },
   "workspaces": {
     "packages": [
@@ -102,7 +99,7 @@
       "callback-return": "off",
       "no-undefined": "off",
       "node/no-deprecated-api": "off",
-      "import/no-extraneous-dependencies": "off",
+      "import/no-extraneous-dependencies": "error",
       "no-await-in-loop": "error",
       "no-restricted-imports": [
         "error",
