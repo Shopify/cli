@@ -46,7 +46,7 @@ export function validateSession(
   return tokensAreValid
 }
 
-export function validateToken(token: ApplicationToken): boolean {
+function validateToken(token: ApplicationToken): boolean {
   if (!token) return false
   return token.expiresAt > expireThreshold()
 }

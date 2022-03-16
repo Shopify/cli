@@ -1,6 +1,6 @@
 import {applicationId} from './session/identity'
 import {Bug} from './error'
-import {validateScopes, validateSession, validateToken} from './session/validate'
+import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
 import {
