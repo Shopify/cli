@@ -1,11 +1,12 @@
 import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
 
+import {applicationId} from './session/identity'
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes} from './session/scopes'
 import {store as secureStore, fetch as secureFetch} from './session/store'
 import {ApplicationToken, IdentityToken, Session} from './session/schema'
 import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, refreshAccessToken} from './session/exchange'
-import {ensureAuthenticated, OAuthApplications} from './session'
+import {ensureAuthenticated, OAuthApplications, OAuthSession} from './session'
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
 
@@ -26,20 +27,26 @@ const validIdentityToken: IdentityToken = {
   scopes: ['scope', 'scope2'],
 }
 
+const validTokens: OAuthSession = {
+  admin: 'admin_token',
+  storefront: 'storefront_token',
+  partners: 'partners_token',
+}
+
 const appTokens: {[x: string]: ApplicationToken} = {
   // Admin APIs includes domain in the key
-  'mystore-appId': {
-    accessToken: 'access_token',
+  'mystore-admin': {
+    accessToken: 'admin_token',
     expiresAt: futureDate,
     scopes: ['scope', 'scope2'],
   },
-  appId1: {
-    accessToken: 'access_token',
+  'storefront-renderer': {
+    accessToken: 'storefront_token',
     expiresAt: futureDate,
     scopes: ['scope1'],
   },
-  appId2: {
-    accessToken: 'access_token',
+  partners: {
+    accessToken: 'partners_token',
     expiresAt: futureDate,
     scopes: ['scope2'],
   },
@@ -79,6 +86,7 @@ beforeEach(() => {
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
+  vi.mocked(applicationId).mockImplementation((app) => app)
 })
 
 afterEach(() => {
@@ -98,7 +106,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     vi.mocked(secureFetch).mockResolvedValue(undefined)
 
     // When
-    await ensureAuthenticated(defaultApplications)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).toHaveBeenCalledOnce()
@@ -106,6 +114,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
   })
 
   it('executes complete auth flow if session is for a different fqdn', async () => {
@@ -114,7 +123,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     const newSession: Session = {...invalidSession, ...validSession}
 
     // When
-    await ensureAuthenticated(defaultApplications)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).toHaveBeenCalledOnce()
@@ -122,6 +131,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(newSession)
+    expect(got).toEqual(validTokens)
   })
 
   it('executes complete auth flow if requesting additional scopes', async () => {
@@ -131,7 +141,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
-    await ensureAuthenticated(defaultApplications)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).toHaveBeenCalledOnce()
@@ -139,6 +149,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
   })
 })
 
@@ -150,14 +161,15 @@ describe('when existing session is valid', () => {
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
-    await ensureAuthenticated(defaultApplications)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).not.toHaveBeenCalled()
     expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
-    expect(secureStore).not.toBeCalled()
+    expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
   })
 })
 
@@ -169,7 +181,7 @@ describe('when existing session is expired', () => {
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
-    await ensureAuthenticated(defaultApplications)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).not.toHaveBeenCalledOnce()
@@ -177,5 +189,6 @@ describe('when existing session is expired', () => {
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
   })
 })

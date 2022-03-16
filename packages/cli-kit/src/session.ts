@@ -1,3 +1,5 @@
+import {applicationId} from './session/identity'
+import {Bug} from './error'
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
@@ -55,26 +57,18 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
 }
 
+export interface OAuthSession {
+  admin?: string
+  partners?: string
+  storefront?: string
+}
+
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  * @param options {OAuthApplications} An object containing the applications we need to be authenticated with.
  * @returns {OAuthSession} An instance with the access tokens organized by application.
  */
-
-// await ensureAuthenticated({
-//   adminApi: {
-//     storeFqdn: 'myshop.myshopify.com',
-//     scopes: [],
-//   },
-//   storefrontRendererApi: {
-//     scopes: [],
-//   },
-//   partnersApi: {
-//     scopes: [],
-//   },
-// })
-
-export async function ensureAuthenticated(applications: OAuthApplications): Promise<void> {
+export async function ensureAuthenticated(applications: OAuthApplications): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
   const currentSession = (await secureStore.fetch()) || {}
@@ -89,16 +83,11 @@ export async function ensureAuthenticated(applications: OAuthApplications): Prom
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (sessionIsInvalid) {
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
-  } else {
-    console.log('CURRENT SESSION IS VALID; NOTHING HAPPENED')
-    // session is valid
-    return
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
-  secureStore.store(completeSession)
-  console.log('NEW SESSION SAVED: ')
-  console.log(JSON.stringify(newSession, null, 4))
+  await secureStore.store(completeSession)
+  return tokensFor(applications, completeSession, fqdn)
 }
 
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
@@ -142,6 +131,30 @@ async function refreshTokens(token: IdentityToken, applications: OAuthApplicatio
       applications: applicationTokens,
     },
   }
+}
+
+async function tokensFor(applications: OAuthApplications, session: Session, fqdn: string): Promise<OAuthSession> {
+  const fqdnSession = session[fqdn]
+  if (!fqdnSession) {
+    throw new Bug('No session found after ensuring authenticated')
+  }
+  const tokens: OAuthSession = {}
+  if (applications.adminApi) {
+    const appId = applicationId('admin')
+    const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
+    tokens.admin = fqdnSession.applications[realAppId]?.accessToken
+  }
+
+  if (applications.partnersApi) {
+    const appId = applicationId('partners')
+    tokens.partners = fqdnSession.applications[appId]?.accessToken
+  }
+
+  if (applications.storefrontRendererApi) {
+    const appId = applicationId('storefront-renderer')
+    tokens.storefront = fqdnSession.applications[appId]?.accessToken
+  }
+  return tokens
 }
 
 // Scope Helpers
