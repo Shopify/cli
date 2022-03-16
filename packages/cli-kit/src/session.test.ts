@@ -338,7 +338,7 @@ describe('ensureAuthenticatedPartners', () => {
     expect(got).toEqual('partners_token')
   })
 
-  it('throws error if there is no storefront token', async () => {
+  it('throws error if there is no partners token', async () => {
     // Given
     vi.mocked(validateScopes).mockReturnValue(true)
     vi.mocked(validateSession).mockReturnValue(true)
@@ -351,7 +351,7 @@ describe('ensureAuthenticatedPartners', () => {
     expect(got).rejects.toThrow(`No partners token`)
   })
 
-  it('returns custom partner token if envvar is defined', async () => {
+  it('returns custom partners token if envvar is defined', async () => {
     // Given
     vi.mocked(validateScopes).mockReturnValue(true)
     vi.mocked(validateSession).mockReturnValue(true)
