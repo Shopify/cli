@@ -83,8 +83,8 @@ export interface OAuthSession {
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
  * @returns {Promise<PartnersAPIToken>} The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(scopes: string[] = []): Promise<PartnersAPIToken> {
-  const envToken = process.env[constants.environmentVariables.partnersToken]
+export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<PartnersAPIToken> {
+  const envToken = env[constants.environmentVariables.partnersToken]
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
@@ -134,7 +134,7 @@ export async function ensureAuthenticatedAdmin(store?: string, scopes: string[] 
  * @param applications {OAuthApplications} An object containing the applications we need to be authenticated with.
  * @returns {OAuthSession} An instance with the access tokens organized by application.
  */
-export async function ensureAuthenticated(applications: OAuthApplications): Promise<OAuthSession> {
+export async function ensureAuthenticated(applications: OAuthApplications, env = process.env): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
   const currentSession = (await secureStore.fetch()) || {}
@@ -156,7 +156,7 @@ export async function ensureAuthenticated(applications: OAuthApplications): Prom
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token
-  const envToken = process.env[constants.environmentVariables.partnersToken]
+  const envToken = env[constants.environmentVariables.partnersToken]
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
