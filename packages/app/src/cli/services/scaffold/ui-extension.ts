@@ -3,7 +3,7 @@ import {fileURLToPath} from 'url'
 import {error, file, output, path, string, template} from '@shopify/cli-kit'
 
 import {blocks, UiExtensionTypes} from '../../constants'
-import {load as loadApp, App} from '../../app/app'
+import {load as loadApp, App} from '../../models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {

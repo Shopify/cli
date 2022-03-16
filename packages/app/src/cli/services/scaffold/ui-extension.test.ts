@@ -3,7 +3,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
 
-import {App, load as loadApp} from '../../app/app'
+import {App, load as loadApp} from '../../models/app/app'
 import {configurationFileNames, UiExtensionTypes} from '../../constants'
 
 import uiExtensionInit from './ui-extension'
