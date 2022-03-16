@@ -3,7 +3,7 @@ import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest
 import {applicationId} from './session/identity'
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes} from './session/scopes'
-import {storeSession as secureStore, fetchSession as secureFetch} from './session/store'
+import {store as secureStore, fetch as secureFetch} from './session/store'
 import {ApplicationToken, IdentityToken, Session} from './session/schema'
 import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, refreshAccessToken} from './session/exchange'
 import {ensureAuthenticated, OAuthApplications, OAuthSession} from './session'

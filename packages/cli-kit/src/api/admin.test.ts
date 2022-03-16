@@ -1,6 +1,6 @@
-import {ApplicationToken} from 'session/schema'
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
+import {AdminAPIToken} from 'session'
 
 import * as admin from './admin'
 import {buildHeaders} from './common'
@@ -32,11 +32,7 @@ const mockedResult = {
   ],
 }
 
-const mockedToken: ApplicationToken = {
-  accessToken: 'mytoken',
-  expiresAt: new Date(),
-  scopes: [],
-}
+const mockedToken: AdminAPIToken = 'token'
 
 describe('admin-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {
@@ -52,7 +48,7 @@ describe('admin-api', () => {
 
   test('request is called with correct parameters', async () => {
     // Given
-    const headers = {'custom-header': mockedToken.accessToken}
+    const headers = {'custom-header': mockedToken}
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
 
@@ -76,6 +72,6 @@ describe('admin-api', () => {
     await admin.request('query', mockedToken, 'shop', {})
 
     // Then
-    expect(buildHeaders).toHaveBeenCalledWith(mockedToken.accessToken)
+    expect(buildHeaders).toHaveBeenCalledWith(mockedToken)
   })
 })

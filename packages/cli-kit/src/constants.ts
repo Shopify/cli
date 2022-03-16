@@ -17,6 +17,7 @@ const constants = {
     spinWorkspace: 'SPIN_WORKSPACE',
     spinNamespace: 'SPIN_NAMESPACE',
     spinHost: 'SPIN_HOST',
+    partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
   },
   paths: {
     executables: {

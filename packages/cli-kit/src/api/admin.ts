@@ -1,13 +1,14 @@
 import {request as graphqlRequest, gql} from 'graphql-request'
 
+import {AdminAPIToken} from '../session'
 import {ApplicationToken} from '../session/schema'
 
 import {buildHeaders} from './common'
 
-export async function request<T>(query: any, token: ApplicationToken, store: string, variables?: any): Promise<T> {
-  const version = await fetchApiVersion(token.accessToken, store)
+export async function request<T>(query: any, token: AdminAPIToken, store: string, variables?: any): Promise<T> {
+  const version = await fetchApiVersion(token, store)
   const url = adminUrl(store, version)
-  const headers = await buildHeaders(token.accessToken)
+  const headers = await buildHeaders(token)
   return graphqlRequest<T>(url, query, variables, headers)
 }
 

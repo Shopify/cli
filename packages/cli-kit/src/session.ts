@@ -1,5 +1,5 @@
 import {applicationId} from './session/identity'
-import {Abort, Bug} from './error'
+import {Bug} from './error'
 import {validateScopes, validateSession, validateToken} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
@@ -14,6 +14,13 @@ import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import {cliKit} from './store'
+import constants from './constants'
+
+const NO_SESSION = new Bug('No session found after ensuring authenticated')
+const INVALID_ADMIN_STORE = new Error('No valid store found')
+const MISSING_PARTNER_TOKEN = new Bug('No partners token found after ensuring authenticated')
+const MISSING_ADMIN_TOKEN = new Bug('No admin token found after ensuring authenticated')
+const MISSING_STOREFRONT_TOKEN = new Bug('No storefront token found after ensuring authenticated')
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -59,37 +66,44 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
 }
 
+export type PartnersAPIToken = string
+export type AdminAPIToken = string
+export type StorefrontAPIToken = string
+
 export interface OAuthSession {
-  admin?: string
-  partners?: string
-  storefront?: string
+  admin?: AdminAPIToken
+  partners?: PartnersAPIToken
+  storefront?: StorefrontAPIToken
 }
 
 /**
  * Ensure that we have a valid session to access the Partners API.
- * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be returned.
- * @returns {Promise<string>} The access token for the Partners API.
+ * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
+ * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored
+ * @param scopes {string[]} Optional array of extra scopes to authenticate with.
+ * @returns {Promise<PartnersAPIToken>} The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(): Promise<string> {
-  const envToken = process.env.SHOPIFY_CLI_PARTNERS_TOKEN
+export async function ensureAuthenticatedPartners(scopes: string[] = []): Promise<PartnersAPIToken> {
+  const envToken = process.env[constants.environmentVariables.partnersToken]
   if (envToken) {
-    return refreshPartnersToken(envToken)
+    return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
-  const tokens = await ensureAuthenticated({partnersApi: {scopes: []}})
+  const tokens = await ensureAuthenticated({partnersApi: {scopes}})
   if (!tokens.partners) {
-    throw new Bug('No partners token found after ensuring authenticated')
+    throw MISSING_PARTNER_TOKEN
   }
   return tokens.partners
 }
 
 /**
  * Ensure that we have a valid session to access the Storefront API.
- * @returns {Promise<string>} The access token for the Storefront API.
+ * @param scopes {string[]} Optional array of extra scopes to authenticate with.
+ * @returns {Promise<StorefrontAPIToken>} The access token for the Storefront API.
  */
-export async function ensureAuthenticatedStorefront(): Promise<string> {
-  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes: []}})
+export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<StorefrontAPIToken> {
+  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
   if (!tokens.storefront) {
-    throw new Bug('No storefront token found after ensuring authenticated')
+    throw MISSING_STOREFRONT_TOKEN
   }
   return tokens.storefront
 }
@@ -99,16 +113,17 @@ export async function ensureAuthenticatedStorefront(): Promise<string> {
  * If the session is valid, the store will be saved as the `activeStore` for future usage.
  * If no store is passed we will try to use the `activeStore` if there is any.
  * @param store {string} Store fqdn to request auth for
- * @returns {Promise<string>} The access token for the Admin API
+ * @param scopes {string[]} Optional array of extra scopes to authenticate with.
+ * @returns {Promise<AdminAPIToken>} The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store?: string): Promise<string> {
+export async function ensureAuthenticatedAdmin(store?: string, scopes: string[] = []): Promise<AdminAPIToken> {
   const validStore = store || cliKit.get('activeStore')
   if (!validStore) {
-    throw new Error('No valid store found')
+    throw INVALID_ADMIN_STORE
   }
-  const tokens = await ensureAuthenticated({adminApi: {scopes: [], storeFqdn: validStore}})
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: validStore}})
   if (!tokens.admin) {
-    throw new Bug('No admin token found after ensuring authenticated')
+    throw MISSING_ADMIN_TOKEN
   }
   cliKit.set('activeStore', store)
   return tokens.admin
@@ -122,13 +137,12 @@ export async function ensureAuthenticatedAdmin(store?: string): Promise<string> 
 export async function ensureAuthenticated(applications: OAuthApplications): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
-  const currentSession = (await secureStore.fetchSession()) || {}
+  const currentSession = (await secureStore.fetch()) || {}
   const fqdnSession = currentSession[fqdn]
   const scopes = getFlattenScopes(applications)
 
   const needFullAuth = !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
   const sessionIsInvalid = !validateSession(applications, fqdnSession)
-  const envToken = process.env.SHOPIFY_CLI_PARTNERS_TOKEN
 
   let newSession = {}
   if (needFullAuth) {
@@ -138,8 +152,16 @@ export async function ensureAuthenticated(applications: OAuthApplications): Prom
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
-  await secureStore.storeSession(completeSession)
-  return tokensFor(applications, completeSession, fqdn)
+  await secureStore.store(completeSession)
+  const tokens = await tokensFor(applications, completeSession, fqdn)
+
+  // Overwrite partners token if using a custom CLI Token
+  const envToken = process.env[constants.environmentVariables.partnersToken]
+  if (envToken && applications.partnersApi) {
+    tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
+  }
+
+  return tokens
 }
 
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
@@ -185,22 +207,10 @@ async function refreshTokens(token: IdentityToken, applications: OAuthApplicatio
   }
 }
 
-async function refreshPartnersToken(envToken: string) {
-  const currentToken = await secureStore.fetchPartnersToken()
-  const isValid = currentToken && validateToken(currentToken)
-  if (isValid) {
-    return currentToken.accessToken
-  }
-  const exchangeScopes = getExchangeScopes({partnersApi: {scopes: []}})
-  const newToken = await exchangeCustomPartnerToken(envToken, exchangeScopes.partners)
-  await secureStore.storePartnersToken(newToken)
-  return newToken.accessToken
-}
-
 async function tokensFor(applications: OAuthApplications, session: Session, fqdn: string): Promise<OAuthSession> {
   const fqdnSession = session[fqdn]
   if (!fqdnSession) {
-    throw new Bug('No session found after ensuring authenticated')
+    throw NO_SESSION
   }
   const tokens: OAuthSession = {}
   if (applications.adminApi) {
