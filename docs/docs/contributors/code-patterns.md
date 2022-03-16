@@ -90,7 +90,7 @@ For example, some models are internal to services.
 However, suppose the model is core to the domain the package represents, for example, App. In that case, it must live in its own file that represents it.
 
 :::caution Models and business logic
-It might feel tempting to add business logic to models. Refrain from doing it. A model is an object with whom the business logic operates. or example, if we have business logic for loading and validating an app, we'll have that function. The output will be the model ready to pass to other components down the process.
+It might feel tempting to add business logic to models. Refrain from doing it. A model is an object with whom the business logic operates. For example, if we have business logic for loading and validating an app, we'll have that function. The output will be the model ready to pass to other components down the process.
 
 The model can contain convenient getters and setters to interact with the model.
 :::
