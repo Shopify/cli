@@ -12,6 +12,7 @@ module.exports = {
     'contributors/code-patterns',
     'contributors/principles',
     'contributors/testing-strategy',
+    'contributors/troubleshooting',
     'contributors/release',
     {
       type: 'category',
