@@ -14,7 +14,13 @@
     "@cucumber/cucumber": "^8.0.0-rc.2",
     "@types/cucumber": "^7.0.0",
     "cucumber-junit-formatter": "^0.2.2",
-    "cucumber-pretty": "^6.0.1"
+    "cucumber-pretty": "^6.0.1",
+    "pathe": "0.2.0",
+    "picocolors": "^1.0.0",
+    "execa": "^5.1.1",
+    "tempy": "^1.0.1",
+    "@types/rimraf": "^3.0.2",
+    "rimraf": "^3.0.2"
   },
   "engines": {
     "node": "^14.13.1 || ^16.0.0 || ^17.0.0"
