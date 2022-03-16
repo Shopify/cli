@@ -20,9 +20,9 @@ func New(config *core.Config, apiRoot string) *RootHandler {
 	return &RootHandler{
 		fsutils.NewFS(&templates, "templates"),
 		&apiConfig{
-			ApiRoot: apiRoot,
-			Port:    config.Port,
-			Store:   config.Store,
+			ApiRoot:            apiRoot,
+			Port:               config.Port,
+			Store:              config.Store,
 			IntegrationContext: config.IntegrationContext,
 		},
 	}
