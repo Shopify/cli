@@ -1,5 +1,7 @@
-import enquirer from 'enquirer'
-import {Listr} from 'listr2'
+// @ts-ignore
+import enquirer, {Select} from 'enquirer'
+import * as colors from 'ansi-colors'
+import {Listr, PromptOptions} from 'listr2'
 
 export interface Question {
   type: 'input' | 'select'
@@ -10,8 +12,26 @@ export interface Question {
 }
 
 export const prompt = <T>(questions: Question[]): Promise<T> => {
+  const extra = {numbered: true}
+  const options = {...questions, extra}
   return enquirer.prompt(questions)
 }
+
+export function promptSelect() {
+  const prompt = new Select({
+    name: 'color',
+    message: 'Pick a flavor',
+    choices: ['apple', 'grape', 'watermelon', 'cherry', 'orange'],
+    pointer(choice: any, i: number) {
+      return this.state.index === i ? colors.green('→') : ' '
+    },
+  })
+  return prompt.run()
+}
+
+// const pointer = (choice: any, i: number) => {
+//   return thisstate.index === i ? colors.green('→') : ' '
+// }
 
 export interface Task {
   title: string
