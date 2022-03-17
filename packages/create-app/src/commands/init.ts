@@ -1,9 +1,8 @@
+import initPrompt from '../prompts/init'
+import initService from '../services/init'
 import {Command, Flags} from '@oclif/core'
 import {path} from '@shopify/cli-kit'
 import {DependencyManager} from '@shopify/cli-kit/src/dependency'
-
-import initPrompt from '../prompts/init'
-import initService from '../services/init'
 
 export default class Init extends Command {
   static flags = {

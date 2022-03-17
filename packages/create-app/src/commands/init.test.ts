@@ -1,9 +1,7 @@
-import {describe, it, expect, vi} from 'vitest'
-
+import Init from './init'
 import initService from '../services/init'
 import initPrompt from '../prompts/init'
-
-import Init from './init'
+import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('../utils/paths')
 vi.mock('../services/init')

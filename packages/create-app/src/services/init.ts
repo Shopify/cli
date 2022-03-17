@@ -1,12 +1,9 @@
-import {Writable} from 'stream'
-
-import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
-
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import cliPackage from '../../../cli/package.json'
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+
 import appPackage from '../../../app/package.json'
 import {template as getTemplatePath} from '../utils/paths'
+import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
+import {Writable} from 'stream'
 
 interface InitOptions {
   name: string
