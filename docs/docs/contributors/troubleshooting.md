@@ -3,17 +3,17 @@ title: Troubleshooting
 ---
 
 
-# Vitest Mocking
+## Vitest Mocking
 
 We found out some issues with Vitest mocks, here is a list of detected problems and the solutions/workarounds:
 
 
-## Mocks not clearing between tests
+### Mocks not clearing between tests
 When mocking a function, always make sure to clear the mock after each test. There is an open issue where mocks are not cleared automatically even if you call `clearAllMocks()` or with the `clearMocks` config. [Issue Link](https://github.com/vitest-dev/vitest/issues/872)
 
 
 
-### Problem
+#### Problem
 
 This is an example:
 
@@ -32,7 +32,7 @@ test('2', async () => {
 })
 ```
 
-### Solution
+#### Solution
 Manually clear all mocks after each test:
 ```ts
 import foo from './path'
@@ -49,9 +49,9 @@ afterEach(() => {
 ```
 
 
-## Mocking Module functions
+### Mocking Module functions
 
-### Problem
+#### Problem
 
 Usually you would create a module mock like this:
 
