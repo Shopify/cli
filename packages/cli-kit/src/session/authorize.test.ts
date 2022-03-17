@@ -1,12 +1,11 @@
-import {describe, it, expect, vi} from 'vitest'
-
+import {authorize, MismatchStateError} from './authorize'
+import {listenRedirect} from './redirect-listener'
+import {clientId} from './identity'
 import {generateRandomChallengePair, randomHex} from '../string'
 import {open} from '../system'
 import {identity} from '../environment/fqdn'
 
-import {authorize, MismatchStateError} from './authorize'
-import {listenRedirect} from './redirect-listener'
-import {clientId} from './identity'
+import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('../system')
 vi.mock('./redirect-listener')

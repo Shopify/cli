@@ -1,8 +1,7 @@
-import constants from '../constants'
-import {OAuthApplications} from '../session'
-
 import {applicationId} from './identity'
 import {ApplicationToken, IdentityToken} from './schema'
+import constants from '../constants'
+import {OAuthApplications} from '../session'
 
 /**
  * Validate if an identity token is valid for the requested scopes

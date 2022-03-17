@@ -1,5 +1,5 @@
-import type {Writable} from 'node:stream'
 import {execa} from 'execa'
+import type {Writable} from 'node:stream'
 
 export {default as open} from 'open'
 

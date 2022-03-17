@@ -1,6 +1,5 @@
-import keytar from 'keytar'
-
 import constants from './constants'
+import keytar from 'keytar'
 
 /**
  * Fetches secured content from the system's keychain.

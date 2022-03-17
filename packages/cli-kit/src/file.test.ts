@@ -1,8 +1,7 @@
-import {describe, test, expect, it} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
-
 import {copy, mkdir, write, read} from './file'
 import {join} from './path'
+import {describe, test, expect, it} from 'vitest'
+import {temporary} from '@shopify/cli-testing'
 
 describe('copy', () => {
   it('copies the file', async () => {

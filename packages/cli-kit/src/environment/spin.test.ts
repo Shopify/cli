@@ -1,8 +1,6 @@
-import {describe, test, expect, vi, it, afterEach} from 'vitest'
-
-import {captureOutput} from '../system'
-
 import {show, fqdn, isSpin, instance, workspace, namespace, host} from './spin'
+import {captureOutput} from '../system'
+import {describe, test, expect, vi, it, afterEach} from 'vitest'
 
 vi.mock('../system')
 const mockedCaptureOutput = vi.mocked(captureOutput)

@@ -1,8 +1,6 @@
-import {expect, it, describe} from 'vitest'
-
-import {Environment} from '../network/service'
-
 import {partners, shopify, identity} from './service'
+import {Environment} from '../network/service'
+import {expect, it, describe} from 'vitest'
 
 describe('partners', () => {
   it('returns local when the environment variable points to the local environment', () => {
