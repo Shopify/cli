@@ -1,14 +1,15 @@
-import {resolve, dirname, join} from 'path'
-import {promisify} from 'util'
-import {spawn, exec} from 'child_process'
-import {createServer as createNodeServer} from 'http'
-
 import {paramCase} from 'change-case'
 import {readFile, mkdirp, writeFile, pathExists, emptyDir, remove} from 'fs-extra'
 import playwright from 'playwright-chromium'
 import {createServer as createViteServer, build, ViteDevServer, UserConfig} from 'vite'
 import sirv from 'sirv'
 import getPort from 'get-port'
+
+import {path, output} from '@shopify/cli-kit'
+// eslint-disable-next-line no-restricted-imports
+import {spawn, exec} from 'node:child_process'
+import {createServer as createNodeServer} from 'http'
+import {promisify} from 'util'
 
 const INPUT_TIMEOUT = 500
 const execPromise = promisify(exec)
@@ -59,8 +60,8 @@ export enum KeyInput {
   Yes = 'y',
 }
 
-const hydrogenCli = resolve(__dirname, '../../', 'bin', 'hydrogen')
-const fixtureRoot = resolve(__dirname, '../fixtures')
+const hydrogenCli = path.resolve(__dirname, '../../', 'bin', 'hydrogen')
+const fixtureRoot = path.resolve(__dirname, '../fixtures')
 
 export async function withCli(runner: (context: Context) => void, options?: Options) {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -79,7 +80,7 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
         const result = await runCliCommand(directory, command, input)
 
         if (options?.debug) {
-          console.log(result)
+          output.message(`${result}`)
         }
 
         return {
@@ -100,7 +101,7 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
             const context = await browser.newContext()
             const playrightPage = await context.newPage()
             try {
-              const appDirectory = join(directory, appName)
+              const appDirectory = path.join(directory, appName)
               await runInstall(appDirectory)
 
               const url = await server?.start(appDirectory)
@@ -130,8 +131,9 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
         }
       },
     })
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    console.log(error)
+    output.error(`${error}`)
     if (!options?.debug) {
       await fs.cleanup()
     }
@@ -144,7 +146,7 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
 
 async function createSandbox(directory: string) {
   await mkdirp(directory)
-  await writeFile(join(directory, '.gitignore'), '*')
+  await writeFile(path.join(directory, '.gitignore'), '*')
 
   return new Sandbox(directory)
 }
@@ -199,7 +201,6 @@ async function runInstall(directory: string) {
   })
 }
 
-// @ts-ignore
 async function createBuild(directory: string) {
   const clientOptions: UserConfig = {
     root: directory,
@@ -227,7 +228,7 @@ async function createServer(_?: ServerOptions): Promise<Server> {
     start: async (directory) => {
       server = await createViteServer({
         root: directory,
-        configFile: resolve(directory, 'vite.config.js'),
+        configFile: path.resolve(directory, 'vite.config.js'),
       })
       await server.listen()
 
@@ -238,7 +239,7 @@ async function createServer(_?: ServerOptions): Promise<Server> {
     },
     async stop() {
       if (!server) {
-        console.log('Attempted to stop the server, but it does not exist.')
+        output.message('Attempted to stop the server, but it does not exist.')
         return
       }
 
@@ -247,9 +248,8 @@ async function createServer(_?: ServerOptions): Promise<Server> {
   }
 }
 
-// @ts-ignore
 async function createStaticServer(directory: string): Promise<Server> {
-  const serve = sirv(resolve(directory, 'dist'))
+  const serve = sirv(path.resolve(directory, 'dist'))
   const httpServer = createNodeServer(serve)
   const port = await getPort()
   return {
@@ -273,13 +273,13 @@ class Sandbox {
   constructor(public readonly root: string) {}
 
   resolvePath(...parts: string[]) {
-    return resolve(this.root, ...parts)
+    return path.resolve(this.root, ...parts)
   }
 
   async write(file: string, contents: string) {
     const filePath = this.resolvePath(file)
 
-    await mkdirp(dirname(filePath))
+    await mkdirp(path.dirname(filePath))
     await writeFile(filePath, contents, {encoding: 'utf8'})
   }
 

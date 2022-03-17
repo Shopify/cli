@@ -1,3 +1,4 @@
+/* eslint-disable guard-for-in */
 export const deepCopy = <T>(obj: T): T => {
   if (typeof obj === 'object') {
     const copyArray = (arr: any[]): any => arr.map((val) => deepCopy(val))
@@ -27,10 +28,12 @@ export const deepCopy = <T>(obj: T): T => {
  * * If the value of a key is an object it will extend `to` the
  *   key/values of that object.
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export function merge<F extends object, T extends object, R extends F & T = F & T>(from: F, to: T): R {
   const mergedInto = deepCopy(to) as R
   for (const key in from) {
     const curKey = key as unknown as keyof R
+    // eslint-disable-next-line no-prototype-builtins
     const hasKey = mergedInto.hasOwnProperty(key)
     const fromVal = from[key]
     if (Array.isArray(fromVal)) {
