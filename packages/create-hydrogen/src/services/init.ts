@@ -1,9 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
-import cliPackage from '../../../cli/package.json'
 import {template as getTemplatePath} from '../utils/paths'
-import {string, path, template, file, output, os, ui, dependency} from '@shopify/cli-kit'
+import {constants, string, path, template, file, output, os, ui, dependency} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -22,7 +21,7 @@ const RENAME_MAP = {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath(options.template)
-  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version
+  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
   const hydrogenPackageVersion = options.hydrogenVersion
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)

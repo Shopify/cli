@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+import {directories} from '../lib/constants'
+import {exec} from '../lib/system'
+import {writeFile} from '../lib/fs'
 import {Given, After, BeforeAll, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
 import rimraf from 'rimraf'
 import path from 'pathe'
-
-import {directories} from '../lib/constants'
-import {exec} from '../lib/system'
-import {writeFile} from '../lib/fs'
 
 // In the case of debug we want to disable
 // the timeouts to be able to sleep the

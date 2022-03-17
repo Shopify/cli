@@ -1,6 +1,3 @@
-import cliPackage from '../../../cli/package.json'
-
-import appPackage from '../../../app/package.json'
 import {template as getTemplatePath} from '../utils/paths'
 import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
 import {Writable} from 'stream'
