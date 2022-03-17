@@ -2,10 +2,135 @@
 title: session
 ---
 
-:::info Work in progress
+The `session` module provides an interface to ensure that the user is authenticated and to obtain tokens for each API as needed.
+The CLI already handles basic scopes for you,
 
-The session building blocks haven't been built yet.
-Once built,
-there'll be APIs to authenticate the user and managing the session in the environment.
+Session exposes 4 methods:
+- [Storefront API](#ensureauthenticatedstorefront)
+- [Partners API](#ensureauthenticatedpartners)
+- [Admin API](#ensureauthenticatedadmin)
+- [All APIs session](#ensureauthenticated)
+<br/><br/>
 
+### `ensureAuthenticatedStorefront`
+
+Authenticate the user and return a Storefront API token.
+
+```ts
+import {session} from '@shopify/cli-kit'
+
+const scopes = []
+const token = await session.ensureAuthenticatedStorefront(scopes)
+```
+
+:::note
+We already include basic scopes by default for each API, if you are not sure if you need extra scopes, you probably don't.
 :::
+
+#### Input
+
+| Name | Description | Required | Default |
+| --- | -- | --- | --- |
+| `scopes` | Any extra scope you want include in the auth process | No | [] |
+
+#### Output
+
+It returns a `Promise<string>` with the Storefront token.
+
+<br/><br/>
+
+:::tip
+If the user has never logged in before, the CLI will open a browser to authenticate them. We cache and refresh the identity token, so that should only happen once.
+:::
+<br/><br/>
+
+### `ensureAuthenticatedPartners`
+
+Authenticate the user and return a Partners API token.
+
+**Token-based authentication for Partners API**:
+If `SHOPIFY_CLI_PARTNERS_TOKEN` exists in the Environment, session will use that token and exchange it for a valid Partners API token ignoring any previously existing session for partners.
+
+```ts
+import {session} from '@shopify/cli-kit'
+
+const scopes = []
+const token = await session.ensureAuthenticatedPartners(scopes)
+```
+
+:::caution
+If you use SHOPIFY_CLI_PARTNERS_TOKEN any extra scope will be ignored as custom tokens do not support extra scopes.
+:::
+
+#### Input
+
+| Name | Description | Required | Default |
+| --- | -- | --- | --- |
+| `scopes` | Any extra scope you want include in the auth process | No | [] |
+
+#### Output
+
+It returns a `Promise<string>` with the Partners API token.
+<br/><br/>
+
+
+### `ensureAuthenticatedAdmin`
+
+Authenticate the user and return an Admin API token.
+
+```ts
+import {session} from '@shopify/cli-kit'
+
+const scopes = []
+const myStore = 'mystore.myshopify.com'
+const token = await session.ensureAuthenticatedAdmin(myStore, scopes)
+```
+
+#### Input
+
+| Name | Description | Required | Default |
+| --- | -- | --- | --- |
+| `store` | FQDN of the store you want to log in | No | `activeStore` if available |
+| `scopes` | Any extra scope you want include in the auth process | No | [] |
+
+#### Output
+
+It returns a `Promise<string>` with the Admin API token.
+<br/><br/>
+
+
+### `ensureAuthenticated`
+
+This is a generic method that allows you to obtain tokens for multiple apps at once.
+Authenticate the user and return a tokens for all the given APIs.
+
+```ts
+import {session} from '@shopify/cli-kit'
+
+const applications: session.OAuthApplications = {
+  adminApi: {storeFqdn: 'mystore.myshopify.com', scopes: []},
+  partnersApi: {scopes: []},
+  storefrontRendererApi: {scopes: []},
+}
+
+const tokens = await session.ensureAuthenticated(applications)
+```
+
+#### Input
+
+| Name | Description | Required | Default |
+| --- | -- | --- | --- |
+| `applications` | OAuthApplication object detailing which APIs and scopes do you need a session for | Yes | - |
+
+#### Output
+
+It returns a `Promise<OAuthSession>`. OAuthSession includes tokens for the three supported APIs as strings.
+
+```ts
+interface OAuthSession {
+  admin?: string
+  partners?: string
+  storefront?: string
+}
+```
+
