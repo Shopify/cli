@@ -1,11 +1,10 @@
+import {ApplicationToken, IdentityToken} from './schema'
+import {applicationId, clientId as getIdentityClientId} from './identity'
+import {CodeAuthResult} from './authorize'
 import {Abort} from '../error'
 import {API} from '../network/api'
 import {fetch} from '../http'
 import {identity as identityFqdn} from '../environment/fqdn'
-
-import {ApplicationToken, IdentityToken} from './schema'
-import {applicationId, clientId as getIdentityClientId} from './identity'
-import {CodeAuthResult} from './authorize'
 
 export interface ExchangeScopes {
   admin: string[]

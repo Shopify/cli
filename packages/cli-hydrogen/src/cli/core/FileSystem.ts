@@ -1,7 +1,6 @@
-import {resolve, relative, dirname} from 'path'
-
 import {appendFile, readFile, mkdirp, copy as copyExtra, CopyOptions, remove, writeFile, ensureDir} from 'fs-extra'
 import glob, {Options as GlobOptions} from 'fast-glob'
+import {path} from '@shopify/cli-kit'
 
 export interface FS {
   read(file: string): Promise<string>
@@ -26,13 +25,13 @@ export class FileSystem implements FS {
 
   async write(file: string, contents: string) {
     const resolved = this.resolvePath(file)
-    await mkdirp(dirname(resolved))
+    await mkdirp(path.dirname(resolved))
     await writeFile(resolved, contents)
   }
 
   async append(file: string, contents: string) {
     const resolved = this.resolvePath(file)
-    await mkdirp(dirname(resolved))
+    await mkdirp(path.dirname(resolved))
     await appendFile(resolved, contents)
   }
 
@@ -68,13 +67,13 @@ export class FileSystem implements FS {
   }
 
   resolvePath(...paths: string[]) {
-    return resolve(this.root, ...paths)
+    return path.resolve(this.root, ...paths)
   }
 
-  relativePath(path: string, explicitRoot?: string) {
+  relativePath(from: string, explicitRoot?: string) {
     if (explicitRoot) {
-      return relative(explicitRoot, path)
+      return path.relative(explicitRoot, from)
     }
-    return relative(this.root, path)
+    return path.relative(this.root, from)
   }
 }

@@ -1,9 +1,7 @@
-import {request as graphqlRequest} from 'graphql-request'
-
+import {buildHeaders} from './common'
 import {ApplicationToken} from '../session/schema'
 import {partners as partnersFqdn} from '../environment/fqdn'
-
-import {buildHeaders} from './common'
+import {request as graphqlRequest} from 'graphql-request'
 
 export async function request<T>(query: any, token: ApplicationToken, variables?: any): Promise<T> {
   const fqdn = await partnersFqdn()

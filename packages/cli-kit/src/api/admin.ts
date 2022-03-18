@@ -1,8 +1,6 @@
-import {request as graphqlRequest, gql} from 'graphql-request'
-
-import {ApplicationToken} from '../session/schema'
-
 import {buildHeaders} from './common'
+import {ApplicationToken} from '../session/schema'
+import {request as graphqlRequest, gql} from 'graphql-request'
 
 export async function request<T>(query: any, token: ApplicationToken, store: string, variables?: any): Promise<T> {
   const version = await fetchApiVersion(token.accessToken, store)

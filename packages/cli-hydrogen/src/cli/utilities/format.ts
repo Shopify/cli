@@ -1,6 +1,6 @@
-import {extname} from 'path'
-
 import prettier from 'prettier'
+import {path} from '@shopify/cli-kit'
+
 import type {Options} from 'prettier'
 
 const DEFAULT_PRETTIER_CONFIG: Options = {
@@ -18,7 +18,7 @@ const DEFAULT_PRETTIER_CONFIG: Options = {
  * @returns The formatted content.
  */
 export async function formatFile(content: string, options: {path: string}) {
-  const ext = extname(options.path)
+  const ext = path.extname(options.path)
   const prettierConfig: Options = {
     ...DEFAULT_PRETTIER_CONFIG,
     parser: 'babel',

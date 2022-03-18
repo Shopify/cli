@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {Response} from 'node-fetch'
-import {describe, it, expect, vi, afterAll, beforeAll} from 'vitest'
-
-import {identity} from '../environment/fqdn'
-import {fetch} from '../http'
 
 import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './exchange'
 import {applicationId, clientId} from './identity'
 import {IdentityToken} from './schema'
+import {fetch} from '../http'
+import {identity} from '../environment/fqdn'
+import {describe, it, expect, vi, afterAll, beforeAll} from 'vitest'
+import {Response} from 'node-fetch'
 
 const currentDate = new Date(2022, 1, 1, 10)
 const expiredDate = new Date(2022, 1, 1, 11)

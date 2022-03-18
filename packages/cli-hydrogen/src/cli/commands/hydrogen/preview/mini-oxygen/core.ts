@@ -1,10 +1,9 @@
+import {createServer} from './server'
+import {StorageFactory} from './storage'
 import {CorePlugin, MiniflareCore} from '@miniflare/core'
 import {CachePlugin} from '@miniflare/cache'
 import {VMScriptRunner} from '@miniflare/runner-vm'
 import {Log, LogLevel} from '@miniflare/shared'
-
-import {createServer} from './server'
-import {StorageFactory} from './storage'
 
 export class MiniOxygen extends MiniflareCore<any> {
   constructor(options: any) {

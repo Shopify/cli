@@ -1,9 +1,7 @@
-import {strict as assert} from 'assert'
-
-import {When, Then} from '@cucumber/cucumber'
-
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
+import {When, Then} from '@cucumber/cucumber'
+import {strict as assert} from 'assert'
 
 interface UIExtensionConfiguration {
   name: string

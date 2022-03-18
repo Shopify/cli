@@ -1,11 +1,8 @@
-import {randomUUID} from 'crypto'
-
-import {test, vi, expect, describe} from 'vitest'
-
+import {buildHeaders} from './common'
 import {isShopify} from '../environment/local'
 import constants from '../constants'
-
-import {buildHeaders} from './common'
+import {test, vi, expect, describe} from 'vitest'
+import {randomUUID} from 'crypto'
 
 vi.mock('crypto')
 vi.mock('../environment/local')

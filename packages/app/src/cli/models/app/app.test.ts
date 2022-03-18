@@ -1,9 +1,7 @@
+import {load, HomeNotFoundError} from './app'
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
-
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
-
-import {load, HomeNotFoundError} from './app'
 
 describe('load', () => {
   type BlockType = 'uiExtensions' | 'scripts'

@@ -1,9 +1,8 @@
-import {Command, Flags} from '@oclif/core'
-import {path} from '@shopify/cli-kit'
-
 import {HYDROGEN_VERSION} from '../utils/versions'
 import initPrompt from '../prompts/init'
 import initService from '../services/init'
+import {path} from '@shopify/cli-kit'
+import {Command, Flags} from '@oclif/core'
 
 export default class Init extends Command {
   static flags = {

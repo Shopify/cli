@@ -1,7 +1,3 @@
-import {expect, describe, test, vi} from 'vitest'
-
-import {Environment} from '../network/service'
-
 import {
   partners as partnersEnvironment,
   shopify as shopifyEnvironment,
@@ -17,6 +13,8 @@ import {
   NotProvidedStoreFQDNError,
 } from './fqdn'
 import {isSpin, fqdn as spinFqdn} from './spin'
+import {Environment} from '../network/service'
+import {expect, describe, test, vi} from 'vitest'
 
 vi.mock('./spin')
 vi.mock('./service')

@@ -1,7 +1,6 @@
+import {execa} from 'execa'
 import process from 'node:process'
 import os from 'node:os'
-
-import {execa} from 'execa'
 
 const getEnvironmentVariable = () => {
   const {env} = process
@@ -12,6 +11,7 @@ const getEnvironmentVariable = () => {
 const getUsernameFromOsUserInfo = (): string | null => {
   try {
     return os.userInfo().username
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return null
   }
@@ -48,9 +48,11 @@ export const username = async (): Promise<string | null> => {
     try {
       const {stdout} = await execa('id', ['-un', userId])
       return stdout
-      // eslint-disable-next-line no-empty
+
+      // eslint-disable-next-line no-catch-all/no-catch-all,no-empty
     } catch {}
     return makeUsernameFromId(userId)
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return null
   }
