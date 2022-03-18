@@ -1,6 +1,6 @@
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
-import {AdminAPIToken} from 'session'
+import {string} from 'session'
 
 import * as admin from './admin'
 import {buildHeaders} from './common'
@@ -32,7 +32,7 @@ const mockedResult = {
   ],
 }
 
-const mockedToken: AdminAPIToken = 'token'
+const mockedToken = 'token'
 
 describe('admin-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {

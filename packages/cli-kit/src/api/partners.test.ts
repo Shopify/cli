@@ -1,6 +1,6 @@
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
-import {PartnersAPIToken} from 'session'
+import {string} from 'session'
 
 import {partners} from '../environment/fqdn'
 
@@ -21,7 +21,7 @@ vi.mock('../environment/fqdn')
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'
 const url = 'https://partners.shopify.com/api/cli/graphql'
-const mockedToken: PartnersAPIToken = 'token'
+const mockedToken = 'token'
 
 describe('partners-api', () => {
   test('calls the graphql client once', async () => {
