@@ -1,8 +1,6 @@
 import {request as graphqlRequest} from 'graphql-request'
 
-import {ApplicationToken} from '../session/schema'
 import {partners as partnersFqdn} from '../environment/fqdn'
-import {string} from '../session'
 
 import {buildHeaders} from './common'
 
