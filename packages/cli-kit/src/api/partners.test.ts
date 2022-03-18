@@ -1,7 +1,6 @@
 import * as partnersApi from './partners'
 import {buildHeaders} from './common'
 import {partners} from '../environment/fqdn'
-import {ApplicationToken} from 'session/schema'
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
 
@@ -19,11 +18,7 @@ vi.mock('../environment/fqdn')
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'
 const url = 'https://partners.shopify.com/api/cli/graphql'
-const mockedToken: ApplicationToken = {
-  accessToken: 'mytoken',
-  expiresAt: new Date(),
-  scopes: [],
-}
+const mockedToken = 'token'
 
 describe('partners-api', () => {
   test('calls the graphql client once', async () => {
@@ -40,7 +35,7 @@ describe('partners-api', () => {
 
   test('request is called with correct parameters', async () => {
     // Given
-    const headers = {'custom-header': mockedToken.accessToken}
+    const headers = {'custom-header': mockedToken}
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
@@ -61,6 +56,6 @@ describe('partners-api', () => {
     await partnersApi.request('query', mockedToken, {})
 
     // Then
-    expect(buildHeaders).toHaveBeenCalledWith(mockedToken.accessToken)
+    expect(buildHeaders).toHaveBeenCalledWith(mockedToken)
   })
 })
