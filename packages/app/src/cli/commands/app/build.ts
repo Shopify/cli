@@ -1,7 +1,5 @@
 import {Command} from '@oclif/core'
 import {session, ui} from '@shopify/cli-kit'
-import {Prompt, Select, MultiSelect, prompt} from 'enquirer'
-// import * as colors from 'ansi-colors'
 
 export default class Build extends Command {
   static description = 'Build a block or an app'

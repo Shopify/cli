@@ -1,8 +1,7 @@
-import constants from '../constants'
-import {exists as fileExists} from '../file'
-
 import {isTruthy} from './utilities'
 import {isSpin} from './spin'
+import constants from '../constants'
+import {exists as fileExists} from '../file'
 
 /**
  * Returns true if the CLI is running in debug mode.

@@ -1,14 +1,26 @@
-import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
-
+import {cliKit} from './store'
 import {applicationId} from './session/identity'
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes} from './session/scopes'
 import {store as secureStore, fetch as secureFetch} from './session/store'
 import {ApplicationToken, IdentityToken, Session} from './session/schema'
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, refreshAccessToken} from './session/exchange'
-import {ensureAuthenticated, OAuthApplications, OAuthSession} from './session'
+import {
+  exchangeAccessForApplicationTokens,
+  exchangeCodeForAccessToken,
+  exchangeCustomPartnerToken,
+  refreshAccessToken,
+} from './session/exchange'
+import {
+  ensureAuthenticated,
+  ensureAuthenticatedAdmin,
+  ensureAuthenticatedPartners,
+  ensureAuthenticatedStorefront,
+  OAuthApplications,
+  OAuthSession,
+} from './session'
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
+import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -52,6 +64,12 @@ const appTokens: {[x: string]: ApplicationToken} = {
   },
 }
 
+const partnersToken: ApplicationToken = {
+  accessToken: 'custom_partners_token',
+  expiresAt: futureDate,
+  scopes: ['scope2'],
+}
+
 const fqdn = 'fqdn.com'
 
 const validSession: Session = {
@@ -61,10 +79,17 @@ const validSession: Session = {
   },
 }
 
+const sessionWithoutTokens: Session = {
+  [fqdn]: {
+    identity: validIdentityToken,
+    applications: {},
+  },
+}
+
 const invalidSession: Session = {
   randomFQDN: {
     identity: validIdentityToken,
-    applications: appTokens,
+    applications: {},
   },
 }
 
@@ -76,6 +101,7 @@ beforeAll(() => {
   vi.mock('./session/scopes')
   vi.mock('./session/store')
   vi.mock('./session/validate')
+  vi.mock('./store')
 
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
@@ -87,6 +113,7 @@ beforeEach(() => {
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(applicationId).mockImplementation((app) => app)
+  vi.mocked(exchangeCustomPartnerToken).mockResolvedValue(partnersToken)
 })
 
 afterEach(() => {
@@ -171,6 +198,26 @@ describe('when existing session is valid', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
   })
+
+  it('overwrites partners token if provided with a custom CLI token', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+    const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
+    const expected = {...validTokens, partners: 'custom_partners_token'}
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, env)
+
+    // Then
+    expect(authorize).not.toHaveBeenCalled()
+    expect(exchangeCodeForAccessToken).not.toBeCalled()
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+    expect(refreshAccessToken).not.toBeCalled()
+    expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(expected)
+  })
 })
 
 describe('when existing session is expired', () => {
@@ -190,5 +237,130 @@ describe('when existing session is expired', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+  })
+})
+
+describe('ensureAuthenticatedStorefront', () => {
+  it('returns only storefront token if success', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticatedStorefront()
+
+    // Then
+    expect(got).toEqual('storefront_token')
+  })
+
+  it('throws error if there is no storefront token', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
+
+    // When
+    const got = ensureAuthenticatedStorefront()
+
+    // Then
+    expect(got).rejects.toThrow(`No storefront token`)
+  })
+})
+
+describe('ensureAuthenticatedAdmin', () => {
+  it('returns only admin token if success', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticatedAdmin('mystore')
+
+    // Then
+    expect(got).toEqual('admin_token')
+  })
+
+  it('throws error if there is no store', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = ensureAuthenticatedAdmin()
+
+    // Then
+    expect(got).rejects.toThrow(`No valid store found`)
+  })
+
+  it('works if there is a previously used store', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(cliKit).get.mockImplementation(() => 'mystore')
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticatedAdmin()
+
+    // Then
+    expect(got).toEqual('admin_token')
+  })
+
+  it('throws error if there is no token', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
+
+    // When
+    const got = ensureAuthenticatedAdmin()
+
+    // Then
+    expect(got).rejects.toThrow(`No admin token`)
+  })
+})
+
+describe('ensureAuthenticatedPartners', () => {
+  it('returns only partners token if success', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticatedPartners()
+
+    // Then
+    expect(got).toEqual('partners_token')
+  })
+
+  it('throws error if there is no partners token', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
+
+    // When
+    const got = ensureAuthenticatedPartners()
+
+    // Then
+    expect(got).rejects.toThrow(`No partners token`)
+  })
+
+  it('returns custom partners token if envvar is defined', async () => {
+    // Given
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+    const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
+
+    // When
+    const got = await ensureAuthenticatedPartners([], env)
+
+    // Then
+    expect(got).toEqual('custom_partners_token')
   })
 })

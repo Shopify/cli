@@ -1,12 +1,12 @@
-import path from 'path'
-import http from 'http'
-import type {IncomingMessage} from 'http'
-import fs from 'fs'
-import {URL} from 'url'
-
 import mime from 'mime'
 import {Request} from '@miniflare/core'
 import connect from 'connect'
+import {path} from '@shopify/cli-kit'
+import {URL} from 'node:url'
+import http from 'http'
+import fs from 'fs'
+import type {IncomingMessage} from 'http'
+
 import type {NextHandleFunction} from 'connect'
 
 import type {MiniOxygen} from './core'
@@ -25,7 +25,7 @@ function createAssetMiddleware(assets: string[]): NextHandleFunction {
       return rs.pipe(res)
     }
 
-    next()
+    return next()
   }
 }
 
@@ -52,9 +52,10 @@ function createRequestMiddleware(mf: MiniOxygen): any {
       }
 
       res.end()
-    } catch (e: any) {
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error: any) {
       res.writeHead(500, {'Content-Type': 'text/plain; charset=UTF-8'})
-      res.end(e.stack, 'utf8')
+      res.end(error.stack, 'utf8')
     }
 
     return response

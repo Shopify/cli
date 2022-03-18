@@ -1,11 +1,11 @@
 // import type {Env} from 'types';
-import chalk from 'chalk'
-
+import {checkHydrogenVersion, checkEslintConfig, checkNodeVersion} from './check/rules'
 import {HelpfulError} from '../../utilities'
+
 import {CheckResult} from '../../types'
 import Command from '../../core/Command'
-
-import {checkHydrogenVersion, checkEslintConfig, checkNodeVersion} from './check/rules'
+import chalk from 'chalk'
+import {output} from '@shopify/cli-kit'
 
 export default class Check extends Command {
   static description = 'Check a hydrogen app for common problems.'
@@ -46,7 +46,7 @@ export default class Check extends Command {
     }
 
     await fixChecks.call(this, results)
-    console.log()
+    output.newline()
   }
 }
 
@@ -63,9 +63,9 @@ function displayCheckResults(this: Command, allCheckResults: CheckResult[]) {
   ;[...Object.entries(checksBySection)].forEach(([section, sectionResults]) => {
     const allChecksStatusEmoji = statusEmoji(sectionResults.every(({success}) => success))
 
-    console.log()
+    output.newline()
     this.interface.say(`${allChecksStatusEmoji} ${chalk.cyan.bold.underline(section)}`)
-    console.log()
+    output.newline()
 
     sectionResults.forEach(({description, link, success, fix, id}) => {
       const docsLink = link ? chalk.dim(`${indent}${link}\n`) : ''
@@ -76,7 +76,7 @@ function displayCheckResults(this: Command, allCheckResults: CheckResult[]) {
       this.interface.say(lines.join('\n'))
     })
   })
-  console.log()
+  output.newline()
 }
 
 async function fixChecks(this: Command, results: CheckResult[]) {
@@ -92,10 +92,10 @@ async function fixChecks(this: Command, results: CheckResult[]) {
     return
   }
 
-  console.log()
-  console.log()
+  output.newline()
+  output.newline()
   await this.interface.say(`${allFixableResults.length} failed checks might be automatically fixable.`)
-  console.log()
+  output.newline()
   const wantsFix = await this.interface.ask(
     `Do you want to apply automatic fixes to ${allFixableResults.length} failed checks?`,
     {boolean: true, name: 'fix', default: false},
@@ -129,6 +129,7 @@ async function fixChecks(this: Command, results: CheckResult[]) {
 async function* runFixers(allFixableResults: Required<CheckResult>[], context: any) {
   for (const {fix, description} of allFixableResults) {
     try {
+      // eslint-disable-next-line no-await-in-loop
       await fix(context)
     } finally {
       yield {description, files: []}

@@ -1,6 +1,5 @@
-import {expect, describe, test} from 'vitest'
-
 import Token from './token'
+import {expect, describe, test} from 'vitest'
 
 describe('Token', () => {
   test('expired returns true when the token is expired', () => {

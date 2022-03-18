@@ -17,8 +17,8 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "true",
-    "lint": "prettier -c src/** && eslint src/**/*.ts",
-    "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
+    "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
+    "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
     "test": "true",
     "test:watch": "vitest watch",
     "tsc": "tsc --noEmit"

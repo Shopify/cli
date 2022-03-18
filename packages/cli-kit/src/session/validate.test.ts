@@ -1,10 +1,8 @@
-import {expect, describe, it, vi, beforeAll, afterAll} from 'vitest'
-
-import {OAuthApplications} from '../session'
-
 import {applicationId} from './identity'
 import {IdentityToken} from './schema'
 import {validateScopes, validateSession} from './validate'
+import {OAuthApplications} from '../session'
+import {expect, describe, it, vi, beforeAll, afterAll} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
 const currentDate = new Date(2022, 1, 1, 10)

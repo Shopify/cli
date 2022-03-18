@@ -1,11 +1,10 @@
+import {ApplicationToken, IdentityToken} from './schema'
+import {applicationId, clientId as getIdentityClientId} from './identity'
+import {CodeAuthResult} from './authorize'
 import {Abort} from '../error'
 import {API} from '../network/api'
 import {fetch} from '../http'
 import {identity as identityFqdn} from '../environment/fqdn'
-
-import {ApplicationToken, IdentityToken} from './schema'
-import {applicationId, clientId as getIdentityClientId} from './identity'
-import {CodeAuthResult} from './authorize'
 
 export interface ExchangeScopes {
   admin: string[]
@@ -82,6 +81,18 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
   /* eslint-enable @typescript-eslint/naming-convention */
 
   return tokenRequest(params).then(buildIdentityToken)
+}
+
+/**
+ * Given a custom CLI token passed as ENV variable, request a valid partners API token
+ * This token does not accept extra scopes, just the cli one.
+ * @param token {string} The CLI token passed as ENV variable
+ * @returns {Promise<ApplicationToken>} An instance with the application access tokens.
+ */
+export async function exchangeCustomPartnerToken(token: string): Promise<ApplicationToken> {
+  const appId = applicationId('partners')
+  const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
+  return newToken[appId]
 }
 
 async function requestAppToken(

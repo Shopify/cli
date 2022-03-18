@@ -1,6 +1,5 @@
-import {fileURLToPath} from 'url'
-
 import {file, path, error} from '@shopify/cli-kit'
+import {fileURLToPath} from 'url'
 
 export async function cliVersion(): Promise<string> {
   const cliPackageJsonpath =

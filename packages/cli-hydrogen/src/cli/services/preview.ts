@@ -1,6 +1,5 @@
-import {output, path} from '@shopify/cli-kit'
-
 import {MiniOxygen} from '../commands/hydrogen/preview/mini-oxygen/core'
+import {output, path} from '@shopify/cli-kit'
 
 interface PreviewOptions {
   directory: string

@@ -1,6 +1,6 @@
+import {exec} from './system'
 import type {Writable} from 'node:stream'
 
-import {exec} from './system'
 import type {ExecOptions} from './system'
 
 export enum DependencyManager {
