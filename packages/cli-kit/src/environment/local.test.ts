@@ -7,9 +7,9 @@ vi.mock('../file')
 vi.mock('./spin')
 
 describe('isDebug', () => {
-  it('returns true when DEBUG is 1', () => {
+  it('returns true when SHOPIFY_CONFIG is debug', () => {
     // Given
-    const env = {DEBUG: '1'}
+    const env = {SHOPIFY_CONFIG: 'debug'}
 
     // When
     const got = isDebug(env)
