@@ -4,21 +4,6 @@ title: Release
 
 # Release process
 
-## Cadence
-
-Releases are done **bi-weekly**.
-In the current phase of the project,
-the cadence is long enough to include a reasonable amount of changes,
-and not too long to have users asking for a new release.
-
-The upoming releases are listed below:
-- January 3rd
-- January 17th
-- January 31st
-- February 14th
-- February 21st
-- March 7th
-
 ## Process
 
 ### Adding change sets when opening PRs
