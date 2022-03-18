@@ -1,9 +1,7 @@
-import {expect, it, describe, vi} from 'vitest'
-
-import {exists as fileExists} from '../file'
-
 import {isSpin} from './spin'
 import {isDebug, isShopify} from './local'
+import {exists as fileExists} from '../file'
+import {expect, it, describe, vi} from 'vitest'
 
 vi.mock('../file')
 vi.mock('./spin')

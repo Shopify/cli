@@ -1,6 +1,6 @@
+import {SessionSchema} from './schema'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 
-import {SessionSchema} from './schema'
 import type {Session} from './schema'
 /**
  * The identifier of the session in the secure store.

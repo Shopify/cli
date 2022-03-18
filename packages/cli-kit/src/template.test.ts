@@ -1,9 +1,8 @@
-import {describe, expect, it} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
-
 import {join} from './path'
 import {write, mkdir, read} from './file'
 import {create, recursiveDirectoryCopy} from './template'
+import {temporary} from '@shopify/cli-testing'
+import {describe, expect, it} from 'vitest'
 
 describe('create', () => {
   it('replaces passes the content through the liquid engine', async () => {

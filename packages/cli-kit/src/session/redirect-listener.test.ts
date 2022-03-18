@@ -1,7 +1,3 @@
-import http from 'http'
-
-import {describe, it, expect, vi} from 'vitest'
-
 import {
   RedirectListener,
   redirectResponseBody,
@@ -10,6 +6,8 @@ import {
   MissingCodeError,
   MissingStateError,
 } from './redirect-listener'
+import {describe, it, expect, vi} from 'vitest'
+import http from 'http'
 
 describe('RedirectListener', () => {
   it('starts and stops the server', async () => {

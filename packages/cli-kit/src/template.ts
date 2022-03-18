@@ -1,7 +1,6 @@
-import {Liquid} from 'liquidjs'
-
 import {glob, join, dirname, relative} from './path'
 import {mkdir, write, read, copy, isDirectory} from './file'
+import {Liquid} from 'liquidjs'
 
 // This line is necessary to register additional helpers.
 export function create(templateContent: string) {

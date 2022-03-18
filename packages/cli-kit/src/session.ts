@@ -66,14 +66,10 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
 }
 
-export type PartnersAPIToken = string
-export type AdminAPIToken = string
-export type StorefrontAPIToken = string
-
 export interface OAuthSession {
-  admin?: AdminAPIToken
-  partners?: PartnersAPIToken
-  storefront?: StorefrontAPIToken
+  admin?: string
+  partners?: string
+  storefront?: string
 }
 
 /**
@@ -81,9 +77,9 @@ export interface OAuthSession {
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<PartnersAPIToken>} The access token for the Partners API.
+ * @returns {Promise<string>} The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<PartnersAPIToken> {
+export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
   const envToken = env[constants.environmentVariables.partnersToken]
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
@@ -98,9 +94,9 @@ export async function ensureAuthenticatedPartners(scopes: string[] = [], env = p
 /**
  * Ensure that we have a valid session to access the Storefront API.
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<StorefrontAPIToken>} The access token for the Storefront API.
+ * @returns {Promise<string>} The access token for the Storefront API.
  */
-export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<StorefrontAPIToken> {
+export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<string> {
   const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
   if (!tokens.storefront) {
     throw MISSING_STOREFRONT_TOKEN
@@ -114,9 +110,9 @@ export async function ensureAuthenticatedStorefront(scopes: string[] = []): Prom
  * If no store is passed we will try to use the `activeStore` if there is any.
  * @param store {string} Store fqdn to request auth for
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<AdminAPIToken>} The access token for the Admin API
+ * @returns {Promise<string>} The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store?: string, scopes: string[] = []): Promise<AdminAPIToken> {
+export async function ensureAuthenticatedAdmin(store?: string, scopes: string[] = []): Promise<string> {
   const validStore = store || cliKit.get('activeStore')
   if (!validStore) {
     throw INVALID_ADMIN_STORE

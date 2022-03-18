@@ -1,5 +1,3 @@
-import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
-
 import {cliKit} from './store'
 import {applicationId} from './session/identity'
 import {validateScopes, validateSession} from './session/validate'
@@ -22,6 +20,7 @@ import {
 } from './session'
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
+import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 

@@ -1,9 +1,7 @@
-import {describe, expect, vi, it} from 'vitest'
-
-import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
-
 import {ApplicationToken, Session} from './schema'
 import {store, fetch, remove, identifier} from './store'
+import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
+import {describe, expect, vi, it} from 'vitest'
 
 vi.mock('../secure-store')
 

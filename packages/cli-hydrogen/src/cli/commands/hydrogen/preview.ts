@@ -1,7 +1,6 @@
+import previewService from '../../services/preview'
 import {path, file, error} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
-
-import previewService from '../../services/preview'
 
 export default class Preview extends Command {
   static description = 'Run a Hydrogen storefront locally in a worker environment'

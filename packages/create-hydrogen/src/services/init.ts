@@ -1,12 +1,9 @@
-import {Writable} from 'stream'
-
-import {string, path, template, file, output, os, ui, dependency} from '@shopify/cli-kit'
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import cliPackage from '../../../cli/package.json'
+
 import {template as getTemplatePath} from '../utils/paths'
+import {constants, string, path, template, file, output, os, ui, dependency} from '@shopify/cli-kit'
+import {Writable} from 'stream'
 
 interface InitOptions {
   name: string
@@ -24,7 +21,7 @@ const RENAME_MAP = {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath(options.template)
-  const cliPackageVersion = options.shopifyCliVersion ?? cliPackage.version
+  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
   const hydrogenPackageVersion = options.hydrogenVersion
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)

@@ -10,8 +10,8 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "true",
-    "lint": "prettier -c src/** && eslint src/**/*.ts",
-    "lint:fix": "prettier -w src/** && eslint src/**/*.ts --fix",
+    "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
+    "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc --noEmit"
@@ -22,6 +22,9 @@
     ]
   },
   "dependencies": {},
+  "peerDependencies": {
+    "@oclif/core": "1.3.6"
+  },
   "devDependencies": {
     "@shopify/cli-kit": "0.33.1",
     "@shopify/cli-testing": "0.30.2",

@@ -1,10 +1,9 @@
-import degit from 'degit'
-import {underline, yellow} from 'chalk'
-import {ui} from '@shopify/cli-kit'
-
 import cliPackageJson from '../../../../../cli/package.json'
 import cliHydrogenPackageJson from '../../../../package.json'
 import Command, {Flags} from '../../core/Command'
+import degit from 'degit'
+import {underline, yellow} from 'chalk'
+import {ui, output} from '@shopify/cli-kit'
 
 export enum Template {
   Minimum = 'Minimal Hydrogen starter',
@@ -117,7 +116,9 @@ export default class Init extends Command {
       const finalFilename = RENAME_MAP[fileName as keyof typeof RENAME_MAP] ?? fileName
       const destPath = sourceFile.replace(rootTmp, this.root).replace(fileName, finalFilename)
 
+      // eslint-disable-next-line no-await-in-loop
       const overwritten = await this.fs.hasFile(destPath)
+      // eslint-disable-next-line no-await-in-loop
       await this.fs.copy(sourceFile, destPath)
 
       this.interface.printFile({
@@ -141,12 +142,12 @@ export default class Init extends Command {
 
     await this.package.write()
 
-    console.log()
+    output.newline()
     this.interface.say(
       `${underline('Success!')} Created app in ${yellow(`/${this.fs.relativePath(this.root, process.cwd())}`)}.`,
     )
     this.interface.say(`Run the following commands to get started:`)
-    console.log()
+    output.newline()
     if (this.root !== process.cwd()) {
       this.interface.say([
         [` • cd ${this.fs.relativePath(this.root, process.cwd())}`, 'change into the project directory'],
@@ -158,9 +159,9 @@ export default class Init extends Command {
       [` • ${usesYarn ? `yarn` : `npm install --legacy-peer-deps`}`, '         install the dependencies'],
       [` • ${usesYarn ? `yarn` : `npm run`} dev`, '     start the dev server'],
     ])
-    console.log()
-    console.log()
-    console.log()
+    output.newline()
+    output.newline()
+    output.newline()
   }
 }
 

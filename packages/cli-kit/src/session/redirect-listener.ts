@@ -1,7 +1,6 @@
+import {Abort, Bug} from '../error'
 import http from 'http'
 import url from 'url'
-
-import {Abort, Bug} from '../error'
 
 export const EmptyUrlError = new Abort('We received the authentication redirect but the URL is empty')
 export const AuthenticationError = (message: string) => {

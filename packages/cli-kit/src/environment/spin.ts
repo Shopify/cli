@@ -1,7 +1,6 @@
+import {isTruthy} from './utilities'
 import constants from '../constants'
 import {captureOutput} from '../system'
-
-import {isTruthy} from './utilities'
 
 /**
  * When ran in a Spin environment, it returns the fqdn of the instance.

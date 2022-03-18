@@ -1,7 +1,6 @@
-import semver from 'semver'
-
 import {CheckResult} from '../../../../../types'
 import Command from '../../../../../core/Command'
+import semver from 'semver'
 
 const NODE_MIN_VERSION = '>=12.0.0'
 

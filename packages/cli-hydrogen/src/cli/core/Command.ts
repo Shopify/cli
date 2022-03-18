@@ -1,18 +1,15 @@
-import {resolve} from 'path'
-
-import {Command, Flags} from '@oclif/core'
-
-import {logError} from '../utilities'
-
 import {FileSystem} from './FileSystem'
 import {Package} from './Package'
 import {Interface} from './Interface'
 import {Workspace} from './Workspace'
 import {Storage} from './Storage'
+import {logError} from '../utilities'
+import {Command as OclifCommand, Flags} from '@oclif/core'
+import {path} from '@shopify/cli-kit'
 
 export {Flags}
 
-export default abstract class extends Command {
+abstract class Command extends OclifCommand {
   readonly fs: FileSystem = new FileSystem()
   readonly store: Storage = new Storage({projectName: '@shopify/cli'})
   readonly package: Package = new Package()
@@ -25,7 +22,7 @@ export default abstract class extends Command {
   _root: string = process.cwd()
 
   set root(val: string) {
-    const root = resolve(val)
+    const root = path.resolve(val)
     this._root = root
     this.fs.root = root
     this.package.root = root
@@ -47,3 +44,5 @@ export default abstract class extends Command {
     return super.catch(err)
   }
 }
+
+export default Command

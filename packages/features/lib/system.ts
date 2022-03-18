@@ -1,6 +1,5 @@
-import pc from 'picocolors'
-
 import {isDebug} from './environment'
+import pc from 'picocolors'
 
 const execa = require('execa')
 
