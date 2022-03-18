@@ -1,6 +1,7 @@
-import {execa} from 'execa'
 import process from 'node:process'
 import os from 'node:os'
+
+import {execa} from 'execa'
 
 const getEnvironmentVariable = () => {
   const {env} = process
@@ -56,4 +57,15 @@ export const username = async (): Promise<string | null> => {
   } catch {
     return null
   }
+}
+
+/**
+ * Returns the platform and architecture.
+ * @returns {{platform: string, arch: string}} Returns the current platform and architecture.
+ */
+export const platformAndArch = (): {platform: string; arch: string} => {
+  const platform = process.platform
+  let arch = os.arch()
+  if (arch === 'x64') arch = 'amd64'
+  return {platform, arch}
 }

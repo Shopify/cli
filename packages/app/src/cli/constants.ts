@@ -4,6 +4,10 @@ export const configurationFileNames = {
   script: 'shopify.script.toml',
 }
 
+export const versions = {
+  extensionsBinary: 'v0.2.0',
+}
+
 export const blocks = {
   uiExtensions: {
     directoryName: 'ui-extensions',
