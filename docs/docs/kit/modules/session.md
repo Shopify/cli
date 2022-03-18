@@ -10,7 +10,16 @@ Session exposes 4 methods:
 - [Partners API](#ensureauthenticatedpartners)
 - [Admin API](#ensureauthenticatedadmin)
 - [All APIs session](#ensureauthenticated)
-<br/><br/>
+
+By default, these scopes are always included when authenticating the user:
+
+| API | Scopes |
+| --- | -- |
+| `All` | `openid` |
+| `Storefront` | `https://api.shopify.com/auth/shop.storefront-renderer.devtools` |
+| `Partners` | `https://api.shopify.com/auth/partners.app.cli.access` |
+| `Admin` | `https://api.shopify.com/auth/shop.admin.graphql` `https://api.shopify.com/auth/shop.admin.themes` `https://api.shopify.com/auth/partners.collaborator-relationships.readonly`|
+
 
 ### `ensureAuthenticatedStorefront`
 
@@ -23,10 +32,6 @@ const scopes = []
 const token = await session.ensureAuthenticatedStorefront(scopes)
 ```
 
-:::note
-We already include basic scopes by default for each API, if you are not sure if you need extra scopes, you probably don't.
-:::
-
 #### Input
 
 | Name | Description | Required | Default |
@@ -35,21 +40,17 @@ We already include basic scopes by default for each API, if you are not sure if 
 
 #### Output
 
-It returns a `Promise<string>` with the Storefront token.
+It returns a `Promise<string>` that resolves with the Storefront token.
 
-<br/><br/>
 
-:::tip
+:::tip Session caching
 If the user has never logged in before, the CLI will open a browser to authenticate them. We cache and refresh the identity token, so that should only happen once.
 :::
-<br/><br/>
 
 ### `ensureAuthenticatedPartners`
 
 Authenticate the user and return a Partners API token.
 
-**Token-based authentication for Partners API**:
-If `SHOPIFY_CLI_PARTNERS_TOKEN` exists in the Environment, session will use that token and exchange it for a valid Partners API token ignoring any previously existing session for partners.
 
 ```ts
 import {session} from '@shopify/cli-kit'
@@ -58,8 +59,12 @@ const scopes = []
 const token = await session.ensureAuthenticatedPartners(scopes)
 ```
 
-:::caution
-If you use SHOPIFY_CLI_PARTNERS_TOKEN any extra scope will be ignored as custom tokens do not support extra scopes.
+:::info Token-based authentication
+If `SHOPIFY_CLI_PARTNERS_TOKEN` exists in the Environment, session will use that token and exchange it for a valid Partners API token ignoring any previously existing session for partners.
+:::
+
+:::caution Token-based authentication and scopes
+If you use SHOPIFY_CLI_PARTNERS_TOKEN any extra scope will be ignored as the token has already a set of scopes associated to it.
 :::
 
 #### Input
@@ -70,8 +75,7 @@ If you use SHOPIFY_CLI_PARTNERS_TOKEN any extra scope will be ignored as custom 
 
 #### Output
 
-It returns a `Promise<string>` with the Partners API token.
-<br/><br/>
+It returns a `Promise<string>` that resolves with the Partners API token.
 
 
 ### `ensureAuthenticatedAdmin`
@@ -98,8 +102,7 @@ const token = await session.ensureAuthenticatedAdmin(myStore, scopes)
 
 #### Output
 
-It returns a `Promise<string>` with the Admin API token.
-<br/><br/>
+It returns a `Promise<string>` that resolves with the Admin API token.
 
 
 ### `ensureAuthenticated`
