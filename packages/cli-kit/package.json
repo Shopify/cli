@@ -50,7 +50,6 @@
     "win32"
   ],
   "dependencies": {
-    "ansi-colors": "^4.1.1",
     "keytar": "^7.9.0",
     "open": "^8.4.0"
   },
@@ -73,7 +72,7 @@
     "listr2": "^4.0.2",
     "node-fetch": "^3.2.1",
     "pathe": "^0.2.0",
-    "picocolors": "^1.0.0",
+    "ansi-colors": "^4.1.1",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "toml": "^3.0.0",

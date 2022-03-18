@@ -1,5 +1,7 @@
-import pc from 'picocolors'
+/* eslint-disable no-console */
 import terminalLink from 'terminal-link'
+import colors from 'ansi-colors'
+import {Fatal} from 'error'
 
 enum ContentTokenType {
   Command,
@@ -60,10 +62,10 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
       const enumToken = token as ContentToken
       switch (enumToken.type) {
         case ContentTokenType.Command:
-          output += pc.bold(pc.yellow(enumToken.value))
+          output += colors.bold(colors.yellow(enumToken.value))
           break
         case ContentTokenType.Path:
-          output += pc.italic(enumToken.value)
+          output += colors.italic(enumToken.value)
           break
         case ContentTokenType.Link:
           output += terminalLink(enumToken.value, enumToken.metadata.link ?? '')
@@ -75,28 +77,33 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
 }
 
 export const success = (content: Message) => {
-  // eslint-disable-next-line no-console
-  console.log(pc.green(`🎉 ${stringifyMessage(content)}`))
+  console.log(colors.green(`🎉 ${stringifyMessage(content)}`))
 }
 
 export const message = (content: Message) => {
-  // eslint-disable-next-line no-console
   console.log(stringifyMessage(content))
 }
 
 export const newline = () => {
-  // eslint-disable-next-line no-console
   console.log()
 }
 
-export const error = (content: Message) => {
-  // eslint-disable-next-line no-console
-  console.error(stringifyMessage(content))
+export const error = (content: Fatal) => {
+  const padding = '    '
+  const title = colors.bgBlack(' Error ')
+  const header = colors.redBright(`\n━━━━━━${title}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
+  const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+  console.log(header)
+  console.log(padding + stringifyMessage(content.message))
+  if (content.tryMessage) {
+    console.log(`\n${padding}${colors.bold('What to try:')}`)
+    console.log(padding + content.tryMessage)
+  }
+  console.log(footer)
 }
 
 export const warning = (content: Message) => {
-  // eslint-disable-next-line no-console
-  console.warn(pc.yellow(stringifyMessage(content)))
+  console.warn(colors.yellow(stringifyMessage(content)))
 }
 
 function stringifyMessage(message: Message): string {
@@ -106,3 +113,4 @@ function stringifyMessage(message: Message): string {
     return message
   }
 }
+/* eslint-enable no-console */

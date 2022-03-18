@@ -22,7 +22,10 @@ function runCLI() {
       const oclifHandle = Errors.handle
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting
-      return bugsnagHandle.then(kitHandle).then(oclifHandle)
+      return bugsnagHandle.then((error: Error) => {
+        oclifHandle(error)
+        kitHandle(error)
+      })
     })
 }
 

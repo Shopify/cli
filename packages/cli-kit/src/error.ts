@@ -1,3 +1,4 @@
+import * as ouput from './output'
 /**
  * A fatal error represents an error shouldn't be rescued and that causes the execution to terminate.
  * There shouldn't be code that catches fatal errors.
@@ -27,6 +28,7 @@ export class Bug extends Fatal {}
  * @returns A promise that resolves with the error passed.
  */
 export function handler(error: Error): Promise<Error> {
-  console.log('HANDLER!')
+  const fatal = error instanceof Fatal ? error : new Fatal(error.message)
+  ouput.error(fatal)
   return Promise.resolve(error)
 }
