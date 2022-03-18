@@ -67,7 +67,7 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const name = paramCase(expect.getState().currentTestName)
-  const directory = join(fixtureRoot, name)
+  const directory = path.join(fixtureRoot, name)
 
   const fs = await createSandbox(directory)
 
