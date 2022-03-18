@@ -3,7 +3,7 @@ title: session
 ---
 
 The `session` module provides an interface to ensure that the user is authenticated and to obtain tokens for each API as needed.
-The CLI already handles basic scopes for you,
+
 
 Session exposes 4 methods:
 - [Storefront API](#ensureauthenticatedstorefront)
@@ -77,6 +77,9 @@ It returns a `Promise<string>` with the Partners API token.
 ### `ensureAuthenticatedAdmin`
 
 Authenticate the user and return an Admin API token.
+- If a store is provided, it will be saved as `activeStore` for future usage.
+- If a store is not provided, session will try to load read and use the `activeStore`.
+- If a store is not provided and there is no `activeStore` this method will throw an Error.
 
 ```ts
 import {session} from '@shopify/cli-kit'
@@ -90,7 +93,7 @@ const token = await session.ensureAuthenticatedAdmin(myStore, scopes)
 
 | Name | Description | Required | Default |
 | --- | -- | --- | --- |
-| `store` | FQDN of the store you want to log in | No | `activeStore` if available |
+| `store` | FQDN of the store you want to log in to | No | saved `activeStore` if available |
 | `scopes` | Any extra scope you want include in the auth process | No | [] |
 
 #### Output
@@ -102,7 +105,7 @@ It returns a `Promise<string>` with the Admin API token.
 ### `ensureAuthenticated`
 
 This is a generic method that allows you to obtain tokens for multiple apps at once.
-Authenticate the user and return a tokens for all the given APIs.
+Authenticate the user and return a session with tokens for all the given APIs.
 
 ```ts
 import {session} from '@shopify/cli-kit'
