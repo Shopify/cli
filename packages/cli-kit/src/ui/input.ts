@@ -11,14 +11,13 @@ export class Input extends enquirer.StringPrompt {
     this.styles.submitted = colors.magenta
   }
 
-  prefix(state: any) {
+  prefix(_state: any) {
     const color = this.styles.primary.bold
     return this.state.status === 'submitted' ? color('✔') : color('?')
   }
 
   async render() {
     const size = this.state.size
-
     const prefix = await this.prefix()
     const separator = await this.separator()
     const message = await this.message()

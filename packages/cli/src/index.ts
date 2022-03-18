@@ -14,7 +14,9 @@ function runCLI() {
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
       const bugsnagHandle = new Promise<Error>((resolve) => {
-        Bugsnag.notify(error, undefined, resolve)
+        if (!settings.debug) {
+          Bugsnag.notify(error, undefined, resolve)
+        }
         resolve(error)
       })
       const oclifHandle = Errors.handle

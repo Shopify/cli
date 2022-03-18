@@ -1,27 +1,28 @@
 import {Command} from '@oclif/core'
-import {session, ui} from '@shopify/cli-kit'
+import {session, ui, error} from '@shopify/cli-kit'
 
 export default class Build extends Command {
   static description = 'Build a block or an app'
 
   async run(): Promise<void> {
+    throw new error.Abort(`This is a custom error`)
+
     const question: ui.Question = {
       type: 'input',
       name: 'template',
-      message: 'Choose a template',
-      default: 'template-hydrogen-minimum',
-      choices: ['template-hydrogen-default', 'template-hydrogen-minimum'],
+      message: 'Your app’s name? (You can change it later.)',
+      default: 'my-app',
     }
 
     const qqu: ui.Question = {
       type: 'select',
-      name: 'name',
-      message: "Your UI extension's working name?",
+      name: 'extension_type',
+      message: 'What type of script would you like to build? (Select with ↑ ↓ ⏎)',
       default: 'extension',
-      choices: ['template-hydrogen-default2222', 'template-hydrogen-minimum2222'],
+      choices: ['1. Discount', '2. Payment method', '3. Shipping method'],
     }
 
     const result = await ui.prompt([question, qqu])
-    console.log(result)
+    // console.log(result)
   }
 }

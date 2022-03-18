@@ -11,13 +11,13 @@ export class Select extends enquirer.Select {
     this.styles.em = colors.magenta
   }
 
-  pointer(choice: any, i: number) {
+  pointer(_choice: any, i: number) {
     const color = this.styles.primary
     const showPointer = !this.state.multiple && this.state.index === i
     return showPointer ? color('>') : ' '
   }
 
-  prefix(state: any) {
+  prefix(_state: any) {
     const color = this.styles.primary.bold
     return this.state.status === 'submitted' ? color('✔') : color('?')
   }

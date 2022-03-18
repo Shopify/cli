@@ -24,25 +24,13 @@ export const prompt = async <T>(questions: Question[]): Promise<T> => {
   return value
 }
 
-const mainColor = colors.magentaBright
-
 function mapper(question: Question): any {
   if (question.type === 'input') {
-    return promptInput(question)
+    return new Input(question)
   } else if (question.type === 'select') {
-    return promptSelect(question)
+    return new Select(question)
   }
   return undefined
-}
-
-function promptSelect(question: Question) {
-  const prompt = new Select(question)
-  return prompt
-}
-
-function promptInput(question: Question) {
-  const prompt = new Input(question)
-  return prompt
 }
 
 export interface Task {
