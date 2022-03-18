@@ -42,7 +42,7 @@ make run serve testdata/extension.config.yml
 Subsequently, you should be able to retrieve sample assets as follows:
 
 ```sh
-curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/index.js
+curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/main.js
 ```
 
 Going to root end point http://localhost:8000 will take you to the Dev Console app.
@@ -136,7 +136,7 @@ extensions:
 The easiest way to test the integration with the [Shopify CLI](https://github.com/Shopify/shopify-cli) is to clone the aforementioned repository and
 
 1. run `rake extensions:install` to download the latest extension server binary and place it in `ext/shopify-extensions`, followed by
-2. running `config feature extension_server_beta --enable` to obtain the necessary feature flag.
+2. running `shopify config feature extension_server_beta --enable` to obtain the necessary feature flag.
 
 Afterwards, the following three commands will be executed by the new extension server:
 
