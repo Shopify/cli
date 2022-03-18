@@ -10,7 +10,7 @@ import {isSpin} from './spin'
  * @returns true if SHOPIFY_CONFIG is debug
  */
 export function isDebug(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.debug])
+  return env[constants.environmentVariables.shopifyConfig] === 'debug'
 }
 
 /**

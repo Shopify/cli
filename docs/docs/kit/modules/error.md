@@ -38,7 +38,7 @@ Also think about what steps you'd expect the CLI to tell you to try to fix or wo
 Then craft the error, and make sure we have [tests](/testing-strategy) in place to ensure there are no future regressions in that scenario.
 
 :::tip Showing stacktraces
-If users want to opt into seeing the stacktraces, they can call the CLI with the environment variable `SHOPIFY_CONFIG=1`.
+If users want to opt into seeing the stacktraces, they can call the CLI with the environment variable `SHOPIFY_CONFIG=debug`.
 :::
 
 ### Don't catch `Abort` and `Bug` errors
