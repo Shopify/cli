@@ -1,6 +1,5 @@
 import process from 'node:process'
 import os from 'node:os'
-
 import {execa} from 'execa'
 
 const getEnvironmentVariable = () => {

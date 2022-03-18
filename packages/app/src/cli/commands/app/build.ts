@@ -7,41 +7,23 @@ export default class Build extends Command {
   static description = 'Build a block or an app'
 
   async run(): Promise<void> {
-    // const question: ui.Question = {
-    //   type: 'select',
-    //   name: 'template',
-    //   message: 'Choose a template',
-    //   choices: ['template-hydrogen-default', 'template-hydrogen-minimum'],
-    // }
+    const question: ui.Question = {
+      type: 'input',
+      name: 'template',
+      message: 'Choose a template',
+      default: 'template-hydrogen-minimum',
+      choices: ['template-hydrogen-default', 'template-hydrogen-minimum'],
+    }
 
-    // const result = await ui.prompt([question])
-    // console.log(result)
+    const qqu: ui.Question = {
+      type: 'select',
+      name: 'name',
+      message: "Your UI extension's working name?",
+      default: 'extension',
+      choices: ['template-hydrogen-default2222', 'template-hydrogen-minimum2222'],
+    }
 
-    const result = await ui.promptSelect()
+    const result = await ui.prompt([question, qqu])
     console.log(result)
-
-    // const prompt1 = new Select({
-    //   name: 'color',
-    //   message: 'Pick a flavor',
-    //   choices: ['apple', 'grape', 'watermelon', 'cherry', 'orange'],
-    // })
-
-    // const prompt2 = new Select({
-    //   name: 'color',
-    //   message: 'Pick a flavor',
-    //   choices: ['apple', 'grape', 'watermelon', 'cherry', 'orange'],
-    // })
-
-    // // prompt
-    // //   .run()
-    // //   .then((answer) => console.log('Answer:', answer))
-    // //   .catch(console.error)
-
-    // const a = prompt1.run()
-
-    // console.log(a)
-    // const token: session.OAuthSession = await session.ensureAuthenticated({})
-    // console.log('TOKEN:', token)
-    // await session.ensureAuthenticated({})
   }
 }
