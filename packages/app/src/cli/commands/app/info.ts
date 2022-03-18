@@ -1,7 +1,6 @@
+import {load as loadApp, App} from '../../models/app/app'
 import {Command, Flags} from '@oclif/core'
 import {output, path} from '@shopify/cli-kit'
-
-import {load as loadApp, App} from '../../models/app/app'
 
 export default class AppInfo extends Command {
   static description = 'Print basic information about your app and blocks'

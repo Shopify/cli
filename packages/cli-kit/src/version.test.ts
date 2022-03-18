@@ -1,7 +1,6 @@
+import {latestNpmPackageVersion} from './version'
 import {describe, it, expect, vi} from 'vitest'
 import latestVersion from 'latest-version'
-
-import {latestNpmPackageVersion} from './version'
 
 vi.mock('latest-version')
 

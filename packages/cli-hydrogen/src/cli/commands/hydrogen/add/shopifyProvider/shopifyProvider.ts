@@ -1,6 +1,5 @@
-import {transform, addImportSpecifier, addImportStatement, wrapJsxChildren} from '@shopify/ast-utilities/javascript'
-
 import Command from '../../../../core/Command'
+import {transform, addImportSpecifier, addImportStatement, wrapJsxChildren} from '@shopify/ast-utilities/javascript'
 
 export async function addShopifyProvider(this: Command) {
   const {fs} = this

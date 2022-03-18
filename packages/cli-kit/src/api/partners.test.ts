@@ -1,10 +1,8 @@
-import {test, vi, expect, describe} from 'vitest'
-import {request as graphqlRequest} from 'graphql-request'
-
-import {partners} from '../environment/fqdn'
-
 import * as partnersApi from './partners'
 import {buildHeaders} from './common'
+import {partners} from '../environment/fqdn'
+import {test, vi, expect, describe} from 'vitest'
+import {request as graphqlRequest} from 'graphql-request'
 
 vi.mock('graphql-request', async () => {
   const {gql} = await vi.importActual('graphql-request')

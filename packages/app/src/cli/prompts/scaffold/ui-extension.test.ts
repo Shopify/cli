@@ -1,8 +1,6 @@
-import {describe, it, expect, vi} from 'vitest'
-
-import {uiExtensions} from '../../constants'
-
 import scaffoldUiExtensionPrompt from './ui-extension'
+import {uiExtensions} from '../../constants'
+import {describe, it, expect, vi} from 'vitest'
 
 describe('UI extension prompt', () => {
   it('when name is not passed', async () => {

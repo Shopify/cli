@@ -1,6 +1,5 @@
-import {pascalCase} from 'change-case'
-
 import {ComponentType} from '../types'
+import {pascalCase} from 'change-case'
 
 function getReactComponentTypeSuffix(component: ComponentType) {
   switch (component) {

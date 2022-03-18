@@ -1,6 +1,5 @@
-import {describe, it, expect, vi} from 'vitest'
-
 import init from './init'
+import {describe, it, expect, vi} from 'vitest'
 
 describe('init', () => {
   it('when name is not passed', async () => {

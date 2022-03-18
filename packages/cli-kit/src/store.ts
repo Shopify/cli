@@ -1,10 +1,9 @@
+import schema from './store/schema'
+import cliKitPackageJson from '../package.json'
 import Conf from 'conf'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import cliKitPackageJson from '../package.json'
-
-import schema from './store/schema'
 
 const migrations = {}
 

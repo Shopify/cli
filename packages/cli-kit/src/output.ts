@@ -84,6 +84,11 @@ export const message = (content: Message) => {
   console.log(stringifyMessage(content))
 }
 
+export const newline = () => {
+  // eslint-disable-next-line no-console
+  console.log()
+}
+
 export const error = (content: Message) => {
   // eslint-disable-next-line no-console
   console.error(stringifyMessage(content))

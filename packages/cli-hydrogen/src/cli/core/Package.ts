@@ -1,7 +1,6 @@
-import {join} from 'path'
-
 import Debug from 'debug'
 import {readJsonSync, writeFileSync} from 'fs-extra'
+import {path} from '@shopify/cli-kit'
 
 interface PackageBase {
   name?: string
@@ -50,7 +49,7 @@ export class Package {
 
   set name(val: string) {
     try {
-      const pkgJson: PackageJson = readJsonSync(join(val, 'package.json'))
+      const pkgJson: PackageJson = readJsonSync(path.join(val, 'package.json'))
 
       if (pkgJson) {
         this.syncInternal({...pkgJson, name: val})
@@ -64,7 +63,7 @@ export class Package {
   set root(val: string) {
     this._root = val
     try {
-      const pkgJson: PackageJson = readJsonSync(join(val, 'package.json'))
+      const pkgJson: PackageJson = readJsonSync(path.join(val, 'package.json'))
 
       if (pkgJson) {
         this.syncInternal(pkgJson)
@@ -91,7 +90,7 @@ export class Package {
       pkgJson.devDependencies[name] = version
     })
 
-    writeFileSync(join(this._root, 'package.json'), JSON.stringify(pkgJson, null, 2))
+    writeFileSync(path.join(this._root, 'package.json'), JSON.stringify(pkgJson, null, 2))
   }
 
   install(dependency: string, options: InstallOptions = {}) {
