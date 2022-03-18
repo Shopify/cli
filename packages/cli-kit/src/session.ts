@@ -1,5 +1,3 @@
-import {request} from 'api/admin'
-
 import {applicationId} from './session/identity'
 import {Bug} from './error'
 import {validateScopes, validateSession} from './session/validate'

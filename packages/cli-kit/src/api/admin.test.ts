@@ -1,6 +1,5 @@
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
-import {string} from 'session'
 
 import * as admin from './admin'
 import {buildHeaders} from './common'
