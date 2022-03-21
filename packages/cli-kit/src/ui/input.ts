@@ -10,6 +10,7 @@ export class Input extends enquirer.StringPrompt {
     this.styles.primary = colors.magenta
     this.styles.submitted = colors.magenta
     this.styles.danger = colors.red
+    this.symbols.pointer = '!'
   }
 
   prefix(_state: any) {
