@@ -89,17 +89,17 @@ export const newline = () => {
 }
 
 export const error = (content: Fatal) => {
+  const message = content.message || 'Unknown error'
   const padding = '    '
-  const title = colors.bgBlack(' Error ')
-  const header = colors.redBright(`\n━━━━━━${title}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
+  const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
   const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-  console.log(header)
-  console.log(padding + stringifyMessage(content.message))
+  console.error(header)
+  console.error(padding + stringifyMessage(message))
   if (content.tryMessage) {
-    console.log(`\n${padding}${colors.bold('What to try:')}`)
-    console.log(padding + content.tryMessage)
+    console.error(`\n${padding}${colors.bold('What to try:')}`)
+    console.error(padding + content.tryMessage)
   }
-  console.log(footer)
+  console.error(footer)
 }
 
 export const warning = (content: Message) => {

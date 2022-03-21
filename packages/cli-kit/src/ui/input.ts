@@ -9,6 +9,7 @@ export class Input extends enquirer.StringPrompt {
     super(options)
     this.styles.primary = colors.magenta
     this.styles.submitted = colors.magenta
+    this.styles.danger = colors.red
   }
 
   prefix(_state: any) {
@@ -26,15 +27,15 @@ export class Input extends enquirer.StringPrompt {
     let prompt = [prefix, message].filter(Boolean).join(' ')
     this.state.prompt = prompt
 
-    let output = await this.format()
+    const output = await this.format()
     const help = (await this.error()) || (await this.hint())
 
-    if (help && !output.includes(help)) output += ` ${help}`
-
+    const underline = '▔'.repeat(Math.max(color.unstyle(output).length - 10, 30))
     if (this.state.submitted) {
       prompt += ` ${separator} ${output}`
     } else {
-      prompt += `\n${color('>')} ${output}`
+      prompt += `\n${color('>')} ${output}\n  ${color(underline)}`
+      if (help && !prompt.includes(help)) prompt += ` ${help}`
     }
 
     this.clear(size)
