@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
+import {Fatal} from './error'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
-import {Fatal} from 'error'
 
 enum ContentTokenType {
   Command,
