@@ -51,6 +51,30 @@ export async function isDirectory(path: string): Promise<boolean> {
   return (await fs.promises.lstat(path)).isDirectory()
 }
 
+/**
+ * Moves a file.
+ * @param src {string} File to be moved.
+ * @param dest {string} Path to be moved to.
+ * @param options {object} Moving options.
+ */
+export async function move(src: string, dest: string, options: {overwrite?: boolean} = {}): Promise<void> {
+  await fs.move(src, dest, options)
+}
+
+/**
+ * Changes the permissions of a directory or file.
+ * @param path {string} Path to the file or directory whose permissions will be modified.
+ * @param mode {string | numbers} Permissions to set to the file or directory.
+ */
+export async function chmod(path: string, mode: number | string): Promise<void> {
+  await fs.promises.chmod(path, mode)
+}
+
+/**
+ * Returns true if a file or directory exists
+ * @param path {string} Path to the directory or file.
+ * @returns {boolean} True if it exists.
+ */
 export async function exists(path: string): Promise<boolean> {
   try {
     await fs.promises.access(path)
