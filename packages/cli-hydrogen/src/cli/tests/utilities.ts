@@ -5,7 +5,7 @@ import {createServer as createViteServer, build, ViteDevServer, UserConfig} from
 import sirv from 'sirv'
 import getPort from 'get-port'
 
-import {path, output} from '@shopify/cli-kit'
+import {path, output, error as cliErrors} from '@shopify/cli-kit'
 // eslint-disable-next-line no-restricted-imports
 import {spawn, exec} from 'node:child_process'
 import {createServer as createNodeServer} from 'http'
@@ -133,7 +133,8 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
     })
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    output.error(`${error}`)
+    const fatal = new cliErrors.Fatal(`${error}`)
+    output.error(fatal)
     if (!options?.debug) {
       await fs.cleanup()
     }
