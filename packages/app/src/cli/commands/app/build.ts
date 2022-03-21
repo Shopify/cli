@@ -32,5 +32,8 @@ export default class Build extends Command {
 
     const result = await ui.prompt([question, qqu])
     // console.log(result)
+    // const token = await session.ensureAuthenticated({})
+    // success(`TOKEN: ${token}`)
+    // await session.ensureAuthenticated({})
   }
 }
