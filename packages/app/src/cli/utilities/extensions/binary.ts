@@ -1,7 +1,7 @@
 import {versions} from '../../constants'
+import {http, file, path, os, error} from '@shopify/cli-kit'
 import crypto from 'node:crypto'
 import zlib from 'node:zlib'
-import {http, file, path, os, error} from '@shopify/cli-kit'
 import {createWriteStream, chmodSync, rmSync, promises as fs} from 'node:fs'
 import {pipeline} from 'node:stream'
 import {promisify} from 'node:util'
