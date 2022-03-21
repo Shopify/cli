@@ -40,6 +40,7 @@ module.exports = {
         'kit/modules/output',
         'kit/modules/session',
         'kit/modules/version',
+        'kit/modules/ui',
       ],
     },
   ],

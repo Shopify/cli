@@ -6,17 +6,6 @@ import enquirer from 'enquirer'
 import * as colors from 'ansi-colors'
 import {Listr, PromptOptions} from 'listr2'
 
-/**
- * An interface to define a Prompt question
- * If a `validate` block is provided it may return a boolean or a string.
- * If a string is returned it will be used as the validation error message.
- *
- * Some properties only affect the `input` type:
- * - `default`: The default value for the input
- *
- * Some properties only affect the `select` type:
- * - `choices`: An array of choices to select from
- */
 export interface Question {
   type: 'input' | 'select'
   name: string
