@@ -1,65 +1,89 @@
 import {versions} from '../../constants'
-import {http, file, path, os, error} from '@shopify/cli-kit'
-import crypto from 'node:crypto'
+import {directory as getVendorDirectory} from '../vendor-directory'
+import {http, file, path, os, error, checksum} from '@shopify/cli-kit'
 import zlib from 'node:zlib'
-import {createWriteStream, chmodSync, rmSync, promises as fs} from 'node:fs'
+import {createWriteStream} from 'node:fs'
 import {pipeline} from 'node:stream'
 import {promisify} from 'node:util'
-import {fileURLToPath} from 'url'
-
-const streamPipeline = promisify(pipeline)
 
 const SUPPORTED_SYSTEMS = ['darwin amd64', 'darwin arm64', 'linux 386', 'linux amd64', 'windows 386', 'windows amd64']
 const RELEASE_DOWNLOADS_URL = 'https://github.com/Shopify/shopify-cli-extensions/releases/download'
 
-async function vendorDir() {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url))
-  const dir = path.resolve(__dirname, '../vendor')
-  if (!(await file.exists(vendorDir))) await file.mkdir(dir)
-  return dir
+export const UnsupportedPlatformError = ({platform, arch}: {platform: string; arch: string}) => {
+  return new error.Abort(
+    `The current platform ${platform} and architecture ${arch} are not supported for extensions development.`,
+  )
 }
 
-async function downloadExecutable({processingDir, releaseAsset}) {
-  const assetDownloadUrl = releaseUrlForAsset(releaseAsset, 'gz')
-  const response = await http.fetch(assetDownloadUrl)
-  const outFile = path.join(processingDir, releaseAsset)
-  await streamPipeline(response.body, zlib.createGunzip(), createWriteStream(outFile))
-
-  const md5DownloadUrl = releaseUrlForAsset(releaseAsset, 'md5')
-  await validateChecksum(outFile, md5DownloadUrl)
-
-  const finalPath = path.join(await vendorDir(), releaseAsset)
-  await file.move(outFile, finalPath, {overwrite: true})
-  await chmodSync(finalPath, 0o755)
-}
-
-// const processingDir = await file.mkTmpDir()
-// try {
-//   await downloadExecutable({processingDir, releaseAsset})
-// } finally {
-//   await file.rmdir(processingDir)
-// }
-
-export async function downloadIfNeeded(): Promise<string> {
+export async function getBinaryPathOrDownload(): Promise<string> {
+  // Return the path if it already exists
+  const binaryLocalPath = await getBinaryLocalPath()
+  if (await binaryExists()) {
+    return binaryLocalPath
+  }
   const {platform, arch} = os.platformAndArch()
+  validatePlatformSupport({platform, arch})
+
+  let artifact = `shopify-extensions-${platform}-${arch}`
+  if (platform === 'windows') artifact += '.exe'
+
+  return file.inTemporaryDirectory(async (tmpDir) => {
+    const outputBinary = await download({into: tmpDir, artifact})
+    await file.mkdir(path.join(path.dirname(outputBinary)))
+    await file.move(outputBinary, binaryLocalPath, {overwrite: true})
+    await file.chmod(binaryLocalPath, 0o755)
+    return binaryLocalPath
+  })
+}
+
+async function download({into, artifact}: {into: string; artifact: string}): Promise<string> {
+  const assetDownloadUrl = getReleaseArtifactURL({
+    name: artifact,
+    extension: 'gz',
+  })
+  const response = await http.fetch(assetDownloadUrl)
+  const outputBinary = path.join(into, artifact)
+  await promisify(pipeline)(response.body as any, zlib.createGunzip(), createWriteStream(outputBinary))
+
+  const md5DownloadUrl = getReleaseArtifactURL({
+    name: artifact,
+    extension: 'md5',
+  })
+  await checksum.validate({file: outputBinary, md5FileURL: md5DownloadUrl})
+  return outputBinary
+}
+
+export function getReleaseArtifactURL({name, extension}: {name: string; extension: string}) {
+  return `${RELEASE_DOWNLOADS_URL}/${versions.extensionsBinary}/${name}.${extension}`
+}
+
+export function validatePlatformSupport({platform, arch}: {platform: string; arch: string}) {
   if (!SUPPORTED_SYSTEMS.includes(`${platform} ${arch}`)) {
-    throw new error.Abort(`Unsupported platform: ${platform} ${arch}`)
+    throw UnsupportedPlatformError({
+      platform,
+      arch,
+    })
   }
-  let releaseAsset = `shopify-extensions-${platform}-${arch}`
-  if (platform === 'windows') releaseAsset += '.exe'
 }
 
-function releaseUrlForAsset(releaseAsset: string, extension: string) {
-  return `${RELEASE_DOWNLOADS_URL}/${versions.extensionsBinary}/${releaseAsset}.${extension}`
+export async function ensureBinaryDirectoryExists(): Promise<void> {
+  const binaryPath = await getBinaryLocalPath()
+  await file.mkdir(path.dirname(binaryPath))
 }
 
-async function validateChecksum(fileToValidate: string, md5DownloadUrl: string) {
-  const data = await fs.readFile(fileToValidate)
-  const md5Digest = crypto.createHash('MD5').update(data).digest('hex')
-  const md5Response = await http.fetch(md5DownloadUrl)
-  const md5Contents = await md5Response.text()
-  const canonicalMD5 = md5Contents.split(' ')[0]
-  if (!(canonicalMD5 === md5Digest)) {
-    throw new error.Abort(`Could not validate checksum! (found ${md5Digest}, should have received ${canonicalMD5})`)
+export async function binaryExists(): Promise<boolean> {
+  const binaryPath = await getBinaryLocalPath()
+  return file.exists(binaryPath)
+}
+
+export async function getBinaryLocalPath(): Promise<string> {
+  const {platform, arch} = os.platformAndArch()
+  const vendorDirectory = await getVendorDirectory()
+  const binariesDirectory = path.join(vendorDirectory, 'binaries')
+  const extensionsDirectory = path.join(binariesDirectory, 'extensions')
+  let binaryName = `${versions.extensionsBinary}-${platform}-${arch}`
+  if (platform === 'windows') {
+    binaryName += '.exe'
   }
+  return path.join(extensionsDirectory, binaryName)
 }

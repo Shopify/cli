@@ -6,7 +6,7 @@ import tempy from 'tempy'
  * Creates a temporary directory and ties its lifecycle ot the lifecycle of the callback.
  * @param callback - The callback that receives the temporary directory.
  */
-export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T) {
+export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
   return tempy.directory.task(callback)
 }
 
@@ -68,6 +68,20 @@ export async function move(src: string, dest: string, options: {overwrite?: bool
  */
 export async function chmod(path: string, mode: number | string): Promise<void> {
   await fs.promises.chmod(path, mode)
+}
+
+/**
+ * Checks if a file has executable permissions.
+ * @param path {string} Path to the file whose permissions will be checked.
+ */
+export async function hasExecutablePermissions(path: string): Promise<boolean> {
+  try {
+    await fs.promises.access(path, fs.constants.X_OK)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 /**

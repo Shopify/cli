@@ -1,6 +1,6 @@
-import {copy, mkdir, write, read, inTemporaryDirectory, exists, move, chmod} from './file'
+import {copy, mkdir, hasExecutablePermissions, write, read, inTemporaryDirectory, exists, move, chmod} from './file'
 import {join} from './path'
-import {describe, test, expect, it} from 'vitest'
+import {describe, expect, it} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 
 describe('inTemporaryDirectory', () => {
@@ -119,6 +119,7 @@ describe('chmod', () => {
 
       // When/Then
       await chmod(filePath, '777')
+      await expect(hasExecutablePermissions(filePath)).resolves.toEqual(true)
     })
   })
 })
