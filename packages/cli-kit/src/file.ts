@@ -1,5 +1,14 @@
 import fs from 'fs-extra'
 import del from 'del'
+import tempy from 'tempy'
+
+/**
+ * Creates a temporary directory and ties its lifecycle ot the lifecycle of the callback.
+ * @param callback - The callback that receives the temporary directory.
+ */
+export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T) {
+  return tempy.directory.task(callback)
+}
 
 /**
  * It reads a file and returns its content as a string using the

@@ -1,8 +1,25 @@
-import {copy, mkdir, write, read} from './file'
+import {copy, mkdir, write, read, inTemporaryDirectory, exists} from './file'
 import {join} from './path'
 import {describe, test, expect, it} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 
+describe('inTemporaryDirectory', () => {
+  it('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
+    // Given
+    let gotTmpDir = ''
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      gotTmpDir = tmpDir
+      const filePath = join(tmpDir, 'test-file')
+      const content = 'test-content'
+      await write(filePath, content)
+      await expect(exists(filePath)).resolves.toBe(true)
+    })
+
+    // Then
+    await expect(exists(gotTmpDir)).resolves.toBe(false)
+  })
+})
 describe('copy', () => {
   it('copies the file', async () => {
     await temporary.directory(async (tmpDir) => {
