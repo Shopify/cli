@@ -121,10 +121,14 @@ export const shouldOutput = (logLevel: LogLevel): boolean => {
   return messageLogLevelValue >= currentLogLevelValue
 }
 
-const message = (content: Message, level: LogLevel = 'info') => {
-  if (shouldOutput(level)) {
-    console.log(stringifyMessage(content))
-  }
+/**
+ * Ouputs information to the user. This is akin to "console.log"
+ * Info messages don't get additional formatting.
+ * Note: Info messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
+export const info = (content: Message) => {
+  message(content, 'info')
 }
 
 /**
@@ -137,16 +141,6 @@ export const success = (content: Message) => {
   if (shouldOutput('info')) {
     console.log(colors.green(`🎉 ${stringifyMessage(content)}`))
   }
-}
-
-/**
- * Ouputs information to the user. This is akin to "console.log"
- * Info messages don't get additional formatting.
- * Note: Info messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- */
-export const info = (content: Message) => {
-  message(content, 'info')
 }
 
 /**
@@ -206,4 +200,11 @@ function stringifyMessage(message: Message): string {
     return message
   }
 }
+
+const message = (content: Message, level: LogLevel = 'info') => {
+  if (shouldOutput(level)) {
+    console.log(stringifyMessage(content))
+  }
+}
+
 /* eslint-enable no-console */
