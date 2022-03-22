@@ -38,12 +38,12 @@ describe('initialize a UI extension', () => {
   }
 
   it('successfully scaffolds the UI extension when no other UI extensions exist', async () => {
-    vi.spyOn(output, 'message').mockImplementation(() => {})
+    vi.spyOn(output, 'info').mockImplementation(() => {})
     const name = 'my-ext-1'
     const uiExtensionType = 'checkout-post-purchase'
     await createFromTemplate({name, uiExtensionType})
-    expect(output.message).toBeCalledWith(output.content`Generating ${configurationFileNames.uiExtension}`)
-    expect(output.message).toBeCalledWith(output.content`Generating index.jsx`)
+    expect(output.info).toBeCalledWith(output.content`Generating ${configurationFileNames.uiExtension}`)
+    expect(output.info).toBeCalledWith(output.content`Generating index.jsx`)
     const scaffoldedUiExtension = (await loadApp(tmpDir)).uiExtensions[0]
     expect(scaffoldedUiExtension.configuration.name).toBe(name)
   })

@@ -1,0 +1,6 @@
+{
+  "name": "Shopify",
+  "type": "node",
+  "request": "launch",
+  "cwd": "${workspaceFolder}",
+}

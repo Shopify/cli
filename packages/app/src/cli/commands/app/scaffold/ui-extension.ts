@@ -43,6 +43,6 @@ export default class AppScaffoldUiExtension extends Command {
       ...promptAnswers,
       parentApp,
     })
-    output.message(output.content`UI Extension ${name} generated successfully!`)
+    output.info(output.content`UI Extension ${name} generated successfully!`)
   }
 }

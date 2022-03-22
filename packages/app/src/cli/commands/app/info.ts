@@ -19,6 +19,6 @@ export default class AppInfo extends Command {
     const {args, flags} = await this.parse(AppInfo)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
-    output.message(output.content`${JSON.stringify(app, null, 2)}`)
+    output.info(output.content`${JSON.stringify(app, null, 2)}`)
   }
 }

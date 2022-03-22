@@ -23,7 +23,7 @@ interface WriteFromTemplateOptions {
 }
 async function writeFromTemplate({promptAnswers, filename, alias, directory}: WriteFromTemplateOptions) {
   const _alias = alias || filename
-  output.message(output.content`Generating ${_alias}`)
+  output.info(output.content`Generating ${_alias}`)
   const templatePath = await getTemplatePath('ui-extensions')
   const templateItemPath = path.join(templatePath, filename)
   const content = await file.read(templateItemPath)
