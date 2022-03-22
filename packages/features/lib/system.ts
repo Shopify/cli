@@ -1,5 +1,5 @@
 import {isDebug} from './environment'
-import pc from 'picocolors'
+import colors from 'ansi-colors'
 
 const execa = require('execa')
 
@@ -18,20 +18,20 @@ interface ExecOptions {
  */
 export function exec(command: string, args: string[] = [], options?: ExecOptions) {
   if (isDebug) {
-    console.log(pc.gray(`Running: ${command} ${args.join(' ')}`))
+    console.log(colors.gray(`Running: ${command} ${args.join(' ')}`))
   }
 
   const _options: any = {...options, stdout: undefined, stderr: undefined}
-  const shortCommand = command.split('/').slice(-1).pop()
+  const shortCommand = command.split('/').slice(-1).pop() || ''
   const commandProcess = execa(command, args, _options)
   commandProcess.stdout.on('data', (data: string) => {
     if (isDebug) {
-      console.log(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
+      console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
     }
   })
   commandProcess.stderr.on('data', (data: string) => {
     if (isDebug) {
-      console.log(pc.gray(`${pc.bold(shortCommand)}: ${data}`))
+      console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
     }
   })
   return commandProcess

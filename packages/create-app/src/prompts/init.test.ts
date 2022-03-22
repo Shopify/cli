@@ -20,6 +20,7 @@ describe('init', () => {
         name: 'name',
         message: "Your app's working name?",
         default: 'app',
+        validate: expect.any(Function),
       },
     ])
     expect(got).toEqual({...options, ...answers})

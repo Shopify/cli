@@ -54,7 +54,7 @@
     "open": "^8.4.0"
   },
   "devDependencies": {
-    "node-fetch": "^3.2.1",
+    "@shopify/cli-testing": "0.30.2",
     "change-case": "^4.1.2",
     "conf": "^10.1.1",
     "del": "^6.0.0",
@@ -70,13 +70,13 @@
     "latest-version": "^6.0.0",
     "liquidjs": "^9.35.1",
     "listr2": "^4.0.2",
+    "node-fetch": "^3.2.1",
     "pathe": "^0.2.0",
-    "picocolors": "^1.0.0",
+    "ansi-colors": "^4.1.1",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "toml": "^3.0.0",
-    "zod": "^3.11.6",
-    "@shopify/cli-testing": "0.30.2",
-    "vitest": "0.6.0"
+    "vitest": "0.6.0",
+    "zod": "^3.11.6"
   }
 }

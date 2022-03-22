@@ -16,6 +16,15 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       name: 'name',
       message: "Your app's working name?",
       default: 'app',
+      validate: (value) => {
+        if (value.length === 0) {
+          return 'App Name cannot be empty'
+        }
+        if (value.length > 30) {
+          return 'App name is too long (maximum is 30 characters)'
+        }
+        return true
+      },
     })
   }
   const promptOutput: InitOutput = await prompt(questions)
