@@ -9,6 +9,9 @@ import {
   move,
   chmod,
   append,
+  remove,
+  copyWithPermissions,
+  writeWithPermissions,
 } from './file'
 import {join} from './path'
 import {describe, expect, it} from 'vitest'
@@ -151,6 +154,60 @@ describe('chmod', () => {
 
       // Then
       await expect(hasExecutablePermissions(filePath)).resolves.toEqual(true)
+    })
+  })
+})
+
+describe('remove', () => {
+  it('removes a file', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const filePath = join(tmpDir, 'from')
+      await write(filePath, content)
+
+      // When
+      await remove(filePath)
+
+      // Then
+      await expect(exists(filePath)).resolves.toEqual(false)
+    })
+  })
+})
+
+describe('copyWithPermissions', () => {
+  it('copies file with executable permissions', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const fileName = 'test.txt'
+      const filePath = join(tmpDir, fileName)
+      await write(filePath, content)
+      await chmod(filePath, 0o755)
+      const to = join(tmpDir, 'to')
+      const toFilePath = join(to, fileName)
+
+      // When
+      await copyWithPermissions(filePath, to)
+
+      // Then
+      await expect(exists(toFilePath)).toBe(true)
+    })
+  })
+})
+
+describe('writeWithPermissions', () => {
+  it('writes file with executable permissions', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const filePath = join(tmpDir, 'from')
+
+      // When
+      await writeWithPermissions(filePath, content, {executable: true})
+
+      // Then
+      await expect(hasExecutablePermissions(filePath)).toBe(true)
     })
   })
 })

@@ -30,6 +30,15 @@ export async function copy(from: string, to: string): Promise<void> {
   await fs.copy(from, to)
 }
 
+export async function copyWithPermissions(from: string, to: string): Promise<void> {
+  await fs.copy(from, to)
+
+  if (await hasExecutablePermissions(from)) {
+    // TODO: is there a way to `chmod +x` on this file?
+    await fs.chmod(to, 0o755)
+  }
+}
+
 export async function write(path: string, data: string): Promise<void> {
   await fs.writeFile(path, data)
 }
@@ -38,12 +47,28 @@ export async function append(path: string, data: string): Promise<void> {
   await fs.appendFile(path, data)
 }
 
+export async function writeWithPermissions(
+  path: string,
+  data: string,
+  options: {executable?: boolean} = {},
+): Promise<void> {
+  await fs.writeFile(path, data)
+
+  if (options.executable) {
+    await fs.chmod(path, 0o755)
+  }
+}
+
 export async function mkdir(path: string): Promise<void> {
   await fs.mkdirp(path)
 }
 
-export async function rmdir(path: string): Promise<void> {
-  await del(path)
+export async function remove(path: string): Promise<void> {
+  await fs.remove(path)
+}
+
+export async function rmdir(path: string, {force}: {force?: boolean} = {}): Promise<void> {
+  await del(path, {force})
 }
 
 export async function mkTmpDir(): Promise<string> {

@@ -2,6 +2,7 @@ export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: 'shopify.extension.toml',
   script: 'shopify.script.toml',
+  home: 'shopify.home.toml',
 }
 
 export const versions = {
@@ -16,6 +17,10 @@ export const blocks = {
   scripts: {
     directoryName: 'scripts',
     configurationName: configurationFileNames.script,
+  },
+  home: {
+    directoryName: 'home',
+    configurationName: configurationFileNames.home,
   },
 }
 

@@ -16,6 +16,11 @@ export default class Init extends Command {
       parse: (input, _) => Promise.resolve(path.resolve(input)),
       hidden: false,
     }),
+    template: Flags.string({
+      description: 'The template for app home. Eg, --template https://github.com/shopify/app-template-php',
+      env: 'SHOPIFY_FLAG_TEMPLATE',
+      default: 'https://github.com/Shopify/shopify-app-php.git',
+    }),
     'dependency-manager': Flags.string({
       char: 'd',
       env: 'SHOPIFY_FLAG_DEPENDENCY_MANAGER',
@@ -48,6 +53,7 @@ export default class Init extends Command {
     await initService({
       name: promptAnswers.name,
       dependencyManager: flags['dependency-manager'],
+      template: flags.template,
       shopifyCliVersion: flags['shopify-cli-version'],
       shopifyAppVersion: flags['shopify-app-version'],
       shopifyCliKitVersion: flags['shopify-cli-kit-version'],

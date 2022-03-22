@@ -4,9 +4,9 @@ import {When, Then} from '@cucumber/cucumber'
 import {strict as assert} from 'assert'
 
 When(
-  /I create an app named (.+) with (.+) as dependency manager/,
+  /I create an app named (.+) with (.+) as dependency manager and (.+) as the template/,
   {timeout: 2 * 60 * 1000},
-  async function (appName: string, dependencyManager: string) {
+  async function (appName: string, dependencyManager: string, templateUrl: string) {
     const {stdout} = await exec(executables.createApp, [
       '--name',
       appName,
@@ -14,6 +14,8 @@ When(
       this.temporaryDirectory,
       '--dependency-manager',
       dependencyManager,
+      '--template',
+      templateUrl,
       '--shopify-cli-version',
       `file:${directories.packages.cli}`,
       '--shopify-app-version',
@@ -27,7 +29,7 @@ When(
 )
 
 Then(
-  /I have an app named (.+) with (.+) as dependency manager/,
+  /I have an app named (.+) scaffolded from the template with (.+) as dependency manager/,
   {},
   async function (appName: string, dependencyManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory])
