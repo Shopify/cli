@@ -127,28 +127,62 @@ const message = (content: Message, level: LogLevel = 'info') => {
   }
 }
 
+/**
+ * Outputs a success message to the user.
+ * Success message receive a special formatting to make them stand out in the console.
+ * Note: Success messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
     console.log(colors.green(`🎉 ${stringifyMessage(content)}`))
   }
 }
 
+/**
+ * Ouputs information to the user. This is akin to "console.log"
+ * Info messages don't get additional formatting.
+ * Note: Info messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
 export const info = (content: Message) => {
   message(content, 'info')
 }
 
+/**
+ * Ouputs debug information to the user. By default these output is hidden unless the user calls the CLI with --verbose.
+ * Debug messages don't get additional formatting.
+ * Note: Debug messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
 export const debug = (content: Message) => {
   message(content, 'debug')
 }
 
+/**
+ * Outputs a warning message to the user.
+ * Warning messages receive a special formatting to make them stand out in the console.
+ * Note: Warning messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
 export const warn = (content: Message) => {
   console.warn(colors.yellow(stringifyMessage(content)))
 }
 
+/**
+ * Prints a new line in the terminal.
+ */
 export const newline = () => {
   console.log()
 }
 
+/**
+ * Formats and outputs a fatal error.
+ * Note: This API is not intended to be used internally. If you want to
+ * abort the execution due to an error, raise a fatal error and let the
+ * error handler handle and format it.
+ * @param content {Fatal} The fatal error to be output.
+ */
 export const error = (content: Fatal) => {
   if (shouldOutput('error')) {
     const message = content.message || 'Unknown error'
