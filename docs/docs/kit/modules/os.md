@@ -21,7 +21,7 @@ The function returns the platform and the architecture of the environment in whi
 ```ts
 import { os } from "@shopify/cli-kit"
 
-const {platform, arch} = await os.platformAndArch();
+const {platform, arch} = os.platformAndArch();
 console.log(platform) // darwin
 console.log(arch) // arm64
 ```

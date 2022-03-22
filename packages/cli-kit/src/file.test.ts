@@ -117,8 +117,10 @@ describe('chmod', () => {
       const filePath = join(tmpDir, 'from')
       await write(filePath, content)
 
-      // When/Then
+      // When
       await chmod(filePath, '777')
+
+      // Then
       await expect(hasExecutablePermissions(filePath)).resolves.toEqual(true)
     })
   })

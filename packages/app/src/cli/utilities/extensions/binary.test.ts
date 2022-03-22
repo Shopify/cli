@@ -102,7 +102,7 @@ describe('validatePlatformSupport', () => {
 })
 
 describe('getBinaryPathOrDownload', () => {
-  it('returns the binary path if th ebinary already exists', async () => {
+  it('returns the binary path if the binary already exists', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const vendorDirectory = path.join(tmpDir, 'vendor')
@@ -118,6 +118,7 @@ describe('getBinaryPathOrDownload', () => {
 
       // Then
       expect(got).toEqual(binaryLocalPath)
+      expect(http.fetch).not.toHaveBeenCalled()
     })
   })
 

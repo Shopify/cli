@@ -23,7 +23,7 @@ describe('validate', () => {
       vi.mocked(fetch).mockResolvedValue(response)
 
       // When
-      await validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})
+      await expect(validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})).resolves
     })
   })
 
