@@ -1,6 +1,6 @@
 import {join as pathJoin} from './path'
 import {write as fileWrite} from './file'
-import {validate, InvalidChecksumError} from './checksum'
+import {validateMD5, InvalidChecksumError} from './checksum'
 import {fetch} from './http'
 import {temporary} from '@shopify/cli-testing'
 import {describe, it, expect, vi} from 'vitest'

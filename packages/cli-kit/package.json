@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@shopify/cli-testing": "0.30.2",
+    "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
     "conf": "^10.1.1",
     "del": "^6.0.0",
@@ -71,8 +72,8 @@
     "liquidjs": "^9.35.1",
     "listr2": "^4.0.2",
     "md5-file": "^5.0.0",
+    "node-fetch": "^3.2.3",
     "pathe": "^0.2.0",
-    "ansi-colors": "^4.1.1",
     "tempy": "^2.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",

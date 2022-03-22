@@ -24,7 +24,7 @@ vi.mock('@shopify/cli-kit', async () => {
       fetch: vi.fn(),
     },
     checksum: {
-      validate: vi.fn(),
+      validateMD5: vi.fn(),
     },
     os: {
       platformAndArch: vi.fn(),
@@ -164,7 +164,7 @@ describe('getBinaryPathOrDownload', () => {
         body: createReadStream(relaseArtifact),
       }
       vi.mocked(http.fetch).mockResolvedValue(response)
-      vi.mocked(checksum.validate).mockRejectedValue(md5ValidationError)
+      vi.mocked(checksum.validateMD5).mockRejectedValue(md5ValidationError)
       const binaryLocalPath = await getBinaryLocalPath()
 
       // When
