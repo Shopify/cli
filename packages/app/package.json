@@ -39,7 +39,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rollup -c && tsc -p tsconfig.dist.json",
+    "build": "rimraf dist/ && rollup -c && tsc -p tsconfig.dist.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
