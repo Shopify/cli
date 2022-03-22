@@ -38,7 +38,7 @@ describe('initialize a UI extension', () => {
   }
 
   it('successfully scaffolds the UI extension when no other UI extensions exist', async () => {
-    vi.spyOn(output, 'message').mockImplementation(() => {})
+    vi.spyOn(output, 'info').mockImplementation(() => {})
     const name = 'my-ext-1'
     const uiExtensionType = 'checkout-post-purchase'
     await createFromTemplate({name, uiExtensionType})
