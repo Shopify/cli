@@ -23,7 +23,7 @@ describe('validate', () => {
       vi.mocked(fetch).mockResolvedValue(response)
 
       // When
-      await validate({file, md5FileURL: 'https://test.shopify.com/md5-file'})
+      await validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})
     })
   })
 
@@ -43,7 +43,7 @@ describe('validate', () => {
       vi.mocked(fetch).mockResolvedValue(response)
 
       // When
-      await expect(validate({file, md5FileURL: 'https://test.shopify.com/md5-file'})).rejects.toThrowError(
+      await expect(validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})).rejects.toThrowError(
         InvalidChecksumError({file, expected: remoteHash, got: hash}),
       )
     })

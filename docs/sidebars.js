@@ -33,6 +33,7 @@ module.exports = {
       collapsed: true,
       items: [
         'kit/modules/api',
+        'kit/modules/checksum',
         'kit/modules/template',
         'kit/modules/dependency',
         'kit/modules/error',

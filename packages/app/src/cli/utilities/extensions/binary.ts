@@ -49,7 +49,7 @@ async function download({into, artifact}: {into: string; artifact: string}): Pro
     name: artifact,
     extension: 'md5',
   })
-  await checksum.validate({file: outputBinary, md5FileURL: md5DownloadUrl})
+  await checksum.validateMD5({file: outputBinary, md5FileURL: md5DownloadUrl})
   return outputBinary
 }
 
