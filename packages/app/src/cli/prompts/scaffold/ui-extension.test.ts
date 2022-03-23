@@ -1,5 +1,5 @@
 import scaffoldUiExtensionPrompt from './ui-extension'
-import {uiExtensions} from '../../constants'
+import {uiExtensions} from '$cli/constants'
 import {describe, it, expect, vi} from 'vitest'
 
 describe('UI extension prompt', () => {

@@ -1,4 +1,4 @@
-import {versions} from '../../constants'
+import {versions} from '$cli/constants'
 import {directory as getVendorDirectory} from '../vendor-directory'
 import {http, file, path, os, error, checksum} from '@shopify/cli-kit'
 import zlib from 'node:zlib'

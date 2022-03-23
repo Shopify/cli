@@ -1,6 +1,6 @@
 import {getBinaryPathOrDownload, getBinaryLocalPath, validatePlatformSupport, UnsupportedPlatformError} from './binary'
 import {directory as getVendorDirectory} from '../vendor-directory'
-import {versions} from '../../constants'
+import {versions} from '$cli/constants'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {http, file, path, os, checksum} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'

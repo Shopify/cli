@@ -1,7 +1,7 @@
-import {uiExtensions} from '../../../constants'
-import scaffoldUiExtensionPrompt from '../../../prompts/scaffold/ui-extension'
-import {load as loadApp, App} from '../../../models/app/app'
-import scaffoldUiExtensionService from '../../../services/scaffold/ui-extension'
+import {uiExtensions} from '$cli/constants'
+import scaffoldUiExtensionPrompt from '$cli/prompts/scaffold/ui-extension'
+import {load as loadApp, App} from '$cli/models/app/app'
+import scaffoldUiExtensionService from '$cli/services/scaffold/ui-extension'
 import {output, path} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 

@@ -1,4 +1,4 @@
-import {load as loadApp, App} from '../../models/app/app'
+import {load as loadApp, App} from '$cli/models/app/app'
 import {Command, Flags} from '@oclif/core'
 import {output, path} from '@shopify/cli-kit'
 

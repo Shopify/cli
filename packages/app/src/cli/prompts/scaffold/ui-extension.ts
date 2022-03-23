@@ -1,4 +1,4 @@
-import {uiExtensions, UiExtensionTypes} from '../../constants'
+import {uiExtensions, UiExtensionTypes} from '$cli/constants'
 import {ui} from '@shopify/cli-kit'
 
 interface ScaffoldUiExtensionOptions {

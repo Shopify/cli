@@ -1,4 +1,4 @@
-import {blocks, configurationFileNames, genericConfigurationFileNames, uiExtensions} from '../../constants'
+import {blocks, configurationFileNames, genericConfigurationFileNames, uiExtensions} from '$cli/constants'
 import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
 
 export const HomeNotFoundError = (homeDirectory: string) => {
