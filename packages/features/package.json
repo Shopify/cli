@@ -27,7 +27,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "../../package.json"
+      "../../.eslintrc.cjs"
     ],
     "rules": {
       "no-console": "off"

@@ -15,16 +15,19 @@ export default class AppScaffoldUiExtension extends Command {
       hidden: false,
       description: 'UI Extension type',
       options: uiExtensions.types,
+      env: 'SHOPIFY_FLAG_TYPE',
     }),
     name: Flags.string({
       char: 'n',
       hidden: false,
       description: 'name of your UI Extension',
+      env: 'SHOPIFY_FLAG_NAME',
     }),
     path: Flags.string({
       char: 'p',
       hidden: true,
       description: 'the path to your app directory',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 

@@ -10,6 +10,7 @@ export default class AppInfo extends Command {
       char: 'p',
       hidden: true,
       description: 'the path to your app directory',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 
