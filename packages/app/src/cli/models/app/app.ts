@@ -7,6 +7,7 @@ export const HomeNotFoundError = (homeDirectory: string) => {
 
 const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
+  id: schema.define.optional(schema.define.string()),
 })
 
 type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>

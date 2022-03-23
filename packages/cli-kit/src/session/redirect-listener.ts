@@ -41,6 +41,7 @@ export class RedirectListener {
   private static createServer(callback: RedirectCallback): http.Server {
     return http.createServer((request, response) => {
       const requestUrl = request.url
+      if (requestUrl === '/favicon.ico') return {}
 
       const respond = () => {
         response.writeHead(200, {'Content-Type': 'text/html'})
