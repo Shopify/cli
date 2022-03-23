@@ -20,7 +20,7 @@ import {
   TextBlock,
   TextContainer,
   View,
-} from "@shopify/post-purchase-ui-extensions-react";
+} from "@shopify/app/ui-extensions/post-purchase/react";
 
 /**
  * Entry point for the `ShouldRender` Extension Point.
