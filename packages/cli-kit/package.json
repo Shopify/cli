@@ -54,7 +54,6 @@
     "open": "^8.4.0"
   },
   "devDependencies": {
-    "@shopify/cli-testing": "0.30.2",
     "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
     "conf": "^10.1.1",

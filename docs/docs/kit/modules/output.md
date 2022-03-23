@@ -8,7 +8,9 @@ The module `output` provides a set of utilities for presenting information to th
 Refrain from using the `console` APIs as the ESLint setup suggests. The interfacing through the `output` module allows achieving consistent formatting and capturing the output in tests to run expectations on it.
 :::
 
-### Content
+## API
+
+### `content`
 
 The output module API builds upon [tagged templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) to tokenize the content and apply different formatting depending on the semantics of the tokens.
 The example below shows how we are using tagged templates to mark the directory where the app has been created as a `path` token:
@@ -78,3 +80,31 @@ output.warn("The 'name' attribute is deprecated and will soon be removed.")
 ### `output.newline`
 
 If you need to output a new line, you can use the `output.newline()` interface.
+
+## Testing
+
+Because mocking the output and running expectations on the content that we output to the user is a common need when writing tests, we provide a utility from `@shopify/cli-testing` to facilitate writing those tests:
+
+```ts
+import {it, expect} from 'vitest'
+import {outputMocker} from '@shopify/cli-testing'
+import {output} from '@shopify/cli-kit'
+
+it('outputs hello world', () => {
+  // Given
+  const outputMock = outputMocker.mockAndCapture()
+
+  // When
+  output.info('Hello world')
+
+  // Then
+  expect(outputMock.output()).toMatch(/Hello world/)
+  outputMock.clear()
+})
+```
+
+You can either call `output()` to get the aggregated output or `info()`, `debug()`, `success()`, `warn()` to get the individual output. The collected output is the raw content that is passed to the APIs.
+
+:::caution Clearing the mock
+The mocking doesn't get cleared automatically and therefore it's important that you call `clear()` on the mock object.
+:::

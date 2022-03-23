@@ -193,7 +193,7 @@ export const error = (content: Fatal) => {
   }
 }
 
-function stringifyMessage(message: Message): string {
+export function stringifyMessage(message: Message): string {
   if (message instanceof TokenizedString) {
     return message.value
   } else {
