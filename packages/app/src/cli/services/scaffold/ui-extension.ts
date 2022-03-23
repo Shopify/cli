@@ -1,5 +1,5 @@
 import {blocks, UiExtensionTypes} from '../../constants'
-import {load as loadApp, App} from '../../models/app/app'
+import {App} from '../../models/app/app'
 import {error, file, output, path, string, template} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 

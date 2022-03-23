@@ -1,5 +1,5 @@
 import {template as getTemplatePath} from '../utils/paths'
-import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
+import {string, path, template, output, os, ui, dependency, constants} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {

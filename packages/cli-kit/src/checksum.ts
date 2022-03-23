@@ -1,4 +1,3 @@
-import {read as readFile} from './file'
 import {fetch} from './http'
 import {Abort} from './error'
 import md5File from 'md5-file'
