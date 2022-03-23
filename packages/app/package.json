@@ -81,6 +81,6 @@
     "react-router": "^6.2.2",
     "react-router-dom": "^6.2.2",
     "vite-plugin-pages": "^0.21.2",
-    "vitest": "0.6.0"
+    "vitest": "0.7.9"
   }
 }

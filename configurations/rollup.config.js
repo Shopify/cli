@@ -16,12 +16,7 @@ export const plugins = (packagePath, additionalAliases = []) => {
     alias({
       // Including these transitive dependencies is necessary to prevent
       // runtime errors when the dependent packages try to import them.
-      entries: [
-        ...Object.entries(additionalAliases).map((find, replacement) => ({
-          find,
-          replacement,
-        })),
-      ],
+      entries: additionalAliases,
     }),
     stripShebang(),
     resolve({
