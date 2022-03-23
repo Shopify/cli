@@ -1,10 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import uiExtensionInit from './ui-extension'
-import {load as loadApp} from '$cli/models/app/app'
-import {configurationFileNames, UiExtensionTypes} from '$cli/constants'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
+import {load as loadApp} from '$cli/models/app/app'
+import {configurationFileNames, UiExtensionTypes} from '$cli/constants'
 
 describe('initialize a UI extension', () => {
   let tmpDir: string

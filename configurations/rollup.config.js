@@ -10,13 +10,21 @@ export const distDir = (packagePath) => {
   return process.env.SHOPIFY_DIST_DIR || path.join(packagePath, 'dist')
 }
 
-export const plugins = (packagePath, additionalAliases = []) => {
+export const aliases = (packagePath) => {
+  return [
+    {find: '@shopify/cli-testing', replacement: path.join(__dirname, '../packages/cli-testing/src/index.ts')},
+    {find: '@shopify/cli-kit', replacement: path.join(__dirname, '../packages/cli-kit/src/index.ts')},
+    {find: new RegExp('^\\$(.*)$'), replacement: path.join(packagePath, './src/$1.ts')},
+  ]
+}
+
+export const plugins = (packagePath) => {
   return [
     json(),
     alias({
       // Including these transitive dependencies is necessary to prevent
       // runtime errors when the dependent packages try to import them.
-      entries: additionalAliases,
+      entries: aliases(packagePath),
     }),
     stripShebang(),
     resolve({

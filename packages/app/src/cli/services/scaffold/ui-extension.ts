@@ -1,7 +1,7 @@
-import {blocks, UiExtensionTypes} from '$cli/constants'
-import {App} from '$cli/models/app/app'
 import {error, file, output, path, string, template} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
+import {blocks, UiExtensionTypes} from '$cli/constants'
+import {App} from '$cli/models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {
