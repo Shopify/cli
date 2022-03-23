@@ -12,6 +12,7 @@ module.exports = {
     'contributors/code-patterns',
     'contributors/principles',
     'contributors/testing-strategy',
+    'contributors/eslint-rules',
     'contributors/troubleshooting',
     'contributors/release',
     {
