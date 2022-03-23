@@ -53,6 +53,7 @@
     "eslint-plugin-no-catch-all": "^1.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-unicorn": "^40.0.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
     "execa": "^5.1.1",
     "fast-glob": "^3.2.11",
     "pathe": "0.2.0",
@@ -80,7 +81,8 @@
     "plugins": [
       "no-catch-all",
       "jest",
-      "@nrwl/nx"
+      "@nrwl/nx",
+      "unused-imports"
     ],
     "extends": [
       "plugin:@shopify/typescript",
@@ -92,7 +94,21 @@
       "prettier/prettier": [
         "error"
       ],
-      "import/order": ["error", {"groups": ["index", "sibling", "parent", "internal", "external", "builtin", "object", "type"]}],
+      "import/order": [
+        "error",
+        {
+          "groups": [
+            "index",
+            "sibling",
+            "parent",
+            "internal",
+            "external",
+            "builtin",
+            "object",
+            "type"
+          ]
+        }
+      ],
       "no-catch-all/no-catch-all": "error",
       "no-console": "error",
       "@typescript-eslint/no-namespace": "off",
@@ -103,6 +119,7 @@
       "node/no-deprecated-api": "off",
       "import/no-extraneous-dependencies": "error",
       "no-await-in-loop": "error",
+      "unused-imports/no-unused-imports": "error",
       "no-restricted-imports": [
         "error",
         {

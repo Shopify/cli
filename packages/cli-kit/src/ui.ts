@@ -2,9 +2,7 @@
 // @ts-nocheck
 import {Input} from './ui/input'
 import {Select} from './ui/select'
-import enquirer from 'enquirer'
-import * as colors from 'ansi-colors'
-import {Listr, PromptOptions} from 'listr2'
+import {Listr} from 'listr2'
 
 export interface Question {
   type: 'input' | 'select'

@@ -1,4 +1,4 @@
-import {path as cliKitPath, error, file} from '@shopify/cli-kit'
+import {path as cliKitPath, error} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 
 const __dirname = cliKitPath.dirname(fileURLToPath(import.meta.url))

@@ -1,4 +1,3 @@
-import {Bug} from './error'
 import {dependencyManagerUsedForCreating, DependencyManager, install} from './dependency'
 import {exec} from './system'
 import {describe, it, expect, vi} from 'vitest'
