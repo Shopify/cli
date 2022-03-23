@@ -90,7 +90,7 @@ import {it, expect} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
 import {output} from '@shopify/cli-kit'
 
-it('output', () => {
+it('outputs hello world', () => {
   // Given
   const outputMock = outputMocker.mockAndCapture()
 
