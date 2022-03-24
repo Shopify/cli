@@ -1,5 +1,5 @@
 import React from "react";
-import { render, extend, Text } from "@shopify/admin-ui-extensions-react";
+import { render, extend, Text } from "@shopify/app/ui-extensions/react";
 
 // Your extension must render all four modes
 extend("Admin::Product::SubscriptionPlan::Add", render(App));

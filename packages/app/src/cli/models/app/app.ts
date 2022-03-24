@@ -13,7 +13,7 @@ type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  uiExtensionType: schema.define.enum(uiExtensions.types),
+  type: schema.define.enum(uiExtensions.types),
 })
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>

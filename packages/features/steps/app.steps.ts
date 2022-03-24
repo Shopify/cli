@@ -33,5 +33,5 @@ Then(/I have a UI extension named (.+) of type (.+)/, {}, async function (appNam
     return uiExtension.configuration.name === appName
   })
   if (!uiExtension) assert.fail(`Extension not created! Config:\n${JSON.stringify(results, null, 2)}`)
-  assert.equal(uiExtension.configuration.uiExtensionType, uiExtensionType)
+  assert.equal(uiExtension.configuration.type, uiExtensionType)
 })
