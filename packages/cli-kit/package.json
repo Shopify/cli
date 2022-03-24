@@ -27,7 +27,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rollup -c",
+    "build": "rimraf dist/ && rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
@@ -37,7 +37,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "../../package.json"
+      "../../.eslintrc.cjs"
     ]
   },
   "engine-strict": true,
@@ -54,7 +54,7 @@
     "open": "^8.4.0"
   },
   "devDependencies": {
-    "@shopify/cli-testing": "0.30.2",
+    "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
     "conf": "^10.1.1",
     "del": "^6.0.0",
@@ -70,13 +70,14 @@
     "latest-version": "^6.0.0",
     "liquidjs": "^9.35.1",
     "listr2": "^4.0.2",
-    "node-fetch": "^3.2.1",
+    "md5-file": "^5.0.0",
+    "node-fetch": "^3.2.3",
     "pathe": "^0.2.0",
-    "ansi-colors": "^4.1.1",
+    "tempy": "^2.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "toml": "^3.0.0",
-    "vitest": "0.6.0",
+    "vitest": "0.7.9",
     "zod": "^3.11.6"
   }
 }

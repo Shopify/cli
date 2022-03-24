@@ -1,7 +1,7 @@
 import {load, HomeNotFoundError} from './app'
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
 
 describe('load', () => {
   type BlockType = 'uiExtensions' | 'scripts'
@@ -161,7 +161,7 @@ describe('load', () => {
     await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
-      ui_extension_type = "checkout-post-purchase"
+      type = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -182,7 +182,7 @@ describe('load', () => {
     await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
-      ui_extension_type = "checkout-post-purchase"
+      type = "checkout-post-purchase"
       `
     const {blockDir} = await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -205,7 +205,7 @@ describe('load', () => {
 
     let blockConfiguration = `
       name = "my_extension_1"
-      ui_extension_type = "checkout-post-purchase"
+      type = "checkout-post-purchase"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',
@@ -215,7 +215,7 @@ describe('load', () => {
 
     blockConfiguration = `
       name = "my_extension_2"
-      ui_extension_type = "product-subscription"
+      type = "product-subscription"
       `
     await writeBlockConfig({
       blockType: 'uiExtensions',

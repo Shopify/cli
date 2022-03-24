@@ -12,6 +12,7 @@ module.exports = {
     'contributors/code-patterns',
     'contributors/principles',
     'contributors/testing-strategy',
+    'contributors/eslint-rules',
     'contributors/troubleshooting',
     'contributors/release',
     {
@@ -33,6 +34,7 @@ module.exports = {
       collapsed: true,
       items: [
         'kit/modules/api',
+        'kit/modules/checksum',
         'kit/modules/template',
         'kit/modules/dependency',
         'kit/modules/error',

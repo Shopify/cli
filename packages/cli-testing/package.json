@@ -4,11 +4,12 @@
   "private": true,
   "description": "A set of utilities for writing unit tests",
   "type": "module",
-  "main": "dist/index.js",
   "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "files": [
@@ -25,7 +26,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "../../package.json"
+      "../../.eslintrc.cjs"
     ]
   },
   "engine-strict": true,
@@ -38,6 +39,8 @@
     "win32"
   ],
   "devDependencies": {
-    "tempy": "^2.0.0"
+    "@shopify/cli-kit": "0.33.1",
+    "tempy": "^2.0.0",
+    "vitest": "0.7.9"
   }
 }

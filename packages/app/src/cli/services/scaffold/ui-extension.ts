@@ -1,7 +1,7 @@
-import {blocks, UiExtensionTypes} from '../../constants'
-import {load as loadApp, App} from '../../models/app/app'
 import {error, file, output, path, string, template} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
+import {blocks, UiExtensionTypes} from '$cli/constants'
+import {App} from '$cli/models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {
@@ -23,7 +23,7 @@ interface WriteFromTemplateOptions {
 }
 async function writeFromTemplate({promptAnswers, filename, alias, directory}: WriteFromTemplateOptions) {
   const _alias = alias || filename
-  output.message(output.content`Generating ${_alias}`)
+  output.info(output.content`Generating ${_alias}`)
   const templatePath = await getTemplatePath('ui-extensions')
   const templateItemPath = path.join(templatePath, filename)
   const content = await file.read(templateItemPath)

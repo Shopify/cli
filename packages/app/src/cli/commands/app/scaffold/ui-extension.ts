@@ -1,9 +1,9 @@
-import {uiExtensions} from '../../../constants'
-import scaffoldUiExtensionPrompt from '../../../prompts/scaffold/ui-extension'
-import {load as loadApp, App} from '../../../models/app/app'
-import scaffoldUiExtensionService from '../../../services/scaffold/ui-extension'
-import {file, output, path} from '@shopify/cli-kit'
+import {output, path} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
+import {uiExtensions} from '$cli/constants'
+import scaffoldUiExtensionPrompt from '$cli/prompts/scaffold/ui-extension'
+import {load as loadApp, App} from '$cli/models/app/app'
+import scaffoldUiExtensionService from '$cli/services/scaffold/ui-extension'
 
 export default class AppScaffoldUiExtension extends Command {
   static description = 'Scaffold a UI Extension'
@@ -15,16 +15,19 @@ export default class AppScaffoldUiExtension extends Command {
       hidden: false,
       description: 'UI Extension type',
       options: uiExtensions.types,
+      env: 'SHOPIFY_FLAG_TYPE',
     }),
     name: Flags.string({
       char: 'n',
       hidden: false,
       description: 'name of your UI Extension',
+      env: 'SHOPIFY_FLAG_NAME',
     }),
     path: Flags.string({
       char: 'p',
       hidden: true,
       description: 'the path to your app directory',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 
@@ -43,6 +46,6 @@ export default class AppScaffoldUiExtension extends Command {
       ...promptAnswers,
       parentApp,
     })
-    output.message(output.content`UI Extension ${name} generated successfully!`)
+    output.info(output.content`UI Extension ${name} generated successfully!`)
   }
 }

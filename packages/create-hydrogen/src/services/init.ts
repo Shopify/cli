@@ -59,7 +59,7 @@ async function init(options: InitOptions) {
     {concurrent: false},
   )
 
-  output.message(output.content`
+  output.info(output.content`
   ${hyphenizedName} is ready to build! ✨
     Run ${output.token.command(`${dependencyManager} dev`)} to start developing.
     Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}

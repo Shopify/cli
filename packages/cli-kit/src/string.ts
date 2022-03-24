@@ -2,6 +2,7 @@ import crypto from 'crypto'
 
 export {camelCase as camelize} from 'change-case'
 export {paramCase as hyphenize} from 'change-case'
+export {snakeCase as underscore} from 'change-case'
 
 /** Returns a random string */
 export function randomHex(size: number): string {

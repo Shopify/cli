@@ -8,12 +8,14 @@ export default class Preview extends Command {
     path: Flags.string({
       hidden: true,
       description: 'the path to your hydrogen storefront',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
     port: Flags.string({
       char: 'p',
       hidden: true,
       description: 'the port to run the preview server on',
       default: '3000',
+      env: 'SHOPIFY_FLAG_PORT',
     }),
   }
 

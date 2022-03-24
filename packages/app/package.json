@@ -20,26 +20,26 @@
       "import": "./dist/framework/ui-extensions/admin/react.js",
       "types": "./dist/framework/ui-extensions/admin/react.d.ts"
     },
-    "./checkout": {
+    "./ui-extensions/checkout": {
       "import": "./dist/framework/ui-extensions/checkout/index.js",
       "types": "./dist/framework/ui-extensions/checkout/index.d.ts"
     },
-    "./checkout/react": {
+    "./ui-extensions/checkout/react": {
       "import": "./dist/framework/ui-extensions/checkout/react.js",
       "types": "./dist/framework/ui-extensions/checkout/react.d.ts"
     },
-    "./post-purchase": {
+    "./ui-extensions/post-purchase": {
       "import": "./dist/framework/ui-extensions/post-purchase/index.js",
       "types": "./dist/framework/ui-extensions/post-purchase/index.d.ts"
     },
-    "./post-purchase/react": {
+    "./ui-extensions/post-purchase/react": {
       "import": "./dist/framework/ui-extensions/post-purchase/react.js",
       "types": "./dist/framework/ui-extensions/post-purchase/react.d.ts"
     }
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rollup -c && tsc -p tsconfig.dist.json",
+    "build": "rimraf dist/ && rollup -c && tsc -p tsconfig.dist.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
@@ -49,7 +49,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "../../package.json"
+      "../../.eslintrc.cjs"
     ]
   },
   "dependencies": {
@@ -81,6 +81,6 @@
     "react-router": "^6.2.2",
     "react-router-dom": "^6.2.2",
     "vite-plugin-pages": "^0.21.2",
-    "vitest": "0.6.0"
+    "vitest": "0.7.9"
   }
 }

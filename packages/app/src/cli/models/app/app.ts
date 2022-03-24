@@ -1,5 +1,5 @@
-import {blocks, configurationFileNames, genericConfigurationFileNames, uiExtensions} from '../../constants'
 import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
+import {blocks, configurationFileNames, genericConfigurationFileNames, uiExtensions} from '$cli/constants'
 
 export const HomeNotFoundError = (homeDirectory: string) => {
   return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
@@ -14,7 +14,7 @@ type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  uiExtensionType: schema.define.enum(uiExtensions.types),
+  type: schema.define.enum(uiExtensions.types),
 })
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>

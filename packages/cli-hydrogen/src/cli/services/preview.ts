@@ -23,7 +23,7 @@ async function runPreview({directory, port}: PreviewOptions) {
   const app = await mf.createServer({assets: files})
 
   app.listen(port, () => {
-    output.message(`\nStarted miniOxygen server. Listening at http://localhost:${port}\n`)
+    output.info(`\nStarted miniOxygen server. Listening at http://localhost:${port}\n`)
   })
 }
 

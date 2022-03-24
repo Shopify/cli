@@ -88,7 +88,7 @@ export class Interface {
         const [label, ...values] = msg
         const spacer = [INDENT, INDENT].join('')
 
-        output.message(chalk.cyan([spacer, label, ...values].join(spacer)))
+        output.info(chalk.cyan([spacer, label, ...values].join(spacer)))
       })
       return
     }
@@ -97,10 +97,10 @@ export class Interface {
     const type = options.error ? `${chalk.black.bgRedBright` error `}${INDENT}` : ''
     const combinedMessage = [type, styledText].join('')
 
-    output.message(options.strong ? chalk.bold(combinedMessage) : combinedMessage)
+    output.info(options.strong ? chalk.bold(combinedMessage) : combinedMessage)
 
     if (options.breakAfter) {
-      output.message('')
+      output.info('')
     }
   }
 

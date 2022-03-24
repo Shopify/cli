@@ -33,7 +33,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rollup -c",
+    "build": "rimraf dist/ && rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
@@ -44,7 +44,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "../../package.json"
+      "../../.eslintrc.cjs"
     ],
     "rules": {
       "no-warning-comments": "off"
@@ -58,7 +58,7 @@
     "open": "^8.4.0"
   },
   "devDependencies": {
-    "vitest": "0.6.0"
+    "vitest": "0.7.9"
   },
   "engine-strict": true,
   "engines": {
