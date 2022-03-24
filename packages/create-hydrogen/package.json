@@ -58,7 +58,7 @@
     "open": "^8.4.0"
   },
   "devDependencies": {
-    "vitest": "0.6.0"
+    "vitest": "0.7.9"
   },
   "engine-strict": true,
   "engines": {

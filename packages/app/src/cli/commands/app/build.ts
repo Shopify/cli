@@ -1,13 +1,12 @@
 import {Command} from '@oclif/core'
-import {session} from '@shopify/cli-kit'
-import {success} from '@shopify/cli-kit/src/output'
+import {session, output} from '@shopify/cli-kit'
 
 export default class Build extends Command {
   static description = 'Build a block or an app'
 
   async run(): Promise<void> {
     const token = await session.ensureAuthenticated({})
-    success(`TOKEN: ${token}`)
+    output.success(`TOKEN: ${JSON.stringify(token)}`)
     // await session.ensureAuthenticated({})
   }
 }
