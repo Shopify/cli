@@ -1,5 +1,5 @@
-import {App} from '../models/app/app'
-import {api, error, file, output, path, queries, session, toml, ui} from '@shopify/cli-kit'
+import {App, updateAppConfigurationFile} from '../models/app/app'
+import {api, error, output, path, queries, session, ui} from '@shopify/cli-kit'
 import {configurationFileNames} from '$cli/constants'
 
 interface DevOptions {
@@ -26,28 +26,49 @@ interface OrganizationStore {
 }
 
 async function devInit({app}: DevOptions) {
+  const {appId, store} = await configureDevEnvironment(app)
+  if (appId && store) {
+    output.success(`Connected app ${appId} to store ${store}`)
+  }
+}
+
+async function configureDevEnvironment(app: App): Promise<{appId: string; store: string}> {
   if (app.configuration.id) {
     // App is already connected to an org an a remote app
-    return
+    // TODO: Check if we have a dev store for this app
   }
 
   const token = await session.ensureAuthenticatedPartners()
   const org = await selectOrganization(token)
-  output.info(`✔ Using ${org.businessName}`)
   const {apps, stores} = await fetchAppsAndStores(org.id, token)
-  const selectedApp = await selectApp(apps)
+  let selectedApp = await selectApp(apps)
 
-  if (selectedApp) {
-  } else {
-    output.info('TODO: Create app')
+  if (!selectedApp) {
+    selectedApp = await createApp(org.id, token)
   }
 
-  const selectedStore = await selectStore(stores)
-  if (selectedStore) {
-    output.info(`TODO: Connect project to app ${selectedStore.shopDomain}`)
-  } else {
-    output.info('TODO: Create store')
+  app.configuration.id = selectedApp.apiKey
+  app.configuration.name = selectedApp.title
+  updateAppConfigurationFile(app)
+
+  let selectedStore = await selectStore(stores)
+  if (!selectedStore) {
+    selectedStore = await createDevStore(org.id, token)
   }
+
+  return {appId: selectedApp!.id, store: selectedStore!.shopId}
+}
+
+async function createApp(orgId: string, token: string): Promise<OrganizationApp> {
+  output.info('TODO: Create a new app')
+  const app: any = {}
+  return app
+}
+
+async function createDevStore(orgId: string, token: string): Promise<OrganizationStore> {
+  output.info('TODO: Create a new dev store')
+  const store: any = {}
+  return store
 }
 
 async function selectOrganization(token: string): Promise<{id: string; businessName: string}> {
@@ -58,7 +79,7 @@ async function selectOrganization(token: string): Promise<{id: string; businessN
     return organizations[0]
   }
   if (organizations.length === 0) {
-    throw new error.Fatal('You need to create an Shopify Partners organization first')
+    throw new error.Fatal('You need to create a Shopify Partners organization first')
   }
 
   const questions: ui.Question = {

@@ -76,7 +76,7 @@
     "tempy": "^2.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
-    "toml": "^3.0.0",
+    "@iarna/toml": "^2.2.5",
     "vitest": "0.7.9",
     "zod": "^3.11.6"
   }

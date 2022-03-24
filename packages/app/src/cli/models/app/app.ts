@@ -117,6 +117,14 @@ async function parseConfigurationFile(schema: any, path: string) {
   return parseResult.data
 }
 
+export async function updateAppConfigurationFile(app: App): Promise<void> {
+  const confPath = path.join(app.directory, configurationFileNames.app)
+  const parsed = AppConfigurationSchema.parse(app.configuration)
+  const configurationContent = toml.stringify(parsed)
+  await file.write(confPath, '# This file stores configurations for your Shopify app.\n\n')
+  await file.append(confPath, configurationContent)
+}
+
 async function loadUiExtensions(rootDirectory: string): Promise<UIExtension[]> {
   const uiExtensionsPath = path.join(rootDirectory, `${blocks.uiExtensions.directoryName}/*`)
   const directories = await path.glob(uiExtensionsPath, {onlyDirectories: true})

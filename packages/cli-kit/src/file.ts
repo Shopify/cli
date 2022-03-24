@@ -34,6 +34,10 @@ export async function write(path: string, data: string): Promise<void> {
   await fs.writeFile(path, data)
 }
 
+export async function append(path: string, data: string): Promise<void> {
+  await fs.appendFile(path, data)
+}
+
 export async function mkdir(path: string): Promise<void> {
   await fs.mkdirp(path)
 }
