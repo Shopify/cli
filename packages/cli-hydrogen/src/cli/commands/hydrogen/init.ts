@@ -27,10 +27,12 @@ export default class Init extends Command {
     root: Flags.string({
       char: 'r',
       description: 'Root directory of the project.',
+      env: 'SHOPIFY_FLAG_ROOT',
     }),
     local: Flags.boolean({
       char: 'l',
       description: 'Use local hydrogen',
+      env: 'SHOPIFY_FLAG_LOCAL',
     }),
   }
 
