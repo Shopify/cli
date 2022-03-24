@@ -79,7 +79,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
     client_id: clientId,
   }
   /* eslint-enable @typescript-eslint/naming-convention */
-
+  console.log(params)
   return tokenRequest(params).then(buildIdentityToken)
 }
 
@@ -129,7 +129,7 @@ async function tokenRequest(params: {[key: string]: any}): Promise<unknown> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-
+  console.log(url.href)
   const res = await fetch(url.href, {method: 'POST'})
   if (!res.ok) {
     throw new Abort(`HTTP ${res.status}`)

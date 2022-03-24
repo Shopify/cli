@@ -145,9 +145,13 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (sessionIsInvalid) {
     newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
+    // console.log('REFRESHED SESSION:')
+    // console.log(JSON.stringify(newSession, null, 2))
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
+  // console.log('COMPLETE SESSION:')
+  // console.log(JSON.stringify(completeSession, null, 2))
   await secureStore.store(completeSession)
   const tokens = await tokensFor(applications, completeSession, fqdn)
 

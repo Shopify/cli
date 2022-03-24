@@ -7,7 +7,7 @@ export const FindOrganizationQuery = gql`
         id
         businessName
         website
-        stores(first: 200) {
+        stores(first: 100) {
           nodes {
             shopId
             link
