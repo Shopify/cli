@@ -5,11 +5,11 @@ module.exports = {
     docs: {
       description: 'ensure that command flags include the environment variable name',
     },
-    schema: [], // no options
+    schema: [],
   },
-  create: function (context) {
+  create(context) {
     return {
-      PropertyDefinition: function (node) {
+      PropertyDefinition(node) {
         if (node.key.name === 'flags') {
           node.value.properties.forEach((flag) => {
             const arguments = flag.value?.arguments ?? []
@@ -20,7 +20,7 @@ module.exports = {
             const properties = argument.properties.map((property) => property.key.name)
             if (!properties.includes('env')) {
               context.report(
-                node,
+                argument,
                 'Flags must specify the environment variable that represents the flag through the env property',
               )
             }
