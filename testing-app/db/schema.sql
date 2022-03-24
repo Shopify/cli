@@ -1,2 +1,0 @@
--- This file stores your database schema. If deployed on oxygen, your cloud
--- database will stay updated with this schema.
