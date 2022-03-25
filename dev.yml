@@ -70,14 +70,14 @@ commands:
     subcommands:
       build:
         desc: Build the fixture project
-        run: yarn --cwd fixture build
+        run: yarn fixture:build
       dev:
         desc: Dev the fixture project
-        run: yarn --cwd fixture dev
+        run: yarn fixture:dev
       test:
         desc: Test the fixture project
-        run: yarn --cwd fixture test
+        run: yarn fixture:test
       scaffold:
         desc: Scaffold in the fixture project
-        run: yarn --cwd fixture scaffold
+        run: yarn fixture:scaffold
 
