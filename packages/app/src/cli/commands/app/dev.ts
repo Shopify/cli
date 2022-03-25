@@ -20,7 +20,6 @@ export default class Dev extends Command {
     const {args, flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
-    console.log(app)
     await devInit({app})
   }
 }

@@ -1,5 +1,3 @@
-// import {gql} from 'graphql-request'
-
 import {gql} from 'graphql-request'
 
 export interface AllOrganizationsQuerySchema {
@@ -8,8 +6,6 @@ export interface AllOrganizationsQuerySchema {
       id: string
       businessName: string
       website: string
-      stores: any
-      apps: any
     }[]
   }
 }

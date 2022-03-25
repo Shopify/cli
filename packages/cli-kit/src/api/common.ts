@@ -19,5 +19,3 @@ export async function buildHeaders(token: string): Promise<{[key: string]: any}>
 
   return headers
 }
-
-// {"User-Agent"=>"Shopify CLI; v=2.12.0", "Sec-CH-UA"=>"Shopify CLI; v=2.12.0 sha=b5ab5bef91b0dde7b586faa39c1e71c07ffae4dd", "Sec-CH-UA-PLATFORM"=>"mac", "X-Request-Id"=>"fdf00e4e-6784-4a65-ba6c-59c841c4683c"
