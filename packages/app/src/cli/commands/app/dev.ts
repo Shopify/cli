@@ -1,5 +1,5 @@
 import {load as loadApp, App} from '../../models/app/app'
-import devInit from '../../services/dev/dev.service'
+import devInit from '../../services/dev'
 import {Command, Flags} from '@oclif/core'
 import {path} from '@shopify/cli-kit'
 
