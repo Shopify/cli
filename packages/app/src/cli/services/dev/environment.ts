@@ -1,31 +1,13 @@
-import {selectApp, selectOrganization, selectStore} from './prompts'
 import {api, error, output, queries, session} from '@shopify/cli-kit'
+import {selectApp, selectOrganization, selectStore} from '$cli/prompts/dev'
 import {App, updateAppConfigurationFile} from '$cli/models/app/app'
+import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
-export interface Organization {
-  id: string
-  businessName: string
-  website?: string
-}
-
-export interface OrganizationApp {
-  id: string
-  title: string
-  apiKey: string
-  apiSecretKeys: {
-    secret: string
-  }
-  appType?: string
-}
-
-export interface OrganizationStore {
-  shopId: string
-  link: string
-  shopDomain: string
-  shopName: string
-  transferDisabled: boolean
-  convertableToPartnerTest: boolean
-}
+const NO_ORG_ERROR = new error.Fatal('No Organization found', 'You need to create a Shopify Partners organization')
+const NO_DEV_STORE_ERROR = new error.Fatal(
+  'There are no developement stores available',
+  'Please create a store in the Shopify Partners dashboard',
+)
 
 /**
  * Check that the project is connected to an app in partners dashboard
@@ -38,7 +20,7 @@ export interface OrganizationStore {
  * If not, redirect the user to install it
  * @param app
  */
-export async function ensureValidDevEnvironment(app: App): Promise<void> {
+export async function ensureDevEnvironment(app: App): Promise<void> {
   const token = await session.ensureAuthenticatedPartners()
   const orgs = await fetchOrganizations(token)
   const org = await selectOrganization(orgs)
@@ -64,10 +46,7 @@ async function selectOrCreateStore(stores: OrganizationStore[], orgId: string): 
   const store = await selectStore(stores)
   if (store) return store
   // Temporary error while we can't create a store from CLI
-  throw new error.Fatal(
-    'There are no developement stores available',
-    'Please create a store in the Shopify Partners dashboard',
-  )
+  throw NO_DEV_STORE_ERROR
 }
 
 async function fetchOrganizations(token: string): Promise<Organization[]> {
@@ -75,7 +54,7 @@ async function fetchOrganizations(token: string): Promise<Organization[]> {
   const result: queries.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
   if (organizations.length === 0) {
-    throw new error.Fatal('No Organization found', 'You need to create a Shopify Partners organization first')
+    throw NO_ORG_ERROR
   }
   return organizations
 }
@@ -87,6 +66,6 @@ async function fetchAppsAndStores(
   const query = queries.FindOrganizationQuery
   const result: queries.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
-  if (!org) throw new error.Fatal('Invalid Organization')
+  if (!org) throw NO_ORG_ERROR
   return {apps: org.apps.nodes, stores: org.stores.nodes}
 }

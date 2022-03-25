@@ -1,33 +1,50 @@
-import {load, HomeNotFoundError} from './app'
+import {load, HomeNotFoundError, updateAppConfigurationFile} from './app'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
 
+let tmpDir: string
+const appConfiguration = `
+name = "my_app"
+`
+beforeEach(async () => {
+  tmpDir = await file.mkTmpDir()
+})
+
+afterEach(async () => {
+  if (tmpDir) {
+    await file.rmdir(tmpDir)
+  }
+})
+
+const writeConfig = async (appConfiguration: string) => {
+  const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
+  await file.write(appConfigurationPath, appConfiguration)
+}
+
+const mkdirHome = async () => {
+  await file.mkdir(path.join(tmpDir, 'home'))
+}
+
+describe('updateAppConfigurationFile', () => {
+  it('updates the app configuration file', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    await mkdirHome()
+    const app = await load(tmpDir)
+
+    // When
+    await updateAppConfigurationFile(app, {name: 'new-name', id: 'new-id'})
+
+    // Then
+    const updatedApp = await load(tmpDir)
+    expect(updatedApp.configuration.id).toEqual('new-id')
+    expect(updatedApp.configuration.name).toEqual('new-name')
+  })
+})
+
 describe('load', () => {
   type BlockType = 'uiExtensions' | 'scripts'
-
-  let tmpDir: string
-  const appConfiguration = `
-  name = "my_app"
-  `
-  beforeEach(async () => {
-    tmpDir = await file.mkTmpDir()
-  })
-
-  afterEach(async () => {
-    if (tmpDir) {
-      await file.rmdir(tmpDir)
-    }
-  })
-
-  const writeConfig = async (appConfiguration: string) => {
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-    await file.write(appConfigurationPath, appConfiguration)
-  }
-
-  const mkdirHome = async () => {
-    await file.mkdir(path.join(tmpDir, 'home'))
-  }
 
   const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
     const block = blocks[blockType]

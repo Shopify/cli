@@ -1,7 +1,7 @@
-import {selectApp, selectOrganization, selectStore} from './prompts'
-import {Organization, OrganizationApp, OrganizationStore} from './environment'
+import {selectApp, selectOrganization, selectStore} from './dev'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
+import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
