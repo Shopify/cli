@@ -1,5 +1,5 @@
-import {ensureValidDevEnvironment} from './dev/environment'
-import {App} from '../models/app/app'
+import {ensureValidDevEnvironment} from './environment'
+import {App} from '../../models/app/app'
 
 interface DevOptions {
   app: App

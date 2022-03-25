@@ -1,11 +1,11 @@
-import {selectApp, selectOrganization, selectStore} from './questions'
+import {selectApp, selectOrganization, selectStore} from './prompts'
 import {api, error, output, queries, session} from '@shopify/cli-kit'
 import {App, updateAppConfigurationFile} from '$cli/models/app/app'
 
 export interface Organization {
   id: string
   businessName: string
-  website: string
+  website?: string
 }
 
 export interface OrganizationApp {
@@ -15,7 +15,7 @@ export interface OrganizationApp {
   apiSecretKeys: {
     secret: string
   }
-  appType: string
+  appType?: string
 }
 
 export interface OrganizationStore {
