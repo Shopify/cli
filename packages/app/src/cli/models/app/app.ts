@@ -119,7 +119,6 @@ async function parseConfigurationFile(schema: any, path: string) {
 
 export async function updateAppConfigurationFile(app: App, data: {name: string; id: string}): Promise<void> {
   const confPath = path.join(app.directory, configurationFileNames.app)
-  console.log(confPath)
   const parsed = AppConfigurationSchema.parse(data)
   const configurationContent = toml.stringify(parsed)
   await file.write(confPath, '# This file stores configurations for your Shopify app.\n\n')
