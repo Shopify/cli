@@ -18,11 +18,11 @@ describe('common API methods', () => {
 
     // Then
     expect(headers).toEqual({
-      'X-Shopify-Access-Token': 'my-token',
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${constants.versions.cli}`,
-      'X-Shopify-Cli-Employee': '1',
-      authorization: 'my-token',
+      authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
     })
   })
@@ -36,10 +36,11 @@ describe('common API methods', () => {
 
     // Then
     expect(headers).toEqual({
-      'X-Shopify-Access-Token': 'my-token',
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${constants.versions.cli}`,
-      authorization: 'my-token',
+      authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
     })
   })

@@ -1,4 +1,15 @@
-import {copy, mkdir, hasExecutablePermissions, write, read, inTemporaryDirectory, exists, move, chmod} from './file'
+import {
+  copy,
+  mkdir,
+  hasExecutablePermissions,
+  write,
+  read,
+  inTemporaryDirectory,
+  exists,
+  move,
+  chmod,
+  append,
+} from './file'
 import {join} from './path'
 import {describe, expect, it} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
@@ -105,6 +116,24 @@ describe('exists', () => {
 
       // Then
       expect(got).toEqual(false)
+    })
+  })
+})
+
+describe('append', () => {
+  it('appends content to an existing file', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const filePath = join(tmpDir, 'from')
+      await write(filePath, content)
+
+      // When
+      await append(filePath, '-appended')
+
+      // Then
+      const got = await read(filePath)
+      expect(got).toEqual(`${content}-appended`)
     })
   })
 })

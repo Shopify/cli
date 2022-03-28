@@ -11,9 +11,10 @@ export async function buildHeaders(token: string): Promise<{[key: string]: any}>
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'X-Request-Id': randomUUID(),
-    authorization: token,
-    'X-Shopify-Access-Token': token,
-    ...(isEmployee && {'X-Shopify-Cli-Employee': '1'}),
+    authorization: `Bearer ${token}`,
+    'X-Shopify-Access-Token': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    // ...(isEmployee && {'X-Shopify-Cli-Employee': '1'}),
   }
 
   return headers

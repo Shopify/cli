@@ -6,6 +6,9 @@ import * as colors from 'ansi-colors'
 
 export class Select extends enquirer.Select {
   constructor(options) {
+    options.result = (value) => {
+      return this.focused.value || this.focused.name
+    }
     super(options)
     this.styles.primary = colors.magenta
     this.styles.em = colors.magenta

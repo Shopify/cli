@@ -8,8 +8,8 @@ describe('load', () => {
 
   let tmpDir: string
   const appConfiguration = `
-  name = "my_app"
-  `
+name = "my_app"
+`
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir()
   })

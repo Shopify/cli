@@ -10,7 +10,7 @@ export interface Question {
   message: string
   validate?: (value: string) => string | boolean
   default?: string
-  choices?: string[]
+  choices?: string[] | {name: string; value: string}[]
 }
 
 export const prompt = async <T>(questions: Question[]): Promise<T> => {

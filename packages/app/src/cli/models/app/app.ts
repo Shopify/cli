@@ -5,8 +5,9 @@ export const HomeNotFoundError = (homeDirectory: string) => {
   return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
 }
 
-const AppConfigurationSchema = schema.define.object({
+export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
+  id: schema.define.optional(schema.define.string()),
 })
 
 type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
@@ -103,7 +104,7 @@ async function loadConfigurationFile(path: string): Promise<object> {
   const configurationContent = await file.read(path)
   // Convert snake_case keys to camelCase before returning
   return Object.fromEntries(
-    Object.entries(toml.parse(configurationContent)).map((kv) => [string.camelize(kv[0]), kv[1]]),
+    Object.entries(toml.decode(configurationContent)).map((kv) => [string.camelize(kv[0]), kv[1]]),
   )
 }
 
