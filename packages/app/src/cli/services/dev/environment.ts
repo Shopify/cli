@@ -1,4 +1,4 @@
-import {api, error, output, queries, session} from '@shopify/cli-kit'
+import {api, error, output, session} from '@shopify/cli-kit'
 import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
@@ -51,8 +51,8 @@ async function selectOrCreateStore(stores: OrganizationStore[], orgId: string): 
 }
 
 async function fetchOrganizations(token: string): Promise<Organization[]> {
-  const query = queries.AllOrganizationsQuery
-  const result: queries.AllOrganizationsQuerySchema = await api.partners.request(query, token)
+  const query = api.queries.AllOrganizationsQuery
+  const result: api.queries.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
   if (organizations.length === 0) {
     throw NO_ORG_ERROR
@@ -64,8 +64,8 @@ async function fetchAppsAndStores(
   orgId: string,
   token: string,
 ): Promise<{apps: OrganizationApp[]; stores: OrganizationStore[]}> {
-  const query = queries.FindOrganizationQuery
-  const result: queries.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
+  const query = api.queries.FindOrganizationQuery
+  const result: api.queries.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
   if (!org) throw NO_ORG_ERROR
   return {apps: org.apps.nodes, stores: org.stores.nodes}

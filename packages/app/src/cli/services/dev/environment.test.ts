@@ -1,5 +1,5 @@
 import {ensureDevEnvironment} from './environment'
-import {api, queries} from '@shopify/cli-kit'
+import {api} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {App} from '$cli/models/app/app'
@@ -73,8 +73,8 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key1', name: 'app1'})
-    expect(api.partners.request).toHaveBeenNthCalledWith(1, queries.AllOrganizationsQuery, 'token')
-    expect(api.partners.request).toHaveBeenNthCalledWith(2, queries.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(api.partners.request).toHaveBeenNthCalledWith(1, api.queries.AllOrganizationsQuery, 'token')
+    expect(api.partners.request).toHaveBeenNthCalledWith(2, api.queries.FindOrganizationQuery, 'token', {id: ORG1.id})
     expect(selectOrganizationPrompt).toHaveBeenCalledWith([ORG1, ORG2])
     expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
