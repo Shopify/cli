@@ -4,11 +4,12 @@ import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
-const NO_ORG_ERROR = new error.Fatal('No Organization found', 'You need to create a Shopify Partners organization')
-const NO_DEV_STORE_ERROR = new error.Fatal(
-  'There are no developement stores available',
-  'Please create a store in the Shopify Partners dashboard',
-)
+const NoOrgError = () => new error.Fatal('No Organization found', 'You need to create a Shopify Partners organization')
+const NoDevStoreError = () =>
+  new error.Fatal(
+    'There are no developement stores available',
+    'Please create a store in the Shopify Partners dashboard',
+  )
 
 /**
  * Check that the project is connected to an app in partners dashboard
@@ -47,7 +48,7 @@ async function selectOrCreateStore(stores: OrganizationStore[], orgId: string): 
   const store = await selectStorePrompt(stores)
   if (store) return store
   // Temporary error while we can't create a store from CLI
-  throw NO_DEV_STORE_ERROR
+  throw NoDevStoreError()
 }
 
 async function fetchOrganizations(token: string): Promise<Organization[]> {
@@ -55,7 +56,7 @@ async function fetchOrganizations(token: string): Promise<Organization[]> {
   const result: api.queries.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
   if (organizations.length === 0) {
-    throw NO_ORG_ERROR
+    throw NoOrgError()
   }
   return organizations
 }
@@ -67,6 +68,6 @@ async function fetchAppsAndStores(
   const query = api.queries.FindOrganizationQuery
   const result: api.queries.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
-  if (!org) throw NO_ORG_ERROR
+  if (!org) throw NoOrgError()
   return {apps: org.apps.nodes, stores: org.stores.nodes}
 }
