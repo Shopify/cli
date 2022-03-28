@@ -9,7 +9,7 @@ import {dependencies} from './package.json'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const cliExternal = [...external, Object.keys(dependencies), '@shopify/cli-kit']
+const appExternal = [...external, ...Object.keys(dependencies), '@shopify/cli-kit']
 
 const featureCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/app/**/*.ts`),
@@ -27,10 +27,7 @@ const configuration = () => [
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
-            return `commands/${chunkInfo.facadeModuleId
-              .split('src/cli/commands')
-              .pop()
-              .replace('ts', 'js')}`
+            return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }
@@ -38,7 +35,7 @@ const configuration = () => [
       },
     ],
     plugins: plugins(__dirname),
-    external: cliExternal,
+    external: appExternal,
   },
 ]
 

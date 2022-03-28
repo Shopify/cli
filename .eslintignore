@@ -3,3 +3,4 @@ node_modules
 bin
 *.feature
 eslint-rules/
+rollup.config.js
