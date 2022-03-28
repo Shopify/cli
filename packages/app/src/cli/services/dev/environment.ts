@@ -1,5 +1,5 @@
 import {api, error, output, queries, session} from '@shopify/cli-kit'
-import {selectApp, selectOrganization, selectStore} from '$cli/prompts/dev'
+import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {App, updateAppConfigurationFile} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
@@ -23,7 +23,7 @@ const NO_DEV_STORE_ERROR = new error.Fatal(
 export async function ensureDevEnvironment(app: App): Promise<void> {
   const token = await session.ensureAuthenticatedPartners()
   const orgs = await fetchOrganizations(token)
-  const org = await selectOrganization(orgs)
+  const org = await selectOrganizationPrompt(orgs)
   const {apps, stores} = await fetchAppsAndStores(org.id, token)
   const selectedApp = await selectOrCreateApp(apps, org.id, token)
 
@@ -35,7 +35,7 @@ export async function ensureDevEnvironment(app: App): Promise<void> {
 }
 
 async function selectOrCreateApp(apps: OrganizationApp[], orgId: string, token: string): Promise<OrganizationApp> {
-  const app = await selectApp(apps)
+  const app = await selectAppPrompt(apps)
   if (app) return app
   output.info('TODO: Create a new app')
   const newApp: any = {}
@@ -43,7 +43,7 @@ async function selectOrCreateApp(apps: OrganizationApp[], orgId: string, token: 
 }
 
 async function selectOrCreateStore(stores: OrganizationStore[], orgId: string): Promise<OrganizationStore> {
-  const store = await selectStore(stores)
+  const store = await selectStorePrompt(stores)
   if (store) return store
   // Temporary error while we can't create a store from CLI
   throw NO_DEV_STORE_ERROR

@@ -1,4 +1,4 @@
-import {selectApp, selectOrganization, selectStore} from './dev'
+import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from './dev'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
@@ -44,7 +44,7 @@ describe('selectOrganization', () => {
     vi.mocked(ui.prompt).mockResolvedValue({id: '1'})
 
     // When
-    const got = await selectOrganization([ORG1, ORG2])
+    const got = await selectOrganizationPrompt([ORG1, ORG2])
 
     // Then
     expect(got).toEqual(ORG1)
@@ -66,7 +66,7 @@ describe('selectOrganization', () => {
     const orgs = [ORG2]
 
     // When
-    const got = await selectOrganization(orgs)
+    const got = await selectOrganizationPrompt(orgs)
 
     // Then
     expect(got).toEqual(ORG2)
@@ -80,7 +80,7 @@ describe('selectApp', () => {
     const apps: OrganizationApp[] = []
 
     // When
-    const got = await selectApp(apps)
+    const got = await selectAppPrompt(apps)
 
     // Then
     expect(got).toEqual(undefined)
@@ -93,7 +93,7 @@ describe('selectApp', () => {
     vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'create'})
 
     // When
-    const got = await selectApp(apps)
+    const got = await selectAppPrompt(apps)
 
     // Then
     expect(got).toEqual(undefined)
@@ -117,7 +117,7 @@ describe('selectApp', () => {
     vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'key2'})
 
     // When
-    const got = await selectApp(apps)
+    const got = await selectAppPrompt(apps)
 
     // Then
     expect(got).toEqual(APP2)
@@ -142,7 +142,7 @@ describe('selectStore', () => {
     const stores: OrganizationStore[] = []
 
     // When
-    const got = await selectStore(stores)
+    const got = await selectStorePrompt(stores)
 
     // Then
     expect(got).toEqual(undefined)
@@ -155,7 +155,7 @@ describe('selectStore', () => {
     vi.mocked(ui.prompt).mockResolvedValue({id: '2'})
 
     // When
-    const got = await selectStore(stores)
+    const got = await selectStorePrompt(stores)
 
     // Then
     expect(got).toEqual(STORE2)

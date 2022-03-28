@@ -3,7 +3,7 @@ import {api, queries} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {App, updateAppConfigurationFile} from '$cli/models/app/app'
-import {selectApp, selectOrganization, selectStore} from '$cli/prompts/dev'
+import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
 vi.mock('$cli/prompts/dev')
 vi.mock('$cli/models/app/app')
@@ -58,9 +58,9 @@ const LOCAL_APP: App = {
 describe('ensureDevEnvironment', () => {
   it('selects an org, app and store if there is no previous state and saves it', async () => {
     // Given
-    vi.mocked(selectOrganization).mockResolvedValue(ORG1)
-    vi.mocked(selectApp).mockResolvedValue(APP1)
-    vi.mocked(selectStore).mockResolvedValue(STORE1)
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+    vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
+    vi.mocked(selectStorePrompt).mockResolvedValue(STORE1)
     vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
     vi.mocked(api.partners.request).mockResolvedValueOnce({
       organizations: {nodes: [{apps: {nodes: [APP1, APP2]}, stores: {nodes: [STORE1, STORE2]}}]},
@@ -73,9 +73,9 @@ describe('ensureDevEnvironment', () => {
     expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key1', name: 'app1'})
     expect(api.partners.request).toHaveBeenNthCalledWith(1, queries.AllOrganizationsQuery, 'token')
     expect(api.partners.request).toHaveBeenNthCalledWith(2, queries.FindOrganizationQuery, 'token', {id: ORG1.id})
-    expect(selectOrganization).toHaveBeenCalledWith([ORG1, ORG2])
-    expect(selectApp).toHaveBeenCalledWith([APP1, APP2])
-    expect(selectStore).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(selectOrganizationPrompt).toHaveBeenCalledWith([ORG1, ORG2])
+    expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
   it('throws if there are no organizations', async () => {
@@ -90,9 +90,9 @@ describe('ensureDevEnvironment', () => {
 
   it('throws if there are no dev stores', async () => {
     // Given
-    vi.mocked(selectOrganization).mockResolvedValue(ORG1)
-    vi.mocked(selectApp).mockResolvedValue(APP1)
-    vi.mocked(selectStore).mockResolvedValue(undefined)
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+    vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
+    vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
     vi.mocked(api.partners.request).mockResolvedValueOnce({
       organizations: {nodes: [{apps: {nodes: [APP1, APP2]}, stores: {nodes: []}}]},

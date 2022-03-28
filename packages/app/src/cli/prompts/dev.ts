@@ -1,7 +1,7 @@
 import {error, ui} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
-export async function selectOrganization(organizations: Organization[]): Promise<Organization> {
+export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
     return organizations[0]
   }
@@ -20,7 +20,7 @@ export async function selectOrganization(organizations: Organization[]): Promise
   return org
 }
 
-export async function selectApp(apps: OrganizationApp[]): Promise<OrganizationApp | undefined> {
+export async function selectAppPrompt(apps: OrganizationApp[]): Promise<OrganizationApp | undefined> {
   if (apps.length === 0) return undefined
   const appList = apps.map((app) => ({name: app.title, value: app.apiKey}))
   const createOption = {name: 'Create a new app', value: 'create'}
@@ -36,7 +36,7 @@ export async function selectApp(apps: OrganizationApp[]): Promise<OrganizationAp
   return apps.find((app: any) => app.apiKey === choice.apiKey)
 }
 
-export async function selectStore(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
+export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))
 
