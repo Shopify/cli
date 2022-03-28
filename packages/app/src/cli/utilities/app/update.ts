@@ -6,6 +6,6 @@ export async function updateAppConfigurationFile(app: App, data: {name: string; 
   const confPath = path.join(app.directory, configurationFileNames.app)
   const parsed = AppConfigurationSchema.parse(data)
   const configurationContent = toml.encode(parsed)
-  await file.write(confPath, '# This file stores configurations for your Shopify app.\n\n')
-  await file.append(confPath, configurationContent)
+  const header = '# This file stores configurations for your Shopify app.\n\n'
+  await file.write(confPath, header + configurationContent)
 }

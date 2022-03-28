@@ -20,6 +20,7 @@ vi.mock('@shopify/cli-kit', async () => {
       partners: {
         request: vi.fn(),
       },
+      queries: cliKit.api.queries,
     },
   }
 })

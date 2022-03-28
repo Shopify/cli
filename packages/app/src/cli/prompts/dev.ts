@@ -1,4 +1,4 @@
-import {error, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -13,11 +13,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     choices: orgList,
   }
   const choice: {id: string} = await ui.prompt([questions])
-  const org = organizations.find((org: any) => org.id === choice.id)
-  if (!org) {
-    throw new error.Fatal('Could not find organization')
-  }
-  return org
+  return organizations.find((org: any) => org.id === choice.id)!
 }
 
 export async function selectAppPrompt(apps: OrganizationApp[]): Promise<OrganizationApp | undefined> {
@@ -32,12 +28,12 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
     choices: appList,
   }
   const choice: {apiKey: string} = await ui.prompt([questions])
-  if (choice.apiKey === createOption.value) return undefined
   return apps.find((app: any) => app.apiKey === choice.apiKey)
 }
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
+  if (stores.length === 1) return stores[0]
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))
 
   const questions: ui.Question = {
