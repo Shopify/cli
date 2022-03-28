@@ -2,11 +2,13 @@ import {ensureDevEnvironment} from './environment'
 import {api, queries} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
-import {App, updateAppConfigurationFile} from '$cli/models/app/app'
+import {App} from '$cli/models/app/app'
 import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 vi.mock('$cli/prompts/dev')
 vi.mock('$cli/models/app/app')
+vi.mock('$cli/utilities/app/update')
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
   return {

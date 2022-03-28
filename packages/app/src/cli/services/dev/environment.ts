@@ -1,7 +1,8 @@
 import {api, error, output, queries, session} from '@shopify/cli-kit'
 import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
-import {App, updateAppConfigurationFile} from '$cli/models/app/app'
+import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
+import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 const NO_ORG_ERROR = new error.Fatal('No Organization found', 'You need to create a Shopify Partners organization')
 const NO_DEV_STORE_ERROR = new error.Fatal(

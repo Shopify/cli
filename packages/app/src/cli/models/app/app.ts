@@ -5,7 +5,7 @@ export const HomeNotFoundError = (homeDirectory: string) => {
   return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
 }
 
-const AppConfigurationSchema = schema.define.object({
+export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   id: schema.define.optional(schema.define.string()),
 })
@@ -115,14 +115,6 @@ async function parseConfigurationFile(schema: any, path: string) {
     throw new error.Abort(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`)
   }
   return parseResult.data
-}
-
-export async function updateAppConfigurationFile(app: App, data: {name: string; id: string}): Promise<void> {
-  const confPath = path.join(app.directory, configurationFileNames.app)
-  const parsed = AppConfigurationSchema.parse(data)
-  const configurationContent = toml.stringify(parsed)
-  await file.write(confPath, '# This file stores configurations for your Shopify app.\n\n')
-  await file.append(confPath, configurationContent)
 }
 
 async function loadUiExtensions(rootDirectory: string): Promise<UIExtension[]> {
