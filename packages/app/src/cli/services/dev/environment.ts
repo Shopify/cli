@@ -4,11 +4,15 @@ import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
-const NoOrgError = () => new error.Fatal('No Organization found', 'You need to create a Shopify Partners organization')
+const NoOrgError = () =>
+  new error.Fatal(
+    'No Organization found',
+    'You need to create a Shopify Partners organization: https://partners.shopify.com ',
+  )
 const NoDevStoreError = () =>
   new error.Fatal(
     'There are no developement stores available',
-    'Please create a store in the Shopify Partners dashboard',
+    'Please create a store in the Shopify Partners dashboard: https://partners.shopify.com',
   )
 
 /**
