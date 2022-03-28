@@ -56,8 +56,8 @@ async function selectOrCreateStore(stores: OrganizationStore[], orgId: string): 
 }
 
 async function fetchOrganizations(token: string): Promise<Organization[]> {
-  const query = api.queries.AllOrganizationsQuery
-  const result: api.queries.AllOrganizationsQuerySchema = await api.partners.request(query, token)
+  const query = api.graphql.AllOrganizationsQuery
+  const result: api.graphql.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
   if (organizations.length === 0) {
     throw NoOrgError()
@@ -69,8 +69,8 @@ async function fetchAppsAndStores(
   orgId: string,
   token: string,
 ): Promise<{apps: OrganizationApp[]; stores: OrganizationStore[]}> {
-  const query = api.queries.FindOrganizationQuery
-  const result: api.queries.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
+  const query = api.graphql.FindOrganizationQuery
+  const result: api.graphql.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError()
   return {apps: org.apps.nodes, stores: org.stores.nodes}

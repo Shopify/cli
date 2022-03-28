@@ -1,5 +1,5 @@
 import * as admin from './api/admin'
 import * as partners from './api/partners'
-import * as queries from './api/queries'
+import * as graphql from './api/graphql'
 
-export {admin, partners, queries}
+export {admin, partners, graphql}

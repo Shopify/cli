@@ -20,7 +20,7 @@ vi.mock('@shopify/cli-kit', async () => {
       partners: {
         request: vi.fn(),
       },
-      queries: cliKit.api.queries,
+      graphql: cliKit.api.graphql,
     },
   }
 })
@@ -74,8 +74,8 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key1', name: 'app1'})
-    expect(api.partners.request).toHaveBeenNthCalledWith(1, api.queries.AllOrganizationsQuery, 'token')
-    expect(api.partners.request).toHaveBeenNthCalledWith(2, api.queries.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(api.partners.request).toHaveBeenNthCalledWith(1, api.graphql.AllOrganizationsQuery, 'token')
+    expect(api.partners.request).toHaveBeenNthCalledWith(2, api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
     expect(selectOrganizationPrompt).toHaveBeenCalledWith([ORG1, ORG2])
     expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
