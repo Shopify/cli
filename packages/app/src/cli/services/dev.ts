@@ -5,9 +5,9 @@ interface DevOptions {
   app: App
 }
 
-async function devInit({app}: DevOptions) {
+async function dev({app}: DevOptions) {
   await ensureDevEnvironment(app)
   // Create tunnel etc...
 }
 
-export default devInit
+export default dev

@@ -1,5 +1,5 @@
 import {load as loadApp, App} from '../../models/app/app'
-import devInit from '../../services/dev'
+import dev from '../../services/dev'
 import {Command, Flags} from '@oclif/core'
 import {path} from '@shopify/cli-kit'
 
@@ -18,6 +18,6 @@ export default class Dev extends Command {
     const {args, flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
-    await devInit({app})
+    await dev({app})
   }
 }
