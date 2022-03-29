@@ -1,3 +1,4 @@
+import {createApp} from './create-app'
 import {api, error, output, session} from '@shopify/cli-kit'
 import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
@@ -7,12 +8,12 @@ import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 const NoOrgError = () =>
   new error.Fatal(
     'No Organization found',
-    'You need to create a Shopify Partners organization: https://partners.shopify.com ',
+    'You need to create a Shopify Partners organization: https://partners.shopify.com/signup ',
   )
-const NoDevStoreError = () =>
+const NoDevStoreError = (orgId: string) =>
   new error.Fatal(
     'There are no developement stores available',
-    'Please create a store in the Shopify Partners dashboard: https://partners.shopify.com',
+    `Please create a store in the Shopify Partners dashboard: https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`,
   )
 
 /**
@@ -31,7 +32,7 @@ export async function ensureDevEnvironment(app: App): Promise<void> {
   const orgs = await fetchOrganizations(token)
   const org = await selectOrganizationPrompt(orgs)
   const {apps, stores} = await fetchAppsAndStores(org.id, token)
-  const selectedApp = await selectOrCreateApp(apps, org.id, token)
+  const selectedApp = await selectOrCreateApp(app, apps, org.id)
 
   updateAppConfigurationFile(app, {id: selectedApp.apiKey, name: selectedApp.title})
 
@@ -40,28 +41,24 @@ export async function ensureDevEnvironment(app: App): Promise<void> {
   output.info(`Connected to ${selectedApp.title} and ${selectedStore.shopName}`)
 }
 
-async function selectOrCreateApp(apps: OrganizationApp[], orgId: string, token: string): Promise<OrganizationApp> {
-  const app = await selectAppPrompt(apps)
-  if (app) return app
-  output.info('TODO: Create a new app')
-  const newApp: any = {}
-  return newApp
+async function selectOrCreateApp(app: App, apps: OrganizationApp[], orgId: string): Promise<OrganizationApp> {
+  const selectedApp = await selectAppPrompt(apps)
+  if (selectedApp) return selectedApp
+  return createApp(orgId, app)
 }
 
 async function selectOrCreateStore(stores: OrganizationStore[], orgId: string): Promise<OrganizationStore> {
   const store = await selectStorePrompt(stores)
   if (store) return store
   // Temporary error while we can't create a store from CLI
-  throw NoDevStoreError()
+  throw NoDevStoreError(orgId)
 }
 
 async function fetchOrganizations(token: string): Promise<Organization[]> {
   const query = api.graphql.AllOrganizationsQuery
   const result: api.graphql.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
-  if (organizations.length === 0) {
-    throw NoOrgError()
-  }
+  if (organizations.length === 0) throw NoOrgError()
   return organizations
 }
 
