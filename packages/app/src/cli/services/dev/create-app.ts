@@ -1,5 +1,4 @@
-import {api, error} from '@shopify/cli-kit'
-import {ensureAuthenticatedPartners} from '$../../cli-kit/src/session'
+import {api, error, session} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
 import {appNamePrompt, appTypePrompt} from '$cli/prompts/dev'
 import {OrganizationApp} from '$cli/models/organization'
@@ -7,8 +6,7 @@ import {OrganizationApp} from '$cli/models/organization'
 export async function createApp(orgId: string, app: App): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.configuration.name)
   const type = await appTypePrompt()
-  const token = await ensureAuthenticatedPartners()
-
+  const token = await session.ensureAuthenticatedPartners()
   const variables: api.graphql.CreateAppQueryVariables = {
     org: parseInt(orgId, 10),
     title: `${name}`,
