@@ -32,6 +32,11 @@ You can run the CLIs through the following `package.json` scripts:
 The project is configured with a `dev.yml` so the above steps become `dev up`, `dev clone`, and `dev shopify|create-app|create-hydrogen` for running the various CLIs.
 :::
 
+#### Fixture
+
+The repository contains a fixture project at `fixture/` that can be used for testing purposes.
+The project is setup to use the CLI from the repository instead of the NPM version.
+
 ### More automation
 
 Besides the scripts for building and running the CLIs, there are others that might come handy when adding code to the project:

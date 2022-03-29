@@ -65,3 +65,19 @@ commands:
         run: |
           yarn --cwd docs run build
           yarn --cwd docs run serve
+  fixture:
+    desc: 'Commands to interact with the fixture project'
+    subcommands:
+      build:
+        desc: Build the fixture project
+        run: yarn fixture:build
+      dev:
+        desc: Dev the fixture project
+        run: yarn fixture:dev
+      test:
+        desc: Test the fixture project
+        run: yarn fixture:test
+      scaffold:
+        desc: Scaffold in the fixture project
+        run: yarn fixture:scaffold
+
