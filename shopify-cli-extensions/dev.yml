@@ -3,6 +3,8 @@ name: shopify-cli-extensions
 type: go
 
 up:
+  - ruby:
+      version: '3.1.1'
   - python:
       version: '3.9.10'
   - go:
