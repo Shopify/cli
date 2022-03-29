@@ -1,4 +1,5 @@
 import {ensureDevEnvironment} from './environment'
+import {createApp} from './create-app'
 import {api} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
@@ -9,6 +10,7 @@ import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 vi.mock('$cli/prompts/dev')
 vi.mock('$cli/models/app/app')
 vi.mock('$cli/utilities/app/update')
+vi.mock('./create-app')
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
   return {
@@ -27,6 +29,8 @@ vi.mock('@shopify/cli-kit', async () => {
 
 afterEach(() => {
   vi.mocked(api.partners.request).mockClear()
+  vi.mocked(selectStorePrompt).mockClear()
+  vi.mocked(selectAppPrompt).mockClear()
 })
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
@@ -95,7 +99,7 @@ describe('ensureDevEnvironment', () => {
     // Given
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
     vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
-    vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
+    vi.mocked(selectStorePrompt).mockReturnValueOnce(Promise.resolve(undefined))
     vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
     vi.mocked(api.partners.request).mockResolvedValueOnce({
       organizations: {nodes: [{apps: {nodes: [APP1, APP2]}, stores: {nodes: []}}]},
@@ -103,7 +107,30 @@ describe('ensureDevEnvironment', () => {
 
     // When
     const got = ensureDevEnvironment(LOCAL_APP)
-
     expect(got).rejects.toThrow(`There are no developement stores available`)
+  })
+
+  it('prompts to create a new app if app selection returns undefined', async () => {
+    // Given
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+    vi.mocked(selectAppPrompt).mockResolvedValue(undefined)
+    vi.mocked(createApp).mockResolvedValue(APP2)
+    vi.mocked(selectStorePrompt).mockReturnValueOnce(Promise.resolve(STORE1))
+    vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
+    vi.mocked(api.partners.request).mockResolvedValueOnce({
+      organizations: {nodes: [{apps: {nodes: []}, stores: {nodes: [STORE1, STORE2]}}]},
+    })
+
+    // When
+    await ensureDevEnvironment(LOCAL_APP)
+
+    // Then
+    expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key2', name: 'app2'})
+    expect(createApp).toBeCalledWith(ORG1.id, LOCAL_APP)
+    expect(api.partners.request).toHaveBeenNthCalledWith(1, api.graphql.AllOrganizationsQuery, 'token')
+    expect(api.partners.request).toHaveBeenNthCalledWith(2, api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(selectOrganizationPrompt).toHaveBeenCalledWith([ORG1, ORG2])
+    expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 })
