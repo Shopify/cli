@@ -19,9 +19,6 @@ const CreateStoreLink = (orgId: string) => {
   return `Click here to create a new dev store to preview your project: ${url}`
 }
 
-const StoreNotFound = (name: string) =>
-  new error.Fatal(`The provided store domain (${name}) could not be found in your organization`)
-
 /**
  * Check that the project is connected to an app in partners dashboard
  * If not, select an organization and select/create an app
@@ -37,7 +34,7 @@ const StoreNotFound = (name: string) =>
 export async function ensureDevEnvironment(app: App): Promise<{app: OrganizationApp; store: OrganizationStore}> {
   const token = await session.ensureAuthenticatedPartners()
 
-  const cachedInfo: CachedAppInfo | undefined = getCachedInfo(app)
+  const cachedInfo = getCachedInfo(app)
 
   const orgId = await selectOrg(token, cachedInfo)
   const {apps, stores} = await fetchAppsAndStores(orgId, token)

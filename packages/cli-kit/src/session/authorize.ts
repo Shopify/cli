@@ -40,6 +40,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
 
   url = `${url}?${new URLSearchParams(params).toString()}`
   open(url)
+  output.info("To run this command, first log in to Shopify. We've opened the page for you on your browser.")
   output.info(`\nAs a backup, here's the link for the login page: ${url}`)
   const result = await listenRedirect(host, port)
 

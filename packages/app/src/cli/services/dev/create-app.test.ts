@@ -66,8 +66,10 @@ describe('createApp', () => {
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: {}, userErrors: [{message: 'some-error'}]}})
+
     // When
     const got = createApp('123', LOCAL_APP)
+
     // Then
     expect(got).rejects.toThrow(`some-error`)
   })

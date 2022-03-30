@@ -13,12 +13,12 @@ export interface CachedAppInfo {
   storeFqdn?: string
 }
 
-interface ConfType {
+interface ConfSchema {
   activeStore: string
   appInfo: CachedAppInfo[]
 }
 
-export const cliKit = new Conf<ConfType>({
+export const cliKit = new Conf<ConfSchema>({
   schema,
   migrations,
   projectName: 'shopify-cli-kit',
