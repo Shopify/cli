@@ -45,3 +45,58 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
   const choice: {id: string} = await ui.prompt([questions])
   return stores.find((store: any) => store.shopId === choice.id)
 }
+
+export async function appTypePrompt(): Promise<string> {
+  const options = [
+    {name: 'Public: An app built for a wide merchant audience.', value: 'public'},
+    {name: 'Custom: An app custom built for a single client.', value: 'custom'},
+  ]
+
+  const questions: ui.Question = {
+    type: 'select',
+    name: 'value',
+    message: 'What type of app are you building?',
+    choices: options,
+  }
+  const choice: {value: string} = await ui.prompt([questions])
+  return choice.value
+}
+
+export async function appNamePrompt(currentName: string): Promise<string> {
+  const questions: ui.Question = {
+    type: 'input',
+    name: 'name',
+    message: 'App Name',
+    default: currentName,
+    validate: (value) => {
+      if (value.length === 0) {
+        return 'App Name cannot be empty'
+      }
+      if (value.length > 30) {
+        return 'App name is too long (maximum is 30 characters)'
+      }
+      if (value.includes('shopify')) {
+        return 'Invalid app name'
+      }
+      return true
+    },
+  }
+  const input: {name: string} = await ui.prompt([questions])
+  return input.name
+}
+
+export async function reloadStoreListPrompt(): Promise<boolean> {
+  const options = [
+    {name: 'Yes, reload stores', value: 'reload'},
+    {name: 'No, cancel dev', value: 'cancel'},
+  ]
+
+  const questions: ui.Question = {
+    type: 'select',
+    name: 'value',
+    message: 'Would you like to reload your store list to retrieve your recently created store?',
+    choices: options,
+  }
+  const choice: {value: string} = await ui.prompt([questions])
+  return choice.value === 'reload'
+}
