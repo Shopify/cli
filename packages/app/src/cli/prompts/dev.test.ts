@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   appNamePrompt,
   appTypePrompt,
@@ -6,6 +7,9 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
 } from './dev'
+=======
+import {appNamePrompt, appTypePrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from './dev'
+>>>>>>> main
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
