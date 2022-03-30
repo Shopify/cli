@@ -13,11 +13,9 @@ import {
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
-import {cliKit} from './store'
 import constants from './constants'
 
 const NO_SESSION = new Bug('No session found after ensuring authenticated')
-const INVALID_ADMIN_STORE = new Error('No valid store found')
 const MISSING_PARTNER_TOKEN = new Bug('No partners token found after ensuring authenticated')
 const MISSING_ADMIN_TOKEN = new Bug('No admin token found after ensuring authenticated')
 const MISSING_STOREFRONT_TOKEN = new Bug('No storefront token found after ensuring authenticated')
@@ -106,22 +104,15 @@ export async function ensureAuthenticatedStorefront(scopes: string[] = []): Prom
 
 /**
  * Ensure that we have a valid Admin session for the given store.
- * If the session is valid, the store will be saved as the `activeStore` for future usage.
- * If no store is passed we will try to use the `activeStore` if there is any.
  * @param store {string} Store fqdn to request auth for
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
  * @returns {Promise<string>} The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store?: string, scopes: string[] = []): Promise<string> {
-  const validStore = store || cliKit.get('activeStore')
-  if (!validStore) {
-    throw INVALID_ADMIN_STORE
-  }
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: validStore}})
+export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<string> {
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
   if (!tokens.admin) {
     throw MISSING_ADMIN_TOKEN
   }
-  cliKit.set('activeStore', store)
   return tokens.admin
 }
 

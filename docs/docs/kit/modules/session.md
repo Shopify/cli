@@ -80,10 +80,7 @@ It returns a `Promise<string>` that resolves with the Partners API token.
 
 ### `ensureAuthenticatedAdmin`
 
-Authenticate the user and return an Admin API token.
-- If a store is provided, it will be saved as `activeStore` for future usage.
-- If a store is not provided, session will try to load read and use the `activeStore`.
-- If a store is not provided and there is no `activeStore` this method will throw an Error.
+Authenticate the user and return an Admin API token for the given store.
 
 ```ts
 import {session} from '@shopify/cli-kit'
@@ -97,7 +94,7 @@ const token = await session.ensureAuthenticatedAdmin(myStore, scopes)
 
 | Name | Description | Required | Default |
 | --- | -- | --- | --- |
-| `store` | FQDN of the store you want to log in to | No | saved `activeStore` if available |
+| `store` | FQDN of the store you want to log in to | Yes | - |
 | `scopes` | Any extra scope you want include in the auth process | No | [] |
 
 #### Output

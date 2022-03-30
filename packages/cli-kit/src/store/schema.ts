@@ -1,9 +1,6 @@
 import type {Schema} from 'conf'
 
 const schema: Schema<any> = {
-  activeStore: {
-    type: 'string',
-  },
   appInfo: {
     type: 'array',
     items: {
