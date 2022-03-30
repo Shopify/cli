@@ -1,9 +1,12 @@
 package build
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
@@ -79,5 +82,54 @@ func TestWatch(t *testing.T) {
 
 	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js")); err != nil {
 		t.Error("expected main.js to exist")
+	}
+}
+
+func TestWatchLocalization(t *testing.T) {
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+
+	extension := config.Extensions[0]
+	locales_filepath := filepath.Join(".", extension.Development.RootDir, "locales")
+
+	os.RemoveAll(locales_filepath)
+	err := os.Mkdir(locales_filepath, 0775)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		os.RemoveAll(locales_filepath)
+	})
+	en_content := []byte("{\"key\":\"value\"}")
+	err = os.WriteFile(filepath.Join(locales_filepath, "en.default.json"), en_content, 0775)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	results := []Result{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		WatchLocalization(ctx, extension, func(result Result) {
+			results = append(results, result)
+		})
+	}()
+
+	// done
+	cancel()
+	// wait while all goroutines will end their job
+	wg.Wait()
+
+	if len(results) != 1 {
+		t.Errorf("expected 1 result but got %d\n", len(results))
+	}
+
+	if !results[0].Success {
+		t.Error("expected first build to succeed")
+	}
+
+	value, err := json.Marshal(results[0].Extension.Localization.Translations["en"])
+	if string(value) != "{\"key\":\"value\"}" {
+		t.Errorf("expected correct translation for 'en' but received %s\n", string(value))
 	}
 }

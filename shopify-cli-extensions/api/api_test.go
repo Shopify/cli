@@ -174,7 +174,6 @@ func TestGetSingleExtension(t *testing.T) {
 	if extension.Localization != nil {
 		t.Error("expect localization to be nil without defined locales")
 	}
-
 }
 
 func TestServeAssets(t *testing.T) {
@@ -736,6 +735,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"hidden": false,
 			"resource": {"url": ""},
 			"root": {"url": "%v/extensions/00000000-0000-0000-0000-000000000000"},
+			"localizationStatus": "",
 			"status": "success",
 			"resource": {"url": "cart/1234"}
 			},

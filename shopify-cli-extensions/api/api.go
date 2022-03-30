@@ -226,6 +226,10 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 			if err != nil {
 				log.Printf("failed to merge update data %v", err)
 			}
+			// manually overwite localization data
+			if castedData.Localization != nil && (api.Extensions[index].Localization == nil || castedData.Localization.LastUpdated > api.Extensions[index].Localization.LastUpdated) {
+				api.Extensions[index].Localization = castedData.Localization
+			}
 			updatedExtensions = append(updatedExtensions, api.Extensions[index])
 		}
 	}
@@ -340,7 +344,6 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 	encoder := json.NewEncoder(rw)
 
 	extensions := getExtensionsWithUrl(api.Extensions, api.GetApiRootUrlFromRequest(r))
-	extensions = getExtensionsWithLocalization(extensions)
 
 	encoder.Encode(extensionsResponse{
 		api.getResponse(r),
@@ -464,80 +467,6 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 	}
 
 	return extension
-}
-
-func getExtensionsWithLocalization(extensions []core.Extension) []core.Extension {
-	updatedCopy := []core.Extension{}
-	for _, extension := range extensions {
-		updatedCopy = append(updatedCopy, setExtensionLocalization(extension))
-	}
-	return updatedCopy
-}
-
-func setExtensionLocalization(original core.Extension) core.Extension {
-	extension := core.Extension{}
-	err := mergeWithOverwrite(&extension, &original)
-	if err != nil {
-		return original
-	}
-
-	localization, err := GetLocalization(&extension)
-	if err != nil {
-		log.Printf("failed to retrieve locales: %v", err)
-	}
-
-	extension.Localization = localization
-	return extension
-}
-
-func GetLocalization(extension *core.Extension) (*core.Localization, error) {
-	path := filepath.Join(".", extension.Development.RootDir, "locales")
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// The extension does not have a locales directory.
-		return nil, nil
-	}
-
-	fileNames, err := GetFileNames(path)
-	if err != nil {
-		return nil, err
-	}
-	translations := make(map[string]interface{})
-	defaultLocale := ""
-	defaultLocalesFound := []string{}
-
-	for _, fileName := range fileNames {
-		data, err := GetMapFromJsonFile(filepath.Join(path, fileName))
-		if err != nil {
-			return nil, err
-		}
-
-		locale := strings.Split(fileName, ".")[0]
-
-		if IsDefaultLocale(fileName) {
-			defaultLocalesFound = append(defaultLocalesFound, locale)
-		}
-
-		translations[locale] = data
-	}
-
-	if len(translations) == 0 {
-		return nil, nil
-	} else {
-
-		if len(defaultLocalesFound) == 0 {
-			log.Println("could not determine a default locale, please ensure you have a {locale}.default.json file")
-		} else {
-			if len(defaultLocalesFound) > 1 {
-				log.Println("multiple default locales found, please ensure you only have a single {locale}.default.json file")
-			}
-			defaultLocale = defaultLocalesFound[0]
-		}
-
-		return &core.Localization{
-			DefaultLocale: defaultLocale,
-			Translations:  translations,
-		}, nil
-	}
 }
 
 func GetFileNames(folderPath string) ([]string, error) {

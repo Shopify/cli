@@ -86,6 +86,7 @@ type ExtensionService struct {
 type Localization struct {
 	DefaultLocale string                 `json:"defaultLocale" yaml:"default_locale"`
 	Translations  map[string]interface{} `json:"translations" yaml:"translations"`
+	LastUpdated   int64                  `json:"lastUpdated" yaml:"lastUpdated"`
 }
 
 type Capabilities struct {
@@ -132,17 +133,18 @@ type commandConfig struct {
 }
 
 type Development struct {
-	Build    commandConfig     `json:"-" yaml:"build,omitempty"`
-	BuildDir string            `json:"-" yaml:"build_dir,omitempty"`
-	Develop  commandConfig     `json:"-" yaml:"develop,omitempty"`
-	Entries  map[string]string `json:"-" yaml:"entries,omitempty"`
-	Resource Url               `json:"resource" yaml:"resource,omitempty"`
-	Renderer Renderer          `json:"-" yaml:"renderer,omitempty"`
-	Root     Url               `json:"root" yaml:"root,omitempty"`
-	RootDir  string            `json:"-" yaml:"root_dir,omitempty"`
-	Hidden   bool              `json:"hidden" yaml:"-"`
-	Status   string            `json:"status" yaml:"-"`
-	Template string            `json:"-" yaml:"template,omitempty"`
+	Build              commandConfig     `json:"-" yaml:"build,omitempty"`
+	BuildDir           string            `json:"-" yaml:"build_dir,omitempty"`
+	Develop            commandConfig     `json:"-" yaml:"develop,omitempty"`
+	Entries            map[string]string `json:"-" yaml:"entries,omitempty"`
+	Resource           Url               `json:"resource" yaml:"resource,omitempty"`
+	Renderer           Renderer          `json:"-" yaml:"renderer,omitempty"`
+	Root               Url               `json:"root" yaml:"root,omitempty"`
+	RootDir            string            `json:"-" yaml:"root_dir,omitempty"`
+	Hidden             bool              `json:"hidden" yaml:"-"`
+	Status             string            `json:"status" yaml:"-"`
+	LocalizationStatus string            `json:"localizationStatus" yaml:"-"`
+	Template           string            `json:"-" yaml:"template,omitempty"`
 }
 
 func (d Development) UsesReact() bool {
