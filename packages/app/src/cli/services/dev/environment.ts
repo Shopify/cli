@@ -1,5 +1,5 @@
 import {createApp} from './create-app'
-import {api, error, output, session, store as conf} from '@shopify/cli-kit'
+import {api, error, session, store as conf} from '@shopify/cli-kit'
 import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
@@ -32,15 +32,10 @@ const StoreNotFound = (name: string) =>
  * @param app {App} Current local app information
  * @param envStore {string} Optional store passed via env variable/flag
  */
-export async function ensureDevEnvironment(app: App, envStore?: string): Promise<{appId: string; store: string}> {
+export async function ensureDevEnvironment(app: App): Promise<{app: OrganizationApp; store: OrganizationStore}> {
   const token = await session.ensureAuthenticatedPartners()
 
   const cachedInfo: CachedAppInfo | undefined = getCachedInfo(app)
-
-  const cachedStore = cachedInfo?.storeFqdn
-  if (cachedStore && (cachedStore === envStore || envStore === undefined)) {
-    return {appId: cachedInfo.appId, store: cachedStore}
-  }
 
   const orgId = await selectOrg(token, cachedInfo)
   const {apps, stores} = await fetchAppsAndStores(orgId, token)
@@ -49,13 +44,11 @@ export async function ensureDevEnvironment(app: App, envStore?: string): Promise
   conf.setAppInfo(selectedApp.apiKey, {orgId})
   updateAppConfigurationFile(app, {id: selectedApp.apiKey, name: selectedApp.title})
 
-  const selectedStore = await selectStore(stores, orgId, envStore, cachedInfo?.storeFqdn)
+  const selectedStore = await selectStore(stores, orgId, cachedInfo?.storeFqdn)
 
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore.shopDomain})
 
-  // NEXT: check if app is installed or redirect to install app
-  output.info(`Connected to ${selectedApp.title} and ${selectedStore.shopName}`)
-  return {appId: selectedApp.apiKey, store: selectedStore.shopDomain}
+  return {app: selectedApp, store: selectedStore}
 }
 
 function getCachedInfo(app: App): CachedAppInfo | undefined {
@@ -106,14 +99,8 @@ async function selectOrCreateApp(
 async function selectStore(
   stores: OrganizationStore[],
   orgId: string,
-  envStore?: string,
   previousStore?: string,
 ): Promise<OrganizationStore> {
-  if (envStore) {
-    const store = stores.find((store) => store.shopDomain === envStore)
-    if (store) return store
-    throw StoreNotFound(envStore)
-  }
   if (previousStore) {
     const store = stores.find((store) => store.shopDomain === previousStore)
     if (store) return store

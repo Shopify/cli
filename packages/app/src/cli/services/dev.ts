@@ -3,12 +3,12 @@ import {App} from '../models/app/app'
 import {output} from '@shopify/cli-kit'
 
 interface DevOptions {
-  app: App
+  appInfo: App
   store?: string
 }
 
-async function dev({app, store}: DevOptions) {
-  const info = await ensureDevEnvironment(app, store)
+async function dev({appInfo}: DevOptions) {
+  const {app, store} = await ensureDevEnvironment(appInfo)
   output.info(`AppId: ${info.appId}, store: ${info.store}`)
   // Create tunnel etc...
 }
