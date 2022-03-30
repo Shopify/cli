@@ -20,7 +20,7 @@ you can go through the steps below to have your environment setup to work with t
 1. Clone the repository: `git clone https://github.com/Shopify/shopify-cli-next.git`.
 2. Install dependencies: `yarn install`
 
-### Run
+### Run against a local project
 
 You can run the CLIs through the following `package.json` scripts:
 
@@ -28,14 +28,25 @@ You can run the CLIs through the following `package.json` scripts:
 - `yarn create-app`: Builds and runs the create-app CLI.
 - `yarn create-hydrogen`: Builds and runs the create-hydrogen CLI.
 
+All commands support the `--path` argument, so you can run any command pointing to your app. For example, `yarn shopify app build --path /path/to/project`
+
 :::tip For first-party contributors
 The project is configured with a `dev.yml` so the above steps become `dev up`, `dev clone`, and `dev shopify|create-app|create-hydrogen` for running the various CLIs.
 :::
 
-#### Fixture
+### Run against the fixture project
 
-The repository contains a fixture project at `fixture/` that can be used for testing purposes.
-The project is setup to use the CLI from the repository instead of the NPM version.
+The repository contains fixture projects under `fixtures/` that can be used for testing purposes.
+`fixture/app` is the most representative of what a standard Shopify app looks like.
+If you want to interact with it, you can `cd` into the directory and run the CLI through the scripts in the `package.json`:
+
+| Command | **Yarn** | **dev** |
+| ---- | ---- | --- |
+| shopify | `yarn shopify` | `dev fixture shopify` |
+| build | `yarn build` | `dev fixture build` |
+| dev | `yarn dev` | `dev fixture dev` |
+| test | `yarn test` | `dev fixture test` |
+| scaffold | `yarn scaffold` | `dev fixture scaffold` |
 
 ### More automation
 
