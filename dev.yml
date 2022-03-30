@@ -65,3 +65,22 @@ commands:
         run: |
           yarn --cwd docs run build
           yarn --cwd docs run serve
+  fixture:
+    desc: 'Commands to interact with the fixture project'
+    subcommands:
+      shopify:
+        desc: Runs Shopify with the fixture project
+        run: yarn --cwd fixtures/app shopify
+      build:
+        desc: Build the fixture project
+        run: yarn --cwd fixtures/app build
+      dev:
+        desc: Dev the fixture project
+        run: yarn --cwd fixtures/app dev
+      test:
+        desc: Test the fixture project
+        run: yarn --cwd fixtures/app test
+      scaffold:
+        desc: Scaffold in the fixture project
+        run: yarn --cwd fixtures/app scaffold
+

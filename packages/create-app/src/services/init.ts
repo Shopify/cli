@@ -31,7 +31,7 @@ async function init(options: InitOptions) {
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  await ui.list(
+  const list = new ui.Listr(
     [
       {
         title: `Initializing your app ${hyphenizedName}`,
@@ -64,6 +64,7 @@ async function init(options: InitOptions) {
     ],
     {concurrent: false},
   )
+  await list.run()
 
   output.info(output.content`
   ${hyphenizedName} is ready to build! ✨

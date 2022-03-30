@@ -11,32 +11,6 @@
     "access": "public",
     "@shopify:registry": "https://registry.npmjs.org"
   },
-  "exports": {
-    "./ui-extensions/admin": {
-      "import": "./dist/framework/ui-extensions/admin/index.js",
-      "types": "./dist/framework/ui-extensions/admin/index.d.ts"
-    },
-    "./ui-extensions/admin/react": {
-      "import": "./dist/framework/ui-extensions/admin/react.js",
-      "types": "./dist/framework/ui-extensions/admin/react.d.ts"
-    },
-    "./ui-extensions/checkout": {
-      "import": "./dist/framework/ui-extensions/checkout/index.js",
-      "types": "./dist/framework/ui-extensions/checkout/index.d.ts"
-    },
-    "./ui-extensions/checkout/react": {
-      "import": "./dist/framework/ui-extensions/checkout/react.js",
-      "types": "./dist/framework/ui-extensions/checkout/react.d.ts"
-    },
-    "./ui-extensions/post-purchase": {
-      "import": "./dist/framework/ui-extensions/post-purchase/index.js",
-      "types": "./dist/framework/ui-extensions/post-purchase/index.d.ts"
-    },
-    "./ui-extensions/post-purchase/react": {
-      "import": "./dist/framework/ui-extensions/post-purchase/react.js",
-      "types": "./dist/framework/ui-extensions/post-purchase/react.d.ts"
-    }
-  },
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "rimraf dist/ && rollup -c && tsc -p tsconfig.dist.json",
@@ -53,12 +27,6 @@
     ]
   },
   "dependencies": {
-    "@shopify/admin-ui-extensions": "^1.0.1",
-    "@shopify/admin-ui-extensions-react": "^1.0.1",
-    "@shopify/checkout-ui-extensions": "^0.13.0",
-    "@shopify/checkout-ui-extensions-react": "^0.14.0",
-    "@shopify/post-purchase-ui-extensions": "^0.13.2",
-    "@shopify/post-purchase-ui-extensions-react": "^0.13.2"
   },
   "peerDependencies": {
     "@oclif/core": "1.3.6",
