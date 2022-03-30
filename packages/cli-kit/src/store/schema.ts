@@ -4,6 +4,23 @@ const schema: Schema<any> = {
   activeStore: {
     type: 'string',
   },
+  appInfo: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        appId: {
+          type: 'string',
+        },
+        orgId: {
+          type: 'string',
+        },
+        storeFqdn: {
+          type: 'string',
+        },
+      },
+    },
+  },
 }
 
 export default schema
