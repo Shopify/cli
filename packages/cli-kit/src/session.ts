@@ -15,10 +15,10 @@ import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import constants from './constants'
 
-const NO_SESSION = new Bug('No session found after ensuring authenticated')
-const MISSING_PARTNER_TOKEN = new Bug('No partners token found after ensuring authenticated')
-const MISSING_ADMIN_TOKEN = new Bug('No admin token found after ensuring authenticated')
-const MISSING_STOREFRONT_TOKEN = new Bug('No storefront token found after ensuring authenticated')
+const NoSessionError = new Bug('No session found after ensuring authenticated')
+const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
+const MissingAdminTokenError = new Bug('No admin token found after ensuring authenticated')
+const MissingStorefrontTokenError = new Bug('No storefront token found after ensuring authenticated')
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -84,7 +84,7 @@ export async function ensureAuthenticatedPartners(scopes: string[] = [], env = p
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}})
   if (!tokens.partners) {
-    throw MISSING_PARTNER_TOKEN
+    throw MissingPartnerTokenError
   }
   return tokens.partners
 }
@@ -97,7 +97,7 @@ export async function ensureAuthenticatedPartners(scopes: string[] = [], env = p
 export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<string> {
   const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
   if (!tokens.storefront) {
-    throw MISSING_STOREFRONT_TOKEN
+    throw MissingStorefrontTokenError
   }
   return tokens.storefront
 }
@@ -111,7 +111,7 @@ export async function ensureAuthenticatedStorefront(scopes: string[] = []): Prom
 export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<string> {
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
   if (!tokens.admin) {
-    throw MISSING_ADMIN_TOKEN
+    throw MissingAdminTokenError
   }
   return tokens.admin
 }
@@ -197,7 +197,7 @@ async function refreshTokens(token: IdentityToken, applications: OAuthApplicatio
 async function tokensFor(applications: OAuthApplications, session: Session, fqdn: string): Promise<OAuthSession> {
   const fqdnSession = session[fqdn]
   if (!fqdnSession) {
-    throw NO_SESSION
+    throw NoSessionError
   }
   const tokens: OAuthSession = {}
   if (applications.adminApi) {
