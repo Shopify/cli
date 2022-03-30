@@ -1,4 +1,11 @@
-import {appNamePrompt, appTypePrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from './dev'
+import {
+  appNamePrompt,
+  appTypePrompt,
+  reloadStoreListPrompt,
+  selectAppPrompt,
+  selectOrganizationPrompt,
+  selectStorePrompt,
+} from './dev'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
@@ -214,6 +221,30 @@ describe('appName', () => {
         message: 'App Name',
         default: 'suggested-name',
         validate: expect.any(Function),
+      },
+    ])
+  })
+})
+
+describe('reloadStoreList', () => {
+  it('returns true if user selects reload', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'reload'})
+
+    // When
+    const got = await reloadStoreListPrompt()
+
+    // Then
+    expect(got).toEqual(true)
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: 'Would you like to reload your store list to retrieve your recently created store?',
+        choices: [
+          {name: 'Yes, reload stores', value: 'reload'},
+          {name: 'No, cancel dev', value: 'cancel'},
+        ],
       },
     ])
   })
