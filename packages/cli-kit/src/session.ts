@@ -15,6 +15,7 @@ import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import {cliKit} from './store'
 import constants from './constants'
+import * as output from './output'
 
 const NO_SESSION = new Bug('No session found after ensuring authenticated')
 const INVALID_ADMIN_STORE = new Error('No valid store found')
@@ -161,6 +162,8 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
 }
 
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
+  output.info("To run this command, first log in to Shopify. We've opened the page for you on your browser.")
+
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn

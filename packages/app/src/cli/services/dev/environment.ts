@@ -1,6 +1,6 @@
 import {createApp} from './create-app'
-import {api, error, session, store as conf} from '@shopify/cli-kit'
-import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {api, error, output, session, store as conf} from '@shopify/cli-kit'
+import {reloadStoreListPrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
@@ -12,10 +12,12 @@ const NoOrgError = () =>
     'You need to create a Shopify Partners organization: https://partners.shopify.com/signup ',
   )
 const NoDevStoreError = (orgId: string) =>
-  new error.Fatal(
-    'There are no developement stores available',
-    `Please create a store in the Shopify Partners dashboard: https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`,
-  )
+  new error.Fatal('There are no developement stores available', CreateStoreLink(orgId))
+
+const CreateStoreLink = (orgId: string) => {
+  const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
+  return `Click here to create a new dev store to preview your project: ${url}`
+}
 
 const StoreNotFound = (name: string) =>
   new error.Fatal(`The provided store domain (${name}) could not be found in your organization`)
@@ -53,9 +55,7 @@ export async function ensureDevEnvironment(app: App): Promise<{app: Organization
 
 function getCachedInfo(app: App): CachedAppInfo | undefined {
   if (!app.configuration.id) return undefined
-  const cachedInfo = getAppInfo(app.configuration.id)
-  if (cachedInfo) return cachedInfo
-  return undefined
+  return getAppInfo(app.configuration.id)
 }
 
 async function selectOrg(token: string, cachedInfo?: CachedAppInfo): Promise<string> {
@@ -83,31 +83,37 @@ async function selectOrCreateApp(
     const selectedApp = apps.find((app) => app.apiKey === cachedInfo.appId)
     if (selectedApp) return selectedApp
   }
-  const selectedApp = await selectAppPrompt(apps)
-  if (selectedApp) return selectedApp
-  return createApp(orgId, localApp)
+  let app = await selectAppPrompt(apps)
+  if (!app) app = await createApp(orgId, localApp)
+
+  output.success(`Connected your project with ${app.title}`)
+  return app
 }
 
 /**
- * Select store from list or throw error if there aren't any
- * If a store is provided via env, check that this store exists in user org and automatically select it
+ * Select store from list or
+ * If a store was used previously, we automatically select it (if it's still available)
+ * If there are no stores, show a link to create a store and prompt the user to refresh the store list
+ * If no store is finally selected, throw error
  * @param stores {OrganizationStore[]} List of available stores
  * @param orgId {string} Current organization ID
- * @param envStore {string} Optional store passed via env variable/flag
  * @returns {Promise<OrganizationStore>} The selected store
  */
-async function selectStore(
-  stores: OrganizationStore[],
-  orgId: string,
-  previousStore?: string,
-): Promise<OrganizationStore> {
-  if (previousStore) {
-    const store = stores.find((store) => store.shopDomain === previousStore)
+async function selectStore(stores: OrganizationStore[], orgId: string, prevStore?: string): Promise<OrganizationStore> {
+  if (prevStore) {
+    const store = stores.find((store) => store.shopDomain === prevStore)
     if (store) return store
   }
   const store = await selectStorePrompt(stores)
   if (store) return store
-  throw NoDevStoreError(orgId)
+
+  output.info(`\n${CreateStoreLink(orgId)}`)
+  const reload = await reloadStoreListPrompt()
+  if (!reload) throw NoDevStoreError(orgId)
+
+  const token = await session.ensureAuthenticatedPartners()
+  const data = await fetchAppsAndStores(orgId, token)
+  return selectStore(data.stores, orgId, token)
 }
 
 async function fetchOrganizations(token: string): Promise<Organization[]> {

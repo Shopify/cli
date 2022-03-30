@@ -1,4 +1,4 @@
-import {api, error, session} from '@shopify/cli-kit'
+import {api, error, output, session} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
 import {appNamePrompt, appTypePrompt} from '$cli/prompts/dev'
 import {OrganizationApp} from '$cli/models/organization'
@@ -21,5 +21,6 @@ export async function createApp(orgId: string, app: App): Promise<OrganizationAp
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Fatal(errors)
   }
+  output.success(`🎉 ${result.appCreate.app.title} has been created on your Partners account`)
   return result.appCreate.app
 }
