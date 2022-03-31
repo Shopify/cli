@@ -60,7 +60,7 @@ describe('prompts', () => {
 
       const homeApp = await askPrompts(tmpDir)
 
-      expect(promptSpy).toHaveBeenCalledWith(prompts)
+      expect(promptSpy).toHaveBeenCalledWith(prompts.sort())
       expect(homeApp).toEqual(answers)
     })
   })

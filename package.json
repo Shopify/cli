@@ -74,7 +74,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "fixture"
+      "fixtures/*"
     ]
   },
   "prettier": {
