@@ -17,9 +17,8 @@ export default class Init extends Command {
       hidden: false,
     }),
     template: Flags.string({
-      description: 'The template for app home. Eg, --template https://github.com/shopify/app-template-php',
+      description: 'The template for app home. Eg, --template https://github.com/Shopify/shopify-app-php',
       env: 'SHOPIFY_FLAG_TEMPLATE',
-      default: 'https://github.com/shopify/bfs-app-template-test',
     }),
     'dependency-manager': Flags.string({
       char: 'd',
@@ -40,11 +39,12 @@ export default class Init extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const promptAnswers = await initPrompt({
       name: flags.name,
+      template: flags.template,
     })
     await initService({
       name: promptAnswers.name,
       dependencyManager: flags['dependency-manager'],
-      template: flags.template,
+      template: promptAnswers.template,
       local: flags.local,
       directory,
     })

@@ -54,7 +54,7 @@ const LOCAL_APP: App = {
   packageManager: 'yarn',
   configuration: {name: 'my-app'},
   scripts: [],
-  home: {directory: ''},
+  home: {directory: '', configuration: {commands: {dev: ''}}},
   extensions: [],
 }
 
