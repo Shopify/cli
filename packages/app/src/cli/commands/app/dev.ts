@@ -4,7 +4,7 @@ import {Command, Flags} from '@oclif/core'
 import {path} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
-  static description = 'Develop a block or an app'
+  static description = 'Run the app'
 
   static flags = {
     path: Flags.string({

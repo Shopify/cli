@@ -34,7 +34,7 @@ interface Script {
   directory: string
 }
 
-interface Extension {
+export interface Extension {
   configuration: ExtensionConfiguration
   directory: string
 }
@@ -48,7 +48,7 @@ export const HomeConfigurationSchema = schema.define.object({
 
 export type HomeConfiguration = schema.define.infer<typeof HomeConfigurationSchema>
 export type HomeConfigurationCommands = keyof HomeConfiguration['commands']
-interface Home {
+export interface Home {
   directory: string
   configuration: HomeConfiguration
 }

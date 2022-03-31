@@ -1,3 +1,4 @@
 # This file stores configurations for your Shopify app.
 
-name = "fixture"
+name = "cli-example-app-custom"
+id = "99bc289f377cd2f412aa368c5a570f5c"

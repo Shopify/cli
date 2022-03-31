@@ -7,6 +7,9 @@ enum ContentTokenType {
   Command,
   Path,
   Link,
+  Yellow,
+  Cyan,
+  Magenta,
 }
 
 interface ContentMetadata {
@@ -34,6 +37,15 @@ export const token = {
   },
   link: (value: string, link: string) => {
     return new ContentToken(value, {link}, ContentTokenType.Link)
+  },
+  cyan: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Cyan)
+  },
+  yellow: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Yellow)
+  },
+  magenta: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Magenta)
   },
 }
 
@@ -69,6 +81,15 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Link:
           output += terminalLink(enumToken.value, enumToken.metadata.link ?? '')
+          break
+        case ContentTokenType.Yellow:
+          output += colors.yellow(enumToken.value)
+          break
+        case ContentTokenType.Cyan:
+          output += colors.cyan(enumToken.value)
+          break
+        case ContentTokenType.Magenta:
+          output += colors.magenta(enumToken.value)
           break
       }
     }
