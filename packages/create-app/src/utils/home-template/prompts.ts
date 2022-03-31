@@ -1,28 +1,14 @@
 import {configurationFileNames} from '../../constants'
 import {homeTemplateSchema} from '../../models/home-template'
-import {file, path, toml, ui} from '@shopify/cli-kit'
+import {file, path, toml} from '@shopify/cli-kit'
 
 export default async function askPrompts(directory: string) {
-  const homeConfigs = await getHomeConfigs(directory)
+  const templatePath = path.join(directory, configurationFileNames.homeTemplate)
 
-  const allPrompts = homeConfigs.flatMap((config) => config.prompts)
-
-  return allPrompts.length ? ui.prompt(allPrompts) : {}
-}
-
-async function getHomeConfigs(directory: string) {
-  const globPath = path.join(directory, '**', configurationFileNames.homeTemplate)
-  const configFilePaths = await path.glob(globPath)
-  const results = []
-
-  for (const configFilePath of configFilePaths) {
-    results.push(parseConfiguration(configFilePath))
+  if (await file.exists(templatePath)) {
+    const rawToml = await file.read(templatePath)
+    return homeTemplateSchema.parse(await toml.decode(rawToml))
+  } else {
+    return []
   }
-
-  return Promise.all(results)
-}
-
-async function parseConfiguration(tomlPath: string) {
-  const rawToml = await file.read(tomlPath)
-  return homeTemplateSchema.parse(await toml.decode(rawToml))
 }

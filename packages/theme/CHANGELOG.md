@@ -1,5 +1,11 @@
 # @shopify/theme
 
+## 0.5.9
+
+### Patch Changes
+
+- Some fixes
+
 ## 0.5.8
 
 ### Patch Changes

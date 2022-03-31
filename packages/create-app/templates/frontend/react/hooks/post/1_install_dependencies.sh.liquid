@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-echo $SCRIPT_DIR
-cd $SCRIPT_DIR
-{{dependency_manager}} install
-
-# exit 1
-exit 0
