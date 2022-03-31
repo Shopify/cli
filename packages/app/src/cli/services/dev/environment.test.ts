@@ -55,7 +55,7 @@ const LOCAL_APP: App = {
   configuration: {name: 'my-app'},
   scripts: [],
   home: {directory: ''},
-  uiExtensions: [],
+  extensions: [],
 }
 
 describe('ensureDevEnvironment', () => {

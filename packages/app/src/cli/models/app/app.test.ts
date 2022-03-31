@@ -4,7 +4,7 @@ import {file, path} from '@shopify/cli-kit'
 import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
 
 describe('load', () => {
-  type BlockType = 'uiExtensions' | 'scripts'
+  type BlockType = 'extensions' | 'scripts'
 
   let tmpDir: string
   const appConfiguration = `
@@ -132,21 +132,21 @@ name = "my_app"
     expect(app.packageManager).toBe('pnpm')
   })
 
-  it("throws an error if the UI extension configuration file doesn't exist", async () => {
+  it("throws an error if the extension configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'uiExtensions', name: 'my-extension'})
+    makeBlockDir({blockType: 'extensions', name: 'my-extension'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
-  it('throws an error if the UI extension configuration file is invalid', async () => {
+  it('throws an error if the extension configuration file is invalid', async () => {
     // Given
     const blockConfiguration = `
       wrong = "my_extension"
       `
     await writeBlockConfig({
-      blockType: 'uiExtensions',
+      blockType: 'extensions',
       blockConfiguration,
       name: 'my-extension',
     })
@@ -155,7 +155,7 @@ name = "my_app"
     await expect(load(tmpDir)).rejects.toThrow()
   })
 
-  it('loads the app when it has a UI extension with a valid configuration', async () => {
+  it('loads the app when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
@@ -164,7 +164,7 @@ name = "my_app"
       type = "checkout-post-purchase"
       `
     await writeBlockConfig({
-      blockType: 'uiExtensions',
+      blockType: 'extensions',
       blockConfiguration,
       name: 'my-extension',
     })
@@ -173,10 +173,10 @@ name = "my_app"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
+    expect(app.extensions[0].configuration.name).toBe('my_extension')
   })
 
-  it('loads the app from a UI extension directory when it has a UI extension with a valid configuration', async () => {
+  it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
@@ -185,7 +185,7 @@ name = "my_app"
       type = "checkout-post-purchase"
       `
     const {blockDir} = await writeBlockConfig({
-      blockType: 'uiExtensions',
+      blockType: 'extensions',
       blockConfiguration,
       name: 'my-extension',
     })
@@ -195,10 +195,10 @@ name = "my_app"
 
     // Then
     expect(app.configuration.name).toBe('my_app')
-    expect(app.uiExtensions[0].configuration.name).toBe('my_extension')
+    expect(app.extensions[0].configuration.name).toBe('my_extension')
   })
 
-  it('loads the app with several UI extensions that have valid configurations', async () => {
+  it('loads the app with several extensions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
     await mkdirHome()
@@ -208,7 +208,7 @@ name = "my_app"
       type = "checkout-post-purchase"
       `
     await writeBlockConfig({
-      blockType: 'uiExtensions',
+      blockType: 'extensions',
       blockConfiguration,
       name: 'my_extension_1',
     })
@@ -218,7 +218,7 @@ name = "my_app"
       type = "product-subscription"
       `
     await writeBlockConfig({
-      blockType: 'uiExtensions',
+      blockType: 'extensions',
       blockConfiguration,
       name: 'my_extension_2',
     })
@@ -227,9 +227,9 @@ name = "my_app"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.uiExtensions).toHaveLength(2)
-    expect(app.uiExtensions[0].configuration.name).toBe('my_extension_1')
-    expect(app.uiExtensions[1].configuration.name).toBe('my_extension_2')
+    expect(app.extensions).toHaveLength(2)
+    expect(app.extensions[0].configuration.name).toBe('my_extension_1')
+    expect(app.extensions[1].configuration.name).toBe('my_extension_2')
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
