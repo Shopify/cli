@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "private": true,
   "description": "Utilities building and publishing themes",
   "type": "module",
@@ -26,7 +26,7 @@
     "@oclif/core": "1.3.6"
   },
   "devDependencies": {
-    "@shopify/cli-kit": "0.33.8",
+    "@shopify/cli-kit": "1.0.0",
     "vitest": "0.7.9"
   }
 }

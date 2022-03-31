@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 1.0.0
+
+### Minor Changes
+
+- e744db7: Rename UI Extensions back to Extensions
+
+### Patch Changes
+
+- Get workflows working e2e
+- Updated dependencies
+  - @shopify/cli-kit@1.0.0
+
 ## 0.33.8
 
 ### Patch Changes

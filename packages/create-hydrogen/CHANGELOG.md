@@ -1,5 +1,14 @@
 # @shopify/create-hydrogen
 
+## 1.0.0
+
+### Patch Changes
+
+- Get workflows working e2e
+- Updated dependencies
+  - @shopify/cli-kit@1.0.0
+  - @shopify/cli-hydrogen@1.0.0
+
 ## 0.33.8
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @shopify/theme
 
+## 0.5.8
+
+### Patch Changes
+
+- Get workflows working e2e
+
 ## 0.5.7
 
 ### Patch Changes
