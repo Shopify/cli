@@ -15,8 +15,8 @@ interface InitOptions {
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath('app')
-  const cliPackageVersion = constants.versions.cli
-  const appPackageVersion = constants.versions.app
+  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
+  const appPackageVersion = options.shopifyAppVersion ?? constants.versions.app
 
   const dependencyOverrides: {[key: string]: string} = {}
   if (options.shopifyCliVersion) {
