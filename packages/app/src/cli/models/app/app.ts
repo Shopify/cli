@@ -1,5 +1,5 @@
 import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
-import {blocks, configurationFileNames, genericConfigurationFileNames, uiExtensions} from '$cli/constants'
+import {blocks, configurationFileNames, genericConfigurationFileNames, extensions} from '$cli/constants'
 
 export const HomeNotFoundError = (homeDirectory: string) => {
   return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
@@ -12,12 +12,12 @@ export const AppConfigurationSchema = schema.define.object({
 
 type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
-const UIExtensionConfigurationSchema = schema.define.object({
+const ExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(uiExtensions.types),
+  type: schema.define.enum(extensions.types),
 })
 
-type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
+type ExtensionConfiguration = schema.define.infer<typeof ExtensionConfigurationSchema>
 
 const ScriptConfigurationSchema = schema.define.object({
   name: schema.define.string(),
@@ -30,8 +30,8 @@ interface Script {
   directory: string
 }
 
-interface UIExtension {
-  configuration: UIExtensionConfiguration
+interface Extension {
+  configuration: ExtensionConfiguration
   directory: string
 }
 
@@ -47,7 +47,7 @@ export interface App {
   configuration: AppConfiguration
   scripts: Script[]
   home: Home
-  uiExtensions: UIExtension[]
+  extensions: Extension[]
 }
 
 export async function load(directory: string): Promise<App> {
@@ -64,7 +64,7 @@ export async function load(directory: string): Promise<App> {
   const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath)
   const appDirectory = path.dirname(configurationPath)
   const scripts = await loadScripts(appDirectory)
-  const uiExtensions = await loadUiExtensions(appDirectory)
+  const extensions = await loadExtensions(appDirectory)
   const yarnLockPath = path.join(appDirectory, genericConfigurationFileNames.yarn.lockfile)
   const yarnLockExists = await file.exists(yarnLockPath)
   const pnpmLockPath = path.join(appDirectory, genericConfigurationFileNames.pnpm.lockfile)
@@ -84,7 +84,7 @@ export async function load(directory: string): Promise<App> {
     configuration,
     home,
     scripts,
-    uiExtensions,
+    extensions,
     packageManager,
   }
 }
@@ -117,15 +117,15 @@ async function parseConfigurationFile(schema: any, path: string) {
   return parseResult.data
 }
 
-async function loadUiExtensions(rootDirectory: string): Promise<UIExtension[]> {
-  const uiExtensionsPath = path.join(rootDirectory, `${blocks.uiExtensions.directoryName}/*`)
-  const directories = await path.glob(uiExtensionsPath, {onlyDirectories: true})
-  return Promise.all(directories.map((directory) => loadUiExtension(directory)))
+async function loadExtensions(rootDirectory: string): Promise<Extension[]> {
+  const extensionsPath = path.join(rootDirectory, `${blocks.extensions.directoryName}/*`)
+  const directories = await path.glob(extensionsPath, {onlyDirectories: true})
+  return Promise.all(directories.map((directory) => loadExtension(directory)))
 }
 
-async function loadUiExtension(directory: string): Promise<UIExtension> {
-  const configurationPath = path.join(directory, blocks.uiExtensions.configurationName)
-  const configuration = await parseConfigurationFile(UIExtensionConfigurationSchema, configurationPath)
+async function loadExtension(directory: string): Promise<Extension> {
+  const configurationPath = path.join(directory, blocks.extensions.configurationName)
+  const configuration = await parseConfigurationFile(ExtensionConfigurationSchema, configurationPath)
   return {directory, configuration}
 }
 

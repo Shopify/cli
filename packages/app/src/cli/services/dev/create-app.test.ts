@@ -11,7 +11,7 @@ const LOCAL_APP: App = {
   configuration: {name: 'my-app'},
   scripts: [],
   home: {directory: ''},
-  uiExtensions: [],
+  extensions: [],
 }
 
 const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: {secret: 'secret1'}}
