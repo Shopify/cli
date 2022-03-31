@@ -3,35 +3,35 @@ import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'
 import {strict as assert} from 'assert'
 
-interface UIExtensionConfiguration {
+interface ExtensionConfiguration {
   name: string
-  uiExtensionType: string
+  extensionType: string
 }
 
 When(
-  /I create a UI extension named (.+) of type (.+)/,
+  /I create a extension named (.+) of type (.+)/,
   {timeout: 2 * 60 * 1000},
-  async function (uiExtensionName: string, uiExtensionType: string) {
+  async function (extensionName: string, extensionType: string) {
     await exec(executables.cli, [
       'app',
       'scaffold',
-      'ui-extension',
+      'extension',
       '--name',
-      uiExtensionName,
+      extensionName,
       '--path',
       this.appDirectory,
       '--type',
-      uiExtensionType,
+      extensionType,
     ])
   },
 )
 
-Then(/I have a UI extension named (.+) of type (.+)/, {}, async function (appName: string, uiExtensionType: string) {
+Then(/I have a extension named (.+) of type (.+)/, {}, async function (appName: string, extensionType: string) {
   const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory])
   const results = JSON.parse(stdout)
-  const uiExtension = results.uiExtensions.find((uiExtension: {configuration: UIExtensionConfiguration}) => {
-    return uiExtension.configuration.name === appName
+  const extension = results.extensions.find((extension: {configuration: ExtensionConfiguration}) => {
+    return extension.configuration.name === appName
   })
-  if (!uiExtension) assert.fail(`Extension not created! Config:\n${JSON.stringify(results, null, 2)}`)
-  assert.equal(uiExtension.configuration.type, uiExtensionType)
+  if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(results, null, 2)}`)
+  assert.equal(extension.configuration.type, extensionType)
 })

@@ -1,5 +1,47 @@
 # @shopify/create-app
 
+## 1.0.1
+
+### Patch Changes
+
+- Some fixes
+
+## 1.0.0
+
+### Patch Changes
+
+- Get workflows working e2e
+
+## 0.33.8
+
+### Patch Changes
+
+- Remove unnecessary dependencies
+
+## 0.33.7
+
+### Patch Changes
+
+- Add .gitignore to the app template
+
+## 0.33.6
+
+### Patch Changes
+
+- Fix create-app fixing the wrong dependency of @shopify/app
+
+## 0.33.5
+
+### Patch Changes
+
+- Some fixes with external packages
+
+## 0.33.4
+
+### Patch Changes
+
+- Version 0.33.3
+
 ## 0.33.2
 
 ### Patch Changes

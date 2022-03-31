@@ -1,5 +1,48 @@
 # @shopify/app
 
+## 1.0.1
+
+### Patch Changes
+
+- Some fixes
+- Updated dependencies
+  - @shopify/cli-kit@1.0.1
+
+## 1.0.0
+
+### Minor Changes
+
+- e744db7: Rename UI Extensions back to Extensions
+
+### Patch Changes
+
+- Get workflows working e2e
+- Updated dependencies
+  - @shopify/cli-kit@1.0.0
+
+## 0.33.8
+
+### Patch Changes
+
+- Remove unnecessary dependencies
+- Updated dependencies
+  - @shopify/cli-kit@0.33.8
+
+## 0.33.7
+
+### Patch Changes
+
+- Add .gitignore to the app template
+- Updated dependencies
+  - @shopify/cli-kit@0.33.7
+
+## 0.33.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @shopify/cli-kit@0.33.3
+
 ## 0.33.2
 
 ### Patch Changes

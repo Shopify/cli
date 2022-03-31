@@ -2,10 +2,12 @@ import {ui} from '@shopify/cli-kit'
 
 interface InitOptions {
   name?: string
+  template?: string
 }
 
 interface InitOutput {
   name: string
+  template: string
 }
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
@@ -27,8 +29,17 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       },
     })
   }
+  if (!options.template) {
+    questions.push({
+      type: 'select',
+      name: 'template',
+      choices: ['php', 'node', 'rails'],
+      message: 'Which template would you like to use?',
+      default: 'https://github.com/Shopify/shopify-app-php',
+    })
+  }
   const promptOutput: InitOutput = await prompt(questions)
-  return {...options, ...promptOutput}
+  return {...options, ...promptOutput, template: 'https://github.com/Shopify/shopify-app-php'}
 }
 
 export default init

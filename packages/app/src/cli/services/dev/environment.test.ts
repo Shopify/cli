@@ -68,8 +68,8 @@ const LOCAL_APP: App = {
   packageManager: 'yarn',
   configuration: {name: 'my-app', id: 'key1'},
   scripts: [],
-  home: {directory: ''},
-  uiExtensions: [],
+  home: {directory: '', configuration: {commands: {dev: ''}}},
+  extensions: [],
 }
 
 const FETCH_ORG_RESPONSE_VALUE = {

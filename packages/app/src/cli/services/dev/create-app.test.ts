@@ -10,8 +10,8 @@ const LOCAL_APP: App = {
   packageManager: 'yarn',
   configuration: {name: 'my-app'},
   scripts: [],
-  home: {directory: ''},
-  uiExtensions: [],
+  home: {directory: '', configuration: {commands: {dev: ''}}},
+  extensions: [],
 }
 
 const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: {secret: 'secret1'}}
