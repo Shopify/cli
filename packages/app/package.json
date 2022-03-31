@@ -58,7 +58,8 @@
     "@shopify/checkout-ui-extensions": "^0.13.0",
     "@shopify/checkout-ui-extensions-react": "^0.14.0",
     "@shopify/post-purchase-ui-extensions": "^0.13.2",
-    "@shopify/post-purchase-ui-extensions-react": "^0.13.2"
+    "@shopify/post-purchase-ui-extensions-react": "^0.13.2",
+    "esbuild": "^0.14.29"
   },
   "peerDependencies": {
     "@oclif/core": "1.3.6",

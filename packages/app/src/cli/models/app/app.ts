@@ -37,6 +37,7 @@ interface Script {
 export interface Extension {
   configuration: ExtensionConfiguration
   directory: string
+  buildDirectory: string
 }
 
 export const HomeConfigurationSchema = schema.define.object({
@@ -145,7 +146,7 @@ async function loadExtensions(rootDirectory: string): Promise<Extension[]> {
 async function loadExtension(directory: string): Promise<Extension> {
   const configurationPath = path.join(directory, blocks.extensions.configurationName)
   const configuration = await parseConfigurationFile(ExtensionConfigurationSchema, configurationPath)
-  return {directory, configuration}
+  return {directory, configuration, buildDirectory: path.join(directory, 'build')}
 }
 
 async function loadScripts(rootDirectory: string): Promise<Script[]> {
