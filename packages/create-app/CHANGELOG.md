@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.33.4
+
+### Patch Changes
+
+- Version 0.33.3
+
 ## 0.33.2
 
 ### Patch Changes
