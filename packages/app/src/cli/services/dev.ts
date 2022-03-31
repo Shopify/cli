@@ -1,6 +1,5 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {App} from '../models/app/app'
-import {output} from '@shopify/cli-kit'
 
 interface DevOptions {
   appInfo: App
@@ -9,8 +8,6 @@ interface DevOptions {
 
 async function dev({appInfo}: DevOptions) {
   const {app, store} = await ensureDevEnvironment(appInfo)
-  output.success(`Running dev on ${store.shopName}`)
-  output.info(`\nTo test your app on a different dev store run 'shopify dev --store <store_domain>'`)
   // Create tunnel etc...
 }
 
