@@ -61,7 +61,7 @@ async function init(options: InitOptions) {
             await scaffoldTemplate({
               ...options,
               directory: tmpDirApp,
-              templatePath: appTemplatePath,
+              templatePath,
               cliPackageVersion,
               appPackageVersion,
               user,
