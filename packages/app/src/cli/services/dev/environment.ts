@@ -18,6 +18,13 @@ const CreateStoreLink = (orgId: string) => {
   return `Click here to create a new dev store to preview your project:\n${url}\n`
 }
 
+interface DevEnvironmentInput {
+  appInfo: App
+  apiKey?: string
+  store?: string
+  reset: boolean
+}
+
 interface DevEnvironmentOutput {
   org: Organization
   app: OrganizationApp
@@ -43,10 +50,13 @@ interface FetchResponse {
  * @param app {App} Current local app information
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
-export async function ensureDevEnvironment(app: App): Promise<DevEnvironmentOutput> {
+export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
 
-  const cachedInfo = getCachedInfo(app)
+  const apiKey = input.appInfo.configuration.id
+  if (input.reset && apiKey) conf.clearAppInfo(apiKey)
+
+  const cachedInfo = getCachedInfo(input)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
@@ -56,18 +66,21 @@ export async function ensureDevEnvironment(app: App): Promise<DevEnvironmentOutp
     return {org: organization, app: cached.app, store: cached.store}
   }
 
-  const selectedApp = cached?.app || (await selectOrCreateApp(app, apps, orgId))
+  const selectedApp = cached?.app || (await selectOrCreateApp(input.appInfo, apps, orgId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
-  updateAppConfigurationFile(app, {id: selectedApp.apiKey, name: selectedApp.title})
+  updateAppConfigurationFile(input.appInfo, {id: selectedApp.apiKey, name: selectedApp.title})
   const selectedStore = cached?.store || (await selectStore(stores, orgId))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore.shopDomain})
 
   return {org: organization, app: selectedApp, store: selectedStore}
 }
 
-function getCachedInfo(app: App): conf.CachedAppInfo | undefined {
-  if (!app.configuration.id) return undefined
-  return conf.getAppInfo(app.configuration.id)
+function getCachedInfo(input: DevEnvironmentInput): conf.CachedAppInfo | undefined {
+  const apiKey = input.appInfo.configuration.id
+  const reset = input.reset
+  if (!apiKey) return undefined
+  if (apiKey && reset) conf.clearAppInfo(apiKey)
+  return conf.getAppInfo(apiKey)
 }
 
 /**

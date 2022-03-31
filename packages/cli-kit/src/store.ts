@@ -40,3 +40,12 @@ export function setAppInfo(appId: string, data: {storeFqdn?: string; orgId?: str
   }
   cliKit.set('appInfo', apps)
 }
+
+export function clearAppInfo(appId: string): void {
+  const apps = cliKit.get('appInfo') ?? []
+  const index = apps.findIndex((saved: any) => saved.appId === appId)
+  if (index !== -1) {
+    apps.splice(index, 1)
+  }
+  cliKit.set('appInfo', apps)
+}
