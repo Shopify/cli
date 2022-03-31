@@ -1,5 +1,5 @@
 import {glob, join, dirname, relative} from './path'
-import {mkdir, read, isDirectory, copyWithPermissions, hasExecutablePermissions, writeWithPermissions} from './file'
+import {mkdir, read, copy, isDirectory, write} from './file'
 import {Liquid} from 'liquidjs'
 
 // This line is necessary to register additional helpers.
@@ -35,12 +35,10 @@ export async function recursiveDirectoryCopy(from: string, to: string, data: any
         await mkdir(dirname(outputPath))
         const content = await read(templateItemPath)
         const contentOutput = await create(content)(data)
-
-        await writeWithPermissions(outputPath.replace('.liquid', ''), contentOutput, {
-          executable: await hasExecutablePermissions(templateItemPath),
-        })
+        await copy(templateItemPath, outputPath.replace('.liquid', ''))
+        await write(outputPath.replace('.liquid', ''), contentOutput)
       } else {
-        await copyWithPermissions(templateItemPath, outputPath)
+        await copy(templateItemPath, outputPath)
       }
     }),
   )
