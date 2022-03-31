@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "0.33.3",
+  "version": "0.33.5",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -49,7 +49,10 @@
     "linux",
     "win32"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "open": "^8.4.0",
+    "keytar": "^7.9.0"
+  },
   "devDependencies": {
     "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
@@ -63,8 +66,6 @@
     "fs-extra": "^10.0.0",
     "graphql": "^16.3.0",
     "graphql-request": "^4.0.0",
-    "keytar": "^7.9.0",
-    "open": "^8.4.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.35.1",
     "listr2": "^4.0.2",

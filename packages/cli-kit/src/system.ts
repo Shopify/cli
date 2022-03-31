@@ -1,12 +1,15 @@
 import {execa} from 'execa'
 import type {Writable} from 'node:stream'
 
-export {default as open} from 'open'
-
 export interface ExecOptions {
   cwd?: string
   stdout?: Writable
   stderr?: Writable
+}
+
+export const open = async (url: string) => {
+  const externalOpen = await import('open')
+  await externalOpen.default(url)
 }
 
 /**

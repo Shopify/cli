@@ -1692,6 +1692,11 @@
     unified "^8.4.0"
     unist-builder "^1.0.4"
 
+"@shopify/cli-kit@0.33.3":
+  version "0.33.3"
+  resolved "https://registry.yarnpkg.com/@shopify/cli-kit/-/cli-kit-0.33.3.tgz#b1f7320cb3f21a665eaa4e99a8fc27cfbbc35c33"
+  integrity sha512-4XMx/hXf/Y7mIgqO32kLDNu82MwhjozSFeC8pD6x1T6I2NAv31J7gc6+lkimAakdMGDGl6GmTcZtuRY+7uhbFg==
+
 "@shopify/eslint-plugin@^41.0.1":
   version "41.1.0"
   resolved "https://registry.yarnpkg.com/@shopify/eslint-plugin/-/eslint-plugin-41.1.0.tgz#c0b0e7e2259252316d1559c38e1fcc90e695e76d"

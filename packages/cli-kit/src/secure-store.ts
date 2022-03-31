@@ -1,5 +1,4 @@
 import constants from './constants'
-import keytar from 'keytar'
 
 /**
  * Fetches secured content from the system's keychain.
@@ -7,6 +6,7 @@ import keytar from 'keytar'
  * @returns A promise that resolves with the content or null if it doesn't exist.
  */
 export async function fetch(identifier: string): Promise<string | null> {
+  const keytar = await import('keytar')
   const content = await keytar.getPassword(constants.keychain.service, identifier)
   return content
 }
@@ -18,7 +18,8 @@ export async function fetch(identifier: string): Promise<string | null> {
  * @returns A promise that resolves when the storing completes.
  */
 export async function store(identifier: string, content: string): Promise<void> {
-  await keytar.setPassword(constants.keychain.service, identifier, content)
+  const keytar = await import('keytar')
+  await keytar.default.setPassword(constants.keychain.service, identifier, content)
 }
 
 /**
@@ -27,6 +28,7 @@ export async function store(identifier: string, content: string): Promise<void> 
  * @returns A promise that resolves with true if the content was deleted.
  */
 export async function remove(identifier: string): Promise<boolean> {
-  const result = await keytar.deletePassword(constants.keychain.service, identifier)
+  const keytar = await import('keytar')
+  const result = await keytar.default.deletePassword(constants.keychain.service, identifier)
   return result
 }
