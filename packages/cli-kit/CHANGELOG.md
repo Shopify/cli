@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 0.33.8
+
+### Patch Changes
+
+- Remove unnecessary dependencies
+
 ## 0.33.7
 
 ### Patch Changes
