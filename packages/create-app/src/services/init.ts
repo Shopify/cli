@@ -1,7 +1,8 @@
 import {template as getTemplatePath} from '../utils/paths'
 import {string, path, template, output, os, ui, dependency, constants} from '@shopify/cli-kit'
 import {Writable} from 'stream'
-
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 interface InitOptions {
   name: string
   directory: string
@@ -15,7 +16,7 @@ async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath('app')
   const cliPackageVersion = constants.versions.cli
-  const appPackageVersion = constants.versions.cliKit
+  const appPackageVersion = constants.versions.app
 
   const dependencyOverrides: {[key: string]: string} = {}
   if (options.shopifyCliVersion) {

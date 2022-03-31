@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 0.33.6
+
+### Patch Changes
+
+- Fix create-app fixing the wrong dependency of @shopify/app
+
 ## 0.33.5
 
 ### Patch Changes
