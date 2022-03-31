@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 0.33.3
+
+### Patch Changes
+
+- Make keytar a devDependency to bundle it with Rollup
+
 ## 0.33.2
 
 ### Patch Changes
