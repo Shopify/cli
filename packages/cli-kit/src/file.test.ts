@@ -9,6 +9,7 @@ import {
   move,
   chmod,
   append,
+  remove,
 } from './file'
 import {join} from './path'
 import {describe, expect, it} from 'vitest'
@@ -151,6 +152,23 @@ describe('chmod', () => {
 
       // Then
       await expect(hasExecutablePermissions(filePath)).resolves.toEqual(true)
+    })
+  })
+})
+
+describe('remove', () => {
+  it('removes a file', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const filePath = join(tmpDir, 'from')
+      await write(filePath, content)
+
+      // When
+      await remove(filePath)
+
+      // Then
+      await expect(exists(filePath)).resolves.toEqual(false)
     })
   })
 })

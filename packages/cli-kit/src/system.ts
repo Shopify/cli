@@ -1,4 +1,5 @@
 import {execa} from 'execa'
+import type {ExecaChildProcess} from 'execa'
 import type {Writable} from 'node:stream'
 
 export interface ExecOptions {
@@ -23,7 +24,7 @@ export const captureOutput = async (command: string, args: string[]): Promise<st
   return result.stdout
 }
 
-export const exec = async (command: string, args: string[], options?: ExecOptions) => {
+export const exec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
   const commandProcess = execa(command, args, {
     cwd: options?.cwd,
   })
@@ -33,5 +34,6 @@ export const exec = async (command: string, args: string[], options?: ExecOption
   if (options?.stdout) {
     commandProcess.stdout?.pipe(options.stdout)
   }
-  await commandProcess
+
+  return commandProcess
 }

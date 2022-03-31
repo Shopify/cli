@@ -1,0 +1,3 @@
+[commands]
+build = "node build.js"
+dev = "node server.js"

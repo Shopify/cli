@@ -16,25 +16,21 @@ export default class Init extends Command {
       parse: (input, _) => Promise.resolve(path.resolve(input)),
       hidden: false,
     }),
+    template: Flags.string({
+      description: 'The template for app home. Eg, --template https://github.com/shopify/app-template-php',
+      env: 'SHOPIFY_FLAG_TEMPLATE',
+      default: 'https://github.com/shopify/bfs-app-template-test',
+    }),
     'dependency-manager': Flags.string({
       char: 'd',
       env: 'SHOPIFY_FLAG_DEPENDENCY_MANAGER',
       hidden: false,
       options: ['npm', 'yarn', 'pnpm'],
     }),
-    'shopify-cli-version': Flags.string({
-      char: 's',
-      env: 'SHOPIFY_FLAG_SHOPIFY_CLI_VERSION',
-      hidden: true,
-    }),
-    'shopify-cli-kit-version': Flags.string({
-      char: 's',
-      env: 'SHOPIFY_FLAG_SHOPIFY_CLI_KIT_VERSION',
-      hidden: true,
-    }),
-    'shopify-app-version': Flags.string({
-      char: 'a',
-      env: 'SHOPIFY_FLAG_SHOPIFY_APP_VERSION',
+    local: Flags.boolean({
+      char: 'l',
+      env: 'SHOPIFY_FLAG_LOCAL',
+      default: false,
       hidden: true,
     }),
   }
@@ -48,9 +44,8 @@ export default class Init extends Command {
     await initService({
       name: promptAnswers.name,
       dependencyManager: flags['dependency-manager'],
-      shopifyCliVersion: flags['shopify-cli-version'],
-      shopifyAppVersion: flags['shopify-app-version'],
-      shopifyCliKitVersion: flags['shopify-cli-kit-version'],
+      template: flags.template,
+      local: flags.local,
       directory,
     })
   }

@@ -42,8 +42,12 @@ export async function mkdir(path: string): Promise<void> {
   await fs.mkdirp(path)
 }
 
-export async function rmdir(path: string): Promise<void> {
-  await del(path)
+export async function remove(path: string): Promise<void> {
+  await fs.remove(path)
+}
+
+export async function rmdir(path: string, {force}: {force?: boolean} = {}): Promise<void> {
+  await del(path, {force})
 }
 
 export async function mkTmpDir(): Promise<string> {
