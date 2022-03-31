@@ -4,7 +4,6 @@ import {reloadStoreListPrompt, selectAppPrompt, selectOrganizationPrompt, select
 import {App} from '$cli/models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
-import {CachedAppInfo, getAppInfo} from '$../../cli-kit/src/store'
 
 const NoOrgError = () =>
   new error.Fatal(
@@ -48,7 +47,6 @@ export async function ensureDevEnvironment(app: App): Promise<DevEnvironmentOutp
   const token = await session.ensureAuthenticatedPartners()
 
   const cachedInfo = getCachedInfo(app)
-
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
@@ -67,9 +65,9 @@ export async function ensureDevEnvironment(app: App): Promise<DevEnvironmentOutp
   return {org: organization, app: selectedApp, store: selectedStore}
 }
 
-function getCachedInfo(app: App): CachedAppInfo | undefined {
+function getCachedInfo(app: App): conf.CachedAppInfo | undefined {
   if (!app.configuration.id) return undefined
-  return getAppInfo(app.configuration.id)
+  return conf.getAppInfo(app.configuration.id)
 }
 
 /**
@@ -130,7 +128,7 @@ async function selectStore(stores: OrganizationStore[], orgId: string): Promise<
 function validateCachedInfo(
   apps: OrganizationApp[],
   stores: OrganizationStore[],
-  info?: CachedAppInfo,
+  info?: conf.CachedAppInfo,
 ): {app?: OrganizationApp; store?: OrganizationStore} {
   if (!info || !info.storeFqdn) return {}
   const selectedApp = apps.find((app) => app.apiKey === info.appId)
@@ -180,5 +178,6 @@ async function fetchAppsAndStores(orgId: string, token: string): Promise<FetchRe
   const result: api.graphql.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError()
-  return {organization: org, apps: org.apps.nodes, stores: org.stores.nodes}
+  const parsedOrg = {id: org.id, businessName: org.businessName}
+  return {organization: parsedOrg, apps: org.apps.nodes, stores: org.stores.nodes}
 }

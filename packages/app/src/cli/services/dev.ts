@@ -3,7 +3,6 @@ import {App} from '../models/app/app'
 
 interface DevOptions {
   appInfo: App
-  store?: string
 }
 
 async function dev({appInfo}: DevOptions) {
