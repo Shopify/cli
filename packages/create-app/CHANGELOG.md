@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 0.33.7
+
+### Patch Changes
+
+- Add .gitignore to the app template
+
 ## 0.33.6
 
 ### Patch Changes

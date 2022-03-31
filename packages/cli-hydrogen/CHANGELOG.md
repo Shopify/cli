@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 0.33.7
+
+### Patch Changes
+
+- Add .gitignore to the app template
+- Updated dependencies
+  - @shopify/cli-kit@0.33.7
+
 ## 0.33.3
 
 ### Patch Changes

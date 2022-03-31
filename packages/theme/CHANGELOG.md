@@ -1,5 +1,11 @@
 # @shopify/theme
 
+## 0.5.6
+
+### Patch Changes
+
+- Add .gitignore to the app template
+
 ## 0.5.5
 
 ### Patch Changes
