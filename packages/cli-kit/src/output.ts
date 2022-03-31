@@ -139,7 +139,7 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    console.log(colors.green(`🎉 ${stringifyMessage(content)}`))
+    console.log(`${colors.magenta('✔')} ${stringifyMessage(content)}`)
   }
 }
 

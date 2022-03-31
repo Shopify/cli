@@ -1,4 +1,3 @@
-import {cliKit} from './store'
 import {applicationId} from './session/identity'
 import {validateScopes, validateSession} from './session/validate'
 import {allDefaultScopes} from './session/scopes'
@@ -282,33 +281,6 @@ describe('ensureAuthenticatedAdmin', () => {
     expect(got).toEqual('admin_token')
   })
 
-  it('throws error if there is no store', async () => {
-    // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
-    vi.mocked(secureFetch).mockResolvedValue(validSession)
-
-    // When
-    const got = ensureAuthenticatedAdmin()
-
-    // Then
-    expect(got).rejects.toThrow(`No valid store found`)
-  })
-
-  it('works if there is a previously used store', async () => {
-    // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
-    vi.mocked(cliKit).get.mockImplementation(() => 'mystore')
-    vi.mocked(secureFetch).mockResolvedValue(validSession)
-
-    // When
-    const got = await ensureAuthenticatedAdmin()
-
-    // Then
-    expect(got).toEqual('admin_token')
-  })
-
   it('throws error if there is no token', async () => {
     // Given
     vi.mocked(validateScopes).mockReturnValue(true)
@@ -316,7 +288,7 @@ describe('ensureAuthenticatedAdmin', () => {
     vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
 
     // When
-    const got = ensureAuthenticatedAdmin()
+    const got = ensureAuthenticatedAdmin('mystore')
 
     // Then
     expect(got).rejects.toThrow(`No admin token`)
