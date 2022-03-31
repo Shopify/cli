@@ -1,0 +1,12 @@
+runtime_context: sandbox
+version: 1
+configuration:
+  type: object
+  fields:
+    trackingId:
+      name: Tracking Id
+      description: Tracking Id
+      type: single_line_text_field
+      validations:
+      - name: min
+        value: "1"
