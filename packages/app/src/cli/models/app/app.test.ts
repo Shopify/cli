@@ -1,4 +1,4 @@
-import {load, HomeNotFoundError} from './app'
+import {load} from './app'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
@@ -21,12 +21,16 @@ name = "my_app"
   })
 
   const writeConfig = async (appConfiguration: string) => {
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-    await file.write(appConfigurationPath, appConfiguration)
-  }
-
-  const mkdirHome = async () => {
-    await file.mkdir(path.join(tmpDir, 'home'))
+    const appDirectory = path.join(tmpDir, configurationFileNames.app)
+    const homeDirectory = path.join(tmpDir, blocks.home.directoryName)
+    const homeConfiguration = `
+    [commands]
+    build = "build"
+    dev = "dev"
+    `
+    await file.write(appDirectory, appConfiguration)
+    await file.mkdir(homeDirectory)
+    await file.write(path.join(homeDirectory, blocks.home.configurationName), homeConfiguration)
   }
 
   const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
@@ -74,7 +78,6 @@ name = "my_app"
         wrong = "my_app"
         `
     await writeConfig(appConfiguration)
-    await mkdirHome()
 
     // When/Then
     await expect(load(tmpDir)).rejects.toThrow()
@@ -83,7 +86,6 @@ name = "my_app"
   it('loads the app when the configuration is valid and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
 
     // When
     const app = await load(tmpDir)
@@ -95,7 +97,6 @@ name = "my_app"
   it('defaults to npm as package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
 
     // When
     const app = await load(tmpDir)
@@ -107,7 +108,6 @@ name = "my_app"
   it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
     const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile)
     await file.write(yarnLockPath, '')
 
@@ -121,7 +121,6 @@ name = "my_app"
   it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
     const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile)
     await file.write(pnpmLockPath, '')
 
@@ -158,7 +157,6 @@ name = "my_app"
   it('loads the app when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
       type = "checkout-post-purchase"
@@ -179,7 +177,6 @@ name = "my_app"
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
     const blockConfiguration = `
       name = "my_extension"
       type = "checkout-post-purchase"
@@ -201,7 +198,6 @@ name = "my_app"
   it('loads the app with several extensions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
 
     let blockConfiguration = `
       name = "my_extension_1"
@@ -255,18 +251,9 @@ name = "my_app"
     await expect(load(tmpDir)).rejects.toThrowError()
   })
 
-  it('throws an error if the home directory is missing', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    // When
-    await expect(load(tmpDir)).rejects.toThrowError(HomeNotFoundError(path.resolve(tmpDir, 'home')))
-  })
-
   it('loads the app when it has a script with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
 
     const blockConfiguration = `
       name = "my-script"
@@ -287,7 +274,6 @@ name = "my_app"
   it('loads the app with several scripts that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
-    await mkdirHome()
     let blockConfiguration = `
       name = "my-script-1"
       `

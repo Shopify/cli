@@ -4,7 +4,7 @@ import extensionInit from './extension'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
 import {load as loadApp} from '$cli/models/app/app'
-import {configurationFileNames, ExtensionTypes} from '$cli/constants'
+import {blocks, configurationFileNames, ExtensionTypes} from '$cli/constants'
 
 describe('initialize a extension', () => {
   let tmpDir: string
@@ -12,11 +12,19 @@ describe('initialize a extension', () => {
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir()
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
+    const homeConfigurationPath = path.join(tmpDir, blocks.home.directoryName, blocks.home.configurationName)
+
     const appConfiguration = `
       name = "my_app"
       `
+    const homeConfiguration = `
+    [commands]
+    build = "./build.sh"
+    dev = "./test.sh"
+    `
     await file.write(appConfigurationPath, appConfiguration)
-    await file.mkdir(path.join(tmpDir, 'home'))
+    await file.mkdir(path.dirname(homeConfigurationPath))
+    await file.write(homeConfigurationPath, homeConfiguration)
   })
   afterEach(async () => {
     vi.clearAllMocks()

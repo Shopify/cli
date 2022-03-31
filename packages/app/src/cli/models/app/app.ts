@@ -5,6 +5,10 @@ export const HomeNotFoundError = (homeDirectory: string) => {
   return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
 }
 
+export const HomeConfigurationFileNotFound = (configurationFilePath: string) => {
+  return new error.Abort(`Couldn't find the home configuraiton file at ${configurationFilePath}`)
+}
+
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   id: schema.define.optional(schema.define.string()),
@@ -35,8 +39,18 @@ interface Extension {
   directory: string
 }
 
+export const HomeConfigurationSchema = schema.define.object({
+  commands: schema.define.object({
+    build: schema.define.string().optional(),
+    dev: schema.define.string(),
+  }),
+})
+
+export type HomeConfiguration = schema.define.infer<typeof HomeConfigurationSchema>
+export type HomeConfigurationCommands = keyof HomeConfiguration['commands']
 interface Home {
   directory: string
+  configuration: HomeConfiguration
 }
 
 type PackageManager = 'npm' | 'yarn' | 'pnpm'
@@ -94,7 +108,12 @@ async function loadHome(appDirectory: string): Promise<Home> {
   if (!(await file.exists(homeDirectory))) {
     throw HomeNotFoundError(homeDirectory)
   }
-  return {directory: homeDirectory}
+  const homeConfigurationFile = path.join(homeDirectory, configurationFileNames.home)
+  if (!(await file.exists(homeConfigurationFile))) {
+    throw HomeConfigurationFileNotFound(homeConfigurationFile)
+  }
+  const configuration = await parseConfigurationFile(HomeConfigurationSchema, homeConfigurationFile)
+  return {directory: homeDirectory, configuration}
 }
 
 async function loadConfigurationFile(path: string): Promise<object> {
