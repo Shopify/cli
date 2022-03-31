@@ -14,7 +14,6 @@ export interface CachedAppInfo {
 }
 
 interface ConfSchema {
-  activeStore: string
   appInfo: CachedAppInfo[]
 }
 

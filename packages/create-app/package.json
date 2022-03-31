@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "0.31.3",
+  "version": "0.33.2",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "type": "module",
@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "vitest": "0.7.9",
-    "@shopify/cli-kit": "0.33.1"
+    "@shopify/cli-kit": "0.33.2"
   },
   "engine-strict": true,
   "engines": {
