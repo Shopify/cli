@@ -139,7 +139,6 @@ async function init(options: InitOptions) {
         },
         {
           title: `Installing app dependencies with ${dependencyManager}`,
-          skip: true,
           task: async (_, task) => {
             const stdout = new Writable({
               write(chunk, encoding, next) {
@@ -147,7 +146,7 @@ async function init(options: InitOptions) {
                 next()
               },
             })
-            await dependency.install(outputDirectory, dependencyManager, stdout)
+            await dependency.install(tmpDirApp, dependencyManager, stdout)
           },
         },
       ],
