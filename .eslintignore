@@ -4,3 +4,5 @@ bin
 *.feature
 eslint-rules/
 rollup.config.js
+template/
+templates/
