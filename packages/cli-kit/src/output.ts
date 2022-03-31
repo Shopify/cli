@@ -10,6 +10,7 @@ enum ContentTokenType {
   Yellow,
   Cyan,
   Magenta,
+  Green,
 }
 
 interface ContentMetadata {
@@ -47,6 +48,9 @@ export const token = {
   magenta: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Magenta)
   },
+  green: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Green)
+  },
 }
 
 // output.content`Something ${output.token.command(Something)}`
@@ -58,7 +62,7 @@ class TokenizedString {
   }
 }
 
-type Message = string | TokenizedString
+export type Message = string | TokenizedString
 
 export function content(strings: TemplateStringsArray, ...keys: (ContentToken | string)[]): TokenizedString {
   let output = ``
@@ -90,6 +94,9 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Magenta:
           output += colors.magenta(enumToken.value)
+          break
+        case ContentTokenType.Green:
+          output += colors.green(enumToken.value)
           break
       }
     }
