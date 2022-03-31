@@ -6,7 +6,7 @@ interface DevOptions {
 }
 
 async function dev({appInfo}: DevOptions) {
-  const {app, store} = await ensureDevEnvironment(appInfo)
+  const {org, app, store} = await ensureDevEnvironment(appInfo)
   // Create tunnel etc...
 }
 

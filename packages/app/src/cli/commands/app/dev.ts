@@ -9,8 +9,8 @@ export default class Dev extends Command {
   static flags = {
     path: Flags.string({
       hidden: true,
-      description: 'the path to your app directory',
-      env: 'SHOPIFY_FLAG_APP_PATH',
+      description: 'The path to your app directory.',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 

@@ -111,7 +111,7 @@ describe('ensureDevEnvironment', () => {
 
   it('shows prompts if cached info exists but is invalid', async () => {
     // Given
-    vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    vi.mocked(conf.getAppInfo).mockReturnValue({appId: 'key4'})
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
     vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
     vi.mocked(selectStorePrompt).mockResolvedValue(STORE1)
