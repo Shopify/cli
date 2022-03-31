@@ -1,6 +1,6 @@
+import downloadTemplate from './download'
 import {git} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
-import downloadTemplate from './download'
 
 describe('download', () => {
   it('clones the factory template URL', async () => {

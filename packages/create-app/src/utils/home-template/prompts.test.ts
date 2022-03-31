@@ -1,9 +1,8 @@
+import askPrompts from './prompts'
+import {configurationFileNames} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
 import {ui, file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
-
-import askPrompts from './prompts'
-import {configurationFileNames} from '../../constants'
 
 describe('prompts', () => {
   it('prompts users for answers', async () => {

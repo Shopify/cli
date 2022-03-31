@@ -1,8 +1,8 @@
+import cleanup from './cleanup'
+import {configurationFileNames} from '../../constants'
 import {temporary} from '@shopify/cli-testing'
 import {file, path} from '@shopify/cli-kit'
 import {describe, expect, it} from 'vitest'
-import {configurationFileNames} from '../../constants'
-import cleanup from './cleanup'
 
 describe('cleanup', () => {
   async function mockProjectFolder(tmpDir: string) {
@@ -41,13 +41,13 @@ describe('cleanup', () => {
 
       // Then
 
-      expect(await file.exists(path.join(tmpDir, '.git'))).toBe(false)
-      expect(await file.exists(path.join(tmpDir, '.github'))).toBe(false)
-      expect(await file.exists(path.join(tmpDir, '.gitmodules'))).toBe(false)
-      expect(await file.exists(path.join(tmpDir, '_template'))).toBe(false)
-      expect(await file.exists(path.join(tmpDir, 'frontend', '.git'))).toBe(false)
-      expect(await file.exists(path.join(tmpDir, 'frontend', '_template'))).toBe(false)
-      expect(await file.exists(path.join(tmpDir, configurationFileNames.homeTemplate))).toBe(false)
+      await expect(file.exists(path.join(tmpDir, '.git'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, '.github'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, '.gitmodules'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, '_template'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, 'frontend', '.git'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, 'frontend', '_template'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, configurationFileNames.homeTemplate))).resolves.toBe(false)
     })
   })
 
@@ -59,9 +59,9 @@ describe('cleanup', () => {
       await cleanup(tmpDir)
 
       // Then
-      expect(await file.exists(path.join(tmpDir, 'server.js'))).toBe(true)
-      expect(await file.exists(path.join(tmpDir, 'node_modules'))).toBe(true)
-      expect(await file.exists(path.join(tmpDir, 'frontend', 'node_modules'))).toBe(true)
+      await expect(file.exists(path.join(tmpDir, 'server.js'))).resolves.toBe(true)
+      await expect(file.exists(path.join(tmpDir, 'node_modules'))).resolves.toBe(true)
+      await expect(file.exists(path.join(tmpDir, 'frontend', 'node_modules'))).resolves.toBe(true)
     })
   })
 })

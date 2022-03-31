@@ -1,13 +1,10 @@
-import {file, path, toml, ui} from '@shopify/cli-kit'
-
 import {configurationFileNames} from '../../constants'
 import {homeTemplateSchema} from '../../models/home-template'
+import {file, path, toml, ui} from '@shopify/cli-kit'
 
 export default async function askPrompts(directory: string) {
   const homeConfigs = await getHomeConfigs(directory)
 
-  // TODO: Do we need to distinguish frontend/backend prompts?
-  // Idea: We can add a name/prefix in the shopify.home.template.toml
   const allPrompts = homeConfigs.flatMap((config) => config.prompts)
 
   return allPrompts.length ? ui.prompt(allPrompts) : {}

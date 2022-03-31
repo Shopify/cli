@@ -11,26 +11,26 @@ interface InitOptions {
   directory: string
   template: string
   dependencyManager: string | undefined
-  shopifyCliVersion: string | undefined
-  shopifyAppVersion: string | undefined
-  shopifyCliKitVersion: string | undefined
+  local: boolean
 }
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath('app')
-  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
-  const appPackageVersion = options.shopifyAppVersion ?? constants.versions.app
 
+  let cliPackageVersion = constants.versions.cli
+  let appPackageVersion = constants.versions.app
   const dependencyOverrides: {[key: string]: string} = {}
-  if (options.shopifyCliVersion) {
-    dependencyOverrides['@shopify/cli'] = options.shopifyCliVersion
-  }
-  if (options.shopifyAppVersion) {
-    dependencyOverrides['@shopify/app'] = options.shopifyAppVersion
-  }
-  if (options.shopifyCliKitVersion) {
-    dependencyOverrides['@shopify/cli-kit'] = options.shopifyCliKitVersion
+
+  if (options.local) {
+    cliPackageVersion = `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`
+    appPackageVersion = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
+
+    dependencyOverrides['@shopify/cli'] = cliPackageVersion
+    dependencyOverrides['@shopify/app'] = appPackageVersion
+    dependencyOverrides['@shopify/cli-kit'] = `file:${
+      (await path.findUp('packages/cli-kit', {type: 'directory'})) as string
+    }`
   }
 
   const dependencyManager = inferDependencyManager(options.dependencyManager)
