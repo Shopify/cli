@@ -15,6 +15,7 @@ interface DevOptions {
 
 async function dev(input: DevOptions) {
   const {org, app, store} = await ensureDevEnvironment(input)
+
   const url = await createTunnel()
   if (!input.appInfo.configuration.id) return
   await updateURLs(input.appInfo.configuration.id, url)
