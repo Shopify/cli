@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 1.0.6
+
+### Patch Changes
+
+- Add deploy command
+
 ## 1.0.5
 
 ### Patch Changes
