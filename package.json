@@ -58,7 +58,7 @@
     "execa": "^5.1.1",
     "fast-glob": "^3.2.11",
     "pathe": "0.2.0",
-    "prettier": "^2.5.1",
+    "prettier": "^2.6.1",
     "rimraf": "^3.0.2",
     "rollup": "^2.68.0",
     "rollup-plugin-dts": "^4.1.0",
