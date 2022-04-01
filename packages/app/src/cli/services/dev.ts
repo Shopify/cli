@@ -1,4 +1,5 @@
 import {ensureDevEnvironment} from './dev/environment'
+import {updateURLs} from './dev/update-urls'
 import {createTunnel} from './dev/tunnel'
 import {App} from '../models/app/app'
 import {output} from '@shopify/cli-kit'
