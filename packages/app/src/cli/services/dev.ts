@@ -8,6 +8,7 @@ interface DevOptions {
 
 async function dev({appInfo}: DevOptions) {
   const {org, app, store} = await ensureDevEnvironment(appInfo)
+  output.info(`Running dev with ${app.title} on ${store.shopName}`)
   log('Connecting to the platform...')
   await new Promise((resolve, reject) => setInterval(resolve, 1 * 1000))
   log(
