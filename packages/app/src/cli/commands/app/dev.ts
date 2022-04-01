@@ -17,7 +17,7 @@ export default class Dev extends Command {
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const appInfo: App = await loadApp(directory)
-    await dev({appInfo})
+    const app: App = await loadApp(directory)
+    await dev({app})
   }
 }
