@@ -1,5 +1,4 @@
 import {template as getTemplatePath} from '../utils/paths'
-import askPrompts from '../utils/home-template/prompts'
 import downloadTemplate from '../utils/home-template/download'
 import cleanupHome from '../utils/home-template/cleanup'
 import {blocks} from '../constants'
@@ -43,18 +42,20 @@ async function init(options: InitOptions) {
     const tmpDirHome = path.join(tmpDirApp, blocks.home.directoryName)
     const tmpDirDownload = path.join(tmpDir, 'download')
 
-    await downloadTemplate({
-      templateUrl: options.template,
-      into: tmpDirDownload,
-    })
-
-    const promptAnswers = await askPrompts(tmpDirDownload)
-
     await file.mkdir(tmpDirHome)
     await file.mkdir(tmpDirDownload)
 
     const list = new ui.Listr(
       [
+        {
+          title: 'Downloading template',
+          task: async (_, task) => {
+            await downloadTemplate({
+              templateUrl: options.template,
+              into: tmpDirDownload,
+            })
+          },
+        },
         {
           title: `Initializing your app ${hyphenizedName}`,
           task: async (_, task) => {
@@ -90,8 +91,7 @@ async function init(options: InitOptions) {
                         next()
                       },
                     })
-                    // @PEDRO: Adding `{stdout}` at the end raises an error
-                    await system.exec(hookPath, [])
+                    await system.exec(hookPath, [], {stdout})
                   },
                 }
               }),
@@ -100,7 +100,7 @@ async function init(options: InitOptions) {
                 task: async () => {
                   await scaffoldTemplate({
                     ...options,
-                    prompts: promptAnswers as any,
+                    prompts: {},
                     directory: tmpDirHome,
                     templatePath: tmpDirDownload,
                     cliPackageVersion,

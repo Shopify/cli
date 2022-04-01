@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 1.0.2
+
+### Patch Changes
+
+- Include the download template in the UI list
+
 ## 1.0.1
 
 ### Patch Changes
