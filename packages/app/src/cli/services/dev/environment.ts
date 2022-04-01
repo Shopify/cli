@@ -16,7 +16,7 @@ const CreateStoreLink = (orgId: string) => {
   return `Click here to create a new dev store to preview your project:\n${url}\n`
 }
 
-interface DevEnvironmentInput {
+export interface DevEnvironmentInput {
   appInfo: App
   apiKey?: string
   store?: string

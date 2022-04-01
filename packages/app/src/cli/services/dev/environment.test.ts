@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './environment'
+import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
 import {createApp} from './create-app'
 import {api, store as conf} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
@@ -72,6 +72,11 @@ const LOCAL_APP: App = {
   extensions: [],
 }
 
+const INPUT: DevEnvironmentInput = {
+  appInfo: LOCAL_APP,
+  reset: false,
+}
+
 const FETCH_ORG_RESPONSE_VALUE = {
   organizations: {
     nodes: [
@@ -97,7 +102,7 @@ describe('ensureDevEnvironment', () => {
       .mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await ensureDevEnvironment(LOCAL_APP)
+    const got = await ensureDevEnvironment(INPUT)
 
     // Then
     expect(got).toEqual({org: ORG1, app: APP1, store: STORE1})
@@ -121,7 +126,7 @@ describe('ensureDevEnvironment', () => {
       .mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await ensureDevEnvironment(LOCAL_APP)
+    const got = await ensureDevEnvironment(INPUT)
 
     // Then
     expect(got).toEqual({org: ORG1, app: APP1, store: STORE1})
@@ -139,7 +144,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await ensureDevEnvironment(LOCAL_APP)
+    const got = await ensureDevEnvironment(INPUT)
 
     // Then
     expect(got).toEqual({org: ORG1, app: APP1, store: STORE1})
@@ -155,37 +160,26 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: []}})
 
     // When
-    const got = ensureDevEnvironment(LOCAL_APP)
+    const got = ensureDevEnvironment(INPUT)
 
     expect(got).rejects.toThrow(`No Organization found`)
   })
 
   it('throws if there are no dev stores and user selects to cancel', async () => {
     // Given
-    // const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
-    //   throw new Error('process.exit')
-    // })
-    // vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
-    // vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-    // vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
-    // vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
-    // vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
-    // vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
-    // vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
-    // // vi.mocked(api.partners.request)
-    // //   .mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
-    // //   .mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
-    // //   .mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
-    // // When
-    // // const got = ensureDevEnvironment(LOCAL_APP)
-    // // console.log(got)
-    // // Then
-    // // const got2 = await got
-    // // expect.assertions(1)
-    // expect(ensureDevEnvironment(LOCAL_APP)).rejects.toThrowError('') // expect(got).rejects.toThrowError('process.exit')
-    // expect(api.partners.request).toHaveBeenCalledTimes(2)
-    // expect(mockExit).toHaveBeenCalled()
-    // mockExit.mockRestore()
+    vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+    vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
+    vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
+    vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
+    vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
+    vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
+
+    // When
+    const got = ensureDevEnvironment(INPUT)
+
+    // Then
+    expect(got).rejects.toThrowError('') // expect(got).rejects.toThrowError('process.exit')
   })
 
   it('prompts to create a new app if app selection returns undefined', async () => {
@@ -198,7 +192,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    await ensureDevEnvironment(LOCAL_APP)
+    await ensureDevEnvironment(INPUT)
 
     // Then
     expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key2', name: 'app2'})
