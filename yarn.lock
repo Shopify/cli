@@ -1731,10 +1731,10 @@
     "@remote-ui/core" "^2.1.3"
     "@shopify/ui-extensions" "^1.0.1"
 
-"@shopify/ast-utilities@^1.2.0":
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/@shopify/ast-utilities/-/ast-utilities-1.3.2.tgz#e687b7ccb07a6755bd8a6d340a1d0a469b4942c5"
-  integrity sha512-io2KeNrVHAnSe2p6pVMPRZxPOxKLasVbbai0XABYcDamyFCDspqKPc8Q6VFGZ39aKUiY4OVr8MXQU4XOLHqCYA==
+"@shopify/ast-utilities@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@shopify/ast-utilities/-/ast-utilities-1.3.4.tgz#ee8338ff1998455ec4a6cdb74c34d4e19697ba18"
+  integrity sha512-R+faUZYZKjHZcE3iH5TIJ44gBEPGiMxvAQGdRy4o5azH5Pc0NuRRCFKw5dQRdtrRyNRPYnuh+FfBqZr0rclf9g==
   dependencies:
     "@babel/plugin-transform-react-jsx" ">=7.0.0"
     "@babel/plugin-transform-typescript" ">=7.0.0"
