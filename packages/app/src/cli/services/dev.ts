@@ -3,7 +3,6 @@ import {updateURLs} from './dev/update-urls'
 import {createTunnel} from './dev/tunnel'
 import {App, Home} from '../models/app/app'
 import {output, system} from '@shopify/cli-kit'
-
 interface DevOptions {
   app: App
 }
@@ -17,18 +16,17 @@ interface DevHomeOptions {
 async function dev({app}: DevOptions) {
   const {
     app: {
-      id: appId,
       apiKey,
-      apiSecretKeys: {secret: apiSecret},
+      apiSecretKeys,
     },
     store,
   } = await ensureDevEnvironment(app)
   const url = await createTunnel()
-  await updateURLs(appId, url)
+  await updateURLs(apiKey, url)
   output.success(`Your app is available at: ${url}/auth?${store.shopDomain}`)
   devHome(app.home, {
     apiKey,
-    apiSecret,
+    apiSecret: apiSecretKeys[0].secret,
     hostname: url,
   })
 }
@@ -40,14 +38,20 @@ async function devHome(home: Home, options: DevHomeOptions) {
   }
 
   const [cmd, ...args] = script.split(' ')
-  await system.exec(cmd, args, {
-    cwd: home.directory,
-    env: {
-      ...process.env,
-      API_KEY: options.apiKey,
-      API_SECRET_KEY: options.apiSecret,
-      HOST_NAME: options.hostname.replace(/https:\/\//, ''),
-    },
+
+  await output.concurrent(0, "home", async (stdout) => {
+    await system.exec(cmd, args, {
+      cwd: home.directory,
+      stdout,
+      env: {
+        ...process.env,
+        SHOPIFY_API_KEY: options.apiKey,
+        SHOPIFY_API_SECRET: options.apiSecret,
+        HOST: options.hostname.replace(/https:\/\//, ''),
+        // TODO: Fetch the scopes
+        SCOPES: "write_products,write_customers,write_draft_orders"
+      },
+    })
   })
 }
 

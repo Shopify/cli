@@ -99,13 +99,19 @@ async function init(options: InitOptions) {
                 return {
                   title: path.basename(hookPath),
                   task: async (_: any, task: any) => {
-                    const output = new Writable({
+                    const stdout = new Writable({
                       write(chunk, encoding, next) {
                         task.output = chunk.toString()
                         next()
                       },
                     })
-                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                    const stderr = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout, stderr})
                   },
                 }
               }),
@@ -114,13 +120,19 @@ async function init(options: InitOptions) {
                 return {
                   title: path.basename(hookPath),
                   task: async (_: any, task: any) => {
-                    const output = new Writable({
+                    const stdout = new Writable({
                       write(chunk, encoding, next) {
                         task.output = chunk.toString()
                         next()
                       },
                     })
-                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                    const stderr = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout, stderr})
                   },
                 }
               }),

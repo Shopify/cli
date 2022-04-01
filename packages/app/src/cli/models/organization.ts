@@ -10,7 +10,7 @@ export interface OrganizationApp {
   apiKey: string
   apiSecretKeys: {
     secret: string
-  }
+  }[]
   appType?: string
 }
 

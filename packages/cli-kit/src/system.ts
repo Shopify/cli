@@ -36,6 +36,5 @@ export const exec = (command: string, args: string[], options?: ExecOptions): Ex
   if (options?.stdout) {
     commandProcess.stdout?.pipe(options.stdout)
   }
-
   return commandProcess
 }
