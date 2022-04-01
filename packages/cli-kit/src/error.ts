@@ -17,6 +17,12 @@ export class Fatal extends Error {
  */
 export class Abort extends Fatal {}
 
+export class AbortSilent extends Fatal {
+  constructor() {
+    super('')
+  }
+}
+
 /**
  * A bug error is an error that represents a bug and therefore should be reported.
  */
