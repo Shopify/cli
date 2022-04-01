@@ -61,7 +61,7 @@
     "@types/mime": "^2.0.3",
     "@types/minimist": "^1.2.2",
     "@types/semver": "^7.3.9",
-    "ajv": "^8.10.0",
+    "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
