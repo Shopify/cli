@@ -145,7 +145,7 @@ describe('selectApp', () => {
 })
 
 describe('selectStore', () => {
-  it('returns undefined if store list is empty.', async () => {
+  it('returns undefined if store list is empty', async () => {
     // Given
     const stores: OrganizationStore[] = []
 
