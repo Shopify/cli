@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@shopify/cli-testing": "0.30.2",
-    "@babel/core": "^7.17.2",
+    "@babel/core": "^7.17.8",
     "@shopify/ast-utilities": "^1.2.0",
     "@shopify/prettier-config": "^1.1.2",
     "@types/change-case": "^2.3.1",
