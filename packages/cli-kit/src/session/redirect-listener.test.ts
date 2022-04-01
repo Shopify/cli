@@ -17,6 +17,7 @@ describe('RedirectListener', () => {
         cb()
       },
       close: vi.fn(),
+      setTimeout: vi.fn(),
     }
     vi.spyOn(http, 'createServer').mockImplementation(() => server)
     const listenSpy: any = vi.spyOn(server, 'listen')
@@ -44,6 +45,7 @@ describe('RedirectListener', () => {
       close: (cb: (error: Error | undefined) => void) => {
         cb(undefined)
       },
+      setTimeout: vi.fn(),
     }
     vi.spyOn(http, 'createServer').mockImplementation(() => server)
     const subject = new RedirectListener({
@@ -64,6 +66,7 @@ describe('RedirectListener', () => {
       close: (cb: (error: Error | undefined) => void) => {
         cb(stopError)
       },
+      setTimeout: vi.fn(),
     }
     vi.spyOn(http, 'createServer').mockImplementation(() => server)
     const subject = new RedirectListener({
