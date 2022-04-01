@@ -54,4 +54,5 @@ export const external = [
    * they fix it on their end.
    */
   'open',
+  'ngrok'
 ]
