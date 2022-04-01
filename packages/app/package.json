@@ -79,6 +79,6 @@
     "commands": "dist/commands"
   },
   "devDependencies": {
-    "vitest": "0.7.9"
+    "vitest": "0.8.1"
   }
 }

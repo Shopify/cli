@@ -52,7 +52,7 @@
     "open": "^8.4.0"
   },
   "devDependencies": {
-    "vitest": "0.7.9",
+    "vitest": "0.8.1",
     "@shopify/cli-kit": "1.0.1"
   },
   "engine-strict": true,
