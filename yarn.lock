@@ -1757,13 +1757,6 @@
     "@shopify/checkout-ui-extensions" "^0.14.0"
     "@types/react" ">=17.0.0 <18.0.0"
 
-"@shopify/checkout-ui-extensions@^0.13.0":
-  version "0.13.0"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.13.0.tgz#8498bbef48b2a036b1082fe7dabb0c20cb2d8958"
-  integrity sha512-ZDdzzad/LHCxWYu5ZSJk7iAeV4DKQfLGi3aguPPb3Pu4s8JGvwFa+ZrMFSCGYWH4pSfAVPAYMMvE+y/XUmQx7w==
-  dependencies:
-    "@remote-ui/core" "^2.1.3"
-
 "@shopify/checkout-ui-extensions@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.14.0.tgz#246f4323993c6acf9c351eb16ce46732886f890d"
