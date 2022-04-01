@@ -7575,6 +7575,13 @@ pirates@^4.0.4:
   resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.5.tgz#feec352ea5c3268fb23a37c702ab1699f35a5f3b"
   integrity sha512-8V9+HQPupnaXMA23c5hvl69zXvTwTzyAYasnkb0Tts4XvO4CliqONMOnvlq26rkhLC3nWDFBJf73LU1e1VZLaQ==
 
+pixelmatch@5.2.1:
+  version "5.2.1"
+  resolved "https://registry.yarnpkg.com/pixelmatch/-/pixelmatch-5.2.1.tgz#9e4e4f4aa59648208a31310306a5bed5522b0d65"
+  integrity sha512-WjcAdYSnKrrdDdqTcVEY7aB7UhhwjYQKYhHiBXdJef0MOaQeYpUdQ+iVyBLa5YBKS8MPVPPMX7rpOByISLpeEQ==
+  dependencies:
+    pngjs "^4.0.1"
+
 pkg-dir@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/pkg-dir/-/pkg-dir-4.2.0.tgz#f099133df7ede422e81d1d8448270eeb3e4261f3"
@@ -7596,24 +7603,26 @@ pkg-up@^3.1.0:
   dependencies:
     find-up "^3.0.0"
 
-playwright-chromium@^1.19.2:
-  version "1.19.2"
-  resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.19.2.tgz#0ee116dafad471d61fbbbc0da13a9d4222aa088e"
-  integrity sha512-4S6KiJgR6PCQmlm4IzArgt9aDkzijYXxVG1j3vRqdugXQ1mPA2QIFUmXmRJeDczVkbIR5N8opJSNMnNDFg4qVw==
+playwright-chromium@^1.20.1:
+  version "1.20.1"
+  resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.20.1.tgz#7a80cc4e517c397e7a60aac50a34e87be2803609"
+  integrity sha512-zDJm59GEOWrHqpByblzaKI+bpswd3nrheCoAGOTBDX7MsQYwAV/ZBS2aCJzeGxDt/67brq/fQuZse3GwnCk+6A==
   dependencies:
-    playwright-core "1.19.2"
+    playwright-core "1.20.1"
 
-playwright-core@1.19.2:
-  version "1.19.2"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.19.2.tgz#90b9209554f174c649abf495952fcb4335437218"
-  integrity sha512-OsL3sJZIo1UxKNWSP7zW7sk3FyUGG06YRHxHeBw51eIOxTCQRx5t+hXd0cvXashN2CHnd3hIZTs2aKa/im4hZQ==
+playwright-core@1.20.1:
+  version "1.20.1"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.20.1.tgz#2d892964dd3ddc93f6e185be4b59621f3a339d4c"
+  integrity sha512-A8ZsZ09gaSbxP0UijoLyzp3LJc0kWMxDooLPi+mm4/5iYnTbd6PF5nKjoFw1a7KwjZIEgdhJduah4BcUIh+IPA==
   dependencies:
+    colors "1.4.0"
     commander "8.3.0"
     debug "4.3.3"
     extract-zip "2.0.1"
     https-proxy-agent "5.0.0"
     jpeg-js "0.4.3"
     mime "3.0.0"
+    pixelmatch "5.2.1"
     pngjs "6.0.0"
     progress "2.0.3"
     proper-lockfile "4.1.2"
@@ -7634,6 +7643,11 @@ pngjs@6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/pngjs/-/pngjs-6.0.0.tgz#ca9e5d2aa48db0228a52c419c3308e87720da821"
   integrity sha512-TRzzuFRRmEoSW/p1KVAmiOgPco2Irlah+bGFCeNfJXxxYGwSw7YwAOAcd7X28K/m5bjBWKsC29KyoMfHbypayg==
+
+pngjs@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/pngjs/-/pngjs-4.0.1.tgz#f803869bb2fc1bfe1bf99aa4ec21c108117cfdbe"
+  integrity sha512-rf5+2/ioHeQxR6IxuYNYGFytUyG3lma/WW1nsmjeHlWwtb2aByla6dkVc8pmJ9nplzkTA0q2xx7mMWrOTqT4Gg==
 
 postcss@^8.4.6:
   version "8.4.6"
