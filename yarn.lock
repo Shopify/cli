@@ -1539,7 +1539,7 @@
     tmp "~0.2.1"
     tslib "^2.3.0"
 
-"@nrwl/tao@13.8.3", "@nrwl/tao@^13.8.2":
+"@nrwl/tao@13.8.3":
   version "13.8.3"
   resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-13.8.3.tgz#386e847af28a87850724092f7df75c7dcb53a9e8"
   integrity sha512-zLM2uP398iLkpuTODfAaA1K7NeTGLrkVCdE7GkasrIg9dzd82Fx6k7kZnGhfVAVgfZpbXo8twKg0vdhxlJNWyA==
@@ -1558,7 +1558,7 @@
     tslib "^2.3.0"
     yargs-parser "20.0.0"
 
-"@nrwl/tao@13.9.5":
+"@nrwl/tao@13.9.5", "@nrwl/tao@^13.9.5":
   version "13.9.5"
   resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-13.9.5.tgz#d45d3b75bfe015f9344f6e22735d5aa0388b04c6"
   integrity sha512-wvHdEuTxamADvQoGJa3BOZoijQm3Irol0vAxkxzoFS47SYXNvoBPtLhvrtF8P+yJv+gTLW8C0QnUHPVtsnenPA==
