@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 1.0.3
+
+### Patch Changes
+
+- Add support for plugins
+
 ## 1.0.1
 
 ### Patch Changes
