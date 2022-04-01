@@ -68,7 +68,7 @@
     "conf": "^10.1.1",
     "connect": "^3.7.0",
     "cosmiconfig": "^7.0.1",
-    "debug": "^4.3.2",
+    "debug": "^4.3.4",
     "degit": "^2.8.4",
     "faker": "^5.5.3",
     "fast-glob": "^3.2.11",
