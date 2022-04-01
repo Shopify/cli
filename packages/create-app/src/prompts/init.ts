@@ -33,7 +33,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     questions.push({
       type: 'select',
       name: 'template',
-      choices: ['php', 'node', 'rails'],
+      choices: ['node', 'rails'],
       message: 'Which template would you like to use?',
       default: 'https://github.com/Shopify/shopify-app-node#cli-next',
     })
