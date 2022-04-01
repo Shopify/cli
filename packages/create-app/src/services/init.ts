@@ -35,7 +35,6 @@ async function init(options: InitOptions) {
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  const homeOutputDirectory = path.join(options.directory, hyphenizedName, 'home')
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const tmpDirApp = path.join(tmpDir, 'app')
