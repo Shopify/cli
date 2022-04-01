@@ -94,6 +94,7 @@ export class RedirectListener {
 
   async stop(): Promise<void> {
     await new Promise<void>((resolve, reject) => {
+      this.server.setTimeout(1)
       this.server.close((error) => {
         if (error) {
           reject(error)

@@ -1,9 +1,10 @@
 import path from 'pathe'
 import dts from 'rollup-plugin-dts'
+import {dependencies} from './package.json'
 
 import {external, plugins, distDir} from '../../configurations/rollup.config'
 
-const cliKitExternal = [...external]
+const cliKitExternal = [...external, ...Object.keys(dependencies)]
 
 const configuration = () => [
   {

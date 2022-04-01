@@ -35,11 +35,11 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       name: 'template',
       choices: ['php', 'node', 'rails'],
       message: 'Which template would you like to use?',
-      default: 'https://github.com/Shopify/shopify-app-php',
+      default: 'https://github.com/Shopify/shopify-app-node#cli-next',
     })
   }
   const promptOutput: InitOutput = await prompt(questions)
-  return {...options, ...promptOutput, template: 'https://github.com/Shopify/shopify-app-php'}
+  return {...options, ...promptOutput, template: 'https://github.com/Shopify/shopify-app-node#cli-next'}
 }
 
 export default init

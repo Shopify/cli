@@ -2,6 +2,7 @@
 import {Fatal} from './error'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
+import {Writable} from 'node:stream'
 
 enum ContentTokenType {
   Command,
@@ -236,6 +237,31 @@ const message = (content: Message, level: LogLevel = 'info') => {
   if (shouldOutput(level)) {
     console.log(stringifyMessage(content))
   }
+}
+
+/**
+ * Use this function when you have multiple concurrent processes that send data events
+ * and we need to output them ensuring that they can visually differenciated by the user.
+ *
+ * @param index {number} The index of the process being run. This is used to determine the color.
+ * @param prefix {string} The prefix to include in the standard output data to differenciate logs.
+ * @param process The callback that's called with a Writable instance to send events through.
+ */
+export async function concurrent(index: number, prefix: string, process: (stdout: Writable) => Promise<void>) {
+  const colors = [token.yellow, token.cyan, token.magenta, token.green]
+
+  const stdout = new Writable({
+    write(chunk, encoding, next) {
+      const lines = chunk.toString('ascii').split('\n')
+      const color = colors[colors.length % (index + 1)]
+      const linePrefix = color(`[${prefix}]: `)
+      for (const line of lines) {
+        info(content`${linePrefix}${line}`)
+      }
+      next()
+    },
+  })
+  await process(stdout)
 }
 
 /* eslint-enable no-console */

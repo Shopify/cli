@@ -4,7 +4,7 @@ import {describe, it, expect, vi} from 'vitest'
 describe('init', () => {
   it('when name is not passed', async () => {
     const prompt = vi.fn()
-    const answers = {name: 'app', template: 'https://github.com/Shopify/shopify-app-php'}
+    const answers = {name: 'app', template: 'https://github.com/Shopify/shopify-app-node#cli-next'}
     const options = {template: 'template'}
 
     // Given
@@ -28,7 +28,7 @@ describe('init', () => {
 
   it('when name is passed', async () => {
     const prompt = vi.fn()
-    const answers = {name: 'app', template: 'https://github.com/Shopify/shopify-app-php'}
+    const answers = {name: 'app', template: 'https://github.com/Shopify/shopify-app-node#cli-next'}
     const options = {name: 'app', template: 'template'}
 
     // Given

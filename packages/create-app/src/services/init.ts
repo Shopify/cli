@@ -75,26 +75,10 @@ async function init(options: InitOptions) {
         {
           title: `Creating home`,
           task: async (_, task) => {
-            const hooksPreFilePaths = await path.glob(path.join(homeOutputDirectory, '**/_template/hooks/pre/*'))
-            const hooksPostFilePaths = (
-              await path.glob(path.join(homeOutputDirectory, '**/_template/hooks/post/*'))
-            ).map((hookPath) => hookPath.replace(/\.liquid$/, ''))
+            const hooksPreFilePaths = await path.glob(path.join(tmpDirDownload, 'hooks/pre/*'))
+            const hooksPostFilePaths = await path.glob(path.join(tmpDirDownload, 'hooks/post/*'))
 
             return task.newListr([
-              ...hooksPreFilePaths.map((hookPath) => {
-                return {
-                  title: path.basename(hookPath),
-                  task: async () => {
-                    const stdout = new Writable({
-                      write(chunk, encoding, next) {
-                        task.output = chunk.toString()
-                        next()
-                      },
-                    })
-                    await system.exec(hookPath, [], {stdout})
-                  },
-                }
-              }),
               {
                 title: 'Scaffolding home',
                 task: async () => {
@@ -111,20 +95,33 @@ async function init(options: InitOptions) {
                   })
                 },
               },
-              ...hooksPostFilePaths.map((tmpHookPath) => {
-                const relativeFilePath = path.relative(tmpDirDownload, tmpHookPath)
-                const hookPath = path.join(tmpDirHome, relativeFilePath)
+              ...hooksPreFilePaths.map((sourcePath) => {
+                const hookPath = path.join(tmpDirHome, path.relative(tmpDirDownload, sourcePath)).replace('.liquid', '')
                 return {
                   title: path.basename(hookPath),
-                  task: async () => {
-                    const stdout = new Writable({
+                  task: async (_: any, task: any) => {
+                    const output = new Writable({
                       write(chunk, encoding, next) {
                         task.output = chunk.toString()
                         next()
                       },
                     })
-                    // @GIULIANO: How shoul we handle stderr? You mentioned error logs.
-                    await system.exec(hookPath, [])
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                  },
+                }
+              }),
+              ...hooksPostFilePaths.map((sourcePath) => {
+                const hookPath = path.join(tmpDirHome, path.relative(tmpDirDownload, sourcePath)).replace('.liquid', '')
+                return {
+                  title: path.basename(hookPath),
+                  task: async (_: any, task: any) => {
+                    const output = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
                   },
                 }
               }),
@@ -140,13 +137,13 @@ async function init(options: InitOptions) {
         {
           title: `Installing app dependencies with ${dependencyManager}`,
           task: async (_, task) => {
-            const stdout = new Writable({
+            const output = new Writable({
               write(chunk, encoding, next) {
                 task.output = chunk.toString()
                 next()
               },
             })
-            await dependency.install(tmpDirApp, dependencyManager, stdout)
+            await dependency.install(tmpDirApp, dependencyManager, output, output)
           },
         },
       ],

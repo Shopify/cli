@@ -49,12 +49,12 @@
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
     "@oclif/core": "1.6.4",
-    "@oclif/plugin-help": "^5.1.11",
+    "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",
     "@shopify/cli-kit": "1.0.1"
   },
   "devDependencies": {
-    "vitest": "0.7.9"
+    "vitest": "0.8.1"
   },
   "engine-strict": true,
   "engines": {
