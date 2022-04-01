@@ -29,9 +29,15 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
  * Installs the dependencies in the given directory.
  * @param directory {string} The directory that contains the package.json
  * @param dependencyManager {DependencyManager} The dependency manager to use to install the dependencies.
- * @returns
+ * @param stdout {Writable} Standard output stream.
+ * @returns stderr {Writable} Standard error stream.
  */
-export async function install(directory: string, dependencyManager: DependencyManager, stdout?: Writable) {
-  const options: ExecOptions = {cwd: directory, stdout}
+export async function install(
+  directory: string,
+  dependencyManager: DependencyManager,
+  stdout?: Writable,
+  stderr?: Writable,
+) {
+  const options: ExecOptions = {cwd: directory, stdout, stderr}
   await exec(dependencyManager, ['install'], options)
 }
