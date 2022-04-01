@@ -260,7 +260,7 @@ export async function concurrent(index: number, prefix: string, callback: (stdou
     write(chunk, encoding, next) {
       const lines = chunk.toString('ascii').split('\n')
       for (const line of lines) {
-        info(`${linePrefix()}${line}`)
+        info(content`${linePrefix()}${line}`)
       }
       next()
     },
@@ -269,7 +269,7 @@ export async function concurrent(index: number, prefix: string, callback: (stdou
     write(chunk, encoding, next) {
       const lines = chunk.toString('ascii').split('\n')
       for (const line of lines) {
-        message(`${linePrefix()}${line}`, "error")
+        message(content`${linePrefix()}${line}`, "error")
       }
       next()
     },

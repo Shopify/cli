@@ -8,6 +8,7 @@ interface DevOptions {
 }
 
 interface DevHomeOptions {
+  port: number
   apiKey: string
   apiSecret: string
   hostname: string
@@ -21,13 +22,15 @@ async function dev({app}: DevOptions) {
     },
     store,
   } = await ensureDevEnvironment(app)
-  const url = await createTunnel()
+  const port = 3000
+  const url = await createTunnel({port})
   await updateURLs(apiKey, url)
   output.success(`Your app is available at: ${url}/auth?${store.shopDomain}`)
   devHome(app.home, {
     apiKey,
     apiSecret: apiSecretKeys[0].secret,
     hostname: url,
+    port
   })
 }
 
@@ -40,6 +43,7 @@ async function devHome(home: Home, options: DevHomeOptions) {
   const [cmd, ...args] = script.split(' ')
 
   await output.concurrent(0, "home", async (stdout) => {
+    console.log(options.hostname)
     await system.exec(cmd, args, {
       cwd: home.directory,
       stdout,
@@ -49,7 +53,9 @@ async function devHome(home: Home, options: DevHomeOptions) {
         SHOPIFY_API_SECRET: options.apiSecret,
         HOST: options.hostname.replace(/https:\/\//, ''),
         // TODO: Fetch the scopes
-        SCOPES: "write_products,write_customers,write_draft_orders"
+        SCOPES: "write_products,write_customers,write_draft_orders",
+        PORT: `${options.port}`,
+        NODE_ENV: `development`
       },
     })
   })
