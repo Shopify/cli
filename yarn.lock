@@ -1730,18 +1730,6 @@
     "@remote-ui/core" "^2.1.3"
     "@shopify/ui-extensions" "^1.0.1"
 
-"@shopify/app@0.33.1":
-  version "0.33.1"
-  resolved "https://registry.yarnpkg.com/@shopify/app/-/app-0.33.1.tgz#120244837b04abe905914cf682798433419ee382"
-  integrity sha512-Qx2mjLCM37k7karS+llW0GgbjRjwIvVK7Q9fbGk8TrOwH2uJtxETjcLq+Ub9yY7sDI5DS6NV6Kex9OdNg88+lQ==
-  dependencies:
-    "@shopify/admin-ui-extensions" "^1.0.1"
-    "@shopify/admin-ui-extensions-react" "^1.0.1"
-    "@shopify/checkout-ui-extensions" "^0.13.0"
-    "@shopify/checkout-ui-extensions-react" "^0.14.0"
-    "@shopify/post-purchase-ui-extensions" "^0.13.2"
-    "@shopify/post-purchase-ui-extensions-react" "^0.13.2"
-
 "@shopify/ast-utilities@^1.2.0":
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@shopify/ast-utilities/-/ast-utilities-1.3.2.tgz#e687b7ccb07a6755bd8a6d340a1d0a469b4942c5"
@@ -1782,29 +1770,6 @@
   dependencies:
     "@remote-ui/async-subscription" "^2.1.7"
     "@remote-ui/core" "^2.1.6"
-
-"@shopify/cli-kit@0.33.1":
-  version "0.33.1"
-  resolved "https://registry.yarnpkg.com/@shopify/cli-kit/-/cli-kit-0.33.1.tgz#34f0dfd5347e05af2d1e08de291523c6a84ba8c2"
-  integrity sha512-lIDJQ1QYNnCWBkCfJBe5ZDFTu36jBmSU0Nn6We4oFqJVHLYQhrj7SWr5Qo5Tk+c6wUhNWC9UWe102Ga1B6VT1g==
-  dependencies:
-    keytar "^7.9.0"
-    open "^8.4.0"
-
-"@shopify/cli-kit@0.33.3":
-  version "0.33.3"
-  resolved "https://registry.yarnpkg.com/@shopify/cli-kit/-/cli-kit-0.33.3.tgz#b1f7320cb3f21a665eaa4e99a8fc27cfbbc35c33"
-  integrity sha512-4XMx/hXf/Y7mIgqO32kLDNu82MwhjozSFeC8pD6x1T6I2NAv31J7gc6+lkimAakdMGDGl6GmTcZtuRY+7uhbFg==
-
-"@shopify/cli@0.33.1":
-  version "0.33.1"
-  resolved "https://registry.yarnpkg.com/@shopify/cli/-/cli-0.33.1.tgz#4c3d03976e309167a64d80f183677c3553c37067"
-  integrity sha512-ymHrUNcweBEYNLLDK/zxj1A6FjI+y1zNj7wtt12Ve3FvVtpoMzExTeuv7I/IA4dyW2dIXZ47+FLspGzWq+3v4g==
-  dependencies:
-    "@bugsnag/js" "^7.16.2"
-    "@oclif/core" "1.3.6"
-    "@oclif/plugin-help" "^5.1.11"
-    "@shopify/cli-kit" "0.33.1"
 
 "@shopify/eslint-plugin@^41.0.1":
   version "41.1.0"
