@@ -216,7 +216,10 @@ export const error = (content: Fatal) => {
     console.error(padding + stringifyMessage(message))
     if (content.tryMessage) {
       console.error(`\n${padding}${colors.bold('What to try:')}`)
-      console.error(padding + content.tryMessage)
+      const lines = content.tryMessage.split('\n')
+      lines.forEach((line) => {
+        console.error(`${padding}${line}`)
+      })
     }
     console.error(footer)
   }

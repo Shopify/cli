@@ -1,4 +1,4 @@
-import {ui} from '@shopify/cli-kit'
+import {output, ui} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -33,13 +33,16 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
-  if (stores.length === 1) return stores[0]
+  if (stores.length === 1) {
+    output.success(`Using your default dev store (${stores[0].shopName}) to preview your project`)
+    return stores[0]
+  }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))
 
   const questions: ui.Question = {
     type: 'select',
     name: 'id',
-    message: 'Where would you like to view your project? Select a dev store',
+    message: 'Which development store would you like to use to view your project?',
     choices: storeList,
   }
   const choice: {id: string} = await ui.prompt([questions])
@@ -83,4 +86,20 @@ export async function appNamePrompt(currentName: string): Promise<string> {
   }
   const input: {name: string} = await ui.prompt([questions])
   return input.name
+}
+
+export async function reloadStoreListPrompt(): Promise<boolean> {
+  const options = [
+    {name: 'Yes, reload stores', value: 'reload'},
+    {name: 'No, cancel dev', value: 'cancel'},
+  ]
+
+  const questions: ui.Question = {
+    type: 'select',
+    name: 'value',
+    message: 'Would you like to reload your store list to retrieve your recently created store?',
+    choices: options,
+  }
+  const choice: {value: string} = await ui.prompt([questions])
+  return choice.value === 'reload'
 }

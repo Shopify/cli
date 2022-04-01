@@ -1,6 +1,14 @@
-import {appNamePrompt, appTypePrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from './dev'
+import {
+  appNamePrompt,
+  appTypePrompt,
+  reloadStoreListPrompt,
+  selectAppPrompt,
+  selectOrganizationPrompt,
+  selectStorePrompt,
+} from './dev'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-testing'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 vi.mock('@shopify/cli-kit', async () => {
@@ -137,7 +145,7 @@ describe('selectApp', () => {
 })
 
 describe('selectStore', () => {
-  it('returns undefined if store list is empty,', async () => {
+  it('returns undefined if store list is empty', async () => {
     // Given
     const stores: OrganizationStore[] = []
 
@@ -149,7 +157,22 @@ describe('selectStore', () => {
     expect(ui.prompt).not.toBeCalled()
   })
 
-  it('returns app if user selects one', async () => {
+  it('returns without asking if there is only 1 store', async () => {
+    // Given
+    const stores: OrganizationStore[] = [STORE1]
+    const outputMock = outputMocker.mockAndCapture()
+
+    // When
+    const got = await selectStorePrompt(stores)
+
+    // Then
+    expect(got).toEqual(STORE1)
+    expect(ui.prompt).not.toBeCalled()
+    expect(outputMock.output()).toMatch('Using your default dev store (store1) to preview your project')
+    outputMock.clear()
+  })
+
+  it('returns store if user selects one', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1, STORE2]
     vi.mocked(ui.prompt).mockResolvedValue({id: '2'})
@@ -163,7 +186,7 @@ describe('selectStore', () => {
       {
         type: 'select',
         name: 'id',
-        message: 'Where would you like to view your project? Select a dev store',
+        message: 'Which development store would you like to use to view your project?',
         choices: [
           {name: 'store1', value: '1'},
           {name: 'store2', value: '2'},
@@ -214,6 +237,30 @@ describe('appName', () => {
         message: 'App Name',
         default: 'suggested-name',
         validate: expect.any(Function),
+      },
+    ])
+  })
+})
+
+describe('reloadStoreList', () => {
+  it('returns true if user selects reload', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'reload'})
+
+    // When
+    const got = await reloadStoreListPrompt()
+
+    // Then
+    expect(got).toEqual(true)
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: 'Would you like to reload your store list to retrieve your recently created store?',
+        choices: [
+          {name: 'Yes, reload stores', value: 'reload'},
+          {name: 'No, cancel dev', value: 'cancel'},
+        ],
       },
     ])
   })
