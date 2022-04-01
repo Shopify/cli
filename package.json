@@ -27,7 +27,7 @@
     "@cucumber/cucumber": "^8.0.0-rc.2",
     "@nrwl/cli": "^13.8.3",
     "@nrwl/eslint-plugin-nx": "^13.9.5",
-    "@nrwl/js": "^13.8.3",
+    "@nrwl/js": "^13.9.5",
     "@nrwl/tao": "^13.9.5",
     "@nrwl/workspace": "^13.8.2",
     "@rollup/plugin-alias": "^3.1.9",
