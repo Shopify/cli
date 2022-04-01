@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.3.0
+
+### Minor Changes
+
+- e744db7: Rename UI Extensions back to Extensions
+
 ## 0.2.0
 
 ### Minor Changes

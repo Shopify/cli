@@ -1,12 +1,23 @@
-import {Command} from '@oclif/core'
-import {session, output} from '@shopify/cli-kit'
+import {Command, Flags} from '@oclif/core'
+import {path} from '@shopify/cli-kit'
+import {App, load as loadApp} from '$cli/models/app/app'
+import build from '$cli/services/build'
 
 export default class Build extends Command {
-  static description = 'Build a block or an app'
+  static description = 'Build the app'
+
+  static flags = {
+    path: Flags.string({
+      hidden: true,
+      description: 'the path to your app directory',
+      env: 'SHOPIFY_APP_PATH',
+    }),
+  }
 
   async run(): Promise<void> {
-    const token = await session.ensureAuthenticated({})
-    output.success(`TOKEN: ${JSON.stringify(token)}`)
-    // await session.ensureAuthenticated({})
+    const {args, flags} = await this.parse(Build)
+    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const app: App = await loadApp(directory)
+    await build({app})
   }
 }

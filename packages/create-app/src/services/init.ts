@@ -1,70 +1,158 @@
 import {template as getTemplatePath} from '../utils/paths'
-import {string, path, template, output, os, ui, dependency, constants} from '@shopify/cli-kit'
+import downloadTemplate from '../utils/home-template/download'
+import cleanupHome from '../utils/home-template/cleanup'
+import {blocks} from '../constants'
+import {string, path, template, file, output, os, ui, dependency, constants, system} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
   name: string
   directory: string
+  template: string
   dependencyManager: string | undefined
-  shopifyCliVersion: string | undefined
-  shopifyAppVersion: string | undefined
-  shopifyCliKitVersion: string | undefined
+  local: boolean
 }
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
   const templatePath = await getTemplatePath('app')
-  const cliPackageVersion = constants.versions.cli
-  const appPackageVersion = constants.versions.cliKit
 
+  let cliPackageVersion = constants.versions.cli
+  let appPackageVersion = constants.versions.app
   const dependencyOverrides: {[key: string]: string} = {}
-  if (options.shopifyCliVersion) {
-    dependencyOverrides['@shopify/cli'] = options.shopifyCliVersion
-  }
-  if (options.shopifyAppVersion) {
-    dependencyOverrides['@shopify/app'] = options.shopifyAppVersion
-  }
-  if (options.shopifyCliKitVersion) {
-    dependencyOverrides['@shopify/cli-kit'] = options.shopifyCliKitVersion
+
+  if (options.local) {
+    cliPackageVersion = `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`
+    appPackageVersion = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
+
+    dependencyOverrides['@shopify/cli'] = cliPackageVersion
+    dependencyOverrides['@shopify/app'] = appPackageVersion
+    dependencyOverrides['@shopify/cli-kit'] = `file:${
+      (await path.findUp('packages/cli-kit', {type: 'directory'})) as string
+    }`
   }
 
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  const list = new ui.Listr(
-    [
-      {
-        title: `Initializing your app ${hyphenizedName}`,
-        task: async (_, task) => {
-          await createApp({
-            ...options,
-            outputDirectory,
-            templatePath,
-            cliPackageVersion,
-            appPackageVersion,
-            user,
-            dependencyManager,
-            dependencyOverrides,
-          })
-          task.title = 'Initialized'
+  const homeOutputDirectory = path.join(options.directory, hyphenizedName, 'home')
+
+  await file.inTemporaryDirectory(async (tmpDir) => {
+    const tmpDirApp = path.join(tmpDir, 'app')
+    const tmpDirHome = path.join(tmpDirApp, blocks.home.directoryName)
+    const tmpDirDownload = path.join(tmpDir, 'download')
+
+    await file.mkdir(tmpDirHome)
+    await file.mkdir(tmpDirDownload)
+
+    const list = new ui.Listr(
+      [
+        {
+          title: 'Downloading template',
+          task: async (_, task) => {
+            await downloadTemplate({
+              templateUrl: options.template,
+              into: tmpDirDownload,
+            })
+          },
         },
-      },
-      {
-        title: `Installing dependencies with ${dependencyManager}`,
-        task: async (_, task) => {
-          const stdout = new Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          })
-          await installDependencies(outputDirectory, dependencyManager, stdout)
+        {
+          title: `Initializing your app ${hyphenizedName}`,
+          task: async (_, task) => {
+            await scaffoldTemplate({
+              ...options,
+              directory: tmpDirApp,
+              templatePath,
+              cliPackageVersion,
+              appPackageVersion,
+              user,
+              dependencyManager,
+              dependencyOverrides,
+            })
+            task.title = 'App initialized'
+          },
         },
-      },
-    ],
-    {concurrent: false},
-  )
-  await list.run()
+        {
+          title: `Creating home`,
+          task: async (_, task) => {
+            const hooksPreFilePaths = await path.glob(path.join(tmpDirDownload, 'hooks/pre/*'))
+            const hooksPostFilePaths = await path.glob(path.join(tmpDirDownload, 'hooks/post/*'))
+
+            return task.newListr([
+              {
+                title: 'Scaffolding home',
+                task: async () => {
+                  await scaffoldTemplate({
+                    ...options,
+                    prompts: {},
+                    directory: tmpDirHome,
+                    templatePath: tmpDirDownload,
+                    cliPackageVersion,
+                    appPackageVersion,
+                    user,
+                    dependencyManager,
+                    dependencyOverrides,
+                  })
+                },
+              },
+              ...hooksPreFilePaths.map((sourcePath) => {
+                const hookPath = path.join(tmpDirHome, path.relative(tmpDirDownload, sourcePath)).replace('.liquid', '')
+                return {
+                  title: path.basename(hookPath),
+                  task: async (_: any, task: any) => {
+                    const output = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                  },
+                }
+              }),
+              ...hooksPostFilePaths.map((sourcePath) => {
+                const hookPath = path.join(tmpDirHome, path.relative(tmpDirDownload, sourcePath)).replace('.liquid', '')
+                return {
+                  title: path.basename(hookPath),
+                  task: async (_: any, task: any) => {
+                    const output = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                  },
+                }
+              }),
+              {
+                title: 'Cleaning up home',
+                task: async () => {
+                  await cleanupHome(tmpDirHome)
+                },
+              },
+            ])
+          },
+        },
+        {
+          title: `Installing app dependencies with ${dependencyManager}`,
+          task: async (_, task) => {
+            const output = new Writable({
+              write(chunk, encoding, next) {
+                task.output = chunk.toString()
+                next()
+              },
+            })
+            await dependency.install(tmpDirApp, dependencyManager, output, output)
+          },
+        },
+      ],
+      {concurrent: false},
+    )
+    await list.run()
+
+    await file.move(tmpDirApp, outputDirectory)
+  })
 
   output.info(output.content`
   ${hyphenizedName} is ready to build! ✨
@@ -80,17 +168,10 @@ function inferDependencyManager(optionsDependencyManager: string | undefined): d
   return dependency.dependencyManagerUsedForCreating()
 }
 
-async function installDependencies(
-  directory: string,
-  dependencyManager: dependency.DependencyManager,
-  stdout: Writable,
-): Promise<void> {
-  await dependency.install(directory, dependencyManager, stdout)
-}
-
-async function createApp(
+async function scaffoldTemplate(
   options: InitOptions & {
-    outputDirectory: string
+    directory: string
+    prompts?: {[key: string]: string | number | boolean}
     templatePath: string
     cliPackageVersion: string
     appPackageVersion: string
@@ -110,8 +191,9 @@ async function createApp(
     author: options.user,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     dependency_manager: options.dependencyManager,
+    ...options.prompts,
   }
-  await template.recursiveDirectoryCopy(options.templatePath, options.outputDirectory, templateData)
+  await template.recursiveDirectoryCopy(options.templatePath, options.directory, templateData)
 }
 
 export default init

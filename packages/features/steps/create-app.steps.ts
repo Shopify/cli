@@ -1,4 +1,4 @@
-import {executables, directories} from '../lib/constants'
+import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'
 import {strict as assert} from 'assert'
@@ -14,12 +14,7 @@ When(
       this.temporaryDirectory,
       '--dependency-manager',
       dependencyManager,
-      '--shopify-cli-version',
-      `file:${directories.packages.cli}`,
-      '--shopify-app-version',
-      `file:${directories.packages.app}`,
-      '--shopify-cli-kit-version',
-      `file:${directories.packages.cliKit}`,
+      '--local',
     ])
     const hyphenatedAppName = stdout.match(/Initializing your app ([\w-]+)/)[1]
     this.appDirectory = `${this.temporaryDirectory}/${hyphenatedAppName}`
@@ -27,7 +22,7 @@ When(
 )
 
 Then(
-  /I have an app named (.+) with (.+) as dependency manager/,
+  /I have an app named (.+) scaffolded from the template with (.+) as dependency manager/,
   {},
   async function (appName: string, dependencyManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory])

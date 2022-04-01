@@ -42,7 +42,7 @@ In Shopify CLI 3.0 we are moving from this model to a **unified dependency graph
 }
 ```
 
-As described [here](/decision-record/2022-01-typescript-rewrite), the dependency managers will **deterministically resolve and pull the graph and ensure it's compatible with the activated Node environment** This includes tool and runtime dependencies. If `npm/yarn/pnpm install` succeeds in resolving the graph, developers will have everything in their environment to interact with their projects.
+As described [here](/contributors/decision-record/2022-01-typescript-rewrite), the dependency managers will **deterministically resolve and pull the graph and ensure it's compatible with the activated Node environment** This includes tool and runtime dependencies. If `npm/yarn/pnpm install` succeeds in resolving the graph, developers will have everything in their environment to interact with their projects.
 
 Moreover, **the version requirements will be strict** in this first iteration. Softening the requirements for transitive dependencies like `@shopify/checkout-ui-extensions-run` or `@shopify/scripts-toolchain-as` will require them to have acceptance tests that ensure we don't rely on humans to figure out if a change is breaking or not.
 

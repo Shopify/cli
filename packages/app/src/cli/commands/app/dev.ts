@@ -4,11 +4,11 @@ import dev from '$cli/services/dev'
 import {load as loadApp, App} from '$cli/models/app/app'
 
 export default class Dev extends Command {
-  static description = 'Develop a block or an app'
+  static description = 'Run the app'
 
   static flags = {
     path: Flags.string({
-      hidden: false,
+      hidden: true,
       description: 'The path to your app directory.',
       env: 'SHOPIFY_FLAG_PATH',
     }),

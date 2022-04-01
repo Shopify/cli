@@ -2,11 +2,16 @@
 import {Fatal} from './error'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
+import {Writable} from 'node:stream'
 
 enum ContentTokenType {
   Command,
   Path,
   Link,
+  Yellow,
+  Cyan,
+  Magenta,
+  Green,
 }
 
 interface ContentMetadata {
@@ -35,6 +40,18 @@ export const token = {
   link: (value: string, link: string) => {
     return new ContentToken(value, {link}, ContentTokenType.Link)
   },
+  cyan: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Cyan)
+  },
+  yellow: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Yellow)
+  },
+  magenta: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Magenta)
+  },
+  green: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Green)
+  },
 }
 
 // output.content`Something ${output.token.command(Something)}`
@@ -46,7 +63,7 @@ class TokenizedString {
   }
 }
 
-type Message = string | TokenizedString
+export type Message = string | TokenizedString
 
 export function content(strings: TemplateStringsArray, ...keys: (ContentToken | string)[]): TokenizedString {
   let output = ``
@@ -69,6 +86,18 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Link:
           output += terminalLink(enumToken.value, enumToken.metadata.link ?? '')
+          break
+        case ContentTokenType.Yellow:
+          output += colors.yellow(enumToken.value)
+          break
+        case ContentTokenType.Cyan:
+          output += colors.cyan(enumToken.value)
+          break
+        case ContentTokenType.Magenta:
+          output += colors.magenta(enumToken.value)
+          break
+        case ContentTokenType.Green:
+          output += colors.green(enumToken.value)
           break
       }
     }
@@ -208,6 +237,31 @@ const message = (content: Message, level: LogLevel = 'info') => {
   if (shouldOutput(level)) {
     console.log(stringifyMessage(content))
   }
+}
+
+/**
+ * Use this function when you have multiple concurrent processes that send data events
+ * and we need to output them ensuring that they can visually differenciated by the user.
+ *
+ * @param index {number} The index of the process being run. This is used to determine the color.
+ * @param prefix {string} The prefix to include in the standard output data to differenciate logs.
+ * @param process The callback that's called with a Writable instance to send events through.
+ */
+export async function concurrent(index: number, prefix: string, process: (stdout: Writable) => Promise<void>) {
+  const colors = [token.yellow, token.cyan, token.magenta, token.green]
+
+  const stdout = new Writable({
+    write(chunk, encoding, next) {
+      const lines = chunk.toString('ascii').split('\n')
+      const color = colors[colors.length % (index + 1)]
+      const linePrefix = color(`[${prefix}]: `)
+      for (const line of lines) {
+        info(content`${linePrefix}${line}`)
+      }
+      next()
+    },
+  })
+  await process(stdout)
 }
 
 /* eslint-enable no-console */

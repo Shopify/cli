@@ -1,12 +1,16 @@
 import {execa} from 'execa'
+import type {ExecaChildProcess} from 'execa'
 import type {Writable} from 'node:stream'
-
-export {default as open} from 'open'
 
 export interface ExecOptions {
   cwd?: string
   stdout?: Writable
   stderr?: Writable
+}
+
+export const open = async (url: string) => {
+  const externalOpen = await import('open')
+  await externalOpen.default(url)
 }
 
 /**
@@ -20,7 +24,7 @@ export const captureOutput = async (command: string, args: string[]): Promise<st
   return result.stdout
 }
 
-export const exec = async (command: string, args: string[], options?: ExecOptions) => {
+export const exec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
   const commandProcess = execa(command, args, {
     cwd: options?.cwd,
   })
@@ -30,5 +34,6 @@ export const exec = async (command: string, args: string[], options?: ExecOption
   if (options?.stdout) {
     commandProcess.stdout?.pipe(options.stdout)
   }
-  await commandProcess
+
+  return commandProcess
 }

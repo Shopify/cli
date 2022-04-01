@@ -1,5 +1,29 @@
 # @shopify/theme
 
+## 0.5.9
+
+### Patch Changes
+
+- Some fixes
+
+## 0.5.8
+
+### Patch Changes
+
+- Get workflows working e2e
+
+## 0.5.7
+
+### Patch Changes
+
+- Remove unnecessary dependencies
+
+## 0.5.6
+
+### Patch Changes
+
+- Add .gitignore to the app template
+
 ## 0.5.5
 
 ### Patch Changes

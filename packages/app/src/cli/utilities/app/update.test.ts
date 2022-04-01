@@ -2,20 +2,25 @@ import {updateAppConfigurationFile} from './update'
 import {describe, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
-import {configurationFileNames} from '$cli/constants'
+import {blocks, configurationFileNames} from '$cli/constants'
 import {load} from '$cli/models/app/app'
 
 const appConfiguration = `
 name = "my_app"
 `
+const homeConfiguration = `
+[commands]
+build = "./build.sh"
+dev = "./dev.sh"
+`
 
 const writeConfig = async (appConfiguration: string, tmpDir: string) => {
   const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-  await file.write(appConfigurationPath, appConfiguration)
-}
+  const homeConfigurationPath = path.join(tmpDir, blocks.home.directoryName, blocks.home.configurationName)
 
-const mkdirHome = async (tmpDir: string) => {
-  await file.mkdir(path.join(tmpDir, 'home'))
+  await file.mkdir(path.dirname(homeConfigurationPath))
+  await file.write(appConfigurationPath, appConfiguration)
+  await file.write(homeConfigurationPath, homeConfiguration)
 }
 
 describe('updateAppConfigurationFile', () => {
@@ -23,7 +28,7 @@ describe('updateAppConfigurationFile', () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       await writeConfig(appConfiguration, tmpDir)
-      await mkdirHome(tmpDir)
+
       const app = await load(tmpDir)
 
       // When

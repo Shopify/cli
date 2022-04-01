@@ -1,7 +1,8 @@
 export const configurationFileNames = {
   app: 'shopify.app.toml',
-  uiExtension: 'shopify.ui-extension.toml',
+  extension: 'shopify.extension.toml',
   script: 'shopify.script.toml',
+  home: 'shopify.home.toml',
 }
 
 export const versions = {
@@ -9,13 +10,17 @@ export const versions = {
 }
 
 export const blocks = {
-  uiExtensions: {
-    directoryName: 'ui-extensions',
-    configurationName: configurationFileNames.uiExtension,
+  extensions: {
+    directoryName: 'extensions',
+    configurationName: configurationFileNames.extension,
   },
   scripts: {
     directoryName: 'scripts',
     configurationName: configurationFileNames.script,
+  },
+  home: {
+    directoryName: 'home',
+    configurationName: configurationFileNames.home,
   },
 }
 
@@ -28,12 +33,12 @@ export const genericConfigurationFileNames = {
   },
 }
 
-interface UiExtensionsType {
-  // Dependent code requires that uiExtensions.types has at least 1 element.
+interface ExtensionsType {
+  // Dependent code requires that extensions.types has at least 1 element.
   // Otherwise it will be typed as string[] which doesn't guarantee a first element.
   types: [string, ...string[]]
 }
-export const uiExtensions: UiExtensionsType = {
+export const extensions: ExtensionsType = {
   types: ['theme-app-extension', 'product-subscription', 'checkout-post-purchase'],
 }
-export type UiExtensionTypes = typeof uiExtensions.types[number]
+export type ExtensionTypes = typeof extensions.types[number]

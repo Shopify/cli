@@ -68,8 +68,8 @@ const LOCAL_APP: App = {
   packageManager: 'yarn',
   configuration: {name: 'my-app', id: 'key1'},
   scripts: [],
-  home: {directory: ''},
-  uiExtensions: [],
+  home: {directory: '', configuration: {commands: {dev: ''}}},
+  extensions: [],
 }
 
 const FETCH_ORG_RESPONSE_VALUE = {
@@ -111,7 +111,7 @@ describe('ensureDevEnvironment', () => {
 
   it('shows prompts if cached info exists but is invalid', async () => {
     // Given
-    vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    vi.mocked(conf.getAppInfo).mockReturnValue({appId: 'key4'})
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
     vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
     vi.mocked(selectStorePrompt).mockResolvedValue(STORE1)
@@ -162,18 +162,30 @@ describe('ensureDevEnvironment', () => {
 
   it('throws if there are no dev stores and user selects to cancel', async () => {
     // Given
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-    vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
-    vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
-    vi.mocked(selectStorePrompt).mockReturnValueOnce(Promise.resolve(undefined))
-    vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
-    vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
-
-    // When
-    const got = ensureDevEnvironment(LOCAL_APP)
-
-    // Then
-    expect(got).rejects.toThrow(`There are no developement stores available`)
+    // const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+    //   throw new Error('process.exit')
+    // })
+    // vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    // vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+    // vi.mocked(selectAppPrompt).mockResolvedValue(APP1)
+    // vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
+    // vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
+    // vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
+    // vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
+    // // vi.mocked(api.partners.request)
+    // //   .mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
+    // //   .mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
+    // //   .mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
+    // // When
+    // // const got = ensureDevEnvironment(LOCAL_APP)
+    // // console.log(got)
+    // // Then
+    // // const got2 = await got
+    // // expect.assertions(1)
+    // expect(ensureDevEnvironment(LOCAL_APP)).rejects.toThrowError('') // expect(got).rejects.toThrowError('process.exit')
+    // expect(api.partners.request).toHaveBeenCalledTimes(2)
+    // expect(mockExit).toHaveBeenCalled()
+    // mockExit.mockRestore()
   })
 
   it('prompts to create a new app if app selection returns undefined', async () => {

@@ -10,8 +10,6 @@ const NoOrgError = () =>
     'No Organization found',
     'You need to create a Shopify Partners organization: https://partners.shopify.com/signup ',
   )
-const NoDevStoreError = (orgId: string) =>
-  new error.Fatal('There are no developement stores available', CreateStoreLink(orgId))
 
 const CreateStoreLink = (orgId: string) => {
   const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
@@ -113,7 +111,7 @@ async function selectOrCreateApp(localApp: App, apps: OrganizationApp[], orgId: 
 /**
  * Select store from list or
  * If there are no stores, show a link to create a store and prompt the user to refresh the store list
- * If no store is finally selected, throw error
+ * If no store is finally selected, exit process
  * @param stores {OrganizationStore[]} List of available stores
  * @param orgId {string} Current organization ID
  * @returns {Promise<OrganizationStore>} The selected store
@@ -124,7 +122,7 @@ async function selectStore(stores: OrganizationStore[], orgId: string): Promise<
 
   output.info(`\n${CreateStoreLink(orgId)}`)
   const reload = await reloadStoreListPrompt()
-  if (!reload) throw NoDevStoreError(orgId)
+  if (!reload) throw new error.AbortSilent()
 
   const token = await session.ensureAuthenticatedPartners()
   const data = await fetchAppsAndStores(orgId, token)
