@@ -25,7 +25,7 @@
     "@bugsnag/source-maps": "^2.3.0",
     "@changesets/cli": "^2.22.0",
     "@cucumber/cucumber": "^8.0.0-rc.2",
-    "@nrwl/cli": "^13.8.3",
+    "@nrwl/cli": "^13.9.5",
     "@nrwl/eslint-plugin-nx": "^13.9.5",
     "@nrwl/js": "^13.8.3",
     "@nrwl/tao": "^13.9.5",
