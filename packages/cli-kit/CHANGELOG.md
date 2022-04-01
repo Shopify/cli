@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 1.0.5
+
+### Patch Changes
+
+- Import ngrok dynamically
+
 ## 1.0.4
 
 ### Patch Changes
