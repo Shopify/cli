@@ -19,7 +19,7 @@ async function build({app}: BuildOptions) {
       })
     }),
   ])
-  output.success('Application successfully built')
+  output.success(`${app.configuration.name} built`)
 }
 
 export default build

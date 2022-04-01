@@ -9,7 +9,10 @@ interface HomeOptions {
   stderr: Writable
 }
 
-export default async function home(command: HomeConfigurationCommands, {home, stdout, stderr}: HomeOptions): Promise<void> {
+export default async function home(
+  command: HomeConfigurationCommands,
+  {home, stdout, stderr}: HomeOptions,
+): Promise<void> {
   const script = home.configuration.commands[command]
   if (!script) {
     return

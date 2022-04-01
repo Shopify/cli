@@ -168,7 +168,7 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    console.log(`${colors.magenta('✔')} ${stringifyMessage(content)}`)
+    console.log(colors.bold(`${colors.magenta('✔')} Success! ${stringifyMessage(content)}`))
   }
 }
 
@@ -247,7 +247,11 @@ const message = (content: Message, level: LogLevel = 'info') => {
  * @param prefix {string} The prefix to include in the standard output data to differenciate logs.
  * @param process The callback that's called with a Writable instance to send events through.
  */
-export async function concurrent(index: number, prefix: string, callback: (stdout: Writable, stderr: Writable) => Promise<void>) {
+export async function concurrent(
+  index: number,
+  prefix: string,
+  callback: (stdout: Writable, stderr: Writable) => Promise<void>,
+) {
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
 
   function linePrefix() {
@@ -269,7 +273,7 @@ export async function concurrent(index: number, prefix: string, callback: (stdou
     write(chunk, encoding, next) {
       const lines = chunk.toString('ascii').split('\n')
       for (const line of lines) {
-        message(content`${linePrefix()}${line}`, "error")
+        message(content`${linePrefix()}${line}`, 'error')
       }
       next()
     },

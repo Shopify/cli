@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
@@ -63,7 +63,7 @@
   },
   "peerDependencies": {
     "@oclif/core": "1.3.6",
-    "@shopify/cli-kit": "1.0.1",
+    "@shopify/cli-kit": "1.0.4",
     "react": ">=17.0.0 <18.0.0"
   },
   "engine-strict": true,

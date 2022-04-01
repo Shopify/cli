@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 1.0.4
+
+### Patch Changes
+
+- e2e working
+- Updated dependencies
+  - @shopify/cli-kit@1.0.4
+
 ## 1.0.1
 
 ### Patch Changes

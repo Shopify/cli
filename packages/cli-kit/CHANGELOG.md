@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 1.0.4
+
+### Patch Changes
+
+- e2e working
+
 ## 1.0.1
 
 ### Patch Changes
