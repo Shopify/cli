@@ -52,8 +52,8 @@ export default class Dev extends Command {
       apiKey: flags['api-key'],
       store: flags.store,
       reset: flags.reset,
-      noTunnel: flags['no-tunnel'],
-      noUpdate: flags['no-update'],
+      tunnel: !flags['no-tunnel'],
+      update: !flags['no-update'],
     })
   }
 }

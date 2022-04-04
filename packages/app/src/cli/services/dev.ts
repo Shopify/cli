@@ -9,8 +9,8 @@ interface DevOptions {
   apiKey?: string
   store?: string
   reset: boolean
-  noTunnel: boolean
-  noUpdate: boolean
+  tunnel: boolean
+  update: boolean
 }
 
 interface DevHomeOptions {
@@ -28,8 +28,8 @@ async function dev(input: DevOptions) {
   const port = 3000
   let url = `http://localhost:${port}`
 
-  url = input.noTunnel ? url : await createTunnel({port})
-  if (!input.noUpdate) await updateURLs(apiKey, url)
+  if (input.tunnel) url = await createTunnel({port})
+  if (input.update) await updateURLs(apiKey, url)
 
   output.success(`Your app is available at: ${url}/auth?shop=${store.shopDomain}`)
   devHome(input.appInfo.home, {
