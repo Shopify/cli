@@ -41,11 +41,6 @@ async function init(options: InitOptions) {
     const tmpDirHome = path.join(tmpDirApp, blocks.home.directoryName)
     const tmpDirDownload = path.join(tmpDir, 'download')
 
-    await downloadTemplate({
-      templateUrl: options.template,
-      into: tmpDirDownload,
-    })
-
     await file.mkdir(tmpDirHome)
     await file.mkdir(tmpDirDownload)
 
