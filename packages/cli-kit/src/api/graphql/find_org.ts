@@ -56,7 +56,7 @@ export interface FindOrganizationQuerySchema {
           apiKey: string
           apiSecretKeys: {
             secret: string
-          }
+          }[]
           appType: string
         }[]
       }

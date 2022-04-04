@@ -14,7 +14,7 @@ const LOCAL_APP: App = {
   extensions: [],
 }
 
-const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: {secret: 'secret1'}}
+const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
 
 beforeEach(() => {
   vi.mock('$cli/prompts/dev')

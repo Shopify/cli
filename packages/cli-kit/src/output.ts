@@ -250,7 +250,7 @@ const message = (content: Message, level: LogLevel = 'info') => {
 export async function concurrent(
   index: number,
   prefix: string,
-  callback: (stdout: Writable, stderr: Writable) => Promise<void>,
+  action: (stdout: Writable, stderr: Writable) => Promise<void>,
 ) {
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
 
@@ -278,7 +278,7 @@ export async function concurrent(
       next()
     },
   })
-  await callback(stdout, stderr)
+  await action(stdout, stderr)
 }
 
 /* eslint-enable no-console */
