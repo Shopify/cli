@@ -73,7 +73,7 @@ const LOCAL_APP: App = {
 }
 
 const INPUT: DevEnvironmentInput = {
-  appInfo: LOCAL_APP,
+  appManifest: LOCAL_APP,
   reset: false,
 }
 
