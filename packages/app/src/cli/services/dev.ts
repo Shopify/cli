@@ -26,8 +26,11 @@ async function dev(input: DevOptions) {
     store,
   } = await ensureDevEnvironment(input)
   const port = 3000
-  const url = await createTunnel({port})
-  await updateURLs(apiKey, url)
+  let url = `http://localhost:${port}`
+
+  url = input.noTunnel ? url : await createTunnel({port})
+  if (!input.noUpdate) await updateURLs(apiKey, url)
+
   output.success(`Your app is available at: ${url}/auth?shop=${store.shopDomain}`)
   devHome(input.appInfo.home, {
     apiKey,
