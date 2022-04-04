@@ -52,10 +52,8 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
-    "@shopify/cli-hydrogen": "1.0.6",
     "@shopify/cli-kit": "1.0.6",
-    "@oclif/core": "1.6.4",
-    "open": "^8.4.0"
+    "@oclif/core": "1.6.4"
   },
   "devDependencies": {
     "vitest": "0.8.1"
