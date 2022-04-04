@@ -5,7 +5,7 @@ import {App, Home} from '../models/app/app'
 import {output, system} from '@shopify/cli-kit'
 
 interface DevOptions {
-  appInfo: App
+  appManifest: App
   apiKey?: string
   store?: string
   reset: boolean
@@ -32,7 +32,7 @@ async function dev(input: DevOptions) {
   if (input.update) await updateURLs(apiKey, url)
 
   output.success(`Your app is available at: ${url}/auth?shop=${store.shopDomain}`)
-  devHome(input.appInfo.home, {
+  devHome(input.appManifest.home, {
     apiKey,
     apiSecret: apiSecretKeys[0].secret,
     hostname: url,

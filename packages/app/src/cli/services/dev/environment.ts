@@ -8,7 +8,7 @@ import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/orga
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 export interface DevEnvironmentInput {
-  appInfo: App
+  appManifest: App
   apiKey?: string
   store?: string
   reset: boolean
@@ -37,13 +37,13 @@ interface DevEnvironmentOutput {
 export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
 
-  const cachedInfo = getCachedInfo(input.reset, input.appInfo.configuration.id)
+  const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
-  const selectedApp = await selectOrCreateApp(input.appInfo, apps, orgId, cachedInfo?.appId, input.apiKey)
+  const selectedApp = await selectOrCreateApp(input.appManifest, apps, orgId, cachedInfo?.appId, input.apiKey)
   conf.setAppInfo(selectedApp.apiKey, {orgId})
-  updateAppConfigurationFile(input.appInfo, {id: selectedApp.apiKey, name: selectedApp.title})
+  updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
   const selectedStore = await selectStore(stores, orgId, cachedInfo?.storeFqdn, input.store)
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore.shopDomain})
 

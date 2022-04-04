@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {cliKit, getAppInfo, setAppInfo} from '$store'
+import {clearAppInfo, cliKit, getAppInfo, setAppInfo} from '$store'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2'}
@@ -52,5 +52,19 @@ describe('setAppInfo', () => {
 
     // Then
     expect(got).toEqual([APP1, APP2])
+  })
+})
+
+describe('clearAppInfo', () => {
+  it('removes cached info if exists', () => {
+    // Given
+    cliKit.set('appInfo', [APP1, APP2])
+
+    // When
+    clearAppInfo('app1')
+    const got = cliKit.get('appInfo')
+
+    // Then
+    expect(got).toEqual([APP2])
   })
 })
