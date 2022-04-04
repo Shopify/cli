@@ -41,6 +41,11 @@ async function init(options: InitOptions) {
     const tmpDirHome = path.join(tmpDirApp, blocks.home.directoryName)
     const tmpDirDownload = path.join(tmpDir, 'download')
 
+    await downloadTemplate({
+      templateUrl: options.template,
+      into: tmpDirDownload,
+    })
+
     await file.mkdir(tmpDirHome)
     await file.mkdir(tmpDirDownload)
 
@@ -83,7 +88,6 @@ async function init(options: InitOptions) {
                 task: async () => {
                   await scaffoldTemplate({
                     ...options,
-                    prompts: {},
                     directory: tmpDirHome,
                     templatePath: tmpDirDownload,
                     cliPackageVersion,
@@ -182,7 +186,6 @@ function inferDependencyManager(optionsDependencyManager: string | undefined): d
 async function scaffoldTemplate(
   options: InitOptions & {
     directory: string
-    prompts?: {[key: string]: string | number | boolean}
     templatePath: string
     cliPackageVersion: string
     appPackageVersion: string
@@ -202,7 +205,6 @@ async function scaffoldTemplate(
     author: options.user,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     dependency_manager: options.dependencyManager,
-    ...options.prompts,
   }
   await template.recursiveDirectoryCopy(options.templatePath, options.directory, templateData)
 }
