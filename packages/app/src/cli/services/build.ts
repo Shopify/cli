@@ -10,16 +10,16 @@ interface BuildOptions {
 
 async function build({app}: BuildOptions) {
   await Promise.all([
-    output.concurrent(0, 'home', async (stdout) => {
-      await buildHome('build', {home: app.home, stdout})
+    output.concurrent(0, 'home', async (stdout, stderr) => {
+      await buildHome('build', {home: app.home, stdout, stderr})
     }),
     ...app.extensions.map((extension, index) => {
-      return output.concurrent(index + 1, path.basename(extension.directory), async (stdout) => {
-        await buildExtension(extension, {stdout})
+      return output.concurrent(index + 1, path.basename(extension.directory), async (stdout, stderr) => {
+        await buildExtension(extension, {stdout, stderr})
       })
     }),
   ])
-  output.success('Application successfully built')
+  output.success(`${app.configuration.name} built`)
 }
 
 export default build

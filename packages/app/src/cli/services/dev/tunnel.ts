@@ -1,7 +1,10 @@
-import {output, tunnel} from '@shopify/cli-kit'
+import {tunnel} from '@shopify/cli-kit'
 
-export async function createTunnel(): Promise<string> {
-  const url = await tunnel.create()
-  output.success(`ngrok tunnel running at ${url}`)
+interface CreateTunnelOptions {
+  port: number
+}
+
+export async function createTunnel(options: CreateTunnelOptions): Promise<string> {
+  const url = await tunnel.create({port: options.port, authToken: '6p8aPPMh1jkjT6TDc82pX_2T8SRKzqZYTcZNL65nsNw'})
   return url
 }

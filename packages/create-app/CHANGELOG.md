@@ -1,5 +1,29 @@
 # @shopify/create-app
 
+## 1.0.7
+
+### Patch Changes
+
+- Remove php from the list
+
+## 1.0.6
+
+### Patch Changes
+
+- Add deploy command
+
+## 1.0.5
+
+### Patch Changes
+
+- Import ngrok dynamically
+
+## 1.0.4
+
+### Patch Changes
+
+- e2e working
+
 ## 1.0.2
 
 ### Patch Changes

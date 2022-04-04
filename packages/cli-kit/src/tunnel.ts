@@ -1,5 +1,10 @@
-import ngrok from 'ngrok'
+interface CreateOptions {
+  port: number
+  authToken: string
+}
 
-export async function create(): Promise<string> {
-  return ngrok.connect({addr: 3000})
+export async function create(options: CreateOptions): Promise<string> {
+  const ngrok = await import('ngrok')
+  await ngrok.kill()
+  return ngrok.connect({proto: 'http', addr: options.port, authtoken: options.authToken})
 }

@@ -35,7 +35,6 @@ async function init(options: InitOptions) {
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  const homeOutputDirectory = path.join(options.directory, hyphenizedName, 'home')
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const tmpDirApp = path.join(tmpDir, 'app')
@@ -100,13 +99,19 @@ async function init(options: InitOptions) {
                 return {
                   title: path.basename(hookPath),
                   task: async (_: any, task: any) => {
-                    const output = new Writable({
+                    const stdout = new Writable({
                       write(chunk, encoding, next) {
                         task.output = chunk.toString()
                         next()
                       },
                     })
-                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                    const stderr = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout, stderr})
                   },
                 }
               }),
@@ -115,13 +120,19 @@ async function init(options: InitOptions) {
                 return {
                   title: path.basename(hookPath),
                   task: async (_: any, task: any) => {
-                    const output = new Writable({
+                    const stdout = new Writable({
                       write(chunk, encoding, next) {
                         task.output = chunk.toString()
                         next()
                       },
                     })
-                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout: output, stderr: output})
+                    const stderr = new Writable({
+                      write(chunk, encoding, next) {
+                        task.output = chunk.toString()
+                        next()
+                      },
+                    })
+                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout, stderr})
                   },
                 }
               }),

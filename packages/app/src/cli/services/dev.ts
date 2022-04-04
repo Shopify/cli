@@ -1,8 +1,8 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
 import {createTunnel} from './dev/tunnel'
-import {App} from '../models/app/app'
-import {output} from '@shopify/cli-kit'
+import {App, Home} from '../models/app/app'
+import {output, system} from '@shopify/cli-kit'
 
 interface DevOptions {
   appInfo: App
@@ -13,21 +13,53 @@ interface DevOptions {
   noUpdate: boolean
 }
 
+interface DevHomeOptions {
+  port: number
+  apiKey: string
+  apiSecret: string
+  hostname: string
+}
+
 async function dev(input: DevOptions) {
-  const {org, app, store} = await ensureDevEnvironment(input)
+  const {
+    app: {apiKey, apiSecretKeys},
+    store,
+  } = await ensureDevEnvironment(input)
+  const port = 3000
+  const url = await createTunnel({port})
+  await updateURLs(apiKey, url)
+  output.success(`Your app is available at: ${url}/auth?shop=${store.shopDomain}`)
+  devHome(input.appInfo.home, {
+    apiKey,
+    apiSecret: apiSecretKeys[0].secret,
+    hostname: url,
+    port,
+  })
+}
 
-  const url = await createTunnel()
-  if (!input.appInfo.configuration.id) return
-  await updateURLs(input.appInfo.configuration.id, url)
-  output.success(`Your app is available at: ${url}/auth?shop=development-lifecycle-store.myshopify.com`)
+async function devHome(home: Home, options: DevHomeOptions) {
+  const script = home.configuration.commands.dev
+  if (!script) {
+    return
+  }
 
-  output.info(`Running dev with ${app.title} on ${store.shopName}`)
-  //   log('Connecting to the platform...')
-  await new Promise((resolve, reject) => setInterval(resolve, 1 * 1000))
-  //   log(
-  //     `Your app is available at: https://54b7-2003-fb-ef0b-39ff-990c-d5ba-10e2-ff79.ngrok.io/auth?shop=development-lifecycle-store.myshopify.com`,
-  //   )
-  await new Promise((resolve, reject) => setInterval(resolve, 20 * 1000))
+  const [cmd, ...args] = script.split(' ')
+
+  await output.concurrent(0, 'home', async (stdout) => {
+    await system.exec(cmd, args, {
+      cwd: home.directory,
+      stdout,
+      env: {
+        ...process.env,
+        SHOPIFY_API_KEY: options.apiKey,
+        SHOPIFY_API_SECRET: options.apiSecret,
+        HOST: options.hostname,
+        SCOPES: 'write_products,write_customers,write_draft_orders',
+        PORT: `${options.port}`,
+        NODE_ENV: `development`,
+      },
+    })
+  })
 }
 
 export default dev

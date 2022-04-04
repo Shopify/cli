@@ -48,7 +48,7 @@ export interface CreateAppQuerySchema {
       redirectUrlWhitelist: string[]
       apiSecretKeys: {
         secret: string
-      }
+      }[]
       appType: string
     }
     userErrors: {

@@ -168,7 +168,7 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    console.log(`${colors.magenta('✔')} ${stringifyMessage(content)}`)
+    console.log(colors.bold(`${colors.magenta('✔')} Success! ${stringifyMessage(content)}`))
   }
 }
 
@@ -247,21 +247,38 @@ const message = (content: Message, level: LogLevel = 'info') => {
  * @param prefix {string} The prefix to include in the standard output data to differenciate logs.
  * @param process The callback that's called with a Writable instance to send events through.
  */
-export async function concurrent(index: number, prefix: string, process: (stdout: Writable) => Promise<void>) {
+export async function concurrent(
+  index: number,
+  prefix: string,
+  action: (stdout: Writable, stderr: Writable) => Promise<void>,
+) {
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
+
+  function linePrefix() {
+    const color = colors[colors.length % (index + 1)]
+    const linePrefix = color(`[${prefix}]: `)
+    return linePrefix
+  }
 
   const stdout = new Writable({
     write(chunk, encoding, next) {
       const lines = chunk.toString('ascii').split('\n')
-      const color = colors[colors.length % (index + 1)]
-      const linePrefix = color(`[${prefix}]: `)
       for (const line of lines) {
-        info(content`${linePrefix}${line}`)
+        info(content`${linePrefix()}${line}`)
       }
       next()
     },
   })
-  await process(stdout)
+  const stderr = new Writable({
+    write(chunk, encoding, next) {
+      const lines = chunk.toString('ascii').split('\n')
+      for (const line of lines) {
+        message(content`${linePrefix()}${line}`, 'error')
+      }
+      next()
+    },
+  })
+  await action(stdout, stderr)
 }
 
 /* eslint-enable no-console */

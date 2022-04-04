@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 0.5.11
+
+### Patch Changes
+
+- Add deploy command
+
+## 0.5.10
+
+### Patch Changes
+
+- e2e working
+
 ## 0.5.9
 
 ### Patch Changes

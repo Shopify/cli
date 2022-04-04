@@ -5,7 +5,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {App} from '$cli/models/app/app'
-import {reloadStoreListPrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 outputMocker.mockAndCapture()
@@ -44,8 +44,8 @@ afterEach(() => {
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
 const ORG2: Organization = {id: '2', businessName: 'org2'}
-const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: {secret: 'secret1'}}
-const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: {secret: 'secret2'}}
+const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
+const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
 const CACHED1: conf.CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1'}
 const STORE1: OrganizationStore = {
   shopId: '1',

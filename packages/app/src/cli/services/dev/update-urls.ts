@@ -6,7 +6,7 @@ export async function updateURLs(apiKey: string, url: string): Promise<void> {
   const variables: api.graphql.UpdateURLsQueryVariables = {
     apiKey,
     appUrl: url,
-    redir: [`${url}/auth/shopify/callback`],
+    redir: ['https://localhost/', `${url}/auth`, `${url}/auth/callback`],
   }
 
   const query = api.graphql.UpdateURLsQuery
