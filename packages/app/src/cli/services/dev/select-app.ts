@@ -52,7 +52,7 @@ function validateApiKey(apps: OrganizationApp[], apiKey?: string) {
   return apps.find((app) => app.apiKey === apiKey)
 }
 
-async function createApp(orgId: string, app: App): Promise<OrganizationApp> {
+export async function createApp(orgId: string, app: App): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.configuration.name)
   const type = await appTypePrompt()
   const token = await session.ensureAuthenticatedPartners()

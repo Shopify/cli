@@ -1,11 +1,10 @@
 import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
-import {createApp} from './create-app'
 import {api, store as conf} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {App} from '$cli/models/app/app'
-import {reloadStoreListPrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from '$cli/prompts/dev'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 outputMocker.mockAndCapture()
@@ -197,7 +196,7 @@ describe('ensureDevEnvironment', () => {
     // Given
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
     vi.mocked(selectAppPrompt).mockResolvedValue(undefined)
-    vi.mocked(createApp).mockResolvedValue(APP2)
+    // vi.mocked(createApp).mockResolvedValue(APP2)
     vi.mocked(selectStorePrompt).mockReturnValueOnce(Promise.resolve(STORE1))
     vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: [ORG1, ORG2]}})
     vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
@@ -207,7 +206,7 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key2', name: 'app2'})
-    expect(createApp).toBeCalledWith(ORG1.id, LOCAL_APP)
+    // expect(createApp).toBeCalledWith(ORG1.id, LOCAL_APP)
     expect(api.partners.request).toHaveBeenNthCalledWith(1, api.graphql.AllOrganizationsQuery, 'token')
     expect(api.partners.request).toHaveBeenNthCalledWith(2, api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
     expect(selectOrganizationPrompt).toHaveBeenCalledWith([ORG1, ORG2])

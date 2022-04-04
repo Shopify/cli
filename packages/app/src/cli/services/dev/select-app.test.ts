@@ -1,4 +1,4 @@
-import {createApp} from './create-app'
+import {createApp} from './select-app'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
