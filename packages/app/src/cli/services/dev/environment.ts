@@ -1,4 +1,4 @@
-import {selectOrCreateApp} from './create-app'
+import {selectOrCreateApp} from './select-app'
 import {fetchAppsAndStores, fetchOrganizations} from './fetch'
 import {selectStore} from './select-store'
 import {output, session, store as conf} from '@shopify/cli-kit'
