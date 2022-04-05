@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
@@ -44,7 +44,7 @@
     "prettier": "^2.6.1"
   },
   "peerDependencies": {
-    "@shopify/cli-kit": "1.0.8"
+    "@shopify/cli-kit": "1.0.9"
   },
   "devDependencies": {
     "@shopify/cli-testing": "0.30.2",

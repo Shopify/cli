@@ -1,5 +1,12 @@
 # fixtures-app
 
+## 0.1.6
+
+### Patch Changes
+
+- @shopify/app@1.0.9
+- @shopify/cli@1.0.9
+
 ## 0.1.5
 
 ### Patch Changes

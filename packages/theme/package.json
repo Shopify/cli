@@ -26,7 +26,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@shopify/cli-kit": "1.0.8",
+    "@shopify/cli-kit": "1.0.9",
     "vitest": "0.8.1"
   }
 }
