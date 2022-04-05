@@ -8,6 +8,7 @@ import {
   exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   refreshAccessToken,
+  InvalidGrantError,
 } from './session/exchange'
 import {
   ensureAuthenticated,
@@ -232,6 +233,27 @@ describe('when existing session is expired', () => {
     // Then
     expect(authorize).not.toHaveBeenCalledOnce()
     expect(exchangeCodeForAccessToken).not.toBeCalled()
+    expect(refreshAccessToken).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
+  })
+
+  it('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {
+    // Given
+    const tokenResponseError = new InvalidGrantError('Invalid grant')
+
+    vi.mocked(validateScopes).mockReturnValue(true)
+    vi.mocked(validateSession).mockReturnValue(false)
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications)
+
+    // Then
+    expect(authorize).toHaveBeenCalledOnce()
+    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)

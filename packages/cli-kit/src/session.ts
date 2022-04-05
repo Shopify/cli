@@ -9,6 +9,7 @@ import {
   exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
+  InvalidGrantError,
 } from './session/exchange'
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
@@ -132,10 +133,19 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
   const sessionIsInvalid = !validateSession(applications, fqdnSession)
 
   let newSession = {}
+
   if (needFullAuth) {
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (sessionIsInvalid) {
-    newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
+    try {
+      newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
+    } catch (error: any) {
+      if (error instanceof InvalidGrantError) {
+        newSession = await executeCompleteFlow(applications, fqdn)
+      } else {
+        throw error
+      }
+    }
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
