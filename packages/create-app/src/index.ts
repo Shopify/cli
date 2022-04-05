@@ -1,4 +1,4 @@
-import {run, flush, settings, Errors} from '@oclif/core'
+import {run, flush, settings} from '@oclif/core'
 import {error as kitError, environment} from '@shopify/cli-kit'
 
 function runCreateApp() {
@@ -19,10 +19,12 @@ function runCreateApp() {
   run(undefined, import.meta.url)
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
-      const oclifHandle = Errors.handle
+      const kitMapper = kitError.mapper
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting
-      return kitHandle(error).then(oclifHandle)
+      return kitMapper(error).then((error: Error) => {
+        kitHandle(error)
+      })
     })
 }
 
