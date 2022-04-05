@@ -31,3 +31,13 @@ function sha256(str: string) {
 export function capitalize(string: string) {
   return string.substring(0, 1).toUpperCase() + string.substring(1)
 }
+
+/**
+ * Given a store, returns a valid store fqdn removing protocol and adding .myshopify.com domain
+ * @param store Original store name provided by the user
+ * @returns a valid store fqdn
+ */
+export function normalizeStoreName(store: string) {
+  const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  return storeFqdn.includes('.myshopify.com') ? storeFqdn : `${storeFqdn}.myshopify.com`
+}

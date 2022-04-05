@@ -13,6 +13,9 @@ function runCLI() {
   run(undefined, import.meta.url)
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
+      if (error instanceof kitError.AbortSilent) {
+        process.exit(0)
+      }
       const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
         if (!settings.debug) {
           await new Promise((resolve, reject) => {

@@ -11,9 +11,24 @@ const NoOrgError = () =>
     'You need to create a Shopify Partners organization: https://partners.shopify.com/signup ',
   )
 
+const InvalidApiKeyError = (apiKey: string) => {
+  return new error.Fatal(`Invalid API key: ${apiKey}`, 'Check that the provided API KEY is correct and try again.')
+}
+
+const InvalidStoreError = (apiKey: string) => {
+  return new error.Fatal(`Invalid Store domain: ${apiKey}`, 'Check that the provided Store is correct and try again.')
+}
+
 const CreateStoreLink = (orgId: string) => {
   const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
   return `Click here to create a new dev store to preview your project:\n${url}\n`
+}
+
+export interface DevEnvironmentInput {
+  appManifest: App
+  apiKey?: string
+  store?: string
+  reset: boolean
 }
 
 interface DevEnvironmentOutput {
@@ -32,7 +47,8 @@ interface FetchResponse {
  * Make sure there is a valid environment to execute `dev`
  * That means we have a valid organization, app and dev store selected.
  *
- * If there is cached info (user ran `dev` previously), check if it is still valid and return it
+ * If there are app/store from flags, we check if they are valid. If they are not, throw an error.
+ * If there is cached info (user ran `dev` previously), check if it is still valid and return it.
  * If there is no cached info (or is invalid):
  *  - Show prompts to select an org, app and dev store
  *  - The new selection will be saved as global configuration
@@ -41,31 +57,32 @@ interface FetchResponse {
  * @param app {App} Current local app information
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
-export async function ensureDevEnvironment(app: App): Promise<DevEnvironmentOutput> {
+export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
 
-  const cachedInfo = getCachedInfo(app)
+  const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
-  const cached = validateCachedInfo(apps, stores, cachedInfo)
-  if (cached?.app && cached?.store) {
-    showReusedValues(organization.businessName, cached.app.title, cached.store.shopDomain)
-    return {org: organization, app: cached.app, store: cached.store}
-  }
-
-  const selectedApp = cached?.app || (await selectOrCreateApp(app, apps, orgId))
+  const selectedApp = await selectOrCreateApp(input.appManifest, apps, orgId, cachedInfo?.appId, input.apiKey)
   conf.setAppInfo(selectedApp.apiKey, {orgId})
-  updateAppConfigurationFile(app, {id: selectedApp.apiKey, name: selectedApp.title})
-  const selectedStore = cached?.store || (await selectStore(stores, orgId))
+  updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
+  const selectedStore = await selectStore(stores, orgId, cachedInfo?.storeFqdn, input.store)
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore.shopDomain})
 
   return {org: organization, app: selectedApp, store: selectedStore}
 }
 
-function getCachedInfo(app: App): conf.CachedAppInfo | undefined {
-  if (!app.configuration.id) return undefined
-  return conf.getAppInfo(app.configuration.id)
+/**
+ * Retrieve cached info from the global configuration based on the current local app
+ * @param reset {boolean} Wheter to reset the cache or not
+ * @param appId {string} Current local app id, used to retrieve the cached info
+ * @returns
+ */
+function getCachedInfo(reset: boolean, apiKey?: string): conf.CachedAppInfo | undefined {
+  if (!apiKey) return undefined
+  if (apiKey && reset) conf.clearAppInfo(apiKey)
+  return conf.getAppInfo(apiKey)
 }
 
 /**
@@ -80,14 +97,34 @@ async function selectOrg(token: string): Promise<string> {
 }
 
 /**
- * Select an app from list or create a new one
- * If no apps exists, we automatically prompt the user to create a new one
+ * Select an app from env, list or create a new one:
+ * If an envApiKey is provided, we check if it is valid and return it. If it's not valid, throw error
+ * If a cachedAppId is provided, we check if it is valid and return it. If it's not valid, ignore it.
+ * If there is no valid app yet, prompt the user to select one from the list or create a new one.
+ * If no apps exists, we automatically prompt the user to create a new one.
  * @param app {App} Current local app information
  * @param apps {OrganizationApp[]} List of remote available apps
  * @param orgId {string} Current Organization
+ * @param cachedAppId {string} Cached app apikey
+ * @param envApiKey {string} API key from the environment/flag
  * @returns {Promise<OrganizationApp>} The selected (or created) app
  */
-async function selectOrCreateApp(localApp: App, apps: OrganizationApp[], orgId: string): Promise<OrganizationApp> {
+async function selectOrCreateApp(
+  localApp: App,
+  apps: OrganizationApp[],
+  orgId: string,
+  cachedApiKey?: string,
+  envApiKey?: string,
+): Promise<OrganizationApp> {
+  if (envApiKey) {
+    const envApp = validateApiKey(apps, envApiKey)
+    if (envApp) return envApp
+    throw InvalidApiKeyError(envApiKey)
+  }
+
+  const cachedApp = validateApiKey(apps, cachedApiKey)
+  if (cachedApp) return cachedApp
+
   let app = await selectAppPrompt(apps)
   if (!app) app = await createApp(orgId, localApp)
 
@@ -96,14 +133,52 @@ async function selectOrCreateApp(localApp: App, apps: OrganizationApp[], orgId: 
 }
 
 /**
+ * Check if the provided apiKey exists in the list of retrieved apps
+ * @param apps {OrganizationApp[]} List of remote available apps
+ * @param apiKey {string} API key to check
+ * @returns {OrganizationApp} The app if it exists, undefined otherwise
+ */
+function validateApiKey(apps: OrganizationApp[], apiKey?: string) {
+  return apps.find((app) => app.apiKey === apiKey)
+}
+
+/**
+ *  Check if the provided storeDomain exists in the list of retrieved stores
+ * @param stores {OrganizationStore[]} List of remote available stores
+ * @param storeDomain {string} Store domain to check
+ * @returns {OrganizationStore} The store if it exists, undefined otherwise
+ */
+function validateStore(stores: OrganizationStore[], storeDomain?: string) {
+  return stores.find((store) => store.shopDomain === storeDomain)
+}
+
+/**
  * Select store from list or
+ * If an envStore is provided, we check if it is valid and return it. If it's not valid, throw error
+ * If a cachedStoreName is provided, we check if it is valid and return it. If it's not valid, ignore it.
  * If there are no stores, show a link to create a store and prompt the user to refresh the store list
  * If no store is finally selected, exit process
  * @param stores {OrganizationStore[]} List of available stores
  * @param orgId {string} Current organization ID
+ * @param cachedStoreName {string} Cached store name
+ * @param envStore {string} Store from the environment/flag
  * @returns {Promise<OrganizationStore>} The selected store
  */
-async function selectStore(stores: OrganizationStore[], orgId: string): Promise<OrganizationStore> {
+async function selectStore(
+  stores: OrganizationStore[],
+  orgId: string,
+  cachedStoreName?: string,
+  envStore?: string,
+): Promise<OrganizationStore> {
+  if (envStore) {
+    const envStoreInfo = validateStore(stores, envStore)
+    if (envStoreInfo) return envStoreInfo
+    throw InvalidStoreError(envStore)
+  }
+
+  const cachedStore = validateStore(stores, cachedStoreName)
+  if (cachedStore) return cachedStore
+
   const store = await selectStorePrompt(stores)
   if (store) return store
 
@@ -114,24 +189,6 @@ async function selectStore(stores: OrganizationStore[], orgId: string): Promise<
   const token = await session.ensureAuthenticatedPartners()
   const data = await fetchAppsAndStores(orgId, token)
   return selectStore(data.stores, orgId)
-}
-
-/**
- * Check if the current cached info corresponds to a valid app and store from the current organization
- * @param apps {OrganizationApp[]} List of available apps
- * @param stores {OrganizationStore[]} List of available stores
- * @param info  {CachedAppInfo} Cached app info
- * @returns {app?: OrganizationApp; store?: OrganizationStore} App and store if they are valid
- */
-function validateCachedInfo(
-  apps: OrganizationApp[],
-  stores: OrganizationStore[],
-  info?: conf.CachedAppInfo,
-): {app?: OrganizationApp; store?: OrganizationStore} {
-  if (!info || !info.storeFqdn) return {}
-  const selectedApp = apps.find((app) => app.apiKey === info.appId)
-  const selectedStore = stores.find((store) => store.shopDomain === info.storeFqdn)
-  return {app: selectedApp, store: selectedStore}
 }
 
 /**

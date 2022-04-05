@@ -5,7 +5,12 @@ import {App, Home} from '../models/app/app'
 import {output, system} from '@shopify/cli-kit'
 
 interface DevOptions {
-  app: App
+  appManifest: App
+  apiKey?: string
+  store?: string
+  reset: boolean
+  tunnel: boolean
+  update: boolean
 }
 
 interface DevHomeOptions {
@@ -15,16 +20,19 @@ interface DevHomeOptions {
   hostname: string
 }
 
-async function dev({app}: DevOptions) {
+async function dev(input: DevOptions) {
   const {
     app: {apiKey, apiSecretKeys},
     store,
-  } = await ensureDevEnvironment(app)
+  } = await ensureDevEnvironment(input)
   const port = 3000
-  const url = await createTunnel({port})
-  await updateURLs(apiKey, url)
+  let url = `http://localhost:${port}`
+
+  if (input.tunnel) url = await createTunnel({port})
+  if (input.update) await updateURLs(apiKey, url)
+
   output.success(`Your app is available at: ${url}/auth?shop=${store.shopDomain}`)
-  devHome(app.home, {
+  devHome(input.appManifest.home, {
     apiKey,
     apiSecret: apiSecretKeys[0].secret,
     hostname: url,

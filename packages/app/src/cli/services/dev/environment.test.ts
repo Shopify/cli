@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './environment'
+import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
 import {createApp} from './create-app'
 import {api, store as conf} from '@shopify/cli-kit'
 import {afterEach, describe, expect, it, vi} from 'vitest'
@@ -72,6 +72,11 @@ const LOCAL_APP: App = {
   extensions: [],
 }
 
+const INPUT: DevEnvironmentInput = {
+  appManifest: LOCAL_APP,
+  reset: false,
+}
+
 const FETCH_ORG_RESPONSE_VALUE = {
   organizations: {
     nodes: [
@@ -97,7 +102,7 @@ describe('ensureDevEnvironment', () => {
       .mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await ensureDevEnvironment(LOCAL_APP)
+    const got = await ensureDevEnvironment(INPUT)
 
     // Then
     expect(got).toEqual({org: ORG1, app: APP1, store: STORE1})
@@ -121,7 +126,7 @@ describe('ensureDevEnvironment', () => {
       .mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await ensureDevEnvironment(LOCAL_APP)
+    const got = await ensureDevEnvironment(INPUT)
 
     // Then
     expect(got).toEqual({org: ORG1, app: APP1, store: STORE1})
@@ -139,7 +144,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await ensureDevEnvironment(LOCAL_APP)
+    const got = await ensureDevEnvironment(INPUT)
 
     // Then
     expect(got).toEqual({org: ORG1, app: APP1, store: STORE1})
@@ -155,7 +160,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({organizations: {nodes: []}})
 
     // When
-    const got = ensureDevEnvironment(LOCAL_APP)
+    const got = ensureDevEnvironment(INPUT)
 
     expect(got).rejects.toThrow(`No Organization found`)
   })
@@ -198,7 +203,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    await ensureDevEnvironment(LOCAL_APP)
+    await ensureDevEnvironment(INPUT)
 
     // Then
     expect(updateAppConfigurationFile).toHaveBeenCalledWith(LOCAL_APP, {id: 'key2', name: 'app2'})
