@@ -10,7 +10,6 @@ import {App} from '$cli/models/app/app'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
-outputMocker.mockAndCapture()
 vi.mock('./fetch')
 vi.mock('./select-app')
 vi.mock('./select-store')
@@ -37,11 +36,6 @@ vi.mock('@shopify/cli-kit', async () => {
       clearAppInfo: vi.fn(),
     },
   }
-})
-
-afterEach(() => {
-  vi.mocked(api.partners.request).mockClear()
-  vi.mocked(conf.getAppInfo).mockClear()
 })
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
@@ -85,6 +79,13 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+afterEach(() => {
+  vi.mocked(api.partners.request).mockClear()
+  vi.mocked(conf.getAppInfo).mockClear()
+  vi.mocked(fetchOrganizations).mockClear()
+  vi.mocked(selectOrganizationPrompt).mockClear()
+})
+
 describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
@@ -107,12 +108,13 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with cached state', async () => {
     // Given
+    const outputMock = outputMocker.mockAndCapture()
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
     vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
     vi.mocked(selectStore).mockResolvedValue(STORE1)
     vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
     vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
-    vi.mocked(conf.getAppInfo).mockReturnValue({appId: APP1.apiKey, orgId: ORG1.id, storeFqdn: STORE1.shopDomain})
+    vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
 
     // When
     const got = await ensureDevEnvironment(INPUT)
@@ -124,7 +126,15 @@ describe('ensureDevEnvironment', () => {
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
     expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP1.title, id: APP1.apiKey})
+    expect(outputMock.output()).toMatch(/Reusing the org, app, dev store settings from your last run:/)
+    outputMock.clear()
   })
 
-  it('resets cached state if reset is true', () => {})
+  it('resets cached state if reset is true', async () => {
+    // When
+    await ensureDevEnvironment({...INPUT, reset: true})
+
+    // Then
+    expect(conf.clearAppInfo).toHaveBeenCalledWith(APP1.apiKey)
+  })
 })
