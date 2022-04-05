@@ -19,6 +19,7 @@ export default class Dev extends Command {
     }),
     store: Flags.string({
       hidden: false,
+      char: 's',
       description: 'Development store URL. Must be an existing development store.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
