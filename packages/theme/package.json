@@ -21,9 +21,10 @@
       "../../.eslintrc.cjs"
     ]
   },
-  "dependencies": {},
-  "peerDependencies": {
+  "dependencies": {
     "@oclif/core": "1.3.6"
+  },
+  "peerDependencies": {
   },
   "devDependencies": {
     "@shopify/cli-kit": "1.0.6",
