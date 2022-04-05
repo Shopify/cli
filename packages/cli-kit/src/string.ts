@@ -22,3 +22,12 @@ function base64URLEncode(str: Buffer) {
 function sha256(str: string) {
   return crypto.createHash('sha256').update(str).digest()
 }
+
+/**
+ * Given a string, it returns it with the first letter capitalized.
+ * @param string {string} String whose first letter will be caplitalized.
+ * @returns The given string with its first letter capitalized.
+ */
+export function capitalize(string: string) {
+  return string.substring(0, 1).toUpperCase() + string.substring(1)
+}

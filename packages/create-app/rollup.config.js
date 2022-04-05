@@ -1,18 +1,11 @@
 import path from 'pathe';
 import alias from '@rollup/plugin-alias';
+import {dependencies} from './package.json'
 
 import {external, plugins, distDir} from '../../configurations/rollup.config';
 
-const createAppExternal = [...external];
+const createAppExternal = [...external, ...Object.keys(dependencies)];
 const createAppPlugins = [
-  alias({
-    entries: [
-      {
-        find: '@shopify/cli-kit',
-        replacement: path.join(__dirname, '../cli-kit/src/index.ts'),
-      },
-    ],
-  }),
   ...plugins(__dirname),
 ];
 
