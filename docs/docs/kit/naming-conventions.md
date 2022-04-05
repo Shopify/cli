@@ -20,3 +20,4 @@ Command/Flag    | Short form(s)     | Action
 `--port <n>`    | `-p`              | When running a server, expose the specified port _n_.
 `--json`        |                   | Return command output as JSON.
 `--no-color`    |                   | Deactivate all color in the terminal output.
+`--store`       | `-s`              | Development store URL.
