@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 1.0.8
+
+### Patch Changes
+
+- 8e2c3d3: Improve the error handling to not treat invalid commands as bug errors
+
 ## 1.0.6
 
 ### Patch Changes

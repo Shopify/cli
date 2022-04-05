@@ -1,5 +1,13 @@
 # @shopify/create-hydrogen
 
+## 1.0.8
+
+### Patch Changes
+
+- 8e2c3d3: Improve the error handling to not treat invalid commands as bug errors
+- Updated dependencies [8e2c3d3]
+  - @shopify/cli-kit@1.0.8
+
 ## 1.0.6
 
 ### Patch Changes
