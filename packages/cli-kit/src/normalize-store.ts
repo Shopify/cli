@@ -3,7 +3,7 @@
  * @param store Original store name provided by the user
  * @returns a valid store fqdn
  */
-export function normalizeStoreName(store: string) {
+export function parseStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
   return storeFqdn.includes('.myshopify.com') ? storeFqdn : `${storeFqdn}.myshopify.com`
 }
