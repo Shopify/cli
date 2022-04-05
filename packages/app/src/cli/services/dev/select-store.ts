@@ -1,3 +1,4 @@
+import {fetchAppsAndStores} from './fetch'
 import {error, output, session} from '@shopify/cli-kit'
 import {OrganizationStore} from '$cli/models/organization'
 import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
