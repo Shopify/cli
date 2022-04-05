@@ -1,4 +1,6 @@
 import * as ouput from './output'
+import {Errors} from '@oclif/core'
+
 /**
  * A fatal error represents an error shouldn't be rescued and that causes the execution to terminate.
  * There shouldn't be code that catches fatal errors.
@@ -37,4 +39,14 @@ export function handler(error: Error): Promise<Error> {
   const fatal = error instanceof Fatal ? error : new Fatal(error.message)
   ouput.error(fatal)
   return Promise.resolve(error)
+}
+
+export function mapper(error: Error): Promise<Error> {
+  if (error instanceof Errors.CLIError) {
+    const mappedError = new Abort(error.message)
+    mappedError.stack = error.stack
+    return Promise.resolve(mappedError)
+  } else {
+    return Promise.resolve(error)
+  }
 }
