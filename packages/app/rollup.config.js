@@ -15,6 +15,12 @@ const featureCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/app/**/*.ts`),
   `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
 ])
+
+const frameworkModules = fg.sync([
+  path.join(__dirname, `/src/framework/**/*.ts`),
+  `!${path.join(__dirname, `/src/framework/**/*.test.ts`)}`,
+])
+
 const configuration = () => [
   // CLI
   {
@@ -28,6 +34,26 @@ const configuration = () => [
           if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
             return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
+          } else {
+            return '[name].js'
+          }
+        },
+      },
+    ],
+    plugins: plugins(__dirname),
+    external: appExternal,
+  },
+  {
+    input: [...frameworkModules],
+    output: [
+      {
+        dir: distDir(__dirname),
+        format: 'esm',
+        sourcemap: true,
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.facadeModuleId.includes('src/framework')) {
+            // Preserves the commands/... path
+            return `framework/${chunkInfo.facadeModuleId.split('src/framework').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

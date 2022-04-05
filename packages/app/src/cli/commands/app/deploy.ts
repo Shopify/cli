@@ -25,7 +25,7 @@ export default class Build extends Command {
     output.newline()
     output.info('Pushing your code to Shopify...')
     await new Promise((resolve, reject) => {
-      setInterval(resolve, 3 * 1000)
+      setTimeout(resolve, 3 * 1000)
     })
 
     output.newline()

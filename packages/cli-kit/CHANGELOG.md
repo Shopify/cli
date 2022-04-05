@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 1.0.9
+
+### Patch Changes
+
+- df1c523: Re-authenticate if Identity returns an invalid grant error
+
 ## 1.0.8
 
 ### Patch Changes

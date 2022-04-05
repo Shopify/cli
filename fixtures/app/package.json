@@ -1,6 +1,6 @@
 {
   "name": "fixtures-app",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "home/index.js",
   "license": "UNLICENSED",
   "scripts": {
@@ -12,8 +12,8 @@
     "scaffold": "../shopify app scaffold"
   },
   "dependencies": {
-    "@shopify/cli": "1.0.8",
-    "@shopify/app": "1.0.8",
+    "@shopify/cli": "1.0.9",
+    "@shopify/app": "1.0.9",
     "react": "17.0.2"
   },
   "author": "pepicrft"
