@@ -1,5 +1,5 @@
 // CLI
-import {run, settings, flush, Errors} from '@oclif/core'
+import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
 import {error as kitError, environment} from '@shopify/cli-kit'
 
@@ -13,21 +13,22 @@ function runCLI() {
   run(undefined, import.meta.url)
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
-      const bugsnagHandle = new Promise<Error>((resolve) => {
+      const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
         if (!settings.debug) {
-          Bugsnag.notify(error, undefined, resolve)
+          await new Promise((resolve, reject) => {
+            Bugsnag.notify(errorToReport, undefined, resolve)
+          })
         }
-        resolve(error)
-      })
-      const oclifHandle = Errors.handle
+        return Promise.resolve(errorToReport)
+      }
+      const kitMapper = kitError.mapper
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting
-      return bugsnagHandle.then((error: Error) => {
-        if (settings.debug) {
-          oclifHandle(error)
-        }
-        kitHandle(error)
-      })
+      return kitMapper(error)
+        .then(bugsnagHandle)
+        .then((error: Error) => {
+          kitHandle(error)
+        })
     })
 }
 
