@@ -5,7 +5,7 @@
  */
 const sleep = async () => {
   await new Promise((resolve) => {
-    setInterval(resolve, 60 * 60 * 1000)
+    setTimeout(resolve, 60 * 60 * 1000)
   })
 }
 

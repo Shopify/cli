@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './exchange'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange'
 import {applicationId, clientId} from './identity'
 import {IdentityToken} from './schema'
 import {fetch} from '../http'
@@ -61,14 +61,18 @@ describe('exchange code for identity token', () => {
 
   it('Throws HTTP error if the request fails', () => {
     // Given
-    const response = new Response('', {status: 500})
+    const responseBody = {
+      error: 'invalid_grant',
+      error_description: 'The grant is invalid',
+    }
+    const response = new Response(JSON.stringify(responseBody), {status: 500})
     vi.mocked(fetch).mockResolvedValue(response)
 
     // When
     const got = exchangeCodeForAccessToken(code)
 
     // Then
-    return expect(got).rejects.toThrow('HTTP 500')
+    return expect(got).rejects.toThrowError(new InvalidGrantError(responseBody.error_description))
   })
 })
 

@@ -6,6 +6,8 @@ import {API} from '../network/api'
 import {fetch} from '../http'
 import {identity as identityFqdn} from '../environment/fqdn'
 
+export class InvalidGrantError extends Error {}
+
 export interface ExchangeScopes {
   admin: string[]
   partners: string[]
@@ -129,10 +131,17 @@ async function tokenRequest(params: {[key: string]: any}): Promise<unknown> {
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
   const res = await fetch(url.href, {method: 'POST'})
+  const payload: any = await res.json()
   if (!res.ok) {
-    throw new Abort(`HTTP ${res.status}`)
+    if (payload.error === 'invalid_grant') {
+      // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
+      // using a valid refresh token. When that happens, we take the user through the authentication flow.
+      throw new InvalidGrantError(payload.error_description)
+    } else {
+      throw new Abort(payload.error_description)
+    }
   }
-  return res.json()
+  return payload
 }
 
 function buildIdentityToken(result: any): IdentityToken {
