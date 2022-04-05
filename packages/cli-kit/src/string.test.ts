@@ -1,5 +1,5 @@
-import {normalizeStoreName} from './normalize-store'
 import {describe, expect, it} from 'vitest'
+import {normalizeStoreName} from '$string'
 
 describe('normalizeStore', () => {
   it('parses store name with http', () => {
