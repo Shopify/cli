@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {normalize, path} from '@shopify/cli-kit'
+import {path, string} from '@shopify/cli-kit'
 import dev from '$cli/services/dev'
 import {load as loadApp, App} from '$cli/models/app/app'
 
@@ -21,7 +21,7 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Development store URL. Must be an existing development store.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(normalize.parseStoreName(input)),
+      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
     }),
     reset: Flags.boolean({
       hidden: false,
