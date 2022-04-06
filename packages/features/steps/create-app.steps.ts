@@ -15,6 +15,8 @@ When(
       '--dependency-manager',
       dependencyManager,
       '--local',
+      '--template',
+      'https://github.com/Shopify/shopify-app-node#cli-next',
     ])
     const hyphenatedAppName = stdout.match(/Initializing your app ([\w-]+)/)[1]
     this.appDirectory = `${this.temporaryDirectory}/${hyphenatedAppName}`
