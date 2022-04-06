@@ -113,7 +113,7 @@ func TestMergeTemplatesJSON(t *testing.T) {
 		t.Error(err)
 	}
 
-	config := packageJSON{}
+	var config packageJSON
 	err = json.Unmarshal(file, &config)
 
 	if err != nil {
@@ -350,4 +350,18 @@ func TestCreateLocaleFiles(t *testing.T) {
 	t.Cleanup(func() {
 		os.RemoveAll(rootDir)
 	})
+}
+
+type packageJSON struct {
+	Name            string            `json:"name"`
+	DevDependencies map[string]string `json:"devDependencies"`
+	Dependencies    map[string]string `json:"dependencies"`
+	License         string            `json:"license"`
+	Scripts         map[string]string `json:"scripts"`
+}
+
+type shopifyCLIYML struct {
+	ProjectType    string `yaml:"project_type"`
+	OrganizationId string `yaml:"organization_id"`
+	ExtensionType  string `yaml:"EXTENSION_TYPE"`
 }

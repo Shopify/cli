@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
@@ -15,7 +16,7 @@ import (
 	"text/template"
 )
 
-const nextStepsTemplatePath = "templates/%s/next-steps.txt"
+const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
 
 func Build(extension core.Extension, report ResultHandler) {
 	script, err := script(extension.BuildDir(), "build")
@@ -63,9 +64,8 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 	logProcessors := sync.WaitGroup{}
 	logProcessors.Add(2)
 
-	templateBytes, _ := create.ReadTemplateFile(fmt.Sprintf(nextStepsTemplatePath, extension.Type))
-	nextStepsTemplate := string(templateBytes)
-
+	templateBytes, _ := create.ReadTemplateFile(fmt.Sprintf(nextStepsTemplatePath, strings.ToLower(extension.Type)))
+	
 	go processLogs(stdout, logProcessingHandlers{
 		onCompletion: func() { logProcessors.Done() },
 		onMessage: func(message string) {
@@ -73,9 +73,9 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 				report(Result{false, err.Error(), extension})
 			} else {
 				report(Result{true, message, extension})
-				if len(nextStepsTemplate) > 0 {
-					fmt.Fprintf(os.Stdout, "%s\n", generateNextSteps(nextStepsTemplate, extension, integrationCtx))
-					nextStepsTemplate = ""
+				if len(templateBytes) > 0 {
+					fmt.Fprintf(os.Stdout, "%s\n", generateNextSteps(string(templateBytes), extension, integrationCtx))
+					templateBytes = nil
 				}
 			}
 		},
@@ -104,7 +104,7 @@ func generateNextSteps(rawTemplate string, ext core.Extension, ctx core.Integrat
 	templ := template.New("templ")
 	templ, err := templ.Parse(rawTemplate)
 	if err == nil {
-		contextRoot := &contextRoot{ ext, ctx }
+		contextRoot := contextRoot{ ext, ctx }
 		templ.Execute(&buf, contextRoot)
 	}
 

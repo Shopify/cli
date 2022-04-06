@@ -1,42 +1,21 @@
 package create
 
 import (
-	"embed"
 	"os/exec"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/Shopify/shopify-cli-extensions/core/fsutils"
-	"github.com/Shopify/shopify-cli-extensions/create/process"
-)
-
-//go:embed templates/* templates/.shopify-cli.yml.tpl
-var templates embed.FS
-
-const (
-	cliConfigYamlFile string = ".shopify-cli.yml"
-	configYamlFile    string = "extension.config.yml"
-	defaultBuildDir   string = "build"
-	defaultSourceDir  string = "src"
-	templateRoot      string = "templates"
-	templateFileExt   string = ".tpl"
 )
 
 func ReadTemplateFile(path string) ([]byte, error) {
-	return templates.ReadFile(path)
+	return fsutils.NewFS(&templates, "templates").ReadTemplateFile(path)
 }
 
-func NewExtensionProject(extension core.Extension) (err error) {
-	fs := fsutils.NewFS(&templates, templateRoot)
-
-	project := newProject(extension)
-
-	setup := process.NewProcess(
-		makeDir(extension.Development.RootDir),
-		mergeGlobalTemplates(fs, project),
-		mergeExtensionTemplates(fs, project),
-		createSourceFiles(fs, project),
-		mergeYamlAndJsonFiles(fs, project),
-		installDependencies(extension.Development.RootDir),
+func NewExtensionProject(extension core.Extension) error {
+	setup := NewProcess(
+		MakeDir(extension.Development.RootDir),
+		CreateProject(extension),
+		InstallDependencies(extension.Development.RootDir),
 	)
 
 	return setup.Run()

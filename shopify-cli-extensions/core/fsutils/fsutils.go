@@ -118,20 +118,16 @@ func CopyFileContent(targetPath string, content []byte) error {
 	return nil
 }
 
-func MakeDir(dirPath string) error {
-	return os.MkdirAll(dirPath, 0755)
-}
-
-func RemoveDir(dirPath string) error {
-	return os.Remove(dirPath)
-}
-
 func OpenFileForAppend(filePath string) (*os.File, error) {
 	return os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0600)
 }
 
+func (fs *FS) ReadTemplateFile(filePath string) ([]byte, error) {
+	return fs.ReadFile(fs.normalizePath(filePath))
+}
+
 func (fs *FS) normalizePath(filePath string) string {
-	if strings.HasPrefix(filePath, fs.root+"/") {
+	if strings.HasPrefix(filePath, fs.root + "/") {
 		return filePath
 	}
 	return filepath.Join(fs.root, filePath)

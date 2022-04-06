@@ -1,4 +1,4 @@
-{{ if .React }}
+{{ if .Development.UsesReact }}
 import React, { useCallback } from "react";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import CountryGraphql from "./Country.graphql";
