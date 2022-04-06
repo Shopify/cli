@@ -144,6 +144,10 @@ Afterwards, the following three commands will be executed by the new extension s
 - `shopify extension serve`
 - `shopify extension build`
 
+**Development builds**
+
+Testing against a development build is possible, too. Simply clone this repository and make sure that it is located in the same parent directory as `shopify-cli` and named `shopify-cli-extensions`. Run `make build` in `shopify-cli-extensions` and wait for the build process to complete. Next, navigate into the Shopify CLI directory via `cd ../shopify-cli` and run `rake extensions:symlink` to create a symlink to the binary you just created. Just like before you require the above feature flag for testing.
+
 ### DevConsole
 
 #### Build
