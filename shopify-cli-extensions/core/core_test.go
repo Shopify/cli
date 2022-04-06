@@ -14,6 +14,7 @@ extensions:
 		type: checkout_ui_extension
 		title: Test Extension
 		name: Alternate Name
+		can_access_network: true
 `)
 
 	config, err := core.LoadConfig(strings.NewReader(serializedConfig))
@@ -42,6 +43,10 @@ extensions:
 
 	if extension.Name != "Alternate Name" {
 		t.Errorf("invalid name - expected Alternate Name go %s", extension.Name)
+	}
+
+	if !extension.CanAccessNetwork {
+		t.Errorf("invalid value for CanAccessNetwork - expected true got %t", extension.CanAccessNetwork)
 	}
 }
 

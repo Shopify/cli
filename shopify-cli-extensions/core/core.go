@@ -89,17 +89,18 @@ type Localization struct {
 }
 
 type Extension struct {
-	Assets          map[string]Asset `json:"assets" yaml:"-"`
-	Development     Development      `json:"development" yaml:"development,omitempty"`
-	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty"`
-	Localization    *Localization    `json:"localization" yaml:"-"`
-	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
-	Type            string           `json:"type" yaml:"type,omitempty"`
-	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
-	Version         string           `json:"version" yaml:"version,omitempty"`
-	Surface         string           `json:"surface" yaml:"-"`
-	Title           string           `json:"title,omitempty" yaml:"title,omitempty"`
-	Name            string           `json:"name,omitempty" yaml:"name,omitempty"`
+	Assets           map[string]Asset `json:"assets" yaml:"-"`
+	CanAccessNetwork bool             `json:"canAccessNetwork" yaml:"can_access_network,omitempty"`
+	Development      Development      `json:"development" yaml:"development,omitempty"`
+	ExtensionPoints  []string         `json:"extensionPoints" yaml:"extension_points,omitempty"`
+	Localization     *Localization    `json:"localization" yaml:"-"`
+	Metafields       []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
+	Type             string           `json:"type" yaml:"type,omitempty"`
+	UUID             string           `json:"uuid" yaml:"uuid,omitempty"`
+	Version          string           `json:"version" yaml:"version,omitempty"`
+	Surface          string           `json:"surface" yaml:"-"`
+	Title            string           `json:"title,omitempty" yaml:"title,omitempty"`
+	Name             string           `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
 func (e Extension) String() string {
