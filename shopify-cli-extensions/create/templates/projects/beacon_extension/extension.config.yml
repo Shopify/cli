@@ -1,5 +1,5 @@
 runtime_context: sandbox
-version: 1
+version: "1"
 configuration:
   type: object
   fields:
