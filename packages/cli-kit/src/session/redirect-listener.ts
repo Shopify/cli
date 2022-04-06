@@ -1,6 +1,7 @@
 import {Abort, Bug} from '../error'
 import http from 'http'
 import url from 'url'
+import {output} from '$index'
 
 export const EmptyUrlError = new Abort('We received the authentication redirect but the URL is empty')
 export const AuthenticationError = (message: string) => {
@@ -15,6 +16,8 @@ export const MissingStateError = new Bug(
 )
 
 export const redirectResponseBody = 'Continuing the authentication in your terminal...'
+
+const ResponseTimeoutSeconds = 10
 
 /**
  * It represents the result of a redirect.
@@ -106,12 +109,17 @@ export class RedirectListener {
   }
 }
 
-export async function listenRedirect(host: string, port: number): Promise<{code: string; state: string}> {
+export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      output.info('Timed out while waiting for response from Shopify')
+      output.info(`\nPlease open this url in your browser:\n${url}\n`)
+    }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,
       port,
       callback: (error, code, state) => {
+        clearTimeout(timeout)
         redirectListener.stop()
         if (error) {
           reject(error)
