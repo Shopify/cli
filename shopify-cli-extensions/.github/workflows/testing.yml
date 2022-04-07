@@ -21,6 +21,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+    name: integration-test-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
