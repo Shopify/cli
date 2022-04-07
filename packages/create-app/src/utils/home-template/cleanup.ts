@@ -15,13 +15,5 @@ export default async function cleanup(homeOutputDirectory: string) {
     },
   )
 
-  const templatePaths = await path.glob([path.join(homeOutputDirectory, '**', '_template')], {
-    onlyFiles: false,
-    onlyDirectories: false,
-    ignore: ['**/node_modules/**'],
-  })
-
-  const pathsToDelete = [...gitPaths, ...templatePaths]
-
-  return Promise.all(pathsToDelete.map((path) => file.rmdir(path, {force: true}))).then(() => {})
+  return Promise.all(gitPaths.map((path) => file.rmdir(path, {force: true}))).then(() => {})
 }

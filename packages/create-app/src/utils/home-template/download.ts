@@ -1,12 +1,7 @@
 import {git} from '@shopify/cli-kit'
 
 export default async function downloadTemplate({templateUrl, into}: {templateUrl: string; into: string}) {
-  const components = templateUrl.split('#')
-  let branch: string | undefined
-  const repository = components[0]
-  if (components.length === 2) {
-    branch = components[1]
-  }
+  const [repository, branch] = templateUrl.split('#')
   const options: any = {'--recurse-submodules': null}
   if (branch) {
     options['--branch'] = branch
