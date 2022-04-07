@@ -1,5 +1,4 @@
 import cleanup from './cleanup'
-import {configurationFileNames} from '../../constants'
 import {temporary} from '@shopify/cli-testing'
 import {file, path} from '@shopify/cli-kit'
 import {describe, expect, it} from 'vitest'
@@ -18,7 +17,6 @@ describe('cleanup', () => {
       file.mkdir(path.join(tmpDir, '.gitmodules')),
       file.mkdir(path.join(tmpDir, '_template')),
       file.mkdir(path.join(tmpDir, 'frontend')),
-      file.write(path.join(tmpDir, configurationFileNames.homeTemplate), 'content'),
     ])
 
     await Promise.all([
@@ -47,7 +45,6 @@ describe('cleanup', () => {
       await expect(file.exists(path.join(tmpDir, '_template'))).resolves.toBe(false)
       await expect(file.exists(path.join(tmpDir, 'frontend', '.git'))).resolves.toBe(false)
       await expect(file.exists(path.join(tmpDir, 'frontend', '_template'))).resolves.toBe(false)
-      await expect(file.exists(path.join(tmpDir, configurationFileNames.homeTemplate))).resolves.toBe(false)
     })
   })
 
