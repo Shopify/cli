@@ -112,8 +112,7 @@ export class RedirectListener {
 export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
-      output.info('Timed out while waiting for response from Shopify')
-      output.info(`\nPlease open this url in your browser:\n${url}\n`)
+      output.info(`\nAuto-open timed out. Click this link to open the log in page::\n${url}\n`)
     }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,
