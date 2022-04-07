@@ -83,7 +83,6 @@ async function init(options: InitOptions) {
                 task: async () => {
                   await scaffoldTemplate({
                     ...options,
-                    prompts: {},
                     directory: tmpDirHome,
                     templatePath: tmpDirDownload,
                     cliPackageVersion,
@@ -182,7 +181,6 @@ function inferDependencyManager(optionsDependencyManager: string | undefined): d
 async function scaffoldTemplate(
   options: InitOptions & {
     directory: string
-    prompts?: {[key: string]: string | number | boolean}
     templatePath: string
     cliPackageVersion: string
     appPackageVersion: string
@@ -202,7 +200,6 @@ async function scaffoldTemplate(
     author: options.user,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     dependency_manager: options.dependencyManager,
-    ...options.prompts,
   }
   await template.recursiveDirectoryCopy(options.templatePath, options.directory, templateData)
 }
