@@ -40,7 +40,7 @@ const validIdentityToken: IdentityToken = {
 }
 
 const validTokens: OAuthSession = {
-  admin: 'admin_token',
+  admin: {token: 'admin_token', store: 'mystore'},
   storefront: 'storefront_token',
   partners: 'partners_token',
 }
@@ -300,7 +300,7 @@ describe('ensureAuthenticatedAdmin', () => {
     const got = await ensureAuthenticatedAdmin('mystore')
 
     // Then
-    expect(got).toEqual('admin_token')
+    expect(got).toEqual({token: 'admin_token', store: 'mystore'})
   })
 
   it('throws error if there is no token', async () => {

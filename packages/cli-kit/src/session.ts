@@ -65,8 +65,13 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
 }
 
+export interface AdminSession {
+  token: string
+  store: string
+}
+
 export interface OAuthSession {
-  admin?: string
+  admin?: AdminSession
   partners?: string
   storefront?: string
 }
@@ -109,7 +114,7 @@ export async function ensureAuthenticatedStorefront(scopes: string[] = []): Prom
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
  * @returns {Promise<string>} The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<string> {
+export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
   if (!tokens.admin) {
     throw MissingAdminTokenError
@@ -213,7 +218,10 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
-    tokens.admin = fqdnSession.applications[realAppId]?.accessToken
+    const token = fqdnSession.applications[realAppId]?.accessToken
+    if (token) {
+      tokens.admin = {token, store: applications.adminApi.storeFqdn}
+    }
   }
 
   if (applications.partnersApi) {
