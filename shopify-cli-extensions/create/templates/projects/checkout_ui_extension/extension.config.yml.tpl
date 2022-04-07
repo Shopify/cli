@@ -1,6 +1,6 @@
 ---
 extension_points:
-  - Checkout::Feature::Render
+  - Checkout::Dynamic::Render
 # metafields:
 #   - namespace: my-namespace
 #     key: my-key
