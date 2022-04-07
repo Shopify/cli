@@ -15,7 +15,7 @@ import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import constants from './constants'
-import {normalizeStoreName} from '$string'
+import {normalizeStoreName} from './string'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
