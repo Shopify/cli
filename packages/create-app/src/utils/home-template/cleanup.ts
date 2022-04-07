@@ -1,4 +1,3 @@
-import {configurationFileNames} from '../../constants'
 import {file, path} from '@shopify/cli-kit'
 
 export default async function cleanup(homeOutputDirectory: string) {
@@ -16,19 +15,5 @@ export default async function cleanup(homeOutputDirectory: string) {
     },
   )
 
-  const templatePaths = await path.glob(
-    [
-      path.join(homeOutputDirectory, '**', '_template'),
-      path.join(homeOutputDirectory, '**', configurationFileNames.homeTemplate),
-    ],
-    {
-      onlyFiles: false,
-      onlyDirectories: false,
-      ignore: ['**/node_modules/**'],
-    },
-  )
-
-  const pathsToDelete = [...gitPaths, ...templatePaths]
-
-  return Promise.all(pathsToDelete.map((path) => file.rmdir(path, {force: true}))).then(() => {})
+  return Promise.all(gitPaths.map((path) => file.rmdir(path, {force: true}))).then(() => {})
 }

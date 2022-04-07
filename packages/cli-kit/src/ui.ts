@@ -4,6 +4,7 @@ import {Input} from './ui/input'
 import {Select} from './ui/select'
 
 export {Listr} from 'listr2'
+export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
 export interface Question {
   type: 'input' | 'select'
