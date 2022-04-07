@@ -1,17 +1,18 @@
 import {buildHeaders} from './common'
 import {request as graphqlRequest, gql} from 'graphql-request'
+import {AdminSession} from '$session'
 
-export async function request<T>(query: any, token: string, store: string, variables?: any): Promise<T> {
-  const version = await fetchApiVersion(token, store)
-  const url = adminUrl(store, version)
-  const headers = await buildHeaders(token)
+export async function request<T>(query: any, session: AdminSession, variables?: any): Promise<T> {
+  const version = await fetchApiVersion(session)
+  const url = adminUrl(session.store, version)
+  const headers = await buildHeaders(session.token)
   return graphqlRequest<T>(url, query, variables, headers)
 }
 
-async function fetchApiVersion(token: string, store: string): Promise<any> {
-  const url = adminUrl(store, 'unstable')
+async function fetchApiVersion(session: AdminSession): Promise<any> {
+  const url = adminUrl(session.store, 'unstable')
   const query = apiVersionQuery()
-  const headers = await buildHeaders(token)
+  const headers = await buildHeaders(session.token)
 
   const data = await graphqlRequest(url, query, {}, headers)
   return data.publicApiVersions
@@ -24,6 +25,11 @@ async function fetchApiVersion(token: string, store: string): Promise<any> {
 function adminUrl(store: string, version: string | undefined): string {
   const realVersion = version || 'unstable'
   return `https://${store}/admin/api/${realVersion}/graphql.json`
+}
+
+function adminRestUrl(store: string, version: string | undefined, path: string): string {
+  const realVersion = version || 'unstable'
+  return `https://${store}/admin/api/${realVersion}/${path}}`
 }
 
 function apiVersionQuery(): string {
