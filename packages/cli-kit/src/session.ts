@@ -15,6 +15,7 @@ import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import constants from './constants'
+import {normalizeStoreName} from '$string'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -129,6 +130,10 @@ export async function ensureAuthenticatedAdmin(store: string, scopes: string[] =
  */
 export async function ensureAuthenticated(applications: OAuthApplications, env = process.env): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
+
+  if (applications.adminApi?.storeFqdn) {
+    applications.adminApi.storeFqdn = normalizeStoreName(applications.adminApi.storeFqdn)
+  }
 
   const currentSession = (await secureStore.fetch()) || {}
   const fqdnSession = currentSession[fqdn]
