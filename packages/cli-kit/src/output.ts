@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import {Fatal} from './error'
-import {capitalize} from './string'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import {Writable} from 'node:stream'
@@ -214,13 +213,16 @@ export const error = (content: Fatal) => {
     const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
     const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
     console.error(header)
-    console.error(padding + capitalize(stringifyMessage(message)))
+    const lines = message.split('\n')
+    for (const line of lines) {
+      console.error(`${padding}${line}`)
+    }
     if (content.tryMessage) {
       console.error(`\n${padding}${colors.bold('What to try:')}`)
       const lines = content.tryMessage.split('\n')
-      lines.forEach((line) => {
+      for (const line of lines) {
         console.error(`${padding}${line}`)
-      })
+      }
     }
     console.error(footer)
   }
