@@ -99,12 +99,7 @@ it('outputs hello world', () => {
 
   // Then
   expect(outputMock.output()).toMatch(/Hello world/)
-  outputMock.clear()
 })
 ```
 
 You can either call `output()` to get the aggregated output or `info()`, `debug()`, `success()`, `warn()` to get the individual output. The collected output is the raw content that is passed to the APIs.
-
-:::caution Clearing the mock
-The mocking doesn't get cleared automatically and therefore it's important that you call `clear()` on the mock object.
-:::

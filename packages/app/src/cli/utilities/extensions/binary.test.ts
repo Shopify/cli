@@ -1,6 +1,6 @@
 import {getBinaryPathOrDownload, getBinaryLocalPath, validatePlatformSupport, UnsupportedPlatformError} from './binary'
 import {directory as getVendorDirectory} from '../vendor-directory'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {http, file, path, os, checksum} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
 import {createGzip} from 'node:zlib'
@@ -24,11 +24,6 @@ vi.mock('@shopify/cli-kit', async () => {
       platformAndArch: vi.fn(),
     },
   }
-})
-
-afterEach(async () => {
-  await vi.mocked(getVendorDirectory).mockClear()
-  await vi.mocked(os.platformAndArch).mockClear()
 })
 
 describe('getBinaryLocalPath', () => {

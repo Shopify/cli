@@ -6,23 +6,21 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
 } from './dev'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    ui: {
-      prompt: vi.fn(),
-    },
-  }
-})
-
-afterEach(() => {
-  vi.mocked(ui.prompt).mockClear()
+beforeEach(() => {
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      ui: {
+        prompt: vi.fn(),
+      },
+    }
+  })
 })
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
@@ -169,7 +167,6 @@ describe('selectStore', () => {
     expect(got).toEqual(STORE1)
     expect(ui.prompt).not.toBeCalled()
     expect(outputMock.output()).toMatch('Using your default dev store (store1) to preview your project')
-    outputMock.clear()
   })
 
   it('returns store if user selects one', async () => {
