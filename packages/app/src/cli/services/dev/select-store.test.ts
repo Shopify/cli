@@ -123,8 +123,6 @@ describe('selectStore', async () => {
     const got = selectStore([], '1')
 
     // Then
-    expect(selectStorePrompt).toHaveBeenCalled()
-    expect(reloadStoreListPrompt).toHaveBeenCalled()
-    expect(got).rejects.toThrowError()
+    expect(got).rejects.toThrow()
   })
 })
