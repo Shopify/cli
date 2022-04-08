@@ -1,6 +1,6 @@
 import {selectStore} from './select-store'
 import {fetchAppsAndStores} from './fetch'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Organization, OrganizationStore} from '$cli/models/organization'
 import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
@@ -35,10 +35,6 @@ beforeEach(() => {
       },
     }
   })
-})
-
-afterEach(() => {
-  vi.mocked(selectStorePrompt).mockClear()
 })
 
 describe('selectStore', async () => {

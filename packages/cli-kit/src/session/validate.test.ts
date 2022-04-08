@@ -2,7 +2,7 @@ import {applicationId} from './identity'
 import {IdentityToken} from './schema'
 import {validateScopes, validateSession} from './validate'
 import {OAuthApplications} from '../session'
-import {expect, describe, it, vi, beforeAll, afterAll} from 'vitest'
+import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
 const currentDate = new Date(2022, 1, 1, 10)
@@ -65,9 +65,9 @@ const defaultApps: OAuthApplications = {
   storefrontRendererApi: {scopes: []},
 }
 
-beforeAll(() => {
+beforeEach(() => {
   vi.mock('./identity')
-  vi.mocked(applicationId).mockImplementation((id) => id)
+  vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
 })
 
