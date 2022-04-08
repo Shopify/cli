@@ -28,14 +28,7 @@ const configuration = () => [
         sourcemap: true,
       },
     ],
-    plugins: [
-      dts({
-        respectExternal: true,
-        compilerOptions: {
-          composite: false,
-        },
-      }),
-    ],
+    plugins: [dts()],
     external: cliKitExternal,
   },
 ]
