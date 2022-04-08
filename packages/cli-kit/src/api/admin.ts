@@ -1,6 +1,6 @@
 import {buildHeaders} from './common'
+import {AdminSession} from '../session'
 import {request as graphqlRequest, gql} from 'graphql-request'
-import {AdminSession} from '$session'
 
 export async function request<T>(query: any, session: AdminSession, variables?: any): Promise<T> {
   const version = await fetchApiVersion(session)
