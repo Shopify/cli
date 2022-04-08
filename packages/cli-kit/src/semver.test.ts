@@ -1,4 +1,4 @@
-import {Version, InvalidVersionError} from './semver'
+import {Version} from './semver'
 import {describe, expect, it} from 'vitest'
 
 describe('Version', () => {
@@ -17,6 +17,6 @@ describe('Version', () => {
     expect(() => {
       // eslint-disable-next-line no-new
       new Version('invalid')
-    }).toThrowError(new InvalidVersionError('Invalid Version: invalid'))
+    }).toThrowError()
   })
 })
