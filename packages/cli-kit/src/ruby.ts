@@ -1,6 +1,6 @@
-import {Fatal} from '$error'
-import {system} from '$index'
-import {concurrent} from '$output'
+import {system} from './index'
+import {Fatal} from './error'
+import {concurrent} from './output'
 
 export async function exec(args: string[], token: string) {
   await validateRubyEnv()
