@@ -1,5 +1,5 @@
 import {fetchAppsAndStores, fetchOrganizations} from './fetch'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
@@ -39,10 +39,6 @@ vi.mock('@shopify/cli-kit', async () => {
       graphql: cliKit.api.graphql,
     },
   }
-})
-
-afterEach(() => {
-  vi.mocked(api.partners.request).mockClear()
 })
 
 describe('fetchOrganizations', async () => {

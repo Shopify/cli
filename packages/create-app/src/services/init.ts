@@ -1,9 +1,9 @@
 import {template as getTemplatePath} from '../utils/paths'
 import downloadTemplate from '../utils/home-template/download'
 import cleanupHome from '../utils/home-template/cleanup'
+import getDeepInstallNPMTasks from '../utils/home-template/npm'
 import {blocks} from '../constants'
-import {string, path, template, file, output, os, ui, dependency, constants, system} from '@shopify/cli-kit'
-import {Writable} from 'stream'
+import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
@@ -74,9 +74,6 @@ async function init(options: InitOptions) {
         {
           title: `Creating home`,
           task: async (_, task) => {
-            const hooksPreFilePaths = await path.glob(path.join(tmpDirDownload, 'hooks/pre/*'))
-            const hooksPostFilePaths = await path.glob(path.join(tmpDirDownload, 'hooks/post/*'))
-
             return task.newListr([
               {
                 title: 'Scaffolding home',
@@ -93,48 +90,6 @@ async function init(options: InitOptions) {
                   })
                 },
               },
-              ...hooksPreFilePaths.map((sourcePath) => {
-                const hookPath = path.join(tmpDirHome, path.relative(tmpDirDownload, sourcePath)).replace('.liquid', '')
-                return {
-                  title: path.basename(hookPath),
-                  task: async (_: any, task: any) => {
-                    const stdout = new Writable({
-                      write(chunk, encoding, next) {
-                        task.output = chunk.toString()
-                        next()
-                      },
-                    })
-                    const stderr = new Writable({
-                      write(chunk, encoding, next) {
-                        task.output = chunk.toString()
-                        next()
-                      },
-                    })
-                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout, stderr})
-                  },
-                }
-              }),
-              ...hooksPostFilePaths.map((sourcePath) => {
-                const hookPath = path.join(tmpDirHome, path.relative(tmpDirDownload, sourcePath)).replace('.liquid', '')
-                return {
-                  title: path.basename(hookPath),
-                  task: async (_: any, task: any) => {
-                    const stdout = new Writable({
-                      write(chunk, encoding, next) {
-                        task.output = chunk.toString()
-                        next()
-                      },
-                    })
-                    const stderr = new Writable({
-                      write(chunk, encoding, next) {
-                        task.output = chunk.toString()
-                        next()
-                      },
-                    })
-                    await system.exec(hookPath, [], {cwd: tmpDirHome, stdout, stderr})
-                  },
-                }
-              }),
               {
                 title: 'Cleaning up home',
                 task: async () => {
@@ -145,15 +100,20 @@ async function init(options: InitOptions) {
           },
         },
         {
-          title: `Installing app dependencies with ${dependencyManager}`,
-          task: async (_, task) => {
-            const output = new Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            })
-            await dependency.install(tmpDirApp, dependencyManager, output, output)
+          title: `Installing dependencies with ${dependencyManager}`,
+          task: async (_, parentTask) => {
+            function didInstallEverything() {
+              parentTask.title = `Installed dependencies with ${dependencyManager}`
+            }
+
+            return parentTask.newListr(
+              await getDeepInstallNPMTasks({
+                from: tmpDirApp,
+                dependencyManager,
+                didInstallEverything,
+              }),
+              {concurrent: 3},
+            )
           },
         },
       ],

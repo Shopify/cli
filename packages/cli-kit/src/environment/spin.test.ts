@@ -1,13 +1,9 @@
 import {show, fqdn, isSpin, instance, workspace, namespace, host} from './spin'
 import {captureOutput} from '../system'
-import {describe, test, expect, vi, it, afterEach} from 'vitest'
+import {describe, test, expect, vi, it} from 'vitest'
 
 vi.mock('../system')
 const mockedCaptureOutput = vi.mocked(captureOutput)
-
-afterEach(() => {
-  vi.mocked(mockedCaptureOutput).mockClear()
-})
 
 describe('fqdn', () => {
   it('shows the latest when SPIN_INSTANCE is not present', async () => {
