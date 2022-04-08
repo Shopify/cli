@@ -40,6 +40,7 @@ module.exports = {
         'kit/modules/error',
         'kit/modules/os',
         'kit/modules/output',
+        'kit/modules/semver',
         'kit/modules/session',
         'kit/modules/version',
         'kit/modules/ui',

@@ -1,14 +1,9 @@
 import {platformAndArch} from './os'
-import {describe, it, expect, vi, afterEach} from 'vitest'
-import {userInfo as osUserInfo, arch as osArch} from 'node:os'
+import {describe, it, expect, vi} from 'vitest'
+import {arch as osArch} from 'node:os'
 
 vi.mock('node:os')
 vi.mock('node:process')
-
-afterEach(() => {
-  vi.mocked(osUserInfo).mockClear()
-  vi.mocked(osArch).mockClear()
-})
 
 describe('platformAndArch', () => {
   it("returns the right architecture when it's x64", () => {
