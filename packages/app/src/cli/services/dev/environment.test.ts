@@ -81,14 +81,17 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+beforeEach(async () => {
+  vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+  vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
+  vi.mocked(selectStore).mockResolvedValue(STORE1)
+  vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
+  vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
+})
+
 describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-    vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
-    vi.mocked(selectStore).mockResolvedValue(STORE1)
-    vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-    vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
     vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
 
     // When
@@ -104,11 +107,6 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, with cached state', async () => {
     // Given
     const outputMock = outputMocker.mockAndCapture()
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-    vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
-    vi.mocked(selectStore).mockResolvedValue(STORE1)
-    vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-    vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
     vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
 
     // When
