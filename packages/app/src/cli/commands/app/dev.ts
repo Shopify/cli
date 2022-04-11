@@ -12,6 +12,7 @@ export default class Dev extends Command {
       description: 'The path to your app directory.',
       env: 'SHOPIFY_FLAG_PATH',
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     'api-key': Flags.string({
       hidden: false,
       description: 'The API key of your app.',
@@ -30,12 +31,14 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     'no-tunnel': Flags.boolean({
       hidden: false,
       description: 'Skips creating an HTTP tunnel.',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     'no-update': Flags.boolean({
       hidden: false,
       description: 'Skips the dashboard URL update step.',

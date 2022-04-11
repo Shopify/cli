@@ -54,6 +54,7 @@ function createRequestMiddleware(mf: MiniOxygen): any {
       res.end()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       res.writeHead(500, {'Content-Type': 'text/plain; charset=UTF-8'})
       res.end(error.stack, 'utf8')
     }

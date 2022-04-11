@@ -52,6 +52,7 @@ const appTokens: {[x: string]: ApplicationToken} = {
     expiresAt: futureDate,
     scopes: ['scope', 'scope2'],
   },
+
   'storefront-renderer': {
     accessToken: 'storefront_token',
     expiresAt: futureDate,
