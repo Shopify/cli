@@ -4,7 +4,7 @@ import {generateRandomChallengePair, randomHex} from '../string'
 import {open} from '../system'
 import {Abort} from '../error'
 import {identity as identityFqdn} from '../environment/fqdn'
-import {output} from '../index'
+import * as output from '../output'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
