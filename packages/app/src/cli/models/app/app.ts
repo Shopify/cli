@@ -6,7 +6,7 @@ export const HomeNotFoundError = (homeDirectory: string) => {
 }
 
 export const HomeConfigurationFileNotFound = (configurationFilePath: string) => {
-  return new error.Abort(`Couldn't find the home configuraiton file at ${configurationFilePath}`)
+  return new error.Abort(`Couldn't find the home configuration file at ${configurationFilePath}`)
 }
 
 export const AppConfigurationSchema = schema.define.object({

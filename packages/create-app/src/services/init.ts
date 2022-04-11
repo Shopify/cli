@@ -80,7 +80,7 @@ async function init(options: InitOptions) {
                 task: async () => {
                   await scaffoldTemplate({
                     ...options,
-                    directory: tmpDirHome,
+                    directory: tmpDirApp,
                     templatePath: tmpDirDownload,
                     cliPackageVersion,
                     appPackageVersion,
@@ -112,7 +112,7 @@ async function init(options: InitOptions) {
                 dependencyManager,
                 didInstallEverything,
               }),
-              {concurrent: 3},
+              {concurrent: false},
             )
           },
         },
