@@ -1,5 +1,7 @@
-const isCI = process.env.NODE_ENV === 'ci';
-const featureToRun = process.env.FEATURE;
+const isCI = process.env.NODE_ENV === 'ci'
+const featureToRun = process.env.FEATURE
+const nodeVersion = process.version.match(/^v(\d+\.\d+)/)[1]
+const isNode14 = nodeVersion.startsWith('14')
 
 const common = [
   '--publish-quiet',
@@ -10,18 +12,21 @@ const common = [
   '--format-options \'{"colorsEnabled": true}\'',
   '--format progress',
   '--format node_modules/cucumber-pretty',
-];
+]
+
+if (isNode14) {
+  common.push(`--tags ~@skip_node_14`)
+}
+
 if (isCI) {
-  common.push(
-    '--format node_modules/cucumber-junit-formatter:/tmp/artifacts/acceptance.junit',
-  );
+  common.push('--format node_modules/cucumber-junit-formatter:/tmp/artifacts/acceptance.junit')
 }
 if (featureToRun) {
-  common.push(featureToRun);
+  common.push(featureToRun)
 } else {
-  common.push('features/**/*.feature');
+  common.push('features/**/*.feature')
 }
 
 module.exports = {
   default: common.join(' '),
-};
+}
