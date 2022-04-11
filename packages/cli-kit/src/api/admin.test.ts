@@ -1,5 +1,6 @@
 import * as admin from './admin'
 import {buildHeaders} from './common'
+import {AdminSession} from '../session'
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
 
@@ -30,7 +31,8 @@ const mockedResult = {
   ],
 }
 
-const mockedToken = 'token'
+const token = 'token'
+const Session: AdminSession = {token, storeFqdn: 'store'}
 
 describe('admin-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {
@@ -38,7 +40,7 @@ describe('admin-api', () => {
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await admin.request('query', mockedToken, 'shop', {})
+    await admin.request('query', Session, {})
 
     // Then
     expect(graphqlRequest).toHaveBeenCalledTimes(2)
@@ -46,16 +48,17 @@ describe('admin-api', () => {
 
   test('request is called with correct parameters', async () => {
     // Given
-    const headers = {'custom-header': mockedToken}
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const headers = {'custom-header': token}
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
 
     // When
-    await admin.request('query', mockedToken, 'shop', {variables: 'variables'})
+    await admin.request('query', Session, {variables: 'variables'})
 
     // Then
     expect(graphqlRequest).toHaveBeenLastCalledWith(
-      'https://shop/admin/api/2022-01/graphql.json',
+      'https://store/admin/api/2022-01/graphql.json',
       'query',
       {variables: 'variables'},
       headers,
@@ -67,9 +70,9 @@ describe('admin-api', () => {
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await admin.request('query', mockedToken, 'shop', {})
+    await admin.request('query', Session, {})
 
     // Then
-    expect(buildHeaders).toHaveBeenCalledWith(mockedToken)
+    expect(buildHeaders).toHaveBeenCalledWith(token)
   })
 })
