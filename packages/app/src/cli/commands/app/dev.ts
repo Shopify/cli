@@ -51,6 +51,7 @@ export default class Dev extends Command {
     const {args, flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const appManifest: App = await loadApp(directory)
+    const plugins = this.config.plugins
 
     await dev({
       appManifest,
@@ -59,6 +60,7 @@ export default class Dev extends Command {
       reset: flags.reset,
       tunnel: !flags['no-tunnel'],
       update: !flags['no-update'],
+      plugins,
     })
   }
 }
