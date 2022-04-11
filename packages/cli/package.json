@@ -75,6 +75,7 @@
       "@oclif/plugin-help",
       "@oclif/plugin-plugins"
     ],
+    "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
       "hydrogen": {

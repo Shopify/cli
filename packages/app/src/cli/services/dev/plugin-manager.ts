@@ -1,6 +1,6 @@
 import {Plugin} from '@oclif/core/lib/interfaces'
 
-const TUNNEL_PLUGINS = ['@shopify/cli-plugin-ngrok']
+const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
 
 interface TunnelPlugin {
   start: (options: TunnelStartOptions) => Promise<string>

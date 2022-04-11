@@ -18,7 +18,7 @@ describe('lookupTunnelPlugin', () => {
 
   it('returns undefined if the tunnel module fails be imported', async () => {
     // Given
-    const ngrokPluginMock = {name: '@shopify/cli-plugin-ngrok', root: 'wrongPath'} as Plugin
+    const ngrokPluginMock = {name: '@shopify/plugin-ngrok', root: 'wrongPath'} as Plugin
     const plugins: Plugin[] = [ngrokPluginMock]
 
     // When
@@ -40,7 +40,7 @@ describe('lookupTunnelPlugin', () => {
     )
 
     const root = path.join(process.cwd(), tmpDir)
-    const ngrokPluginMock = {name: '@shopify/cli-plugin-ngrok', root} as Plugin
+    const ngrokPluginMock = {name: '@shopify/plugin-ngrok', root} as Plugin
     const plugins: Plugin[] = [ngrokPluginMock]
 
     // When
