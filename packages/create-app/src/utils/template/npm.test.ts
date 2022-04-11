@@ -1,6 +1,6 @@
 import getDeepInstallNPMTasks from './npm'
 import {dependency, file, path, ui} from '@shopify/cli-kit'
-import {describe, expect, it, MockedFunctionDeep, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 import {Writable} from 'stream'
 
@@ -116,7 +116,7 @@ describe('dependencies', () => {
 
       await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
 
-      const install = dependency.install as MockedFunctionDeep<typeof dependency.install>
+      const install = vi.mocked(dependency.install)
 
       install.mock.calls.forEach((args, i) => {
         const stdout = args[2]
@@ -137,7 +137,7 @@ describe('dependencies', () => {
 
       await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
 
-      const install = dependency.install as MockedFunctionDeep<typeof dependency.install>
+      const install = vi.mocked(dependency.install)
 
       install.mock.calls.forEach((args, i) => {
         const stderr = args[3]

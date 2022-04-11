@@ -24,7 +24,6 @@
     "/bin/run.js",
     "/bin/run.cmd",
     "/dist",
-    "templates",
     "/oclif.manifest.json"
   ],
   "publishConfig": {
