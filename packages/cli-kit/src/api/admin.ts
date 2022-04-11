@@ -4,13 +4,13 @@ import {request as graphqlRequest, gql} from 'graphql-request'
 
 export async function request<T>(query: any, session: AdminSession, variables?: any): Promise<T> {
   const version = await fetchApiVersion(session)
-  const url = adminUrl(session.store, version)
+  const url = adminUrl(session.storeFqdn, version)
   const headers = await buildHeaders(session.token)
   return graphqlRequest<T>(url, query, variables, headers)
 }
 
 async function fetchApiVersion(session: AdminSession): Promise<any> {
-  const url = adminUrl(session.store, 'unstable')
+  const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
   const headers = await buildHeaders(session.token)
 

@@ -68,7 +68,7 @@ export interface OAuthApplications {
 
 export interface AdminSession {
   token: string
-  store: string
+  storeFqdn: string
 }
 
 export interface OAuthSession {
@@ -225,7 +225,7 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
     const token = fqdnSession.applications[realAppId]?.accessToken
     if (token) {
-      tokens.admin = {token, store: applications.adminApi.storeFqdn}
+      tokens.admin = {token, storeFqdn: applications.adminApi.storeFqdn}
     }
   }
 
