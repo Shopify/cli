@@ -289,7 +289,7 @@ describe('ensureAuthenticatedAdmin', () => {
     const got = await ensureAuthenticatedAdmin('mystore')
 
     // Then
-    expect(got).toEqual({token: 'admin_token', store: 'mystore.myshopify.com'})
+    expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
   })
 
   it('throws error if there is no token', async () => {

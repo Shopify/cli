@@ -27,11 +27,6 @@ function adminUrl(store: string, version: string | undefined): string {
   return `https://${store}/admin/api/${realVersion}/graphql.json`
 }
 
-function adminRestUrl(store: string, version: string | undefined, path: string): string {
-  const realVersion = version || 'unstable'
-  return `https://${store}/admin/api/${realVersion}/${path}}`
-}
-
 function apiVersionQuery(): string {
   return gql`
     query {

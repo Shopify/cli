@@ -32,7 +32,7 @@ const mockedResult = {
 }
 
 const token = 'token'
-const Session: AdminSession = {token, store: 'store'}
+const Session: AdminSession = {token, storeFqdn: 'store'}
 
 describe('admin-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {
