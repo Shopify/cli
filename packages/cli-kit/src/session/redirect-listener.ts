@@ -112,7 +112,8 @@ export class RedirectListener {
 export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
-      output.info(`\nAuto-open timed out. Click this link to open the log in page::\n${url}\n`)
+      const message = '\nAuto-open timed out. Click this link to open the log in page:\n'
+      output.info(output.content`${message}${output.token.link('Auth Link', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,
