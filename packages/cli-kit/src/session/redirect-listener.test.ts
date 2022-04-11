@@ -106,6 +106,7 @@ describe('RedirectListener', () => {
     expect(receivedCode).toBe('foo')
     expect(receivedState).toBe('state')
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       'Content-Type': 'text/html',
     })
     expect(responseEndMock).toHaveBeenCalledWith(redirectResponseBody)
@@ -135,6 +136,7 @@ describe('RedirectListener', () => {
     // Then
     expect(receivedError).toBe(EmptyUrlError)
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       'Content-Type': 'text/html',
     })
     expect(responseEndMock).toHaveBeenCalledWith(redirectResponseBody)
@@ -166,6 +168,7 @@ describe('RedirectListener', () => {
     // Then
     expect(receivedError).toEqual(AuthenticationError(`error_description`))
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       'Content-Type': 'text/html',
     })
     expect(responseEndMock).toHaveBeenCalledWith(redirectResponseBody)
@@ -197,6 +200,7 @@ describe('RedirectListener', () => {
     // Then
     expect(receivedError).toBe(MissingCodeError)
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       'Content-Type': 'text/html',
     })
     expect(responseEndMock).toHaveBeenCalledWith(redirectResponseBody)
@@ -228,6 +232,7 @@ describe('RedirectListener', () => {
     // Then
     expect(receivedError).toBe(MissingStateError)
     expect(responseWriteHeadMock).toHaveBeenCalledWith(200, {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       'Content-Type': 'text/html',
     })
     expect(responseEndMock).toHaveBeenCalledWith(redirectResponseBody)

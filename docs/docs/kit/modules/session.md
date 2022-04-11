@@ -87,7 +87,7 @@ import {session} from '@shopify/cli-kit'
 
 const scopes = []
 const myStore = 'mystore.myshopify.com'
-const token = await session.ensureAuthenticatedAdmin(myStore, scopes)
+const {storeFqdn, token} = await session.ensureAuthenticatedAdmin(myStore, scopes)
 ```
 
 #### Input
@@ -99,7 +99,7 @@ const token = await session.ensureAuthenticatedAdmin(myStore, scopes)
 
 #### Output
 
-It returns a `Promise<string>` that resolves with the Admin API token.
+It returns a `Promise<AdminSession>` that resolves to an object including both the API Token and the store it is associated to.
 
 
 ### `ensureAuthenticated`
@@ -131,7 +131,7 @@ It returns a `Promise<OAuthSession>`. OAuthSession includes tokens for the three
 
 ```ts
 interface OAuthSession {
-  admin?: string
+  admin?: AdminSession // {token: string, storeFqdn: string}
   partners?: string
   storefront?: string
 }
