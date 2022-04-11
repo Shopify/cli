@@ -1,6 +1,7 @@
 import {execa} from 'execa'
 import {platform as processPlatform} from 'node:process'
 import {userInfo as osUserInfo, arch as osArch} from 'node:os'
+import {homedir} from 'os'
 
 const getEnvironmentVariable = () => {
   const {env} = process
@@ -70,4 +71,8 @@ export const platformAndArch = (
     arch = 'amd64'
   }
   return {platform, arch}
+}
+
+export const homeDir = (): string => {
+  return homedir()
 }
