@@ -1,7 +1,6 @@
-import {template as getTemplatePath} from '../utils/paths'
-import downloadTemplate from '../utils/home-template/download'
-import cleanupHome from '../utils/home-template/cleanup'
-import getDeepInstallNPMTasks from '../utils/home-template/npm'
+import downloadTemplate from '../utils/template/download'
+import cleanupHome from '../utils/template/cleanup'
+import getDeepInstallNPMTasks from '../utils/template/npm'
 import {blocks} from '../constants'
 import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
 
@@ -15,7 +14,6 @@ interface InitOptions {
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
-  const templatePath = await getTemplatePath('app')
 
   let cliPackageVersion = constants.versions.cli
   let appPackageVersion = constants.versions.app
@@ -58,29 +56,13 @@ async function init(options: InitOptions) {
         {
           title: `Initializing your app ${hyphenizedName}`,
           task: async (_, task) => {
-            await scaffoldTemplate({
-              ...options,
-              directory: tmpDirApp,
-              templatePath,
-              cliPackageVersion,
-              appPackageVersion,
-              user,
-              dependencyManager,
-              dependencyOverrides,
-            })
-            task.title = 'App initialized'
-          },
-        },
-        {
-          title: `Creating home`,
-          task: async (_, task) => {
             return task.newListr([
               {
                 title: 'Scaffolding home',
                 task: async () => {
                   await scaffoldTemplate({
                     ...options,
-                    directory: tmpDirHome,
+                    directory: tmpDirApp,
                     templatePath: tmpDirDownload,
                     cliPackageVersion,
                     appPackageVersion,
@@ -112,7 +94,7 @@ async function init(options: InitOptions) {
                 dependencyManager,
                 didInstallEverything,
               }),
-              {concurrent: 3},
+              {concurrent: false},
             )
           },
         },
