@@ -1,6 +1,5 @@
 import {directory as getVendorDirectoryPath} from './vendor-directory'
-import {describe, it, expect, vi, afterEach} from 'vitest'
-import {file} from '@shopify/cli-kit'
+import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -11,11 +10,6 @@ vi.mock('@shopify/cli-kit', async () => {
       mkdir: vi.fn(),
     },
   }
-})
-
-afterEach(() => {
-  vi.mocked(file.mkdir).mockClear()
-  vi.mocked(file.exists).mockClear()
 })
 
 describe('path', () => {

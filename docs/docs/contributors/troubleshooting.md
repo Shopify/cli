@@ -7,48 +7,6 @@ title: Troubleshooting
 
 We found out some issues with Vitest mocks, here is a list of detected problems and the solutions/workarounds:
 
-
-### Mocks not clearing between tests
-When mocking a function, always make sure to clear the mock after each test. There is an open issue where mocks are not cleared automatically even if you call `clearAllMocks()` or with the `clearMocks` config. [Issue Link](https://github.com/vitest-dev/vitest/issues/872)
-
-
-
-#### Problem
-
-This is an example:
-
-```ts
-import foo from './path'
-vi.mock('./path');
-test('1', async () => {
-  foo()
-  expect(foo).toHaveBeenCalledTimes(1);
-})
-
-test('2', async () => {
-  foo()
-  expect(foo).toHaveBeenCalledTimes(1); //Will fail here, expected 1, received 2
-  // Mock should have been cleared between tests
-})
-```
-
-#### Solution
-Manually clear all mocks after each test:
-```ts
-import foo from './path'
-vi.mock('./path');
-
-afterEach(() => {
-  vi.mocked(foo).clearMock()
-})
-
-// WARNING: This won't work:
-afterEach(() => {
-  vi.clearAllMocks()
-})
-```
-
-
 ### Mocking Module functions
 
 #### Problem

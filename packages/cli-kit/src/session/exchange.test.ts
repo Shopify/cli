@@ -5,7 +5,7 @@ import {applicationId, clientId} from './identity'
 import {IdentityToken} from './schema'
 import {fetch} from '../http'
 import {identity} from '../environment/fqdn'
-import {describe, it, expect, vi, afterAll, beforeAll} from 'vitest'
+import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 
 const currentDate = new Date(2022, 1, 1, 10)
@@ -25,7 +25,7 @@ const identityToken: IdentityToken = {
   scopes: data.scope.split(' '),
 }
 
-beforeAll(() => {
+beforeEach(() => {
   vi.mock('../http')
   vi.mock('../environment/fqdn')
   vi.mock('./identity')

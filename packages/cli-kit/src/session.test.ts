@@ -20,7 +20,7 @@ import {
 } from './session'
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
-import {vi, describe, expect, it, beforeAll, afterEach, beforeEach} from 'vitest'
+import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -114,17 +114,6 @@ beforeEach(() => {
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(applicationId).mockImplementation((app) => app)
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue(partnersToken)
-})
-
-afterEach(() => {
-  // There is an open issue where mocks are not cleared automatically after each test
-  // even if you call clearAllMocks() or with the clearMocks config
-  // https://github.com/vitest-dev/vitest/issues/872
-  vi.mocked(authorize).mockClear()
-  vi.mocked(exchangeCodeForAccessToken).mockClear()
-  vi.mocked(exchangeAccessForApplicationTokens).mockClear()
-  vi.mocked(secureStore).mockClear()
-  vi.mocked(refreshAccessToken).mockClear()
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
