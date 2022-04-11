@@ -48,6 +48,7 @@ describe('admin-api', () => {
 
   test('request is called with correct parameters', async () => {
     // Given
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = {'custom-header': token}
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
