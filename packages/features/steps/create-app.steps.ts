@@ -29,7 +29,6 @@ Then(
   async function (appName: string, dependencyManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory])
     const results = JSON.parse(stdout)
-    assert.equal(results.configuration.name, appName)
     assert.equal(results.packageManager, dependencyManager)
   },
 )
