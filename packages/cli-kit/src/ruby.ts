@@ -1,22 +1,47 @@
+import {file, ui} from './index'
 import * as system from './system'
 import {Fatal} from './error'
 import {join} from './path'
+import constants from './constants'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
-import constants from '$constants'
+
+const RubyCLIVersion = '2.15.5'
 
 export async function exec(args: string[], token: string) {
-  await validateRubyEnv()
-  await installCLIIfNeeded()
-
-  const allArgs = ['exec', 'shopify'].concat(args)
-  spawn('bundle', allArgs, {
+  await installDependencies()
+  spawn('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
     shell: true,
+    cwd: rubyCLIPath(),
+    env: {...process.env, SHOPIFY_ADMIN_TOKEN: token},
   })
 }
 
-export async function validateRubyEnv() {
+async function installDependencies() {
+  // We only show a loading spinner if it's the first time installing dependencies
+  // If the vendor path exists we assume it's not your first time.
+  const exists = await file.exists(rubyCLIPath())
+  const renderer = exists ? 'silent' : 'default'
+
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Installing theme dependencies',
+        task: async () => {
+          await validateRubyEnv()
+          await createWorkingDirectory()
+          await createGemfile()
+          await bundleInstall()
+        },
+      },
+    ],
+    {renderer},
+  )
+  await list.run()
+}
+
+async function validateRubyEnv() {
   try {
     await system.exec('ruby', ['-v'])
   } catch {
@@ -33,10 +58,20 @@ export async function validateRubyEnv() {
   }
 }
 
-async function installCLIIfNeeded() {
-  const version = '0.12'
-  const dir = join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', version)
-  console.log(dir)
-  await system.exec('bundle', ['config', 'set', '--local', 'path', dir])
-  await system.exec('bundle', ['install'])
+function createWorkingDirectory() {
+  return file.mkdir(rubyCLIPath())
+}
+
+async function createGemfile() {
+  const gemPath = join(rubyCLIPath(), 'Gemfile')
+  await file.write(gemPath, `source 'https://rubygems.org'\ngem 'shopify-cli', '${RubyCLIVersion}'`)
+}
+
+async function bundleInstall() {
+  await system.exec('bundle', ['config', 'set', '--local', 'path', rubyCLIPath()], {cwd: rubyCLIPath()})
+  await system.exec('bundle', ['install'], {cwd: rubyCLIPath()})
+}
+
+function rubyCLIPath() {
+  return join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 }
