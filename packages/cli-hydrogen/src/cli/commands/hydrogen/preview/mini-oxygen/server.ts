@@ -11,10 +11,14 @@ import type {NextHandleFunction} from 'connect'
 
 import type {MiniOxygen} from './core'
 
-function createAssetMiddleware(assets: string[]): NextHandleFunction {
-  return (req, res, next) => {
-    const filePath = path.join(process.cwd(), './dist/client', req.url!)
+interface AssetMiddlewareOptions {
+  root?: string
+  assets: string[]
+}
 
+function createAssetMiddleware({assets, root}: AssetMiddlewareOptions): NextHandleFunction {
+  return (req, res, next) => {
+    const filePath = path.join(root ?? process.cwd(), './dist/client', req.url!)
     if (assets.includes(filePath)) {
       const rs = fs.createReadStream(filePath)
       const {size} = fs.statSync(filePath)
@@ -54,7 +58,6 @@ function createRequestMiddleware(mf: MiniOxygen): any {
       res.end()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error: any) {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       res.writeHead(500, {'Content-Type': 'text/plain; charset=UTF-8'})
       res.end(error.stack, 'utf8')
     }
@@ -63,10 +66,10 @@ function createRequestMiddleware(mf: MiniOxygen): any {
   }
 }
 
-export async function createServer(mf: MiniOxygen, options: {assets: string[]} = {assets: []}) {
+export async function createServer(mf: MiniOxygen, options: {assets: string[]; root?: string} = {assets: []}) {
   const app = connect()
 
-  app.use(createAssetMiddleware(options.assets))
+  app.use(createAssetMiddleware(options))
   app.use(createRequestMiddleware(mf))
 
   const server = http.createServer(app)
