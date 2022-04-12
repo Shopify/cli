@@ -13,7 +13,7 @@ export default async function extension(extension: Extension, {stdout, stderr, a
   const binaryDir = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
   const extensionRelativePath = path.relative(app.directory, extension.directory)
   const envConfigs = {
-    root_dir: path.relative(extension.directory, app.directory),
+    root_dir: '.',
     build_dir: path.join(extensionRelativePath, 'build/development'),
     entries: {
       main: path.join(extensionRelativePath, 'src/index.js'),
@@ -36,7 +36,7 @@ export default async function extension(extension: Extension, {stdout, stderr, a
   )
   stdout.write(yamlConfigs)
   await system.exec(path.join(binaryDir, 'shopify-cli-extensions'), ['build', '-'], {
-    cwd: extension.directory,
+    cwd: app.directory,
     stdout,
     stderr,
     stdin: yamlConfigs,
