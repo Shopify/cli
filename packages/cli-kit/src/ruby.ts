@@ -1,4 +1,4 @@
-import {system} from './index'
+import * as system from './system'
 import {Fatal} from './error'
 import {concurrent} from './output'
 
