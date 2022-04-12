@@ -8,6 +8,14 @@ import {spawn} from 'child_process'
 
 const RubyCLIVersion = '2.15.5'
 
+/**
+ * Execute CLI 2.0 commands.
+ * Installs a version of RubyCLI as a vendor dependency in a hidden folder in the system.
+ * User must have a valid ruby+bundler environment to run any command.
+ *
+ * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
+ * @param token {string} Token to pass to CLI 2.0, will be set as an environment variable
+ */
 export async function exec(args: string[], token: string) {
   await installDependencies()
   spawn('bundle', ['exec', 'shopify'].concat(args), {
@@ -18,9 +26,13 @@ export async function exec(args: string[], token: string) {
   })
 }
 
+/**
+ * Validate Ruby Enviroment
+ * Install RubyCLI and its dependencies
+ * Shows a loading spinner if it's the first time installing dependencies
+ * or if we are installing a new version of RubyCLI
+ */
 async function installDependencies() {
-  // We only show a loading spinner if it's the first time installing dependencies
-  // If the vendor path exists we assume it's not your first time.
   const exists = await file.exists(rubyCLIPath())
   const renderer = exists ? 'silent' : 'default'
 
