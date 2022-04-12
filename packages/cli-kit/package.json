@@ -71,6 +71,8 @@
     "fs-extra": "^10.0.0",
     "graphql": "^16.3.0",
     "graphql-request": "^4.2.0",
+    "js-yaml": "^4.1.0",
+    "@types/js-yaml": "^4.0.5",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",
     "listr2": "^4.0.5",
