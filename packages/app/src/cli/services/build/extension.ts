@@ -35,6 +35,9 @@ function extensionConfig(extension: Extension, app: App): object {
         title: extension.configuration.name,
         type: 'checkout_post_purchase',
         metafields: [],
+        commands: {
+          build: 'shopify-cli-extensions build',
+        },
         development: envConfigs,
       },
     ],
