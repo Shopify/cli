@@ -24,8 +24,14 @@ import (
 const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
 
 func Build(extension core.Extension, report ResultHandler) {
-	buildDir := extension.BuildDir()
-	script, err := script(buildDir, "shopify-cli-extensions", "build")
+	buildCommand := extension.Commands["build"]
+	if len(buildCommand) == 0 {
+		buildCommand = "build"
+	}
+	splitCommand := strings.Split(buildCommand, " ")
+	buildCommand, args := splitCommand[0], splitCommand[1:]
+
+	script, err := script(extension.BuildDir(), buildCommand, args...)
 	if err != nil {
 		report(Result{false, err.Error(), extension})
 		return
