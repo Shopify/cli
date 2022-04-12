@@ -145,8 +145,3 @@ dist
 
 .DS_Store
 .build
-
-# Ruby
-.bundle
-Gemfile.lock
-
