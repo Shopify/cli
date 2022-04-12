@@ -27,7 +27,6 @@ export default async function extension(extension: Extension, {stdout, stderr, a
           type: 'checkout_post_purchase',
           metafields: [],
           development: envConfigs,
-          production: envConfigs,
         },
       ],
     },
