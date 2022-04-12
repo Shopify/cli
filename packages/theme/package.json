@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "true",
+    "build": "rimraf dist/ && rollup -c",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
@@ -28,5 +28,8 @@
   "devDependencies": {
     "@shopify/cli-kit": "1.0.9",
     "vitest": "0.9.2"
+  },
+  "oclif": {
+    "commands": "dist/commands"
   }
 }

@@ -15,6 +15,7 @@ import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import constants from './constants'
+import {normalizeStoreName} from './string'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -65,8 +66,13 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
 }
 
+export interface AdminSession {
+  token: string
+  storeFqdn: string
+}
+
 export interface OAuthSession {
-  admin?: string
+  admin?: AdminSession
   partners?: string
   storefront?: string
 }
@@ -109,7 +115,7 @@ export async function ensureAuthenticatedStorefront(scopes: string[] = []): Prom
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
  * @returns {Promise<string>} The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<string> {
+export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
   if (!tokens.admin) {
     throw MissingAdminTokenError
@@ -124,6 +130,10 @@ export async function ensureAuthenticatedAdmin(store: string, scopes: string[] =
  */
 export async function ensureAuthenticated(applications: OAuthApplications, env = process.env): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
+
+  if (applications.adminApi?.storeFqdn) {
+    applications.adminApi.storeFqdn = normalizeStoreName(applications.adminApi.storeFqdn)
+  }
 
   const currentSession = (await secureStore.fetch()) || {}
   const fqdnSession = currentSession[fqdn]
@@ -213,7 +223,10 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
-    tokens.admin = fqdnSession.applications[realAppId]?.accessToken
+    const token = fqdnSession.applications[realAppId]?.accessToken
+    if (token) {
+      tokens.admin = {token, storeFqdn: applications.adminApi.storeFqdn}
+    }
   }
 
   if (applications.partnersApi) {

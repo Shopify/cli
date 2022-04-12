@@ -40,18 +40,21 @@ const validIdentityToken: IdentityToken = {
 }
 
 const validTokens: OAuthSession = {
-  admin: 'admin_token',
+  admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
   storefront: 'storefront_token',
   partners: 'partners_token',
 }
 
 const appTokens: {[x: string]: ApplicationToken} = {
   // Admin APIs includes domain in the key
-  'mystore-admin': {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  'mystore.myshopify.com-admin': {
     accessToken: 'admin_token',
     expiresAt: futureDate,
     scopes: ['scope', 'scope2'],
   },
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   'storefront-renderer': {
     accessToken: 'storefront_token',
     expiresAt: futureDate,
@@ -289,7 +292,7 @@ describe('ensureAuthenticatedAdmin', () => {
     const got = await ensureAuthenticatedAdmin('mystore')
 
     // Then
-    expect(got).toEqual('admin_token')
+    expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
   })
 
   it('throws error if there is no token', async () => {

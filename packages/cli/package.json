@@ -69,9 +69,10 @@
     "bin": "shopify",
     "commands": "dist/commands",
     "plugins": [
-      "@oclif/plugin-help",
       "@shopify/app",
+      "@shopify/theme",
       "@shopify/cli-hydrogen",
+      "@oclif/plugin-help",
       "@oclif/plugin-plugins"
     ],
     "topicSeparator": " ",
