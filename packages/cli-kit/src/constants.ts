@@ -1,5 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
+import {cacheHome} from './xdg'
+import {join as pathJoin} from './path'
 import {version as cliKitVersion} from '../package.json'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -25,6 +27,11 @@ const constants = {
   paths: {
     executables: {
       dev: '/opt/dev/bin/dev',
+    },
+    directories: {
+      cache: () => {
+        return pathJoin(cacheHome(), 'shopify-cli')
+      },
     },
   },
   /**
