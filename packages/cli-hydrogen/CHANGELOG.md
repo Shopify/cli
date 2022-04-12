@@ -1,5 +1,15 @@
 # @shopify/cli-hydrogen
 
+## 1.1.0
+
+### Minor Changes
+
+- e64ddda: New commands: `dev` (running a vite server in hydrogen apps) and `build` (building hydrogen apps for node and worker target environments)
+
+### Patch Changes
+
+- fdf108d: Fix bug with asset loading when using `shopify hydrogen preview` command.
+
 ## 1.0.9
 
 ### Patch Changes
