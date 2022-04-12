@@ -1,21 +1,44 @@
-import {path, system} from '@shopify/cli-kit'
+import {path, system, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
-import {Extension} from '$cli/models/app/app'
+import {App, Extension} from '$cli/models/app/app'
 
 interface HomeOptions {
   stdout: Writable
   stderr: Writable
+  app: App
 }
 
-export default async function extension(extension: Extension, {stdout, stderr}: HomeOptions): Promise<void> {
-  const esbuildPath = (await path.findUp('node_modules/.bin/esbuild', {type: 'file'})) as string
+export default async function extension(extension: Extension, {stdout, stderr, app}: HomeOptions): Promise<void> {
   stdout.write('Starting the extension build')
-  await system.exec(
-    esbuildPath,
-    [`--outdir=${extension.buildDirectory}`, `--log-level=verbose`, path.join(extension.directory, 'index.jsx')],
-    {
-      stdout,
-      stderr,
+  const binaryDir = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
+  const extensionRelativePath = path.relative(app.directory, extension.directory)
+  const envConfigs = {
+    root_dir: path.relative(extension.directory, app.directory),
+    build_dir: path.join(extensionRelativePath, 'build/development'),
+    entries: {
+      main: path.join(extensionRelativePath, 'src/index.js'),
     },
+  }
+  const yamlConfigs = yaml.encode(
+    {
+      extensions: [
+        {
+          title: extension.configuration.name,
+          type: 'checkout_post_purchase',
+          metafields: [],
+          development: envConfigs,
+          production: envConfigs,
+        },
+      ],
+    },
+    null,
+    2,
   )
+  stdout.write(yamlConfigs)
+  await system.exec(path.join(binaryDir, 'shopify-cli-extensions'), ['build', '-'], {
+    cwd: extension.directory,
+    stdout,
+    stderr,
+    stdin: yamlConfigs,
+  })
 }

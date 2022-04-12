@@ -15,7 +15,7 @@ async function build({app}: BuildOptions) {
     }),
     ...app.extensions.map((extension, index) => {
       return output.concurrent(index + 1, path.basename(extension.directory), async (stdout, stderr) => {
-        await buildExtension(extension, {stdout, stderr})
+        await buildExtension(extension, {stdout, stderr, app})
       })
     }),
   ])

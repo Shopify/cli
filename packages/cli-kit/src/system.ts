@@ -7,6 +7,7 @@ export interface ExecOptions {
   env?: any
   stdout?: Writable
   stderr?: Writable
+  stdin?: string
 }
 
 export const open = async (url: string) => {
@@ -29,6 +30,7 @@ export const exec = (command: string, args: string[], options?: ExecOptions): Ex
   const commandProcess = execa(command, args, {
     cwd: options?.cwd,
     env: options?.env ?? process.env,
+    input: options?.stdin,
   })
   if (options?.stderr) {
     commandProcess.stderr?.pipe(options.stderr)
