@@ -12,6 +12,7 @@ import {version as appVersion} from '../../app/package.json'
 
 const constants = {
   environmentVariables: {
+    unitTest: 'SHOPIFY_UNIT_TEST',
     shopifyConfig: 'SHOPIFY_CONFIG',
     runAsUser: 'SHOPIFY_RUN_AS_USER',
     partnersEnv: 'SHOPIFY_PARTNERS_ENV',
@@ -29,8 +30,18 @@ const constants = {
       dev: '/opt/dev/bin/dev',
     },
     directories: {
-      cache: () => {
-        return pathJoin(cacheHome(), 'shopify-cli')
+      cache: {
+        path: () => {
+          return pathJoin(cacheHome(), 'shopify-cli')
+        },
+        vendor: {
+          path: () => {
+            return pathJoin(cacheHome(), 'shopify-cli', 'vendor')
+          },
+          binaries: () => {
+            return pathJoin(cacheHome(), 'shopify-cli', 'vendor', 'binaries')
+          },
+        },
       },
     },
   },

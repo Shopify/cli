@@ -1,5 +1,4 @@
-import {directory as getVendorDirectory} from '../vendor-directory'
-import {http, file, path, os, error, checksum} from '@shopify/cli-kit'
+import {http, file, path, os, error, checksum, constants} from '@shopify/cli-kit'
 import zlib from 'node:zlib'
 import {createWriteStream} from 'node:fs'
 import {pipeline} from 'node:stream'
@@ -78,8 +77,7 @@ export async function binaryExists(): Promise<boolean> {
 
 export async function getBinaryLocalPath(): Promise<string> {
   const {platform, arch} = os.platformAndArch()
-  const vendorDirectory = await getVendorDirectory()
-  const binariesDirectory = path.join(vendorDirectory, 'binaries')
+  const binariesDirectory = constants.paths.directories.cache.vendor.binaries()
   const extensionsDirectory = path.join(binariesDirectory, 'extensions')
   let binaryName = `${versions.extensionsBinary}-${platform}-${arch}`
   if (platform === 'windows') {
