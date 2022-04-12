@@ -96,7 +96,7 @@ out
 dist
 
 # extension build output
-extensions/*/build/*.js*
+fixtures/app/extensions/*/build
 
 # Gatsby files
 .cache/
