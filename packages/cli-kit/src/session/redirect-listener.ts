@@ -1,5 +1,5 @@
 import {Abort, Bug} from '../error'
-import {output} from '../index'
+import * as output from '../output'
 import http from 'http'
 import url from 'url'
 
@@ -47,7 +47,6 @@ export class RedirectListener {
       if (requestUrl === '/favicon.ico') return {}
 
       const respond = () => {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         response.writeHead(200, {'Content-Type': 'text/html'})
         response.end(redirectResponseBody)
       }
