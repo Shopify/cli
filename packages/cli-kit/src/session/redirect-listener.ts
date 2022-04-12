@@ -1,4 +1,5 @@
 import {Abort, Bug} from '../error'
+import * as output from '../output'
 import http from 'http'
 import url from 'url'
 
@@ -15,6 +16,8 @@ export const MissingStateError = new Bug(
 )
 
 export const redirectResponseBody = 'Continuing the authentication in your terminal...'
+
+const ResponseTimeoutSeconds = 10
 
 /**
  * It represents the result of a redirect.
@@ -107,12 +110,17 @@ export class RedirectListener {
   }
 }
 
-export async function listenRedirect(host: string, port: number): Promise<{code: string; state: string}> {
+export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      const message = '\nAuto-open timed out. Click this link to open the log in page:\n'
+      output.info(output.content`${message}${output.token.link('Auth Link', url)}\n`)
+    }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,
       port,
       callback: (error, code, state) => {
+        clearTimeout(timeout)
         redirectListener.stop()
         if (error) {
           reject(error)

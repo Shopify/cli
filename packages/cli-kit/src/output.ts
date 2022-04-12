@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import {Fatal} from './error'
+import {isUnitTest} from './environment/local'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import {Writable} from 'node:stream'
@@ -145,6 +146,9 @@ export const currentLogLevel = (): LogLevel => {
 }
 
 export const shouldOutput = (logLevel: LogLevel): boolean => {
+  if (isUnitTest()) {
+    return false
+  }
   const currentLogLevelValue = logLevelValue(currentLogLevel())
   const messageLogLevelValue = logLevelValue(logLevel)
   return messageLogLevelValue >= currentLogLevelValue

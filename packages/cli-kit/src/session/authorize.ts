@@ -1,10 +1,10 @@
 import {listenRedirect} from './redirect-listener'
 import {clientId} from './identity'
-import * as output from '../output'
 import {generateRandomChallengePair, randomHex} from '../string'
 import {open} from '../system'
 import {Abort} from '../error'
 import {identity as identityFqdn} from '../environment/fqdn'
+import * as output from '../output'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
@@ -40,9 +40,10 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
 
   url = `${url}?${new URLSearchParams(params).toString()}`
   open(url)
-  output.info('To run this command, first log in to Shopify Partners.')
-  output.info(`\nAs a backup, here's the link for the login page: ${url}`)
-  const result = await listenRedirect(host, port)
+  output.info(
+    "\nTo run this command, first log in to Shopify Partners. We're opening the page for you on your browser...",
+  )
+  const result = await listenRedirect(host, port, url)
 
   if (result.state !== state) {
     throw MismatchStateError
