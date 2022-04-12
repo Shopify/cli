@@ -44,7 +44,6 @@ module.exports = {
         'kit/modules/session',
         'kit/modules/version',
         'kit/modules/ui',
-        'kit/modules/xdg',
       ],
     },
   ],
