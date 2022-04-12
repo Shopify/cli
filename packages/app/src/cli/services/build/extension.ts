@@ -31,7 +31,6 @@ export default async function extension(extension: Extension, {stdout, stderr, a
       },
     ],
   })
-  stdout.write(yamlConfigs)
   await system.exec(path.join(binaryDir, 'shopify-cli-extensions'), ['build', '-'], {
     cwd: app.directory,
     stdout,
