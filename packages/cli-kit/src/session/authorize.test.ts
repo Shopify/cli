@@ -37,7 +37,7 @@ describe('authorize', () => {
       'http://fqdn.com/oauth/authorize?client_id=clientId&scope=scope1+scope2&redirect_uri=http%3A%2F%2F127.0.0.1%3A3456&state=state&response_type=code&code_challenge_method=S256&code_challenge=challenge'
 
     expect(open).toHaveBeenCalledWith(url)
-    expect(listenRedirect).toHaveBeenCalledWith(host, port)
+    expect(listenRedirect).toHaveBeenCalledWith(host, port, url)
     expect(got).toEqual({code: 'code', codeVerifier: challenge.codeVerifier})
   })
 
