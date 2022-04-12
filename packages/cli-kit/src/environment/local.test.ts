@@ -1,10 +1,23 @@
 import {isSpin} from './spin'
-import {isDebug, isShopify} from './local'
+import {isDebug, isShopify, isUnitTest} from './local'
 import {exists as fileExists} from '../file'
 import {expect, it, describe, vi} from 'vitest'
 
 vi.mock('../file')
 vi.mock('./spin')
+
+describe('isUnitTest', () => {
+  it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
+    // Given
+    const env = {SHOPIFY_UNIT_TEST: '1'}
+
+    // When
+    const got = isUnitTest(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+})
 
 describe('isDebug', () => {
   it('returns true when SHOPIFY_CONFIG is debug', () => {

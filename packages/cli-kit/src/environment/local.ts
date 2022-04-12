@@ -25,3 +25,14 @@ export async function isShopify(env = process.env): Promise<boolean> {
   const devInstalled = await fileExists(constants.paths.executables.dev)
   return devInstalled || isSpin()
 }
+
+/**
+ * This variable is used when running unit tests to indicate that the CLI's business logic
+ * is run as a subject of a unit test. We can use this variable to disable output through
+ * the standard streams.
+ * @param env The environment variables from the environment of the current process.
+ * @returns True if the SHOPIFY_UNIT_TEST environment variable is truthy.
+ */
+export function isUnitTest(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.unitTest])
+}

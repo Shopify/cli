@@ -1,7 +1,6 @@
 import {getBinaryPathOrDownload, getBinaryLocalPath, validatePlatformSupport, UnsupportedPlatformError} from './binary'
-import {directory as getVendorDirectory} from '../vendor-directory'
 import {describe, it, expect, vi} from 'vitest'
-import {http, file, path, os, checksum} from '@shopify/cli-kit'
+import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
 import {createGzip} from 'node:zlib'
 import {createReadStream, createWriteStream} from 'node:fs'
@@ -9,7 +8,6 @@ import {promisify} from 'node:util'
 import {pipeline} from 'node:stream'
 import {versions} from '$cli/constants'
 
-vi.mock('../vendor-directory')
 vi.mock('@shopify/cli-kit', async () => {
   const module: any = await vi.importActual('@shopify/cli-kit')
   return {
@@ -23,14 +21,25 @@ vi.mock('@shopify/cli-kit', async () => {
     os: {
       platformAndArch: vi.fn(),
     },
+    constants: {
+      paths: {
+        directories: {
+          cache: {
+            vendor: {
+              binaries: vi.fn(),
+            },
+          },
+        },
+      },
+    },
   }
 })
 
 describe('getBinaryLocalPath', () => {
   it('returns the right path when windows', async () => {
     // Given
-    const vendorDirectory = '/vendor'
-    vi.mocked(getVendorDirectory).mockResolvedValue(vendorDirectory)
+    const binariesDirectory = '/binaries'
+    vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
     vi.mocked(os.platformAndArch).mockReturnValue({
       platform: 'windows',
       arch: 'arm64',
@@ -40,15 +49,13 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    expect(got).toEqual(
-      path.join(vendorDirectory, `binaries/extensions/${versions.extensionsBinary}-windows-arm64.exe`),
-    )
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${versions.extensionsBinary}-windows-arm64.exe`))
   })
 
   it('returns the right path when not windows', async () => {
     // Given
-    const vendorDirectory = '/vendor'
-    vi.mocked(getVendorDirectory).mockResolvedValue(vendorDirectory)
+    const binariesDirectory = '/binaries'
+    vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
     vi.mocked(os.platformAndArch).mockReturnValue({
       platform: 'darwin',
       arch: 'arm64',
@@ -58,7 +65,7 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    expect(got).toEqual(path.join(vendorDirectory, `binaries/extensions/${versions.extensionsBinary}-darwin-arm64`))
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${versions.extensionsBinary}-darwin-arm64`))
   })
 })
 
@@ -94,8 +101,8 @@ describe('getBinaryPathOrDownload', () => {
   it('returns the binary path if the binary already exists', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
-      const vendorDirectory = path.join(tmpDir, 'vendor')
-      vi.mocked(getVendorDirectory).mockResolvedValue(vendorDirectory)
+      const binariesDirectory = path.join(tmpDir, 'binaries')
+      vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
       vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
       const binaryLocalPath = await getBinaryLocalPath()
       const binary = 'binary'
@@ -114,8 +121,8 @@ describe('getBinaryPathOrDownload', () => {
   it('throws an error if the platform and architecture are not supported', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
-      const vendorDirectory = path.join(tmpDir, 'vendor')
-      vi.mocked(getVendorDirectory).mockResolvedValue(vendorDirectory)
+      const binariesDirectory = path.join(tmpDir, 'binaries')
+      vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
       vi.mocked(os.platformAndArch).mockReturnValue({platform: 'unsupported', arch: 'arm64'})
       const binaryLocalPath = await getBinaryLocalPath()
 
@@ -133,7 +140,7 @@ describe('getBinaryPathOrDownload', () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const binaryContent = 'binary'
-      const vendorDirectory = path.join(tmpDir, 'vendor')
+      const binariesDirectory = path.join(tmpDir, 'binaries')
       const releaseArtifactsDirectory = path.join(tmpDir, 'release-artifacts')
       const releaseBinariesDirectory = path.join(tmpDir, 'relase-binary')
       const releaseBinary = path.join(releaseBinariesDirectory, 'extensions')
@@ -148,7 +155,7 @@ describe('getBinaryPathOrDownload', () => {
       // Given: Compressing release binaries
       await promisify(pipeline)(createReadStream(releaseBinary), createGzip(), createWriteStream(relaseArtifact))
 
-      vi.mocked(getVendorDirectory).mockResolvedValue(vendorDirectory)
+      vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
       vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
       const response: any = {
         body: createReadStream(relaseArtifact),
@@ -166,7 +173,7 @@ describe('getBinaryPathOrDownload', () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const binaryContent = 'binary'
-      const vendorDirectory = path.join(tmpDir, 'vendor')
+      const binariesDirectory = path.join(tmpDir, 'binaries')
       const releaseArtifactsDirectory = path.join(tmpDir, 'release-artifacts')
       const releaseBinariesDirectory = path.join(tmpDir, 'relase-binary')
       const releaseBinary = path.join(releaseBinariesDirectory, 'extensions')
@@ -180,7 +187,7 @@ describe('getBinaryPathOrDownload', () => {
       // Given: Compressing release binaries
       await promisify(pipeline)(createReadStream(releaseBinary), createGzip(), createWriteStream(relaseArtifact))
 
-      vi.mocked(getVendorDirectory).mockResolvedValue(vendorDirectory)
+      vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
       vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
       const response: any = {
         body: createReadStream(relaseArtifact),

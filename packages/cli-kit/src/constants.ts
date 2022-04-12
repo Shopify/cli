@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
+import {join as pathJoin} from './path'
 import {version as cliKitVersion} from '../package.json'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -7,9 +8,13 @@ import {version as cliVersion} from '../../cli/package.json'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {version as appVersion} from '../../app/package.json'
+import envPaths from 'env-paths'
+
+const identifier = 'shopify-cli'
 
 const constants = {
   environmentVariables: {
+    unitTest: 'SHOPIFY_UNIT_TEST',
     shopifyConfig: 'SHOPIFY_CONFIG',
     runAsUser: 'SHOPIFY_RUN_AS_USER',
     partnersEnv: 'SHOPIFY_PARTNERS_ENV',
@@ -25,6 +30,21 @@ const constants = {
   paths: {
     executables: {
       dev: '/opt/dev/bin/dev',
+    },
+    directories: {
+      cache: {
+        path: () => {
+          return envPaths(identifier).cache
+        },
+        vendor: {
+          path: () => {
+            return pathJoin(envPaths(identifier).cache, 'vendor')
+          },
+          binaries: () => {
+            return pathJoin(envPaths(identifier).cache, 'vendor', 'binaries')
+          },
+        },
+      },
     },
   },
   /**
