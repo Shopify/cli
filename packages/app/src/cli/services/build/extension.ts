@@ -10,8 +10,7 @@ interface HomeOptions {
 
 export default async function extension(extension: Extension, {stdout, stderr, app}: HomeOptions): Promise<void> {
   stdout.write('Starting the extension build')
-  const binaryDir = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
-  await system.exec(path.join(binaryDir, 'shopify-cli-extensions'), ['build', '-'], {
+  await system.exec(await extensionsBinaryPath(), ['build', '-'], {
     cwd: app.directory,
     stdout,
     stderr,
@@ -40,4 +39,9 @@ function extensionConfig(extension: Extension, app: App): object {
       },
     ],
   }
+}
+
+async function extensionsBinaryPath(): Promise<string> {
+  const binaryDir = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
+  return path.join(binaryDir, 'shopify-cli-extensions')
 }
