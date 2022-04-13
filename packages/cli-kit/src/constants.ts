@@ -12,6 +12,11 @@ import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
 
+const cacheFolder = () => {
+  if (process.env.XDG_CACHE_HOME) return process.env.XDG_CACHE_HOME
+  return envPaths(identifier).cache
+}
+
 const constants = {
   environmentVariables: {
     unitTest: 'SHOPIFY_UNIT_TEST',
@@ -34,14 +39,14 @@ const constants = {
     directories: {
       cache: {
         path: () => {
-          return envPaths(identifier).cache
+          return cacheFolder()
         },
         vendor: {
           path: () => {
-            return pathJoin(envPaths(identifier).cache, 'vendor')
+            return pathJoin(cacheFolder(), 'vendor')
           },
           binaries: () => {
-            return pathJoin(envPaths(identifier).cache, 'vendor', 'binaries')
+            return pathJoin(cacheFolder(), 'vendor', 'binaries')
           },
         },
       },
