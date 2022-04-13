@@ -25,8 +25,8 @@ export class MiniOxygen extends MiniflareCore<any> {
     await super.dispose()
   }
 
-  createServer({assets = []}: {assets?: string[]} = {}) {
-    return createServer(this, {assets})
+  createServer({assets = [], root}: {assets?: string[]; root?: string} = {}) {
+    return createServer(this, {assets, root})
   }
 }
 

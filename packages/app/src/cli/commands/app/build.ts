@@ -15,7 +15,7 @@ export default class Build extends Command {
   }
 
   async run(): Promise<void> {
-    const {args, flags} = await this.parse(Build)
+    const {flags} = await this.parse(Build)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
     await build({app})

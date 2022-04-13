@@ -11,16 +11,17 @@ async function preview({directory, port}: PreviewOptions) {
 }
 
 async function runPreview({directory, port}: PreviewOptions) {
-  const files = await path.glob('dist/client/**/*')
+  const files = await path.glob(path.join(directory, 'dist/client/**/*'))
 
   const mf = new MiniOxygen({
+    modules: true,
     buildCommand: 'yarn build',
     globals: {Oxygen: {}},
     scriptPath: path.resolve(directory, 'dist/worker/index.js'),
     sitePath: path.resolve(directory, 'dist/client'),
   })
 
-  const app = await mf.createServer({assets: files})
+  const app = await mf.createServer({root: directory, assets: files})
 
   app.listen(port, () => {
     output.info(`\nStarted miniOxygen server. Listening at http://localhost:${port}\n`)

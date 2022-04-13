@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
@@ -41,7 +41,8 @@
     "@miniflare/storage-memory": "^2.2.0",
     "@miniflare/web-sockets": "^2.2.0",
     "@types/prettier": "^2.4.4",
-    "prettier": "^2.6.1"
+    "prettier": "^2.6.1",
+    "vite": "^2.9.1"
   },
   "peerDependencies": {
     "@shopify/cli-kit": "1.0.9"
