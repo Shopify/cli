@@ -5,7 +5,7 @@ import path from 'pathe'
 import fs from 'fs'
 import {strict as assert} from 'assert'
 
-Then(/I see Theme's help menu/, async function () {
+Then(/I see Theme's help menu/, {timeout: 60 * 1000}, async function () {
   await exec(executables.cli, ['theme', 'help'], {env: {...process.env, ...this.temporaryEnv}})
 })
 
