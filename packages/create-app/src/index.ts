@@ -19,6 +19,8 @@ function runCreateApp() {
   run(undefined, import.meta.url)
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
+      console.log(error)
+
       const kitMapper = kitError.mapper
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting

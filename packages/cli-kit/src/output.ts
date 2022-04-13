@@ -212,7 +212,10 @@ export const newline = () => {
  */
 export const error = (content: Fatal) => {
   if (shouldOutput('error')) {
-    const message = content.message || 'Unknown error'
+    if (!content.message) {
+      return
+    }
+    const message = content.message
     const padding = '    '
     const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
     const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
