@@ -1,4 +1,5 @@
-import {file, ui} from './index'
+import * as file from './file'
+import * as ui from './ui'
 import * as system from './system'
 import {Fatal} from './error'
 import {join} from './path'
@@ -6,7 +7,7 @@ import constants from './constants'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 
-const RubyCLIVersion = '2.15.5'
+const RubyCLIVersion = '2.15.6'
 
 /**
  * Execute CLI 2.0 commands.
