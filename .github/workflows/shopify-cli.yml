@@ -33,6 +33,10 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
+      - name: Set Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1.2
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
@@ -67,6 +71,10 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
+      - name: Set Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1.2
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
