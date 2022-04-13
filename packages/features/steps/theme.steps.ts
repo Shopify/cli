@@ -12,7 +12,6 @@ Then(/I see Theme's help menu/, {timeout: 60 * 1000}, async function () {
 Then(/I have Ruby CLI installed as a vendor dependency/, {}, async function () {
   const cacheHome = this.temporaryEnv.XDG_CACHE_HOME
   const cliPath = path.join(cacheHome, 'vendor', 'ruby-cli')
-  console.log(cliPath)
   const exists = fs.existsSync(cliPath)
   assert.equal(exists, true)
 })
