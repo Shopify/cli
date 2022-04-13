@@ -4,10 +4,12 @@ import * as system from './system'
 import {Fatal} from './error'
 import {join} from './path'
 import constants from './constants'
+import {coerce} from './semver'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 
 const RubyCLIVersion = '2.15.6'
+const MinBundlerVersion = '2.3.8'
 
 /**
  * Execute CLI 2.0 commands.
@@ -64,8 +66,20 @@ async function validateRubyEnv() {
     )
   }
 
+  const bundlerVersion = await getBundlerVersion()
+  const isValid = bundlerVersion?.compare(MinBundlerVersion)
+  if (isValid === -1 || isValid === undefined) {
+    throw new Fatal(
+      `Bundler version ${bundlerVersion} is not supported`,
+      `Make sure you have Bundler version ${MinBundlerVersion} or higher installed on your system: https://bundler.io/`,
+    )
+  }
+}
+
+async function getBundlerVersion() {
   try {
-    await system.exec('bundler', ['-v'])
+    const {stdout} = await system.exec('bundler', ['-v'])
+    return coerce(stdout)
   } catch {
     throw new Fatal('Bundler not found', 'Make sure you have Bundler installed on your system: https://bundler.io/')
   }
