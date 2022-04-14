@@ -1,17 +1,42 @@
-import {dependency, path, ui} from '@shopify/cli-kit'
+import {constants, path, dependency, ui, npm} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
-interface DeepInstallNPMTasksOptions {
-  from: string
-  dependencyManager: dependency.DependencyManager
-  didInstallEverything(): void
+export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local: boolean): Promise<npm.PackageJSON> {
+  packageJSON.dependencies = packageJSON.dependencies || {}
+  packageJSON.dependencies['@shopify/cli'] = constants.versions.cli
+  packageJSON.dependencies['@shopify/app'] = constants.versions.app
+
+  if (local) {
+    const dependencyOverrides = {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      '@shopify/cli': `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      '@shopify/app': `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      '@shopify/cli-kit': `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`,
+    }
+
+    packageJSON.overrides = packageJSON.overrides
+      ? {...packageJSON.overrides, ...dependencyOverrides}
+      : dependencyOverrides
+
+    packageJSON.resolutions = packageJSON.resolutions
+      ? {...packageJSON.resolutions, ...dependencyOverrides}
+      : dependencyOverrides
+  }
+
+  return packageJSON
 }
 
-export default async function getDeepInstallNPMTasks({
+export async function getDeepInstallNPMTasks({
   from,
   dependencyManager,
   didInstallEverything,
-}: DeepInstallNPMTasksOptions): Promise<ui.ListrTask[]> {
+}: {
+  from: string
+  dependencyManager: dependency.DependencyManager
+  didInstallEverything(): void
+}): Promise<ui.ListrTask[]> {
   const packageJSONFiles = await path.glob([path.join(from, '**/package.json')])
   let foldersInstalled = 0
 

@@ -1,22 +1,85 @@
-import getDeepInstallNPMTasks from './npm'
-import {dependency, file, path, ui} from '@shopify/cli-kit'
-import {describe, expect, it, vi} from 'vitest'
+import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
+import {constants, dependency, file, npm, path, ui} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: {[key: string]: any} = await vi.importActual('@shopify/cli-kit')
+describe('updateCLIDependencies', () => {
+  it('updates the @shopify/cli and @shopify/app dependency version', async () => {
+    const mockPackageJSON = {} as npm.PackageJSON
 
-  return {
-    ...cliKit,
-    dependency: {
-      ...cliKit.dependency,
-      install: vi.fn(),
+    await updateCLIDependencies(mockPackageJSON, false)
+
+    expect(mockPackageJSON.dependencies['@shopify/cli']).toBe(constants.versions.cli)
+    expect(mockPackageJSON.dependencies['@shopify/app']).toBe(constants.versions.app)
+  })
+
+  it('does not update overrides or resolutions if local is false', async () => {
+    const mockPackageJSON = {overrides: {}, resolutions: {}} as npm.PackageJSON
+
+    await updateCLIDependencies(mockPackageJSON, false)
+
+    expect(mockPackageJSON.overrides['@shopify/cli']).toBeUndefined()
+    expect(mockPackageJSON.overrides['@shopify/app']).toBeUndefined()
+    expect(mockPackageJSON.overrides['@shopify/cli-kit']).toBeUndefined()
+    expect(mockPackageJSON.resolutions['@shopify/cli']).toBeUndefined()
+    expect(mockPackageJSON.resolutions['@shopify/app']).toBeUndefined()
+    expect(mockPackageJSON.resolutions['@shopify/cli-kit']).toBeUndefined()
+  })
+
+  it.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
+    'updates overrides for %s if local is true',
+    async (dependency) => {
+      const mockPackageJSON = {} as npm.PackageJSON
+
+      await updateCLIDependencies(mockPackageJSON, true)
+
+      const dependencyOveride = mockPackageJSON.overrides[dependency]
+      const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
+      const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+
+      expect(dependencyJSON.name).toBe(dependency)
     },
-  }
+  )
+
+  it.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
+    'updates resolutions for %s if local is true',
+    async (dependency) => {
+      const mockPackageJSON = {} as npm.PackageJSON
+
+      await updateCLIDependencies(mockPackageJSON, true)
+
+      const dependencyResolution = mockPackageJSON.resolutions[dependency]
+      const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
+      const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+
+      expect(dependencyJSON.name).toBe(dependency)
+    },
+  )
+
+  it('does not change existing values', async () => {
+    const mockPackageJSON = {
+      name: '',
+      author: '',
+      dependencies: {
+        mock: 'value',
+      },
+      resolutions: {
+        mock: 'value',
+      },
+      overrides: {
+        mock: 'value',
+      },
+    }
+    await updateCLIDependencies(mockPackageJSON, false)
+
+    expect(mockPackageJSON.dependencies.mock).toBe('value')
+    expect(mockPackageJSON.overrides.mock).toBe('value')
+    expect(mockPackageJSON.resolutions.mock).toBe('value')
+  })
 })
 
-describe('dependencies', () => {
+describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
     await temporary.directory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'home'))
@@ -35,6 +98,10 @@ describe('dependencies', () => {
     dependencyManager: dependency.DependencyManager.Npm,
     didInstallEverything: () => {},
   }
+
+  beforeEach(() => {
+    vi.spyOn(dependency, 'install').mockImplementation(async () => undefined)
+  })
 
   it.each([
     ['/', 0],

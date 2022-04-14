@@ -29,21 +29,34 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       },
     })
   }
+
+  // Eventually this list should be taken from a remote location
+  // That way we don't have to update the CLI every time we add a template
+  const templateURLMap = {
+    node: 'https://github.com/Shopify/starter-node-app',
+    php: 'https://github.com/Shopify/starter-node-app',
+  }
+
   if (!options.template) {
     questions.push({
       type: 'select',
       name: 'template',
-      choices: ['node', 'rails'],
+      choices: Object.keys(templateURLMap),
       message: 'Which template would you like to use?',
-      default: 'https://github.com/Shopify/shopify-app-node#richard/frontend-via-submodules',
+      default: 'https://github.com/Shopify/starter-node-app',
     })
   }
+
   const promptOutput: InitOutput = await prompt(questions)
-  return {
+  const answers = {
     ...options,
     ...promptOutput,
-    template: 'https://github.com/Shopify/shopify-app-node#richard/frontend-via-submodules',
   }
+
+  const templateURL = templateURLMap[answers.template as keyof typeof templateURLMap]
+  answers.template = templateURL || answers.template
+
+  return answers
 }
 
 export default init

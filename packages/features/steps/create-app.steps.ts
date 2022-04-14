@@ -18,7 +18,7 @@ When(
         dependencyManager,
         '--local',
         '--template',
-        'https://github.com/Shopify/shopify-app-node#cli-next',
+        'https://github.com/Shopify/shopify-app-node#richard/frontend-via-submodules',
       ],
       {env: {...process.env, ...this.temporaryEnv}},
     )
@@ -38,3 +38,9 @@ Then(
     assert.equal(results.packageManager, dependencyManager)
   },
 )
+
+Then(/I can build the app/, {}, async function () {
+  await exec(executables.cli, ['app', 'build', '--path', this.appDirectory], {
+    env: {...process.env, ...this.temporaryEnv},
+  })
+})
