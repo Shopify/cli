@@ -724,31 +724,33 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 	}
 	expectedExtensions := fmt.Sprintf(`[
 		{
-		  "customData": "baz",
-		  "assets": {
+			"customData": "baz",
+			"assets": {
 			"main": {
-			  "name": "main",
-			  "url": "%v/extensions/00000000-0000-0000-0000-000000000000/assets/main.js",
-			  "lastUpdated": 0
+				"name": "main",
+				"url": "%v/extensions/00000000-0000-0000-0000-000000000000/assets/main.js",
+				"lastUpdated": 0
 			}
-		  },
-		  "development": {
+			},
+			"development": {
 			"hidden": false,
 			"resource": {"url": ""},
 			"root": {"url": "%v/extensions/00000000-0000-0000-0000-000000000000"},
 			"status": "success",
 			"resource": {"url": "cart/1234"}
-		  },
-		  "type": "checkout_ui_extension",
-		  "metafields": [{"namespace": "another-namespace", "key": "another-key"}],
-		  "uuid": "00000000-0000-0000-0000-000000000000",
-		  "version": "",
-		  "extensionPoints": null,
-		  "localization": null,
-		  "surface": "checkout",
-		  "canAccessNetwork": false
+			},
+			"type": "checkout_ui_extension",
+			"metafields": [{"namespace": "another-namespace", "key": "another-key"}],
+			"uuid": "00000000-0000-0000-0000-000000000000",
+			"version": "",
+			"extensionPoints": null,
+			"localization": null,
+			"surface": "checkout",
+			"capabilities": {
+				"networkAccess": false
+			}
 		}
-	  ]`, server.URL, server.URL)
+		]`, server.URL, server.URL)
 
 	match, err := isEqualJSON(expectedExtensions, string(extensions))
 	if err != nil {

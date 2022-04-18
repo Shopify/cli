@@ -49,6 +49,8 @@ extensions:
         version: '^0.13.2'
       entries:
         main: 'src/index.tsx'
+    capabilities:
+      network_access: true
   - uuid: 00000000-0000-0000-0000-000000000003
     type: beacon_extension
     title: Beacon Test Extension
@@ -61,3 +63,5 @@ extensions:
         version: '^0.14.0'
       entries:
         main: 'src/index.js'
+    capabilities:
+      network_access: false
