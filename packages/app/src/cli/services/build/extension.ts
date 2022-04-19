@@ -9,9 +9,8 @@ interface HomeOptions {
 }
 
 export default async function extension(extension: Extension, {stdout, stderr, app}: HomeOptions): Promise<void> {
-  stdout.write('Starting the extension build')
   await system.exec(await extensionsBinaryPath(), ['build', '-'], {
-    cwd: extension.directory,
+    cwd: app.directory,
     stdout,
     stderr,
     stdin: yaml.encode(extensionConfig(extension, app)),
@@ -19,15 +18,6 @@ export default async function extension(extension: Extension, {stdout, stderr, a
 }
 
 function extensionConfig(extension: Extension, app: App): object {
-  const envConfigs = {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    root_dir: extension.directory,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    build_dir: path.join(extension.directory, 'build/development'),
-    entries: {
-      main: path.join(extension.directory, 'src/index.jsx'),
-    },
-  }
   return {
     extensions: [
       {
@@ -37,7 +27,15 @@ function extensionConfig(extension: Extension, app: App): object {
         commands: {
           build: 'shopify-cli-extensions build',
         },
-        development: envConfigs,
+        development: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          root_dir: '.',
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          build_dir: path.relative(app.directory, extension.buildDirectory),
+          entries: {
+            main: path.relative(app.directory, extension.entrySourceFilePath),
+          },
+        },
       },
     ],
   }
