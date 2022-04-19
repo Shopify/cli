@@ -19,6 +19,14 @@ type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 const ExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(extensions.types),
+  metafields: schema.define
+    .array(
+      schema.define.object({
+        namespace: schema.define.string(),
+        key: schema.define.string(),
+      }),
+    )
+    .default([]),
 })
 
 type ExtensionConfiguration = schema.define.infer<typeof ExtensionConfigurationSchema>
