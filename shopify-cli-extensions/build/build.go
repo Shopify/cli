@@ -24,14 +24,7 @@ import (
 const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
 
 func Build(extension core.Extension, report ResultHandler) {
-	buildCommand := extension.Commands["build"]
-	if len(buildCommand) == 0 {
-		buildCommand = "build"
-	}
-	splitCommand := strings.Split(buildCommand, " ")
-	buildCommand, args := splitCommand[0], splitCommand[1:]
-
-	script, err := script(extension.BuildDir(), buildCommand, args...)
+	script, err := script(extension.BuildDir(), extension.NodeExecutable, "build")
 	if err != nil {
 		report(Result{false, err.Error(), extension})
 		return
@@ -57,7 +50,7 @@ func Build(extension core.Extension, report ResultHandler) {
 }
 
 func Watch(extension core.Extension, integrationCtx core.IntegrationContext, report ResultHandler) {
-	script, err := script(extension.BuildDir(), "develop")
+	script, err := script(extension.BuildDir(), extension.NodeExecutable, "develop")
 	if err != nil {
 		report(Result{false, err.Error(), extension})
 		return

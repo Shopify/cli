@@ -106,6 +106,7 @@ type Extension struct {
 	Surface         string           `json:"surface" yaml:"-"`
 	Title           string           `json:"title,omitempty" yaml:"title,omitempty"`
 	Name            string           `json:"name,omitempty" yaml:"name,omitempty"`
+	NodeExecutable  string           `json:"node_executable" yaml:"node_executable,omitempty"`
 }
 
 func (e Extension) String() string {
