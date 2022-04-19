@@ -265,7 +265,8 @@ export async function concurrent(
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
 
   function linePrefix() {
-    const color = colors[colors.length % (index + 1)]
+    const colorIndex = index < colors.length ? index : index % colors.length
+    const color = colors[colorIndex]
     const linePrefix = color(`[${prefix}]: `)
     return linePrefix
   }
