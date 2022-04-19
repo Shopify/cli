@@ -1,7 +1,7 @@
 # This file stores configurations for your Shopify app UI extension.
 
 name = "checkout-post-purchase"
-type = "checkout-post-purchase"
+type = "checkout_post_purchase"
 
 # [[metafield]]
 # namespace = "my-namespace"

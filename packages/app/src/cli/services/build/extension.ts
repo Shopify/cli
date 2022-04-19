@@ -33,7 +33,7 @@ function extensionConfig(extension: Extension, app: App): object {
     extensions: [
       {
         title: extension.configuration.name,
-        type: 'checkout_post_purchase',
+        type: extension.configuration.type,
         metafields: [],
         commands: {
           build: 'shopify-cli-extensions build',
@@ -46,5 +46,5 @@ function extensionConfig(extension: Extension, app: App): object {
 
 async function extensionsBinaryPath(): Promise<string> {
   const binaryDir = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
-  return path.join(binaryDir, 'shopify-cli-extensions')
+  return path.join(binaryDir, 'shopify-extensions')
 }
