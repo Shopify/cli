@@ -14,7 +14,6 @@
   "dependencies": {
     "@shopify/app": "1.0.9",
     "@shopify/cli": "1.0.9",
-    "@shopify/shopify-cli-extensions": "^0.2.0",
     "react": "17.0.2"
   },
   "author": "pepicrft"
