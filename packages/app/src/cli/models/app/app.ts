@@ -159,7 +159,7 @@ async function loadExtension(directory: string): Promise<Extension> {
     directory,
     configuration,
     buildDirectory: path.join(directory, 'build'),
-    entrySourceFilePath: path.join(directory, 'src/index.jsx'),
+    entrySourceFilePath: path.join(directory, 'src/index.js'),
   }
 }
 

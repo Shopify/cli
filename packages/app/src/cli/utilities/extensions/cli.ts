@@ -19,7 +19,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
   if (useExtensionsCLISources()) {
     const projectDirectory = path.join(homedir(), 'src/github.com/shopify/shopify-cli-extensions')
     try {
-      await system.exec('make', ['build'], {...options, cwd: projectDirectory, colors: true})
+      await system.exec('make', ['build'], {...options, stdout: undefined, stderr: undefined, cwd: projectDirectory, colors: true})
       await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, {...options, colors: true})
     } catch {
       throw new error.AbortSilent()

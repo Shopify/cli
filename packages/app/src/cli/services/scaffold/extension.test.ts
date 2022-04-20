@@ -51,7 +51,7 @@ describe('initialize a extension', () => {
     const extensionType = 'checkout-post-purchase'
     await createFromTemplate({name, extensionType})
     expect(output.info).toBeCalledWith(output.content`Generating ${configurationFileNames.extension}`)
-    expect(output.info).toBeCalledWith(output.content`Generating index.jsx`)
+    expect(output.info).toBeCalledWith(output.content`Generating index.js`)
     const scaffoldedExtension = (await loadApp(tmpDir)).extensions[0]
     expect(scaffoldedExtension.configuration.name).toBe(name)
   })

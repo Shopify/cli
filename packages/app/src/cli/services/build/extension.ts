@@ -12,15 +12,16 @@ interface HomeOptions {
 
 export default async function extension(extension: Extension, {stdout, stderr, app}: HomeOptions): Promise<void> {
   stdout.write(`Building extension...`)
+  const stdin = yaml.encode(await extensionConfig(extension))
   await runGoExtensionsCLI(['build', '-'], {
-    cwd: app.directory,
+    cwd: extension.directory,
     stdout,
     stderr,
-    stdin: yaml.encode(await extensionConfig(extension, app)),
+    stdin,
   })
 }
 
-async function extensionConfig(extension: Extension, app: App): Promise<any> {
+async function extensionConfig(extension: Extension): Promise<any> {
   return {
     extensions: [
       {
@@ -29,16 +30,13 @@ async function extensionConfig(extension: Extension, app: App): Promise<any> {
         metafields: extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
-        commands: {
-          build: 'shopify-cli-extensions build',
-        },
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: '.',
+          root_dir: ".",
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          build_dir: path.relative(app.directory, extension.buildDirectory),
+          build_dir: path.relative(extension.directory, extension.buildDirectory),
           entries: {
-            main: path.relative(app.directory, extension.entrySourceFilePath),
+            main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
         },
       },
