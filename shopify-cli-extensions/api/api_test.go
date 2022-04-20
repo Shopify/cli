@@ -746,6 +746,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"extensionPoints": null,
 			"localization": null,
 			"surface": "checkout",
+			"node_executable": "",
 			"capabilities": {
 				"networkAccess": false
 			}

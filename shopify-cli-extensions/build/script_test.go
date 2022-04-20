@@ -16,7 +16,7 @@ func TestYarnCommandStructure(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	cmd, err := script(".", "build", "some-arg")
+	cmd, err := script(".", "", "some-arg")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestNpmCommandStructure(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	cmd, err := script(".", "build", "some-arg")
+	cmd, err := script(".", "", "some-arg")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestPrefersYarn(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	script(".", "build")
+	script(".", "", "build")
 
 	if lookupOrder[0] != "yarn" {
 		t.Error("Expected yarn to be checked first")
