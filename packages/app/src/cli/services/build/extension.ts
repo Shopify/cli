@@ -1,3 +1,4 @@
+import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
 import {path, system, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 import {App, Extension} from '$cli/models/app/app'
@@ -6,24 +7,28 @@ interface HomeOptions {
   stdout: Writable
   stderr: Writable
   app: App
+  signal: AbortSignal
 }
 
 export default async function extension(extension: Extension, {stdout, stderr, app}: HomeOptions): Promise<void> {
-  await system.exec(await extensionsBinaryPath(), ['build', '-'], {
+  stdout.write(`Building extension...`)
+  await runGoExtensionsCLI(['build', '-'], {
     cwd: app.directory,
     stdout,
     stderr,
-    stdin: yaml.encode(extensionConfig(extension, app)),
+    // stdin: yaml.encode(await extensionConfig(extension, app)),
   })
 }
 
-function extensionConfig(extension: Extension, app: App): object {
+async function extensionConfig(extension: Extension, app: App): Promise<any> {
   return {
     extensions: [
       {
         title: extension.configuration.name,
         type: extension.configuration.type,
         metafields: extension.configuration.metafields,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        node_executable: await nodeExtensionsCLIPath(),
         commands: {
           build: 'shopify-cli-extensions build',
         },

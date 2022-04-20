@@ -273,7 +273,7 @@ export async function concurrent(
 
   const stdout = new Writable({
     write(chunk, encoding, next) {
-      const lines = chunk.toString('ascii').split('\n')
+      const lines = chunk.toString().replace(/\n$/, '').split('\n')
       for (const line of lines) {
         info(content`${linePrefix()}${line}`)
       }
@@ -282,7 +282,7 @@ export async function concurrent(
   })
   const stderr = new Writable({
     write(chunk, encoding, next) {
-      const lines = chunk.toString('ascii').split('\n')
+      const lines = chunk.toString().replace(/\n$/, '').split('\n')
       for (const line of lines) {
         message(content`${linePrefix()}${line}`, 'error')
       }

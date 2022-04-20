@@ -2,6 +2,7 @@ import {getBinaryPathOrDownload} from './binary'
 import {useExtensionsCLISources} from '../../environment'
 import {system, error, path} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
+import {homedir} from 'node:os'
 
 const NodeExtensionsCLINotFoundError = () => {
   return new error.Bug(`Couldn't find the shopify-cli-extensions Node binary`)
@@ -15,11 +16,12 @@ const NodeExtensionsCLINotFoundError = () => {
  */
 export async function runGoExtensionsCLI(args: string[], options: system.ExecOptions = {}) {
   if (useExtensionsCLISources()) {
-    const projectDirectory = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
-    await system.exec('make', ['run', ...args], {...options, cwd: projectDirectory})
+    const projectDirectory = path.join(homedir(), 'src/github.com/shopify/shopify-cli-extensions')
+    await system.exec('make', ['build'], {...options, cwd: projectDirectory, colors: true})
+    await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, {...options, colors: true})
   } else {
     const binaryPath = await getBinaryPathOrDownload()
-    await system.exec(binaryPath, [...args], options)
+    await system.exec(binaryPath, [...args], {...options, colors: true})
   }
 }
 
