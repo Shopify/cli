@@ -16,7 +16,7 @@ export default async function extension(extension: Extension, {stdout, stderr, a
     cwd: app.directory,
     stdout,
     stderr,
-    // stdin: yaml.encode(await extensionConfig(extension, app)),
+    stdin: yaml.encode(await extensionConfig(extension, app)),
   })
 }
 

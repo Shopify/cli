@@ -48,21 +48,26 @@ async function devHome(home: Home, options: DevHomeOptions) {
 
   const [cmd, ...args] = script.split(' ')
 
-  await output.concurrent(0, 'home', async (stdout) => {
-    await system.exec(cmd, args, {
-      cwd: home.directory,
-      stdout,
-      env: {
-        ...process.env,
-        SHOPIFY_API_KEY: options.apiKey,
-        SHOPIFY_API_SECRET: options.apiSecret,
-        HOST: options.hostname,
-        SCOPES: 'write_products,write_customers,write_draft_orders',
-        PORT: `${options.port}`,
-        NODE_ENV: `development`,
-      },
-    })
-  })
+  await output.concurrent([
+    {
+      prefix: "home",
+      action: async (stdout, stderr) => {
+        await system.exec(cmd, args, {
+          cwd: home.directory,
+          stdout,
+          env: {
+            ...process.env,
+            SHOPIFY_API_KEY: options.apiKey,
+            SHOPIFY_API_SECRET: options.apiSecret,
+            HOST: options.hostname,
+            SCOPES: 'write_products,write_customers,write_draft_orders',
+            PORT: `${options.port}`,
+            NODE_ENV: `development`,
+          },
+        })
+      }
+    }
+  ])
 }
 
 export default dev

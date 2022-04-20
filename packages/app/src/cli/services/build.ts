@@ -3,6 +3,7 @@ import buildExtension from './build/extension'
 
 import {App} from '../models/app/app'
 import {path, output} from '@shopify/cli-kit'
+import { Writable } from 'node:stream'
 
 interface BuildOptions {
   app: App
@@ -11,15 +12,19 @@ interface BuildOptions {
 async function build({app}: BuildOptions) {
   const abortController = new AbortController()
   try {
-    await Promise.all([
-      output.concurrent(0, 'home', async (stdout, stderr) => {
-        await buildHome('build', {home: app.home, stdout, stderr, signal: abortController.signal})
-      }),
-      ...app.extensions.map((extension, index) => {
-        return output.concurrent(index + 1, path.basename(extension.directory), async (stdout, stderr) => {
+    await output.concurrent([
+      {
+        prefix: "home",
+        action: async (stdout, stderr) => {
+          await buildHome('build', {home: app.home, stdout, stderr, signal: abortController.signal})
+        }
+      },
+      ...app.extensions.map((extension) => ({
+        prefix: path.basename(extension.directory),
+        action: async (stdout: Writable, stderr: Writable) => {
           await buildExtension(extension, {stdout, stderr, app, signal: abortController.signal})
-        })
-      }),
+        }
+      }))
     ])
   } catch (error: any) {
     // If one of the processes fails, we abort any running ones.

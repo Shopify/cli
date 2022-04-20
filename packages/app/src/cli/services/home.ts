@@ -12,7 +12,7 @@ interface HomeOptions {
 
 export default async function home(
   command: HomeConfigurationCommands,
-  {home, stdout, stderr}: HomeOptions,
+  {home, stdout, stderr, signal}: HomeOptions,
 ): Promise<void> {
   const script = home.configuration.commands[command]
   if (!script) {
@@ -20,5 +20,6 @@ export default async function home(
   }
 
   const [cmd, ...args] = script.split(' ')
-  await system.exec(cmd, args, {cwd: home.directory, stdout, stderr, colors: true})
+  await system.exec(cmd, args, {cwd: home.directory, stdout, stderr, colors: true, signal: signal})
+  stdout.write("Home successfully built.")
 }

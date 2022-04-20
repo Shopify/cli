@@ -32,7 +32,7 @@ export const captureOutput = async (command: string, args: string[]): Promise<st
 export const exec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
   const env = options?.env ?? process.env
   if (options?.colors) {
-    env.FORCE_COLOR = "1"
+    env.FORCE_COLOR = '1'
   }
   const commandProcess = execa(command, args, {
     env,
@@ -69,18 +69,19 @@ interface ConcurrentExecCommand {
 export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise<void> => {
   const abortController = new AbortController()
   try {
-    await Promise.race(
-      commands.map((command, index) => {
-        return concurrentOutput(index, command.prefix, async (stdout, stderr) => {
+    await concurrentOutput(commands.map((command) => {
+      return {
+        prefix: command.prefix,
+        action: async (stdout, stderr) => {
           await exec(command.executable, command.args, {
             stdout,
             stderr,
             cwd: command.cwd,
             signal: abortController.signal,
           })
-        })
-      }),
-    )
+        }
+      }
+    }))
   } catch (error: any) {
     // We abort any running process
     abortController.abort()
