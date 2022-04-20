@@ -10,6 +10,7 @@ import {
   chmod,
   append,
   remove,
+  stripUp,
 } from './file'
 import {join} from './path'
 import {describe, expect, it} from 'vitest'
@@ -170,5 +171,22 @@ describe('remove', () => {
       // Then
       await expect(exists(filePath)).resolves.toEqual(false)
     })
+  })
+})
+
+describe('stripUp', () => {
+  it('strips the given amount of leading directories', async () => {
+    // Given
+    const filePath = 'a/b/c/d/e'
+
+    // When
+    const newFilePath1 = stripUp(filePath, 1)
+    const newFilePath2 = stripUp(filePath, 2)
+    const newFilePath3 = stripUp(filePath, 3)
+
+    // Then
+    await expect(newFilePath1).toEqual('b/c/d/e')
+    await expect(newFilePath2).toEqual('c/d/e')
+    await expect(newFilePath3).toEqual('d/e')
   })
 })

@@ -1,6 +1,12 @@
 import fs from 'fs-extra'
 import del from 'del'
 import tempy from 'tempy'
+import {sep, join} from 'pathe'
+
+export function stripUp(path: string, strip: number) {
+  const parts = path.split(sep)
+  return join(...parts.slice(strip))
+}
 
 /**
  * Creates a temporary directory and ties its lifecycle ot the lifecycle of the callback.
