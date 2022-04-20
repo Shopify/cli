@@ -7,6 +7,17 @@ import (
 	"testing"
 )
 
+func TestNodeExecutableCommandStructure(t *testing.T) {
+	cmd, err := script(".", "/path/to/executable", "build", "some-arg")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(cmd.Args, []string{"/path/to/executable", "build", "some-arg"}) {
+		t.Errorf("Unexpected program arguments: %s", strings.Join(cmd.Args, " "))
+	}
+}
+
 func TestYarnCommandStructure(t *testing.T) {
 	LookPath = func(file string) (string, error) {
 		if file == "yarn" {
@@ -16,7 +27,7 @@ func TestYarnCommandStructure(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	cmd, err := script(".", "", "some-arg")
+	cmd, err := script(".", "", "build", "some-arg")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +45,7 @@ func TestNpmCommandStructure(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	cmd, err := script(".", "", "some-arg")
+	cmd, err := script(".", "", "build", "some-arg")
 	if err != nil {
 		t.Fatal(err)
 	}
