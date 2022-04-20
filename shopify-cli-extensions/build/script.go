@@ -13,7 +13,6 @@ var (
 func script(dir, nodeExecutable string, script string, args ...string) (*exec.Cmd, error) {
 	if nodeExecutable != "" {
 		cmd := Command(nodeExecutable, append([]string{script}, args...)...)
-		cmd.Dir = dir
 		return cmd, nil
 	} else if exe, err := LookPath("yarn"); err == nil {
 		cmd := Command(exe, buildYarnArguments(script, args...)...)
