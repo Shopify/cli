@@ -1,9 +1,9 @@
 import buildHome from './home'
-import buildExtension from './build/extension'
+import {buildExtension} from './build/extension'
 
 import {App} from '../models/app/app'
 import {path, output} from '@shopify/cli-kit'
-import { Writable } from 'node:stream'
+import {Writable} from 'node:stream'
 
 interface BuildOptions {
   app: App
@@ -14,17 +14,17 @@ async function build({app}: BuildOptions) {
   try {
     await output.concurrent([
       {
-        prefix: "home",
+        prefix: 'home',
         action: async (stdout, stderr) => {
           await buildHome('build', {home: app.home, stdout, stderr, signal: abortController.signal})
-        }
+        },
       },
       ...app.extensions.map((extension) => ({
         prefix: path.basename(extension.directory),
         action: async (stdout: Writable, stderr: Writable) => {
-          await buildExtension(extension, {stdout, stderr, app, signal: abortController.signal})
-        }
-      }))
+          await buildExtension(extension, {stdout, stderr, signal: abortController.signal})
+        },
+      })),
     ])
   } catch (error: any) {
     // If one of the processes fails, we abort any running ones.

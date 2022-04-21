@@ -50,7 +50,7 @@ async function devHome(home: Home, options: DevHomeOptions) {
 
   await output.concurrent([
     {
-      prefix: "home",
+      prefix: 'home',
       action: async (stdout, stderr) => {
         await system.exec(cmd, args, {
           cwd: home.directory,
@@ -65,8 +65,8 @@ async function devHome(home: Home, options: DevHomeOptions) {
             NODE_ENV: `development`,
           },
         })
-      }
-    }
+      },
+    },
   ])
 }
 

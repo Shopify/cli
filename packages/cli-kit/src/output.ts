@@ -249,11 +249,11 @@ const message = (content: Message, level: LogLevel = 'info') => {
   }
 }
 
-type OutputProcess = {
+interface OutputProcess {
   /** The prefix to include in the logs
    *   [vite] Output coming from Vite
    */
-  prefix: string,
+  prefix: string
   /**
    * A callback to invoke the process. stdout and stderr should be used
    * to send standard output and error data that gets formatted with the
@@ -275,31 +275,33 @@ export async function concurrent(processes: OutputProcess[]) {
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < colors.length ? index : index % colors.length
     const color = colors[colorIndex]
-    const linePrefix = color(`${" ".repeat(prefixColumnSize - prefix.length)}[${prefix}]: `)
+    const linePrefix = color(`${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `)
     return linePrefix
   }
 
-  await Promise.all(processes.map(async (process, index) => {
-    const stdout = new Writable({
-      write(chunk, encoding, next) {
-        const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-        for (const line of lines) {
-          info(content`${linePrefix(process.prefix, index)}${line}`)
-        }
-        next()
-      },
-    })
-    const stderr = new Writable({
-      write(chunk, encoding, next) {
-        const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-        for (const line of lines) {
-          message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
-        }
-        next()
-      },
-    })
-    await process.action(stdout, stderr)
-  }))
+  await Promise.all(
+    processes.map(async (process, index) => {
+      const stdout = new Writable({
+        write(chunk, encoding, next) {
+          const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+          for (const line of lines) {
+            info(content`${linePrefix(process.prefix, index)}${line}`)
+          }
+          next()
+        },
+      })
+      const stderr = new Writable({
+        write(chunk, encoding, next) {
+          const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+          for (const line of lines) {
+            message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
+          }
+          next()
+        },
+      })
+      await process.action(stdout, stderr)
+    }),
+  )
 }
 
 /**

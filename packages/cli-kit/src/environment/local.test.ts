@@ -4,7 +4,9 @@ import {exists as fileExists} from '../file'
 import {expect, it, describe, vi} from 'vitest'
 
 vi.mock('../file')
-vi.mock('./spin')
+vi.mock('./spin', () => ({
+  isSpin: vi.fn(),
+}))
 
 describe('isUnitTest', () => {
   it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {

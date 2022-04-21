@@ -1,26 +1,47 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
-import {path, system, yaml} from '@shopify/cli-kit'
+import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
-import {App, Extension} from '$cli/models/app/app'
+import {Extension} from '$cli/models/app/app'
 
-interface HomeOptions {
+interface ExtensionBuildOptions {
+  /**
+   * Standard output stream to send the output through.
+   */
   stdout: Writable
+  /**
+   * Standard error stream to send the error output through.
+   */
   stderr: Writable
-  app: App
+
+  /**
+   * Signal to abort the build process.
+   */
   signal: AbortSignal
 }
 
-export default async function extension(extension: Extension, {stdout, stderr, app}: HomeOptions): Promise<void> {
-  stdout.write(`Building extension...`)
+/**
+ * It builds an extension.
+ * @param extension {Extension} The extension to build.
+ * @param options {ExtensionBuildOptions} Build options.
+ */
+export async function buildExtension(extension: Extension, options: ExtensionBuildOptions): Promise<void> {
+  options.stdout.write(`Building extension...`)
   const stdin = yaml.encode(await extensionConfig(extension))
   await runGoExtensionsCLI(['build', '-'], {
     cwd: extension.directory,
-    stdout,
-    stderr,
+    stdout: options.stdout,
+    stderr: options.stderr,
     stdin,
   })
 }
 
+/**
+ * The extensions' Go binary receives the build configuration through
+ * standard input as a YAML-encoded object. This function returns the
+ * Javascript object representing the configuration necessary for building.
+ * @param extension {Extension} Extension that will be built.
+ * @returns
+ */
 async function extensionConfig(extension: Extension): Promise<any> {
   return {
     extensions: [
@@ -32,7 +53,7 @@ async function extensionConfig(extension: Extension): Promise<any> {
         node_executable: await nodeExtensionsCLIPath(),
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: ".",
+          root_dir: '.',
           // eslint-disable-next-line @typescript-eslint/naming-convention
           build_dir: path.relative(extension.directory, extension.buildDirectory),
           entries: {
@@ -42,9 +63,4 @@ async function extensionConfig(extension: Extension): Promise<any> {
       },
     ],
   }
-}
-
-async function extensionsBinaryPath(): Promise<string> {
-  const binaryDir = await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'shopify-cli-extensions'])
-  return path.join(binaryDir, 'shopify-extensions')
 }
