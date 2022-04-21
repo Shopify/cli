@@ -5,7 +5,7 @@ import {getThemeStore} from '$cli/utilities/theme-store'
 export default class Publish extends Command {
   static description = 'Set a remote theme as the live theme.'
 
-  static args = [{name: 'themeId', description: 'The ID of the theme to delete', required: false}]
+  static args = [{name: 'themeId', description: 'The ID of the theme', required: false}]
 
   static flags = {
     force: Flags.boolean({
