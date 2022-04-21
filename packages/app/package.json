@@ -60,7 +60,8 @@
     "@shopify/checkout-ui-extensions-react": "^0.14.0",
     "@shopify/post-purchase-ui-extensions": "^0.13.2",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.2",
-    "esbuild": "^0.14.29"
+    "esbuild": "^0.14.29",
+    "@shopify/shopify-cli-extensions": "^0.2.0"
   },
   "peerDependencies": {
     "@shopify/cli-kit": "1.0.9",

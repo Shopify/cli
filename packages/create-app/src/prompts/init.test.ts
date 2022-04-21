@@ -6,7 +6,7 @@ describe('init', () => {
     const prompt = vi.fn()
     const answers = {
       name: 'app',
-      template: 'https://github.com/Shopify/shopify-app-node#richard/frontend-via-submodules',
+      template: 'https://github.com/Shopify/starter-node-app#add-shopify-home-toml',
     }
     const options = {template: 'template'}
 
@@ -33,7 +33,7 @@ describe('init', () => {
     const prompt = vi.fn()
     const answers = {
       name: 'app',
-      template: 'https://github.com/Shopify/shopify-app-node#richard/frontend-via-submodules',
+      template: 'https://github.com/Shopify/starter-node-app#add-shopify-home-toml',
     }
     const options = {name: 'app', template: 'template'}
 

@@ -5,6 +5,13 @@ export const configurationFileNames = {
   home: 'shopify.home.toml',
 }
 
+export const environmentVariables = {
+  /**
+   * Environment variable to instructs the CLI on running the extensions' CLI through its sources.
+   */
+  useExtensionsCLISources: 'SHOPIFY_USE_EXTENSIONS_CLI_SOURCES',
+}
+
 export const versions = {
   extensionsBinary: 'v0.2.0',
 }
@@ -41,4 +48,5 @@ interface ExtensionsType {
 export const extensions: ExtensionsType = {
   types: ['theme-app-extension', 'product-subscription', 'checkout-post-purchase'],
 }
+
 export type ExtensionTypes = typeof extensions.types[number]

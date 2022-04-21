@@ -1,8 +1,8 @@
 import downloadTemplate from '../utils/template/download'
-import cleanupHome from '../utils/template/cleanup'
-import getDeepInstallNPMTasks from '../utils/template/npm'
-import {blocks} from '../constants'
-import {string, path, template, file, output, os, ui, dependency, constants} from '@shopify/cli-kit'
+import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
+import cleanup from '../utils/template/cleanup'
+
+import {string, path, file, output, ui, dependency, template, npm} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
@@ -13,34 +13,15 @@ interface InitOptions {
 }
 
 async function init(options: InitOptions) {
-  const user = (await os.username()) ?? ''
-
-  let cliPackageVersion = constants.versions.cli
-  let appPackageVersion = constants.versions.app
-  const dependencyOverrides: {[key: string]: string} = {}
-
-  if (options.local) {
-    cliPackageVersion = `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`
-    appPackageVersion = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
-
-    dependencyOverrides['@shopify/cli'] = cliPackageVersion
-    dependencyOverrides['@shopify/app'] = appPackageVersion
-    dependencyOverrides['@shopify/cli-kit'] = `file:${
-      (await path.findUp('packages/cli-kit', {type: 'directory'})) as string
-    }`
-  }
-
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
   await file.inTemporaryDirectory(async (tmpDir) => {
-    const tmpDirApp = path.join(tmpDir, 'app')
-    const tmpDirHome = path.join(tmpDirApp, blocks.home.directoryName)
-    const tmpDirDownload = path.join(tmpDir, 'download')
+    const templateDownloadDir = path.join(tmpDir, 'download')
+    const templateScaffoldDir = path.join(tmpDir, 'app')
 
-    await file.mkdir(tmpDirHome)
-    await file.mkdir(tmpDirDownload)
+    await file.mkdir(templateDownloadDir)
 
     const list = new ui.Listr(
       [
@@ -49,33 +30,38 @@ async function init(options: InitOptions) {
           task: async (_, task) => {
             await downloadTemplate({
               templateUrl: options.template,
-              into: tmpDirDownload,
+              into: templateDownloadDir,
             })
+            task.title = 'Template downloaded'
           },
         },
         {
           title: `Initializing your app ${hyphenizedName}`,
-          task: async (_, task) => {
-            return task.newListr([
+          task: async (_, parentTask) => {
+            return parentTask.newListr([
               {
-                title: 'Scaffolding home',
-                task: async () => {
-                  await scaffoldTemplate({
-                    ...options,
-                    directory: tmpDirApp,
-                    templatePath: tmpDirDownload,
-                    cliPackageVersion,
-                    appPackageVersion,
-                    user,
-                    dependencyManager,
-                    dependencyOverrides,
+                title: 'Parsing liquid',
+                task: async (_, task) => {
+                  await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    dependency_manager: dependencyManager,
                   })
+
+                  task.title = 'Liquid parsed'
                 },
               },
               {
-                title: 'Cleaning up home',
-                task: async () => {
-                  await cleanupHome(tmpDirHome)
+                title: 'Updating package.json',
+                task: async (_, task) => {
+                  const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
+
+                  await npm.updateAppData(packageJSON, hyphenizedName)
+                  await updateCLIDependencies(packageJSON, options.local)
+
+                  await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+
+                  task.title = 'Package.json updated'
+                  parentTask.title = 'App initialized'
                 },
               },
             ])
@@ -85,12 +71,12 @@ async function init(options: InitOptions) {
           title: `Installing dependencies with ${dependencyManager}`,
           task: async (_, parentTask) => {
             function didInstallEverything() {
-              parentTask.title = `Installed dependencies with ${dependencyManager}`
+              parentTask.title = `Dependencies installed with ${dependencyManager}`
             }
 
             return parentTask.newListr(
               await getDeepInstallNPMTasks({
-                from: tmpDirApp,
+                from: templateScaffoldDir,
                 dependencyManager,
                 didInstallEverything,
               }),
@@ -98,12 +84,20 @@ async function init(options: InitOptions) {
             )
           },
         },
+        {
+          title: 'Cleaning up',
+          task: async (_, task) => {
+            await cleanup(templateScaffoldDir)
+
+            task.title = 'Completed clean up'
+          },
+        },
       ],
       {concurrent: false},
     )
     await list.run()
 
-    await file.move(tmpDirApp, outputDirectory)
+    await file.move(templateScaffoldDir, outputDirectory)
   })
 
   output.info(output.content`
@@ -118,32 +112,6 @@ function inferDependencyManager(optionsDependencyManager: string | undefined): d
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()
-}
-
-async function scaffoldTemplate(
-  options: InitOptions & {
-    directory: string
-    templatePath: string
-    cliPackageVersion: string
-    appPackageVersion: string
-    dependencyOverrides: {[key: string]: string}
-    user: string
-    dependencyManager: string
-  },
-): Promise<void> {
-  const templateData = {
-    name: options.name,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    shopify_cli_version: options.cliPackageVersion,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    shopify_app_version: options.appPackageVersion,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    dependency_overrides: options.dependencyOverrides,
-    author: options.user,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    dependency_manager: options.dependencyManager,
-  }
-  await template.recursiveDirectoryCopy(options.templatePath, options.directory, templateData)
 }
 
 export default init
