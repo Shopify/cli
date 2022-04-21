@@ -16,5 +16,5 @@ shopify app scaffold extension --type product_subscription
 
 # vs
 
-SHOPIFY_FLAG_TYPE=product_subscription shopify app scaffold extension
+SHOPIFY_FLAG_EXTENSION_TYPE=product_subscription shopify app scaffold extension
 ```

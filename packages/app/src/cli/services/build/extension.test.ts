@@ -9,7 +9,7 @@ describe('buildExtension', () => {
   test('delegates the build to the Go binary', async () => {
     // Given
     const stdout: any = {write: vi.fn()}
-    const stderr: any = vi.mocked(vi.fn())
+    const stderr: any = vi.fn()
     const signal: any = vi.fn()
     const extension = {
       buildDirectory: '',
@@ -26,8 +26,8 @@ describe('buildExtension', () => {
     await buildExtension(extension, {stdout, stderr, signal})
 
     // Then
-    expect(vi.mocked(runGoExtensionsCLI)).toHaveBeenCalled()
-    const calls = (vi.mocked(runGoExtensionsCLI) as any).calls
+    expect(runGoExtensionsCLI).toHaveBeenCalled()
+    const calls = (runGoExtensionsCLI as any).calls
     const [command, options] = calls[0]
     expect(command).toEqual(['build', '-'])
     expect(options.stdout).toBe(stdout)
