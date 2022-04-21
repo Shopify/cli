@@ -1300,6 +1300,11 @@
   resolved "https://registry.yarnpkg.com/@kwsites/promise-deferred/-/promise-deferred-1.1.1.tgz#8ace5259254426ccef57f3175bc64ed7095ed919"
   integrity sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==
 
+"@luckycatfactory/esbuild-graphql-loader@^3.6.0":
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/@luckycatfactory/esbuild-graphql-loader/-/esbuild-graphql-loader-3.7.0.tgz#0c84eb8f18f704e00463200001c0c9b520a41c34"
+  integrity sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==
+
 "@manypkg/find-root@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@manypkg/find-root/-/find-root-1.1.0.tgz#a62d8ed1cd7e7d4c11d9d52a8397460b5d4ad29f"
@@ -1854,6 +1859,15 @@
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@shopify/prettier-config/-/prettier-config-1.1.2.tgz#612f87c0cd1196e8b43c85425e587d0fa7f1172d"
   integrity sha512-5ugCL9sPGzmOaZjeRGaWUWhHgAbemrS6z+R7v6gwiD+BiqSeoFhIY+imLpfdFCVpuOGalpHeCv6o3gv++EHs0A==
+
+"@shopify/shopify-cli-extensions@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-0.2.0.tgz#23f15c95c79abfe294ab5e48eb55df0a144ad3da"
+  integrity sha512-622Z4O8C+vMnocYw+vfiCKUemdThmVqT/GVx9MF8OY+n/NwQGTR+1s0mqNpxNNvoP0ThuzKFqqGNuAhtIXnF2g==
+  dependencies:
+    "@luckycatfactory/esbuild-graphql-loader" "^3.6.0"
+    esbuild "^0.12.22"
+    js-yaml "^4.1.0"
 
 "@shopify/typescript-configs@^5.1.0":
   version "5.1.0"
@@ -4479,6 +4493,11 @@ esbuild-windows-arm64@0.14.34:
   version "0.14.34"
   resolved "https://registry.yarnpkg.com/esbuild-windows-arm64/-/esbuild-windows-arm64-0.14.34.tgz#b74a6395b7b7e53dba70b71b39542afd83352473"
   integrity sha512-EYvmKbSa2B3sPnpC28UEu9jBK5atGV4BaVRE7CYGUci2Hlz4AvtV/LML+TcDMT6gBgibnN2gcltWclab3UutMg==
+
+esbuild@^0.12.22:
+  version "0.12.29"
+  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.12.29.tgz#be602db7c4dc78944a9dbde0d1ea19d36c1f882d"
+  integrity sha512-w/XuoBCSwepyiZtIRsKsetiLDUVGPVw1E/R3VTFSecIy8UR7Cq3SOtwKHJMFoVqqVG36aGkzh4e8BvpO1Fdc7g==
 
 esbuild@^0.14.27, esbuild@^0.14.29:
   version "0.14.29"
