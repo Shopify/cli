@@ -2,6 +2,15 @@ import {isTruthy} from './utilities'
 import {isSpin} from './spin'
 import constants from '../constants'
 import {exists as fileExists} from '../file'
+import {homedir} from 'node:os'
+
+/**
+ * Returns the path to the user's home directory.
+ * @returns {string} The path to the user's home directory.
+ */
+export function homeDirectory(): string {
+  return homedir()
+}
 
 /**
  * Returns true if the CLI is running in debug mode.

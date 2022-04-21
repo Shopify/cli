@@ -2,7 +2,7 @@ import {runGoExtensionsCLI, nodeExtensionsCLIPath} from './cli'
 import {getBinaryPathOrDownload} from './binary'
 import {useExtensionsCLISources} from '../../environment'
 import {describe, test, expect, vi} from 'vitest'
-import {system} from '@shopify/cli-kit'
+import {system, environment, path} from '@shopify/cli-kit'
 
 vi.mock('../../environment')
 vi.mock('./binary')
@@ -11,8 +11,12 @@ vi.mock('@shopify/cli-kit', async () => {
   return {
     ...cliKit,
     system: {
-      captureOutput: vi.fn(),
       exec: vi.fn(),
+    },
+    environment: {
+      local: {
+        homeDirectory: vi.fn(),
+      },
     },
   }
 })
@@ -20,15 +24,28 @@ vi.mock('@shopify/cli-kit', async () => {
 describe('runGoExtensionsCLI', () => {
   test('runs the CLI through Make when using the local sources', async () => {
     // Given
-    const projectDirectory = '/path/to/shopify-cli-extensions'
+    const projectDirectory = '/home/src/github.com/shopify/shopify-cli-extensions'
     vi.mocked(useExtensionsCLISources).mockReturnValue(true)
-    vi.mocked(system.captureOutput).mockResolvedValue(projectDirectory)
+    vi.mocked(environment.local.homeDirectory).mockReturnValue('/home')
 
     // When
     const got = await runGoExtensionsCLI(['build'])
 
     // Then
-    expect(vi.mocked(system.exec)).toHaveBeenCalledWith('make', ['build'], {colors: true, stdout: undefined, stderr: undefined, cwd: projectDirectory})
+    expect(vi.mocked(system.exec)).toHaveBeenNthCalledWith(1, 'make', ['build'], {
+      colors: true,
+      stdout: undefined,
+      stderr: undefined,
+      cwd: projectDirectory,
+    })
+    expect(vi.mocked(system.exec)).toHaveBeenNthCalledWith(
+      2,
+      path.join(projectDirectory, 'shopify-extensions'),
+      ['build'],
+      {
+        colors: true,
+      },
+    )
   })
 
   test('runs the CLI through the downloaded binary when not using the local sources', async () => {

@@ -51,7 +51,7 @@ describe('isShopify', () => {
 
   it('returns true when it is a spin environment', async () => {
     // Given
-    vi.mocked(isSpin).mockResolvedValue(true)
+    vi.mocked(isSpin).mockReturnValue(true)
 
     // When
     await expect(isShopify()).resolves.toBe(true)
