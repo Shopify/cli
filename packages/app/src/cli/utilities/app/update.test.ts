@@ -7,8 +7,11 @@ import {load} from '$cli/models/app/app'
 
 const appConfiguration = `
 name = "my_app"
+scopes = "read_products"
 `
 const homeConfiguration = `
+type = "backend"
+
 [commands]
 build = "./build.sh"
 dev = "./dev.sh"
@@ -24,7 +27,7 @@ const writeConfig = async (appConfiguration: string, tmpDir: string) => {
 }
 
 describe('updateAppConfigurationFile', () => {
-  it('updates the app configuration file', async () => {
+  it('Merges the new data, with existing data', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       await writeConfig(appConfiguration, tmpDir)
@@ -38,6 +41,7 @@ describe('updateAppConfigurationFile', () => {
       const updatedApp = await load(tmpDir)
       expect(updatedApp.configuration.id).toEqual('new-id')
       expect(updatedApp.configuration.name).toEqual('new-name')
+      expect(updatedApp.configuration.scopes).toEqual('read_products')
     })
   })
 })

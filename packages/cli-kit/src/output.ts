@@ -87,7 +87,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           output += colors.italic(enumToken.value)
           break
         case ContentTokenType.Link:
-          output += terminalLink(enumToken.value, enumToken.metadata.link ?? '')
+          output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
           break
         case ContentTokenType.Yellow:
           output += colors.yellow(enumToken.value)

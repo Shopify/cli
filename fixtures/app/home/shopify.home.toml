@@ -1,3 +1,5 @@
+type = "backend"
+
 [commands]
 build = "./scripts/build.sh"
 dev = "true"

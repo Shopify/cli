@@ -1,7 +1,6 @@
-import buildHome from './home'
 import {buildExtension} from './build/extension'
-
-import {App} from '../models/app/app'
+import buildHome from './home'
+import {App, Home} from '../models/app/app'
 import {path, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
@@ -13,12 +12,14 @@ async function build({app}: BuildOptions) {
   const abortController = new AbortController()
   try {
     await output.concurrent([
-      {
-        prefix: 'home',
-        action: async (stdout, stderr) => {
-          await buildHome('build', {home: app.home, stdout, stderr, signal: abortController.signal})
-        },
-      },
+      ...app.homes.map((home: Home) => {
+        return {
+          prefix: home.configuration.type,
+          action: async (stdout: Writable, stderr: Writable) => {
+            await buildHome('build', {home, stdout, stderr, signal: abortController.signal})
+          },
+        }
+      }),
       ...app.extensions.map((extension) => ({
         prefix: path.basename(extension.directory),
         action: async (stdout: Writable, stderr: Writable) => {
