@@ -10,12 +10,16 @@ export default class Dev extends Command {
       description: 'the path to your hydrogen storefront',
       env: 'SHOPIFY_HYDROGEN_PATH',
     }),
+    force: Flags.boolean({
+      description: 'force dependency pre-bundling.',
+      env: 'SHOPIFY_HYDROGEN_DEV_FORCE',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    await devService({directory})
+    await devService({directory, ...flags})
   }
 }
