@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
-import {Fatal} from './error'
+import {Fatal, Bug} from './error'
 import {isUnitTest} from './environment/local'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
+import StackTracey from 'stacktracey'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -210,7 +211,7 @@ export const newline = () => {
  * error handler handle and format it.
  * @param content {Fatal} The fatal error to be output.
  */
-export const error = (content: Fatal) => {
+export const error = async (content: Fatal) => {
   if (shouldOutput('error')) {
     if (!content.message) {
       return
@@ -229,6 +230,28 @@ export const error = (content: Fatal) => {
       const lines = content.tryMessage.split('\n')
       for (const line of lines) {
         console.error(`${padding}${line}`)
+      }
+    }
+
+    let stack = await new StackTracey(content).withSourcesAsync()
+    stack = stack
+      .filter((entry) => {
+        return !entry.file.includes('@oclif/core')
+      })
+      .map((item) => {
+        item.calleeShort = colors.yellow(item.calleeShort)
+        /** We make the paths relative to the packages/ directory */
+        const fileShortComponents = item.fileShort.split('packages/')
+        item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1] : fileShortComponents[0]
+        return item
+      })
+    if (content instanceof Bug) {
+      if (stack.items.length !== 0) {
+        console.error(`\n${padding}${colors.bold('Stack trace:')}`)
+        const stackLines = stack.asTable({}).split('\n')
+        for (const stackLine of stackLines) {
+          console.error(`${padding}${stackLine}`)
+        }
       }
     }
     console.error(footer)
