@@ -6,8 +6,15 @@ import * as colors from 'ansi-colors'
 
 export class Select extends enquirer.Select {
   constructor(options) {
+    const originalResult = options.result
     options.result = (value) => {
-      return this.focused.value || this.focused.name
+      const answer = this.focused.value || this.focused.name || value
+
+      if (originalResult) {
+        return originalResult(answer)
+      }
+
+      return answer
     }
     super(options)
     this.styles.primary = colors.magenta
