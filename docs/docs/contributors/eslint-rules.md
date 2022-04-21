@@ -12,9 +12,9 @@ This rule ensures that command flags have the environment variable set.
 This way users can decide between passing flags using arguments or environment variables:
 
 ```bash
-shopify app scaffold extension --type product-subscription
+shopify app scaffold extension --type product_subscription
 
 # vs
 
-SHOPIFY_FLAG_TYPE=product-subscription shopify app scaffold extension
+SHOPIFY_FLAG_EXTENSION_TYPE=product_subscription shopify app scaffold extension
 ```

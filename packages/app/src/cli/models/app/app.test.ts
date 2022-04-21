@@ -159,7 +159,7 @@ name = "my_app"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
-      type = "checkout-post-purchase"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockType: 'extensions',
@@ -179,7 +179,7 @@ name = "my_app"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
-      type = "checkout-post-purchase"
+      type = "checkout_post_purchase"
       `
     const {blockDir} = await writeBlockConfig({
       blockType: 'extensions',
@@ -201,7 +201,7 @@ name = "my_app"
 
     let blockConfiguration = `
       name = "my_extension_1"
-      type = "checkout-post-purchase"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockType: 'extensions',
@@ -211,7 +211,7 @@ name = "my_app"
 
     blockConfiguration = `
       name = "my_extension_2"
-      type = "product-subscription"
+      type = "product_subscription"
       `
     await writeBlockConfig({
       blockType: 'extensions',
