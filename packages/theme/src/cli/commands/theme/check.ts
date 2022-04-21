@@ -5,6 +5,6 @@ export default class Check extends Command {
   static description = 'Validate the theme'
 
   async run(): Promise<void> {
-    await ruby.exec(['theme', 'check'], '')
+    await ruby.exec(['theme', 'check'])
   }
 }

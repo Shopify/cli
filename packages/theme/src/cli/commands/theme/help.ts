@@ -6,6 +6,6 @@ export default class Help extends Command {
   static hidden = true
 
   async run(): Promise<void> {
-    await ruby.exec(['theme', 'help'], '')
+    await ruby.exec(['theme', 'help'])
   }
 }

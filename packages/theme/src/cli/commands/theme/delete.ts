@@ -22,7 +22,7 @@ export default class Delete extends Command {
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',
-      env: 'SHOPIFY_FLAG_THEME_DELETE_FORCE',
+      env: 'SHOPIFY_FLAG_THEME_FORCE',
     }),
     store: Flags.string({
       char: 's',

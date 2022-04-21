@@ -2,7 +2,9 @@ import {Command, Flags} from '@oclif/core'
 import {ruby} from '@shopify/cli-kit'
 
 export default class Init extends Command {
-  static description = 'Create a new theme'
+  static description = 'Clones a Git repository to use as a starting point for building a new theme.'
+
+  static args = [{name: 'name', description: 'Name of the new theme', required: false}]
 
   static flags = {
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -16,6 +18,6 @@ export default class Init extends Command {
 
   async run(): Promise<void> {
     const command = ['theme', 'init'].concat(this.argv)
-    await ruby.exec(command, '')
+    await ruby.exec(command)
   }
 }

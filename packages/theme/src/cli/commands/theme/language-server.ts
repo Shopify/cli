@@ -5,6 +5,6 @@ export default class LanguageServer extends Command {
   static description = 'Start a Language Server Protocol server.'
 
   async run(): Promise<void> {
-    await ruby.exec(['theme', 'language-server'], '')
+    await ruby.exec(['theme', 'language-server'])
   }
 }
