@@ -1,5 +1,6 @@
 import {Command, Flags} from '@oclif/core'
-import {session, string, store as conf, error, ruby} from '@shopify/cli-kit'
+import {session, string, ruby} from '@shopify/cli-kit'
+import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Delete extends Command {
   static description = "Delete remote themes from the connected store. This command can't be undone"
@@ -38,10 +39,7 @@ export default class Delete extends Command {
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Delete)
 
-    const store = flags.store || conf.getThemeStore()
-    if (!store) {
-      throw new error.Fatal('A store is required', 'Set the store using --store={your_store}')
-    }
+    const store = getThemeStore(flags)
 
     const command = ['theme', 'delete']
     if (args.themeId) {
