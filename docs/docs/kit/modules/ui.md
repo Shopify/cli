@@ -51,6 +51,7 @@ export interface Question {
   validate?: (value: string) => string | boolean
   default?: string
   choices?: string[]
+  result?: (value: string) => string | boolean // Format the final submitted value before it is returned.
 }
 ```
 :::info Question properties

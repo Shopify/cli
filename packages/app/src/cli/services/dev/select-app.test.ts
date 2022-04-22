@@ -1,16 +1,24 @@
 import {createApp, selectOrCreateApp} from './select-app'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {App} from '$cli/models/app/app'
+import {App, HomeType} from '$cli/models/app/app'
 import {OrganizationApp} from '$cli/models/organization'
 import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
 
 const LOCAL_APP: App = {
   directory: '',
   packageManager: 'yarn',
-  configuration: {name: 'my-app'},
+  configuration: {name: 'my-app', scopes: 'read_products'},
   scripts: [],
-  home: {directory: '', configuration: {commands: {dev: ''}}},
+  homes: [
+    {
+      directory: '',
+      configuration: {
+        type: HomeType.Backend,
+        commands: {dev: ''},
+      },
+    },
+  ],
   extensions: [],
 }
 

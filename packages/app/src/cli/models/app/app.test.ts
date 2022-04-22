@@ -9,6 +9,7 @@ describe('load', () => {
   let tmpDir: string
   const appConfiguration = `
 name = "my_app"
+scopes = "read_products"
 `
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir()
@@ -24,6 +25,8 @@ name = "my_app"
     const appDirectory = path.join(tmpDir, configurationFileNames.app)
     const homeDirectory = path.join(tmpDir, blocks.home.directoryName)
     const homeConfiguration = `
+    type = "backend"
+
     [commands]
     build = "build"
     dev = "dev"
@@ -159,7 +162,7 @@ name = "my_app"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
-      type = "checkout-post-purchase"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockType: 'extensions',
@@ -179,7 +182,7 @@ name = "my_app"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
-      type = "checkout-post-purchase"
+      type = "checkout_post_purchase"
       `
     const {blockDir} = await writeBlockConfig({
       blockType: 'extensions',
@@ -201,7 +204,7 @@ name = "my_app"
 
     let blockConfiguration = `
       name = "my_extension_1"
-      type = "checkout-post-purchase"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockType: 'extensions',
@@ -211,7 +214,7 @@ name = "my_app"
 
     blockConfiguration = `
       name = "my_extension_2"
-      type = "product-subscription"
+      type = "product_subscription"
       `
     await writeBlockConfig({
       blockType: 'extensions',

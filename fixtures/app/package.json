@@ -12,8 +12,8 @@
     "scaffold": "../shopify app scaffold"
   },
   "dependencies": {
-    "@shopify/cli": "1.0.9",
     "@shopify/app": "1.0.9",
+    "@shopify/cli": "1.0.9",
     "react": "17.0.2"
   },
   "author": "pepicrft"

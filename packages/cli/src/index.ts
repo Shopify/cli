@@ -14,7 +14,7 @@ function runCLI() {
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
       if (error instanceof kitError.AbortSilent) {
-        process.exit(0)
+        process.exit(1)
       }
       const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
         if (!settings.debug) {

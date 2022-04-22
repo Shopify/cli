@@ -7,6 +7,8 @@ up:
       packages:
         - ./
         - ./docs
+  - ruby:
+      version: 3.1.2
 
 env:
   SHOPIFY_CONFIG: debug

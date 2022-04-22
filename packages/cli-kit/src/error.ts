@@ -1,6 +1,12 @@
 import * as ouput from './output'
 import {Errors} from '@oclif/core'
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import sourceMapSupport from 'source-map-support'
+
+sourceMapSupport.install()
+
 /**
  * A fatal error represents an error shouldn't be rescued and that causes the execution to terminate.
  * There shouldn't be code that catches fatal errors.
@@ -35,9 +41,9 @@ export class Bug extends Fatal {}
  * @param error Error to be handled.
  * @returns A promise that resolves with the error passed.
  */
-export function handler(error: Error): Promise<Error> {
+export async function handler(error: Error): Promise<Error> {
   const fatal = error instanceof Fatal ? error : new Fatal(error.message)
-  ouput.error(fatal)
+  await ouput.error(fatal)
   return Promise.resolve(error)
 }
 

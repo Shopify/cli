@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
-import {Fatal} from './error'
+import {Fatal, Bug} from './error'
 import {isUnitTest} from './environment/local'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
+import StackTracey from 'stacktracey'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -86,7 +87,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           output += colors.italic(enumToken.value)
           break
         case ContentTokenType.Link:
-          output += terminalLink(enumToken.value, enumToken.metadata.link ?? '')
+          output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
           break
         case ContentTokenType.Yellow:
           output += colors.yellow(enumToken.value)
@@ -210,7 +211,7 @@ export const newline = () => {
  * error handler handle and format it.
  * @param content {Fatal} The fatal error to be output.
  */
-export const error = (content: Fatal) => {
+export const error = async (content: Fatal) => {
   if (shouldOutput('error')) {
     if (!content.message) {
       return
@@ -231,6 +232,28 @@ export const error = (content: Fatal) => {
         console.error(`${padding}${line}`)
       }
     }
+
+    let stack = await new StackTracey(content).withSourcesAsync()
+    stack = stack
+      .filter((entry) => {
+        return !entry.file.includes('@oclif/core')
+      })
+      .map((item) => {
+        item.calleeShort = colors.yellow(item.calleeShort)
+        /** We make the paths relative to the packages/ directory */
+        const fileShortComponents = item.fileShort.split('packages/')
+        item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1] : fileShortComponents[0]
+        return item
+      })
+    if (content instanceof Bug) {
+      if (stack.items.length !== 0) {
+        console.error(`\n${padding}${colors.bold('Stack trace:')}`)
+        const stackLines = stack.asTable({}).split('\n')
+        for (const stackLine of stackLines) {
+          console.error(`${padding}${stackLine}`)
+        }
+      }
+    }
     console.error(footer)
   }
 }
@@ -249,47 +272,85 @@ const message = (content: Message, level: LogLevel = 'info') => {
   }
 }
 
+interface OutputProcess {
+  /** The prefix to include in the logs
+   *   [vite] Output coming from Vite
+   */
+  prefix: string
+  /**
+   * A callback to invoke the process. stdout and stderr should be used
+   * to send standard output and error data that gets formatted with the
+   * right prefix.
+   */
+  action: (stdout: Writable, stderr: Writable) => Promise<void>
+}
+
 /**
  * Use this function when you have multiple concurrent processes that send data events
  * and we need to output them ensuring that they can visually differenciated by the user.
  *
- * @param index {number} The index of the process being run. This is used to determine the color.
- * @param prefix {string} The prefix to include in the standard output data to differenciate logs.
- * @param process The callback that's called with a Writable instance to send events through.
+ * @param processes {OutputProcess[]} A list of processes to run concurrently.
  */
-export async function concurrent(
-  index: number,
-  prefix: string,
-  action: (stdout: Writable, stderr: Writable) => Promise<void>,
-) {
+export async function concurrent(processes: OutputProcess[]) {
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
+  const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
-  function linePrefix() {
+  function linePrefix(prefix: string, index: number) {
     const colorIndex = index < colors.length ? index : index % colors.length
     const color = colors[colorIndex]
-    const linePrefix = color(`[${prefix}]: `)
+    const linePrefix = color(`${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `)
     return linePrefix
   }
 
-  const stdout = new Writable({
-    write(chunk, encoding, next) {
-      const lines = chunk.toString('ascii').split('\n')
-      for (const line of lines) {
-        info(content`${linePrefix()}${line}`)
-      }
-      next()
-    },
-  })
-  const stderr = new Writable({
-    write(chunk, encoding, next) {
-      const lines = chunk.toString('ascii').split('\n')
-      for (const line of lines) {
-        message(content`${linePrefix()}${line}`, 'error')
-      }
-      next()
-    },
-  })
-  await action(stdout, stderr)
+  await Promise.all(
+    processes.map(async (process, index) => {
+      const stdout = new Writable({
+        write(chunk, encoding, next) {
+          const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+          for (const line of lines) {
+            info(content`${linePrefix(process.prefix, index)}${line}`)
+          }
+          next()
+        },
+      })
+      const stderr = new Writable({
+        write(chunk, encoding, next) {
+          const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+          for (const line of lines) {
+            message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
+          }
+          next()
+        },
+      })
+      await process.action(stdout, stderr)
+    }),
+  )
+}
+
+/**
+ * This regex can be used to find the erase cursor Ansii characters
+ * to strip them from the string.
+ * https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#erase-functions
+ */
+const eraseCursorAnsiRegex = [
+  // Erase the entire line
+  '2K',
+  // Clear vertical tab stop at current line
+  '1G',
+]
+  .map((element) => `[\\u001B\\u009B][[\\]()#;?]*${element}`)
+  .join('|')
+
+/**
+ * The data sent through the standard pipelines of the sub-processes that we execute
+ * might contain ansii escape characters to move the cursor. That causes any additional
+ * formatting to break. This function takes a string and strips escape characters that
+ * manage the cursor in the terminal.
+ * @param value {string} String whose erase cursor escape characters will be stripped.
+ * @returns {string} Stripped string.
+ */
+function stripAnsiEraseCursorEscapeCharacters(value: string): string {
+  return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
 }
 
 /* eslint-enable no-console */

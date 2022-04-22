@@ -3,10 +3,10 @@
 name = "{{name}}"
 type = "{{extensionType}}"
 
-# [[metafield]]
+# [[metafields]]
 # namespace = "my-namespace"
 # key = "my-key"
 
-# [[metafield]]
+# [[metafields]]
 # namespace = "my-namespace"
 # key = "my-key-2"

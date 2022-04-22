@@ -47,7 +47,7 @@ async function extensionInit({name, extensionType, parentApp}: ExtensionInitOpti
   await Promise.all(
     [
       {filename: 'config.toml', alias: blocks.extensions.configurationName},
-      {filename: `${extensionType}.jsx`, alias: 'index.jsx'},
+      {filename: `${extensionType}.jsx`, alias: 'index.js'},
     ].map((fileDetails) =>
       writeFromTemplate({
         ...fileDetails,

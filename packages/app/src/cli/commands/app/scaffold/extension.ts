@@ -15,7 +15,7 @@ export default class AppScaffoldExtension extends Command {
       hidden: false,
       description: 'Extension type',
       options: extensions.types,
-      env: 'SHOPIFY_FLAG_TYPE',
+      env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
     }),
     name: Flags.string({
       char: 'n',

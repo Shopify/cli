@@ -1,24 +1,29 @@
 import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
 import {blocks, configurationFileNames, genericConfigurationFileNames, extensions} from '$cli/constants'
 
-export const HomeNotFoundError = (homeDirectory: string) => {
-  return new error.Abort(`Couldn't find the home directory at ${homeDirectory}`)
-}
-
-export const HomeConfigurationFileNotFound = (configurationFilePath: string) => {
-  return new error.Abort(`Couldn't find the home configuration file at ${configurationFilePath}`)
+export const HomeConfigurationFileNotFound = (directory: string) => {
+  return new error.Abort(`Couldn't find ${configurationFileNames.home} in ${directory}`)
 }
 
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   id: schema.define.optional(schema.define.string()),
+  scopes: schema.define.string(),
 })
 
-type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
+export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 const ExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(extensions.types),
+  metafields: schema.define
+    .array(
+      schema.define.object({
+        namespace: schema.define.string(),
+        key: schema.define.string(),
+      }),
+    )
+    .default([]),
 })
 
 type ExtensionConfiguration = schema.define.infer<typeof ExtensionConfigurationSchema>
@@ -38,9 +43,16 @@ export interface Extension {
   configuration: ExtensionConfiguration
   directory: string
   buildDirectory: string
+  entrySourceFilePath: string
+}
+
+export enum HomeType {
+  Frontend = 'frontend',
+  Backend = 'backend',
 }
 
 export const HomeConfigurationSchema = schema.define.object({
+  type: schema.define.enum([HomeType.Frontend, HomeType.Backend]),
   commands: schema.define.object({
     build: schema.define.string().optional(),
     dev: schema.define.string(),
@@ -49,6 +61,7 @@ export const HomeConfigurationSchema = schema.define.object({
 
 export type HomeConfiguration = schema.define.infer<typeof HomeConfigurationSchema>
 export type HomeConfigurationCommands = keyof HomeConfiguration['commands']
+
 export interface Home {
   directory: string
   configuration: HomeConfiguration
@@ -61,7 +74,7 @@ export interface App {
   packageManager: PackageManager
   configuration: AppConfiguration
   scripts: Script[]
-  home: Home
+  homes: Home[]
   extensions: Extension[]
 }
 
@@ -92,29 +105,34 @@ export async function load(directory: string): Promise<App> {
   } else {
     packageManager = 'npm'
   }
-  const home = await loadHome(appDirectory)
 
   return {
     directory: appDirectory,
+    homes: await loadHomes(appDirectory),
     configuration,
-    home,
     scripts,
     extensions,
     packageManager,
   }
 }
 
-async function loadHome(appDirectory: string): Promise<Home> {
-  const homeDirectory = path.join(appDirectory, 'home')
-  if (!(await file.exists(homeDirectory))) {
-    throw HomeNotFoundError(homeDirectory)
+async function loadHomes(appDirectory: string): Promise<Home[]> {
+  const homeTomlPaths = await path.glob(path.join(appDirectory, `**/${configurationFileNames.home}`))
+
+  if (homeTomlPaths.length === 0) {
+    throw HomeConfigurationFileNotFound(appDirectory)
   }
-  const homeConfigurationFile = path.join(homeDirectory, configurationFileNames.home)
-  if (!(await file.exists(homeConfigurationFile))) {
-    throw HomeConfigurationFileNotFound(homeConfigurationFile)
+
+  const homes = await Promise.all(homeTomlPaths.map((path) => loadHome(path)))
+
+  return homes
+}
+
+async function loadHome(homeConfigurationFile: string): Promise<Home> {
+  return {
+    directory: path.dirname(homeConfigurationFile),
+    configuration: await parseConfigurationFile(HomeConfigurationSchema, homeConfigurationFile),
   }
-  const configuration = await parseConfigurationFile(HomeConfigurationSchema, homeConfigurationFile)
-  return {directory: homeDirectory, configuration}
 }
 
 async function loadConfigurationFile(path: string): Promise<object> {
@@ -146,7 +164,12 @@ async function loadExtensions(rootDirectory: string): Promise<Extension[]> {
 async function loadExtension(directory: string): Promise<Extension> {
   const configurationPath = path.join(directory, blocks.extensions.configurationName)
   const configuration = await parseConfigurationFile(ExtensionConfigurationSchema, configurationPath)
-  return {directory, configuration, buildDirectory: path.join(directory, 'build')}
+  return {
+    directory,
+    configuration,
+    buildDirectory: path.join(directory, 'build'),
+    entrySourceFilePath: path.join(directory, 'src/index.js'),
+  }
 }
 
 async function loadScripts(rootDirectory: string): Promise<Script[]> {

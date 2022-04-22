@@ -1,24 +1,38 @@
+import {buildExtension} from './build/extension'
 import buildHome from './home'
-import buildExtension from './build/extension'
-
-import {App} from '../models/app/app'
+import {App, Home} from '../models/app/app'
 import {path, output} from '@shopify/cli-kit'
+import {Writable} from 'node:stream'
 
 interface BuildOptions {
   app: App
 }
 
 async function build({app}: BuildOptions) {
-  await Promise.all([
-    output.concurrent(0, 'home', async (stdout, stderr) => {
-      await buildHome('build', {home: app.home, stdout, stderr})
-    }),
-    ...app.extensions.map((extension, index) => {
-      return output.concurrent(index + 1, path.basename(extension.directory), async (stdout, stderr) => {
-        await buildExtension(extension, {stdout, stderr})
-      })
-    }),
-  ])
+  const abortController = new AbortController()
+  try {
+    await output.concurrent([
+      ...app.homes.map((home: Home) => {
+        return {
+          prefix: home.configuration.type,
+          action: async (stdout: Writable, stderr: Writable) => {
+            await buildHome('build', {home, stdout, stderr, signal: abortController.signal})
+          },
+        }
+      }),
+      ...app.extensions.map((extension) => ({
+        prefix: path.basename(extension.directory),
+        action: async (stdout: Writable, stderr: Writable) => {
+          await buildExtension(extension, {stdout, stderr, signal: abortController.signal})
+        },
+      })),
+    ])
+  } catch (error: any) {
+    // If one of the processes fails, we abort any running ones.
+    abortController.abort()
+    throw error
+  }
+
   output.success(`${app.configuration.name} built`)
 }
 
