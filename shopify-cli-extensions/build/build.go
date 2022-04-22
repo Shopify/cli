@@ -24,18 +24,24 @@ import (
 const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
 
 func Build(extension core.Extension, report ResultHandler) {
-	script, err := script(extension.BuildDir(), extension.NodeExecutable, "build")
+	var err error
+	var command *exec.Cmd
+	if extension.NodeExecutable == "" {
+		command = nodeExecutableScript(extension.NodeExecutable, "build")
+	} else {
+		command, err = script(extension.BuildDir(), extension.NodeExecutable, "build")
+	}
 	if err != nil {
 		report(Result{false, err.Error(), extension})
 		return
 	}
 
-	if err := configureScript(script, extension); err != nil {
+	if err := configureScript(command, extension); err != nil {
 		report(Result{false, err.Error(), extension})
 	}
 	ensureBuildDirectoryExists(extension)
 
-	output, err := script.CombinedOutput()
+	output, err := command.CombinedOutput()
 	if err != nil {
 		report(Result{false, string(output), extension})
 		return
@@ -50,7 +56,7 @@ func Build(extension core.Extension, report ResultHandler) {
 }
 
 func Watch(extension core.Extension, integrationCtx core.IntegrationContext, report ResultHandler) {
-	script, err := script(extension.BuildDir(), extension.NodeExecutable, "develop")
+	script, err := script(extension.BuildDir(), "develop")
 	if err != nil {
 		report(Result{false, err.Error(), extension})
 		return

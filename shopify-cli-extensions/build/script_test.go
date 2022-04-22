@@ -8,10 +8,7 @@ import (
 )
 
 func TestNodeExecutableCommandStructure(t *testing.T) {
-	cmd, err := script(".", "/path/to/executable", "build", "some-arg")
-	if err != nil {
-		t.Fatal(err)
-	}
+	cmd := nodeExecutableScript("/path/to/executable", "build", "some-arg")
 
 	if !reflect.DeepEqual(cmd.Args, []string{"/path/to/executable", "build", "some-arg"}) {
 		t.Errorf("Unexpected program arguments: %s", strings.Join(cmd.Args, " "))
@@ -27,7 +24,7 @@ func TestYarnCommandStructure(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	cmd, err := script(".", "", "build", "some-arg")
+	cmd, err := script(".", "build", "some-arg")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +42,7 @@ func TestNpmCommandStructure(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	cmd, err := script(".", "", "build", "some-arg")
+	cmd, err := script(".", "build", "some-arg")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +59,7 @@ func TestPrefersYarn(t *testing.T) {
 		return "", errors.New("command not found")
 	}
 
-	script(".", "", "build")
+	script(".", "build")
 
 	if lookupOrder[0] != "yarn" {
 		t.Error("Expected yarn to be checked first")
