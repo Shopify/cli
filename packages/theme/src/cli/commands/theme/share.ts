@@ -24,6 +24,6 @@ export default class Share extends Command {
     const {flags} = await this.parse(Share)
     const store = getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.exec(['theme', 'share', flags.path], adminSession)
+    await ruby.execCLI(['theme', 'share', flags.path], adminSession)
   }
 }

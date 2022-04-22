@@ -15,6 +15,6 @@ export default class Package extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Package)
 
-    await ruby.exec(['theme', 'package', flags.path])
+    await ruby.execCLI(['theme', 'package', flags.path])
   }
 }

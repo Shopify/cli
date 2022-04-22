@@ -18,6 +18,6 @@ export default class List extends Command {
     const {flags} = await this.parse(List)
     const store = getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.exec(['theme', 'list'], adminSession)
+    await ruby.execCLI(['theme', 'list'], adminSession)
   }
 }

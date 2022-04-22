@@ -53,6 +53,6 @@ export default class Delete extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.exec(command, adminSession)
+    await ruby.execCLI(command, adminSession)
   }
 }

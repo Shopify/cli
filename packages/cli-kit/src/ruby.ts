@@ -5,9 +5,9 @@ import {Fatal} from './error'
 import {join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
+import {AdminSession} from './session'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
-import {AdminSession} from '$session'
 
 const RubyCLIVersion = '2.15.6'
 const MinBundlerVersion = '2.3.8'
@@ -20,7 +20,7 @@ const MinBundlerVersion = '2.3.8'
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
  * @param token {string} Token to pass to CLI 2.0, will be set as an environment variable
  */
-export async function exec(args: string[], adminSession?: AdminSession) {
+export async function execCLI(args: string[], adminSession?: AdminSession) {
   await installDependencies()
   const env = {
     ...process.env,

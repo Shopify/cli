@@ -35,6 +35,6 @@ export default class Publish extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.exec(command, adminSession)
+    await ruby.execCLI(command, adminSession)
   }
 }
