@@ -18,3 +18,23 @@ shopify app scaffold extension --type product_subscription
 
 SHOPIFY_FLAG_EXTENSION_TYPE=product_subscription shopify app scaffold extension
 ```
+
+### `command-conventional-flag-env`
+
+This rule ensures that the environment variable that we associate to commands' flags follows a convention.
+
+```ts
+export default class Dev extends Command {
+  static flags = {
+    path: Flags.string({
+      hidden: true,
+      env: 'SHOPIFY_FLAG_PATH', // Correct
+    }),
+    force: Flags.string({
+      hidden: true,
+      env: 'FORCE', // Error
+    }),
+  }
+}
+```
+
