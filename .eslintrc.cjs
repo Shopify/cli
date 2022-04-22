@@ -1,6 +1,7 @@
 const path = require('pathe')
 
 const rulesDirPlugin = require('eslint-plugin-rulesdir')
+
 rulesDirPlugin.RULES_DIR = path.join(__dirname, 'eslint-rules')
 
 module.exports = {
@@ -74,5 +75,6 @@ module.exports = {
       },
     ],
     'rulesdir/command-flags-with-env': 'error',
+    'rulesdir/command-conventional-flag-env': 'error',
   },
 }

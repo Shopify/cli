@@ -13,15 +13,15 @@ export default class Build extends Command {
     path: Flags.string({
       hidden: true,
       description: 'the path to your hydrogen storefront',
-      env: 'SHOPIFY_HYDROGEN_PATH',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
     base: Flags.string({
       description: ' the public path when served in production',
-      env: 'SHOPIFY_HYDROGEN_BUILD_BASE',
+      env: 'SHOPIFY_FLAG_BUILD_BASE',
     }),
     client: Flags.boolean({
       description: 'build the client code',
-      env: 'SHOPIFY_HYDROGEN_BUILD_CLIENT',
+      env: 'SHOPIFY_FLAG_BUILD_CLIENT',
       allowNo: true,
       default: true,
     }),
@@ -30,11 +30,11 @@ export default class Build extends Command {
       description: 'the target platform to build for (worker or node)',
       options: ['node', 'worker'],
       default: 'worker',
-      env: 'SHOPIFY_HYDROGEN_BUILD_TARGET',
+      env: 'SHOPIFY_FLAG_BUILD_TARGET',
     }),
     entry: Flags.string({
       description: 'produce Server Side Rendering (SSR) build for node environments',
-      env: 'SHOPIFY_HYDROGEN_BUILD_SSR_ENTRY',
+      env: 'SHOPIFY_FLAG_BUILD_SSR_ENTRY',
     }),
   }
 
