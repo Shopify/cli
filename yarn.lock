@@ -1415,68 +1415,58 @@
   resolved "https://registry.yarnpkg.com/@microsoft/fetch-event-source/-/fetch-event-source-2.0.1.tgz#9ceecc94b49fbaa15666e38ae8587f64acce007d"
   integrity sha512-W6CLUJ2eBMw3Rec70qrsEW0jOm/3twwJv21mrmj2yORiaVmVYGS4sSS5yUwvQc1ZlDLYGPnClVWmUUMagKNsfA==
 
-"@miniflare/cache@^2.2.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/cache/-/cache-2.3.0.tgz#664af6ca212241653bef5e2b93b4608dbac103c7"
-  integrity sha512-lOf3WVtrs0ac7KOtsQ+JOGHWR90zsqqJbolE+Wt4hIZuvM2U3t1RD2Ms7U20J301msVIsBAd02IL57H95LXQtQ==
+"@miniflare/cache@^2.3.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@miniflare/cache/-/cache-2.4.0.tgz#1b02e0519ef9306af51a366ec0e1c9189c676fd3"
+  integrity sha512-tMDXlUVlThgFubJmlxZoKmLK8kBxDmuMbVMt7csHpXegzkuo2TmIsDqBE/C3CRiJ5xeCQgpD6iZtKBu5Zn5fRA==
   dependencies:
-    "@miniflare/core" "2.3.0"
-    "@miniflare/shared" "2.3.0"
+    "@miniflare/core" "2.4.0"
+    "@miniflare/shared" "2.4.0"
     http-cache-semantics "^4.1.0"
     undici "4.13.0"
 
-"@miniflare/core@2.3.0", "@miniflare/core@^2.2.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/core/-/core-2.3.0.tgz#29e5756d2772d09c6cdf77d2c84fc85888e30bf8"
-  integrity sha512-Dltb3p+Uq5Lx53DuInckHYaDoMrBq49HE/p/oUDXmzHmQy7EAM6v+nJGKmiM9Uen4OqyqsmlmPWqntSMjaX7Jg==
+"@miniflare/core@2.4.0", "@miniflare/core@^2.3.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@miniflare/core/-/core-2.4.0.tgz#11a454aae60f87cf6523c259b3384698dac19403"
+  integrity sha512-vYl8xaWTFzxtkbzx3IkT4Py0OAFdfmFnVo627O1HKHWVGlkjVr8UKtxBpIR+f5pq/HCMzzqA1HM9FXO0dQfy3A==
   dependencies:
     "@iarna/toml" "^2.2.5"
-    "@miniflare/shared" "2.3.0"
-    "@miniflare/watcher" "2.3.0"
+    "@miniflare/shared" "2.4.0"
+    "@miniflare/watcher" "2.4.0"
     busboy "^0.3.1"
     dotenv "^10.0.0"
     kleur "^4.1.4"
     set-cookie-parser "^2.4.8"
     undici "4.13.0"
 
-"@miniflare/runner-vm@^2.2.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/runner-vm/-/runner-vm-2.3.0.tgz#c2881a7f7cb78244c3456be044bf604520743543"
-  integrity sha512-/aB997YodNcRFxtlnvEn4BJSIqKXRw29FexOqCWwWv+b7XQkTTxd4IfSocIFi6du3265gp85icqP/hxsLAQBVg==
+"@miniflare/runner-vm@^2.3.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@miniflare/runner-vm/-/runner-vm-2.4.0.tgz#79d1286dab7e93d3acfec3c1f99a08c0a675a61c"
+  integrity sha512-7sdwBYzXQTwYeR3tTvQ+vJfzc7BXwqR8AUPK9l5gvCtg+Geq9sMslr5SikIJpgcvbYqKDjvC9DQEPJ3sqr9cSQ==
   dependencies:
-    "@miniflare/shared" "2.3.0"
+    "@miniflare/shared" "2.4.0"
 
-"@miniflare/shared@2.3.0", "@miniflare/shared@^2.2.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/shared/-/shared-2.3.0.tgz#7ad2f09bc85125872301578848b46b7d8b4a77ce"
-  integrity sha512-TvCSUe1op5AKINx3zHSSdfAbdoV3eSF3MzeVQA4+1NmtuefY8cjujQCdILeAxg3oPbHXaZkc7j1zZ13rYdvwGQ==
+"@miniflare/shared@2.4.0", "@miniflare/shared@^2.3.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@miniflare/shared/-/shared-2.4.0.tgz#dde0c1fd1c668969720b282901a6fe60cf4e1447"
+  integrity sha512-lPQFzBUVGNQ93gQ/dliToWnO0OqAgsD3/902Pd/IixVSRwRj3BTnYv2dHMUKZcODBPrhnbqZeqcPWdBLzEx8uw==
   dependencies:
     ignore "^5.1.8"
     kleur "^4.1.4"
 
-"@miniflare/storage-memory@^2.2.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/storage-memory/-/storage-memory-2.3.0.tgz#1a6ac118243aefe6b91232c739316a995eb0296f"
-  integrity sha512-cMqQK9neRySchoNUVhQYOmLFrYkAjT5V113Wfxmsz93dladQ1/mXOsndqPrlb+5hhnwbw4Ns67nyzkHUe9sX/g==
+"@miniflare/storage-memory@^2.3.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@miniflare/storage-memory/-/storage-memory-2.4.0.tgz#af3214bd17bc08e93f8f5750bf666c0152f5353e"
+  integrity sha512-mhWwgHhDNtEa7y1bYbdVucV0lqUmzagYXUSppAdSGS5JPyJMyw3HseqRNTk6gC/vKlvEYlFf3ugWcREGCedr9A==
   dependencies:
-    "@miniflare/shared" "2.3.0"
+    "@miniflare/shared" "2.4.0"
 
-"@miniflare/watcher@2.3.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/watcher/-/watcher-2.3.0.tgz#82c8cba1c37d619f4790bc9b230cdaa45f677fdf"
-  integrity sha512-G0ZE9WHIcdR2TlPXwwQabULDIMZ9LujfC0tn+yXmPXKxgWoJWcWFmUbkhVDcOJzkIz2TAhRlLbW11n8nChUHFQ==
+"@miniflare/watcher@2.4.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@miniflare/watcher/-/watcher-2.4.0.tgz#3ac422d53461ef7ad0b335d4d58f925c6584a7f2"
+  integrity sha512-gDQRUxwOjmctvowyd4Hcdy3fjxz3ERKzirp6TvA3AWUohKZk3IhwGlaA8aCwbdP+ELYQlG5wK44AfLSGi956fg==
   dependencies:
-    "@miniflare/shared" "2.3.0"
-
-"@miniflare/web-sockets@^2.2.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@miniflare/web-sockets/-/web-sockets-2.3.0.tgz#50c548dffc55cb4f418f270cf41759663bb1141b"
-  integrity sha512-3xcPG1vfiMb2obVC4jNtS5VzUxzM1rdUrWPCG86gpZaHky0xC1U7Tp+eFdxQFTty99HPYrrVKXl1ww2h1LGWRA==
-  dependencies:
-    "@miniflare/core" "2.3.0"
-    "@miniflare/shared" "2.3.0"
-    undici "4.13.0"
-    ws "^8.2.2"
+    "@miniflare/shared" "2.4.0"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -1921,6 +1911,24 @@
     jsx-ast-utils "^3.2.1"
     pkg-dir "^5.0.0"
     pluralize "^8.0.0"
+
+"@shopify/mini-oxygen@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@shopify/mini-oxygen/-/mini-oxygen-0.0.5.tgz#bb34f07c6aeaf0c346c41e79ac97e811eb2630fc"
+  integrity sha512-ZyFWNTDB+TFvr6/MGcXrRbKbCdLGKMugGLuvKWYf5Yb1GDCXK5zD88ciXNn7IM+mzIepZ0yF5PKY53eDHJDrUw==
+  dependencies:
+    "@miniflare/cache" "^2.3.0"
+    "@miniflare/core" "^2.3.0"
+    "@miniflare/runner-vm" "^2.3.0"
+    "@miniflare/shared" "^2.3.0"
+    "@miniflare/storage-memory" "^2.3.0"
+    "@types/connect" "^3.4.35"
+    "@types/mime" "^2.0.3"
+    connect "^3.7.0"
+    inquirer "^8.2.1"
+    mime "^3.0.0"
+    semiver "^1.1.0"
+    typescript "^4.6.3"
 
 "@shopify/post-purchase-ui-extensions-react@^0.13.2":
   version "0.13.3"
@@ -5870,7 +5878,7 @@ ini@~1.3.0:
   resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
-inquirer@^8.2.2:
+inquirer@^8.2.1, inquirer@^8.2.2:
   version "8.2.2"
   resolved "https://registry.yarnpkg.com/inquirer/-/inquirer-8.2.2.tgz#1310517a87a0814d25336c78a20b44c3d9b7629d"
   integrity sha512-pG7I/si6K/0X7p1qU+rfWnpTE1UIkTONN1wxtzh0d+dHXtT/JG6qBgLxoyHVsQa8cFABxAPh0pD6uUUHiAoaow==
@@ -8650,6 +8658,11 @@ seed-random@~2.2.0:
   resolved "https://registry.yarnpkg.com/seed-random/-/seed-random-2.2.0.tgz#2a9b19e250a817099231a5b99a4daf80b7fbed54"
   integrity sha1-KpsZ4lCoFwmSMaW5mk2vgLf77VQ=
 
+semiver@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/semiver/-/semiver-1.1.0.tgz#9c97fb02c21c7ce4fcf1b73e2c7a24324bdddd5f"
+  integrity sha512-QNI2ChmuioGC1/xjyYwyZYADILWyW6AmS1UH6gDj/SFUUUS4MBAWs/7mxnkRPc/F4iHezDP+O8t0dO8WHiEOdg==
+
 semver-regex@^4.0.0:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/semver-regex/-/semver-regex-4.0.2.tgz#fd3124efe81647b33eb90a9de07cb72992424a02"
@@ -9614,6 +9627,11 @@ typescript@^4.2.3, typescript@^4.5.0, typescript@^4.5.3:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.5.tgz#d8c953832d28924a9e3d37c73d729c846c5896f3"
   integrity sha512-TCTIul70LyWe6IJWT8QSYeA54WQe8EjQFU4wY52Fasj5UKx88LNYKCgBEHcOMOrFF1rKGbD8v/xcNWVUq9SymA==
 
+typescript@^4.6.3:
+  version "4.6.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.6.3.tgz#eefeafa6afdd31d725584c67a0eaba80f6fc6c6c"
+  integrity sha512-yNIatDa5iaofVozS/uQJEl3JRWLKKGJKh6Yaiv0GLGSuhpFJe7P3SbHZ8/yjAHRQwKRoA6YZqlfjXWmVzoVSMw==
+
 typical@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/typical/-/typical-4.0.0.tgz#cbeaff3b9d7ae1e2bbfaf5a4e6f11eccfde94fc4"
@@ -10072,11 +10090,6 @@ ws@8.4.2:
   version "7.5.7"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.7.tgz#9e0ac77ee50af70d58326ecff7e85eb3fa375e67"
   integrity sha512-KMvVuFzpKBuiIXW3E4u3mySRO2/mCHSyZDJQM5NQ9Q9KHWHWh0NHgfbRMLLrceUK5qAL4ytALJbpRMjixFZh8A==
-
-ws@^8.2.2:
-  version "8.5.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.5.0.tgz#bfb4be96600757fe5382de12c670dab984a1ed4f"
-  integrity sha512-BWX0SWVgLPzYwF8lTzEy1egjhS4S4OEAHfsO8o65WOVsrnSRGaSiUaa9e0ggGlkMTtBlmOpEXiie9RUcBO86qg==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"
