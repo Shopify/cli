@@ -31,7 +31,7 @@ export default class Pull extends Command {
       env: 'SHOPIFY_FLAG_THEME_ONLY',
     }),
     ignore: Flags.boolean({
-      char: 'n',
+      char: 'x',
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_THEME_IGNORE',
     }),
@@ -74,6 +74,6 @@ export default class Pull extends Command {
     console.log(command)
     const store = getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.exec(command, adminSession)
+    await ruby.execCLI(command, adminSession)
   }
 }
