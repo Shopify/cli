@@ -5,9 +5,9 @@ import {Fatal} from './error'
 import {join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
+import {AdminSession} from './session'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
-import {AdminSession} from '$session'
 
 const RubyCLIVersion = '2.15.6'
 const MinBundlerVersion = '2.3.8'
