@@ -1,4 +1,5 @@
-import {error, file, output, path, string, template} from '@shopify/cli-kit'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {error, file, output, path, string, template, yaml} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
 import {App} from '$cli/models/app/app'
@@ -27,6 +28,7 @@ interface ExtensionInitOptions {
   extensionType: ExtensionTypes
   app: App
 }
+
 async function extensionInit({name, extensionType, app}: ExtensionInitOptions) {
   if (extensionType === 'theme') {
     await themeExtensionInit({name, extensionType, app})
@@ -36,6 +38,7 @@ async function extensionInit({name, extensionType, app}: ExtensionInitOptions) {
     await argoExtensionInit({name, extensionType, app})
   }
 }
+
 async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const templatePath = await getTemplatePath('theme-extension')
@@ -44,21 +47,30 @@ async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptio
 
 async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
-  await Promise.all(
-    [
-      {filename: 'config.toml', alias: blocks.extensions.configurationName},
-      {filename: `${extensionType}.jsx`, alias: 'index.js'},
-    ].map((fileDetails) =>
-      writeFromTemplate({
-        ...fileDetails,
-        directory: extensionDirectory,
-        promptAnswers: {
-          name,
-          extensionType,
-        },
-      }),
-    ),
-  )
+  const hyphenizedName = string.hyphenize(name)
+  const extensionsYaml = yaml.encode({
+    extensions: [
+      {
+        title: hyphenizedName,
+        // Use the new templates
+        type: `${extensionType}_next`,
+        metafields: [],
+
+        // node_executable: await nodeExtensionsCLIPath(),
+      },
+    ],
+  })
+  await file.inTemporaryDirectory(async (temporaryDirectory) => {
+    // Unlike the build command of the binary that supports passing the configuration
+    // through standard input
+    const extensionsYamlPath = path.join(temporaryDirectory, 'extensions.yaml')
+    await file.write(extensionsYamlPath, extensionsYaml)
+
+    await runGoExtensionsCLI(['create', extensionsYamlPath], {
+      stdout: process.stdout,
+      stderr: process.stderr,
+    })
+  })
 }
 
 async function ensureExtensionDirectoryExists({name, app}: Omit<ExtensionInitOptions, 'extensionType'>) {

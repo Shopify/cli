@@ -4,8 +4,7 @@
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
-    "/dist",
-    "/templates"
+    "/dist"
   ],
   "publishConfig": {
     "access": "public",
