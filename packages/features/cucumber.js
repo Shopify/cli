@@ -11,7 +11,7 @@ const common = [
   '--require lib/**/*.ts',
   '--format-options \'{"colorsEnabled": true}\'',
   '--format progress',
-  '--format node_modules/cucumber-pretty',
+  '--format node_modules/@cucumber/pretty-formatter',
 ]
 
 if (isNode14) {
