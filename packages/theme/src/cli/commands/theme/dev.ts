@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {path, ruby, session, string} from '@shopify/cli-kit'
 import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Dev extends Command {
@@ -15,18 +15,16 @@ export default class Dev extends Command {
     'theme-editor-sync': Flags.boolean({
       char: 'a',
       description: 'Synchronize Theme Editor updates in the local theme files.',
-      env: 'SHOPIFY_FLAG_THEME_THEME_EDITOR_SYNC',
+      env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
     port: Flags.string({
       description: 'The path to your theme',
       char: 'p',
-      default: '.',
       env: 'SHOPIFY_FLAG_PORT',
     }),
     host: Flags.string({
       description: 'The path to your theme',
       char: 'h',
-      default: '127.0.0.1',
       env: 'SHOPIFY_FLAG_HOST',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -40,6 +38,7 @@ export default class Dev extends Command {
       description: 'The path to your theme',
       default: '.',
       env: 'SHOPIFY_FLAG_PATH',
+      parse: (input, _) => Promise.resolve(path.resolve(input)),
     }),
     store: Flags.string({
       char: 's',

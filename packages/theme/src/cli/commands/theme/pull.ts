@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {path, ruby, session, string} from '@shopify/cli-kit'
 import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Pull extends Command {
@@ -39,6 +39,7 @@ export default class Pull extends Command {
       description: 'The path to your theme',
       default: '.',
       env: 'SHOPIFY_FLAG_PATH',
+      parse: (input, _) => Promise.resolve(path.resolve(input)),
     }),
     store: Flags.string({
       char: 's',
@@ -51,7 +52,12 @@ export default class Pull extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Pull)
 
-    const command = ['theme', 'pull', flags.path]
+    let validPath = flags.path
+    if (!path.isAbsolute(validPath)) {
+      validPath = path.resolve(flags.path)
+    }
+
+    const command = ['theme', 'pull', validPath]
     if (flags.theme) {
       command.push('-t')
       command.push(flags.theme)

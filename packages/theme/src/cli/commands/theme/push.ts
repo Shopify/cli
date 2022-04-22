@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {path, ruby, session, string} from '@shopify/cli-kit'
 import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Push extends Command {
@@ -61,6 +61,7 @@ export default class Push extends Command {
       description: 'The path to your theme',
       default: '.',
       env: 'SHOPIFY_FLAG_PATH',
+      parse: (input, _) => Promise.resolve(path.resolve(input)),
     }),
     store: Flags.string({
       char: 's',
@@ -106,7 +107,6 @@ export default class Push extends Command {
       command.push('-a')
     }
 
-    console.log(command)
     const store = getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await ruby.execCLI(command, adminSession)

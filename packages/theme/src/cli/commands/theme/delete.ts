@@ -11,13 +11,13 @@ export default class Delete extends Command {
     development: Flags.boolean({
       char: 'd',
       description: 'Delete your development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DELETE_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'show-all': Flags.boolean({
       char: 'a',
       description: 'Include others development themes in theme list.',
-      env: 'SHOPIFY_FLAG_THEME_DELETE_SHOW_ALL',
+      env: 'SHOPIFY_FLAG_THEME_SHOW_ALL',
     }),
     force: Flags.boolean({
       char: 'f',
@@ -41,7 +41,6 @@ export default class Delete extends Command {
     if (args.themeId) {
       command.push(args.themeId)
     }
-
     if (flags.development) {
       command.push('-d')
     }
