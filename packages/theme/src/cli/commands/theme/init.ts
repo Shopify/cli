@@ -18,6 +18,6 @@ export default class Init extends Command {
 
   async run(): Promise<void> {
     const command = ['theme', 'init'].concat(this.argv)
-    await ruby.exec(command)
+    await ruby.execCLI(command)
   }
 }

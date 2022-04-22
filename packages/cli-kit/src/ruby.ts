@@ -20,7 +20,7 @@ const MinBundlerVersion = '2.3.8'
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
  * @param token {string} Token to pass to CLI 2.0, will be set as an environment variable
  */
-export async function exec(args: string[], adminSession?: AdminSession) {
+export async function execCLI(args: string[], adminSession?: AdminSession) {
   await installDependencies()
   const env = {
     ...process.env,
