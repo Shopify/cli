@@ -1,4 +1,5 @@
 ---
+name: App Feature
 extension_points:
   - Checkout::Dynamic::Render
 # metafields:
