@@ -26,10 +26,10 @@ const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
 func Build(extension core.Extension, report ResultHandler) {
 	var err error
 	var command *exec.Cmd
-	if extension.NodeExecutable == "" {
+	if extension.NodeExecutable != "" {
 		command = nodeExecutableScript(extension.NodeExecutable, "build")
 	} else {
-		command, err = script(extension.BuildDir(), extension.NodeExecutable, "build")
+		command, err = script(extension.BuildDir(), "build")
 	}
 	if err != nil {
 		report(Result{false, err.Error(), extension})
