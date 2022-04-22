@@ -15,6 +15,7 @@ export interface CachedAppInfo {
 
 interface ConfSchema {
   appInfo: CachedAppInfo[]
+  themeStore: string
 }
 
 export const cliKit = new Conf<ConfSchema>({
@@ -48,4 +49,12 @@ export function clearAppInfo(appId: string): void {
     apps.splice(index, 1)
   }
   cliKit.set('appInfo', apps)
+}
+
+export function getThemeStore(): string | undefined {
+  return cliKit.get('themeStore')
+}
+
+export function setThemeStore(store: string): void {
+  cliKit.set('themeStore', store)
 }

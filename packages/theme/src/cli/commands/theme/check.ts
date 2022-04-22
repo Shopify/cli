@@ -1,7 +1,10 @@
 import {Command} from '@oclif/core'
+import {ruby} from '@shopify/cli-kit'
 
 export default class Check extends Command {
   static description = 'Validate the theme'
 
-  async run(): Promise<void> {}
+  async run(): Promise<void> {
+    await ruby.execCLI(['theme', 'check'])
+  }
 }
