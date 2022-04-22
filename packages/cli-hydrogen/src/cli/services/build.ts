@@ -1,69 +1,41 @@
-import {build} from 'vite'
-import {ui, output} from '@shopify/cli-kit'
+import {build as viteBuild} from 'vite'
+import {ui} from '@shopify/cli-kit'
+
+type Target = 'node' | 'client' | 'worker'
 
 interface DevOptions {
   directory: string
-  target: 'worker' | 'node'
+  targets: {[key in Target]: boolean | string}
   base?: string
 }
 
-async function dev({directory, target, base}: DevOptions) {
-  const commonConfig = {base}
+async function build({directory, targets, base}: DevOptions) {
+  const commonConfig = {base, root: directory}
 
-  const serverBuild = {
-    title: `Building ${target} code`,
-    task: async () => {
-      await build({
-        ...commonConfig,
-        root: directory,
-        build: {
-          outDir: 'dist/server',
-          ssr: `@shopify/hydrogen/platforms/node`,
-        },
-      })
-    },
-  }
-  const workerBuild = {
-    title: `Building ${target} code`,
-    task: async () => {
-      process.env.WORKER = 'true'
-
-      await build({
-        ...commonConfig,
-        root: directory,
-        build: {
-          outDir: 'dist/worker',
-          ssr: `@shopify/hydrogen/platforms/worker-event`,
-        },
-      })
-    },
-  }
-
-  const list = new ui.Listr(
-    [
-      {
-        title: `Building client code`,
-        task: async () => {
-          await build({
+  const tasks: ui.ListrTask[] = Object.entries(targets)
+    .filter(([_, value]) => value)
+    .map(([key, value]) => {
+      return {
+        title: `Building ${key} code`,
+        task: async (_, task) => {
+          process.env.WORKER = key === 'worker' ? 'true' : undefined
+          await viteBuild({
             ...commonConfig,
-            root: directory,
             build: {
-              outDir: 'dist/client',
-              manifest: true,
+              outDir: `dist/${key}`,
+              ssr: typeof value === 'string' ? value : undefined,
+              manifest: key === 'client',
             },
           })
+
+          task.title = `Built ${key} code`
         },
-      },
-      target === 'worker' ? workerBuild : serverBuild,
-    ],
-    {concurrent: false},
-  )
+      }
+    })
+
+  const list = new ui.Listr(tasks)
 
   await list.run()
-
-  output.info(output.content`
-    ${target} build completed successfully! ✨
-  `)
 }
 
-export default dev
+export default build
