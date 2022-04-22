@@ -11,9 +11,10 @@
     "tsc": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^8.0.0-rc.2",
     "@types/cucumber": "^7.0.0",
+    "@cucumber/cucumber": "^8.1.2",
     "cucumber-junit-formatter": "^0.2.2",
+    "@cucumber/pretty-formatter": "1.0.0-alpha.2",
     "cucumber-pretty": "^6.0.1",
     "pathe": "0.2.0",
     "ansi-colors": "^4.1.1",

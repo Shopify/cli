@@ -1,3 +1,5 @@
+const path = require('pathe')
+
 const isCI = process.env.NODE_ENV === 'ci'
 const featureToRun = process.env.FEATURE
 const nodeVersion = process.version.match(/^v(\d+\.\d+)/)[1]
@@ -9,9 +11,7 @@ const common = [
   '--require world/**/*.ts',
   '--require steps/**/*.ts',
   '--require lib/**/*.ts',
-  '--format-options \'{"colorsEnabled": true}\'',
-  '--format progress',
-  '--format node_modules/@cucumber/pretty-formatter',
+  '--format @cucumber/pretty-formatter',
 ]
 
 if (isNode14) {
