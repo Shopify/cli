@@ -38,3 +38,17 @@ export default class Dev extends Command {
 }
 ```
 
+### `command-reserved-flags`
+
+This rule ensures that reserved flags use the same environment variable.
+
+```ts
+export default class Dev extends Command {
+  static flags = {
+    path: Flags.string({
+      hidden: true,
+      env: 'SHOPIFY_FLAG_APP_PATH', // Incorrect: It must be SHOPIFY_FLAG_PATH
+    }),
+  }
+}
+```
