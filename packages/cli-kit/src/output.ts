@@ -291,21 +291,21 @@ interface OutputProcess {
  *
  * @param processes {OutputProcess[]} A list of processes to run concurrently.
  */
-export async function concurrent(processes: OutputProcess[]) {
+export async function concurrent(processes: OutputProcess[], options = {colors: false}) {
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < colors.length ? index : index % colors.length
     const color = colors[colorIndex]
-    const linePrefix = color(`${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `)
-    return linePrefix
+    const lineContents = `${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `
+    return options.colors ? color(lineContents) : lineContents
   }
 
   await Promise.all(
     processes.map(async (process, index) => {
       const stdout = new Writable({
-        write(chunk, encoding, next) {
+        write(chunk, _encoding, next) {
           const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
           for (const line of lines) {
             info(content`${linePrefix(process.prefix, index)}${line}`)
@@ -314,7 +314,7 @@ export async function concurrent(processes: OutputProcess[]) {
         },
       })
       const stderr = new Writable({
-        write(chunk, encoding, next) {
+        write(chunk, _encoding, next) {
           const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
           for (const line of lines) {
             console.log('ERROR')

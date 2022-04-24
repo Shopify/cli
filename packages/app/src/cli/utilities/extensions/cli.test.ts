@@ -29,17 +29,17 @@ describe('runGoExtensionsCLI', () => {
     vi.mocked(environment.local.homeDirectory).mockReturnValue('/home')
 
     // When
-    const got = await runGoExtensionsCLI(['build'])
+    const got = await runGoExtensionsCLI(['build'], {colors: false})
 
     // Then
     expect(system.exec).toHaveBeenNthCalledWith(1, 'make', ['build'], {
-      colors: true,
+      colors: false,
       stdout: undefined,
       stderr: undefined,
       cwd: projectDirectory,
     })
     expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {
-      colors: true,
+      colors: false,
     })
   })
 
@@ -50,10 +50,10 @@ describe('runGoExtensionsCLI', () => {
     vi.mocked(getBinaryPathOrDownload).mockResolvedValue(binaryPath)
 
     // When
-    const got = await runGoExtensionsCLI(['build'])
+    const got = await runGoExtensionsCLI(['build'], {colors: false})
 
     // Then
-    expect(system.exec).toHaveBeenCalledWith(binaryPath, ['build'], {...{colors: true}})
+    expect(system.exec).toHaveBeenCalledWith(binaryPath, ['build'], {...{colors: false}})
   })
 })
 

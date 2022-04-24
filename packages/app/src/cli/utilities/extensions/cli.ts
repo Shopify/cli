@@ -26,15 +26,14 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
         stdout: undefined,
         stderr: undefined,
         cwd: projectDirectory,
-        colors: true,
       })
-      await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, {...options, colors: true})
+      await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
     } catch {
       throw new error.AbortSilent()
     }
   } else {
     const binaryPath = await getBinaryPathOrDownload()
-    await system.exec(binaryPath, [...args], {...options, colors: true})
+    await system.exec(binaryPath, [...args], options)
   }
 }
 

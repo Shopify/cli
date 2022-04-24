@@ -17,6 +17,11 @@ interface ExtensionBuildOptions {
    * Signal to abort the build process.
    */
   signal: AbortSignal
+
+  /**
+   * Boolean to specify whether or not to display colors in output
+   */
+  colors: boolean
 }
 
 /**
@@ -32,6 +37,7 @@ export async function buildExtension(extension: Extension, options: ExtensionBui
     stdout: options.stdout,
     stderr: options.stderr,
     stdin,
+    colors: options.colors,
   })
 }
 
