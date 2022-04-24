@@ -10,7 +10,7 @@ interface BuildOptions {
 
 async function build({app}: BuildOptions) {
   const abortController = new AbortController()
-  const colors = Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+  const colors = output.shouldDisplayColors()
   try {
     await output.concurrent(
       [
