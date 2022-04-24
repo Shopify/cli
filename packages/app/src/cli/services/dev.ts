@@ -109,9 +109,6 @@ async function devHome(homes: Home[], options: DevHomeOptions) {
         },
       }
     }),
-    {
-      colors,
-    },
   )
 }
 

@@ -291,7 +291,7 @@ interface OutputProcess {
  *
  * @param processes {OutputProcess[]} A list of processes to run concurrently.
  */
-export async function concurrent(processes: OutputProcess[], options = {colors: false}) {
+export async function concurrent(processes: OutputProcess[]) {
   const colors = [token.yellow, token.cyan, token.magenta, token.green]
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
@@ -299,7 +299,7 @@ export async function concurrent(processes: OutputProcess[], options = {colors: 
     const colorIndex = index < colors.length ? index : index % colors.length
     const color = colors[colorIndex]
     const lineContents = `${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `
-    return options.colors ? color(lineContents) : lineContents
+    return color(lineContents)
   }
 
   await Promise.all(

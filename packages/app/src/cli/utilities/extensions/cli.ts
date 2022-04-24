@@ -1,6 +1,6 @@
 import {getBinaryPathOrDownload} from './binary'
 import {useExtensionsCLISources} from '../../environment'
-import {system, error, path, environment} from '@shopify/cli-kit'
+import {environment, error, output, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 
 const NodeExtensionsCLINotFoundError = () => {
@@ -15,6 +15,7 @@ const NodeExtensionsCLINotFoundError = () => {
  * @param options {system.ExecOptions} Options to configure the process execution.
  */
 export async function runGoExtensionsCLI(args: string[], options: system.ExecOptions = {}) {
+  options.colors = output.shouldDisplayColors()
   if (useExtensionsCLISources()) {
     const projectDirectory = path.join(
       environment.local.homeDirectory(),

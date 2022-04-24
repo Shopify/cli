@@ -23,7 +23,7 @@ describe('buildExtension', () => {
     }
 
     // When
-    await buildExtension(extension, {stdout, stderr, signal, colors: false})
+    await buildExtension(extension, {stdout, stderr, signal})
 
     // Then
     expect(runGoExtensionsCLI).toHaveBeenCalled()

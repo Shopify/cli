@@ -29,7 +29,7 @@ describe('runGoExtensionsCLI', () => {
     vi.mocked(environment.local.homeDirectory).mockReturnValue('/home')
 
     // When
-    const got = await runGoExtensionsCLI(['build'], {colors: false})
+    const got = await runGoExtensionsCLI(['build'])
 
     // Then
     expect(system.exec).toHaveBeenNthCalledWith(1, 'make', ['build'], {
@@ -50,7 +50,7 @@ describe('runGoExtensionsCLI', () => {
     vi.mocked(getBinaryPathOrDownload).mockResolvedValue(binaryPath)
 
     // When
-    const got = await runGoExtensionsCLI(['build'], {colors: false})
+    const got = await runGoExtensionsCLI(['build'])
 
     // Then
     expect(system.exec).toHaveBeenCalledWith(binaryPath, ['build'], {...{colors: false}})
