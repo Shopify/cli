@@ -72,8 +72,10 @@ async function devHome(homes: Home[], options: DevHomeOptions) {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
   const BACKEND_PORT = `${options.backendPort}`
 
+  const colors = Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+
   await output.concurrent(
-    homes.map(({configuration, directory}: Home, index) => {
+    homes.map(({configuration, directory}: Home, _index) => {
       const {commands, type} = configuration
       const [cmd, ...args] = commands.dev.split(' ')
       const env =
@@ -107,6 +109,9 @@ async function devHome(homes: Home[], options: DevHomeOptions) {
         },
       }
     }),
+    {
+      colors,
+    },
   )
 }
 
