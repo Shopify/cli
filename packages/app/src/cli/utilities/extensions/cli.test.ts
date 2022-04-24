@@ -33,14 +33,11 @@ describe('runGoExtensionsCLI', () => {
 
     // Then
     expect(system.exec).toHaveBeenNthCalledWith(1, 'make', ['build'], {
-      colors: false,
       stdout: undefined,
       stderr: undefined,
       cwd: projectDirectory,
     })
-    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {
-      colors: false,
-    })
+    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {})
   })
 
   test('runs the CLI through the downloaded binary when not using the local sources', async () => {
@@ -53,7 +50,7 @@ describe('runGoExtensionsCLI', () => {
     const got = await runGoExtensionsCLI(['build'])
 
     // Then
-    expect(system.exec).toHaveBeenCalledWith(binaryPath, ['build'], {...{colors: false}})
+    expect(system.exec).toHaveBeenCalledWith(binaryPath, ['build'], {})
   })
 })
 

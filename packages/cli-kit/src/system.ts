@@ -1,4 +1,4 @@
-import {concurrent as concurrentOutput} from './output'
+import {concurrent as concurrentOutput, shouldDisplayColors} from './output'
 import {execa} from 'execa'
 import type {ExecaChildProcess} from 'execa'
 import type {Writable} from 'node:stream'
@@ -10,7 +10,6 @@ export interface ExecOptions {
   stderr?: Writable
   stdin?: string
   signal?: AbortSignal
-  colors?: boolean
 }
 
 export const open = async (url: string) => {
@@ -31,7 +30,7 @@ export const captureOutput = async (command: string, args: string[]): Promise<st
 
 export const exec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
   const env = options?.env ?? process.env
-  if (options?.colors) {
+  if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
   }
   const commandProcess = execa(command, args, {

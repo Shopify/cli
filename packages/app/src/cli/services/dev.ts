@@ -72,8 +72,6 @@ async function devHome(homes: Home[], options: DevHomeOptions) {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
   const BACKEND_PORT = `${options.backendPort}`
 
-  const colors = output.shouldDisplayColors()
-
   await output.concurrent(
     homes.map(({configuration, directory}: Home, _index) => {
       const {commands, type} = configuration

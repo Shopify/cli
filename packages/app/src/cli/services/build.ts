@@ -10,21 +10,20 @@ interface BuildOptions {
 
 async function build({app}: BuildOptions) {
   const abortController = new AbortController()
-  const colors = output.shouldDisplayColors()
   try {
     await output.concurrent([
       ...app.homes.map((home: Home) => {
         return {
           prefix: home.configuration.type,
           action: async (stdout: Writable, stderr: Writable) => {
-            await buildHome('build', {home, stdout, stderr, signal: abortController.signal, colors})
+            await buildHome('build', {home, stdout, stderr, signal: abortController.signal})
           },
         }
       }),
       ...app.extensions.map((extension) => ({
         prefix: path.basename(extension.directory),
         action: async (stdout: Writable, stderr: Writable) => {
-          await buildExtension(extension, {stdout, stderr, signal: abortController.signal, colors})
+          await buildExtension(extension, {stdout, stderr, signal: abortController.signal})
         },
       })),
     ])
