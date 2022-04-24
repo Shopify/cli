@@ -173,7 +173,7 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    consoleLog(colors.bold(`${colors.magenta('✔')} Success! ${stringifyMessage(content)}`))
+    consoleLog(colors.bold(`${colors.green('✔')} Success! ${stringifyMessage(content)}`))
   }
 }
 
@@ -298,8 +298,7 @@ export async function concurrent(processes: OutputProcess[]) {
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < colors.length ? index : index % colors.length
     const color = colors[colorIndex]
-    const lineContents = `${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `
-    return color(lineContents)
+    return color(`${prefix}:${' '.repeat(prefixColumnSize - prefix.length)}  `)
   }
 
   await Promise.all(
