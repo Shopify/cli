@@ -173,7 +173,7 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    console.log(colors.bold(`${colors.magenta('✔')} Success! ${stringifyMessage(content)}`))
+    consoleLog(colors.bold(`${colors.magenta('✔')} Success! ${stringifyMessage(content)}`))
   }
 }
 
@@ -194,7 +194,7 @@ export const debug = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const warn = (content: Message) => {
-  console.warn(colors.yellow(stringifyMessage(content)))
+  consoleWarn(colors.yellow(stringifyMessage(content)))
 }
 
 /**
@@ -220,16 +220,16 @@ export const error = async (content: Fatal) => {
     const padding = '    '
     const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
     const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-    console.error(header)
+    consoleError(header)
     const lines = message.split('\n')
     for (const line of lines) {
-      console.error(`${padding}${line}`)
+      consoleError(`${padding}${line}`)
     }
     if (content.tryMessage) {
-      console.error(`\n${padding}${colors.bold('What to try:')}`)
+      consoleError(`\n${padding}${colors.bold('What to try:')}`)
       const lines = content.tryMessage.split('\n')
       for (const line of lines) {
-        console.error(`${padding}${line}`)
+        consoleError(`${padding}${line}`)
       }
     }
 
@@ -247,14 +247,14 @@ export const error = async (content: Fatal) => {
       })
     if (content instanceof Bug) {
       if (stack.items.length !== 0) {
-        console.error(`\n${padding}${colors.bold('Stack trace:')}`)
+        consoleError(`\n${padding}${colors.bold('Stack trace:')}`)
         const stackLines = stack.asTable({}).split('\n')
         for (const stackLine of stackLines) {
-          console.error(`${padding}${stackLine}`)
+          consoleError(`${padding}${stackLine}`)
         }
       }
     }
-    console.error(footer)
+    consoleError(footer)
   }
 }
 
@@ -268,7 +268,7 @@ export function stringifyMessage(message: Message): string {
 
 const message = (content: Message, level: LogLevel = 'info') => {
   if (shouldOutput(level)) {
-    console.log(stringifyMessage(content))
+    consoleLog(stringifyMessage(content))
   }
 }
 
@@ -298,14 +298,14 @@ export async function concurrent(processes: OutputProcess[]) {
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < colors.length ? index : index % colors.length
     const color = colors[colorIndex]
-    const linePrefix = color(`${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `)
-    return linePrefix
+    const lineContents = `${' '.repeat(prefixColumnSize - prefix.length)}[${prefix}]: `
+    return color(lineContents)
   }
 
   await Promise.all(
     processes.map(async (process, index) => {
       const stdout = new Writable({
-        write(chunk, encoding, next) {
+        write(chunk, _encoding, next) {
           const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
           for (const line of lines) {
             info(content`${linePrefix(process.prefix, index)}${line}`)
@@ -314,10 +314,10 @@ export async function concurrent(processes: OutputProcess[]) {
         },
       })
       const stderr = new Writable({
-        write(chunk, encoding, next) {
+        write(chunk, _encoding, next) {
           const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
           for (const line of lines) {
-            console.log('ERROR')
+            consoleLog('ERROR')
             message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
           }
           next()
@@ -352,6 +352,30 @@ const eraseCursorAnsiRegex = [
  */
 function stripAnsiEraseCursorEscapeCharacters(value: string): string {
   return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
+}
+
+function consoleLog(message: string): void {
+  console.log(withOrWithoutStyle(message))
+}
+
+function consoleError(message: string): void {
+  console.error(withOrWithoutStyle(message))
+}
+
+function consoleWarn(message: string): void {
+  console.warn(withOrWithoutStyle(message))
+}
+
+function withOrWithoutStyle(message: string): string {
+  if (shouldDisplayColors()) {
+    return message
+  } else {
+    return colors.unstyle(message)
+  }
+}
+
+export function shouldDisplayColors(): boolean {
+  return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
 }
 
 /* eslint-enable no-console */

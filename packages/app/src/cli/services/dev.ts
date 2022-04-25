@@ -73,7 +73,7 @@ async function devHome(homes: Home[], options: DevHomeOptions) {
   const BACKEND_PORT = `${options.backendPort}`
 
   await output.concurrent(
-    homes.map(({configuration, directory}: Home, index) => {
+    homes.map(({configuration, directory}: Home, _index) => {
       const {commands, type} = configuration
       const [cmd, ...args] = commands.dev.split(' ')
       const env =

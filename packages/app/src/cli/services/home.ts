@@ -20,6 +20,6 @@ export default async function home(
   }
 
   const [cmd, ...args] = script.split(' ')
-  await system.exec(cmd, args, {cwd: home.directory, stdout, stderr, colors: true, signal})
+  await system.exec(cmd, args, {cwd: home.directory, stdout, stderr, signal})
   stdout.write('Home successfully built.')
 }
