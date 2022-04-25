@@ -77,7 +77,7 @@ export default class Pull extends Command {
     if (flags.ignore) {
       command.push('-n')
     }
-    console.log(command)
+
     const store = getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await ruby.execCLI(command, adminSession)

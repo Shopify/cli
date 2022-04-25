@@ -44,7 +44,7 @@ export default class Push extends Command {
     json: Flags.boolean({
       char: 'j',
       description: 'Output JSON instead of a UI.',
-      env: 'SHOPIFY_FLAG_THEME_JSON',
+      env: 'SHOPIFY_FLAG_JSON',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'allow-live': Flags.boolean({
