@@ -3,7 +3,7 @@ import {
   shopify as shopifyEnvironment,
   identity as identityEnvironment,
 } from './service'
-import {isSpin, fqdn as spinFqdn} from './spin'
+import {fqdn as spinFqdn} from './spin'
 import {Abort} from '../error'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
@@ -30,12 +30,7 @@ export async function partners(): Promise<string> {
     case 'local':
       return 'partners.myshopify.io'
     case 'spin':
-      if (isSpin()) {
-        const fqdn = await spinFqdn()
-        return `partners.${fqdn}`
-      } else {
-        throw CouldntObtainPartnersSpinFQDNError
-      }
+      return `partners.${await spinFqdn()}`
     default:
       return productionFqdn
   }
@@ -52,12 +47,7 @@ export async function identity(): Promise<string> {
     case 'local':
       return 'identity.myshopify.io'
     case 'spin':
-      if (isSpin()) {
-        const fqdn = await spinFqdn()
-        return `identity.${fqdn}`
-      } else {
-        throw CouldntObtainIdentitySpinFQDNError
-      }
+      return `identity.${await spinFqdn()}`
     default:
       return productionFqdn
   }
@@ -74,12 +64,7 @@ export async function shopify(options: {storeFqdn?: string} = {}): Promise<strin
     case 'local':
       return 'shopify.myshopify.io'
     case 'spin':
-      if (isSpin()) {
-        const fqdn = await spinFqdn()
-        return `identity.${fqdn}`
-      } else {
-        throw CouldntObtainShopifySpinFQDNError
-      }
+      return `identity.${await spinFqdn()}`
     default:
       if (options.storeFqdn) {
         return options.storeFqdn
