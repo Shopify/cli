@@ -13,28 +13,28 @@
   },
   "exports": {
     "./ui-extensions/admin": {
-      "import": "./dist/framework/ui-extensions/admin/index.js",
-      "types": "./dist/framework/ui-extensions/admin/index.d.ts"
+      "import": "./dist/runtime/ui-extensions/admin/index.js",
+      "types": "./dist/runtime/ui-extensions/admin/index.d.ts"
     },
     "./ui-extensions/admin/react": {
-      "import": "./dist/framework/ui-extensions/admin/react.js",
-      "types": "./dist/framework/ui-extensions/admin/react.d.ts"
+      "import": "./dist/runtime/ui-extensions/admin/react.js",
+      "types": "./dist/runtime/ui-extensions/admin/react.d.ts"
     },
     "./ui-extensions/checkout": {
-      "import": "./dist/framework/ui-extensions/checkout/index.js",
-      "types": "./dist/framework/ui-extensions/checkout/index.d.ts"
+      "import": "./dist/runtime/ui-extensions/checkout/index.js",
+      "types": "./dist/runtime/ui-extensions/checkout/index.d.ts"
     },
     "./ui-extensions/checkout/react": {
-      "import": "./dist/framework/ui-extensions/checkout/react.js",
-      "types": "./dist/framework/ui-extensions/checkout/react.d.ts"
+      "import": "./dist/runtime/ui-extensions/checkout/react.js",
+      "types": "./dist/runtime/ui-extensions/checkout/react.d.ts"
     },
     "./ui-extensions/post-purchase": {
-      "import": "./dist/framework/ui-extensions/post-purchase/index.js",
-      "types": "./dist/framework/ui-extensions/post-purchase/index.d.ts"
+      "import": "./dist/runtime/ui-extensions/post-purchase/index.js",
+      "types": "./dist/runtime/ui-extensions/post-purchase/index.d.ts"
     },
     "./ui-extensions/post-purchase/react": {
-      "import": "./dist/framework/ui-extensions/post-purchase/react.js",
-      "types": "./dist/framework/ui-extensions/post-purchase/react.d.ts"
+      "import": "./dist/runtime/ui-extensions/post-purchase/react.js",
+      "types": "./dist/runtime/ui-extensions/post-purchase/react.d.ts"
     }
   },
   "scripts": {
