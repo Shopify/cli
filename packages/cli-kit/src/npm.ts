@@ -12,6 +12,7 @@ export interface PackageJSON extends JSON {
   name: string
   author: string
   dependencies: {[key: string]: string}
+  devDependencies: {[key: string]: string}
   resolutions: {[key: string]: string}
   overrides: {[key: string]: string}
 }

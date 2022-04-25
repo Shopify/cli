@@ -64,6 +64,9 @@ describe('updateCLIDependencies', () => {
       dependencies: {
         mock: 'value',
       },
+      devDependencies: {
+        mock: 'value',
+      },
       resolutions: {
         mock: 'value',
       },
