@@ -10,7 +10,7 @@ export default class Build extends Command {
     path: Flags.string({
       hidden: true,
       description: 'the path to your app directory',
-      env: 'SHOPIFY_APP_PATH',
+      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 

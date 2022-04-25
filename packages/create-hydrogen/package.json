@@ -56,7 +56,7 @@
     "@oclif/core": "1.6.4"
   },
   "devDependencies": {
-    "vitest": "0.9.3"
+    "vitest": "0.9.4"
   },
   "engine-strict": true,
   "engines": {

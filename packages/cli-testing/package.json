@@ -41,6 +41,6 @@
   "devDependencies": {
     "@shopify/cli-kit": "1.0.9",
     "tempy": "^2.0.0",
-    "vitest": "0.9.3"
+    "vitest": "0.9.4"
   }
 }
