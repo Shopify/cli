@@ -1,5 +1,5 @@
 ---
-'@shopify/cli-kit': minor
+'@shopify/cli-kit': patch
 ---
 
 - New `github` module for retrieving latest releases of a given github repository and for parsing github repository URLs.
