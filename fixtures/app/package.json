@@ -1,20 +1,20 @@
 {
-  "name": "fixtures-app",
-  "version": "0.1.7",
-  "main": "home/index.js",
+  "name": "app",
+  "version": "0.1.0",
+  "main": "home/backend/index.js",
   "license": "UNLICENSED",
   "scripts": {
-    "shopify": "../shopify",
-    "build": "../shopify app build",
-    "dev": "../shopify app dev",
-    "test": "../shopify app test",
-    "push": "../shopify app push",
-    "scaffold": "../shopify app scaffold"
+    "shopify": "shopify",
+    "build": "shopify app build",
+    "dev": "shopify app dev",
+    "push": "shopify app push",
+    "scaffold": "shopify app scaffold",
+    "deploy": "shopify app deploy"
   },
   "dependencies": {
-    "@shopify/app": "1.1.1",
     "@shopify/cli": "1.1.1",
+    "@shopify/app": "1.1.1",
     "react": "17.0.2"
   },
-  "author": "pepicrft"
+  "author": "isaac"
 }
