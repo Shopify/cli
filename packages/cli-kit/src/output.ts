@@ -292,12 +292,12 @@ interface OutputProcess {
  * @param processes {OutputProcess[]} A list of processes to run concurrently.
  */
 export async function concurrent(processes: OutputProcess[]) {
-  const colors = [token.yellow, token.cyan, token.magenta, token.green]
+  const concurrentColors = [token.yellow, token.cyan, token.magenta, token.green]
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
   function linePrefix(prefix: string, index: number) {
-    const colorIndex = index < colors.length ? index : index % colors.length
-    const color = colors[colorIndex]
+    const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
+    const color = concurrentColors[colorIndex]
     return color(`${prefix}:${' '.repeat(prefixColumnSize - prefix.length)}  `)
   }
 
@@ -316,8 +316,7 @@ export async function concurrent(processes: OutputProcess[]) {
         write(chunk, _encoding, next) {
           const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
           for (const line of lines) {
-            consoleLog('ERROR')
-            message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
+            message(content`${linePrefix(process.prefix, index)}${colors.bold('ERROR')} ${line}`, 'error')
           }
           next()
         },
