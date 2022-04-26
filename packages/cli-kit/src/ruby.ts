@@ -9,7 +9,7 @@ import {AdminSession} from './session'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 
-const RubyCLIVersion = '2.15.6'
+const RubyCLIVersion = '2.16.0'
 const MinBundlerVersion = '2.3.8'
 
 /**
