@@ -46,30 +46,27 @@ async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptio
 }
 
 async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
-  const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const hyphenizedName = string.hyphenize(name)
-  const extensionsYaml = yaml.encode({
+  const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
+  const stdin = yaml.encode({
     extensions: [
       {
         title: hyphenizedName,
         // Use the new templates
         type: `${extensionType}_next`,
         metafields: [],
-
-        // node_executable: await nodeExtensionsCLIPath(),
+        development: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          root_dir: hyphenizedName,
+        },
       },
     ],
   })
-  await file.inTemporaryDirectory(async (temporaryDirectory) => {
-    // Unlike the build command of the binary that supports passing the configuration
-    // through standard input
-    const extensionsYamlPath = path.join(temporaryDirectory, 'extensions.yaml')
-    await file.write(extensionsYamlPath, extensionsYaml)
-
-    await runGoExtensionsCLI(['create', extensionsYamlPath], {
-      stdout: process.stdout,
-      stderr: process.stderr,
-    })
+  await runGoExtensionsCLI(['create', '-'], {
+    cwd: extensionDirectory,
+    stdout: process.stdout,
+    stderr: process.stderr,
+    stdin,
   })
 }
 
