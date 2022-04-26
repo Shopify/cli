@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {path, ruby, session, string} from '@shopify/cli-kit'
 import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Share extends Command {
@@ -11,6 +11,7 @@ export default class Share extends Command {
       description: 'The path to your theme',
       default: '.',
       env: 'SHOPIFY_FLAG_PATH',
+      parse: (input, _) => Promise.resolve(path.resolve(input)),
     }),
     store: Flags.string({
       char: 's',

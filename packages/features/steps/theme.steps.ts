@@ -6,7 +6,7 @@ import fs from 'fs'
 import {strict as assert} from 'assert'
 
 Then(/I see Theme's help menu/, {timeout: 60 * 1000}, async function () {
-  await exec(executables.cli, ['theme', 'help'], {env: {...process.env, ...this.temporaryEnv}})
+  await exec(executables.cli, ['theme', 'help-old'], {env: {...process.env, ...this.temporaryEnv}})
 })
 
 Then(/I have Ruby CLI installed as a vendor dependency/, {}, async function () {
