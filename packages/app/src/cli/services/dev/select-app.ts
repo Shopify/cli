@@ -27,13 +27,15 @@ export async function selectOrCreateApp(
   envApiKey?: string,
 ): Promise<OrganizationApp> {
   if (envApiKey) {
-    const envApp = validateApiKey(apps, envApiKey)
+    const envApp = await appFromApiKey(envApiKey)
     if (envApp) return envApp
     throw InvalidApiKeyError(envApiKey)
   }
 
-  const cachedApp = validateApiKey(apps, cachedApiKey)
-  if (cachedApp) return cachedApp
+  if (cachedApiKey) {
+    const cachedApp = await appFromApiKey(cachedApiKey)
+    if (cachedApp) return cachedApp
+  }
 
   let app = await selectAppPrompt(apps)
   if (!app) app = await createApp(orgId, localApp)
@@ -43,13 +45,15 @@ export async function selectOrCreateApp(
 }
 
 /**
- * Check if the provided apiKey exists in the list of retrieved apps
+ * Check if the provided apiKey corresponds to an existing app (in any org the user belongs to)
  * @param apps {OrganizationApp[]} List of remote available apps
  * @param apiKey {string} API key to check
  * @returns {OrganizationApp} The app if it exists, undefined otherwise
  */
-function validateApiKey(apps: OrganizationApp[], apiKey?: string) {
-  return apps.find((app) => app.apiKey === apiKey)
+export async function appFromApiKey(apiKey: string): Promise<OrganizationApp> {
+  const token = await session.ensureAuthenticatedPartners()
+  const app: OrganizationApp = await api.partners.request(api.graphql.FindAppQuery, token, {apiKey})
+  return app
 }
 
 export async function createApp(orgId: string, app: App): Promise<OrganizationApp> {

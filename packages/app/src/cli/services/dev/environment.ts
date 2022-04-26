@@ -37,12 +37,21 @@ interface DevEnvironmentOutput {
 export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
 
+  let appFromApiKey: OrganizationApp
+  if (input.apiKey) {
+    appFromApiKey = await appFromApiKey(input.apiKey)
+    if (!appFromApiKey) {
+      throw InvalidApiKeyError(input.apiKey)
+    }
+  }
+
   const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
   const selectedApp = await selectOrCreateApp(input.appManifest, apps, orgId, cachedInfo?.appId, input.apiKey)
   conf.setAppInfo(selectedApp.apiKey, {orgId})
+
   updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
   const selectedStore = await selectStore(stores, orgId, cachedInfo?.storeFqdn, input.store)
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore.shopDomain})
