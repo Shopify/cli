@@ -8,6 +8,9 @@ import {version as cliVersion} from '../../cli/package.json'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {version as appVersion} from '../../app/package.json'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {version as cliHydrogenVersion} from '../../cli-hydrogen/package.json'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
@@ -65,6 +68,7 @@ const constants = {
      */
     cli: cliVersion,
     app: appVersion,
+    cliHydrogen: cliHydrogenVersion,
   },
   keychain: {
     service: 'shopify-cli',

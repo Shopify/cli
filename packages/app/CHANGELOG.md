@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 1.1.1
+
+### Patch Changes
+
+- 22ff40a: Add support for running the extensions' CLI through the sources
+- 5763a76: Determine terminal coloring vs monochrome globally
+- Updated dependencies [488c06a]
+- Updated dependencies [f156c37]
+- Updated dependencies [5763a76]
+  - @shopify/cli-kit@1.1.1
+
 ## 1.0.9
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 0.5.12
+
+### Patch Changes
+
+- b7b980b: Add pull/push/dev/open commands to theme
+- 924fdf3: Added first batch of theme commands
+
 ## 0.5.11
 
 ### Patch Changes

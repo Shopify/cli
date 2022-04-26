@@ -53,7 +53,7 @@ const configuration = () => [
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.facadeModuleId.includes('src/runtime')) {
             // Preserves the commands/... path
-            return `framework/${chunkInfo.facadeModuleId.split('src/runtime').pop().replace('ts', 'js')}`
+            return `runtime/${chunkInfo.facadeModuleId.split('src/runtime').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

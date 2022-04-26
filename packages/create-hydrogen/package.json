@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "1.0.9",
+  "version": "1.1.1",
   "private": false,
   "description": "A CLI tool to create a new Shopify hydrogen app.",
   "type": "module",
@@ -39,8 +39,7 @@
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit",
-    "refresh-templates": "node ./scripts/refresh-templates.mjs"
+    "tsc": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
@@ -52,8 +51,10 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
-    "@shopify/cli-kit": "1.0.9",
-    "@oclif/core": "1.6.4"
+    "@oclif/core": "1.6.4",
+    "@shopify/cli-kit": "1.1.1",
+    "@types/download": "^8.0.1",
+    "download": "^8.0.0"
   },
   "devDependencies": {
     "vitest": "0.9.4"

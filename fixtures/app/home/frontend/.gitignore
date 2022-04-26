@@ -1,0 +1,9 @@
+# Dependency directory
+node_modules
+
+# Ignore Apple macOS Desktop Services Store
+.DS_Store
+
+# Logs
+logs
+*.log

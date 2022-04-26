@@ -1,5 +1,5 @@
-type = "backend"
+type="backend"
 
 [commands]
-build = "./scripts/build.sh"
-dev = "true"
+dev = "npm run dev"
+build = "npm run build"

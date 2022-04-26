@@ -60,7 +60,7 @@ export function parseRepoUrl(src: string) {
       'user/repo#dev',
       'https://github.com/user/repo',
     ]
-    return new Abort(`Parsing the url ${src} failed. Supported formats are ${exampleFormats.join(', ')}.`)
+    throw new Abort(`Parsing the url ${src} failed. Supported formats are ${exampleFormats.join(', ')}.`)
   }
 
   const site = match[1] || match[2] || match[3] || 'github.com'
