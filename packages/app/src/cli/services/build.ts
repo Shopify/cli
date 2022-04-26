@@ -33,6 +33,7 @@ async function build({app}: BuildOptions) {
     throw error
   }
 
+  output.newline()
   output.success(`${app.configuration.name} built`)
 }
 
