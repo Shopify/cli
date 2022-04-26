@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
@@ -40,7 +40,7 @@
     "vite": "^2.9.1"
   },
   "peerDependencies": {
-    "@shopify/cli-kit": "1.0.9"
+    "@shopify/cli-kit": "1.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",

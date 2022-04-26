@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 1.1.1
+
+### Patch Changes
+
+- 488c06a: Added an interface to shell out to the Ruby CLI
+- f156c37: - New `github` module for retrieving latest releases of a given github repository and for parsing github repository URLs.
+  - New field in select prompts `result` for formatting a value after submission.
+- 5763a76: Determine terminal coloring vs monochrome globally
+
 ## 1.0.9
 
 ### Patch Changes
