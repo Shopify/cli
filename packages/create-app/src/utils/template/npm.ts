@@ -11,7 +11,9 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
     const appPath = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
     const cliKitPath = `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`
 
+    // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
+    // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/app'] = appPath
 
     const dependencyOverrides = {
