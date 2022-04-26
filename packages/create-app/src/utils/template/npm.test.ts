@@ -57,6 +57,18 @@ describe('updateCLIDependencies', () => {
     },
   )
 
+  it.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
+    const mockPackageJSON = {} as npm.PackageJSON
+
+    await updateCLIDependencies(mockPackageJSON, true)
+
+    const dependencyResolution = mockPackageJSON.dependencies[dependency]
+    const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
+    const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+
+    expect(dependencyJSON.name).toBe(dependency)
+  })
+
   it('does not change existing values', async () => {
     const mockPackageJSON = {
       name: '',

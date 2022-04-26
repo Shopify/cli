@@ -1,5 +1,14 @@
 # fixtures-app
 
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [22ff40a]
+- Updated dependencies [5763a76]
+  - @shopify/app@1.1.1
+  - @shopify/cli@1.1.1
+
 ## 0.1.6
 
 ### Patch Changes

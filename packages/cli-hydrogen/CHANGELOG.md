@@ -1,5 +1,15 @@
 # @shopify/cli-hydrogen
 
+## 1.1.1
+
+### Patch Changes
+
+- caf2134: Use @shopify/mini-oxygen to within preview command and provide missing Node flags.
+- Updated dependencies [488c06a]
+- Updated dependencies [f156c37]
+- Updated dependencies [5763a76]
+  - @shopify/cli-kit@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes
