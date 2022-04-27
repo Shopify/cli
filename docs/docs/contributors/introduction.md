@@ -48,6 +48,31 @@ If you want to interact with it, you can `cd` into the directory and run the CLI
 | test | `yarn test` | `dev fixture test` |
 | scaffold | `yarn scaffold` | `dev fixture scaffold` |
 
+### Interacting with Spin environments
+
+:::caution Only for Shopify employees
+The content in this section is only relevant for Shopify employees that might need to debug the integration of the CLI with internal environments.
+:::
+
+The CLI can't run in a Spin environment yet. However, you can run it pointing to Spin environments. It is useful, for example, to debug new or existing features on Identity or Partners.
+You can do so by using the following environment variables that instruct the CLI on the environment for each of the services. By default, it points to the production instance of the service.
+
+```bash
+SHOPIFY_PARTNERS_ENV=spin
+SHOPIFY_SHOPIFY_ENV=spin
+SHOPIFY_IDENTITY_ENV=spin
+
+# Optional:
+#  When not passed, it uses the last Spin instance created.
+SPIN_INSTANCE=[spin-instance-fqdn]
+```
+
+For example, if we want to use the partners' constellation, which includes Partners and Identity, you can run the following command:
+
+```bash
+SHOPIFY_PARTNERS_ENV=spin SHOPIFY_IDENTITY_ENV=spin dev shopify {...args}
+```
+
 ### More automation
 
 Besides the scripts for building and running the CLIs, there are others that might come handy when adding code to the project:

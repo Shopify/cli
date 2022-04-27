@@ -39,8 +39,8 @@
     "win32"
   ],
   "devDependencies": {
-    "@shopify/cli-kit": "1.0.9",
+    "@shopify/cli-kit": "1.1.1",
     "tempy": "^2.0.0",
-    "vitest": "0.9.3"
+    "vitest": "0.9.4"
   }
 }

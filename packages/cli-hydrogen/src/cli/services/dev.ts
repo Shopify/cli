@@ -2,17 +2,15 @@ import {createServer} from 'vite'
 
 interface DevOptions {
   directory: string
+  force: boolean
 }
 
-async function dev({directory}: DevOptions) {
-  await runHydrogen({directory})
-}
-
-async function runHydrogen({directory}: {directory: string}) {
+async function dev({directory, force}: DevOptions) {
   const server = await createServer({
     root: directory,
     server: {
       open: true,
+      force,
     },
   })
 

@@ -9,6 +9,7 @@ describe('load', () => {
   let tmpDir: string
   const appConfiguration = `
 name = "my_app"
+scopes = "read_products"
 `
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir()
@@ -24,6 +25,8 @@ name = "my_app"
     const appDirectory = path.join(tmpDir, configurationFileNames.app)
     const homeDirectory = path.join(tmpDir, blocks.home.directoryName)
     const homeConfiguration = `
+    type = "backend"
+
     [commands]
     build = "build"
     dev = "dev"

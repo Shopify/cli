@@ -12,6 +12,8 @@ concurrency:
 
 env:
   DEBUG: 1
+  YARN_VERSION: "1.22.18"
+  RUBY_VERSION: "3.1.2"
 
 jobs:
   main:
@@ -36,12 +38,14 @@ jobs:
       - name: Set Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.1.2
+          ruby-version: ${{ env.RUBY_VERSION }}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      - name: Install yarn
+        run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
@@ -80,6 +84,8 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      - name: Install yarn
+        run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build

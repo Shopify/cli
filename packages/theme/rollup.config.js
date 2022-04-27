@@ -16,11 +16,6 @@ const themeCommands = fg.sync([
   `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
 ])
 
-const frameworkModules = fg.sync([
-  path.join(__dirname, `/src/framework/**/*.ts`),
-  `!${path.join(__dirname, `/src/framework/**/*.test.ts`)}`,
-])
-
 const configuration = () => [
   // CLI
   {

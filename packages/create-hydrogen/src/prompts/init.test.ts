@@ -63,6 +63,7 @@ describe('init', () => {
           choices: ['template-hydrogen-default', 'template-hydrogen-minimum'],
           message: 'Choose a template',
           default: 'template-hydrogen-default',
+          result: expect.any(Function),
         },
       ]),
     )

@@ -1,8 +1,8 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
 import {createTunnel} from './dev/tunnel'
-import {App, Home} from '../models/app/app'
-import {output, system} from '@shopify/cli-kit'
+import {App, AppConfiguration, Home, HomeType} from '../models/app/app'
+import {output, port, system} from '@shopify/cli-kit'
 
 interface DevOptions {
   appManifest: App
@@ -14,10 +14,12 @@ interface DevOptions {
 }
 
 interface DevHomeOptions {
-  port: number
+  frontendPort: number
+  backendPort: number
   apiKey: string
   apiSecret: string
   hostname: string
+  scopes: AppConfiguration['scopes']
 }
 
 async function dev(input: DevOptions) {
@@ -25,49 +27,87 @@ async function dev(input: DevOptions) {
     app: {apiKey, apiSecretKeys},
     store,
   } = await ensureDevEnvironment(input)
-  const port = 3000
-  let url = `http://localhost:${port}`
+  const frontendPort = await port.getRandomPort()
+  const backendPort = await port.getRandomPort()
+  let url = `http://localhost:${frontendPort}`
 
-  if (input.tunnel) url = await createTunnel({port})
+  if (input.tunnel) url = await createTunnel({port: frontendPort})
   if (input.update) await updateURLs(apiKey, url)
 
-  output.success(`Your app is available at: ${url}/auth?shop=${store.shopDomain}`)
-  devHome(input.appManifest.home, {
+  const storeAppUrl = `${url}/api/auth?shop=${store.shopDomain}`
+
+  output.success(`Tunnel created`)
+
+  output.info(output.content`
+  Your app is up and running! ✨
+  View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
+  `)
+
+  devHome(input.appManifest.homes, {
     apiKey,
+    frontendPort,
+    backendPort,
+    scopes: input.appManifest.configuration.scopes,
     apiSecret: apiSecretKeys[0].secret,
     hostname: url,
-    port,
   })
 }
 
-async function devHome(home: Home, options: DevHomeOptions) {
-  const script = home.configuration.commands.dev
-  if (!script) {
-    return
-  }
+async function devHome(homes: Home[], options: DevHomeOptions) {
+  // eslint-disable-next-line @shopify/prefer-module-scope-constants
+  const SHOPIFY_API_KEY = options.apiKey
 
-  const [cmd, ...args] = script.split(' ')
+  // eslint-disable-next-line @shopify/prefer-module-scope-constants
+  const SHOPIFY_API_SECRET = options.apiSecret
 
-  await output.concurrent([
-    {
-      prefix: 'home',
-      action: async (stdout, stderr) => {
-        await system.exec(cmd, args, {
-          cwd: home.directory,
-          stdout,
-          env: {
-            ...process.env,
-            SHOPIFY_API_KEY: options.apiKey,
-            SHOPIFY_API_SECRET: options.apiSecret,
-            HOST: options.hostname,
-            SCOPES: 'write_products,write_customers,write_draft_orders',
-            PORT: `${options.port}`,
-            NODE_ENV: `development`,
-          },
-        })
-      },
-    },
-  ])
+  // eslint-disable-next-line @shopify/prefer-module-scope-constants
+  const HOST = options.hostname
+
+  // eslint-disable-next-line @shopify/prefer-module-scope-constants
+  const SCOPES = options.scopes
+
+  // eslint-disable-next-line @shopify/prefer-module-scope-constants
+  const FRONTEND_PORT = `${options.frontendPort}`
+
+  // eslint-disable-next-line @shopify/prefer-module-scope-constants
+  const BACKEND_PORT = `${options.backendPort}`
+
+  await output.concurrent(
+    homes.map(({configuration, directory}: Home, _index) => {
+      const {commands, type} = configuration
+      const [cmd, ...args] = commands.dev.split(' ')
+      const env =
+        type === HomeType.Backend
+          ? {
+              SHOPIFY_API_KEY,
+              SHOPIFY_API_SECRET,
+              HOST,
+              BACKEND_PORT,
+              SCOPES,
+            }
+          : {
+              SHOPIFY_API_KEY,
+              BACKEND_PORT,
+              FRONTEND_PORT,
+            }
+
+      return {
+        prefix: configuration.type,
+        action: async (stdout, stderr) => {
+          await system.exec(cmd, args, {
+            cwd: directory,
+            stdout,
+            stderr,
+            env: {
+              ...process.env,
+              ...env,
+              NODE_ENV: `development`,
+            },
+          })
+        },
+      }
+    }),
+  )
 }
 
 export default dev

@@ -16,8 +16,11 @@ describe('initialize a extension', () => {
 
     const appConfiguration = `
       name = "my_app"
+      scopes = "read_products"
       `
     const homeConfiguration = `
+    type = "backend"
+
     [commands]
     build = "./build.sh"
     dev = "./test.sh"

@@ -8,7 +8,11 @@ export default class Dev extends Command {
     path: Flags.string({
       hidden: true,
       description: 'the path to your hydrogen storefront',
-      env: 'SHOPIFY_HYDROGEN_PATH',
+      env: 'SHOPIFY_FLAG_PATH',
+    }),
+    force: Flags.boolean({
+      description: 'force dependency pre-bundling.',
+      env: 'SHOPIFY_FLAG_DEV_FORCE',
     }),
   }
 
@@ -16,6 +20,6 @@ export default class Dev extends Command {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    await devService({directory})
+    await devService({directory, ...flags})
   }
 }

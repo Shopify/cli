@@ -16,8 +16,8 @@ interface InitOutput {
 }
 
 const TEMPLATE_MAP = {
-  [Template.Default]: 'Shopify/hydrogen/examples/template-hydrogen-default',
-  [Template.Minimum]: 'Shopify/hydrogen/examples/template-hydrogen-minimum',
+  [Template.Default]: 'Shopify/hydrogen/templates/template-hydrogen-default',
+  [Template.Minimum]: 'Shopify/hydrogen/templates/template-hydrogen-hello-world',
 }
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
@@ -38,6 +38,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       message: 'Choose a template',
       choices: Object.keys(TEMPLATE_MAP),
       default: Template.Default,
+      result: (value) => TEMPLATE_MAP[value as Template],
     })
   }
 

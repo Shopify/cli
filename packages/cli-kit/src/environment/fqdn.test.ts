@@ -3,16 +3,8 @@ import {
   shopify as shopifyEnvironment,
   identity as identityEnvironment,
 } from './service'
-import {
-  partners,
-  shopify,
-  identity,
-  CouldntObtainPartnersSpinFQDNError,
-  CouldntObtainIdentitySpinFQDNError,
-  CouldntObtainShopifySpinFQDNError,
-  NotProvidedStoreFQDNError,
-} from './fqdn'
-import {isSpin, fqdn as spinFqdn} from './spin'
+import {partners, shopify, identity, NotProvidedStoreFQDNError} from './fqdn'
+import {fqdn as spinFqdn} from './spin'
 import {Environment} from '../network/service'
 import {expect, describe, test, vi} from 'vitest'
 
@@ -45,7 +37,6 @@ describe('partners', () => {
   test("returns the spin fqdn if the environment is spin and it's running in a Spin environment", async () => {
     // Given
     vi.mocked(partnersEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(spinFqdn).mockResolvedValue('spin.com')
 
     // When
@@ -53,15 +44,6 @@ describe('partners', () => {
 
     // Then
     expect(got).toEqual('partners.spin.com')
-  })
-
-  test("throws the spin fqdn if the environment is spin and it's not running in a Spin environment", async () => {
-    // Given
-    vi.mocked(partnersEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(isSpin).mockReturnValue(false)
-
-    // When
-    await expect(partners()).rejects.toThrow(CouldntObtainPartnersSpinFQDNError)
   })
 })
 
@@ -91,7 +73,6 @@ describe('identity', () => {
   test("returns the spin fqdn if the environment is spin and it's running in a Spin environment", async () => {
     // Given
     vi.mocked(identityEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(spinFqdn).mockResolvedValue('spin.com')
 
     // When
@@ -99,15 +80,6 @@ describe('identity', () => {
 
     // Then
     expect(got).toEqual('identity.spin.com')
-  })
-
-  test("throws the spin fqdn if the environment is spin and it's not running in a Spin environment", async () => {
-    // Given
-    vi.mocked(identityEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(isSpin).mockReturnValue(false)
-
-    // When
-    await expect(identity()).rejects.toThrow(CouldntObtainIdentitySpinFQDNError)
   })
 })
 
@@ -146,7 +118,6 @@ describe('shopify', () => {
   test("returns the spin fqdn if the environment is spin and it's running in a Spin environment", async () => {
     // Given
     vi.mocked(shopifyEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(spinFqdn).mockResolvedValue('spin.com')
 
     // When
@@ -154,14 +125,5 @@ describe('shopify', () => {
 
     // Then
     expect(got).toEqual('identity.spin.com')
-  })
-
-  test("throws the spin fqdn if the environment is spin and it's not running in a Spin environment", async () => {
-    // Given
-    vi.mocked(shopifyEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(isSpin).mockReturnValue(false)
-
-    // When
-    await expect(shopify({})).rejects.toThrow(CouldntObtainShopifySpinFQDNError)
   })
 })

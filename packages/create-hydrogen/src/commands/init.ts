@@ -1,4 +1,3 @@
-import {HYDROGEN_VERSION} from '../utils/versions'
 import initPrompt from '../prompts/init'
 import initService from '../services/init'
 import {path} from '@shopify/cli-kit'
@@ -40,7 +39,12 @@ export default class Init extends Command {
       char: 'h',
       env: 'SHOPIFY_FLAG_HYDROGEN_VERSION',
       hidden: false,
-      default: HYDROGEN_VERSION,
+    }),
+    local: Flags.boolean({
+      char: 'l',
+      env: 'SHOPIFY_FLAG_LOCAL',
+      default: false,
+      hidden: true,
     }),
   }
 
@@ -58,6 +62,7 @@ export default class Init extends Command {
       shopifyCliVersion: flags['shopify-cli-version'],
       hydrogenVersion: flags['hydrogen-version'],
       directory,
+      local: flags.local,
     })
   }
 }

@@ -11,13 +11,24 @@ interface InitOutput {
 }
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
+  // Eventually this list should be taken from a remote location
+  // That way we don't have to update the CLI every time we add a template
+  const templateURLMap = {
+    node: 'https://github.com/Shopify/starter-node-app',
+  }
+
+  const defaults = {
+    name: 'app',
+    template: templateURLMap.node,
+  }
+
   const questions: ui.Question[] = []
   if (!options.name) {
     questions.push({
       type: 'input',
       name: 'name',
       message: "Your app's working name?",
-      default: 'app',
+      default: defaults.name,
       validate: (value) => {
         if (value.length === 0) {
           return 'App Name cannot be empty'
@@ -30,20 +41,13 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     })
   }
 
-  // Eventually this list should be taken from a remote location
-  // That way we don't have to update the CLI every time we add a template
-  const templateURLMap = {
-    node: 'https://github.com/Shopify/starter-node-app',
-    php: 'https://github.com/Shopify/starter-node-app',
-  }
-
-  if (!options.template) {
+  if (!options.template && Object.keys(templateURLMap).length > 1) {
     questions.push({
       type: 'select',
       name: 'template',
       choices: Object.keys(templateURLMap),
       message: 'Which template would you like to use?',
-      default: 'https://github.com/Shopify/starter-node-app',
+      default: defaults.template,
     })
   }
 
@@ -54,7 +58,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   }
 
   const templateURL = templateURLMap[answers.template as keyof typeof templateURLMap]
-  answers.template = templateURL || answers.template
+  answers.template = templateURL || answers.template || defaults.template
 
   return answers
 }

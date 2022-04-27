@@ -6,6 +6,7 @@ export default async function cleanup(homeOutputDirectory: string) {
       path.join(homeOutputDirectory, '**', '.git'),
       path.join(homeOutputDirectory, '**', '.github'),
       path.join(homeOutputDirectory, '**', '.gitmodules'),
+      path.join(homeOutputDirectory, 'LICENSE*'),
     ],
     {
       dot: true,
