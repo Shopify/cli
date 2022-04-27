@@ -41,3 +41,8 @@ export async function fetchAppsAndStores(orgId: string, token: string): Promise<
   const parsedOrg = {id: org.id, businessName: org.businessName}
   return {organization: parsedOrg, apps: org.apps.nodes, stores: org.stores.nodes}
 }
+
+export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp> {
+  const res: api.graphql.FindAppQuerySchema = await api.partners.request(api.graphql.FindAppQuery, token, {apiKey})
+  return res.app
+}

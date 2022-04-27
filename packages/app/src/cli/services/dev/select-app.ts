@@ -1,11 +1,9 @@
+import {fetchAppFromApiKey} from './fetch'
 import {api, error, output, session} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
 import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
 import {OrganizationApp} from '$cli/models/organization'
 
-const InvalidApiKeyError = (apiKey: string) => {
-  return new error.Fatal(`Invalid API key: ${apiKey}`, 'Check that the provided API KEY is correct and try again.')
-}
 /**
  * Select an app from env, list or create a new one:
  * If an envApiKey is provided, we check if it is valid and return it. If it's not valid, throw error
@@ -24,14 +22,7 @@ export async function selectOrCreateApp(
   apps: OrganizationApp[],
   orgId: string,
   cachedApiKey?: string,
-  envApiKey?: string,
 ): Promise<OrganizationApp> {
-  if (envApiKey) {
-    const envApp = await appFromApiKey(envApiKey)
-    if (envApp) return envApp
-    throw InvalidApiKeyError(envApiKey)
-  }
-
   if (cachedApiKey) {
     const cachedApp = await appFromApiKey(cachedApiKey)
     if (cachedApp) return cachedApp
@@ -52,8 +43,7 @@ export async function selectOrCreateApp(
  */
 export async function appFromApiKey(apiKey: string): Promise<OrganizationApp> {
   const token = await session.ensureAuthenticatedPartners()
-  const app: OrganizationApp = await api.partners.request(api.graphql.FindAppQuery, token, {apiKey})
-  return app
+  return fetchAppFromApiKey(apiKey, token)
 }
 
 export async function createApp(orgId: string, app: App): Promise<OrganizationApp> {
