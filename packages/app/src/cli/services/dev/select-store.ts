@@ -10,14 +10,12 @@ const CreateStoreLink = (orgId: string) => {
 
 /**
  * Select store from list or
- * If an envStore is provided, we check if it is valid and return it. If it's not valid, throw error
  * If a cachedStoreName is provided, we check if it is valid and return it. If it's not valid, ignore it.
  * If there are no stores, show a link to create a store and prompt the user to refresh the store list
  * If no store is finally selected, exit process
  * @param stores {OrganizationStore[]} List of available stores
  * @param orgId {string} Current organization ID
  * @param cachedStoreName {string} Cached store name
- * @param envStore {string} Store from the environment/flag
  * @returns {Promise<string>} The selected store
  */
 export async function selectStore(
@@ -43,10 +41,9 @@ export async function selectStore(
 }
 
 /**
- *  Check if the provided storeDomain exists in the list of retrieved stores
- * @param stores {OrganizationStore[]} List of remote available stores
+ * Check if the provided storeDomain exists
  * @param storeDomain {string} Store domain to check
- * @returns {OrganizationStore} The store if it exists, undefined otherwise
+ * @returns {boolean} Whether the store exists or not
  */
 export async function validateStore(storeDomain?: string): Promise<boolean> {
   const res = await http.fetch(`https://${storeDomain}/admin`, {method: 'HEAD'})

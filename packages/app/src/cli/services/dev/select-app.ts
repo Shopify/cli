@@ -6,7 +6,6 @@ import {OrganizationApp} from '$cli/models/organization'
 
 /**
  * Select an app from env, list or create a new one:
- * If an envApiKey is provided, we check if it is valid and return it. If it's not valid, throw error
  * If a cachedAppId is provided, we check if it is valid and return it. If it's not valid, ignore it.
  * If there is no valid app yet, prompt the user to select one from the list or create a new one.
  * If no apps exists, we automatically prompt the user to create a new one.
@@ -14,7 +13,6 @@ import {OrganizationApp} from '$cli/models/organization'
  * @param apps {OrganizationApp[]} List of remote available apps
  * @param orgId {string} Current Organization
  * @param cachedAppId {string} Cached app apikey
- * @param envApiKey {string} API key from the environment/flag
  * @returns {Promise<OrganizationApp>} The selected (or created) app
  */
 export async function selectOrCreateApp(
@@ -37,7 +35,6 @@ export async function selectOrCreateApp(
 
 /**
  * Check if the provided apiKey corresponds to an existing app (in any org the user belongs to)
- * @param apps {OrganizationApp[]} List of remote available apps
  * @param apiKey {string} API key to check
  * @returns {OrganizationApp} The app if it exists, undefined otherwise
  */

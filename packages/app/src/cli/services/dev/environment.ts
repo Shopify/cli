@@ -70,7 +70,7 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
 
 /**
  * Any data sent via input flags takes precedence and needs to be validated.
- * If the input is invalid, we must throw an error and stop the execution.
+ * If any of the inputs is invalid, we must throw an error and stop the execution.
  * @param input
  * @returns
  */
