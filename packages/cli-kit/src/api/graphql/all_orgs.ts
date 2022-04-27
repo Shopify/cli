@@ -12,7 +12,7 @@ export interface AllOrganizationsQuerySchema {
 
 export const AllOrganizationsQuery = gql`
   {
-    organizations {
+    organizations(first: 200) {
       nodes {
         id
         businessName
