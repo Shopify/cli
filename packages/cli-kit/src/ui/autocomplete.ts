@@ -31,4 +31,16 @@ export class AutoComplete extends enquirer.AutoComplete {
     const color = this.styles.primary.bold
     return this.state.status === 'submitted' ? color('✔') : color('?')
   }
+
+  format() {
+    if (!this.focused) return this.input
+    if (this.options.multiple && this.state.submitted) {
+      return this.selected.map((ch) => this.styles.primary(ch.message)).join(', ')
+    }
+    if (this.state.submitted) {
+      this.value = this.input = this.focused.value
+      return this.styles.primary(this.focused.name)
+    }
+    return this.input
+  }
 }
