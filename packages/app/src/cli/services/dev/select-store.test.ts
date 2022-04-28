@@ -44,11 +44,11 @@ beforeEach(() => {
 describe('selectStore', async () => {
   it('returns store if cachedStoreName and is valid', async () => {
     // Given
-    const cachedDomain = STORE1.shopDomain
+    const fqdn = STORE1.shopDomain
     vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1', cachedDomain)
+    const got = await selectStore([STORE1, STORE2], '1', fqdn)
 
     // Then
     expect(got).toEqual(STORE1.shopDomain)
@@ -69,12 +69,12 @@ describe('selectStore', async () => {
 
   it('prompts user to select if cachedApiKey is invalid', async () => {
     // Given
-    const cachedDomain = 'invalid'
+    const fqdn = 'invalid'
     vi.mocked(http.fetch).mockResolvedValue({status: 404} as any)
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1', cachedDomain)
+    const got = await selectStore([STORE1, STORE2], '1', fqdn)
 
     // Then
     expect(got).toEqual(STORE1.shopDomain)
