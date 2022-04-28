@@ -86,6 +86,7 @@
       "app": {
         "description": "Build Shopify apps"
       }
-    }
+    },
+    "additionalHelpFlags": ["-h"]
   }
 }

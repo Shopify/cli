@@ -64,6 +64,7 @@
   ],
   "oclif": {
     "bin": "create-app",
-    "commands": "./dist/commands"
+    "commands": "./dist/commands",
+    "additionalHelpFlags": ["-h"]
   }
 }
