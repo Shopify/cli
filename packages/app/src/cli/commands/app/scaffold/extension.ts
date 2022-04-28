@@ -36,7 +36,7 @@ export default class AppScaffoldExtension extends Command {
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const parentApp: App = await loadApp(directory)
+    const app: App = await loadApp(directory)
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
       name: flags.name,
@@ -44,7 +44,7 @@ export default class AppScaffoldExtension extends Command {
     const {extensionType, name} = promptAnswers
     await scaffoldExtensionService({
       ...promptAnswers,
-      parentApp,
+      app,
     })
     output.info(output.content`Extension ${name} generated successfully!`)
   }

@@ -46,7 +46,7 @@ interface ExtensionsType {
   types: [string, ...string[]]
 }
 export const extensions: ExtensionsType = {
-  types: ['theme_extension', 'product_subscription', 'checkout_post_purchase'],
+  types: ['theme', 'product_subscription', 'checkout_post_purchase'],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
