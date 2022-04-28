@@ -1,5 +1,11 @@
 # @shopify/cli-hydrogen
 
+## 2.0.0
+
+### Major Changes
+
+- Version 2.0.0
+
 ## 1.1.1
 
 ### Patch Changes

@@ -1,0 +1,13 @@
+diff --git a/node_modules/rollup-plugin-esbuild/dist/index.js b/node_modules/rollup-plugin-esbuild/dist/index.js
+index 910d958..1491fa4 100644
+--- a/node_modules/rollup-plugin-esbuild/dist/index.js
++++ b/node_modules/rollup-plugin-esbuild/dist/index.js
+@@ -336,7 +336,7 @@ var src_default = (_a = {}) => {
+         target: defaultOptions.target || "es2017",
+         jsxFactory: defaultOptions.jsxFactory,
+         jsxFragment: defaultOptions.jsxFragment,
+-        sourcemap: sourceMap,
++        sourcemap: true,
+         sourcefile: id
+       }, esbuildOptions));
+       await warn(this, result.warnings);

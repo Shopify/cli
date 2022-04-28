@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
@@ -83,7 +83,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0"
+    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
   },
   "os": [
     "darwin",

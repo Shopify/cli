@@ -14,6 +14,7 @@ module.exports = {
     'contributors/testing-strategy',
     'contributors/eslint-rules',
     'contributors/troubleshooting',
+    'contributors/debugging',
     'contributors/release',
     {
       type: 'category',

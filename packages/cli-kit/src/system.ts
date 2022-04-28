@@ -66,26 +66,19 @@ interface ConcurrentExecCommand {
  * @param commands {ConcurrentExecCommand[]} Commands to execute.
  */
 export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise<void> => {
-  const abortController = new AbortController()
-  try {
-    await concurrentOutput(
-      commands.map((command) => {
-        return {
-          prefix: command.prefix,
-          action: async (stdout, stderr) => {
-            await exec(command.executable, command.args, {
-              stdout,
-              stderr,
-              cwd: command.cwd,
-              signal: abortController.signal,
-            })
-          },
-        }
-      }),
-    )
-  } catch (error: any) {
-    // We abort any running process
-    abortController.abort()
-    throw error
-  }
+  await concurrentOutput(
+    commands.map((command) => {
+      return {
+        prefix: command.prefix,
+        action: async (stdout, stderr, signal) => {
+          await exec(command.executable, command.args, {
+            stdout,
+            stderr,
+            cwd: command.cwd,
+            signal,
+          })
+        },
+      }
+    }),
+  )
 }

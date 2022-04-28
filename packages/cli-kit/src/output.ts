@@ -272,7 +272,7 @@ const message = (content: Message, level: LogLevel = 'info') => {
   }
 }
 
-interface OutputProcess {
+export interface OutputProcess {
   /** The prefix to include in the logs
    *   [vite] Output coming from Vite
    */
@@ -282,7 +282,7 @@ interface OutputProcess {
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
-  action: (stdout: Writable, stderr: Writable) => Promise<void>
+  action: (stdout: Writable, stderr: Writable, signal: AbortSignal) => Promise<void>
 }
 
 /**
@@ -292,6 +292,8 @@ interface OutputProcess {
  * @param processes {OutputProcess[]} A list of processes to run concurrently.
  */
 export async function concurrent(processes: OutputProcess[]) {
+  const abortController = new AbortController()
+
   const concurrentColors = [token.yellow, token.cyan, token.magenta, token.green]
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
@@ -301,29 +303,36 @@ export async function concurrent(processes: OutputProcess[]) {
     return color(`${prefix}:${' '.repeat(prefixColumnSize - prefix.length)}  `)
   }
 
-  await Promise.all(
-    processes.map(async (process, index) => {
-      const stdout = new Writable({
-        write(chunk, _encoding, next) {
-          const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-          for (const line of lines) {
-            info(content`${linePrefix(process.prefix, index)}${line}`)
-          }
-          next()
-        },
-      })
-      const stderr = new Writable({
-        write(chunk, _encoding, next) {
-          const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-          for (const line of lines) {
-            message(content`${linePrefix(process.prefix, index)}${colors.bold('ERROR')} ${line}`, 'error')
-          }
-          next()
-        },
-      })
-      await process.action(stdout, stderr)
-    }),
-  )
+  try {
+    await Promise.all(
+      processes.map(async (process, index) => {
+        const stdout = new Writable({
+          write(chunk, _encoding, next) {
+            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+            for (const line of lines) {
+              info(content`${linePrefix(process.prefix, index)}${line}`)
+            }
+            next()
+          },
+        })
+        const stderr = new Writable({
+          write(chunk, _encoding, next) {
+            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+            for (const line of lines) {
+              consoleLog('ERROR')
+              message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
+            }
+            next()
+          },
+        })
+        await process.action(stdout, stderr, abortController.signal)
+      }),
+    )
+  } catch (_error: any) {
+    // We abort any running process
+    abortController.abort()
+    throw _error
+  }
 }
 
 /**
