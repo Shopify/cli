@@ -44,7 +44,7 @@ describe('initialize a extension', () => {
     await extensionInit({
       name,
       extensionType,
-      parentApp: await loadApp(tmpDir),
+      app: await loadApp(tmpDir),
     })
   }
 
