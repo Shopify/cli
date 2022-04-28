@@ -27,6 +27,7 @@ async function dev(input: DevOptions) {
     app: {apiKey, apiSecretKeys},
     store,
   } = await ensureDevEnvironment(input)
+
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   let url = `http://localhost:${frontendPort}`
@@ -34,7 +35,7 @@ async function dev(input: DevOptions) {
   if (input.tunnel) url = await createTunnel({port: frontendPort})
   if (input.update) await updateURLs(apiKey, url)
 
-  const storeAppUrl = `${url}/api/auth?shop=${store.shopDomain}`
+  const storeAppUrl = `${url}/api/auth?shop=${store}`
 
   output.success(`Tunnel created`)
 

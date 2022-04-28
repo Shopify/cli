@@ -59,7 +59,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp('123', LOCAL_APP)
+    const got = await createApp('123', LOCAL_APP, 'token')
 
     // Then
     expect(got).toEqual(APP1)
@@ -73,7 +73,7 @@ describe('createApp', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: {}, userErrors: [{message: 'some-error'}]}})
 
     // When
-    const got = createApp('123', LOCAL_APP)
+    const got = createApp('123', LOCAL_APP, 'token')
 
     // Then
     expect(got).rejects.toThrow(`some-error`)
@@ -81,48 +81,25 @@ describe('createApp', () => {
 })
 
 describe('selectOrCreateApp', () => {
-  it('returns app if envApiKey is valid', async () => {
-    // Given
-    const envApiKey = APP2.apiKey
-
-    // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', 'key4', envApiKey)
-
-    // Then
-    expect(got).toEqual(APP2)
-    expect(selectAppPrompt).not.toHaveBeenCalled()
-  })
-
-  it('throws if envApiKey is invalid', async () => {
-    // Given
-    const envApiKey = 'invalid'
-
-    // When
-    const got = selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', 'key4', envApiKey)
-
-    // Then
-    expect(got).rejects.toThrowError(/Invalid API key/)
-    expect(selectAppPrompt).not.toHaveBeenCalled()
-  })
-
-  it('returns app if cachedApiKey is valid and there is no envApiKey', async () => {
+  it('returns app if cachedApiKey is valid', async () => {
     // Given
     const cachedApiKey = APP1.apiKey
+    vi.mocked(api.partners.request).mockResolvedValueOnce({app: APP1})
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', cachedApiKey)
+    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', 'token', cachedApiKey)
 
     // Then
     expect(got).toEqual(APP1)
     expect(selectAppPrompt).not.toHaveBeenCalled()
   })
 
-  it('prompts user to select if there is no envApiKey nor cachedApiKey', async () => {
+  it('prompts user to select if there is no cachedApiKey', async () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1')
+    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], 'token', '1')
 
     // Then
     expect(got).toEqual(APP1)
@@ -133,9 +110,10 @@ describe('selectOrCreateApp', () => {
     // Given
     const cachedApiKey = 'invalid'
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
+    vi.mocked(api.partners.request).mockResolvedValueOnce({app: null})
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', cachedApiKey)
+    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', 'token', cachedApiKey)
 
     // Then
     expect(got).toEqual(APP1)
@@ -157,7 +135,7 @@ describe('selectOrCreateApp', () => {
     }
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1')
+    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', 'token')
 
     // Then
     expect(got).toEqual(APP1)

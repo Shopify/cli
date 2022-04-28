@@ -1,6 +1,7 @@
 import {selectStore} from './select-store'
 import {fetchAppsAndStores} from './fetch'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {http} from '@shopify/cli-kit'
 import {Organization, OrganizationStore} from '$cli/models/organization'
 import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
@@ -33,48 +34,28 @@ beforeEach(() => {
       session: {
         ensureAuthenticatedPartners: async () => 'token',
       },
+      http: {
+        fetch: vi.fn(),
+      },
     }
   })
 })
 
 describe('selectStore', async () => {
-  it('returns store if envStore is valid', async () => {
+  it('returns store if cachedStoreName and is valid', async () => {
     // Given
-    const envShopDomain = STORE1.shopDomain
+    const fqdn = STORE1.shopDomain
+    vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1', 'cached', envShopDomain)
+    const got = await selectStore([STORE1, STORE2], '1', fqdn)
 
     // Then
-    expect(got).toEqual(STORE1)
+    expect(got).toEqual(STORE1.shopDomain)
     expect(selectStorePrompt).not.toHaveBeenCalled()
   })
 
-  it('throws if envStore is invalid', async () => {
-    // Given
-    const envShopDomain = 'invalid'
-
-    // When
-    const got = selectStore([STORE1, STORE2], '1', 'cached', envShopDomain)
-
-    // Then
-    expect(got).rejects.toThrowError(/Invalid Store/)
-    expect(selectStorePrompt).not.toHaveBeenCalled()
-  })
-
-  it('returns store if cachedStoreName is valid and envStore is null', async () => {
-    // Given
-    const cachedDomain = STORE1.shopDomain
-
-    // When
-    const got = await selectStore([STORE1, STORE2], '1', cachedDomain)
-
-    // Then
-    expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).not.toHaveBeenCalled()
-  })
-
-  it('prompts user to select if there is no envApiKey nor cachedApiKey', async () => {
+  it('prompts user to select if there is no cachedApiKey', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
@@ -82,20 +63,21 @@ describe('selectStore', async () => {
     const got = await selectStore([STORE1, STORE2], '1')
 
     // Then
-    expect(got).toEqual(STORE1)
+    expect(got).toEqual(STORE1.shopDomain)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
   it('prompts user to select if cachedApiKey is invalid', async () => {
     // Given
-    const cachedDomain = 'invalid'
+    const fqdn = 'invalid'
+    vi.mocked(http.fetch).mockResolvedValue({status: 404} as any)
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1', cachedDomain)
+    const got = await selectStore([STORE1, STORE2], '1', fqdn)
 
     // Then
-    expect(got).toEqual(STORE1)
+    expect(got).toEqual(STORE1.shopDomain)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 

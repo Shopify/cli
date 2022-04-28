@@ -1,11 +1,22 @@
 import {selectOrCreateApp} from './select-app'
-import {fetchAppsAndStores, fetchOrganizations} from './fetch'
-import {selectStore} from './select-store'
-import {output, session, store as conf} from '@shopify/cli-kit'
+import {fetchAppFromApiKey, fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {selectStore, validateStore} from './select-store'
+import {error, output, session, store as conf} from '@shopify/cli-kit'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
+import {OrganizationApp} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
+
+const InvalidApiKeyError = (apiKey: string) => {
+  return new error.Fatal(
+    `Invalid API key: ${apiKey}`,
+    'You can find the apiKey in the app settings in the Partner Dashboard.',
+  )
+}
+
+const InvalidStoreError = (storeFqdn: string) => {
+  return new error.Fatal(`Invalid Store: ${storeFqdn}`, 'Check that the provided Store is correct and try again.')
+}
 
 export interface DevEnvironmentInput {
   appManifest: App
@@ -15,9 +26,8 @@ export interface DevEnvironmentInput {
 }
 
 interface DevEnvironmentOutput {
-  org: Organization
   app: OrganizationApp
-  store: OrganizationStore
+  store: string
 }
 
 /**
@@ -36,22 +46,56 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
+  let {app: selectedApp, store: selectedStore} = await dataFromInput(input, token)
+  if (selectedApp && selectedStore) {
+    updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
+    conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
+    return {app: selectedApp, store: selectedStore}
+  }
 
   const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
-  const selectedApp = await selectOrCreateApp(input.appManifest, apps, orgId, cachedInfo?.appId, input.apiKey)
+  selectedApp = selectedApp || (await selectOrCreateApp(input.appManifest, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
-  updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
-  const selectedStore = await selectStore(stores, orgId, cachedInfo?.storeFqdn, input.store)
-  conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore.shopDomain})
 
-  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, selectedApp.title, selectedStore.shopName)
+  updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
+  selectedStore = selectedStore || (await selectStore(stores, orgId, cachedInfo?.storeFqdn))
+  conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
+
+  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
+    showReusedValues(organization.businessName, selectedApp.title, selectedStore)
   }
 
-  return {org: organization, app: selectedApp, store: selectedStore}
+  return {app: selectedApp, store: selectedStore}
+}
+
+/**
+ * Any data sent via input flags takes precedence and needs to be validated.
+ * If any of the inputs is invalid, we must throw an error and stop the execution.
+ * @param input
+ * @returns
+ */
+async function dataFromInput(
+  input: DevEnvironmentInput,
+  token: string,
+): Promise<{app?: OrganizationApp; store?: string}> {
+  let selectedApp: OrganizationApp | undefined
+  let selectedStore: string | undefined
+
+  if (input.apiKey) {
+    selectedApp = await fetchAppFromApiKey(input.apiKey, token)
+    if (!selectedApp) throw InvalidApiKeyError(input.apiKey)
+  }
+
+  if (input.store) {
+    const isValid = await validateStore(input.store)
+    if (!isValid) throw InvalidStoreError(input.store)
+    selectedStore = input.store
+  }
+
+  return {app: selectedApp, store: selectedStore}
 }
 
 /**
