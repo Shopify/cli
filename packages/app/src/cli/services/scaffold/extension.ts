@@ -28,7 +28,7 @@ interface ExtensionInitOptions {
   app: App
 }
 async function extensionInit({name, extensionType, app}: ExtensionInitOptions) {
-  if (extensionType === 'theme_extension') {
+  if (extensionType === 'theme') {
     await themeExtensionInit({name, extensionType, app})
   } else {
     await argoExtensionInit({name, extensionType, app})
