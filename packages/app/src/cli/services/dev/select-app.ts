@@ -1,5 +1,5 @@
 import {fetchAppFromApiKey} from './fetch'
-import {api, error, output, session} from '@shopify/cli-kit'
+import {api, error, output} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
 import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
 import {OrganizationApp} from '$cli/models/organization'
