@@ -13,3 +13,4 @@ Scenario: I scaffold a theme extension
   And I create an app named MyExtendedApp with yarn as dependency manager
   When I create a extension named MyExtension of type theme
   Then I have a extension named MyExtension of type theme
+  Then The extension named MyExtension contains the theme extension directories
