@@ -19,34 +19,24 @@ export async function selectOrCreateApp(
   localApp: App,
   apps: OrganizationApp[],
   orgId: string,
+  token: string,
   cachedApiKey?: string,
 ): Promise<OrganizationApp> {
   if (cachedApiKey) {
-    const cachedApp = await appFromApiKey(cachedApiKey)
+    const cachedApp = await fetchAppFromApiKey(cachedApiKey, token)
     if (cachedApp) return cachedApp
   }
 
   let app = await selectAppPrompt(apps)
-  if (!app) app = await createApp(orgId, localApp)
+  if (!app) app = await createApp(orgId, localApp, token)
 
   output.success(`Connected your project with ${app.title}`)
   return app
 }
 
-/**
- * Check if the provided apiKey corresponds to an existing app (in any org the user belongs to)
- * @param apiKey {string} API key to check
- * @returns {OrganizationApp} The app if it exists, undefined otherwise
- */
-export async function appFromApiKey(apiKey: string): Promise<OrganizationApp> {
-  const token = await session.ensureAuthenticatedPartners()
-  return fetchAppFromApiKey(apiKey, token)
-}
-
-export async function createApp(orgId: string, app: App): Promise<OrganizationApp> {
+export async function createApp(orgId: string, app: App, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.configuration.name)
   const type = await appTypePrompt()
-  const token = await session.ensureAuthenticatedPartners()
   const variables: api.graphql.CreateAppQueryVariables = {
     org: parseInt(orgId, 10),
     title: `${name}`,

@@ -1,5 +1,5 @@
-import {appFromApiKey, selectOrCreateApp} from './select-app'
-import {fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {selectOrCreateApp} from './select-app'
+import {fetchAppFromApiKey, fetchAppsAndStores, fetchOrganizations} from './fetch'
 import {selectStore, validateStore} from './select-store'
 import {error, output, session, store as conf} from '@shopify/cli-kit'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
@@ -8,11 +8,14 @@ import {OrganizationApp} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 const InvalidApiKeyError = (apiKey: string) => {
-  return new error.Fatal(`Invalid API key: ${apiKey}`, 'Check that the provided API KEY is correct and try again.')
+  return new error.Fatal(
+    `Invalid API key: ${apiKey}`,
+    'You can find the apiKey in the app settings in the Partner Dashboard.',
+  )
 }
 
-const InvalidStoreError = (apiKey: string) => {
-  return new error.Fatal(`Invalid Store domain: ${apiKey}`, 'Check that the provided Store is correct and try again.')
+const InvalidStoreError = (storeFqdn: string) => {
+  return new error.Fatal(`Invalid Store: ${storeFqdn}`, 'Check that the provided Store is correct and try again.')
 }
 
 export interface DevEnvironmentInput {
@@ -43,7 +46,7 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  let {app: selectedApp, store: selectedStore} = await dataFromInput(input)
+  let {app: selectedApp, store: selectedStore} = await dataFromInput(input, token)
   if (selectedApp && selectedStore) {
     updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
@@ -54,7 +57,7 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
 
-  selectedApp = selectedApp || (await selectOrCreateApp(input.appManifest, apps, orgId, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(input.appManifest, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
   updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
@@ -74,12 +77,15 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
  * @param input
  * @returns
  */
-async function dataFromInput(input: DevEnvironmentInput): Promise<{app?: OrganizationApp; store?: string}> {
+async function dataFromInput(
+  input: DevEnvironmentInput,
+  token: string,
+): Promise<{app?: OrganizationApp; store?: string}> {
   let selectedApp: OrganizationApp | undefined
   let selectedStore: string | undefined
 
   if (input.apiKey) {
-    selectedApp = await appFromApiKey(input.apiKey)
+    selectedApp = await fetchAppFromApiKey(input.apiKey, token)
     if (!selectedApp) throw InvalidApiKeyError(input.apiKey)
   }
 
