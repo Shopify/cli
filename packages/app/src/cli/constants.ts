@@ -1,7 +1,7 @@
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: 'shopify.extension.toml',
-  script: 'shopify.script.toml',
+  functions: 'shopify.function.toml',
   home: 'shopify.home.toml',
 }
 
@@ -21,9 +21,9 @@ export const blocks = {
     directoryName: 'extensions',
     configurationName: configurationFileNames.extension,
   },
-  scripts: {
-    directoryName: 'scripts',
-    configurationName: configurationFileNames.script,
+  functions: {
+    directoryName: 'functions',
+    configurationName: configurationFileNames.functions,
   },
   home: {
     directoryName: 'home',
@@ -40,13 +40,31 @@ export const genericConfigurationFileNames = {
   },
 }
 
+export const functionExtensions: ExtensionsType = {
+  types: [
+    'product_discount_type',
+    'order_discount_type',
+    'shipping_discount_type',
+    'payment_methods',
+    'shipping_rate_presenter',
+  ],
+}
+
+const appExtensions: ExtensionsType = {
+  types: ['product_subscription', 'checkout_post_purchase'],
+}
+
+const themeExtensions: ExtensionsType = {
+  types: ['theme'],
+}
+
 interface ExtensionsType {
   // Dependent code requires that extensions.types has at least 1 element.
   // Otherwise it will be typed as string[] which doesn't guarantee a first element.
   types: [string, ...string[]]
 }
 export const extensions: ExtensionsType = {
-  types: ['theme', 'product_subscription', 'checkout_post_purchase'],
+  types: [...themeExtensions.types, ...appExtensions.types, ...functionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]

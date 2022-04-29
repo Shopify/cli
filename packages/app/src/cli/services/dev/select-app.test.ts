@@ -9,7 +9,7 @@ const LOCAL_APP: App = {
   directory: '',
   packageManager: 'yarn',
   configuration: {name: 'my-app', scopes: 'read_products'},
-  scripts: [],
+  functions: [],
   homes: [
     {
       directory: '',
