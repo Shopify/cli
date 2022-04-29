@@ -260,3 +260,7 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
     storefront: apiScopes('storefront-renderer', storefrontScopes),
   }
 }
+
+export function logout() {
+  return secureStore.remove()
+}
