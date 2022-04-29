@@ -1,7 +1,8 @@
 import {lookupTunnelPlugin} from './plugins'
+import {mkdir, mkTmpDir, rmdir, write} from './file'
+import {join} from './path'
 import {describe, expect, it} from 'vitest'
 import {Plugin} from '@oclif/core/lib/interfaces'
-import {file, path} from '@shopify/cli-kit'
 
 describe('lookupTunnelPlugin', () => {
   it('returns undefined when there are no tunnel plugins ', async () => {
@@ -30,16 +31,13 @@ describe('lookupTunnelPlugin', () => {
 
   it('returns the tunnel module when the ngrok plugin is present', async () => {
     // Given
-    const tmpDir = await file.mkTmpDir()
-    const distDir = path.join(tmpDir, 'dist')
-    await file.mkdir(distDir)
-    const tunnelFile = path.join(distDir, 'tunnel.js')
-    await file.write(
-      tunnelFile,
-      'export async function start(options) { return Promise.resolve(options.port.toString()) }',
-    )
+    const tmpDir = await mkTmpDir()
+    const distDir = join(tmpDir, 'dist')
+    await mkdir(distDir)
+    const tunnelFile = join(distDir, 'tunnel.js')
+    await write(tunnelFile, 'export async function start(options) { return Promise.resolve(options.port.toString()) }')
 
-    const root = path.join(process.cwd(), tmpDir)
+    const root = join(process.cwd(), tmpDir)
     const ngrokPluginMock = {name: '@shopify/plugin-ngrok', root} as Plugin
     const plugins: Plugin[] = [ngrokPluginMock]
 
@@ -48,6 +46,6 @@ describe('lookupTunnelPlugin', () => {
 
     // Then
     await expect(got?.start({port: 3000})).resolves.toBe('3000')
-    await file.rmdir(tmpDir)
+    await rmdir(tmpDir)
   })
 })
