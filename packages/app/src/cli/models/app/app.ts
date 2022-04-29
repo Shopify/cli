@@ -28,14 +28,14 @@ const ExtensionConfigurationSchema = schema.define.object({
 
 type ExtensionConfiguration = schema.define.infer<typeof ExtensionConfigurationSchema>
 
-const ScriptConfigurationSchema = schema.define.object({
+const FunctionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
 })
 
-type ScriptConfiguration = schema.define.infer<typeof ScriptConfigurationSchema>
+type FunctionConfiguration = schema.define.infer<typeof FunctionConfigurationSchema>
 
-interface Script {
-  configuration: ScriptConfiguration
+interface AppFunction {
+  configuration: FunctionConfiguration
   directory: string
 }
 
@@ -73,7 +73,7 @@ export interface App {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
-  scripts: Script[]
+  functions: AppFunction[]
   homes: Home[]
   extensions: Extension[]
 }
@@ -91,7 +91,7 @@ export async function load(directory: string): Promise<App> {
   }
   const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath)
   const appDirectory = path.dirname(configurationPath)
-  const scripts = await loadScripts(appDirectory)
+  const functions = await loadFunctions(appDirectory)
   const extensions = await loadExtensions(appDirectory)
   const yarnLockPath = path.join(appDirectory, genericConfigurationFileNames.yarn.lockfile)
   const yarnLockExists = await file.exists(yarnLockPath)
@@ -110,7 +110,7 @@ export async function load(directory: string): Promise<App> {
     directory: appDirectory,
     homes: await loadHomes(appDirectory),
     configuration,
-    scripts,
+    functions,
     extensions,
     packageManager,
   }
@@ -172,15 +172,15 @@ async function loadExtension(directory: string): Promise<Extension> {
   }
 }
 
-async function loadScripts(rootDirectory: string): Promise<Script[]> {
-  const scriptsPath = path.join(rootDirectory, `${blocks.scripts.directoryName}/*`)
-  const directories = await path.glob(scriptsPath, {onlyDirectories: true})
-  return Promise.all(directories.map((directory) => loadScript(directory)))
+async function loadFunctions(rootDirectory: string): Promise<AppFunction[]> {
+  const functionsPath = path.join(rootDirectory, `${blocks.functions.directoryName}/*`)
+  const directories = await path.glob(functionsPath, {onlyDirectories: true})
+  return Promise.all(directories.map((directory) => loadFunction(directory)))
 }
 
-async function loadScript(directory: string): Promise<Script> {
-  const configurationPath = path.join(directory, blocks.scripts.configurationName)
-  const configuration = await parseConfigurationFile(ScriptConfigurationSchema, configurationPath)
+async function loadFunction(directory: string): Promise<AppFunction> {
+  const configurationPath = path.join(directory, blocks.functions.configurationName)
+  const configuration = await parseConfigurationFile(FunctionConfigurationSchema, configurationPath)
 
   return {directory, configuration}
 }

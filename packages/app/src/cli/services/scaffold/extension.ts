@@ -1,6 +1,6 @@
 import {error, file, output, path, string, template} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
-import {blocks, ExtensionTypes} from '$cli/constants'
+import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
 import {App} from '$cli/models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -30,6 +30,8 @@ interface ExtensionInitOptions {
 async function extensionInit({name, extensionType, app}: ExtensionInitOptions) {
   if (extensionType === 'theme') {
     await themeExtensionInit({name, extensionType, app})
+  } else if (functionExtensions.types.includes(extensionType)) {
+    // Do soemething
   } else {
     await argoExtensionInit({name, extensionType, app})
   }
