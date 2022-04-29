@@ -1,4 +1,4 @@
-import {lookupTunnelPlugin} from './plugin-manager'
+import {lookupTunnelPlugin} from './plugins'
 import {describe, expect, it} from 'vitest'
 import {Plugin} from '@oclif/core/lib/interfaces'
 import {file, path} from '@shopify/cli-kit'

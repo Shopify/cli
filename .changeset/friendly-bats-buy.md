@@ -2,4 +2,4 @@
 '@shopify/cli': minor
 ---
 
-Use ngrok plugin from dev command if present
+Use ngrok from plugin with --tunnel flag

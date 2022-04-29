@@ -1,8 +1,7 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
-import {lookupTunnelPlugin} from './dev/plugin-manager'
 import {App, AppConfiguration, Home, HomeType} from '../models/app/app'
-import {output, port, system} from '@shopify/cli-kit'
+import {output, port, system, plugins} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 interface DevOptions {
@@ -35,8 +34,8 @@ async function dev(input: DevOptions) {
   let url = `http://localhost:${frontendPort}`
 
   if (input.tunnel) {
-    const tunnelPlugin = await lookupTunnelPlugin(input.plugins)
-    if (tunnelPlugin) url = await tunnelPlugin.start({port: 3000})
+    const tunnelPlugin = await plugins.lookupTunnelPlugin(input.plugins)
+    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
   }
   if (input.update) await updateURLs(apiKey, url)
 
