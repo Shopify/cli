@@ -34,7 +34,7 @@ const FunctionConfigurationSchema = schema.define.object({
 
 type FunctionConfiguration = schema.define.infer<typeof FunctionConfigurationSchema>
 
-interface Function {
+interface AppFunction {
   configuration: FunctionConfiguration
   directory: string
 }
@@ -73,7 +73,7 @@ export interface App {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
-  functions: Function[]
+  functions: AppFunction[]
   homes: Home[]
   extensions: Extension[]
 }
@@ -172,13 +172,13 @@ async function loadExtension(directory: string): Promise<Extension> {
   }
 }
 
-async function loadFunctions(rootDirectory: string): Promise<Function[]> {
+async function loadFunctions(rootDirectory: string): Promise<AppFunction[]> {
   const functionsPath = path.join(rootDirectory, `${blocks.functions.directoryName}/*`)
   const directories = await path.glob(functionsPath, {onlyDirectories: true})
   return Promise.all(directories.map((directory) => loadFunction(directory)))
 }
 
-async function loadFunction(directory: string): Promise<Function> {
+async function loadFunction(directory: string): Promise<AppFunction> {
   const configurationPath = path.join(directory, blocks.functions.configurationName)
   const configuration = await parseConfigurationFile(FunctionConfigurationSchema, configurationPath)
 

@@ -32,7 +32,6 @@ async function extensionInit({name, extensionType, app}: ExtensionInitOptions) {
     await themeExtensionInit({name, extensionType, app})
   } else if (functionExtensions.types.includes(extensionType)) {
     // Do soemething
-    console.log('DOWNLOAD TEMPLATE')
   } else {
     await argoExtensionInit({name, extensionType, app})
   }
