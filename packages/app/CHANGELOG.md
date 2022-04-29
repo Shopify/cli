@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 2.0.1
+
+### Patch Changes
+
+- 9cb99f12: Add new UI selection type: autocomplete
+- 651ecb0f: Add support for scaffolding theme extensions
+- 882e54e6: Improve validation of --api-key and --store flags for dev
+- Updated dependencies [9cb99f12]
+- Updated dependencies [882e54e6]
+  - @shopify/cli-kit@2.0.1
+
 ## 1.1.1
 
 ### Patch Changes
