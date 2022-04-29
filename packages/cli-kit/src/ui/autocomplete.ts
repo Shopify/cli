@@ -38,7 +38,8 @@ export class AutoComplete extends enquirer.AutoComplete {
       return this.selected.map((ch) => this.styles.primary(ch.message)).join(', ')
     }
     if (this.state.submitted) {
-      this.value = this.input = this.focused.value
+      this.value = this.focused.value
+      this.input = this.focused.value
       return this.styles.primary(this.focused.name)
     }
     return this.input
