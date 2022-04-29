@@ -1,8 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
-import {downloadTemplate} from '../utils/template'
-import {constants, template, string, path, file, output, os, ui, npm, dependency} from '@shopify/cli-kit'
+import {constants, template, string, path, file, output, os, ui, npm, dependency, git} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -43,9 +42,9 @@ async function init(options: InitOptions) {
         {
           title: 'Downloading template',
           task: async (_, task) => {
-            await downloadTemplate({
-              templateUrl: [GIT_HOST, options.template].join(':'),
-              into: templateDownloadDir,
+            await git.downloadRepository({
+              repoUrl: [GIT_HOST, options.template].join(':'),
+              destination: templateDownloadDir,
             })
             task.title = 'Template downloaded'
           },
