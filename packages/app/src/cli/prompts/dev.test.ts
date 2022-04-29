@@ -56,7 +56,7 @@ describe('selectOrganization', () => {
     expect(got).toEqual(ORG1)
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'select',
+        type: 'autocomplete',
         name: 'id',
         message: 'Which org would you like to work in?',
         choices: [
@@ -105,7 +105,7 @@ describe('selectApp', () => {
     expect(got).toEqual(undefined)
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'select',
+        type: 'autocomplete',
         name: 'apiKey',
         message: 'Which existing app would you like to connect this work to?',
         choices: [
@@ -129,7 +129,7 @@ describe('selectApp', () => {
     expect(got).toEqual(APP2)
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'select',
+        type: 'autocomplete',
         name: 'apiKey',
         message: 'Which existing app would you like to connect this work to?',
         choices: [
@@ -181,7 +181,7 @@ describe('selectStore', () => {
     expect(got).toEqual(STORE2)
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'select',
+        type: 'autocomplete',
         name: 'id',
         message: 'Which development store would you like to use to view your project?',
         choices: [

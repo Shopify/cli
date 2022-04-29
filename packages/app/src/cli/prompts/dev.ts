@@ -7,7 +7,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   }
   const orgList = organizations.map((org) => ({name: org.businessName, value: org.id}))
   const questions: ui.Question = {
-    type: 'select',
+    type: 'autocomplete',
     name: 'id',
     message: 'Which org would you like to work in?',
     choices: orgList,
@@ -22,7 +22,7 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
   const createOption = {name: 'Create a new app', value: 'create'}
   appList.push(createOption)
   const questions: ui.Question = {
-    type: 'select',
+    type: 'autocomplete',
     name: 'apiKey',
     message: 'Which existing app would you like to connect this work to?',
     choices: appList,
@@ -40,7 +40,7 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))
 
   const questions: ui.Question = {
-    type: 'select',
+    type: 'autocomplete',
     name: 'id',
     message: 'Which development store would you like to use to view your project?',
     choices: storeList,

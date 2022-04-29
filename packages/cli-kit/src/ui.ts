@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+import {AutoComplete} from './ui/autocomplete'
 import {Input} from './ui/input'
 import {Select} from './ui/select'
 
@@ -7,7 +8,7 @@ export {Listr} from 'listr2'
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
 export interface Question {
-  type: 'input' | 'select'
+  type: 'input' | 'select' | 'autocomplete'
   name: string
   message: string
   validate?: (value: string) => string | boolean
@@ -31,6 +32,8 @@ function mapper(question: Question): any {
     return new Input(question)
   } else if (question.type === 'select') {
     return new Select(question)
+  } else if (question.type === 'autocomplete') {
+    return new AutoComplete(question)
   }
   return undefined
 }
