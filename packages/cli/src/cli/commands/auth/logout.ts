@@ -1,5 +1,5 @@
-import {Command, Flags} from '@oclif/core'
-import {output, path, session, ui} from '@shopify/cli-kit'
+import {Command} from '@oclif/core'
+import {output, session} from '@shopify/cli-kit'
 
 export default class Logout extends Command {
   static description = 'Logout from Shopify'
