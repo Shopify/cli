@@ -70,7 +70,7 @@
     "fast-glob": "^3.2.11",
     "fs-extra": "^10.0.0",
     "get-port": "^5.1.1",
-    "inquirer": "^8.2.2",
+    "inquirer": "^8.2.4",
     "mime": "^3.0.0",
     "minimist": "^1.2.6",
     "playwright-chromium": "^1.20.1",
