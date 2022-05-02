@@ -46,18 +46,17 @@ async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptio
 }
 
 async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
-  const hyphenizedName = string.hyphenize(name)
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const stdin = yaml.encode({
     extensions: [
       {
-        title: hyphenizedName,
+        title: name,
         // Use the new templates
         type: `${extensionType}_next`,
         metafields: [],
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: hyphenizedName,
+          root_dir: '.',
         },
       },
     ],
