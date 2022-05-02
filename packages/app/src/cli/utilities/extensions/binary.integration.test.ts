@@ -32,4 +32,4 @@ it('downloads, validates, and untars the binary', async () => {
     // Then
     await expect(file.exists(binaryPath)).resolves.toEqual(true)
   })
-})
+}, 30 * 1000)
