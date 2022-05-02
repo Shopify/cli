@@ -3,6 +3,9 @@ import {useExtensionsCLISources} from '../../environment'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 
+let building = false
+let built = false
+
 const NodeExtensionsCLINotFoundError = () => {
   return new error.Bug(`Couldn't find the shopify-cli-extensions Node binary`)
 }
@@ -20,13 +23,24 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
       environment.local.homeDirectory(),
       'src/github.com/shopify/shopify-cli-extensions',
     )
+    options.stdout.write(`Using extensions CLI from ${projectDirectory}`)
     try {
-      await system.exec('make', ['build'], {
-        ...options,
-        stdout: undefined,
-        stderr: undefined,
-        cwd: projectDirectory,
-      })
+      if (building) {
+        while (!built) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      } else {
+        building = true
+        options.stdout.write('Building extensions CLI...')
+        await system.exec('make', ['build'], {
+          ...options,
+          stdout: undefined,
+          stderr: undefined,
+          cwd: projectDirectory,
+        })
+        built = true
+        options.stdout.write('Built extensions CLI successfully!')
+      }
       await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
     } catch {
       throw new error.AbortSilent()
