@@ -1,4 +1,4 @@
-import {error, file, output, path, string, template} from '@shopify/cli-kit'
+import {error, file, git, output, path, string, template, ui} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
 import {App} from '$cli/models/app/app'
@@ -26,23 +26,32 @@ interface ExtensionInitOptions {
   name: string
   extensionType: ExtensionTypes
   app: App
+  cloneUrl: string
+  language: string
 }
-async function extensionInit({name, extensionType, app}: ExtensionInitOptions) {
-  if (extensionType === 'theme') {
-    await themeExtensionInit({name, extensionType, app})
-  } else if (functionExtensions.types.includes(extensionType)) {
-    // Do soemething
+
+interface ExtensionLocalTemplateOptions {
+  name: string
+  extensionType: ExtensionTypes
+  app: App
+}
+
+async function extensionInit(options: ExtensionInitOptions) {
+  if (options.extensionType === 'theme') {
+    await themeExtensionInit(options)
+  } else if (functionExtensions.types.includes(options.extensionType)) {
+    await functionExtensionInit(options)
   } else {
-    await argoExtensionInit({name, extensionType, app})
+    await argoExtensionInit(options)
   }
 }
-async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptions) {
+async function themeExtensionInit({name, app, extensionType}: ExtensionLocalTemplateOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const templatePath = await getTemplatePath('theme-extension')
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
+async function argoExtensionInit({name, extensionType, app}: ExtensionLocalTemplateOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   await Promise.all(
     [
@@ -61,7 +70,44 @@ async function argoExtensionInit({name, extensionType, app}: ExtensionInitOption
   )
 }
 
-async function ensureExtensionDirectoryExists({name, app}: Omit<ExtensionInitOptions, 'extensionType'>) {
+async function functionExtensionInit(options: ExtensionInitOptions) {
+  const extensionDirectory = await ensureExtensionDirectoryExists(options)
+  await file.inTemporaryDirectory(async (tmpDir) => {
+    const templateDownloadDir = path.join(tmpDir, 'download')
+
+    const list = new ui.Listr([
+      {
+        title: 'Scaffolding extension',
+        task: async () => {
+          await file.mkdir(templateDownloadDir)
+          await git.downloadRepository({repoUrl: options.cloneUrl, destination: templateDownloadDir})
+          const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+          template.recursiveDirectoryCopy(origin, extensionDirectory, {})
+        },
+      },
+    ])
+    await list.run()
+  })
+}
+
+function functionTemplatePath({extensionType, language}: ExtensionInitOptions): string {
+  switch (extensionType) {
+    case 'product_discount_type':
+      return `discounts/${language}/product-discount-type/default`
+    case 'order_discount_type':
+      return `discounts/${language}/order-discount-type/default`
+    case 'shipping_discount_type':
+      return `discounts/${language}/shipping-discount-type/default`
+    case 'payment_methods':
+      return `checkout/${language}/payment-methods/default`
+    case 'shipping_rate_presenter':
+      return `checkout/${language}/shipping-rate-presenter/default`
+    default:
+      throw new error.Fatal('Invalid extension type')
+  }
+}
+
+async function ensureExtensionDirectoryExists({name, app}: {name: string; app: App}) {
   const hyphenizedName = string.hyphenize(name)
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {

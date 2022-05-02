@@ -29,6 +29,23 @@ export default class AppScaffoldExtension extends Command {
       description: 'the path to your app directory',
       env: 'SHOPIFY_FLAG_PATH',
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'clone-url': Flags.string({
+      hidden: true,
+      char: 'u',
+      description:
+        'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/scripts-apis-examples',
+      env: 'SHOPIFY_FLAG_CLONE_URL',
+      default: 'https://github.com/Shopify/scripts-apis-examples',
+    }),
+    language: Flags.string({
+      hidden: true,
+      char: 'l',
+      options: ['wasm', 'rust', 'typescript'],
+      description: 'Language of the template',
+      env: 'SHOPIFY_FLAG_LANGUAGE',
+      default: 'wasm',
+    }),
   }
 
   static args = [{name: 'file'}]
@@ -45,6 +62,8 @@ export default class AppScaffoldExtension extends Command {
     await scaffoldExtensionService({
       ...promptAnswers,
       app,
+      cloneUrl: flags['clone-url'],
+      language: flags.language,
     })
     output.info(output.content`Extension ${name} generated successfully!`)
   }
