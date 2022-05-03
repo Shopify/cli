@@ -1333,13 +1333,6 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nrwl/cli@14.0.2":
-  version "14.0.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-14.0.2.tgz#e16dd7ca3fad98455207c75ff6e91147ff31417a"
-  integrity sha512-Mzs2fys/LRV6dhZmBe9ZirNc/93lTaXH3YDNtnfJCYRLUXxQCN/67HdP8eCORgTQ9odR7NJd+2pMUai7sla/0g==
-  dependencies:
-    nx "14.0.2"
-
 "@nrwl/cli@14.0.5":
   version "14.0.5"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-14.0.5.tgz#084b77f127ba13d3c32eed3e739720dde5309848"
@@ -1415,13 +1408,6 @@
     "@phenomnomnominal/tsquery" "4.1.1"
     tmp "~0.2.1"
     tslib "^2.3.0"
-
-"@nrwl/tao@14.0.2":
-  version "14.0.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-14.0.2.tgz#18a2b2048ac6c7ecbae373b1d5ece327ae5141bc"
-  integrity sha512-KMGNB1FKOQ+AwEJD5Nqg/NX0kUtexdj2+cEHJin8th3i/ZD9hnaLHU3AlErGR1RfD++l3pGJC3x2z6iKfPmfUA==
-  dependencies:
-    nx "14.0.2"
 
 "@nrwl/tao@14.0.5", "@nrwl/tao@^14.0.1":
   version "14.0.5"
@@ -1908,7 +1894,7 @@
   resolved "https://registry.yarnpkg.com/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.2.174.tgz#8efcb2bce3727a91874b88aa5be003da6445db8b"
   integrity sha512-9aFcbPTFA5jtiTQbOsq+/QN29F/YNpOrhcwsUa2Haqq0+2h71rMiBn7oluUERFQ+/se9J0C00iSC0QXif4pfuQ==
 
-"@swc/core@^1.2.119", "@swc/core@^1.2.152", "@swc/core@^1.2.173":
+"@swc/core@^1.2.119", "@swc/core@^1.2.173":
   version "1.2.174"
   resolved "https://registry.yarnpkg.com/@swc/core/-/core-1.2.174.tgz#fbc5d65d37be66591c7de94c7db9b2da16c2e471"
   integrity sha512-PbBwwaqrBCyOae+hZV9QK+QeR1azqb+MGKvuk6SVxsk3Rvh1HSX4CieMnuhcmX+Sm4L58eQv9l37ZLCu2hBZcA==
@@ -5125,13 +5111,21 @@ fast-safe-stringify@^2.0.8:
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz#c406a83b6e70d9e35ce3b30a81141df30aeba884"
   integrity sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==
 
-fastify-http-proxy@^6.2.2:
+"fastify-http-proxy-deprecated@npm:fastify-http-proxy@6.2.2":
   version "6.2.2"
   resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.2.2.tgz#ad4e1da273774c67f74d94ef3f7664fdfb7a04fa"
   integrity sha512-UiBdgfgHlMJXF1XaQF5F3am6SSirWu2QNMaEO5Qow23CfccaONXXLjIF9/CTj5tD6rA8DcUZddRhva1uVKOqcQ==
   dependencies:
     fastify-reply-from "^6.4.1"
     ws "^8.4.2"
+
+fastify-http-proxy@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.3.0.tgz#eb4d1d04cf5fd4671d6a4ad406ddb8f3739ac66c"
+  integrity sha512-1aazvPYORgTKEyxb0EiMfjtZ5LP0+x3fDDbjAhZXWEI6D8OAAi2B5+VBmnxMFLPoEhh2Hc5foJLOWltT6+ioTg==
+  dependencies:
+    fastify-http-proxy-deprecated "npm:fastify-http-proxy@6.2.2"
+    process-warning "^1.0.0"
 
 fastify-plugin@^3.0.0:
   version "3.0.1"
@@ -7746,45 +7740,6 @@ nwsapi@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
-
-nx@14.0.2:
-  version "14.0.2"
-  resolved "https://registry.yarnpkg.com/nx/-/nx-14.0.2.tgz#ed6ccf1f02644e1a96a5a6086af7f28c96a7d3cb"
-  integrity sha512-kJgxPctxKtXZ+LZbKzFSP2cdDIyHrfNWyPY29yhVxfSOn0SIMKXUHHAYMIioARXZ0IAdU4uZTRZMmn38yaEJJw==
-  dependencies:
-    "@nrwl/cli" "14.0.2"
-    "@nrwl/tao" "14.0.2"
-    "@parcel/watcher" "2.0.4"
-    "@swc-node/register" "^1.4.2"
-    "@swc/core" "^1.2.152"
-    chalk "4.1.0"
-    chokidar "^3.5.1"
-    cli-cursor "3.1.0"
-    cli-spinners "2.6.1"
-    cliui "^7.0.2"
-    dotenv "~10.0.0"
-    enquirer "~2.3.6"
-    fast-glob "3.2.7"
-    figures "3.2.0"
-    flat "^5.0.2"
-    fs-extra "^9.1.0"
-    glob "7.1.4"
-    ignore "^5.0.4"
-    jsonc-parser "3.0.0"
-    minimatch "3.0.4"
-    npm-run-path "^4.0.1"
-    open "^8.4.0"
-    rxjs "^6.5.4"
-    rxjs-for-await "0.0.2"
-    semver "7.3.4"
-    string-width "^4.2.3"
-    tar-stream "~2.2.0"
-    tmp "~0.2.1"
-    tsconfig-paths "^3.9.0"
-    tslib "^2.3.0"
-    v8-compile-cache "2.3.0"
-    yargs "^17.4.0"
-    yargs-parser "21.0.1"
 
 nx@14.0.5, nx@^14.0.5:
   version "14.0.5"
