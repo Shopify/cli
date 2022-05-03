@@ -80,7 +80,7 @@
     "liquidjs": "^9.36.0",
     "listr2": "^4.0.5",
     "md5-file": "^5.0.0",
-    "node-fetch": "^3.2.3",
+    "node-fetch": "^3.2.4",
     "pathe": "^0.2.0",
     "semver": "^7.3.6",
     "simple-git": "^3.5.0",
