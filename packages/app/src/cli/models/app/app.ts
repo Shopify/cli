@@ -85,10 +85,11 @@ interface AppLoaderConstructorArgs {
 
 class AppLoader {
   private directory: string
-  private appDirectory: string
+  private mode: AppLoaderMode
+  private appDirectory = ''
+  private configurationPath = ''
   private configurationPath: string
-  private mode: "strict" | "report"
-  private errors: object[]
+  private errors: string[] = []
 
   constructor({directory, mode}: AppLoaderConstructorArgs) {
     this.mode = mode
@@ -114,7 +115,7 @@ class AppLoader {
       packageManager = 'npm'
     }
 
-    let retval = {
+    const retval = {
       directory: this.appDirectory,
       homes: await this.loadHomes(),
       configuration,
@@ -184,10 +185,7 @@ class AppLoader {
 
     const parseResult = schema.safeParse(configurationObject)
     if (!parseResult.success) {
-      this.abortOrReport(
-        `Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`,
-        {}
-      )
+      this.abortOrReport(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`, {})
     }
     return parseResult.data
   }
@@ -223,7 +221,7 @@ class AppLoader {
   }
 
   abortOrReport(errorMessage: string, fallback: any = null) {
-    if (this.mode == "strict") {
+    if (this.mode === 'strict') {
       throw new error.Abort(errorMessage)
     } else {
       this.errors.push(errorMessage)
@@ -232,7 +230,7 @@ class AppLoader {
   }
 }
 
-export async function load(directory: string, mode?: string = "strict"): Promise<App> {
+export async function load(directory: string, mode? = 'strict'): Promise<App> {
   const loader = new AppLoader({directory, mode})
-  return await loader.loaded()
+  return loader.loaded()
 }
