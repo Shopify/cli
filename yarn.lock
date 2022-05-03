@@ -1757,23 +1757,15 @@
     unified "^8.4.0"
     unist-builder "^1.0.4"
 
-"@shopify/checkout-ui-extensions-react@^0.14.0":
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.14.0.tgz#efa4abef2f7e48c867b6f84866fe967af70d54d4"
-  integrity sha512-pSgUCYihG2eCk9iG6h2vXhU9DzZ9jEhA8+34eMJINxXKVuMxsfIXJ5/XP8nUx458mE/FACLNBLmrKKqQEF6QOg==
+"@shopify/checkout-ui-extensions-react@^0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.15.0.tgz#9d7f2416b958e217d6521553bc1afd665382813e"
+  integrity sha512-f+HwWUa3zxqddjY2jASMAJ29gQxs4irDBuXxtXsgOivz70LsI8l8pDx4fyLgEgwyCci4cUrDbjRlGIUwTWDvpQ==
   dependencies:
     "@remote-ui/async-subscription" "^2.1.7"
     "@remote-ui/react" "^4.3.0"
-    "@shopify/checkout-ui-extensions" "^0.14.0"
+    "@shopify/checkout-ui-extensions" "^0.15.0"
     "@types/react" ">=17.0.0 <18.0.0"
-
-"@shopify/checkout-ui-extensions@^0.14.0":
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.14.0.tgz#246f4323993c6acf9c351eb16ce46732886f890d"
-  integrity sha512-qNSv1UUmCRhliEH053Cp1iZYtqy06pMh0Nyh5duvuEvyocJn4EM8XgHpjXT2mPYgWo/p9WnvVkfQg7/6cSSfhA==
-  dependencies:
-    "@remote-ui/async-subscription" "^2.1.7"
-    "@remote-ui/core" "^2.1.6"
 
 "@shopify/checkout-ui-extensions@^0.15.0":
   version "0.15.0"
