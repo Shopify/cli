@@ -99,6 +99,7 @@ class AppLoader {
   }
 
   async loaded() {
+    this.errors = []
     this.appDirectory = await this.findAppDirectory()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, await this.getConfigurationPath())
     const functions = await this.loadFunctions()
@@ -124,7 +125,7 @@ class AppLoader {
       extensions,
       packageManager,
     }
-    if (this.errors) app.errors = this.errors
+    if (this.errors.length > 0) app.errors = this.errors
     return app
   }
 
