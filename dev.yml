@@ -52,7 +52,7 @@ commands:
     desc: 'Type-check the project'
     run: yarn run tsc:affected
   server:
-    depends-railgun: true
+    depends-isogun: true
     desc: Run docusaurus documentation local server
     run: yarn --cwd docs run start --no-open
   docs:
