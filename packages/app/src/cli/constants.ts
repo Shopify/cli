@@ -49,11 +49,11 @@ export const functionExtensions: ExtensionsType = {
   ],
 }
 
-const appExtensions: ExtensionsType = {
+export const uiExtensions: ExtensionsType = {
   types: ['product_subscription', 'checkout_post_purchase'],
 }
 
-const themeExtensions: ExtensionsType = {
+export const themeExtensions: ExtensionsType = {
   types: ['theme'],
 }
 
@@ -63,7 +63,7 @@ interface ExtensionsType {
   types: [string, ...string[]]
 }
 export const extensions: ExtensionsType = {
-  types: [...themeExtensions.types, ...appExtensions.types, ...functionExtensions.types],
+  types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
