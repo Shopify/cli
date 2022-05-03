@@ -4,7 +4,7 @@ import {file, path} from '@shopify/cli-kit'
 import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
 
 describe('load', () => {
-  type BlockType = 'extensions' | 'scripts'
+  type BlockType = 'extensions' | 'functions'
 
   let tmpDir: string
   const appConfiguration = `
@@ -233,74 +233,74 @@ scopes = "read_products"
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'scripts', name: 'my-script'})
+    makeBlockDir({blockType: 'functions', name: 'my-functions'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
-  it('throws an error if the script configuration file is invalid', async () => {
+  it('throws an error if the function configuration file is invalid', async () => {
     // Given
     const blockConfiguration = `
-      wrong = "my-script"
+      wrong = "my-function"
     `
     await writeBlockConfig({
-      blockType: 'scripts',
+      blockType: 'functions',
       blockConfiguration,
-      name: 'my-script',
+      name: 'my-function',
     })
 
     // When
     await expect(load(tmpDir)).rejects.toThrowError()
   })
 
-  it('loads the app when it has a script with a valid configuration', async () => {
+  it('loads the app when it has a functions with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      name = "my-script"
+      name = "my-function"
       `
     await writeBlockConfig({
-      blockType: 'scripts',
+      blockType: 'functions',
       blockConfiguration,
-      name: 'my-script',
+      name: 'my-functions',
     })
 
     // When
     const app = await load(tmpDir)
 
     // Then
-    expect(app.scripts[0].configuration.name).toBe('my-script')
+    expect(app.functions[0].configuration.name).toBe('my-function')
   })
 
-  it('loads the app with several scripts that have valid configurations', async () => {
+  it('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
     let blockConfiguration = `
-      name = "my-script-1"
+      name = "my-function-1"
       `
     await writeBlockConfig({
-      blockType: 'scripts',
+      blockType: 'functions',
       blockConfiguration,
-      name: 'my-script-1',
+      name: 'my-function-1',
     })
 
     blockConfiguration = `
-      name = "my-script-2"
+      name = "my-function-2"
       `
     await writeBlockConfig({
-      blockType: 'scripts',
+      blockType: 'functions',
       blockConfiguration,
-      name: 'my-script-2',
+      name: 'my-function-2',
     })
 
     // When
     const app = await load(tmpDir)
 
     // Then
-    expect(app.scripts).toHaveLength(2)
-    expect(app.scripts[0].configuration.name).toBe('my-script-1')
-    expect(app.scripts[1].configuration.name).toBe('my-script-2')
+    expect(app.functions).toHaveLength(2)
+    expect(app.functions[0].configuration.name).toBe('my-function-1')
+    expect(app.functions[1].configuration.name).toBe('my-function-2')
   })
 })
