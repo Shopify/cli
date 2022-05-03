@@ -100,7 +100,7 @@ export interface App {
     theme: ThemeExtension[]
     function: FunctionExtension[]
   }
-  errors: string[]
+  errors?: string[]
 }
 
 export type AppLoaderMode = 'strict' | 'report'
