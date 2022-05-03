@@ -31,6 +31,7 @@ describe('lookupTunnelPlugin', () => {
 
   it('returns the tunnel module when the ngrok plugin is present', async () => {
     // Given
+    // Using mkTmpDir instead of temporary.directory because the folder needs to be inside the project to be imported
     const tmpDir = await mkTmpDir()
     const distDir = join(tmpDir, 'dist')
     await mkdir(distDir)
