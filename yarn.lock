@@ -1333,13 +1333,6 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nrwl/cli@14.0.2":
-  version "14.0.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-14.0.2.tgz#e16dd7ca3fad98455207c75ff6e91147ff31417a"
-  integrity sha512-Mzs2fys/LRV6dhZmBe9ZirNc/93lTaXH3YDNtnfJCYRLUXxQCN/67HdP8eCORgTQ9odR7NJd+2pMUai7sla/0g==
-  dependencies:
-    nx "14.0.2"
-
 "@nrwl/cli@14.0.5":
   version "14.0.5"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-14.0.5.tgz#084b77f127ba13d3c32eed3e739720dde5309848"
@@ -1415,13 +1408,6 @@
     "@phenomnomnominal/tsquery" "4.1.1"
     tmp "~0.2.1"
     tslib "^2.3.0"
-
-"@nrwl/tao@14.0.2":
-  version "14.0.2"
-  resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-14.0.2.tgz#18a2b2048ac6c7ecbae373b1d5ece327ae5141bc"
-  integrity sha512-KMGNB1FKOQ+AwEJD5Nqg/NX0kUtexdj2+cEHJin8th3i/ZD9hnaLHU3AlErGR1RfD++l3pGJC3x2z6iKfPmfUA==
-  dependencies:
-    nx "14.0.2"
 
 "@nrwl/tao@14.0.5", "@nrwl/tao@^14.0.1":
   version "14.0.5"
@@ -1908,7 +1894,7 @@
   resolved "https://registry.yarnpkg.com/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.2.174.tgz#8efcb2bce3727a91874b88aa5be003da6445db8b"
   integrity sha512-9aFcbPTFA5jtiTQbOsq+/QN29F/YNpOrhcwsUa2Haqq0+2h71rMiBn7oluUERFQ+/se9J0C00iSC0QXif4pfuQ==
 
-"@swc/core@^1.2.119", "@swc/core@^1.2.152", "@swc/core@^1.2.173":
+"@swc/core@^1.2.119", "@swc/core@^1.2.173":
   version "1.2.174"
   resolved "https://registry.yarnpkg.com/@swc/core/-/core-1.2.174.tgz#fbc5d65d37be66591c7de94c7db9b2da16c2e471"
   integrity sha512-PbBwwaqrBCyOae+hZV9QK+QeR1azqb+MGKvuk6SVxsk3Rvh1HSX4CieMnuhcmX+Sm4L58eQv9l37ZLCu2hBZcA==
@@ -2210,10 +2196,10 @@
   resolved "https://registry.yarnpkg.com/@types/ms/-/ms-0.7.31.tgz#31b7ca6407128a3d2bbc27fe2d21b345397f6197"
   integrity sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==
 
-"@types/node@*", "@types/node@^17.0.30":
-  version "17.0.30"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.30.tgz#2c6e8512acac70815e8176aa30c38025067880ef"
-  integrity sha512-oNBIZjIqyHYP8VCNAV9uEytXVeXG2oR0w9lgAXro20eugRQfY002qr3CUl6BAe+Yf/z3CRjPdz27Pu6WWtuSRw==
+"@types/node@*", "@types/node@^17.0.31":
+  version "17.0.31"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.31.tgz#a5bb84ecfa27eec5e1c802c6bbf8139bdb163a5d"
+  integrity sha512-AR0x5HbXGqkEx9CadRH3EBYx/VkiUgZIhP4wvPn/+5KIsgpNoyFaRlVe0Zlx9gRtg8fA06a9tskE2MSN7TcG4Q==
 
 "@types/node@^12.7.1":
   version "12.20.49"
@@ -7746,45 +7732,6 @@ nwsapi@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
-
-nx@14.0.2:
-  version "14.0.2"
-  resolved "https://registry.yarnpkg.com/nx/-/nx-14.0.2.tgz#ed6ccf1f02644e1a96a5a6086af7f28c96a7d3cb"
-  integrity sha512-kJgxPctxKtXZ+LZbKzFSP2cdDIyHrfNWyPY29yhVxfSOn0SIMKXUHHAYMIioARXZ0IAdU4uZTRZMmn38yaEJJw==
-  dependencies:
-    "@nrwl/cli" "14.0.2"
-    "@nrwl/tao" "14.0.2"
-    "@parcel/watcher" "2.0.4"
-    "@swc-node/register" "^1.4.2"
-    "@swc/core" "^1.2.152"
-    chalk "4.1.0"
-    chokidar "^3.5.1"
-    cli-cursor "3.1.0"
-    cli-spinners "2.6.1"
-    cliui "^7.0.2"
-    dotenv "~10.0.0"
-    enquirer "~2.3.6"
-    fast-glob "3.2.7"
-    figures "3.2.0"
-    flat "^5.0.2"
-    fs-extra "^9.1.0"
-    glob "7.1.4"
-    ignore "^5.0.4"
-    jsonc-parser "3.0.0"
-    minimatch "3.0.4"
-    npm-run-path "^4.0.1"
-    open "^8.4.0"
-    rxjs "^6.5.4"
-    rxjs-for-await "0.0.2"
-    semver "7.3.4"
-    string-width "^4.2.3"
-    tar-stream "~2.2.0"
-    tmp "~0.2.1"
-    tsconfig-paths "^3.9.0"
-    tslib "^2.3.0"
-    v8-compile-cache "2.3.0"
-    yargs "^17.4.0"
-    yargs-parser "21.0.1"
 
 nx@14.0.5, nx@^14.0.5:
   version "14.0.5"
