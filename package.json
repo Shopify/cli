@@ -27,7 +27,7 @@
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.0",
     "@changesets/cli": "^2.22.0",
-    "nx": "^14.0.1",
+    "nx": "^14.0.5",
     "@nrwl/eslint-plugin-nx": "^14.0.5",
     "@nrwl/js": "^14.0.5",
     "@nrwl/tao": "^14.0.1",
