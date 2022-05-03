@@ -1744,6 +1744,14 @@
     "@remote-ui/async-subscription" "^2.1.7"
     "@remote-ui/core" "^2.1.6"
 
+"@shopify/checkout-ui-extensions@^0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.15.0.tgz#a21bd3a133bbf2927819eebe9cba5098d48bd5d8"
+  integrity sha512-qaD+zCyJ7GRGSaLIskvcC24Tugw8qM+CvtIQ1ykuttBndOg9s++k3fvbfsNEPKoQBv7brMA3HSyMJGEN197N7Q==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.7"
+    "@remote-ui/core" "^2.1.6"
+
 "@shopify/eslint-plugin@^41.2.0":
   version "41.2.1"
   resolved "https://registry.yarnpkg.com/@shopify/eslint-plugin/-/eslint-plugin-41.2.1.tgz#b3093bd1e79fe6f5a1fa8ffb06a29b09b88a0a86"
