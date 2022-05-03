@@ -1,5 +1,11 @@
 import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
-import {blocks, configurationFileNames, genericConfigurationFileNames, extensions} from '$cli/constants'
+import {
+  blocks,
+  configurationFileNames,
+  genericConfigurationFileNames,
+  extensions,
+  functionExtensions,
+} from '$cli/constants'
 
 export const HomeConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.home} in ${directory}`)
@@ -13,7 +19,7 @@ export const AppConfigurationSchema = schema.define.object({
 
 export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
-const ExtensionConfigurationSchema = schema.define.object({
+const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(extensions.types),
   metafields: schema.define
@@ -26,21 +32,35 @@ const ExtensionConfigurationSchema = schema.define.object({
     .default([]),
 })
 
-type ExtensionConfiguration = schema.define.infer<typeof ExtensionConfigurationSchema>
+type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
 
-const FunctionConfigurationSchema = schema.define.object({
+const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
+  type: schema.define.enum(functionExtensions.types),
+  title: schema.define.string(),
 })
 
-type FunctionConfiguration = schema.define.infer<typeof FunctionConfigurationSchema>
+type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
 
-interface AppFunction {
-  configuration: FunctionConfiguration
+const ThemeExtensionConfigurationSchema = schema.define.object({
+  name: schema.define.string(),
+  type: schema.define.enum(functionExtensions.types),
+})
+
+type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
+
+interface FunctionExtension {
+  configuration: FunctionExtensionConfiguration
   directory: string
 }
 
-export interface Extension {
-  configuration: ExtensionConfiguration
+interface ThemeExtension {
+  configuration: ThemeExtensionConfiguration
+  directory: string
+}
+
+export interface UIExtension {
+  configuration: UIExtensionConfiguration
   directory: string
   buildDirectory: string
   entrySourceFilePath: string
@@ -73,9 +93,12 @@ export interface App {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
-  functions: AppFunction[]
   homes: Home[]
-  extensions: Extension[]
+  extensions: {
+    ui: UIExtension[]
+    theme: ThemeExtension[]
+    function: FunctionExtension[]
+  }
 }
 
 export async function load(directory: string): Promise<App> {
@@ -110,8 +133,7 @@ export async function load(directory: string): Promise<App> {
     directory: appDirectory,
     homes: await loadHomes(appDirectory),
     configuration,
-    functions,
-    extensions,
+    extensions: {ui: extensions, theme: [], function: []},
     packageManager,
   }
 }
@@ -147,6 +169,7 @@ async function loadConfigurationFile(path: string): Promise<object> {
 }
 
 async function parseConfigurationFile(schema: any, path: string) {
+  if (!(await file.exists(path))) return undefined
   const configurationObject = await loadConfigurationFile(path)
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
@@ -155,32 +178,45 @@ async function parseConfigurationFile(schema: any, path: string) {
   return parseResult.data
 }
 
-async function loadExtensions(rootDirectory: string): Promise<Extension[]> {
+async function loadExtensions(rootDirectory: string): Promise<UIExtension[]> {
   const extensionsPath = path.join(rootDirectory, `${blocks.extensions.directoryName}/*`)
   const directories = await path.glob(extensionsPath, {onlyDirectories: true})
   return Promise.all(directories.map((directory) => loadExtension(directory)))
 }
 
-async function loadExtension(directory: string): Promise<Extension> {
-  const configurationPath = path.join(directory, blocks.extensions.configurationName)
-  const configuration = await parseConfigurationFile(ExtensionConfigurationSchema, configurationPath)
-  return {
-    directory,
-    configuration,
-    buildDirectory: path.join(directory, 'build'),
-    entrySourceFilePath: path.join(directory, 'src/index.js'),
+async function loadExtension(directory: string): Promise<UIExtension | ThemeExtension | FunctionExtension> {
+  const uiConfigurationPath = path.join(directory, blocks.extensions.configurationName.ui)
+  const functionConfiguationPath = path.join(directory, blocks.extensions.configurationName.function)
+  const themeConfigurationPath = path.join(directory, blocks.extensions.configurationName.theme)
+
+  let configuration: any
+  if (await file.exists(uiConfigurationPath)) {
+    const configuration = await parseConfigurationFile(UIExtensionConfigurationSchema, uiConfigurationPath)
+
+    return {
+      directory,
+      configuration,
+      buildDirectory: path.join(directory, 'build'),
+      entrySourceFilePath: path.join(directory, 'src/index.js'),
+    }
+  } else if (await file.exists(functionConfiguationPath)) {
+    configuration = await parseConfigurationFile(FunctionExtensionConfigurationSchema, functionConfiguationPath)
+  } else if (await file.exists(themeConfigurationPath)) {
+    configuration = await parseConfigurationFile(ThemeExtensionConfigurationSchema, themeConfigurationPath)
   }
+
+  return {directory, configuration}
 }
 
-async function loadFunctions(rootDirectory: string): Promise<AppFunction[]> {
-  const functionsPath = path.join(rootDirectory, `${blocks.functions.directoryName}/*`)
+async function loadFunctions(rootDirectory: string): Promise<FunctionExtension[]> {
+  const functionsPath = path.join(rootDirectory, `${blocks.extensions.directoryName}/*`)
   const directories = await path.glob(functionsPath, {onlyDirectories: true})
   return Promise.all(directories.map((directory) => loadFunction(directory)))
 }
 
-async function loadFunction(directory: string): Promise<AppFunction> {
-  const configurationPath = path.join(directory, blocks.functions.configurationName)
-  const configuration = await parseConfigurationFile(FunctionConfigurationSchema, configurationPath)
+async function loadFunction(directory: string): Promise<FunctionExtension> {
+  const configurationPath = path.join(directory, blocks.extensions.configurationName.function)
+  const configuration = await parseConfigurationFile(FunctionExtensionConfigurationSchema, configurationPath)
 
   return {directory, configuration}
 }

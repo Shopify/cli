@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
 import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
-import {Extension} from '$cli/models/app/app'
+import {UIExtension} from '$cli/models/app/app'
 
 interface ExtensionBuildOptions {
   /**
@@ -21,10 +21,10 @@ interface ExtensionBuildOptions {
 
 /**
  * It builds an extension.
- * @param extension {Extension} The extension to build.
+ * @param extension {UIExtension} The extension to build.
  * @param options {ExtensionBuildOptions} Build options.
  */
-export async function buildExtension(extension: Extension, options: ExtensionBuildOptions): Promise<void> {
+export async function buildExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Building extension...`)
   const stdin = yaml.encode(await extensionConfig(extension))
   await runGoExtensionsCLI(['build', '-'], {
@@ -39,10 +39,10 @@ export async function buildExtension(extension: Extension, options: ExtensionBui
  * The extensions' Go binary receives the build configuration through
  * standard input as a YAML-encoded object. This function returns the
  * Javascript object representing the configuration necessary for building.
- * @param extension {Extension} Extension that will be built.
+ * @param extension {UIExtension} Extension that will be built.
  * @returns
  */
-async function extensionConfig(extension: Extension): Promise<any> {
+async function extensionConfig(extension: UIExtension): Promise<any> {
   return {
     extensions: [
       {

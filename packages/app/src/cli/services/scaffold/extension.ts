@@ -55,7 +55,7 @@ async function argoExtensionInit({name, extensionType, app}: ExtensionLocalTempl
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   await Promise.all(
     [
-      {filename: 'config.toml', alias: blocks.extensions.configurationName},
+      {filename: 'config.toml', alias: blocks.extensions.configurationName.ui},
       {filename: `${extensionType}.jsx`, alias: 'index.js'},
     ].map((fileDetails) =>
       writeFromTemplate({

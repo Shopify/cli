@@ -1,7 +1,10 @@
 export const configurationFileNames = {
   app: 'shopify.app.toml',
-  extension: 'shopify.extension.toml',
-  functions: 'shopify.function.toml',
+  extension: {
+    ui: 'shopify.ui.extension.toml',
+    theme: 'shopify.theme.extension.toml',
+    function: 'shopify.function.extension.toml',
+  },
   home: 'shopify.home.toml',
 }
 
@@ -20,10 +23,6 @@ export const blocks = {
   extensions: {
     directoryName: 'extensions',
     configurationName: configurationFileNames.extension,
-  },
-  functions: {
-    directoryName: 'functions',
-    configurationName: configurationFileNames.functions,
   },
   home: {
     directoryName: 'home',
