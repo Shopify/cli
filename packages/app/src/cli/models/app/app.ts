@@ -76,11 +76,14 @@ export interface App {
   functions: AppFunction[]
   homes: Home[]
   extensions: Extension[]
+  errors?: string[]
 }
+
+export type AppLoaderMode = 'strict' | 'report'
 
 interface AppLoaderConstructorArgs {
   directory: string
-  mode: string
+  mode: AppLoaderMode
 }
 
 class AppLoader {
@@ -88,13 +91,11 @@ class AppLoader {
   private mode: AppLoaderMode
   private appDirectory = ''
   private configurationPath = ''
-  private configurationPath: string
   private errors: string[] = []
 
   constructor({directory, mode}: AppLoaderConstructorArgs) {
     this.mode = mode
     this.directory = directory
-    this.errors = []
   }
 
   async loaded() {
@@ -115,7 +116,7 @@ class AppLoader {
       packageManager = 'npm'
     }
 
-    const retval = {
+    const app: App = {
       directory: this.appDirectory,
       homes: await this.loadHomes(),
       configuration,
@@ -123,8 +124,8 @@ class AppLoader {
       extensions,
       packageManager,
     }
-    if (this.errors) retval.errors = this.errors
-    return retval
+    if (this.errors) app.errors = this.errors
+    return app
   }
 
   async findAppDirectory() {
@@ -230,7 +231,7 @@ class AppLoader {
   }
 }
 
-export async function load(directory: string, mode? = 'strict'): Promise<App> {
+export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
   const loader = new AppLoader({directory, mode})
   return loader.loaded()
 }
