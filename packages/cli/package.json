@@ -85,6 +85,9 @@
       },
       "app": {
         "description": "Build Shopify apps"
+      },
+      "auth": {
+        "description": "Auth operations"
       }
     },
     "additionalHelpFlags": [
