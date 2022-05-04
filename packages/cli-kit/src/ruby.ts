@@ -11,6 +11,7 @@ import {local} from './environment'
 import {spawn} from 'child_process'
 
 const RubyCLIVersion = '2.16.0'
+const ThemeCheckVersion = '1.10.2'
 const MinBundlerVersion = '2.3.8'
 
 /**
@@ -22,7 +23,7 @@ const MinBundlerVersion = '2.3.8'
  * @param token {string} Token to pass to CLI 2.0, will be set as an environment variable
  */
 export async function execCLI(args: string[], adminSession?: AdminSession) {
-  await installDependencies()
+  await installCLIDependencies()
   const env = {
     ...process.env,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
@@ -32,8 +33,18 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
   spawn('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
     shell: true,
-    cwd: rubyCLIPath(),
+    cwd: shopifyCLIDirectory(),
     env,
+  })
+}
+
+export async function execThemeCheckCLI(args: string[], adminSession?: AdminSession) {
+  await installThemeCheckCLIDependencies()
+
+  spawn('bundle', ['exec', 'theme-check'].concat(args), {
+    stdio: 'inherit',
+    shell: true,
+    cwd: themeCheckDirectory(),
   })
 }
 
@@ -43,8 +54,8 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
  * Shows a loading spinner if it's the first time installing dependencies
  * or if we are installing a new version of RubyCLI
  */
-async function installDependencies() {
-  const exists = await file.exists(rubyCLIPath())
+async function installThemeCheckCLIDependencies() {
+  const exists = await file.exists(shopifyCLIDirectory())
   const renderer = local.isUnitTest() || exists ? 'silent' : 'default'
 
   const list = new ui.Listr(
@@ -53,9 +64,36 @@ async function installDependencies() {
         title: 'Installing theme dependencies',
         task: async () => {
           await validateRubyEnv()
-          await createWorkingDirectory()
-          await createGemfile()
-          await bundleInstall()
+          await createThemeCheckCLIWorkingDirectory()
+          await createThemeCheckGemfile()
+          await bundleInstallThemeCheck()
+        },
+      },
+    ],
+    {renderer},
+  )
+  await list.run()
+}
+
+/**
+ * Validate Ruby Enviroment
+ * Install RubyCLI and its dependencies
+ * Shows a loading spinner if it's the first time installing dependencies
+ * or if we are installing a new version of RubyCLI
+ */
+async function installCLIDependencies() {
+  const exists = await file.exists(shopifyCLIDirectory())
+  const renderer = exists ? 'silent' : 'default'
+
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Installing theme dependencies',
+        task: async () => {
+          await validateRubyEnv()
+          await createShopifyCLIWorkingDirectory()
+          await createShopifyCLIGemfile()
+          await bundleInstallShopifyCLI()
         },
       },
     ],
@@ -93,20 +131,38 @@ async function getBundlerVersion() {
   }
 }
 
-function createWorkingDirectory() {
-  return file.mkdir(rubyCLIPath())
+function createShopifyCLIWorkingDirectory() {
+  return file.mkdir(shopifyCLIDirectory())
 }
 
-async function createGemfile() {
-  const gemPath = join(rubyCLIPath(), 'Gemfile')
+function createThemeCheckCLIWorkingDirectory() {
+  return file.mkdir(themeCheckDirectory())
+}
+
+async function createShopifyCLIGemfile() {
+  const gemPath = join(shopifyCLIDirectory(), 'Gemfile')
   await file.write(gemPath, `source 'https://rubygems.org'\ngem 'shopify-cli', '${RubyCLIVersion}'`)
 }
 
-async function bundleInstall() {
-  await system.exec('bundle', ['config', 'set', '--local', 'path', rubyCLIPath()], {cwd: rubyCLIPath()})
-  await system.exec('bundle', ['install'], {cwd: rubyCLIPath()})
+async function createThemeCheckGemfile() {
+  const gemPath = join(themeCheckDirectory(), 'Gemfile')
+  await file.write(gemPath, `source 'https://rubygems.org'\ngem 'theme-check', '${ThemeCheckVersion}'`)
 }
 
-function rubyCLIPath() {
+async function bundleInstallShopifyCLI() {
+  await system.exec('bundle', ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {cwd: shopifyCLIDirectory()})
+  await system.exec('bundle', ['install'], {cwd: shopifyCLIDirectory()})
+}
+
+async function bundleInstallThemeCheck() {
+  await system.exec('bundle', ['config', 'set', '--local', 'path', themeCheckDirectory()], {cwd: themeCheckDirectory()})
+  await system.exec('bundle', ['install'], {cwd: themeCheckDirectory()})
+}
+
+function shopifyCLIDirectory() {
   return join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+}
+
+function themeCheckDirectory() {
+  return join(constants.paths.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
 }
