@@ -1,6 +1,6 @@
 import Fastify from 'fastify'
 import {port, output} from '@shopify/cli-kit'
-import fastifyHTTPProxy from 'fastify-http-proxy'
+import fastifyHTTPProxy from '@fastify/http-proxy'
 import {Writable} from 'stream'
 
 /**
