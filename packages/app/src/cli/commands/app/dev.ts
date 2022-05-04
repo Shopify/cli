@@ -31,10 +31,9 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'no-tunnel': Flags.boolean({
+    tunnel: Flags.boolean({
       hidden: false,
-      description: 'Skips creating an HTTP tunnel.',
+      description: 'Creates an HTTP tunnel to enable mobile or webhooks testing.',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
     }),
@@ -48,17 +47,19 @@ export default class Dev extends Command {
   }
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(Dev)
+    const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const appManifest: App = await loadApp(directory)
+    const plugins = this.config.plugins
 
     await dev({
       appManifest,
       apiKey: flags['api-key'],
       store: flags.store,
       reset: flags.reset,
-      tunnel: !flags['no-tunnel'],
+      tunnel: flags.tunnel,
       update: !flags['no-update'],
+      plugins,
     })
   }
 }

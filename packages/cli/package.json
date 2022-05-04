@@ -51,7 +51,8 @@
     "@oclif/core": "1.7.0",
     "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",
-    "@shopify/cli-kit": "2.0.1"
+    "@shopify/cli-kit": "2.0.1",
+    "@shopify/plugin-ngrok": "^0.2.2"
   },
   "devDependencies": {
     "vitest": "0.10.0"
@@ -73,8 +74,10 @@
       "@shopify/theme",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
+      "@oclif/plugin-plugins",
+      "@shopify/plugin-ngrok"
     ],
+    "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
       "hydrogen": {
