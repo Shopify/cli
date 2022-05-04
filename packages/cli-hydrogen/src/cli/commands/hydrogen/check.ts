@@ -5,7 +5,7 @@ import {HelpfulError} from '../../utilities'
 import {CheckResult} from '../../types'
 import Command from '../../core/Command'
 import chalk from 'chalk'
-import {output} from '@shopify/cli-kit'
+import {output, cli} from '@shopify/cli-kit'
 
 export default class Check extends Command {
   static description = 'Check a hydrogen app for common problems.'
@@ -13,6 +13,7 @@ export default class Check extends Command {
   static examples = [`$ shopify hydrogen check`]
 
   static flags = {
+    ...cli.globalFlags,
     ...Command.flags,
   }
 

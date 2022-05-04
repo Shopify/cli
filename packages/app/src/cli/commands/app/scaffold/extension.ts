@@ -1,4 +1,4 @@
-import {output, path} from '@shopify/cli-kit'
+import {output, path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 import {extensions} from '$cli/constants'
 import scaffoldExtensionPrompt from '$cli/prompts/scaffold/extension'
@@ -10,6 +10,7 @@ export default class AppScaffoldExtension extends Command {
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
+    ...cli.globalFlags,
     type: Flags.string({
       char: 't',
       hidden: false,
