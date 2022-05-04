@@ -2,7 +2,7 @@ import {Flags} from '@oclif/core'
 
 /**
  * An object that contains the flags that
- * are shared across all the commands.
+ * are shared across all the app commands.
  */
 export const appFlags = {
   path: Flags.string({
