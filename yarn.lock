@@ -835,6 +835,27 @@
   resolved "https://registry.yarnpkg.com/@fastify/error/-/error-2.0.0.tgz#a9f94af56eb934f0ab1ce4ef9f0ced6ebf2319dc"
   integrity sha512-wI3fpfDT0t7p8E6dA2eTECzzOd+bZsZCJ2Hcv+Onn2b7ZwK3RwD27uW2QDaMtQhAfWQQP+WNK7nKf0twLsBf9w==
 
+"@fastify/http-proxy@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@fastify/http-proxy/-/http-proxy-7.1.0.tgz#96b05e757ec9ebcc9fc8590911ca38a0cc62d373"
+  integrity sha512-G15TPeO657N8n4mhlGvbKneZH3exiV8fjbSoJgzcgwzaEmidc+4v3Xg/loTp21palsq+hQPlzVl0eHSzDTAuKA==
+  dependencies:
+    "@fastify/reply-from" "^7.0.0"
+    ws "^8.4.2"
+
+"@fastify/reply-from@^7.0.0":
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/@fastify/reply-from/-/reply-from-7.0.1.tgz#ae3798f307bfa1d14b83878cd442f5f7083fabb5"
+  integrity sha512-ikp6GpmEJ7AVxcDdSVE9MhpUtC9KnImQDegc5ePZ+H7QZcraIjotP7YndwT/fP8lYj2Qr1h4RtuFNU8Wdwleuw==
+  dependencies:
+    end-of-stream "^1.4.4"
+    fastify-plugin "^3.0.0"
+    http-errors "^2.0.0"
+    pump "^3.0.0"
+    semver "^7.3.5"
+    tiny-lru "^8.0.1"
+    undici "^5.0.0"
+
 "@graphql-tools/batch-execute@^7.1.2":
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/@graphql-tools/batch-execute/-/batch-execute-7.1.2.tgz#35ba09a1e0f80f34f1ce111d23c40f039d4403a0"
@@ -1458,6 +1479,41 @@
     supports-color "^8.1.1"
     tslib "^2"
 
+"@oclif/core@1.3.6":
+  version "1.3.6"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.3.6.tgz#b3c3b3c865c33d88aa6e7f8f596a7939720c4d68"
+  integrity sha512-WSb5uyHlfTcN2HQT1miKDe90AhaiZ5Di0jmyqWlPZA0XE+xvJgMPOAyQdxxVed+XpkP6AhCPJEoIlZvQb1y1Xw==
+  dependencies:
+    "@oclif/linewrap" "^1.0.0"
+    "@oclif/screen" "^3.0.2"
+    ansi-escapes "^4.3.0"
+    ansi-styles "^4.2.0"
+    cardinal "^2.1.1"
+    chalk "^4.1.2"
+    clean-stack "^3.0.1"
+    cli-progress "^3.10.0"
+    debug "^4.3.3"
+    ejs "^3.1.6"
+    fs-extra "^9.1.0"
+    get-package-type "^0.1.0"
+    globby "^11.0.4"
+    hyperlinker "^1.0.0"
+    indent-string "^4.0.0"
+    is-wsl "^2.2.0"
+    js-yaml "^3.13.1"
+    lodash "^4.17.21"
+    natural-orderby "^2.0.3"
+    object-treeify "^1.1.4"
+    password-prompt "^1.1.2"
+    semver "^7.3.5"
+    string-width "^4.2.3"
+    strip-ansi "^6.0.1"
+    supports-color "^8.1.1"
+    supports-hyperlinks "^2.2.0"
+    tslib "^2.3.1"
+    widest-line "^3.1.0"
+    wrap-ansi "^7.0.0"
+
 "@oclif/core@1.7.0", "@oclif/core@^1.2.0", "@oclif/core@^1.3.6":
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.7.0.tgz#3b763b53eafa9afbb13cf7cdfeac0f8ddd8ab1af"
@@ -1691,16 +1747,6 @@
     "@remote-ui/async-subscription" "^2.1.7"
     "@remote-ui/core" "^2.1.6"
 
-"@shopify/cli-kit@~> 1.0.1":
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/@shopify/cli-kit/-/cli-kit-1.0.9.tgz#aa24b86632ffdadca6beb47806550e90c6ce8125"
-  integrity sha512-Jf7aZ9n43dfkU3nkdib4LknqUmlboBiasHZisehG6Qc6OWcTDcnyKRpAWMhIKPYZUQzK2Sor7BIhyvP+OgADOw==
-  dependencies:
-    "@oclif/core" "1.3.6"
-    keytar "^7.9.0"
-    ngrok "^4.3.1"
-    open "^8.4.0"
-
 "@shopify/eslint-plugin@^41.2.0":
   version "41.2.1"
   resolved "https://registry.yarnpkg.com/@shopify/eslint-plugin/-/eslint-plugin-41.2.1.tgz#b3093bd1e79fe6f5a1fa8ffb06a29b09b88a0a86"
@@ -1748,13 +1794,13 @@
     semiver "^1.1.0"
     typescript "^4.6.3"
 
-"@shopify/plugin-ngrok@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.2.tgz#c85ed1267e746609c05e3cb1066e725039fcc2bc"
-  integrity sha512-vvQ6ZwpbwjWsEesNGIRZvnws9iOBbMcK3sc1l5a+nC5LG13kokcwQyEVzdCeWuTgbol1xoX5Xndy8q6tSYrutw==
+"@shopify/plugin-ngrok@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.3.tgz#56b562a7e6bcbb91a674aa9b74cd2c357240a575"
+  integrity sha512-BpDtZyJeiibHBvXE6cswrYcn/nWamK0YV8xIJp2Gl4OGaK7uyxAP5keIepOoBNUBsawOo/9f0N/VueQK+AlQNQ==
   dependencies:
     "@oclif/core" "1.3.6"
-    "@shopify/cli-kit" "~> 1.0.1"
+    "@shopify/cli-kit" "^2.0.1"
     ngrok "^4.3.1"
 
 "@shopify/post-purchase-ui-extensions-react@^0.13.2":
@@ -2735,7 +2781,7 @@ ansi-styles@^3.2.1:
   dependencies:
     color-convert "^1.9.0"
 
-ansi-styles@^4.0.0, ansi-styles@^4.1.0, ansi-styles@^4.2.1, ansi-styles@^4.3.0:
+ansi-styles@^4.0.0, ansi-styles@^4.1.0, ansi-styles@^4.2.0, ansi-styles@^4.2.1, ansi-styles@^4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-4.3.0.tgz#edd803628ae71c04c85ae7a0906edad34b648937"
   integrity sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==
@@ -5130,13 +5176,21 @@ fast-safe-stringify@^2.0.8:
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz#c406a83b6e70d9e35ce3b30a81141df30aeba884"
   integrity sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==
 
-fastify-http-proxy@^6.2.2:
+"fastify-http-proxy-deprecated@npm:fastify-http-proxy@6.2.2":
   version "6.2.2"
   resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.2.2.tgz#ad4e1da273774c67f74d94ef3f7664fdfb7a04fa"
   integrity sha512-UiBdgfgHlMJXF1XaQF5F3am6SSirWu2QNMaEO5Qow23CfccaONXXLjIF9/CTj5tD6rA8DcUZddRhva1uVKOqcQ==
   dependencies:
     fastify-reply-from "^6.4.1"
     ws "^8.4.2"
+
+fastify-http-proxy@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.3.0.tgz#eb4d1d04cf5fd4671d6a4ad406ddb8f3739ac66c"
+  integrity sha512-1aazvPYORgTKEyxb0EiMfjtZ5LP0+x3fDDbjAhZXWEI6D8OAAi2B5+VBmnxMFLPoEhh2Hc5foJLOWltT6+ioTg==
+  dependencies:
+    fastify-http-proxy-deprecated "npm:fastify-http-proxy@6.2.2"
+    process-warning "^1.0.0"
 
 fastify-plugin@^3.0.0:
   version "3.0.1"
@@ -7806,7 +7860,7 @@ object-keys@^1.1.1:
   resolved "https://registry.yarnpkg.com/object-keys/-/object-keys-1.1.1.tgz#1c47f272df277f3b1daf061677d9c82e2322c60e"
   integrity sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==
 
-object-treeify@^1.1.33:
+object-treeify@^1.1.33, object-treeify@^1.1.4:
   version "1.1.33"
   resolved "https://registry.yarnpkg.com/object-treeify/-/object-treeify-1.1.33.tgz#f06fece986830a3cba78ddd32d4c11d1f76cdf40"
   integrity sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==
@@ -8627,14 +8681,6 @@ react-is@^17.0.1:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     scheduler "^0.20.2"
-
-react@17.0.2:
-  version "17.0.2"
-  resolved "https://registry.yarnpkg.com/react/-/react-17.0.2.tgz#d0b5cc516d29eb3eee383f75b62864cfb6800037"
-  integrity sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
 
 read-pkg-up@^7.0.1:
   version "7.0.1"
@@ -10166,6 +10212,11 @@ undici@^4.0.0:
   version "4.16.0"
   resolved "https://registry.yarnpkg.com/undici/-/undici-4.16.0.tgz#469bb87b3b918818d3d7843d91a1d08da357d5ff"
   integrity sha512-tkZSECUYi+/T1i4u+4+lwZmQgLXd4BLGlrc7KZPcLIW7Jpq99+Xpc30ONv7nS6F5UNOxp/HBZSSL9MafUrvJbw==
+
+undici@^5.0.0:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-5.1.1.tgz#356427b0d1f032ca4cf85537b1e1694a52090438"
+  integrity sha512-CmK9JzLSMGx+2msOao8LhkKn3J7eKo2M50v0KZQ2XbiHcGqLS1HiIj01ceIm3jbUYlspw/FTSb6nMdSNyvVyaQ==
 
 unherit@^1.0.4:
   version "1.1.3"
