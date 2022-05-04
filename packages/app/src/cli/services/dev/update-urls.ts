@@ -6,7 +6,7 @@ export async function updateURLs(apiKey: string, url: string): Promise<void> {
   const variables: api.graphql.UpdateURLsQueryVariables = {
     apiKey,
     appUrl: url,
-    redir: ['https://localhost/', `${url}/auth`, `${url}/auth/callback`, `${url}/api/auth/callback`],
+    redir: [`${url}/auth/callback`, `${url}/auth/shopify/callback`],
   }
 
   const query = api.graphql.UpdateURLsQuery
@@ -15,5 +15,5 @@ export async function updateURLs(apiKey: string, url: string): Promise<void> {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new error.Fatal(errors)
   }
-  output.success('Whitelist URLS updated in Partners Dashboard')
+  output.success('Allowed redirection URLs updated in Partners Dashboard')
 }

@@ -1691,6 +1691,16 @@
     "@remote-ui/async-subscription" "^2.1.7"
     "@remote-ui/core" "^2.1.6"
 
+"@shopify/cli-kit@~> 1.0.1":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@shopify/cli-kit/-/cli-kit-1.0.9.tgz#aa24b86632ffdadca6beb47806550e90c6ce8125"
+  integrity sha512-Jf7aZ9n43dfkU3nkdib4LknqUmlboBiasHZisehG6Qc6OWcTDcnyKRpAWMhIKPYZUQzK2Sor7BIhyvP+OgADOw==
+  dependencies:
+    "@oclif/core" "1.3.6"
+    keytar "^7.9.0"
+    ngrok "^4.3.1"
+    open "^8.4.0"
+
 "@shopify/eslint-plugin@^41.2.0":
   version "41.2.1"
   resolved "https://registry.yarnpkg.com/@shopify/eslint-plugin/-/eslint-plugin-41.2.1.tgz#b3093bd1e79fe6f5a1fa8ffb06a29b09b88a0a86"
@@ -1737,6 +1747,15 @@
     mime "^3.0.0"
     semiver "^1.1.0"
     typescript "^4.6.3"
+
+"@shopify/plugin-ngrok@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.2.tgz#c85ed1267e746609c05e3cb1066e725039fcc2bc"
+  integrity sha512-vvQ6ZwpbwjWsEesNGIRZvnws9iOBbMcK3sc1l5a+nC5LG13kokcwQyEVzdCeWuTgbol1xoX5Xndy8q6tSYrutw==
+  dependencies:
+    "@oclif/core" "1.3.6"
+    "@shopify/cli-kit" "~> 1.0.1"
+    ngrok "^4.3.1"
 
 "@shopify/post-purchase-ui-extensions-react@^0.13.2":
   version "0.13.3"
