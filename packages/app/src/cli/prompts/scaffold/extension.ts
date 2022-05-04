@@ -4,6 +4,7 @@ import {extensions, ExtensionTypes} from '$cli/constants'
 interface ScaffoldExtensionOptions {
   name?: string
   extensionType?: ExtensionTypes
+  ignoreExtensions: string[]
 }
 
 interface ScaffoldExtensionOutput {
@@ -29,7 +30,7 @@ const scaffoldExtensionPrompt = async (
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: extensions.types,
+      choices: extensions.types.filter((type) => !options.ignoreExtensions.includes(type)),
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)

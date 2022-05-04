@@ -1,4 +1,4 @@
-import {output, path, cli} from '@shopify/cli-kit'
+import {output, path, cli, error} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 import {extensions} from '$cli/constants'
 import scaffoldExtensionPrompt from '$cli/prompts/scaffold/extension'
@@ -55,8 +55,11 @@ export default class AppScaffoldExtension extends Command {
     const {args, flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
+    this.validateType(app, flags.type)
+
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
+      ignoreExtensions: this.extensionsLimitedByQuantity(app),
       name: flags.name,
     })
     const {extensionType, name} = promptAnswers
@@ -67,5 +70,17 @@ export default class AppScaffoldExtension extends Command {
       language: flags.language,
     })
     output.info(output.content`Extension ${name} generated successfully!`)
+  }
+
+  validateType(app: App, type: string) {
+    if (this.extensionsLimitedByQuantity(app).includes(type)) {
+      throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
+    }
+  }
+
+  extensionsLimitedByQuantity(app: App) {
+    const hasThemeExtension = app.extensions.theme.length > 0
+    const hasProductSubscription = app.extensions.ui.find((ext) => ext.configuration.type === 'product_subscription')
+    return [...(hasThemeExtension ? ['theme'] : []), ...(hasProductSubscription ? ['product_subscription'] : [])]
   }
 }
