@@ -2,6 +2,7 @@ import {buildExtension} from './extension'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {describe, expect, test, vi} from 'vitest'
 import {yaml, path} from '@shopify/cli-kit'
+import {App, Extension} from '$cli/models/app/app'
 
 vi.mock('../../utilities/extensions/cli')
 
@@ -11,19 +12,33 @@ describe('buildExtension', () => {
     const stdout: any = {write: vi.fn()}
     const stderr: any = vi.fn()
     const signal: any = vi.fn()
-    const extension = {
-      buildDirectory: '',
+    const appRoot = '/'
+    const extensionName = 'myextension'
+    const extensionRoot = `/extensions/${extensionName}`
+    const extension: Extension = {
+      buildDirectory: `${extensionRoot}/build`,
       configuration: {
-        name: 'name',
+        name: extensionName,
         metafields: [],
         type: 'checkout_post_purchase',
       },
-      directory: '/',
-      entrySourceFilePath: '/',
+      directory: extensionRoot,
+      entrySourceFilePath: `${extensionRoot}/src/index.js`,
+    }
+    const app: App = {
+      directory: appRoot,
+      packageManager: 'yarn',
+      configuration: {
+        name: 'myapp',
+        scopes: '',
+      },
+      homes: [],
+      functions: [],
+      extensions: [extension],
     }
 
     // When
-    await buildExtension(extension, {stdout, stderr, signal})
+    await buildExtension(extension, app, {stdout, stderr, signal})
 
     // Then
     expect(runGoExtensionsCLI).toHaveBeenCalled()
@@ -37,11 +52,11 @@ describe('buildExtension', () => {
       extensions: [
         {
           title: extension.configuration.name,
-          type: extension.configuration.type,
+          type: `${extension.configuration.type}_next`,
           metafields: extension.configuration.metafields,
           development: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            root_dir: '.',
+            root_dir: path.relative(appRoot, extensionRoot),
             // eslint-disable-next-line @typescript-eslint/naming-convention
             build_dir: path.relative(extension.directory, extension.buildDirectory),
             entries: {

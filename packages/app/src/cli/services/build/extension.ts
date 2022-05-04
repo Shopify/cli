@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
 import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
-import {Extension} from '$cli/models/app/app'
+import {App, Extension} from '$cli/models/app/app'
 
 interface ExtensionBuildOptions {
   /**
@@ -24,11 +24,11 @@ interface ExtensionBuildOptions {
  * @param extension {Extension} The extension to build.
  * @param options {ExtensionBuildOptions} Build options.
  */
-export async function buildExtension(extension: Extension, options: ExtensionBuildOptions): Promise<void> {
+export async function buildExtension(extension: Extension, app: App, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Building extension...`)
-  const stdin = yaml.encode(await extensionConfig(extension))
+  const stdin = yaml.encode(await extensionConfig(extension, app))
   await runGoExtensionsCLI(['build', '-'], {
-    cwd: extension.directory,
+    cwd: app.directory,
     stdout: options.stdout,
     stderr: options.stderr,
     stdin,
@@ -42,18 +42,18 @@ export async function buildExtension(extension: Extension, options: ExtensionBui
  * @param extension {Extension} Extension that will be built.
  * @returns
  */
-async function extensionConfig(extension: Extension): Promise<any> {
+async function extensionConfig(extension: Extension, app: App): Promise<any> {
   return {
     extensions: [
       {
         title: extension.configuration.name,
-        type: extension.configuration.type,
+        type: `${extension.configuration.type}_next`,
         metafields: extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: '.',
+          root_dir: path.relative(app.directory, extension.directory),
           // eslint-disable-next-line @typescript-eslint/naming-convention
           build_dir: path.relative(extension.directory, extension.buildDirectory),
           entries: {

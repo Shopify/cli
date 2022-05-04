@@ -8,7 +8,7 @@ export const HomeConfigurationFileNotFound = (directory: string) => {
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   id: schema.define.optional(schema.define.string()),
-  scopes: schema.define.string(),
+  scopes: schema.define.string().default(''),
 })
 
 export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
