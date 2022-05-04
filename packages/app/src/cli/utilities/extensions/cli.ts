@@ -18,7 +18,7 @@ const NodeExtensionsCLINotFoundError = () => {
  * @param options {system.ExecOptions} Options to configure the process execution.
  */
 export async function runGoExtensionsCLI(args: string[], options: system.ExecOptions = {}) {
-  let stdout = options.stdout || {write: ()=>{}}
+  const stdout = options.stdout || {write: () => {}}
   if (useExtensionsCLISources()) {
     const projectDirectory = path.join(
       environment.local.homeDirectory(),
@@ -27,8 +27,10 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
     stdout.write(`Using extensions CLI from ${projectDirectory}`)
     try {
       if (building) {
+        // eslint-disable-next-line no-unmodified-loop-condition
         while (!built) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 1000))
         }
       } else {
         building = true

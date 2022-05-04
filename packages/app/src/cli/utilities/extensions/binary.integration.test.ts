@@ -21,15 +21,19 @@ vi.mock('@shopify/cli-kit', async () => {
   }
 })
 
-it('downloads, validates, and untars the binary', async () => {
-  await temporary.directory(async (tmpDir) => {
-    // Given
-    vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(tmpDir)
+it(
+  'downloads, validates, and untars the binary',
+  async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(tmpDir)
 
-    // Then
-    const binaryPath = await getBinaryPathOrDownload()
+      // Then
+      const binaryPath = await getBinaryPathOrDownload()
 
-    // Then
-    await expect(file.exists(binaryPath)).resolves.toEqual(true)
-  })
-}, 30 * 1000)
+      // Then
+      await expect(file.exists(binaryPath)).resolves.toEqual(true)
+    })
+  },
+  30 * 1000,
+)

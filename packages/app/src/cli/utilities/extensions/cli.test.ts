@@ -38,7 +38,9 @@ describe('runGoExtensionsCLI', () => {
       stderr: undefined,
       cwd: projectDirectory,
     })
-    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {stdout})
+    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {
+      stdout,
+    })
   })
 
   test('runs the CLI through the downloaded binary when not using the local sources', async () => {
