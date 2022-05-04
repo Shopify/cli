@@ -1,8 +1,8 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
-import {createTunnel} from './dev/tunnel'
 import {App, AppConfiguration, Home, HomeType} from '../models/app/app'
-import {output, port, system} from '@shopify/cli-kit'
+import {output, port, system, plugins} from '@shopify/cli-kit'
+import {Plugin} from '@oclif/core/lib/interfaces'
 
 interface DevOptions {
   appManifest: App
@@ -11,6 +11,7 @@ interface DevOptions {
   reset: boolean
   tunnel: boolean
   update: boolean
+  plugins: Plugin[]
 }
 
 interface DevHomeOptions {
@@ -32,7 +33,10 @@ async function dev(input: DevOptions) {
   const backendPort = await port.getRandomPort()
   let url = `http://localhost:${frontendPort}`
 
-  if (input.tunnel) url = await createTunnel({port: frontendPort})
+  if (input.tunnel) {
+    const tunnelPlugin = await plugins.lookupTunnelPlugin(input.plugins)
+    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
+  }
   if (input.update) await updateURLs(apiKey, url)
 
   const storeAppUrl = `${url}/api/auth?shop=${store}`

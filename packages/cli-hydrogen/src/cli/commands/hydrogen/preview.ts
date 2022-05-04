@@ -1,10 +1,11 @@
 import previewService from '../../services/preview'
-import {path} from '@shopify/cli-kit'
+import {path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class Preview extends Command {
   static description = 'Run a Hydrogen storefront locally in a worker environment'
   static flags = {
+    ...cli.globalFlags,
     path: Flags.string({
       hidden: true,
       description: 'the path to your hydrogen storefront',
