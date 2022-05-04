@@ -4,7 +4,7 @@ import {file, path} from '@shopify/cli-kit'
 import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
 
 describe('load', () => {
-  type BlockType = 'extensions' | 'functions'
+  type BlockType = 'ui' | 'function' | 'theme'
 
   let tmpDir: string
   const appConfiguration = `
@@ -37,8 +37,8 @@ scopes = "read_products"
   }
 
   const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
-    const block = blocks[blockType]
-    return path.join(tmpDir, block.directoryName, name, block.configurationName)
+    const configurationName = blocks.extensions.configurationName[blockType]
+    return path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
   }
 
   const makeBlockDir = async ({blockType, name}: {blockType: BlockType; name: string}) => {
@@ -136,7 +136,7 @@ scopes = "read_products"
 
   it("throws an error if the extension configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'extensions', name: 'my-extension'})
+    makeBlockDir({blockType: 'ui', name: 'my-extension'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
@@ -148,7 +148,7 @@ scopes = "read_products"
       wrong = "my_extension"
       `
     await writeBlockConfig({
-      blockType: 'extensions',
+      blockType: 'ui',
       blockConfiguration,
       name: 'my-extension',
     })
@@ -165,7 +165,7 @@ scopes = "read_products"
       type = "checkout_post_purchase"
       `
     await writeBlockConfig({
-      blockType: 'extensions',
+      blockType: 'ui',
       blockConfiguration,
       name: 'my-extension',
     })
@@ -174,7 +174,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -185,7 +185,7 @@ scopes = "read_products"
       type = "checkout_post_purchase"
       `
     const {blockDir} = await writeBlockConfig({
-      blockType: 'extensions',
+      blockType: 'ui',
       blockConfiguration,
       name: 'my-extension',
     })
@@ -195,7 +195,7 @@ scopes = "read_products"
 
     // Then
     expect(app.configuration.name).toBe('my_app')
-    expect(app.extensions[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
   })
 
   it('loads the app with several extensions that have valid configurations', async () => {
@@ -207,7 +207,7 @@ scopes = "read_products"
       type = "checkout_post_purchase"
       `
     await writeBlockConfig({
-      blockType: 'extensions',
+      blockType: 'ui',
       blockConfiguration,
       name: 'my_extension_1',
     })
@@ -217,7 +217,7 @@ scopes = "read_products"
       type = "product_subscription"
       `
     await writeBlockConfig({
-      blockType: 'extensions',
+      blockType: 'ui',
       blockConfiguration,
       name: 'my_extension_2',
     })
@@ -226,14 +226,17 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions).toHaveLength(2)
-    expect(app.extensions[0].configuration.name).toBe('my_extension_1')
-    expect(app.extensions[1].configuration.name).toBe('my_extension_2')
+    expect(app.extensions.ui).toHaveLength(2)
+    const extensions = app.extensions.ui.sort((extA, extB) =>
+      extA.configuration.name < extB.configuration.name ? -1 : 1,
+    )
+    expect(extensions[0].configuration.name).toBe('my_extension_1')
+    expect(extensions[1].configuration.name).toBe('my_extension_2')
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'functions', name: 'my-functions'})
+    makeBlockDir({blockType: 'function', name: 'my-functions'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
@@ -245,7 +248,7 @@ scopes = "read_products"
       wrong = "my-function"
     `
     await writeBlockConfig({
-      blockType: 'functions',
+      blockType: 'function',
       blockConfiguration,
       name: 'my-function',
     })
@@ -260,9 +263,11 @@ scopes = "read_products"
 
     const blockConfiguration = `
       name = "my-function"
+      type = "payment_methods"
+      title = "my-function"
       `
     await writeBlockConfig({
-      blockType: 'functions',
+      blockType: 'function',
       blockConfiguration,
       name: 'my-functions',
     })
@@ -271,7 +276,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.functions[0].configuration.name).toBe('my-function')
+    expect(app.extensions.function[0].configuration.name).toBe('my-function')
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -279,18 +284,22 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     let blockConfiguration = `
       name = "my-function-1"
+      type = "payment_methods"
+      title = "my-function-1"
       `
     await writeBlockConfig({
-      blockType: 'functions',
+      blockType: 'function',
       blockConfiguration,
       name: 'my-function-1',
     })
 
     blockConfiguration = `
       name = "my-function-2"
+      type = "product_discount_type"
+      title = "my-function-2"
       `
     await writeBlockConfig({
-      blockType: 'functions',
+      blockType: 'function',
       blockConfiguration,
       name: 'my-function-2',
     })
@@ -299,8 +308,11 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.functions).toHaveLength(2)
-    expect(app.functions[0].configuration.name).toBe('my-function-1')
-    expect(app.functions[1].configuration.name).toBe('my-function-2')
+    expect(app.extensions.function).toHaveLength(2)
+    const functions = app.extensions.function.sort((extA, extB) =>
+      extA.configuration.name < extB.configuration.name ? -1 : 1,
+    )
+    expect(functions[0].configuration.name).toBe('my-function-1')
+    expect(functions[1].configuration.name).toBe('my-function-2')
   })
 })

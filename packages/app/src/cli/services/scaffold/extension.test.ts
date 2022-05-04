@@ -45,6 +45,8 @@ describe('initialize a extension', () => {
       name,
       extensionType,
       app: await loadApp(tmpDir),
+      cloneUrl: 'cloneurl',
+      language: 'wasm',
     })
   }
 
@@ -53,7 +55,7 @@ describe('initialize a extension', () => {
     const name = 'my-ext-1'
     const extensionType = 'checkout_post_purchase'
     await createFromTemplate({name, extensionType})
-    const scaffoldedExtension = (await loadApp(tmpDir)).extensions[0]
+    const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]
     expect(scaffoldedExtension.configuration.name).toBe(name)
   })
 
@@ -63,7 +65,7 @@ describe('initialize a extension', () => {
     const extensionType = 'checkout_post_purchase'
     await createFromTemplate({name: name1, extensionType})
     await createFromTemplate({name: name2, extensionType})
-    const scaffoldedExtension2 = (await loadApp(tmpDir)).extensions[1]
+    const scaffoldedExtension2 = (await loadApp(tmpDir)).extensions.ui[1]
     expect(scaffoldedExtension2.configuration.name).toBe(name2)
   })
 

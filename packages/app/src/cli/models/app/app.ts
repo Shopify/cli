@@ -126,7 +126,7 @@ class AppLoader {
     this.errors = []
     this.appDirectory = await this.findAppDirectory()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, await this.getConfigurationPath())
-    const extensionsPath = path.join(this.directory, `${blocks.extensions.directoryName}`)
+    const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
     const functions = await this.loadFunctions(extensionsPath)
     const extensions = await this.loadExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
