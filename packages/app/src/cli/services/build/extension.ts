@@ -36,8 +36,7 @@ export interface ExtensionBuildOptions {
 }
 
 /**
- * It builds an extension.
- * @param extension {UIExtension} The extension to build.
+ * It builds the extensions.
  * @param options {ExtensionBuildOptions} Build options.
  */
 export async function buildExtension(options: ExtensionBuildOptions): Promise<void> {

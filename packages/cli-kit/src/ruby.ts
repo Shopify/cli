@@ -38,7 +38,7 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
   })
 }
 
-export async function execThemeCheckCLI(args: string[], adminSession?: AdminSession) {
+export async function execThemeCheckCLI(args: string[]) {
   await installThemeCheckCLIDependencies()
 
   spawn('bundle', ['exec', 'theme-check'].concat(args), {
