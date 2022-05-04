@@ -15,6 +15,7 @@
     "version-bump": "lerna version --no-push --include-merged-tags"
   },
   "devDependencies": {
+    "@shopify/app": "^2.0.0",
     "@shopify/eslint-plugin": "^40.4.0",
     "eslint": "^7.32.0",
     "lerna": "^4.0.0"

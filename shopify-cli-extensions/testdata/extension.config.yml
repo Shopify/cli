@@ -23,6 +23,24 @@ extensions:
       resource:
         url: 'cart/1234'
   - uuid: 00000000-0000-0000-0000-000000000001
+    type: checkout_ui_extension_next
+    title: Checkout UI Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    metafields:
+      - namespace: my-namespace
+        key: my-key
+    development:
+      root_dir: 'tmp/checkout_ui_extension_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
+      resource:
+        url: 'cart/1234'
+  - uuid: 00000000-0000-0000-0000-000000000002
     type: product_subscription
     title: Product Subscription Test Extension
     development:
@@ -34,7 +52,20 @@ extensions:
         version: '^1.0.1'
       entries:
         main: 'src/index.tsx'
-  - uuid: 00000000-0000-0000-0000-000000000002
+  - uuid: 00000000-0000-0000-0000-000000000003
+    type: product_subscription_next
+    title: Product Subscription Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    development:
+      root_dir: 'tmp/product_subscription_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
+  - uuid: 00000000-0000-0000-0000-000000000004
     type: checkout_post_purchase
     title: Post Purchase Test Extension
     metafields:
@@ -51,7 +82,25 @@ extensions:
         main: 'src/index.tsx'
     capabilities:
       network_access: true
-  - uuid: 00000000-0000-0000-0000-000000000003
+  - uuid: 00000000-0000-0000-0000-000000000005
+    type: checkout_post_purchase_next
+    title: Post Purchase Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    metafields:
+      - namespace: my-namespace
+        key: my-key
+    development:
+      root_dir: 'tmp/checkout_post_purchase_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
+    capabilities:
+      network_access: true
+  - uuid: 00000000-0000-0000-0000-000000000006
     type: beacon_extension
     title: Beacon Test Extension
     development:

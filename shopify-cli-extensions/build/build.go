@@ -56,21 +56,27 @@ func Build(extension core.Extension, report ResultHandler) {
 }
 
 func Watch(extension core.Extension, integrationCtx core.IntegrationContext, report ResultHandler) {
-	script, err := script(extension.BuildDir(), "develop")
+	var err error
+	var command *exec.Cmd
+	if extension.NodeExecutable != "" {
+		command = nodeExecutableScript(extension.NodeExecutable, "develop")
+	} else {
+		command, err = script(extension.BuildDir(), "develop")
+	}
 	if err != nil {
 		report(Result{false, err.Error(), extension})
 		return
 	}
 
-	stdout, _ := script.StdoutPipe()
-	stderr, _ := script.StderrPipe()
+	stdout, _ := command.StdoutPipe()
+	stderr, _ := command.StderrPipe()
 
-	if err := configureScript(script, extension); err != nil {
+	if err := configureScript(command, extension); err != nil {
 		report(Result{false, err.Error(), extension})
 	}
 	ensureBuildDirectoryExists(extension)
 
-	script.Start()
+	command.Start()
 
 	logProcessors := sync.WaitGroup{}
 	logProcessors.Add(2)
@@ -99,7 +105,7 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 		},
 	})
 
-	script.Wait()
+	command.Wait()
 	logProcessors.Wait()
 }
 
@@ -131,6 +137,22 @@ func ensureBuildDirectoryExists(ext core.Extension) {
 }
 
 func configureScript(script *exec.Cmd, extension core.Extension) error {
+	// "Next" extensions are executed from the root directory of the project,
+	// not the root directory of the extension itself. Hence paths must be
+	// prefaced by the extension's root_dir in arguments to the executable.
+	//
+	// However, this prefacing breaks the Go code, so we need to do it
+	// non-destructively.
+	if extension.UsesNext() {
+		development := extension.Development
+		development.BuildDir = extension.BuildDir()
+		entries := development.Entries
+		for handle, path := range entries {
+			entries[handle] = filepath.Join(".", extension.Development.RootDir, path)
+		}
+		development.Entries = entries
+		extension.Development = development
+	}
 	data, err := yaml.Marshal(extension)
 	if err != nil {
 		return fmt.Errorf("unable to serialize extension configuration information: %w", err)

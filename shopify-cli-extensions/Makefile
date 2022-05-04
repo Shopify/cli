@@ -67,6 +67,7 @@ build-node-packages:
 	yarn install
 	yarn build
 	chmod +x packages/shopify-cli-extensions/cli.js
+	ln -sf ../../packages/shopify-cli-extensions/cli.js node_modules/.bin/shopify-cli-extensions
 
 .PHONY: bootstrap
 bootstrap: tmp build
