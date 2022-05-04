@@ -1,3 +1,4 @@
+import {appFlags} from '../../../flags'
 import {output, path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 import {extensions} from '$cli/constants'
@@ -11,6 +12,7 @@ export default class AppScaffoldExtension extends Command {
 
   static flags = {
     ...cli.globalFlags,
+    ...appFlags,
     type: Flags.string({
       char: 't',
       hidden: false,
@@ -23,12 +25,6 @@ export default class AppScaffoldExtension extends Command {
       hidden: false,
       description: 'name of your Extension',
       env: 'SHOPIFY_FLAG_NAME',
-    }),
-    path: Flags.string({
-      char: 'p',
-      hidden: true,
-      description: 'the path to your app directory',
-      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 

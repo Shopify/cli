@@ -1,3 +1,4 @@
+import {appFlags} from '../../flags'
 import {Command, Flags} from '@oclif/core'
 import {path, string, cli} from '@shopify/cli-kit'
 import dev from '$cli/services/dev'
@@ -8,11 +9,7 @@ export default class Dev extends Command {
 
   static flags = {
     ...cli.globalFlags,
-    path: Flags.string({
-      hidden: true,
-      description: 'The path to your app directory.',
-      env: 'SHOPIFY_FLAG_PATH',
-    }),
+    ...appFlags,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'api-key': Flags.string({
       hidden: false,
