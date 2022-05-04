@@ -1,10 +1,11 @@
 import initPrompt from '../prompts/init'
 import initService from '../services/init'
-import {path} from '@shopify/cli-kit'
+import {path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class Init extends Command {
   static flags = {
+    ...cli.globalFlags,
     name: Flags.string({
       char: 'n',
       env: 'SHOPIFY_FLAG_NAME',

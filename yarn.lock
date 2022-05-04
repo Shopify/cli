@@ -835,6 +835,27 @@
   resolved "https://registry.yarnpkg.com/@fastify/error/-/error-2.0.0.tgz#a9f94af56eb934f0ab1ce4ef9f0ced6ebf2319dc"
   integrity sha512-wI3fpfDT0t7p8E6dA2eTECzzOd+bZsZCJ2Hcv+Onn2b7ZwK3RwD27uW2QDaMtQhAfWQQP+WNK7nKf0twLsBf9w==
 
+"@fastify/http-proxy@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@fastify/http-proxy/-/http-proxy-7.1.0.tgz#96b05e757ec9ebcc9fc8590911ca38a0cc62d373"
+  integrity sha512-G15TPeO657N8n4mhlGvbKneZH3exiV8fjbSoJgzcgwzaEmidc+4v3Xg/loTp21palsq+hQPlzVl0eHSzDTAuKA==
+  dependencies:
+    "@fastify/reply-from" "^7.0.0"
+    ws "^8.4.2"
+
+"@fastify/reply-from@^7.0.0":
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/@fastify/reply-from/-/reply-from-7.0.1.tgz#ae3798f307bfa1d14b83878cd442f5f7083fabb5"
+  integrity sha512-ikp6GpmEJ7AVxcDdSVE9MhpUtC9KnImQDegc5ePZ+H7QZcraIjotP7YndwT/fP8lYj2Qr1h4RtuFNU8Wdwleuw==
+  dependencies:
+    end-of-stream "^1.4.4"
+    fastify-plugin "^3.0.0"
+    http-errors "^2.0.0"
+    pump "^3.0.0"
+    semver "^7.3.5"
+    tiny-lru "^8.0.1"
+    undici "^5.0.0"
+
 "@graphql-tools/batch-execute@^7.1.2":
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/@graphql-tools/batch-execute/-/batch-execute-7.1.2.tgz#35ba09a1e0f80f34f1ce111d23c40f039d4403a0"
@@ -5155,13 +5176,21 @@ fast-safe-stringify@^2.0.8:
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz#c406a83b6e70d9e35ce3b30a81141df30aeba884"
   integrity sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==
 
-fastify-http-proxy@^6.2.2:
+"fastify-http-proxy-deprecated@npm:fastify-http-proxy@6.2.2":
   version "6.2.2"
   resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.2.2.tgz#ad4e1da273774c67f74d94ef3f7664fdfb7a04fa"
   integrity sha512-UiBdgfgHlMJXF1XaQF5F3am6SSirWu2QNMaEO5Qow23CfccaONXXLjIF9/CTj5tD6rA8DcUZddRhva1uVKOqcQ==
   dependencies:
     fastify-reply-from "^6.4.1"
     ws "^8.4.2"
+
+fastify-http-proxy@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.3.0.tgz#eb4d1d04cf5fd4671d6a4ad406ddb8f3739ac66c"
+  integrity sha512-1aazvPYORgTKEyxb0EiMfjtZ5LP0+x3fDDbjAhZXWEI6D8OAAi2B5+VBmnxMFLPoEhh2Hc5foJLOWltT6+ioTg==
+  dependencies:
+    fastify-http-proxy-deprecated "npm:fastify-http-proxy@6.2.2"
+    process-warning "^1.0.0"
 
 fastify-plugin@^3.0.0:
   version "3.0.1"
@@ -10183,6 +10212,11 @@ undici@^4.0.0:
   version "4.16.0"
   resolved "https://registry.yarnpkg.com/undici/-/undici-4.16.0.tgz#469bb87b3b918818d3d7843d91a1d08da357d5ff"
   integrity sha512-tkZSECUYi+/T1i4u+4+lwZmQgLXd4BLGlrc7KZPcLIW7Jpq99+Xpc30ONv7nS6F5UNOxp/HBZSSL9MafUrvJbw==
+
+undici@^5.0.0:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-5.1.1.tgz#356427b0d1f032ca4cf85537b1e1694a52090438"
+  integrity sha512-CmK9JzLSMGx+2msOao8LhkKn3J7eKo2M50v0KZQ2XbiHcGqLS1HiIj01ceIm3jbUYlspw/FTSb6nMdSNyvVyaQ==
 
 unherit@^1.0.4:
   version "1.1.3"

@@ -2,7 +2,7 @@ import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-pr
 import {describe, expect, test, vi} from 'vitest'
 import Fastify from 'fastify'
 import {port, output} from '@shopify/cli-kit'
-import fastifyHttpProxy from 'fastify-http-proxy'
+import fastifyHttpProxy from '@fastify/http-proxy'
 
 vi.mock('fastify')
 vi.mock('@shopify/cli-kit')

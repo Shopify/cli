@@ -1,10 +1,11 @@
 import devService from '../../services/dev'
-import {path} from '@shopify/cli-kit'
+import {path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class Dev extends Command {
   static description = 'Run a Hydrogen storefront locally for development'
   static flags = {
+    ...cli.globalFlags,
     path: Flags.string({
       hidden: true,
       description: 'the path to your hydrogen storefront',

@@ -3,7 +3,7 @@ import cliHydrogenPackageJson from '../../../../package.json'
 import Command, {Flags} from '../../core/Command'
 import degit from 'degit'
 import {underline, yellow} from 'chalk'
-import {ui, output} from '@shopify/cli-kit'
+import {ui, cli, output} from '@shopify/cli-kit'
 
 export enum Template {
   Minimum = 'Minimal Hydrogen starter',
@@ -24,6 +24,7 @@ const RENAME_MAP = {
 export default class Init extends Command {
   static args = [{name: 'name', description: 'Root of the project'}]
   static flags = {
+    ...cli.globalFlags,
     root: Flags.string({
       char: 'r',
       description: 'Root directory of the project.',
