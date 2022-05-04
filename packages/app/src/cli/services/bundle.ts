@@ -11,7 +11,7 @@ async function buildExtension(extension: any, into: string) {
   await file.copy(`${extension.directory}/build/index.js`, into)
 }
 
-export default async function bundle(app: App): Promise<Bundle> {
+export async function bundle(app: App): Promise<Bundle> {
   const tmpDir = path.resolve(await file.mkTmpDir())
 
   // const homeFolder = path.join(tmpDir, 'home')
@@ -27,7 +27,7 @@ export default async function bundle(app: App): Promise<Bundle> {
   await Promise.all(
     app.extensions.map(async (extension) => {
       // replace config name with id when available
-      const extensionFolder = path.join(tmpDir, extension.configuration.uuid)
+      const extensionFolder = path.join(tmpDir, 'todo')
       uiExtensionBundles.push({
         directory: extensionFolder,
         metadata: {

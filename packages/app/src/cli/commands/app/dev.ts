@@ -1,8 +1,8 @@
 import {appFlags} from '../../flags'
+import {load as loadApp, App} from '../../models/app/app'
+import dev from '../../services/dev'
 import {Command, Flags} from '@oclif/core'
 import {path, string, cli} from '@shopify/cli-kit'
-import dev from '$cli/services/dev'
-import {load as loadApp, App} from '$cli/models/app/app'
 
 export default class Dev extends Command {
   static description = 'Run the app'

@@ -1,41 +1,30 @@
-// import fs from 'fs'
-
-// import AppInfo from 'cli/commands/app/info'
-// import {build} from 'esbuild'
-// import {http,output} from '@shopify/cli-kit'
-import {api, error, output, session, http} from '@shopify/cli-kit'
+import {App} from '../models/app/app'
+import {api, error, session, http, id} from '@shopify/cli-kit'
 import fs from 'fs'
 
-// import {load as loadApp, App} from '../app/app'
-
-/*
-Upload command:
------
-const app = loadApp()
-upload(app)
-Deploy command
------
-const app = loadApp()
-const session = ensureAuthenticated()
-validateBeforeUpload(app)
-const zipFilePath = build(app)
-upload(app, zipFilePath, session) {
-  multiPart(zipFilePath, headers)
+interface UploadOptions {
+  app: App
+  archivePath: string
+  deploymentUUID?: string
+  signedURL?: string
 }
-*/
 
-export async function upload(apiKey: string | undefined, deploymentUuid: string, file: string, signedUrl: string) {
+export async function upload(options: UploadOptions) {
+  const apiKey = options.app.configuration.id
   if (!apiKey) {
-    output.info('apiKey is undefined...')
-    throw new error.Fatal('apiKey undefined...')
+    throw new error.Abort(
+      "The app configuration file doesn't have an id and it's necessary to upload the app",
+      'You can set it manually getting the API key of the app in the partners organization or run the dev command.',
+    )
   }
-
   const token = await session.ensureAuthenticatedPartners()
+  const deploymentUUID = options.deploymentUUID ?? id.generateRandomUUID()
+  const signedURL = options.signedURL ?? (await generateUrl(apiKey, deploymentUUID))
 
   const formData = http.formData()
-  const buffer = fs.readFileSync(file)
+  const buffer = fs.readFileSync(options.archivePath)
   formData.append('my_upload', buffer)
-  await http.fetch(signedUrl, {
+  await http.fetch(signedURL, {
     method: 'put',
     body: buffer,
     headers: formData.getHeaders(),
@@ -43,8 +32,8 @@ export async function upload(apiKey: string | undefined, deploymentUuid: string,
 
   const variables: api.graphql.CreateDeploymentVariables = {
     apiKey,
-    uuid: deploymentUuid,
-    bundleUrl: signedUrl,
+    uuid: deploymentUUID,
+    bundleUrl: signedURL,
   }
 
   const mutation = api.graphql.CreateDeployment
@@ -55,16 +44,7 @@ export async function upload(apiKey: string | undefined, deploymentUuid: string,
   }
 }
 
-export async function generateUrl(apiKey: string | undefined, deploymentUuid: string, uploadUrlOverride?: string) {
-  if (uploadUrlOverride) {
-    return uploadUrlOverride
-  }
-
-  if (!apiKey) {
-    output.info('apiKey is undefined...')
-    throw new error.Fatal('apiKey undefined...')
-  }
-
+export async function generateUrl(apiKey: string, deploymentUuid: string) {
   const mutation = api.graphql.GenerateSignedUploadUrl
   const token = await session.ensureAuthenticatedPartners()
   const variables: api.graphql.GenerateSignedUploadUrlVariables = {
