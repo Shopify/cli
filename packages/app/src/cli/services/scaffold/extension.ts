@@ -82,7 +82,7 @@ async function functionExtensionInit(options: ExtensionInitOptions) {
           await file.mkdir(templateDownloadDir)
           await git.downloadRepository({repoUrl: options.cloneUrl, destination: templateDownloadDir})
           const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-          template.recursiveDirectoryCopy(origin, extensionDirectory, {})
+          template.recursiveDirectoryCopy(origin, extensionDirectory, options)
         },
       },
     ])
