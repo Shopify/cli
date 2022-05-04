@@ -87,6 +87,9 @@
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "vitest": "0.10.0",
-    "zod": "^3.14.3"
+    "zod": "^3.14.3",
+    "form-data": "^4.0.0",
+    "cross-zip": "^4.0.0",
+    "@types/cross-zip": "^4.0.0"
   }
 }
