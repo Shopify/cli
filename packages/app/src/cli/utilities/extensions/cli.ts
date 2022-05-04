@@ -18,12 +18,13 @@ const NodeExtensionsCLINotFoundError = () => {
  * @param options {system.ExecOptions} Options to configure the process execution.
  */
 export async function runGoExtensionsCLI(args: string[], options: system.ExecOptions = {}) {
+  let stdout = options.stdout || {write: ()=>{}}
   if (useExtensionsCLISources()) {
     const projectDirectory = path.join(
       environment.local.homeDirectory(),
       'src/github.com/shopify/shopify-cli-extensions',
     )
-    options.stdout.write(`Using extensions CLI from ${projectDirectory}`)
+    stdout.write(`Using extensions CLI from ${projectDirectory}`)
     try {
       if (building) {
         while (!built) {
@@ -31,7 +32,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
         }
       } else {
         building = true
-        options.stdout.write('Building extensions CLI...')
+        stdout.write('Building extensions CLI...')
         await system.exec('make', ['build'], {
           ...options,
           stdout: undefined,
@@ -39,7 +40,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
           cwd: projectDirectory,
         })
         built = true
-        options.stdout.write('Built extensions CLI successfully!')
+        stdout.write('Built extensions CLI successfully!')
       }
       await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
     } catch {

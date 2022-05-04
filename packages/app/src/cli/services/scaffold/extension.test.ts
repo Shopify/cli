@@ -41,6 +41,7 @@ describe('initialize a extension', () => {
     extensionType: ExtensionTypes
   }
   const createFromTemplate = async ({name, extensionType}: CreateFromTemplateOptions) => {
+    const stdout: any = {write: vi.fn()}
     await extensionInit({
       name,
       extensionType,
