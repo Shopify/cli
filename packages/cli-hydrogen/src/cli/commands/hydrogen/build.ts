@@ -1,6 +1,6 @@
 import buildService from '../../services/build'
 import {Command, Flags} from '@oclif/core'
-import {path} from '@shopify/cli-kit'
+import {path, cli} from '@shopify/cli-kit'
 
 const PLATFORM_ENTRIES = {
   node: `@shopify/hydrogen/platforms/node`,
@@ -10,6 +10,7 @@ const PLATFORM_ENTRIES = {
 export default class Build extends Command {
   static description = 'Builds a Hydrogen storefront for production'
   static flags = {
+    ...cli.globalFlags,
     path: Flags.string({
       hidden: true,
       description: 'the path to your hydrogen storefront',

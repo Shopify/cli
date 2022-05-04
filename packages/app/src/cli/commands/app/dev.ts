@@ -1,5 +1,5 @@
 import {Command, Flags} from '@oclif/core'
-import {path, string} from '@shopify/cli-kit'
+import {path, string, cli} from '@shopify/cli-kit'
 import dev from '$cli/services/dev'
 import {load as loadApp, App} from '$cli/models/app/app'
 
@@ -7,6 +7,7 @@ export default class Dev extends Command {
   static description = 'Run the app'
 
   static flags = {
+    ...cli.globalFlags,
     path: Flags.string({
       hidden: true,
       description: 'The path to your app directory.',
