@@ -1,3 +1,4 @@
+import {Abort} from './error'
 import git from 'simple-git'
 
 export const factory = git
@@ -12,7 +13,7 @@ export async function downloadRepository({repoUrl, destination}: {repoUrl: strin
 
   await git().clone(repository, destination, options, (err) => {
     if (err) {
-      throw new Error(err.message)
+      throw new Abort(err.message)
     }
   })
 }

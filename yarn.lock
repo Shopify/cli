@@ -5176,39 +5176,10 @@ fast-safe-stringify@^2.0.8:
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz#c406a83b6e70d9e35ce3b30a81141df30aeba884"
   integrity sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==
 
-"fastify-http-proxy-deprecated@npm:fastify-http-proxy@6.2.2":
-  version "6.2.2"
-  resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.2.2.tgz#ad4e1da273774c67f74d94ef3f7664fdfb7a04fa"
-  integrity sha512-UiBdgfgHlMJXF1XaQF5F3am6SSirWu2QNMaEO5Qow23CfccaONXXLjIF9/CTj5tD6rA8DcUZddRhva1uVKOqcQ==
-  dependencies:
-    fastify-reply-from "^6.4.1"
-    ws "^8.4.2"
-
-fastify-http-proxy@^6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/fastify-http-proxy/-/fastify-http-proxy-6.3.0.tgz#eb4d1d04cf5fd4671d6a4ad406ddb8f3739ac66c"
-  integrity sha512-1aazvPYORgTKEyxb0EiMfjtZ5LP0+x3fDDbjAhZXWEI6D8OAAi2B5+VBmnxMFLPoEhh2Hc5foJLOWltT6+ioTg==
-  dependencies:
-    fastify-http-proxy-deprecated "npm:fastify-http-proxy@6.2.2"
-    process-warning "^1.0.0"
-
 fastify-plugin@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/fastify-plugin/-/fastify-plugin-3.0.1.tgz#79e84c29f401020f38b524f59f2402103fd21ed2"
   integrity sha512-qKcDXmuZadJqdTm6vlCqioEbyewF60b/0LOFCcYN1B6BIZGlYJumWWOYs70SFYLDAH4YqdE1cxH/RKMG7rFxgA==
-
-fastify-reply-from@^6.4.1:
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/fastify-reply-from/-/fastify-reply-from-6.6.0.tgz#70abaaab0f461efb2f4c0ad4276f20ece4ea3403"
-  integrity sha512-LGKs1KUgdXajk+WoRjiZZbhtj+xrBPxy6UFRHvxQKpIcr/ztZNUa5JZmuSlMu6eP/SzReai9j82EHm+UlD8LZQ==
-  dependencies:
-    end-of-stream "^1.4.4"
-    fastify-plugin "^3.0.0"
-    http-errors "^2.0.0"
-    pump "^3.0.0"
-    semver "^7.3.5"
-    tiny-lru "^8.0.1"
-    undici "^4.0.0"
 
 fastify@^3.29.0:
   version "3.29.0"
@@ -10207,11 +10178,6 @@ undici@4.13.0:
   version "4.13.0"
   resolved "https://registry.yarnpkg.com/undici/-/undici-4.13.0.tgz#7d10fe150c3241a6b3b0eba80eff59c9fb40f359"
   integrity sha512-8lk8S/f2V0VUNGf2scU2b+KI2JSzEQLdCyRNRF3XmHu+5jectlSDaPSBCXAHFaUlt1rzngzOBVDgJS9/Gue/KA==
-
-undici@^4.0.0:
-  version "4.16.0"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-4.16.0.tgz#469bb87b3b918818d3d7843d91a1d08da357d5ff"
-  integrity sha512-tkZSECUYi+/T1i4u+4+lwZmQgLXd4BLGlrc7KZPcLIW7Jpq99+Xpc30ONv7nS6F5UNOxp/HBZSSL9MafUrvJbw==
 
 undici@^5.0.0:
   version "5.1.1"
