@@ -39,7 +39,7 @@ export const deploy = async ({app, uploadUrlOverride}: DeployOptions) => {
 
     output.newline()
     output.info('Summary')
-    app.extensions.forEach((extension) => {
+    app.extensions.ui.forEach((extension) => {
       output.info(
         output.content`${output.token.magenta('✔')} ${path.basename(
           extension.directory,
@@ -49,7 +49,7 @@ export const deploy = async ({app, uploadUrlOverride}: DeployOptions) => {
 
     output.newline()
     output.info('Next steps')
-    app.extensions.forEach((extension) => {
+    app.extensions.ui.forEach((extension) => {
       output.info(`  · Publish ${path.basename(extension.directory)} from Shopify Partners:`)
       output.info(`   https://partners.shopify.com/....`)
     })

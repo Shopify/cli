@@ -9,7 +9,6 @@ const LOCAL_APP: App = {
   directory: '',
   packageManager: 'yarn',
   configuration: {name: 'my-app', scopes: 'read_products'},
-  functions: [],
   homes: [
     {
       directory: '',
@@ -19,7 +18,7 @@ const LOCAL_APP: App = {
       },
     },
   ],
-  extensions: [],
+  extensions: {ui: [], theme: [], function: []},
 }
 
 const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}

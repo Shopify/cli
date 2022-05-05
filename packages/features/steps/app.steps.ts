@@ -22,18 +22,22 @@ When(
   },
 )
 
-Then(/I have a extension named (.+) of type (.+)/, {}, async function (appName: string, extensionType: string) {
-  const appInfo = await this.appInfo()
-  const extension = appInfo.extensions.find((extension: {configuration: ExtensionConfiguration}) => {
-    return extension.configuration.name === appName
-  })
-  if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
-  assert.equal(extension.configuration.type, extensionType)
-})
+Then(
+  /I have a (.+) extension named (.+) of type (.+)/,
+  {},
+  async function (category: string, appName: string, extensionType: string) {
+    const appInfo = await this.appInfo()
+    const extension = appInfo.extensions[category].find((extension: {configuration: ExtensionConfiguration}) => {
+      return extension.configuration.name === appName
+    })
+    if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
+    assert.equal(extension.configuration.type, extensionType)
+  },
+)
 
 Then(/The extension named (.+) contains the theme extension directories/, {}, async function (appName: string) {
   const appInfo = await this.appInfo()
-  const extension = appInfo.extensions.find((extension: {configuration: ExtensionConfiguration}) => {
+  const extension = appInfo.extensions.theme.find((extension: {configuration: ExtensionConfiguration}) => {
     return extension.configuration.name === appName
   })
   if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)

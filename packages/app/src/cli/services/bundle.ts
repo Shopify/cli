@@ -25,7 +25,7 @@ export async function bundle(app: App): Promise<Bundle> {
 
   const uiExtensionBundles: UIExtensionBundle[] = []
   await Promise.all(
-    app.extensions.map(async (extension) => {
+    app.extensions.ui.map(async (extension) => {
       // replace config name with id when available
       const extensionFolder = path.join(tmpDir, 'todo')
       uiExtensionBundles.push({

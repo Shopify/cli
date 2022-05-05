@@ -65,7 +65,6 @@ const LOCAL_APP: App = {
   directory: '',
   packageManager: 'yarn',
   configuration: {name: 'my-app', id: 'key1', scopes: 'read_products'},
-  functions: [],
   homes: [
     {
       directory: '',
@@ -75,7 +74,7 @@ const LOCAL_APP: App = {
       },
     },
   ],
-  extensions: [],
+  extensions: {ui: [], theme: [], function: []},
 }
 
 const INPUT: DevEnvironmentInput = {

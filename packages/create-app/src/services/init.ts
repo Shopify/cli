@@ -1,8 +1,7 @@
-import downloadTemplate from '../utils/template/download'
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
 import cleanup from '../utils/template/cleanup'
 
-import {string, path, file, output, ui, dependency, template, npm} from '@shopify/cli-kit'
+import {string, path, file, output, ui, dependency, template, npm, git} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
@@ -28,9 +27,9 @@ async function init(options: InitOptions) {
         {
           title: 'Downloading template',
           task: async (_, task) => {
-            await downloadTemplate({
-              templateUrl: options.template,
-              into: templateDownloadDir,
+            await git.downloadRepository({
+              repoUrl: options.template,
+              destination: templateDownloadDir,
             })
             task.title = 'Template downloaded'
           },

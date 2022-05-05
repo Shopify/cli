@@ -1,5 +1,12 @@
 import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
-import {blocks, configurationFileNames, genericConfigurationFileNames, extensions} from '$cli/constants'
+import {
+  blocks,
+  configurationFileNames,
+  genericConfigurationFileNames,
+  functionExtensions,
+  themeExtensions,
+  uiExtensions,
+} from '$cli/constants'
 
 export const HomeConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.home} in ${directory}`)
@@ -13,9 +20,9 @@ export const AppConfigurationSchema = schema.define.object({
 
 export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
-const ExtensionConfigurationSchema = schema.define.object({
+const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(extensions.types),
+  type: schema.define.enum(uiExtensions.types),
   metafields: schema.define
     .array(
       schema.define.object({
@@ -26,21 +33,35 @@ const ExtensionConfigurationSchema = schema.define.object({
     .default([]),
 })
 
-type ExtensionConfiguration = schema.define.infer<typeof ExtensionConfigurationSchema>
+type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
 
-const FunctionConfigurationSchema = schema.define.object({
+const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
+  type: schema.define.enum(functionExtensions.types),
+  title: schema.define.string(),
 })
 
-type FunctionConfiguration = schema.define.infer<typeof FunctionConfigurationSchema>
+type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
 
-interface AppFunction {
-  configuration: FunctionConfiguration
+const ThemeExtensionConfigurationSchema = schema.define.object({
+  name: schema.define.string(),
+  type: schema.define.enum(themeExtensions.types),
+})
+
+type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
+
+interface FunctionExtension {
+  configuration: FunctionExtensionConfiguration
   directory: string
 }
 
-export interface Extension {
-  configuration: ExtensionConfiguration
+interface ThemeExtension {
+  configuration: ThemeExtensionConfiguration
+  directory: string
+}
+
+export interface UIExtension {
+  configuration: UIExtensionConfiguration
   directory: string
   buildDirectory: string
   entrySourceFilePath: string
@@ -73,9 +94,12 @@ export interface App {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
-  functions: AppFunction[]
   homes: Home[]
-  extensions: Extension[]
+  extensions: {
+    ui: UIExtension[]
+    theme: ThemeExtension[]
+    function: FunctionExtension[]
+  }
   errors?: string[]
 }
 
@@ -102,8 +126,10 @@ class AppLoader {
     this.errors = []
     this.appDirectory = await this.findAppDirectory()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, await this.getConfigurationPath())
-    const functions = await this.loadFunctions()
-    const extensions = await this.loadExtensions()
+    const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
+    const functions = await this.loadFunctions(extensionsPath)
+    const extensions = await this.loadExtensions(extensionsPath)
+    const themeExtensions = await this.loadThemeExtensions(extensionsPath)
     const yarnLockPath = path.join(this.appDirectory, genericConfigurationFileNames.yarn.lockfile)
     const yarnLockExists = await file.exists(yarnLockPath)
     const pnpmLockPath = path.join(this.appDirectory, genericConfigurationFileNames.pnpm.lockfile)
@@ -121,8 +147,7 @@ class AppLoader {
       directory: this.appDirectory,
       homes: await this.loadHomes(),
       configuration,
-      functions,
-      extensions,
+      extensions: {ui: extensions, theme: themeExtensions, function: functions},
       packageManager,
     }
     if (this.errors.length > 0) app.errors = this.errors
@@ -192,34 +217,45 @@ class AppLoader {
     return parseResult.data
   }
 
-  async loadExtensions(): Promise<Extension[]> {
-    const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}/*`)
-    const directories = await path.glob(extensionsPath, {onlyDirectories: true})
-    return Promise.all(directories.map((directory) => this.loadExtension(directory)))
+  async loadExtensions(extensionsPath: string): Promise<UIExtension[]> {
+    const extensionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
+    const configPaths = await path.glob(extensionConfigPaths)
+
+    const extensions = configPaths.map(async (configPath) => {
+      const directory = path.dirname(configPath)
+      const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configPath)
+      return {
+        directory,
+        configuration,
+        buildDirectory: path.join(directory, 'build'),
+        entrySourceFilePath: path.join(directory, 'src/index.js'),
+      }
+    })
+    return Promise.all(extensions)
   }
 
-  async loadExtension(directory: string): Promise<Extension> {
-    const configurationPath = path.join(directory, blocks.extensions.configurationName)
-    const configuration = await this.parseConfigurationFile(ExtensionConfigurationSchema, configurationPath)
-    return {
-      directory,
-      configuration,
-      buildDirectory: path.join(directory, 'build'),
-      entrySourceFilePath: path.join(directory, 'src/index.js'),
-    }
+  async loadFunctions(extensionsPath: string): Promise<FunctionExtension[]> {
+    const functionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.function}`)
+    const configPaths = await path.glob(functionConfigPaths)
+
+    const functions = configPaths.map(async (configPath) => {
+      const directory = path.dirname(configPath)
+      const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configPath)
+      return {directory, configuration}
+    })
+    return Promise.all(functions)
   }
 
-  async loadFunctions(): Promise<AppFunction[]> {
-    const functionsPath = path.join(this.appDirectory, `${blocks.functions.directoryName}/*`)
-    const directories = await path.glob(functionsPath, {onlyDirectories: true})
-    return Promise.all(directories.map((directory) => this.loadFunction(directory)))
-  }
+  async loadThemeExtensions(extensionsPath: string): Promise<ThemeExtension[]> {
+    const themeConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.theme}`)
+    const configPaths = await path.glob(themeConfigPaths)
 
-  async loadFunction(directory: string): Promise<AppFunction> {
-    const configurationPath = path.join(directory, blocks.functions.configurationName)
-    const configuration = await this.parseConfigurationFile(FunctionConfigurationSchema, configurationPath)
-
-    return {directory, configuration}
+    const themeExtensions = configPaths.map(async (configPath) => {
+      const directory = path.dirname(configPath)
+      const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configPath)
+      return {directory, configuration}
+    })
+    return Promise.all(themeExtensions)
   }
 
   abortOrReport(errorMessage: string, fallback: any = null) {

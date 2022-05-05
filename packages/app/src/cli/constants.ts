@@ -1,7 +1,10 @@
 export const configurationFileNames = {
   app: 'shopify.app.toml',
-  extension: 'shopify.extension.toml',
-  functions: 'shopify.function.toml',
+  extension: {
+    ui: 'shopify.extension.toml',
+    theme: 'shopify.theme.extension.toml',
+    function: 'shopify.function.extension.toml',
+  },
   home: 'shopify.home.toml',
 }
 
@@ -22,8 +25,8 @@ export const blocks = {
     configurationName: configurationFileNames.extension,
   },
   functions: {
-    directoryName: 'functions',
-    configurationName: configurationFileNames.functions,
+    defaultUrl: 'https://github.com/Shopify/scripts-apis-examples',
+    defaultLanguage: 'wasm',
   },
   home: {
     directoryName: 'home',
@@ -50,11 +53,11 @@ export const functionExtensions: ExtensionsType = {
   ],
 }
 
-const appExtensions: ExtensionsType = {
+export const uiExtensions: ExtensionsType = {
   types: ['product_subscription', 'checkout_post_purchase'],
 }
 
-const themeExtensions: ExtensionsType = {
+export const themeExtensions: ExtensionsType = {
   types: ['theme'],
 }
 
@@ -64,7 +67,7 @@ interface ExtensionsType {
   types: [string, ...string[]]
 }
 export const extensions: ExtensionsType = {
-  types: [...themeExtensions.types, ...appExtensions.types, ...functionExtensions.types],
+  types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
