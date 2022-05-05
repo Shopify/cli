@@ -17,6 +17,21 @@ interface ExtensionBuildOptions {
    * Signal to abort the build process.
    */
   signal: AbortSignal
+
+  /**
+   * Overrides the default build directory.
+   */
+  buildDirectory?: string
+
+  /**
+   * The extension to be built.
+   */
+  extension: Extension
+
+  /**
+   * The app that contains the extension.
+   */
+  app: App
 }
 
 /**
@@ -24,15 +39,21 @@ interface ExtensionBuildOptions {
  * @param extension {Extension} The extension to build.
  * @param options {ExtensionBuildOptions} Build options.
  */
-export async function buildExtension(extension: Extension, app: App, options: ExtensionBuildOptions): Promise<void> {
+export async function buildExtension(options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Building extension...`)
-  const stdin = yaml.encode(await extensionConfig(extension, app))
+  const stdin = yaml.encode(await extensionConfig(options))
   await runGoExtensionsCLI(['build', '-'], {
-    cwd: app.directory,
+    cwd: options.app.directory,
     stdout: options.stdout,
     stderr: options.stderr,
     stdin,
   })
+}
+
+interface ExtensionConfigOptions {
+  app: App
+  extension: Extension
+  buildDirectory?: string
 }
 
 /**
@@ -42,22 +63,23 @@ export async function buildExtension(extension: Extension, app: App, options: Ex
  * @param extension {Extension} Extension that will be built.
  * @returns
  */
-async function extensionConfig(extension: Extension, app: App): Promise<any> {
+async function extensionConfig(options: ExtensionConfigOptions): Promise<any> {
   return {
     extensions: [
       {
-        title: extension.configuration.name,
-        type: `${extension.configuration.type}_next`,
-        metafields: extension.configuration.metafields,
+        title: options.extension.configuration.name,
+        type: `${options.extension.configuration.type}_next`,
+        metafields: options.extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: path.relative(app.directory, extension.directory),
+          root_dir: path.relative(options.app.directory, options.extension.directory),
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          build_dir: path.relative(extension.directory, extension.buildDirectory),
+          build_dir:
+            options.buildDirectory ?? path.relative(options.extension.directory, options.extension.buildDirectory),
           entries: {
-            main: path.relative(extension.directory, extension.entrySourceFilePath),
+            main: path.relative(options.extension.directory, options.extension.entrySourceFilePath),
           },
         },
       },
