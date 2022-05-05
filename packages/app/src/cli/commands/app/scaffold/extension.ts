@@ -46,7 +46,7 @@ export default class AppScaffoldExtension extends Command {
   static args = [{name: 'file'}]
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(AppScaffoldExtension)
+    const {flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
 
@@ -57,16 +57,22 @@ export default class AppScaffoldExtension extends Command {
       ignoreExtensions: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
     })
-    const {extensionType, name} = promptAnswers
+
     await scaffoldExtensionService({
       ...promptAnswers,
       app,
       cloneUrl: flags['clone-url'],
       language: flags.language,
     })
-    output.info(output.content`Extension ${name} generated successfully!`)
+    output.info(output.content`Extension ${promptAnswers.name} generated successfully!`)
   }
 
+  /**
+   * If the type passed as flag is not valid because it has already been scaffolded
+   * and we do not allow multiple extensions of that type, throw an error
+   * @param app {App} current App
+   * @param type {string} extension type
+   */
   validateType(app: App, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
       throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
@@ -74,7 +80,8 @@ export default class AppScaffoldExtension extends Command {
   }
 
   /**
-   * Some extensions types like `theme` and `product_subscription` are limited to one per app
+   * Some extension types like `theme` and `product_subscription` are limited to one per app
+   * Use this method to retrieve a list of the limited types that have already been scaffolded
    *
    * @param app {App} current App
    * @returns {string[]} list of extensions that are limited by quantity and are already scaffolded
