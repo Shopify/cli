@@ -1,7 +1,7 @@
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: {
-    ui: 'shopify.ui.extension.toml',
+    ui: 'shopify.extension.toml',
     theme: 'shopify.theme.extension.toml',
     function: 'shopify.function.extension.toml',
   },
