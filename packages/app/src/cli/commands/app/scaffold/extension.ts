@@ -1,3 +1,4 @@
+import {appFlags} from '../../../flags'
 import {output, path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 import {extensions} from '$cli/constants'
@@ -11,6 +12,7 @@ export default class AppScaffoldExtension extends Command {
 
   static flags = {
     ...cli.globalFlags,
+    ...appFlags,
     type: Flags.string({
       char: 't',
       hidden: false,
@@ -24,12 +26,6 @@ export default class AppScaffoldExtension extends Command {
       description: 'name of your Extension',
       env: 'SHOPIFY_FLAG_NAME',
     }),
-    path: Flags.string({
-      char: 'p',
-      hidden: true,
-      description: 'the path to your app directory',
-      env: 'SHOPIFY_FLAG_PATH',
-    }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'clone-url': Flags.string({
       hidden: true,
@@ -37,7 +33,6 @@ export default class AppScaffoldExtension extends Command {
       description:
         'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/scripts-apis-examples',
       env: 'SHOPIFY_FLAG_CLONE_URL',
-      default: 'https://github.com/Shopify/scripts-apis-examples',
     }),
     language: Flags.string({
       hidden: true,
@@ -45,7 +40,6 @@ export default class AppScaffoldExtension extends Command {
       options: ['wasm', 'rust', 'typescript'],
       description: 'Language of the template',
       env: 'SHOPIFY_FLAG_LANGUAGE',
-      default: 'wasm',
     }),
   }
 

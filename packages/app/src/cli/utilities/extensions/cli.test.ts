@@ -29,7 +29,8 @@ describe('runGoExtensionsCLI', () => {
     vi.mocked(environment.local.homeDirectory).mockReturnValue('/home')
 
     // When
-    const got = await runGoExtensionsCLI(['build'])
+    const stdout: any = {write: vi.fn()}
+    const got = await runGoExtensionsCLI(['build'], {stdout})
 
     // Then
     expect(system.exec).toHaveBeenNthCalledWith(1, 'make', ['build'], {
@@ -37,7 +38,9 @@ describe('runGoExtensionsCLI', () => {
       stderr: undefined,
       cwd: projectDirectory,
     })
-    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {})
+    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {
+      stdout,
+    })
   })
 
   test('runs the CLI through the downloaded binary when not using the local sources', async () => {

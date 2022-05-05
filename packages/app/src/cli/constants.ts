@@ -16,13 +16,17 @@ export const environmentVariables = {
 }
 
 export const versions = {
-  extensionsBinary: 'v0.2.0',
+  extensionsBinary: 'v0.5.0',
 }
 
 export const blocks = {
   extensions: {
     directoryName: 'extensions',
     configurationName: configurationFileNames.extension,
+  },
+  functions: {
+    defaultUrl: 'https://github.com/Shopify/scripts-apis-examples',
+    defaultLanguage: 'wasm',
   },
   home: {
     directoryName: 'home',
