@@ -18,7 +18,7 @@ When(
         dependencyManager,
         '--local',
         '--template',
-        'https://github.com/Shopify/shopify-app-node#richard/frontend-via-submodules-toml-updates',
+        'https://github.com/Shopify/shopify-app-template-node#richard/frontend-via-submodules-toml-updates',
       ],
       {env: {...process.env, ...this.temporaryEnv}},
     )
