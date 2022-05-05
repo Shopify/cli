@@ -21,7 +21,7 @@ async function build({app}: BuildOptions) {
     ...app.extensions.map((extension) => ({
       prefix: path.basename(extension.directory),
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-        await buildExtension(extension, app, {stdout, stderr, signal})
+        await buildExtension({app, extension, stdout, stderr, signal})
       },
     })),
   ])
