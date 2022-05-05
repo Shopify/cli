@@ -1,18 +1,14 @@
-import {Command, Flags} from '@oclif/core'
+import {appFlags} from '../../flags'
+import {load as loadApp, App} from '../../models/app/app'
+import {Command} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
-import {load as loadApp, App} from '$cli/models/app/app'
 
 export default class AppInfo extends Command {
   static description = 'Print basic information about your app and blocks'
 
   static flags = {
     ...cli.globalFlags,
-    path: Flags.string({
-      char: 'p',
-      hidden: true,
-      description: 'the path to your app directory',
-      env: 'SHOPIFY_FLAG_PATH',
-    }),
+    ...appFlags,
   }
 
   static args = [{name: 'file'}]

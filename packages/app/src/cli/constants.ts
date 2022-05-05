@@ -1,7 +1,7 @@
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: {
-    ui: 'shopify.ui.extension.toml',
+    ui: 'shopify.extension.toml',
     theme: 'shopify.theme.extension.toml',
     function: 'shopify.function.extension.toml',
   },
@@ -16,13 +16,17 @@ export const environmentVariables = {
 }
 
 export const versions = {
-  extensionsBinary: 'v0.2.0',
+  extensionsBinary: 'v0.5.0',
 }
 
 export const blocks = {
   extensions: {
     directoryName: 'extensions',
     configurationName: configurationFileNames.extension,
+  },
+  functions: {
+    defaultUrl: 'https://github.com/Shopify/scripts-apis-examples',
+    defaultLanguage: 'wasm',
   },
   home: {
     directoryName: 'home',

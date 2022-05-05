@@ -1,52 +1,27 @@
+import {appFlags} from '../../flags'
+import {deploy} from '../../services/deploy'
+import {App, load as loadApp} from '../../models/app/app'
 import {Command, Flags} from '@oclif/core'
-import {path, output, cli} from '@shopify/cli-kit'
-import {App, load as loadApp} from '$cli/models/app/app'
-import build from '$cli/services/build'
+import {path, cli} from '@shopify/cli-kit'
 
-export default class Build extends Command {
+export default class Deploy extends Command {
   static description = 'Deploy your Shopify app'
 
   static flags = {
     ...cli.globalFlags,
-    path: Flags.string({
+    ...appFlags,
+    uploadUrl: Flags.string({
       hidden: true,
-      description: 'the path to your app directory',
-      env: 'SHOPIFY_FLAG_PATH',
+      description: 'Signed URL to upload the app.',
+      env: 'SHOPIFY_FLAG_UPLOAD_URL',
     }),
   }
 
   async run(): Promise<void> {
-    const {args, flags} = await this.parse(Build)
+    const {args, flags} = await this.parse(Deploy)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const uploadUrlOverride = flags.uploadUrl
     const app: App = await loadApp(directory)
-    output.info('Building your app...')
-    output.newline()
-    await build({app})
-
-    output.newline()
-    output.info('Pushing your code to Shopify...')
-    await new Promise((resolve, reject) => {
-      setTimeout(resolve, 3 * 1000)
-    })
-
-    output.newline()
-    output.success(`${app.configuration.name} deploy to Shopify Partners`)
-
-    output.newline()
-    output.info('Summary')
-    app.extensions.ui.forEach((extension) => {
-      output.info(
-        output.content`${output.token.magenta('✔')} ${path.basename(
-          extension.directory,
-        )} is deployed to Shopify but not yet live`,
-      )
-    })
-
-    output.newline()
-    output.info('Next steps')
-    app.extensions.ui.forEach((extension) => {
-      output.info(`  · Publish ${path.basename(extension.directory)} from Shopify Partners:`)
-      output.info(`   https://partners.shopify.com/....`)
-    })
+    await deploy({app, uploadUrlOverride})
   }
 }

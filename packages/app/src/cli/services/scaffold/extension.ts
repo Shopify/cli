@@ -1,4 +1,5 @@
-import {error, file, git, output, path, string, template, ui} from '@shopify/cli-kit'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {error, file, git, output, path, string, template, ui, yaml} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
 import {App} from '$cli/models/app/app'
@@ -26,14 +27,8 @@ interface ExtensionInitOptions {
   name: string
   extensionType: ExtensionTypes
   app: App
-  cloneUrl: string
-  language: string
-}
-
-interface ExtensionLocalTemplateOptions {
-  name: string
-  extensionType: ExtensionTypes
-  app: App
+  cloneUrl?: string
+  language?: string
 }
 
 async function extensionInit(options: ExtensionInitOptions) {
@@ -45,33 +40,40 @@ async function extensionInit(options: ExtensionInitOptions) {
     await argoExtensionInit(options)
   }
 }
-async function themeExtensionInit({name, app, extensionType}: ExtensionLocalTemplateOptions) {
+
+async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const templatePath = await getTemplatePath('theme-extension')
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function argoExtensionInit({name, extensionType, app}: ExtensionLocalTemplateOptions) {
+async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
-  await Promise.all(
-    [
-      {filename: 'config.toml', alias: blocks.extensions.configurationName.ui},
-      {filename: `${extensionType}.jsx`, alias: 'index.js'},
-    ].map((fileDetails) =>
-      writeFromTemplate({
-        ...fileDetails,
-        directory: extensionDirectory,
-        promptAnswers: {
-          name,
-          extensionType,
+  const stdin = yaml.encode({
+    extensions: [
+      {
+        title: name,
+        // Use the new templates
+        type: `${extensionType}_next`,
+        metafields: [],
+        development: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          root_dir: '.',
         },
-      }),
-    ),
-  )
+      },
+    ],
+  })
+  await runGoExtensionsCLI(['create', '-'], {
+    cwd: extensionDirectory,
+    stdout: process.stdout,
+    stderr: process.stderr,
+    stdin,
+  })
 }
 
 async function functionExtensionInit(options: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists(options)
+  const url = options.cloneUrl || blocks.functions.defaultUrl
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
@@ -80,7 +82,7 @@ async function functionExtensionInit(options: ExtensionInitOptions) {
         title: 'Scaffolding extension',
         task: async () => {
           await file.mkdir(templateDownloadDir)
-          await git.downloadRepository({repoUrl: options.cloneUrl, destination: templateDownloadDir})
+          await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
           const origin = path.join(templateDownloadDir, functionTemplatePath(options))
           template.recursiveDirectoryCopy(origin, extensionDirectory, options)
         },
@@ -91,17 +93,18 @@ async function functionExtensionInit(options: ExtensionInitOptions) {
 }
 
 function functionTemplatePath({extensionType, language}: ExtensionInitOptions): string {
+  const lang = language || blocks.functions.defaultLanguage
   switch (extensionType) {
     case 'product_discount_type':
-      return `discounts/${language}/product-discount-type/default`
+      return `discounts/${lang}/product-discount-type/default`
     case 'order_discount_type':
-      return `discounts/${language}/order-discount-type/default`
+      return `discounts/${lang}/order-discount-type/default`
     case 'shipping_discount_type':
-      return `discounts/${language}/shipping-discount-type/default`
+      return `discounts/${lang}/shipping-discount-type/default`
     case 'payment_methods':
-      return `checkout/${language}/payment-methods/default`
+      return `checkout/${lang}/payment-methods/default`
     case 'shipping_rate_presenter':
-      return `checkout/${language}/shipping-rate-presenter/default`
+      return `checkout/${lang}/shipping-rate-presenter/default`
     default:
       throw new error.Fatal('Invalid extension type')
   }
