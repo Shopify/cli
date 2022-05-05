@@ -2,7 +2,7 @@ import {buildExtension} from './extension'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {describe, expect, test, vi} from 'vitest'
 import {yaml, path} from '@shopify/cli-kit'
-import {App, Extension} from '$cli/models/app/app'
+import {App, UIExtension} from '$cli/models/app/app'
 
 vi.mock('../../utilities/extensions/cli')
 
@@ -15,7 +15,7 @@ describe('buildExtension', () => {
     const appRoot = '/'
     const extensionName = 'myextension'
     const extensionRoot = `/extensions/${extensionName}`
-    const extension: Extension = {
+    const extension: UIExtension = {
       buildDirectory: `${extensionRoot}/build`,
       configuration: {
         name: extensionName,
@@ -33,8 +33,7 @@ describe('buildExtension', () => {
         scopes: '',
       },
       homes: [],
-      functions: [],
-      extensions: [extension],
+      extensions: {ui: [extension], function: [], theme: []},
     }
 
     // When
