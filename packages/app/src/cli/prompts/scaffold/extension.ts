@@ -4,7 +4,7 @@ import {extensions, ExtensionTypes} from '$cli/constants'
 interface ScaffoldExtensionOptions {
   name?: string
   extensionType?: ExtensionTypes
-  ignoreExtensions: string[]
+  ignoreExtensions?: string[]
 }
 
 interface ScaffoldExtensionOutput {
