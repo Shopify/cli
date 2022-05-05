@@ -1,7 +1,7 @@
 import {appFlags} from '../../../flags'
 import {output, path, cli, error} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
-import {extensions} from '$cli/constants'
+import {extensions, limitedExtensions} from '$cli/constants'
 import scaffoldExtensionPrompt from '$cli/prompts/scaffold/extension'
 import {load as loadApp, App} from '$cli/models/app/app'
 import scaffoldExtensionService from '$cli/services/scaffold/extension'
@@ -45,12 +45,6 @@ export default class AppScaffoldExtension extends Command {
 
   static args = [{name: 'file'}]
 
-  limited = {
-    ui: ['product_subscription'],
-    theme: ['theme'],
-    function: [],
-  }
-
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
@@ -60,7 +54,7 @@ export default class AppScaffoldExtension extends Command {
 
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
-      ignoreExtensions: this.extensionsLimitedByQuantity(app),
+      ignoreExtensions: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
     })
     const {extensionType, name} = promptAnswers
@@ -74,13 +68,13 @@ export default class AppScaffoldExtension extends Command {
   }
 
   validateType(app: App, type: string | undefined) {
-    if (this.extensionsLimitedByQuantity(app).includes(type)) {
+    if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
       throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
     }
   }
 
   /**
-   * Extensions of type `theme` and `product_subscription` are limited to one per app
+   * Some extensions types like `theme` and `product_subscription` are limited to one per app
    *
    * @param app {App} current App
    * @returns {string[]} list of extensions that are limited by quantity and are already scaffolded
@@ -89,13 +83,8 @@ export default class AppScaffoldExtension extends Command {
     const themeTypes: string[] = app.extensions.theme.map((ext) => ext.configuration.type)
     const uiTypes: string[] = app.extensions.ui.map((ext) => ext.configuration.type)
 
-    const themeExtensions = themeTypes.filter((type) => this.limited.theme.includes(type))
-    const uiExtensions = uiTypes.filter((type) => this.limited.ui.includes(type))
+    const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
+    const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
     return [...themeExtensions, ...uiExtensions]
-
-    // const hasThemeExtension = app.extensions.theme.filter((ext) => this.limited.theme.includes(ext.configuration.type))
-
-    // const hasProductSubscription = app.extensions.ui.find((ext) => ext.configuration.type === 'product_subscription')
-    // return [...(hasThemeExtension ? ['theme'] : []), ...(hasProductSubscription ? ['product_subscription'] : [])]
   }
 }

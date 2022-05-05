@@ -16,6 +16,15 @@ Scenario: I scaffold a theme extension
   Then The extension named MyExtension contains the theme extension directories
 
 @skip_node_14
+Scenario: I scaffold two theme extensions
+  Given I have a working directory
+  And I create an app named MyExtendedApp with yarn as dependency manager
+  When I create a extension named MyExtension of type theme
+  When I create a extension named MyExtension2 of type theme
+  Then I have a theme extension named MyExtension of type theme
+  Then I do not have a theme extension named MyExtension2 of type theme
+
+@skip_node_14
 Scenario: I scaffold a function extension
   Given I have a working directory
   And I create an app named MyExtendedApp with yarn as dependency manager

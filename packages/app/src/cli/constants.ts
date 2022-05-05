@@ -34,6 +34,15 @@ export const blocks = {
   },
 }
 
+/**
+ * List of extensions for each category that are limited by quantity, only 1 of each is allowed per app
+ */
+export const limitedExtensions = {
+  ui: ['product_subscription'],
+  theme: ['theme'],
+  function: [],
+}
+
 export const genericConfigurationFileNames = {
   yarn: {
     lockfile: 'yarn.lock',
