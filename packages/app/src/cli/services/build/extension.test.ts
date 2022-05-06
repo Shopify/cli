@@ -17,11 +17,11 @@ describe('buildExtension', () => {
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
       buildDirectory: `${extensionRoot}/build`,
+      configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
         name: extensionName,
         metafields: [],
         type: 'checkout_post_purchase',
-        path: '/shopify.ui.etension.toml',
       },
       directory: extensionRoot,
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
@@ -29,10 +29,10 @@ describe('buildExtension', () => {
     const app: App = {
       directory: appRoot,
       packageManager: 'yarn',
+      configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
         name: 'myapp',
         scopes: '',
-        path: '/shopify.app.toml',
       },
       homes: [],
       extensions: {ui: [extension], function: [], theme: []},

@@ -45,9 +45,9 @@ export const deploy = async ({app}: DeployOptions) => {
 function ensureIdsPresence(app: App) {
   const configurationFilesWithoutId = app.extensions.ui
     .filter((uiExtension) => uiExtension.configuration.id === undefined)
-    .map((uiExtension) => uiExtension.configuration.path)
+    .map((uiExtension) => uiExtension.configurationPath)
   if (!app.configuration.id) {
-    configurationFilesWithoutId.push(app.configuration.path)
+    configurationFilesWithoutId.push(app.configurationPath)
   }
   if (configurationFilesWithoutId.length !== 0) {
     const filesSequenceString = configurationFilesWithoutId.map((filePath) => path.relativize(filePath)).join(', ')

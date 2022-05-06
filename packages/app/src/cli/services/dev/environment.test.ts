@@ -64,7 +64,8 @@ const STORE2: OrganizationStore = {
 const LOCAL_APP: App = {
   directory: '',
   packageManager: 'yarn',
-  configuration: {name: 'my-app', id: 'key1', scopes: 'read_products', path: '/shopify.app.toml'},
+  configurationPath: '/shopify.app.toml',
+  configuration: {name: 'my-app', id: 'key1', scopes: 'read_products'},
   homes: [
     {
       directory: '',
