@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "main": "home/backend/index.js",
   "license": "UNLICENSED",
+  "private": true,
   "scripts": {
     "shopify": "../shopify",
     "build": "../shopify app build",

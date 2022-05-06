@@ -21,6 +21,7 @@ describe('buildExtension', () => {
         name: extensionName,
         metafields: [],
         type: 'checkout_post_purchase',
+        path: '/shopify.ui.etension.toml',
       },
       directory: extensionRoot,
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
@@ -31,6 +32,7 @@ describe('buildExtension', () => {
       configuration: {
         name: 'myapp',
         scopes: '',
+        path: '/shopify.app.toml',
       },
       homes: [],
       extensions: {ui: [extension], function: [], theme: []},

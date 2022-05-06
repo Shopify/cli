@@ -14,7 +14,7 @@ export const HomeConfigurationFileNotFound = (directory: string) => {
 
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  id: schema.define.optional(schema.define.string()),
+  id: schema.define.string().optional(),
   scopes: schema.define.string().default(''),
 })
 
@@ -23,6 +23,7 @@ export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(uiExtensions.types),
+  id: schema.define.string().optional(),
   metafields: schema.define
     .array(
       schema.define.object({
@@ -52,16 +53,19 @@ type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConf
 
 interface FunctionExtension {
   configuration: FunctionExtensionConfiguration
+  configurationPath: string
   directory: string
 }
 
 interface ThemeExtension {
   configuration: ThemeExtensionConfiguration
+  configurationPath: string
   directory: string
 }
 
 export interface UIExtension {
   configuration: UIExtensionConfiguration
+  configurationPath: string
   directory: string
   buildDirectory: string
   entrySourceFilePath: string
@@ -94,6 +98,7 @@ export interface App {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
+  configurationPath: string
   homes: Home[]
   extensions: {
     ui: UIExtension[]
@@ -125,7 +130,8 @@ class AppLoader {
   async loaded() {
     this.errors = []
     this.appDirectory = await this.findAppDirectory()
-    const configuration = await this.parseConfigurationFile(AppConfigurationSchema, await this.getConfigurationPath())
+    const configurationPath = await this.getConfigurationPath()
+    const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
     const functions = await this.loadFunctions(extensionsPath)
     const extensions = await this.loadExtensions(extensionsPath)
@@ -147,6 +153,7 @@ class AppLoader {
       directory: this.appDirectory,
       homes: await this.loadHomes(),
       configuration,
+      configurationPath,
       extensions: {ui: extensions, theme: themeExtensions, function: functions},
       packageManager,
     }
@@ -201,9 +208,11 @@ class AppLoader {
     }
     const configurationContent = await file.read(path)
     // Convert snake_case keys to camelCase before returning
-    return Object.fromEntries(
-      Object.entries(toml.decode(configurationContent)).map((kv) => [string.camelize(kv[0]), kv[1]]),
-    )
+    return {
+      ...Object.fromEntries(
+        Object.entries(toml.decode(configurationContent)).map((kv) => [string.camelize(kv[0]), kv[1]]),
+      ),
+    }
   }
 
   async parseConfigurationFile(schema: any, path: string) {
@@ -221,12 +230,13 @@ class AppLoader {
     const extensionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
     const configPaths = await path.glob(extensionConfigPaths)
 
-    const extensions = configPaths.map(async (configPath) => {
-      const directory = path.dirname(configPath)
-      const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configPath)
+    const extensions = configPaths.map(async (configurationPath) => {
+      const directory = path.dirname(configurationPath)
+      const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configurationPath)
       return {
         directory,
         configuration,
+        configurationPath,
         buildDirectory: path.join(directory, 'build'),
         entrySourceFilePath: path.join(directory, 'src/index.js'),
       }
@@ -238,10 +248,10 @@ class AppLoader {
     const functionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.function}`)
     const configPaths = await path.glob(functionConfigPaths)
 
-    const functions = configPaths.map(async (configPath) => {
-      const directory = path.dirname(configPath)
-      const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configPath)
-      return {directory, configuration}
+    const functions = configPaths.map(async (configurationPath) => {
+      const directory = path.dirname(configurationPath)
+      const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configurationPath)
+      return {directory, configuration, configurationPath}
     })
     return Promise.all(functions)
   }
@@ -250,10 +260,10 @@ class AppLoader {
     const themeConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.theme}`)
     const configPaths = await path.glob(themeConfigPaths)
 
-    const themeExtensions = configPaths.map(async (configPath) => {
-      const directory = path.dirname(configPath)
-      const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configPath)
-      return {directory, configuration}
+    const themeExtensions = configPaths.map(async (configurationPath) => {
+      const directory = path.dirname(configurationPath)
+      const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configurationPath)
+      return {directory, configuration, configurationPath}
     })
     return Promise.all(themeExtensions)
   }

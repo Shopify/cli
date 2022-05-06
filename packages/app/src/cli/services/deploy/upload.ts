@@ -1,28 +1,26 @@
-import {App} from '../models/app/app'
 import {api, error, session, http, id} from '@shopify/cli-kit'
+
 import fs from 'fs'
 
 interface UploadOptions {
-  app: App
-  archivePath: string
-  deploymentUUID?: string
-  signedURL?: string
+  /** The application API key */
+  apiKey: string
+
+  /** The path to the bundle file to be uploaded */
+  bundlePath: string
 }
 
+/**
+ * Uploads a bundle.
+ * @param options {UploadOptions} The upload options
+ */
 export async function upload(options: UploadOptions) {
-  const apiKey = options.app.configuration.id
-  if (!apiKey) {
-    throw new error.Abort(
-      "The app configuration file doesn't have an id and it's necessary to upload the app",
-      'You can set it manually getting the API key of the app in the partners organization or run the dev command.',
-    )
-  }
   const token = await session.ensureAuthenticatedPartners()
-  const deploymentUUID = options.deploymentUUID ?? id.generateRandomUUID()
-  const signedURL = options.signedURL ?? (await generateUrl(apiKey, deploymentUUID))
+  const deploymentUUID = id.generateRandomUUID()
+  const signedURL = await generateUrl(options.apiKey, deploymentUUID)
 
   const formData = http.formData()
-  const buffer = fs.readFileSync(options.archivePath)
+  const buffer = fs.readFileSync(options.bundlePath)
   formData.append('my_upload', buffer)
   await http.fetch(signedURL, {
     method: 'put',
@@ -31,7 +29,7 @@ export async function upload(options: UploadOptions) {
   })
 
   const variables: api.graphql.CreateDeploymentVariables = {
-    apiKey,
+    apiKey: options.apiKey,
     uuid: deploymentUUID,
     bundleUrl: signedURL,
   }
@@ -44,12 +42,18 @@ export async function upload(options: UploadOptions) {
   }
 }
 
-export async function generateUrl(apiKey: string, deploymentUuid: string) {
+/**
+ * It generates a URL to upload an app bundle.
+ * @param apiKey {string} The application API key
+ * @param deploymentUUID {string} The unique identifier of the deployment.
+ * @returns
+ */
+export async function generateUrl(apiKey: string, deploymentUUID: string) {
   const mutation = api.graphql.GenerateSignedUploadUrl
   const token = await session.ensureAuthenticatedPartners()
   const variables: api.graphql.GenerateSignedUploadUrlVariables = {
     apiKey,
-    deploymentUuid,
+    deploymentUuid: deploymentUUID,
     bundleFormat: 1,
   }
 

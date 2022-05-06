@@ -1,5 +1,6 @@
 # This file stores configurations for your Shopify app UI extension.
 
+id = "uuid"
 name = "checkout-post-purchase"
 type = "checkout_post_purchase"
 

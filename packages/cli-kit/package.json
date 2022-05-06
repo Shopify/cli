@@ -58,10 +58,14 @@
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
+    "@types/cross-zip": "^4.0.0",
+    "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
     "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
+    "commondir": "^1.0.1",
     "conf": "^10.1.2",
+    "cross-zip": "^4.0.0",
     "del": "^6.0.0",
     "enquirer": "^2.3.6",
     "env-paths": "^3.0.0",
@@ -69,12 +73,12 @@
     "fast-glob": "^3.2.11",
     "find-up": "^6.2.0",
     "find-versions": "^5.0.0",
+    "form-data": "^4.0.0",
     "fs-extra": "^10.0.0",
     "get-port-please": "^2.5.0",
     "graphql": "^16.4.0",
     "graphql-request": "^4.2.0",
     "js-yaml": "^4.1.0",
-    "@types/js-yaml": "^4.0.5",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",
     "listr2": "^4.0.5",
@@ -87,9 +91,6 @@
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "vitest": "0.10.0",
-    "zod": "^3.14.3",
-    "form-data": "^4.0.0",
-    "cross-zip": "^4.0.0",
-    "@types/cross-zip": "^4.0.0"
+    "zod": "^3.14.3"
   }
 }
