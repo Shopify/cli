@@ -6,7 +6,7 @@ import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
-import {App, HomeType} from '$cli/models/app/app'
+import {App, WebType} from '$cli/models/app/app'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
@@ -66,11 +66,11 @@ const LOCAL_APP: App = {
   packageManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {name: 'my-app', id: 'key1', scopes: 'read_products'},
-  homes: [
+  webs: [
     {
       directory: '',
       configuration: {
-        type: HomeType.Backend,
+        type: WebType.Backend,
         commands: {dev: ''},
       },
     },

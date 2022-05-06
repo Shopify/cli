@@ -97,12 +97,12 @@ describe('updateCLIDependencies', () => {
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
     await temporary.directory(async (tmpDir) => {
-      await file.mkdir(path.join(tmpDir, 'home'))
-      await file.mkdir(path.join(tmpDir, 'home', 'frontend'))
+      await file.mkdir(path.join(tmpDir, 'web'))
+      await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([
         file.write(path.join(tmpDir, 'package.json'), '{}'),
-        file.write(path.join(tmpDir, 'home', 'package.json'), '{}'),
-        file.write(path.join(tmpDir, 'home', 'frontend', 'package.json'), '{}'),
+        file.write(path.join(tmpDir, 'web', 'package.json'), '{}'),
+        file.write(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
       ])
 
       callback(tmpDir)
@@ -120,8 +120,8 @@ describe('getDeepInstallNPMTasks', () => {
 
   it.each([
     ['/', 0],
-    ['/home/', 1],
-    ['/home/frontend/', 2],
+    ['/web/', 1],
+    ['/web/frontend/', 2],
   ])('returns a task for %s', async (folderPath, i) => {
     await mockAppFolder(async (tmpDir) => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
@@ -147,13 +147,13 @@ describe('getDeepInstallNPMTasks', () => {
         expect.any(Writable),
       )
       expect(dependency.install).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'home')}/`,
+        `${path.join(tmpDir, 'web')}/`,
         defaultArgs.dependencyManager,
         expect.any(Writable),
         expect.any(Writable),
       )
       expect(dependency.install).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'home', 'frontend')}/`,
+        `${path.join(tmpDir, 'web', 'frontend')}/`,
         defaultArgs.dependencyManager,
         expect.any(Writable),
         expect.any(Writable),
@@ -169,8 +169,8 @@ describe('getDeepInstallNPMTasks', () => {
       await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
 
       expect(taskStates).toContainEqual({title: `Installed dependencies in /`})
-      expect(taskStates).toContainEqual({title: `Installed dependencies in /home/`})
-      expect(taskStates).toContainEqual({title: `Installed dependencies in /home/frontend/`})
+      expect(taskStates).toContainEqual({title: `Installed dependencies in /web/`})
+      expect(taskStates).toContainEqual({title: `Installed dependencies in /web/frontend/`})
     })
   })
 

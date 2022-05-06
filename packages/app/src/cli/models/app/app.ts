@@ -8,8 +8,8 @@ import {
   uiExtensions,
 } from '$cli/constants'
 
-export const HomeConfigurationFileNotFound = (directory: string) => {
-  return new error.Abort(`Couldn't find ${configurationFileNames.home} in ${directory}`)
+export const WebConfigurationFileNotFound = (directory: string) => {
+  return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)
 }
 
 export const AppConfigurationSchema = schema.define.object({
@@ -71,25 +71,25 @@ export interface UIExtension {
   entrySourceFilePath: string
 }
 
-export enum HomeType {
+export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
 }
 
-export const HomeConfigurationSchema = schema.define.object({
-  type: schema.define.enum([HomeType.Frontend, HomeType.Backend]),
+export const WebConfigurationSchema = schema.define.object({
+  type: schema.define.enum([WebType.Frontend, WebType.Backend]),
   commands: schema.define.object({
     build: schema.define.string().optional(),
     dev: schema.define.string(),
   }),
 })
 
-export type HomeConfiguration = schema.define.infer<typeof HomeConfigurationSchema>
-export type HomeConfigurationCommands = keyof HomeConfiguration['commands']
+export type WebConfiguration = schema.define.infer<typeof WebConfigurationSchema>
+export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
-export interface Home {
+export interface Web {
   directory: string
-  configuration: HomeConfiguration
+  configuration: WebConfiguration
 }
 
 type PackageManager = 'npm' | 'yarn' | 'pnpm'
@@ -99,7 +99,7 @@ export interface App {
   packageManager: PackageManager
   configuration: AppConfiguration
   configurationPath: string
-  homes: Home[]
+  webs: Web[]
   extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
@@ -151,7 +151,7 @@ class AppLoader {
 
     const app: App = {
       directory: this.appDirectory,
-      homes: await this.loadHomes(),
+      webs: await this.loadWebs(),
       configuration,
       configurationPath,
       extensions: {ui: extensions, theme: themeExtensions, function: functions},
@@ -183,22 +183,22 @@ class AppLoader {
     return configurationPath
   }
 
-  async loadHomes(): Promise<Home[]> {
-    const homeTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.home}`))
+  async loadWebs(): Promise<Web[]> {
+    const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
 
-    if (homeTomlPaths.length === 0) {
-      throw HomeConfigurationFileNotFound(this.appDirectory)
+    if (webTomlPaths.length === 0) {
+      throw WebConfigurationFileNotFound(this.appDirectory)
     }
 
-    const homes = await Promise.all(homeTomlPaths.map((path) => this.loadHome(path)))
+    const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
-    return homes
+    return webs
   }
 
-  async loadHome(homeConfigurationFile: string): Promise<Home> {
+  async loadWeb(WebConfigurationFile: string): Promise<Web> {
     return {
-      directory: path.dirname(homeConfigurationFile),
-      configuration: await this.parseConfigurationFile(HomeConfigurationSchema, homeConfigurationFile),
+      directory: path.dirname(WebConfigurationFile),
+      configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
     }
   }
 

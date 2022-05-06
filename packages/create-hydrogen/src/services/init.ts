@@ -202,13 +202,13 @@ async function installDependencies(
   await dependency.install(directory, dependencyManager, stdout)
 }
 
-async function cleanup(homeOutputDirectory: string) {
+async function cleanup(webOutputDirectory: string) {
   const gitPaths = await path.glob(
     [
-      path.join(homeOutputDirectory, '**', '.git'),
-      path.join(homeOutputDirectory, '**', '.github'),
-      path.join(homeOutputDirectory, '**', '.gitmodules'),
-      path.join(homeOutputDirectory, '.stackblitzrc'),
+      path.join(webOutputDirectory, '**', '.git'),
+      path.join(webOutputDirectory, '**', '.github'),
+      path.join(webOutputDirectory, '**', '.gitmodules'),
+      path.join(webOutputDirectory, '.stackblitzrc'),
     ],
     {
       dot: true,

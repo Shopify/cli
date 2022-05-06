@@ -5,7 +5,7 @@ export const configurationFileNames = {
     theme: 'shopify.theme.extension.toml',
     function: 'shopify.function.extension.toml',
   },
-  home: 'shopify.home.toml',
+  web: 'shopify.web.toml',
 }
 
 export const environmentVariables = {
@@ -28,9 +28,9 @@ export const blocks = {
     defaultUrl: 'https://github.com/Shopify/scripts-apis-examples',
     defaultLanguage: 'wasm',
   },
-  home: {
-    directoryName: 'home',
-    configurationName: configurationFileNames.home,
+  web: {
+    directoryName: 'web',
+    configurationName: configurationFileNames.web,
   },
 }
 

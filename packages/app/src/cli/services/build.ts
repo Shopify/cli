@@ -1,6 +1,6 @@
 import {buildExtension} from './build/extension'
-import buildHome from './home'
-import {App, Home} from '../models/app/app'
+import buildWeb from './web'
+import {App, Web} from '../models/app/app'
 import {path, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
@@ -10,11 +10,11 @@ interface BuildOptions {
 
 async function build({app}: BuildOptions) {
   await output.concurrent([
-    ...app.homes.map((home: Home) => {
+    ...app.webs.map((web: Web) => {
       return {
-        prefix: home.configuration.type,
+        prefix: web.configuration.type,
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          await buildHome('build', {home, stdout, stderr, signal})
+          await buildWeb('build', {web, stdout, stderr, signal})
         },
       }
     }),

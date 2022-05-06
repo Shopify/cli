@@ -12,13 +12,13 @@ describe('initialize a extension', () => {
   beforeEach(async () => {
     tmpDir = await file.mkTmpDir()
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-    const homeConfigurationPath = path.join(tmpDir, blocks.home.directoryName, blocks.home.configurationName)
+    const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 
     const appConfiguration = `
       name = "my_app"
       scopes = "read_products"
       `
-    const homeConfiguration = `
+    const webConfiguration = `
     type = "backend"
 
     [commands]
@@ -26,8 +26,8 @@ describe('initialize a extension', () => {
     dev = "./test.sh"
     `
     await file.write(appConfigurationPath, appConfiguration)
-    await file.mkdir(path.dirname(homeConfigurationPath))
-    await file.write(homeConfigurationPath, homeConfiguration)
+    await file.mkdir(path.dirname(webConfigurationPath))
+    await file.write(webConfigurationPath, webConfiguration)
   })
   afterEach(async () => {
     vi.clearAllMocks()

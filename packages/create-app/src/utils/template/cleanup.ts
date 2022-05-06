@@ -1,12 +1,12 @@
 import {file, path} from '@shopify/cli-kit'
 
-export default async function cleanup(homeOutputDirectory: string) {
+export default async function cleanup(webOutputDirectory: string) {
   const gitPaths = await path.glob(
     [
-      path.join(homeOutputDirectory, '**', '.git'),
-      path.join(homeOutputDirectory, '**', '.github'),
-      path.join(homeOutputDirectory, '**', '.gitmodules'),
-      path.join(homeOutputDirectory, 'LICENSE*'),
+      path.join(webOutputDirectory, '**', '.git'),
+      path.join(webOutputDirectory, '**', '.github'),
+      path.join(webOutputDirectory, '**', '.gitmodules'),
+      path.join(webOutputDirectory, 'LICENSE*'),
     ],
     {
       dot: true,

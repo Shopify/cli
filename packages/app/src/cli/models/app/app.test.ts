@@ -23,8 +23,8 @@ scopes = "read_products"
 
   const writeConfig = async (appConfiguration: string) => {
     const appDirectory = path.join(tmpDir, configurationFileNames.app)
-    const homeDirectory = path.join(tmpDir, blocks.home.directoryName)
-    const homeConfiguration = `
+    const webDirectory = path.join(tmpDir, blocks.web.directoryName)
+    const webConfiguration = `
     type = "backend"
 
     [commands]
@@ -32,8 +32,8 @@ scopes = "read_products"
     dev = "dev"
     `
     await file.write(appDirectory, appConfiguration)
-    await file.mkdir(homeDirectory)
-    await file.write(path.join(homeDirectory, blocks.home.configurationName), homeConfiguration)
+    await file.mkdir(webDirectory)
+    await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
   }
 
   const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
