@@ -319,8 +319,7 @@ export async function concurrent(processes: OutputProcess[]) {
           write(chunk, _encoding, next) {
             const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
             for (const line of lines) {
-              consoleLog('ERROR')
-              message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
+              message(content`${linePrefix(process.prefix, index)}${colors.bold('ERROR')} ${line}`, 'error')
             }
             next()
           },
