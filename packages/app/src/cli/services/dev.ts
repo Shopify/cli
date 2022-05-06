@@ -1,6 +1,6 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
-import {App, AppConfiguration, Home, HomeType} from '../models/app/app'
+import {App, AppConfiguration, Web, WebType} from '../models/app/app'
 import {output, port, system, plugins} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
@@ -14,7 +14,7 @@ interface DevOptions {
   plugins: Plugin[]
 }
 
-interface DevHomeOptions {
+interface DevWebOptions {
   frontendPort: number
   backendPort: number
   apiKey: string
@@ -48,7 +48,7 @@ async function dev(input: DevOptions) {
   View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
   `)
 
-  devHome(input.appManifest.homes, {
+  devWeb(input.appManifest.webs, {
     apiKey,
     frontendPort,
     backendPort,
@@ -58,7 +58,7 @@ async function dev(input: DevOptions) {
   })
 }
 
-async function devHome(homes: Home[], options: DevHomeOptions) {
+async function devWeb(webs: Web[], options: DevWebOptions) {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
   const SHOPIFY_API_KEY = options.apiKey
 
@@ -78,11 +78,11 @@ async function devHome(homes: Home[], options: DevHomeOptions) {
   const BACKEND_PORT = `${options.backendPort}`
 
   await output.concurrent(
-    homes.map(({configuration, directory}: Home, _index) => {
+    webs.map(({configuration, directory}: Web, _index) => {
       const {commands, type} = configuration
       const [cmd, ...args] = commands.dev.split(' ')
       const env =
-        type === HomeType.Backend
+        type === WebType.Backend
           ? {
               SHOPIFY_API_KEY,
               SHOPIFY_API_SECRET,

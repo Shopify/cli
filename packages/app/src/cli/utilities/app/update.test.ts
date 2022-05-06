@@ -9,7 +9,7 @@ const appConfiguration = `
 name = "my_app"
 scopes = "read_products"
 `
-const homeConfiguration = `
+const webConfiguration = `
 type = "backend"
 
 [commands]
@@ -19,11 +19,11 @@ dev = "./dev.sh"
 
 const writeConfig = async (appConfiguration: string, tmpDir: string) => {
   const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-  const homeConfigurationPath = path.join(tmpDir, blocks.home.directoryName, blocks.home.configurationName)
+  const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 
-  await file.mkdir(path.dirname(homeConfigurationPath))
+  await file.mkdir(path.dirname(webConfigurationPath))
   await file.write(appConfigurationPath, appConfiguration)
-  await file.write(homeConfigurationPath, homeConfiguration)
+  await file.write(webConfigurationPath, webConfiguration)
 }
 
 describe('updateAppConfigurationFile', () => {

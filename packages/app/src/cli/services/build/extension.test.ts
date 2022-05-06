@@ -34,7 +34,7 @@ describe('buildExtension', () => {
         name: 'myapp',
         scopes: '',
       },
-      homes: [],
+      webs: [],
       extensions: {ui: [extension], function: [], theme: []},
     }
 

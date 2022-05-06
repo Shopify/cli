@@ -1,7 +1,7 @@
 import {createApp, selectOrCreateApp} from './select-app'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {App, HomeType} from '$cli/models/app/app'
+import {App, WebType} from '$cli/models/app/app'
 import {OrganizationApp} from '$cli/models/organization'
 import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
 
@@ -10,11 +10,11 @@ const LOCAL_APP: App = {
   packageManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {name: 'my-app', scopes: 'read_products'},
-  homes: [
+  webs: [
     {
       directory: '',
       configuration: {
-        type: HomeType.Backend,
+        type: WebType.Backend,
         commands: {dev: ''},
       },
     },

@@ -28,7 +28,7 @@ describe('cleanup', () => {
     ])
   }
 
-  it('cleans up template files in home directory', async () => {
+  it('cleans up template files in web directory', async () => {
     await temporary.directory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 

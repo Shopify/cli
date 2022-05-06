@@ -24,7 +24,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
         action: async (stdout, stderr, signal, port) => {},
       },
       {
-        logPrefix: 'home',
+        logPrefix: 'web',
         action: async (stdout, stderr, signal, port) => {},
       },
     ])
@@ -46,7 +46,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     expect(concurrentCalls.length).toEqual(1)
     const concurrentProcesses = concurrentCalls[0][0]
     expect(concurrentProcesses[0].prefix).toEqual('extensions')
-    expect(concurrentProcesses[1].prefix).toEqual('home')
+    expect(concurrentProcesses[1].prefix).toEqual('web')
     expect(got.port).toEqual(3000)
     expect(server.close).not.toHaveBeenCalled()
     await got.close()
