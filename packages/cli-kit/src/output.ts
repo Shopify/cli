@@ -300,7 +300,7 @@ export async function concurrent(processes: OutputProcess[]) {
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
     const color = concurrentColors[colorIndex]
-    return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} | `)
+    return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
   }
 
   try {
