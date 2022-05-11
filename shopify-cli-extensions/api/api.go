@@ -297,30 +297,32 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 	}
 
 	connection := &websocketConnection{upgradedConnection, api.GetApiRootUrlFromRequest(r), sync.Mutex{}}
+	doOnce := sync.Once{}
 	notifications := make(chan notification)
 	done := make(chan struct{})
 
-	closeHandler := func(closeCode int, message string) error {
-		close(done)
-		api.unregisterClientAndNotify(connection, closeCode, message)
+	closeConnection := func(closeCode int, message string) error {
+		doOnce.Do(func() {
+			close(done)
+			close(notifications)
+			api.unregisterClientAndNotify(connection, closeCode, message)
+		})
 		return nil
 	}
 
-	connection.SetCloseHandler(func(closeCode int, message string) error {
-		return closeHandler(closeCode, message)
-	})
+	connection.SetCloseHandler(closeConnection)
 
 	api.registerClient(connection, func(update notification) {
 		notifications <- update
-	}, closeHandler)
+	}, closeConnection)
 
 	notification, err := api.getNotification("connected", api.Extensions, connection.rootUrl)
 	if err != nil {
-		closeHandler(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
+		closeConnection(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
 	}
 	err = api.writeJSONMessage(connection, &notification)
 	if err != nil {
-		closeHandler(websocket.CloseNoStatusReceived, "cannot establish connection to client")
+		closeConnection(websocket.CloseNoStatusReceived, "cannot establish connection to client")
 		return
 	}
 
@@ -329,7 +331,6 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 	for {
 		select {
 		case <-done:
-			close(notifications)
 			return
 		case notification := <-notifications:
 
@@ -404,7 +405,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 	rw.Write([]byte(fmt.Sprintf("not found: %v", err)))
 }
 
-func (api *ExtensionsApi) registerClient(connection *websocketConnection, notify notificationHandler, close closeHandler) bool {
+func (api *ExtensionsApi) registerClient(connection *websocketConnection, notify notificationHandler, close closeConnection) bool {
 	api.connections.Store(connection, client{notify, close})
 	return true
 }
@@ -642,9 +643,9 @@ type singleExtensionResponse struct {
 
 type client struct {
 	notify notificationHandler
-	close  closeHandler
+	close  closeConnection
 }
 
 type notificationHandler func(notification)
 
-type closeHandler func(code int, text string) error
+type closeConnection func(code int, text string) error

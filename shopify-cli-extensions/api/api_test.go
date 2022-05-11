@@ -411,7 +411,9 @@ func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
 func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 	api := New(config, apiRoot)
 	server := httptest.NewServer(api)
-	ws, err := createWebsocket(server)
+	first_connection, err := createWebsocket(server)
+	second_connection, err := createWebsocket(server)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -422,18 +424,29 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
-	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
+	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
-	ws.SetCloseHandler(func(code int, text string) error {
-		ws.Close()
+	if err := verifyWebsocketMessage(second_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
+		t.Error(err)
+	}
+
+	first_connection.SetCloseHandler(func(code int, text string) error {
+		first_connection.Close()
 		return nil
 	})
 
 	api.Shutdown()
 
-	if err := verifyConnectionShutdown(api, ws); err != nil {
+	api.Notify(api.Extensions)
+
+	// Both connections should be closed correctly
+	if err := verifyConnectionShutdown(api, first_connection); err != nil {
+		t.Error(err)
+	}
+
+	if err := verifyConnectionShutdown(api, second_connection); err != nil {
 		t.Error(err)
 	}
 }
@@ -441,7 +454,9 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 func TestWebsocketConnectionClientClose(t *testing.T) {
 	api := New(config, apiRoot)
 	server := httptest.NewServer(api)
-	ws, err := createWebsocket(server)
+	first_connection, err := createWebsocket(server)
+	second_connection, err := createWebsocket(server)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -452,13 +467,24 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
 	}
 
-	if err := verifyWebsocketMessage(ws, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
+	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 
-	ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(1000, "client close connection"))
+	if err := verifyWebsocketMessage(second_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
+		t.Error(err)
+	}
 
-	if err := verifyConnectionShutdown(api, ws); err != nil {
+	first_connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(1000, "client close connection"))
+
+	// First connection should be closed
+	if err := verifyConnectionShutdown(api, first_connection); err != nil {
+		t.Error(err)
+	}
+
+	api.Notify(api.Extensions)
+	// Second connection should receive the update message
+	if err := verifyWebsocketMessage(second_connection, "update", api.Version, api.App, expectedExtensions, api.Store); err != nil {
 		t.Error(err)
 	}
 }
@@ -857,15 +883,6 @@ func verifyWebsocketMessage(
 }
 
 func verifyConnectionShutdown(api *ExtensionsApi, ws *websocket.Conn) error {
-	// TODO: Break out of this 1 second wait if the client responds correctly to the close message
-	// Currently the test will fail without the wait since the channel and connection is still open
-	<-time.After(time.Second * 1)
-
-	api.Notify([]core.Extension{})
-
-	// Need to reset the deadline otherwise reading the message will fail
-	// with a timeout error instead of the expected websocket closed message
-	ws.SetReadDeadline(time.Time{})
 	_, message, err := ws.ReadMessage()
 	if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 		notification := notification{}

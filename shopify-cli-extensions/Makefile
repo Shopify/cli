@@ -37,16 +37,21 @@ endif
 	md5sum ${executable} > ${canonical_name}.md5
 	gzip ${executable} && mv ${executable}.gz ${canonical_name}.gz
 
-.PHONY: test
-test:
+.PHONY: js-test
+js-test:
 	yarn install
 	yarn test
 
+.PHONY: go-test
+go-test:
 	# Create mock app folder to get go test running
 	rm -rf api/dev-console
 	mkdir api/dev-console
 	touch api/dev-console/index.html
 	go test ./...
+
+.PHONY: test
+test: js-test go-test
 
 ifeq (serve-dev,$(firstword $(MAKECMDGOALS)))
   SHOPIFILE := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
