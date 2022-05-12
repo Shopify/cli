@@ -32,7 +32,10 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 			extension.Assets[name] = Asset{Name: name}
 		}
 
-		extension.Surface = GetSurface(&extension)
+		if extension.Surface == "" {
+			extension.Surface = GetSurface(&extension)
+		}
+
 		extensions = append(extensions, extension)
 	}
 	// TODO: Improve this when we need to read more app configs,
@@ -103,7 +106,7 @@ type Extension struct {
 	Type            string           `json:"type" yaml:"type,omitempty"`
 	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
 	Version         string           `json:"version" yaml:"version,omitempty"`
-	Surface         string           `json:"surface" yaml:"-"`
+	Surface         string           `json:"surface" yaml:"surface"`
 	Title           string           `json:"title,omitempty" yaml:"title,omitempty"`
 	Name            string           `json:"name,omitempty" yaml:"name,omitempty"`
 	NodeExecutable  string           `json:"-" yaml:"node_executable,omitempty"`

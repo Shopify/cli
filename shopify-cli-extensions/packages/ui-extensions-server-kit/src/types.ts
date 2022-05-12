@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace, @shopify/strict-component-boundaries */
 import './ExtensionServerClient/types';
+import type {Surface} from './ExtensionServerClient/types';
 
 declare global {
   namespace ExtensionServer {
@@ -58,7 +59,7 @@ export interface ExtensionPayload {
   };
   uuid: string;
   version: string;
-  surface: string;
+  surface: Surface;
   title: string;
 }
 

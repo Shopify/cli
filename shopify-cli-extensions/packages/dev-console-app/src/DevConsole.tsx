@@ -42,6 +42,9 @@ export function DevConsole() {
     hide,
     focus,
     unfocus,
+    client: {
+      options: {surface},
+    },
   } = useDevConsoleInternal();
 
   const allSelected = selectedExtensionsSet.size === extensions.length;
@@ -121,6 +124,70 @@ export function DevConsole() {
       </aside>
     ) : null;
 
+  const ConsoleContent = () => (
+    <section className={styles.ExtensionList}>
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <Checkbox
+                label={
+                  allSelected
+                    ? i18n.translate('bulkActions.deselectAll')
+                    : i18n.translate('bulkActions.selectAll')
+                }
+                checked={allSelected}
+                onChange={toggleSelectAll}
+                labelHidden
+              />
+            </th>
+            <th>{i18n.translate('extensionList.name')}</th>
+            <th>{i18n.translate('extensionList.type')}</th>
+            <th>{i18n.translate('extensionList.status')}</th>
+            <th>
+              <div className={actionSetStyles.ActionGroup}>
+                {actionHeaderMarkup}
+                <Action
+                  source={RefreshMinor}
+                  accessibilityLabel={i18n.translate('extensionList.refresh')}
+                  onAction={refreshSelectedExtensions}
+                />
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {extensions.map((extension) => {
+            const uuid = extension.uuid;
+            return (
+              <ExtensionRow
+                key={uuid}
+                extension={extension}
+                onSelect={toggleSelect}
+                selected={selectedExtensionsSet.has(uuid)}
+                onHighlight={focus}
+                onClearHighlight={unfocus}
+                onCloseMobileQRCode={() => setActiveMobileQRCodeExtension(undefined)}
+                onShowMobileQRCode={setActiveMobileQRCodeExtension}
+              />
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
+  );
+
+  const ConsoleEmpty = () => {
+    return (
+      // eslint-disable-next-line @shopify/jsx-prefer-fragment-wrappers
+      <div>
+        {surface
+          ? i18n.translate('errors.noExtensionsForSurface', {surface})
+          : i18n.translate('errors.noExtensions')}
+      </div>
+    );
+  };
+
   return (
     <ToastProvider>
       <div className={styles.OuterContainer}>
@@ -133,58 +200,7 @@ export function DevConsole() {
           </header>
           <main>
             <ConsoleSidenav />
-            {extensions.length > 0 && (
-              <section className={styles.ExtensionList}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        <Checkbox
-                          label={
-                            allSelected
-                              ? i18n.translate('bulkActions.deselectAll')
-                              : i18n.translate('bulkActions.selectAll')
-                          }
-                          checked={allSelected}
-                          onChange={toggleSelectAll}
-                          labelHidden
-                        />
-                      </th>
-                      <th>{i18n.translate('extensionList.name')}</th>
-                      <th>{i18n.translate('extensionList.type')}</th>
-                      <th>{i18n.translate('extensionList.status')}</th>
-                      <th>
-                        <div className={actionSetStyles.ActionGroup}>
-                          {actionHeaderMarkup}
-                          <Action
-                            source={RefreshMinor}
-                            accessibilityLabel={i18n.translate('extensionList.refresh')}
-                            onAction={refreshSelectedExtensions}
-                          />
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {extensions.map((extension) => {
-                      const uuid = extension.uuid;
-                      return (
-                        <ExtensionRow
-                          key={uuid}
-                          extension={extension}
-                          onSelect={toggleSelect}
-                          selected={selectedExtensionsSet.has(uuid)}
-                          onHighlight={focus}
-                          onClearHighlight={unfocus}
-                          onCloseMobileQRCode={() => setActiveMobileQRCodeExtension(undefined)}
-                          onShowMobileQRCode={setActiveMobileQRCodeExtension}
-                        />
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </section>
-            )}
+            {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
             <QRCodeModal
               extension={activeMobileQRCodeExtension}
               open={activeMobileQRCodeExtension !== undefined}

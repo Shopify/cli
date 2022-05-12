@@ -26,6 +26,7 @@ extensions:
     type: checkout_ui_extension_next
     title: Checkout UI Test Extension Next
     node_executable: packages/shopify-cli-extensions/cli.js
+    surface: checkout
     metafields:
       - namespace: my-namespace
         key: my-key
@@ -56,6 +57,7 @@ extensions:
     type: product_subscription_next
     title: Product Subscription Test Extension Next
     node_executable: packages/shopify-cli-extensions/cli.js
+    surface: admin
     development:
       root_dir: 'tmp/product_subscription_next'
       build_dir: 'build'
@@ -86,6 +88,7 @@ extensions:
     type: checkout_post_purchase_next
     title: Post Purchase Test Extension Next
     node_executable: packages/shopify-cli-extensions/cli.js
+    surface: post-purchase
     metafields:
       - namespace: my-namespace
         key: my-key

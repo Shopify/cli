@@ -122,7 +122,19 @@ export class ExtensionServerClient implements ExtensionServer.Client {
           return (this.listeners[type] ?? []).forEach((listener) => listener(payload));
         }
 
-        this.listeners[event].forEach((listener) => listener(data));
+        this.listeners[event].forEach((listener) => {
+          // Filter for only extensions matching the current surface
+          if (event === 'connected' || event === 'update') {
+            const castedData = data as ExtensionServer.InboundEvents['connected'];
+            const filteredExtensions = castedData.extensions?.filter(
+              (extensions) => !this.options.surface || extensions.surface === this.options.surface,
+            );
+            listener({...data, extensions: filteredExtensions});
+            return;
+          }
+
+          listener(data);
+        });
       } catch (err) {
         console.error(
           `[ExtensionServer] Something went wrong while parsing a server message:`,

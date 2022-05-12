@@ -14,5 +14,9 @@
     "hide": "Hide",
     "selectAll": "Select all",
     "deselectAll": "Deselect all"
+  },
+  "errors": {
+    "noExtensions": "No extensions found",
+    "noExtensionsForSurface": "No extensions found for the surface: {surface}"
   }
 }

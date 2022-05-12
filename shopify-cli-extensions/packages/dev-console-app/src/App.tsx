@@ -3,17 +3,19 @@ import '@shopify/polaris/dist/styles.css';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import {AppProvider} from '@shopify/polaris';
 import {I18nContext, I18nManager} from '@shopify/react-i18n';
-import {ExtensionServerProvider} from '@shopify/ui-extensions-server-kit';
+import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit';
 
 import * as styles from './theme.module.css';
 import {DevConsole} from './DevConsole';
 
 const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:';
 const host = (import.meta.env.VITE_WEBSOCKET_HOST as string) || location.host;
+const surface = new URLSearchParams(location.search).get('surface');
 const extensionServerOptions = {
   connection: {
     url: `${protocol}//${host}/extensions/`,
   },
+  surface: isValidSurface(surface) ? surface : undefined,
 };
 
 const locale = 'en';

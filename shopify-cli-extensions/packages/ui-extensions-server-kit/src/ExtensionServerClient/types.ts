@@ -53,6 +53,10 @@ declare global {
          */
         protocols?: string | string[];
       };
+      /**
+       * If provided the extension server will only return extensions that matches the specified surface
+       */
+      surface?: Surface;
     }
 
     /**
@@ -60,6 +64,11 @@ declare global {
      * communicate with the extension server.
      */
     interface Client {
+      /**
+       * Connection options
+       */
+      options: Options;
+
       /**
        * Reconnecting WebSocket Client
        */
@@ -141,7 +150,7 @@ declare global {
         assets: Assets;
         development: Development;
         extensionPoints: string[] | null;
-        surface: string;
+        surface: Surface;
         name?: string;
         title?: string;
         type: string;
@@ -223,5 +232,6 @@ declare global {
     type EventUnsubscriber = () => void;
   }
 }
+export type Surface = 'checkout' | 'admin' | 'post-purchase';
 
 export {};
