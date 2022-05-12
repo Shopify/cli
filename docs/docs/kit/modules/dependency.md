@@ -25,3 +25,21 @@ const dependencyManager = dependencyManagerUsedForCreating(); // dependency.Depe
 ```
 
 With that information the `create` command can use the same dependency manager to install the dependencies of the generated project.
+
+### Installing NPM dependencies recursively
+
+Projects might contain more than one NPM dependency graph declared in `package.json` files in different directories.
+In that scenario,
+we might want to traverse all those directories and install the dependencies before running any command's business logic.
+The `dependency` module provides a function to do that:
+
+```ts
+import { dependency, DependencyManager } from "@shopify/cli-kit"
+
+await installRecursively({
+    directory: "/path/to/project",
+    dependencyManager: DependencyManager.Yarn
+})
+```
+
+If any of the installation fails, other installations are cancelled.
