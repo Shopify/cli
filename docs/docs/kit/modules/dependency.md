@@ -36,7 +36,7 @@ The `dependency` module provides a function to do that:
 ```ts
 import { dependency, DependencyManager } from "@shopify/cli-kit"
 
-await installRecursively({
+await installNPMDependenciesRecursively({
     directory: "/path/to/project",
     dependencyManager: "yarn"
 })

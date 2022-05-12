@@ -21,7 +21,7 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
   }
 }
 
-interface InstallRecursivelyOptions {
+interface InstallNPMDependenciesRecursivelyOptions {
   /**
    * The dependency manager to use to install the dependencies.
    */
@@ -36,9 +36,9 @@ interface InstallRecursivelyOptions {
  * This function traverses down a directory tree to find directories containing a package.json
  * and installs the dependencies if needed. To know if it's needed, it uses the "check" command
  * provided by dependency managers.
- * @param options {InstallRecursivelyOptions} Options to install dependencies recursively.
+ * @param options {InstallNPMDependenciesRecursivelyOptions} Options to install dependencies recursively.
  */
-export async function installRecursively(options: InstallRecursivelyOptions) {
+export async function installNPMDependenciesRecursively(options: InstallNPMDependenciesRecursivelyOptions) {
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
     cwd: options.directory,
     onlyFiles: true,
