@@ -1,7 +1,7 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
-import {output, port, system, plugins} from '@shopify/cli-kit'
+import {output, port, system, plugins, dependency} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 interface DevOptions {
@@ -24,6 +24,10 @@ interface DevWebOptions {
 }
 
 async function dev(input: DevOptions) {
+  await dependency.installRecursively({
+    directory: input.appManifest.directory,
+    dependencyManager: input.appManifest.dependencyManager,
+  })
   const {
     app: {apiKey, apiSecretKeys},
     store,

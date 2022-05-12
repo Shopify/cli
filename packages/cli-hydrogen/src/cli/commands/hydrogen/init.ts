@@ -157,7 +157,7 @@ export default class Init extends Command {
       ])
     }
 
-    const usesYarn = this.package.packageManager === 'npm'
+    const usesYarn = this.package.dependencyManager === 'npm'
     this.interface.say([
       [` • ${usesYarn ? `yarn` : `npm install --legacy-peer-deps`}`, '         install the dependencies'],
       [` • ${usesYarn ? `yarn` : `npm run`} dev`, '     start the dev server'],

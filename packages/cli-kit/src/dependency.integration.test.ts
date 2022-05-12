@@ -1,6 +1,6 @@
 import {join as pathJoin, dirname} from './path'
 import {write as writeFile, mkdir} from './file'
-import {installRecursively, DependencyManager} from './dependency'
+import {installRecursively} from './dependency'
 import {describe, test} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 
@@ -22,7 +22,7 @@ describe('installRecursively', () => {
       // When
       await installRecursively({
         directory: tmpDir,
-        dependencyManager: DependencyManager.Yarn,
+        dependencyManager: 'yarn',
       })
     })
   })

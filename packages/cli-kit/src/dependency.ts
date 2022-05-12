@@ -3,12 +3,8 @@ import {glob, dirname, join as pathJoin} from './path'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
-export enum DependencyManager {
-  Npm = 'npm',
-  Yarn = 'yarn',
-  Pnpm = 'pnpm',
-}
-export const dependencyManager = Object.entries(DependencyManager).map(([_, value]) => `${value}`)
+export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
+export type DependencyManager = typeof dependencyManager[number]
 
 /**
  * Returns the dependency manager used to run the create workflow.
@@ -17,11 +13,11 @@ export const dependencyManager = Object.entries(DependencyManager).map(([_, valu
  */
 export function dependencyManagerUsedForCreating(env = process.env): DependencyManager {
   if (env.npm_config_user_agent?.includes('yarn')) {
-    return DependencyManager.Yarn
+    return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
-    return DependencyManager.Pnpm
+    return 'pnpm'
   } else {
-    return DependencyManager.Npm
+    return 'npm'
   }
 }
 

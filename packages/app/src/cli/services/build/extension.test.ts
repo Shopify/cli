@@ -28,7 +28,7 @@ describe('buildExtension', () => {
     }
     const app: App = {
       directory: appRoot,
-      packageManager: 'yarn',
+      dependencyManager: 'yarn',
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
         name: 'myapp',

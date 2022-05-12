@@ -38,7 +38,7 @@ import { dependency, DependencyManager } from "@shopify/cli-kit"
 
 await installRecursively({
     directory: "/path/to/project",
-    dependencyManager: DependencyManager.Yarn
+    dependencyManager: "yarn"
 })
 ```
 

@@ -7,7 +7,7 @@ import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
 
 const LOCAL_APP: App = {
   directory: '',
-  packageManager: 'yarn',
+  dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {name: 'my-app', scopes: 'read_products'},
   webs: [
