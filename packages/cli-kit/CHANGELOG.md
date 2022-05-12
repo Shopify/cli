@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 2.0.2
+
+### Patch Changes
+
+- c6a9450b: Add support to scaffold function extensions
+- 70d8d50d: Add homeDir helper to 'os'
+  Remove tunnel
+
 ## 2.0.1
 
 ### Patch Changes

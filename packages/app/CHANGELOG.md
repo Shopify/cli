@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 2.0.2
+
+### Patch Changes
+
+- 99018b84: Print loadable app/extensions data even when there is some invalid configuration
+- c6a9450b: Add support to scaffold function extensions
+- Updated dependencies [c6a9450b]
+- Updated dependencies [70d8d50d]
+  - @shopify/cli-kit@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes

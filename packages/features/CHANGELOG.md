@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.3.1
+
+### Patch Changes
+
+- c6a9450b: Add support to scaffold function extensions
+
 ## 0.3.0
 
 ### Minor Changes

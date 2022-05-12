@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 2.0.2
+
+### Patch Changes
+
+- 70d8d50d: Use ngrok from plugin with --tunnel flag
+- c6a9450b: Add support to scaffold function extensions
+- Updated dependencies [c6a9450b]
+- Updated dependencies [70d8d50d]
+  - @shopify/cli-kit@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes
