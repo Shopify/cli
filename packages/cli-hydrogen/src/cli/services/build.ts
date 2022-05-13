@@ -18,7 +18,9 @@ async function build({directory, targets, base}: DevOptions) {
       return {
         title: `Building ${key} code`,
         task: async (_, task) => {
-          process.env.WORKER = key === 'worker' ? 'true' : undefined
+          if (key === 'worker') {
+            process.env.WORKER = 'true'
+          }
           await viteBuild({
             ...commonConfig,
             build: {
