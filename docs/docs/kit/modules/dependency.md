@@ -38,7 +38,9 @@ import { dependency, DependencyManager } from "@shopify/cli-kit"
 
 await installNPMDependenciesRecursively({
     directory: "/path/to/project",
-    dependencyManager: "yarn"
+    dependencyManager: "yarn",
+    // Specifies the maximum depth of the glob search.
+    deep: 3
 })
 ```
 
