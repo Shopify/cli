@@ -54,7 +54,7 @@ export const functionExtensions: ExtensionsType = {
 }
 
 export const uiExtensions: ExtensionsType = {
-  types: ['product_subscription', 'checkout_post_purchase'],
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase'],
 }
 
 export const themeExtensions: ExtensionsType = {
