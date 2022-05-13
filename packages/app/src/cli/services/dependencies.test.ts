@@ -42,6 +42,7 @@ describe('installAppNPMDependencies', () => {
     expect(dependency.installNPMDependenciesRecursively).toHaveBeenCalledWith({
       dependencyManager: 'yarn',
       directory: '/tmp/project',
+      deep: 3,
     })
   })
 })

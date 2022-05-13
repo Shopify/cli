@@ -15,8 +15,9 @@ export async function installAppNPMDependencies(app: App) {
         await dependency.installNPMDependenciesRecursively({
           dependencyManager: app.dependencyManager,
           directory: app.directory,
+          deep: 3,
         })
-        task.title = 'Template downloaded'
+        task.title = 'Dependencies installed'
       },
     },
   ])

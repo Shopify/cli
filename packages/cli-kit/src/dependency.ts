@@ -30,6 +30,11 @@ interface InstallNPMDependenciesRecursivelyOptions {
    * The directory from where we'll find package.json's recursively
    */
   directory: string
+
+  /**
+   * Specifies the maximum depth of the glob search.
+   */
+  deep?: number
 }
 
 /**
@@ -42,6 +47,7 @@ export async function installNPMDependenciesRecursively(options: InstallNPMDepen
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
     cwd: options.directory,
     onlyFiles: true,
+    deep: options.deep,
   })
   const abortController = new AbortController()
   try {
