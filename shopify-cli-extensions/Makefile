@@ -93,6 +93,7 @@ integration-test: tmp build
 		../../shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
 	test -f tmp/integration_test/locales/en.default.json
+	for testfile in `find testdata/test -type f -name '*_test.rb'`; do ruby "$$testfile"; done
 
 .PHONY: update-version
 update-version:
