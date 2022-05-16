@@ -3,14 +3,17 @@ import {error, output, api} from '@shopify/cli-kit'
 import {Organization, OrganizationStore} from '$cli/models/organization'
 import {convertToDevStorePrompt, reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
-const ConvertToDevError = (storeName: string) => {
-  return new error.Fatal(`Error converting store ${storeName} to a Dev store`)
+const ConvertToDevError = (storeName: string, message: string) => {
+  return new error.Bug(
+    `Error converting store ${storeName} to a Test store: ${message}`,
+    'This store might not be compatible with draft apps, please try a different store',
+  )
 }
 
-const StoreNotFoundError = (storeName: string, orgName: string) => {
-  return new error.Fatal(
-    `Could not find ${storeName} in the Organization ${orgName} as a valid development store.`,
-    'Create a new store from partners dashboard or select an existing development one.',
+const StoreNotFoundError = (storeName: string, org: Organization) => {
+  return new error.Bug(
+    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
+    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
   )
 }
 
@@ -36,13 +39,13 @@ export async function selectStore(
   cachedStoreName?: string,
 ): Promise<string> {
   if (cachedStoreName) {
-    const isValid = await validateStore(cachedStoreName, stores, org, token)
+    const isValid = await validateOrConverToDevStore(cachedStoreName, stores, org, token)
     if (isValid) return cachedStoreName
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
-    const isValid = await validateStore(store.shopDomain, stores, org, token)
+    const isValid = await validateOrConverToDevStore(store.shopDomain, stores, org, token)
     if (!isValid) return selectStore(stores, org, token)
     return store.shopDomain
   }
@@ -65,17 +68,17 @@ export async function selectStore(
  * @returns {Promise<boolean>} True if the store is valid
  * @throws {Fatal} If the store can't be found in the organization or we fail to make it a dev store
  */
-export async function validateStore(
+export async function validateOrConverToDevStore(
   storeDomain: string,
   stores: OrganizationStore[],
   org: Organization,
   token: string,
 ): Promise<boolean> {
   const store = stores.find((store) => store.shopDomain === storeDomain)
-  if (!store) throw StoreNotFoundError(storeDomain, org.businessName)
+  if (!store) throw StoreNotFoundError(storeDomain, org)
   if (store.transferDisabled) return true
   const shouldConvert = await convertToDevStorePrompt(store.shopDomain)
-  if (shouldConvert) await convertStoreToDev(store, org.id, token)
+  if (shouldConvert) await convertStoreToTest(store, org.id, token)
   return shouldConvert
 }
 
@@ -86,7 +89,7 @@ export async function validateStore(
  * @param orgId {string} Current organization ID
  * @param token {string} Token to access partners API
  */
-export async function convertStoreToDev(store: OrganizationStore, orgId: string, token: string) {
+export async function convertStoreToTest(store: OrganizationStore, orgId: string, token: string) {
   const query = api.graphql.ConvertDevToTestStoreQuery
   const variables: api.graphql.ConvertDevToTestStoreVariables = {
     input: {
@@ -96,7 +99,8 @@ export async function convertStoreToDev(store: OrganizationStore, orgId: string,
   }
   const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
-    throw ConvertToDevError(store.shopDomain)
+    const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
+    throw ConvertToDevError(store.shopDomain, errors)
   }
   output.success(`Converted ${store.shopDomain} to a Dev store`)
 }

@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
-import {selectStore, validateStore} from './select-store'
+import {selectStore, validateOrConverToDevStore} from './select-store'
 import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
@@ -8,16 +8,17 @@ import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/orga
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 const InvalidApiKeyError = (apiKey: string) => {
-  return new error.Fatal(
+  return new error.Abort(
     `Invalid API key: ${apiKey}`,
     'You can find the apiKey in the app settings in the Partner Dashboard.',
   )
 }
 
 const InvalidStoreError = (storeFqdn: string) => {
-  return new error.Fatal(
+  return new error.Abort(
     `Invalid Store: ${storeFqdn}`,
-    'Check that the provided Store is valid and try again. It must be a development non-transferable store in your partners organization',
+    `Check that the provided Store is valid and try again.
+    You can create a development store from your Partners dashboard: https://shopify.dev/themes/tools/development-stores`,
   )
 }
 
@@ -51,7 +52,7 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
   const token = await session.ensureAuthenticatedPartners()
   const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
-  const {organization, apps, stores} = await fetchData(orgId, token)
+  const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
   let {app: selectedApp, store: selectedStore} = await dataFromInput(input, organization, stores, token)
   if (selectedApp && selectedStore) {
@@ -74,16 +75,16 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
   return {app: selectedApp, store: selectedStore}
 }
 
-async function fetchData(orgId: string, token: string): Promise<FetchResponse> {
+async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data: any = {}
   const list = new ui.Listr([
     {
       title: 'Fetching organization data',
       task: async () => {
-        data = await fetchOrgAndApps(orgId, token)
+        const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
+        data = {...responses[0], stores: responses[1]}
         // We need ALL stores so we can validate the selected one.
         // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
-        data.stores = await fetchAllStores(orgId, token)
       },
     },
   ])
@@ -112,7 +113,7 @@ async function dataFromInput(
   }
 
   if (input.store) {
-    const isValid = await validateStore(input.store, stores, org, token)
+    const isValid = await validateOrConverToDevStore(input.store, stores, org, token)
     if (!isValid) throw InvalidStoreError(input.store)
     selectedStore = input.store
   }
