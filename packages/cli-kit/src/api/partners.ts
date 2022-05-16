@@ -46,7 +46,7 @@ export async function functionProxyRequest<T>(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     api_key: apiKey,
     query,
-    variables: JSON.stringify(variables),
+    variables: JSON.stringify(variables) || '{}',
   }
   const proxyQuery = ScriptServiceProxyQuery
   const res: ProxyResponse = await request(proxyQuery, token, proxyVariables)

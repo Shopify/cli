@@ -64,7 +64,16 @@ export const functionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts', 'payment_methods', 'shipping_rate_presenter'],
 } as const
 
-export type FunctionExtensionTypes = typeof functionExtensions.types[number]
+export const functionExtensionPointNameMapper = (type: string) => {
+  if (type === 'product_discount_type' || type === 'order_discount_type' || type === 'shipping_discount_type') {
+    return 'DISCOUNT'
+  } else if (type === 'payment_methods') {
+    return 'PAYMENT_METHODS'
+  } else if (type === 'shipping_rate_presenter') {
+    return 'SHIPPING_METHODS'
+  }
+  return undefined
+}
 
 export const uiExtensions = {
   types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],

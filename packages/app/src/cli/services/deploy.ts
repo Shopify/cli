@@ -6,6 +6,7 @@ import {App, getUIExtensionRendererVersion, UIExtension} from '../models/app/app
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {path, output, temporary, error} from '@shopify/cli-kit'
+import {deployFunction} from './deploy/functions'
 
 const WebPixelConfigError = (property: string) => {
   return new error.Abort(
@@ -23,8 +24,8 @@ export const deploy = async (options: DeployOptions) => {
   const {app, identifiers} = await ensureDeployEnvironment({app: options.app})
   const apiKey = identifiers.app
 
-  output.newline()
-  output.info('Pushing your code to Shopify...')
+  // output.newline()
+  // output.info('Pushing your code to Shopify...')
 
   output.newline()
   output.success(`${app.name} deployed to Shopify Partners`)
@@ -52,6 +53,10 @@ export const deploy = async (options: DeployOptions) => {
           extension.directory,
         )} is deployed to Shopify but not yet live`,
       )
+
+    app.extensions.function.forEach((extension) => {
+      output.info(`  · Deploying ${extension.configuration.name}`)
+      deployFunction(extension, app)
     })
   })
 }
