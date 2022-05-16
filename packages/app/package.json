@@ -10,32 +10,6 @@
     "access": "public",
     "@shopify:registry": "https://registry.npmjs.org"
   },
-  "exports": {
-    "./ui-extensions/admin": {
-      "import": "./dist/runtime/ui-extensions/admin/index.js",
-      "types": "./dist/runtime/ui-extensions/admin/index.d.ts"
-    },
-    "./ui-extensions/admin/react": {
-      "import": "./dist/runtime/ui-extensions/admin/react.js",
-      "types": "./dist/runtime/ui-extensions/admin/react.d.ts"
-    },
-    "./ui-extensions/checkout": {
-      "import": "./dist/runtime/ui-extensions/checkout/index.js",
-      "types": "./dist/runtime/ui-extensions/checkout/index.d.ts"
-    },
-    "./ui-extensions/checkout/react": {
-      "import": "./dist/runtime/ui-extensions/checkout/react.js",
-      "types": "./dist/runtime/ui-extensions/checkout/react.d.ts"
-    },
-    "./ui-extensions/post-purchase": {
-      "import": "./dist/runtime/ui-extensions/post-purchase/index.js",
-      "types": "./dist/runtime/ui-extensions/post-purchase/index.d.ts"
-    },
-    "./ui-extensions/post-purchase/react": {
-      "import": "./dist/runtime/ui-extensions/post-purchase/react.js",
-      "types": "./dist/runtime/ui-extensions/post-purchase/react.d.ts"
-    }
-  },
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "rimraf dist/ && rollup -c",
