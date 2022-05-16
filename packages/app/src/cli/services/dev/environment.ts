@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
-import {selectStore, validateOrConverToDevStore} from './select-store'
+import {selectStore, validateAndConvertToTestStoreIfNeeded} from './select-store'
 import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
@@ -113,7 +113,7 @@ async function dataFromInput(
   }
 
   if (input.store) {
-    const isValid = await validateOrConverToDevStore(input.store, stores, org, token)
+    const isValid = await validateAndConvertToTestStoreIfNeeded(input.store, stores, org, token)
     if (!isValid) throw InvalidStoreError(input.store)
     selectedStore = input.store
   }

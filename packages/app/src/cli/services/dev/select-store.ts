@@ -39,13 +39,13 @@ export async function selectStore(
   cachedStoreName?: string,
 ): Promise<string> {
   if (cachedStoreName) {
-    const isValid = await validateOrConverToDevStore(cachedStoreName, stores, org, token)
+    const isValid = await validateAndConvertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
     if (isValid) return cachedStoreName
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
-    const isValid = await validateOrConverToDevStore(store.shopDomain, stores, org, token)
+    const isValid = await validateAndConvertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
     if (!isValid) return selectStore(stores, org, token)
     return store.shopDomain
   }
@@ -66,9 +66,9 @@ export async function selectStore(
  * @param orgId {string} Current organization ID
  * @param token {string} Token to access partners API
  * @returns {Promise<boolean>} True if the store is valid
- * @throws {Fatal} If the store can't be found in the organization or we fail to make it a dev store
+ * @throws {Fatal} If the store can't be found in the organization or we fail to make it a test store
  */
-export async function validateOrConverToDevStore(
+export async function validateAndConvertToTestStoreIfNeeded(
   storeDomain: string,
   stores: OrganizationStore[],
   org: Organization,
@@ -83,7 +83,7 @@ export async function validateOrConverToDevStore(
 }
 
 /**
- * Convert a store to a dev store so development apps can be installed
+ * Convert a store to a test store so development apps can be installed
  * This can't be undone, so we ask the user to confirm
  * @param store {OrganizationStore} Store to convert
  * @param orgId {string} Current organization ID
@@ -102,5 +102,5 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw ConvertToDevError(store.shopDomain, errors)
   }
-  output.success(`Converted ${store.shopDomain} to a Dev store`)
+  output.success(`Converted ${store.shopDomain} to a Test store`)
 }
