@@ -16,7 +16,7 @@ export const environmentVariables = {
 }
 
 export const versions = {
-  extensionsBinary: 'v0.7.0',
+  extensionsBinary: 'v0.8.0',
 }
 
 export const blocks = {
