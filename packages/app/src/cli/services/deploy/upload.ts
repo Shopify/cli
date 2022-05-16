@@ -38,7 +38,7 @@ export async function upload(options: UploadOptions) {
   const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, token, variables)
   if (result.deploymentCreate && result.deploymentCreate.userErrors && result.deploymentCreate.userErrors.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Fatal(errors)
+    throw new error.Abort(errors)
   }
 }
 
@@ -64,7 +64,7 @@ export async function generateUrl(apiKey: string, deploymentUUID: string) {
     result.deploymentGenerateSignedUploadUrl.userErrors.length > 0
   ) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
-    throw new error.Fatal(errors)
+    throw new error.Abort(errors)
   }
 
   return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
