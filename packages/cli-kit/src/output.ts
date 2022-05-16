@@ -4,6 +4,7 @@ import {isUnitTest} from './environment/local'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
+import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {

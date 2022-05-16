@@ -1,5 +1,6 @@
 import {exec} from './system'
 import {glob, dirname, join as pathJoin} from './path'
+import AbortController from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
