@@ -1,9 +1,9 @@
 import {selectStore} from './select-store'
 import {fetchOrgAndApps} from './fetch'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {http} from '@shopify/cli-kit'
+import {api} from '@shopify/cli-kit'
 import {Organization, OrganizationStore} from '$cli/models/organization'
-import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {convertToDevStorePrompt, reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
 const STORE1: OrganizationStore = {
@@ -11,8 +11,8 @@ const STORE1: OrganizationStore = {
   link: 'link1',
   shopDomain: 'domain1',
   shopName: 'store1',
-  transferDisabled: false,
-  convertableToPartnerTest: false,
+  transferDisabled: true,
+  convertableToPartnerTest: true,
 }
 
 const STORE2: OrganizationStore = {
@@ -37,6 +37,12 @@ beforeEach(() => {
       http: {
         fetch: vi.fn(),
       },
+      api: {
+        partners: {
+          request: vi.fn(),
+        },
+        graphql: cliKit.api.graphql,
+      },
     }
   })
 })
@@ -45,10 +51,9 @@ describe('selectStore', async () => {
   it('returns store if cachedStoreName and is valid', async () => {
     // Given
     const fqdn = STORE1.shopDomain
-    vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1', fqdn)
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
 
     // Then
     expect(got).toEqual(STORE1.shopDomain)
@@ -60,7 +65,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1')
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token')
 
     // Then
     expect(got).toEqual(STORE1.shopDomain)
@@ -69,16 +74,30 @@ describe('selectStore', async () => {
 
   it('prompts user to select if cachedApiKey is invalid', async () => {
     // Given
-    const fqdn = 'invalid'
-    vi.mocked(http.fetch).mockResolvedValue({status: 404} as any)
+    const fqdn = STORE2.shopDomain
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], '1', fqdn)
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
 
     // Then
     expect(got).toEqual(STORE1.shopDomain)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+  })
+
+  it('prompts user to convert store to non-transferable if selection is invalid', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
+    vi.mocked(convertToDevStorePrompt).mockResolvedValueOnce(true)
+    vi.mocked(api.partners.request).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
+
+    // When
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token')
+
+    // Then
+    expect(got).toEqual(STORE2.shopDomain)
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(convertToDevStorePrompt).toHaveBeenCalledWith(STORE2.shopDomain)
   })
 
   it('prompts user to create & reload if prompt returns undefined, throws if reload is false', async () => {
@@ -87,7 +106,7 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = selectStore([STORE1, STORE2], '1')
+    const got = selectStore([STORE1, STORE2], ORG1, 'token')
 
     // Then
     expect(got).rejects.toThrowError()
@@ -102,7 +121,7 @@ describe('selectStore', async () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue({organization: ORG1, stores: [], apps: []})
 
     // When
-    const got = selectStore([], '1')
+    const got = selectStore([], ORG1, 'token')
 
     // Then
     expect(got).rejects.toThrow()
