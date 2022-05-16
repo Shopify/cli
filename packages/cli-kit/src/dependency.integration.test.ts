@@ -1,7 +1,7 @@
 import {join as pathJoin, dirname} from './path'
 import {write as writeFile, mkdir} from './file'
 import {installNPMDependenciesRecursively} from './dependency'
-import {describe, test} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 
 describe('installNPMDependenciesRecursively', () => {
@@ -20,10 +20,12 @@ describe('installNPMDependenciesRecursively', () => {
       await writeFile(backendPackage, JSON.stringify({}))
 
       // When
-      await installNPMDependenciesRecursively({
-        directory: tmpDir,
-        dependencyManager: 'yarn',
-      })
+      await expect(
+        installNPMDependenciesRecursively({
+          directory: tmpDir,
+          dependencyManager: 'yarn',
+        }),
+      ).resolves.toBe(undefined)
     })
   })
 })

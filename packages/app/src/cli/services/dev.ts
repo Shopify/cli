@@ -1,6 +1,6 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
-import {installAppNPMDependencies} from './dependencies'
+import {installAppDependencies} from './dependencies'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
 import {output, port, system, plugins} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
@@ -25,7 +25,7 @@ interface DevWebOptions {
 }
 
 async function dev(input: DevOptions) {
-  await installAppNPMDependencies(input.appManifest)
+  await installAppDependencies(input.appManifest)
   const {
     app: {apiKey, apiSecretKeys},
     store,

@@ -1,11 +1,11 @@
-import {installAppNPMDependencies} from './dependencies'
+import {installAppDependencies} from './dependencies'
 import {App} from '../models/app/app'
 import {describe, expect, test, vi} from 'vitest'
 import {dependency, ui} from '@shopify/cli-kit'
 
 vi.mock('@shopify/cli-kit')
 
-describe('installAppNPMDependencies', () => {
+describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
     // Given
     const app: App = {
@@ -29,7 +29,7 @@ describe('installAppNPMDependencies', () => {
     vi.mocked(dependency)
 
     // When
-    await installAppNPMDependencies(app)
+    await installAppDependencies(app)
 
     // Then
     expect(vi.mocked(ui.Listr).mock.calls.length).toEqual(1)

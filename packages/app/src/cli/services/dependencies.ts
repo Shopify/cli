@@ -7,7 +7,7 @@ import {dependency, ui} from '@shopify/cli-kit'
  * defined in package.json files.
  * @param app {App} App whose dependencies will be installed.
  */
-export async function installAppNPMDependencies(app: App) {
+export async function installAppDependencies(app: App) {
   const list = new ui.Listr([
     {
       title: 'Installing any necessary dependencies',
