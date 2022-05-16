@@ -1,4 +1,4 @@
-import {dependencyManagerUsedForCreating, DependencyManager, install} from './dependency'
+import {dependencyManagerUsedForCreating, install} from './dependency'
 import {exec} from './system'
 import {describe, it, expect, vi} from 'vitest'
 
@@ -15,7 +15,7 @@ describe('dependencyManagerUsedForCreating', () => {
     const got = dependencyManagerUsedForCreating(env)
 
     // Then
-    expect(got).toBe(DependencyManager.Yarn)
+    expect(got).toBe('yarn')
   })
 
   it('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
@@ -27,7 +27,7 @@ describe('dependencyManagerUsedForCreating', () => {
     const got = dependencyManagerUsedForCreating(env)
 
     // Then
-    expect(got).toBe(DependencyManager.Pnpm)
+    expect(got).toBe('pnpm')
   })
 
   it('returns npm when the package manager cannot be detected', () => {
@@ -35,14 +35,14 @@ describe('dependencyManagerUsedForCreating', () => {
     const got = dependencyManagerUsedForCreating({})
 
     // Then
-    expect(got).toBe(DependencyManager.Npm)
+    expect(got).toBe('npm')
   })
 })
 
 describe('install', () => {
   it('runs the install command', async () => {
     // Given
-    const dependencyManager = DependencyManager.Npm
+    const dependencyManager = 'npm'
     const directory = '/path/to/project'
 
     // When

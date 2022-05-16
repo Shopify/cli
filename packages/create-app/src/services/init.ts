@@ -12,7 +12,7 @@ interface InitOptions {
 }
 
 async function init(options: InitOptions) {
-  const dependencyManager = inferDependencyManager(options.dependencyManager)
+  const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
@@ -107,7 +107,10 @@ async function init(options: InitOptions) {
 }
 
 function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
-  if (optionsDependencyManager && dependency.dependencyManager.includes(optionsDependencyManager)) {
+  if (
+    optionsDependencyManager &&
+    dependency.dependencyManager.includes(optionsDependencyManager as dependency.DependencyManager)
+  ) {
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()
