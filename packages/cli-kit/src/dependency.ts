@@ -1,11 +1,17 @@
 import {exec} from './system'
+import {exists as fileExists, read as readFile} from './file'
 import {glob, dirname, join as pathJoin} from './path'
+import {Bug} from './error'
 import AbortController from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
 export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
 export type DependencyManager = typeof dependencyManager[number]
+
+export const PackageJsonNotFoundError = (directory: string) => {
+  return new Bug(`The directory ${directory} doesn't have a package.json.`)
+}
 
 /**
  * Returns the dependency manager used to run the create workflow.
@@ -83,4 +89,108 @@ export async function install(
 ) {
   const options: ExecOptions = {cwd: directory, stdout, stderr, signal}
   await exec(dependencyManager, ['install'], options)
+}
+
+/**
+ * Returns the list of production and dev dependencies of a package.json
+ * @param packageJsonPath {string} Path to the package.json file
+ * @returns A promise that resolves with the list of dependencies.
+ */
+export async function getDependencies(packageJsonPath: string): Promise<string[]> {
+  if (!(await fileExists(packageJsonPath))) {
+    throw PackageJsonNotFoundError(dirname(packageJsonPath))
+  }
+  const packageJsonContent = JSON.parse(await readFile(packageJsonPath))
+  const dependencies: {[key: string]: string} = packageJsonContent.dependencies ?? {}
+  const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
+
+  return [...Object.keys(dependencies), ...Object.keys(devDependencies)]
+}
+
+interface AddNPMDependenciesIfNeededOptions {
+  /** How dependencies should be added */
+  type: 'dev' | 'prod' | 'peer'
+
+  /** The dependency manager to use to add dependencies */
+  dependencyManager: DependencyManager
+
+  /** The directory that contains the package.json where dependencies will be added */
+  directory: string
+
+  /** Standard output coming from the underlying installation process */
+  stdout?: Writable
+
+  /** Standard error coming from the underlying installation process */
+  stderr?: Writable
+
+  /** Abort signal to stop the process */
+  signal?: AbortSignal
+}
+
+/**
+ * Adds dependencies to a Node project (i.e. a project that has a package.json)
+ * @param dependencies {string[]} List of dependencies to be added.
+ * @param options {AddNPMDependenciesIfNeededOptions} Options for adding dependencies.
+ */
+export async function addNPMDependenciesIfNeeded(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
+  const packageJsonPath = pathJoin(options.directory, 'package.json')
+  if (!(await fileExists(packageJsonPath))) {
+    throw PackageJsonNotFoundError(options.directory)
+  }
+  const existingDependencies = await getDependencies(packageJsonPath)
+  const dependenciesToAdd = dependencies.filter((dep) => {
+    return !existingDependencies.includes(dep)
+  })
+  let command: string[]
+  switch (options.dependencyManager) {
+    case 'npm':
+      command = ['install']
+      switch (options.type) {
+        case 'dev':
+          command.push('--save-dev')
+          break
+        case 'peer':
+          command.push('--save-peer')
+          break
+        case 'prod':
+          command.push('--save-prod')
+          break
+      }
+      break
+    case 'yarn':
+      command = ['add']
+      switch (options.type) {
+        case 'dev':
+          command.push('--dev')
+          break
+        case 'peer':
+          command.push('--peer')
+          break
+        case 'prod':
+          command.push('--prod')
+          break
+      }
+      break
+    case 'pnpm':
+      command = ['add']
+      switch (options.type) {
+        case 'dev':
+          command.push('--save-dev')
+          break
+        case 'peer':
+          command.push('--save-peer')
+          break
+        case 'prod':
+          command.push('--save-prod')
+          break
+      }
+      break
+  }
+  command = command.concat(dependenciesToAdd)
+  exec(options.dependencyManager, command, {
+    cwd: options.directory,
+    stdout: options.stdout,
+    stderr: options.stderr,
+    signal: options.signal,
+  })
 }
