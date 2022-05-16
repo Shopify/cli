@@ -2,7 +2,7 @@ import {api, error} from '@shopify/cli-kit'
 import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 const NoOrgError = () =>
-  new error.Fatal(
+  new error.Abort(
     'No Organization found',
     'You need to create a Shopify Partners organization: https://partners.shopify.com/signup ',
   )

@@ -106,7 +106,7 @@ function functionTemplatePath({extensionType, language}: ExtensionInitOptions): 
     case 'shipping_rate_presenter':
       return `checkout/${lang}/shipping-rate-presenter/default`
     default:
-      throw new error.Fatal('Invalid extension type')
+      throw new error.Abort('Invalid extension type')
   }
 }
 

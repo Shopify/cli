@@ -8,14 +8,14 @@ import {OrganizationApp} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 const InvalidApiKeyError = (apiKey: string) => {
-  return new error.Fatal(
+  return new error.Abort(
     `Invalid API key: ${apiKey}`,
     'You can find the apiKey in the app settings in the Partner Dashboard.',
   )
 }
 
 const InvalidStoreError = (storeFqdn: string) => {
-  return new error.Fatal(`Invalid Store: ${storeFqdn}`, 'Check that the provided Store is correct and try again.')
+  return new error.Abort(`Invalid Store: ${storeFqdn}`, 'Check that the provided Store is correct and try again.')
 }
 
 export interface DevEnvironmentInput {
