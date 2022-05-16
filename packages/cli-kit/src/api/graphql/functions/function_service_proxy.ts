@@ -5,3 +5,7 @@ export const ScriptServiceProxyQuery = gql`
     scriptServiceProxy(apiKey: $api_key, query: $query, variables: $variables)
   }
 `
+
+export interface ScriptServiceProxyQuerySchema {
+  scriptServiceProxy: any
+}

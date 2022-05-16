@@ -1,0 +1,197 @@
+schema {
+  query: QueryRoot
+}
+
+type Address {
+  address1: String
+  address2: String
+  address3: String
+  city: String
+  company: String
+  countryCode: String
+  firstName: String
+  lastName: String
+  phone: String
+  poBox: Boolean!
+  provinceCode: String
+  zip: String
+}
+
+type BuyerIdentity {
+  customer: Customer
+  email: String
+}
+
+type Customer implements HasMetafields {
+  acceptsMarketing: Boolean!
+  email: String
+  id: UnsignedInt64!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+  ordersCount: Int!
+  tags: [String!]!
+  totalSpent: Money!
+}
+
+type DeliveryLine {
+  amount: Money
+  destination: Address!
+  markup: Money
+  strategy: DeliveryStrategy
+}
+
+type DeliveryStrategy {
+  carrierIdentifier: String
+  code: String!
+  id: UnsignedInt64!
+  name: String!
+  phoneRequired: Boolean!
+  source: String!
+}
+
+interface HasMetafields {
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+}
+
+"""
+A [JSON](https://www.json.org/json-en.html) object.
+
+Example value:
+`{
+  "product": {
+    "id": "gid://shopify/Product/1346443542550",
+    "title": "White T-shirt",
+    "options": [{
+      "name": "Size",
+      "values": ["M", "L"]
+    }]
+  }
+}`
+"""
+scalar JSON
+
+type MerchandiseLine {
+  id: Int!
+  price: Money!
+  properties: [Property!]!
+  quantity: Int!
+  title: String
+  variant: Variant
+  weight: Int
+}
+
+type Metafield {
+  type: String!
+  value: JSON!
+}
+
+type Money {
+  currency: String!
+  subunits: UnsignedInt64!
+}
+
+type PaymentMethod {
+  cards: [String!]!
+  id: UnsignedInt64!
+  name: String!
+}
+
+type Product implements HasMetafields {
+  giftCard: Boolean!
+  id: UnsignedInt64!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+  tags: [String!]!
+  title: String!
+  type: String
+  vendor: String
+}
+
+type Property {
+  key: String!
+  value: String!
+}
+
+type PurchaseProposal {
+  buyerIdentity: BuyerIdentity!
+  customAttribute(key: String!): String
+  deliveryLines: [DeliveryLine!]!
+  locale: String!
+  merchandiseLines: [MerchandiseLine!]!
+}
+
+type QueryRoot {
+  paymentMethods: [PaymentMethod!]!
+
+  """
+  The purchase proposal.
+  """
+  purchaseProposal: PurchaseProposal!
+}
+
+"""
+Unsigned integer of up to 64 bit, encoded as a number (not a string).
+Example value: `1099511627776`
+"""
+scalar UnsignedInt64
+
+type Variant implements HasMetafields {
+  compareAtPrice: Money
+  id: UnsignedInt64!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+  product: Product!
+  sku: String
+}
