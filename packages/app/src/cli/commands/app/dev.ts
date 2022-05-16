@@ -36,6 +36,14 @@ export default class Dev extends Command {
       default: false,
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
+    'skip-dependencies-installation': Flags.boolean({
+      char: 's',
+      hidden: false,
+      description: 'Skips the installation of dependencies.',
+      env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
+      default: false,
+    }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     'no-update': Flags.boolean({
       hidden: false,
       description: 'Skips the dashboard URL update step.',
@@ -57,6 +65,7 @@ export default class Dev extends Command {
       reset: flags.reset,
       tunnel: flags.tunnel,
       update: !flags['no-update'],
+      skipDependenciesInstallation: flags['skip-dependencies-installation'],
       plugins,
     })
   }

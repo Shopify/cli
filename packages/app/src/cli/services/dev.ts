@@ -1,5 +1,6 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {updateURLs} from './dev/update-urls'
+import {installAppDependencies} from './dependencies'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
 import {output, port, system, plugins} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
@@ -12,6 +13,7 @@ interface DevOptions {
   tunnel: boolean
   update: boolean
   plugins: Plugin[]
+  skipDependenciesInstallation: boolean
 }
 
 interface DevWebOptions {
@@ -24,6 +26,9 @@ interface DevWebOptions {
 }
 
 async function dev(input: DevOptions) {
+  if (!input.skipDependenciesInstallation) {
+    await installAppDependencies(input.appManifest)
+  }
   const {
     app: {apiKey, apiSecretKeys},
     store,

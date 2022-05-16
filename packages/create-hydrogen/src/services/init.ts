@@ -143,7 +143,10 @@ async function init(options: InitOptions) {
 }
 
 function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
-  if (optionsDependencyManager && dependency.dependencyManager.includes(optionsDependencyManager)) {
+  if (
+    optionsDependencyManager &&
+    dependency.dependencyManager.includes(optionsDependencyManager as dependency.DependencyManager)
+  ) {
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()
