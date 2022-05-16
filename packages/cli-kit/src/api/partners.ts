@@ -12,7 +12,7 @@ export async function request<T>(query: any, token: string, variables?: any): Pr
   ${query}
 
   With variables:
-  ${variables}
+  ${variables ? JSON.stringify(variables, null, 2) : ''}
   `)
   return graphqlRequest<T>(url, query, variables, headers)
 }

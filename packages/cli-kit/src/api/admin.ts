@@ -9,7 +9,7 @@ export async function request<T>(query: any, session: AdminSession, variables?: 
   ${query}
 
   With variables:
-  ${variables}
+  ${variables ? JSON.stringify(variables, null, 2) : ''}
   `)
   const version = await fetchApiVersion(session)
   const url = adminUrl(session.storeFqdn, version)
