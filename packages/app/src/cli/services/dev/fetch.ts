@@ -33,16 +33,22 @@ export async function fetchOrganizations(token: string): Promise<Organization[]>
  * @param token {string} Token to access partners API
  * @returns {Promise<FetchResponse>} Current organization details and list of apps and stores
  */
-export async function fetchAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
+export async function fetchOrgAndApps(orgId: string, token: string): Promise<FetchResponse> {
   const query = api.graphql.FindOrganizationQuery
   const result: api.graphql.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError()
   const parsedOrg = {id: org.id, businessName: org.businessName}
-  return {organization: parsedOrg, apps: org.apps.nodes, stores: org.stores.nodes}
+  return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
 }
 
 export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp> {
   const res: api.graphql.FindAppQuerySchema = await api.partners.request(api.graphql.FindAppQuery, token, {apiKey})
   return res.app
+}
+
+export async function fetchAllStores(orgId: string, token: string): Promise<OrganizationStore[]> {
+  const query = api.graphql.AllStoresByOrganizationQuery
+  const result: api.graphql.AllStoresByOrganizationSchema = await api.partners.request(query, token, {id: orgId})
+  return result.organizations.nodes[0].stores.nodes
 }

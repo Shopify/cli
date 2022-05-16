@@ -1,5 +1,5 @@
 import {selectStore} from './select-store'
-import {fetchAppsAndStores} from './fetch'
+import {fetchOrgAndApps} from './fetch'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {http} from '@shopify/cli-kit'
 import {Organization, OrganizationStore} from '$cli/models/organization'
@@ -99,7 +99,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
-    vi.mocked(fetchAppsAndStores).mockResolvedValue({organization: ORG1, stores: [], apps: []})
+    vi.mocked(fetchOrgAndApps).mockResolvedValue({organization: ORG1, stores: [], apps: []})
 
     // When
     const got = selectStore([], '1')

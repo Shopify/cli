@@ -1,10 +1,10 @@
 import {selectOrCreateApp} from './select-app'
-import {fetchAppFromApiKey, fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
 import {selectStore, validateStore} from './select-store'
-import {error, output, session, store as conf} from '@shopify/cli-kit'
+import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
-import {OrganizationApp} from '$cli/models/organization'
+import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 const InvalidApiKeyError = (apiKey: string) => {
@@ -15,7 +15,10 @@ const InvalidApiKeyError = (apiKey: string) => {
 }
 
 const InvalidStoreError = (storeFqdn: string) => {
-  return new error.Fatal(`Invalid Store: ${storeFqdn}`, 'Check that the provided Store is correct and try again.')
+  return new error.Fatal(
+    `Invalid Store: ${storeFqdn}`,
+    'Check that the provided Store is valid and try again. It must be a development non-transferable store in your partners organization',
+  )
 }
 
 export interface DevEnvironmentInput {
@@ -46,22 +49,22 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  let {app: selectedApp, store: selectedStore} = await dataFromInput(input, token)
-  if (selectedApp && selectedStore) {
-    updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
-    conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
-    return {app: selectedApp, store: selectedStore}
-  }
-
   const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
-  const {organization, apps, stores} = await fetchAppsAndStores(orgId, token)
+  const {organization, apps, stores} = await fetchData(orgId, token)
+
+  let {app: selectedApp, store: selectedStore} = await dataFromInput(input, organization, stores, token)
+  if (selectedApp && selectedStore) {
+    updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
+    conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
+    return {app: selectedApp, store: selectedStore}
+  }
 
   selectedApp = selectedApp || (await selectOrCreateApp(input.appManifest, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
   updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
-  selectedStore = selectedStore || (await selectStore(stores, orgId, cachedInfo?.storeFqdn))
+  selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
@@ -69,6 +72,23 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
   }
 
   return {app: selectedApp, store: selectedStore}
+}
+
+async function fetchData(orgId: string, token: string): Promise<FetchResponse> {
+  let data: any = {}
+  const list = new ui.Listr([
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        data = await fetchOrgAndApps(orgId, token)
+        // We need ALL stores so we can validate the selected one.
+        // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
+        data.stores = await fetchAllStores(orgId, token)
+      },
+    },
+  ])
+  await list.run()
+  return data
 }
 
 /**
@@ -79,6 +99,8 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
  */
 async function dataFromInput(
   input: DevEnvironmentInput,
+  org: Organization,
+  stores: OrganizationStore[],
   token: string,
 ): Promise<{app?: OrganizationApp; store?: string}> {
   let selectedApp: OrganizationApp | undefined
@@ -90,7 +112,7 @@ async function dataFromInput(
   }
 
   if (input.store) {
-    const isValid = await validateStore(input.store)
+    const isValid = await validateStore(input.store, stores, org, token)
     if (!isValid) throw InvalidStoreError(input.store)
     selectedStore = input.store
   }

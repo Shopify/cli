@@ -1,5 +1,5 @@
 import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
-import {fetchAppFromApiKey, fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
 import {selectStore, validateStore} from './select-store'
 import {store as conf} from '@shopify/cli-kit'
@@ -101,7 +101,7 @@ beforeEach(async () => {
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1.shopDomain)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-  vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
+  vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
 })
 
 describe('ensureDevEnvironment', () => {

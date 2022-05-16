@@ -5,9 +5,12 @@ export const AllStoresByOrganizationQuery = gql`
     organizations(id: $id, first: 1) {
       nodes {
         id
-        stores {
+        stores(first: 500) {
           nodes {
             shopId
+            link
+            shopDomain
+            shopName
             transferDisabled
             convertableToPartnerTest
           }
@@ -24,10 +27,13 @@ export interface AllStoresByOrganizationSchema {
       stores: {
         nodes: {
           shopId: string
+          link: string
+          shopDomain: string
+          shopName: string
           transferDisabled: boolean
           convertableToPartnerTest: boolean
         }[]
       }
-    }
+    }[]
   }
 }

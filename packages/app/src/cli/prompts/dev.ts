@@ -103,3 +103,21 @@ export async function reloadStoreListPrompt(): Promise<boolean> {
   const choice: {value: string} = await ui.prompt([questions])
   return choice.value === 'reload'
 }
+
+export async function convertToDevStorePrompt(storeName: string): Promise<boolean> {
+  const options = [
+    {name: 'Yes, convert to dev store', value: 'convert'},
+    {name: 'No, select a different store', value: 'cancel'},
+  ]
+
+  const questions: ui.Question = {
+    type: 'select',
+    name: 'value',
+    message: `Do you want to convert ${storeName} to a development store?
+  Doing this will allow you to install your app, but the store will become "transfer-disabled".
+  Learn more: https://shopify.dev/tutorials/transfer-a-development-store-to-a-merchant#transfer-disabled-stores`,
+    choices: options,
+  }
+  const choice: {value: string} = await ui.prompt([questions])
+  return choice.value === 'convert'
+}
