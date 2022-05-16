@@ -109,7 +109,7 @@ describe('getDeepInstallNPMTasks', () => {
     })
   }
 
-  const defaultArgs = {
+  const defaultArgs: {dependencyManager: dependency.DependencyManager; didInstallEverything: () => void} = {
     dependencyManager: 'npm',
     didInstallEverything: () => {},
   }

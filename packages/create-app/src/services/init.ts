@@ -12,7 +12,7 @@ interface InitOptions {
 }
 
 async function init(options: InitOptions) {
-  const dependencyManager = inferDependencyManager(options.dependencyManager)
+  const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
