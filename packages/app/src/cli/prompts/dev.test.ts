@@ -1,11 +1,4 @@
-import {
-  appNamePrompt,
-  appTypePrompt,
-  reloadStoreListPrompt,
-  selectAppPrompt,
-  selectOrganizationPrompt,
-  selectStorePrompt,
-} from './dev'
+import {appNamePrompt, reloadStoreListPrompt, selectAppPrompt, selectOrganizationPrompt, selectStorePrompt} from './dev'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
@@ -187,30 +180,6 @@ describe('selectStore', () => {
         choices: [
           {name: 'store1', value: '1'},
           {name: 'store2', value: '2'},
-        ],
-      },
-    ])
-  })
-})
-
-describe('appType', () => {
-  it('asks the user to select a type and returns it', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'custom'})
-
-    // When
-    const got = await appTypePrompt()
-
-    // Then
-    expect(got).toEqual('custom')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'value',
-        message: 'What type of app are you building?',
-        choices: [
-          {name: 'Public: An app built for a wide merchant audience.', value: 'public'},
-          {name: 'Custom: An app custom built for a single client.', value: 'custom'},
         ],
       },
     ])

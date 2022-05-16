@@ -3,7 +3,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 import {App, WebType} from '$cli/models/app/app'
 import {OrganizationApp} from '$cli/models/organization'
-import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
+import {appNamePrompt, selectAppPrompt} from '$cli/prompts/dev'
 
 const LOCAL_APP: App = {
   directory: '',
@@ -48,7 +48,6 @@ describe('createApp', () => {
   it('sends request to create app and returns it', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 123,
@@ -69,7 +68,6 @@ describe('createApp', () => {
   it('throws error if requests has a user error', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: {}, userErrors: [{message: 'some-error'}]}})
 
     // When
@@ -124,7 +122,6 @@ describe('selectOrCreateApp', () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(undefined)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 1,

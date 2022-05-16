@@ -1,7 +1,7 @@
 import {fetchAppFromApiKey} from './fetch'
 import {api, error, output} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
-import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
+import {appNamePrompt, selectAppPrompt} from '$cli/prompts/dev'
 import {OrganizationApp} from '$cli/models/organization'
 
 /**
@@ -36,13 +36,11 @@ export async function selectOrCreateApp(
 
 export async function createApp(orgId: string, app: App, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.configuration.name)
-  const type = await appTypePrompt()
   const variables: api.graphql.CreateAppQueryVariables = {
     org: parseInt(orgId, 10),
     title: `${name}`,
     appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
     redir: ['http://localhost:3456'],
-    type,
   }
 
   const query = api.graphql.CreateAppQuery
@@ -51,6 +49,7 @@ export async function createApp(orgId: string, app: App, token: string): Promise
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Fatal(errors)
   }
+  console.log(result.appCreate.app)
   output.success(`🎉 ${result.appCreate.app.title} has been created on your Partners account`)
   return result.appCreate.app
 }
