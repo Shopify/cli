@@ -13,6 +13,7 @@ interface DevOptions {
   tunnel: boolean
   update: boolean
   plugins: Plugin[]
+  skipDependenciesInstallation: boolean
 }
 
 interface DevWebOptions {
@@ -25,7 +26,9 @@ interface DevWebOptions {
 }
 
 async function dev(input: DevOptions) {
-  await installAppDependencies(input.appManifest)
+  if (!input.skipDependenciesInstallation) {
+    await installAppDependencies(input.appManifest)
+  }
   const {
     app: {apiKey, apiSecretKeys},
     store,
