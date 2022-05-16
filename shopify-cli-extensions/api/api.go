@@ -37,7 +37,9 @@ func New(config *core.Config, apiRoot string) *ExtensionsApi {
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, "/dev-console", http.StatusTemporaryRedirect)
+		url := r.URL
+		url.Path = "/dev-console"
+		http.Redirect(rw, r, url.String(), http.StatusTemporaryRedirect)
 	})
 
 	api := configureExtensionsApi(config, mux, apiRoot)

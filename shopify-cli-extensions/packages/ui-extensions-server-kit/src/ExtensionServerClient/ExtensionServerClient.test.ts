@@ -186,6 +186,25 @@ describe('ExtensionServerClient', () => {
       expect(client.connection).toBeUndefined();
     });
 
+    it('re-use existing connection if connect options have not changed', async () => {
+      const initialURL = 'ws://initial.socket.com';
+      const initialSocket = new WS(initialURL);
+      const client = new ExtensionServerClient({connection: {url: initialURL}});
+
+      jest.spyOn(initialSocket, 'close');
+
+      await initialSocket.connected;
+
+      expect(initialSocket.server.clients()).toHaveLength(1);
+
+      client.connect({connection: {url: initialURL}});
+
+      expect(initialSocket.server.clients()).toHaveLength(1);
+      expect(initialSocket.close).not.toHaveBeenCalled();
+
+      initialSocket.close();
+    });
+
     it('creates a new connection if the URL has changed', async () => {
       const initialURL = 'ws://initial.socket.com';
       const initialSocket = new WS(initialURL);
@@ -193,10 +212,13 @@ describe('ExtensionServerClient', () => {
       const updatedSocket = new WS(updatedURL);
       const client = new ExtensionServerClient({connection: {url: initialURL}});
 
+      await initialSocket.connected;
+
       expect(initialSocket.server.clients()).toHaveLength(1);
       expect(updatedSocket.server.clients()).toHaveLength(0);
 
       client.connect({connection: {url: updatedURL}});
+
       await initialSocket.closed;
 
       expect(initialSocket.server.clients()).toHaveLength(0);
