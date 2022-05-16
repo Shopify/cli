@@ -1,5 +1,4 @@
 # This file stores configurations for your Shopify app.
 
-name = "cli-example-app-public"
-id = "ff4b54959a5b5b47b670255c3f56dd89"
+name = "app"
 scopes = "read_products"
