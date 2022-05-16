@@ -148,10 +148,10 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({app: APP2, store: STORE1.shopDomain})
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain})
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
     expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP2.title, id: APP2.apiKey})
-    expect(fetchOrganizations).not.toBeCalled()
-    expect(selectOrganizationPrompt).not.toBeCalled()
+    expect(fetchOrganizations).toBeCalled()
+    expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
   })
