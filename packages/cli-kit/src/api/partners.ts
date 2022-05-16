@@ -8,11 +8,11 @@ export async function request<T>(query: any, token: string, variables?: any): Pr
   const url = `https://${fqdn}/api/cli/graphql`
   const headers = await buildHeaders(token)
   debug(`
-  Sending Partners GraphQL request:
-  ${query}
+Sending Partners GraphQL request:
+${query}
 
-  With variables:
-  ${variables ? JSON.stringify(variables, null, 2) : ''}
+With variables:
+${variables ? JSON.stringify(variables, null, 2) : ''}
   `)
   return graphqlRequest<T>(url, query, variables, headers)
 }

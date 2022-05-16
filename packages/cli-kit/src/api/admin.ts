@@ -5,11 +5,11 @@ import {request as graphqlRequest, gql} from 'graphql-request'
 
 export async function request<T>(query: any, session: AdminSession, variables?: any): Promise<T> {
   debug(`
-  Sending Admin GraphQL request:
-  ${query}
+Sending Admin GraphQL request:
+${query}
 
-  With variables:
-  ${variables ? JSON.stringify(variables, null, 2) : ''}
+With variables:
+${variables ? JSON.stringify(variables, null, 2) : ''}
   `)
   const version = await fetchApiVersion(session)
   const url = adminUrl(session.storeFqdn, version)
@@ -23,8 +23,8 @@ async function fetchApiVersion(session: AdminSession): Promise<any> {
   const headers = await buildHeaders(session.token)
 
   debug(`
-  Sending Admin GraphQL request to URL ${url} with query:
-  ${query}
+Sending Admin GraphQL request to URL ${url} with query:
+${query}
   `)
   const data = await graphqlRequest(url, query, {}, headers)
   return data.publicApiVersions
