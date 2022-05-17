@@ -1,7 +1,25 @@
-import {fetchAppsAndStores} from './fetch'
-import {error, output, session, http} from '@shopify/cli-kit'
-import {OrganizationStore} from '$cli/models/organization'
+import {fetchAllStores} from './fetch'
+import {error, output, api} from '@shopify/cli-kit'
+import {Organization, OrganizationStore} from '$cli/models/organization'
 import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
+
+const ConvertToDevError = (storeName: string, message: string) => {
+  return new error.Bug(
+    `Error converting store ${storeName} to a Test store: ${message}`,
+    'This store might not be compatible with draft apps, please try a different store',
+  )
+}
+
+const StoreNotFoundError = (storeName: string, org: Organization) => {
+  return new error.Bug(
+    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
+    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
+  )
+}
+
+const InvalidStore = (storeName: string) => {
+  return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
+}
 
 const CreateStoreLink = (orgId: string) => {
   const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
@@ -20,32 +38,70 @@ const CreateStoreLink = (orgId: string) => {
  */
 export async function selectStore(
   stores: OrganizationStore[],
-  orgId: string,
+  org: Organization,
+  token: string,
   cachedStoreName?: string,
 ): Promise<string> {
   if (cachedStoreName) {
-    const isValid = await validateStore(cachedStoreName)
-    if (isValid) return cachedStoreName
+    await convertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
+    return cachedStoreName
   }
 
   const store = await selectStorePrompt(stores)
-  if (store) return store.shopDomain
+  if (store) {
+    await convertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
+    return store.shopDomain
+  }
 
-  output.info(`\n${CreateStoreLink(orgId)}`)
+  output.info(`\n${CreateStoreLink(org.id)}`)
   const reload = await reloadStoreListPrompt()
   if (!reload) throw new error.AbortSilent()
 
-  const token = await session.ensureAuthenticatedPartners()
-  const data = await fetchAppsAndStores(orgId, token)
-  return selectStore(data.stores, orgId)
+  const data = await fetchAllStores(org.id, token)
+  return selectStore(data, org, token)
 }
 
 /**
- * Check if the provided storeDomain exists
+ * Check if the store exists in the current organization and it is a valid store
+ * To be valid, it must be non-transferable.
  * @param storeDomain {string} Store domain to check
- * @returns {boolean} Whether the store exists or not
+ * @param stores {OrganizationStore[]} List of available stores
+ * @param orgId {string} Current organization ID
+ * @param token {string} Token to access partners API
+ * @returns {Promise<boolean>} True if the store is valid
+ * @throws {Fatal} If the store can't be found in the organization or we fail to make it a test store
  */
-export async function validateStore(storeDomain?: string): Promise<boolean> {
-  const res = await http.fetch(`https://${storeDomain}/admin`, {method: 'HEAD'})
-  return res.status === 200
+export async function convertToTestStoreIfNeeded(
+  storeDomain: string,
+  stores: OrganizationStore[],
+  org: Organization,
+  token: string,
+): Promise<void> {
+  const store = stores.find((store) => store.shopDomain === storeDomain)
+  if (!store) throw StoreNotFoundError(storeDomain, org)
+  if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
+  if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
+}
+
+/**
+ * Convert a store to a test store so development apps can be installed
+ * This can't be undone, so we ask the user to confirm
+ * @param store {OrganizationStore} Store to convert
+ * @param orgId {string} Current organization ID
+ * @param token {string} Token to access partners API
+ */
+export async function convertStoreToTest(store: OrganizationStore, orgId: string, token: string) {
+  const query = api.graphql.ConvertDevToTestStoreQuery
+  const variables: api.graphql.ConvertDevToTestStoreVariables = {
+    input: {
+      organizationID: parseInt(orgId, 10),
+      shopId: store.shopId,
+    },
+  }
+  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
+  if (!result.convertDevToTestStore.convertedToTestStore) {
+    const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
+    throw ConvertToDevError(store.shopDomain, errors)
+  }
+  output.success(`Converted ${store.shopDomain} to a Test store`)
 }

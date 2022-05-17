@@ -1,7 +1,7 @@
 import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
-import {fetchAppFromApiKey, fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
-import {selectStore, validateStore} from './select-store'
+import {selectStore, convertToTestStoreIfNeeded} from './select-store'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
@@ -101,7 +101,7 @@ beforeEach(async () => {
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1.shopDomain)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-  vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
+  vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
 })
 
 describe('ensureDevEnvironment', () => {
@@ -140,7 +140,7 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
-    vi.mocked(validateStore).mockResolvedValueOnce(true)
+    vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
@@ -148,10 +148,10 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({app: APP2, store: STORE1.shopDomain})
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain})
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
     expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP2.title, id: APP2.apiKey})
-    expect(fetchOrganizations).not.toBeCalled()
-    expect(selectOrganizationPrompt).not.toBeCalled()
+    expect(fetchOrganizations).toBeCalled()
+    expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
   })
