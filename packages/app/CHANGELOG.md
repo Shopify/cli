@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 2.0.3
+
+### Patch Changes
+
+- 30daa213: Install dependencies as part of the dev workflow
+- 8421ec9e: Enable creation of checkout-ui extensions
+- ba003f7b: Automatically make stores non-transferable when selecting them for `dev`
+- b00ac480: Remove appType prompt, add createAsNew prompt
+- Updated dependencies [30daa213]
+- Updated dependencies [07bcb005]
+- Updated dependencies [ba003f7b]
+- Updated dependencies [b00ac480]
+  - @shopify/cli-kit@2.0.3
+
 ## 2.0.2
 
 ### Patch Changes
