@@ -153,19 +153,19 @@ export class ExtensionServerClient implements ExtensionServer.Client {
       return;
     }
 
-    this.closeConnection();
-
     if (!this.api || this.api.url !== this.connection.url) {
       this.initializeApiClient();
     }
 
-    if (connectWebsocket) {
-      this.connection = new WebSocket(
-        this.options.connection.url,
-        this.options.connection.protocols,
-      );
-      this.initializeConnection();
+    if (!connectWebsocket) {
+      return;
     }
+
+    this.closeConnection();
+
+    this.connection = new WebSocket(this.options.connection.url, this.options.connection.protocols);
+
+    this.initializeConnection();
   }
 
   protected closeConnection() {
