@@ -1794,13 +1794,12 @@
     semiver "^1.1.0"
     typescript "^4.6.3"
 
-"@shopify/plugin-ngrok@^0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.3.tgz#56b562a7e6bcbb91a674aa9b74cd2c357240a575"
-  integrity sha512-BpDtZyJeiibHBvXE6cswrYcn/nWamK0YV8xIJp2Gl4OGaK7uyxAP5keIepOoBNUBsawOo/9f0N/VueQK+AlQNQ==
+"@shopify/plugin-ngrok@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.4.tgz#0f105e5c326c2407cff6664668a1ba1cc89a0a04"
+  integrity sha512-GPwqJBAnLt/DJNqS9DYtIypXlE4P67d43xNYjGg/3WiiP/bM2G2f4ablsLk6VSMVv/LJjR8xYIT137aUNMNecw==
   dependencies:
     "@oclif/core" "1.3.6"
-    "@shopify/cli-kit" "^2.0.1"
     ngrok "^4.3.1"
 
 "@shopify/post-purchase-ui-extensions-react@^0.13.2":
