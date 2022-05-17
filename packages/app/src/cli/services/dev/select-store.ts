@@ -1,7 +1,7 @@
 import {fetchAllStores} from './fetch'
 import {error, output, api} from '@shopify/cli-kit'
 import {Organization, OrganizationStore} from '$cli/models/organization'
-import {convertToDevStorePrompt, reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
 const ConvertToDevError = (storeName: string, message: string) => {
   return new error.Bug(
@@ -39,14 +39,13 @@ export async function selectStore(
   cachedStoreName?: string,
 ): Promise<string> {
   if (cachedStoreName) {
-    const isValid = await validateAndConvertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
-    if (isValid) return cachedStoreName
+    await convertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
+    return cachedStoreName
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
-    const isValid = await validateAndConvertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
-    if (!isValid) return selectStore(stores, org, token)
+    await convertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
     return store.shopDomain
   }
 
@@ -68,18 +67,15 @@ export async function selectStore(
  * @returns {Promise<boolean>} True if the store is valid
  * @throws {Fatal} If the store can't be found in the organization or we fail to make it a test store
  */
-export async function validateAndConvertToTestStoreIfNeeded(
+export async function convertToTestStoreIfNeeded(
   storeDomain: string,
   stores: OrganizationStore[],
   org: Organization,
   token: string,
-): Promise<boolean> {
+): Promise<void> {
   const store = stores.find((store) => store.shopDomain === storeDomain)
   if (!store) throw StoreNotFoundError(storeDomain, org)
-  if (store.transferDisabled) return true
-  const shouldConvert = await convertToDevStorePrompt(store.shopDomain)
-  if (shouldConvert) await convertStoreToTest(store, org.id, token)
-  return shouldConvert
+  if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }
 
 /**

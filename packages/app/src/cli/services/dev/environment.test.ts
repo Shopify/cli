@@ -1,7 +1,7 @@
 import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
 import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
-import {selectStore, validateAndConvertToTestStoreIfNeeded} from './select-store'
+import {selectStore, convertToTestStoreIfNeeded} from './select-store'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
@@ -140,7 +140,7 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
-    vi.mocked(validateAndConvertToTestStoreIfNeeded).mockResolvedValueOnce(true)
+    vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
     // When

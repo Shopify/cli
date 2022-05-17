@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
-import {selectStore, validateAndConvertToTestStoreIfNeeded} from './select-store'
+import {selectStore, convertToTestStoreIfNeeded} from './select-store'
 import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
 import {selectOrganizationPrompt} from '$cli/prompts/dev'
 import {App} from '$cli/models/app/app'
@@ -11,14 +11,6 @@ const InvalidApiKeyError = (apiKey: string) => {
   return new error.Abort(
     `Invalid API key: ${apiKey}`,
     'You can find the apiKey in the app settings in the Partner Dashboard.',
-  )
-}
-
-const InvalidStoreError = (storeFqdn: string) => {
-  return new error.Abort(
-    `Invalid Store: ${storeFqdn}`,
-    `Check that the provided Store is valid and try again.
-    You can create a development store from your Partners dashboard: https://shopify.dev/themes/tools/development-stores`,
   )
 }
 
@@ -113,8 +105,7 @@ async function dataFromInput(
   }
 
   if (input.store) {
-    const isValid = await validateAndConvertToTestStoreIfNeeded(input.store, stores, org, token)
-    if (!isValid) throw InvalidStoreError(input.store)
+    await convertToTestStoreIfNeeded(input.store, stores, org, token)
     selectedStore = input.store
   }
 

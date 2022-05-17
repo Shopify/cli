@@ -3,7 +3,7 @@ import {fetchOrgAndApps} from './fetch'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 import {Organization, OrganizationStore} from '$cli/models/organization'
-import {convertToDevStorePrompt, reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
+import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
 const STORE1: OrganizationStore = {
@@ -72,23 +72,21 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('prompts user to select if cachedApiKey is invalid', async () => {
+  it('throws if cachedApiKey is invalid', async () => {
     // Given
-    const fqdn = STORE2.shopDomain
+    const fqdn = 'invalid-store'
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
+    const got = selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
 
     // Then
-    expect(got).toEqual(STORE1.shopDomain)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(got).rejects.toThrow('Could not find invalid-store')
   })
 
   it('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(convertToDevStorePrompt).mockResolvedValueOnce(true)
     vi.mocked(api.partners.request).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
 
     // When
@@ -97,7 +95,6 @@ describe('selectStore', async () => {
     // Then
     expect(got).toEqual(STORE2.shopDomain)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
-    expect(convertToDevStorePrompt).toHaveBeenCalledWith(STORE2.shopDomain)
   })
 
   it('prompts user to create & reload if prompt returns undefined, throws if reload is false', async () => {
