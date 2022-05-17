@@ -317,7 +317,7 @@ describe('addNPMDependenciesIfNeeded', () => {
     })
   })
 
-  test("runs the right command when it's pnpm and production dependencies", async () => {
+  test("runs the right command when it's pnpm and peer dependencies", async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
