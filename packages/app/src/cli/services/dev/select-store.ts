@@ -17,6 +17,10 @@ const StoreNotFoundError = (storeName: string, org: Organization) => {
   )
 }
 
+const InvalidStore = (storeName: string) => {
+  return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
+}
+
 const CreateStoreLink = (orgId: string) => {
   const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
   return `Click here to create a new dev store to preview your project:\n${url}\n`
@@ -75,6 +79,7 @@ export async function convertToTestStoreIfNeeded(
 ): Promise<void> {
   const store = stores.find((store) => store.shopDomain === storeDomain)
   if (!store) throw StoreNotFoundError(storeDomain, org)
+  if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }
 
