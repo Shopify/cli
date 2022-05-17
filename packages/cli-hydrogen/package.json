@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "type": "module",
