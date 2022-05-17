@@ -14,7 +14,7 @@ export type ExtensionRowProps = {
   onSelect(extension: ExtensionPayload): void;
   onHighlight(extension: ExtensionPayload): void;
   onClearHighlight(): void;
-} & Pick<ActionSetProps, 'activeMobileQRCode' | 'onShowMobileQRCode' | 'onCloseMobileQRCode'>;
+} & Pick<ActionSetProps, 'onShowMobileQRCode' | 'onCloseMobileQRCode'>;
 
 export function ExtensionRow({
   extension,
@@ -29,11 +29,8 @@ export function ExtensionRow({
     fallback: en,
   });
   const {
-    assets,
     development: {hidden, status},
   } = extension;
-
-  const {name, url: scriptUrl} = assets.main;
 
   const handleSelect = useCallback(
     (event?: MouseEvent) => {
@@ -63,7 +60,7 @@ export function ExtensionRow({
       <td>
         <Checkbox label="" checked={selected} onChange={() => handleSelect()} />
       </td>
-      <td className={textClass}>{name}</td>
+      <td className={textClass}>{extension.title}</td>
       <td className={textClass}>{extension.type}</td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>

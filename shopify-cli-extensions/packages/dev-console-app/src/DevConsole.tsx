@@ -19,6 +19,7 @@ import * as styles from './DevConsole.module.scss';
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import * as actionSetStyles from './ActionSet/ActionSet.module.scss';
 import en from './translations/en.json';
+import {QRCodeModal} from './QRCodeModal';
 
 // Hiding content until there are more options in the side nav
 const DISPLAY_SIDENAV = false;
@@ -42,22 +43,6 @@ export function DevConsole() {
     focus,
     unfocus,
   } = useDevConsoleInternal();
-
-  const [connectionUrl, setConnectionUrl] = useState<string>('');
-
-  useEffect(() => {
-    const url = new URLSearchParams(location.search).get('url');
-    if (url && url !== connectionUrl) {
-      setConnectionUrl(url);
-    }
-  }, [connectionUrl]);
-
-  useEffect(() => {
-    if (connectionUrl) {
-      connect({connection: {url: connectionUrl}});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectionUrl]);
 
   const allSelected = selectedExtensionsSet.size === extensions.length;
 
@@ -191,10 +176,6 @@ export function DevConsole() {
                           selected={selectedExtensionsSet.has(uuid)}
                           onHighlight={focus}
                           onClearHighlight={unfocus}
-                          activeMobileQRCode={
-                            activeMobileQRCodeExtension !== undefined &&
-                            activeMobileQRCodeExtension.uuid === uuid
-                          }
                           onCloseMobileQRCode={() => setActiveMobileQRCodeExtension(undefined)}
                           onShowMobileQRCode={setActiveMobileQRCodeExtension}
                         />
@@ -204,6 +185,11 @@ export function DevConsole() {
                 </table>
               </section>
             )}
+            <QRCodeModal
+              extension={activeMobileQRCodeExtension}
+              open={activeMobileQRCodeExtension !== undefined}
+              onClose={() => setActiveMobileQRCodeExtension(undefined)}
+            />
           </main>
         </div>
       </div>

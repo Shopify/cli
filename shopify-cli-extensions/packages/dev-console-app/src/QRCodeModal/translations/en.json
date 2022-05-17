@@ -1,0 +1,13 @@
+{
+  "title": "QR code to view on mobile",
+  "qrcode": {
+    "action": "Generate a QR code to view on mobile",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "content": "Scan code to test {thisExtension} on mobile devices.",
+    "thisExtension": "this extension",
+    "loadError": "There was a problem generating the QR code",
+    "useSecureURL": "QR code can only be generated with a secure URL",
+    "tryAgain": "Try again"
+  }
+}

@@ -9,6 +9,7 @@ declare global {
       refresh: {uuid: string}[];
       focus: {uuid: string}[];
       unfocus: void;
+      navigate: {url: string};
     }
 
     interface OutboundPersistEvents {
@@ -22,6 +23,7 @@ declare global {
       refresh: {uuid: string}[];
       focus: {uuid: string}[];
       unfocus: void;
+      navigate: {url: string};
     }
   }
 }
