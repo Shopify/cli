@@ -152,7 +152,7 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
       args = argumentsToAddDependenciesWithYarn(dependenciesToAdd, options.type)
       break
     case 'pnpm':
-      args = argumentsToAddDependenciesWithPnpm(dependenciesToAdd, options.type)
+      args = argumentsToAddDependenciesWithPNPM(dependenciesToAdd, options.type)
       break
   }
   exec(options.dependencyManager, args, {
@@ -169,7 +169,7 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
  * @param type {DependencyType} The dependency type.
  * @returns {string[]} An array with the arguments.
  */
-export function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['install']
   command = command.concat(dependencies)
   switch (type) {
@@ -192,7 +192,7 @@ export function argumentsToAddDependenciesWithNPM(dependencies: string[], type: 
  * @param type {DependencyType} The dependency type.
  * @returns {string[]} An array with the arguments.
  */
-export function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType): string[] {
   let command = ['add']
   command = command.concat(dependencies)
   switch (type) {
@@ -215,7 +215,7 @@ export function argumentsToAddDependenciesWithYarn(dependencies: string[], type:
  * @param type {DependencyType} The dependency type.
  * @returns {string[]} An array with the arguments.
  */
-export function argumentsToAddDependenciesWithPnpm(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['add']
   command = command.concat(dependencies)
   switch (type) {
