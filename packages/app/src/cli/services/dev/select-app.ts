@@ -1,7 +1,7 @@
 import {fetchAppFromApiKey} from './fetch'
 import {api, error, output} from '@shopify/cli-kit'
 import {App} from '$cli/models/app/app'
-import {appNamePrompt, selectAppPrompt} from '$cli/prompts/dev'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '$cli/prompts/dev'
 import {OrganizationApp} from '$cli/models/organization'
 
 /**
@@ -27,10 +27,10 @@ export async function selectOrCreateApp(
     if (cachedApp) return cachedApp
   }
 
-  let app = await selectAppPrompt(apps)
-  if (!app) app = await createApp(orgId, localApp, token)
+  let createNewApp = apps.length === 0
+  if (!createNewApp) createNewApp = await createAsNewAppPrompt()
+  const app = createNewApp ? await createApp(orgId, localApp, token) : await selectAppPrompt(apps)
 
-  output.success(`Connected your project with ${app.title}`)
   return app
 }
 
@@ -49,7 +49,7 @@ export async function createApp(orgId: string, app: App, token: string): Promise
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Fatal(errors)
   }
-  console.log(result.appCreate.app)
+
   output.success(`🎉 ${result.appCreate.app.title} has been created on your Partners account`)
   return result.appCreate.app
 }
