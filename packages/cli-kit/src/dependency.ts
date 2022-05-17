@@ -107,9 +107,11 @@ export async function getDependencies(packageJsonPath: string): Promise<string[]
   return [...Object.keys(dependencies), ...Object.keys(devDependencies)]
 }
 
+type DependencyType = 'dev' | 'prod' | 'peer'
+
 interface AddNPMDependenciesIfNeededOptions {
   /** How dependencies should be added */
-  type: 'dev' | 'prod' | 'peer'
+  type: DependencyType
 
   /** The dependency manager to use to add dependencies */
   dependencyManager: DependencyManager
@@ -141,56 +143,91 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
   const dependenciesToAdd = dependencies.filter((dep) => {
     return !existingDependencies.includes(dep)
   })
-  let command: string[]
+  let args: string[]
   switch (options.dependencyManager) {
     case 'npm':
-      command = ['install']
-      switch (options.type) {
-        case 'dev':
-          command.push('--save-dev')
-          break
-        case 'peer':
-          command.push('--save-peer')
-          break
-        case 'prod':
-          command.push('--save-prod')
-          break
-      }
+      args = argumentsToAddDependenciesWithNPM(dependenciesToAdd, options.type)
       break
     case 'yarn':
-      command = ['add']
-      switch (options.type) {
-        case 'dev':
-          command.push('--dev')
-          break
-        case 'peer':
-          command.push('--peer')
-          break
-        case 'prod':
-          command.push('--prod')
-          break
-      }
+      args = argumentsToAddDependenciesWithYarn(dependenciesToAdd, options.type)
       break
     case 'pnpm':
-      command = ['add']
-      switch (options.type) {
-        case 'dev':
-          command.push('--save-dev')
-          break
-        case 'peer':
-          command.push('--save-peer')
-          break
-        case 'prod':
-          command.push('--save-prod')
-          break
-      }
+      args = argumentsToAddDependenciesWithPnpm(dependenciesToAdd, options.type)
       break
   }
-  command = command.concat(dependenciesToAdd)
-  exec(options.dependencyManager, command, {
+  exec(options.dependencyManager, args, {
     cwd: options.directory,
     stdout: options.stdout,
     stderr: options.stderr,
     signal: options.signal,
   })
+}
+
+/**
+ * Returns the arguments to add dependencies using NPM.
+ * @param dependencies {string[]} The list of dependencies to add
+ * @param type {DependencyType} The dependency type.
+ * @returns {string[]} An array with the arguments.
+ */
+export function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
+  let command = ['install']
+  command = command.concat(dependencies)
+  switch (type) {
+    case 'dev':
+      command.push('--save-dev')
+      break
+    case 'peer':
+      command.push('--save-peer')
+      break
+    case 'prod':
+      command.push('--save-prod')
+      break
+  }
+  return command
+}
+
+/**
+ * Returns the arguments to add dependencies using Yarn.
+ * @param dependencies {string[]} The list of dependencies to add
+ * @param type {DependencyType} The dependency type.
+ * @returns {string[]} An array with the arguments.
+ */
+export function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType): string[] {
+  let command = ['add']
+  command = command.concat(dependencies)
+  switch (type) {
+    case 'dev':
+      command.push('--dev')
+      break
+    case 'peer':
+      command.push('--peer')
+      break
+    case 'prod':
+      command.push('--prod')
+      break
+  }
+  return command
+}
+
+/**
+ * Returns the arguments to add dependencies using PNPM.
+ * @param dependencies {string[]} The list of dependencies to add
+ * @param type {DependencyType} The dependency type.
+ * @returns {string[]} An array with the arguments.
+ */
+export function argumentsToAddDependenciesWithPnpm(dependencies: string[], type: DependencyType): string[] {
+  let command = ['add']
+  command = command.concat(dependencies)
+  switch (type) {
+    case 'dev':
+      command.push('--save-dev')
+      break
+    case 'peer':
+      command.push('--save-peer')
+      break
+    case 'prod':
+      command.push('--save-prod')
+      break
+  }
+  return command
 }
