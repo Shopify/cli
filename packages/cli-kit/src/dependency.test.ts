@@ -103,7 +103,7 @@ describe('getDependencies', () => {
     })
   })
 
-  test('returns dev dependencies when dev dependencies do not exist', async () => {
+  test('returns production dependencies when dev dependencies do not exist', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
