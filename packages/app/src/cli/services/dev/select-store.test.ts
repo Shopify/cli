@@ -21,6 +21,15 @@ const STORE2: OrganizationStore = {
   shopDomain: 'domain2',
   shopName: 'store2',
   transferDisabled: false,
+  convertableToPartnerTest: true,
+}
+
+const STORE3: OrganizationStore = {
+  shopId: '3',
+  link: 'link3',
+  shopDomain: 'domain3',
+  shopName: 'store3',
+  transferDisabled: false,
   convertableToPartnerTest: false,
 }
 
@@ -95,6 +104,17 @@ describe('selectStore', async () => {
     // Then
     expect(got).toEqual(STORE2.shopDomain)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+  })
+
+  it('throws if store is non convertible', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE3)
+
+    // When
+    const got = selectStore([STORE1, STORE2, STORE3], ORG1, 'token')
+
+    // Then
+    expect(got).rejects.toThrow("domain3 can't be used to test draft apps")
   })
 
   it('prompts user to create & reload if prompt returns undefined, throws if reload is false', async () => {
