@@ -46,6 +46,7 @@ interface InstallNPMDependenciesRecursivelyOptions {
  */
 export async function installNPMDependenciesRecursively(options: InstallNPMDependenciesRecursivelyOptions) {
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
+    ignore: [pathJoin(options.directory, 'node_modules/**/package.json')],
     cwd: options.directory,
     onlyFiles: true,
     deep: options.deep,
