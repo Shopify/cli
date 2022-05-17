@@ -25,7 +25,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
       connection: {
         automaticConnect: true,
         protocols: [],
-        ...(options?.connection ?? {}),
+        ...(options.connection ?? {}),
       },
     } as ExtensionServer.Options;
 
