@@ -137,17 +137,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     });
   }
 
-  protected mergeOptions(newOptions: ExtensionServer.Options, options: ExtensionServer.Options) {
-    return {
-      ...options,
-      ...newOptions,
-      connection: {
-        ...options.connection,
-        ...newOptions.connection,
-      },
-    };
-  }
-
   protected setupConnection(connectWebsocket = true) {
     if (!this.options.connection.url) {
       return;
