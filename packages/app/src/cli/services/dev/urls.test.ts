@@ -1,12 +1,12 @@
 import {updateURLs, generateURL} from './urls'
+import {App, UIExtension, WebType} from '../../models/app/app'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, path, plugins} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
-import {App, UIExtension, WebType} from '$cli/models/app/app'
 
 const LOCAL_APP: App = {
   directory: '',
-  packageManager: 'yarn',
+  dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {name: 'my-app', scopes: 'read_products'},
   webs: [
@@ -22,7 +22,6 @@ const LOCAL_APP: App = {
 }
 
 beforeEach(() => {
-  vi.mock('$cli/prompts/dev')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -52,6 +51,7 @@ describe('generateURL', () => {
       tunnel: false,
       update: false,
       plugins: [],
+      skipDependenciesInstallation: true,
     }
 
     // When
@@ -69,6 +69,7 @@ describe('generateURL', () => {
       tunnel: true,
       update: false,
       plugins: [],
+      skipDependenciesInstallation: true,
     }
     vi.mocked(plugins.lookupTunnelPlugin).mockImplementationOnce(async () => undefined)
 
@@ -87,6 +88,7 @@ describe('generateURL', () => {
       tunnel: true,
       update: false,
       plugins: [],
+      skipDependenciesInstallation: true,
     }
     vi.mocked(plugins.lookupTunnelPlugin).mockImplementationOnce(async () => {
       return {start: async () => 'https://fake-url.ngrok.io'}
@@ -115,7 +117,7 @@ describe('generateURL', () => {
       directory: extensionRoot,
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
     }
-    const appWithExtension = {...LOCAL_APP, extensions: {ui: [extension]}}
+    const appWithExtension = {...LOCAL_APP, extensions: {ui: [extension], theme: [], function: []}}
 
     const input = {
       appManifest: appWithExtension,
@@ -123,6 +125,7 @@ describe('generateURL', () => {
       tunnel: false,
       update: false,
       plugins: [],
+      skipDependenciesInstallation: true,
     }
     vi.mocked(plugins.lookupTunnelPlugin).mockImplementationOnce(async () => {
       return {start: async () => 'https://fake-url.ngrok.io'}
