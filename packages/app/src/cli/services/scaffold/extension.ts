@@ -1,6 +1,7 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {error, file, git, output, path, string, template, ui, yaml} from '@shopify/cli-kit'
+import {error, file, git, output, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
+import stream from 'node:stream'
 import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
 import {App} from '$cli/models/app/app'
 
@@ -37,7 +38,7 @@ async function extensionInit(options: ExtensionInitOptions) {
   } else if (functionExtensions.types.includes(options.extensionType)) {
     await functionExtensionInit(options)
   } else {
-    await argoExtensionInit(options)
+    await uiExtensionInit(options)
   }
 }
 
@@ -47,28 +48,71 @@ async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptio
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
+async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
-  const stdin = yaml.encode({
-    extensions: [
-      {
-        title: name,
-        // Use the new templates
-        type: `${extensionType}_next`,
-        metafields: [],
-        development: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: '.',
-        },
+  const list = new ui.Listr([
+    {
+      title: 'Scaffolding extension',
+      task: async () => {
+        const stdin = yaml.encode({
+          extensions: [
+            {
+              title: name,
+              // Use the new templates
+              type: `${extensionType}_next`,
+              metafields: [],
+              development: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                root_dir: '.',
+              },
+            },
+          ],
+        })
+        await runGoExtensionsCLI(['create', '-'], {
+          cwd: extensionDirectory,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          stdin,
+        })
       },
-    ],
-  })
-  await runGoExtensionsCLI(['create', '-'], {
-    cwd: extensionDirectory,
-    stdout: process.stdout,
-    stderr: process.stderr,
-    stdin,
-  })
+    },
+    {
+      title: 'Installing additional dependencies',
+      task: async (_, task) => {
+        const requiredDependencies = getRuntimeDependencies({extensionType})
+        dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+          dependencyManager: app.dependencyManager,
+          type: 'prod',
+          directory: app.directory,
+          stderr: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+          stdout: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+        })
+      },
+    },
+  ])
+  await list.run()
+}
+
+function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOptions, 'extensionType'>): string[] {
+  switch (extensionType) {
+    case 'product_subscription':
+      return ['react', '@shopify/admin-ui-extensions-react']
+    case 'checkout_ui_extension':
+      return ['react', '@shopify/checkout-ui-extensions-react']
+    case 'checkout_post_purchase':
+      return ['react', '@shopify/post-purchase-ui-extensions-react']
+  }
+  return []
 }
 
 async function functionExtensionInit(options: ExtensionInitOptions) {
