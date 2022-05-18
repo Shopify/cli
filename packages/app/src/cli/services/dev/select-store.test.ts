@@ -34,7 +34,7 @@ const STORE3: OrganizationStore = {
 }
 
 beforeEach(() => {
-  vi.mock('$cli/prompts/dev')
+  vi.mock('../../prompts/dev')
   vi.mock('./fetch')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')

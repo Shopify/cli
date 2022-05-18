@@ -14,9 +14,9 @@ beforeEach(() => {
   vi.mock('./fetch')
   vi.mock('./select-app')
   vi.mock('./select-store')
-  vi.mock('$cli/prompts/dev')
-  vi.mock('$cli/models/app/app')
-  vi.mock('$cli/utilities/app/update')
+  vi.mock('../../prompts/dev')
+  vi.mock('../../models/app/app')
+  vi.mock('../../utilities/app/update')
   vi.mock('./create-app')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')

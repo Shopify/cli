@@ -4,7 +4,6 @@ import {api} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 
 beforeEach(() => {
-  vi.mock('$cli/prompts/dev')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {

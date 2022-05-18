@@ -26,7 +26,7 @@ const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecret
 const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
 
 beforeEach(() => {
-  vi.mock('$cli/prompts/dev')
+  vi.mock('../../prompts/dev')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
