@@ -1,10 +1,18 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import extensionInit from './extension'
-import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
+import extensionInit, {getRuntimeDependencies} from './extension'
+import {
+  blocks,
+  configurationFileNames,
+  ExtensionTypes,
+  uiExtensions,
+  functionExtensions,
+  themeExtensions,
+  uiExtensionRendererDependency,
+} from '../../constants'
+import {describe, it, expect, vi, beforeEach, afterEach, test} from 'vitest'
 import {file, output, path, dependency} from '@shopify/cli-kit'
 import {load as loadApp} from '$cli/models/app/app'
-import {blocks, configurationFileNames, ExtensionTypes} from '$cli/constants'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -116,4 +124,38 @@ describe('initialize a extension', () => {
     },
     30 * 1000,
   )
+})
+
+describe('getRuntimeDependencies', () => {
+  test('returns an empty list for extensions that are not UI extensions', () => {
+    // Given
+    const extensions: ExtensionTypes[] = [...functionExtensions.types, ...themeExtensions.types]
+
+    // When/then
+    extensions.forEach((extensionType) => {
+      expect(getRuntimeDependencies({extensionType})).toEqual([])
+    })
+  })
+
+  test('includes React for UI extensions', () => {
+    // Given
+    const extensions: ExtensionTypes[] = [...uiExtensions.types]
+
+    // When/then
+    extensions.forEach((extensionType) => {
+      expect(getRuntimeDependencies({extensionType}).includes('react')).toBeTruthy()
+    })
+  })
+
+  test('includes the renderer package for UI extensions', () => {
+    // Given
+    const extensions: ExtensionTypes[] = [...uiExtensions.types]
+
+    // When/then
+    extensions.forEach((extensionType) => {
+      expect(
+        getRuntimeDependencies({extensionType}).includes(uiExtensionRendererDependency(extensionType) as string),
+      ).toBeTruthy()
+    })
+  })
 })

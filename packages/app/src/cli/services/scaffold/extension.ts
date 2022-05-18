@@ -1,6 +1,6 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {blocks, ExtensionTypes, functionExtensions, uiExtensionRendererDependency} from '../../constants'
-import {error, file, git, output, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
+import {error, file, git, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
 import {App} from '$cli/models/app/app'
@@ -167,17 +167,6 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   }
   await file.mkdir(extensionDirectory)
   return extensionDirectory
-}
-
-async function writeFromTemplate({promptAnswers, filename, alias, directory}: WriteFromTemplateOptions) {
-  const _alias = alias || filename
-  output.info(output.content`Generating ${_alias}`)
-  const templatePath = await getTemplatePath('extensions')
-  const templateItemPath = path.join(templatePath, filename)
-  const content = await file.read(templateItemPath)
-  const contentOutput = await template.create(content)(promptAnswers)
-  const fullpath = path.join(directory, _alias)
-  await file.write(fullpath, contentOutput)
 }
 
 export default extensionInit
