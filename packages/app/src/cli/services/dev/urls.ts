@@ -1,21 +1,18 @@
 import {DevOptions} from '../dev'
 import {api, error, output, plugins, session} from '@shopify/cli-kit'
 
-export async function generateURL(input: DevOptions, frontendPort: number) {
+export async function generateURL(options: DevOptions, frontendPort: number) {
   let url = `http://localhost:${frontendPort}`
 
   const hasExtensions: boolean =
-    input.appManifest.extensions.ui.length > 0 ||
-    input.appManifest.extensions.function.length > 0 ||
-    input.appManifest.extensions.theme.length > 0
-  const useTunnel = input.tunnel || hasExtensions
+    options.appManifest.extensions.ui.length > 0 ||
+    options.appManifest.extensions.function.length > 0 ||
+    options.appManifest.extensions.theme.length > 0
+  const useTunnel = options.tunnel || hasExtensions
 
   if (useTunnel) {
-    const tunnelPlugin = await plugins.lookupTunnelPlugin(input.plugins)
-    if (tunnelPlugin === undefined) {
-      throw new error.Abort('The tunnel plugin could not be found.', 'shopify plugins install ngrok')
-    }
-    url = await tunnelPlugin.start({port: frontendPort})
+    const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
+    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
   }
 
   return url

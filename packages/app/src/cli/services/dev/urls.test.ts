@@ -1,7 +1,7 @@
 import {updateURLs, generateURL} from './urls'
 import {App, UIExtension, WebType} from '../../models/app/app'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, path, plugins} from '@shopify/cli-kit'
+import {api, error, path} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 
 const LOCAL_APP: App = {
@@ -36,7 +36,9 @@ beforeEach(() => {
         graphql: cliKit.api.graphql,
       },
       plugins: {
-        lookupTunnelPlugin: vi.fn(),
+        lookupTunnelPlugin: async () => {
+          return {start: async () => 'https://fake-url.ngrok.io'}
+        },
       },
     }
   })
@@ -61,25 +63,6 @@ describe('generateURL', () => {
     expect(got).toEqual('http://localhost:3456')
   })
 
-  it('shows an error if the --tunnel flag is passed, but the plugin is not found', async () => {
-    // Given
-    const input = {
-      appManifest: LOCAL_APP,
-      reset: false,
-      tunnel: true,
-      update: false,
-      plugins: [],
-      skipDependenciesInstallation: true,
-    }
-    vi.mocked(plugins.lookupTunnelPlugin).mockImplementationOnce(async () => undefined)
-
-    // When
-    const got = generateURL(input, 3456)
-
-    // Then
-    await expect(got).rejects.toThrow('The tunnel plugin could not be found.')
-  })
-
   it('returns a tunnel URL when the --tunnel flag is passed', async () => {
     // Given
     const input = {
@@ -90,9 +73,6 @@ describe('generateURL', () => {
       plugins: [],
       skipDependenciesInstallation: true,
     }
-    vi.mocked(plugins.lookupTunnelPlugin).mockImplementationOnce(async () => {
-      return {start: async () => 'https://fake-url.ngrok.io'}
-    })
 
     // When
     const got = await generateURL(input, 3456)
@@ -127,9 +107,6 @@ describe('generateURL', () => {
       plugins: [],
       skipDependenciesInstallation: true,
     }
-    vi.mocked(plugins.lookupTunnelPlugin).mockImplementationOnce(async () => {
-      return {start: async () => 'https://fake-url.ngrok.io'}
-    })
 
     // When
     const got = await generateURL(input, 3456)
@@ -180,6 +157,6 @@ describe('updateURLs', () => {
     const got = updateURLs('apiKey', 'http://localhost:3456')
 
     // Then
-    expect(got).rejects.toThrow(`Boom!`)
+    expect(got).rejects.toThrow(new error.Abort(`Boom!`))
   })
 })
