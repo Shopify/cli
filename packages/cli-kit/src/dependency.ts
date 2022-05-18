@@ -143,6 +143,9 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
   const dependenciesToAdd = dependencies.filter((dep) => {
     return !existingDependencies.includes(dep)
   })
+  if (dependenciesToAdd.length === 0) {
+    return
+  }
   let args: string[]
   switch (options.dependencyManager) {
     case 'npm':

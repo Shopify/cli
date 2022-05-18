@@ -77,7 +77,7 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
     },
     {
       title: 'Scaffolding extension',
-      task: async () => {
+      task: async (_, task) => {
         const stdin = yaml.encode({
           extensions: [
             {
@@ -94,8 +94,18 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
         })
         await runGoExtensionsCLI(['create', '-'], {
           cwd: extensionDirectory,
-          stdout: process.stdout,
-          stderr: process.stderr,
+          stderr: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+          stdout: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
           stdin,
         })
       },
