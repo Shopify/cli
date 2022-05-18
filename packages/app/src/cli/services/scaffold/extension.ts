@@ -52,6 +52,29 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const list = new ui.Listr([
     {
+      title: 'Installing additional dependencies',
+      task: async (_, task) => {
+        const requiredDependencies = getRuntimeDependencies({extensionType})
+        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+          dependencyManager: app.dependencyManager,
+          type: 'prod',
+          directory: app.directory,
+          stderr: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+          stdout: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+        })
+      },
+    },
+    {
       title: 'Scaffolding extension',
       task: async () => {
         const stdin = yaml.encode({
@@ -73,29 +96,6 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
           stdout: process.stdout,
           stderr: process.stderr,
           stdin,
-        })
-      },
-    },
-    {
-      title: 'Installing additional dependencies',
-      task: async (_, task) => {
-        const requiredDependencies = getRuntimeDependencies({extensionType})
-        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
-          dependencyManager: app.dependencyManager,
-          type: 'prod',
-          directory: app.directory,
-          stderr: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-          stdout: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
         })
       },
     },
