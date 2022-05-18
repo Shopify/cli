@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "main": "web/backend/index.js",
   "license": "UNLICENSED",
   "private": true,
@@ -13,8 +13,8 @@
     "deploy": "../shopify app deploy"
   },
   "dependencies": {
-    "@shopify/cli": "2.0.2",
-    "@shopify/app": "2.0.2",
+    "@shopify/cli": "2.0.3",
+    "@shopify/app": "2.0.3",
     "react": "17.0.2"
   },
   "author": "isaac"

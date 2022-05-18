@@ -1,6 +1,6 @@
 import scaffoldExtensionPrompt from './extension'
+import {extensions} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
-import {extensions} from '$cli/constants'
 
 describe('extension prompt', () => {
   it('when name is not passed', async () => {

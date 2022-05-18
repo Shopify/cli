@@ -1,5 +1,4 @@
 # This file stores configurations for your Shopify app.
 
-name = "my-node-app"
-id = "b43e5ceece1183e75ba3c6dd81af979a"
+name = "app"
 scopes = "read_products"

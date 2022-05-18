@@ -1,7 +1,7 @@
-import {fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {fetchAllStores, fetchOrgAndApps, fetchOrganizations} from './fetch'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
 const ORG2: Organization = {id: '2', businessName: 'org2'}
@@ -67,27 +67,42 @@ describe('fetchOrganizations', async () => {
   })
 })
 
-describe('fetchAppAndStores', async () => {
-  it('returns fetched apps and stores', async () => {
+describe('fetchApp', async () => {
+  it('returns fetched apps', async () => {
     // Given
     vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await fetchAppsAndStores(ORG1.id, 'token')
+    const got = await fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
-    expect(got).toEqual({organization: ORG1, apps: [APP1, APP2], stores: [STORE1]})
+    expect(got).toEqual({organization: ORG1, apps: [APP1, APP2], stores: []})
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
   })
+
   it('throws if there are no organizations', async () => {
     // Given
     vi.mocked(api.partners.request).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = fetchAppsAndStores(ORG1.id, 'token')
+    const got = fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
     expect(got).rejects.toThrow('No Organization found')
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
+  })
+})
+
+describe('fetchAllStores', async () => {
+  it('returns fetched stores', async () => {
+    // Given
+    vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
+
+    // When
+    const got = await fetchAllStores(ORG1.id, 'token')
+
+    // Then
+    expect(got).toEqual([STORE1])
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllStoresByOrganizationQuery, 'token', {id: ORG1.id})
   })
 })

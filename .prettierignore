@@ -3,3 +3,4 @@ node_modules
 bin
 dist
 *.d.ts
+fixtures/

@@ -4,6 +4,7 @@ import {isUnitTest} from './environment/local'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
+import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -184,7 +185,7 @@ export const success = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const debug = (content: Message) => {
-  message(content, 'debug')
+  message(colors.gray(stringifyMessage(content)), 'debug')
 }
 
 /**

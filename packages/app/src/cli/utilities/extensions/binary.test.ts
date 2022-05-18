@@ -1,4 +1,5 @@
 import {getBinaryPathOrDownload, getBinaryLocalPath, validatePlatformSupport, UnsupportedPlatformError} from './binary'
+import {versions} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
 import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
@@ -6,7 +7,6 @@ import {createGzip} from 'node:zlib'
 import {createReadStream, createWriteStream} from 'node:fs'
 import {promisify} from 'node:util'
 import {pipeline} from 'node:stream'
-import {versions} from '$cli/constants'
 
 vi.mock('@shopify/cli-kit', async () => {
   const module: any = await vi.importActual('@shopify/cli-kit')

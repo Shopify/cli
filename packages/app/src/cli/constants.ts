@@ -16,7 +16,7 @@ export const environmentVariables = {
 }
 
 export const versions = {
-  extensionsBinary: 'v0.7.0',
+  extensionsBinary: 'v0.8.0',
 }
 
 export const blocks = {
@@ -54,7 +54,7 @@ export const functionExtensions: ExtensionsType = {
 }
 
 export const uiExtensions: ExtensionsType = {
-  types: ['product_subscription', 'checkout_post_purchase'],
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase'],
 }
 
 export const themeExtensions: ExtensionsType = {
@@ -71,3 +71,20 @@ export const extensions: ExtensionsType = {
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
+
+/**
+ * Returns the runtime renderer dependency for a given UI extension type.
+ * @param extensionType {ExtensionTypes} Extension type.
+ * @returns The renderer dependency that should be present in the app's package.json
+ */
+export function uiExtensionRendererDependency(extensionType: ExtensionTypes): string | undefined {
+  switch (extensionType) {
+    case 'product_subscription':
+      return '@shopify/admin-ui-extensions-react'
+    case 'checkout_ui_extension':
+      return '@shopify/checkout-ui-extensions-react'
+    case 'checkout_post_purchase':
+      return '@shopify/post-purchase-ui-extensions-react'
+  }
+  return undefined
+}

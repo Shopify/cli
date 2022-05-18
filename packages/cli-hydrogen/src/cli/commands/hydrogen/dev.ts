@@ -15,6 +15,10 @@ export default class Dev extends Command {
       description: 'force dependency pre-bundling.',
       env: 'SHOPIFY_FLAG_DEV_FORCE',
     }),
+    host: Flags.boolean({
+      description: 'listen on all addresses, including LAN and public addresses.',
+      env: 'SHOPIFY_FLAG_DEV_HOST',
+    }),
   }
 
   async run(): Promise<void> {

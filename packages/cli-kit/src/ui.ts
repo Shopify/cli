@@ -3,6 +3,9 @@
 import {AutoComplete} from './ui/autocomplete'
 import {Input} from './ui/input'
 import {Select} from './ui/select'
+import {AbortSilent} from './error'
+import {remove, exists} from './file'
+import {relative} from './path'
 
 export {Listr} from 'listr2'
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
@@ -25,6 +28,32 @@ export const prompt = async <T>(questions: Question[]): Promise<T> => {
     value[question.name] = await question.run()
   }
   return value
+}
+
+export async function nonEmptyDirectoryPrompt(directory: string) {
+  if (await exists(directory)) {
+    const options = [
+      {name: 'Yes, remove the files', value: 'overwrite'},
+      {name: 'No, abort the command', value: 'abort'},
+    ]
+
+    const relativeDirectory = relative(process.cwd(), directory)
+
+    const questions: Question = {
+      type: 'select',
+      name: 'value',
+      message: `${relativeDirectory} is not an empty directory. Do you want to remove the existing files and continue?`,
+      choices: options,
+    }
+
+    const choice: {value: string} = await prompt([questions])
+
+    if (choice.value === 'abort') {
+      throw new AbortSilent()
+    }
+
+    remove(directory)
+  }
 }
 
 function mapper(question: Question): any {

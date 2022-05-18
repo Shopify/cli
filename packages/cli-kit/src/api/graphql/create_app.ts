@@ -1,16 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const CreateAppQuery = gql`
-  mutation AppCreate($org: Int!, $title: String!, $appUrl: Url!, $redir: [Url]!, $type: AppType) {
-    appCreate(
-      input: {
-        organizationID: $org
-        title: $title
-        applicationUrl: $appUrl
-        redirectUrlWhitelist: $redir
-        appType: $type
-      }
-    ) {
+  mutation AppCreate($org: Int!, $title: String!, $appUrl: Url!, $redir: [Url]!) {
+    appCreate(input: {organizationID: $org, title: $title, applicationUrl: $appUrl, redirectUrlWhitelist: $redir}) {
       app {
         id
         apiKey
@@ -35,7 +27,6 @@ export interface CreateAppQueryVariables {
   title: string
   appUrl: string
   redir: string[]
-  type: string
 }
 
 export interface CreateAppQuerySchema {

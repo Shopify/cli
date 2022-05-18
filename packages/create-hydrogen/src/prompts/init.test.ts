@@ -60,9 +60,9 @@ describe('init', () => {
         {
           type: 'select',
           name: 'template',
-          choices: ['template-hydrogen-default', 'template-hydrogen-minimum'],
+          choices: ['Demo store', 'Hello world'],
           message: 'Choose a template',
-          default: 'template-hydrogen-default',
+          default: 'Demo store',
           result: expect.any(Function),
         },
       ]),
@@ -72,8 +72,8 @@ describe('init', () => {
 
   it('when template is passed', async () => {
     const prompt = vi.fn()
-    const answers = {template: 'template-hydrogen-minimum'}
-    const options = {template: 'template-hydrogen-minimum'}
+    const answers = {template: 'Demo store'}
+    const options = {template: 'Hello world'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))

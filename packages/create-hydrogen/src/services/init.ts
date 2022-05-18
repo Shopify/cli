@@ -1,7 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
-import {constants, template, string, path, file, output, os, ui, npm, dependency, git} from '@shopify/cli-kit'
+import {downloadTemplate} from '../utils/template'
+
+import {constants, template, string, path, file, output, os, ui, npm, dependency} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -30,6 +32,8 @@ async function init(options: InitOptions) {
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
+  await ui.nonEmptyDirectoryPrompt(outputDirectory)
+
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
     const templateScaffoldDir = path.join(tmpDir, 'app')
@@ -42,10 +46,11 @@ async function init(options: InitOptions) {
         {
           title: 'Downloading template',
           task: async (_, task) => {
-            await git.downloadRepository({
-              repoUrl: [GIT_HOST, options.template].join(':'),
-              destination: templateDownloadDir,
+            await downloadTemplate({
+              templateUrl: [GIT_HOST, options.template].join(':'),
+              into: templateDownloadDir,
             })
+
             task.title = 'Template downloaded'
           },
         },
@@ -143,7 +148,10 @@ async function init(options: InitOptions) {
 }
 
 function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
-  if (optionsDependencyManager && dependency.dependencyManager.includes(optionsDependencyManager)) {
+  if (
+    optionsDependencyManager &&
+    dependency.dependencyManager.includes(optionsDependencyManager as dependency.DependencyManager)
+  ) {
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()

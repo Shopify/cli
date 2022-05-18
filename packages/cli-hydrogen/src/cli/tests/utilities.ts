@@ -133,7 +133,7 @@ export async function withCli(runner: (context: Context) => void, options?: Opti
     })
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    const fatal = new cliErrors.Fatal(`${error}`)
+    const fatal = new cliErrors.Abort(`${error}`)
     output.error(fatal)
     if (!options?.debug) {
       await fs.cleanup()

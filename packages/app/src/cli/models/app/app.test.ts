@@ -1,7 +1,7 @@
 import {load} from './app'
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '$cli/constants'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -105,7 +105,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.packageManager).toBe('npm')
+    expect(app.dependencyManager).toBe('npm')
   })
 
   it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
@@ -118,7 +118,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.packageManager).toBe('yarn')
+    expect(app.dependencyManager).toBe('yarn')
   })
 
   it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
@@ -131,7 +131,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.packageManager).toBe('pnpm')
+    expect(app.dependencyManager).toBe('pnpm')
   })
 
   it("throws an error if the extension configuration file doesn't exist", async () => {

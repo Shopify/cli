@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 2.0.3
+
+### Patch Changes
+
+- 8421ec9e: Enable creation of checkout-ui extensions
+- Updated dependencies [30daa213]
+- Updated dependencies [07bcb005]
+- Updated dependencies [ba003f7b]
+- Updated dependencies [b00ac480]
+  - @shopify/cli-kit@2.0.3
+
 ## 2.0.2
 
 ### Patch Changes

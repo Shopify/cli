@@ -1,4 +1,3 @@
-import {file, error, path, schema, string, toml} from '@shopify/cli-kit'
 import {
   blocks,
   configurationFileNames,
@@ -6,7 +5,8 @@ import {
   functionExtensions,
   themeExtensions,
   uiExtensions,
-} from '$cli/constants'
+} from '../../constants'
+import {file, error, path, schema, string, toml, dependency} from '@shopify/cli-kit'
 
 export const WebConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)
@@ -92,11 +92,9 @@ export interface Web {
   configuration: WebConfiguration
 }
 
-type PackageManager = 'npm' | 'yarn' | 'pnpm'
-
 export interface App {
   directory: string
-  packageManager: PackageManager
+  dependencyManager: dependency.DependencyManager
   configuration: AppConfiguration
   configurationPath: string
   webs: Web[]
@@ -140,13 +138,13 @@ class AppLoader {
     const yarnLockExists = await file.exists(yarnLockPath)
     const pnpmLockPath = path.join(this.appDirectory, genericConfigurationFileNames.pnpm.lockfile)
     const pnpmLockExists = await file.exists(pnpmLockPath)
-    let packageManager: PackageManager
+    let dependencyManager: dependency.DependencyManager
     if (yarnLockExists) {
-      packageManager = 'yarn'
+      dependencyManager = 'yarn'
     } else if (pnpmLockExists) {
-      packageManager = 'pnpm'
+      dependencyManager = 'pnpm'
     } else {
-      packageManager = 'npm'
+      dependencyManager = 'npm'
     }
 
     const app: App = {
@@ -155,7 +153,7 @@ class AppLoader {
       configuration,
       configurationPath,
       extensions: {ui: extensions, theme: themeExtensions, function: functions},
-      packageManager,
+      dependencyManager,
     }
     if (this.errors.length > 0) app.errors = this.errors
     return app

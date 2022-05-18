@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -61,6 +61,7 @@
     "@types/cross-zip": "^4.0.0",
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
+    "abort-controller": "^3.0.0",
     "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
     "commondir": "^1.0.1",
