@@ -28,8 +28,8 @@ export async function createExtension(
     apiKey,
     type: extensionGraphqlId(type),
     title: name,
-    config: '{}',
-    context: '',
+    config: JSON.stringify({}),
+    context: null,
   }
   const result: api.graphql.ExtensionCreateSchema = await api.partners.request(query, token, variables)
 

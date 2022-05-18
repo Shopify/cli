@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const ExtensionCreateQuery = gql`
-  mutation ExtensionCreate($apiKey: String!, $type: ExtensionType!, $title: String!, $config: JSON!) {
-    extensionCreate(input: {apiKey: $apiKey, type: $type, title: $title, config: $config}) {
+  mutation ExtensionCreate($apiKey: String!, $type: ExtensionType!, $title: String!, $config: JSON!, $context: String) {
+    extensionCreate(input: {apiKey: $apiKey, type: $type, title: $title, config: $config, context: $context}) {
       extensionRegistration {
         id
         uuid
