@@ -155,7 +155,7 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
       args = argumentsToAddDependenciesWithPNPM(dependenciesToAdd, options.type)
       break
   }
-  exec(options.dependencyManager, args, {
+  await exec(options.dependencyManager, args, {
     cwd: options.directory,
     stdout: options.stdout,
     stderr: options.stderr,

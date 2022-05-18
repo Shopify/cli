@@ -1,7 +1,8 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {error, file, git, output, path, string, template, ui, yaml} from '@shopify/cli-kit'
+import {blocks, ExtensionTypes, functionExtensions, uiExtensionRendererDependency} from '../../constants'
+import {error, file, git, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
-import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
+import stream from 'node:stream'
 import {App} from '$cli/models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -37,7 +38,7 @@ async function extensionInit(options: ExtensionInitOptions) {
   } else if (functionExtensions.types.includes(options.extensionType)) {
     await functionExtensionInit(options)
   } else {
-    await argoExtensionInit(options)
+    await uiExtensionInit(options)
   }
 }
 
@@ -47,28 +48,77 @@ async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptio
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function argoExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
+async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
-  const stdin = yaml.encode({
-    extensions: [
-      {
-        title: name,
-        // Use the new templates
-        type: `${extensionType}_next`,
-        metafields: [],
-        development: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          root_dir: '.',
-        },
+  const list = new ui.Listr([
+    {
+      title: 'Installing additional dependencies',
+      task: async (_, task) => {
+        const requiredDependencies = getRuntimeDependencies({extensionType})
+        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+          dependencyManager: app.dependencyManager,
+          type: 'prod',
+          directory: app.directory,
+          stderr: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+          stdout: new stream.Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          }),
+        })
+        task.title = 'Dependencies installed'
       },
-    ],
-  })
-  await runGoExtensionsCLI(['create', '-'], {
-    cwd: extensionDirectory,
-    stdout: process.stdout,
-    stderr: process.stderr,
-    stdin,
-  })
+    },
+    {
+      title: 'Scaffolding extension',
+      task: async () => {
+        const stdin = yaml.encode({
+          extensions: [
+            {
+              title: name,
+              // Use the new templates
+              type: `${extensionType}_next`,
+              metafields: [],
+              development: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                root_dir: '.',
+              },
+            },
+          ],
+        })
+        await runGoExtensionsCLI(['create', '-'], {
+          cwd: extensionDirectory,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          stdin,
+        })
+      },
+    },
+  ])
+  await list.run()
+}
+
+export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOptions, 'extensionType'>): string[] {
+  switch (extensionType) {
+    case 'product_subscription':
+    case 'checkout_ui_extension':
+    case 'checkout_post_purchase':
+      // eslint-disable-next-line no-case-declarations
+      const dependencies = ['react']
+      // eslint-disable-next-line no-case-declarations
+      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      if (rendererDependency) {
+        dependencies.push(rendererDependency)
+      }
+      return dependencies
+  }
+  return []
 }
 
 async function functionExtensionInit(options: ExtensionInitOptions) {
@@ -118,17 +168,6 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   }
   await file.mkdir(extensionDirectory)
   return extensionDirectory
-}
-
-async function writeFromTemplate({promptAnswers, filename, alias, directory}: WriteFromTemplateOptions) {
-  const _alias = alias || filename
-  output.info(output.content`Generating ${_alias}`)
-  const templatePath = await getTemplatePath('extensions')
-  const templateItemPath = path.join(templatePath, filename)
-  const content = await file.read(templateItemPath)
-  const contentOutput = await template.create(content)(promptAnswers)
-  const fullpath = path.join(directory, _alias)
-  await file.write(fullpath, contentOutput)
 }
 
 export default extensionInit
