@@ -46,7 +46,7 @@ describe('createApp', () => {
       type: 'CHECKOUT_POST_PURCHASE',
       title: 'my-ext',
       config: '{}',
-      context: '',
+      context: null,
     }
 
     // When
