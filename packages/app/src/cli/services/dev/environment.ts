@@ -1,11 +1,11 @@
 import {selectOrCreateApp} from './select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
+import {selectOrganizationPrompt} from '../../prompts/dev'
+import {App} from '../../models/app/app'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {updateAppConfigurationFile} from '../../utilities/app/update'
 import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
-import {selectOrganizationPrompt} from '$cli/prompts/dev'
-import {App} from '$cli/models/app/app'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
-import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 const InvalidApiKeyError = (apiKey: string) => {
   return new error.Abort(

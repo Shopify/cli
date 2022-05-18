@@ -1,4 +1,3 @@
-import {file, error, path, schema, string, toml, dependency} from '@shopify/cli-kit'
 import {
   blocks,
   configurationFileNames,
@@ -6,7 +5,8 @@ import {
   functionExtensions,
   themeExtensions,
   uiExtensions,
-} from '$cli/constants'
+} from '../../constants'
+import {file, error, path, schema, string, toml, dependency} from '@shopify/cli-kit'
 
 export const WebConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)

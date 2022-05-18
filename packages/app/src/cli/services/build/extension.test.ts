@@ -1,8 +1,8 @@
 import {buildExtension} from './extension'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {App, UIExtension} from '../../models/app/app'
 import {describe, expect, test, vi} from 'vitest'
 import {yaml, path} from '@shopify/cli-kit'
-import {App, UIExtension} from '$cli/models/app/app'
 
 vi.mock('../../utilities/extensions/cli')
 

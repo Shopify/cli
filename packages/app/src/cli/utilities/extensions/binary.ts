@@ -1,9 +1,9 @@
+import {versions} from '../../constants'
 import {http, file, path, os, error, checksum, constants} from '@shopify/cli-kit'
 import zlib from 'node:zlib'
 import {createWriteStream} from 'node:fs'
 import {pipeline} from 'node:stream'
 import {promisify} from 'node:util'
-import {versions} from '$cli/constants'
 
 const SUPPORTED_SYSTEMS = ['darwin amd64', 'darwin arm64', 'linux 386', 'linux amd64', 'windows 386', 'windows amd64']
 const RELEASE_DOWNLOADS_URL = 'https://github.com/Shopify/shopify-cli-extensions/releases/download'

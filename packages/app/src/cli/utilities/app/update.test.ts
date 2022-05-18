@@ -1,9 +1,9 @@
 import {updateAppConfigurationFile} from './update'
+import {blocks, configurationFileNames} from '../../constants'
+import {load} from '../../models/app/app'
 import {describe, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
-import {blocks, configurationFileNames} from '$cli/constants'
-import {load} from '$cli/models/app/app'
 
 const appConfiguration = `
 name = "my_app"

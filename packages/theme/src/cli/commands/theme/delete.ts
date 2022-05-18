@@ -1,6 +1,6 @@
+import {getThemeStore} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {session, string, ruby} from '@shopify/cli-kit'
-import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Delete extends Command {
   static description = "Delete remote themes from the connected store. This command can't be undone"

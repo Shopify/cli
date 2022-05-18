@@ -1,7 +1,7 @@
 import {fetchAllStores, fetchOrgAndApps, fetchOrganizations} from './fetch'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
 const ORG2: Organization = {id: '2', businessName: 'org2'}

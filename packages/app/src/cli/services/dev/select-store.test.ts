@@ -1,9 +1,9 @@
 import {selectStore} from './select-store'
 import {fetchOrgAndApps} from './fetch'
+import {Organization, OrganizationStore} from '../../models/organization'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {Organization, OrganizationStore} from '$cli/models/organization'
-import {reloadStoreListPrompt, selectStorePrompt} from '$cli/prompts/dev'
 
 const ORG1: Organization = {id: '1', businessName: 'org1'}
 const STORE1: OrganizationStore = {

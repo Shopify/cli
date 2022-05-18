@@ -14,7 +14,6 @@ export const aliases = (packagePath) => {
   return [
     {find: '@shopify/cli-testing', replacement: path.join(__dirname, '../packages/cli-testing/src/index.ts')},
     {find: '@shopify/cli-kit', replacement: path.join(__dirname, '../packages/cli-kit/src/index.ts')},
-    {find: new RegExp('^\\$(.*)$'), replacement: path.join(packagePath, './src/$1.ts')},
   ]
 }
 
@@ -40,7 +39,4 @@ export const plugins = (packagePath) => {
   ]
 }
 
-export const external = [
-  '@oclif/core',
-  '@bugsnag/js'
-]
+export const external = ['@oclif/core', '@bugsnag/js']

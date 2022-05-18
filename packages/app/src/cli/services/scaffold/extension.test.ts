@@ -10,9 +10,9 @@ import {
   themeExtensions,
   uiExtensionRendererDependency,
 } from '../../constants'
+import {load as loadApp} from '../../models/app/app'
 import {describe, it, expect, vi, beforeEach, afterEach, test} from 'vitest'
 import {file, output, path, dependency} from '@shopify/cli-kit'
-import {load as loadApp} from '$cli/models/app/app'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')

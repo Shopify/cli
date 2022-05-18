@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
+import {App, UIExtension} from '../../models/app/app'
 import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
-import {App, UIExtension} from '$cli/models/app/app'
 
 interface ExtensionBuildOptions {
   /**

@@ -1,6 +1,6 @@
+import {getThemeStore} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {path, ruby, session, string} from '@shopify/cli-kit'
-import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Pull extends Command {
   static description = 'Download your remote theme files locally.'

@@ -1,5 +1,5 @@
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {output, ui} from '@shopify/cli-kit'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {

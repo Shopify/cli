@@ -1,8 +1,8 @@
 import {fetchAppFromApiKey} from './fetch'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
+import {App} from '../../models/app/app'
+import {OrganizationApp} from '../../models/organization'
 import {api, error, output} from '@shopify/cli-kit'
-import {App} from '$cli/models/app/app'
-import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '$cli/prompts/dev'
-import {OrganizationApp} from '$cli/models/organization'
 
 /**
  * Select an app from env, list or create a new one:

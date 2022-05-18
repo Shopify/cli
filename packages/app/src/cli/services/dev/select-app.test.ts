@@ -1,9 +1,9 @@
 import {createApp, selectOrCreateApp} from './select-app'
+import {App, WebType} from '../../models/app/app'
+import {OrganizationApp} from '../../models/organization'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {App, WebType} from '$cli/models/app/app'
-import {OrganizationApp} from '$cli/models/organization'
-import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '$cli/prompts/dev'
 
 const LOCAL_APP: App = {
   directory: '',

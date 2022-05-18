@@ -6,10 +6,10 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
 } from './dev'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {

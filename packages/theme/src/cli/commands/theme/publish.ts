@@ -1,6 +1,6 @@
+import {getThemeStore} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {ruby, session, string} from '@shopify/cli-kit'
-import {getThemeStore} from '$cli/utilities/theme-store'
 
 export default class Publish extends Command {
   static description = 'Set a remote theme as the live theme.'

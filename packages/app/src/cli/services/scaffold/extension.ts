@@ -1,9 +1,9 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {blocks, ExtensionTypes, functionExtensions, uiExtensionRendererDependency} from '../../constants'
+import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
-import {App} from '$cli/models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {

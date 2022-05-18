@@ -2,13 +2,13 @@ import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
 import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {App, WebType} from '../../models/app/app'
+import {selectOrganizationPrompt} from '../../prompts/dev'
+import {updateAppConfigurationFile} from '../../utilities/app/update'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
-import {App, WebType} from '$cli/models/app/app'
-import {selectOrganizationPrompt} from '$cli/prompts/dev'
-import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 beforeEach(() => {
   vi.mock('./fetch')
