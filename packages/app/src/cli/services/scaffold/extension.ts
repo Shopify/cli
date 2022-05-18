@@ -1,8 +1,8 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {blocks, ExtensionTypes, functionExtensions, uiExtensionRendererDependency} from '../../constants'
 import {error, file, git, output, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
-import {blocks, ExtensionTypes, functionExtensions} from '$cli/constants'
 import {App} from '$cli/models/app/app'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -106,11 +106,16 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
 export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOptions, 'extensionType'>): string[] {
   switch (extensionType) {
     case 'product_subscription':
-      return ['react', '@shopify/admin-ui-extensions-react']
     case 'checkout_ui_extension':
-      return ['react', '@shopify/checkout-ui-extensions-react']
     case 'checkout_post_purchase':
-      return ['react', '@shopify/post-purchase-ui-extensions-react']
+      // eslint-disable-next-line no-case-declarations
+      const dependencies = ['react']
+      // eslint-disable-next-line no-case-declarations
+      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      if (rendererDependency) {
+        dependencies.push(rendererDependency)
+      }
+      return dependencies
   }
   return []
 }
