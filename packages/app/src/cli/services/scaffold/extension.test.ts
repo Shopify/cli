@@ -2,9 +2,19 @@
 // @ts-ignore
 import extensionInit from './extension'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {file, output, path} from '@shopify/cli-kit'
+import {file, output, path, dependency} from '@shopify/cli-kit'
 import {load as loadApp} from '$cli/models/app/app'
 import {blocks, configurationFileNames, ExtensionTypes} from '$cli/constants'
+
+vi.mock('@shopify/cli-kit', async () => {
+  const cliKit: any = await vi.importActual('@shopify/cli-kit')
+  return {
+    ...cliKit,
+    dependency: {
+      addNPMDependenciesIfNeeded: vi.fn(),
+    },
+  }
+})
 
 describe('initialize a extension', () => {
   let tmpDir: string
@@ -72,8 +82,26 @@ describe('initialize a extension', () => {
       const extensionType = 'checkout_post_purchase'
       await createFromTemplate({name: name1, extensionType})
       await createFromTemplate({name: name2, extensionType})
-      const scaffoldedExtension2 = (await loadApp(tmpDir)).extensions.ui[1]
+      const addDependenciesCalls = vi.mocked(dependency.addNPMDependenciesIfNeeded).mock.calls
+      expect(addDependenciesCalls.length).toEqual(2)
+
+      const loadedApp = await loadApp(tmpDir)
+      const scaffoldedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
+        lhs.directory < rhs.directory ? -1 : 1,
+      )[1]
       expect(scaffoldedExtension2.configuration.name).toBe(name2)
+
+      const firstDependenciesCallArgs = addDependenciesCalls[0]
+      expect(firstDependenciesCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
+      expect(firstDependenciesCallArgs[1].dependencyManager).toEqual('npm')
+      expect(firstDependenciesCallArgs[1].type).toEqual('prod')
+      expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
+
+      const secondDependencyCallArgs = addDependenciesCalls[1]
+      expect(secondDependencyCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
+      expect(secondDependencyCallArgs[1].dependencyManager).toEqual('npm')
+      expect(secondDependencyCallArgs[1].type).toEqual('prod')
+      expect(secondDependencyCallArgs[1].directory).toEqual(loadedApp.directory)
     },
     30 * 1000,
   )
