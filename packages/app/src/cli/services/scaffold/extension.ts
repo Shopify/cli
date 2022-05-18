@@ -72,6 +72,7 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
             },
           }),
         })
+        task.title = 'Dependencies installed'
       },
     },
     {
