@@ -10,6 +10,10 @@ interface InitOutput {
   template: string
 }
 
+type Question = ui.Question & {
+  preface?: string
+}
+
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
   // Eventually this list should be taken from a remote location
   // That way we don't have to update the CLI every time we add a template
@@ -22,12 +26,13 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     template: templateURLMap.node,
   }
 
-  const questions: ui.Question[] = []
+  const questions: Question[] = []
   if (!options.name) {
     questions.push({
       type: 'input',
       name: 'name',
-      message: "Your app's working name?",
+      preface: 'Welcome. Let’s get started by naming your app. You can change it later.',
+      message: "Your app's name?",
       default: defaults.name,
       validate: (value) => {
         if (value.length === 0) {

@@ -5,6 +5,7 @@ import {Input} from './ui/input'
 import {Select} from './ui/select'
 import {AbortSilent} from './error'
 import {remove, exists} from './file'
+import {info} from './output'
 import {relative} from './path'
 
 export {Listr} from 'listr2'
@@ -24,6 +25,9 @@ export const prompt = async <T>(questions: Question[]): Promise<T> => {
   const mappedQuestions: any = questions.map(mapper)
   const value: any = {}
   for (const question of mappedQuestions) {
+    if (question.preface) {
+      info(question.preface)
+    }
     // eslint-disable-next-line no-await-in-loop
     value[question.name] = await question.run()
   }
