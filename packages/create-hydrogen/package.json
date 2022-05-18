@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "private": false,
   "description": "A CLI tool to create a new Shopify hydrogen app.",
   "type": "module",
@@ -52,7 +52,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
     "@oclif/core": "1.7.0",
-    "@shopify/cli-kit": "2.0.3",
+    "@shopify/cli-kit": "2.0.5",
     "@types/download": "^8.0.1",
     "download": "^8.0.0"
   },

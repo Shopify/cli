@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 2.0.5
+
+### Patch Changes
+
+- 56b31022: Fix the installation of NPM packages that was failing because there were not awaiting the Promise
+
 ## 2.0.3
 
 ### Patch Changes

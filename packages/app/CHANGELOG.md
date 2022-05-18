@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 2.0.5
+
+### Patch Changes
+
+- 56b31022: Install UI extensions' runtime dependencies when scaffolding new extensions
+- Updated dependencies [56b31022]
+  - @shopify/cli-kit@2.0.5
+
 ## 2.0.3
 
 ### Patch Changes
