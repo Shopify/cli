@@ -80,7 +80,7 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
       title: 'Installing additional dependencies',
       task: async (_, task) => {
         const requiredDependencies = getRuntimeDependencies({extensionType})
-        dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
           dependencyManager: app.dependencyManager,
           type: 'prod',
           directory: app.directory,
@@ -103,7 +103,7 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
   await list.run()
 }
 
-function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOptions, 'extensionType'>): string[] {
+export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOptions, 'extensionType'>): string[] {
   switch (extensionType) {
     case 'product_subscription':
       return ['react', '@shopify/admin-ui-extensions-react']
