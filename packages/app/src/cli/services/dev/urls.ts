@@ -5,9 +5,9 @@ export async function generateURL(options: DevOptions, frontendPort: number) {
   let url = `http://localhost:${frontendPort}`
 
   const hasExtensions: boolean =
-    options.appManifest.extensions.ui.length > 0 ||
-    options.appManifest.extensions.function.length > 0 ||
-    options.appManifest.extensions.theme.length > 0
+    options.app.extensions.ui.length > 0 ||
+    options.app.extensions.function.length > 0 ||
+    options.app.extensions.theme.length > 0
   const useTunnel = options.tunnel || hasExtensions
 
   if (useTunnel) {
