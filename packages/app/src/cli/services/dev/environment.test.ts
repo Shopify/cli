@@ -79,12 +79,12 @@ const LOCAL_APP: App = {
 }
 
 const INPUT: DevEnvironmentInput = {
-  appManifest: LOCAL_APP,
+  app: LOCAL_APP,
   reset: false,
 }
 
 const INPUT_WITH_DATA: DevEnvironmentInput = {
-  appManifest: LOCAL_APP,
+  app: LOCAL_APP,
   reset: false,
   apiKey: 'key1',
   store: 'domain1',
@@ -113,7 +113,17 @@ describe('ensureDevEnvironment', () => {
     const got = await ensureDevEnvironment(INPUT)
 
     // Then
-    expect(got).toEqual({app: APP1, store: STORE1.shopDomain})
+    expect(got).toEqual({
+      app: APP1,
+      store: STORE1.shopDomain,
+      identifiers: {
+        app: {
+          apiKey: 'key1',
+          apiSecret: 'secret1',
+        },
+        extensions: {},
+      },
+    })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
     expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP1.title, id: APP1.apiKey})
@@ -128,7 +138,17 @@ describe('ensureDevEnvironment', () => {
     const got = await ensureDevEnvironment(INPUT)
 
     // Then
-    expect(got).toEqual({app: APP1, store: STORE1.shopDomain})
+    expect(got).toEqual({
+      app: APP1,
+      store: STORE1.shopDomain,
+      identifiers: {
+        app: {
+          apiKey: 'key1',
+          apiSecret: 'secret1',
+        },
+        extensions: {},
+      },
+    })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
@@ -147,7 +167,17 @@ describe('ensureDevEnvironment', () => {
     const got = await ensureDevEnvironment(INPUT_WITH_DATA)
 
     // Then
-    expect(got).toEqual({app: APP2, store: STORE1.shopDomain})
+    expect(got).toEqual({
+      app: APP2,
+      store: STORE1.shopDomain,
+      identifiers: {
+        app: {
+          apiKey: 'key2',
+          apiSecret: 'secret2',
+        },
+        extensions: {},
+      },
+    })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
     expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP2.title, id: APP2.apiKey})
     expect(fetchOrganizations).toBeCalled()
