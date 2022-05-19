@@ -1,9 +1,9 @@
 port: 8000
-public_url: https://0f75-76-69-118-212.ngrok.io
-store: shop1.shopify.app-bridge-svve.trish-ta.us.spin.dev
+public_url: https://example.ngrok.io
+store: test-shop.myshopify.com
 
 app:
-  api_key: app_bridge_key
+  api_key: app_api_key
 extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: checkout_ui_extension
@@ -22,24 +22,24 @@ extensions:
         main: 'src/index.tsx'
       resource:
         url: 'cart/1234'
-  # - uuid: 00000000-0000-0000-0000-000000000001
-  #   type: checkout_ui_extension_next
-  #   title: Checkout UI Test Extension Next
-  #   node_executable: packages/shopify-cli-extensions/cli.js
-  #   metafields:
-  #     - namespace: my-namespace
-  #       key: my-key
-  #   development:
-  #     root_dir: 'tmp/checkout_ui_extension_next'
-  #     build_dir: 'build'
-  #     template: 'javascript-react'
-  #     renderer:
-  #       name: '@shopify/app'
-  #       version: '^1.0.0'
-  #     entries:
-  #       main: 'src/index.js'
-  #     resource:
-  #       url: 'cart/1234'
+  - uuid: 00000000-0000-0000-0000-000000000001
+    type: checkout_ui_extension_next
+    title: Checkout UI Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    metafields:
+      - namespace: my-namespace
+        key: my-key
+    development:
+      root_dir: 'tmp/checkout_ui_extension_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
+      resource:
+        url: 'cart/1234'
   - uuid: 00000000-0000-0000-0000-000000000002
     type: product_subscription
     title: Product Subscription Test Extension
@@ -52,19 +52,19 @@ extensions:
         version: '^1.0.1'
       entries:
         main: 'src/index.tsx'
-  # - uuid: 00000000-0000-0000-0000-000000000003
-  #   type: product_subscription_next
-  #   title: Product Subscription Test Extension Next
-  #   node_executable: packages/shopify-cli-extensions/cli.js
-  #   development:
-  #     root_dir: 'tmp/product_subscription_next'
-  #     build_dir: 'build'
-  #     template: 'javascript-react'
-  #     renderer:
-  #       name: '@shopify/app'
-  #       version: '^1.0.0'
-  #     entries:
-  #       main: 'src/index.js'
+  - uuid: 00000000-0000-0000-0000-000000000003
+    type: product_subscription_next
+    title: Product Subscription Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    development:
+      root_dir: 'tmp/product_subscription_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
   - uuid: 00000000-0000-0000-0000-000000000004
     type: checkout_post_purchase
     title: Post Purchase Test Extension
@@ -82,35 +82,35 @@ extensions:
         main: 'src/index.tsx'
     capabilities:
       network_access: true
-  # - uuid: 00000000-0000-0000-0000-000000000005
-  #   type: checkout_post_purchase_next
-  #   title: Post Purchase Test Extension Next
-  #   node_executable: packages/shopify-cli-extensions/cli.js
-  #   metafields:
-  #     - namespace: my-namespace
-  #       key: my-key
-  #   development:
-  #     root_dir: 'tmp/checkout_post_purchase_next'
-  #     build_dir: 'build'
-  #     template: 'javascript-react'
-  #     renderer:
-  #       name: '@shopify/app'
-  #       version: '^1.0.0'
-  #     entries:
-  #       main: 'src/index.js'
-  #   capabilities:
-  #     network_access: true
-  # - uuid: 00000000-0000-0000-0000-000000000006
-  #   type: beacon_extension
-  #   title: Beacon Test Extension
-  #   development:
-  #     root_dir: 'tmp/beacon_extension'
-  #     build_dir: 'build'
-  #     template: 'javascript'
-  #     renderer:
-  #       name: '@shopify/checkout-ui-extensions'
-  #       version: '^0.14.0'
-  #     entries:
-  #       main: 'src/index.js'
-  #   capabilities:
-  #     network_access: false
+  - uuid: 00g add000000-0000-0000-0000-000000000005
+    type: checkout_post_purchase_next
+    title: Post Purchase Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    metafields:
+      - namespace: my-namespace
+        key: my-key
+    development:
+      root_dir: 'tmp/checkout_post_purchase_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
+    capabilities:
+      network_access: true
+  - uuid: 00000000-0000-0000-0000-000000000006
+    type: beacon_extension
+    title: Beacon Test Extension
+    development:
+      root_dir: 'tmp/beacon_extension'
+      build_dir: 'build'
+      template: 'javascript'
+      renderer:
+        name: '@shopify/checkout-ui-extensions'
+        version: '^0.14.0'
+      entries:
+        main: 'src/index.js'
+    capabilities:
+      network_access: false
