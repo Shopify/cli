@@ -4,13 +4,24 @@ import type {Surface} from './ExtensionServerClient/types';
 
 declare global {
   namespace ExtensionServer {
-    interface InboundEvents {
+    type ServerEvents =
+      | {
+          event: 'dispatch';
+          data: InboundEvents['dispatch'];
+        }
+      | {
+          event: 'connected';
+          data: InboundEvents['connected'];
+        }
+      | {
+          event: 'update';
+          data: InboundEvents['update'];
+        };
+
+    interface InboundEvents extends DispatchEvents {
+      dispatch: {type: keyof DispatchEvents; payload: DispatchEvents[keyof DispatchEvents]};
       connected: {extensions: ExtensionPayload[]; app?: App; store: string};
       update: {extensions?: ExtensionPayload[]; app?: App};
-      refresh: {uuid: string}[];
-      focus: {uuid: string}[];
-      unfocus: void;
-      navigate: {url: string};
     }
 
     interface OutboundPersistEvents {
@@ -20,7 +31,7 @@ declare global {
       };
     }
 
-    interface OutboundDispatchEvents {
+    interface DispatchEvents {
       refresh: {uuid: string}[];
       focus: {uuid: string}[];
       unfocus: void;

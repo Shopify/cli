@@ -4,12 +4,12 @@ import {mockApp} from '../testing';
 
 import {ExtensionServerClient} from './ExtensionServerClient';
 
+const defaultOptions = {
+  connection: {url: 'ws://example-host.com:8000/extensions/'},
+};
+
 describe('ExtensionServerClient', () => {
-  function setup(
-    options: ExtensionServer.Options = {
-      connection: {url: 'ws://example-host.com:8000/extensions/'},
-    },
-  ) {
+  function setup(options: ExtensionServer.Options = defaultOptions) {
     if (!options.connection.url) {
       throw new Error('Please set a URL');
     }
@@ -58,6 +58,54 @@ describe('ExtensionServerClient', () => {
   });
 
   describe('on()', () => {
+    it('sends data with extensions filtered by surface option on "connected" event', async () => {
+      const {socket, client} = setup({...defaultOptions, surface: 'admin'});
+      const connectSpy = jest.fn();
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+        ],
+      };
+
+      client.on('connected', connectSpy);
+      socket.send({event: 'connected', data});
+
+      expect(connectSpy).toHaveBeenCalledTimes(1);
+      expect(connectSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: [{uuid: '123', surface: 'admin'}],
+        }),
+      );
+
+      socket.close();
+    });
+
+    it('sends data with extensions filtered by surface option on "update" event', async () => {
+      const {socket, client} = setup({...defaultOptions, surface: 'admin'});
+      const updateSpy = jest.fn();
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+        ],
+      };
+
+      client.on('update', updateSpy);
+      socket.send({event: 'update', data});
+
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: [{uuid: '123', surface: 'admin'}],
+        }),
+      );
+
+      socket.close();
+    });
+
     it('listens to persist events', async () => {
       const {socket, client} = setup();
       const updateSpy = jest.fn();

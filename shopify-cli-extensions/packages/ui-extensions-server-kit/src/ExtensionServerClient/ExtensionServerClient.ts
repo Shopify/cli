@@ -71,7 +71,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     );
   }
 
-  public emit<TEvent extends keyof ExtensionServer.OutboundDispatchEvents>(
+  public emit<TEvent extends keyof ExtensionServer.DispatchEvents>(
     ...args: ExtensionServer.EmitArgs<TEvent>
   ): void {
     const [event, data] = args;
@@ -110,30 +110,19 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
     this.connection?.addEventListener('message', (message) => {
       try {
-        const {event, data} = JSON.parse(message.data) as {
-          event: string;
-          data: ExtensionServer.InboundEvents[keyof ExtensionServer.InboundEvents];
-        };
+        const {event, data} = JSON.parse(message.data) as ExtensionServer.ServerEvents;
+
         if (event === 'dispatch') {
-          const {type, payload} = data as {
-            type: keyof ExtensionServer.InboundEvents;
-            payload: ExtensionServer.InboundEvents[keyof ExtensionServer.InboundEvents];
-          };
-          return (this.listeners[type] ?? []).forEach((listener) => listener(payload));
+          const {type, payload} = data;
+          (this.listeners[type] ?? []).forEach((listener) => listener(payload));
+          return;
         }
 
+        const filteredExtensions = data.extensions?.filter(
+          (extension: any) => !this.options.surface || extension.surface === this.options.surface,
+        );
         this.listeners[event].forEach((listener) => {
-          // Filter for only extensions matching the current surface
-          if (event === 'connected' || event === 'update') {
-            const castedData = data as ExtensionServer.InboundEvents['connected'];
-            const filteredExtensions = castedData.extensions?.filter(
-              (extensions) => !this.options.surface || extensions.surface === this.options.surface,
-            );
-            listener({...data, extensions: filteredExtensions});
-            return;
-          }
-
-          listener(data);
+          listener({...data, extensions: filteredExtensions});
         });
       } catch (err) {
         console.error(
