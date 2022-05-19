@@ -33,18 +33,13 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   }
 
   public connect(options: ExtensionServer.Options = {connection: {}}) {
-    const newOptions = mergeOptions(options, this.options);
+    const newOptions = mergeOptions(this.options, options);
     const optionsChanged = JSON.stringify(newOptions) !== JSON.stringify(this.options);
 
-    if (!optionsChanged) {
-      return () => {
-        this.closeConnection();
-      };
+    if (optionsChanged) {
+      this.options = newOptions;
+      this.setupConnection(true);
     }
-
-    this.options = newOptions;
-
-    this.setupConnection(true);
 
     return () => {
       this.closeConnection();
@@ -164,7 +159,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   }
 }
 
-function mergeOptions(newOptions: ExtensionServer.Options, options: ExtensionServer.Options) {
+function mergeOptions(options: ExtensionServer.Options, newOptions: ExtensionServer.Options) {
   return {
     ...options,
     ...newOptions,
