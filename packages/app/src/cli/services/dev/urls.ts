@@ -1,4 +1,22 @@
-import {api, error, output, session} from '@shopify/cli-kit'
+import {DevOptions} from '../dev'
+import {api, error, output, plugins, session} from '@shopify/cli-kit'
+
+export async function generateURL(options: DevOptions, frontendPort: number) {
+  let url = `http://localhost:${frontendPort}`
+
+  const hasExtensions: boolean =
+    options.appManifest.extensions.ui.length > 0 ||
+    options.appManifest.extensions.function.length > 0 ||
+    options.appManifest.extensions.theme.length > 0
+  const useTunnel = options.tunnel || hasExtensions
+
+  if (useTunnel) {
+    const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
+    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
+  }
+
+  return url
+}
 
 export async function updateURLs(apiKey: string, url: string): Promise<void> {
   const token = await session.ensureAuthenticatedPartners()
