@@ -1,15 +1,15 @@
 import {
   appNamePrompt,
-  appTypePrompt,
+  createAsNewAppPrompt,
   reloadStoreListPrompt,
   selectAppPrompt,
   selectOrganizationPrompt,
   selectStorePrompt,
 } from './dev'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -81,42 +81,6 @@ describe('selectOrganization', () => {
 })
 
 describe('selectApp', () => {
-  it('returns undefined if app list is empty,', async () => {
-    // Given
-    const apps: OrganizationApp[] = []
-
-    // When
-    const got = await selectAppPrompt(apps)
-
-    // Then
-    expect(got).toEqual(undefined)
-    expect(ui.prompt).not.toBeCalled()
-  })
-
-  it('returns undefined if user selects to create app', async () => {
-    // Given
-    const apps: OrganizationApp[] = [APP1, APP2]
-    vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'create'})
-
-    // When
-    const got = await selectAppPrompt(apps)
-
-    // Then
-    expect(got).toEqual(undefined)
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'autocomplete',
-        name: 'apiKey',
-        message: 'Which existing app would you like to connect this work to?',
-        choices: [
-          {name: 'app1', value: 'key1'},
-          {name: 'app2', value: 'key2'},
-          {name: 'Create a new app', value: 'create'},
-        ],
-      },
-    ])
-  })
-
   it('returns app if user selects one', async () => {
     // Given
     const apps: OrganizationApp[] = [APP1, APP2]
@@ -131,11 +95,10 @@ describe('selectApp', () => {
       {
         type: 'autocomplete',
         name: 'apiKey',
-        message: 'Which existing app would you like to connect this work to?',
+        message: 'Which existing app is this for?',
         choices: [
           {name: 'app1', value: 'key1'},
           {name: 'app2', value: 'key2'},
-          {name: 'Create a new app', value: 'create'},
         ],
       },
     ])
@@ -193,30 +156,6 @@ describe('selectStore', () => {
   })
 })
 
-describe('appType', () => {
-  it('asks the user to select a type and returns it', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'custom'})
-
-    // When
-    const got = await appTypePrompt()
-
-    // Then
-    expect(got).toEqual('custom')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'value',
-        message: 'What type of app are you building?',
-        choices: [
-          {name: 'Public: An app built for a wide merchant audience.', value: 'public'},
-          {name: 'Custom: An app custom built for a single client.', value: 'custom'},
-        ],
-      },
-    ])
-  })
-})
-
 describe('appName', () => {
   it('asks the user to write a name and returns it', async () => {
     // Given
@@ -257,6 +196,30 @@ describe('reloadStoreList', () => {
         choices: [
           {name: 'Yes, reload stores', value: 'reload'},
           {name: 'No, cancel dev', value: 'cancel'},
+        ],
+      },
+    ])
+  })
+})
+
+describe('createAsNewAppPrompt', () => {
+  it('returns true if user selects to create a new app', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
+
+    // When
+    const got = await createAsNewAppPrompt()
+
+    // Then
+    expect(got).toEqual(true)
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: 'Create this project as a new app on Shopify?',
+        choices: [
+          {name: 'Yes, create it as a new app', value: 'yes'},
+          {name: 'No, connect it to an existing app', value: 'cancel'},
         ],
       },
     ])

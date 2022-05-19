@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
+import {App, UIExtension} from '../../models/app/app'
 import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
-import {App, UIExtension} from '$cli/models/app/app'
 
 interface ExtensionBuildOptions {
   /**
@@ -76,8 +76,9 @@ async function extensionConfig(options: ExtensionConfigOptions): Promise<any> {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           root_dir: path.relative(options.app.directory, options.extension.directory),
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          build_dir:
-            options.buildDirectory ?? path.relative(options.extension.directory, options.extension.buildDirectory),
+          build_dir: options.buildDirectory
+            ? path.relative(options.extension.directory, options.buildDirectory)
+            : path.relative(options.extension.directory, options.extension.buildDirectory),
           entries: {
             main: path.relative(options.extension.directory, options.extension.entrySourceFilePath),
           },

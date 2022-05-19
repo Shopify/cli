@@ -11,7 +11,7 @@ sourceMapSupport.install()
  * A fatal error represents an error shouldn't be rescued and that causes the execution to terminate.
  * There shouldn't be code that catches fatal errors.
  */
-export class Fatal extends Error {
+export abstract class Fatal extends Error {
   tryMessage: string | null
   constructor(message: string, tryMessage: string | null = null) {
     super(message)
@@ -42,7 +42,7 @@ export class Bug extends Fatal {}
  * @returns A promise that resolves with the error passed.
  */
 export async function handler(error: Error): Promise<Error> {
-  const fatal = error instanceof Fatal ? error : new Fatal(error.message)
+  const fatal = error instanceof Fatal ? error : new Abort(error.message)
   await ouput.error(fatal)
   return Promise.resolve(error)
 }

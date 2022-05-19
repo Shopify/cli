@@ -4,6 +4,7 @@ import {isUnitTest} from './environment/local'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
+import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -184,7 +185,7 @@ export const success = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const debug = (content: Message) => {
-  message(content, 'debug')
+  message(colors.gray(stringifyMessage(content)), 'debug')
 }
 
 /**
@@ -300,7 +301,7 @@ export async function concurrent(processes: OutputProcess[]) {
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
     const color = concurrentColors[colorIndex]
-    return color(`${prefix}:${' '.repeat(prefixColumnSize - prefix.length)}  `)
+    return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
   }
 
   try {
@@ -319,8 +320,7 @@ export async function concurrent(processes: OutputProcess[]) {
           write(chunk, _encoding, next) {
             const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
             for (const line of lines) {
-              consoleLog('ERROR')
-              message(content`${linePrefix(process.prefix, index)}${line}`, 'error')
+              message(content`${linePrefix(process.prefix, index)}${colors.bold('ERROR')} ${line}`, 'error')
             }
             next()
           },

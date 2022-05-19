@@ -67,3 +67,16 @@ If a `validate` function is provided, it may return a boolean or a string. If a 
 
 It returns an object with the answers provided by the user. The return type of the function is typed depending on the expected result:
 `const result: T` -> `Promise<T>`
+
+### `promptForNonEmptyDirectory`
+
+Used to ask users if they would like to remove the contents of a given directory before proceeding.
+
+```ts
+  await ui.nonEmptyDirectoryPrompt('path/to/non-empty-directory')
+```
+
+The following choices are presented to the user:
+
+- Yes, remove the files
+- No, abort the command

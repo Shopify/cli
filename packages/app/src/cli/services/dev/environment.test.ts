@@ -1,22 +1,22 @@
 import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
-import {fetchAppFromApiKey, fetchAppsAndStores, fetchOrganizations} from './fetch'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
-import {selectStore, validateStore} from './select-store'
+import {selectStore, convertToTestStoreIfNeeded} from './select-store'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {App, WebType} from '../../models/app/app'
+import {selectOrganizationPrompt} from '../../prompts/dev'
+import {updateAppConfigurationFile} from '../../utilities/app/update'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
-import {Organization, OrganizationApp, OrganizationStore} from '$cli/models/organization'
-import {App, HomeType} from '$cli/models/app/app'
-import {selectOrganizationPrompt} from '$cli/prompts/dev'
-import {updateAppConfigurationFile} from '$cli/utilities/app/update'
 
 beforeEach(() => {
   vi.mock('./fetch')
   vi.mock('./select-app')
   vi.mock('./select-store')
-  vi.mock('$cli/prompts/dev')
-  vi.mock('$cli/models/app/app')
-  vi.mock('$cli/utilities/app/update')
+  vi.mock('../../prompts/dev')
+  vi.mock('../../models/app/app')
+  vi.mock('../../utilities/app/update')
   vi.mock('./create-app')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -63,13 +63,14 @@ const STORE2: OrganizationStore = {
 }
 const LOCAL_APP: App = {
   directory: '',
-  packageManager: 'yarn',
+  dependencyManager: 'yarn',
+  configurationPath: '/shopify.app.toml',
   configuration: {name: 'my-app', id: 'key1', scopes: 'read_products'},
-  homes: [
+  webs: [
     {
       directory: '',
       configuration: {
-        type: HomeType.Backend,
+        type: WebType.Backend,
         commands: {dev: ''},
       },
     },
@@ -100,7 +101,7 @@ beforeEach(async () => {
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1.shopDomain)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-  vi.mocked(fetchAppsAndStores).mockResolvedValue(FETCH_RESPONSE)
+  vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
 })
 
 describe('ensureDevEnvironment', () => {
@@ -139,7 +140,7 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
-    vi.mocked(validateStore).mockResolvedValueOnce(true)
+    vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
@@ -147,10 +148,10 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({app: APP2, store: STORE1.shopDomain})
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain})
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
     expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP2.title, id: APP2.apiKey})
-    expect(fetchOrganizations).not.toBeCalled()
-    expect(selectOrganizationPrompt).not.toBeCalled()
+    expect(fetchOrganizations).toBeCalled()
+    expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
   })

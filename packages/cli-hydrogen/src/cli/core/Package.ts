@@ -110,7 +110,7 @@ export class Package {
     return this.internal.engines?.node
   }
 
-  get packageManager() {
+  get dependencyManager() {
     return /yarn/.test(process.env.npm_execpath || '') ? 'yarn' : 'npm'
   }
 

@@ -1,8 +1,15 @@
 import {ui} from '@shopify/cli-kit'
 
 export enum Template {
-  Minimum = 'template-hydrogen-minimum',
-  Default = 'template-hydrogen-default',
+  Minimum = 'Hello world',
+  Default = 'Demo store',
+}
+
+const TEMPLATE_BASE = 'Shopify/hydrogen/templates/template-hydrogen-'
+
+const TEMPLATE_MAP = {
+  [Template.Default]: 'default',
+  [Template.Minimum]: 'hello-world',
 }
 
 interface InitOptions {
@@ -13,11 +20,6 @@ interface InitOptions {
 interface InitOutput {
   name: string
   template: Template
-}
-
-const TEMPLATE_MAP = {
-  [Template.Default]: 'Shopify/hydrogen/templates/template-hydrogen-default',
-  [Template.Minimum]: 'Shopify/hydrogen/templates/template-hydrogen-hello-world',
 }
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
@@ -38,7 +40,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       message: 'Choose a template',
       choices: Object.keys(TEMPLATE_MAP),
       default: Template.Default,
-      result: (value) => TEMPLATE_MAP[value as Template],
+      result: (value) => `${TEMPLATE_BASE}${TEMPLATE_MAP[value as Template]}`,
     })
   }
 

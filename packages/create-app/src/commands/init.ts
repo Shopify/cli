@@ -18,7 +18,7 @@ export default class Init extends Command {
       hidden: false,
     }),
     template: Flags.string({
-      description: 'The template for app home. Eg, --template https://github.com/Shopify/shopify-app-node',
+      description: 'The app template. Eg, --template https://github.com/Shopify/shopify-app-node',
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -1,5 +1,37 @@
 # @shopify/cli-hydrogen
 
+## 2.0.5
+
+### Patch Changes
+
+- Updated dependencies [56b31022]
+  - @shopify/cli-kit@2.0.5
+
+## 2.0.4
+
+### Patch Changes
+
+- 39d7ebd8: Added friendlier template names and adds overwrite prompt to init command if the directory is not empty.
+- ee9adca9: Add `--host` flag to `shopify hydrogen dev`
+
+## 2.0.3
+
+### Patch Changes
+
+- Updated dependencies [30daa213]
+- Updated dependencies [07bcb005]
+- Updated dependencies [ba003f7b]
+- Updated dependencies [b00ac480]
+  - @shopify/cli-kit@2.0.3
+
+## 2.0.2
+
+### Patch Changes
+
+- Updated dependencies [c6a9450b]
+- Updated dependencies [70d8d50d]
+  - @shopify/cli-kit@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes

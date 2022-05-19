@@ -35,7 +35,7 @@ Then(
       env: {...process.env, ...this.temporaryEnv},
     })
     const results = JSON.parse(stdout)
-    assert.equal(results.packageManager, dependencyManager)
+    assert.equal(results.dependencyManager, dependencyManager)
   },
 )
 

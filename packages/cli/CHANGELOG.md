@@ -1,5 +1,33 @@
 # @shopify/cli
 
+## 2.0.5
+
+### Patch Changes
+
+- Updated dependencies [56b31022]
+  - @shopify/cli-kit@2.0.5
+
+## 2.0.3
+
+### Patch Changes
+
+- 8421ec9e: Enable creation of checkout-ui extensions
+- Updated dependencies [30daa213]
+- Updated dependencies [07bcb005]
+- Updated dependencies [ba003f7b]
+- Updated dependencies [b00ac480]
+  - @shopify/cli-kit@2.0.3
+
+## 2.0.2
+
+### Patch Changes
+
+- 70d8d50d: Use ngrok from plugin with --tunnel flag
+- c6a9450b: Add support to scaffold function extensions
+- Updated dependencies [c6a9450b]
+- Updated dependencies [70d8d50d]
+  - @shopify/cli-kit@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes

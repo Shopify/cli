@@ -1,19 +1,20 @@
 import {createApp, selectOrCreateApp} from './select-app'
+import {App, WebType} from '../../models/app/app'
+import {OrganizationApp} from '../../models/organization'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
-import {App, HomeType} from '$cli/models/app/app'
-import {OrganizationApp} from '$cli/models/organization'
-import {appNamePrompt, appTypePrompt, selectAppPrompt} from '$cli/prompts/dev'
 
 const LOCAL_APP: App = {
   directory: '',
-  packageManager: 'yarn',
+  dependencyManager: 'yarn',
+  configurationPath: '/shopify.app.toml',
   configuration: {name: 'my-app', scopes: 'read_products'},
-  homes: [
+  webs: [
     {
       directory: '',
       configuration: {
-        type: HomeType.Backend,
+        type: WebType.Backend,
         commands: {dev: ''},
       },
     },
@@ -25,7 +26,7 @@ const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecret
 const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
 
 beforeEach(() => {
-  vi.mock('$cli/prompts/dev')
+  vi.mock('../../prompts/dev')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -47,12 +48,10 @@ describe('createApp', () => {
   it('sends request to create app and returns it', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 123,
       title: 'app-name',
-      type: 'custom',
       appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
       redir: ['http://localhost:3456'],
     }
@@ -68,7 +67,6 @@ describe('createApp', () => {
   it('throws error if requests has a user error', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: {}, userErrors: [{message: 'some-error'}]}})
 
     // When
@@ -93,9 +91,10 @@ describe('selectOrCreateApp', () => {
     expect(selectAppPrompt).not.toHaveBeenCalled()
   })
 
-  it('prompts user to select if there is no cachedApiKey', async () => {
+  it('prompts user to select if there is no cachedApiKey and chooses to select', async () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
 
     // When
     const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], 'token', '1')
@@ -105,11 +104,12 @@ describe('selectOrCreateApp', () => {
     expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
   })
 
-  it('prompts user to select if cachedApiKey is invalid', async () => {
+  it('prompts user to select if cachedApiKey is invalid and chooses to select', async () => {
     // Given
     const cachedApiKey = 'invalid'
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
     vi.mocked(api.partners.request).mockResolvedValueOnce({app: null})
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
 
     // When
     const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], '1', 'token', cachedApiKey)
@@ -119,16 +119,14 @@ describe('selectOrCreateApp', () => {
     expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
   })
 
-  it('prompts user to create if prompt returns undefined', async () => {
+  it('prompts user to create if chooses to create', async () => {
     // Given
-    vi.mocked(selectAppPrompt).mockResolvedValueOnce(undefined)
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 1,
       title: 'app-name',
-      type: 'custom',
       appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
       redir: ['http://localhost:3456'],
     }
@@ -138,7 +136,7 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
+    expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.configuration.name)
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
   })
 })

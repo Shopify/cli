@@ -1,5 +1,37 @@
 # @shopify/app
 
+## 2.0.5
+
+### Patch Changes
+
+- 56b31022: Install UI extensions' runtime dependencies when scaffolding new extensions
+- Updated dependencies [56b31022]
+  - @shopify/cli-kit@2.0.5
+
+## 2.0.3
+
+### Patch Changes
+
+- 30daa213: Install dependencies as part of the dev workflow
+- 8421ec9e: Enable creation of checkout-ui extensions
+- ba003f7b: Automatically make stores non-transferable when selecting them for `dev`
+- b00ac480: Remove appType prompt, add createAsNew prompt
+- Updated dependencies [30daa213]
+- Updated dependencies [07bcb005]
+- Updated dependencies [ba003f7b]
+- Updated dependencies [b00ac480]
+  - @shopify/cli-kit@2.0.3
+
+## 2.0.2
+
+### Patch Changes
+
+- 99018b84: Print loadable app/extensions data even when there is some invalid configuration
+- c6a9450b: Add support to scaffold function extensions
+- Updated dependencies [c6a9450b]
+- Updated dependencies [70d8d50d]
+  - @shopify/cli-kit@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes

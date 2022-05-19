@@ -1,6 +1,6 @@
+import {configurationFileNames} from '../../constants'
+import {App, AppConfigurationSchema, AppConfiguration} from '../../models/app/app'
 import {file, path, toml} from '@shopify/cli-kit'
-import {App, AppConfigurationSchema, AppConfiguration} from '$cli/models/app/app'
-import {configurationFileNames} from '$cli/constants'
 
 export async function updateAppConfigurationFile(app: App, data: Partial<AppConfiguration>): Promise<void> {
   const confPath = path.join(app.directory, configurationFileNames.app)

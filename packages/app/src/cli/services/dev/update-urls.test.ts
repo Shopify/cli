@@ -4,7 +4,6 @@ import {api} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 
 beforeEach(() => {
-  vi.mock('$cli/prompts/dev')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -29,7 +28,11 @@ describe('updateURLs', () => {
     const expectedVariables = {
       apiKey: 'apiKey',
       appUrl: 'http://localhost:3456',
-      redir: ['http://localhost:3456/auth/callback', 'http://localhost:3456/auth/shopify/callback'],
+      redir: [
+        'http://localhost:3456/auth/callback',
+        'http://localhost:3456/auth/shopify/callback',
+        'http://localhost:3456/api/auth/callback',
+      ],
     }
 
     // When

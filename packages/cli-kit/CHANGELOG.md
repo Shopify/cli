@@ -1,5 +1,28 @@
 # @shopify/cli-kit
 
+## 2.0.5
+
+### Patch Changes
+
+- 56b31022: Fix the installation of NPM packages that was failing because there were not awaiting the Promise
+
+## 2.0.3
+
+### Patch Changes
+
+- 30daa213: Add a utility function to install NPM packages recursively
+- 07bcb005: Add a utility functions for adding NPM dependencies to a project
+- ba003f7b: Automatically make stores non-transferable when selecting them for `dev`
+- b00ac480: Remove appType prompt, add createAsNew prompt
+
+## 2.0.2
+
+### Patch Changes
+
+- c6a9450b: Add support to scaffold function extensions
+- 70d8d50d: Add homeDir helper to 'os'
+  Remove tunnel
+
 ## 2.0.1
 
 ### Patch Changes

@@ -1,15 +1,15 @@
 import {updateAppConfigurationFile} from './update'
+import {blocks, configurationFileNames} from '../../constants'
+import {load} from '../../models/app/app'
 import {describe, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
-import {blocks, configurationFileNames} from '$cli/constants'
-import {load} from '$cli/models/app/app'
 
 const appConfiguration = `
 name = "my_app"
 scopes = "read_products"
 `
-const homeConfiguration = `
+const webConfiguration = `
 type = "backend"
 
 [commands]
@@ -19,11 +19,11 @@ dev = "./dev.sh"
 
 const writeConfig = async (appConfiguration: string, tmpDir: string) => {
   const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-  const homeConfigurationPath = path.join(tmpDir, blocks.home.directoryName, blocks.home.configurationName)
+  const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 
-  await file.mkdir(path.dirname(homeConfigurationPath))
+  await file.mkdir(path.dirname(webConfigurationPath))
   await file.write(appConfigurationPath, appConfiguration)
-  await file.write(homeConfigurationPath, homeConfiguration)
+  await file.write(webConfigurationPath, webConfiguration)
 }
 
 describe('updateAppConfigurationFile', () => {

@@ -7,16 +7,6 @@ export const FindOrganizationQuery = gql`
         id
         businessName
         website
-        stores(first: 100) {
-          nodes {
-            shopId
-            link
-            shopDomain
-            shopName
-            transferDisabled
-            convertableToPartnerTest
-          }
-        }
         apps(first: 100) {
           nodes {
             id
@@ -39,16 +29,6 @@ export interface FindOrganizationQuerySchema {
       id: string
       businessName: string
       website: string
-      stores: {
-        nodes: {
-          shopId: string
-          link: string
-          shopDomain: string
-          shopName: string
-          transferDisabled: boolean
-          convertableToPartnerTest: boolean
-        }[]
-      }
       apps: {
         nodes: {
           id: string
