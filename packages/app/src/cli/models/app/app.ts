@@ -245,7 +245,6 @@ class AppLoader {
   }
 
   async loadUIExtensions(extensionsPath: string): Promise<UIExtension[]> {
-    const appPackageJson = path.join(this.appDirectory, 'package.json')
     const extensionConfigPaths = path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
     const configPaths = await path.glob(extensionConfigPaths)
 
@@ -294,6 +293,20 @@ class AppLoader {
       this.errors.push(errorMessage)
       return fallback
     }
+  }
+}
+
+/**
+ * Reads the dependencies from the app's package.json and creates a copy
+ * of the app with the list of dependencies updated.
+ * @param app {App} App whose Node dependencies will be updated.
+ * @returns {Promise<App>} The app with the Node dependencies updated.
+ */
+export async function updateDependencies(app: App): Promise<App> {
+  const nodeDependencies = await dependency.getDependencies(path.join(app.directory, 'package.json'))
+  return {
+    ...app,
+    nodeDependencies,
   }
 }
 
