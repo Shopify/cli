@@ -45,7 +45,7 @@ console.log(result)
 
 ```ts
 export interface Question {
-  type: 'input' | 'select'
+  type: 'input' | 'select' | 'autocomplete' | 'password'
   name: string // This is the identifier that will be returned with the user answer.
   message: string
   validate?: (value: string) => string | boolean
