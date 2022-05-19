@@ -139,7 +139,8 @@ describe('getRuntimeDependencies', () => {
 
   test('includes React for UI extensions', () => {
     // Given
-    const extensions: ExtensionTypes[] = [...uiExtensions.types]
+    // Beacon extensions don't need React as a runtime dependency.
+    const extensions: ExtensionTypes[] = [...uiExtensions.types].filter((extension) => extension !== 'beacon_extension')
 
     // When/then
     extensions.forEach((extensionType) => {
@@ -153,9 +154,10 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     extensions.forEach((extensionType) => {
-      expect(
-        getRuntimeDependencies({extensionType}).includes(uiExtensionRendererDependency(extensionType) as string),
-      ).toBeTruthy()
+      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      if (rendererDependency) {
+        expect(getRuntimeDependencies({extensionType}).includes(rendererDependency)).toBeTruthy()
+      }
     })
   })
 })
