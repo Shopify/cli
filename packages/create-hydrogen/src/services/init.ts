@@ -95,7 +95,7 @@ async function init(options: InitOptions) {
                         '@shopify/cli': cliPackageVersion,
                       },
                     })
-
+                    await updateCLIScripts(packageJSON)
                     await npm.writePackageJSON(templateScaffoldDir, packageJSON)
 
                     task.title = 'Package.json updated'
@@ -143,7 +143,7 @@ async function init(options: InitOptions) {
 
   output.info(output.content`Your project will display inventory from the Hydrogen Demo Store.
     To connect this project to your Shopify store's inventory instead,
-    update ${output.token.yellow(`${hyphenizedName}/shopify.config.js`)} with your
+    update ${output.token.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your
     store ID and Storefront API key.\n`)
 }
 
@@ -162,6 +162,12 @@ export default init
 interface PackageDependencies {
   devDependencies: {[key: string]: string | undefined}
   dependencies: {[key: string]: string | undefined}
+}
+
+async function updateCLIScripts(packageJSON: npm.PackageJSON): Promise<npm.PackageJSON> {
+  packageJSON.scripts.dev = `shopify hydrogen dev`
+
+  return packageJSON
 }
 
 async function updateCLIDependencies(
