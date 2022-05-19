@@ -17,13 +17,6 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface WriteFromTemplateOptions {
-  promptAnswers: any
-  filename: string
-  alias?: string
-  directory: string
-}
-
 interface ExtensionInitOptions {
   name: string
   extensionType: ExtensionTypes

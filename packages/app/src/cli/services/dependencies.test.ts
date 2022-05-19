@@ -11,8 +11,16 @@ vi.mock('@shopify/cli-kit', async () => {
       Listr: vi.fn(),
     },
     dependency: {
-      updateDependencies: (app: App) => app,
+      installNPMDependenciesRecursively: vi.fn(),
     },
+  }
+})
+
+vi.mock('../models/app/app', async () => {
+  const app: any = await vi.importActual('../models/app/app')
+  return {
+    ...app,
+    updateDependencies: async (app: App) => app,
   }
 })
 
