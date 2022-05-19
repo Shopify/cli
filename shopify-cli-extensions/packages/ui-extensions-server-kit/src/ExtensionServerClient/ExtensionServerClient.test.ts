@@ -1,4 +1,5 @@
 import WS from 'jest-websocket-mock';
+import fetchMock from 'jest-fetch-mock';
 
 import {mockApp} from '../testing';
 
@@ -9,6 +10,10 @@ const defaultOptions = {
 };
 
 describe('ExtensionServerClient', () => {
+  beforeEach(() => {
+    fetchMock.enableMocks();
+  });
+
   function setup(options: ExtensionServer.Options = defaultOptions) {
     if (!options.connection.url) {
       throw new Error('Please set a URL');
@@ -18,6 +23,16 @@ describe('ExtensionServerClient', () => {
 
     return {socket, client, options};
   }
+
+  // beforeEach(() => {
+  //   // eslint-disable-next-line jest/prefer-spy-on
+  //   global.fetch = jest.fn().mockImplementationOnce(() =>
+  //     Promise.resolve({
+  //       status: 400,
+  //       json: () => Promise.resolve({success: false, error: 'Something bad happened'}),
+  //     }),
+  //   );
+  // });
 
   describe('initialization', () => {
     it('connects to the target websocket', async () => {
@@ -40,20 +55,54 @@ describe('ExtensionServerClient', () => {
       socket.close();
     });
 
-    it('initializes an API client with the given URL', () => {
-      const url = 'ws://initial.socket.com';
+    describe('API client', () => {
+      it('is initialized with the given URL', () => {
+        const url = 'ws://initial.socket.com';
 
-      const client = new ExtensionServerClient({connection: {url}});
+        const client = new ExtensionServerClient({connection: {url}});
 
-      expect(client.api.url).toBe(url.replace('ws', 'http'));
-    });
+        expect(client.api.url).toBe(url.replace('ws', 'http'));
+      });
 
-    it('initializes an API client with a secure URL', () => {
-      const url = 'wss://initial.socket.com';
+      it('is initialized with a secure URL', () => {
+        const url = 'wss://initial.socket.com';
 
-      const client = new ExtensionServerClient({connection: {url}});
+        const client = new ExtensionServerClient({connection: {url}});
 
-      expect(client.api.url).toBe(url.replace('wss', 'https'));
+        expect(client.api.url).toBe(url.replace('wss', 'https'));
+      });
+
+      it('returns extensions filtered by surface option', async () => {
+        const extensions = [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+        ];
+
+        fetchMock.mockResponse(JSON.stringify({extensions}));
+
+        const {socket, client} = setup({...defaultOptions, surface: 'admin'});
+        expect(await client.api.extensions()).toStrictEqual({
+          extensions: [{uuid: '123', surface: 'admin'}],
+        });
+
+        socket.close();
+      });
+
+      it('returns all extensions when surface option is not valid', async () => {
+        const extensions = [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+        ];
+
+        fetchMock.mockResponse(JSON.stringify({extensions}));
+
+        const {socket, client} = setup({...defaultOptions, surface: 'abc' as any});
+        expect(await client.api.extensions()).toStrictEqual({
+          extensions,
+        });
+
+        socket.close();
+      });
     });
   });
 
@@ -82,6 +131,30 @@ describe('ExtensionServerClient', () => {
       socket.close();
     });
 
+    it('sends data with all extensions when surface option is not valid on "connected" event', async () => {
+      const {socket, client} = setup({...defaultOptions, surface: 'abc' as any});
+      const connectSpy = jest.fn();
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+        ],
+      };
+
+      client.on('connected', connectSpy);
+      socket.send({event: 'connected', data});
+
+      expect(connectSpy).toHaveBeenCalledTimes(1);
+      expect(connectSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: data.extensions,
+        }),
+      );
+
+      socket.close();
+    });
+
     it('sends data with extensions filtered by surface option on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'admin'});
       const updateSpy = jest.fn();
@@ -100,6 +173,30 @@ describe('ExtensionServerClient', () => {
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           extensions: [{uuid: '123', surface: 'admin'}],
+        }),
+      );
+
+      socket.close();
+    });
+
+    it('sends data with all extensions when surface option is not valid on "update" event', async () => {
+      const {socket, client} = setup({...defaultOptions, surface: 'abc' as any});
+      const updateSpy = jest.fn();
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+        ],
+      };
+
+      client.on('update', updateSpy);
+      socket.send({event: 'update', data});
+
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: data.extensions,
         }),
       );
 
