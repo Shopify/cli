@@ -92,7 +92,7 @@ async function init(options: InitOptions) {
           },
         },
       ],
-      {concurrent: false, rendererSilent: environment.local.isUnitTest()},
+      {concurrent: false, rendererOptions: {collapse: false}, rendererSilent: environment.local.isUnitTest()},
     )
     await list.run()
 
