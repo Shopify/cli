@@ -12,7 +12,6 @@ export default class Build extends Command {
     ...appFlags,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'skip-dependencies-installation': Flags.boolean({
-      char: 'S',
       hidden: false,
       description: 'Skips the installation of dependencies.',
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
