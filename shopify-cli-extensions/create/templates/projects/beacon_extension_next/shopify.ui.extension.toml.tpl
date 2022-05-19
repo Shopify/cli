@@ -1,0 +1,15 @@
+{{ template "shared/shopify.ui.extension.toml" . }}
+runtime_context = "sandbox"
+version = "1"
+
+[configuration]
+type = "object"
+
+[configuration.fields.trackingId]
+name = "Tracking Id"
+description = "Tracking Id"
+type = "single_line_text_field"
+
+  [[configuration.fields.trackingId.validations]]
+  name = "min"
+  value = "1"
