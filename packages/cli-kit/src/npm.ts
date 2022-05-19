@@ -15,6 +15,7 @@ export interface PackageJSON extends JSON {
   devDependencies: {[key: string]: string}
   resolutions: {[key: string]: string}
   overrides: {[key: string]: string}
+  scripts: {[key: string]: string}
 }
 
 export async function readPackageJSON(directory: string): Promise<PackageJSON> {
