@@ -1,7 +1,0 @@
-templates
-src/core/Command.ts
-src/core/Config.ts
-src/utilities/format.ts
-src/utilities/merge.ts
-src/tests/utilities.ts
-src/cli/commands/hydrogen/preview

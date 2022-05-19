@@ -73,6 +73,7 @@ describe('updateCLIDependencies', () => {
     const mockPackageJSON = {
       name: '',
       author: '',
+      scripts: {},
       dependencies: {
         mock: 'value',
       },

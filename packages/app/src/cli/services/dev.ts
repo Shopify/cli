@@ -1,11 +1,11 @@
 import {ensureDevEnvironment} from './dev/environment'
-import {updateURLs} from './dev/update-urls'
+import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
-import {output, port, system, plugins} from '@shopify/cli-kit'
+import {output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
-interface DevOptions {
+export interface DevOptions {
   appManifest: App
   apiKey?: string
   store?: string
@@ -36,17 +36,10 @@ async function dev(input: DevOptions) {
 
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
-  let url = `http://localhost:${frontendPort}`
-
-  if (input.tunnel) {
-    const tunnelPlugin = await plugins.lookupTunnelPlugin(input.plugins)
-    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
-  }
+  const url: string = await generateURL(input, frontendPort)
   if (input.update) await updateURLs(apiKey, url)
 
   const storeAppUrl = `${url}/api/auth?shop=${store}`
-
-  output.success(`Tunnel created`)
 
   output.info(output.content`
   Your app is up and running! ✨
