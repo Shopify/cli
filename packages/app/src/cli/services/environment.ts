@@ -1,10 +1,10 @@
-import {selectOrCreateApp} from './select-app'
-import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
-import {selectStore, convertToTestStoreIfNeeded} from './select-store'
-import {selectOrganizationPrompt} from '../../prompts/dev'
-import {App, Identifiers} from '../../models/app/app'
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {updateAppConfigurationFile} from '../../utilities/app/update'
+import {selectOrCreateApp} from './dev/select-app'
+import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
+import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
+import {selectOrganizationPrompt} from '../prompts/dev'
+import {App, Identifiers} from '../models/app/app'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
+import {updateAppConfigurationFile} from '../utilities/app/update'
 import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
 
 const InvalidApiKeyError = (apiKey: string) => {

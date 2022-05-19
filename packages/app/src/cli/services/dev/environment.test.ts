@@ -1,7 +1,7 @@
-import {DevEnvironmentInput, ensureDevEnvironment} from './environment'
 import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
+import {DevEnvironmentInput, ensureDevEnvironment} from '../environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {App, WebType} from '../../models/app/app'
 import {selectOrganizationPrompt} from '../../prompts/dev'

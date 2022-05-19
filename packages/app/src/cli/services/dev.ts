@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './dev/environment'
+import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
