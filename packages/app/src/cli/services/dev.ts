@@ -6,7 +6,7 @@ import {output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 export interface DevOptions {
-  appManifest: App
+  app: App
   apiKey?: string
   store?: string
   reset: boolean
@@ -25,19 +25,16 @@ interface DevWebOptions {
   scopes: AppConfiguration['scopes']
 }
 
-async function dev(input: DevOptions) {
-  if (!input.skipDependenciesInstallation) {
-    await installAppDependencies(input.appManifest)
+async function dev(options: DevOptions) {
+  if (!options.skipDependenciesInstallation) {
+    await installAppDependencies(options.app)
   }
-  const {
-    app: {apiKey, apiSecretKeys},
-    store,
-  } = await ensureDevEnvironment(input)
+  const {identifiers, store} = await ensureDevEnvironment(options)
 
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
-  const url: string = await generateURL(input, frontendPort)
-  if (input.update) await updateURLs(apiKey, url)
+  const url: string = await generateURL(options, frontendPort)
+  if (options.update) await updateURLs(identifiers.app.apiKey, url)
 
   const storeAppUrl = `${url}/api/auth?shop=${store}`
 
@@ -46,12 +43,12 @@ async function dev(input: DevOptions) {
   View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
   `)
 
-  devWeb(input.appManifest.webs, {
-    apiKey,
+  devWeb(options.app.webs, {
+    apiKey: identifiers.app.apiKey,
     frontendPort,
     backendPort,
-    scopes: input.appManifest.configuration.scopes,
-    apiSecret: apiSecretKeys[0].secret,
+    scopes: options.app.configuration.scopes,
+    apiSecret: identifiers.app.apiSecret ?? '',
     hostname: url,
   })
 }

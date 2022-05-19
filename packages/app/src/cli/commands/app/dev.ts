@@ -55,11 +55,11 @@ export default class Dev extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const appManifest: App = await loadApp(directory)
+    const app: App = await loadApp(directory)
     const plugins = this.config.plugins
 
     await dev({
-      appManifest,
+      app,
       apiKey: flags['api-key'],
       store: flags.store,
       reset: flags.reset,

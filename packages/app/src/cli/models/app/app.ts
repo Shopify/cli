@@ -12,6 +12,22 @@ export const WebConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)
 }
 
+export interface Identifiers {
+  app: {
+    /** API key */
+    apiKey: string
+    /** API secret */
+    apiSecret?: string
+  }
+
+  /**
+   * The extensions' unique identifiers.
+   */
+  extensions: {
+    [key: string]: string
+  }
+}
+
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   id: schema.define.string().optional(),

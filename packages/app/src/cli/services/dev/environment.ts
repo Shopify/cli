@@ -2,7 +2,7 @@ import {selectOrCreateApp} from './select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
 import {selectOrganizationPrompt} from '../../prompts/dev'
-import {App} from '../../models/app/app'
+import {App, Identifiers} from '../../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {updateAppConfigurationFile} from '../../utilities/app/update'
 import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
@@ -15,15 +15,16 @@ const InvalidApiKeyError = (apiKey: string) => {
 }
 
 export interface DevEnvironmentInput {
-  appManifest: App
+  app: App
   apiKey?: string
   store?: string
   reset: boolean
 }
 
 interface DevEnvironmentOutput {
-  app: OrganizationApp
+  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   store: string
+  identifiers: Identifiers
 }
 
 /**
@@ -42,21 +43,31 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const cachedInfo = getCachedInfo(input.reset, input.appManifest.configuration.id)
+  const cachedInfo = getCachedInfo(input.reset, input.app.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
   let {app: selectedApp, store: selectedStore} = await dataFromInput(input, organization, stores, token)
   if (selectedApp && selectedStore) {
-    updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
+    updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
-    return {app: selectedApp, store: selectedStore}
+    return {
+      app: selectedApp,
+      store: selectedStore,
+      identifiers: {
+        app: {
+          apiKey: selectedApp.apiKey,
+          apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+        },
+        extensions: {},
+      },
+    }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(input.appManifest, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(input.app, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
-  updateAppConfigurationFile(input.appManifest, {id: selectedApp.apiKey, name: selectedApp.title})
+  updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
@@ -64,7 +75,45 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
     showReusedValues(organization.businessName, selectedApp.title, selectedStore)
   }
 
-  return {app: selectedApp, store: selectedStore}
+  return {
+    app: selectedApp,
+    store: selectedStore,
+    identifiers: {
+      app: {
+        apiKey: selectedApp.apiKey,
+        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+      },
+      extensions: {},
+    },
+  }
+}
+
+export interface DeployEnvironmentOptions {
+  app: App
+  apiKey?: string
+  reset: boolean
+}
+
+interface DeployEnvironmentOutput {
+  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  identifiers: Identifiers
+}
+
+export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
+  return {
+    app: {
+      id: '123',
+      title: 'title',
+      appType: 'type',
+    },
+    identifiers: {
+      app: {
+        apiKey: 'NOTDONE',
+        apiSecret: 'NOTDONE',
+      },
+      extensions: {},
+    },
+  }
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
