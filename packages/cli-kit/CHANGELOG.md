@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 2.0.6
+
+### Patch Changes
+
+- f7e74d33: Retrieve only non-archived stores
+
 ## 2.0.5
 
 ### Patch Changes

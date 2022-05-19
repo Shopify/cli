@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 2.0.6
+
+### Patch Changes
+
+- a4c41300: Removes legacy commands and modules related to add and check.
+- Updated dependencies [f7e74d33]
+  - @shopify/cli-kit@2.0.6
+
 ## 2.0.5
 
 ### Patch Changes
