@@ -6,7 +6,7 @@ describe('extension prompt', () => {
   it('when name is not passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'ext'}
-    const options = {ignoreExtensions: []}
+    const options = {extensionTypesAlreadyAtQuota: []}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -35,7 +35,7 @@ describe('extension prompt', () => {
   it('when name is passed', async () => {
     const prompt = vi.fn()
     const answers = {}
-    const options = {name: 'my-special-extension', ignoreExtensions: []}
+    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: []}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -55,10 +55,10 @@ describe('extension prompt', () => {
     expect(got).toEqual({...options, ...answers})
   })
 
-  it('when ignoredExtensions is not empty', async () => {
+  it('when extensionTypesAlreadyAtQuota is not empty', async () => {
     const prompt = vi.fn()
     const answers = {}
-    const options = {name: 'my-special-extension', ignoreExtensions: ['theme']}
+    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: ['theme']}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))

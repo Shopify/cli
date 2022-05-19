@@ -54,7 +54,7 @@ export default class AppScaffoldExtension extends Command {
 
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
-      ignoreExtensions: this.limitedExtensionsAlreadyScaffolded(app),
+      extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
     })
 
