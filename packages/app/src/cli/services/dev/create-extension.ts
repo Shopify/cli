@@ -1,6 +1,5 @@
 import {api, error} from '@shopify/cli-kit'
-import {ExtensionCreateVariables} from '$../../cli-kit/src/api/graphql'
-import {ExtensionTypes} from '$cli/constants'
+import {ExtensionTypes} from 'cli/constants'
 
 interface ExtensionRegistration {
   id: string
@@ -24,7 +23,7 @@ export async function createExtension(
   token: string,
 ): Promise<ExtensionRegistration> {
   const query = api.graphql.ExtensionCreateQuery
-  const variables: ExtensionCreateVariables = {
+  const variables: api.graphql.ExtensionCreateVariables = {
     apiKey,
     type: extensionGraphqlId(type),
     title: name,
