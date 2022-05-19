@@ -1,5 +1,5 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {blocks, ExtensionTypes, functionExtensions, uiExtensionRendererDependency} from '../../constants'
+import {blocks, ExtensionTypes, functionExtensions, getUIExtensionRendererDependency} from '../../constants'
 import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
@@ -118,7 +118,7 @@ export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOption
       // eslint-disable-next-line no-case-declarations
       const dependencies = ['react']
       // eslint-disable-next-line no-case-declarations
-      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)
       }

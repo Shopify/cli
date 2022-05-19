@@ -5,7 +5,8 @@ import {
   functionExtensions,
   themeExtensions,
   uiExtensions,
-  uiExtensionRendererDependency,
+  getUIExtensionRendererDependency,
+  ExtensionTypes,
 } from '../../constants'
 import {file, error, path, schema, string, toml, dependency} from '@shopify/cli-kit'
 
@@ -318,11 +319,11 @@ export async function updateDependencies(app: App): Promise<App> {
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
  */
 export function getUIExtensionRendererVersion(
-  uiExtension: UIExtension,
+  uiExtensionType: ExtensionTypes,
   app: App,
 ): {name: string; version: string} | undefined {
   const nodeDependencies = app.nodeDependencies
-  const rendererDependencyName = uiExtensionRendererDependency(uiExtension.configuration.type)
+  const rendererDependencyName = getUIExtensionRendererDependency(uiExtensionType)
   if (!rendererDependencyName) {
     return undefined
   }

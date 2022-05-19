@@ -8,7 +8,7 @@ import {
   uiExtensions,
   functionExtensions,
   themeExtensions,
-  uiExtensionRendererDependency,
+  getUIExtensionRendererDependency,
 } from '../../constants'
 import {load as loadApp} from '../../models/app/app'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -120,7 +120,7 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     extensions.forEach((extensionType) => {
-      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         expect(getRuntimeDependencies({extensionType}).includes(rendererDependency)).toBeTruthy()
       }
