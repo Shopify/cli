@@ -31,7 +31,7 @@ export interface Identifiers {
 
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  id: schema.define.string().optional(),
+  id: schema.define.string(),
   scopes: schema.define.string().default(''),
 })
 

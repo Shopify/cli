@@ -22,7 +22,8 @@ scopes = "read_products"
   })
 
   const writeConfig = async (appConfiguration: string) => {
-    const appDirectory = path.join(tmpDir, configurationFileNames.app)
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
+    const packageJsonPath = path.join(tmpDir, 'package.json')
     const webDirectory = path.join(tmpDir, blocks.web.directoryName)
     const webConfiguration = `
     type = "backend"
@@ -31,7 +32,8 @@ scopes = "read_products"
     build = "build"
     dev = "dev"
     `
-    await file.write(appDirectory, appConfiguration)
+    await file.write(appConfigurationPath, appConfiguration)
+    await file.write(packageJsonPath, JSON.stringify({dependencies: {}, devDependencies: {}}))
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
   }

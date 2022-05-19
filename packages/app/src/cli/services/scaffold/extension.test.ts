@@ -21,6 +21,7 @@ vi.mock('@shopify/cli-kit', async () => {
     ...cliKit,
     dependency: {
       addNPMDependenciesIfNeeded: vi.fn(),
+      getDependencies: cliKit.dependency.getDependencies,
     },
   }
 })
@@ -161,6 +162,7 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     await file.write(appConfigurationPath, appConfiguration)
     await file.mkdir(path.dirname(webConfigurationPath))
     await file.write(webConfigurationPath, webConfiguration)
+    await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
     // eslint-disable-next-line node/callback-return
     await callback(tmpDir)
   })

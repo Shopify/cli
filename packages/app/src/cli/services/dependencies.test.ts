@@ -3,7 +3,18 @@ import {App} from '../models/app/app'
 import {describe, expect, test, vi} from 'vitest'
 import {dependency, ui} from '@shopify/cli-kit'
 
-vi.mock('@shopify/cli-kit')
+vi.mock('@shopify/cli-kit', async () => {
+  const cliKit: any = await vi.importActual('@shopify/cli-kit')
+  return {
+    ...cliKit,
+    ui: {
+      Listr: vi.fn(),
+    },
+    dependency: {
+      updateDependencies: (app: App) => app,
+    },
+  }
+})
 
 describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
@@ -21,12 +32,12 @@ describe('installAppDependencies', () => {
         theme: [],
       },
       webs: [],
+      nodeDependencies: {},
       configurationPath: '/tmp/project/shopify.app.toml',
     }
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}
     vi.mocked(ui.Listr).mockReturnValue(list)
-    vi.mocked(dependency)
 
     // When
     await installAppDependencies(app)
