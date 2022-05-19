@@ -17,6 +17,7 @@ export interface Question {
   message: string
   validate?: (value: string) => string | boolean
   default?: string
+  preface?: string
   choices?: string[] | {name: string; value: string}[]
   result?: (value: string) => string | boolean
 }

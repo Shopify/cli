@@ -10,10 +10,6 @@ interface InitOutput {
   template: string
 }
 
-type Question = ui.Question & {
-  preface?: string
-}
-
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
   // Eventually this list should be taken from a remote location
   // That way we don't have to update the CLI every time we add a template
@@ -26,7 +22,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     template: templateURLMap.node,
   }
 
-  const questions: Question[] = []
+  const questions: ui.Question[] = []
   if (!options.name) {
     questions.push({
       type: 'input',
