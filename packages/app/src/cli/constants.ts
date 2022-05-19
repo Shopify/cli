@@ -16,7 +16,7 @@ export const environmentVariables = {
 }
 
 export const versions = {
-  extensionsBinary: 'v0.8.0',
+  extensionsBinary: 'v0.11.0',
 }
 
 export const blocks = {
@@ -54,7 +54,7 @@ export const functionExtensions: ExtensionsType = {
 }
 
 export const uiExtensions: ExtensionsType = {
-  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase'],
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'beacon_extension'],
 }
 
 export const themeExtensions: ExtensionsType = {
