@@ -3,7 +3,7 @@
 
 import {downloadTemplate} from '../utils/template'
 
-import {constants, template, string, path, file, output, os, ui, npm, dependency} from '@shopify/cli-kit'
+import {constants, template, string, path, file, output, os, ui, npm, dependency, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -128,7 +128,7 @@ async function init(options: InitOptions) {
           },
         },
       ],
-      {concurrent: false},
+      {concurrent: false, rendererSilent: environment.local.isUnitTest()},
     )
     await list.run()
 

@@ -1,5 +1,5 @@
 import {App} from '../models/app/app'
-import {dependency, ui} from '@shopify/cli-kit'
+import {dependency, ui, environment} from '@shopify/cli-kit'
 
 /**
  * Given an app, it installs its NPM dependencies by traversing
@@ -8,18 +8,21 @@ import {dependency, ui} from '@shopify/cli-kit'
  * @param app {App} App whose dependencies will be installed.
  */
 export async function installAppDependencies(app: App) {
-  const list = new ui.Listr([
-    {
-      title: 'Installing any necessary dependencies',
-      task: async (_, task) => {
-        await dependency.installNPMDependenciesRecursively({
-          dependencyManager: app.dependencyManager,
-          directory: app.directory,
-          deep: 3,
-        })
-        task.title = 'Dependencies installed'
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Installing any necessary dependencies',
+        task: async (_, task) => {
+          await dependency.installNPMDependenciesRecursively({
+            dependencyManager: app.dependencyManager,
+            directory: app.directory,
+            deep: 3,
+          })
+          task.title = 'Dependencies installed'
+        },
       },
-    },
-  ])
+    ],
+    {rendererSilent: environment.local.isUnitTest()},
+  )
   await list.run()
 }

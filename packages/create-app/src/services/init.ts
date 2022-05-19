@@ -1,7 +1,7 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
 import cleanup from '../utils/template/cleanup'
 
-import {string, path, file, output, ui, dependency, template, npm, git} from '@shopify/cli-kit'
+import {string, path, file, output, ui, dependency, template, npm, git, environment} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
@@ -92,7 +92,7 @@ async function init(options: InitOptions) {
           },
         },
       ],
-      {concurrent: false},
+      {concurrent: false, rendererSilent: environment.local.isUnitTest()},
     )
     await list.run()
 
