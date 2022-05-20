@@ -179,8 +179,7 @@ export function DevConsole() {
 
   const ConsoleEmpty = () => {
     return (
-      // eslint-disable-next-line @shopify/jsx-prefer-fragment-wrappers
-      <div>
+      <div className={styles.Empty}>
         {surface
           ? i18n.translate('errors.noExtensionsForSurface', {surface})
           : i18n.translate('errors.noExtensions')}
