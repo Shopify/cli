@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 2.0.7
+
+### Patch Changes
+
+- 9b17ef2c: Add utility function to obtain the renderer runtime package for a given extension type
+- Updated dependencies [0d2e8e50]
+- Updated dependencies [739e8e9d]
+- Updated dependencies [c95660a6]
+  - @shopify/cli-kit@2.0.7
+
 ## 2.0.6
 
 ### Patch Changes
