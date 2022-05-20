@@ -8,7 +8,7 @@ import (
 )
 
 func TestNodeExecutableCommandStructure(t *testing.T) {
-	cmd := nodeExecutableScript("/path/to/executable", "build", "some-arg")
+	cmd := nodeExecutableScript("root/dir", "/path/to/executable", "build", "some-arg")
 
 	if !reflect.DeepEqual(cmd.Args, []string{"/path/to/executable", "build", "some-arg"}) {
 		t.Errorf("Unexpected program arguments: %s", strings.Join(cmd.Args, " "))
