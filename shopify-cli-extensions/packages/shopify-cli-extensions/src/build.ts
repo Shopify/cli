@@ -47,7 +47,10 @@ export function build({mode}: Options) {
       built = true;
       logResult(result);
     })
-    .catch((_e) => process.exit(1));
+    .catch((_e) => {
+      console.error('Error building extension: ', _e);
+      process.exit(1);
+    });
 }
 
 function getPlugins() {
