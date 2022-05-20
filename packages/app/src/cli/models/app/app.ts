@@ -65,7 +65,7 @@ const ThemeExtensionConfigurationSchema = schema.define.object({
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 
 export interface Extension {
-  idEnvironmentVariable: string
+  idEnvironmentVariableName: string
   localIdentifier: string
   configurationPath: string
   directory: string
@@ -115,7 +115,7 @@ export interface AppEnvironment {
 }
 
 export interface App {
-  idEnvironmentVariable: string
+  idEnvironmentVariableName: string
   directory: string
   dependencyManager: dependency.DependencyManager
   configuration: AppConfiguration
@@ -196,7 +196,7 @@ class AppLoader {
     }
 
     const app: App = {
-      idEnvironmentVariable: 'SHOPIFY_APP_ID',
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       directory: this.appDirectory,
       webs: await this.loadWebs(),
       configuration,
@@ -310,7 +310,7 @@ class AppLoader {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configurationPath)
       return {
-        idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         directory,
         configuration,
         configurationPath,
@@ -333,7 +333,7 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
-        idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
       }
     })
@@ -351,7 +351,7 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
-        idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
       }
     })
@@ -405,8 +405,8 @@ export async function updateIdentifiers({app, identifiers, environmentType}: Upd
     }
   }
   const variables: {[key: string]: string} = {}
-  if (!envVariables.includes(app.idEnvironmentVariable)) {
-    variables[app.idEnvironmentVariable] = identifiers.app
+  if (!envVariables.includes(app.idEnvironmentVariableName)) {
+    variables[app.idEnvironmentVariableName] = identifiers.app
   }
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
@@ -446,8 +446,8 @@ export function getIdentifiers({app, environmentType}: GetIdentifiersOptions): P
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {
-    if (Object.keys(envVariables).includes(extension.idEnvironmentVariable)) {
-      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariable]
+    if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
+      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]
     }
   }
   app.extensions.ui.forEach(processExtension)
@@ -455,7 +455,7 @@ export function getIdentifiers({app, environmentType}: GetIdentifiersOptions): P
   app.extensions.theme.forEach(processExtension)
 
   return {
-    app: envVariables[app.idEnvironmentVariable],
+    app: envVariables[app.idEnvironmentVariableName],
     extensions: extensionsIdentifiers,
   }
 }

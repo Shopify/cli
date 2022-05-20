@@ -61,7 +61,7 @@ const STORE2: OrganizationStore = {
   convertableToPartnerTest: false,
 }
 const LOCAL_APP: App = {
-  idEnvironmentVariable: 'SHOPIFY_APP_ID',
+  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',

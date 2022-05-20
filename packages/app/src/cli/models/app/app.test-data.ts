@@ -2,7 +2,7 @@ import {App, UIExtension} from './app'
 
 export function testApp(app: Partial<App> = {}): App {
   return {
-    idEnvironmentVariable: app.idEnvironmentVariable ?? 'SHOPIFY_APP_ID',
+    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_APP_ID',
     configuration: {
       name: app?.configuration?.name ?? 'App',
       scopes: app?.configuration?.scopes ?? '',
@@ -37,6 +37,6 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
       uiExtension?.configurationPath ?? '/tmp/project/extensions/test-ui-extension/shopify.ui.extension.toml',
     directory: uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension',
     entrySourceFilePath: uiExtension?.entrySourceFilePath ?? '/tmp/project/extensions/test-ui-extension/src/index.js',
-    idEnvironmentVariable: uiExtension?.idEnvironmentVariable ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
+    idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
   }
 }

@@ -50,17 +50,8 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
-    options = {
-      ...options,
-      app: await updateIdentifiers({
-        app: options.app,
-        identifiers: {
-          app: selectedApp.apiKey,
-          extensions: {},
-        },
-        environmentType: 'local',
-      }),
-    }
+    options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
     return {
       app: {
@@ -79,17 +70,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
   // eslint-disable-next-line no-param-reassign
-  options = {
-    ...options,
-    app: await updateIdentifiers({
-      app: options.app,
-      identifiers: {
-        app: selectedApp.apiKey,
-        extensions: {},
-      },
-      environmentType: 'local',
-    }),
-  }
+  options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
@@ -107,6 +88,20 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
       app: selectedApp.apiKey,
       extensions: {},
     },
+  }
+}
+
+async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string}) {
+  return {
+    ...options,
+    app: await updateIdentifiers({
+      app: options.app,
+      identifiers: {
+        app: options.apiKey,
+        extensions: {},
+      },
+      environmentType: 'local',
+    }),
   }
 }
 

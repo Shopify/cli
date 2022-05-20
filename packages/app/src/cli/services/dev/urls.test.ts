@@ -5,7 +5,7 @@ import {api, error, path} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 
 const LOCAL_APP: App = {
-  idEnvironmentVariable: 'SHOPIFY_APP_ID',
+  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
@@ -93,7 +93,7 @@ describe('generateURL', () => {
     const extensionName = 'myextension'
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
-      idEnvironmentVariable: 'SHOPIFY_APP_ID',
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       localIdentifier: extensionName,
       buildDirectory: `${extensionRoot}/build`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
