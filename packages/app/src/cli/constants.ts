@@ -6,18 +6,18 @@ export const configurationFileNames = {
     function: 'shopify.function.extension.toml',
   },
   web: 'shopify.web.toml',
-}
+} as const
 
 export const environmentVariables = {
   /**
    * Environment variable to instructs the CLI on running the extensions' CLI through its sources.
    */
   useExtensionsCLISources: 'SHOPIFY_USE_EXTENSIONS_CLI_SOURCES',
-}
+} as const
 
 export const versions = {
   extensionsBinary: 'v0.11.0',
-}
+} as const
 
 export const blocks = {
   extensions: {
@@ -32,7 +32,7 @@ export const blocks = {
     directoryName: 'web',
     configurationName: configurationFileNames.web,
   },
-}
+} as const
 
 export const genericConfigurationFileNames = {
   yarn: {
@@ -41,9 +41,9 @@ export const genericConfigurationFileNames = {
   pnpm: {
     lockfile: 'pnpm-lock.yaml',
   },
-}
+} as const
 
-export const functionExtensions: ExtensionsType = {
+export const functionExtensions = {
   types: [
     'product_discount_type',
     'order_discount_type',
@@ -51,26 +51,31 @@ export const functionExtensions: ExtensionsType = {
     'payment_methods',
     'shipping_rate_presenter',
   ],
-}
+} as const
 
-export const uiExtensions: ExtensionsType = {
+export const uiExtensions = {
   types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'beacon_extension'],
-}
+} as const
 
-export const themeExtensions: ExtensionsType = {
+export const themeExtensions = {
   types: ['theme'],
-}
+} as const
 
-interface ExtensionsType {
-  // Dependent code requires that extensions.types has at least 1 element.
-  // Otherwise it will be typed as string[] which doesn't guarantee a first element.
-  types: [string, ...string[]]
-}
-export const extensions: ExtensionsType = {
+export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
+
+export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 'function' | 'ui' {
+  if (extensionType === 'theme') {
+    return 'theme'
+  }
+  if ((functionExtensions.types as ReadonlyArray<string>).includes(extensionType)) {
+    return 'function'
+  }
+  return 'ui'
+}
 
 /**
  * Returns the runtime renderer dependency for a given UI extension type.
