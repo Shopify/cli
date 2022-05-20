@@ -20,9 +20,9 @@ interface DotEnvFile {
    */
   path: string
   /**
-   * Content of the .env file.
+   * Variables of the .env file.
    */
-  content: {[name: string]: string}
+  variables: {[name: string]: string}
 }
 
 export async function read(path: string): Promise<DotEnvFile> {
@@ -32,7 +32,7 @@ export async function read(path: string): Promise<DotEnvFile> {
   const content = await readFile(path)
   return {
     path,
-    content: parse(content),
+    variables: parse(content),
   }
 }
 
@@ -41,5 +41,5 @@ export async function read(path: string): Promise<DotEnvFile> {
  * @param file {DotEnvFile} .env file to be written.
  */
 export async function write(file: DotEnvFile) {
-  await writeFile(file.path, stringify(file.content))
+  await writeFile(file.path, stringify(file.variables))
 }

@@ -24,7 +24,7 @@ describe('read', () => {
 
       // Then
       expect(got.path).toEqual(dotEnvPath)
-      expect(got.content.FOO).toEqual('BAR')
+      expect(got.variables.FOO).toEqual('BAR')
     })
   })
 })
@@ -38,7 +38,7 @@ describe('write', () => {
       // When
       await write({
         path: dotEnvPath,
-        content: {
+        variables: {
           FOO: 'BAR',
         },
       })
@@ -46,7 +46,7 @@ describe('write', () => {
 
       // Then
       expect(got.path).toEqual(dotEnvPath)
-      expect(got.content.FOO).toEqual('BAR')
+      expect(got.variables.FOO).toEqual('BAR')
     })
   })
 
@@ -59,7 +59,7 @@ describe('write', () => {
       // When
       await write({
         path: dotEnvPath,
-        content: {
+        variables: {
           FOO2: 'BAR2',
         },
       })
@@ -67,7 +67,7 @@ describe('write', () => {
 
       // Then
       expect(got.path).toEqual(dotEnvPath)
-      expect(got.content.FOO2).toEqual('BAR2')
+      expect(got.variables.FOO2).toEqual('BAR2')
     })
   })
 })
