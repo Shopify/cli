@@ -12,3 +12,9 @@ extensions:
         version: ~> 0.14.0
       entries:
         main: src/index.tsx
+      build:
+        env:
+          CUSTOM_VAR: foo
+      develop:
+        env:
+          CUSTOM_VAR: bar

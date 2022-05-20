@@ -52,6 +52,15 @@ module ContractTest
       assert_equal('foo', development_develop_env['CUSTOM_VAR'])
     end
 
+    def test_main_js_contents
+      assert File.exist?('tmp/integration_test/build/main.js')
+
+      assert File.readlines('tmp/integration_test/build/main.js')
+                 .grep(/"My custom environment variable is:\s*"\s*,\s*"bar"/).any?
+      assert File.readlines('tmp/integration_test/build/main.js')
+                 .grep(/"My custom NODE_ENV is:\s*"\s*,\s*"production"/).any?
+    end
+
     def test_dot_shopify_cli_yml_contents
       extension_config_yml = YAML.load_file('tmp/integration_test/.shopify-cli.yml')
 

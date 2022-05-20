@@ -20,7 +20,7 @@ export interface Development {
   entries: {[key: string]: string};
   buildDir: string;
   build?: CommandOptions;
-  serve?: CommandOptions;
+  develop?: CommandOptions;
 }
 
 interface RequiredConfigs {

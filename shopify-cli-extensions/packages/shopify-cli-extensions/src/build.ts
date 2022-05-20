@@ -8,10 +8,11 @@ export interface Options {
 
 export function build({mode}: Options) {
   const isDevelopment = mode === 'development';
+  const configs = getConfigs();
   const {
-    development: {entries, build = {}, serve = {}, buildDir},
-  } = getConfigs();
-  const {env = {}} = isDevelopment ? serve : build;
+    development: {entries, build = {}, develop = {}, buildDir},
+  } = configs;
+  const {env = {}} = isDevelopment ? develop : build;
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,
