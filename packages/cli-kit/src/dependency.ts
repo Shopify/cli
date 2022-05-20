@@ -96,7 +96,7 @@ export async function install(
  * @param packageJsonPath {string} Path to the package.json file
  * @returns A promise that resolves with the list of dependencies.
  */
-export async function getDependencies(packageJsonPath: string): Promise<string[]> {
+export async function getDependencies(packageJsonPath: string): Promise<{[key: string]: string}> {
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(dirname(packageJsonPath))
   }
@@ -104,7 +104,7 @@ export async function getDependencies(packageJsonPath: string): Promise<string[]
   const dependencies: {[key: string]: string} = packageJsonContent.dependencies ?? {}
   const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
 
-  return [...Object.keys(dependencies), ...Object.keys(devDependencies)]
+  return {...dependencies, ...devDependencies}
 }
 
 type DependencyType = 'dev' | 'prod' | 'peer'
@@ -139,7 +139,7 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(options.directory)
   }
-  const existingDependencies = await getDependencies(packageJsonPath)
+  const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
   const dependenciesToAdd = dependencies.filter((dep) => {
     return !existingDependencies.includes(dep)
   })

@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {blocks, ExtensionTypes, functionExtensions, uiExtensionRendererDependency} from '../../constants'
+import {blocks, ExtensionTypes, functionExtensions, getUIExtensionRendererDependency} from '../../constants'
 import {App} from '../../models/app/app'
-import {error, file, git, path, string, template, ui, yaml, dependency} from '@shopify/cli-kit'
+import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
 
@@ -15,13 +15,6 @@ async function getTemplatePath(name: string): Promise<string> {
   } else {
     throw new error.Bug(`Couldn't find the template ${name} in @shopify/app.`)
   }
-}
-
-interface WriteFromTemplateOptions {
-  promptAnswers: any
-  filename: string
-  alias?: string
-  directory: string
 }
 
 interface ExtensionInitOptions {
@@ -50,67 +43,70 @@ async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptio
 
 async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
-  const list = new ui.Listr([
-    {
-      title: 'Installing additional dependencies',
-      task: async (_, task) => {
-        const requiredDependencies = getRuntimeDependencies({extensionType})
-        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
-          dependencyManager: app.dependencyManager,
-          type: 'prod',
-          directory: app.directory,
-          stderr: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-          stdout: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-        })
-        task.title = 'Dependencies installed'
-      },
-    },
-    {
-      title: 'Scaffolding extension',
-      task: async (_, task) => {
-        const stdin = yaml.encode({
-          extensions: [
-            {
-              title: name,
-              // Use the new templates
-              type: `${extensionType}_next`,
-              metafields: [],
-              development: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                root_dir: '.',
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Installing additional dependencies',
+        task: async (_, task) => {
+          const requiredDependencies = getRuntimeDependencies({extensionType})
+          await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+            dependencyManager: app.dependencyManager,
+            type: 'prod',
+            directory: app.directory,
+            stderr: new stream.Writable({
+              write(chunk, encoding, next) {
+                task.output = chunk.toString()
+                next()
               },
-            },
-          ],
-        })
-        await runGoExtensionsCLI(['create', '-'], {
-          cwd: extensionDirectory,
-          stderr: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-          stdout: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-          stdin,
-        })
+            }),
+            stdout: new stream.Writable({
+              write(chunk, encoding, next) {
+                task.output = chunk.toString()
+                next()
+              },
+            }),
+          })
+          task.title = 'Dependencies installed'
+        },
       },
-    },
-  ])
+      {
+        title: 'Scaffolding extension',
+        task: async (_, task) => {
+          const stdin = yaml.encode({
+            extensions: [
+              {
+                title: name,
+                // Use the new templates
+                type: `${extensionType}_next`,
+                metafields: [],
+                development: {
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  root_dir: '.',
+                },
+              },
+            ],
+          })
+          await runGoExtensionsCLI(['create', '-'], {
+            cwd: extensionDirectory,
+            stderr: new stream.Writable({
+              write(chunk, encoding, next) {
+                task.output = chunk.toString()
+                next()
+              },
+            }),
+            stdout: new stream.Writable({
+              write(chunk, encoding, next) {
+                task.output = chunk.toString()
+                next()
+              },
+            }),
+            stdin,
+          })
+        },
+      },
+    ],
+    {rendererSilent: environment.local.isUnitTest()},
+  )
   await list.run()
 }
 
@@ -122,7 +118,7 @@ export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOption
       // eslint-disable-next-line no-case-declarations
       const dependencies = ['react']
       // eslint-disable-next-line no-case-declarations
-      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)
       }
@@ -137,17 +133,20 @@ async function functionExtensionInit(options: ExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    const list = new ui.Listr([
-      {
-        title: 'Scaffolding extension',
-        task: async () => {
-          await file.mkdir(templateDownloadDir)
-          await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
-          const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-          template.recursiveDirectoryCopy(origin, extensionDirectory, options)
+    const list = new ui.Listr(
+      [
+        {
+          title: 'Scaffolding extension',
+          task: async () => {
+            await file.mkdir(templateDownloadDir)
+            await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
+            const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+            template.recursiveDirectoryCopy(origin, extensionDirectory, options)
+          },
         },
-      },
-    ])
+      ],
+      {rendererSilent: environment.local.isUnitTest()},
+    )
     await list.run()
   })
 }

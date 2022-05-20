@@ -5,6 +5,8 @@ import {
   functionExtensions,
   themeExtensions,
   uiExtensions,
+  getUIExtensionRendererDependency,
+  ExtensionTypes,
 } from '../../constants'
 import {file, error, path, schema, string, toml, dependency} from '@shopify/cli-kit'
 
@@ -113,6 +115,7 @@ export interface App {
   dependencyManager: dependency.DependencyManager
   configuration: AppConfiguration
   configurationPath: string
+  nodeDependencies: {[key: string]: string}
   webs: Web[]
   extensions: {
     ui: UIExtension[]
@@ -148,12 +151,13 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
     const functions = await this.loadFunctions(extensionsPath)
-    const extensions = await this.loadExtensions(extensionsPath)
+    const uiExtensions = await this.loadUIExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
     const yarnLockPath = path.join(this.appDirectory, genericConfigurationFileNames.yarn.lockfile)
     const yarnLockExists = await file.exists(yarnLockPath)
     const pnpmLockPath = path.join(this.appDirectory, genericConfigurationFileNames.pnpm.lockfile)
     const pnpmLockExists = await file.exists(pnpmLockPath)
+    const nodeDependencies = await dependency.getDependencies(path.join(this.appDirectory, 'package.json'))
     let dependencyManager: dependency.DependencyManager
     if (yarnLockExists) {
       dependencyManager = 'yarn'
@@ -168,8 +172,9 @@ class AppLoader {
       webs: await this.loadWebs(),
       configuration,
       configurationPath,
-      extensions: {ui: extensions, theme: themeExtensions, function: functions},
+      extensions: {ui: uiExtensions, theme: themeExtensions, function: functions},
       dependencyManager,
+      nodeDependencies,
     }
     if (this.errors.length > 0) app.errors = this.errors
     return app
@@ -240,8 +245,8 @@ class AppLoader {
     return parseResult.data
   }
 
-  async loadExtensions(extensionsPath: string): Promise<UIExtension[]> {
-    const extensionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
+  async loadUIExtensions(extensionsPath: string): Promise<UIExtension[]> {
+    const extensionConfigPaths = path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
     const configPaths = await path.glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
@@ -290,6 +295,43 @@ class AppLoader {
       return fallback
     }
   }
+}
+
+/**
+ * Reads the dependencies from the app's package.json and creates a copy
+ * of the app with the list of dependencies updated.
+ * @param app {App} App whose Node dependencies will be updated.
+ * @returns {Promise<App>} The app with the Node dependencies updated.
+ */
+export async function updateDependencies(app: App): Promise<App> {
+  const nodeDependencies = await dependency.getDependencies(path.join(app.directory, 'package.json'))
+  return {
+    ...app,
+    nodeDependencies,
+  }
+}
+
+/**
+ * Given a UI extension and the app it belongs to, it returns the version of the renderer
+ * package.
+ * @param uiExtension {UIExtension} UI extension whose renderer version will be obtained.
+ * @param app {App} App object containing the extension.
+ * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
+ */
+export function getUIExtensionRendererVersion(
+  uiExtensionType: ExtensionTypes,
+  app: App,
+): {name: string; version: string} | undefined {
+  const nodeDependencies = app.nodeDependencies
+  const rendererDependencyName = getUIExtensionRendererDependency(uiExtensionType)
+  if (!rendererDependencyName) {
+    return undefined
+  }
+  const rendererDependency = nodeDependencies[rendererDependencyName]
+  if (!rendererDependency) {
+    return undefined
+  }
+  return {name: rendererDependencyName, version: rendererDependency}
 }
 
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {

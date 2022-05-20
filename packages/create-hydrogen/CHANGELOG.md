@@ -1,5 +1,13 @@
 # @shopify/create-hydrogen
 
+## 2.0.6
+
+### Patch Changes
+
+- edfcfb36: Fix missing cross-env bug. Update copy to refer to hydrogen.config.js.
+- Updated dependencies [f7e74d33]
+  - @shopify/cli-kit@2.0.6
+
 ## 2.0.5
 
 ### Patch Changes

@@ -79,9 +79,8 @@ describe('getDependencies', () => {
       const got = await getDependencies(packageJsonPath)
 
       // Then
-      expect(got.length).toEqual(2)
-      expect(got.includes('prod')).toBeTruthy()
-      expect(got.includes('dev')).toBeTruthy()
+      expect(got.prod).toEqual('1.2.3')
+      expect(got.dev).toEqual('4.5.6')
     })
   })
 
@@ -98,8 +97,7 @@ describe('getDependencies', () => {
       const got = await getDependencies(packageJsonPath)
 
       // Then
-      expect(got.length).toEqual(1)
-      expect(got.includes('dev')).toBeTruthy()
+      expect(got.dev).toEqual('4.5.6')
     })
   })
 
@@ -116,8 +114,7 @@ describe('getDependencies', () => {
       const got = await getDependencies(packageJsonPath)
 
       // Then
-      expect(got.length).toEqual(1)
-      expect(got.includes('prod')).toBeTruthy()
+      expect(got.prod).toEqual('1.2.3')
     })
   })
 

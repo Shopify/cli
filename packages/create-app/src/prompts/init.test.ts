@@ -21,7 +21,8 @@ describe('init', () => {
       {
         type: 'input',
         name: 'name',
-        message: "Your app's working name?",
+        preface: 'Welcome. Let’s get started by naming your app. You can change it later.',
+        message: "Your app's name?",
         default: 'app',
         validate: expect.any(Function),
       },

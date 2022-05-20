@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './dev/environment'
+import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {serveExtension} from './build/extension'
@@ -29,7 +29,11 @@ interface DevWebOptions {
 
 async function dev(options: DevOptions) {
   if (!options.skipDependenciesInstallation) {
-    await installAppDependencies(options.app)
+    // eslint-disable-next-line no-param-reassign
+    options = {
+      ...options,
+      app: await installAppDependencies(options.app),
+    }
   }
   const {identifiers, store} = await ensureDevEnvironment(options)
 

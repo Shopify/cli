@@ -18,6 +18,7 @@ const LOCAL_APP: App = {
       },
     },
   ],
+  nodeDependencies: {},
   extensions: {ui: [], theme: [], function: []},
 }
 
@@ -47,8 +48,8 @@ beforeEach(() => {
 describe('generateURL', () => {
   it('returns a localhost URL by default', async () => {
     // Given
-    const input = {
-      appManifest: LOCAL_APP,
+    const options = {
+      app: LOCAL_APP,
       reset: false,
       tunnel: false,
       update: false,
@@ -57,7 +58,7 @@ describe('generateURL', () => {
     }
 
     // When
-    const got = await generateURL(input, 3456)
+    const got = await generateURL(options, 3456)
 
     // Then
     expect(got).toEqual('http://localhost:3456')
@@ -65,8 +66,8 @@ describe('generateURL', () => {
 
   it('returns a tunnel URL when the --tunnel flag is passed', async () => {
     // Given
-    const input = {
-      appManifest: LOCAL_APP,
+    const options = {
+      app: LOCAL_APP,
       reset: false,
       tunnel: true,
       update: false,
@@ -75,7 +76,7 @@ describe('generateURL', () => {
     }
 
     // When
-    const got = await generateURL(input, 3456)
+    const got = await generateURL(options, 3456)
 
     // Then
     expect(got).toEqual('https://fake-url.ngrok.io')
@@ -99,8 +100,8 @@ describe('generateURL', () => {
     }
     const appWithExtension = {...LOCAL_APP, extensions: {ui: [extension], theme: [], function: []}}
 
-    const input = {
-      appManifest: appWithExtension,
+    const options = {
+      app: appWithExtension,
       reset: false,
       tunnel: false,
       update: false,
@@ -109,7 +110,7 @@ describe('generateURL', () => {
     }
 
     // When
-    const got = await generateURL(input, 3456)
+    const got = await generateURL(options, 3456)
 
     // Then
     expect(got).toEqual('https://fake-url.ngrok.io')

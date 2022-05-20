@@ -1,11 +1,11 @@
-import {selectOrCreateApp} from './select-app'
-import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './fetch'
-import {selectStore, convertToTestStoreIfNeeded} from './select-store'
-import {selectOrganizationPrompt} from '../../prompts/dev'
-import {App, Identifiers} from '../../models/app/app'
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {updateAppConfigurationFile} from '../../utilities/app/update'
-import {error, output, session, store as conf, ui} from '@shopify/cli-kit'
+import {selectOrCreateApp} from './dev/select-app'
+import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
+import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
+import {selectOrganizationPrompt} from '../prompts/dev'
+import {App, Identifiers} from '../models/app/app'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
+import {updateAppConfigurationFile} from '../utilities/app/update'
+import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
 const InvalidApiKeyError = (apiKey: string) => {
   return new error.Abort(
@@ -120,17 +120,20 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data: any = {}
-  const list = new ui.Listr([
-    {
-      title: 'Fetching organization data',
-      task: async () => {
-        const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
-        data = {...responses[0], stores: responses[1]}
-        // We need ALL stores so we can validate the selected one.
-        // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Fetching organization data',
+        task: async () => {
+          const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
+          data = {...responses[0], stores: responses[1]}
+          // We need ALL stores so we can validate the selected one.
+          // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
+        },
       },
-    },
-  ])
+    ],
+    {rendererSilent: environment.local.isUnitTest()},
+  )
   await list.run()
   return data
 }

@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 2.0.6
+
+### Patch Changes
+
+- 904218a1: Use the tunnel on dev when there are extensions
+- Updated dependencies [f7e74d33]
+  - @shopify/cli-kit@2.0.6
+
 ## 2.0.5
 
 ### Patch Changes

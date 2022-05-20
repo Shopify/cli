@@ -1,5 +1,5 @@
-import {ExtensionTypes} from '../../constants'
 import {api, error} from '@shopify/cli-kit'
+import {ExtensionTypes} from 'cli/constants'
 
 interface ExtensionRegistration {
   id: string

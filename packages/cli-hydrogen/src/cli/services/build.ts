@@ -1,5 +1,5 @@
 import {build as viteBuild} from 'vite'
-import {ui} from '@shopify/cli-kit'
+import {ui, environment} from '@shopify/cli-kit'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -35,7 +35,7 @@ async function build({directory, targets, base}: DevOptions) {
       }
     })
 
-  const list = new ui.Listr(tasks)
+  const list = new ui.Listr(tasks, {rendererSilent: environment.local.isUnitTest()})
 
   await list.run()
 }

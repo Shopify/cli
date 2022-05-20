@@ -6,6 +6,7 @@ import {join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
+import {local} from './environment'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 
@@ -44,7 +45,7 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
  */
 async function installDependencies() {
   const exists = await file.exists(rubyCLIPath())
-  const renderer = exists ? 'silent' : 'default'
+  const renderer = local.isUnitTest() || exists ? 'silent' : 'default'
 
   const list = new ui.Listr(
     [
