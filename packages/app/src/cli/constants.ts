@@ -77,7 +77,7 @@ export type ExtensionTypes = typeof extensions.types[number]
  * @param extensionType {ExtensionTypes} Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
-export function uiExtensionRendererDependency(extensionType: ExtensionTypes): string | undefined {
+export function getUIExtensionRendererDependency(extensionType: ExtensionTypes): string | undefined {
   switch (extensionType) {
     case 'product_subscription':
       return '@shopify/admin-ui-extensions-react'

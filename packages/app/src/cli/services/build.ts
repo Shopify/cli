@@ -1,14 +1,19 @@
 import {buildExtension} from './build/extension'
 import buildWeb from './web'
+import {installAppDependencies} from './dependencies'
 import {App, Web} from '../models/app/app'
 import {path, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 interface BuildOptions {
   app: App
+  skipDependenciesInstallation: boolean
 }
 
-async function build({app}: BuildOptions) {
+async function build({app, skipDependenciesInstallation}: BuildOptions) {
+  if (!skipDependenciesInstallation) {
+    await installAppDependencies(app)
+  }
   await output.concurrent([
     ...app.webs.map((web: Web) => {
       return {

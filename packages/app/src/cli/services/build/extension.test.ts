@@ -35,6 +35,7 @@ describe('buildExtension', () => {
         scopes: '',
       },
       webs: [],
+      nodeDependencies: {},
       extensions: {ui: [extension], function: [], theme: []},
     }
 

@@ -22,6 +22,7 @@ const writeConfig = async (appConfiguration: string, tmpDir: string) => {
   const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 
   await file.mkdir(path.dirname(webConfigurationPath))
+  await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
   await file.write(appConfigurationPath, appConfiguration)
   await file.write(webConfigurationPath, webConfiguration)
 }

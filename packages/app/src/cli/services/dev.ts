@@ -27,7 +27,11 @@ interface DevWebOptions {
 
 async function dev(options: DevOptions) {
   if (!options.skipDependenciesInstallation) {
-    await installAppDependencies(options.app)
+    // eslint-disable-next-line no-param-reassign
+    options = {
+      ...options,
+      app: await installAppDependencies(options.app),
+    }
   }
   const {identifiers, store} = await ensureDevEnvironment(options)
 

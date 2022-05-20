@@ -8,7 +8,7 @@ import {
   uiExtensions,
   functionExtensions,
   themeExtensions,
-  uiExtensionRendererDependency,
+  getUIExtensionRendererDependency,
 } from '../../constants'
 import {load as loadApp} from '../../models/app/app'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -21,6 +21,7 @@ vi.mock('@shopify/cli-kit', async () => {
     ...cliKit,
     dependency: {
       addNPMDependenciesIfNeeded: vi.fn(),
+      getDependencies: cliKit.dependency.getDependencies,
     },
   }
 })
@@ -61,13 +62,11 @@ describe('initialize a extension', () => {
 
         const firstDependenciesCallArgs = addDependenciesCalls[0]
         expect(firstDependenciesCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
-        expect(firstDependenciesCallArgs[1].dependencyManager).toEqual('npm')
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
         expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
 
         const secondDependencyCallArgs = addDependenciesCalls[1]
         expect(secondDependencyCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
-        expect(secondDependencyCallArgs[1].dependencyManager).toEqual('npm')
         expect(secondDependencyCallArgs[1].type).toEqual('prod')
         expect(secondDependencyCallArgs[1].directory).toEqual(loadedApp.directory)
       })
@@ -119,7 +118,7 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     extensions.forEach((extensionType) => {
-      const rendererDependency = uiExtensionRendererDependency(extensionType)
+      const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         expect(getRuntimeDependencies({extensionType}).includes(rendererDependency)).toBeTruthy()
       }
@@ -161,6 +160,7 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     await file.write(appConfigurationPath, appConfiguration)
     await file.mkdir(path.dirname(webConfigurationPath))
     await file.write(webConfigurationPath, webConfiguration)
+    await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
     // eslint-disable-next-line node/callback-return
     await callback(tmpDir)
   })

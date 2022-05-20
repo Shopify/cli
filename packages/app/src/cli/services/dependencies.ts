@@ -1,4 +1,4 @@
-import {App} from '../models/app/app'
+import {App, updateDependencies} from '../models/app/app'
 import {dependency, ui, environment} from '@shopify/cli-kit'
 
 /**
@@ -6,6 +6,7 @@ import {dependency, ui, environment} from '@shopify/cli-kit'
  * the sub-directories and finding the ones that have NPM dependencies
  * defined in package.json files.
  * @param app {App} App whose dependencies will be installed.
+ * @returns {Promise<App>} An copy of the app with the Node dependencies updated.
  */
 export async function installAppDependencies(app: App) {
   const list = new ui.Listr(
@@ -25,4 +26,5 @@ export async function installAppDependencies(app: App) {
     {rendererSilent: environment.local.isUnitTest()},
   )
   await list.run()
+  return updateDependencies(app)
 }

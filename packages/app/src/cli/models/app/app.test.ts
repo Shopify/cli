@@ -1,6 +1,11 @@
-import {load} from './app'
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
-import {describe, it, expect, beforeEach, afterEach} from 'vitest'
+import {load, getUIExtensionRendererVersion, App} from './app'
+import {
+  configurationFileNames,
+  blocks,
+  genericConfigurationFileNames,
+  getUIExtensionRendererDependency,
+} from '../../constants'
+import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 
 describe('load', () => {
@@ -22,7 +27,8 @@ scopes = "read_products"
   })
 
   const writeConfig = async (appConfiguration: string) => {
-    const appDirectory = path.join(tmpDir, configurationFileNames.app)
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
+    const packageJsonPath = path.join(tmpDir, 'package.json')
     const webDirectory = path.join(tmpDir, blocks.web.directoryName)
     const webConfiguration = `
     type = "backend"
@@ -31,7 +37,8 @@ scopes = "read_products"
     build = "build"
     dev = "dev"
     `
-    await file.write(appDirectory, appConfiguration)
+    await file.write(appConfigurationPath, appConfiguration)
+    await file.write(packageJsonPath, JSON.stringify({dependencies: {}, devDependencies: {}}))
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
   }
@@ -314,5 +321,83 @@ scopes = "read_products"
     )
     expect(functions[0].configuration.name).toBe('my-function-1')
     expect(functions[1].configuration.name).toBe('my-function-2')
+  })
+})
+
+describe('getUIExtensionRendererVersion', () => {
+  test("returns undefined when the UI extension type doesn't have a runtime dependency", () => {
+    // Given/When
+    const app: App = {
+      configuration: {
+        name: 'App',
+        scopes: '',
+      },
+      dependencyManager: 'yarn',
+      directory: '/tmp/project',
+      extensions: {
+        ui: [],
+        function: [],
+        theme: [],
+      },
+      webs: [],
+      nodeDependencies: {},
+      configurationPath: '/tmp/project/shopify.app.toml',
+    }
+    const got = getUIExtensionRendererVersion('beacon_extension', app)
+
+    // Then
+    expect(got).to.toBeUndefined()
+  })
+
+  test('returns undefined when the renderer dependency is not a dependency of the app', () => {
+    // Given/When
+    const app: App = {
+      configuration: {
+        name: 'App',
+        scopes: '',
+      },
+      dependencyManager: 'yarn',
+      directory: '/tmp/project',
+      extensions: {
+        ui: [],
+        function: [],
+        theme: [],
+      },
+      webs: [],
+      nodeDependencies: {},
+      configurationPath: '/tmp/project/shopify.app.toml',
+    }
+    const got = getUIExtensionRendererVersion('product_subscription', app)
+
+    // Then
+    expect(got).to.toBeUndefined()
+  })
+
+  test('returns the name of the renderer package and the version if it is dependency of the app', () => {
+    // Given/When
+    const nodeDependencies: {[key: string]: string} = {}
+    const rendererDependency = getUIExtensionRendererDependency('product_subscription') as string
+    nodeDependencies[rendererDependency] = '1.2.3'
+    const app: App = {
+      configuration: {
+        name: 'App',
+        scopes: '',
+      },
+      dependencyManager: 'yarn',
+      directory: '/tmp/project',
+      extensions: {
+        ui: [],
+        function: [],
+        theme: [],
+      },
+      webs: [],
+      nodeDependencies,
+      configurationPath: '/tmp/project/shopify.app.toml',
+    }
+    const got = getUIExtensionRendererVersion('product_subscription', app)
+
+    // Then
+    expect(got?.name).to.toEqual(rendererDependency)
+    expect(got?.version).toEqual('1.2.3')
   })
 })
