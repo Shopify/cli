@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 2.0.8
+
+### Patch Changes
+
+- Make envfile a dependency to mitigate bundling issues
+
 ## 2.0.7
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @shopify/create-app
 
+## 2.0.8
+
+### Patch Changes
+
+- Updated dependencies
+  - @shopify/cli-kit@2.0.8
+
 ## 2.0.7
 
 ### Patch Changes
