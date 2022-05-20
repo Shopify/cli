@@ -66,18 +66,21 @@ const ThemeExtensionConfigurationSchema = schema.define.object({
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 
 export interface FunctionExtension {
+  idEnvironmentVariable: string
   configuration: FunctionExtensionConfiguration
   configurationPath: string
   directory: string
 }
 
 export interface ThemeExtension {
+  idEnvironmentVariable: string
   configuration: ThemeExtensionConfiguration
   configurationPath: string
   directory: string
 }
 
 export interface UIExtension {
+  idEnvironmentVariable: string
   configuration: UIExtensionConfiguration
   configurationPath: string
   directory: string
@@ -115,6 +118,7 @@ export interface AppEnvironment {
 }
 
 export interface App {
+  idEnvironmentVariable: string
   directory: string
   dependencyManager: dependency.DependencyManager
   configuration: AppConfiguration
@@ -195,6 +199,7 @@ class AppLoader {
     }
 
     const app: App = {
+      idEnvironmentVariable: 'SHOPIFY_APP_ID',
       directory: this.appDirectory,
       webs: await this.loadWebs(),
       configuration,
@@ -308,6 +313,7 @@ class AppLoader {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configurationPath)
       return {
+        idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         directory,
         configuration,
         configurationPath,
@@ -325,7 +331,12 @@ class AppLoader {
     const functions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configurationPath)
-      return {directory, configuration, configurationPath}
+      return {
+        directory,
+        configuration,
+        configurationPath,
+        idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+      }
     })
     return Promise.all(functions)
   }
@@ -337,7 +348,12 @@ class AppLoader {
     const themeExtensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configurationPath)
-      return {directory, configuration, configurationPath}
+      return {
+        directory,
+        configuration,
+        configurationPath,
+        idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+      }
     })
     return Promise.all(themeExtensions)
   }
@@ -366,19 +382,19 @@ export async function updateDependencies(app: App): Promise<App> {
   }
 }
 
-export type IdentifiersEnvironment = 'local' | 'production'
+export type EnvironmentType = 'local' | 'production'
 
 export async function updateIdentifiers({
   app,
   identifiers,
-  environment,
+  type,
 }: {
   app: App
   identifiers: Identifiers
-  environment: IdentifiersEnvironment
+  type: EnvironmentType
 }) {}
 
-export function identifiers({app, environment}: {app: App; environment: IdentifiersEnvironment}): Identifiers {
+export function identifiers({app, type}: {app: App; type: EnvironmentType}): Partial<Identifiers> {
   return {
     app: '123',
     extensions: {},

@@ -182,6 +182,7 @@ scopes = "read_products"
 
     // Then
     expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].idEnvironmentVariable).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -203,6 +204,7 @@ scopes = "read_products"
     // Then
     expect(app.configuration.name).toBe('my_app')
     expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].idEnvironmentVariable).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   it('loads the app with several extensions that have valid configurations', async () => {
@@ -238,7 +240,9 @@ scopes = "read_products"
       extA.configuration.name < extB.configuration.name ? -1 : 1,
     )
     expect(extensions[0].configuration.name).toBe('my_extension_1')
+    expect(extensions[0].idEnvironmentVariable).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1].configuration.name).toBe('my_extension_2')
+    expect(extensions[1].idEnvironmentVariable).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
@@ -276,7 +280,7 @@ scopes = "read_products"
     await writeBlockConfig({
       blockType: 'function',
       blockConfiguration,
-      name: 'my-functions',
+      name: 'my-function',
     })
 
     // When
@@ -284,6 +288,7 @@ scopes = "read_products"
 
     // Then
     expect(app.extensions.function[0].configuration.name).toBe('my-function')
+    expect(app.extensions.function[0].idEnvironmentVariable).toBe('SHOPIFY_MY_FUNCTION_ID')
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -321,6 +326,8 @@ scopes = "read_products"
     )
     expect(functions[0].configuration.name).toBe('my-function-1')
     expect(functions[1].configuration.name).toBe('my-function-2')
+    expect(functions[0].idEnvironmentVariable).toBe('SHOPIFY_MY_FUNCTION_1_ID')
+    expect(functions[1].idEnvironmentVariable).toBe('SHOPIFY_MY_FUNCTION_2_ID')
   })
 })
 
@@ -328,6 +335,7 @@ describe('getUIExtensionRendererVersion', () => {
   test("returns undefined when the UI extension type doesn't have a runtime dependency", () => {
     // Given/When
     const app: App = {
+      idEnvironmentVariable: 'SHOPIFY_APP_ID',
       configuration: {
         name: 'App',
         scopes: '',
@@ -356,6 +364,7 @@ describe('getUIExtensionRendererVersion', () => {
   test('returns undefined when the renderer dependency is not a dependency of the app', () => {
     // Given/When
     const app: App = {
+      idEnvironmentVariable: 'SHOPIFY_APP_ID',
       configuration: {
         name: 'App',
         scopes: '',
@@ -387,6 +396,7 @@ describe('getUIExtensionRendererVersion', () => {
     const rendererDependency = getUIExtensionRendererDependency('product_subscription') as string
     nodeDependencies[rendererDependency] = '1.2.3'
     const app: App = {
+      idEnvironmentVariable: 'SHOPIFY_APP_ID',
       configuration: {
         name: 'App',
         scopes: '',

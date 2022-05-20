@@ -28,6 +28,7 @@ describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
     // Given
     const app: App = {
+      idEnvironmentVariable: 'SHOPIFY_APP_ID',
       configuration: {
         name: 'App',
         scopes: '',
