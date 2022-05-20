@@ -10,7 +10,6 @@ export interface DevOptions {
   apiKey?: string
   store?: string
   reset: boolean
-  tunnel: boolean
   update: boolean
   plugins: Plugin[]
   skipDependenciesInstallation: boolean

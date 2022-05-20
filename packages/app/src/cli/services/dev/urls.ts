@@ -1,20 +1,10 @@
 import {DevOptions} from '../dev'
 import {api, error, output, plugins, session} from '@shopify/cli-kit'
 
-export async function generateURL(options: DevOptions, frontendPort: number) {
-  let url = `http://localhost:${frontendPort}`
-
-  const hasExtensions: boolean =
-    options.app.extensions.ui.length > 0 ||
-    options.app.extensions.function.length > 0 ||
-    options.app.extensions.theme.length > 0
-  const useTunnel = options.tunnel || hasExtensions
-
-  if (useTunnel) {
-    const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
-    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
-  }
-
+export async function generateURL(options: DevOptions, frontendPort: number): Promise<string> {
+  const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
+  if (!tunnelPlugin) throw new error.Abort('The tunnel could not be found')
+  const url = await tunnelPlugin?.start({port: frontendPort})
   return url
 }
 
