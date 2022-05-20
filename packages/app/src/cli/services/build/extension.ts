@@ -91,24 +91,25 @@ export async function extensionConfig(
   console.log(renderer)
   console.log(uuid)
   console.log()
+
   return {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     public_url: url,
     port,
-    store: 'saky-dev-store.myshopify.com',
+    store: 'isaac-dev-cli.myshopify.com',
     app: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       api_key: options.app.configuration.id,
     },
     extensions: [
       {
-        uuid,
+        uuid: 'something-weird',
         title: options.extension.configuration.name,
         type: `${options.extension.configuration.type}`,
         metafields: options.extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         extension_points: [],
-        // version: '1.0.1',
+        version: '1.0.1',
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
         development: {
@@ -123,8 +124,9 @@ export async function extensionConfig(
           },
           // template: 'javascript-react',
           renderer,
-
-          // resource: {},
+          resource: {
+            url: '/products/7640517804268',
+          },
         },
       },
     ],

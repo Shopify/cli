@@ -49,14 +49,14 @@ async function dev(options: DevOptions) {
   View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
   `)
 
-  // const devWebs = devWeb(options.app.webs, {
-  //   apiKey: identifiers.app.apiKey,
-  //   frontendPort,
-  //   backendPort,
-  //   scopes: options.app.configuration.scopes,
-  //   apiSecret: identifiers.app.apiSecret ?? '',
-  //   hostname: url,
-  // })
+  const devWebs = devWeb(options.app.webs, {
+    apiKey: identifiers.app.apiKey,
+    frontendPort,
+    backendPort,
+    scopes: options.app.configuration.scopes,
+    apiSecret: identifiers.app.apiSecret ?? '',
+    hostname: url,
+  })
 
   // console.log('READY TO DEV')
 

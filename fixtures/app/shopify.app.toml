@@ -1,5 +1,5 @@
 # This file stores configurations for your Shopify app.
 
-name = "ext-dev"
-id = "b64e08bef5bcf43744fabf898db9384b"
+name = "ext-dev2"
+id = "5fd33d5d6016c69e3d59a047dee9635c"
 scopes = "read_products"
