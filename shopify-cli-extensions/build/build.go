@@ -27,7 +27,7 @@ func Build(extension core.Extension, report ResultHandler) {
 	var err error
 	var command *exec.Cmd
 	if extension.NodeExecutable != "" {
-		command = nodeExecutableScript(extension.NodeExecutable, "build")
+		command = nodeExecutableScript(extension.Development.RootDir, extension.NodeExecutable, "build")
 	} else {
 		command, err = script(extension.BuildDir(), "build")
 	}
@@ -59,7 +59,7 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 	var err error
 	var command *exec.Cmd
 	if extension.NodeExecutable != "" {
-		command = nodeExecutableScript(extension.NodeExecutable, "develop")
+		command = nodeExecutableScript(extension.Development.RootDir, extension.NodeExecutable, "develop")
 	} else {
 		command, err = script(extension.BuildDir(), "develop")
 	}
