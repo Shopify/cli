@@ -341,6 +341,10 @@ describe('getUIExtensionRendererVersion', () => {
       },
       webs: [],
       nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
     const got = getUIExtensionRendererVersion('beacon_extension', app)
@@ -365,6 +369,10 @@ describe('getUIExtensionRendererVersion', () => {
       },
       webs: [],
       nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
     const got = getUIExtensionRendererVersion('product_subscription', app)
@@ -392,6 +400,10 @@ describe('getUIExtensionRendererVersion', () => {
       },
       webs: [],
       nodeDependencies,
+      environment: {
+        dotenv: {},
+        env: {},
+      },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
     const got = getUIExtensionRendererVersion('product_subscription', app)

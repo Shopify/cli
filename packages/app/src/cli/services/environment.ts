@@ -22,7 +22,7 @@ export interface DevEnvironmentInput {
 }
 
 interface DevEnvironmentOutput {
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   store: string
   identifiers: Identifiers
 }
@@ -52,13 +52,13 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
     updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
     return {
-      app: selectedApp,
+      app: {
+        ...selectedApp,
+        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+      },
       store: selectedStore,
       identifiers: {
-        app: {
-          apiKey: selectedApp.apiKey,
-          apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
-        },
+        app: selectedApp.apiKey,
         extensions: {},
       },
     }
@@ -76,13 +76,13 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
   }
 
   return {
-    app: selectedApp,
+    app: {
+      ...selectedApp,
+      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+    },
     store: selectedStore,
     identifiers: {
-      app: {
-        apiKey: selectedApp.apiKey,
-        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
-      },
+      app: selectedApp.apiKey,
       extensions: {},
     },
   }
@@ -107,10 +107,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       appType: 'type',
     },
     identifiers: {
-      app: {
-        apiKey: 'NOTDONE',
-        apiSecret: 'NOTDONE',
-      },
+      app: 'NOTDONE',
       extensions: {},
     },
   }

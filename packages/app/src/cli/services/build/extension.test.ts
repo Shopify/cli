@@ -36,6 +36,10 @@ describe('buildExtension', () => {
       },
       webs: [],
       nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
       extensions: {ui: [extension], function: [], theme: []},
     }
 

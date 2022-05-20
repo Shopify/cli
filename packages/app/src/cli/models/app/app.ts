@@ -8,25 +8,21 @@ import {
   getUIExtensionRendererDependency,
   ExtensionTypes,
 } from '../../constants'
-import {file, error, path, schema, string, toml, dependency} from '@shopify/cli-kit'
+import {file, error, path, schema, string, toml, dependency, dotenv} from '@shopify/cli-kit'
 
 export const WebConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)
 }
 
 export interface Identifiers {
-  app: {
-    /** API key */
-    apiKey: string
-    /** API secret */
-    apiSecret?: string
-  }
+  /** Application's API Key */
+  app: string
 
   /**
    * The extensions' unique identifiers.
    */
   extensions: {
-    [key: string]: string
+    [directory: string]: string
   }
 }
 
@@ -110,6 +106,14 @@ export interface Web {
   configuration: WebConfiguration
 }
 
+export interface AppEnvironment {
+  dotenv: {
+    local?: dotenv.DotEnvFile
+    production?: dotenv.DotEnvFile
+  }
+  env: {[key: string]: string}
+}
+
 export interface App {
   directory: string
   dependencyManager: dependency.DependencyManager
@@ -117,6 +121,7 @@ export interface App {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
+  environment: AppEnvironment
   extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
@@ -171,6 +176,7 @@ class AppLoader {
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
+    const environment = await this.loadEnvironment()
     const functions = await this.loadFunctions(extensionsPath)
     const uiExtensions = await this.loadUIExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
@@ -193,12 +199,40 @@ class AppLoader {
       webs: await this.loadWebs(),
       configuration,
       configurationPath,
+      environment,
       extensions: {ui: uiExtensions, theme: themeExtensions, function: functions},
       dependencyManager,
       nodeDependencies,
     }
     if (!this.errors.isEmpty()) app.errors = this.errors
     return app
+  }
+
+  async loadEnvironment(systemEnv: {[key: string]: string | undefined} = process.env): Promise<AppEnvironment> {
+    const env = Object.fromEntries(
+      Object.entries(systemEnv).filter(([key, value]) => {
+        return key.startsWith('SHOPIFY_') && value
+      }),
+    ) as {[key: string]: string}
+
+    let localEnv: dotenv.DotEnvFile | undefined
+    let productionEnv: dotenv.DotEnvFile | undefined
+
+    const localEnvPath = path.join(this.appDirectory, '.local.env')
+    if (await file.exists(localEnvPath)) {
+      localEnv = await dotenv.read(localEnvPath)
+    }
+    const productionEnvPath = path.join(this.appDirectory, '.dev')
+    if (await file.exists(productionEnvPath)) {
+      productionEnv = await dotenv.read(productionEnvPath)
+    }
+    return {
+      dotenv: {
+        production: productionEnv,
+        local: localEnv,
+      },
+      env,
+    }
   }
 
   async findAppDirectory() {
@@ -329,6 +363,25 @@ export async function updateDependencies(app: App): Promise<App> {
   return {
     ...app,
     nodeDependencies,
+  }
+}
+
+export type IdentifiersEnvironment = 'local' | 'production'
+
+export async function updateIdentifiers({
+  app,
+  identifiers,
+  environment,
+}: {
+  app: App
+  identifiers: Identifiers
+  environment: IdentifiersEnvironment
+}) {}
+
+export function identifiers({app, environment}: {app: App; environment: IdentifiersEnvironment}): Identifiers {
+  return {
+    app: '123',
+    extensions: {},
   }
 }
 

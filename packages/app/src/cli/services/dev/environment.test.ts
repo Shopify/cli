@@ -76,6 +76,10 @@ const LOCAL_APP: App = {
     },
   ],
   nodeDependencies: {},
+  environment: {
+    dotenv: {},
+    env: {},
+  },
   extensions: {ui: [], theme: [], function: []},
 }
 
@@ -115,13 +119,10 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({
-      app: APP1,
+      app: {...APP1, apiSecret: 'secret1'},
       store: STORE1.shopDomain,
       identifiers: {
-        app: {
-          apiKey: 'key1',
-          apiSecret: 'secret1',
-        },
+        app: 'key1',
         extensions: {},
       },
     })
@@ -140,13 +141,10 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({
-      app: APP1,
+      app: {...APP1, apiSecret: 'secret1'},
       store: STORE1.shopDomain,
       identifiers: {
-        app: {
-          apiKey: 'key1',
-          apiSecret: 'secret1',
-        },
+        app: 'key1',
         extensions: {},
       },
     })
@@ -169,13 +167,10 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({
-      app: APP2,
+      app: {...APP2, apiSecret: 'secret2'},
       store: STORE1.shopDomain,
       identifiers: {
-        app: {
-          apiKey: 'key2',
-          apiSecret: 'secret2',
-        },
+        app: 'key2',
         extensions: {},
       },
     })
