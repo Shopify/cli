@@ -44,6 +44,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
         built = true
         stdout.write('Built extensions CLI successfully!')
       }
+      stdout.write(`Extensions CLI Built`)
       await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
     } catch {
       throw new error.AbortSilent()

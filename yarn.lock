@@ -1629,14 +1629,14 @@
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.21.tgz#5de5a2385a35309427f6011992b544514d559aa1"
   integrity sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==
 
-"@remote-ui/async-subscription@^2.1.9":
+"@remote-ui/async-subscription@^2.1.7", "@remote-ui/async-subscription@^2.1.9":
   version "2.1.9"
   resolved "https://registry.yarnpkg.com/@remote-ui/async-subscription/-/async-subscription-2.1.9.tgz#84f413e40a8136ba28ee6ee0f946e4c1f85832d7"
   integrity sha512-+5UmqyjQJXLJLOVbEBvfzc/Yt4mV/9J36IGJhCJdpdEmIBde7DjkWBt91eSFxa3+Zx6Enq1unkBl4rqosYgpgw==
   dependencies:
     "@remote-ui/rpc" "^1.3.0"
 
-"@remote-ui/core@^2.1.3", "@remote-ui/core@^2.1.9":
+"@remote-ui/core@^2.1.3", "@remote-ui/core@^2.1.6", "@remote-ui/core@^2.1.9":
   version "2.1.9"
   resolved "https://registry.yarnpkg.com/@remote-ui/core/-/core-2.1.9.tgz#dd3c8eee304b5660189c520f5848b9562ec6f7dc"
   integrity sha512-a8HbfrZ1fq7u8/mmlFnmfl3LlQsFA9kkuvBtSnRf82dbUsspCT/y0yU6cN6/3Ek+tsPvuAd06lrlhd5L+VCMNg==
@@ -1644,7 +1644,7 @@
     "@remote-ui/rpc" "^1.3.0"
     "@remote-ui/types" "^1.1.2"
 
-"@remote-ui/react@^4.1.3", "@remote-ui/react@^4.1.5":
+"@remote-ui/react@^4.1.3", "@remote-ui/react@^4.1.5", "@remote-ui/react@^4.3.0":
   version "4.5.1"
   resolved "https://registry.yarnpkg.com/@remote-ui/react/-/react-4.5.1.tgz#b1d758ef7b51147e5a8c862543e48bdd0dca14bd"
   integrity sha512-KElTH95viqdF2zg3lmLAu8mdtbThcxVxTLq5SKBCZV7lsp4yUYFKcUAcoGeFK8al28SfOJfrf/LdKzhIRAFjfQ==
@@ -1754,6 +1754,24 @@
     remark-stringify "^7.0.3"
     unified "^8.4.0"
     unist-builder "^1.0.4"
+
+"@shopify/checkout-ui-extensions-react@^0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.15.0.tgz#9d7f2416b958e217d6521553bc1afd665382813e"
+  integrity sha512-f+HwWUa3zxqddjY2jASMAJ29gQxs4irDBuXxtXsgOivz70LsI8l8pDx4fyLgEgwyCci4cUrDbjRlGIUwTWDvpQ==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.7"
+    "@remote-ui/react" "^4.3.0"
+    "@shopify/checkout-ui-extensions" "^0.15.0"
+    "@types/react" ">=17.0.0 <18.0.0"
+
+"@shopify/checkout-ui-extensions@^0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.15.0.tgz#a21bd3a133bbf2927819eebe9cba5098d48bd5d8"
+  integrity sha512-qaD+zCyJ7GRGSaLIskvcC24Tugw8qM+CvtIQ1ykuttBndOg9s++k3fvbfsNEPKoQBv7brMA3HSyMJGEN197N7Q==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.7"
+    "@remote-ui/core" "^2.1.6"
 
 "@shopify/eslint-plugin@^41.2.0":
   version "41.2.1"
@@ -2283,9 +2301,9 @@
   integrity sha512-cfkwWw72849SNYp3Zx0IcIs25vABmFh73xicxhCkTcvtZQeIez15PpwQN8fY3RD7gv1Wrxlc9MEtfMORZDEsGw==
 
 "@types/node@^17.0.31":
-  version "17.0.34"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.34.tgz#3b0b6a50ff797280b8d000c6281d229f9c538cef"
-  integrity sha512-XImEz7XwTvDBtzlTnm8YvMqGW/ErMWBsKZ+hMTvnDIjGCKxwK5Xpc+c/oQjOauwq8M4OS11hEkpjX8rrI/eEgA==
+  version "17.0.35"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.35.tgz#635b7586086d51fb40de0a2ec9d1014a5283ba4a"
+  integrity sha512-vu1SrqBjbbZ3J6vwY17jBs8Sr/BKA+/a/WtjRG+whKg1iuLFOosq872EXS0eXWILdO36DHQQeku/ZcL6hz2fpg==
 
 "@types/node@^8.10.50":
   version "8.10.66"
@@ -2812,7 +2830,7 @@ array-back@^4.0.1, array-back@^4.0.2:
   resolved "https://registry.yarnpkg.com/array-back/-/array-back-4.0.2.tgz#8004e999a6274586beeb27342168652fdb89fa1e"
   integrity sha512-NbdMezxqf94cnNfWLL7V/im0Ub+Anbb0IoZhvzie8+4HJ4nMQuzHuy49FkGYCJK2yAloZ3meiB6AVMClbrI1vg==
 
-array-includes@^3.1.4:
+array-includes@^3.1.4, array-includes@^3.1.5:
   version "3.1.5"
   resolved "https://registry.yarnpkg.com/array-includes/-/array-includes-3.1.5.tgz#2c320010db8d31031fd2a5f6b3bbd4b1aad31bdb"
   integrity sha512-iSDYZMMyTPkiFasVqfuAQnWAYcvO/SeBSCGKePoEthjp4LEMTe4uLc7b025o4jAZpHhihh8xPo99TNWUWWkGDQ==
@@ -2838,7 +2856,7 @@ array.prototype.flat@^1.2.5:
     es-abstract "^1.19.2"
     es-shim-unscopables "^1.0.0"
 
-array.prototype.flatmap@^1.2.5:
+array.prototype.flatmap@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/array.prototype.flatmap/-/array.prototype.flatmap-1.3.0.tgz#a7e8ed4225f4788a70cd910abcf0791e76a5534f"
   integrity sha512-PZC9/8TKAIxcWKdyeb77EzULHPrIX/tIZebLJUQOMR1OwYosT8yggdfWScfTBCDj5utONvOuPQQumYsU2ULbkg==
@@ -4843,24 +4861,24 @@ eslint-plugin-react-hooks@^4.3.0:
   integrity sha512-8k1gRt7D7h03kd+SAAlzXkQwWK22BnK6GKZG+FJA6BAGy22CFvl8kCIXKpVux0cCxMWDQUPqSok0LKaZ0aOcCw==
 
 eslint-plugin-react@^7.27.1:
-  version "7.29.4"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-react/-/eslint-plugin-react-7.29.4.tgz#4717de5227f55f3801a5fd51a16a4fa22b5914d2"
-  integrity sha512-CVCXajliVh509PcZYRFyu/BoUEz452+jtQJq2b3Bae4v3xBUWPLCmtmBM+ZinG4MzwmxJgJ2M5rMqhqLVn7MtQ==
+  version "7.30.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-react/-/eslint-plugin-react-7.30.0.tgz#8e7b1b2934b8426ac067a0febade1b13bd7064e3"
+  integrity sha512-RgwH7hjW48BleKsYyHK5vUAvxtE9SMPDKmcPRQgtRCYaZA0XQPt5FSkrU3nhz5ifzMZcA8opwmRJ2cmOO8tr5A==
   dependencies:
-    array-includes "^3.1.4"
-    array.prototype.flatmap "^1.2.5"
+    array-includes "^3.1.5"
+    array.prototype.flatmap "^1.3.0"
     doctrine "^2.1.0"
     estraverse "^5.3.0"
     jsx-ast-utils "^2.4.1 || ^3.0.0"
     minimatch "^3.1.2"
     object.entries "^1.1.5"
     object.fromentries "^2.0.5"
-    object.hasown "^1.1.0"
+    object.hasown "^1.1.1"
     object.values "^1.1.5"
     prop-types "^15.8.1"
     resolve "^2.0.0-next.3"
     semver "^6.3.0"
-    string.prototype.matchall "^4.0.6"
+    string.prototype.matchall "^4.0.7"
 
 eslint-plugin-rulesdir@^0.2.1:
   version "0.2.1"
@@ -7655,7 +7673,7 @@ nanoid@^3.3.1:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.3.tgz#fd8e8b7aa761fe807dba2d1b98fb7241bb724a25"
   integrity sha512-p1sjXuopFs0xg+fPASzQ28agW1oHD7xDsd9Xkf3T15H3c/cifrFHVwrh74PdoklAPi+i7MdRsE47vm2r6JoB+w==
 
-nanoid@^3.3.3:
+nanoid@^3.3.4:
   version "3.3.4"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.4.tgz#730b67e3cd09e2deacf03c027c81c9d9dbc5e8ab"
   integrity sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==
@@ -7922,7 +7940,7 @@ object.fromentries@^2.0.5:
     define-properties "^1.1.3"
     es-abstract "^1.19.1"
 
-object.hasown@^1.1.0:
+object.hasown@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/object.hasown/-/object.hasown-1.1.1.tgz#ad1eecc60d03f49460600430d97f23882cf592a3"
   integrity sha512-LYLe4tivNQzq4JdaWW6WO3HMZZJWzkkH8fnI6EebWl0VZth2wL2Lovm74ep2/gZzlaTdV62JZHEqHQ2yVn8Q/A==
@@ -8454,11 +8472,11 @@ postcss@^8.4.12:
     source-map-js "^1.0.2"
 
 postcss@^8.4.13:
-  version "8.4.13"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.4.13.tgz#7c87bc268e79f7f86524235821dfdf9f73e5d575"
-  integrity sha512-jtL6eTBrza5MPzy8oJLFuUscHDXTV5KcLlqAWHl5q5WYRfnNRGSmOZmOZ1T6Gy7A99mOZfqungmZMpMmCVJ8ZA==
+  version "8.4.14"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.4.14.tgz#ee9274d5622b4858c1007a74d76e42e56fd21caf"
+  integrity sha512-E398TUmfAYFPBSdzgeieK2Y1+1cpdxJx8yXbK/m57nRhKSmk1GB2tO4lbLBtlkfPQTDKfe4Xqv1ASWPpayPEig==
   dependencies:
-    nanoid "^3.3.3"
+    nanoid "^3.3.4"
     picocolors "^1.0.0"
     source-map-js "^1.0.2"
 
@@ -9005,9 +9023,9 @@ rollup@^2.59.0:
     fsevents "~2.3.2"
 
 rollup@^2.71.1:
-  version "2.73.0"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.73.0.tgz#128fef4b333fd92d02d6929afbb6ee38d7feb32d"
-  integrity sha512-h/UngC3S4Zt28mB3g0+2YCMegT5yoftnQplwzPqGZcKvlld5e+kT/QRmJiL+qxGyZKOYpgirWGdLyEO1b0dpLQ==
+  version "2.74.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.74.0.tgz#4f460e7979b8ed1f3aa0489059480a504de28b4a"
+  integrity sha512-RRwXTX5+ObPJhcMV6zP3RdHvy90/lBOUfbzL7IKkFjMJGAqeBGZiv9nZWm/DoTESaTE3GBkkzbU9QVN2AuCkjw==
   optionalDependencies:
     fsevents "~2.3.2"
 
@@ -9509,7 +9527,7 @@ string-width@^1.0.1:
     is-fullwidth-code-point "^3.0.0"
     strip-ansi "^6.0.1"
 
-string.prototype.matchall@^4.0.6:
+string.prototype.matchall@^4.0.7:
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/string.prototype.matchall/-/string.prototype.matchall-4.0.7.tgz#8e6ecb0d8a1fb1fda470d81acecb2dba057a481d"
   integrity sha512-f48okCX7JiwVi1NXCVWcFnZgADDC/n2vePlQ/KUCNqCikLLilQvwjMO8+BHVKvgzH0JB0J9LEPgxOGT02RoETg==

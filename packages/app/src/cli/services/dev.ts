@@ -1,9 +1,11 @@
 import {ensureDevEnvironment} from './dev/environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
-import {App, AppConfiguration, Web, WebType} from '../models/app/app'
-import {output, port, system} from '@shopify/cli-kit'
+import {serveExtension} from './build/extension'
+import {App, AppConfiguration, Identifiers, Web, WebType} from '../models/app/app'
+import {output, path, port, session, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
+import {Writable} from 'node:stream'
 
 export interface DevOptions {
   app: App
@@ -43,7 +45,7 @@ async function dev(options: DevOptions) {
   View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
   `)
 
-  devWeb(options.app.webs, {
+  const devWebs = devWeb(options.app.webs, {
     apiKey: identifiers.app.apiKey,
     frontendPort,
     backendPort,
@@ -51,9 +53,15 @@ async function dev(options: DevOptions) {
     apiSecret: identifiers.app.apiSecret ?? '',
     hostname: url,
   })
+
+  console.log('READY TO DEV')
+
+  const devExt = await devExtensions(options.app, identifiers, url)
+
+  await output.concurrent([...devWebs, ...devExt])
 }
 
-async function devWeb(webs: Web[], options: DevWebOptions) {
+function devWeb(webs: Web[], options: DevWebOptions) {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
   const SHOPIFY_API_KEY = options.apiKey
 
@@ -72,42 +80,64 @@ async function devWeb(webs: Web[], options: DevWebOptions) {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
   const BACKEND_PORT = `${options.backendPort}`
 
-  await output.concurrent(
-    webs.map(({configuration, directory}: Web, _index) => {
-      const {commands, type} = configuration
-      const [cmd, ...args] = commands.dev.split(' ')
-      const env =
-        type === WebType.Backend
-          ? {
-              SHOPIFY_API_KEY,
-              SHOPIFY_API_SECRET,
-              HOST,
-              BACKEND_PORT,
-              SCOPES,
-            }
-          : {
-              SHOPIFY_API_KEY,
-              BACKEND_PORT,
-              FRONTEND_PORT,
-            }
+  const webActions = webs.map(({configuration, directory}: Web, _index) => {
+    const {commands, type} = configuration
+    const [cmd, ...args] = commands.dev.split(' ')
+    const env =
+      type === WebType.Backend
+        ? {
+            SHOPIFY_API_KEY,
+            SHOPIFY_API_SECRET,
+            HOST,
+            BACKEND_PORT,
+            SCOPES,
+          }
+        : {
+            SHOPIFY_API_KEY,
+            BACKEND_PORT,
+            FRONTEND_PORT,
+          }
 
-      return {
-        prefix: configuration.type,
-        action: async (stdout, stderr) => {
-          await system.exec(cmd, args, {
-            cwd: directory,
-            stdout,
-            stderr,
-            env: {
-              ...process.env,
-              ...env,
-              NODE_ENV: `development`,
-            },
-          })
-        },
+    return {
+      prefix: configuration.type,
+      action: async (stdout: any, stderr: any) => {
+        await system.exec(cmd, args, {
+          cwd: directory,
+          stdout,
+          stderr,
+          env: {
+            ...process.env,
+            ...env,
+            NODE_ENV: `development`,
+          },
+        })
+      },
+    }
+  })
+  return webActions
+}
+
+async function devExtensions(app: App, identifiers: Identifiers, url: string) {
+  console.log(app)
+  const token = await session.ensureAuthenticatedPartners()
+  return app.extensions.ui.map((extension) => ({
+    prefix: path.basename(extension.directory),
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      if (!(extension.configuration.name in identifiers.extensions)) {
+        // const ext = await createExtension(
+        //   identifiers.app.apiKey,
+        //   extension.configuration.type,
+        //   extension.configuration.name,
+        //   token,
+        // )
+        // console.log(ext)
+        return
       }
-    }),
-  )
+      const uuid = identifiers.extensions[extension.configuration.name]
+      console.log('SERVING: ', extension.configuration, uuid)
+      await serveExtension({app, extension, stdout, stderr, signal}, uuid, url)
+    },
+  }))
 }
 
 export default dev

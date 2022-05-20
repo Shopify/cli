@@ -3,7 +3,7 @@ import {App, UIExtension} from '../../models/app/app'
 import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
-interface ExtensionBuildOptions {
+export interface ExtensionBuildOptions {
   /**
    * Standard output stream to send the output through.
    */
@@ -50,6 +50,17 @@ export async function buildExtension(options: ExtensionBuildOptions): Promise<vo
   })
 }
 
+export async function serveExtension(options: ExtensionBuildOptions, uuid: string, url: string): Promise<void> {
+  options.stdout.write(`Serving extension...`)
+  const stdin = yaml.encode(await extensionConfig(options, uuid, url))
+  await runGoExtensionsCLI(['serve', '-', '--verbose'], {
+    cwd: options.app.directory,
+    stdout: options.stdout,
+    stderr: options.stderr,
+    stdin,
+  })
+}
+
 interface ExtensionConfigOptions {
   app: App
   extension: UIExtension
@@ -63,10 +74,19 @@ interface ExtensionConfigOptions {
  * @param extension {UIExtension} Extension that will be built.
  * @returns
  */
-async function extensionConfig(options: ExtensionConfigOptions): Promise<any> {
+export async function extensionConfig(options: ExtensionConfigOptions, uuid?: string, url?: string): Promise<any> {
   return {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    public_url: url,
+    port: 8000,
+    store: 'saky-dev-store.myshopify.com',
+    app: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      api_key: options.app.configuration.id,
+    },
     extensions: [
       {
+        uuid,
         title: options.extension.configuration.name,
         type: `${options.extension.configuration.type}_next`,
         metafields: options.extension.configuration.metafields,
@@ -81,6 +101,13 @@ async function extensionConfig(options: ExtensionConfigOptions): Promise<any> {
             : path.relative(options.extension.directory, options.extension.buildDirectory),
           entries: {
             main: path.relative(options.extension.directory, options.extension.entrySourceFilePath),
+          },
+          renderer: {
+            name: '@shopify/admin-ui-extensions',
+            version: '1.0.1',
+          },
+          resource: {
+            url: '/products/7550587502828',
           },
         },
       },

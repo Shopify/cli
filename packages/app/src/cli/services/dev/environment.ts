@@ -59,7 +59,8 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
           apiKey: selectedApp.apiKey,
           apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
         },
-        extensions: {},
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        extensions: {'ext-01': '44caf0ff-117c-4ccb-bcb1-71cef978d07c'},
       },
     }
   }
@@ -83,7 +84,8 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
         apiKey: selectedApp.apiKey,
         apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
       },
-      extensions: {},
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      extensions: {'ext-01': '44caf0ff-117c-4ccb-bcb1-71cef978d07c'},
     },
   }
 }
