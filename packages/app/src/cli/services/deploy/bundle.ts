@@ -27,7 +27,7 @@ export async function bundle(options: BundleOptions) {
             stdout,
             stderr,
             signal,
-            buildDirectory: path.join(bundleDirectory, extension.configuration.id as string),
+            buildDirectory: path.join(bundleDirectory, 'todo'),
           })
         },
       })),

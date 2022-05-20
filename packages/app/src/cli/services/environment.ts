@@ -2,7 +2,7 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, updateIdentifiers} from '../models/app/app'
+import {App, Identifiers, updateIdentifiers, getIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
@@ -42,7 +42,8 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const cachedInfo = getCachedInfo(options.reset, options.app.configuration.id)
+  const identifiers = await getIdentifiers({app: options.app, environmentType: 'local'})
+  const cachedInfo = getCachedInfo(options.reset, identifiers.app)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
@@ -57,7 +58,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
           app: selectedApp.apiKey,
           extensions: {},
         },
-        type: 'local',
+        environmentType: 'local',
       }),
     }
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
@@ -86,7 +87,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
         app: selectedApp.apiKey,
         extensions: {},
       },
-      type: 'local',
+      environmentType: 'local',
     }),
   }
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))

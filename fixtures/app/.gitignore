@@ -1,4 +1,5 @@
 # Environment Configuration
+.local.env
 .env
 
 # Dependency directory

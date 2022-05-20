@@ -16,6 +16,7 @@ describe('buildExtension', () => {
     const extensionName = 'myextension'
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
+      localIdentifier: extensionName,
       idEnvironmentVariable: 'SHOPIFY_MY_EXTENSION_ID',
       buildDirectory: `${extensionRoot}/build`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),

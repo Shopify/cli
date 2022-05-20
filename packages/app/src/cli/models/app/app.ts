@@ -384,20 +384,23 @@ export async function updateDependencies(app: App): Promise<App> {
 
 export type EnvironmentType = 'local' | 'production'
 
-export async function updateIdentifiers({
-  app,
-  identifiers,
-  type,
-}: {
+interface UpdateIdentifiersOptions {
   app: App
   identifiers: Identifiers
-  type: EnvironmentType
-}): Promise<App> {
+  environmentType: EnvironmentType
+}
+
+/**
+ * Given an app and a set of identifiers, it persists the identifiers in the .env files.
+ * @param options {UpdateIdentifiersOptions} Options.
+ * @returns {App} An copy of the app with the environment updated to reflect the updated identifiers.
+ */
+export async function updateIdentifiers({app, identifiers, environmentType}: UpdateIdentifiersOptions): Promise<App> {
   const envVariables = Object.keys(app.environment.env)
-  let dotenvFile = type === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production
+  let dotenvFile = environmentType === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production
   if (!dotenvFile) {
     dotenvFile = {
-      path: path.join(app.directory, dotEnvFileNames.local),
+      path: path.join(app.directory, environmentType === 'local' ? dotEnvFileNames.local : dotEnvFileNames.production),
       variables: {},
     }
   }
@@ -412,14 +415,34 @@ export async function updateIdentifiers({
     }
   })
   dotenvFile.variables = variables
-  dotenv.write(dotenvFile)
-  return app
+  await dotenv.write(dotenvFile)
+  return {
+    ...app,
+    environment: {
+      env: app.environment.env,
+      dotenv: {
+        local: environmentType === 'local' ? dotenvFile : app.environment.dotenv?.local,
+        production: environmentType === 'production' ? dotenvFile : app.environment.dotenv?.production,
+      },
+    },
+  }
 }
 
-export function getIdentifiers({app, type}: {app: App; type: EnvironmentType}): Partial<Identifiers> {
+interface GetIdentifiersOptions {
+  app: App
+  environmentType: EnvironmentType
+}
+
+/**
+ * Given an app and a environment, it fetches the ids from the environment
+ * and returns them.
+ * @param options {GetIdentifiersOptions} Options.
+ * @returns
+ */
+export function getIdentifiers({app, environmentType}: GetIdentifiersOptions): Partial<Identifiers> {
   const envVariables = {
     ...app.environment.env,
-    ...(type === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production)?.variables,
+    ...(environmentType === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production)?.variables,
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {

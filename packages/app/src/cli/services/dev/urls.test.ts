@@ -94,6 +94,7 @@ describe('generateURL', () => {
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
       idEnvironmentVariable: 'SHOPIFY_APP_ID',
+      localIdentifier: extensionName,
       buildDirectory: `${extensionRoot}/build`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {

@@ -3,7 +3,7 @@ import {selectOrCreateApp} from './select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
 import {DevEnvironmentOptions, ensureDevEnvironment} from '../environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {App, WebType, updateIdentifiers} from '../../models/app/app'
+import {App, WebType, updateIdentifiers, getIdentifiers} from '../../models/app/app'
 import {selectOrganizationPrompt} from '../../prompts/dev'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -65,7 +65,7 @@ const LOCAL_APP: App = {
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
-  configuration: {name: 'my-app', id: 'key1', scopes: 'read_products'},
+  configuration: {name: 'my-app', scopes: 'read_products'},
   webs: [
     {
       directory: '',
@@ -102,6 +102,7 @@ const FETCH_RESPONSE = {
 }
 
 beforeEach(async () => {
+  vi.mocked(getIdentifiers).mockResolvedValue({app: undefined})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1.shopDomain)
@@ -134,7 +135,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      type: 'local',
+      environmentType: 'local',
     })
   })
 
@@ -142,7 +143,9 @@ describe('ensureDevEnvironment', () => {
     // Given
     const outputMock = outputMocker.mockAndCapture()
     vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
-
+    vi.mocked(getIdentifiers).mockResolvedValue({
+      app: 'key1',
+    })
     // When
     const got = await ensureDevEnvironment(INPUT)
 
@@ -165,7 +168,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      type: 'local',
+      environmentType: 'local',
     })
     expect(outputMock.output()).toMatch(/Reusing the org, app, dev store settings from your last run:/)
   })
@@ -195,7 +198,7 @@ describe('ensureDevEnvironment', () => {
         app: APP2.apiKey,
         extensions: {},
       },
-      type: 'local',
+      environmentType: 'local',
     })
 
     expect(fetchOrganizations).toBeCalled()
@@ -206,6 +209,9 @@ describe('ensureDevEnvironment', () => {
 
   it('resets cached state if reset is true', async () => {
     // When
+    vi.mocked(getIdentifiers).mockResolvedValue({
+      app: APP1.apiKey,
+    })
     await ensureDevEnvironment({...INPUT, reset: true})
 
     // Then
