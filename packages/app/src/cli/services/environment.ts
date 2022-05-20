@@ -2,9 +2,8 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers} from '../models/app/app'
+import {App, Identifiers, updateIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {updateAppConfigurationFile} from '../utilities/app/update'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
 const InvalidApiKeyError = (apiKey: string) => {
@@ -14,7 +13,7 @@ const InvalidApiKeyError = (apiKey: string) => {
   )
 }
 
-export interface DevEnvironmentInput {
+export interface DevEnvironmentOptions {
   app: App
   apiKey?: string
   store?: string
@@ -41,15 +40,26 @@ interface DevEnvironmentOutput {
  * @param app {App} Current local app information
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
-export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
+export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const cachedInfo = getCachedInfo(input.reset, input.app.configuration.id)
+  const cachedInfo = getCachedInfo(options.reset, options.app.configuration.id)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
-  let {app: selectedApp, store: selectedStore} = await dataFromInput(input, organization, stores, token)
+  let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
   if (selectedApp && selectedStore) {
-    updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
+    // eslint-disable-next-line no-param-reassign
+    options = {
+      ...options,
+      app: await updateIdentifiers({
+        app: options.app,
+        identifiers: {
+          app: selectedApp.apiKey,
+          extensions: {},
+        },
+        type: 'local',
+      }),
+    }
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
     return {
       app: {
@@ -64,10 +74,21 @@ export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<
     }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(input.app, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
-  updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
+  // eslint-disable-next-line no-param-reassign
+  options = {
+    ...options,
+    app: await updateIdentifiers({
+      app: options.app,
+      identifiers: {
+        app: selectedApp.apiKey,
+        extensions: {},
+      },
+      type: 'local',
+    }),
+  }
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
@@ -140,7 +161,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
  * @returns
  */
 async function dataFromInput(
-  input: DevEnvironmentInput,
+  options: DevEnvironmentOptions,
   org: Organization,
   stores: OrganizationStore[],
   token: string,
@@ -148,14 +169,14 @@ async function dataFromInput(
   let selectedApp: OrganizationApp | undefined
   let selectedStore: string | undefined
 
-  if (input.apiKey) {
-    selectedApp = await fetchAppFromApiKey(input.apiKey, token)
-    if (!selectedApp) throw InvalidApiKeyError(input.apiKey)
+  if (options.apiKey) {
+    selectedApp = await fetchAppFromApiKey(options.apiKey, token)
+    if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
   }
 
-  if (input.store) {
-    await convertToTestStoreIfNeeded(input.store, stores, org, token)
-    selectedStore = input.store
+  if (options.store) {
+    await convertToTestStoreIfNeeded(options.store, stores, org, token)
+    selectedStore = options.store
   }
 
   return {app: selectedApp, store: selectedStore}

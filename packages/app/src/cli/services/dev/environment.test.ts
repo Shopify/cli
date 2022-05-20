@@ -1,11 +1,10 @@
 import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
-import {DevEnvironmentInput, ensureDevEnvironment} from '../environment'
+import {DevEnvironmentOptions, ensureDevEnvironment} from '../environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {App, WebType} from '../../models/app/app'
+import {App, WebType, updateIdentifiers} from '../../models/app/app'
 import {selectOrganizationPrompt} from '../../prompts/dev'
-import {updateAppConfigurationFile} from '../../utilities/app/update'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
@@ -84,12 +83,12 @@ const LOCAL_APP: App = {
   extensions: {ui: [], theme: [], function: []},
 }
 
-const INPUT: DevEnvironmentInput = {
+const INPUT: DevEnvironmentOptions = {
   app: LOCAL_APP,
   reset: false,
 }
 
-const INPUT_WITH_DATA: DevEnvironmentInput = {
+const INPUT_WITH_DATA: DevEnvironmentOptions = {
   app: LOCAL_APP,
   reset: false,
   apiKey: 'key1',
@@ -129,7 +128,14 @@ describe('ensureDevEnvironment', () => {
     })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
-    expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP1.title, id: APP1.apiKey})
+    expect(updateIdentifiers).toBeCalledWith({
+      app: LOCAL_APP,
+      identifiers: {
+        app: APP1.apiKey,
+        extensions: {},
+      },
+      type: 'local',
+    })
   })
 
   it('returns selected data and updates internal state, with cached state', async () => {
@@ -153,7 +159,14 @@ describe('ensureDevEnvironment', () => {
     expect(selectOrganizationPrompt).not.toBeCalled()
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
-    expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP1.title, id: APP1.apiKey})
+    expect(updateIdentifiers).toBeCalledWith({
+      app: LOCAL_APP,
+      identifiers: {
+        app: APP1.apiKey,
+        extensions: {},
+      },
+      type: 'local',
+    })
     expect(outputMock.output()).toMatch(/Reusing the org, app, dev store settings from your last run:/)
   })
 
@@ -176,7 +189,15 @@ describe('ensureDevEnvironment', () => {
       },
     })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
-    expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP2.title, id: APP2.apiKey})
+    expect(updateIdentifiers).toBeCalledWith({
+      app: LOCAL_APP,
+      identifiers: {
+        app: APP2.apiKey,
+        extensions: {},
+      },
+      type: 'local',
+    })
+
     expect(fetchOrganizations).toBeCalled()
     expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()

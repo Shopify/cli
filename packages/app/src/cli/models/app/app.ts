@@ -392,13 +392,19 @@ export async function updateIdentifiers({
   app: App
   identifiers: Identifiers
   type: EnvironmentType
-}) {}
+}): Promise<App> {
+  return app
+}
 
-export function identifiers({app, type}: {app: App; type: EnvironmentType}): Partial<Identifiers> {
+export function getIdentifiers({app, type}: {app: App; type: EnvironmentType}): Partial<Identifiers> {
   return {
     app: '123',
     extensions: {},
   }
+}
+
+export function getAppEnvironmentVariable({app, type}: {app: App; type: EnvironmentType}): string | undefined {
+  return ''
 }
 
 /**
