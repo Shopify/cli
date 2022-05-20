@@ -62,13 +62,11 @@ describe('initialize a extension', () => {
 
         const firstDependenciesCallArgs = addDependenciesCalls[0]
         expect(firstDependenciesCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
-        expect(firstDependenciesCallArgs[1].dependencyManager).toEqual('npm')
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
         expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
 
         const secondDependencyCallArgs = addDependenciesCalls[1]
         expect(secondDependencyCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
-        expect(secondDependencyCallArgs[1].dependencyManager).toEqual('npm')
         expect(secondDependencyCallArgs[1].type).toEqual('prod')
         expect(secondDependencyCallArgs[1].directory).toEqual(loadedApp.directory)
       })
