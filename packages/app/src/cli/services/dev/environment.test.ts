@@ -162,6 +162,7 @@ describe('ensureDevEnvironment', () => {
     expect(selectOrganizationPrompt).not.toBeCalled()
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
+<<<<<<< HEAD
     expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
@@ -171,6 +172,10 @@ describe('ensureDevEnvironment', () => {
       environmentType: 'local',
     })
     expect(outputMock.output()).toMatch(/Reusing the org, app, dev store settings from your last run:/)
+=======
+    expect(updateAppConfigurationFile).toBeCalledWith(LOCAL_APP, {name: APP1.title, id: APP1.apiKey})
+    expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
+>>>>>>> ffcd61fc (Update copies)
   })
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {

@@ -5,6 +5,7 @@ export async function generateURL(options: DevOptions, frontendPort: number): Pr
   const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
   if (!tunnelPlugin) throw new error.Abort('The tunnel could not be found')
   const url = await tunnelPlugin?.start({port: frontendPort})
+  output.success('The tunnel is running and you can now view your app')
   return url
 }
 
@@ -23,5 +24,4 @@ export async function updateURLs(apiKey: string, url: string): Promise<void> {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
-  output.success('Allowed redirection URLs updated in Partners Dashboard')
 }

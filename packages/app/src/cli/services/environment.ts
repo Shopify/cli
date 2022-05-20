@@ -44,6 +44,15 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   const token = await session.ensureAuthenticatedPartners()
   const identifiers = await getAppIdentifiers({app: options.app, environmentType: 'local'})
   const cachedInfo = getCachedInfo(options.reset, identifiers.app)
+
+  const explanation =
+    `\nLooks like this is the first time you're running dev for this project.\n` +
+    'Configure your preferences by answering a few questions.\n'
+
+  if (cachedInfo === undefined && !options.reset) {
+    output.info(explanation)
+  }
+
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
@@ -75,7 +84,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, selectedApp.title, selectedStore)
+    showReusedValues(organization.businessName, input.app, selectedStore)
   }
 
   return {
@@ -207,13 +216,14 @@ async function selectOrg(token: string): Promise<string> {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showReusedValues(org: string, app: string, store: string) {
-  output.info(`\nReusing the org, app, dev store settings from your last run:`)
-  output.info(`Organization: ${org}`)
-  output.info(`App: ${app}`)
-  output.info(`Dev store: ${store}\n`)
-  output.info('To change your default settings, use the following flags:')
-  output.info(`--api-key to change your app`)
-  output.info('--store to change your dev store')
-  output.info('--reset to reset all your settings\n')
+function showReusedValues(org: string, app: App, store: string) {
+  output.info('\nUsing your previous dev settings:')
+  output.info(`Org:        ${org}`)
+  output.info(`App:        ${app.configuration.name}`)
+  output.info(`Dev store:  ${store}\n`)
+  output.info(
+    output.content`To reset your default dev config, run ${output.token.command(
+      `${app.dependencyManager} dev --reset`,
+    )}\n`,
+  )
 }

@@ -22,7 +22,7 @@ export const deploy = async ({app}: DeployOptions) => {
   output.info('Pushing your code to Shopify...')
 
   output.newline()
-  output.success(`${app.configuration.name} deploy to Shopify Partners`)
+  output.success(`${app.configuration.name} deployed to Shopify Partners`)
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.configuration.name}.zip`)

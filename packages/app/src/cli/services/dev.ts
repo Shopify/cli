@@ -41,14 +41,19 @@ async function dev(options: DevOptions) {
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options, frontendPort)
+<<<<<<< HEAD
   if (options.update) await updateURLs(identifiers.app, url)
 
+=======
+  let updateMessage = ''
+  if (options.update) {
+    await updateURLs(identifiers.app.apiKey, url)
+    updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
+  }
+  const message = `${updateMessage}Preview link for viewing or sharing: `
+>>>>>>> ffcd61fc (Update copies)
   const storeAppUrl = `${url}/api/auth?shop=${store}`
-
-  output.info(output.content`
-  Your app is up and running! ✨
-  View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
-  `)
+  output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
 
   devWeb(options.app.webs, {
     apiKey: identifiers.app,
