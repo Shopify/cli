@@ -19,6 +19,7 @@ const LOCAL_APP: App = {
       },
     },
   ],
+  nodeDependencies: {},
   extensions: {ui: [], theme: [], function: []},
 }
 
