@@ -24,16 +24,6 @@ describe('ExtensionServerClient', () => {
     return {socket, client, options};
   }
 
-  // beforeEach(() => {
-  //   // eslint-disable-next-line jest/prefer-spy-on
-  //   global.fetch = jest.fn().mockImplementationOnce(() =>
-  //     Promise.resolve({
-  //       status: 400,
-  //       json: () => Promise.resolve({success: false, error: 'Something bad happened'}),
-  //     }),
-  //   );
-  // });
-
   describe('initialization', () => {
     it('connects to the target websocket', async () => {
       const {socket, client} = setup();
