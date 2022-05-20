@@ -49,20 +49,20 @@ async function dev(options: DevOptions) {
   View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
   `)
 
-  const devWebs = devWeb(options.app.webs, {
-    apiKey: identifiers.app.apiKey,
-    frontendPort,
-    backendPort,
-    scopes: options.app.configuration.scopes,
-    apiSecret: identifiers.app.apiSecret ?? '',
-    hostname: url,
-  })
+  // const devWebs = devWeb(options.app.webs, {
+  //   apiKey: identifiers.app.apiKey,
+  //   frontendPort,
+  //   backendPort,
+  //   scopes: options.app.configuration.scopes,
+  //   apiSecret: identifiers.app.apiSecret ?? '',
+  //   hostname: url,
+  // })
 
-  console.log('READY TO DEV')
+  // console.log('READY TO DEV')
 
-  const devExt = await devExtensions(options.app, identifiers, url)
+  const devExt = await devExtensions(options.app, identifiers, url, frontendPort)
 
-  await output.concurrent([...devWebs, ...devExt])
+  await output.concurrent([...devExt])
 }
 
 function devWeb(webs: Web[], options: DevWebOptions) {
@@ -121,8 +121,8 @@ function devWeb(webs: Web[], options: DevWebOptions) {
   return webActions
 }
 
-async function devExtensions(app: App, identifiers: Identifiers, url: string) {
-  console.log(app)
+async function devExtensions(app: App, identifiers: Identifiers, url: string, port: number) {
+  // console.log(app)
   const token = await session.ensureAuthenticatedPartners()
   return app.extensions.ui.map((extension) => ({
     prefix: path.basename(extension.directory),
@@ -139,7 +139,7 @@ async function devExtensions(app: App, identifiers: Identifiers, url: string) {
       }
       const uuid = identifiers.extensions[extension.configuration.name]
       console.log('SERVING: ', extension.configuration, uuid)
-      await serveExtension({app, extension, stdout, stderr, signal}, uuid, url)
+      await serveExtension({app, extension, stdout, stderr, signal}, uuid, url, port)
     },
   }))
 }

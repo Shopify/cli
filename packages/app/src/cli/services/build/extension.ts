@@ -1,5 +1,5 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from '../../utilities/extensions/cli'
-import {App, UIExtension} from '../../models/app/app'
+import {App, getUIExtensionRendererVersion, UIExtension} from '../../models/app/app'
 import {path, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
@@ -50,10 +50,17 @@ export async function buildExtension(options: ExtensionBuildOptions): Promise<vo
   })
 }
 
-export async function serveExtension(options: ExtensionBuildOptions, uuid: string, url: string): Promise<void> {
+export async function serveExtension(
+  options: ExtensionBuildOptions,
+  uuid: string,
+  url: string,
+  port: number,
+): Promise<void> {
   options.stdout.write(`Serving extension...`)
-  const stdin = yaml.encode(await extensionConfig(options, uuid, url))
-  await runGoExtensionsCLI(['serve', '-', '--verbose'], {
+  const config = await extensionConfig(options, uuid, url, port)
+  console.log(JSON.stringify(config, null, 2))
+  const stdin = yaml.encode(config)
+  await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
     stderr: options.stderr,
@@ -74,11 +81,20 @@ interface ExtensionConfigOptions {
  * @param extension {UIExtension} Extension that will be built.
  * @returns
  */
-export async function extensionConfig(options: ExtensionConfigOptions, uuid?: string, url?: string): Promise<any> {
+export async function extensionConfig(
+  options: ExtensionConfigOptions,
+  uuid?: string,
+  url?: string,
+  port?: number,
+): Promise<any> {
+  const renderer = getUIExtensionRendererVersion(options.extension.configuration.type, options.app)
+  console.log(renderer)
+  console.log(uuid)
+  console.log()
   return {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     public_url: url,
-    port: 8000,
+    port,
     store: 'saky-dev-store.myshopify.com',
     app: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -88,8 +104,11 @@ export async function extensionConfig(options: ExtensionConfigOptions, uuid?: st
       {
         uuid,
         title: options.extension.configuration.name,
-        type: `${options.extension.configuration.type}_next`,
+        type: `${options.extension.configuration.type}`,
         metafields: options.extension.configuration.metafields,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        extension_points: [],
+        // version: '1.0.1',
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
         development: {
@@ -102,13 +121,10 @@ export async function extensionConfig(options: ExtensionConfigOptions, uuid?: st
           entries: {
             main: path.relative(options.extension.directory, options.extension.entrySourceFilePath),
           },
-          renderer: {
-            name: '@shopify/admin-ui-extensions',
-            version: '1.0.1',
-          },
-          resource: {
-            url: '/products/7550587502828',
-          },
+          // template: 'javascript-react',
+          renderer,
+
+          // resource: {},
         },
       },
     ],
