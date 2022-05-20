@@ -7,6 +7,7 @@ import {
   uiExtensions,
   getUIExtensionRendererDependency,
   ExtensionTypes,
+  dotEnvFileNames,
 } from '../../constants'
 import {file, error, path, schema, string, toml, dependency, dotenv} from '@shopify/cli-kit'
 
@@ -28,7 +29,6 @@ export interface Identifiers {
 
 export const AppConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  id: schema.define.string().optional(),
   scopes: schema.define.string().default(''),
 })
 
@@ -37,7 +37,6 @@ export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema
 const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(uiExtensions.types),
-  id: schema.define.string().optional(),
   metafields: schema.define
     .array(
       schema.define.object({
@@ -65,25 +64,23 @@ const ThemeExtensionConfigurationSchema = schema.define.object({
 
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 
-export interface FunctionExtension {
+export interface Extension {
   idEnvironmentVariable: string
+  localIdentifier: string
+  configurationPath: string
+  directory: string
+}
+
+export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
-  configurationPath: string
-  directory: string
 }
 
-export interface ThemeExtension {
-  idEnvironmentVariable: string
+export type ThemeExtension = Extension & {
   configuration: ThemeExtensionConfiguration
-  configurationPath: string
-  directory: string
 }
 
-export interface UIExtension {
-  idEnvironmentVariable: string
+export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
-  configurationPath: string
-  directory: string
   buildDirectory: string
   entrySourceFilePath: string
 }
@@ -223,11 +220,11 @@ class AppLoader {
     let localEnv: dotenv.DotEnvFile | undefined
     let productionEnv: dotenv.DotEnvFile | undefined
 
-    const localEnvPath = path.join(this.appDirectory, '.local.env')
+    const localEnvPath = path.join(this.appDirectory, dotEnvFileNames.local)
     if (await file.exists(localEnvPath)) {
       localEnv = await dotenv.read(localEnvPath)
     }
-    const productionEnvPath = path.join(this.appDirectory, '.dev')
+    const productionEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
     if (await file.exists(productionEnvPath)) {
       productionEnv = await dotenv.read(productionEnvPath)
     }
@@ -319,6 +316,7 @@ class AppLoader {
         configurationPath,
         buildDirectory: path.join(directory, 'build'),
         entrySourceFilePath: path.join(directory, 'src/index.js'),
+        localIdentifier: path.basename(directory),
       }
     })
     return Promise.all(extensions)
@@ -336,6 +334,7 @@ class AppLoader {
         configuration,
         configurationPath,
         idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+        localIdentifier: path.basename(directory),
       }
     })
     return Promise.all(functions)
@@ -353,6 +352,7 @@ class AppLoader {
         configuration,
         configurationPath,
         idEnvironmentVariable: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+        localIdentifier: path.basename(directory),
       }
     })
     return Promise.all(themeExtensions)
@@ -393,18 +393,48 @@ export async function updateIdentifiers({
   identifiers: Identifiers
   type: EnvironmentType
 }): Promise<App> {
+  const envVariables = Object.keys(app.environment.env)
+  let dotenvFile = type === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production
+  if (!dotenvFile) {
+    dotenvFile = {
+      path: path.join(app.directory, dotEnvFileNames.local),
+      variables: {},
+    }
+  }
+  const variables: {[key: string]: string} = {}
+  if (!envVariables.includes(app.idEnvironmentVariable)) {
+    variables[app.idEnvironmentVariable] = identifiers.app
+  }
+  Object.keys(identifiers.extensions).forEach((identifier) => {
+    const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
+    if (!envVariables.includes(envVariable)) {
+      variables[envVariable] = identifiers.extensions[identifier]
+    }
+  })
+  dotenvFile.variables = variables
+  dotenv.write(dotenvFile)
   return app
 }
 
 export function getIdentifiers({app, type}: {app: App; type: EnvironmentType}): Partial<Identifiers> {
-  return {
-    app: '123',
-    extensions: {},
+  const envVariables = {
+    ...app.environment.env,
+    ...(type === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production)?.variables,
   }
-}
+  const extensionsIdentifiers: {[key: string]: string} = {}
+  const processExtension = (extension: Extension) => {
+    if (Object.keys(envVariables).includes(extension.idEnvironmentVariable)) {
+      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariable]
+    }
+  }
+  app.extensions.ui.forEach(processExtension)
+  app.extensions.function.forEach(processExtension)
+  app.extensions.theme.forEach(processExtension)
 
-export function getAppEnvironmentVariable({app, type}: {app: App; type: EnvironmentType}): string | undefined {
-  return ''
+  return {
+    app: envVariables[app.idEnvironmentVariable],
+    extensions: extensionsIdentifiers,
+  }
 }
 
 /**

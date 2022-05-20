@@ -183,6 +183,7 @@ scopes = "read_products"
     // Then
     expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
     expect(app.extensions.ui[0].idEnvironmentVariable).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -289,6 +290,7 @@ scopes = "read_products"
     // Then
     expect(app.extensions.function[0].configuration.name).toBe('my-function')
     expect(app.extensions.function[0].idEnvironmentVariable).toBe('SHOPIFY_MY_FUNCTION_ID')
+    expect(app.extensions.function[0].localIdentifier).toBe('my-function')
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -328,6 +330,8 @@ scopes = "read_products"
     expect(functions[1].configuration.name).toBe('my-function-2')
     expect(functions[0].idEnvironmentVariable).toBe('SHOPIFY_MY_FUNCTION_1_ID')
     expect(functions[1].idEnvironmentVariable).toBe('SHOPIFY_MY_FUNCTION_2_ID')
+    expect(functions[0].localIdentifier).toBe('my-function-1')
+    expect(functions[1].localIdentifier).toBe('my-function-2')
   })
 })
 
