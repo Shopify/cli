@@ -1,5 +1,5 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {blocks, ExtensionTypes, functionExtensions, getUIExtensionRendererDependency} from '../../constants'
+import {blocks, extensionTypeCategory, ExtensionTypes, getUIExtensionRendererDependency} from '../../constants'
 import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
@@ -26,12 +26,16 @@ interface ExtensionInitOptions {
 }
 
 async function extensionInit(options: ExtensionInitOptions) {
-  if (options.extensionType === 'theme') {
-    await themeExtensionInit(options)
-  } else if (functionExtensions.types.includes(options.extensionType)) {
-    await functionExtensionInit(options)
-  } else {
-    await uiExtensionInit(options)
+  switch (extensionTypeCategory(options.extensionType)) {
+    case 'theme':
+      await themeExtensionInit(options)
+      break
+    case 'function':
+      await functionExtensionInit(options)
+      break
+    case 'ui':
+      await uiExtensionInit(options)
+      break
   }
 }
 

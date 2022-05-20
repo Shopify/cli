@@ -3,7 +3,7 @@ import {ui} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
   name?: string
-  extensionType?: ExtensionTypes
+  extensionType?: string
 }
 
 interface ScaffoldExtensionOutput {
