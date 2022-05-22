@@ -1,10 +1,13 @@
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
-import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions, } from '../constants'
+import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
 import {os, output, path, store} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
   format: Format
+}
+interface Configurable {
+  configuration?: {type?: string}
 }
 
 export function info(app: App, {format}: InfoOptions) {
@@ -39,8 +42,8 @@ class AppInfo {
 
     let storeDescription = 'not configured'
     if (this.app.configuration.id) {
-      const storeFqdn = store.getAppInfo(this.app.configuration.id).storeFqdn
-      if (storeFqdn) storeDescription = storeFqdn
+      const storeInfo = store.getAppInfo(this.app.configuration.id)
+      if (storeInfo && storeInfo.storeFqdn) storeDescription = storeInfo.storeFqdn
     }
     const lines = [
       ['App', this.app.configuration.name],
@@ -67,42 +70,32 @@ class AppInfo {
 
     let body = `\n${this.webComponentsSection()}`
 
-    uiExtensions.types.forEach((extensionType: string) => {
-      const extensions = this.app.extensions.ui.filter((extension: UIExtension) => {
-        const configurationType = extension.configuration && extension.configuration.type
-        return configurationType === extensionType
-      })
-      if (extensions[0]) {
-        body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
-        extensions.forEach((extension: UIExtension) => {
-          body += `${this.uiExtensionSubSection(extension)}`
+    function augmentWithExtensions<TExtension extends Configurable>(
+      extensionTypes: ReadonlyArray<string>,
+      extensions: TExtension[],
+      outputFormatter: (extension: TExtension) => string,
+    ) {
+      extensionTypes.forEach((extensionType: string) => {
+        const relevantExtensions = extensions.filter((extension: TExtension) => {
+          const configurationType = extension.configuration && extension.configuration.type
+          return configurationType === extensionType
         })
-      }
-    })
-    themeExtensions.types.forEach((extensionType: string) => {
-      const extensions = this.app.extensions.theme.filter((extension: ThemeExtension) => {
-        const configurationType = extension.configuration && extension.configuration.type
-        return configurationType === extensionType
+        if (relevantExtensions[0]) {
+          body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
+          relevantExtensions.forEach((extension: TExtension) => {
+            body += `${outputFormatter(extension)}`
+          })
+        }
       })
-      if (extensions[0]) {
-        body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
-        extensions.forEach((extension: ThemeExtension) => {
-          body += `${this.themeExtensionSubSection(extension)}`
-        })
-      }
-    })
-    functionExtensions.types.forEach((extensionType: string) => {
-      const extensions = this.app.extensions.function.filter((extension: FunctionExtension) => {
-        const configurationType = extension.configuration && extension.configuration.type
-        return configurationType === extensionType
-      })
-      if (extensions[0]) {
-        body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
-        extensions.forEach((extension: FunctionExtension) => {
-          body += `${this.FunctionExtensionSubSection(extension)}`
-        })
-      }
-    })
+    }
+    augmentWithExtensions(uiExtensions.types, this.app.extensions.ui, this.uiExtensionSubSection.bind(this))
+    augmentWithExtensions(themeExtensions.types, this.app.extensions.theme, this.themeExtensionSubSection.bind(this))
+    augmentWithExtensions(
+      functionExtensions.types,
+      this.app.extensions.function,
+      this.functionExtensionSubSection.bind(this),
+    )
+
     const invalidExtensions = Object.values(this.app.extensions)
       .flat()
       .filter((extension) => !extension.configuration || !extension.configuration.type)
@@ -117,28 +110,26 @@ class AppInfo {
   }
 
   webComponentsSection(): string {
-    const errors = []
+    const errors: string[] = []
     const subtitle = [output.content`${output.token.subheading('web app')}`.value]
     const toplevel = ['📂 webs', '']
-    const sublevels = this.app.webs
-      .map((web) => {
-        const data: [string, string][] = []
-        if (web.configuration && web.configuration.type) {
-          data.push([`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)])
-        } else {
-          const error = this.app.errors.details[`${web.directory}/${configurationFileNames.web}`]
-          if (error) errors.push(error)
-        }
-        return data
-      })
-      .flat()
+    const sublevels: [string, string][] = []
+    this.app.webs.forEach((web) => {
+      if (web.configuration && web.configuration.type) {
+        sublevels.push([`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)])
+      } else if (this.app.errors) {
+        const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
+        if (error) errors.push(error)
+      }
+    })
     if (errors[0]) {
-      const errorHeadline = errors.length == 1 ? 'validation error' : 'validation errors'
-      const [errorFirstLine, ...errorRemainingLines] = errors.shift().split('\n')
+      const errorHeadline = errors.length === 1 ? 'validation error' : 'validation errors'
+      const firstError: string = errors.shift()!
+      const [errorFirstLine, ...errorRemainingLines] = firstError.split('\n')
       errors.forEach((error) => error.split('\n').forEach((line) => errorRemainingLines.push(line)))
 
-      sublevels.push([errorHeadline, errorFirstLine].map(this.errorText))
-      errorRemainingLines.forEach((line) => sublevels.push(['', line].map(this.errorText)))
+      sublevels.push([this.errorText(errorHeadline), this.errorText(errorFirstLine)])
+      errorRemainingLines.forEach((line) => sublevels.push(['', this.errorText(line)]))
     }
 
     return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}`
@@ -175,8 +166,8 @@ class AppInfo {
     return `\n${this.linesToColumns(details)}`
   }
 
-  invalidExtensionSubSection(extension: UiExtension | FunctionExtension | ThemeExtension) {
-    const [errorFirstLine, ...errorRemainingLines] = this.app.errors.details[extension.configurationPath].split('\n')
+  invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
+    const [errorFirstLine, ...errorRemainingLines] = this.app.errors!.getError(extension.configurationPath).split('\n')
     const details = [
       [`📂 extension root directory`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
@@ -187,7 +178,7 @@ class AppInfo {
     return `\n${this.linesToColumns(details)}`
   }
 
-  errorText(str: string) {
+  errorText(str: string): string {
     return output.content`${output.token.errorText(str)}`.value
   }
 

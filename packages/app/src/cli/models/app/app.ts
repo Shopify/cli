@@ -122,7 +122,7 @@ export interface App {
     theme: ThemeExtension[]
     function: FunctionExtension[]
   }
-  errors?: string[]
+  errors?: AppErrors
 }
 
 export type AppLoaderMode = 'strict' | 'report'
@@ -132,12 +132,34 @@ interface AppLoaderConstructorArgs {
   mode: AppLoaderMode
 }
 
+class AppErrors {
+  private errors: {
+    [key: string]: string
+  } = {}
+
+  addError(path: string, message: string): void {
+    this.errors[path] = message
+  }
+
+  getError(path: string): string {
+    return this.errors[path]
+  }
+
+  isEmpty() {
+    return Object.keys(this.errors).length === 0
+  }
+
+  toJSON(): string[] {
+    return Object.values(this.errors)
+  }
+}
+
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private appDirectory = ''
   private configurationPath = ''
-  private errors: string[] = []
+  private errors: AppErrors = new AppErrors()
 
   constructor({directory, mode}: AppLoaderConstructorArgs) {
     this.mode = mode
@@ -145,8 +167,6 @@ class AppLoader {
   }
 
   async loaded() {
-    this.errors = []
-    this.errors.details = {}
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
@@ -177,7 +197,7 @@ class AppLoader {
       dependencyManager,
       nodeDependencies,
     }
-    if (this.errors.length > 0) app.errors = this.errors
+    if (!this.errors.isEmpty()) app.errors = this.errors
     return app
   }
 
@@ -292,9 +312,7 @@ class AppLoader {
     if (this.mode === 'strict') {
       throw new error.Abort(errorMessage)
     } else {
-      this.errors.push(errorMessage)
-      // Also store errors by configurationPath for detailed display
-      this.errors.details[configurationPath] = errorMessage
+      this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
   }
