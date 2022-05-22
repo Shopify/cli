@@ -1,5 +1,5 @@
 import {App} from '../models/app/app'
-import {output} from '@shopify/cli-kit'
+import {os, output} from '@shopify/cli-kit'
 
 interface InfoOptions {
   format: 'json' | 'text'
@@ -38,7 +38,10 @@ class AppInfo {
       ['App', this.app.configuration.name],
       ['Dev store', 'not configured'],
     ]
-    return [title, this.linesToColumns(lines)]
+    const postscript = output.content`💡 To change these, run ${output.token.command(
+      `${this.app.dependencyManager} shopify dev --reset`,
+    )}`.value
+    return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 
   projectSettingsSection(): string {
@@ -59,14 +62,18 @@ class AppInfo {
 
   systemInfoSection(): string {
     const title = 'Tooling and System'
+    const {platform, arch} = os.platformAndArch()
     const lines = [
       ['Shopify CLI', this.app.nodeDependencies['@shopify/cli']],
       ['Package manager', this.app.dependencyManager],
-      ['OS', this.app.configuration.name],
+      ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL],
       ['Node version', process.version],
     ]
-    return [title, this.linesToColumns(lines)]
+    const postscript = output.content`💡 To update to the latest version of the Shopify CLI, run ${output.token.command(
+      `${this.app.dependencyManager} upgrade`,
+    )}`.value
+    return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 
   linesToColumns(lines: string[][]): string[] {
