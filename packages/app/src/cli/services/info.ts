@@ -1,5 +1,5 @@
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
-import {os, output, path} from '@shopify/cli-kit'
+import {os, output, path, store} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -35,9 +35,15 @@ class AppInfo {
 
   devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
+
+    let storeDescription = 'not configured'
+    if (this.app.configuration.id) {
+      const storeFqdn = store.getAppInfo(this.app.configuration.id).storeFqdn
+      if (storeFqdn) storeDescription = storeFqdn
+    }
     const lines = [
       ['App', this.app.configuration.name],
-      ['Dev store', 'not configured'],
+      ['Dev store', storeDescription],
     ]
     const postscript = output.content`💡 To change these, run ${output.token.command(
       `${this.app.dependencyManager} shopify dev --reset`,
@@ -49,7 +55,7 @@ class AppInfo {
     const title = 'Your Project'
     const lines = [
       ['Name', this.app.configuration.name],
-      ['API key', 'not configured'],
+      ['API key', this.app.configuration.id || 'not configured'],
       ['Root location', this.app.directory],
     ]
     return [title, this.linesToColumns(lines)]
