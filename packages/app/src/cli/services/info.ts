@@ -24,6 +24,7 @@ class AppInfo {
   output(): string {
     return [
       this.devConfigsSection(),
+      this.projectSettingsSection(),
     ].map((sectionContents) => this.section(...sectionContents)).join('\n\n')
   }
 
@@ -32,6 +33,16 @@ class AppInfo {
     const lines = [
       ['App', this.app.configuration.name],
       ['Dev store', 'not configured'],
+    ]
+    return [title, this.linesToColumns(lines)]
+  }
+
+  projectSettingsSection(): string {
+    const title = 'Your Project'
+    const lines = [
+      ['Name', this.app.configuration.name],
+      ['API key', 'not configured'],
+      ['Root location', this.app.directory],
     ]
     return [title, this.linesToColumns(lines)]
   }
@@ -56,6 +67,6 @@ class AppInfo {
   }
 
   section(title: string, body: string): string {
-    return output.content`${output.token.heading(title)}\n${body}`.value
+    return output.content`${output.token.heading(title.toUpperCase())}\n${body}`.value
   }
 }
