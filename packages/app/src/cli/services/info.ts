@@ -1,5 +1,5 @@
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
-import {functionExtensions, themeExtensions, uiExtensions} from '../constants'
+import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions, } from '../constants'
 import {os, output, path, store} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
@@ -68,9 +68,10 @@ class AppInfo {
     let body = `\n${this.webComponentsSection()}`
 
     uiExtensions.types.forEach((extensionType: string) => {
-      const extensions = this.app.extensions.ui.filter(
-        (extension: UIExtension) => extension.configuration.type === extensionType,
-      )
+      const extensions = this.app.extensions.ui.filter((extension: UIExtension) => {
+        const configurationType = extension.configuration && extension.configuration.type
+        return configurationType === extensionType
+      })
       if (extensions[0]) {
         body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
         extensions.forEach((extension: UIExtension) => {
@@ -79,9 +80,10 @@ class AppInfo {
       }
     })
     themeExtensions.types.forEach((extensionType: string) => {
-      const extensions = this.app.extensions.theme.filter(
-        (extension: ThemeExtension) => extension.configuration.type === extensionType,
-      )
+      const extensions = this.app.extensions.theme.filter((extension: ThemeExtension) => {
+        const configurationType = extension.configuration && extension.configuration.type
+        return configurationType === extensionType
+      })
       if (extensions[0]) {
         body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
         extensions.forEach((extension: ThemeExtension) => {
@@ -90,26 +92,54 @@ class AppInfo {
       }
     })
     functionExtensions.types.forEach((extensionType: string) => {
-      const extensions = this.app.extensions.theme.filter(
-        (extension: ThemeExtension) => extension.configuration.type === extensionType,
-      )
+      const extensions = this.app.extensions.function.filter((extension: FunctionExtension) => {
+        const configurationType = extension.configuration && extension.configuration.type
+        return configurationType === extensionType
+      })
       if (extensions[0]) {
         body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
-        extensions.forEach((extension: ThemeExtension) => {
-          body += `${this.themeExtensionSubSection(extension)}`
+        extensions.forEach((extension: FunctionExtension) => {
+          body += `${this.FunctionExtensionSubSection(extension)}`
         })
       }
     })
+    const invalidExtensions = Object.values(this.app.extensions)
+      .flat()
+      .filter((extension) => !extension.configuration || !extension.configuration.type)
+    if (invalidExtensions[0]) {
+      body += `\n\n${output.content`${output.token.subheading('Invalid Extensions')}`.value}`
+      invalidExtensions.forEach((extension) => {
+        body += `${this.invalidExtensionSubSection(extension)}`
+      })
+    }
 
     return [title, body]
   }
 
   webComponentsSection(): string {
+    const errors = []
     const subtitle = [output.content`${output.token.subheading('web app')}`.value]
     const toplevel = ['📂 webs', '']
-    const sublevels = this.app.webs.map((web) => {
-      return [`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)]
-    })
+    const sublevels = this.app.webs
+      .map((web) => {
+        const data: [string, string][] = []
+        if (web.configuration && web.configuration.type) {
+          data.push([`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)])
+        } else {
+          const error = this.app.errors.details[`${web.directory}/${configurationFileNames.web}`]
+          if (error) errors.push(error)
+        }
+        return data
+      })
+      .flat()
+    if (errors[0]) {
+      const errorHeadline = errors.length == 1 ? 'validation error' : 'validation errors'
+      const [errorFirstLine, ...errorRemainingLines] = errors.shift().split('\n')
+      errors.forEach((error) => error.split('\n').forEach((line) => errorRemainingLines.push(line)))
+
+      sublevels.push([errorHeadline, errorFirstLine].map(this.errorText))
+      errorRemainingLines.forEach((line) => sublevels.push(['', line].map(this.errorText)))
+    }
 
     return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}`
   }
@@ -119,7 +149,7 @@ class AppInfo {
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
-      ['     metafields', `${config.metafields.length}`],
+      ['     metafields', config ? `${config.metafields.length}` : 'configuration invalid'],
     ]
 
     return `\n${this.linesToColumns(details)}`
@@ -143,6 +173,22 @@ class AppInfo {
     ]
 
     return `\n${this.linesToColumns(details)}`
+  }
+
+  invalidExtensionSubSection(extension: UiExtension | FunctionExtension | ThemeExtension) {
+    const [errorFirstLine, ...errorRemainingLines] = this.app.errors.details[extension.configurationPath].split('\n')
+    const details = [
+      [`📂 extension root directory`, path.relative(this.app.directory, extension.directory)],
+      ['     config file', path.relative(extension.directory, extension.configurationPath)],
+      ['     validation error', errorFirstLine].map(this.errorText),
+      ...errorRemainingLines.map((line) => ['', line].map(this.errorText)),
+    ]
+
+    return `\n${this.linesToColumns(details)}`
+  }
+
+  errorText(str: string) {
+    return output.content`${output.token.errorText(str)}`.value
   }
 
   accessScopesSection(): [string, string] {

@@ -146,6 +146,7 @@ class AppLoader {
 
   async loaded() {
     this.errors = []
+    this.errors.details = {}
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
@@ -223,7 +224,7 @@ class AppLoader {
 
   async loadConfigurationFile(path: string): Promise<object> {
     if (!(await file.exists(path))) {
-      return this.abortOrReport(`Couldn't find the configuration file at ${path}`, '')
+      return this.abortOrReport(`Couldn't find the configuration file at ${path}`, '', path)
     }
     const configurationContent = await file.read(path)
     // Convert snake_case keys to camelCase before returning
@@ -240,7 +241,7 @@ class AppLoader {
 
     const parseResult = schema.safeParse(configurationObject)
     if (!parseResult.success) {
-      this.abortOrReport(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`, {})
+      this.abortOrReport(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`, {}, path)
     }
     return parseResult.data
   }
@@ -287,11 +288,13 @@ class AppLoader {
     return Promise.all(themeExtensions)
   }
 
-  abortOrReport(errorMessage: string, fallback: any = null) {
+  abortOrReport(errorMessage: string, fallback: any = null, configurationPath: string) {
     if (this.mode === 'strict') {
       throw new error.Abort(errorMessage)
     } else {
       this.errors.push(errorMessage)
+      // Also store errors by configurationPath for detailed display
+      this.errors.details[configurationPath] = errorMessage
       return fallback
     }
   }
