@@ -88,8 +88,8 @@ class AppInfo {
     const subtitle = [output.content`${output.token.subheading(config.type)}`.value]
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
-      ['    config file', path.relative(extension.directory, extension.configurationPath)],
-      ['    metafields', `${config.metafields.length}`],
+      ['     config file', path.relative(extension.directory, extension.configurationPath)],
+      ['     metafields', `${config.metafields.length}`],
     ]
 
     return `${subtitle}\n${this.linesToColumns(details)}`
@@ -100,7 +100,7 @@ class AppInfo {
     const subtitle = output.content`${output.token.subheading(config.type)}`.value
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
-      ['    config file', path.relative(extension.directory, extension.configurationPath)],
+      ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
     return `${subtitle}\n${this.linesToColumns(details)}`
@@ -111,7 +111,7 @@ class AppInfo {
     const subtitle = output.content`${output.token.subheading(config.type)}`.value
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
-      ['    config file', path.relative(extension.directory, extension.configurationPath)],
+      ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
     return `${subtitle}\n${this.linesToColumns(details)}`
