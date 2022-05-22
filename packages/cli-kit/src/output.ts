@@ -12,6 +12,7 @@ enum ContentTokenType {
   Path,
   Link,
   Heading,
+  SubHeading,
   Yellow,
   Cyan,
   Magenta,
@@ -46,6 +47,9 @@ export const token = {
   },
   heading: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Heading)
+  },
+  subheading: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.SubHeading)
   },
   cyan: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Cyan)
@@ -96,6 +100,9 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Heading:
           output += colors.bold.underline(enumToken.value)
+          break
+        case ContentTokenType.SubHeading:
+          output += colors.underline(enumToken.value)
           break
         case ContentTokenType.Yellow:
           output += colors.yellow(enumToken.value)

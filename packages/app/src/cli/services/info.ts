@@ -1,11 +1,12 @@
 import {App} from '../models/app/app'
-import {os, output} from '@shopify/cli-kit'
+import {os, output, path} from '@shopify/cli-kit'
 
+export type Format = 'json' | 'text'
 interface InfoOptions {
-  format: 'json' | 'text'
+  format: Format
 }
 
-export default function info(app: App, {format}: InfoOptions) {
+export function info(app: App, {format}: InfoOptions) {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {
@@ -17,22 +18,22 @@ export default function info(app: App, {format}: InfoOptions) {
 class AppInfo {
   private app: App
 
-  constructor(app) {
+  constructor(app: App) {
     this.app = app
   }
 
   output(): string {
-    return [
+    const sections: [string, string][] = [
       this.devConfigsSection(),
       this.projectSettingsSection(),
+      this.appComponentsSection(),
       this.accessScopesSection(),
       this.systemInfoSection(),
     ]
-      .map((sectionContents) => this.section(...sectionContents))
-      .join('\n\n')
+    return sections.map((sectionContents: [string, string]) => this.section(...sectionContents)).join('\n\n')
   }
 
-  devConfigsSection(): string {
+  devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
     const lines = [
       ['App', this.app.configuration.name],
@@ -44,7 +45,7 @@ class AppInfo {
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 
-  projectSettingsSection(): string {
+  projectSettingsSection(): [string, string] {
     const title = 'Your Project'
     const lines = [
       ['Name', this.app.configuration.name],
@@ -54,20 +55,32 @@ class AppInfo {
     return [title, this.linesToColumns(lines)]
   }
 
-  accessScopesSection(): string {
+  appComponentsSection(): [string, string] {
+    const title = 'Directory Components'
+
+    const subtitle = [output.content`${output.token.subheading('web app')}`.value, '']
+    const toplevel = ['📂 webs', '']
+    const sublevels = this.app.webs.map((web) => {
+      return [`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)]
+    })
+
+    return [title, this.linesToColumns([subtitle, toplevel, ...sublevels])]
+  }
+
+  accessScopesSection(): [string, string] {
     const title = 'Access Scopes in Root TOML File'
     const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
     return [title, this.linesToColumns(lines)]
   }
 
-  systemInfoSection(): string {
+  systemInfoSection(): [string, string] {
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
-    const lines = [
+    const lines: string[][] = [
       ['Shopify CLI', this.app.nodeDependencies['@shopify/cli']],
       ['Package manager', this.app.dependencyManager],
       ['OS', `${platform}-${arch}`],
-      ['Shell', process.env.SHELL],
+      ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
     const postscript = output.content`💡 To update to the latest version of the Shopify CLI, run ${output.token.command(
@@ -76,7 +89,7 @@ class AppInfo {
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 
-  linesToColumns(lines: string[][]): string[] {
+  linesToColumns(lines: string[][]): string {
     const widths: number[] = []
     for (let i = 0; i < lines[0].length; i++) {
       const columnRows = lines.map((line) => line[i])
@@ -89,7 +102,7 @@ class AppInfo {
             return `${col}${' '.repeat(widths[index] - col.length)}`
           })
           .join('   ')
-          .trim()
+          .trimEnd()
       })
       .join('\n')
     return paddedLines
