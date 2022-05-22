@@ -1,4 +1,4 @@
-import {App} from '../models/app/app'
+import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
 import {os, output, path} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
@@ -58,13 +58,63 @@ class AppInfo {
   appComponentsSection(): [string, string] {
     const title = 'Directory Components'
 
-    const subtitle = [output.content`${output.token.subheading('web app')}`.value, '']
+    let body = `\n${this.webComponentsSection()}`
+
+    this.app.extensions.ui.forEach((extension: UIExtension) => {
+      body += `\n\n${this.uiExtensionSubSection(extension)}`
+    })
+    this.app.extensions.theme.forEach((extension: ThemeExtension) => {
+      body += `\n\n${this.themeExtensionSubSection(extension)}`
+    })
+    this.app.extensions.function.forEach((extension: FunctionExtension) => {
+      body += `\n\n${this.functionExtensionSubSection(extension)}`
+    })
+
+    return [title, body]
+  }
+
+  webComponentsSection(): string {
+    const subtitle = [output.content`${output.token.subheading('web app')}`.value]
     const toplevel = ['📂 webs', '']
     const sublevels = this.app.webs.map((web) => {
       return [`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)]
     })
 
-    return [title, this.linesToColumns([subtitle, toplevel, ...sublevels])]
+    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}`
+  }
+
+  uiExtensionSubSection(extension: UIExtension): string {
+    const config = extension.configuration
+    const subtitle = [output.content`${output.token.subheading(config.type)}`.value]
+    const details = [
+      [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
+      ['    config file', path.relative(extension.directory, extension.configurationPath)],
+      ['    metafields', `${config.metafields.length}`],
+    ]
+
+    return `${subtitle}\n${this.linesToColumns(details)}`
+  }
+
+  functionExtensionSubSection(extension: FunctionExtension): string {
+    const config = extension.configuration
+    const subtitle = output.content`${output.token.subheading(config.type)}`.value
+    const details = [
+      [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
+      ['    config file', path.relative(extension.directory, extension.configurationPath)],
+    ]
+
+    return `${subtitle}\n${this.linesToColumns(details)}`
+  }
+
+  themeExtensionSubSection(extension: ThemeExtension): string {
+    const config = extension.configuration
+    const subtitle = output.content`${output.token.subheading(config.type)}`.value
+    const details = [
+      [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
+      ['    config file', path.relative(extension.directory, extension.configurationPath)],
+    ]
+
+    return `${subtitle}\n${this.linesToColumns(details)}`
   }
 
   accessScopesSection(): [string, string] {
@@ -93,13 +143,13 @@ class AppInfo {
     const widths: number[] = []
     for (let i = 0; i < lines[0].length; i++) {
       const columnRows = lines.map((line) => line[i])
-      widths.push(Math.max(...columnRows.map((row) => row.length)))
+      widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
     }
     const paddedLines = lines
       .map((line) => {
         return line
           .map((col, index) => {
-            return `${col}${' '.repeat(widths[index] - col.length)}`
+            return `${col}${' '.repeat(widths[index] - output.unstyled(col).length)}`
           })
           .join('   ')
           .trimEnd()

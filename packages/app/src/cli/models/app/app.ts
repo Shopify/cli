@@ -69,13 +69,13 @@ const ThemeExtensionConfigurationSchema = schema.define.object({
 
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 
-interface FunctionExtension {
+export interface FunctionExtension {
   configuration: FunctionExtensionConfiguration
   configurationPath: string
   directory: string
 }
 
-interface ThemeExtension {
+export interface ThemeExtension {
   configuration: ThemeExtensionConfiguration
   configurationPath: string
   directory: string

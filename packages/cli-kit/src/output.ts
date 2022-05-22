@@ -391,8 +391,12 @@ function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
     return message
   } else {
-    return colors.unstyle(message)
+    return unstyled(message)
   }
+}
+
+export function unstyled(message: string): string {
+  return colors.unstyle(message)
 }
 
 export function shouldDisplayColors(): boolean {
