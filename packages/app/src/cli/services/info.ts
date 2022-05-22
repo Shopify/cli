@@ -25,6 +25,7 @@ class AppInfo {
     return [
       this.devConfigsSection(),
       this.projectSettingsSection(),
+      this.accessScopesSection(),
     ].map((sectionContents) => this.section(...sectionContents)).join('\n\n')
   }
 
@@ -44,6 +45,12 @@ class AppInfo {
       ['API key', 'not configured'],
       ['Root location', this.app.directory],
     ]
+    return [title, this.linesToColumns(lines)]
+  }
+
+  accessScopesSection(): string {
+    const title = 'Access Scopes in Root TOML File'
+    const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
     return [title, this.linesToColumns(lines)]
   }
 
