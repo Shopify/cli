@@ -26,7 +26,10 @@ class AppInfo {
       this.devConfigsSection(),
       this.projectSettingsSection(),
       this.accessScopesSection(),
-    ].map((sectionContents) => this.section(...sectionContents)).join('\n\n')
+      this.systemInfoSection(),
+    ]
+      .map((sectionContents) => this.section(...sectionContents))
+      .join('\n\n')
   }
 
   devConfigsSection(): string {
@@ -51,6 +54,18 @@ class AppInfo {
   accessScopesSection(): string {
     const title = 'Access Scopes in Root TOML File'
     const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
+    return [title, this.linesToColumns(lines)]
+  }
+
+  systemInfoSection(): string {
+    const title = 'Tooling and System'
+    const lines = [
+      ['Shopify CLI', this.app.nodeDependencies['@shopify/cli']],
+      ['Package manager', this.app.dependencyManager],
+      ['OS', this.app.configuration.name],
+      ['Shell', process.env.SHELL],
+      ['Node version', process.version],
+    ]
     return [title, this.linesToColumns(lines)]
   }
 
