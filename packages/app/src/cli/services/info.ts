@@ -1,4 +1,5 @@
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
+import {functionExtensions, themeExtensions, uiExtensions} from '../constants'
 import {os, output, path, store} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
@@ -66,14 +67,38 @@ class AppInfo {
 
     let body = `\n${this.webComponentsSection()}`
 
-    this.app.extensions.ui.forEach((extension: UIExtension) => {
-      body += `\n\n${this.uiExtensionSubSection(extension)}`
+    uiExtensions.types.forEach((extensionType: string) => {
+      const extensions = this.app.extensions.ui.filter(
+        (extension: UIExtension) => extension.configuration.type === extensionType,
+      )
+      if (extensions[0]) {
+        body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
+        extensions.forEach((extension: UIExtension) => {
+          body += `${this.uiExtensionSubSection(extension)}`
+        })
+      }
     })
-    this.app.extensions.theme.forEach((extension: ThemeExtension) => {
-      body += `\n\n${this.themeExtensionSubSection(extension)}`
+    themeExtensions.types.forEach((extensionType: string) => {
+      const extensions = this.app.extensions.theme.filter(
+        (extension: ThemeExtension) => extension.configuration.type === extensionType,
+      )
+      if (extensions[0]) {
+        body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
+        extensions.forEach((extension: ThemeExtension) => {
+          body += `${this.themeExtensionSubSection(extension)}`
+        })
+      }
     })
-    this.app.extensions.function.forEach((extension: FunctionExtension) => {
-      body += `\n\n${this.functionExtensionSubSection(extension)}`
+    functionExtensions.types.forEach((extensionType: string) => {
+      const extensions = this.app.extensions.theme.filter(
+        (extension: ThemeExtension) => extension.configuration.type === extensionType,
+      )
+      if (extensions[0]) {
+        body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
+        extensions.forEach((extension: ThemeExtension) => {
+          body += `${this.themeExtensionSubSection(extension)}`
+        })
+      }
     })
 
     return [title, body]
@@ -91,36 +116,33 @@ class AppInfo {
 
   uiExtensionSubSection(extension: UIExtension): string {
     const config = extension.configuration
-    const subtitle = [output.content`${output.token.subheading(config.type)}`.value]
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
       ['     metafields', `${config.metafields.length}`],
     ]
 
-    return `${subtitle}\n${this.linesToColumns(details)}`
+    return `\n${this.linesToColumns(details)}`
   }
 
   functionExtensionSubSection(extension: FunctionExtension): string {
     const config = extension.configuration
-    const subtitle = output.content`${output.token.subheading(config.type)}`.value
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `${subtitle}\n${this.linesToColumns(details)}`
+    return `\n${this.linesToColumns(details)}`
   }
 
   themeExtensionSubSection(extension: ThemeExtension): string {
     const config = extension.configuration
-    const subtitle = output.content`${output.token.subheading(config.type)}`.value
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `${subtitle}\n${this.linesToColumns(details)}`
+    return `\n${this.linesToColumns(details)}`
   }
 
   accessScopesSection(): [string, string] {
