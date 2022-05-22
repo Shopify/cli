@@ -165,6 +165,7 @@ class AppInfo {
   }
 
   section(title: string, body: string): string {
-    return output.content`${output.token.heading(title.toUpperCase())}\n${body}`.value
+    const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
+    return output.content`${output.token.heading(formattedTitle)}\n${body}`.value
   }
 }
