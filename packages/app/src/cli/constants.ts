@@ -90,6 +90,7 @@ export function getUIExtensionRendererDependency(extensionType: ExtensionTypes):
       return '@shopify/checkout-ui-extensions-react'
     case 'checkout_post_purchase':
       return '@shopify/post-purchase-ui-extensions-react'
+    default:
+      return undefined
   }
-  return undefined
 }

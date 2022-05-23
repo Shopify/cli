@@ -127,8 +127,9 @@ export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOption
         dependencies.push(rendererDependency)
       }
       return dependencies
+    default:
+      return []
   }
-  return []
 }
 
 async function functionExtensionInit(options: ExtensionInitOptions) {
