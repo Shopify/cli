@@ -28,6 +28,7 @@ describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
     // Given
     const app: App = {
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       configuration: {
         name: 'App',
         scopes: '',
@@ -41,6 +42,10 @@ describe('installAppDependencies', () => {
       },
       webs: [],
       nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
     const listRun = vi.fn().mockResolvedValue(undefined)

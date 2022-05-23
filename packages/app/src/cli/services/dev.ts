@@ -33,12 +33,16 @@ async function dev(options: DevOptions) {
       app: await installAppDependencies(options.app),
     }
   }
-  const {identifiers, store} = await ensureDevEnvironment(options)
+  const {
+    identifiers,
+    store,
+    app: {apiSecret},
+  } = await ensureDevEnvironment(options)
 
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options, frontendPort)
-  if (options.update) await updateURLs(identifiers.app.apiKey, url)
+  if (options.update) await updateURLs(identifiers.app, url)
 
   const storeAppUrl = `${url}/api/auth?shop=${store}`
 
@@ -48,11 +52,11 @@ async function dev(options: DevOptions) {
   `)
 
   devWeb(options.app.webs, {
-    apiKey: identifiers.app.apiKey,
+    apiKey: identifiers.app,
     frontendPort,
     backendPort,
     scopes: options.app.configuration.scopes,
-    apiSecret: identifiers.app.apiSecret ?? '',
+    apiSecret: apiSecret as string,
     hostname: url,
   })
 }

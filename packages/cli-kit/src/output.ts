@@ -71,7 +71,7 @@ export const token = {
 
 // output.content`Something ${output.token.command(Something)}`
 
-class TokenizedString {
+export class TokenizedString {
   value: string
   constructor(value: string) {
     this.value = value
