@@ -11,6 +11,9 @@ enum ContentTokenType {
   Command,
   Path,
   Link,
+  Heading,
+  SubHeading,
+  ErrorText,
   Yellow,
   Cyan,
   Magenta,
@@ -42,6 +45,15 @@ export const token = {
   },
   link: (value: string, link: string) => {
     return new ContentToken(value, {link}, ContentTokenType.Link)
+  },
+  heading: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Heading)
+  },
+  subheading: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.SubHeading)
+  },
+  errorText: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.ErrorText)
   },
   cyan: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Cyan)
@@ -89,6 +101,15 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Link:
           output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
+          break
+        case ContentTokenType.Heading:
+          output += colors.bold.underline(enumToken.value)
+          break
+        case ContentTokenType.SubHeading:
+          output += colors.underline(enumToken.value)
+          break
+        case ContentTokenType.ErrorText:
+          output += colors.bold.redBright(enumToken.value)
           break
         case ContentTokenType.Yellow:
           output += colors.yellow(enumToken.value)
@@ -377,8 +398,12 @@ function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
     return message
   } else {
-    return colors.unstyle(message)
+    return unstyled(message)
   }
+}
+
+export function unstyled(message: string): string {
+  return colors.unstyle(message)
 }
 
 export function shouldDisplayColors(): boolean {

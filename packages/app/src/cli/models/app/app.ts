@@ -69,13 +69,13 @@ const ThemeExtensionConfigurationSchema = schema.define.object({
 
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 
-interface FunctionExtension {
+export interface FunctionExtension {
   configuration: FunctionExtensionConfiguration
   configurationPath: string
   directory: string
 }
 
-interface ThemeExtension {
+export interface ThemeExtension {
   configuration: ThemeExtensionConfiguration
   configurationPath: string
   directory: string
@@ -122,7 +122,7 @@ export interface App {
     theme: ThemeExtension[]
     function: FunctionExtension[]
   }
-  errors?: string[]
+  errors?: AppErrors
 }
 
 export type AppLoaderMode = 'strict' | 'report'
@@ -132,12 +132,34 @@ interface AppLoaderConstructorArgs {
   mode: AppLoaderMode
 }
 
+class AppErrors {
+  private errors: {
+    [key: string]: string
+  } = {}
+
+  addError(path: string, message: string): void {
+    this.errors[path] = message
+  }
+
+  getError(path: string): string {
+    return this.errors[path]
+  }
+
+  isEmpty() {
+    return Object.keys(this.errors).length === 0
+  }
+
+  toJSON(): string[] {
+    return Object.values(this.errors)
+  }
+}
+
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private appDirectory = ''
   private configurationPath = ''
-  private errors: string[] = []
+  private errors: AppErrors = new AppErrors()
 
   constructor({directory, mode}: AppLoaderConstructorArgs) {
     this.mode = mode
@@ -145,7 +167,6 @@ class AppLoader {
   }
 
   async loaded() {
-    this.errors = []
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
@@ -176,7 +197,7 @@ class AppLoader {
       dependencyManager,
       nodeDependencies,
     }
-    if (this.errors.length > 0) app.errors = this.errors
+    if (!this.errors.isEmpty()) app.errors = this.errors
     return app
   }
 
@@ -223,7 +244,7 @@ class AppLoader {
 
   async loadConfigurationFile(path: string): Promise<object> {
     if (!(await file.exists(path))) {
-      return this.abortOrReport(`Couldn't find the configuration file at ${path}`, '')
+      return this.abortOrReport(`Couldn't find the configuration file at ${path}`, '', path)
     }
     const configurationContent = await file.read(path)
     // Convert snake_case keys to camelCase before returning
@@ -240,7 +261,7 @@ class AppLoader {
 
     const parseResult = schema.safeParse(configurationObject)
     if (!parseResult.success) {
-      this.abortOrReport(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`, {})
+      this.abortOrReport(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`, {}, path)
     }
     return parseResult.data
   }
@@ -287,11 +308,11 @@ class AppLoader {
     return Promise.all(themeExtensions)
   }
 
-  abortOrReport(errorMessage: string, fallback: any = null) {
+  abortOrReport(errorMessage: string, fallback: any = null, configurationPath: string) {
     if (this.mode === 'strict') {
       throw new error.Abort(errorMessage)
     } else {
-      this.errors.push(errorMessage)
+      this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
   }
