@@ -16,6 +16,7 @@ import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
 import constants from './constants'
 import {normalizeStoreName} from './string'
+import * as output from './output'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -191,6 +192,9 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
       applications: result,
     },
   }
+
+  output.completed('Logged in')
+
   return session
 }
 

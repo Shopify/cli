@@ -101,7 +101,7 @@ async function init(options: InitOptions) {
 
   output.info(output.content`
   ${hyphenizedName} is ready for you to build! Remember to cd into your new directory.
-  To preview your project, run ${output.token.command(`${dependencyManager} shopify dev`)}
+  To preview your project, run ${output.token.command(`${dependencyManager} dev`)}
   To add extensions, run a scaffold command. For more details on all that you can build, see the docs: ${output.token.link(
     'shopify.dev',
     'https://shopify.dev',

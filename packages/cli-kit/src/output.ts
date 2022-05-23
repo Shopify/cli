@@ -195,7 +195,19 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    consoleLog(colors.bold(`${colors.green('✔')} Success! ${stringifyMessage(content)}.`))
+    consoleLog(colors.bold(`✅ Success! ${stringifyMessage(content)}.`))
+  }
+}
+
+/**
+ * Outputs a completed message to the user.
+ * Completed message receive a special formatting to make them stand out in the console.
+ * Note: Completed messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
+export const completed = (content: Message) => {
+  if (shouldOutput('info')) {
+    consoleLog(`${colors.green('✔')} ${stringifyMessage(content)}.`)
   }
 }
 

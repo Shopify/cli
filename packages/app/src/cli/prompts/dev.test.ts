@@ -58,7 +58,7 @@ describe('selectOrganization', () => {
       {
         type: 'autocomplete',
         name: 'id',
-        message: 'Which org would you like to work in?',
+        message: 'Which Partners organization is this work for?',
         choices: [
           {name: 'org1', value: '1'},
           {name: 'org2', value: '2'},

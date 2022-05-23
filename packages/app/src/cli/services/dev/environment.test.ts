@@ -146,6 +146,8 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: 'key1',
     })
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
+
     // When
     const got = await ensureDevEnvironment(INPUT)
 
@@ -170,7 +172,7 @@ describe('ensureDevEnvironment', () => {
       },
       environmentType: 'local',
     })
-    expect(outputMock.output()).toMatch(/Reusing the org, app, dev store settings from your last run:/)
+    expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
   })
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {

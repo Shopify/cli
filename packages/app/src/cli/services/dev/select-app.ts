@@ -50,6 +50,6 @@ export async function createApp(orgId: string, app: App, token: string): Promise
     throw new error.Abort(errors)
   }
 
-  output.success(`🎉 ${result.appCreate.app.title} has been created on your Partners account`)
+  output.success(`${result.appCreate.app.title} has been created on your Partners account`)
   return result.appCreate.app
 }
