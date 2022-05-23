@@ -1,12 +1,13 @@
 import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
 import {selectOrCreateApp} from './select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
-import {DevEnvironmentOptions, ensureDevEnvironment} from '../environment'
+import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment} from '../environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {App, WebType, updateAppIdentifiers, getAppIdentifiers} from '../../models/app/app'
 import {selectOrganizationPrompt} from '../../prompts/dev'
+import {testApp} from '../../models/app/app.test-data'
 import {store as conf} from '@shopify/cli-kit'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
 
 beforeEach(() => {
@@ -219,5 +220,49 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(conf.clearAppInfo).toHaveBeenCalledWith(APP1.apiKey)
+  })
+})
+
+describe('ensureDeployEnvironment', () => {
+  test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
+    // Given
+    const app = testApp()
+    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+
+    // When
+    const got = await ensureDeployEnvironment({app})
+
+    // Then
+    expect(got.partnersApp.id).toEqual(APP2.id)
+    expect(got.partnersApp.title).toEqual(APP2.title)
+    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.identifiers).toEqual({app: APP2.apiKey, extensions: {}})
+  })
+
+  test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
+    // Given
+    const app = testApp()
+    vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+
+    // When
+    const got = await ensureDeployEnvironment({app})
+
+    // Then
+    expect(fetchOrganizations).toHaveBeenCalledWith('token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1.id, 'token', undefined)
+    expect(updateAppIdentifiers).toBeCalledWith({
+      app,
+      identifiers: {
+        app: APP1.apiKey,
+        extensions: {},
+      },
+      environmentType: 'production',
+    })
+    expect(got.partnersApp.id).toEqual(APP1.id)
+    expect(got.partnersApp.title).toEqual(APP1.title)
+    expect(got.partnersApp.appType).toEqual(APP1.appType)
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}})
   })
 })

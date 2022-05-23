@@ -120,7 +120,8 @@ export interface DeployEnvironmentOptions {
 }
 
 interface DeployEnvironmentOutput {
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  app: App
+  partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
 }
 
@@ -160,7 +161,8 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   }
 
   return {
-    app: {
+    app: options.app,
+    partnersApp: {
       id: partnersApp.id,
       title: partnersApp.title,
       appType: partnersApp.appType,
@@ -196,26 +198,6 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
         task: async () => {
           const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
           data = {...responses[0], stores: responses[1]} as FetchResponse
-          // We need ALL stores so we can validate the selected one.
-          // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
-        },
-      },
-    ],
-    {rendererSilent: environment.local.isUnitTest()},
-  )
-  await list.run()
-  return data
-}
-
-async function fetchApps(orgId: string, token: string): Promise<FetchResponse> {
-  let data: any = {}
-  const list = new ui.Listr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
-          data = {...responses[0], stores: responses[1]}
           // We need ALL stores so we can validate the selected one.
           // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
         },

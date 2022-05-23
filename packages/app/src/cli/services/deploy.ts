@@ -10,9 +10,9 @@ interface DeployOptions {
   app: App
 }
 
-export const deploy = async ({app}: DeployOptions) => {
-  const {app: partnersApp, identifiers} = await ensureDeployEnvironment({app})
-  const apiKey = identifiers?.app as string
+export const deploy = async (options: DeployOptions) => {
+  const {app, identifiers} = await ensureDeployEnvironment({app: options.app})
+  const apiKey = identifiers.app
 
   output.newline()
   output.info('Pushing your code to Shopify...')
