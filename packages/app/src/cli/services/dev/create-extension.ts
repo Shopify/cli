@@ -56,7 +56,12 @@ const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'CHECKOUT_POST_PURCHASE'
     case 'theme':
       return 'THEME_APP_EXTENSION'
-    default:
+    case 'beacon_extension':
+    case 'product_discount_type':
+    case 'order_discount_type':
+    case 'shipping_discount_type':
+    case 'payment_methods':
+    case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.
       throw new error.Bug('Unknown extension type')
   }
