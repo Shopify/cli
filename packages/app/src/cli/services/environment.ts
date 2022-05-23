@@ -2,7 +2,7 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
+import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers, Extension} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
@@ -117,8 +117,6 @@ async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string
 
 export interface DeployEnvironmentOptions {
   app: App
-  apiKey?: string
-  reset: boolean
 }
 
 interface DeployEnvironmentOutput {
@@ -127,17 +125,66 @@ interface DeployEnvironmentOutput {
 }
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
+  const token = await session.ensureAuthenticatedPartners()
+  const envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  const areIdentifiersMissing = getAreIdentifiersMissing(options.app, envIdentifiers)
+
+  let identifiers: Identifiers
+  let partnersApp: OrganizationApp
+
+  if (areIdentifiersMissing) {
+    const orgId = await selectOrg(token)
+    const {apps} = await fetchOrgsAppsAndStores(orgId, token)
+
+    let appId: string
+    if (envIdentifiers.app) {
+      appId = envIdentifiers.app
+      partnersApp = await fetchAppFromApiKey(appId, token)
+    } else {
+      partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
+      appId = partnersApp.apiKey
+    }
+
+    identifiers = {
+      app: appId,
+      extensions: {},
+    }
+    // eslint-disable-next-line no-param-reassign
+    options = {
+      ...options,
+      app: await updateAppIdentifiers({app: options.app, identifiers, environmentType: 'production'}),
+    }
+  } else {
+    identifiers = envIdentifiers as Identifiers
+    partnersApp = await fetchAppFromApiKey(identifiers.app, token)
+  }
+
   return {
     app: {
-      id: '123',
-      title: 'title',
-      appType: 'type',
+      id: partnersApp.id,
+      title: partnersApp.title,
+      appType: partnersApp.appType,
     },
-    identifiers: {
-      app: 'NOTDONE',
-      extensions: {},
-    },
+    identifiers,
   }
+}
+
+function getAreIdentifiersMissing(app: App, identifiers: Partial<Identifiers>): boolean {
+  const appIdMissing = identifiers.app === 'undefined'
+
+  const anyExtensionMissingId = (extensions: Extension[]): boolean => {
+    return (
+      extensions.find((extension) => {
+        return identifiers.extensions ? !identifiers?.extensions[extension.localIdentifier] : true
+      }) === undefined
+    )
+  }
+  const anyExtensionIdMissing =
+    anyExtensionMissingId(app.extensions.ui) ||
+    anyExtensionMissingId(app.extensions.theme) ||
+    anyExtensionMissingId(app.extensions.function)
+
+  return appIdMissing || anyExtensionIdMissing
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
@@ -149,6 +196,26 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
         task: async () => {
           const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
           data = {...responses[0], stores: responses[1]} as FetchResponse
+          // We need ALL stores so we can validate the selected one.
+          // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
+        },
+      },
+    ],
+    {rendererSilent: environment.local.isUnitTest()},
+  )
+  await list.run()
+  return data
+}
+
+async function fetchApps(orgId: string, token: string): Promise<FetchResponse> {
+  let data: any = {}
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Fetching organization data',
+        task: async () => {
+          const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
+          data = {...responses[0], stores: responses[1]}
           // We need ALL stores so we can validate the selected one.
           // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
         },

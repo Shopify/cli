@@ -441,9 +441,12 @@ describe('updateAppIdentifiers', () => {
       })
 
       // Then
-      const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env.local'))
-      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
-      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
+      const dotEnvFilePath = path.join(tmpDir, '.env.local')
+      if (await file.exists(dotEnvFilePath)) {
+        const dotEnvFile = await dotenv.read(dotEnvFilePath)
+        expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
+        expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
+      }
     })
   })
 
@@ -481,9 +484,12 @@ describe('updateAppIdentifiers', () => {
       })
 
       // Then
-      const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env'))
-      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
-      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
+      const dotEnvFilePath = path.join(tmpDir, '.env')
+      if (await file.exists(dotEnvFilePath)) {
+        const dotEnvFile = await dotenv.read(dotEnvFilePath)
+        expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
+        expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
+      }
     })
   })
 })

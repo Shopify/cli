@@ -23,7 +23,7 @@ export interface Identifiers {
    * The extensions' unique identifiers.
    */
   extensions: {
-    [directory: string]: string
+    [localIdentifier: string]: string
   }
 }
 
@@ -430,8 +430,11 @@ export async function updateAppIdentifiers({
       variables[envVariable] = identifiers.extensions[identifier]
     }
   })
+  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(variables)
   dotenvFile.variables = variables
-  await dotenv.write(dotenvFile)
+  if (write) {
+    await dotenv.write(dotenvFile)
+  }
   return {
     ...app,
     environment: {
