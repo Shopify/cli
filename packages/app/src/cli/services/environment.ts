@@ -37,7 +37,7 @@ interface DevEnvironmentOutput {
  *  - The new selection will be saved as global configuration
  *  - The `shopify.app.toml` file will be updated with the new app apiKey
  *
- * @param app {App} Current local app information
+ * @param options {DevEnvironmentInput} Current dev environment options
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
@@ -57,9 +57,9 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
   let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
+  let updatedOptions = options
   if (selectedApp && selectedStore) {
-    // eslint-disable-next-line no-param-reassign
-    options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+    updatedOptions = await updateOptionsApp({...updatedOptions, apiKey: selectedApp.apiKey})
 
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
     return {
@@ -75,16 +75,15 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(updatedOptions.app, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
-  // eslint-disable-next-line no-param-reassign
-  options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+  updatedOptions = await updateOptionsApp({...updatedOptions, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, input.app, selectedStore)
+    showReusedValues(organization.businessName, options.app, selectedStore)
   }
 
   return {
