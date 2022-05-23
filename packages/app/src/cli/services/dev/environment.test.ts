@@ -146,6 +146,8 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: 'key1',
     })
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
+
     // When
     const got = await ensureDevEnvironment(INPUT)
 

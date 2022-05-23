@@ -57,9 +57,9 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
   let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
-  let updatedOptions = options
   if (selectedApp && selectedStore) {
-    updatedOptions = await updateOptionsApp({...updatedOptions, apiKey: selectedApp.apiKey})
+    // eslint-disable-next-line no-param-reassign
+    options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
 
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
     return {
@@ -75,10 +75,11 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(updatedOptions.app, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
-  updatedOptions = await updateOptionsApp({...updatedOptions, apiKey: selectedApp.apiKey})
+  // eslint-disable-next-line no-param-reassign
+  options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
@@ -100,16 +101,17 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
 }
 
 async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string}) {
+  const updatedApp = await updateAppIdentifiers({
+    app: options.app,
+    identifiers: {
+      app: options.apiKey,
+      extensions: {},
+    },
+    environmentType: 'local',
+  })
   return {
     ...options,
-    app: await updateAppIdentifiers({
-      app: options.app,
-      identifiers: {
-        app: options.apiKey,
-        extensions: {},
-      },
-      environmentType: 'local',
-    }),
+    app: updatedApp,
   }
 }
 
