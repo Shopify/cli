@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 2.0.9
+
+### Patch Changes
+
+- 4170ac8e: Improve copies related to `dev`
+- 4170ac8e: Always create a tunnel when running dev
+- Updated dependencies [4170ac8e]
+- Updated dependencies [4170ac8e]
+  - @shopify/cli-kit@2.0.9
+
 ## 2.0.8
 
 ### Patch Changes

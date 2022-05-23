@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 2.0.9
+
+### Patch Changes
+
+- 4170ac8e: Improve copies related to `dev`
+- 4170ac8e: Add new `completed` helper to output
+
 ## 2.0.8
 
 ### Patch Changes
