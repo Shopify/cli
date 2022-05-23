@@ -1,4 +1,4 @@
-import {load, getUIExtensionRendererVersion, App, updateIdentifiers, getIdentifiers} from './app'
+import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app'
 import {testApp, testUIExtension} from './app.test-data'
 import {
   configurationFileNames,
@@ -337,7 +337,7 @@ scopes = "read_products"
   })
 })
 
-describe('updateIdentifiers', () => {
+describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's local", async () => {
     await temporary.directory(async (tmpDir: string) => {
       // Given
@@ -352,7 +352,7 @@ describe('updateIdentifiers', () => {
       })
 
       // When
-      const gotApp = await updateIdentifiers({
+      const gotApp = await updateAppIdentifiers({
         app,
         identifiers: {
           app: 'FOO',
@@ -387,7 +387,7 @@ describe('updateIdentifiers', () => {
       })
 
       // When
-      const gotApp = await updateIdentifiers({
+      const gotApp = await updateAppIdentifiers({
         app,
         identifiers: {
           app: 'FOO',
@@ -429,7 +429,7 @@ describe('updateIdentifiers', () => {
       })
 
       // When
-      await updateIdentifiers({
+      await updateAppIdentifiers({
         app,
         identifiers: {
           app: 'FOO',
@@ -469,7 +469,7 @@ describe('updateIdentifiers', () => {
       })
 
       // When
-      await updateIdentifiers({
+      await updateAppIdentifiers({
         app,
         identifiers: {
           app: 'FOO',
@@ -489,7 +489,7 @@ describe('updateIdentifiers', () => {
   })
 })
 
-describe('getIdentifiers', () => {
+describe('getAppIdentifiers', () => {
   test('returns the right identifiers when variables are defined in the .env.local file', async () => {
     await temporary.directory(async (tmpDir: string) => {
       // Given
@@ -516,7 +516,7 @@ describe('getIdentifiers', () => {
       })
 
       // When
-      const got = await getIdentifiers({
+      const got = await getAppIdentifiers({
         app,
         environmentType: 'local',
       })
@@ -548,7 +548,7 @@ describe('getIdentifiers', () => {
       })
 
       // When
-      const got = await getIdentifiers({
+      const got = await getAppIdentifiers({
         app,
         environmentType: 'local',
       })
@@ -585,7 +585,7 @@ describe('getIdentifiers', () => {
       })
 
       // When
-      const got = await getIdentifiers({
+      const got = await getAppIdentifiers({
         app,
         environmentType: 'production',
       })
@@ -617,7 +617,7 @@ describe('getIdentifiers', () => {
       })
 
       // When
-      const got = await getIdentifiers({
+      const got = await getAppIdentifiers({
         app,
         environmentType: 'production',
       })

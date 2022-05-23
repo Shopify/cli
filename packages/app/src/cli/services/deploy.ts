@@ -1,7 +1,7 @@
 import {bundle} from './deploy/bundle'
 import {upload} from './deploy/upload'
 
-import {App, getIdentifiers} from '../models/app/app'
+import {App, getAppIdentifiers} from '../models/app/app'
 import {path, output, temporary} from '@shopify/cli-kit'
 
 interface DeployOptions {
@@ -10,7 +10,7 @@ interface DeployOptions {
 }
 
 export const deploy = async ({app}: DeployOptions) => {
-  const identifiers = await getIdentifiers({app, environmentType: 'production'})
+  const identifiers = await getAppIdentifiers({app, environmentType: 'production'})
 
   /**
    * TODO: We need some logic here to ensure we have IDs for the apps and all the

@@ -384,7 +384,7 @@ export async function updateDependencies(app: App): Promise<App> {
 
 export type EnvironmentType = 'local' | 'production'
 
-interface UpdateIdentifiersOptions {
+interface UpdateAppIdentifiersOptions {
   app: App
   identifiers: Identifiers
   environmentType: EnvironmentType
@@ -392,10 +392,14 @@ interface UpdateIdentifiersOptions {
 
 /**
  * Given an app and a set of identifiers, it persists the identifiers in the .env files.
- * @param options {UpdateIdentifiersOptions} Options.
+ * @param options {UpdateAppIdentifiersOptions} Options.
  * @returns {App} An copy of the app with the environment updated to reflect the updated identifiers.
  */
-export async function updateIdentifiers({app, identifiers, environmentType}: UpdateIdentifiersOptions): Promise<App> {
+export async function updateAppIdentifiers({
+  app,
+  identifiers,
+  environmentType,
+}: UpdateAppIdentifiersOptions): Promise<App> {
   const envVariables = Object.keys(app.environment.env)
   let dotenvFile = environmentType === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production
   if (!dotenvFile) {
@@ -428,7 +432,7 @@ export async function updateIdentifiers({app, identifiers, environmentType}: Upd
   }
 }
 
-interface GetIdentifiersOptions {
+interface GetAppIdentifiersOptions {
   app: App
   environmentType: EnvironmentType
 }
@@ -436,10 +440,10 @@ interface GetIdentifiersOptions {
 /**
  * Given an app and a environment, it fetches the ids from the environment
  * and returns them.
- * @param options {GetIdentifiersOptions} Options.
+ * @param options {GetAppIdentifiersOptions} Options.
  * @returns
  */
-export function getIdentifiers({app, environmentType}: GetIdentifiersOptions): Partial<Identifiers> {
+export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<Identifiers> {
   const envVariables = {
     ...app.environment.env,
     ...(environmentType === 'local' ? app.environment.dotenv.local : app.environment.dotenv.production)?.variables,

@@ -3,7 +3,7 @@ import {selectOrCreateApp} from './select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './select-store'
 import {DevEnvironmentOptions, ensureDevEnvironment} from '../environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {App, WebType, updateIdentifiers, getIdentifiers} from '../../models/app/app'
+import {App, WebType, updateAppIdentifiers, getAppIdentifiers} from '../../models/app/app'
 import {selectOrganizationPrompt} from '../../prompts/dev'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -102,7 +102,7 @@ const FETCH_RESPONSE = {
 }
 
 beforeEach(async () => {
-  vi.mocked(getIdentifiers).mockResolvedValue({app: undefined})
+  vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1.shopDomain)
@@ -129,7 +129,7 @@ describe('ensureDevEnvironment', () => {
     })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
-    expect(updateIdentifiers).toBeCalledWith({
+    expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
         app: APP1.apiKey,
@@ -143,7 +143,7 @@ describe('ensureDevEnvironment', () => {
     // Given
     const outputMock = outputMocker.mockAndCapture()
     vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
-    vi.mocked(getIdentifiers).mockResolvedValue({
+    vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: 'key1',
     })
     // When
@@ -162,7 +162,7 @@ describe('ensureDevEnvironment', () => {
     expect(selectOrganizationPrompt).not.toBeCalled()
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
-    expect(updateIdentifiers).toBeCalledWith({
+    expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
         app: APP1.apiKey,
@@ -192,7 +192,7 @@ describe('ensureDevEnvironment', () => {
       },
     })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
-    expect(updateIdentifiers).toBeCalledWith({
+    expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
         app: APP2.apiKey,
@@ -209,7 +209,7 @@ describe('ensureDevEnvironment', () => {
 
   it('resets cached state if reset is true', async () => {
     // When
-    vi.mocked(getIdentifiers).mockResolvedValue({
+    vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: APP1.apiKey,
     })
     await ensureDevEnvironment({...INPUT, reset: true})

@@ -2,7 +2,7 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, updateIdentifiers, getIdentifiers} from '../models/app/app'
+import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
@@ -42,7 +42,7 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const identifiers = await getIdentifiers({app: options.app, environmentType: 'local'})
+  const identifiers = await getAppIdentifiers({app: options.app, environmentType: 'local'})
   const cachedInfo = getCachedInfo(options.reset, identifiers.app)
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
@@ -94,7 +94,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
 async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string}) {
   return {
     ...options,
-    app: await updateIdentifiers({
+    app: await updateAppIdentifiers({
       app: options.app,
       identifiers: {
         app: options.apiKey,
