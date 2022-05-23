@@ -172,7 +172,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
 }
 
 function getAreIdentifiersMissing(app: App, identifiers: Partial<Identifiers>): boolean {
-  const appIdMissing = identifiers.app === 'undefined'
+  const appIdMissing = identifiers.app === undefined
 
   const anyExtensionMissingId = (extensions: Extension[]): boolean => {
     return (
