@@ -1,10 +1,10 @@
 import {appFlags} from '../../../flags'
 import {output, path, cli, error} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
-import {extensions, limitedExtensions} from 'cli/constants'
-import scaffoldExtensionPrompt from 'cli/prompts/scaffold/extension'
-import {load as loadApp, App} from 'cli/models/app/app'
-import scaffoldExtensionService from 'cli/services/scaffold/extension'
+import {extensions, limitedExtensions} from '../../../constants'
+import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
+import {load as loadApp, App} from '../../../models/app/app'
+import scaffoldExtensionService from '../../../services/scaffold/extension'
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an Extension'
