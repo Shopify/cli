@@ -1,4 +1,4 @@
-import previewService from '../../services/preview'
+import {previewInWorker, previewInNode} from '../../services/preview'
 import {path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
@@ -18,6 +18,13 @@ export default class Preview extends Command {
       default: '3000',
       env: 'SHOPIFY_FLAG_PORT',
     }),
+    target: Flags.string({
+      char: 't',
+      description: 'the target environment (worker or node)',
+      options: ['node', 'worker'],
+      default: 'worker',
+      env: 'SHOPIFY_FLAG_PREVIEW_TARGET',
+    }),
   }
 
   async run(): Promise<void> {
@@ -25,6 +32,10 @@ export default class Preview extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const port = parseInt(flags.port, 10)
 
-    await previewService({directory, port})
+    if (flags.target === 'worker') {
+      await previewInWorker({directory, port})
+    } else if (flags.target === 'node') {
+      await previewInNode({directory, port})
+    }
   }
 }
