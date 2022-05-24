@@ -6,7 +6,7 @@ import {
   themeExtensions,
   uiExtensions,
   getUIExtensionRendererDependency,
-  ExtensionTypes,
+  UIExtensionTypes,
   dotEnvFileNames,
 } from '../../constants'
 import {file, error, path, schema, string, toml, dependency, dotenv} from '@shopify/cli-kit'
@@ -467,12 +467,12 @@ export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptio
 /**
  * Given a UI extension and the app it belongs to, it returns the version of the renderer
  * package.
- * @param uiExtension {UIExtension} UI extension whose renderer version will be obtained.
+ * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
  * @param app {App} App object containing the extension.
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
  */
 export function getUIExtensionRendererVersion(
-  uiExtensionType: ExtensionTypes,
+  uiExtensionType: UIExtensionTypes,
   app: App,
 ): {name: string; version: string} | undefined {
   const nodeDependencies = app.nodeDependencies
