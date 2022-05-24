@@ -10,7 +10,6 @@ export interface DevOptions {
   apiKey?: string
   store?: string
   reset: boolean
-  tunnel: boolean
   update: boolean
   plugins: Plugin[]
   skipDependenciesInstallation: boolean
@@ -33,26 +32,30 @@ async function dev(options: DevOptions) {
       app: await installAppDependencies(options.app),
     }
   }
-  const {identifiers, store} = await ensureDevEnvironment(options)
+  const {
+    identifiers,
+    store,
+    app: {apiSecret},
+  } = await ensureDevEnvironment(options)
 
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options, frontendPort)
-  if (options.update) await updateURLs(identifiers.app.apiKey, url)
-
+  let updateMessage = ''
+  if (options.update) {
+    await updateURLs(identifiers.app, url)
+    updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
+  }
+  const message = `${updateMessage}Preview link for viewing or sharing: `
   const storeAppUrl = `${url}/api/auth?shop=${store}`
-
-  output.info(output.content`
-  Your app is up and running! ✨
-  View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
-  `)
+  output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
 
   devWeb(options.app.webs, {
-    apiKey: identifiers.app.apiKey,
+    apiKey: identifiers.app,
     frontendPort,
     backendPort,
     scopes: options.app.configuration.scopes,
-    apiSecret: identifiers.app.apiSecret ?? '',
+    apiSecret: apiSecret as string,
     hostname: url,
   })
 }

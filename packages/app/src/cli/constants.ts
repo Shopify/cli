@@ -8,6 +8,11 @@ export const configurationFileNames = {
   web: 'shopify.web.toml',
 } as const
 
+export const dotEnvFileNames = {
+  production: '.env',
+  local: '.env.local',
+}
+
 export const environmentVariables = {
   /**
    * Environment variable to instructs the CLI on running the extensions' CLI through its sources.

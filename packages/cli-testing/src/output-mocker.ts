@@ -6,6 +6,7 @@ interface OutputMock {
   info: () => string
   debug: () => string
   success: () => string
+  completed: () => string
   warn: () => string
   clear: () => void
 }
@@ -15,6 +16,7 @@ export function mockAndCapture() {
   const collectedInfo: string[] = []
   const collectedDebug: string[] = []
   const collectedSuccess: string[] = []
+  const collectedCompleted: string[] = []
   const collectedWarn: string[] = []
 
   const infoSpy = vi.spyOn(output, 'info').mockImplementation((content) => {
@@ -25,9 +27,13 @@ export function mockAndCapture() {
     collectedOutput.push(output.stringifyMessage(content))
     collectedDebug.push(output.stringifyMessage(content))
   })
-  const successspy = vi.spyOn(output, 'success').mockImplementation((content) => {
+  const successSpy = vi.spyOn(output, 'success').mockImplementation((content) => {
     collectedOutput.push(output.stringifyMessage(content))
     collectedSuccess.push(output.stringifyMessage(content))
+  })
+  const completedSpy = vi.spyOn(output, 'completed').mockImplementation((content) => {
+    collectedOutput.push(output.stringifyMessage(content))
+    collectedCompleted.push(output.stringifyMessage(content))
   })
   const outputSpy = vi.spyOn(output, 'warn').mockImplementation((content) => {
     collectedOutput.push(output.stringifyMessage(content))
@@ -38,11 +44,13 @@ export function mockAndCapture() {
     info: () => collectedInfo.join('\n'),
     debug: () => collectedDebug.join('\n'),
     success: () => collectedSuccess.join('\n'),
+    completed: () => collectedCompleted.join('\n'),
     warn: () => collectedWarn.join('\n'),
     clear: () => {
       infoSpy.mockClear()
       debugSpy.mockClear()
-      successspy.mockClear()
+      successSpy.mockClear()
+      completedSpy.mockClear()
       outputSpy.mockClear()
     },
   }

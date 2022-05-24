@@ -16,6 +16,8 @@ describe('buildExtension', () => {
     const extensionName = 'myextension'
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
+      localIdentifier: extensionName,
+      idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
       buildDirectory: `${extensionRoot}/build`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
@@ -27,6 +29,7 @@ describe('buildExtension', () => {
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
     }
     const app: App = {
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       directory: appRoot,
       dependencyManager: 'yarn',
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
@@ -36,6 +39,10 @@ describe('buildExtension', () => {
       },
       webs: [],
       nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
       extensions: {ui: [extension], function: [], theme: []},
     }
 

@@ -1,5 +1,14 @@
 # @shopify/create-app
 
+## 2.0.9
+
+### Patch Changes
+
+- 4170ac8e: Improve copies related to `dev`
+- Updated dependencies [4170ac8e]
+- Updated dependencies [4170ac8e]
+  - @shopify/cli-kit@2.0.9
+
 ## 2.0.8
 
 ### Patch Changes

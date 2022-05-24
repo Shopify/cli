@@ -1,4 +1,4 @@
-import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
+import {App, Identifiers, getAppIdentifiers, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
 import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
 import {os, output, path, store} from '@shopify/cli-kit'
 
@@ -10,7 +10,7 @@ interface Configurable {
   configuration?: {type?: string}
 }
 
-export function info(app: App, {format}: InfoOptions) {
+export function info(app: App, {format}: InfoOptions): output.Message {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {
@@ -21,9 +21,11 @@ export function info(app: App, {format}: InfoOptions) {
 
 class AppInfo {
   private app: App
+  private localIdentifiers: Partial<Identifiers>
 
   constructor(app: App) {
     this.app = app
+    this.localIdentifiers = getAppIdentifiers({app, environmentType: 'local'})
   }
 
   output(): string {
@@ -41,8 +43,8 @@ class AppInfo {
     const title = 'Configs for Dev'
 
     let storeDescription = 'not configured'
-    if (this.app.configuration.id) {
-      const storeInfo = store.getAppInfo(this.app.configuration.id)
+    if (this.localIdentifiers.app) {
+      const storeInfo = store.getAppInfo(this.localIdentifiers.app)
       if (storeInfo && storeInfo.storeFqdn) storeDescription = storeInfo.storeFqdn
     }
     const lines = [
@@ -59,7 +61,7 @@ class AppInfo {
     const title = 'Your Project'
     const lines = [
       ['Name', this.app.configuration.name],
-      ['API key', this.app.configuration.id || 'not configured'],
+      ['API key', this.localIdentifiers.app || 'not configured'],
       ['Root location', this.app.directory],
     ]
     return [title, this.linesToColumns(lines)]

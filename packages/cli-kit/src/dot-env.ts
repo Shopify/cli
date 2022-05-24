@@ -14,7 +14,7 @@ export const DotEnvNotFoundError = (path: string) => {
 /**
  * This interface represents a .env file.
  */
-interface DotEnvFile {
+export interface DotEnvFile {
   /**
    * Path to the .env file.
    */
