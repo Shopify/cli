@@ -6,9 +6,8 @@ import {
   configurationFileNames,
   ExtensionTypes,
   uiExtensions,
-  functionExtensions,
-  themeExtensions,
   getUIExtensionRendererDependency,
+  UIExtensionTypes,
 } from '../../constants'
 import {load as loadApp} from '../../models/app/app'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -91,20 +90,12 @@ describe('initialize a extension', () => {
 })
 
 describe('getRuntimeDependencies', () => {
-  test('returns an empty list for extensions that are not UI extensions', () => {
-    // Given
-    const extensions: ExtensionTypes[] = [...functionExtensions.types, ...themeExtensions.types]
-
-    // When/then
-    extensions.forEach((extensionType) => {
-      expect(getRuntimeDependencies({extensionType})).toEqual([])
-    })
-  })
-
   test('includes React for UI extensions', () => {
     // Given
     // Beacon extensions don't need React as a runtime dependency.
-    const extensions: ExtensionTypes[] = [...uiExtensions.types].filter((extension) => extension !== 'beacon_extension')
+    const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
+      (extension) => extension !== 'beacon_extension',
+    )
 
     // When/then
     extensions.forEach((extensionType) => {
@@ -114,7 +105,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes the renderer package for UI extensions', () => {
     // Given
-    const extensions: ExtensionTypes[] = [...uiExtensions.types]
+    const extensions: UIExtensionTypes[] = [...uiExtensions.types]
 
     // When/then
     extensions.forEach((extensionType) => {
