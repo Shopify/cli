@@ -1,5 +1,13 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {blocks, extensionTypeCategory, ExtensionTypes, getUIExtensionRendererDependency} from '../../constants'
+import {
+  blocks,
+  extensionTypeCategory,
+  ExtensionTypes,
+  FunctionExtensionTypes,
+  getUIExtensionRendererDependency,
+  ThemeExtensionTypes,
+  UIExtensionTypes,
+} from '../../constants'
 import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
@@ -17,35 +25,39 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions {
+interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
   name: string
-  extensionType: ExtensionTypes
+  extensionType: TExtensionTypes
   app: App
   cloneUrl?: string
   language?: string
 }
 
+type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes>
+type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionTypes>
+type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionTypes>
+
 async function extensionInit(options: ExtensionInitOptions) {
   switch (extensionTypeCategory(options.extensionType)) {
     case 'theme':
-      await themeExtensionInit(options)
+      await themeExtensionInit(options as ThemeExtensionInitOptions)
       break
     case 'function':
-      await functionExtensionInit(options)
+      await functionExtensionInit(options as FunctionExtensionInitOptions)
       break
     case 'ui':
-      await uiExtensionInit(options)
+      await uiExtensionInit(options as UIExtensionInitOptions)
       break
   }
 }
 
-async function themeExtensionInit({name, app, extensionType}: ExtensionInitOptions) {
+async function themeExtensionInit({name, app, extensionType}: ThemeExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const templatePath = await getTemplatePath('theme-extension')
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions) {
+async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const list = new ui.Listr(
     [
@@ -114,24 +126,24 @@ async function uiExtensionInit({name, extensionType, app}: ExtensionInitOptions)
   await list.run()
 }
 
-export function getRuntimeDependencies({extensionType}: Pick<ExtensionInitOptions, 'extensionType'>): string[] {
+export function getRuntimeDependencies({extensionType}: Pick<UIExtensionInitOptions, 'extensionType'>): string[] {
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
-    case 'checkout_post_purchase':
-      // eslint-disable-next-line no-case-declarations
+    case 'checkout_post_purchase': {
       const dependencies = ['react']
-      // eslint-disable-next-line no-case-declarations
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)
       }
       return dependencies
+    }
+    case 'beacon_extension':
+      return []
   }
-  return []
 }
 
-async function functionExtensionInit(options: ExtensionInitOptions) {
+async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists(options)
   const url = options.cloneUrl || blocks.functions.defaultUrl
   await file.inTemporaryDirectory(async (tmpDir) => {
@@ -155,7 +167,7 @@ async function functionExtensionInit(options: ExtensionInitOptions) {
   })
 }
 
-function functionTemplatePath({extensionType, language}: ExtensionInitOptions): string {
+function functionTemplatePath({extensionType, language}: FunctionExtensionInitOptions): string {
   const lang = language || blocks.functions.defaultLanguage
   switch (extensionType) {
     case 'product_discount_type':
@@ -168,8 +180,6 @@ function functionTemplatePath({extensionType, language}: ExtensionInitOptions): 
       return `checkout/${lang}/payment-methods/default`
     case 'shipping_rate_presenter':
       return `checkout/${lang}/shipping-rate-presenter/default`
-    default:
-      throw new error.Abort('Invalid extension type')
   }
 }
 
