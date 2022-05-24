@@ -63,7 +63,7 @@ interface ExtensionConfigOptions {
  * @param extension {UIExtension} Extension that will be built.
  * @returns
  */
-async function extensionConfig(options: ExtensionConfigOptions): Promise<any> {
+async function extensionConfig(options: ExtensionConfigOptions) {
   return {
     extensions: [
       {

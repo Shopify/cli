@@ -1,7 +1,7 @@
-import schema from './store/schema'
+// import schema from './store/schema'
 import * as output from './output'
 import cliKitPackageJson from '../package.json'
-import Conf from 'conf'
+import Conf, {Schema} from 'conf'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -18,6 +18,26 @@ interface ConfSchema {
   appInfo: CachedAppInfo[]
   themeStore: string
 }
+
+const schema = {
+  appInfo: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        appId: {
+          type: 'string',
+        },
+        orgId: {
+          type: 'string',
+        },
+        storeFqdn: {
+          type: 'string',
+        },
+      },
+    },
+  },
+} as unknown as Schema<ConfSchema>
 
 export const cliKit = new Conf<ConfSchema>({
   schema,

@@ -126,11 +126,13 @@ async function requestAppToken(
   return {[identifier]: appToken}
 }
 
-async function tokenRequest(params: {[key: string]: string}): Promise<unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function tokenRequest(params: {[key: string]: string}): Promise<any> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
   const res = await fetch(url.href, {method: 'POST'})
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
   if (!res.ok) {
     if (payload.error === 'invalid_grant') {
@@ -144,7 +146,15 @@ async function tokenRequest(params: {[key: string]: string}): Promise<unknown> {
   return payload
 }
 
-function buildIdentityToken(result: any): IdentityToken {
+function buildIdentityToken(result: {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  access_token: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  refresh_token: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  expires_in: number
+  scope: string
+}): IdentityToken {
   return {
     accessToken: result.access_token,
     refreshToken: result.refresh_token,
@@ -153,7 +163,8 @@ function buildIdentityToken(result: any): IdentityToken {
   }
 }
 
-function buildApplicationToken(result: any): ApplicationToken {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function buildApplicationToken(result: {access_token: string; expires_in: number; scope: string}): ApplicationToken {
   return {
     accessToken: result.access_token,
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
