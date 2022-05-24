@@ -21,79 +21,97 @@ async function init(options: InitOptions) {
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
     await file.mkdir(templateDownloadDir)
+    let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
 
-    const list = new ui.Listr(
-      [
-        {
-          title: 'Downloading template',
-          task: async (_, task) => {
-            await git.downloadRepository({
-              repoUrl: options.template,
-              destination: templateDownloadDir,
-            })
-            task.title = 'Template downloaded'
-          },
+    tasks = tasks.concat([
+      {
+        title: 'Downloading template',
+        task: async (_, task) => {
+          await git.downloadRepository({
+            repoUrl: options.template,
+            destination: templateDownloadDir,
+          })
+          task.title = 'Template downloaded'
         },
-        {
-          title: `Initializing your app ${hyphenizedName}`,
-          task: async (_, parentTask) => {
-            return parentTask.newListr([
-              {
-                title: 'Parsing liquid',
-                task: async (_, task) => {
-                  await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, {
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    dependency_manager: dependencyManager,
-                  })
+      },
+      {
+        title: `Initializing your app ${hyphenizedName}`,
+        task: async (_, parentTask) => {
+          return parentTask.newListr([
+            {
+              title: 'Parsing liquid',
+              task: async (_, task) => {
+                await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, {
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  dependency_manager: dependencyManager,
+                })
 
-                  task.title = 'Liquid parsed'
-                },
+                task.title = 'Liquid parsed'
               },
-              {
-                title: 'Updating package.json',
-                task: async (_, task) => {
-                  const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
+            },
+            {
+              title: 'Updating package.json',
+              task: async (_, task) => {
+                const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
 
-                  await npm.updateAppData(packageJSON, hyphenizedName)
-                  await updateCLIDependencies(packageJSON, options.local)
+                await npm.updateAppData(packageJSON, hyphenizedName)
+                await updateCLIDependencies(packageJSON, options.local)
 
-                  await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+                await npm.writePackageJSON(templateScaffoldDir, packageJSON)
 
-                  task.title = 'Package.json updated'
-                  parentTask.title = 'App initialized'
-                },
+                task.title = 'Package.json updated'
+                parentTask.title = 'App initialized'
               },
-            ])
-          },
+            },
+          ])
         },
-        {
-          title: `Installing dependencies with ${dependencyManager}`,
-          task: async (_, parentTask) => {
-            function didInstallEverything() {
-              parentTask.title = `Dependencies installed with ${dependencyManager}`
-            }
+      },
+    ])
 
-            return parentTask.newListr(
-              await getDeepInstallNPMTasks({
-                from: templateScaffoldDir,
-                dependencyManager,
-                didInstallEverything,
-              }),
-              {concurrent: false},
-            )
-          },
+    if (await environment.local.isShopify()) {
+      tasks.push({
+        title: "[Shopifolks-only] Configuring the project's NPM registry",
+        task: async (_, task) => {
+          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
+          const npmrcContent = `registry=https://registry.npmjs.org`
+          await file.write(npmrcPath, npmrcContent)
+          task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
-        {
-          title: 'Cleaning up',
-          task: async (_, task) => {
-            await cleanup(templateScaffoldDir)
+      })
+    }
 
-            task.title = 'Completed clean up'
-          },
+    tasks = tasks.concat([
+      {
+        title: `Installing dependencies with ${dependencyManager}`,
+        task: async (_, parentTask) => {
+          function didInstallEverything() {
+            parentTask.title = `Dependencies installed with ${dependencyManager}`
+          }
+
+          return parentTask.newListr(
+            await getDeepInstallNPMTasks({
+              from: templateScaffoldDir,
+              dependencyManager,
+              didInstallEverything,
+            }),
+            {concurrent: false},
+          )
         },
-      ],
-      {concurrent: false, rendererOptions: {collapse: false}, rendererSilent: environment.local.isUnitTest()},
-    )
+      },
+      {
+        title: 'Cleaning up',
+        task: async (_, task) => {
+          await cleanup(templateScaffoldDir)
+          task.title = 'Completed clean up'
+        },
+      },
+    ])
+
+    const list = new ui.Listr(tasks, {
+      concurrent: false,
+      rendererOptions: {collapse: false},
+      rendererSilent: environment.local.isUnitTest(),
+    })
     await list.run()
 
     await file.move(templateScaffoldDir, outputDirectory)
