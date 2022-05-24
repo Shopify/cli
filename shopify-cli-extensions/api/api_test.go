@@ -313,9 +313,9 @@ func TestWebsocketNotify(t *testing.T) {
 	secondConnection.ReadJSON(&websocketMessage{})
 
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
-		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
-		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], api.publicUrl),
 	}
 
 	api.Notify(api.Extensions)
@@ -419,9 +419,9 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 	}
 
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
-		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
-		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], api.publicUrl),
 	}
 
 	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
@@ -462,9 +462,9 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 	}
 
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], server.URL),
-		getExpectedExtensionWithUrls(api.Extensions[1], server.URL),
-		getExpectedExtensionWithUrls(api.Extensions[2], server.URL),
+		getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], api.publicUrl),
 	}
 
 	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
@@ -546,7 +546,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	// First message received is the connected message which can be ignored
 	ws.ReadJSON(&websocketMessage{})
 
-	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], server.URL)}
+	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl)}
 	updatedExtensions[0].Development.Hidden = true
 	updatedExtensions[0].Development.Status = "error"
 
@@ -641,7 +641,7 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 
 	<-time.After(duration)
 
-	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], server.URL)}
+	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl)}
 	updatedExtensions[0].Development.Hidden = false
 
 	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions, api.Store); err != nil {
@@ -753,14 +753,14 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"assets": {
 			"main": {
 				"name": "main",
-				"url": "%v/extensions/00000000-0000-0000-0000-000000000000/assets/main.js",
+				"url": "%v00000000-0000-0000-0000-000000000000/assets/main.js",
 				"lastUpdated": 0
 			}
 			},
 			"development": {
 			"hidden": false,
 			"resource": {"url": ""},
-			"root": {"url": "%v/extensions/00000000-0000-0000-0000-000000000000"},
+			"root": {"url": "%v00000000-0000-0000-0000-000000000000"},
 			"localizationStatus": "",
 			"status": "success",
 			"resource": {"url": "cart/1234"}
@@ -776,7 +776,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 				"networkAccess": false
 			}
 		}
-		]`, server.URL, server.URL)
+		]`, api.publicUrl, api.publicUrl)
 
 	match, err := isEqualJSON(expectedExtensions, string(extensions))
 	if err != nil {
@@ -950,8 +950,8 @@ func getHTMLResponse(api *ExtensionsApi, t *testing.T, host, requestUri string) 
 }
 
 func getExpectedExtensionWithUrls(extension core.Extension, host string) core.Extension {
-	extension.Development.Root.Url = fmt.Sprintf("%s/extensions/%s", host, extension.UUID)
-	extension.Assets["main"] = core.Asset{Name: "main", Url: fmt.Sprintf("%s/extensions/%s/assets/main.js", host, extension.UUID)}
+	extension.Development.Root.Url = fmt.Sprintf("%s%s", host, extension.UUID)
+	extension.Assets["main"] = core.Asset{Name: "main", Url: fmt.Sprintf("%s%s/assets/main.js", host, extension.UUID)}
 	return extension
 }
 
