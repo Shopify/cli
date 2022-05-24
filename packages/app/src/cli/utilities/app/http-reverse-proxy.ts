@@ -54,7 +54,6 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
       const targetPort = await port.getRandomPort()
       server.register(fastifyHTTPProxy, {
-        base: 'http://randomhost',
         upstream: `http://localhost:${targetPort}`,
         prefix: target.pathPrefix,
         rewritePrefix: target.pathPrefix,

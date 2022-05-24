@@ -17,17 +17,22 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(3002)
 
     // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(3000, [
-      {
-        logPrefix: 'extensions',
-        pathPrefix: '/extensions',
-        action: async (stdout, stderr, signal, port) => {},
-      },
-      {
-        logPrefix: 'web',
-        action: async (stdout, stderr, signal, port) => {},
-      },
-    ])
+    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(
+      'tunnelUrl',
+      3000,
+      [
+        {
+          logPrefix: 'extensions',
+          pathPrefix: '/extensions',
+          action: async (stdout, stderr, signal, port) => {},
+        },
+        {
+          logPrefix: 'web',
+          action: async (stdout, stderr, signal, port) => {},
+        },
+      ],
+      [],
+    )
 
     // Then
     expect(server.register).toHaveBeenCalledWith(fastifyHttpProxy, {
@@ -35,12 +40,20 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
       prefix: '/extensions',
       rewritePrefix: '/extensions',
       http2: false,
+      websocket: true,
+      replyOptions: {
+        rewriteRequestHeaders: expect.any(Function),
+      },
     })
     expect(server.register).toHaveBeenCalledWith(fastifyHttpProxy, {
       upstream: `http://localhost:3002`,
       prefix: undefined,
       rewritePrefix: undefined,
       http2: false,
+      websocket: false,
+      replyOptions: {
+        rewriteRequestHeaders: expect.any(Function),
+      },
     })
     const concurrentCalls = (output.concurrent as any).calls
     expect(concurrentCalls.length).toEqual(1)
@@ -60,7 +73,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(4000)
 
     // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(undefined, [])
+    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic('tunnelUrl', undefined, [], [])
 
     // Then
     expect(got.port).toEqual(4000)
