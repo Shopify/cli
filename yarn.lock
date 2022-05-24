@@ -853,6 +853,14 @@
   dependencies:
     fast-json-stringify "^3.0.0"
 
+"@fastify/http-proxy@^8.0.1":
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/@fastify/http-proxy/-/http-proxy-8.0.1.tgz#68ca78ec4f2c644983064055c7a989182f22dab3"
+  integrity sha512-j/MEaPCoZOvQ6iCsNCw7YboIhT6rGfTMjk+4SjaIIBqgc4lRKbHXCBQ0ZIBJ+/mgvNX5hwSjFzxcDSivv0VGWg==
+  dependencies:
+    "@fastify/reply-from" "^8.0.0"
+    ws "^8.4.2"
+
 "@fastify/reply-from@^8.0.0":
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/@fastify/reply-from/-/reply-from-8.0.0.tgz#542a47d4ec68d8ccd9be6015ea9250cee2609222"
