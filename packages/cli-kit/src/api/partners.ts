@@ -1,9 +1,9 @@
 import {buildHeaders} from './common'
 import {partners as partnersFqdn} from '../environment/fqdn'
 import {debug} from '../output'
-import {request as graphqlRequest} from 'graphql-request'
+import {request as graphqlRequest, Variables, RequestDocument} from 'graphql-request'
 
-export async function request<T>(query: any, token: string, variables?: any): Promise<T> {
+export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
   const headers = await buildHeaders(token)

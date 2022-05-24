@@ -13,7 +13,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     choices: orgList,
   }
   const choice: {id: string} = await ui.prompt([questions])
-  return organizations.find((org: any) => org.id === choice.id)!
+  return organizations.find((org) => org.id === choice.id)!
 }
 
 export async function selectAppPrompt(apps: OrganizationApp[]): Promise<OrganizationApp> {
@@ -25,7 +25,7 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
     choices: appList,
   }
   const choice: {apiKey: string} = await ui.prompt([questions])
-  return apps.find((app: any) => app.apiKey === choice.apiKey)!
+  return apps.find((app) => app.apiKey === choice.apiKey)!
 }
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
@@ -43,7 +43,7 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
     choices: storeList,
   }
   const choice: {id: string} = await ui.prompt([questions])
-  return stores.find((store: any) => store.shopId === choice.id)
+  return stores.find((store) => store.shopId === choice.id)
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {

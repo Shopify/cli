@@ -126,7 +126,7 @@ async function requestAppToken(
   return {[identifier]: appToken}
 }
 
-async function tokenRequest(params: {[key: string]: any}): Promise<unknown> {
+async function tokenRequest(params: {[key: string]: string}): Promise<unknown> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()

@@ -2,7 +2,7 @@ import {isShopify} from '../environment/local'
 import constants from '../constants'
 import {randomUUID} from 'crypto'
 
-export async function buildHeaders(token: string): Promise<{[key: string]: any}> {
+export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
   const userAgent = `Shopify CLI; v=${constants.versions.cli}`
   const isEmployee = await isShopify()
 

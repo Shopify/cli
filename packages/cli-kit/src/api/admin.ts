@@ -1,9 +1,9 @@
 import {buildHeaders} from './common'
 import {AdminSession} from '../session'
 import {debug} from '../output'
-import {request as graphqlRequest, gql} from 'graphql-request'
+import {request as graphqlRequest, gql, RequestDocument, Variables} from 'graphql-request'
 
-export async function request<T>(query: any, session: AdminSession, variables?: any): Promise<T> {
+export async function request<T>(query: RequestDocument, session: AdminSession, variables?: Variables): Promise<T> {
   debug(`
 Sending Admin GraphQL request:
 ${query}
@@ -17,7 +17,7 @@ ${variables ? JSON.stringify(variables, null, 2) : ''}
   return graphqlRequest<T>(url, query, variables, headers)
 }
 
-async function fetchApiVersion(session: AdminSession): Promise<any> {
+async function fetchApiVersion(session: AdminSession): Promise<string> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
   const headers = await buildHeaders(session.token)
@@ -26,10 +26,12 @@ async function fetchApiVersion(session: AdminSession): Promise<any> {
 Sending Admin GraphQL request to URL ${url} with query:
 ${query}
   `)
-  const data = await graphqlRequest(url, query, {}, headers)
+  const data = await graphqlRequest<{
+    publicApiVersions: {handle: string; supported: boolean}[]
+  }>(url, query, {}, headers)
   return data.publicApiVersions
-    .filter((item: any) => item.supported)
-    .map((item: any) => item.handle)
+    .filter((item) => item.supported)
+    .map((item) => item.handle)
     .sort()
     .reverse()[0]
 }

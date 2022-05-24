@@ -150,7 +150,7 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
   } else if (sessionIsInvalid) {
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof InvalidGrantError) {
         newSession = await executeCompleteFlow(applications, fqdn)
       } else {

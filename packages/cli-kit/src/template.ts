@@ -19,7 +19,7 @@ export function create(templateContent: string) {
  * @param to {string} Output directory.
  * @param data {string} Data to feed the template engine.
  */
-export async function recursiveDirectoryCopy(from: string, to: string, data: any) {
+export async function recursiveDirectoryCopy(from: string, to: string, data: object) {
   const templateFiles: string[] = await glob(join(from, '**/*'), {dot: true})
 
   const sortedTemplateFiles = templateFiles
