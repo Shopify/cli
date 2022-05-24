@@ -198,6 +198,7 @@ class AppLoader {
 
     const app: App = {
       name,
+      idEnvironmentVariableName: 'SHOPIFY_APP_API_KEY',
       directory: this.appDirectory,
       webs: await this.loadWebs(),
       configuration,
