@@ -432,7 +432,7 @@ export async function updateAppIdentifiers({
     environment: {
       env: app.environment.env,
       dotenv: {
-        production: environmentType === 'production' ? dotenvFile : app.environment.dotenv?.production,
+        production: dotenvFile,
       },
     },
   }
