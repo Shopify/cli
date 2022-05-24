@@ -1,10 +1,10 @@
 import {updateURLs, generateURL} from './urls'
-import {App, UIExtension, WebType} from '../../models/app/app'
+import {App, WebType} from '../../models/app/app'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, error, path} from '@shopify/cli-kit'
-import {outputMocker} from '@shopify/cli-testing'
+import {api, error} from '@shopify/cli-kit'
 
 const LOCAL_APP: App = {
+  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
@@ -18,6 +18,11 @@ const LOCAL_APP: App = {
       },
     },
   ],
+  nodeDependencies: {},
+  environment: {
+    dotenv: {},
+    env: {},
+  },
   extensions: {ui: [], theme: [], function: []},
 }
 
@@ -45,28 +50,10 @@ beforeEach(() => {
 })
 
 describe('generateURL', () => {
-  it('returns a localhost URL by default', async () => {
+  it('returns a tunnel URL by default', async () => {
     // Given
-    const input = {
-      appManifest: LOCAL_APP,
-      reset: false,
-      tunnel: false,
-      update: false,
-      plugins: [],
-      skipDependenciesInstallation: true,
-    }
-
-    // When
-    const got = await generateURL(input, 3456)
-
-    // Then
-    expect(got).toEqual('http://localhost:3456')
-  })
-
-  it('returns a tunnel URL when the --tunnel flag is passed', async () => {
-    // Given
-    const input = {
-      appManifest: LOCAL_APP,
+    const options = {
+      app: LOCAL_APP,
       reset: false,
       tunnel: true,
       update: false,
@@ -75,41 +62,7 @@ describe('generateURL', () => {
     }
 
     // When
-    const got = await generateURL(input, 3456)
-
-    // Then
-    expect(got).toEqual('https://fake-url.ngrok.io')
-  })
-
-  it('returns a tunnel URL when there is at least one extension', async () => {
-    // Given
-    const appRoot = '/'
-    const extensionName = 'myextension'
-    const extensionRoot = `/extensions/${extensionName}`
-    const extension: UIExtension = {
-      buildDirectory: `${extensionRoot}/build`,
-      configurationPath: path.join(appRoot, 'shopify.app.toml'),
-      configuration: {
-        name: extensionName,
-        metafields: [],
-        type: 'checkout_post_purchase',
-      },
-      directory: extensionRoot,
-      entrySourceFilePath: `${extensionRoot}/src/index.js`,
-    }
-    const appWithExtension = {...LOCAL_APP, extensions: {ui: [extension], theme: [], function: []}}
-
-    const input = {
-      appManifest: appWithExtension,
-      reset: false,
-      tunnel: false,
-      update: false,
-      plugins: [],
-      skipDependenciesInstallation: true,
-    }
-
-    // When
-    const got = await generateURL(input, 3456)
+    const got = await generateURL(options, 3456)
 
     // Then
     expect(got).toEqual('https://fake-url.ngrok.io')
@@ -135,18 +88,6 @@ describe('updateURLs', () => {
 
     // Then
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
-  })
-
-  it('notifies the user about the update', async () => {
-    // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: []}})
-    const outputMock = outputMocker.mockAndCapture()
-
-    // When
-    await updateURLs('apiKey', 'http://localhost:3456')
-
-    // Then
-    expect(outputMock.output()).toMatch('Allowed redirection URLs updated in Partners Dashboard')
   })
 
   it('throws an error if requests has a user error', async () => {

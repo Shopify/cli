@@ -1,8 +1,8 @@
 import {bundle} from './deploy/bundle'
 import {upload} from './deploy/upload'
 
-import {App} from '../models/app/app'
-import {error, path, output, temporary} from '@shopify/cli-kit'
+import {App, getAppIdentifiers} from '../models/app/app'
+import {path, output, temporary} from '@shopify/cli-kit'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -10,15 +10,19 @@ interface DeployOptions {
 }
 
 export const deploy = async ({app}: DeployOptions) => {
-  ensureIdsPresence(app)
+  const identifiers = await getAppIdentifiers({app, environmentType: 'production'})
 
-  const apiKey = app.configuration.id as string
+  /**
+   * TODO: We need some logic here to ensure we have IDs for the apps and all the
+   * extensions that are part of it.
+   */
+  const apiKey = identifiers?.app as string
 
   output.newline()
   output.info('Pushing your code to Shopify...')
 
   output.newline()
-  output.success(`${app.configuration.name} deploy to Shopify Partners`)
+  output.success(`${app.configuration.name} deployed to Shopify Partners`)
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.configuration.name}.zip`)
@@ -35,26 +39,4 @@ export const deploy = async ({app}: DeployOptions) => {
       )
     })
   })
-}
-
-/**
- * Given an app, it makes sures all of its blocks have an id that's necessary
- * for the platform to map the bundle artifact to the block on the platform.
- * @param app {App} The application whose ids' presence will be checked.
- */
-function ensureIdsPresence(app: App) {
-  const configurationFilesWithoutId = app.extensions.ui
-    .filter((uiExtension) => uiExtension.configuration.id === undefined)
-    .map((uiExtension) => uiExtension.configurationPath)
-  if (!app.configuration.id) {
-    configurationFilesWithoutId.push(app.configurationPath)
-  }
-  if (configurationFilesWithoutId.length !== 0) {
-    const filesSequenceString = configurationFilesWithoutId.map((filePath) => path.relativize(filePath)).join(', ')
-    const tryNext = 'Dev the project to populate the ids in the configuration files.'
-    throw new error.Abort(
-      `The following configuration files are missing the id attribute: ${filesSequenceString}`,
-      tryNext,
-    )
-  }
 }

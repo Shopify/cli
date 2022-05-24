@@ -15,7 +15,7 @@ export const MissingStateError = new Bug(
   `The authentication cannot continue because the redirect doesn't include the state.`,
 )
 
-export const redirectResponseBody = 'Continuing the authentication in your terminal...'
+export const redirectResponseBody = `You're logged in on the Shopify CLI in your terminal`
 
 const ResponseTimeoutSeconds = 10
 
@@ -113,8 +113,8 @@ export class RedirectListener {
 export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
-      const message = '\nAuto-open timed out. Click this link to open the log in page:\n'
-      output.info(output.content`${message}${output.token.link('Auth Link', url)}\n`)
+      const message = '\nAuto-open timed out. Open the login page: '
+      output.info(output.content`${message}${output.token.link('Log in to Shopify Partners', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,

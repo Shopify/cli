@@ -1,7 +1,14 @@
-import {load} from './app'
-import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
-import {describe, it, expect, beforeEach, afterEach} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app'
+import {testApp, testUIExtension} from './app.test-data'
+import {
+  configurationFileNames,
+  blocks,
+  genericConfigurationFileNames,
+  getUIExtensionRendererDependency,
+} from '../../constants'
+import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
+import {file, path, dotenv} from '@shopify/cli-kit'
+import {temporary} from '@shopify/cli-testing'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -22,7 +29,8 @@ scopes = "read_products"
   })
 
   const writeConfig = async (appConfiguration: string) => {
-    const appDirectory = path.join(tmpDir, configurationFileNames.app)
+    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
+    const packageJsonPath = path.join(tmpDir, 'package.json')
     const webDirectory = path.join(tmpDir, blocks.web.directoryName)
     const webConfiguration = `
     type = "backend"
@@ -31,7 +39,8 @@ scopes = "read_products"
     build = "build"
     dev = "dev"
     `
-    await file.write(appDirectory, appConfiguration)
+    await file.write(appConfigurationPath, appConfiguration)
+    await file.write(packageJsonPath, JSON.stringify({dependencies: {}, devDependencies: {}}))
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
   }
@@ -175,6 +184,8 @@ scopes = "read_products"
 
     // Then
     expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -196,6 +207,7 @@ scopes = "read_products"
     // Then
     expect(app.configuration.name).toBe('my_app')
     expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   it('loads the app with several extensions that have valid configurations', async () => {
@@ -231,7 +243,9 @@ scopes = "read_products"
       extA.configuration.name < extB.configuration.name ? -1 : 1,
     )
     expect(extensions[0].configuration.name).toBe('my_extension_1')
+    expect(extensions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1].configuration.name).toBe('my_extension_2')
+    expect(extensions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
@@ -269,7 +283,7 @@ scopes = "read_products"
     await writeBlockConfig({
       blockType: 'function',
       blockConfiguration,
-      name: 'my-functions',
+      name: 'my-function',
     })
 
     // When
@@ -277,6 +291,8 @@ scopes = "read_products"
 
     // Then
     expect(app.extensions.function[0].configuration.name).toBe('my-function')
+    expect(app.extensions.function[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
+    expect(app.extensions.function[0].localIdentifier).toBe('my-function')
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -314,5 +330,394 @@ scopes = "read_products"
     )
     expect(functions[0].configuration.name).toBe('my-function-1')
     expect(functions[1].configuration.name).toBe('my-function-2')
+    expect(functions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
+    expect(functions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
+    expect(functions[0].localIdentifier).toBe('my-function-1')
+    expect(functions[1].localIdentifier).toBe('my-function-2')
+  })
+})
+
+describe('updateAppIdentifiers', () => {
+  test("persists the ids that are not environment variables in the system and it's local", async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension()
+      const app = testApp({
+        directory: tmpDir,
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      const gotApp = await updateAppIdentifiers({
+        app,
+        identifiers: {
+          app: 'FOO',
+          extensions: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            my_extension: 'BAR',
+          },
+        },
+        environmentType: 'local',
+      })
+
+      // Then
+      const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env.local'))
+      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toEqual('FOO')
+      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+      expect(gotApp.environment.dotenv.local?.variables.SHOPIFY_APP_ID).toEqual('FOO')
+      expect(gotApp.environment.dotenv.local?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+    })
+  })
+
+  test("persists the ids that are not environment variables in the system and it's production", async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension()
+      const app = testApp({
+        directory: tmpDir,
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      const gotApp = await updateAppIdentifiers({
+        app,
+        identifiers: {
+          app: 'FOO',
+          extensions: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            my_extension: 'BAR',
+          },
+        },
+        environmentType: 'production',
+      })
+
+      // Then
+      const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env'))
+      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toEqual('FOO')
+      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+      expect(gotApp.environment.dotenv.production?.variables.SHOPIFY_APP_ID).toEqual('FOO')
+      expect(gotApp.environment.dotenv.production?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+    })
+  })
+
+  test("doesn't persist the ids that come from the system's environment and it's local", async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension()
+      const app = testApp({
+        directory: tmpDir,
+        environment: {
+          dotenv: {},
+          env: {
+            SHOPIFY_APP_ID: 'ENV_FOO',
+            SHOPIFY_MY_EXTENSION_ID: 'ENV_BAR',
+          },
+        },
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      await updateAppIdentifiers({
+        app,
+        identifiers: {
+          app: 'FOO',
+          extensions: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            my_extension: 'BAR',
+          },
+        },
+        environmentType: 'local',
+      })
+
+      // Then
+      const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env.local'))
+      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
+      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
+    })
+  })
+
+  test("doesn't persist the ids that come from the system's environment and it's production", async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension()
+      const app = testApp({
+        directory: tmpDir,
+        environment: {
+          dotenv: {},
+          env: {
+            SHOPIFY_APP_ID: 'ENV_FOO',
+            SHOPIFY_MY_EXTENSION_ID: 'ENV_BAR',
+          },
+        },
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      await updateAppIdentifiers({
+        app,
+        identifiers: {
+          app: 'FOO',
+          extensions: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            my_extension: 'BAR',
+          },
+        },
+        environmentType: 'production',
+      })
+
+      // Then
+      const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env'))
+      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
+      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
+    })
+  })
+})
+
+describe('getAppIdentifiers', () => {
+  test('returns the right identifiers when variables are defined in the .env.local file', async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension({
+        localIdentifier: 'my-extension',
+        idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
+      })
+      const app = testApp({
+        directory: tmpDir,
+        environment: {
+          dotenv: {
+            local: {
+              path: path.join(tmpDir, '.env.local'),
+              variables: {SHOPIFY_APP_ID: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+            },
+          },
+          env: {},
+        },
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      const got = await getAppIdentifiers({
+        app,
+        environmentType: 'local',
+      })
+
+      // Then
+      expect(got.app).toEqual('FOO')
+      expect((got.extensions ?? {})['my-extension']).toEqual('BAR')
+    })
+  })
+
+  test('returns the right identifiers when variables are defined in the system environment', async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension({
+        localIdentifier: 'my-extension',
+        idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
+      })
+      const app = testApp({
+        directory: tmpDir,
+        environment: {
+          dotenv: {},
+          env: {SHOPIFY_APP_ID: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+        },
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      const got = await getAppIdentifiers({
+        app,
+        environmentType: 'local',
+      })
+
+      // Then
+      expect(got.app).toEqual('FOO')
+      expect((got.extensions ?? {})['my-extension']).toEqual('BAR')
+    })
+  })
+
+  test('returns the right identifiers when variables are defined in the .env file', async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension({
+        localIdentifier: 'my-extension',
+        idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
+      })
+      const app = testApp({
+        directory: tmpDir,
+        environment: {
+          dotenv: {
+            production: {
+              path: path.join(tmpDir, '.env'),
+              variables: {SHOPIFY_APP_ID: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+            },
+          },
+          env: {},
+        },
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      const got = await getAppIdentifiers({
+        app,
+        environmentType: 'production',
+      })
+
+      // Then
+      expect(got.app).toEqual('FOO')
+      expect((got.extensions ?? {})['my-extension']).toEqual('BAR')
+    })
+  })
+
+  test('returns the right identifiers when variables are defined in the system environment', async () => {
+    await temporary.directory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = testUIExtension({
+        localIdentifier: 'my-extension',
+        idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
+      })
+      const app = testApp({
+        directory: tmpDir,
+        environment: {
+          dotenv: {},
+          env: {SHOPIFY_APP_ID: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+        },
+        extensions: {
+          ui: [uiExtension],
+          function: [],
+          theme: [],
+        },
+      })
+
+      // When
+      const got = await getAppIdentifiers({
+        app,
+        environmentType: 'production',
+      })
+
+      // Then
+      expect(got.app).toEqual('FOO')
+      expect((got.extensions ?? {})['my-extension']).toEqual('BAR')
+    })
+  })
+})
+
+describe('getUIExtensionRendererVersion', () => {
+  test("returns undefined when the UI extension type doesn't have a runtime dependency", () => {
+    // Given/When
+    const app: App = {
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+      configuration: {
+        name: 'App',
+        scopes: '',
+      },
+      dependencyManager: 'yarn',
+      directory: '/tmp/project',
+      extensions: {
+        ui: [],
+        function: [],
+        theme: [],
+      },
+      webs: [],
+      nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
+      configurationPath: '/tmp/project/shopify.app.toml',
+    }
+    const got = getUIExtensionRendererVersion('beacon_extension', app)
+
+    // Then
+    expect(got).to.toBeUndefined()
+  })
+
+  test('returns undefined when the renderer dependency is not a dependency of the app', () => {
+    // Given/When
+    const app: App = {
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+      configuration: {
+        name: 'App',
+        scopes: '',
+      },
+      dependencyManager: 'yarn',
+      directory: '/tmp/project',
+      extensions: {
+        ui: [],
+        function: [],
+        theme: [],
+      },
+      webs: [],
+      nodeDependencies: {},
+      environment: {
+        dotenv: {},
+        env: {},
+      },
+      configurationPath: '/tmp/project/shopify.app.toml',
+    }
+    const got = getUIExtensionRendererVersion('product_subscription', app)
+
+    // Then
+    expect(got).to.toBeUndefined()
+  })
+
+  test('returns the name of the renderer package and the version if it is dependency of the app', () => {
+    // Given/When
+    const nodeDependencies: {[key: string]: string} = {}
+    const rendererDependency = getUIExtensionRendererDependency('product_subscription') as string
+    nodeDependencies[rendererDependency] = '1.2.3'
+    const app: App = {
+      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+      configuration: {
+        name: 'App',
+        scopes: '',
+      },
+      dependencyManager: 'yarn',
+      directory: '/tmp/project',
+      extensions: {
+        ui: [],
+        function: [],
+        theme: [],
+      },
+      webs: [],
+      nodeDependencies,
+      environment: {
+        dotenv: {},
+        env: {},
+      },
+      configurationPath: '/tmp/project/shopify.app.toml',
+    }
+    const got = getUIExtensionRendererVersion('product_subscription', app)
+
+    // Then
+    expect(got?.name).to.toEqual(rendererDependency)
+    expect(got?.version).toEqual('1.2.3')
   })
 })

@@ -5,7 +5,7 @@ export const AllStoresByOrganizationQuery = gql`
     organizations(id: $id, first: 1) {
       nodes {
         id
-        stores(first: 500) {
+        stores(first: 500, archived: false) {
           nodes {
             shopId
             link

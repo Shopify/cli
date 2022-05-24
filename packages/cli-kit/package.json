@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "2.0.5",
+  "version": "2.0.9",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -54,7 +54,8 @@
     "keytar": "^7.9.0",
     "open": "^8.4.0",
     "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8"
+    "stacktracey": "^2.1.8",
+    "envfile": "^6.17.0"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",

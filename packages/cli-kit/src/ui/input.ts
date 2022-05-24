@@ -28,7 +28,7 @@ export class Input extends enquirer.StringPrompt {
     let prompt = [prefix, message].filter(Boolean).join(' ')
     this.state.prompt = prompt
 
-    const output = await this.format()
+    const output = this.type === 'password' ? await this.formatPassword() : await this.format()
     const help = (await this.error()) || (await this.hint())
 
     const underline = '▔'.repeat(Math.max(color.unstyle(output).length - 10, 30))
@@ -42,5 +42,11 @@ export class Input extends enquirer.StringPrompt {
     this.clear(size)
     this.write([prompt].filter(Boolean).join('\n'))
     this.restore()
+  }
+
+  formatPassword() {
+    if (!this.keypressed) return ''
+    const color = this.state.submitted ? this.styles.primary : this.styles.muted
+    return color(this.symbols.asterisk.repeat(this.input.length))
   }
 }

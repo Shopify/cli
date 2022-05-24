@@ -1,20 +1,11 @@
 import {DevOptions} from '../dev'
 import {api, error, output, plugins, session} from '@shopify/cli-kit'
 
-export async function generateURL(options: DevOptions, frontendPort: number) {
-  let url = `http://localhost:${frontendPort}`
-
-  const hasExtensions: boolean =
-    options.appManifest.extensions.ui.length > 0 ||
-    options.appManifest.extensions.function.length > 0 ||
-    options.appManifest.extensions.theme.length > 0
-  const useTunnel = options.tunnel || hasExtensions
-
-  if (useTunnel) {
-    const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
-    if (tunnelPlugin) url = await tunnelPlugin.start({port: frontendPort})
-  }
-
+export async function generateURL(options: DevOptions, frontendPort: number): Promise<string> {
+  const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
+  if (!tunnelPlugin) throw new error.Abort('The tunnel could not be found')
+  const url = await tunnelPlugin?.start({port: frontendPort})
+  output.success('The tunnel is running and you can now view your app')
   return url
 }
 
@@ -33,5 +24,4 @@ export async function updateURLs(apiKey: string, url: string): Promise<void> {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
-  output.success('Allowed redirection URLs updated in Partners Dashboard')
 }

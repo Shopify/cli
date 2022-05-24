@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './dev/environment'
+import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
@@ -6,11 +6,10 @@ import {output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 export interface DevOptions {
-  appManifest: App
+  app: App
   apiKey?: string
   store?: string
   reset: boolean
-  tunnel: boolean
   update: boolean
   plugins: Plugin[]
   skipDependenciesInstallation: boolean
@@ -25,33 +24,38 @@ interface DevWebOptions {
   scopes: AppConfiguration['scopes']
 }
 
-async function dev(input: DevOptions) {
-  if (!input.skipDependenciesInstallation) {
-    await installAppDependencies(input.appManifest)
+async function dev(options: DevOptions) {
+  if (!options.skipDependenciesInstallation) {
+    // eslint-disable-next-line no-param-reassign
+    options = {
+      ...options,
+      app: await installAppDependencies(options.app),
+    }
   }
   const {
-    app: {apiKey, apiSecretKeys},
+    identifiers,
     store,
-  } = await ensureDevEnvironment(input)
+    app: {apiSecret},
+  } = await ensureDevEnvironment(options)
 
   const frontendPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
-  const url: string = await generateURL(input, frontendPort)
-  if (input.update) await updateURLs(apiKey, url)
-
+  const url: string = await generateURL(options, frontendPort)
+  let updateMessage = ''
+  if (options.update) {
+    await updateURLs(identifiers.app, url)
+    updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
+  }
+  const message = `${updateMessage}Preview link for viewing or sharing: `
   const storeAppUrl = `${url}/api/auth?shop=${store}`
+  output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
 
-  output.info(output.content`
-  Your app is up and running! ✨
-  View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
-  `)
-
-  devWeb(input.appManifest.webs, {
-    apiKey,
+  devWeb(options.app.webs, {
+    apiKey: identifiers.app,
     frontendPort,
     backendPort,
-    scopes: input.appManifest.configuration.scopes,
-    apiSecret: apiSecretKeys[0].secret,
+    scopes: options.app.configuration.scopes,
+    apiSecret: apiSecret as string,
     hostname: url,
   })
 }
