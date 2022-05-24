@@ -8,11 +8,11 @@ export const AuthenticationError = (message: string) => {
   return new Abort(message)
 }
 export const MissingCodeError = new Bug(
-  `The authentication cannot continue because the redirect doesn't include the code.`,
+  `The authentication can't continue because the redirect doesn't include the code.`,
 )
 
 export const MissingStateError = new Bug(
-  `The authentication cannot continue because the redirect doesn't include the state.`,
+  `The authentication can't continue because the redirect doesn't include the state.`,
 )
 
 export const redirectResponseBody = `You're logged in on the Shopify CLI in your terminal`

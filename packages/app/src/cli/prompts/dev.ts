@@ -54,7 +54,7 @@ export async function appNamePrompt(currentName: string): Promise<string> {
     default: currentName,
     validate: (value) => {
       if (value.length === 0) {
-        return 'App Name cannot be empty'
+        return "App Name can't be empty"
       }
       if (value.length > 30) {
         return 'App name is too long (maximum is 30 characters)'
