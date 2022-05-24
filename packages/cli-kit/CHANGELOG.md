@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 2.0.10
+
+### Patch Changes
+
+- 31b75488: Derive app name from package.json, not TOML config
+
 ## 2.0.9
 
 ### Patch Changes

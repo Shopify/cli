@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 2.0.10
+
+### Patch Changes
+
+- abf1c08c: Do not allow to scaffold extensions that already reached the quota limit
+- 31b75488: Derive app name from package.json, not TOML config
+- Updated dependencies [31b75488]
+  - @shopify/cli-kit@2.0.10
+
 ## 2.0.9
 
 ### Patch Changes

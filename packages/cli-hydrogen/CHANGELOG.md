@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 2.0.10
+
+### Patch Changes
+
+- a889b643: Add target flag for node preview command
+- Updated dependencies [31b75488]
+  - @shopify/cli-kit@2.0.10
+
 ## 2.0.9
 
 ### Patch Changes
