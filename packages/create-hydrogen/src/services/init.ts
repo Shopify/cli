@@ -41,95 +41,116 @@ async function init(options: InitOptions) {
     await file.mkdir(templateDownloadDir)
     await file.mkdir(templateScaffoldDir)
 
-    const list = new ui.Listr(
-      [
-        {
-          title: 'Downloading template',
-          task: async (_, task) => {
-            await downloadTemplate({
-              templateUrl: [GIT_HOST, options.template].join(':'),
-              into: templateDownloadDir,
-            })
+    let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
 
-            task.title = 'Template downloaded'
-          },
+    tasks = tasks.concat([
+      {
+        title: 'Downloading template',
+        task: async (_, task) => {
+          await downloadTemplate({
+            templateUrl: [GIT_HOST, options.template].join(':'),
+            into: templateDownloadDir,
+          })
+
+          task.title = 'Template downloaded'
         },
-        {
-          title: `Initializing your app ${hyphenizedName}`,
-          task: async (_, parentTask) => {
-            return parentTask.newListr(
-              [
-                {
-                  title: 'Parsing template files',
-                  task: async (_, task) => {
-                    const templateData = {
-                      name: hyphenizedName,
-                      // eslint-disable-next-line @typescript-eslint/naming-convention
-                      shopify_cli_version: cliPackageVersion,
-                      // eslint-disable-next-line @typescript-eslint/naming-convention
-                      hydrogen_version: hydrogenPackageVersion,
-                      author: user,
-                      // eslint-disable-next-line @typescript-eslint/naming-convention
-                      dependency_manager: options.dependencyManager,
-                    }
-                    await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, templateData)
+      },
+      {
+        title: `Initializing your app ${hyphenizedName}`,
+        task: async (_, parentTask) => {
+          return parentTask.newListr(
+            [
+              {
+                title: 'Parsing template files',
+                task: async (_, task) => {
+                  const templateData = {
+                    name: hyphenizedName,
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    shopify_cli_version: cliPackageVersion,
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    hydrogen_version: hydrogenPackageVersion,
+                    author: user,
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    dependency_manager: options.dependencyManager,
+                  }
+                  await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, templateData)
 
-                    task.title = 'Template files parsed'
-                  },
+                  task.title = 'Template files parsed'
                 },
-                {
-                  title: 'Updating package.json',
-                  task: async (_, task) => {
-                    const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-
-                    await npm.updateAppData(packageJSON, hyphenizedName)
-                    await updateCLIDependencies(packageJSON, options.local, {
-                      dependencies: {
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        '@shopify/hydrogen': hydrogenPackageVersion,
-                      },
-                      devDependencies: {
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        '@shopify/cli': cliPackageVersion,
-                      },
-                    })
-                    await updateCLIScripts(packageJSON)
-                    await npm.writePackageJSON(templateScaffoldDir, packageJSON)
-
-                    task.title = 'Package.json updated'
-                    parentTask.title = 'App initialized'
-                  },
-                },
-              ],
-              {concurrent: false},
-            )
-          },
-        },
-        {
-          title: `Installing dependencies with ${dependencyManager}`,
-          task: async (_, task) => {
-            const stdout = new Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
               },
-            })
-            await installDependencies(templateScaffoldDir, dependencyManager, stdout)
-          },
-        },
-        {
-          title: 'Cleaning up',
-          task: async (_, task) => {
-            await cleanup(templateScaffoldDir)
+              {
+                title: 'Updating package.json',
+                task: async (_, task) => {
+                  const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
 
-            task.title = 'Completed clean up'
-          },
+                  await npm.updateAppData(packageJSON, hyphenizedName)
+                  await updateCLIDependencies(packageJSON, options.local, {
+                    dependencies: {
+                      // eslint-disable-next-line @typescript-eslint/naming-convention
+                      '@shopify/hydrogen': hydrogenPackageVersion,
+                    },
+                    devDependencies: {
+                      // eslint-disable-next-line @typescript-eslint/naming-convention
+                      '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
+                      // eslint-disable-next-line @typescript-eslint/naming-convention
+                      '@shopify/cli': cliPackageVersion,
+                    },
+                  })
+                  await updateCLIScripts(packageJSON)
+                  await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+
+                  task.title = 'Package.json updated'
+                  parentTask.title = 'App initialized'
+                },
+              },
+            ],
+            {concurrent: false},
+          )
         },
-      ],
-      {concurrent: false, rendererSilent: environment.local.isUnitTest()},
-    )
+      },
+    ])
+
+    if (await environment.local.isShopify()) {
+      tasks.push({
+        title: "[Shopifolks-only] Configuring the project's NPM registry",
+        task: async (_, task) => {
+          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
+          const npmrcContent = `registry=https://registry.npmjs.org`
+          await file.write(npmrcPath, npmrcContent)
+          task.title = "[Shopifolks-only] Project's NPM registry configured."
+        },
+      })
+    }
+
+    tasks = tasks.concat([
+      {
+        title: `Installing dependencies with ${dependencyManager}`,
+        task: async (_, task) => {
+          const stdout = new Writable({
+            write(chunk, encoding, next) {
+              task.output = chunk.toString()
+              next()
+            },
+          })
+          await installDependencies(templateScaffoldDir, dependencyManager, stdout)
+        },
+      },
+      {
+        title: 'Cleaning up',
+        task: async (_, task) => {
+          await cleanup(templateScaffoldDir)
+
+          task.title = 'Completed clean up'
+        },
+      },
+    ])
+
+    const list = new ui.Listr(tasks, {
+      concurrent: false,
+      rendererOptions: {collapse: false},
+      rendererSilent: environment.local.isUnitTest(),
+    })
+
     await list.run()
 
     await file.move(templateScaffoldDir, outputDirectory)
