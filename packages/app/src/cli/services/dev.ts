@@ -1,7 +1,7 @@
 import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
-import {serveExtensions} from './build/extension'
+import {devExtensions} from './dev/extension'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -22,12 +22,11 @@ export interface DevOptions {
 }
 
 interface DevWebOptions {
-  frontendPort: number
   backendPort: number
   apiKey: string
-  apiSecret: string
-  hostname: string
-  scopes: AppConfiguration['scopes']
+  apiSecret?: string
+  hostname?: string
+  scopes?: AppConfiguration['scopes']
 }
 
 async function dev(options: DevOptions) {
@@ -59,59 +58,48 @@ async function dev(options: DevOptions) {
   const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)!
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)!
 
-  const devFront = devFrontend(frontendConfig, {
+  const backendOptions = {
     apiKey: identifiers.app,
-    frontendPort,
-    backendPort,
-    scopes: options.app.configuration.scopes,
-    apiSecret: apiSecret as string,
-    hostname: url,
-  })
-
-  const devBack: output.OutputProcess = devBackend(backendConfig, {
-    apiKey: identifiers.app,
-    frontendPort,
     backendPort,
     scopes: options.app.configuration.scopes,
     apiSecret: (apiSecret as string) ?? '',
     hostname: url,
-  })
+  }
 
-  const devExt = await devExtensions(options.app, identifiers.app, url, store)
+  const devFront = devFrontendTarget(frontendConfig, identifiers.app, backendPort)
+  const devBack = devBackendTarget(backendConfig, backendOptions)
+  const devExt = await devExtensionsTarget(options.app, identifiers.app, url, store)
 
   await runConcurrentHTTPProcessesAndPathForwardTraffic(url, frontendPort, [devExt, devFront], [devBack])
 }
 
-function devFrontend(web: Web, options: DevWebOptions): ReverseHTTPProxyTarget {
+function devFrontendTarget(web: Web, apiKey: string, backendPort: number): ReverseHTTPProxyTarget {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
-    SHOPIFY_API_KEY: options.apiKey,
-    BACKEND_PORT: `${options.backendPort}`,
-    FRONTEND_PORT: `${options.frontendPort}`,
+    SHOPIFY_API_KEY: apiKey,
+    BACKEND_PORT: `${backendPort}`,
+    NODE_ENV: `development`,
   }
 
   return {
     logPrefix: web.configuration.type,
     action: async (stdout: any, stderr: any, signal: AbortSignal, port: number) => {
-      const newEnv = {
-        ...process.env,
-        ...env,
-        NODE_ENV: `development`,
-        FRONTEND_PORT: `${port}`,
-      }
-      // console.log(port, cmd, args, newEnv)
       await system.exec(cmd, args, {
         cwd: web.directory,
         stdout,
         stderr,
-        env: newEnv,
+        env: {
+          ...process.env,
+          ...env,
+          FRONTEND_PORT: `${port}`,
+        },
       })
     },
   }
 }
 
-function devBackend(web: Web, options: DevWebOptions): output.OutputProcess {
+function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProcess {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
@@ -120,6 +108,7 @@ function devBackend(web: Web, options: DevWebOptions): output.OutputProcess {
     HOST: options.hostname,
     BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
+    NODE_ENV: `development`,
   }
 
   return {
@@ -132,72 +121,13 @@ function devBackend(web: Web, options: DevWebOptions): output.OutputProcess {
         env: {
           ...process.env,
           ...env,
-          NODE_ENV: `development`,
         },
       })
     },
   }
 }
 
-function devWeb(webs: Web[], options: DevWebOptions): ReverseHTTPProxyTarget[] {
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const SHOPIFY_API_KEY = options.apiKey
-
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const SHOPIFY_API_SECRET = options.apiSecret
-
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const HOST = options.hostname
-
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const SCOPES = options.scopes
-
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const FRONTEND_PORT = `${options.frontendPort}`
-
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const BACKEND_PORT = `${options.backendPort}`
-
-  const webActions = webs.map(({configuration, directory}: Web, _index) => {
-    const {commands, type} = configuration
-    const [cmd, ...args] = commands.dev.split(' ')
-    const env =
-      type === WebType.Backend
-        ? {
-            SHOPIFY_API_KEY,
-            SHOPIFY_API_SECRET,
-            HOST,
-            BACKEND_PORT,
-            SCOPES,
-          }
-        : {
-            SHOPIFY_API_KEY,
-            BACKEND_PORT,
-            FRONTEND_PORT,
-          }
-
-    return {
-      prefix: configuration.type,
-      logPrefix: configuration.type,
-      action: async (stdout: any, stderr: any, signal: AbortSignal, port: number) => {
-        await system.exec(cmd, args, {
-          cwd: directory,
-          stdout,
-          stderr,
-          env: {
-            ...process.env,
-            ...env,
-            NODE_ENV: `development`,
-            FRONTEND_PORT: port,
-          },
-        })
-      },
-    }
-  })
-  return webActions
-}
-
-async function devExtensions(
+async function devExtensionsTarget(
   app: App,
   apiKey: string,
   url: string,
@@ -207,7 +137,7 @@ async function devExtensions(
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
-      await serveExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
+      await devExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
     },
   }
 }

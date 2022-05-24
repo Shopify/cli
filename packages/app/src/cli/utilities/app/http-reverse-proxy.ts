@@ -39,8 +39,10 @@ export interface ReverseHTTPProxyTarget {
 /**
  * A convenient function that runs an HTTP server and does path-based traffic forwarding to sub-processes that run
  * an HTTP server. The method assigns a random port to each of the processes.
+ * @param tunnelUrl {string} The URL of the tunnel.
  * @param portNumber {number} The port to use for the proxy HTTP server. When undefined, a random port is automatically assigned.
- * @param targets {ReverseHTTPProxyTarget[]} And list of processes that run HTTP servers.
+ * @param proxyTargets {ReverseHTTPProxyTarget[]} List of target processes to forward traffic to.
+ * @param additionalProcesses {output.OutputProcess[]} Additional processes to run. The proxy won't forward traffic to these processes.
  * @returns {Promise<ReverseHTTPProxy>} A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
@@ -60,7 +62,9 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
         http2: false,
         websocket: target.logPrefix === 'extensions',
         replyOptions: {
-          rewriteRequestHeaders: (originalReq, headers) => {
+          // Update `host` header to be tunnelURL when forwarding to extensions binary.
+          // The binary uses this to build extensions URLs and they must use the tunnelURL always.
+          rewriteRequestHeaders: (_originalReq, headers) => {
             if (target.logPrefix !== 'extensions') {
               return headers
             }
