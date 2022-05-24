@@ -49,7 +49,7 @@ func New(config *core.Config, apiRoot string) *ExtensionsApi {
 
 func (api *ExtensionsApi) sendUpdateEvent(extensions []core.Extension) {
 	api.notifyClients(func(rootUrl string) (message notification, err error) {
-		return api.getNotification("update", extensions, rootUrl)
+		return api.getNotification("update", extensions, api.publicUrl)
 	})
 }
 
@@ -252,6 +252,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 		sync.Map{},
 		apiRoot,
 		sync.Map{},
+		config.PublicUrl + "/extensions/",
 	}
 
 	api.HandleFunc(strings.TrimSuffix(apiRoot, "/"), handlerWithCors(api.extensionsHandler))
@@ -318,7 +319,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		notifications <- update
 	}, closeConnection)
 
-	notification, err := api.getNotification("connected", api.Extensions, connection.rootUrl)
+	notification, err := api.getNotification("connected", api.Extensions, api.publicUrl)
 	if err != nil {
 		closeConnection(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
 	}
@@ -461,7 +462,7 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 
 		case "dispatch":
 			api.notifyClients(func(rootUrl string) (message notification, err error) {
-				return api.getDispatchNotification(jsonMessage.Data, rootUrl)
+				return api.getDispatchNotification(jsonMessage.Data, api.publicUrl)
 			})
 		}
 	}
@@ -590,6 +591,7 @@ type ExtensionsApi struct {
 	connections sync.Map
 	apiRoot     string
 	updates     sync.Map
+	publicUrl   string
 }
 
 type notification struct {
