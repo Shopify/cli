@@ -1,12 +1,12 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy'
+import fastifyHttpProxy from './fastify-http-proxy/index.cjs'
 import {describe, expect, test, vi} from 'vitest'
 import Fastify from 'fastify'
 import {port, output} from '@shopify/cli-kit'
-import fastifyHttpProxy from './fastify-http-proxy/index'
 
 vi.mock('fastify')
 vi.mock('@shopify/cli-kit')
-vi.mock('./fastify-http-proxy/index')
+vi.mock('./fastify-http-proxy/index.cjs')
 
 describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('proxies to all the targets using the Fastify HTTP Proxy', async () => {

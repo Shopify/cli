@@ -1,8 +1,6 @@
-/* eslint-disable */
-'use strict'
+const {convertUrlToWebSocket} = require('./utils.cjs')
 const From = require('@fastify/reply-from')
 const WebSocket = require('ws')
-const {convertUrlToWebSocket} = require('./utils.cjs')
 
 const httpMethods = ['DELETE', 'GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'OPTIONS']
 const urlPattern = /^https?:\/\//
@@ -43,7 +41,7 @@ function proxyWebSockets(source, target) {
     closeWebSocket(target, code, reason)
   }
 
-  source.on('message', (data) => waitConnection(target, () => target.send(data)))
+  source.on('message', (data) => waitConnection(target, () => target.send(data, {binary: false})))
   source.on('ping', (data) => waitConnection(target, () => target.ping(data)))
   source.on('pong', (data) => waitConnection(target, () => target.pong(data)))
   source.on('close', close)
@@ -51,7 +49,7 @@ function proxyWebSockets(source, target) {
   source.on('unexpected-response', () => close(1011, 'unexpected response'))
 
   // source WebSocket is already connected because it is created by ws server
-  target.on('message', (data) => source.send(data))
+  target.on('message', (data) => source.send(data, {binary: false}))
   target.on('ping', (data) => source.ping(data))
   target.on('pong', (data) => source.pong(data))
   target.on('close', close)
@@ -146,14 +144,12 @@ async function httpProxy(fastify, opts) {
   const preHandler = opts.preHandler || opts.beforeHandler
   const rewritePrefix = generateRewritePrefix(fastify.prefix, opts)
 
-  const fromOpts = Object.assign({}, opts)
+  const fromOpts = {...opts}
   fromOpts.base = opts.upstream
   fromOpts.prefix = undefined
 
   const oldRewriteHeaders = (opts.replyOptions || {}).rewriteHeaders
-  const replyOpts = Object.assign({}, opts.replyOptions, {
-    rewriteHeaders,
-  })
+  const replyOpts = {...opts.replyOptions, rewriteHeaders}
   fromOpts.rewriteHeaders = rewriteHeaders
 
   fastify.register(From, fromOpts)
