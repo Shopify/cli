@@ -844,15 +844,7 @@
   resolved "https://registry.yarnpkg.com/@fastify/error/-/error-2.0.0.tgz#a9f94af56eb934f0ab1ce4ef9f0ced6ebf2319dc"
   integrity sha512-wI3fpfDT0t7p8E6dA2eTECzzOd+bZsZCJ2Hcv+Onn2b7ZwK3RwD27uW2QDaMtQhAfWQQP+WNK7nKf0twLsBf9w==
 
-"@fastify/http-proxy@^7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@fastify/http-proxy/-/http-proxy-7.1.0.tgz#96b05e757ec9ebcc9fc8590911ca38a0cc62d373"
-  integrity sha512-G15TPeO657N8n4mhlGvbKneZH3exiV8fjbSoJgzcgwzaEmidc+4v3Xg/loTp21palsq+hQPlzVl0eHSzDTAuKA==
-  dependencies:
-    "@fastify/reply-from" "^7.0.0"
-    ws "^8.4.2"
-
-"@fastify/reply-from@^7.0.0":
+"@fastify/reply-from@^7.0.1":
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/@fastify/reply-from/-/reply-from-7.0.1.tgz#ae3798f307bfa1d14b83878cd442f5f7083fabb5"
   integrity sha512-ikp6GpmEJ7AVxcDdSVE9MhpUtC9KnImQDegc5ePZ+H7QZcraIjotP7YndwT/fP8lYj2Qr1h4RtuFNU8Wdwleuw==
@@ -10620,7 +10612,7 @@ ws@7.4.5:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.7.tgz#9e0ac77ee50af70d58326ecff7e85eb3fa375e67"
   integrity sha512-KMvVuFzpKBuiIXW3E4u3mySRO2/mCHSyZDJQM5NQ9Q9KHWHWh0NHgfbRMLLrceUK5qAL4ytALJbpRMjixFZh8A==
 
-ws@^8.4.2:
+ws@^8.6.0:
   version "8.6.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.6.0.tgz#e5e9f1d9e7ff88083d0c0dd8281ea662a42c9c23"
   integrity sha512-AzmM3aH3gk0aX7/rZLYvjdvZooofDu3fFOzGqcSnQ1tOcTWwhM/o+q++E8mAyVVIyUdajrkzWUGftaVSDLn1bw==
