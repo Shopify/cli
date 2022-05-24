@@ -126,17 +126,10 @@ class AppInfo {
         if (error) errors.push(error)
       }
     })
-    if (errors[0]) {
-      const errorHeadline = errors.length === 1 ? 'validation error' : 'validation errors'
-      const firstError: string = errors.shift()!
-      const [errorFirstLine, ...errorRemainingLines] = firstError.split('\n')
-      errors.forEach((error) => error.split('\n').forEach((line) => errorRemainingLines.push(line)))
+    let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
+    if (errorContent.trim() === '') errorContent = ''
 
-      sublevels.push([this.errorText(errorHeadline), this.errorText(errorFirstLine)])
-      errorRemainingLines.forEach((line) => sublevels.push(['', this.errorText(line)]))
-    }
-
-    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}`
+    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
   uiExtensionSubSection(extension: UIExtension): string {
@@ -171,19 +164,18 @@ class AppInfo {
   }
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
-    const [errorFirstLine, ...errorRemainingLines] = this.app.errors!.getError(extension.configurationPath).split('\n')
     const details = [
       [`📂 extension root directory`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
-      ['     validation error', errorFirstLine].map(this.errorText),
-      ...errorRemainingLines.map((line) => ['', line].map(this.errorText)),
     ]
-
-    return `\n${this.linesToColumns(details)}`
+    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
+    return `\n${this.linesToColumns(details)}\n${error}`
   }
 
-  errorText(str: string): string {
-    return output.content`${output.token.errorText(str)}`.value
+  formattedError(str: string): string {
+    const [errorFirstLine, ...errorRemainingLines] = str.split('\n')
+    const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
+    return output.content`${output.token.errorText(errorLines.join('\n'))}`.value
   }
 
   accessScopesSection(): [string, string] {
