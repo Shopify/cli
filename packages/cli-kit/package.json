@@ -51,11 +51,11 @@
   ],
   "dependencies": {
     "@oclif/core": "1.7.0",
+    "envfile": "^6.17.0",
     "keytar": "^7.9.0",
     "open": "^8.4.0",
     "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8",
-    "envfile": "^6.17.0"
+    "stacktracey": "^2.1.8"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
@@ -93,6 +93,6 @@
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "vitest": "0.10.0",
-    "zod": "^3.14.3"
+    "zod": "^3.17.3"
   }
 }

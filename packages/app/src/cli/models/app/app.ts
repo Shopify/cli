@@ -278,7 +278,7 @@ class AppLoader {
     }
   }
 
-  async loadConfigurationFile(path: string): Promise<object> {
+  async loadConfigurationFile(path: string): Promise<unknown> {
     if (!(await file.exists(path))) {
       return this.abortOrReport(`Couldn't find the configuration file at ${path}`, '', path)
     }
@@ -291,13 +291,22 @@ class AppLoader {
     }
   }
 
-  async parseConfigurationFile(schema: any, path: string) {
+  async parseConfigurationFile<TSchema extends schema.define.ZodType>(
+    schema: TSchema,
+    path: string,
+  ): Promise<schema.define.TypeOf<TSchema>> {
+    const fallbackOutput = {} as schema.define.TypeOf<TSchema>
+
     const configurationObject = await this.loadConfigurationFile(path)
-    if (!configurationObject) return {}
+    if (!configurationObject) return fallbackOutput
 
     const parseResult = schema.safeParse(configurationObject)
     if (!parseResult.success) {
-      this.abortOrReport(`Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`, {}, path)
+      return this.abortOrReport(
+        `Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`,
+        fallbackOutput,
+        path,
+      )
     }
     return parseResult.data
   }
@@ -358,7 +367,7 @@ class AppLoader {
     return Promise.all(themeExtensions)
   }
 
-  abortOrReport(errorMessage: string, fallback: any = null, configurationPath: string) {
+  abortOrReport<T>(errorMessage: string, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
       throw new error.Abort(errorMessage)
     } else {
