@@ -310,7 +310,7 @@ scopes = "read_products"
 
     blockConfiguration = `
       name = "my-function-2"
-      type = "product_discount_type"
+      type = "product_discounts"
       title = "my-function-2"
       `
     await writeBlockConfig({
