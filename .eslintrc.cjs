@@ -24,6 +24,7 @@ module.exports = {
     'no-console': 'error',
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/switch-exhaustiveness-check': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',
