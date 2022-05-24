@@ -2,9 +2,9 @@ import {App, UIExtension} from './app'
 
 export function testApp(app: Partial<App> = {}): App {
   return {
+    name: app?.name ?? 'App',
     idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_APP_ID',
     configuration: {
-      name: app?.configuration?.name ?? 'App',
       scopes: app?.configuration?.scopes ?? '',
     },
     dependencyManager: app.dependencyManager ?? 'yarn',

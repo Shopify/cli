@@ -32,7 +32,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       default: defaults.name,
       validate: (value) => {
         if (value.length === 0) {
-          return 'App Name cannot be empty'
+          return "App Name can't be empty"
         }
         if (value.length > 30) {
           return 'App name is too long (maximum is 30 characters)'

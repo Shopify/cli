@@ -220,7 +220,7 @@ async function selectOrg(token: string): Promise<string> {
 function showReusedValues(org: string, app: App, store: string) {
   output.info('\nUsing your previous dev settings:')
   output.info(`Org:        ${org}`)
-  output.info(`App:        ${app.configuration.name}`)
+  output.info(`App:        ${app.name}`)
   output.info(`Dev store:  ${store}\n`)
   output.info(
     output.content`To reset your default dev config, run ${output.token.command(

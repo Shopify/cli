@@ -1,4 +1,4 @@
-import {path, error, system, file} from '@shopify/cli-kit'
+import {path, error, system, file, output} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -6,7 +6,30 @@ interface PreviewOptions {
   port: number
 }
 
-async function preview({directory, port}: PreviewOptions) {
+export async function previewInNode({directory, port}: PreviewOptions) {
+  const buildOutputPath = await path.resolve(directory, 'dist/node')
+
+  if (!(await file.exists(buildOutputPath))) {
+    output.info(
+      output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.command(
+        'yarn shopify hydrogen build --target=node',
+      )} to create one.`,
+    )
+
+    await system.exec('yarn', ['shopify', 'hydrogen', 'build', '--target=node'], {
+      cwd: directory,
+      stdout: process.stdout,
+    })
+  }
+
+  await system.exec('node', ['--enable-source-maps', buildOutputPath], {
+    env: {PORT: port},
+    cwd: directory,
+    stdout: process.stdout,
+  })
+}
+
+export async function previewInWorker({directory, port}: PreviewOptions) {
   const config = {
     port,
     workerFile: 'dist/worker/index.js',
@@ -36,8 +59,6 @@ async function preview({directory, port}: PreviewOptions) {
     stdout: process.stdout,
   })
 }
-
-export default preview
 
 export const OxygenPreviewExecutableNotFound = new error.Abort(
   'Could not locate the executable file to run Oxygen locally.',

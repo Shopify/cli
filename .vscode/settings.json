@@ -34,5 +34,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
-  "eslint.workingDirectories": [{ "pattern": "packages/*/package.json" }]
+  "eslint.workingDirectories": [{ "pattern": "packages/*/package.json" }],
+  "vitest.enable": true,
 }

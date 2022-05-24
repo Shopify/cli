@@ -58,13 +58,7 @@ export const genericConfigurationFileNames = {
 } as const
 
 export const functionExtensions = {
-  types: [
-    'product_discount_type',
-    'order_discount_type',
-    'shipping_discount_type',
-    'payment_methods',
-    'shipping_rate_presenter',
-  ],
+  types: ['product_discounts', 'order_discounts', 'shipping_discounts', 'payment_methods', 'shipping_rate_presenter'],
 } as const
 
 export type FunctionExtensionTypes = typeof functionExtensions.types[number]

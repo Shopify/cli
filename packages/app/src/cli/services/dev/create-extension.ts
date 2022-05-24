@@ -57,9 +57,9 @@ const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'theme':
       return 'THEME_APP_EXTENSION'
     case 'beacon_extension':
-    case 'product_discount_type':
-    case 'order_discount_type':
-    case 'shipping_discount_type':
+    case 'product_discounts':
+    case 'order_discounts':
+    case 'shipping_discounts':
     case 'payment_methods':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.

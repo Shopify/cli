@@ -170,12 +170,12 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
 function functionTemplatePath({extensionType, language}: FunctionExtensionInitOptions): string {
   const lang = language || blocks.functions.defaultLanguage
   switch (extensionType) {
-    case 'product_discount_type':
-      return `discounts/${lang}/product-discount-type/default`
-    case 'order_discount_type':
-      return `discounts/${lang}/order-discount-type/default`
-    case 'shipping_discount_type':
-      return `discounts/${lang}/shipping-discount-type/default`
+    case 'product_discounts':
+      return `discounts/${lang}/product-discounts/default`
+    case 'order_discounts':
+      return `discounts/${lang}/order-discounts/default`
+    case 'shipping_discounts':
+      return `discounts/${lang}/shipping-discounts/default`
     case 'payment_methods':
       return `checkout/${lang}/payment-methods/default`
     case 'shipping_rate_presenter':
