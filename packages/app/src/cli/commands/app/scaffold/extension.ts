@@ -69,7 +69,7 @@ export default class AppScaffoldExtension extends Command {
 
   /**
    * If the type passed as flag is not valid because it has already been scaffolded
-   * and we do not allow multiple extensions of that type, throw an error
+   * and we don't allow multiple extensions of that type, throw an error
    * @param app {App} current App
    * @param type {string} extension type
    */
