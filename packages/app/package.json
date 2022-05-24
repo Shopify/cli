@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "2.0.6",
+  "version": "2.0.9",
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
@@ -32,7 +32,7 @@
     "fastify": "^3.29.0"
   },
   "peerDependencies": {
-    "@shopify/cli-kit": "2.0.6"
+    "@shopify/cli-kit": "2.0.9"
   },
   "engine-strict": true,
   "engines": {

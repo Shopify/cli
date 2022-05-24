@@ -62,7 +62,6 @@ export default class Dev extends Command {
       apiKey: flags['api-key'],
       store: flags.store,
       reset: flags.reset,
-      tunnel: flags.tunnel,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       plugins,

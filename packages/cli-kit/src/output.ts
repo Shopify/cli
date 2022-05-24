@@ -11,6 +11,9 @@ enum ContentTokenType {
   Command,
   Path,
   Link,
+  Heading,
+  SubHeading,
+  ErrorText,
   Yellow,
   Cyan,
   Magenta,
@@ -43,6 +46,15 @@ export const token = {
   link: (value: string, link: string) => {
     return new ContentToken(value, {link}, ContentTokenType.Link)
   },
+  heading: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Heading)
+  },
+  subheading: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.SubHeading)
+  },
+  errorText: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.ErrorText)
+  },
   cyan: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Cyan)
   },
@@ -59,7 +71,7 @@ export const token = {
 
 // output.content`Something ${output.token.command(Something)}`
 
-class TokenizedString {
+export class TokenizedString {
   value: string
   constructor(value: string) {
     this.value = value
@@ -89,6 +101,15 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Link:
           output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
+          break
+        case ContentTokenType.Heading:
+          output += colors.bold.underline(enumToken.value)
+          break
+        case ContentTokenType.SubHeading:
+          output += colors.underline(enumToken.value)
+          break
+        case ContentTokenType.ErrorText:
+          output += colors.bold.redBright(enumToken.value)
           break
         case ContentTokenType.Yellow:
           output += colors.yellow(enumToken.value)
@@ -174,7 +195,19 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   if (shouldOutput('info')) {
-    consoleLog(colors.bold(`${colors.green('✔')} Success! ${stringifyMessage(content)}.`))
+    consoleLog(colors.bold(`✅ Success! ${stringifyMessage(content)}.`))
+  }
+}
+
+/**
+ * Outputs a completed message to the user.
+ * Completed message receive a special formatting to make them stand out in the console.
+ * Note: Completed messages are sent through the standard output.
+ * @param content {string} The content to be output to the user.
+ */
+export const completed = (content: Message) => {
+  if (shouldOutput('info')) {
+    consoleLog(`${colors.green('✔')} ${stringifyMessage(content)}.`)
   }
 }
 
@@ -377,8 +410,12 @@ function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
     return message
   } else {
-    return colors.unstyle(message)
+    return unstyled(message)
   }
+}
+
+export function unstyled(message: string): string {
+  return colors.unstyle(message)
 }
 
 export function shouldDisplayColors(): boolean {

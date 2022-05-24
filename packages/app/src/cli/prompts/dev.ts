@@ -9,7 +9,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   const questions: ui.Question = {
     type: 'autocomplete',
     name: 'id',
-    message: 'Which org would you like to work in?',
+    message: 'Which Partners organization is this work for?',
     choices: orgList,
   }
   const choice: {id: string} = await ui.prompt([questions])
@@ -31,7 +31,7 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
-    output.success(`Using your default dev store (${stores[0].shopName}) to preview your project`)
+    output.completed(`Using your default dev store (${stores[0].shopName}) to preview your project`)
     return stores[0]
   }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))

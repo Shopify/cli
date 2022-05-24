@@ -1,5 +1,26 @@
 # @shopify/cli-kit
 
+## 2.0.9
+
+### Patch Changes
+
+- 4170ac8e: Improve copies related to `dev`
+- 4170ac8e: Add new `completed` helper to output
+
+## 2.0.8
+
+### Patch Changes
+
+- Make envfile a dependency to mitigate bundling issues
+
+## 2.0.7
+
+### Patch Changes
+
+- 0d2e8e50: Allow ui.Question to accept preface string
+- 739e8e9d: Add password type for UI Question
+- c95660a6: Add dotenv module that provides utility functions to read and write .env files
+
 ## 2.0.6
 
 ### Patch Changes

@@ -19,7 +19,7 @@ export class World {
     if (!this.appDirectory) {
       throw new Error("An app hasn't been created. Make sure the acceptance test has a step to create an app.")
     }
-    const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory], {
+    const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--format', 'json'], {
       env: {...process.env, ...this.temporaryEnv},
     })
     return JSON.parse(stdout)

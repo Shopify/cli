@@ -2,9 +2,8 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers} from '../models/app/app'
+import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {updateAppConfigurationFile} from '../utilities/app/update'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
 const InvalidApiKeyError = (apiKey: string) => {
@@ -14,7 +13,7 @@ const InvalidApiKeyError = (apiKey: string) => {
   )
 }
 
-export interface DevEnvironmentInput {
+export interface DevEnvironmentOptions {
   app: App
   apiKey?: string
   store?: string
@@ -22,7 +21,7 @@ export interface DevEnvironmentInput {
 }
 
 interface DevEnvironmentOutput {
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   store: string
   identifiers: Identifiers
 }
@@ -38,55 +37,81 @@ interface DevEnvironmentOutput {
  *  - The new selection will be saved as global configuration
  *  - The `shopify.app.toml` file will be updated with the new app apiKey
  *
- * @param app {App} Current local app information
+ * @param options {DevEnvironmentInput} Current dev environment options
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
-export async function ensureDevEnvironment(input: DevEnvironmentInput): Promise<DevEnvironmentOutput> {
+export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const cachedInfo = getCachedInfo(input.reset, input.app.configuration.id)
+  const identifiers = await getAppIdentifiers({app: options.app, environmentType: 'local'})
+  const cachedInfo = getCachedInfo(options.reset, identifiers.app)
+
+  const explanation =
+    `\nLooks like this is the first time you're running dev for this project.\n` +
+    'Configure your preferences by answering a few questions.\n'
+
+  if (cachedInfo === undefined && !options.reset) {
+    output.info(explanation)
+  }
+
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
-  let {app: selectedApp, store: selectedStore} = await dataFromInput(input, organization, stores, token)
+  let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
   if (selectedApp && selectedStore) {
-    updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
+    // eslint-disable-next-line no-param-reassign
+    options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+
     conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
     return {
-      app: selectedApp,
+      app: {
+        ...selectedApp,
+        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+      },
       store: selectedStore,
       identifiers: {
-        app: {
-          apiKey: selectedApp.apiKey,
-          apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
-        },
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        extensions: {'ext-01': '44caf0ff-117c-4ccb-bcb1-71cef978d07c'},
+        app: selectedApp.apiKey,
+        extensions: {},
       },
     }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(input.app, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
   conf.setAppInfo(selectedApp.apiKey, {orgId})
 
-  updateAppConfigurationFile(input.app, {id: selectedApp.apiKey, name: selectedApp.title})
+  // eslint-disable-next-line no-param-reassign
+  options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, selectedApp.title, selectedStore)
+    showReusedValues(organization.businessName, options.app, selectedStore)
   }
 
   return {
-    app: selectedApp,
+    app: {
+      ...selectedApp,
+      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+    },
     store: selectedStore,
     identifiers: {
-      app: {
-        apiKey: selectedApp.apiKey,
-        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
-      },
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      extensions: {'ext-01': '44caf0ff-117c-4ccb-bcb1-71cef978d07c'},
+      app: selectedApp.apiKey,
+      extensions: {},
     },
+  }
+}
+
+async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string}) {
+  const updatedApp = await updateAppIdentifiers({
+    app: options.app,
+    identifiers: {
+      app: options.apiKey,
+      extensions: {},
+    },
+    environmentType: 'local',
+  })
+  return {
+    ...options,
+    app: updatedApp,
   }
 }
 
@@ -109,10 +134,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       appType: 'type',
     },
     identifiers: {
-      app: {
-        apiKey: 'NOTDONE',
-        apiSecret: 'NOTDONE',
-      },
+      app: 'NOTDONE',
       extensions: {},
     },
   }
@@ -145,7 +167,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
  * @returns
  */
 async function dataFromInput(
-  input: DevEnvironmentInput,
+  options: DevEnvironmentOptions,
   org: Organization,
   stores: OrganizationStore[],
   token: string,
@@ -153,14 +175,14 @@ async function dataFromInput(
   let selectedApp: OrganizationApp | undefined
   let selectedStore: string | undefined
 
-  if (input.apiKey) {
-    selectedApp = await fetchAppFromApiKey(input.apiKey, token)
-    if (!selectedApp) throw InvalidApiKeyError(input.apiKey)
+  if (options.apiKey) {
+    selectedApp = await fetchAppFromApiKey(options.apiKey, token)
+    if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
   }
 
-  if (input.store) {
-    await convertToTestStoreIfNeeded(input.store, stores, org, token)
-    selectedStore = input.store
+  if (options.store) {
+    await convertToTestStoreIfNeeded(options.store, stores, org, token)
+    selectedStore = options.store
   }
 
   return {app: selectedApp, store: selectedStore}
@@ -195,13 +217,14 @@ async function selectOrg(token: string): Promise<string> {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showReusedValues(org: string, app: string, store: string) {
-  output.info(`\nReusing the org, app, dev store settings from your last run:`)
-  output.info(`Organization: ${org}`)
-  output.info(`App: ${app}`)
-  output.info(`Dev store: ${store}\n`)
-  output.info('To change your default settings, use the following flags:')
-  output.info(`--api-key to change your app`)
-  output.info('--store to change your dev store')
-  output.info('--reset to reset all your settings\n')
+function showReusedValues(org: string, app: App, store: string) {
+  output.info('\nUsing your previous dev settings:')
+  output.info(`Org:        ${org}`)
+  output.info(`App:        ${app.configuration.name}`)
+  output.info(`Dev store:  ${store}\n`)
+  output.info(
+    output.content`To reset your default dev config, run ${output.token.command(
+      `${app.dependencyManager} dev --reset`,
+    )}\n`,
+  )
 }

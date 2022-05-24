@@ -1,5 +1,32 @@
 # @shopify/app
 
+## 2.0.9
+
+### Patch Changes
+
+- 4170ac8e: Improve copies related to `dev`
+- 4170ac8e: Always create a tunnel when running dev
+- Updated dependencies [4170ac8e]
+- Updated dependencies [4170ac8e]
+  - @shopify/cli-kit@2.0.9
+
+## 2.0.8
+
+### Patch Changes
+
+- Updated dependencies
+  - @shopify/cli-kit@2.0.8
+
+## 2.0.7
+
+### Patch Changes
+
+- 9b17ef2c: Add utility function to obtain the renderer runtime package for a given extension type
+- Updated dependencies [0d2e8e50]
+- Updated dependencies [739e8e9d]
+- Updated dependencies [c95660a6]
+  - @shopify/cli-kit@2.0.7
+
 ## 2.0.6
 
 ### Patch Changes
