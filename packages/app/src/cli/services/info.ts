@@ -19,6 +19,8 @@ export function info(app: App, {format}: InfoOptions): output.Message {
   }
 }
 
+const unknownText = output.content`${output.token.italic('unknown')}`.value
+
 class AppInfo {
   private app: App
   private cachedAppInfo: store.CachedAppInfo | undefined
@@ -104,7 +106,7 @@ class AppInfo {
       .flat()
       .filter((extension) => !extension.configuration || !extension.configuration.type)
     if (invalidExtensions[0]) {
-      body += `\n\n${output.content`${output.token.subheading('Invalid Extensions')}`.value}`
+      body += `\n\n${output.content`${output.token.subheading('Extensions with errors')}`.value}`
       invalidExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
@@ -116,14 +118,17 @@ class AppInfo {
   webComponentsSection(): string {
     const errors: string[] = []
     const subtitle = [output.content`${output.token.subheading('web app')}`.value]
-    const toplevel = ['📂 webs', '']
+    const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
       if (web.configuration && web.configuration.type) {
         sublevels.push([`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)])
       } else if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
-        if (error) errors.push(error)
+        if (error) {
+          sublevels.push([`  📂 ${unknownText}`, path.relative(this.app.directory, web.directory)])
+          errors.push(error)
+        }
       }
     })
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
@@ -137,8 +142,10 @@ class AppInfo {
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
-      ['     metafields', config ? `${config.metafields.length}` : 'configuration invalid'],
     ]
+    if (config && config.metafields.length) {
+      details.push(['     metafields', `${config.metafields.length}`])
+    }
 
     return `\n${this.linesToColumns(details)}`
   }
@@ -165,7 +172,7 @@ class AppInfo {
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
     const details = [
-      [`📂 extension root directory`, path.relative(this.app.directory, extension.directory)],
+      [`📂 ${unknownText}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
     const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
