@@ -35,7 +35,7 @@ export async function selectOrCreateApp(
 }
 
 export async function createApp(orgId: string, app: App, token: string): Promise<OrganizationApp> {
-  const name = await appNamePrompt(app.configuration.name)
+  const name = await appNamePrompt(app.name)
   const variables: api.graphql.CreateAppQueryVariables = {
     org: parseInt(orgId, 10),
     title: `${name}`,

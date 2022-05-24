@@ -32,7 +32,7 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
   ])
 
   output.newline()
-  output.success(`${app.configuration.name} built`)
+  output.success(`${app.name} built`)
 }
 
 export default build

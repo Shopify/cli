@@ -48,7 +48,7 @@ class AppInfo {
       if (storeInfo && storeInfo.storeFqdn) storeDescription = storeInfo.storeFqdn
     }
     const lines = [
-      ['App', this.app.configuration.name],
+      ['App', this.app.name],
       ['Dev store', storeDescription],
     ]
     const postscript = output.content`💡 To change these, run ${output.token.command(
@@ -60,7 +60,7 @@ class AppInfo {
   projectSettingsSection(): [string, string] {
     const title = 'Your Project'
     const lines = [
-      ['Name', this.app.configuration.name],
+      ['Name', this.app.name],
       ['API key', this.localIdentifiers.app || 'not configured'],
       ['Root location', this.app.directory],
     ]
