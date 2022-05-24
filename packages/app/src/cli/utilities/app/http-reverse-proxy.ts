@@ -1,7 +1,6 @@
 import Fastify from 'fastify'
 import {port, output} from '@shopify/cli-kit'
 import fastifyHTTPProxy from '@fastify/http-proxy'
-import websocketPlugin from '@fastify/websocket'
 import {Writable} from 'stream'
 
 /**
@@ -51,7 +50,6 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   additionalProcesses: output.OutputProcess[],
 ): Promise<ReverseHTTPProxy> {
   const server = Fastify()
-  server.register(websocketPlugin)
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
       const targetPort = await port.getRandomPort()
@@ -64,11 +62,9 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
         websocket: target.logPrefix === 'extensions',
         replyOptions: {
           rewriteRequestHeaders: (originalReq, headers) => {
-            // console.log('HEADERS: ', headers, tunnelUrl)
             if (target.logPrefix !== 'extensions') {
               return headers
             }
-            // console.log(headers)
             return {...headers, host: tunnelUrl.replace(/^https?:\/\//, '')}
           },
         },
