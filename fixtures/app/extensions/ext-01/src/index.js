@@ -11,7 +11,7 @@ function App(root, { extensionPoint }) {
     root.createComponent(
       Text,
       {},
-      `Yep! Welcome q to the ${extensionPoint} extension!`
+      `WaTF! Yep! Welcome q to the ${extensionPoint} extension!`
     )
   );
   root.mount();

@@ -1,9 +1,13 @@
 import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
-import {serveExtension} from './build/extension'
-import {App, AppConfiguration, Identifiers, Web, WebType} from '../models/app/app'
-import {output, path, port, session, system} from '@shopify/cli-kit'
+import {serveExtensions} from './build/extension'
+import {
+  ReverseHTTPProxyTarget,
+  runConcurrentHTTPProcessesAndPathForwardTraffic,
+} from '../utilities/app/http-reverse-proxy'
+import {App, AppConfiguration, Web, WebType} from '../models/app/app'
+import {output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 import {Writable} from 'node:stream'
 
@@ -49,7 +53,10 @@ async function dev(options: DevOptions) {
   View it at: ${output.token.link(storeAppUrl, storeAppUrl)}
   `)
 
-  const devWebs = devWeb(options.app.webs, {
+  const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)!
+  const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)!
+
+  const devFront = devFrontend(frontendConfig, {
     apiKey: identifiers.app.apiKey,
     frontendPort,
     backendPort,
@@ -58,14 +65,78 @@ async function dev(options: DevOptions) {
     hostname: url,
   })
 
-  // console.log('READY TO DEV')
+  const devBack: output.OutputProcess = devBackend(backendConfig, {
+    apiKey: identifiers.app.apiKey,
+    frontendPort,
+    backendPort,
+    scopes: options.app.configuration.scopes,
+    apiSecret: identifiers.app.apiSecret ?? '',
+    hostname: url,
+  })
 
-  const devExt = await devExtensions(options.app, identifiers, url, frontendPort)
+  const devExt = await devExtensions(options.app, url, frontendPort, store)
 
-  await output.concurrent([...devExt])
+  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, frontendPort, [devExt, devFront], [devBack])
 }
 
-function devWeb(webs: Web[], options: DevWebOptions) {
+function devFrontend(web: Web, options: DevWebOptions): ReverseHTTPProxyTarget {
+  const {commands} = web.configuration
+  const [cmd, ...args] = commands.dev.split(' ')
+  const env = {
+    SHOPIFY_API_KEY: options.apiKey,
+    BACKEND_PORT: `${options.backendPort}`,
+    FRONTEND_PORT: `${options.frontendPort}`,
+  }
+
+  return {
+    logPrefix: web.configuration.type,
+    action: async (stdout: any, stderr: any, signal: AbortSignal, port: number) => {
+      const newEnv = {
+        ...process.env,
+        ...env,
+        NODE_ENV: `development`,
+        FRONTEND_PORT: `${port}`,
+      }
+      // console.log(port, cmd, args, newEnv)
+      await system.exec(cmd, args, {
+        cwd: web.directory,
+        stdout,
+        stderr,
+        env: newEnv,
+      })
+    },
+  }
+}
+
+function devBackend(web: Web, options: DevWebOptions): output.OutputProcess {
+  const {commands} = web.configuration
+  const [cmd, ...args] = commands.dev.split(' ')
+  const env = {
+    SHOPIFY_API_KEY: options.apiKey,
+    SHOPIFY_API_SECRET: options.apiSecret,
+    HOST: options.hostname,
+    BACKEND_PORT: `${options.backendPort}`,
+    SCOPES: options.scopes,
+  }
+
+  return {
+    prefix: web.configuration.type,
+    action: async (stdout: any, stderr: any, signal: AbortSignal) => {
+      await system.exec(cmd, args, {
+        cwd: web.directory,
+        stdout,
+        stderr,
+        env: {
+          ...process.env,
+          ...env,
+          NODE_ENV: `development`,
+        },
+      })
+    },
+  }
+}
+
+function devWeb(webs: Web[], options: DevWebOptions): ReverseHTTPProxyTarget[] {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
   const SHOPIFY_API_KEY = options.apiKey
 
@@ -104,7 +175,8 @@ function devWeb(webs: Web[], options: DevWebOptions) {
 
     return {
       prefix: configuration.type,
-      action: async (stdout: any, stderr: any) => {
+      logPrefix: configuration.type,
+      action: async (stdout: any, stderr: any, signal: AbortSignal, port: number) => {
         await system.exec(cmd, args, {
           cwd: directory,
           stdout,
@@ -113,6 +185,7 @@ function devWeb(webs: Web[], options: DevWebOptions) {
             ...process.env,
             ...env,
             NODE_ENV: `development`,
+            FRONTEND_PORT: port,
           },
         })
       },
@@ -121,27 +194,14 @@ function devWeb(webs: Web[], options: DevWebOptions) {
   return webActions
 }
 
-async function devExtensions(app: App, identifiers: Identifiers, url: string, port: number) {
-  // console.log(app)
-  const token = await session.ensureAuthenticatedPartners()
-  return app.extensions.ui.map((extension) => ({
-    prefix: path.basename(extension.directory),
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      if (!(extension.configuration.name in identifiers.extensions)) {
-        // const ext = await createExtension(
-        //   identifiers.app.apiKey,
-        //   extension.configuration.type,
-        //   extension.configuration.name,
-        //   token,
-        // )
-        // console.log(ext)
-        return
-      }
-      const uuid = identifiers.extensions[extension.configuration.name]
-      console.log('SERVING: ', extension.configuration, uuid)
-      await serveExtension({app, extension, stdout, stderr, signal}, uuid, url, port)
+async function devExtensions(app: App, url: string, _port: number, storeFqdn: string): Promise<ReverseHTTPProxyTarget> {
+  return {
+    logPrefix: 'extensions',
+    pathPrefix: '/extensions',
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
+      await serveExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn})
     },
-  }))
+  }
 }
 
 export default dev

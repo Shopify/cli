@@ -23,12 +23,12 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
         },
       }
     }),
-    ...app.extensions.ui.map((extension) => ({
-      prefix: path.basename(extension.directory),
+    {
+      prefix: path.basename('extensions'),
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-        await buildExtension({app, extension, stdout, stderr, signal})
+        await buildExtension({app, extensions: app.extensions.ui, stdout, stderr, signal})
       },
-    })),
+    },
   ])
 
   output.newline()

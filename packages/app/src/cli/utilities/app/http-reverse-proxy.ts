@@ -1,12 +1,13 @@
 import Fastify from 'fastify'
 import {port, output} from '@shopify/cli-kit'
 import fastifyHTTPProxy from '@fastify/http-proxy'
+import websocketPlugin from '@fastify/websocket'
 import {Writable} from 'stream'
 
 /**
  * An interface that represents an instance of a reverse proxy.
  */
-interface ReverseHTTPProxy {
+export interface ReverseHTTPProxy {
   /**
    * The port the reverse proxy is running on.
    */
@@ -17,7 +18,7 @@ interface ReverseHTTPProxy {
   close: () => Promise<void>
 }
 
-interface ReverseHTTPProxyTarget {
+export interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
    *   [vite] Output coming from Vite
    */
@@ -44,19 +45,33 @@ interface ReverseHTTPProxyTarget {
  * @returns {Promise<ReverseHTTPProxy>} A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
+  tunnelUrl: string,
   portNumber: number | undefined = undefined,
-  targets: ReverseHTTPProxyTarget[],
+  proxyTargets: ReverseHTTPProxyTarget[],
+  additionalProcesses: output.OutputProcess[],
 ): Promise<ReverseHTTPProxy> {
   const server = Fastify()
-
+  server.register(websocketPlugin)
   const processes = await Promise.all(
-    targets.map(async (target): Promise<output.OutputProcess> => {
+    proxyTargets.map(async (target): Promise<output.OutputProcess> => {
       const targetPort = await port.getRandomPort()
       server.register(fastifyHTTPProxy, {
+        base: 'http://randomhost',
         upstream: `http://localhost:${targetPort}`,
         prefix: target.pathPrefix,
         rewritePrefix: target.pathPrefix,
         http2: false,
+        websocket: target.logPrefix === 'extensions',
+        replyOptions: {
+          rewriteRequestHeaders: (originalReq, headers) => {
+            // console.log('HEADERS: ', headers, tunnelUrl)
+            if (target.logPrefix !== 'extensions') {
+              return headers
+            }
+            // console.log(headers)
+            return {...headers, host: tunnelUrl.replace(/^https?:\/\//, '')}
+          },
+        },
       })
       return {
         prefix: target.logPrefix,
@@ -67,7 +82,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
     }),
   )
 
-  output.concurrent(processes)
+  output.concurrent([...processes, ...additionalProcesses])
 
   const availablePort = portNumber ?? (await port.getRandomPort())
   server.listen(availablePort)
