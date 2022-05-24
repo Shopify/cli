@@ -39,6 +39,15 @@ export const blocks = {
   },
 } as const
 
+/**
+ * List of extensions for each category that are limited by quantity, only 1 of each is allowed per app
+ */
+export const limitedExtensions = {
+  ui: ['product_subscription'],
+  theme: ['theme'],
+  function: [],
+}
+
 export const genericConfigurationFileNames = {
   yarn: {
     lockfile: 'yarn.lock',
@@ -58,13 +67,19 @@ export const functionExtensions = {
   ],
 } as const
 
+export type FunctionExtensionTypes = typeof functionExtensions.types[number]
+
 export const uiExtensions = {
   types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'beacon_extension'],
 } as const
 
+export type UIExtensionTypes = typeof uiExtensions.types[number]
+
 export const themeExtensions = {
   types: ['theme'],
 } as const
+
+export type ThemeExtensionTypes = typeof themeExtensions.types[number]
 
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
@@ -84,10 +99,10 @@ export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 
 
 /**
  * Returns the runtime renderer dependency for a given UI extension type.
- * @param extensionType {ExtensionTypes} Extension type.
+ * @param extensionType {UIExtensionTypes} Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
-export function getUIExtensionRendererDependency(extensionType: ExtensionTypes): string | undefined {
+export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): string | undefined {
   switch (extensionType) {
     case 'product_subscription':
       return '@shopify/admin-ui-extensions-react'
@@ -95,6 +110,7 @@ export function getUIExtensionRendererDependency(extensionType: ExtensionTypes):
       return '@shopify/checkout-ui-extensions-react'
     case 'checkout_post_purchase':
       return '@shopify/post-purchase-ui-extensions-react'
+    case 'beacon_extension':
+      return undefined
   }
-  return undefined
 }
