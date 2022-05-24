@@ -64,7 +64,7 @@ const STORE2: OrganizationStore = {
 const LOCAL_APP: App = {
   name: 'my-app',
   idEnvironmentVariableName: 'SHOPIFY_APP_ID',
-  directory: '',
+  directory: '/app',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {scopes: 'read_products'},
@@ -116,6 +116,7 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
     const got = await ensureDevEnvironment(INPUT)
@@ -129,15 +130,23 @@ describe('ensureDevEnvironment', () => {
         extensions: {},
       },
     })
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
+      appId: APP1.apiKey,
+      directory: LOCAL_APP.directory,
+      orgId: ORG1.id,
+    })
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, {
+      appId: APP1.apiKey,
+      directory: LOCAL_APP.directory,
+      storeFqdn: STORE1.shopDomain,
+    })
     expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'local',
+      environmentType: 'production',
     })
   })
 
@@ -164,15 +173,23 @@ describe('ensureDevEnvironment', () => {
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP1.apiKey, {orgId: ORG1.id})
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, APP1.apiKey, {storeFqdn: STORE1.shopDomain})
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
+      appId: APP1.apiKey,
+      directory: LOCAL_APP.directory,
+      orgId: ORG1.id,
+    })
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, {
+      appId: APP1.apiKey,
+      directory: LOCAL_APP.directory,
+      storeFqdn: STORE1.shopDomain,
+    })
     expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'local',
+      environmentType: 'production',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
   })
@@ -182,6 +199,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
     const got = await ensureDevEnvironment(INPUT_WITH_DATA)
@@ -195,14 +213,19 @@ describe('ensureDevEnvironment', () => {
         extensions: {},
       },
     })
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, APP2.apiKey, {storeFqdn: STORE1.shopDomain, orgId: ORG1.id})
+    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
+      appId: APP2.apiKey,
+      directory: LOCAL_APP.directory,
+      storeFqdn: STORE1.shopDomain,
+      orgId: ORG1.id,
+    })
     expect(updateAppIdentifiers).toBeCalledWith({
       app: LOCAL_APP,
       identifiers: {
         app: APP2.apiKey,
         extensions: {},
       },
-      environmentType: 'local',
+      environmentType: 'production',
     })
 
     expect(fetchOrganizations).toBeCalled()
@@ -213,13 +236,15 @@ describe('ensureDevEnvironment', () => {
 
   it('resets cached state if reset is true', async () => {
     // When
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: APP1.apiKey,
+    vi.mocked(conf.getAppInfo).mockReturnValue({
+      appId: APP1.apiKey,
+      directory: LOCAL_APP.directory,
     })
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
     await ensureDevEnvironment({...INPUT, reset: true})
 
     // Then
-    expect(conf.clearAppInfo).toHaveBeenCalledWith(APP1.apiKey)
+    expect(conf.clearAppInfo).toHaveBeenCalledWith(LOCAL_APP.directory)
   })
 })
 

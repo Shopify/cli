@@ -62,7 +62,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
-    options = await updateDeOptions({...options, apiKey: selectedApp.apiKey})
+    options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
     conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
     return {
@@ -82,7 +82,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
-  options = await updateDeOptions({...options, apiKey: selectedApp.apiKey})
+  options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
   conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
 
@@ -103,7 +103,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   }
 }
 
-async function updateDeOptions(options: DevEnvironmentOptions & {apiKey: string}) {
+async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
   const updatedApp = await updateAppIdentifiers({
     app: options.app,
     identifiers: {
@@ -178,11 +178,9 @@ function getAreIdentifiersMissing(app: App, identifiers: Partial<Identifiers>): 
   const appIdMissing = identifiers.app === undefined
 
   const anyExtensionMissingId = (extensions: Extension[]): boolean => {
-    return (
-      extensions.find((extension) => {
-        return identifiers.extensions ? !identifiers?.extensions[extension.localIdentifier] : true
-      }) === undefined
-    )
+    return extensions.every((extension) => {
+      return (identifiers?.extensions ?? {})[extension.localIdentifier] !== undefined
+    })
   }
   const anyExtensionIdMissing =
     anyExtensionMissingId(app.extensions.ui) ||
