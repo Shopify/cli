@@ -1,10 +1,10 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {App, UIExtension} from '../../models/app/app'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {extensionConfig} from '../../utilities/extensions/configuration'
 import {yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
-export interface ExtensionBuildOptions {
+export interface ExtensionDevOptions {
   /**
    * Standard output stream to send the output through.
    */
@@ -33,17 +33,33 @@ export interface ExtensionBuildOptions {
    * The app that contains the extension.
    */
   app: App
+
+  /**
+   * The app identifier
+   */
+  apiKey: string
+
+  /**
+   * URL where the extension is locally served from. It's usually the tunnel URL
+   */
+  url: string
+
+  /**
+   * The port where the extension is hosted.
+   * It's usually the tunnel port
+   */
+  port: number
+
+  /**
+   * The development store where the extension wants to be previewed
+   */
+  storeFqdn: string
 }
 
-/**
- * It builds an extension.
- * @param extension {UIExtension} The extension to build.
- * @param options {ExtensionBuildOptions} Build options.
- */
-export async function buildExtension(options: ExtensionBuildOptions): Promise<void> {
-  options.stdout.write(`Building extension...`)
-  const stdin = yaml.encode(await extensionConfig(options))
-  await runGoExtensionsCLI(['build', '-'], {
+export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
+  const config = await extensionConfig(options)
+  const stdin = yaml.encode(config)
+  await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
     stderr: options.stderr,

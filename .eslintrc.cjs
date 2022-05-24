@@ -6,9 +6,6 @@ rulesDirPlugin.RULES_DIR = path.join(__dirname, 'eslint-rules')
 
 module.exports = {
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: 'tsconfig.json',
-  },
   plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
@@ -23,7 +20,6 @@ module.exports = {
     'no-console': 'error',
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/no-var-requires': 'off',
-    '@typescript-eslint/switch-exhaustiveness-check': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',
