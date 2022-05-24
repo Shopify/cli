@@ -47,10 +47,7 @@
     "commands": "dist/commands"
   },
   "devDependencies": {
-<<<<<<< HEAD
-=======
     "fastify": "^3.29.0",
->>>>>>> main
     "vitest": "0.10.0"
   }
 }
