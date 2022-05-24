@@ -1,4 +1,0 @@
-# This file stores configurations for your Shopify app.
-
-name = "My Node App"
-scopes = "write_products"
