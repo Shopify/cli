@@ -4,11 +4,12 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
 
 const LOCAL_APP: App = {
+  name: 'my-app',
   idEnvironmentVariableName: 'SHOPIFY_APP_ID',
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
-  configuration: {name: 'my-app', scopes: 'read_products'},
+  configuration: {scopes: 'read_products'},
   webs: [
     {
       directory: '',

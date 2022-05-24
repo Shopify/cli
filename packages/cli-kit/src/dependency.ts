@@ -92,19 +92,39 @@ export async function install(
 }
 
 /**
+ * Returns the name of the package configured in its package.json
+ * @param packageJsonPath {string} Path to the package.json file
+ * @returns A promise that resolves with the name.
+ */
+export async function getPackageName(packageJsonPath: string): Promise<string> {
+  const packageJsonContent = await packageJSONContents(packageJsonPath)
+  return packageJsonContent.name
+}
+
+/**
  * Returns the list of production and dev dependencies of a package.json
  * @param packageJsonPath {string} Path to the package.json file
  * @returns A promise that resolves with the list of dependencies.
  */
 export async function getDependencies(packageJsonPath: string): Promise<{[key: string]: string}> {
-  if (!(await fileExists(packageJsonPath))) {
-    throw PackageJsonNotFoundError(dirname(packageJsonPath))
-  }
-  const packageJsonContent = JSON.parse(await readFile(packageJsonPath))
+  const packageJsonContent = await packageJSONContents(packageJsonPath)
   const dependencies: {[key: string]: string} = packageJsonContent.dependencies ?? {}
   const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
 
   return {...dependencies, ...devDependencies}
+}
+
+interface PackageJSONContents {
+  name: string
+  dependencies?: {[key: string]: any}
+  devDependencies?: {[key: string]: any}
+}
+
+async function packageJSONContents(packageJsonPath: string): Promise<PackageJSONContents> {
+  if (!(await fileExists(packageJsonPath))) {
+    throw PackageJsonNotFoundError(dirname(packageJsonPath))
+  }
+  return JSON.parse(await readFile(packageJsonPath))
 }
 
 type DependencyType = 'dev' | 'prod' | 'peer'

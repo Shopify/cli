@@ -15,7 +15,6 @@ describe('load', () => {
 
   let tmpDir: string
   const appConfiguration = `
-name = "my_app"
 scopes = "read_products"
 `
   beforeEach(async () => {
@@ -40,7 +39,7 @@ scopes = "read_products"
     dev = "dev"
     `
     await file.write(appConfigurationPath, appConfiguration)
-    await file.write(packageJsonPath, JSON.stringify({dependencies: {}, devDependencies: {}}))
+    await file.write(packageJsonPath, JSON.stringify({name: 'my_app', dependencies: {}, devDependencies: {}}))
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
   }
@@ -87,7 +86,7 @@ scopes = "read_products"
   it('throws an error when the configuration file is invalid', async () => {
     // Given
     const appConfiguration = `
-        wrong = "my_app"
+        scopes = 1
         `
     await writeConfig(appConfiguration)
 
@@ -103,7 +102,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.configuration.name).toBe('my_app')
+    expect(app.name).toBe('my_app')
   })
 
   it('defaults to npm as package manager when the configuration is valid', async () => {
@@ -205,7 +204,7 @@ scopes = "read_products"
     const app = await load(blockDir)
 
     // Then
-    expect(app.configuration.name).toBe('my_app')
+    expect(app.name).toBe('my_app')
     expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
     expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
@@ -633,9 +632,9 @@ describe('getUIExtensionRendererVersion', () => {
   test("returns undefined when the UI extension type doesn't have a runtime dependency", () => {
     // Given/When
     const app: App = {
+      name: 'App',
       idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       configuration: {
-        name: 'App',
         scopes: '',
       },
       dependencyManager: 'yarn',
@@ -662,9 +661,9 @@ describe('getUIExtensionRendererVersion', () => {
   test('returns undefined when the renderer dependency is not a dependency of the app', () => {
     // Given/When
     const app: App = {
+      name: 'App',
       idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       configuration: {
-        name: 'App',
         scopes: '',
       },
       dependencyManager: 'yarn',
@@ -694,9 +693,9 @@ describe('getUIExtensionRendererVersion', () => {
     const rendererDependency = getUIExtensionRendererDependency('product_subscription') as string
     nodeDependencies[rendererDependency] = '1.2.3'
     const app: App = {
+      name: 'App',
       idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       configuration: {
-        name: 'App',
         scopes: '',
       },
       dependencyManager: 'yarn',

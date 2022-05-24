@@ -10,7 +10,7 @@ const LOCAL_APP: App = {
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
-  configuration: {name: 'my-app', scopes: 'read_products'},
+  configuration: {scopes: 'read_products'},
   webs: [
     {
       directory: '',
@@ -20,6 +20,7 @@ const LOCAL_APP: App = {
       },
     },
   ],
+  name: 'my-app',
   nodeDependencies: {},
   environment: {
     dotenv: {},
@@ -142,7 +143,7 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.configuration.name)
+    expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
   })
 })

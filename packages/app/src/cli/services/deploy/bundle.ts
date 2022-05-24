@@ -34,7 +34,7 @@ export async function bundle(options: BundleOptions) {
     ])
 
     output.newline()
-    output.success(`${options.app.configuration.name} built`)
+    output.success(`${options.app.name} built`)
 
     await archiver.zip(bundleDirectory, options.bundlePath)
   })

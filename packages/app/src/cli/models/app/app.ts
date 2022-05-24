@@ -9,7 +9,7 @@ import {
   ExtensionTypes,
   dotEnvFileNames,
 } from '../../constants'
-import {file, error, path, schema, string, toml, dependency, dotenv} from '@shopify/cli-kit'
+import {dependency, dotenv, error, file, path, schema, string, toml} from '@shopify/cli-kit'
 
 export const WebConfigurationFileNotFound = (directory: string) => {
   return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)
@@ -28,7 +28,6 @@ export interface Identifiers {
 }
 
 export const AppConfigurationSchema = schema.define.object({
-  name: schema.define.string(),
   scopes: schema.define.string().default(''),
 })
 
@@ -115,6 +114,7 @@ export interface AppEnvironment {
 }
 
 export interface App {
+  name: string
   idEnvironmentVariableName: string
   directory: string
   dependencyManager: dependency.DependencyManager
@@ -185,7 +185,9 @@ class AppLoader {
     const yarnLockExists = await file.exists(yarnLockPath)
     const pnpmLockPath = path.join(this.appDirectory, genericConfigurationFileNames.pnpm.lockfile)
     const pnpmLockExists = await file.exists(pnpmLockPath)
-    const nodeDependencies = await dependency.getDependencies(path.join(this.appDirectory, 'package.json'))
+    const packageJSONPath = path.join(this.appDirectory, 'package.json')
+    const name = await dependency.getPackageName(packageJSONPath)
+    const nodeDependencies = await dependency.getDependencies(packageJSONPath)
     let dependencyManager: dependency.DependencyManager
     if (yarnLockExists) {
       dependencyManager = 'yarn'
@@ -196,6 +198,7 @@ class AppLoader {
     }
 
     const app: App = {
+      name,
       idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       directory: this.appDirectory,
       webs: await this.loadWebs(),

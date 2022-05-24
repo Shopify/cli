@@ -3,6 +3,7 @@ import {
   addNPMDependenciesIfNeeded,
   install,
   getDependencies,
+  getPackageName,
   PackageJsonNotFoundError,
 } from './dependency'
 import {exec} from './system'
@@ -60,6 +61,25 @@ describe('install', () => {
     // Then
     expect(mockedExec).toHaveBeenCalledWith(dependencyManager, ['install'], {
       cwd: directory,
+    })
+  })
+})
+
+describe('getPackageName', () => {
+  test('returns package name', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getPackageName(packageJsonPath)
+
+      // Then
+      expect(got).toEqual('packageName')
     })
   })
 })
