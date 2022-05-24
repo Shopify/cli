@@ -42,8 +42,11 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const identifiers = await getAppIdentifiers({app: options.app, environmentType: 'local'})
-  const cachedInfo = getCachedInfo(options.reset, identifiers.app)
+  const cachedInfo = getAppDevCachedInfo({
+    reset: options.reset,
+    directory: options.app.directory,
+    apiKey: options.apiKey ?? conf.getAppInfo(options.app.directory)?.appId,
+  })
 
   const explanation =
     `\nLooks like this is the first time you're running dev for this project.\n` +
@@ -59,9 +62,9 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
-    options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+    options = await updateDeOptions({...options, apiKey: selectedApp.apiKey})
 
-    conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
+    conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
     return {
       app: {
         ...selectedApp,
@@ -76,12 +79,12 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   }
 
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
-  conf.setAppInfo(selectedApp.apiKey, {orgId})
+  conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
-  options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+  options = await updateDeOptions({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
-  conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
+  conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
     showReusedValues(organization.businessName, options.app, selectedStore)
@@ -100,14 +103,14 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   }
 }
 
-async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string}) {
+async function updateDeOptions(options: DevEnvironmentOptions & {apiKey: string}) {
   const updatedApp = await updateAppIdentifiers({
     app: options.app,
     identifiers: {
       app: options.apiKey,
       extensions: {},
     },
-    environmentType: 'local',
+    environmentType: 'production',
   })
   return {
     ...options,
@@ -240,13 +243,22 @@ async function dataFromInput(
 /**
  * Retrieve cached info from the global configuration based on the current local app
  * @param reset {boolean} Wheter to reset the cache or not
+ * @param directory {string} The directory containing the app.
  * @param appId {string} Current local app id, used to retrieve the cached info
  * @returns
  */
-function getCachedInfo(reset: boolean, apiKey?: string): conf.CachedAppInfo | undefined {
+function getAppDevCachedInfo({
+  reset,
+  directory,
+  apiKey,
+}: {
+  reset: boolean
+  directory: string
+  apiKey?: string
+}): conf.CachedAppInfo | undefined {
   if (!apiKey) return undefined
-  if (apiKey && reset) conf.clearAppInfo(apiKey)
-  return conf.getAppInfo(apiKey)
+  if (apiKey && reset) conf.clearAppInfo(directory)
+  return conf.getAppInfo(directory)
 }
 
 /**
