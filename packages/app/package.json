@@ -26,10 +26,11 @@
     ]
   },
   "dependencies": {
-    "@fastify/reply-from": "^7.0.1",
+    "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "1.7.0",
     "@shopify/shopify-cli-extensions": "^0.2.0",
-    "ws": "^8.6.0"
+    "ws": "^8.4.2",
+    "fastify": "^4.0.0-rc.2"
   },
   "peerDependencies": {
     "@shopify/cli-kit": "2.0.9"
@@ -47,7 +48,6 @@
     "commands": "dist/commands"
   },
   "devDependencies": {
-    "fastify": "^3.29.0",
     "vitest": "0.10.0"
   }
 }
