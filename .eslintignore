@@ -7,3 +7,4 @@ rollup.config.js
 template/
 templates/
 fixtures/
+.eslintrc.cjs
