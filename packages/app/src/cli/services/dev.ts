@@ -69,15 +69,15 @@ async function dev(options: DevOptions) {
   })
 
   const devBack: output.OutputProcess = devBackend(backendConfig, {
-    apiKey: identifiers.app.apiKey,
+    apiKey: identifiers.app,
     frontendPort,
     backendPort,
     scopes: options.app.configuration.scopes,
-    apiSecret: identifiers.app.apiSecret ?? '',
+    apiSecret: (apiSecret as string) ?? '',
     hostname: url,
   })
 
-  const devExt = await devExtensions(options.app, url, frontendPort, store)
+  const devExt = await devExtensions(options.app, identifiers.app, url, store)
 
   await runConcurrentHTTPProcessesAndPathForwardTraffic(url, frontendPort, [devExt, devFront], [devBack])
 }
@@ -197,12 +197,17 @@ function devWeb(webs: Web[], options: DevWebOptions): ReverseHTTPProxyTarget[] {
   return webActions
 }
 
-async function devExtensions(app: App, url: string, _port: number, storeFqdn: string): Promise<ReverseHTTPProxyTarget> {
+async function devExtensions(
+  app: App,
+  apiKey: string,
+  url: string,
+  storeFqdn: string,
+): Promise<ReverseHTTPProxyTarget> {
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
-      await serveExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn})
+      await serveExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
     },
   }
 }

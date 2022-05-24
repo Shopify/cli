@@ -65,6 +65,11 @@ export interface ExtensionDevOptions {
   app: App
 
   /**
+   * The app identifier
+   */
+  apiKey: string
+
+  /**
    * URL where the extension is locally served from. It's usually the tunnel URL
    */
   url: string
@@ -111,6 +116,7 @@ export async function serveExtensions(options: ExtensionDevOptions): Promise<voi
 
 interface ExtensionConfigOptions {
   app: App
+  apiKey?: string
   extensions: UIExtension[]
   buildDirectory?: string
   url?: string
@@ -129,7 +135,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
       return {
-        uuid: extension.configuration.id ?? `${extension.configuration.name}-${id.generateShortId()}`,
+        uuid: `${extension.configuration.name}-${id.generateShortId()}`,
         title: extension.configuration.name,
         type: `${extension.configuration.type}`,
         metafields: extension.configuration.metafields,
@@ -161,7 +167,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
     store: options.storeFqdn,
     app: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      api_key: options.app.configuration.id,
+      api_key: options.apiKey,
     },
     extensions: extensionsConfig,
   }
