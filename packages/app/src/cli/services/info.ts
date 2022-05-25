@@ -44,13 +44,14 @@ class AppInfo {
   devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
 
+    let appName = 'not configured'
     let storeDescription = 'not configured'
     if (this.cachedAppInfo) {
-      const storeInfo = store.getAppInfo(this.app.directory)
-      if (storeInfo && storeInfo.storeFqdn) storeDescription = storeInfo.storeFqdn
+      if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
+      if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
     }
     const lines = [
-      ['App', this.app.name],
+      ['App', appName],
       ['Dev store', storeDescription],
     ]
     const postscript = output.content`💡 To change these, run ${output.token.command(

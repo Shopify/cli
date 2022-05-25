@@ -9,6 +9,9 @@ const schema: Schema<unknown> = {
         appId: {
           type: 'string',
         },
+        title: {
+          type: 'string',
+        },
         orgId: {
           type: 'string',
         },
