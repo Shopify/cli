@@ -36,4 +36,5 @@
   },
   "eslint.workingDirectories": [{ "pattern": "packages/*/package.json" }],
   "vitest.enable": true,
+  "testing.automaticallyOpenPeekView": "never",
 }
