@@ -1,19 +1,22 @@
-import {buildHeaders} from './common'
+import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {AdminSession} from '../session'
 import {debug} from '../output'
 import {request as graphqlRequest, gql, RequestDocument, Variables} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, session: AdminSession, variables?: Variables): Promise<T> {
-  debug(`
-Sending Admin GraphQL request:
-${query}
-
-With variables:
-${variables ? JSON.stringify(variables, null, 2) : ''}
-  `)
   const version = await fetchApiVersion(session)
   const url = adminUrl(session.storeFqdn, version)
   const headers = await buildHeaders(session.token)
+  debug(`
+  Sending Admin GraphQL request:
+  ${query}
+
+  With variables:
+  ${variables ? JSON.stringify(variables, null, 2) : ''}
+
+  And headers:
+  ${sanitizedHeadersOutput(headers)}
+`)
   return graphqlRequest<T>(url, query, variables, headers)
 }
 

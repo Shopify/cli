@@ -21,3 +21,20 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
 
   return headers
 }
+
+/**
+ * Remvoes the sensitive data from the headers and outputs them as a string.
+ * @param headers {{[key: string]: string}} HTTP headers.
+ * @returns {string} A sanitized version of the headers as a string.
+ */
+export function sanitizedHeadersOutput(headers: {[key: string]: string}): string {
+  const sanitized = {...headers}
+  delete sanitized.authorization
+  delete sanitized.Authorization
+  delete sanitized['X-Shopify-Access-Token']
+  return Object.keys(sanitized)
+    .map((header) => {
+      return ` - ${header}: ${sanitized[header]}`
+    })
+    .join('\n')
+}

@@ -1,4 +1,4 @@
-import {buildHeaders} from './common'
+import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {isShopify} from '../environment/local'
 import constants from '../constants'
 import {test, vi, expect, describe} from 'vitest'
@@ -47,5 +47,29 @@ describe('common API methods', () => {
       'Sec-CH-UA-PLATFORM': process.platform,
       /* eslint-enable @typescript-eslint/naming-convention */
     })
+  })
+
+  test('sanitizedHeadersOutput removes the headers that include the token', () => {
+    // Given
+    /* eslint-disable @typescript-eslint/naming-convention */
+    const headers = {
+      'User-Agent': 'useragent',
+      'X-Request-Id': 'uuid',
+      Authorization: 'token',
+      authorization: 'token',
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': 'token',
+    }
+    /* eslint-enable @typescript-eslint/naming-convention */
+
+    // When
+    const got = sanitizedHeadersOutput(headers)
+
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      " - User-Agent: useragent
+       - X-Request-Id: uuid
+       - Content-Type: application/json"
+    `)
   })
 })
