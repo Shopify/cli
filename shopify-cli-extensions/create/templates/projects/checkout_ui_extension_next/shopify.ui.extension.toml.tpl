@@ -5,9 +5,9 @@ extension_points = [
 ]
 
 # [[metafields]]
-# namespace: my-namespace
-# key: my-key
+# namespace = "my-namespace"
+# key = "my-key"
 
 # [[metafields]]
-# namespace: my-namespace
-# key: my-key-2
+# namespace = "my-namespace"
+# key = "my-key-2"

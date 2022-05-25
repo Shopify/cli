@@ -9,7 +9,6 @@ type = "object"
 name = "Tracking Id"
 description = "Tracking Id"
 type = "single_line_text_field"
-
-  [[configuration.fields.trackingId.validations]]
-  name = "min"
-  value = "1"
+validations =  [
+  { name = "min", value = "1" }
+]
