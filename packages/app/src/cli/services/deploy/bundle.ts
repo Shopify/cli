@@ -18,19 +18,12 @@ export async function bundle(options: BundleOptions) {
     await file.mkdir(bundleDirectory)
 
     await output.concurrent([
-      ...options.app.extensions.ui.map((extension) => ({
-        prefix: path.basename(extension.directory),
+      {
+        prefix: 'extensions',
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          await buildExtension({
-            app: options.app,
-            extension,
-            stdout,
-            stderr,
-            signal,
-            buildDirectory: path.join(bundleDirectory, 'todo'),
-          })
+          await buildExtension({app: options.app, extensions: options.app.extensions.ui, stdout, stderr, signal})
         },
-      })),
+      },
     ])
 
     output.newline()

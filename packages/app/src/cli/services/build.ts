@@ -2,7 +2,7 @@ import {buildExtension} from './build/extension'
 import buildWeb from './web'
 import {installAppDependencies} from './dependencies'
 import {App, Web} from '../models/app/app'
-import {path, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 interface BuildOptions {
@@ -23,12 +23,12 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
         },
       }
     }),
-    ...app.extensions.ui.map((extension) => ({
-      prefix: path.basename(extension.directory),
+    {
+      prefix: 'extensions',
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-        await buildExtension({app, extension, stdout, stderr, signal})
+        await buildExtension({app, extensions: app.extensions.ui, stdout, stderr, signal})
       },
-    })),
+    },
   ])
 
   output.newline()
