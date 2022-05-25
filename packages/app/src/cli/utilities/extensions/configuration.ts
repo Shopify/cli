@@ -23,6 +23,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
       // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
+      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
       const resource = extension.configuration.type === 'product_subscription' ? undefined : {url: 'invalid_url'}
       return {
         uuid: `${extension.configuration.name}-${id.generateShortId()}`,
