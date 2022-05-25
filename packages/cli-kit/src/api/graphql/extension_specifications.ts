@@ -18,7 +18,8 @@ export const ExtensionSpecificationsQuery = gql`
 `
 
 export interface ExtensionSpecificationsQueryVariables {
-  apiKey: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  api_key: string
 }
 
 export interface ExtensionSpecificationsQuerySchema {

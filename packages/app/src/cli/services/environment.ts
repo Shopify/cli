@@ -1,5 +1,12 @@
 import {selectOrCreateApp} from './dev/select-app'
-import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
+import {
+  fetchAllStores,
+  fetchAppFromApiKey,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  FetchResponse,
+  fetchAppExtensionRegistrations,
+} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers, Extension} from '../models/app/app'
@@ -148,7 +155,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
       appId = partnersApp.apiKey
     }
-
+    const extensionSpecifications = await fetchAppExtensionRegistrations({token, apiKey: appId})
     identifiers = {
       app: appId,
       extensions: {},

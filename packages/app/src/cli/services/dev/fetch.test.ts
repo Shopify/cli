@@ -1,4 +1,4 @@
-import {fetchAllStores, fetchOrgAndApps, fetchOrganizations} from './fetch'
+import {fetchAllStores, fetchOrgAndApps, fetchOrganizations, fetchAppExtensionRegistrations} from './fetch'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
@@ -104,5 +104,36 @@ describe('fetchAllStores', async () => {
     // Then
     expect(got).toEqual([STORE1])
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllStoresByOrganizationQuery, 'token', {id: ORG1.id})
+  })
+})
+
+describe('fetchAppExtensionRegistrations', () => {
+  it('returns fetched extension registrations', async () => {
+    // Given
+    const response = {
+      app: {
+        extensionRegistrations: [
+          {
+            id: '1234',
+            uuid: 'ddb126da-b578-4ce3-a6d4-8ed1cc0703cc',
+            title: 'checkout-post-purchase',
+            type: 'CHECKOUT_POST_PURCHASE',
+          },
+        ],
+      },
+    }
+    vi.mocked(api.partners.request).mockResolvedValue(response)
+
+    // When
+    const got = await fetchAppExtensionRegistrations({
+      apiKey: 'api-key',
+      token: 'token',
+    })
+
+    // Then
+    expect(got).toEqual(response)
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllAppExtensionRegistrationsQuery, 'token', {
+      apiKey: 'api-key',
+    })
   })
 })
