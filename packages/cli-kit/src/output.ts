@@ -5,7 +5,7 @@ import {DependencyManager} from './dependency'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
-import AbortController from 'abort-controller'
+import {AbortController, AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -349,7 +349,7 @@ export async function concurrent(processes: OutputProcess[]) {
 
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    const color = concurrentColors[0]
+    const color = concurrentColors[colorIndex]
     return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
   }
 

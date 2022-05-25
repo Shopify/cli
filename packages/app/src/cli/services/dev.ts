@@ -7,7 +7,7 @@ import {
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy'
 import {App, AppConfiguration, Web, WebType} from '../models/app/app'
-import {output, port, system} from '@shopify/cli-kit'
+import {error, output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 import {Writable} from 'node:stream'
 
@@ -84,7 +84,7 @@ function devFrontendTarget(web: Web, apiKey: string, backendPort: number): Rever
 
   return {
     logPrefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
       await system.exec(cmd, args, {
         cwd: web.directory,
         stdout,
@@ -113,7 +113,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
 
   return {
     prefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
       await system.exec(cmd, args, {
         cwd: web.directory,
         stdout,
@@ -136,7 +136,7 @@ async function devExtensionsTarget(
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
       await devExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
     },
   }

@@ -1,6 +1,7 @@
 import {concurrent as concurrentOutput, shouldDisplayColors, debug} from './output'
 import {Abort} from './error'
 import {execa} from 'execa'
+import {AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 
 export interface ExecOptions {

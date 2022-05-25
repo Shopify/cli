@@ -5,6 +5,8 @@ import {Errors} from '@oclif/core'
 // @ts-ignore
 import sourceMapSupport from 'source-map-support'
 
+export {AbortSignal} from 'abort-controller'
+
 sourceMapSupport.install()
 
 /**

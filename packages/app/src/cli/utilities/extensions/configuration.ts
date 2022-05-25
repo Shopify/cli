@@ -1,5 +1,5 @@
 import {nodeExtensionsCLIPath} from './cli'
-import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
+import {App, UIExtension, getUIExtensionRendererVersion, getUIExtensionResourceURL} from '../../models/app/app'
 import {id, path} from '@shopify/cli-kit'
 
 export interface ExtensionConfigOptions {
@@ -22,9 +22,6 @@ export interface ExtensionConfigOptions {
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
-      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
-      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
-      const resource = extension.configuration.type === 'product_subscription' ? undefined : {url: 'invalid_url'}
       return {
         uuid: `${extension.configuration.name}-${id.generateShortId()}`,
         title: extension.configuration.name,
@@ -46,7 +43,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
-          resource,
+          resource: getUIExtensionResourceURL(extension.configuration.type),
         },
       }
     }),

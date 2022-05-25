@@ -2,7 +2,7 @@ import {buildExtension} from './build/extension'
 import buildWeb from './web'
 import {installAppDependencies} from './dependencies'
 import {App, Web} from '../models/app/app'
-import {output} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 interface BuildOptions {
@@ -18,14 +18,14 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
     ...app.webs.map((web: Web) => {
       return {
         prefix: web.configuration.type,
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           await buildWeb('build', {web, stdout, stderr, signal})
         },
       }
     }),
     {
       prefix: 'extensions',
-      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
         await buildExtension({app, extensions: app.extensions.ui, stdout, stderr, signal})
       },
     },
