@@ -5,7 +5,7 @@ import type {Writable} from 'node:stream'
 
 export interface ExecOptions {
   cwd?: string
-  env?: any
+  env?: {[key: string]: string | undefined}
   stdout?: Writable
   stderr?: Writable
   stdin?: string

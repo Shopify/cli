@@ -23,8 +23,8 @@ export interface Question {
 }
 
 export const prompt = async <T>(questions: Question[]): Promise<T> => {
-  const mappedQuestions: any = questions.map(mapper)
-  const value: any = {}
+  const mappedQuestions: unknown = questions.map(mapper)
+  const value: unknown = {}
   for (const question of mappedQuestions) {
     if (question.preface) {
       info(question.preface)
@@ -61,7 +61,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
   }
 }
 
-function mapper(question: Question): any {
+function mapper(question: Question): unknown {
   switch (question.type) {
     case 'input':
     case 'password':

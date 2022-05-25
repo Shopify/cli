@@ -24,6 +24,12 @@ module.exports = {
     'no-console': 'error',
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/no-explicit-any': [
+      'error',
+      {
+        fixToUnknown: true,
+      },
+    ],
     '@typescript-eslint/switch-exhaustiveness-check': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
@@ -84,4 +90,12 @@ module.exports = {
     'rulesdir/command-conventional-flag-env': 'error',
     'rulesdir/command-reserved-flags': 'error',
   },
+  overrides: [
+    {
+      files: ['**/*.test.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
+  ],
 }

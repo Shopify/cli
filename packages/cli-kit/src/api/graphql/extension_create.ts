@@ -29,7 +29,7 @@ export interface ExtensionCreateVariables {
   apiKey: string
   type: string
   title: string
-  config: any
+  config: string
   context?: string | null
 }
 

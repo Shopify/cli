@@ -13,7 +13,7 @@ export class Input extends enquirer.StringPrompt {
     this.symbols.pointer = '!'
   }
 
-  prefix(_state: any) {
+  prefix(_state: unknown) {
     const color = this.styles.primary.bold
     return this.state.status === 'submitted' ? color('✔') : color('?')
   }

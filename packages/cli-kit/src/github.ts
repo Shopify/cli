@@ -2,6 +2,7 @@ import {fetch} from './http'
 import {Abort} from './error'
 
 class GitHubClientError extends Error {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(url: string, statusCode: number, bodyJson: any) {
     super(
       `The request to GitHub API URL ${url} failed with status code ${statusCode} and the following error message: ${bodyJson.message}`,
@@ -37,7 +38,8 @@ export async function getLatestRelease(
 ): Promise<GithubRelease> {
   const url = `https://api.github.com/repos/${user}/${repo}/releases`
   const fetchResult = await fetch(url)
-  const jsonBody: any = (await fetchResult.json()) as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsonBody: any = await fetchResult.json()
 
   if (fetchResult.status !== 200) {
     throw new GitHubClientError(url, fetchResult.status, jsonBody)
