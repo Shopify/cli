@@ -87,8 +87,8 @@ export default class AppScaffoldExtension extends Command {
    * @returns {string[]} list of extensions that are limited by quantity and are already scaffolded
    */
   limitedExtensionsAlreadyScaffolded(app: App): string[] {
-    const themeTypes: string[] = app.extensions.theme.map((ext) => ext.configuration.type)
-    const uiTypes: string[] = app.extensions.ui.map((ext) => ext.configuration.type)
+    const themeTypes = app.extensions.theme.map((ext) => ext.configuration.type)
+    const uiTypes = app.extensions.ui.map((ext) => ext.configuration.type)
 
     const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
     const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
