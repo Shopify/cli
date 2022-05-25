@@ -1,6 +1,6 @@
-import {concurrent as concurrentOutput, shouldDisplayColors} from './output'
+import {concurrent as concurrentOutput, shouldDisplayColors, debug} from './output'
+import {Abort} from './error'
 import {execa} from 'execa'
-import type {ExecaChildProcess} from 'execa'
 import type {Writable} from 'node:stream'
 
 export interface ExecOptions {
@@ -28,7 +28,7 @@ export const captureOutput = async (command: string, args: string[]): Promise<st
   return result.stdout
 }
 
-export const exec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
+export const exec = (command: string, args: string[], options?: ExecOptions) => {
   const env = options?.env ?? process.env
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
@@ -38,13 +38,22 @@ export const exec = (command: string, args: string[], options?: ExecOptions): Ex
     cwd: options?.cwd,
     input: options?.stdin,
   })
+  debug(`
+Running system process:
+  · Command: ${command} ${args.join(' ')}
+  · Working directory: ${options?.cwd ?? process.cwd()}
+`)
   if (options?.stderr) {
     commandProcess.stderr?.pipe(options.stderr)
   }
   if (options?.stdout) {
     commandProcess.stdout?.pipe(options.stdout)
   }
-  return commandProcess
+  return commandProcess.catch((processError) => {
+    const abortError = new Abort(processError.message)
+    abortError.stack = processError.stack
+    throw abortError
+  })
 }
 
 interface ConcurrentExecCommand {
