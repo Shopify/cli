@@ -24,6 +24,9 @@ beforeEach(() => {
   vi.mock('../../models/app/app', async () => {
     return {
       getUIExtensionRendererVersion: () => 'renderer-version',
+      getUIExtensionResourceURL: () => {
+        return {url: 'resource_url'}
+      },
     }
   })
 })
@@ -108,7 +111,7 @@ describe('extensionConfig', () => {
               main: 'src/index.js',
             },
             renderer: 'renderer-version',
-            resource: {url: 'invalid_url'},
+            resource: {url: 'resource_url'},
           },
         },
       ],
