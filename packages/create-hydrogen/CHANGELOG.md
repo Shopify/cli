@@ -1,5 +1,17 @@
 # @shopify/create-hydrogen
 
+## 2.0.12
+
+### Patch Changes
+
+- e0104952: Support template names (via --template) in any of the following formats:
+
+  1. the full directory name (ie `template-hydrogen-demo-store`)
+  2. the hyphanized name (ie `demo-store`)
+  3. or the proper name (ie `Demo store`)
+
+  each value will be normalized and produce the same results.
+
 ## 2.0.11
 
 ### Patch Changes

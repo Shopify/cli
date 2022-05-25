@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 2.0.12
+
+### Patch Changes
+
+- 28d6ab49: Persist local state globally and scoped to the project's directory instead of using a .env.local file
+- b13810e6: Only allow to scaffold one post purchase extension
+
 ## 2.0.10
 
 ### Patch Changes
