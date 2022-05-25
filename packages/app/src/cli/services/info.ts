@@ -53,7 +53,8 @@ class AppInfo {
     ]
     const postscript = output.content`💡 To change these, run ${output.token.command(
       this.app.dependencyManager,
-      'shopify dev --reset',
+      'shopify dev',
+      '--reset',
     )}`.value
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
