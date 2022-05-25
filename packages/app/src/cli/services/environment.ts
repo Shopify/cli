@@ -284,7 +284,8 @@ function showReusedValues(org: string, app: App, store: string) {
   output.info(
     output.content`To reset your default dev config, run ${output.token.command(
       app.dependencyManager,
-      'dev --reset',
+      'dev',
+      '--reset',
     )}\n`,
   )
 }

@@ -13,7 +13,8 @@ export async function previewInNode({directory, port}: PreviewOptions) {
     output.info(
       output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.command(
         'yarn',
-        'shopify hydrogen build --target=node',
+        'shopify hydrogen build',
+        '--target=node',
       )} to create one.`,
     )
 
