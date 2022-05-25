@@ -47,12 +47,12 @@ describe('extensionConfig', () => {
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
     }
     const app: App = {
+      name: 'myapp',
       idEnvironmentVariableName: 'SHOPIFY_APP_ID',
       directory: appRoot,
       dependencyManager: 'yarn',
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
-        name: 'myapp',
         scopes: '',
       },
       webs: [],
