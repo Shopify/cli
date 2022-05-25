@@ -42,6 +42,7 @@ async function download({into, artifact}: {into: string; artifact: string}): Pro
   })
   const response = await http.fetch(assetDownloadUrl)
   const outputBinary = path.join(into, artifact)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await promisify(pipeline)(response.body as any, zlib.createGunzip(), createWriteStream(outputBinary))
 
   const md5DownloadUrl = getReleaseArtifactURL({

@@ -8,7 +8,7 @@ export interface WorldConstructorParams {
 
 export class World {
   public temporaryDirectory: string
-  public temporaryEnv: any | undefined
+  public temporaryEnv: {[key: string]: string} | undefined
   public appDirectory: string | undefined
 
   constructor({temporaryDirectory}: WorldConstructorParams) {

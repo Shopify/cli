@@ -361,7 +361,7 @@ export async function concurrent(processes: OutputProcess[]) {
         await process.action(stdout, stderr, abortController.signal)
       }),
     )
-  } catch (_error: any) {
+  } catch (_error) {
     // We abort any running process
     abortController.abort()
     throw _error

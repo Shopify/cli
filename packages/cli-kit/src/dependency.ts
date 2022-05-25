@@ -65,7 +65,7 @@ export async function installNPMDependenciesRecursively(options: InstallNPMDepen
         await install(directory, options.dependencyManager, undefined, undefined, abortController.signal)
       }),
     )
-  } catch (error: any) {
+  } catch (error) {
     abortController.abort()
     throw error
   }

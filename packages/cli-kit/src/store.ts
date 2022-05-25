@@ -1,7 +1,7 @@
-import schema from './store/schema'
+// import schema from './store/schema'
 import * as output from './output'
 import cliKitPackageJson from '../package.json'
-import Conf from 'conf'
+import Conf, {Schema} from 'conf'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -19,6 +19,26 @@ interface ConfSchema {
   themeStore: string
 }
 
+const schema = {
+  appInfo: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        appId: {
+          type: 'string',
+        },
+        orgId: {
+          type: 'string',
+        },
+        storeFqdn: {
+          type: 'string',
+        },
+      },
+    },
+  },
+} as unknown as Schema<ConfSchema>
+
 export const cliKit = new Conf<ConfSchema>({
   schema,
   migrations,
@@ -28,12 +48,12 @@ export const cliKit = new Conf<ConfSchema>({
 
 export function getAppInfo(appId: string): CachedAppInfo | undefined {
   const apps = cliKit.get('appInfo') ?? []
-  return apps.find((app: any) => app.appId === appId)
+  return apps.find((app) => app.appId === appId)
 }
 
 export function setAppInfo(appId: string, data: {storeFqdn?: string; orgId?: string}): void {
   const apps = cliKit.get('appInfo') ?? []
-  const index = apps.findIndex((saved: any) => saved.appId === appId)
+  const index = apps.findIndex((saved) => saved.appId === appId)
   if (index === -1) {
     apps.push({appId, storeFqdn: data.storeFqdn, orgId: data.orgId})
     output.completed('Updated your project name to match your Shopify app name')
@@ -46,7 +66,7 @@ export function setAppInfo(appId: string, data: {storeFqdn?: string; orgId?: str
 
 export function clearAppInfo(appId: string): void {
   const apps = cliKit.get('appInfo') ?? []
-  const index = apps.findIndex((saved: any) => saved.appId === appId)
+  const index = apps.findIndex((saved) => saved.appId === appId)
   if (index !== -1) {
     apps.splice(index, 1)
   }
