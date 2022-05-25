@@ -28,7 +28,7 @@ beforeEach(() => {
   })
 })
 describe('extensionConfig', () => {
-  test('delegates the build to the Go binary', async () => {
+  test('creates config for the go binary', async () => {
     // Given
     const appRoot = '/'
     const extensionName = 'myextension'
@@ -108,6 +108,7 @@ describe('extensionConfig', () => {
               main: 'src/index.js',
             },
             renderer: 'renderer-version',
+            resource: {url: 'invalid_url'},
           },
         },
       ],

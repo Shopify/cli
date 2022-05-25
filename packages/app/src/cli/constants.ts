@@ -10,7 +10,6 @@ export const configurationFileNames = {
 
 export const dotEnvFileNames = {
   production: '.env',
-  local: '.env.local',
 }
 
 export const environmentVariables = {
