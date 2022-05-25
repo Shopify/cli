@@ -1,4 +1,4 @@
-import {App, Identifiers, getAppIdentifiers, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
+import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
 import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
 import {os, output, path, store} from '@shopify/cli-kit'
 
@@ -21,11 +21,11 @@ export function info(app: App, {format}: InfoOptions): output.Message {
 
 class AppInfo {
   private app: App
-  private localIdentifiers: Partial<Identifiers>
+  private cachedAppInfo: store.CachedAppInfo | undefined
 
   constructor(app: App) {
     this.app = app
-    this.localIdentifiers = getAppIdentifiers({app, environmentType: 'local'})
+    this.cachedAppInfo = store.getAppInfo(app.directory)
   }
 
   output(): string {
@@ -43,8 +43,8 @@ class AppInfo {
     const title = 'Configs for Dev'
 
     let storeDescription = 'not configured'
-    if (this.localIdentifiers.app) {
-      const storeInfo = store.getAppInfo(this.localIdentifiers.app)
+    if (this.cachedAppInfo) {
+      const storeInfo = store.getAppInfo(this.app.directory)
       if (storeInfo && storeInfo.storeFqdn) storeDescription = storeInfo.storeFqdn
     }
     const lines = [
@@ -61,7 +61,7 @@ class AppInfo {
     const title = 'Your Project'
     const lines = [
       ['Name', this.app.name],
-      ['API key', this.localIdentifiers.app || 'not configured'],
+      ['API key', this.cachedAppInfo?.appId || 'not configured'],
       ['Root location', this.app.directory],
     ]
     return [title, this.linesToColumns(lines)]

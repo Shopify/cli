@@ -1,6 +1,5 @@
 # Environment Configuration
 .env.local
-.env
 
 # Dependency directory
 node_modules

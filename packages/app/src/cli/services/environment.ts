@@ -2,7 +2,7 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
+import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers, Extension} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
@@ -42,8 +42,11 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const identifiers = await getAppIdentifiers({app: options.app, environmentType: 'local'})
-  const cachedInfo = getCachedInfo(options.reset, identifiers.app)
+  const cachedInfo = getAppDevCachedInfo({
+    reset: options.reset,
+    directory: options.app.directory,
+    apiKey: options.apiKey ?? conf.getAppInfo(options.app.directory)?.appId,
+  })
 
   const explanation =
     `\nLooks like this is the first time you're running dev for this project.\n` +
@@ -59,9 +62,9 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
-    options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+    options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
-    conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore, orgId})
+    conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
     return {
       app: {
         ...selectedApp,
@@ -76,12 +79,12 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   }
 
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
-  conf.setAppInfo(selectedApp.apiKey, {orgId})
+  conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
-  options = await updateOptionsApp({...options, apiKey: selectedApp.apiKey})
+  options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
-  conf.setAppInfo(selectedApp.apiKey, {storeFqdn: selectedStore})
+  conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
     showReusedValues(organization.businessName, options.app, selectedStore)
@@ -100,14 +103,14 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   }
 }
 
-async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string}) {
+async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
   const updatedApp = await updateAppIdentifiers({
     app: options.app,
     identifiers: {
       app: options.apiKey,
       extensions: {},
     },
-    environmentType: 'local',
+    environmentType: 'production',
   })
   return {
     ...options,
@@ -117,27 +120,74 @@ async function updateOptionsApp(options: DevEnvironmentOptions & {apiKey: string
 
 export interface DeployEnvironmentOptions {
   app: App
-  apiKey?: string
-  reset: boolean
 }
 
 interface DeployEnvironmentOutput {
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  app: App
+  partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
 }
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
-  return {
-    app: {
-      id: '123',
-      title: 'title',
-      appType: 'type',
-    },
-    identifiers: {
-      app: 'NOTDONE',
+  const token = await session.ensureAuthenticatedPartners()
+  const envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  const areIdentifiersMissing = getAreIdentifiersMissing(options.app, envIdentifiers)
+
+  let identifiers: Identifiers
+  let partnersApp: OrganizationApp
+
+  if (areIdentifiersMissing) {
+    const orgId = await selectOrg(token)
+    const {apps} = await fetchOrgsAppsAndStores(orgId, token)
+
+    let appId: string
+    if (envIdentifiers.app) {
+      appId = envIdentifiers.app
+      partnersApp = await fetchAppFromApiKey(appId, token)
+    } else {
+      partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
+      appId = partnersApp.apiKey
+    }
+
+    identifiers = {
+      app: appId,
       extensions: {},
-    },
+    }
+    // eslint-disable-next-line no-param-reassign
+    options = {
+      ...options,
+      app: await updateAppIdentifiers({app: options.app, identifiers, environmentType: 'production'}),
+    }
+  } else {
+    identifiers = envIdentifiers as Identifiers
+    partnersApp = await fetchAppFromApiKey(identifiers.app, token)
   }
+
+  return {
+    app: options.app,
+    partnersApp: {
+      id: partnersApp.id,
+      title: partnersApp.title,
+      appType: partnersApp.appType,
+    },
+    identifiers,
+  }
+}
+
+function getAreIdentifiersMissing(app: App, identifiers: Partial<Identifiers>): boolean {
+  const appIdMissing = identifiers.app === undefined
+
+  const anyExtensionMissingId = (extensions: Extension[]): boolean => {
+    return extensions.every((extension) => {
+      return (identifiers?.extensions ?? {})[extension.localIdentifier] !== undefined
+    })
+  }
+  const anyExtensionIdMissing =
+    anyExtensionMissingId(app.extensions.ui) ||
+    anyExtensionMissingId(app.extensions.theme) ||
+    anyExtensionMissingId(app.extensions.function)
+
+  return appIdMissing || anyExtensionIdMissing
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
@@ -191,13 +241,22 @@ async function dataFromInput(
 /**
  * Retrieve cached info from the global configuration based on the current local app
  * @param reset {boolean} Wheter to reset the cache or not
+ * @param directory {string} The directory containing the app.
  * @param appId {string} Current local app id, used to retrieve the cached info
  * @returns
  */
-function getCachedInfo(reset: boolean, apiKey?: string): conf.CachedAppInfo | undefined {
+function getAppDevCachedInfo({
+  reset,
+  directory,
+  apiKey,
+}: {
+  reset: boolean
+  directory: string
+  apiKey?: string
+}): conf.CachedAppInfo | undefined {
   if (!apiKey) return undefined
-  if (apiKey && reset) conf.clearAppInfo(apiKey)
-  return conf.getAppInfo(apiKey)
+  if (apiKey && reset) conf.clearAppInfo(directory)
+  return conf.getAppInfo(directory)
 }
 
 /**

@@ -1,5 +1,3 @@
-// import schema from './store/schema'
-import * as output from './output'
 import cliKitPackageJson from '../package.json'
 import Conf, {Schema} from 'conf'
 
@@ -9,6 +7,7 @@ import Conf, {Schema} from 'conf'
 const migrations = {}
 
 export interface CachedAppInfo {
+  directory: string
   appId: string
   orgId?: string
   storeFqdn?: string
@@ -46,27 +45,31 @@ export const cliKit = new Conf<ConfSchema>({
   projectVersion: cliKitPackageJson.version,
 })
 
-export function getAppInfo(appId: string): CachedAppInfo | undefined {
+export function getAppInfo(directory: string): CachedAppInfo | undefined {
   const apps = cliKit.get('appInfo') ?? []
-  return apps.find((app) => app.appId === appId)
+  return apps.find((app: CachedAppInfo) => app.directory === directory)
 }
 
-export function setAppInfo(appId: string, data: {storeFqdn?: string; orgId?: string}): void {
+export function setAppInfo(options: {directory: string; appId: string; storeFqdn?: string; orgId?: string}): void {
   const apps = cliKit.get('appInfo') ?? []
-  const index = apps.findIndex((saved) => saved.appId === appId)
+  const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
   if (index === -1) {
-    apps.push({appId, storeFqdn: data.storeFqdn, orgId: data.orgId})
-    output.completed('Updated your project name to match your Shopify app name')
+    apps.push(options)
   } else {
     const app: CachedAppInfo = apps[index]
-    apps[index] = {appId, storeFqdn: data.storeFqdn ?? app.storeFqdn, orgId: data.orgId ?? app.orgId}
+    apps[index] = {
+      appId: options.appId,
+      directory: options.directory,
+      storeFqdn: options.storeFqdn ?? app.storeFqdn,
+      orgId: options.orgId ?? app.orgId,
+    }
   }
   cliKit.set('appInfo', apps)
 }
 
-export function clearAppInfo(appId: string): void {
+export function clearAppInfo(directory: string): void {
   const apps = cliKit.get('appInfo') ?? []
-  const index = apps.findIndex((saved) => saved.appId === appId)
+  const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
   if (index !== -1) {
     apps.splice(index, 1)
   }
