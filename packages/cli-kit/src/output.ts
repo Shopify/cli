@@ -82,13 +82,20 @@ function formatPackageManagerCommand(
   scriptName: string,
   scriptArgs: string[],
 ): string {
-  const argPart = scriptArgs.join(' ')
   switch (dependencyManager) {
-    case 'yarn':
-      return `yarn ${scriptName} ${argPart}`
+    case 'yarn': {
+      const pieces = ['yarn', scriptName, ...scriptArgs]
+      return pieces.join(' ')
+    }
     case 'pnpm':
-    case 'npm':
-      return `${dependencyManager} run ${scriptName} -- ${scriptArgs}`
+    case 'npm': {
+      const pieces = [dependencyManager, 'run', scriptName]
+      if (scriptArgs.length > 0) {
+        pieces.push('--')
+        pieces.push(...scriptArgs)
+      }
+      return pieces.join(' ')
+    }
   }
 }
 
