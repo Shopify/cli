@@ -19,7 +19,7 @@ export interface ExtensionConfigOptions {
  * @param extension {UIExtension} Extension that will be built.
  * @returns
  */
-export async function extensionConfig(options: ExtensionConfigOptions): Promise<any> {
+export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
       return {

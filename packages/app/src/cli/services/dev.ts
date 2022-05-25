@@ -84,7 +84,7 @@ function devFrontendTarget(web: Web, apiKey: string, backendPort: number): Rever
 
   return {
     logPrefix: web.configuration.type,
-    action: async (stdout: any, stderr: any, signal: AbortSignal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await system.exec(cmd, args, {
         cwd: web.directory,
         stdout,
@@ -113,7 +113,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
 
   return {
     prefix: web.configuration.type,
-    action: async (stdout: any, stderr: any, signal: AbortSignal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       await system.exec(cmd, args, {
         cwd: web.directory,
         stdout,
