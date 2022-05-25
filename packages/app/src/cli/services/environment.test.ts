@@ -1,23 +1,23 @@
-import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch'
-import {selectOrCreateApp} from './select-app'
-import {selectStore, convertToTestStoreIfNeeded} from './select-store'
-import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment} from '../environment'
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {App, WebType, updateAppIdentifiers, getAppIdentifiers} from '../../models/app/app'
-import {selectOrganizationPrompt} from '../../prompts/dev'
-import {testApp} from '../../models/app/app.test-data'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
+import {selectOrCreateApp} from './dev/select-app'
+import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
+import {ensureDeploymentIdsPresence} from './environment/ids'
+import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment} from './environment'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
+import {App, WebType, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
+import {selectOrganizationPrompt} from '../prompts/dev'
+import {testApp} from '../models/app/app.test-data'
 import {store as conf} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-testing'
 
 beforeEach(() => {
-  vi.mock('./fetch')
-  vi.mock('./select-app')
-  vi.mock('./select-store')
-  vi.mock('../../prompts/dev')
-  vi.mock('../../models/app/app')
-  vi.mock('../../utilities/app/update')
-  vi.mock('./create-app')
+  vi.mock('./dev/fetch')
+  vi.mock('./dev/select-app')
+  vi.mock('./dev/select-store')
+  vi.mock('../prompts/dev')
+  vi.mock('../models/app/app')
+  vi.mock('./environment/ids')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -252,8 +252,13 @@ describe('ensureDeployEnvironment', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+    }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
     const got = await ensureDeployEnvironment({app})
@@ -262,15 +267,19 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
-    expect(got.identifiers).toEqual({app: APP2.apiKey, extensions: {}})
+    expect(got.identifiers).toEqual(identifiers)
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
     // Given
     const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+    }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
     const got = await ensureDeployEnvironment({app})
 
@@ -279,10 +288,7 @@ describe('ensureDeployEnvironment', () => {
     expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1.id, 'token', undefined)
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
-      identifiers: {
-        app: APP1.apiKey,
-        extensions: {},
-      },
+      identifiers,
       environmentType: 'production',
     })
     expect(got.partnersApp.id).toEqual(APP1.id)
