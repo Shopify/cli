@@ -22,6 +22,8 @@ export interface ExtensionConfigOptions {
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
+      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
+      const resource = extension.configuration.type === 'product_subscription' ? undefined : {url: 'invalid_url'}
       return {
         uuid: `${extension.configuration.name}-${id.generateShortId()}`,
         title: extension.configuration.name,
@@ -43,6 +45,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
+          resource,
         },
       }
     }),
