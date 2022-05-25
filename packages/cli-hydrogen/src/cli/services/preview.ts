@@ -23,7 +23,7 @@ export async function previewInNode({directory, port}: PreviewOptions) {
   }
 
   await system.exec('node', ['--enable-source-maps', buildOutputPath], {
-    env: {PORT: port},
+    env: {PORT: `${port}`},
     cwd: directory,
     stdout: process.stdout,
   })
