@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import {Fatal, Bug} from './error'
 import {isUnitTest} from './environment/local'
+import {DependencyManager} from './dependency'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
@@ -37,7 +38,7 @@ class ContentToken {
 }
 
 export const token = {
-  command: (value: string) => {
+  genericShellCommand: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Command)
   },
   path: (value: string) => {
@@ -67,9 +68,24 @@ export const token = {
   green: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
+  command: (dependencyManager: DependencyManager, scriptNameAndArgs: string) => {
+    return new ContentToken(
+      formatPackageManagerCommand(dependencyManager, scriptNameAndArgs),
+      {},
+      ContentTokenType.Command,
+    )
+  },
 }
 
-// output.content`Something ${output.token.command(Something)}`
+function formatPackageManagerCommand(dependencyManager: DependencyManager, scriptNameAndArgs: string): string {
+  switch (dependencyManager) {
+    case 'yarn':
+      return `yarn ${scriptNameAndArgs}`
+    case 'pnpm':
+    case 'npm':
+      return `${dependencyManager} run ${scriptNameAndArgs}`
+  }
+}
 
 export class TokenizedString {
   value: string
