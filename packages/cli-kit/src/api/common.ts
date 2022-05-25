@@ -28,10 +28,13 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
  * @returns {string} A sanitized version of the headers as a string.
  */
 export function sanitizedHeadersOutput(headers: {[key: string]: string}): string {
-  const sanitized = {...headers}
-  delete sanitized.authorization
-  delete sanitized.Authorization
-  delete sanitized['X-Shopify-Access-Token']
+  const sanitized: {[key: string]: string} = {}
+  const keywords = ['token', 'authorization']
+  Object.keys(headers).forEach((header) => {
+    if (keywords.find((keyword) => header.toLocaleLowerCase().includes(keyword)) === undefined) {
+      sanitized[header] = headers[header]
+    }
+  })
   return Object.keys(sanitized)
     .map((header) => {
       return ` - ${header}: ${sanitized[header]}`
