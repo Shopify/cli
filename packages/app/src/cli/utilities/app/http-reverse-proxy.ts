@@ -1,6 +1,6 @@
 import fastifyHTTPProxy from './fastify-http-proxy/index.cjs'
 import Fastify from 'fastify'
-import {port, output} from '@shopify/cli-kit'
+import {port, output, error} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 /**
@@ -33,7 +33,7 @@ export interface ReverseHTTPProxyTarget {
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
-  action: (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => Promise<void> | void
+  action: (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => Promise<void> | void
 }
 
 /**

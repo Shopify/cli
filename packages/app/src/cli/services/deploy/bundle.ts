@@ -1,6 +1,6 @@
 import {buildExtension} from '../build/extension'
 import {App} from '../../models/app/app'
-import {path, output, archiver, temporary, file} from '@shopify/cli-kit'
+import {path, output, archiver, temporary, file, error} from '@shopify/cli-kit'
 
 import {Writable} from 'node:stream'
 
@@ -20,7 +20,7 @@ export async function bundle(options: BundleOptions) {
     await output.concurrent([
       {
         prefix: 'extensions',
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           await buildExtension({app: options.app, extensions: options.app.extensions.ui, stdout, stderr, signal})
         },
       },

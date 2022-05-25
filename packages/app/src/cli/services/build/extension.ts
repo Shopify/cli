@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {App, UIExtension} from '../../models/app/app'
 import {extensionConfig} from '../../utilities/extensions/configuration'
-import {yaml} from '@shopify/cli-kit'
+import {error, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionBuildOptions {
@@ -17,7 +17,7 @@ export interface ExtensionBuildOptions {
   /**
    * Signal to abort the build process.
    */
-  signal: AbortSignal
+  signal: error.AbortSignal
 
   /**
    * Overrides the default build directory.
