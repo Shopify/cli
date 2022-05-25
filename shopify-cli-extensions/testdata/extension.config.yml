@@ -117,3 +117,15 @@ extensions:
         main: 'src/index.js'
     capabilities:
       network_access: false
+  - uuid: 00000000-0000-0000-0000-000000000007
+    type: pos_ui_extension
+    title: POS UI Test Extension
+    development:
+      root_dir: 'tmp/pos_ui_extension'
+      build_dir: 'build'
+      template: 'typescript-react'
+      renderer:
+        name: '@shopify/retail-ui-extensions'
+        version: '^0.1.0'
+      entries:
+        main: 'src/index.tsx'

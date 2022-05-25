@@ -232,6 +232,9 @@ declare global {
     type EventUnsubscriber = () => void;
   }
 }
-export type Surface = 'checkout' | 'admin' | 'post-purchase';
+
+export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'pos'] as const;
+
+export type Surface = typeof AVAILABLE_SURFACES[number];
 
 export {};

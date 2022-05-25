@@ -60,4 +60,19 @@ describe('QRCodeModal', () => {
       children: i18n.translate('qrcode.useSecureURL'),
     });
   });
+
+  it('renders QRCode with pos deep-link url when surface is POS', async () => {
+    const app = mockApp();
+    const store = 'example.com';
+    const extension = mockExtension({surface: 'pos'});
+    const container = render(
+      <QRCodeModal extension={extension} onClose={jest.fn()} open />,
+      withProviders(DefaultProviders, ToastProvider),
+      {state: {app, store, extensions: [extension]}},
+    );
+
+    expect(container?.find(QRCode)?.prop('value')).toStrictEqual(
+      `com.shopify.pos://pos-ui-extensions?scriptUrl=${extension.development.root.url}`,
+    );
+  });
 });

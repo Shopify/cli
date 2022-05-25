@@ -51,7 +51,11 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
       return undefined;
     }
 
-    return `https://${state.store}/admin/extensions-dev/mobile?url=${extension.development.root.url}`;
+    if (extension.surface === 'pos') {
+      return `com.shopify.pos://pos-ui-extensions?scriptUrl=${extension.development.root.url}`;
+    } else {
+      return `https://${state.store}/admin/extensions-dev/mobile?url=${extension.development.root.url}`;
+    }
   }, [extension, state.app, state.store]);
 
   const onButtonClick = useCallback(() => {

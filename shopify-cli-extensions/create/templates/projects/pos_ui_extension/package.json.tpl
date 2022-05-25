@@ -1,0 +1,1 @@
+{{template "shared/package.json" .}}

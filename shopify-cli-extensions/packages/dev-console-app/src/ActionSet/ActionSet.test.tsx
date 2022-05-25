@@ -83,4 +83,16 @@ describe('ActionSet', () => {
       }),
     );
   });
+
+  it('web url does not render if surface is pos', async () => {
+    const extension = mockExtension({surface: 'pos'});
+    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
+    const container = render(
+      <ActionSet extension={extension} />,
+      withProviders(DefaultProviders, TableWrapper),
+      {client},
+    );
+
+    expect(container.find(Action, {accessibilityLabel: i18n.translate('openRootUrl')})).toBeNull();
+  });
 });

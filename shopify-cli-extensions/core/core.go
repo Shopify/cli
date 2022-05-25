@@ -14,6 +14,7 @@ const (
 	Checkout     string = "checkout"
 	Admin        string = "admin"
 	PostPurchase string = "post-purchase"
+	POS          string = "pos"
 )
 
 func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
@@ -199,6 +200,9 @@ func GetSurface(extension *Extension) string {
 	}
 	if strings.Contains(extension.Development.Renderer.Name, "post-purchase") {
 		return PostPurchase
+	}
+	if strings.Contains(extension.Development.Renderer.Name, "retail") {
+		return POS
 	}
 	return Admin
 }

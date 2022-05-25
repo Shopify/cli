@@ -34,6 +34,7 @@ export function ActionSet(props: ActionSetProps) {
   const {extension, className, onShowMobileQRCode} = props;
   const {embedded, hide, navigate, refresh, show, state} = useDevConsoleInternal();
   const hidden = extension.development.hidden;
+  const hideWebUrl = extension.surface === 'pos';
 
   const handleShowHide = useCallback(() => {
     if (hidden) {
@@ -61,12 +62,14 @@ export function ActionSet(props: ActionSetProps) {
     <>
       <td>
         <div className={styles.ActionGroup}>
-          <Action
-            source={LinkIcon}
-            accessibilityLabel={i18n.translate('openRootUrl')}
-            onAction={handleOpenRoot}
-            className={className}
-          />
+          {!hideWebUrl && (
+            <Action
+              source={LinkIcon}
+              accessibilityLabel={i18n.translate('openRootUrl')}
+              onAction={handleOpenRoot}
+              className={className}
+            />
+          )}
           <div className={`${hidden ? rowStyles.ForceVisible : ''}`}>
             <Action
               source={hidden ? HideMinor : ViewMinor}
