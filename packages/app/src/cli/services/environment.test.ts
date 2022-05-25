@@ -1,7 +1,7 @@
 import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
 import {selectOrCreateApp} from './dev/select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
-import {ensureDeploymentIdsPresence} from './environment/ids'
+import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment} from './environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {App, WebType, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
@@ -17,7 +17,7 @@ beforeEach(() => {
   vi.mock('./dev/select-store')
   vi.mock('../prompts/dev')
   vi.mock('../models/app/app')
-  vi.mock('./environment/ids')
+  vi.mock('./environment/identifiers')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {

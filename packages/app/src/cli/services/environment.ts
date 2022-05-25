@@ -1,7 +1,7 @@
 import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
-import {ensureDeploymentIdsPresence} from './environment/ids'
+import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers, Extension} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
@@ -149,7 +149,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
       appId = partnersApp.apiKey
     }
-    identifiers = await ensureDeploymentIdsPresence({app: options.app, appId, token})
+    identifiers = await ensureDeploymentIdsPresence({app: options.app, appId, token, envIdentifiers})
     // eslint-disable-next-line no-param-reassign
     options = {
       ...options,

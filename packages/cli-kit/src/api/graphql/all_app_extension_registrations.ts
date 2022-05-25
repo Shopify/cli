@@ -25,5 +25,5 @@ export interface AllAppExtensionRegistrationsQuerySchema {
       title: string
       type: string
     }[]
-  }[]
+  }
 }
