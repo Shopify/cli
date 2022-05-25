@@ -1,5 +1,18 @@
 # @shopify/create-hydrogen
 
+## 2.0.11
+
+### Patch Changes
+
+- a7419f89: Auto write npmrc for shopify devs using the private registry by mistake.
+
+## 2.0.10
+
+### Patch Changes
+
+- Updated dependencies [31b75488]
+  - @shopify/cli-kit@2.0.10
+
 ## 2.0.9
 
 ### Patch Changes

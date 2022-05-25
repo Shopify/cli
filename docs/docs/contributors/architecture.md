@@ -2,7 +2,7 @@
 title: Architecture
 ---
 
-The Shopify CLI is written in [Typescript](https://www.typescriptlang.org/) and targets Node versions above 12.
+The Shopify CLI is written in [Typescript](https://www.typescriptlang.org/) and targets Node versions above 14.
 We settled on a **Javascript-based** stack because it aligns with the programming language used to build for the platform,
 and allows having a strongly-typed contract with web tooling that's necessary to compile and optimize projects for deployment.
 It's designed following a **modular** architecture where the bottom-most layer represents the foundation that all the features build upon,
