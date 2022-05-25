@@ -116,8 +116,8 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
 
 interface PackageJSONContents {
   name: string
-  dependencies?: {[key: string]: any}
-  devDependencies?: {[key: string]: any}
+  dependencies?: {[key: string]: string}
+  devDependencies?: {[key: string]: string}
 }
 
 async function packageJSONContents(packageJsonPath: string): Promise<PackageJSONContents> {
