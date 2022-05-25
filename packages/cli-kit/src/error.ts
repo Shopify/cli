@@ -42,7 +42,13 @@ export class Bug extends Fatal {}
  * @returns A promise that resolves with the error passed.
  */
 export async function handler(error: Error): Promise<Error> {
-  const fatal = error instanceof Fatal ? error : new Abort(error.message)
+  let fatal: Fatal
+  if (error instanceof Fatal) {
+    fatal = error as Fatal
+  } else {
+    fatal = new Bug(error.message)
+    fatal.stack = error.stack
+  }
   await ouput.error(fatal)
   return Promise.resolve(error)
 }
