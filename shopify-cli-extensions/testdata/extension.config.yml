@@ -104,10 +104,10 @@ extensions:
     capabilities:
       network_access: true
   - uuid: 00000000-0000-0000-0000-000000000006
-    type: beacon_extension
-    title: Beacon Test Extension
+    type: web_pixel_extension
+    title: Web Pixel Test Extension
     development:
-      root_dir: 'tmp/beacon_extension'
+      root_dir: 'tmp/web_pixel_extension'
       build_dir: 'build'
       template: 'javascript'
       renderer:
