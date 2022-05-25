@@ -22,7 +22,7 @@ export const deploy = async (options: DeployOptions) => {
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
-    await bundle({app, bundlePath})
+    await bundle({app, bundlePath, identifiers})
     await upload({apiKey, bundlePath})
 
     output.newline()
