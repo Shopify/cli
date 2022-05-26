@@ -124,7 +124,7 @@ class AppInfo {
 
   webComponentsSection(): string {
     const errors: string[] = []
-    const subtitle = [output.content`${output.token.subheading('web app')}`.value]
+    const subtitle = [output.content`${output.token.subheading('web')}`.value]
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
