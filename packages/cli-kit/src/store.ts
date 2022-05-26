@@ -51,7 +51,13 @@ export function getAppInfo(directory: string): CachedAppInfo | undefined {
   return apps.find((app: CachedAppInfo) => app.directory === directory)
 }
 
-export function setAppInfo(options: {directory: string; appId: string; title?: string; storeFqdn?: string; orgId?: string}): void {
+export function setAppInfo(options: {
+  directory: string
+  appId: string
+  title?: string
+  storeFqdn?: string
+  orgId?: string
+}): void {
   const apps = cliKit.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
   if (index === -1) {

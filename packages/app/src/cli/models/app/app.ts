@@ -281,10 +281,11 @@ class AppLoader {
       return this.abortOrReport(`Couldn't find the configuration file at ${filepath}`, '', filepath)
     }
     const configurationContent = await file.read(filepath)
-    let configuration: string
+    let configuration: object
     try {
       configuration = toml.decode(configurationContent)
-    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       // TOML errors have line, pos and col properties
       if (err.line && err.pos && err.col) {
         return this.abortOrReport(
