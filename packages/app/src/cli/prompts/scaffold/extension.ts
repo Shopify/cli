@@ -17,20 +17,20 @@ const scaffoldExtensionPrompt = async (
   prompt = ui.prompt,
 ): Promise<ScaffoldExtensionOutput> => {
   const questions: ui.Question[] = []
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
-      message: "Your extension's working name?",
-      default: 'extension',
-    })
-  }
   if (!options.extensionType) {
     questions.push({
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
       choices: extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type)),
+    })
+  }
+  if (!options.name) {
+    questions.push({
+      type: 'input',
+      name: 'name',
+      message: "Your extension's working name?",
+      default: 'extension',
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)

@@ -192,9 +192,9 @@ describe('reloadStoreList', () => {
       {
         type: 'select',
         name: 'value',
-        message: 'Would you like to reload your store list to retrieve your recently created store?',
+        message: 'Have you created a new dev store?',
         choices: [
-          {name: 'Yes, reload stores', value: 'reload'},
+          {name: 'Yes, reload my stores', value: 'reload'},
           {name: 'No, cancel dev', value: 'cancel'},
         ],
       },

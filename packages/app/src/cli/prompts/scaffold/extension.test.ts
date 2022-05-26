@@ -17,16 +17,16 @@ describe('extension prompt', () => {
     // Then
     expect(prompt).toHaveBeenCalledWith([
       {
-        type: 'input',
-        name: 'name',
-        message: "Your extension's working name?",
-        default: 'extension',
-      },
-      {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
         choices: extensions.types,
+      },
+      {
+        type: 'input',
+        name: 'name',
+        message: "Your extension's working name?",
+        default: 'extension',
       },
     ])
     expect(got).toEqual({...options, ...answers})
