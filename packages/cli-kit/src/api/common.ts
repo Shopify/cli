@@ -21,3 +21,23 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
 
   return headers
 }
+
+/**
+ * Remvoes the sensitive data from the headers and outputs them as a string.
+ * @param headers {{[key: string]: string}} HTTP headers.
+ * @returns {string} A sanitized version of the headers as a string.
+ */
+export function sanitizedHeadersOutput(headers: {[key: string]: string}): string {
+  const sanitized: {[key: string]: string} = {}
+  const keywords = ['token', 'authorization']
+  Object.keys(headers).forEach((header) => {
+    if (keywords.find((keyword) => header.toLocaleLowerCase().includes(keyword)) === undefined) {
+      sanitized[header] = headers[header]
+    }
+  })
+  return Object.keys(sanitized)
+    .map((header) => {
+      return ` - ${header}: ${sanitized[header]}`
+    })
+    .join('\n')
+}

@@ -1,4 +1,4 @@
-import {buildHeaders} from './common'
+import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {partners as partnersFqdn} from '../environment/fqdn'
 import {debug} from '../output'
 import {request as graphqlRequest, Variables, RequestDocument} from 'graphql-request'
@@ -13,6 +13,9 @@ ${query}
 
 With variables:
 ${variables ? JSON.stringify(variables, null, 2) : ''}
+
+And headers:
+${sanitizedHeadersOutput(headers)}
   `)
   return graphqlRequest<T>(url, query, variables, headers)
 }

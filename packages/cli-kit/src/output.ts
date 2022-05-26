@@ -68,22 +68,34 @@ export const token = {
   green: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
-  command: (dependencyManager: DependencyManager, scriptNameAndArgs: string) => {
+  command: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
     return new ContentToken(
-      formatPackageManagerCommand(dependencyManager, scriptNameAndArgs),
+      formatPackageManagerCommand(dependencyManager, scriptName, scriptArgs),
       {},
       ContentTokenType.Command,
     )
   },
 }
 
-function formatPackageManagerCommand(dependencyManager: DependencyManager, scriptNameAndArgs: string): string {
+function formatPackageManagerCommand(
+  dependencyManager: DependencyManager,
+  scriptName: string,
+  scriptArgs: string[],
+): string {
   switch (dependencyManager) {
-    case 'yarn':
-      return `yarn ${scriptNameAndArgs}`
+    case 'yarn': {
+      const pieces = ['yarn', scriptName, ...scriptArgs]
+      return pieces.join(' ')
+    }
     case 'pnpm':
-    case 'npm':
-      return `${dependencyManager} run ${scriptNameAndArgs}`
+    case 'npm': {
+      const pieces = [dependencyManager, 'run', scriptName]
+      if (scriptArgs.length > 0) {
+        pieces.push('--')
+        pieces.push(...scriptArgs)
+      }
+      return pieces.join(' ')
+    }
   }
 }
 
