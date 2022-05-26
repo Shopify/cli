@@ -6,7 +6,6 @@ import {join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
-import {local} from './environment'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
@@ -21,7 +20,7 @@ const MinBundlerVersion = '2.3.8'
  * User must have a valid ruby+bundler environment to run any command.
  *
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
- * @param token {string} Token to pass to CLI 2.0, will be set as an environment variable
+ * @param adminSession {AdminSession} Contains token and store to pass to CLI 2.0, which will be set as environment variables
  */
 export async function execCLI(args: string[], adminSession?: AdminSession) {
   await installCLIDependencies()
