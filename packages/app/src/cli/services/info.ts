@@ -19,7 +19,8 @@ export function info(app: App, {format}: InfoOptions): output.Message {
   }
 }
 
-const unknownText = output.content`${output.token.italic('unknown')}`.value
+const UNKNOWN_TEXT = output.content`${output.token.italic('unknown')}`.value
+const NOT_CONFIGURED_TEXT = output.content`${output.token.italic('Not yet configured')}`.value
 
 class AppInfo {
   private app: App
@@ -44,11 +45,9 @@ class AppInfo {
   devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
 
-    const emptyState = output.content`${output.token.italic('Not yet configured')}`.value
-
-    let appName = emptyState
-    let storeDescription = emptyState
-    let apiKey = emptyState
+    let appName = NOT_CONFIGURED_TEXT
+    let storeDescription = NOT_CONFIGURED_TEXT
+    let apiKey = NOT_CONFIGURED_TEXT
     let postscript = output.content`💡 These will be populated when you run ${output.token.command(
       this.app.dependencyManager,
       'shopify dev',
@@ -135,7 +134,7 @@ class AppInfo {
       } else if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
         if (error) {
-          sublevels.push([`  📂 ${unknownText}`, path.relative(this.app.directory, web.directory)])
+          sublevels.push([`  📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, web.directory)])
           errors.push(error)
         }
       }
@@ -181,7 +180,7 @@ class AppInfo {
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
     const details = [
-      [`📂 ${unknownText}`, path.relative(this.app.directory, extension.directory)],
+      [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
     const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
