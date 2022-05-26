@@ -44,21 +44,28 @@ class AppInfo {
   devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
 
-    let appName = 'not configured'
-    let storeDescription = 'not configured'
+    let appName = 'Not yet configured'
+    let storeDescription = 'Not yet configured'
+    let apiKey = 'Not yet configured'
+    let postscript = output.content`💡 These will be populated when you run ${output.token.command(
+      this.app.dependencyManager,
+      'shopify dev',
+    )}`.value
     if (this.cachedAppInfo) {
       if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
       if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
+      if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
+      postscript = output.content`💡 To change these, run ${output.token.command(
+        this.app.dependencyManager,
+        'shopify dev',
+        '--reset',
+      )}`.value
     }
     const lines = [
       ['App', appName],
       ['Dev store', storeDescription],
+      ['API key', apiKey],
     ]
-    const postscript = output.content`💡 To change these, run ${output.token.command(
-      this.app.dependencyManager,
-      'shopify dev',
-      '--reset',
-    )}`.value
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 
@@ -66,7 +73,6 @@ class AppInfo {
     const title = 'Your Project'
     const lines = [
       ['Name', this.app.name],
-      ['API key', this.cachedAppInfo?.appId || 'not configured'],
       ['Root location', this.app.directory],
     ]
     return [title, this.linesToColumns(lines)]
