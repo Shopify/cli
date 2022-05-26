@@ -132,6 +132,7 @@ describe('ensureDevEnvironment', () => {
     })
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
+      title: APP1.title,
       directory: LOCAL_APP.directory,
       orgId: ORG1.id,
     })
@@ -175,6 +176,7 @@ describe('ensureDevEnvironment', () => {
     expect(selectOrganizationPrompt).not.toBeCalled()
     expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
+      title: APP1.title,
       directory: LOCAL_APP.directory,
       orgId: ORG1.id,
     })
