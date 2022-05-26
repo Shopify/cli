@@ -1,4 +1,4 @@
-import {buildExtension} from '../build/extension'
+import {buildExtensions} from '../build/extension'
 import {App, Identifiers} from '../../models/app/app'
 import {path, output, archiver, temporary, file, error} from '@shopify/cli-kit'
 
@@ -28,7 +28,7 @@ export async function bundle(options: BundleOptions) {
             const buildDirectory = path.join(bundleDirectory, extensionId)
             return {...extension, buildDirectory}
           })
-          await buildExtension({app: options.app, extensions, stdout, stderr, signal})
+          await buildExtensions({app: options.app, extensions, stdout, stderr, signal})
         },
       },
     ])

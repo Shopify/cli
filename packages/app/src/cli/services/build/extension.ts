@@ -39,7 +39,7 @@ export interface ExtensionBuildOptions {
  * It builds the extensions.
  * @param options {ExtensionBuildOptions} Build options.
  */
-export async function buildExtension(options: ExtensionBuildOptions): Promise<void> {
+export async function buildExtensions(options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Building extension...`)
   const stdin = yaml.encode(await extensionConfig(options))
   await runGoExtensionsCLI(['build', '-'], {

@@ -1,4 +1,4 @@
-import {buildExtension} from './build/extension'
+import {buildExtensions} from './build/extension'
 import buildWeb from './web'
 import {installAppDependencies} from './dependencies'
 import {App, Web} from '../models/app/app'
@@ -26,7 +26,7 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
     {
       prefix: 'extensions',
       action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-        await buildExtension({app, extensions: app.extensions.ui, stdout, stderr, signal})
+        await buildExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal})
       },
     },
   ])
