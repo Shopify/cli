@@ -44,9 +44,11 @@ class AppInfo {
   devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
 
-    let appName = 'Not yet configured'
-    let storeDescription = 'Not yet configured'
-    let apiKey = 'Not yet configured'
+    const emptyState = output.content`${output.token.italic('Not yet configured')}`.value
+
+    let appName = emptyState
+    let storeDescription = emptyState
+    let apiKey = emptyState
     let postscript = output.content`💡 These will be populated when you run ${output.token.command(
       this.app.dependencyManager,
       'shopify dev',
