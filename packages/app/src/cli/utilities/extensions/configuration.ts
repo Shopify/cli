@@ -1,6 +1,10 @@
 import {nodeExtensionsCLIPath} from './cli'
-import {App, UIExtension, getUIExtensionRendererVersion, getUIExtensionResourceURL} from '../../models/app/app'
-import {id, path} from '@shopify/cli-kit'
+import {fetchProductVariant} from './fetch-product-variant'
+import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
+import {error, id, path} from '@shopify/cli-kit'
+import {UIExtensionTypes} from 'cli/constants'
+
+const MissingStoreError = () => new error.Bug('You need a store to test "checkout_ui_extensions"')
 
 export interface ExtensionConfigOptions {
   app: App
@@ -43,7 +47,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
-          resource: getUIExtensionResourceURL(extension.configuration.type),
+          resource: await getUIExtensionResourceURL(extension.configuration.type, options.storeFqdn),
         },
       }
     }),
@@ -59,5 +63,22 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
       api_key: options.apiKey,
     },
     extensions: extensionsConfig,
+  }
+}
+
+export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, store?: string) {
+  switch (uiExtensionType) {
+    case 'checkout_ui_extension': {
+      if (!store) throw MissingStoreError()
+      const result = await fetchProductVariant(store)
+      return {url: `/cart/${result}:1`}
+    }
+    case 'checkout_post_purchase':
+    case 'beacon_extension':
+      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
+      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
+      return {url: 'invalid_url'}
+    case 'product_subscription':
+      return undefined
   }
 }
