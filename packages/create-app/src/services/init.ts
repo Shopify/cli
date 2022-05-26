@@ -80,6 +80,18 @@ async function init(options: InitOptions) {
       })
     }
 
+    if (dependencyManager === 'pnpm') {
+      tasks.push({
+        title: "Updating project's NPM configuration",
+        task: async (_, task) => {
+          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
+          const npmrcContent = `auto-install-peers=true`
+          await file.write(npmrcPath, npmrcContent)
+          task.title = "Project's NPM configuration updated."
+        },
+      })
+    }
+
     tasks = tasks.concat([
       {
         title: `Installing dependencies with ${dependencyManager}`,
