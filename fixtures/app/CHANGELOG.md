@@ -1,5 +1,13 @@
 # app
 
+## 0.1.12
+
+### Patch Changes
+
+- Updated dependencies
+  - @shopify/app@2.0.14
+  - @shopify/cli@2.0.14
+
 ## 0.1.11
 
 ### Patch Changes
