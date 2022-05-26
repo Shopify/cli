@@ -9,6 +9,7 @@ import {AdminSession} from './session'
 import {local} from './environment'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
+import {Writable} from 'node:stream'
 
 const RubyCLIVersion = '2.16.0'
 const ThemeCheckVersion = '1.10.2'
@@ -38,14 +39,50 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
   })
 }
 
-export async function execThemeCheckCLI(args: string[]) {
-  await installThemeCheckCLIDependencies()
+interface ExecThemeCheckCLIOptions {
+  directories: string[]
+  args?: string[]
+  stdout: Writable
+  stderr: Writable
+}
+export async function execThemeCheckCLI({
+  directories,
+  args,
+  stdout,
+  stderr,
+}: ExecThemeCheckCLIOptions): Promise<number[]> {
+  await installThemeCheckCLIDependencies(stdout)
 
-  spawn('bundle', ['exec', 'theme-check'].concat(args), {
-    stdio: 'inherit',
-    shell: true,
-    cwd: themeCheckDirectory(),
+  const processes = directories.map((directory): Promise<number> => {
+    const childProcess = spawn('bundle', ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
+      stdio: ['inherit', 'pipe', 'pipe'],
+      shell: true,
+      cwd: themeCheckDirectory(),
+    })
+    // https://stackoverflow.com/a/35014260
+    childProcess.stdout.pipe(stdout)
+    childProcess.stderr.pipe(stderr)
+    return new Promise((resolve, reject) => {
+      let done = false
+      childProcess.on('error', (err: Error) => {
+        if (!done) {
+          done = true
+          reject(err)
+        }
+      })
+      childProcess.on('exit', (code: number, _signal: string) => {
+        if (!done) {
+          done = true
+          if (code) {
+            reject(new Error(`theme-check exited with code: ${code}`))
+          } else {
+            resolve(code)
+          }
+        }
+      })
+    })
   })
+  return Promise.all(processes)
 }
 
 /**
@@ -54,10 +91,10 @@ export async function execThemeCheckCLI(args: string[]) {
  * Shows a loading spinner if it's the first time installing dependencies
  * or if we are installing a new version of RubyCLI
  */
-async function installThemeCheckCLIDependencies() {
+async function installThemeCheckCLIDependencies(stdout: Writable) {
   const exists = await file.exists(shopifyCLIDirectory())
-  const renderer = local.isUnitTest() || exists ? 'silent' : 'default'
 
+  if (!exists) stdout.write('Installing theme dependencies...')
   const list = new ui.Listr(
     [
       {
@@ -70,9 +107,10 @@ async function installThemeCheckCLIDependencies() {
         },
       },
     ],
-    {renderer},
+    {renderer: 'silent'},
   )
   await list.run()
+  stdout.write('Installed theme dependencies!')
 }
 
 /**
