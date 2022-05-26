@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 2.0.13
+
+### Patch Changes
+
+- 1fb2da6c: Fix uhandled errors not being treated as bugs
+
 ## 2.0.10
 
 ### Patch Changes

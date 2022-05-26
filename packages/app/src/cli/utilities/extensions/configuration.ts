@@ -1,5 +1,5 @@
 import {nodeExtensionsCLIPath} from './cli'
-import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
+import {App, UIExtension, getUIExtensionRendererVersion, getUIExtensionResourceURL} from '../../models/app/app'
 import {id, path} from '@shopify/cli-kit'
 
 export interface ExtensionConfigOptions {
@@ -43,6 +43,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
+          resource: getUIExtensionResourceURL(extension.configuration.type),
         },
       }
     }),

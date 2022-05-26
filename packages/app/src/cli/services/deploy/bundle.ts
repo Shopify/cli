@@ -1,6 +1,6 @@
 import {buildExtension} from '../build/extension'
 import {App, Identifiers} from '../../models/app/app'
-import {path, output, archiver, temporary, file} from '@shopify/cli-kit'
+import {path, output, archiver, temporary, file, error} from '@shopify/cli-kit'
 
 import {Writable} from 'node:stream'
 
@@ -18,7 +18,7 @@ export async function bundle(options: BundleOptions) {
     await output.concurrent([
       {
         prefix: 'extensions',
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           /**
            * For deployment we want the build process to ouptut the artifacts directly in the directory
            * to prevent artifacts from past builds from leaking into deploy builds.

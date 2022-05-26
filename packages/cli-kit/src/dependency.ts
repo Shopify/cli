@@ -2,7 +2,7 @@ import {exec} from './system'
 import {exists as fileExists, read as readFile} from './file'
 import {glob, dirname, join as pathJoin} from './path'
 import {Bug} from './error'
-import AbortController from 'abort-controller'
+import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 

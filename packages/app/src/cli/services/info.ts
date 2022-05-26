@@ -52,7 +52,9 @@ class AppInfo {
       ['Dev store', storeDescription],
     ]
     const postscript = output.content`💡 To change these, run ${output.token.command(
-      `${this.app.dependencyManager} shopify dev --reset`,
+      this.app.dependencyManager,
+      'shopify dev',
+      '--reset',
     )}`.value
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
@@ -200,9 +202,10 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    const postscript = output.content`💡 To update to the latest version of the Shopify CLI, run ${output.token.command(
-      `${this.app.dependencyManager} upgrade`,
-    )}`.value
+    const postscript =
+      output.content`💡 To update to the latest version of the Shopify CLI, run ${output.token.genericShellCommand(
+        `${this.app.dependencyManager} upgrade`,
+      )}`.value
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 

@@ -1,10 +1,11 @@
 /* eslint-disable no-console */
 import {Fatal, Bug} from './error'
 import {isUnitTest} from './environment/local'
+import {DependencyManager} from './dependency'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
-import AbortController from 'abort-controller'
+import {AbortController, AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -37,7 +38,7 @@ class ContentToken {
 }
 
 export const token = {
-  command: (value: string) => {
+  genericShellCommand: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Command)
   },
   path: (value: string) => {
@@ -67,9 +68,36 @@ export const token = {
   green: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
+  command: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
+    return new ContentToken(
+      formatPackageManagerCommand(dependencyManager, scriptName, scriptArgs),
+      {},
+      ContentTokenType.Command,
+    )
+  },
 }
 
-// output.content`Something ${output.token.command(Something)}`
+function formatPackageManagerCommand(
+  dependencyManager: DependencyManager,
+  scriptName: string,
+  scriptArgs: string[],
+): string {
+  switch (dependencyManager) {
+    case 'yarn': {
+      const pieces = ['yarn', scriptName, ...scriptArgs]
+      return pieces.join(' ')
+    }
+    case 'pnpm':
+    case 'npm': {
+      const pieces = [dependencyManager, 'run', scriptName]
+      if (scriptArgs.length > 0) {
+        pieces.push('--')
+        pieces.push(...scriptArgs)
+      }
+      return pieces.join(' ')
+    }
+  }
+}
 
 export class TokenizedString {
   value: string
@@ -333,7 +361,7 @@ export async function concurrent(processes: OutputProcess[]) {
 
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    const color = concurrentColors[0]
+    const color = concurrentColors[colorIndex]
     return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
   }
 

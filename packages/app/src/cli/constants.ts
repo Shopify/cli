@@ -41,8 +41,12 @@ export const blocks = {
 /**
  * List of extensions for each category that are limited by quantity, only 1 of each is allowed per app
  */
-export const limitedExtensions = {
-  ui: ['product_subscription'],
+export const limitedExtensions: {
+  ui: UIExtensionTypes[]
+  theme: ThemeExtensionTypes[]
+  function: FunctionExtensionTypes[]
+} = {
+  ui: ['product_subscription', 'checkout_post_purchase'],
   theme: ['theme'],
   function: [],
 }

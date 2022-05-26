@@ -1,5 +1,5 @@
 import {Web} from '../models/app/app'
-import {system} from '@shopify/cli-kit'
+import {error, system} from '@shopify/cli-kit'
 import {WebConfigurationCommands} from 'cli/models/app/app'
 import {Writable} from 'node:stream'
 
@@ -7,7 +7,7 @@ interface WebOptions {
   web: Web
   stdout: Writable
   stderr: Writable
-  signal: AbortSignal
+  signal: error.AbortSignal
 }
 
 export default async function web(

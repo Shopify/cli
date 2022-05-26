@@ -12,7 +12,9 @@ export async function previewInNode({directory, port}: PreviewOptions) {
   if (!(await file.exists(buildOutputPath))) {
     output.info(
       output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.command(
-        'yarn shopify hydrogen build --target=node',
+        'yarn',
+        'shopify hydrogen build',
+        '--target=node',
       )} to create one.`,
     )
 

@@ -493,6 +493,20 @@ export function getUIExtensionRendererVersion(
   return {name: rendererDependencyName, version: rendererDependency}
 }
 
+export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes) {
+  switch (uiExtensionType) {
+    case 'checkout_ui_extension':
+      return {url: '/cart/42958523695291:10'}
+    case 'checkout_post_purchase':
+    case 'beacon_extension':
+      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
+      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
+      return {url: 'invalid_url'}
+    case 'product_subscription':
+      return undefined
+  }
+}
+
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
   const loader = new AppLoader({directory, mode})
   return loader.loaded()
