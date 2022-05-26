@@ -1,5 +1,5 @@
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {api, error, session} from '@shopify/cli-kit'
+import {api, error} from '@shopify/cli-kit'
 
 const NoOrgError = () =>
   new error.Abort(
