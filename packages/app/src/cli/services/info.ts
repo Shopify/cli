@@ -202,9 +202,10 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
+    const updateCommand = this.app.dependencyManager === 'yarn' ? 'upgrade' : 'update'
     const postscript =
       output.content`💡 To update to the latest version of the Shopify CLI, run ${output.token.genericShellCommand(
-        `${this.app.dependencyManager} upgrade`,
+        `${this.app.dependencyManager} ${updateCommand}`,
       )}`.value
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }

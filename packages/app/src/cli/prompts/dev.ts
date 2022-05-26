@@ -71,14 +71,14 @@ export async function appNamePrompt(currentName: string): Promise<string> {
 
 export async function reloadStoreListPrompt(): Promise<boolean> {
   const options = [
-    {name: 'Yes, reload stores', value: 'reload'},
+    {name: 'Yes, reload my stores', value: 'reload'},
     {name: 'No, cancel dev', value: 'cancel'},
   ]
 
   const questions: ui.Question = {
     type: 'select',
     name: 'value',
-    message: 'Would you like to reload your store list to retrieve your recently created store?',
+    message: 'Have you created a new dev store?',
     choices: options,
   }
   const choice: {value: string} = await ui.prompt([questions])
