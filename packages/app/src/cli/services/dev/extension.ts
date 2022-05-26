@@ -59,6 +59,7 @@ export interface ExtensionDevOptions {
 export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
   const config = await extensionConfig(options)
   const stdin = yaml.encode(config)
+  console.log(stdin)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,

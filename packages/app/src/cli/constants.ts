@@ -106,7 +106,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
     case 'checkout_ui_extension':
       return '@shopify/checkout-ui-extensions-react'
     case 'checkout_post_purchase':
-      return '@shopify/post-purchase-ui-extensions-react'
+      return '@shopify/post-purchase-ui-extensions'
     case 'beacon_extension':
       return undefined
   }

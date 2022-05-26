@@ -156,6 +156,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       app: await updateAppIdentifiers({app: options.app, identifiers, environmentType: 'production'}),
     }
   } else {
+    // Even if the identifiers are present, we need to fetch the app from the API to verify they are correct?
     identifiers = envIdentifiers as Identifiers
     partnersApp = await fetchAppFromApiKey(identifiers.app, token)
   }
