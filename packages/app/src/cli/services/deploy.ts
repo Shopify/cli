@@ -55,8 +55,9 @@ function configFor(extension: UIExtension, app: App) {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       return {renderer_version: getUIExtensionRendererVersion(type, app)}
     case 'checkout_ui_extension':
-      // MISSING LOCALES
-      return extension.configuration
+      // PENDING: Missing locales config
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      return {localization: {default_locale: 'en', translations: {}}, ...extension.configuration}
     case 'beacon_extension':
       // PENDING: what's needed for a beacon_extension??
       return {}
