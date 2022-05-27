@@ -111,3 +111,56 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
       return undefined
   }
 }
+
+export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
+  humanKey: string
+  helpURL?: string
+  additionalHelp?: string
+} {
+  const discountAdditionalHelp =
+    'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.'
+  switch (extensionType) {
+    case 'beacon_extension':
+      return buildExtensionOutputConfig('Beacon')
+    case 'checkout_post_purchase':
+      return buildExtensionOutputConfig('Post-purchase', 'https://shopify.dev/apps/checkout/post-purchase')
+    case 'theme':
+      return buildExtensionOutputConfig('Theme app')
+    case 'checkout_ui_extension':
+      return buildExtensionOutputConfig('Checkout UI')
+    case 'product_subscription':
+      return buildExtensionOutputConfig('Product subscription')
+    case 'product_discounts':
+      return buildExtensionOutputConfig(
+        'Product discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+        discountAdditionalHelp,
+      )
+    case 'order_discounts':
+      return buildExtensionOutputConfig(
+        'Order discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+        discountAdditionalHelp,
+      )
+    case 'shipping_discounts':
+      return buildExtensionOutputConfig(
+        'Shipping discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+        discountAdditionalHelp,
+      )
+    case 'payment_methods':
+      return buildExtensionOutputConfig('Payment method')
+    case 'shipping_rate_presenter':
+      return buildExtensionOutputConfig('Shipping rate presenter')
+    default:
+      return buildExtensionOutputConfig(extensionType)
+  }
+}
+
+function buildExtensionOutputConfig(humanKey: string, helpURL?: string, additionalHelp?: string) {
+  return {
+    humanKey,
+    helpURL,
+    additionalHelp,
+  }
+}

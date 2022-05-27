@@ -1,5 +1,5 @@
 import {appFlags} from '../../../flags'
-import {extensions, limitedExtensions} from '../../../constants'
+import {extensions, ExtensionTypes, getExtensionOutputConfig, limitedExtensions} from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
@@ -64,7 +64,8 @@ export default class AppScaffoldExtension extends Command {
       cloneUrl: flags['clone-url'],
       language: flags.language,
     })
-    output.info(output.content`Extension ${promptAnswers.name} generated successfully!`)
+
+    output.info(formatSuccessfulRunMessage(promptAnswers.extensionType))
   }
 
   /**
@@ -93,5 +94,23 @@ export default class AppScaffoldExtension extends Command {
     const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
     const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
     return [...themeExtensions, ...uiExtensions]
+  }
+
+  formatSuccessfulRunMessage(extensionType: ExtensionTypes): string {
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+    const outputTokens = []
+    outputTokens.push(
+      output.content`Find your ${extensionOutputConfig.humanKey} extension in your extensions folder.`.value,
+    )
+    if (extensionOutputConfig.additionalHelp) {
+      outputTokens.push(extensionOutputConfig.additionalHelp)
+    }
+    if (extensionOutputConfig.helpURL) {
+      outputTokens.push(
+        output.content`For help, see ${output.token.link('docs', extensionOutputConfig.helpURL)}.`.value,
+      )
+    }
+
+    return outputTokens.join('\n')
   }
 }

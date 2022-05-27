@@ -4,6 +4,7 @@ import {
   extensionTypeCategory,
   ExtensionTypes,
   FunctionExtensionTypes,
+  getExtensionOutputConfig,
   getUIExtensionRendererDependency,
   ThemeExtensionTypes,
   UIExtensionTypes,
@@ -86,7 +87,7 @@ async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOption
         },
       },
       {
-        title: 'Scaffolding extension',
+        title: `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`,
         task: async (_, task) => {
           const stdin = yaml.encode({
             extensions: [
@@ -118,6 +119,7 @@ async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOption
             }),
             stdin,
           })
+          task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
       },
     ],
@@ -152,12 +154,13 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
     const list = new ui.Listr(
       [
         {
-          title: 'Scaffolding extension',
-          task: async () => {
+          title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
+          task: async (_, task) => {
             await file.mkdir(templateDownloadDir)
             await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
             const origin = path.join(templateDownloadDir, functionTemplatePath(options))
             template.recursiveDirectoryCopy(origin, extensionDirectory, options)
+            task.title = `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`
           },
         },
       ],
