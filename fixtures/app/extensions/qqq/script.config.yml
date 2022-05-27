@@ -1,0 +1,7 @@
+---
+version: '2'
+title: shipping-rate-presenter-default-script
+description: Shipping methods base script
+configuration:
+  type: object
+  fields: {}

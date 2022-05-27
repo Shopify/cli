@@ -1,6 +1,7 @@
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
-import {error} from '@shopify/cli-kit'
+import {createExtension} from '../dev/create-extension'
+import {error, session} from '@shopify/cli-kit'
 
 const WrongExtensionNumberError = (remote: number, local: number) => {
   return new error.Abort(
@@ -13,10 +14,17 @@ const NoLocalExtensionsError = () => {
   return new error.Abort('There are no extensions to deploy')
 }
 
-const NoAutomaticMatch = () => {
+const ManualMatchRequired = () => {
+  return new error.Abort(
+    'Manual matching is required',
+    'We are working on a a manual solution for this case, coming soon!',
+  )
+}
+
+const InvalidEnvironment = () => {
   return new error.Abort(
     "We couldn't automatically match your local and remote extensions",
-    `Please check your local project or select a different app to deploy to`,
+    'Please check your local project or select a different app to deploy to',
   )
 }
 
@@ -35,135 +43,119 @@ interface ExtensionRegistration {
 }
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions): Promise<Identifiers> {
+  // All initial values both remote and local
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
-  console.log(JSON.stringify(remoteSpecifications, null, 2))
-  const localExtensions: Extension[] = [...options.app.extensions.ui, ...options.app.extensions.function]
   const remoteRegistrations: ExtensionRegistration[] = remoteSpecifications.app.extensionRegistrations
+  let validIdentifiers = options.envIdentifiers.extensions ?? {}
+  const localExtensions: Extension[] = [
+    ...options.app.extensions.ui,
+    ...options.app.extensions.function,
+    ...options.app.extensions.theme,
+  ]
 
-  const envIdentifiers = options.envIdentifiers ?? {extensions: {}}
+  // We need local extensions to deploy
+  if (localExtensions.length === 0) {
+    throw NoLocalExtensionsError()
+  }
 
-  const localId = (extension: Extension) => (envIdentifiers.extensions ?? {})[extension.localIdentifier]
-  const hasLocalId = (extension: Extension) => localId(extension) !== undefined
-  const allExtensionsHaveLocalId = localExtensions.every(hasLocalId)
+  // If there are more remote extensions than local, then something is missing and we can't continue
+  if (remoteRegistrations.length > localExtensions.length) {
+    throw WrongExtensionNumberError(remoteRegistrations.length, localExtensions.length)
+  }
 
+  // Get the local UUID of an extension, if exists
+  const localId = (extension: Extension) => validIdentifiers[extension.localIdentifier]
+
+  // All local UUIDs available
+  const localUUIDs = () => Object.values(validIdentifiers)
+
+  // Whether an extension has an UUID and that UUID and type match with a remote extension
   const existsRemotely = (extension: Extension) => {
     const remote = remoteRegistrations.find((registration) => registration.uuid === localId(extension))
     return remote !== undefined && remote.type === extension.graphQLType
   }
 
-  const needsCreation = (extension: Extension) => {
-    return !hasLocalId(extension) || !existsRemotely(extension)
+  // List of local extensions that don't exists remotely and need to be matched
+  const pendingLocal = localExtensions.filter((extension) => !existsRemotely(extension))
+
+  // List of remote extensions that are not yet matched to a local extension
+  const pendingRemote = remoteRegistrations.filter((registration) => !localUUIDs().includes(registration.uuid))
+
+  // From pending to be matched extensions, this is the list of extensions with duplicated Type
+  // If two or more extensions have the same type, we need to manually match them.
+  const localNeedsManualMatch = (() => {
+    const types = pendingLocal.map((ext) => ext.graphQLType).filter((type, i, array) => array.indexOf(type) !== i)
+    return pendingLocal.filter((ext) => types.includes(ext.graphQLType))
+  })()
+
+  // From pending to be matched remote extensions, this is the list of remote extensions with duplicated Type
+  // If two or more extensions have the same type, we need to manually match them.
+  const remoteNeedsManualMatch = (() => {
+    const types = pendingRemote.map((ext) => ext.type).filter((type, i, array) => array.indexOf(type) !== i)
+    return pendingRemote.filter((ext) => types.includes(ext.type))
+  })()
+
+  // Extensions that should be possible to automatically match or create, should not contain duplicated types
+  const newLocalPending = pendingLocal.filter((extension) => !localNeedsManualMatch.includes(extension))
+  const newRemotePending = pendingRemote.filter((registration) => !remoteNeedsManualMatch.includes(registration))
+
+  // If there are remote pending with types not present locally, we can't automatically match
+  // The user must solve the issue in their environment or deploy to a different app
+  const impossible = newRemotePending.filter((reg) => !newLocalPending.map((ext) => ext.graphQLType).includes(reg.type))
+  if (impossible.length > 0 || newRemotePending.length > newLocalPending.length) {
+    throw InvalidEnvironment()
   }
 
-  const remoteForID = (uuid: string) => {
-    remoteRegistrations.find((registration) => registration.uuid === uuid)
+  // If there are more remote pending than local in total, then we can't automatically match
+  // The user must solve the issue in their environment or deploy to a different app
+  if (newRemotePending.length > newLocalPending.length) {
+    throw InvalidEnvironment()
   }
-
-  const remoteTypeMatches = (ext: Extension) => remoteRegistrations.filter((reg) => reg.type === ext.graphQLType)
-
-  // const canWeMatch = (extension: Extension) => {
-  //   const possibleMatches = remoteTypeMatches(extension)
-  //   if (possibleMatches.length === 0) {
-  //     needsCreation(extension)
-  //   } else if (possibleMatches.length > 1) {
-  //     err = NoAutomaticMatch()
-  //   } else {
-  //     envIdentifiers.extensions![extension.localIdentifier] = possibleMatches[0].uuid
-  //   }
-  // }
-
-  const localExtensionsWithEnvIdentifiers = localExtensions.filter(hasLocalId)
-  const localExtensionsWithoutEnvIdentifiers = localExtensions.filter((ext) => !hasLocalId(ext))
-  const localUUIDs = () => Object.values(envIdentifiers.extensions ?? {})
-  const remoteUUIDs = remoteRegistrations.map((registration) => registration.uuid)
-  // const remoteSpecificationsContainAllLocalIds = localUUIDs.every((extensionId) => remoteUUIDs.includes(extensionId))
-
-  // These extensions should also be created?
-  const localExtensionsWithLocalIdButNotRemote = localExtensions.filter(
-    (extension) => hasLocalId(extension) && !existsRemotely(extension),
-  )
 
   const extensionsToCreate: Extension[] = []
-  let err: error.Abort | undefined
 
-  if (localExtensions.length === 0) {
-    err = NoLocalExtensionsError()
-  }
-
-  if (remoteSpecifications.app.extensionRegistrations.length > localExtensions.length) {
-    // There are more remote extensions than local extensions. We can't handle this case
-    err = WrongExtensionNumberError(remoteSpecifications.app.extensionRegistrations.length, localExtensions.length)
-  }
-
-  const alreadyLinkedExtensions: ExtensionRegistration[] = []
-  const validExtensions: Extension[] = []
-
-  const alreadyMatched = (extension: Extension, matches: ExtensionRegistration[]) =>
-    localUUIDs().includes(matches[0].uuid)
-  /**
-   * For each local extension, evaluate if its already valid or we can automatically match it to a remote one.
-   */
-  localExtensions.forEach((extension) => {
+  // For each pending local extension, evaluate if it can be automatically matched or needs to be created
+  newLocalPending.forEach((extension) => {
     // Remote extensions that have the same type as the local one
-    const possibleMatches = remoteTypeMatches(extension)
-
-    // Local extension alreaedy exists, nothing to do
-    if (existsRemotely(extension)) return
+    const possibleMatches = newRemotePending.filter((req) => req.type === extension.graphQLType)
 
     if (possibleMatches.length === 0) {
-      // There are not remote extensions with the same type. We need to create a new extension
-      extensionsToCreate.push(extension)
-    } else if (possibleMatches.length > 1) {
-      // THere are multiple remote extensions with the same type. We can't automatically match
-      err = NoAutomaticMatch()
-    } else if (alreadyMatched(extension, possibleMatches)) {
-      // There is a remote extension with the same type but is already linked to a locak extension.
-      // We need to create a new extension
+      // There are no remote extensions with the same type. We need to create a new extension
       extensionsToCreate.push(extension)
     } else {
       // There is a unique remote extension with the same type. We can automatically match them.
-      envIdentifiers.extensions![extension.localIdentifier] = possibleMatches[0].uuid
+      validIdentifiers[extension.localIdentifier] = possibleMatches[0].uuid
     }
   })
 
-  // // Case 1: All local extensions have identifiers
-  // if (allExtensionsHaveLocalId) {
-  //   // Case 1.1: All local ids exist in the remote specifications
-  //   if (remoteSpecificationsContainAllLocalIds) {
-  //     // WHAT HAPPENS IF THERE ARE MORE REMOTE THAN LOCAL?
-  //     return {
-  //       app: options.appId,
-  //       extensions: envIdentifiers.extensions ?? {},
-  //     }
-  //     // Case 2.2: There's a mismatch we can't handle (ERROR)
-  //   } else {
-  //     const extensionNames = localExtensionsWithLocalIdButNotRemote
-  //       .map((extension) => extension.localIdentifier)
-  //       .join(', ')
-  //     const extensionEnvVariables = localExtensionsWithLocalIdButNotRemote
-  //       .map((extension) => extension.idEnvironmentVariableName)
-  //       .join(', ')
-  //     err = new error.Abort(
-  //       `The extensions ${extensionNames} don't belong to the partners' app with API key ${options.appId}`,
-  //       `Deploy to the right app, create a new app, or delete the keys ${extensionEnvVariables} from the project's ${dotEnvFileNames.production} file.`,
-  //     )
-  //   }
-  // } else {
-  //   console.log('OK')
-  // }
-
-  if (err) {
-    throw err
+  // Create all extensions that need to be created
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
+    validIdentifiers = {...validIdentifiers, ...newIdentifiers}
   }
 
-  console.log(JSON.stringify(envIdentifiers.extensions, null, 2))
-  console.log(JSON.stringify(extensionsToCreate, null, 2))
+  if (localNeedsManualMatch.length > 0) {
+    // PENDING: Check that there are no more remote extenions that local pending to be manually matched
+    // PENDING: Manually match pending extensions
+    throw ManualMatchRequired()
+  }
 
-  // CREATE EXTENSIONS
-  throw new error.Abort('WAIT')
+  // PENDING: Function extensions can't be created before being deployed we'll need to handle that differently
 
+  // At this point, all extensions are matched either automatically, manually or are new
   return {
     app: options.appId,
-    extensions: {},
+    extensions: validIdentifiers,
   }
+}
+
+async function createExtensions(extensions: Extension[], appId: string) {
+  const token = await session.ensureAuthenticatedPartners()
+  const result: {[localIdentifier: string]: string} = {}
+  for (const extension of extensions) {
+    // eslint-disable-next-line no-await-in-loop
+    const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
+    result[extension.localIdentifier] = registration.uuid
+  }
+  return result
 }

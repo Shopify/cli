@@ -138,14 +138,13 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   let partnersApp: OrganizationApp
 
   if (areIdentifiersMissing) {
-    const orgId = await selectOrg(token)
-    const {apps} = await fetchOrgsAppsAndStores(orgId, token)
-
     let appId: string
     if (envIdentifiers.app) {
       appId = envIdentifiers.app
       partnersApp = await fetchAppFromApiKey(appId, token)
     } else {
+      const orgId = await selectOrg(token)
+      const {apps} = await fetchOrgsAppsAndStores(orgId, token)
       partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
       appId = partnersApp.apiKey
     }

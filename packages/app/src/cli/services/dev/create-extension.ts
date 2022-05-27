@@ -2,12 +2,12 @@ import {extensionGraphqlId} from '../../models/app/app'
 import {ExtensionTypes} from '../../constants'
 import {api, error} from '@shopify/cli-kit'
 
-interface ExtensionRegistration {
+export interface ExtensionRegistration {
   id: string
   uuid: string
   type: string
   title: string
-  draftVersion: {
+  draftVersion?: {
     registrationId: string
     lastUserInteractionAt: string
     validationErrors: {
