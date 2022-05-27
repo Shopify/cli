@@ -45,6 +45,8 @@ const UIExtensionConfigurationSchema = schema.define.object({
       }),
     )
     .default([]),
+  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  capabilities: schema.define.any().optional(),
 })
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
@@ -296,6 +298,7 @@ class AppLoader {
     const fallbackOutput = {} as schema.define.TypeOf<TSchema>
 
     const configurationObject = await this.loadConfigurationFile(path)
+    console.log(configurationObject)
     if (!configurationObject) return fallbackOutput
 
     const parseResult = schema.safeParse(configurationObject)
