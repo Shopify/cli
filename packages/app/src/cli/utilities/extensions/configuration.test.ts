@@ -43,6 +43,8 @@ describe('extensionConfig', () => {
         metafields: [],
         type: 'checkout_post_purchase',
       },
+      type: 'checkout_post_purchase',
+      graphQLType: 'CHECKOUT_POST_PURCHASE',
       directory: extensionRoot,
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
     }
