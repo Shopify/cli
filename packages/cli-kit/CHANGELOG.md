@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 2.0.14
+
+### Patch Changes
+
+- 87e51326: Report errors coming from child processes as abort errors
+- 87e51326: Output the sub-processes that we execute when the user invokes the CLI with --verbose
+- b10ddafc: Output requests' HTTP headers when the user invokes the CLI with --verbose
+
 ## 2.0.13
 
 ### Patch Changes

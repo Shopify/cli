@@ -1,10 +1,11 @@
 {
   "name": "@shopify/app",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [
-    "/dist"
+    "/dist",
+    "/templates"
   ],
   "publishConfig": {
     "access": "public",
@@ -32,7 +33,7 @@
     "fastify": "^4.0.0-rc.2"
   },
   "peerDependencies": {
-    "@shopify/cli-kit": "2.0.13"
+    "@shopify/cli-kit": "2.0.14"
   },
   "engine-strict": true,
   "engines": {

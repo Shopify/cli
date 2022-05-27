@@ -73,8 +73,8 @@ async function init(options: InitOptions) {
         title: "[Shopifolks-only] Configuring the project's NPM registry",
         task: async (_, task) => {
           const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
-          const npmrcContent = `registry=https://registry.npmjs.org`
-          await file.write(npmrcPath, npmrcContent)
+          const npmrcContent = `registry=https://registry.npmjs.org\n`
+          await file.append(npmrcPath, npmrcContent)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
@@ -118,14 +118,15 @@ async function init(options: InitOptions) {
   })
 
   output.info(output.content`
-  ${hyphenizedName} is ready for you to build! Remember to cd into your new directory.
+  ${hyphenizedName} is ready for you to build! Remember to cd into ${outputDirectory}.
   To preview your project, run ${output.token.command(dependencyManager, 'dev')}
-  To add extensions, run a scaffold command. For more details on all that you can build, see the docs: ${output.token.link(
+  To add extensions, run ${output.token.command(dependencyManager, 'scaffold extension')}
+  For more details on all that you can build, see the docs: ${output.token.link(
     'shopify.dev',
     'https://shopify.dev',
   )}. ✨
 
-  For help and a list of commands, enter --help.
+  For help and a list of commands, enter ${output.token.command(dependencyManager, 'shopify app', '--help')}
   `)
 }
 
