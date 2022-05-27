@@ -24,7 +24,7 @@ export const deploy = async (options: DeployOptions) => {
   const extensions = options.app.extensions.ui.map((extension) => {
     return {
       uuid: identifiers.extensions[extension.localIdentifier],
-      config: configFor(extension, app),
+      config: JSON.stringify(configFor(extension, app)),
       context: '',
     }
   })
@@ -50,15 +50,15 @@ function configFor(extension: UIExtension, app: App) {
   const type = extension.type as UIExtensionTypes
   switch (extension.type as UIExtensionTypes) {
     case 'checkout_post_purchase':
-      return JSON.stringify({metafields: extension.configuration.metafields})
+      return {metafields: extension.configuration.metafields}
     case 'product_subscription':
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      return JSON.stringify({renderer_version: getUIExtensionRendererVersion(type, app)})
+      return {renderer_version: getUIExtensionRendererVersion(type, app)}
     case 'checkout_ui_extension':
       // MISSING LOCALES
-      return JSON.stringify(extension.configuration)
+      return extension.configuration
     case 'beacon_extension':
       // PENDING: what's needed for a beacon_extension??
-      return JSON.stringify({})
+      return {}
   }
 }

@@ -130,8 +130,8 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   // Create all extensions that need to be created
   if (extensionsToCreate.length > 0) {
-    // const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
-    // validIdentifiers = {...validIdentifiers, ...newIdentifiers}
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
+    validIdentifiers = {...validIdentifiers, ...newIdentifiers}
   }
 
   if (localNeedsManualMatch.length > 0) {
