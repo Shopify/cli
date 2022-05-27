@@ -3,7 +3,7 @@ import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations,
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers, Extension} from '../models/app/app'
+import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
@@ -132,34 +132,24 @@ interface DeployEnvironmentOutput {
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
   const envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
-  const areIdentifiersMissing = getAreIdentifiersMissing(options.app, envIdentifiers)
 
-  let identifiers: Identifiers
+  let identifiers: Identifiers = envIdentifiers as Identifiers
   let partnersApp: OrganizationApp
 
-  if (areIdentifiersMissing) {
-    let appId: string
-    if (envIdentifiers.app) {
-      appId = envIdentifiers.app
-      partnersApp = await fetchAppFromApiKey(appId, token)
-    } else {
-      const orgId = await selectOrg(token)
-      const {apps} = await fetchOrgsAppsAndStores(orgId, token)
-      partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
-      appId = partnersApp.apiKey
-    }
-    identifiers = await ensureDeploymentIdsPresence({app: options.app, appId, token, envIdentifiers})
-    // eslint-disable-next-line no-param-reassign
-    options = {
-      ...options,
-      app: await updateAppIdentifiers({app: options.app, identifiers, environmentType: 'production'}),
-    }
-  } else {
-    // Even if the identifiers are present, we need to fetch the app from the API to verify they are correct?
-    identifiers = envIdentifiers as Identifiers
+  if (envIdentifiers.app) {
     partnersApp = await fetchAppFromApiKey(identifiers.app, token)
+  } else {
+    const orgId = await selectOrg(token)
+    const {apps} = await fetchOrgsAppsAndStores(orgId, token)
+    partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
   }
 
+  identifiers = await ensureDeploymentIdsPresence({app: options.app, appId: identifiers.app, token, envIdentifiers})
+  // eslint-disable-next-line no-param-reassign
+  options = {
+    ...options,
+    app: await updateAppIdentifiers({app: options.app, identifiers, environmentType: 'production'}),
+  }
   return {
     app: options.app,
     partnersApp: {
@@ -169,22 +159,6 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     },
     identifiers,
   }
-}
-
-function getAreIdentifiersMissing(app: App, identifiers: Partial<Identifiers>): boolean {
-  const appIdMissing = identifiers.app === undefined
-
-  const anyExtensionMissingId = (extensions: Extension[]): boolean => {
-    return extensions.every((extension) => {
-      return (identifiers?.extensions ?? {})[extension.localIdentifier] !== undefined
-    })
-  }
-  const anyExtensionIdMissing =
-    anyExtensionMissingId(app.extensions.ui) ||
-    anyExtensionMissingId(app.extensions.theme) ||
-    anyExtensionMissingId(app.extensions.function)
-
-  return appIdMissing || anyExtensionIdMissing
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
