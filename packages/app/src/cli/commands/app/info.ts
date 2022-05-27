@@ -5,7 +5,7 @@ import {Command, Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
 
 export default class AppInfo extends Command {
-  static description = 'Print basic information about your app and blocks'
+  static description = 'Print basic information about your app and extensions'
 
   static flags = {
     ...cli.globalFlags,
