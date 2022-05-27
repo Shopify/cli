@@ -1,13 +1,19 @@
+import {App, getUIExtensionRendererVersion, Identifiers} from '../../models/app/app'
 import {api, error, session, http, id} from '@shopify/cli-kit'
 
+import {UIExtensionTypes} from 'cli/constants'
 import fs from 'fs'
 
 interface UploadOptions {
+  app: App
+
   /** The application API key */
   apiKey: string
 
   /** The path to the bundle file to be uploaded */
   bundlePath: string
+
+  identifiers: Identifiers
 }
 
 /**
@@ -27,11 +33,21 @@ export async function upload(options: UploadOptions) {
     body: buffer,
     headers: formData.getHeaders(),
   })
+  const extensions = options.app.extensions.ui.map((extension) => {
+    const rendererVersion = getUIExtensionRendererVersion(extension.type as UIExtensionTypes, options.app)
+    return {
+      uuid: options.identifiers.extensions[extension.localIdentifier],
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      config: JSON.stringify({renderer_version: rendererVersion}),
+      context: '',
+    }
+  })
 
   const variables: api.graphql.CreateDeploymentVariables = {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
     bundleUrl: signedURL,
+    extensions,
   }
 
   const mutation = api.graphql.CreateDeployment
