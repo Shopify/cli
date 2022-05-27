@@ -13,6 +13,20 @@ export interface FetchResponse {
   stores: OrganizationStore[]
 }
 
+export async function fetchAppExtensionRegistrations({
+  token,
+  apiKey,
+}: {
+  token: string
+  apiKey: string
+}): Promise<api.graphql.AllAppExtensionRegistrationsQuerySchema> {
+  const query = api.graphql.AllAppExtensionRegistrationsQuery
+  const result: api.graphql.AllAppExtensionRegistrationsQuerySchema = await api.partners.request(query, token, {
+    apiKey,
+  })
+  return result
+}
+
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error

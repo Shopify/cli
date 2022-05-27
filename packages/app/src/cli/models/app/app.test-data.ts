@@ -33,6 +33,8 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
       type: uiExtension?.configuration?.type ?? 'product_subscription',
       metafields: [],
     },
+    type: 'checkout_post_purchase',
+    graphQLType: 'CHECKOUT_POST_PURCHASE',
     configurationPath:
       uiExtension?.configurationPath ?? '/tmp/project/extensions/test-ui-extension/shopify.ui.extension.toml',
     directory: uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension',
