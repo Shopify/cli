@@ -8,6 +8,7 @@ import {
   getUIExtensionRendererDependency,
   UIExtensionTypes,
   dotEnvFileNames,
+  ExtensionTypes,
 } from '../../constants'
 import {dependency, dotenv, error, file, path, schema, string, toml} from '@shopify/cli-kit'
 
@@ -68,6 +69,8 @@ export interface Extension {
   localIdentifier: string
   configurationPath: string
   directory: string
+  type: ExtensionTypes
+  graphQLType: string
 }
 
 export type FunctionExtension = Extension & {
@@ -318,6 +321,8 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
+        type: configuration.type,
+        graphQLType: extensionGraphqlId(configuration.type),
         buildDirectory: path.join(directory, 'build'),
         entrySourceFilePath: path.join(directory, 'src/index.js'),
         localIdentifier: path.basename(directory),
@@ -337,6 +342,8 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
+        type: configuration.type,
+        graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
       }
@@ -355,6 +362,8 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
+        type: configuration.type,
+        graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
       }
@@ -496,4 +505,31 @@ export function getUIExtensionRendererVersion(
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
   const loader = new AppLoader({directory, mode})
   return loader.loaded()
+}
+
+/**
+ * Each extension has a different ID in graphQL.
+ * Sometimes the ID is the same as the type, sometimes it's different.
+ * @param type {string} The extension type
+ * @returns {string} The extension GraphQL ID
+ */
+export const extensionGraphqlId = (type: ExtensionTypes) => {
+  switch (type) {
+    case 'product_subscription':
+      return 'SUBSCRIPTION_MANAGEMENT'
+    case 'checkout_ui_extension':
+      return 'CHECKOUT_UI_EXTENSION'
+    case 'checkout_post_purchase':
+      return 'CHECKOUT_POST_PURCHASE'
+    case 'theme':
+      return 'THEME_APP_EXTENSION'
+    case 'beacon_extension':
+    case 'product_discounts':
+    case 'order_discounts':
+    case 'shipping_discounts':
+    case 'payment_methods':
+    case 'shipping_rate_presenter':
+      // As we add new extensions, this bug will force us to add a new case here.
+      return type
+  }
 }
