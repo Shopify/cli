@@ -131,7 +131,7 @@ const LOCAL_APP = (extensions: UIExtension[]): App => {
   }
 }
 
-const LOCAL_CASE = (extensions: UIExtension[], identifiers: any = {}) => {
+const options = (extensions: UIExtension[], identifiers: any = {}) => {
   return {
     app: LOCAL_APP(extensions),
     token: 'token',
@@ -140,44 +140,13 @@ const LOCAL_CASE = (extensions: UIExtension[], identifiers: any = {}) => {
   }
 }
 
-// CASES 1 to 10 DO NOT HAVE ANY LOCAL UUID, ALL EXTENSIONS REQUIRE MATCHING
-const LOCAL_CASE_1 = LOCAL_CASE([])
-const LOCAL_CASE_2 = LOCAL_CASE([])
-const LOCAL_CASE_3 = LOCAL_CASE([EXTENSION_A, EXTENSION_B])
-const LOCAL_CASE_4 = LOCAL_CASE([EXTENSION_A, EXTENSION_B])
-const LOCAL_CASE_5 = LOCAL_CASE([EXTENSION_A, EXTENSION_B, EXTENSION_C, EXTENSION_D])
-const LOCAL_CASE_6 = LOCAL_CASE([EXTENSION_A, EXTENSION_B])
-const LOCAL_CASE_7 = LOCAL_CASE([EXTENSION_A, EXTENSION_B])
-const LOCAL_CASE_8 = LOCAL_CASE([EXTENSION_A, EXTENSION_A_2])
-const LOCAL_CASE_9 = LOCAL_CASE([EXTENSION_A, EXTENSION_A_2, EXTENSION_B])
-const LOCAL_CASE_10 = LOCAL_CASE([EXTENSION_A])
-
-// CASES 11+ HAVE SOME EXTENSIONS ALREADY MATCHED WITH UUID
-const LOCAL_CASE_11 = LOCAL_CASE([EXTENSION_A, EXTENSION_B], {EXTENSION_A: 'UUID_A'})
-const LOCAL_CASE_12 = LOCAL_CASE([EXTENSION_A, EXTENSION_B], {EXTENSION_A: 'UUID_WRONG'})
-const LOCAL_CASE_13 = LOCAL_CASE([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], {EXTENSION_A: 'UUID_A'})
-
-const REMOTE_CASE_1 = {app: {extensionRegistrations: []}}
-const REMOTE_CASE_2 = {app: {extensionRegistrations: [REGISTRATION_A]}}
-const REMOTE_CASE_3 = {app: {extensionRegistrations: []}}
-const REMOTE_CASE_4 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]}}
-const REMOTE_CASE_5 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]}}
-const REMOTE_CASE_6 = {app: {extensionRegistrations: [REGISTRATION_C, REGISTRATION_D]}}
-const REMOTE_CASE_7 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_C]}}
-const REMOTE_CASE_8 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]}}
-const REMOTE_CASE_9 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]}}
-const REMOTE_CASE_10 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]}}
-const REMOTE_CASE_11 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]}}
-const REMOTE_CASE_12 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]}}
-const REMOTE_CASE_13 = {app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2, REGISTRATION_B]}}
-
 describe('ensureDeploymentIdsPresence: case 1 no local nor remote extensions', () => {
   it('throw a nothing to deploy error', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_1)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: []}})
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_1)
+    const got = ensureDeploymentIdsPresence(options([]))
 
     // Then
     await expect(got).rejects.toThrow('There are no extensions to deploy')
@@ -187,10 +156,10 @@ describe('ensureDeploymentIdsPresence: case 1 no local nor remote extensions', (
 describe('ensureDeploymentIdsPresence: case 2 no local extension, some remote', () => {
   it('throw a nothing to deploy error', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_2)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: [REGISTRATION_A]}})
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_2)
+    const got = ensureDeploymentIdsPresence(options([]))
 
     // Then
     await expect(got).rejects.toThrow('There are no extensions to deploy')
@@ -200,12 +169,12 @@ describe('ensureDeploymentIdsPresence: case 2 no local extension, some remote', 
 describe('ensureDeploymentIdsPresence: case 3 some local extensions, no remote ones', () => {
   it('success and creates all local extensions', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_3)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: []}})
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_A)
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
 
     // When
-    const got = await ensureDeploymentIdsPresence(LOCAL_CASE_3)
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B]))
 
     // Then
     expect(createExtension).toBeCalledTimes(2)
@@ -216,10 +185,12 @@ describe('ensureDeploymentIdsPresence: case 3 some local extensions, no remote o
 describe('ensureDeploymentIdsPresence: case 4 same number of extensions local and remote with matching types', () => {
   it('suceeds automatically', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_4)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]},
+    })
 
     // When
-    const got = await ensureDeploymentIdsPresence(LOCAL_CASE_4)
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B]))
 
     // Then
     expect(createExtension).not.toBeCalled()
@@ -230,12 +201,14 @@ describe('ensureDeploymentIdsPresence: case 4 same number of extensions local an
 describe('ensureDeploymentIdsPresence: case 5 more extensions local than remote, all remote match some local', () => {
   it('suceeds and creates missing extensions', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_5)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]},
+    })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_C)
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_D)
 
     // When
-    const got = await ensureDeploymentIdsPresence(LOCAL_CASE_5)
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B, EXTENSION_C, EXTENSION_D]))
 
     // Then
     expect(createExtension).toBeCalledTimes(2)
@@ -249,10 +222,12 @@ describe('ensureDeploymentIdsPresence: case 5 more extensions local than remote,
 describe('ensureDeploymentIdsPresence: case 6 remote extensions have types not present locally', () => {
   it('throw error, invalid local environment', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_6)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_C, REGISTRATION_D]},
+    })
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_6)
+    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B]))
 
     // Then
     await expect(got).rejects.toThrow("We couldn't automatically match your local and remote extensions")
@@ -262,10 +237,12 @@ describe('ensureDeploymentIdsPresence: case 6 remote extensions have types not p
 describe('ensureDeploymentIdsPresence: case 7 some extensions match, but other are missing', () => {
   it('throw error, invalid local environment', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_7)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_C]},
+    })
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_7)
+    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B]))
 
     // Then
     await expect(got).rejects.toThrow("We couldn't automatically match your local and remote extensions")
@@ -275,10 +252,12 @@ describe('ensureDeploymentIdsPresence: case 7 some extensions match, but other a
 describe('ensureDeploymentIdsPresence: case 8 multiple extensions of the same type locally and remotely', () => {
   it('throw a needs manual match error', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_8)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]},
+    })
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_8)
+    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
     expect(createExtension).not.toBeCalled()
@@ -289,11 +268,13 @@ describe('ensureDeploymentIdsPresence: case 8 multiple extensions of the same ty
 describe('ensureDeploymentIdsPresence: case 9 multiple extensions of the same type locally and remotely, others can be matched', () => {
   it('throw a needs manual match error', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_9)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]},
+    })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_9)
+    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2, EXTENSION_B]))
 
     // Then
     await expect(got).rejects.toThrow('Manual matching is required')
@@ -304,10 +285,12 @@ describe('ensureDeploymentIdsPresence: case 9 multiple extensions of the same ty
 describe('ensureDeploymentIdsPresence: case 10 there are more remote than local extensions', () => {
   it('throw error, invalid local environment', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_10)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]},
+    })
 
     // When
-    const got = ensureDeploymentIdsPresence(LOCAL_CASE_10)
+    const got = ensureDeploymentIdsPresence(options([EXTENSION_A]))
 
     // Then
     await expect(got).rejects.toThrow('This app has 2 registered extensions, but only 1 are locally available.')
@@ -317,10 +300,12 @@ describe('ensureDeploymentIdsPresence: case 10 there are more remote than local 
 describe('ensureDeploymentIdsPresence: case 11 some extension have uuid, others can be matched', () => {
   it('suceeds automatically', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_11)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]},
+    })
 
     // When
-    const got = await ensureDeploymentIdsPresence(LOCAL_CASE_11)
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B], {EXTENSION_A: 'UUID_A'}))
 
     // Then
     expect(createExtension).not.toBeCalled()
@@ -331,10 +316,12 @@ describe('ensureDeploymentIdsPresence: case 11 some extension have uuid, others 
 describe("ensureDeploymentIdsPresence: case 12 some extension have uuid, but doesn't match a remote one", () => {
   it('suceeds rematching the extension to the correct UUID if the type is valid', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_12)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]},
+    })
 
     // When
-    const got = await ensureDeploymentIdsPresence(LOCAL_CASE_12)
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_B], {EXTENSION_A: 'UUID_WRONG'}))
 
     // Then
     expect(createExtension).not.toBeCalled()
@@ -345,10 +332,14 @@ describe("ensureDeploymentIdsPresence: case 12 some extension have uuid, but doe
 describe('ensureDeploymentIdsPresence: case 13 duplicated extension types but some of them already matched', () => {
   it('suceeds matching the other extensions', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce(REMOTE_CASE_13)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
+      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2, REGISTRATION_B]},
+    })
 
     // When
-    const got = await ensureDeploymentIdsPresence(LOCAL_CASE_13)
+    const got = await ensureDeploymentIdsPresence(
+      options([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], {EXTENSION_A: 'UUID_A'}),
+    )
 
     // Then
     expect(createExtension).not.toBeCalled()
