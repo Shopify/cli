@@ -38,8 +38,8 @@ export const prompt = async <T>(questions: Question[]): Promise<T> => {
 export async function nonEmptyDirectoryPrompt(directory: string) {
   if (await exists(directory)) {
     const options = [
-      {name: 'Yes, remove the files', value: 'overwrite'},
-      {name: 'No, abort the command', value: 'abort'},
+      {name: 'No, don’t delete the files', value: 'abort'},
+      {name: 'Yes, delete the files', value: 'overwrite'},
     ]
 
     const relativeDirectory = relative(process.cwd(), directory)
@@ -47,7 +47,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
     const questions: Question = {
       type: 'select',
       name: 'value',
-      message: `${relativeDirectory} is not an empty directory. Do you want to remove the existing files and continue?`,
+      message: `${relativeDirectory} is not an empty directory. Do you want to delete the existing files and continue?`,
       choices: options,
     }
 
