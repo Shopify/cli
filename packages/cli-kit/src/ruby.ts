@@ -2,7 +2,7 @@ import * as file from './file'
 import * as ui from './ui'
 import * as system from './system'
 import {Abort} from './error'
-import {join} from './path'
+import {glob, join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
@@ -52,7 +52,13 @@ export async function execThemeCheckCLI({
 }: ExecThemeCheckCLIOptions): Promise<number[]> {
   await installThemeCheckCLIDependencies(stdout)
 
-  const processes = directories.map((directory): Promise<number> => {
+  const processes = directories.map(async (directory): Promise<number> => {
+    // Check that there are files aside from the extension TOML config file,
+    // otherwise theme-check will return a false failure.
+    const files = await glob(join(directory, '/**/*'))
+    const fileCount = files.filter((file) => !file.match(/\.toml$/)).length
+    if (fileCount === 0) return 0
+
     const childProcess = spawn('bundle', ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
       stdio: ['inherit', 'pipe', 'pipe'],
       shell: true,
