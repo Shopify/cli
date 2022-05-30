@@ -65,7 +65,7 @@ export default class AppScaffoldExtension extends Command {
       language: flags.language,
     })
 
-    output.info(formatSuccessfulRunMessage(promptAnswers.extensionType))
+    output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))
   }
 
   /**
