@@ -16,6 +16,7 @@ describe('cleanup', () => {
       file.mkdir(path.join(tmpDir, '.github')),
       file.mkdir(path.join(tmpDir, '.gitmodules')),
       file.mkdir(path.join(tmpDir, 'frontend')),
+      file.mkdir(path.join(tmpDir, 'package.json.cli2')),
     ])
 
     await Promise.all([
@@ -40,6 +41,7 @@ describe('cleanup', () => {
       await expect(file.exists(path.join(tmpDir, '.github'))).resolves.toBe(false)
       await expect(file.exists(path.join(tmpDir, '.gitmodules'))).resolves.toBe(false)
       await expect(file.exists(path.join(tmpDir, 'frontend', '.git'))).resolves.toBe(false)
+      await expect(file.exists(path.join(tmpDir, 'package.json.cli2'))).resolves.toBe(false)
     })
   })
 
