@@ -17,18 +17,7 @@ const subcommands: Record<Choice, () => void | Promise<void>> = {
       `),
     )
     output.info(`\n\n`)
-    output.info(output.content`${output.token.yellow('Read more here: https://... FIXME')}`)
-  },
-  [Choice.Hydrogen]: () => {
-    output.info(
-      unindent(`
-        - Hydrogen + Oxygen: The Shopify stack for headless commerce
-        - Pixels: Intelligent interactions—powered by secure data
-        - Marketplace Kit: Add commerce to any platform
-      `),
-    )
-    output.info(`\n\n`)
-    output.info(output.content`${output.token.yellow('Read more here: https://... FIXME')}`)
+    output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-1')}`)
   },
   [Choice.DevTools]: () => {
     output.info(
@@ -39,7 +28,18 @@ const subcommands: Record<Choice, () => void | Promise<void>> = {
       `),
     )
     output.info(`\n\n`)
-    output.info(output.content`${output.token.yellow('Read more here: https://... FIXME')}`)
+    output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-2')}`)
+  },
+  [Choice.Hydrogen]: () => {
+    output.info(
+      unindent(`
+        - Hydrogen + Oxygen: The Shopify stack for headless commerce
+        - Pixels: Intelligent interactions—powered by secure data
+        - Marketplace Kit: Add commerce to any platform
+      `),
+    )
+    output.info(`\n\n`)
+    output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-3')}`)
   },
 }
 export default class Editions extends Command {
