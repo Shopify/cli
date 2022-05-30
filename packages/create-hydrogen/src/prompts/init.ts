@@ -2,15 +2,15 @@ import {ui, string} from '@shopify/cli-kit'
 
 export enum Template {
   Minimum = 'Hello world',
-  Default = 'Demo store',
+  DemoStore = 'Demo store',
 }
 
-const TEMPLATE_BASE = 'Shopify/hydrogen/templates/'
-const TEMPLATE_PREFIX = 'template-hydrogen-'
+const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const TEMPLATE_MAP = {
-  [Template.Default]: 'default',
+  [Template.DemoStore]: 'demo-store',
   [Template.Minimum]: 'hello-world',
 }
+const BRANCH = `stackblitz`
 
 interface InitOptions {
   name?: string
@@ -33,19 +33,15 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   if (options.template) {
     const normalizedTemplate = string.hyphenize(options.template)
 
-    if (normalizedTemplate.startsWith(TEMPLATE_PREFIX)) {
-      explicitTemplate = `${TEMPLATE_BASE}${normalizedTemplate}`
-    } else {
-      explicitTemplate = `${TEMPLATE_BASE}${TEMPLATE_PREFIX}${normalizedTemplate}`
-    }
+    explicitTemplate = `${TEMPLATE_BASE}${normalizedTemplate}#${BRANCH}`
   } else {
     questions.push({
       type: 'select',
       name: 'template',
       message: 'Choose a template',
       choices: Object.keys(TEMPLATE_MAP),
-      default: Template.Default,
-      result: (value) => `${TEMPLATE_BASE}${TEMPLATE_MAP[value as Template]}`,
+      default: Template.DemoStore,
+      result: (value) => `${TEMPLATE_BASE}${TEMPLATE_MAP[value as Template]}#${BRANCH}`,
     })
   }
 

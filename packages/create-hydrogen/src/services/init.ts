@@ -1,9 +1,22 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
-import {downloadTemplate} from '../utils/template'
+import {
+  constants,
+  string,
+  path,
+  file,
+  output,
+  os,
+  ui,
+  npm,
+  dependency,
+  environment,
+  github,
+  template,
+  git,
+} from '@shopify/cli-kit'
 
-import {constants, template, string, path, file, output, os, ui, npm, dependency, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -16,12 +29,6 @@ interface InitOptions {
   hydrogenVersion?: string
   local: boolean
 }
-
-const RENAME_MAP = {
-  _gitignore: '.gitignore',
-}
-
-const GIT_HOST = 'git@github.com'
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
@@ -43,18 +50,21 @@ async function init(options: InitOptions) {
 
     let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
 
+    const templateInfo = await github.parseRepoUrl(options.template)
+
     tasks = tasks.concat([
       {
         title: 'Downloading template',
-        task: async (_, task) => {
-          await downloadTemplate({
-            templateUrl: [GIT_HOST, options.template].join(':'),
-            into: templateDownloadDir,
-          })
 
+        task: async (_, task) => {
+          await git.downloadRepository({
+            repoUrl: `${templateInfo.http}#${templateInfo.ref}`,
+            destination: templateDownloadDir,
+          })
           task.title = 'Template downloaded'
         },
       },
+
       {
         title: `Initializing your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
@@ -73,7 +83,11 @@ async function init(options: InitOptions) {
                     // eslint-disable-next-line @typescript-eslint/naming-convention
                     dependency_manager: options.dependencyManager,
                   }
-                  await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, templateData)
+                  await template.recursiveDirectoryCopy(
+                    `${templateDownloadDir}/${templateInfo.subDirectory}`,
+                    templateScaffoldDir,
+                    templateData,
+                  )
 
                   task.title = 'Template files parsed'
                 },

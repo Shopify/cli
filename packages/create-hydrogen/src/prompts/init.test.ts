@@ -70,42 +70,10 @@ describe('init', () => {
     expect(got).toEqual({...options, ...answers})
   })
 
-  it('when non-prefixed template is passed', async () => {
+  it('when template is passed', async () => {
     const prompt = vi.fn()
-    const answers = {template: 'Shopify/hydrogen/templates/template-hydrogen-hello-world'}
-    const options = {template: 'hello-world'}
-
-    // Given
-    prompt.mockResolvedValue(Promise.resolve(answers))
-
-    // When
-    const got = await init(options, prompt)
-
-    // Then
-    expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'template'})]))
-    expect(got).toEqual({...options, ...answers})
-  })
-
-  it('when prefixed-template is passed', async () => {
-    const prompt = vi.fn()
-    const answers = {template: 'Shopify/hydrogen/templates/template-hydrogen-hello-world'}
-    const options = {template: 'template-hydrogen-hello-world'}
-
-    // Given
-    prompt.mockResolvedValue(Promise.resolve(answers))
-
-    // When
-    const got = await init(options, prompt)
-
-    // Then
-    expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'template'})]))
-    expect(got).toEqual({...options, ...answers})
-  })
-
-  it('normalizes the template name is passed', async () => {
-    const prompt = vi.fn()
-    const answers = {template: 'Shopify/hydrogen/templates/template-hydrogen-hello-world'}
-    const options = {template: 'Hello world'}
+    const answers = {template: 'Shopify/hydrogen/templates/demo-store'}
+    const options = {template: 'demo-store'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
