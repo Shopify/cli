@@ -1,10 +1,10 @@
 import {ExtensionRegistration} from '../dev/create-extension'
 import {Extension, IdentifiersExtensions} from 'cli/models/app/app'
 
-type MatchResult =
+export type MatchResult =
   | {
       result: 'ok'
-      extensions: IdentifiersExtensions
+      identifiers: IdentifiersExtensions
       toCreate: Extension[]
       toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
     }
@@ -17,6 +17,10 @@ export async function automaticMatchmaking(
   remoteRegistrations: ExtensionRegistration[],
   identifiers: {[localIdentifier: string]: string},
 ): Promise<MatchResult> {
+  if (remoteRegistrations.length > localExtensions.length) {
+    return {result: 'invalid-environment'}
+  }
+
   const validIdentifiers = identifiers
 
   // Get the local UUID of an extension, if exists
@@ -87,7 +91,7 @@ export async function automaticMatchmaking(
   // At this point, all extensions are matched either automatically, manually or are new
   return {
     result: 'ok',
-    extensions: validIdentifiers,
+    identifiers: validIdentifiers,
     toCreate: extensionsToCreate,
     toManualMatch: {local: localNeedsManualMatch, remote: remoteNeedsManualMatch},
   }

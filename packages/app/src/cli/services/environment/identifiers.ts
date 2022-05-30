@@ -70,7 +70,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     throw InvalidEnvironment()
   }
 
-  let validMatches = match.extensions ?? {}
+  let validMatches = match.identifiers ?? {}
   if (match.toManualMatch.local.length > 0) {
     throw ManualMatchRequired()
   }
