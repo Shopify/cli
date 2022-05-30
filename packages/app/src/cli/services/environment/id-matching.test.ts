@@ -1,7 +1,7 @@
 import {automaticMatchmaking, MatchResult} from './id-matching'
 import {ExtensionRegistration} from '../dev/create-extension'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {App, UIExtension} from 'cli/models/app/app'
+import {UIExtension} from 'cli/models/app/app'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -110,33 +110,6 @@ const EXTENSION_D: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
-}
-
-const LOCAL_APP = (extensions: UIExtension[]): App => {
-  return {
-    name: 'my-app',
-    idEnvironmentVariableName: 'SHOPIFY_APP_ID',
-    directory: '/app',
-    dependencyManager: 'yarn',
-    configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products'},
-    webs: [],
-    nodeDependencies: {},
-    environment: {
-      dotenv: {},
-      env: {},
-    },
-    extensions: {ui: extensions, theme: [], function: []},
-  }
-}
-
-const options = (extensions: UIExtension[], identifiers: any = {}) => {
-  return {
-    app: LOCAL_APP(extensions),
-    token: 'token',
-    appId: 'appId',
-    envIdentifiers: {extensions: identifiers},
-  }
 }
 
 describe('automaticMatchmaking: case 3 some local extensions, no remote ones', () => {
