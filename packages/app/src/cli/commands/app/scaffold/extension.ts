@@ -92,7 +92,7 @@ export default class AppScaffoldExtension extends Command {
   }
 
   validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
-    if (flavor && type && !uiExtensions.types.includes(type)) {
+    if (flavor && type && !(uiExtensions.types as ReadonlyArray<string>).includes(type)) {
       throw new error.Abort(
         'Specified extension flavor on invalid extension type',
         `You can only specify a flavor for these extension types: ${uiExtensions.types}.`,

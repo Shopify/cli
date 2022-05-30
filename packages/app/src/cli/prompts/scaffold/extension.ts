@@ -29,7 +29,7 @@ const scaffoldExtensionPrompt = async (
   if (!options.extensionType) {
     let relevantExtensionTypes = extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
     if (options.extensionFlavor) {
-      relevantExtensionTypes = relevantExtensionTypes.filter((type) => uiExtensions.types.includes(type))
+      relevantExtensionTypes = relevantExtensionTypes.filter(isUiExtensionType)
     }
     questions.push({
       type: 'select',
@@ -52,8 +52,8 @@ const scaffoldExtensionPrompt = async (
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
-  if (!options.extensionFlavor && uiExtensions.types.includes(promptOutput.extensionType)) {
-    const promptOutput2 = await prompt([
+  if (!options.extensionFlavor && isUiExtensionType(promptOutput.extensionType)) {
+    const promptOutput2: {extensionFlavor: string} = await prompt([
       {
         type: 'select',
         name: 'extensionFlavor',
@@ -106,6 +106,10 @@ const extensiontypeCategoryPosition = (extensionType: string): number => {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
   return coll.includes(el as T)
+}
+
+function isUiExtensionType(extensionType: string) {
+  return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
 export default scaffoldExtensionPrompt
