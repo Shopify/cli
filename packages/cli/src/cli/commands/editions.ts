@@ -2,24 +2,44 @@ import {Command} from '@oclif/core'
 import {output, ui} from '@shopify/cli-kit'
 
 enum Choice {
-  B2B,
   BFS,
   Hydrogen,
-  Functions,
+  DevTools,
 }
 
 const subcommands: Record<Choice, () => void | Promise<void>> = {
-  [Choice.B2B]: () => {
-    output.info('Tell the user more about B2B')
-  },
   [Choice.BFS]: () => {
-    output.info('Tell the user more about BFS')
+    output.info(
+      unindent(`
+        - Built for Shopify: Build great commerce apps that look and perform like they’re part of Shopify
+        - Shopify Functions: New ways to extend Shopify: Build custom discounts, shipping, and payments
+        - Checkout Extensibility: Apps for checkout are here: Powerful customizations that work with Shop Pay
+      `),
+    )
+    output.info(`\n\n`)
+    output.info(output.content`${output.token.yellow('Read more here: https://... FIXME')}`)
   },
   [Choice.Hydrogen]: () => {
-    output.info('Tell the user more about Hydrogen')
+    output.info(
+      unindent(`
+        - Hydrogen + Oxygen: The Shopify stack for headless commerce
+        - Pixels: Intelligent interactions—powered by secure data
+        - Marketplace Kit: Add commerce to any platform
+      `),
+    )
+    output.info(`\n\n`)
+    output.info(output.content`${output.token.yellow('Read more here: https://... FIXME')}`)
   },
-  [Choice.Functions]: () => {
-    output.info('Tell the user more about Functions')
+  [Choice.DevTools]: () => {
+    output.info(
+      unindent(`
+        - Developer Experience: Simplified updates to write and distribute an app
+        - Embedded App Improvements: Offer a truly seamless app experience
+        - Data Protection: Future-proof the apps you build
+      `),
+    )
+    output.info(`\n\n`)
+    output.info(output.content`${output.token.yellow('Read more here: https://... FIXME')}`)
   },
 }
 export default class Editions extends Command {
@@ -62,26 +82,23 @@ export default class Editions extends Command {
         message: 'What are you looking to solve?',
         choices: [
           {
-            value: Choice[Choice.Functions],
-            name: 'Create customizations for checkout & across Shopify',
+            value: Choice[Choice.BFS],
+            name: 'NEW WAYS TO BUILD GREAT APPS',
+          },
+          {
+            value: Choice[Choice.DevTools],
+            name: 'IMPROVED DEV TOOLS',
           },
           {
             value: Choice[Choice.Hydrogen],
-            name: 'Build hyper fast storefronts for headless clients',
-          },
-          {
-            value: Choice[Choice.BFS],
-            name: 'Easy templates to get started & get featured in Admin and App Store',
-          },
-          {
-            value: Choice[Choice.B2B],
-            name: 'Build for B2B merchants',
+            name: 'NEXT LEVEL STOREFRONT BUILDING',
           },
         ],
       },
     ])
 
     await subcommands[Choice[answer.editionschoice]]?.()
+    output.info(`\n\n\n`)
   }
 }
 
