@@ -105,7 +105,7 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
     {renderer: 'silent'},
   )
   await list.run()
-  stdout.write('Installed theme dependencies!')
+  if (!exists) stdout.write('Installed theme dependencies!')
 }
 
 /**
