@@ -87,7 +87,7 @@ export async function execThemeCheckCLI({
  * or if we are installing a new version of RubyCLI
  */
 async function installThemeCheckCLIDependencies(stdout: Writable) {
-  const exists = await file.exists(shopifyCLIDirectory())
+  const exists = await file.exists(themeCheckDirectory())
 
   if (!exists) stdout.write('Installing theme dependencies...')
   const list = new ui.Listr(
