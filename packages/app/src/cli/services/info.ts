@@ -19,6 +19,9 @@ export function info(app: App, {format}: InfoOptions): output.Message {
   }
 }
 
+const UNKNOWN_TEXT = output.content`${output.token.italic('unknown')}`.value
+const NOT_CONFIGURED_TEXT = output.content`${output.token.italic('Not yet configured')}`.value
+
 class AppInfo {
   private app: App
   private cachedAppInfo: store.CachedAppInfo | undefined
@@ -42,20 +45,28 @@ class AppInfo {
   devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
 
-    let storeDescription = 'not configured'
-    if (this.cachedAppInfo) {
-      const storeInfo = store.getAppInfo(this.app.directory)
-      if (storeInfo && storeInfo.storeFqdn) storeDescription = storeInfo.storeFqdn
-    }
-    const lines = [
-      ['App', this.app.name],
-      ['Dev store', storeDescription],
-    ]
-    const postscript = output.content`💡 To change these, run ${output.token.command(
+    let appName = NOT_CONFIGURED_TEXT
+    let storeDescription = NOT_CONFIGURED_TEXT
+    let apiKey = NOT_CONFIGURED_TEXT
+    let postscript = output.content`💡 These will be populated when you run ${output.token.command(
       this.app.dependencyManager,
       'shopify dev',
-      '--reset',
     )}`.value
+    if (this.cachedAppInfo) {
+      if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
+      if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
+      if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
+      postscript = output.content`💡 To change these, run ${output.token.command(
+        this.app.dependencyManager,
+        'shopify dev',
+        '--reset',
+      )}`.value
+    }
+    const lines = [
+      ['App', appName],
+      ['Dev store', storeDescription],
+      ['API key', apiKey],
+    ]
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
 
@@ -63,7 +74,6 @@ class AppInfo {
     const title = 'Your Project'
     const lines = [
       ['Name', this.app.name],
-      ['API key', this.cachedAppInfo?.appId || 'not configured'],
       ['Root location', this.app.directory],
     ]
     return [title, this.linesToColumns(lines)]
@@ -104,7 +114,7 @@ class AppInfo {
       .flat()
       .filter((extension) => !extension.configuration || !extension.configuration.type)
     if (invalidExtensions[0]) {
-      body += `\n\n${output.content`${output.token.subheading('Invalid Extensions')}`.value}`
+      body += `\n\n${output.content`${output.token.subheading('Extensions with errors')}`.value}`
       invalidExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
@@ -115,28 +125,24 @@ class AppInfo {
 
   webComponentsSection(): string {
     const errors: string[] = []
-    const subtitle = [output.content`${output.token.subheading('web app')}`.value]
-    const toplevel = ['📂 webs', '']
+    const subtitle = [output.content`${output.token.subheading('web')}`.value]
+    const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
       if (web.configuration && web.configuration.type) {
         sublevels.push([`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)])
       } else if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
-        if (error) errors.push(error)
+        if (error) {
+          sublevels.push([`  📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, web.directory)])
+          errors.push(error)
+        }
       }
     })
-    if (errors[0]) {
-      const errorHeadline = errors.length === 1 ? 'validation error' : 'validation errors'
-      const firstError: string = errors.shift()!
-      const [errorFirstLine, ...errorRemainingLines] = firstError.split('\n')
-      errors.forEach((error) => error.split('\n').forEach((line) => errorRemainingLines.push(line)))
+    let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
+    if (errorContent.trim() === '') errorContent = ''
 
-      sublevels.push([this.errorText(errorHeadline), this.errorText(errorFirstLine)])
-      errorRemainingLines.forEach((line) => sublevels.push(['', this.errorText(line)]))
-    }
-
-    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}`
+    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
   uiExtensionSubSection(extension: UIExtension): string {
@@ -144,8 +150,10 @@ class AppInfo {
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
-      ['     metafields', config ? `${config.metafields.length}` : 'configuration invalid'],
     ]
+    if (config && config.metafields.length) {
+      details.push(['     metafields', `${config.metafields.length}`])
+    }
 
     return `\n${this.linesToColumns(details)}`
   }
@@ -171,19 +179,18 @@ class AppInfo {
   }
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
-    const [errorFirstLine, ...errorRemainingLines] = this.app.errors!.getError(extension.configurationPath).split('\n')
     const details = [
-      [`📂 extension root directory`, path.relative(this.app.directory, extension.directory)],
+      [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
-      ['     validation error', errorFirstLine].map(this.errorText),
-      ...errorRemainingLines.map((line) => ['', line].map(this.errorText)),
     ]
-
-    return `\n${this.linesToColumns(details)}`
+    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
+    return `\n${this.linesToColumns(details)}\n${error}`
   }
 
-  errorText(str: string): string {
-    return output.content`${output.token.errorText(str)}`.value
+  formattedError(str: string): string {
+    const [errorFirstLine, ...errorRemainingLines] = str.split('\n')
+    const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
+    return output.content`${output.token.errorText(errorLines.join('\n'))}`.value
   }
 
   accessScopesSection(): [string, string] {

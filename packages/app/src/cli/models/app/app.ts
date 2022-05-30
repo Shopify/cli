@@ -278,34 +278,49 @@ class AppLoader {
     }
   }
 
-  async loadConfigurationFile(path: string): Promise<unknown> {
-    if (!(await file.exists(path))) {
-      return this.abortOrReport(`Couldn't find the configuration file at ${path}`, '', path)
+  async loadConfigurationFile(filepath: string): Promise<unknown> {
+    if (!(await file.exists(filepath))) {
+      return this.abortOrReport(`Couldn't find the configuration file at ${filepath}`, '', filepath)
     }
-    const configurationContent = await file.read(path)
+    const configurationContent = await file.read(filepath)
+    let configuration: object
+    try {
+      configuration = toml.decode(configurationContent)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      // TOML errors have line, pos and col properties
+      if (err.line && err.pos && err.col) {
+        return this.abortOrReport(
+          `Fix the following error in ${path.relative(this.appDirectory, filepath)}:\n${err.message}`,
+          null,
+          filepath,
+        )
+      } else {
+        throw err
+      }
+    }
     // Convert snake_case keys to camelCase before returning
     return {
-      ...Object.fromEntries(
-        Object.entries(toml.decode(configurationContent)).map((kv) => [string.camelize(kv[0]), kv[1]]),
-      ),
+      ...Object.fromEntries(Object.entries(configuration).map((kv) => [string.camelize(kv[0]), kv[1]])),
     }
   }
 
   async parseConfigurationFile<TSchema extends schema.define.ZodType>(
     schema: TSchema,
-    path: string,
+    filepath: string,
   ): Promise<schema.define.TypeOf<TSchema>> {
     const fallbackOutput = {} as schema.define.TypeOf<TSchema>
 
-    const configurationObject = await this.loadConfigurationFile(path)
+    const configurationObject = await this.loadConfigurationFile(filepath)
     if (!configurationObject) return fallbackOutput
 
     const parseResult = schema.safeParse(configurationObject)
     if (!parseResult.success) {
+      const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
       return this.abortOrReport(
-        `Invalid schema in ${path}:\n${JSON.stringify(parseResult.error.issues, null, 2)}`,
+        `Fix a schema error in ${path.relative(this.appDirectory, filepath)}:\n${formattedError}`,
         fallbackOutput,
-        path,
+        filepath,
       )
     }
     return parseResult.data

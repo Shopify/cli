@@ -9,6 +9,7 @@ const migrations = {}
 export interface CachedAppInfo {
   directory: string
   appId: string
+  title?: string
   orgId?: string
   storeFqdn?: string
 }
@@ -50,7 +51,13 @@ export function getAppInfo(directory: string): CachedAppInfo | undefined {
   return apps.find((app: CachedAppInfo) => app.directory === directory)
 }
 
-export function setAppInfo(options: {directory: string; appId: string; storeFqdn?: string; orgId?: string}): void {
+export function setAppInfo(options: {
+  directory: string
+  appId: string
+  title?: string
+  storeFqdn?: string
+  orgId?: string
+}): void {
   const apps = cliKit.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
   if (index === -1) {
@@ -60,6 +67,7 @@ export function setAppInfo(options: {directory: string; appId: string; storeFqdn
     apps[index] = {
       appId: options.appId,
       directory: options.directory,
+      title: options.title ?? app.title,
       storeFqdn: options.storeFqdn ?? app.storeFqdn,
       orgId: options.orgId ?? app.orgId,
     }
