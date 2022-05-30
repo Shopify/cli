@@ -49,55 +49,32 @@ export async function execThemeCheckCLI({
   args,
   stdout,
   stderr,
-}: ExecThemeCheckCLIOptions): Promise<number[]> {
+}: ExecThemeCheckCLIOptions): Promise<void[]> {
   await installThemeCheckCLIDependencies(stdout)
 
-  const processes = directories.map(async (directory): Promise<number> => {
+  const processes = directories.map(async (directory): Promise<void> => {
     // Check that there are files aside from the extension TOML config file,
     // otherwise theme-check will return a false failure.
     const files = await glob(join(directory, '/**/*'))
     const fileCount = files.filter((file) => !file.match(/\.toml$/)).length
-    if (fileCount === 0) return 0
+    if (fileCount === 0) return
 
-    const childProcess = spawn('bundle', ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
-      stdio: ['inherit', 'pipe', 'pipe'],
-      shell: true,
-      cwd: themeCheckDirectory(),
+    const customStderr = new Writable({
+      write(chunk, ...args) {
+        // For some reason, theme-check reports this initial status line to stderr
+        // See https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/diagnostics_engine.rb#L31
+        // which leads to https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/io_messenger.rb#L65
+        if (chunk.toString('ascii').match(/^Checking/)) {
+          stdout.write(chunk, ...args)
+        } else {
+          stderr.write(chunk, ...args)
+        }
+      },
     })
-    // https://stackoverflow.com/a/35014260
-    childProcess.stdout.pipe(stdout)
-    childProcess.stderr.pipe(
-      new Writable({
-        write(chunk, ...args) {
-          // For some reason, theme-check reports this initial status line to stderr
-          // See https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/diagnostics_engine.rb#L31
-          // which leads to https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/io_messenger.rb#L65
-          if (chunk.toString('ascii').match(/^Checking/)) {
-            stdout.write(chunk, ...args)
-          } else {
-            stderr.write(chunk, ...args)
-          }
-        },
-      }),
-    )
-    return new Promise((resolve, reject) => {
-      let done = false
-      childProcess.on('error', (err: Error) => {
-        if (!done) {
-          done = true
-          reject(err)
-        }
-      })
-      childProcess.on('exit', (code: number, _signal: string) => {
-        if (!done) {
-          done = true
-          if (code) {
-            reject(new Error(`theme-check exited with code: ${code}`))
-          } else {
-            resolve(code)
-          }
-        }
-      })
+    await system.exec('bundle', ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
+      stdout,
+      stderr: customStderr,
+      cwd: themeCheckDirectory(),
     })
   })
   return Promise.all(processes)
