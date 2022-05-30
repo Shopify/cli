@@ -47,6 +47,8 @@ const UIExtensionConfigurationSchema = schema.define.object({
       }),
     )
     .default([]),
+  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  capabilities: schema.define.any().optional(),
 })
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>

@@ -8,6 +8,13 @@ interface UploadOptions {
 
   /** The path to the bundle file to be uploaded */
   bundlePath: string
+
+  /** Extensions extra data */
+  extensions: {
+    uuid: string
+    config: string
+    context: string
+  }[]
 }
 
 /**
@@ -32,6 +39,7 @@ export async function upload(options: UploadOptions) {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
     bundleUrl: signedURL,
+    extensions: options.extensions,
   }
 
   const mutation = api.graphql.CreateDeployment

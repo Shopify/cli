@@ -18,6 +18,11 @@ export interface CreateDeploymentVariables {
   apiKey: string
   uuid: string
   bundleUrl: string
+  extensions: {
+    uuid: string
+    config: string
+    context: string
+  }[]
 }
 
 export interface CreateDeploymentSchema {
