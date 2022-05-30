@@ -1,5 +1,20 @@
 # @shopify/cli-kit
 
+## 3.0.0
+
+### Major Changes
+
+- Bump to 3.0.0
+
+## 2.0.15
+
+### Patch Changes
+
+- 19e343ea: Add support to dev checkout_ui_extension
+- eaf69a92: Add Italic output format
+  Store app title from Partners API
+- 5ed34580: Default option when overwriting project files is now "No"
+
 ## 2.0.14
 
 ### Patch Changes

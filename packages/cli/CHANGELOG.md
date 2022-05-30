@@ -1,5 +1,25 @@
 # @shopify/cli
 
+## 3.0.0
+
+### Major Changes
+
+- Bump to 3.0.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @shopify/cli-kit@3.0.0
+
+## 2.0.15
+
+### Patch Changes
+
+- Updated dependencies [19e343ea]
+- Updated dependencies [eaf69a92]
+- Updated dependencies [5ed34580]
+  - @shopify/cli-kit@2.0.15
+
 ## 2.0.14
 
 ### Patch Changes
