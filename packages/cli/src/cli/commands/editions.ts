@@ -69,7 +69,7 @@ export default class Editions extends Command {
 
 
         Welcome to Dev Mode for the Summer 2022 Edition
-        https://editions.shopify.dev ???? FIXME
+        https://shopify.com/editions/dev
 
 
       `),
