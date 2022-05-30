@@ -12,11 +12,13 @@ interface ScaffoldExtensionOptions {
   name?: string
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
+  extensionFlavor?: string
 }
 
 interface ScaffoldExtensionOutput {
   name: string
   extensionType: ExtensionTypes
+  extensionFlavor?: string
 }
 
 const scaffoldExtensionPrompt = async (
@@ -25,12 +27,15 @@ const scaffoldExtensionPrompt = async (
 ): Promise<ScaffoldExtensionOutput> => {
   const questions: ui.Question[] = []
   if (!options.extensionType) {
+    let relevantExtensionTypes = extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+    if (options.extensionFlavor) {
+      relevantExtensionTypes = relevantExtensionTypes.filter((type) => uiExtensions.types.includes(type))
+    }
     questions.push({
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: extensions.types
-        .filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+      choices: relevantExtensionTypes
         .map((type) => ({
           name: getExtensionOutputConfig(type).humanKey,
           value: type,
@@ -47,6 +52,21 @@ const scaffoldExtensionPrompt = async (
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
+  if (!options.extensionFlavor && uiExtensions.types.includes(promptOutput.extensionType)) {
+    const promptOutput2 = await prompt([
+      {
+        type: 'select',
+        name: 'extensionFlavor',
+        message: "What's your language/framework preference for this extension?",
+        choices: [
+          {name: 'React (recommended)', value: 'react'},
+          {name: 'vanilla JavaScript', value: 'vanilla-js'},
+        ],
+        default: 'react',
+      },
+    ])
+    promptOutput.extensionFlavor = promptOutput2.extensionFlavor
+  }
   return {...options, ...promptOutput}
 }
 

@@ -32,6 +32,7 @@ interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = Extensio
   app: App
   cloneUrl?: string
   language?: string
+  extensionFlavor?: string
 }
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes>
@@ -58,7 +59,7 @@ async function themeExtensionInit({name, app, extensionType}: ThemeExtensionInit
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOptions) {
+async function uiExtensionInit({name, extensionType, app, extensionFlavor}: UIExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const list = new ui.Listr(
     [
@@ -99,6 +100,7 @@ async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOption
                 development: {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   root_dir: '.',
+                  template: extensionFlavor,
                 },
               },
             ],
