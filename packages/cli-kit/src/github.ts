@@ -72,6 +72,7 @@ export function parseRepoUrl(src: string) {
   const subDirectory = match[6]?.slice(1)
   const ref = match[7] || 'HEAD'
   const ssh = `git@${normalizedSite}:${user}/${name}`
+  const http = `https://${normalizedSite}/${user}/${name}`
 
-  return {site: normalizedSite, user, name, ref, subDirectory, ssh}
+  return {site: normalizedSite, user, name, ref, subDirectory, ssh, http}
 }

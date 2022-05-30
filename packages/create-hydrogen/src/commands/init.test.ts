@@ -15,7 +15,7 @@ describe('Init', function () {
     // Given
     const directory = '/path/to/output'
     const name = 'snow-devil'
-    const template = Template.Default
+    const template = Template.DemoStore
 
     initPromptMock.mockReturnValue(Promise.resolve({name, template}))
 
