@@ -3,6 +3,29 @@ import {extensions, getExtensionOutputConfig} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
 
 describe('extension prompt', () => {
+  const extensionTypeQuestion = {
+    type: 'select',
+    name: 'extensionType',
+    message: 'Type of extension?',
+    choices: buildChoices(),
+  }
+  const extensionNameQuestion = {
+    type: 'input',
+    name: 'name',
+    message: "Your extension's working name?",
+    default: 'extension',
+  }
+  const extensionFlavorQuestion = {
+    type: 'select',
+    name: 'extensionFlavor',
+    message: "What's your language/framework preference for this extension?",
+    choices: [
+      {name: 'React (recommended)', value: 'react'},
+      {name: 'vanilla JavaScript', value: 'vanilla-js'},
+    ],
+    default: 'react',
+  }
+
   it('when name is not passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'ext'}
@@ -15,20 +38,7 @@ describe('extension prompt', () => {
     const got = await scaffoldExtensionPrompt(options, prompt)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'extensionType',
-        message: 'Type of extension?',
-        choices: buildChoices(),
-      },
-      {
-        type: 'input',
-        name: 'name',
-        message: "Your extension's working name?",
-        default: 'extension',
-      },
-    ])
+    expect(prompt).toHaveBeenCalledWith([extensionTypeQuestion, extensionNameQuestion])
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -44,14 +54,7 @@ describe('extension prompt', () => {
     const got = await scaffoldExtensionPrompt(options, prompt)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'extensionType',
-        message: 'Type of extension?',
-        choices: buildChoices(),
-      },
-    ])
+    expect(prompt).toHaveBeenCalledWith([extensionTypeQuestion])
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -75,6 +78,48 @@ describe('extension prompt', () => {
         choices: buildChoices().filter((choice) => choice.name !== 'theme app extension'),
       },
     ])
+    expect(got).toEqual({...options, ...answers})
+  })
+
+  it('when scaffolding a UI extension type prompts for language/framework preference', async () => {
+    const prompt = vi.fn()
+    const answers = {extensionFlavor: 'react'}
+    const options = {
+      name: 'my-special-extension',
+      extensionTypesAlreadyAtQuota: [],
+      extensionType: 'checkout_post_purchase',
+    }
+
+    // Given
+    prompt.mockResolvedValue(Promise.resolve(answers))
+
+    // When
+    const got = await scaffoldExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenNthCalledWith(1, [])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion])
+    expect(got).toEqual({...options, ...answers})
+  })
+
+  it('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
+    const prompt = vi.fn()
+    const answers = {}
+    const options = {
+      name: 'my-special-extension',
+      extensionTypesAlreadyAtQuota: [],
+      extensionType: 'theme',
+    }
+
+    // Given
+    prompt.mockResolvedValue(Promise.resolve(answers))
+
+    // When
+    const got = await scaffoldExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenNthCalledWith(1, [])
+    expect(prompt).not.toHaveBeenCalledWith([extensionFlavorQuestion])
     expect(got).toEqual({...options, ...answers})
   })
 })

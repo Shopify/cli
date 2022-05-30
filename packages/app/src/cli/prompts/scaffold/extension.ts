@@ -52,7 +52,7 @@ const scaffoldExtensionPrompt = async (
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
-  if (!options.extensionFlavor && isUiExtensionType(promptOutput.extensionType)) {
+  if (!options.extensionFlavor && isUiExtensionType({...options, ...promptOutput}.extensionType)) {
     const promptOutput2: {extensionFlavor: string} = await prompt([
       {
         type: 'select',
