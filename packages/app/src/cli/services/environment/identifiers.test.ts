@@ -278,7 +278,6 @@ describe('ensureDeploymentIdsPresence: case 9 multiple extensions of the same ty
 
     // Then
     await expect(got).rejects.toThrow('Manual matching is required')
-    expect(createExtension).toBeCalledTimes(1)
   })
 })
 
