@@ -1,5 +1,14 @@
 # @shopify/create-hydrogen
 
+## 3.0.1
+
+### Patch Changes
+
+- c01cd9a5: Supports updated template names from the hydrogen monorepo. The `parseRepoUrl` helper now includes the full `http` address in the returns object.
+- Updated dependencies [c01cd9a5]
+- Updated dependencies [9d324502]
+  - @shopify/cli-kit@3.0.1
+
 ## 3.0.0
 
 ### Major Changes

@@ -26,7 +26,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@shopify/cli-kit": "3.0.0",
+    "@shopify/cli-kit": "3.0.1",
     "vitest": "0.10.0"
   },
   "oclif": {

@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.0.1
+
+### Patch Changes
+
+- 9d324502: Add locale configuration to checkout_ui_extensions
+- Updated dependencies [c01cd9a5]
+- Updated dependencies [9d324502]
+  - @shopify/cli-kit@3.0.1
+
 ## 3.0.0
 
 ### Major Changes
