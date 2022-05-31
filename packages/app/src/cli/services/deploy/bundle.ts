@@ -1,4 +1,4 @@
-import {buildThemeExtensions, buildUIExtensions} from '../build/extension'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension'
 import {App, Identifiers} from '../../models/app/app'
 import {path, output, archiver, temporary, file, error} from '@shopify/cli-kit'
 
@@ -10,14 +10,14 @@ interface BundleOptions {
   identifiers: Identifiers
 }
 
-export async function bundle(options: BundleOptions) {
+export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
   await temporary.directory(async (tmpDir) => {
     const bundleDirectory = path.join(tmpDir, 'bundle')
     await file.mkdir(bundleDirectory)
 
     await output.concurrent([
       {
-        prefix: 'extensions',
+        prefix: 'ui-extensions',
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           await buildThemeExtensions({
             app: options.app,
@@ -49,6 +49,14 @@ export async function bundle(options: BundleOptions) {
           })
         },
       },
+      ...options.app.extensions.function.map((functionExtension) => {
+        return {
+          prefix: functionExtension.localIdentifier,
+          action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+            await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
+          },
+        }
+      }),
     ])
 
     output.newline()

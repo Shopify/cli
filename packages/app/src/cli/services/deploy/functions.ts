@@ -18,7 +18,7 @@ export async function deployFunction(extension: FunctionExtension, app: App) {
     configurationDefinition: '{"type":"object","fields":{}}',
     moduleUploadUrl: uploadUrl,
   }
-  const res: unknown = await api.partners.functionProxyRequest(app.configuration.id!, query, token, variables)
+  const res: unknown = await api.partners.functionProxyRequest('todo', query, token, variables)
 }
 
 async function uploadScript(extension: FunctionExtension, app: App) {
@@ -36,7 +36,7 @@ async function getUploadURL(app: App): Promise<{url: string; headers: {[key: str
   const token = await session.ensureAuthenticatedPartners()
   const query = api.graphql.ModuleUploadUrlGenerateMutation
   const res: api.graphql.ModuleUploadUrlGenerateMutationSchema = await api.partners.functionProxyRequest(
-    app.configuration.id!,
+    'todo',
     query,
     token,
   )

@@ -32,6 +32,7 @@ describe('buildFunctionExtension', () => {
         type: 'product_discounts',
         commands: {},
       },
+      buildWasmPath: '/test/myfunction/dist/index.wasm',
       graphQLType: 'product_discounts',
       directory: '/test/myfunction',
       configurationPath: '/test/myfunction/shopify.function.extension.toml',
