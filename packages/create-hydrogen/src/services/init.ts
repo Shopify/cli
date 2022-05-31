@@ -129,7 +129,7 @@ async function init(options: InitOptions) {
         title: "[Shopifolks-only] Configuring the project's NPM registry",
         task: async (_, task) => {
           const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
-          const npmrcContent = `registry=https://registry.npmjs.org`
+          const npmrcContent = `@shopify:registry=https://registry.npmjs.org`
           await file.write(npmrcPath, npmrcContent)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
