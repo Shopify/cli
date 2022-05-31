@@ -62,9 +62,11 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   title: schema.define.string(),
-  commands: schema.define.object({
-    build: schema.define.string().optional(),
-  }),
+  commands: schema.define
+    .object({
+      build: schema.define.string().optional(),
+    })
+    .optional(),
 })
 
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>

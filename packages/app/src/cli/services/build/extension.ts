@@ -101,9 +101,20 @@ export async function buildFunctionExtension(
   extension: FunctionExtension,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  const buildCommand = extension.configuration.commands.build
+  const buildCommand = extension.configuration.commands?.build
   if (!buildCommand || buildCommand.trim() === '') {
-    throw MissingBuildCommandError(extension.localIdentifier)
+    options.stderr.write(
+      `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
+    )
+    options.stderr.write(`
+    Edit the shopify.function.extension.toml configuration file and set how to build the extension.
+
+    [commands]
+    build = "{COMMAND}"
+
+    Note that the command must output a dist/index.wasm file.
+    `)
+    throw new error.AbortSilent()
   }
   const buildCommandComponents = buildCommand.split(' ')
 

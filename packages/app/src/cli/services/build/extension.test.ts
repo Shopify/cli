@@ -1,7 +1,7 @@
-import {buildFunctionExtension, MissingBuildCommandError} from './extension'
+import {buildFunctionExtension} from './extension'
 import {FunctionExtension} from '../../models/app/app'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {system} from '@shopify/cli-kit'
+import {system, error} from '@shopify/cli-kit'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -23,7 +23,7 @@ describe('buildFunctionExtension', () => {
 
   beforeEach(() => {
     stdout = vi.fn()
-    stderr = vi.fn()
+    stderr = {write: vi.fn()}
     signal = vi.fn()
     extension = {
       configuration: {
@@ -48,13 +48,15 @@ describe('buildFunctionExtension', () => {
         stderr,
         signal,
       }),
-    ).rejects.toEqual(MissingBuildCommandError(extension.localIdentifier))
+    ).rejects.toEqual(new error.AbortSilent())
     expect(system.exec).not.toHaveBeenCalled()
   })
 
   test('throws a MissingBuildCommandError when the build command is empty', async () => {
     // Given
-    extension.configuration.commands.build = ''
+    extension.configuration.commands = {
+      build: '   ',
+    }
 
     // When
     await expect(
@@ -63,13 +65,15 @@ describe('buildFunctionExtension', () => {
         stderr,
         signal,
       }),
-    ).rejects.toEqual(MissingBuildCommandError(extension.localIdentifier))
+    ).rejects.toEqual(new error.AbortSilent())
     expect(system.exec).not.toHaveBeenCalled()
   })
 
   test('delegates the build to system when the build command is present', async () => {
     // Given
-    extension.configuration.commands.build = './scripts/build.sh argument'
+    extension.configuration.commands = {
+      build: './scripts/build.sh argument',
+    }
 
     // When
     await expect(
