@@ -7,5 +7,5 @@ export const ScriptServiceProxyQuery = gql`
 `
 
 export interface ScriptServiceProxyQuerySchema {
-  scriptServiceProxy: any
+  scriptServiceProxy: unknown
 }

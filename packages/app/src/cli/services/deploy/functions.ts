@@ -1,6 +1,6 @@
+import {App, FunctionExtension} from '../../models/app/app'
 import {api, path, session} from '@shopify/cli-kit'
 import {readFileSync} from 'fs'
-import {App, FunctionExtension} from '$cli/models/app/app'
 
 export async function deployFunction(extension: FunctionExtension, app: App) {
   const token = await session.ensureAuthenticatedPartners()
@@ -18,8 +18,7 @@ export async function deployFunction(extension: FunctionExtension, app: App) {
     configurationDefinition: '{"type":"object","fields":{}}',
     moduleUploadUrl: uploadUrl,
   }
-  const res: any = await api.partners.functionProxyRequest(app.configuration.id!, query, token, variables)
-  console.log(JSON.stringify(res.data, null, 2))
+  const res: unknown = await api.partners.functionProxyRequest(app.configuration.id!, query, token, variables)
 }
 
 async function uploadScript(extension: FunctionExtension, app: App) {
@@ -33,7 +32,7 @@ async function uploadScript(extension: FunctionExtension, app: App) {
   return url
 }
 
-async function getUploadURL(app: App): Promise<{url: string; headers: any}> {
+async function getUploadURL(app: App): Promise<{url: string; headers: {[key: string]: string}}> {
   const token = await session.ensureAuthenticatedPartners()
   const query = api.graphql.ModuleUploadUrlGenerateMutation
   const res: api.graphql.ModuleUploadUrlGenerateMutationSchema = await api.partners.functionProxyRequest(

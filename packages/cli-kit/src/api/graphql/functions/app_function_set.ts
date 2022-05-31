@@ -58,7 +58,7 @@ export interface AppFunctionSetMutationSchema {
       appScript: {
         uuid: string
         appKey: string
-        configSchema: any
+        configSchema: unknown
         extensionPointName: string
         title: string
       }
