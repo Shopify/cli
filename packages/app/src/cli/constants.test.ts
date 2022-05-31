@@ -3,38 +3,80 @@ import {describe, expect, it} from 'vitest'
 
 describe('get extension type output configuration', () => {
   it('obtain the correct configuration for extension type beacon_extension', () => {
-    expect(getExtensionOutputConfig('beacon_extension')).toEqual({
+    // Given
+    const extensionType = 'beacon_extension'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Beacon',
     })
   })
 
   it('obtain the correct configuration for extension type checkout_post_purchase', () => {
-    expect(getExtensionOutputConfig('checkout_post_purchase')).toEqual({
+    // Given
+    const extensionType = 'checkout_post_purchase'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Post-purchase',
       helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
     })
   })
 
   it('obtain the correct configuration for extension type theme', () => {
-    expect(getExtensionOutputConfig('theme')).toEqual({
+    // Given
+    const extensionType = 'theme'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Theme app',
     })
   })
 
   it('obtain the correct configuration for extension type checkout_ui_extension', () => {
-    expect(getExtensionOutputConfig('checkout_ui_extension')).toEqual({
+    // Given
+    const extensionType = 'checkout_ui_extension'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Checkout UI',
     })
   })
 
   it('obtain the correct configuration for extension type product_subscription', () => {
-    expect(getExtensionOutputConfig('product_subscription')).toEqual({
+    // Given
+    const extensionType = 'product_subscription'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Product subscription',
     })
   })
 
   it('obtain the correct configuration for extension type product_discounts', () => {
-    expect(getExtensionOutputConfig('product_discounts')).toEqual({
+    // Given
+    const extensionType = 'product_discounts'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Product discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
       additionalHelp:
@@ -43,7 +85,14 @@ describe('get extension type output configuration', () => {
   })
 
   it('obtain the correct configuration for extension type order_discounts', () => {
-    expect(getExtensionOutputConfig('order_discounts')).toEqual({
+    // Given
+    const extensionType = 'order_discounts'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Order discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
       additionalHelp:
@@ -52,7 +101,14 @@ describe('get extension type output configuration', () => {
   })
 
   it('obtain the correct configuration for extension type shipping_discounts', () => {
-    expect(getExtensionOutputConfig('shipping_discounts')).toEqual({
+    // Given
+    const extensionType = 'shipping_discounts'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Shipping discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
       additionalHelp:
@@ -61,13 +117,27 @@ describe('get extension type output configuration', () => {
   })
 
   it('obtain the correct configuration for extension type payment_methods', () => {
-    expect(getExtensionOutputConfig('payment_methods')).toEqual({
+    // Given
+    const extensionType = 'payment_methods'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Payment method',
     })
   })
 
   it('obtain the correct configuration for extension type shipping_rate_presenter', () => {
-    expect(getExtensionOutputConfig('shipping_rate_presenter')).toEqual({
+    // Given
+    const extensionType = 'shipping_rate_presenter'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
       humanKey: 'Shipping rate presenter',
     })
   })

@@ -152,8 +152,6 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
       return buildExtensionOutputConfig('Payment method')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('Shipping rate presenter')
-    default:
-      return buildExtensionOutputConfig(extensionType)
   }
 }
 
