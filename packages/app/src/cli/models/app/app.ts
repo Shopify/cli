@@ -62,6 +62,9 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   title: schema.define.string(),
+  commands: schema.define.object({
+    build: schema.define.string().optional(),
+  }),
 })
 
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
@@ -347,7 +350,7 @@ class AppLoader {
         configurationPath,
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
-        buildDirectory: path.join(directory, 'build'),
+        buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: path.join(directory, 'src/index.js'),
         localIdentifier: path.basename(directory),
       }
