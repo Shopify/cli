@@ -1,5 +1,5 @@
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {upload} from './deploy/upload'
+import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
 import {App, getUIExtensionRendererVersion, UIExtension} from '../models/app/app'
@@ -35,7 +35,8 @@ export const deploy = async (options: DeployOptions) => {
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
-    await upload({apiKey, bundlePath, extensions})
+    await uploadUIExtensionsBundle({apiKey, bundlePath, extensions})
+    await uploadFunctionExtensions(app.extensions.function, {apiKey, identifiers})
 
     output.newline()
     output.info('Summary')
@@ -48,6 +49,7 @@ export const deploy = async (options: DeployOptions) => {
     })
   })
 }
+
 async function configFor(extension: UIExtension, app: App) {
   const type = extension.type as UIExtensionTypes
   switch (extension.type as UIExtensionTypes) {

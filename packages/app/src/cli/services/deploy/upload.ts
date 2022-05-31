@@ -1,8 +1,9 @@
+import {FunctionExtension, Identifiers} from '../../models/app/app'
 import {api, error, session, http, id} from '@shopify/cli-kit'
 
 import fs from 'fs'
 
-interface UploadOptions {
+interface UploadUIExtensionsBundleOptions {
   /** The application API key */
   apiKey: string
 
@@ -19,9 +20,9 @@ interface UploadOptions {
 
 /**
  * Uploads a bundle.
- * @param options {UploadOptions} The upload options
+ * @param options {UploadUIExtensionsBundleOptions} The upload options
  */
-export async function upload(options: UploadOptions) {
+export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundleOptions) {
   const token = await session.ensureAuthenticatedPartners()
   const deploymentUUID = id.generateRandomUUID()
   const signedURL = await generateUrl(options.apiKey, deploymentUUID)
@@ -76,4 +77,17 @@ export async function generateUrl(apiKey: string, deploymentUUID: string) {
   }
 
   return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
+}
+
+interface UploadFunctionExtensionsOptions {
+  apiKey: string
+  identifiers: Identifiers
+}
+
+export async function uploadFunctionExtensions(
+  extensions: FunctionExtension[],
+  options: UploadFunctionExtensionsOptions,
+): Promise<Identifiers> {
+  // TODO
+  return options.identifiers
 }
