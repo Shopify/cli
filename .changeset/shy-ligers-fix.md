@@ -1,6 +1,6 @@
 ---
-'app': major
-'@shopify/app': major
+'app': patch
+'@shopify/app': patch
 '@shopify/cli-kit': patch
 ---
 
