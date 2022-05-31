@@ -1,16 +1,19 @@
+/* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension'
 import {getExtensionOutputConfig} from '../../../constants'
 import {App, load as loadApp} from '../../../models/app/app'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi, beforeAll} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 
-vi.mock('../../../constants')
-vi.mock('../../../models/app/app')
-vi.mock('../../../prompts/scaffold/extension')
-vi.mock('../../../services/scaffold/extension')
+beforeAll(() => {
+  vi.mock('../../../constants')
+  vi.mock('../../../models/app/app')
+  vi.mock('../../../prompts/scaffold/extension')
+  vi.mock('../../../services/scaffold/extension')
+})
 
 describe('after extension command finishes correctly', () => {
   it('displays a confirmation message with only the human-facing name', async () => {
