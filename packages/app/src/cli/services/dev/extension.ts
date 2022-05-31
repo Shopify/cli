@@ -54,15 +54,10 @@ export interface ExtensionDevOptions {
    * The development store where the extension wants to be previewed
    */
   storeFqdn: string
-
-  /**
-   * Whether to include the resource URL in the configuration. Mandatory for dev
-   */
-  includeResourceURL: true
 }
 
 export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
-  const config = await extensionConfig(options)
+  const config = await extensionConfig({includeResourceURL: true, ...options})
   const stdin = yaml.encode(config)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,

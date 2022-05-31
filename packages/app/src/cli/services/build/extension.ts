@@ -33,11 +33,6 @@ export interface ExtensionBuildOptions {
    * The app that contains the extension.
    */
   app: App
-
-  /**
-   * Whether to include the resource URL in the configuration. No need when just building
-   */
-  includeResourceURL: false
 }
 
 /**
@@ -47,7 +42,7 @@ export interface ExtensionBuildOptions {
  */
 export async function buildExtension(options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Building extension...`)
-  const stdin = yaml.encode(await extensionConfig(options))
+  const stdin = yaml.encode(await extensionConfig({includeResourceURL: false, ...options}))
   await runGoExtensionsCLI(['build', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
