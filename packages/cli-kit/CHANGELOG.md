@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.0.1
+
+### Patch Changes
+
+- c01cd9a5: Supports updated template names from the hydrogen monorepo. The `parseRepoUrl` helper now includes the full `http` address in the returns object.
+- 9d324502: Add locale configuration to checkout_ui_extensions
+
 ## 3.0.0
 
 ### Major Changes

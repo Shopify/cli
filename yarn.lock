@@ -7680,9 +7680,9 @@ next-tick@^1.1.0:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.1.0.tgz#1836ee30ad56d67ef281b22bd199f709449b35eb"
   integrity sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==
 
-"ngrok@git+https://github.com/Shopify/ngrok.git#0d1b1621b998c28ab2bc50f45a897799c6def417":
+"ngrok@https://github.com/Shopify/ngrok#0d1b1621b998c28ab2bc50f45a897799c6def417":
   version "4.3.1"
-  resolved "git+https://github.com/Shopify/ngrok.git#0d1b1621b998c28ab2bc50f45a897799c6def417"
+  resolved "https://github.com/Shopify/ngrok#0d1b1621b998c28ab2bc50f45a897799c6def417"
   dependencies:
     "@types/node" "^8.10.50"
     extract-zip "^2.0.1"

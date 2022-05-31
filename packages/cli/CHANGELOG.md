@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.0.1
+
+### Patch Changes
+
+- b911cfa2: Add editions command
+- 2044f14c: Update Ngrok plugin dependency to 0.2.6 (error improvements)
+- Updated dependencies [c01cd9a5]
+- Updated dependencies [9d324502]
+  - @shopify/cli-kit@3.0.1
+
 ## 3.0.0
 
 ### Major Changes
