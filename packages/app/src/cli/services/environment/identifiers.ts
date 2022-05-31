@@ -1,5 +1,5 @@
 import {automaticMatchmaking} from './id-matching'
-import {manualMatch} from './manual-matching'
+import {manualMatchIds} from './id-manual-matching'
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
@@ -75,7 +75,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   const extensionsToCreate = match.toCreate ?? []
 
   if (match.toManualMatch.local.length > 0) {
-    const matchResult = await manualMatch(match.toManualMatch.local, match.toManualMatch.remote)
+    const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
     if (matchResult.result === 'pending-remote') throw ManualMatchRequired()
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)

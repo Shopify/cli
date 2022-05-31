@@ -1,4 +1,4 @@
-import {manualMatch, ManualMatchResult} from './manual-matching'
+import {manualMatchIds, ManualMatchResult} from './id-manual-matching'
 import {ExtensionRegistration} from '../dev/create-extension'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {UIExtension} from 'cli/models/app/app'
@@ -73,7 +73,7 @@ describe('manualMatch: when all extensions are matched', () => {
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A_2'})
 
     // When
-    const got = await manualMatch([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await manualMatchIds([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
     const expected: ManualMatchResult = {
@@ -91,7 +91,7 @@ describe('manualMatch: when there are more local extensions', () => {
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
 
     // When
-    const got = await manualMatch([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A])
+    const got = await manualMatchIds([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A])
 
     // Then
     const expected: ManualMatchResult = {
@@ -111,7 +111,7 @@ describe('manualMatch: when there are more local extensions and user selects to 
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A_2'})
 
     // When
-    const got = await manualMatch([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await manualMatchIds([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
     const expected: ManualMatchResult = {
@@ -131,7 +131,7 @@ describe('manualMatch: when not all remote extensions are matched', () => {
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
 
     // When
-    const got = await manualMatch([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await manualMatchIds([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
     const expected: ManualMatchResult = {result: 'pending-remote'}

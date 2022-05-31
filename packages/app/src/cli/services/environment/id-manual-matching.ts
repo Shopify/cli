@@ -19,7 +19,7 @@ export type ManualMatchResult =
  * @param remoteExtensions {ExtensionRegistration[]} The remote extensions to match
  * @returns {Promise<ManualMatchResult>} The result of the manual matching
  */
-export async function manualMatch(
+export async function manualMatchIds(
   localExtensions: Extension[],
   remoteExtensions: ExtensionRegistration[],
 ): Promise<ManualMatchResult> {

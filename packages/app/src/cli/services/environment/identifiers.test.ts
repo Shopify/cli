@@ -1,6 +1,6 @@
 import {ensureDeploymentIdsPresence} from './identifiers'
 import {automaticMatchmaking} from './id-matching'
-import {manualMatch} from './manual-matching'
+import {manualMatchIds} from './id-manual-matching'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension, ExtensionRegistration} from '../dev/create-extension'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -103,7 +103,7 @@ beforeEach(() => {
   vi.mock('../dev/fetch')
   vi.mock('../dev/create-extension')
   vi.mock('./id-matching')
-  vi.mock('./manual-matching')
+  vi.mock('./id-manual-matching')
 })
 
 describe('ensureDeploymentIdsPresence: case 1 no local nor remote extensions', () => {
@@ -178,7 +178,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
       app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]},
     })
-    vi.mocked(manualMatch).mockResolvedValueOnce({
+    vi.mocked(manualMatchIds).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       toCreate: [EXTENSION_B],
@@ -189,7 +189,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
-    expect(manualMatch).toBeCalledWith([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
+    expect(manualMatchIds).toBeCalledWith([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
     expect(got).toEqual({
       app: 'appId',
       extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B'},
@@ -212,14 +212,14 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
       app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2]},
     })
-    vi.mocked(manualMatch).mockResolvedValueOnce({result: 'pending-remote'})
+    vi.mocked(manualMatchIds).mockResolvedValueOnce({result: 'pending-remote'})
 
     // When
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
     await expect(got).rejects.toThrow('All remote extensions must be connected to a local extension in your project')
-    expect(manualMatch).toBeCalledWith([EXTENSION_A], [REGISTRATION_A, REGISTRATION_A_2])
+    expect(manualMatchIds).toBeCalledWith([EXTENSION_A], [REGISTRATION_A, REGISTRATION_A_2])
   })
 })
 
