@@ -5,28 +5,17 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
 import {error, output, session} from '@shopify/cli-kit'
 
-const WrongExtensionNumberError = (remote: number, local: number) => {
-  return new error.Abort(
-    `This app has ${remote} registered extensions, but only ${local} are locally available.`,
-    `Please check your local project or select a different app to deploy to`,
-  )
-}
-
 const NoLocalExtensionsError = () => {
   return new error.Abort('There are no extensions to deploy')
 }
 
-const ManualMatchRequired = () => {
+const DeployError = (appName: string, packageManager: string) => {
   return new error.Abort(
-    'All remote extensions must be connected to a local extension in your project',
-    'Please check that your local project includes all extensions and execute deploy again',
-  )
-}
-
-const InvalidEnvironment = () => {
-  return new error.Abort(
-    "We couldn't automatically match your local and remote extensions",
-    'Please check your local project or select a different app to deploy to',
+    `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
+    `• If you didn't intend to select this app, run "${packageManager} deploy --reset"
+• If this is the app you intended, check your local project and make sure
+  it contains the same number and types of extensions as the Shopify app
+  you've selected. You may need to scaffold missing extensions.`,
   )
 }
 
@@ -55,6 +44,8 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     ...options.app.extensions.theme,
   ]
 
+  const GenericError = () => DeployError(options.app.name, options.app.dependencyManager)
+
   // We need local extensions to deploy
   if (localExtensions.length === 0) {
     throw NoLocalExtensionsError()
@@ -62,13 +53,13 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   // If there are more remote extensions than local, then something is missing and we can't continue
   if (remoteRegistrations.length > localExtensions.length) {
-    throw WrongExtensionNumberError(remoteRegistrations.length, localExtensions.length)
+    throw GenericError()
   }
 
   const match = await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers)
 
   if (match.result === 'invalid-environment') {
-    throw InvalidEnvironment()
+    throw GenericError()
   }
 
   let validMatches = match.identifiers ?? {}
@@ -76,7 +67,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   if (match.toManualMatch.local.length > 0) {
     const matchResult = await manualMatch(match.toManualMatch.local, match.toManualMatch.remote)
-    if (matchResult.result === 'pending-remote') throw ManualMatchRequired()
+    if (matchResult.result === 'pending-remote') throw GenericError()
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
   }
