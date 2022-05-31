@@ -11,13 +11,26 @@ interface ExtensionConfiguration {
 }
 
 When(
-  /I create a extension named (.+) of type (.+)/,
+  /I create an extension named (.+) of type ([^\s]+)( and flavor (.+))?$/,
   {timeout: 2 * 60 * 1000},
-  async function (extensionName: string, extensionType: string) {
+  async function (extensionName: string, extensionType: string, _, flavor: string) {
+    let flavorArgs: string[] = []
+    if (flavor) flavorArgs = ['--extension-flavor', flavor]
     try {
       await exec(
         executables.cli,
-        ['app', 'scaffold', 'extension', '--name', extensionName, '--path', this.appDirectory, '--type', extensionType],
+        [
+          'app',
+          'scaffold',
+          'extension',
+          '--name',
+          extensionName,
+          '--path',
+          this.appDirectory,
+          '--type',
+          extensionType,
+          ...flavorArgs,
+        ],
         {env: {...process.env, ...this.temporaryEnv}},
       )
       // eslint-disable-next-line no-catch-all/no-catch-all
