@@ -14,6 +14,7 @@ export interface ExtensionConfigOptions {
   url?: string
   port?: number
   storeFqdn?: string
+  includeResourceURL?: boolean
 }
 
 /**
@@ -47,7 +48,9 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
-          resource: await getUIExtensionResourceURL(extension.configuration.type, options.storeFqdn),
+          resource: options.includeResourceURL
+            ? await getUIExtensionResourceURL(extension.configuration.type, options.storeFqdn)
+            : null,
         },
       }
     }),

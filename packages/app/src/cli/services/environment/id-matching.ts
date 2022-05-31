@@ -41,18 +41,20 @@ export async function automaticMatchmaking(
   // List of remote extensions that are not yet matched to a local extension
   const pendingRemote = remoteRegistrations.filter((registration) => !localUUIDs().includes(registration.uuid))
 
-  // From pending to be matched extensions, this is the list of extensions with duplicated Type
-  // If two or more extensions have the same type, we need to manually match them.
-  const localNeedsManualMatch = (() => {
-    const types = pendingLocal.map((ext) => ext.graphQLType).filter((type, i, array) => array.indexOf(type) !== i)
-    return pendingLocal.filter((ext) => types.includes(ext.graphQLType))
-  })()
-
   // From pending to be matched remote extensions, this is the list of remote extensions with duplicated Type
   // If two or more extensions have the same type, we need to manually match them.
   const remoteNeedsManualMatch = (() => {
     const types = pendingRemote.map((ext) => ext.type).filter((type, i, array) => array.indexOf(type) !== i)
     return pendingRemote.filter((ext) => types.includes(ext.type))
+  })()
+
+  // From pending to be matched extensions, this is the list of extensions with duplicated Type
+  // If two or more extensions have the same type, we need to manually match them.
+  const localNeedsManualMatch = (() => {
+    const types = pendingLocal.map((ext) => ext.graphQLType).filter((type, i, array) => array.indexOf(type) !== i)
+    // If local extensions with duplicated types do not have a possible remote match, they don't require manual match
+    const manualTypes = types.filter((type) => remoteNeedsManualMatch.some((reg) => reg.type === type))
+    return pendingLocal.filter((ext) => manualTypes.includes(ext.graphQLType))
   })()
 
   // Extensions that should be possible to automatically match or create, should not contain duplicated types

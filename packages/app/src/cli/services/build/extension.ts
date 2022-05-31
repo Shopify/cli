@@ -33,6 +33,11 @@ export interface ExtensionBuildOptions {
    * The app that contains the extension.
    */
   app: App
+
+  /**
+   * Whether to include the resource URL in the configuration. No need when just building
+   */
+  includeResourceURL: false
 }
 
 /**

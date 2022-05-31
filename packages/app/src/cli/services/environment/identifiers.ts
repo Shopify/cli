@@ -1,8 +1,9 @@
 import {automaticMatchmaking} from './id-matching'
+import {manualMatch} from './manual-matching'
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
-import {error, session, ui} from '@shopify/cli-kit'
+import {error, output, session} from '@shopify/cli-kit'
 
 const WrongExtensionNumberError = (remote: number, local: number) => {
   return new error.Abort(
@@ -17,8 +18,8 @@ const NoLocalExtensionsError = () => {
 
 const ManualMatchRequired = () => {
   return new error.Abort(
-    'Manual matching is required',
-    'We are working on a a manual solution for this case, coming soon!',
+    'All remote extensions must be connected to a local extension in your project',
+    'Please check that your local project includes all extensions and execute deploy again',
   )
 }
 
@@ -71,14 +72,17 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   }
 
   let validMatches = match.identifiers ?? {}
-  if (match.toManualMatch.local.length > 0) {
-    const {identifiers, toCreate} = await manualMatch(match.toManualMatch.local, match.toManualMatch.remote)
-    console.log(identifiers, toCreate)
-  }
-  throw new error.Abort('Manual matching is required')
+  const extensionsToCreate = match.toCreate ?? []
 
-  if (match.toCreate.length > 0) {
-    const newIdentifiers = await createExtensions(match.toCreate, options.appId)
+  if (match.toManualMatch.local.length > 0) {
+    const matchResult = await manualMatch(match.toManualMatch.local, match.toManualMatch.remote)
+    if (matchResult.result === 'pending-remote') throw ManualMatchRequired()
+    validMatches = {...validMatches, ...matchResult.identifiers}
+    extensionsToCreate.push(...matchResult.toCreate)
+  }
+
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
     validMatches = {...validMatches, ...newIdentifiers}
   }
 
@@ -92,41 +96,8 @@ async function createExtensions(extensions: Extension[], appId: string) {
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
+    output.completed(`Created extension ${extension.localIdentifier}`)
     result[extension.localIdentifier] = registration.uuid
   }
   return result
-}
-
-async function manualMatch(localExtensions: Extension[], remoteExtensions: ExtensionRegistration[]) {
-  const identifiers: {[key: string]: string} = {}
-  let pendingRemote = remoteExtensions
-  let pendingLocal = localExtensions
-  for (const extension of localExtensions) {
-    const registrationsForType = pendingRemote.filter((reg) => reg.type === extension.type)
-    if (registrationsForType.length === 0) continue
-    // eslint-disable-next-line no-await-in-loop
-    const selected = await selectRegistrationPrompt(extension, registrationsForType)
-    identifiers[extension.localIdentifier] = selected.uuid
-    pendingRemote = pendingRemote.filter((reg) => reg.uuid !== selected.uuid)
-    pendingLocal = pendingLocal.filter((reg) => reg.localIdentifier !== extension.localIdentifier)
-  }
-  if (pendingRemote.length > 0) {
-    throw new error.Abort('There are still remote extensions to match')
-  }
-  return {identifiers, toCreate: pendingLocal}
-}
-
-export async function selectRegistrationPrompt(
-  extension: Extension,
-  registrations: ExtensionRegistration[],
-): Promise<ExtensionRegistration> {
-  const orgList = registrations.map((reg) => ({name: reg.title, value: reg.uuid}))
-  const questions: ui.Question = {
-    type: 'autocomplete',
-    name: 'uuid',
-    message: `To which extension would you like to connect "${extension.localIdentifier}"?`,
-    choices: orgList,
-  }
-  const choice: {uuid: string} = await ui.prompt([questions])
-  return registrations.find((reg) => reg.uuid === choice.uuid)!
 }
