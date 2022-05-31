@@ -1,3 +1,11 @@
 name = "script"
 type = "payment_methods"
-title = "script"
+version = "2"
+configuration-ui = true
+
+[commands]
+build = "touch ./dist/index.wasm"
+
+[configuration]
+type = "object"
+fields = { }

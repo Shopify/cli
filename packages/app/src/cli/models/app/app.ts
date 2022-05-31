@@ -56,7 +56,14 @@ type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurat
 const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
-  title: schema.define.string(),
+  description: schema.define.string().default(''),
+  configuration: schema.define.any(),
+  /* eslint-disable @typescript-eslint/naming-convention */
+  'configuration-ui': schema.define.boolean().default(true),
+  'app-bridge-create-path': schema.define.string().optional(),
+  'app-bridge-details-path': schema.define.string().optional(),
+  /* eslint-enable @typescript-eslint/naming-convention */
+  version: schema.define.string(),
   commands: schema.define
     .object({
       build: schema.define.string().optional(),
@@ -82,8 +89,30 @@ export interface Extension {
   graphQLType: string
 }
 
+const FunctionExtensionMetadataSchema = schema.define.object({
+  flags: schema.define
+    /* eslint-disable @typescript-eslint/naming-convention */
+    .object({
+      'use-msgpack': schema.define.boolean().optional(),
+    })
+    .default({
+      'use-msgpack': false,
+    })
+    .optional(),
+  /* eslint-enable @typescript-eslint/naming-convention */
+  schemaVersions: schema.define.object({}).catchall(
+    schema.define.object({
+      major: schema.define.number(),
+      minor: schema.define.number(),
+    }),
+  ),
+})
+
+type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
+
 export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
+  metadata: FunctionExtensionMetadata
   buildWasmPath: string
 }
 
@@ -286,14 +315,18 @@ class AppLoader {
     }
   }
 
-  async loadConfigurationFile(filepath: string): Promise<unknown> {
+  async loadConfigurationFile(
+    filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = toml.decode,
+  ): Promise<unknown> {
     if (!(await file.exists(filepath))) {
       return this.abortOrReport(`Couldn't find the configuration file at ${filepath}`, '', filepath)
     }
     const configurationContent = await file.read(filepath)
     let configuration: object
     try {
-      configuration = toml.decode(configurationContent)
+      configuration = decode(configurationContent)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       // TOML errors have line, pos and col properties
@@ -316,10 +349,12 @@ class AppLoader {
   async parseConfigurationFile<TSchema extends schema.define.ZodType>(
     schema: TSchema,
     filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = toml.decode,
   ): Promise<schema.define.TypeOf<TSchema>> {
     const fallbackOutput = {} as schema.define.TypeOf<TSchema>
 
-    const configurationObject = await this.loadConfigurationFile(filepath)
+    const configurationObject = await this.loadConfigurationFile(filepath, decode)
     if (!configurationObject) return fallbackOutput
 
     const parseResult = schema.safeParse(configurationObject)
@@ -363,10 +398,16 @@ class AppLoader {
     const functions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configurationPath)
+      const metadata = await this.parseConfigurationFile(
+        FunctionExtensionMetadataSchema,
+        path.join(directory, 'metadata.json'),
+        JSON.parse,
+      )
       return {
         directory,
         configuration,
         configurationPath,
+        metadata,
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
