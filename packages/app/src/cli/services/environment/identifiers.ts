@@ -2,7 +2,7 @@ import {automaticMatchmaking} from './id-matching'
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
-import {error, session} from '@shopify/cli-kit'
+import {error, session, ui} from '@shopify/cli-kit'
 
 const WrongExtensionNumberError = (remote: number, local: number) => {
   return new error.Abort(
@@ -72,8 +72,10 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   let validMatches = match.identifiers ?? {}
   if (match.toManualMatch.local.length > 0) {
-    throw ManualMatchRequired()
+    const {identifiers, toCreate} = await manualMatch(match.toManualMatch.local, match.toManualMatch.remote)
+    console.log(identifiers, toCreate)
   }
+  throw new error.Abort('Manual matching is required')
 
   if (match.toCreate.length > 0) {
     const newIdentifiers = await createExtensions(match.toCreate, options.appId)
@@ -93,4 +95,38 @@ async function createExtensions(extensions: Extension[], appId: string) {
     result[extension.localIdentifier] = registration.uuid
   }
   return result
+}
+
+async function manualMatch(localExtensions: Extension[], remoteExtensions: ExtensionRegistration[]) {
+  const identifiers: {[key: string]: string} = {}
+  let pendingRemote = remoteExtensions
+  let pendingLocal = localExtensions
+  for (const extension of localExtensions) {
+    const registrationsForType = pendingRemote.filter((reg) => reg.type === extension.type)
+    if (registrationsForType.length === 0) continue
+    // eslint-disable-next-line no-await-in-loop
+    const selected = await selectRegistrationPrompt(extension, registrationsForType)
+    identifiers[extension.localIdentifier] = selected.uuid
+    pendingRemote = pendingRemote.filter((reg) => reg.uuid !== selected.uuid)
+    pendingLocal = pendingLocal.filter((reg) => reg.localIdentifier !== extension.localIdentifier)
+  }
+  if (pendingRemote.length > 0) {
+    throw new error.Abort('There are still remote extensions to match')
+  }
+  return {identifiers, toCreate: pendingLocal}
+}
+
+export async function selectRegistrationPrompt(
+  extension: Extension,
+  registrations: ExtensionRegistration[],
+): Promise<ExtensionRegistration> {
+  const orgList = registrations.map((reg) => ({name: reg.title, value: reg.uuid}))
+  const questions: ui.Question = {
+    type: 'autocomplete',
+    name: 'uuid',
+    message: `To which extension would you like to connect "${extension.localIdentifier}"?`,
+    choices: orgList,
+  }
+  const choice: {uuid: string} = await ui.prompt([questions])
+  return registrations.find((reg) => reg.uuid === choice.uuid)!
 }
