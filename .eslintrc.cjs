@@ -20,6 +20,7 @@ module.exports = {
         groups: ['index', 'sibling', 'parent', 'internal', 'external', 'builtin', 'object', 'type'],
       },
     ],
+    'no-catch-shadow': 'off',
     'no-catch-all/no-catch-all': 'error',
     'no-console': 'error',
     '@typescript-eslint/no-namespace': 'off',

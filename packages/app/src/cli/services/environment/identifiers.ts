@@ -39,11 +39,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
   const remoteRegistrations: ExtensionRegistration[] = remoteSpecifications.app.extensionRegistrations
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const localExtensions: Extension[] = [
-    ...options.app.extensions.ui,
-    ...options.app.extensions.function,
-    ...options.app.extensions.theme,
-  ]
+  const localExtensions: Extension[] = [...options.app.extensions.ui, ...options.app.extensions.theme]
 
   const GenericError = () => DeployError(options.appName, options.app.dependencyManager)
 

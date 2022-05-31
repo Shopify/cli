@@ -54,7 +54,7 @@ export interface AppFunctionSetMutationSchema {
         field: string
         message: string
         tag: string
-      }
+      }[]
       appScript: {
         uuid: string
         appKey: string
@@ -81,6 +81,10 @@ export interface AppFunctionSetVariables {
   library?: {
     language: string
     version: string
+  }
+  appBridge?: {
+    createPath?: string
+    detailsPath?: string
   }
   inputQuery?: string
 }

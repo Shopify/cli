@@ -18,7 +18,13 @@ ${variables ? JSON.stringify(variables, null, 2) : ''}
 And headers:
 ${sanitizedHeadersOutput(headers)}
   `)
-  return graphqlRequest<T>(url, query, variables, headers)
+  // eslint-disable-next-line no-useless-catch
+  try {
+    const response = await graphqlRequest<T>(url, query, variables, headers)
+    return response
+  } catch (error) {
+    throw error
+  }
 }
 
 interface ProxyResponse {

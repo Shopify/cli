@@ -125,6 +125,7 @@ export interface DeployEnvironmentOptions {
 
 interface DeployEnvironmentOutput {
   app: App
+  token: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
 }
@@ -164,6 +165,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       appType: partnersApp.appType,
     },
     identifiers,
+    token,
   }
 }
 

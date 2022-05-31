@@ -1,8 +1,8 @@
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
+import {uploadFunctionExtensions} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import {App, getUIExtensionRendererVersion, UIExtension} from '../models/app/app'
+import {App, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {path, output, temporary, error} from '@shopify/cli-kit'
@@ -20,7 +20,8 @@ interface DeployOptions {
 }
 
 export const deploy = async (options: DeployOptions) => {
-  const {app, identifiers} = await ensureDeployEnvironment({app: options.app})
+  // eslint-disable-next-line prefer-const
+  let {app, identifiers, token} = await ensureDeployEnvironment({app: options.app})
   const apiKey = identifiers.app
 
   output.newline()
@@ -42,8 +43,11 @@ export const deploy = async (options: DeployOptions) => {
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
-    await uploadUIExtensionsBundle({apiKey, bundlePath, extensions})
-    await uploadFunctionExtensions(app.extensions.function, {apiKey, identifiers})
+    // await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+    // eslint-disable-next-line require-atomic-updates
+    identifiers = await uploadFunctionExtensions(app.extensions.function, {apiKey, identifiers, token})
+    // eslint-disable-next-line require-atomic-updates
+    app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
     output.newline()
     output.info('Summary')
