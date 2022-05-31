@@ -21,7 +21,7 @@ export interface ModuleUploadUrlGenerateMutationSchema {
     moduleUploadUrlGenerate: {
       details: {
         url: string
-        headers: unknown
+        headers: {[key: string]: string}
         humanizedMaxSize: string
       }
       userErrors: {

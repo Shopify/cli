@@ -3,11 +3,11 @@ import {
   blocks,
   extensionTypeCategory,
   ExtensionTypes,
-  FunctionExtensionTypes,
   getExtensionOutputConfig,
   getUIExtensionRendererDependency,
   ThemeExtensionTypes,
   UIExtensionTypes,
+  FunctionExtensionTypes,
 } from '../../constants'
 import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'

@@ -1,4 +1,4 @@
-import {bundle} from './deploy/bundle'
+import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
 import {upload} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
@@ -34,7 +34,7 @@ export const deploy = async (options: DeployOptions) => {
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
-    await bundle({app, bundlePath, identifiers})
+    await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
     await upload({apiKey, bundlePath, extensions})
 
     output.newline()

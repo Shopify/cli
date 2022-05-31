@@ -84,6 +84,7 @@ export interface Extension {
 
 export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
+  buildWasmPath: string
 }
 
 export type ThemeExtension = Extension & {
@@ -370,6 +371,7 @@ class AppLoader {
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
+        buildWasmPath: path.join(directory, 'dist/index.wasm'),
       }
     })
     return Promise.all(functions)

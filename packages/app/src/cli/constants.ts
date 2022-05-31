@@ -87,6 +87,8 @@ export const themeExtensions = {
 
 export type ThemeExtensionTypes = typeof themeExtensions.types[number]
 
+export type FunctionExtensionTypes = typeof functionExtensions.types[number]
+
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
 }
