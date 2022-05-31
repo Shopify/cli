@@ -1,14 +1,10 @@
 import {Command} from '@oclif/core'
 import {output, ui} from '@shopify/cli-kit'
 
-enum Choice {
-  BFS,
-  Hydrogen,
-  DevTools,
-}
+type Choice = 'bfs' | 'hydrogen' | 'devtools'
 
-const subcommands: Record<Choice, () => void | Promise<void>> = {
-  [Choice.BFS]: () => {
+const subcommands: {[key in Choice]: () => void | Promise<void>} = {
+  bfs: () => {
     output.info(
       unindent(`
         - Built for Shopify: Build great commerce apps that look and perform like they’re part of Shopify
@@ -19,7 +15,7 @@ const subcommands: Record<Choice, () => void | Promise<void>> = {
     output.info(`\n\n`)
     output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-1')}`)
   },
-  [Choice.DevTools]: () => {
+  devtools: () => {
     output.info(
       unindent(`
         - Developer Experience: Simplified updates to write and distribute an app
@@ -30,7 +26,7 @@ const subcommands: Record<Choice, () => void | Promise<void>> = {
     output.info(`\n\n`)
     output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-2')}`)
   },
-  [Choice.Hydrogen]: () => {
+  hydrogen: () => {
     output.info(
       unindent(`
         - Hydrogen + Oxygen: The Shopify stack for headless commerce
@@ -44,6 +40,7 @@ const subcommands: Record<Choice, () => void | Promise<void>> = {
 }
 export default class Editions extends Command {
   static description = 'Shopify editions'
+  static hidden = true
 
   async run(): Promise<void> {
     output.info(
@@ -75,38 +72,38 @@ export default class Editions extends Command {
       `),
     )
 
-    const answer = await ui.prompt([
+    const answer: {editionschoice: Choice} = await ui.prompt([
       {
         name: 'editionschoice',
         type: 'select',
         message: 'What are you looking to solve?',
         choices: [
           {
-            value: Choice[Choice.BFS],
+            value: 'bfs',
             name: 'NEW WAYS TO BUILD GREAT APPS',
           },
           {
-            value: Choice[Choice.DevTools],
+            value: 'devtools',
             name: 'IMPROVED DEV TOOLS',
           },
           {
-            value: Choice[Choice.Hydrogen],
+            value: 'hydrogen',
             name: 'NEXT LEVEL STOREFRONT BUILDING',
           },
         ],
       },
     ])
 
-    await subcommands[Choice[answer.editionschoice]]?.()
+    await subcommands[answer.editionschoice]?.()
     output.info(`\n\n\n`)
   }
 }
 
-function unindent(s: string): string {
-  const lines = s.split('\n')
+function unindent(value: string): string {
+  const lines = value.split('\n')
   // Remove empty lines at start and end
   if (lines[0].trim() === '') lines.shift()
-  if (lines.at(-1).trim() === '') lines.pop()
+  if (lines.at(-1)?.trim() === '') lines.pop()
   const nonEmptyLines = lines.filter((line) => line.trim().length > 0)
   const numSpacesToCut = Math.min(...nonEmptyLines.map((line) => (/^[\s]*[^\s]/.exec(line)?.[0].length || 1) - 1))
   return lines.map((line) => line.slice(numSpacesToCut)).join('\n')
