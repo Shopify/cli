@@ -82,9 +82,9 @@ export async function execThemeCheckCLI({
 
 /**
  * Validate Ruby Enviroment
- * Install RubyCLI and its dependencies
- * Shows a loading spinner if it's the first time installing dependencies
- * or if we are installing a new version of RubyCLI
+ * Install Theme Check CLI and its dependencies
+ * Shows a loading message if it's the first time installing dependencies
+ * or if we are installing a new version of Theme Check CLI
  */
 async function installThemeCheckCLIDependencies(stdout: Writable) {
   const exists = await file.exists(themeCheckDirectory())
