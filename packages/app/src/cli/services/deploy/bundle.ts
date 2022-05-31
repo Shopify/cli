@@ -1,4 +1,4 @@
-import {buildExtension} from '../build/extension'
+import {buildThemeExtensions, buildUIExtensions} from '../build/extension'
 import {App, Identifiers} from '../../models/app/app'
 import {path, output, archiver, temporary, file, error} from '@shopify/cli-kit'
 
@@ -19,6 +19,18 @@ export async function bundle(options: BundleOptions) {
       {
         prefix: 'extensions',
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+          await buildThemeExtensions({
+            app: options.app,
+            extensions: options.app.extensions.theme,
+            stdout,
+            stderr,
+            signal,
+          })
+        },
+      },
+      {
+        prefix: 'extensions',
+        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           /**
            * For deployment we want the build process to ouptut the artifacts directly in the directory
            * to prevent artifacts from past builds from leaking into deploy builds.
@@ -28,7 +40,13 @@ export async function bundle(options: BundleOptions) {
             const buildDirectory = path.join(bundleDirectory, extensionId)
             return {...extension, buildDirectory}
           })
-          await buildExtension({app: options.app, extensions, stdout, stderr, signal})
+          await buildUIExtensions({
+            app: options.app,
+            extensions,
+            stdout,
+            stderr,
+            signal,
+          })
         },
       },
     ])
