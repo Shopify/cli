@@ -4,7 +4,8 @@ import {App, load as loadApp} from '../../../models/app/app'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
 import {describe, expect, it, vi} from 'vitest'
-import {output, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-testing'
 
 vi.mock('../../../constants')
 vi.mock('../../../models/app/app')
@@ -22,7 +23,7 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith('Find your Human Key extension in your extensions folder.')
+    expect(outputInfo.info()).toMatchInlineSnapshot(`"Find your Human Key extension in your extensions folder."`)
   })
 
   it('displays a confirmation message with human-facing name and help url', async () => {
@@ -36,8 +37,8 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith(
-      'Find your Human Key extension in your extensions folder.\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
+    expect(outputInfo.info()).toMatchInlineSnapshot(
+      `"Find your Human Key extension in your extensions folder.\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​)."`,
     )
   })
 
@@ -52,7 +53,9 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith('Find your Human Key extension in your extensions folder.\nAdditional help')
+    expect(outputInfo.info()).toMatchInlineSnapshot(
+      `"Find your Human Key extension in your extensions folder.\nAdditional help"`,
+    )
   })
 
   it('displays a confirmation message with human-facing name , help url and additional help', async () => {
@@ -67,8 +70,8 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith(
-      'Find your Human Key extension in your extensions folder.\nAdditional help\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
+    expect(outputInfo.info()).toMatchInlineSnapshot(
+      `"Find your Human Key extension in your extensions folder.\nAdditional help\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​)."`,
     )
   })
 })
@@ -98,5 +101,5 @@ function mockSuccessfulCommandExecution(outputConfig: {humanKey: string; helpURL
   vi.mocked(scaffoldExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
   vi.mocked(scaffoldExtensionService).mockResolvedValue()
 
-  return vi.spyOn(output, 'info')
+  return outputMocker.mockAndCapture()
 }
