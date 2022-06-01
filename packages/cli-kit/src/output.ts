@@ -6,6 +6,9 @@ import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import cjs from 'color-json'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
@@ -271,6 +274,16 @@ export const warn = (content: Message) => {
  */
 export const newline = () => {
   console.log()
+}
+
+/**
+ * Turns the given object into a colorized JSON.
+ * @param json {any} Object to turn into a JSON and colorize
+ * @returns {string} Colorized JSON representation of the given object.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const colorJson = (json: any): string => {
+  return cjs(json)
 }
 
 /**

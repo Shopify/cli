@@ -1,8 +1,9 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {ScriptServiceProxyQuery} from './graphql'
 import {partners as partnersFqdn} from '../environment/fqdn'
-import {debug} from '../output'
-import {request as graphqlRequest, Variables, RequestDocument} from 'graphql-request'
+import {debug, colorJson} from '../output'
+import {Abort} from '../error'
+import {request as graphqlRequest, Variables, RequestDocument, ClientError} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
   const fqdn = await partnersFqdn()
@@ -18,12 +19,21 @@ ${variables ? JSON.stringify(variables, null, 2) : ''}
 And headers:
 ${sanitizedHeadersOutput(headers)}
   `)
-  // eslint-disable-next-line no-useless-catch
+
   try {
     const response = await graphqlRequest<T>(url, query, variables, headers)
     return response
   } catch (error) {
-    throw error
+    if (error instanceof ClientError) {
+      const errorMessage = `
+The Partners GraphQL API responded unsuccessfully with the HTTP status ${error.response.status} and errors:
+
+${colorJson(error.response.errors)}
+      `
+      throw new Abort(errorMessage)
+    } else {
+      throw error
+    }
   }
 }
 

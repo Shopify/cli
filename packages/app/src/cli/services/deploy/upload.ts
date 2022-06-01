@@ -159,19 +159,20 @@ async function uploadFunctionExtension(
   const functionContent = fs.readFileSync(extension.buildWasmPath, 'binary')
   await fetch(url, {body: functionContent, headers, method: 'PUT'})
   const query = api.graphql.AppFunctionSetMutation
-  const schemaMajorVersion = Object.values(extension.metadata.schemaVersions).shift()?.major
-  const schemaMinorVersion = Object.values(extension.metadata.schemaVersions).shift()?.minor
+  const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
+  const schemaMajorVersion = schemaVersions?.major
+  const schemaMinorVersion = schemaVersions?.minor
   const variables: api.graphql.AppFunctionSetVariables = {
     uuid: options.identifier,
     extensionPointName: getFunctionExtensionPointName(extension.configuration.type),
     title: extension.configuration.name,
     description: extension.configuration.description,
     force: true,
-    schemaMajorVersion: schemaMajorVersion ? `${schemaMajorVersion}` : '',
-    schemaMinorVersion: schemaMinorVersion ? `${schemaMinorVersion}` : '',
+    schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
+    schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
     scriptConfigVersion: extension.configuration.version,
-    configurationUi: extension.configuration['configuration-ui'],
-    configurationDefinition: JSON.stringify(extension.configuration['meta-object'] ?? {}),
+    configurationUi: extension.configuration.configuration_ui,
+    configurationDefinition: JSON.stringify(extension.configuration.meta_object ?? {}),
     moduleUploadUrl: url,
     appBridge: {
       detailsPath: (extension.configuration.ui?.paths ?? {}).details,
