@@ -1,5 +1,5 @@
 {{ template "shared/shopify.ui.extension.toml" . }}
-runtime_context = "sandbox"
+runtime_context = "strict"
 version = "1"
 
 [configuration]
