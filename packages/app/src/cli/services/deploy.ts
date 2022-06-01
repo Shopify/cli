@@ -5,7 +5,14 @@ import {ensureDeployEnvironment} from './environment'
 import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {path, output, temporary} from '@shopify/cli-kit'
+import {path, output, temporary, error} from '@shopify/cli-kit'
+
+const WebPixelConfigError = (property: string) => {
+  return new error.Abort(
+    `The Web Pixel Extension configuration is missing the key "${property}"`,
+    `Please update your shopify.ui.extension.toml to include a valid "${property}"`,
+  )
+}
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -72,8 +79,30 @@ async function configFor(extension: UIExtension, app: App) {
       const localizationConfig = await loadLocalesConfig(extension.directory)
       return {localization: localizationConfig, ...extension.configuration}
     }
-    case 'beacon_extension':
-      // PENDING: what's needed for a beacon_extension??
-      return {}
+    case 'web_pixel_extension': {
+      validateWebPixelConfig(extension)
+      return {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        runtime_context: extension.configuration.runtimeContext,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        runtime_configuration_definition: extension.configuration.configuration,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        config_version: extension.configuration.version,
+      }
+    }
+  }
+}
+
+function validateWebPixelConfig(extension: UIExtension) {
+  if (!extension.configuration.runtimeContext) {
+    throw WebPixelConfigError('runtime_context')
+  }
+
+  if (!extension.configuration.configuration) {
+    throw WebPixelConfigError('configuration')
+  }
+
+  if (!extension.configuration.version) {
+    throw WebPixelConfigError('version')
   }
 }

@@ -49,7 +49,7 @@ const REGISTRATION_D = {
   uuid: 'UUID_D',
   id: 'D',
   title: 'EXTENSION_D',
-  type: 'BEACON_EXTENSION',
+  type: 'WEB_PIXEL_EXTENSION',
 }
 
 const EXTENSION_A: UIExtension = {
@@ -105,8 +105,8 @@ const EXTENSION_D: UIExtension = {
   localIdentifier: 'EXTENSION_D',
   configurationPath: '',
   directory: '',
-  type: 'beacon_extension',
-  graphQLType: 'BEACON_EXTENSION',
+  type: 'web_pixel_extension',
+  graphQLType: 'WEB_PIXEL_EXTENSION',
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',

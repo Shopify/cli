@@ -1,5 +1,11 @@
 # @shopify/create-hydrogen
 
+## 3.0.2
+
+### Patch Changes
+
+- 87169adb: Fix `npmrc` for Shopifolk to use correct prefix
+
 ## 3.0.1
 
 ### Patch Changes

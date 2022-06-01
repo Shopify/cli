@@ -1,5 +1,15 @@
 # app
 
+## 0.1.16
+
+### Patch Changes
+
+- 79cb9f72: Add manual matching for extensions IDs when deploying
+- Updated dependencies [91e25520]
+- Updated dependencies [79cb9f72]
+- Updated dependencies [7f783134]
+  - @shopify/app@3.0.2
+
 ## 0.1.15
 
 ### Patch Changes

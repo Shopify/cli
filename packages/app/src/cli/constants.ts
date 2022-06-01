@@ -20,7 +20,7 @@ export const environmentVariables = {
 } as const
 
 export const versions = {
-  extensionsBinary: 'v0.13.0',
+  extensionsBinary: 'v0.14.2',
 } as const
 
 export const blocks = {
@@ -46,7 +46,7 @@ export const limitedExtensions: {
   theme: ThemeExtensionTypes[]
   function: FunctionExtensionTypes[]
 } = {
-  ui: ['product_subscription', 'checkout_post_purchase'],
+  ui: ['product_subscription', 'checkout_post_purchase', 'web_pixel_extension'],
   theme: ['theme'],
   function: [],
 }
@@ -65,7 +65,7 @@ export const functionExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'beacon_extension'],
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
 } as const
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
@@ -126,7 +126,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
       return '@shopify/checkout-ui-extensions-react'
     case 'checkout_post_purchase':
       return '@shopify/post-purchase-ui-extensions-react'
-    case 'beacon_extension':
+    case 'web_pixel_extension':
       return undefined
   }
 }
@@ -156,7 +156,7 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
   const discountAdditionalHelp =
     'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.'
   switch (extensionType) {
-    case 'beacon_extension':
+    case 'web_pixel_extension':
       return buildExtensionOutputConfig('web pixel')
     case 'checkout_post_purchase':
       return buildExtensionOutputConfig('post-purchase', 'https://shopify.dev/apps/checkout/post-purchase')
@@ -212,7 +212,7 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
     case 'theme app extension':
       return 'theme'
     case 'web pixel':
-      return 'beacon_extension'
+      return 'web_pixel_extension'
   }
 }
 
