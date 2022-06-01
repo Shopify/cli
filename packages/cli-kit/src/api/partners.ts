@@ -30,7 +30,9 @@ The Partners GraphQL API responded unsuccessfully with the HTTP status ${error.r
 
 ${colorJson(error.response.errors)}
       `
-      throw new Abort(errorMessage)
+      const abortError = new Abort(errorMessage)
+      abortError.stack = error.stack
+      throw abortError
     } else {
       throw error
     }
