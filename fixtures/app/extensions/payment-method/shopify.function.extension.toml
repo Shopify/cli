@@ -1,4 +1,4 @@
-name = "script"
+name = "payment-method"
 type = "payment_methods"
 version = "2"
 configuration-ui = true
