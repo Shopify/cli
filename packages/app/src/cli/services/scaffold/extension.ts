@@ -140,7 +140,7 @@ export function getRuntimeDependencies({extensionType}: Pick<UIExtensionInitOpti
       }
       return dependencies
     }
-    case 'beacon_extension':
+    case 'web_pixel_extension':
       return []
   }
 }

@@ -61,8 +61,8 @@ async function configFor(extension: UIExtension, app: App) {
       const localizationConfig = await loadLocalesConfig(extension.directory)
       return {localization: localizationConfig, ...extension.configuration}
     }
-    case 'beacon_extension':
-      // PENDING: what's needed for a beacon_extension??
+    case 'web_pixel_extension':
+      // PENDING: what's needed for a web_pixel_extension??
       return {}
   }
 }

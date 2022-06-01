@@ -511,7 +511,7 @@ describe('getUIExtensionRendererVersion', () => {
       },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
-    const got = getUIExtensionRendererVersion('beacon_extension', app)
+    const got = getUIExtensionRendererVersion('web_pixel_extension', app)
 
     // Then
     expect(got).to.toBeUndefined()

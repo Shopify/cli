@@ -93,9 +93,9 @@ describe('initialize a extension', () => {
 describe('getRuntimeDependencies', () => {
   test('includes React for UI extensions', () => {
     // Given
-    // Beacon extensions don't need React as a runtime dependency.
+    // Web Pixel extensions don't need React as a runtime dependency.
     const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
-      (extension) => extension !== 'beacon_extension',
+      (extension) => extension !== 'web_pixel_extension',
     )
 
     // When/then

@@ -2,9 +2,9 @@ import {ExtensionTypesHumanKeys, getExtensionOutputConfig, getExtensionTypeFromH
 import {describe, expect, it} from 'vitest'
 
 describe('get extension type output configuration', () => {
-  it('obtain the correct configuration for extension type beacon_extension', () => {
+  it('obtain the correct configuration for extension type web_pixel_extension', () => {
     // Given
-    const extensionType = 'beacon_extension'
+    const extensionType = 'web_pixel_extension'
 
     // When
     const extensionOutputConfig = getExtensionOutputConfig(extensionType)
@@ -152,7 +152,7 @@ describe('get extension type from human key', () => {
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
 
     // Then
-    expect(extensionType).toEqual('beacon_extension')
+    expect(extensionType).toEqual('web_pixel_extension')
   })
 
   it('obtain the correct extension type for human key discount - orders', () => {

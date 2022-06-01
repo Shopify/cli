@@ -542,7 +542,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'CHECKOUT_POST_PURCHASE'
     case 'theme':
       return 'THEME_APP_EXTENSION'
-    case 'beacon_extension':
+    case 'web_pixel_extension':
     case 'product_discounts':
     case 'order_discounts':
     case 'shipping_discounts':
