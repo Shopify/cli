@@ -45,7 +45,7 @@ export const deploy = async (options: DeployOptions) => {
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
     await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     // eslint-disable-next-line require-atomic-updates
-    identifiers = await uploadFunctionExtensions(app.extensions.function, {apiKey, identifiers, token})
+    identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
     // eslint-disable-next-line require-atomic-updates
     app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
