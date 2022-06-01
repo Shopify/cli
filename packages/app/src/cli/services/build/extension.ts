@@ -1,8 +1,22 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {App, UIExtension, ThemeExtension} from '../../models/app/app'
+import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app'
 import {extensionConfig} from '../../utilities/extensions/configuration'
-import {error, ruby, yaml} from '@shopify/cli-kit'
+import {error, ruby, system, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
+
+export const MissingBuildCommandError = (extensionIdentifier: string) => {
+  return new error.Abort(
+    `The function extension ${extensionIdentifier} doesn't have a build command or it's empty`,
+    `
+Edit the shopify.function.extension.toml configuration file and set how to build the extension.
+
+[commands]
+build = "{COMMAND}"
+
+Note that the command must output a dist/index.wasm file.
+  `,
+  )
+}
 
 export interface ExtensionBuildOptions {
   /**
@@ -73,5 +87,41 @@ export async function buildUIExtensions(options: UiExtensionBuildOptions): Promi
     stdout: options.stdout,
     stderr: options.stderr,
     stdin,
+  })
+}
+
+export interface BuildFunctionExtensionOptions extends ExtensionBuildOptions {}
+
+/**
+ * Builds a function extension
+ * @param extension {FunctionExtension} The function extension to build.
+ * @param options {BuildFunctionExtensionOptions} Options to configure the build of the extension.
+ */
+export async function buildFunctionExtension(
+  extension: FunctionExtension,
+  options: BuildFunctionExtensionOptions,
+): Promise<void> {
+  const buildCommand = extension.configuration.commands?.build
+  if (!buildCommand || buildCommand.trim() === '') {
+    options.stderr.write(
+      `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
+    )
+    options.stderr.write(`
+    Edit the shopify.function.extension.toml configuration file and set how to build the extension.
+
+    [commands]
+    build = "{COMMAND}"
+
+    Note that the command must output a dist/index.wasm file.
+    `)
+    throw new error.AbortSilent()
+  }
+  const buildCommandComponents = buildCommand.split(' ')
+  options.stdout.write(`Building function ${extension.localIdentifier}...`)
+  await system.exec(buildCommandComponents[0], buildCommandComponents.slice(1), {
+    stdout: options.stdout,
+    stderr: options.stderr,
+    cwd: extension.directory,
+    signal: options.signal,
   })
 }

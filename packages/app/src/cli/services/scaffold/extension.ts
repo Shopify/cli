@@ -3,11 +3,11 @@ import {
   blocks,
   extensionTypeCategory,
   ExtensionTypes,
-  FunctionExtensionTypes,
   getExtensionOutputConfig,
   getUIExtensionRendererDependency,
   ThemeExtensionTypes,
   UIExtensionTypes,
+  FunctionExtensionTypes,
 } from '../../constants'
 import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
@@ -159,7 +159,11 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
             await file.mkdir(templateDownloadDir)
             await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
             const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            template.recursiveDirectoryCopy(origin, extensionDirectory, options)
+            await template.recursiveDirectoryCopy(origin, extensionDirectory, options)
+            const configYamlPath = path.join(extensionDirectory, 'script.config.yml')
+            if (await file.exists(configYamlPath)) {
+              await file.remove(configYamlPath)
+            }
             task.title = `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`
           },
         },

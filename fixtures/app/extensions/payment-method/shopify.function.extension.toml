@@ -1,0 +1,11 @@
+name = "payment-method"
+type = "payment_methods"
+version = "2"
+configuration_ui = true
+
+[commands]
+build = "echo 'building'"
+
+[meta_object]
+type = "object"
+fields = { }

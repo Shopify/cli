@@ -1,8 +1,8 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {AdminSession} from '../session'
-import {debug} from '../output'
-import {Bug} from '../error'
-import {request as graphqlRequest, gql, RequestDocument, Variables} from 'graphql-request'
+import {debug, colorJson} from '../output'
+import {Bug, Abort} from '../error'
+import {request as graphqlRequest, gql, RequestDocument, Variables, ClientError} from 'graphql-request'
 
 const UnauthorizedAccessError = () => {
   return new Bug(
@@ -22,16 +22,32 @@ export async function request<T>(query: RequestDocument, session: AdminSession, 
   const url = adminUrl(session.storeFqdn, version)
   const headers = await buildHeaders(session.token)
   debug(`
-  Sending Admin GraphQL request:
-  ${query}
+Sending Admin GraphQL request:
+${query}
 
-  With variables:
-  ${variables ? JSON.stringify(variables, null, 2) : ''}
+With variables:
+${variables ? JSON.stringify(variables, null, 2) : ''}
 
-  And headers:
-  ${sanitizedHeadersOutput(headers)}
+And headers:
+${sanitizedHeadersOutput(headers)}
 `)
-  return graphqlRequest<T>(url, query, variables, headers)
+  try {
+    const response = await graphqlRequest<T>(url, query, variables, headers)
+    return response
+  } catch (error) {
+    if (error instanceof ClientError) {
+      const errorMessage = `
+The Admin GraphQL API responded unsuccessfully with the HTTP status ${error.response.status} and errors:
+
+${colorJson(error.response.errors)}
+      `
+      const abortError = new Abort(errorMessage)
+      abortError.stack = error.stack
+      throw abortError
+    } else {
+      throw error
+    }
+  }
 }
 
 async function fetchApiVersion(session: AdminSession): Promise<string> {

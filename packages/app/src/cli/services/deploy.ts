@@ -1,8 +1,8 @@
-import {bundle} from './deploy/bundle'
-import {upload} from './deploy/upload'
+import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
+import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import {App, getUIExtensionRendererVersion, UIExtension} from '../models/app/app'
+import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {path, output, temporary} from '@shopify/cli-kit'
@@ -13,7 +13,8 @@ interface DeployOptions {
 }
 
 export const deploy = async (options: DeployOptions) => {
-  const {app, identifiers} = await ensureDeployEnvironment({app: options.app})
+  // eslint-disable-next-line prefer-const
+  let {app, identifiers, token} = await ensureDeployEnvironment({app: options.app})
   const apiKey = identifiers.app
 
   output.newline()
@@ -34,18 +35,28 @@ export const deploy = async (options: DeployOptions) => {
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
-    await bundle({app, bundlePath, identifiers})
-    await upload({apiKey, bundlePath, extensions})
+    await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
+    await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+    // eslint-disable-next-line require-atomic-updates
+    identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+    // eslint-disable-next-line require-atomic-updates
+    app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
     output.newline()
     output.info('Summary')
-    app.extensions.ui.forEach((extension) => {
+    const outputDeployedButNotLiveMessage = (extension: Extension) => {
       output.info(
-        output.content`${output.token.magenta('✔')} ${path.basename(
-          extension.directory,
-        )} is deployed to Shopify but not yet live`,
+        output.content`${output.token.magenta('✔')} ${
+          extension.localIdentifier
+        } is deployed to Shopify but not yet live`,
       )
-    })
+    }
+    const outputDeployedAndLivedMessage = (extension: Extension) => {
+      output.info(output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is live`)
+    }
+    app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
+    app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
+    app.extensions.function.forEach(outputDeployedButNotLiveMessage)
   })
 }
 

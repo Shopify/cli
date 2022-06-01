@@ -44,6 +44,10 @@ scopes = "read_products"
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
   }
 
+  const blockPath = (name: string) => {
+    return path.join(tmpDir, blocks.extensions.directoryName, name)
+  }
+
   const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
     const configurationName = blocks.extensions.configurationName[blockType]
     return path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
@@ -277,13 +281,14 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      title = "my-function"
+      version = "2"
       `
     await writeBlockConfig({
       blockType: 'function',
       blockConfiguration,
       name: 'my-function',
     })
+    await file.write(path.join(blockPath('my-function'), 'metadata.json'), JSON.stringify({schemaVersions: {}}))
 
     // When
     const app = await load(tmpDir)
@@ -300,7 +305,7 @@ scopes = "read_products"
     let blockConfiguration = `
       name = "my-function-1"
       type = "payment_methods"
-      title = "my-function-1"
+      version = "2"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -311,13 +316,15 @@ scopes = "read_products"
     blockConfiguration = `
       name = "my-function-2"
       type = "product_discounts"
-      title = "my-function-2"
+      version = "2"
       `
     await writeBlockConfig({
       blockType: 'function',
       blockConfiguration,
       name: 'my-function-2',
     })
+    await file.write(path.join(blockPath('my-function-1'), 'metadata.json'), JSON.stringify({schemaVersions: {}}))
+    await file.write(path.join(blockPath('my-function-2'), 'metadata.json'), JSON.stringify({schemaVersions: {}}))
 
     // When
     const app = await load(tmpDir)
@@ -333,6 +340,25 @@ scopes = "read_products"
     expect(functions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
     expect(functions[0].localIdentifier).toBe('my-function-1')
     expect(functions[1].localIdentifier).toBe('my-function-2')
+  })
+
+  it(`throws an error when the function's metadat.json file is missing`, async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      name = "my-function"
+      type = "payment_methods"
+      version = "2"
+      `
+    await writeBlockConfig({
+      blockType: 'function',
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file at .+metadata\.json/)
   })
 })
 
