@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.0.2
+
+### Patch Changes
+
+- 91e25520: Fix an issue where CLI checks for a Ruby env even if not needed (no theme extension present)
+- 79cb9f72: Add manual matching for extensions IDs when deploying
+- 7f783134: Rename Beacon to WebPixel and add deploy configuration
+
 ## 3.0.1
 
 ### Patch Changes

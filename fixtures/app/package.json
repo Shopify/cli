@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "main": "web/backend/index.js",
   "license": "UNLICENSED",
   "private": true,
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@shopify/admin-ui-extensions-react": "^1.0.1",
-    "@shopify/app": "3.0.1",
+    "@shopify/app": "3.0.2",
     "@shopify/cli": "3.0.1",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.3",
     "react": "^18.1.0"
