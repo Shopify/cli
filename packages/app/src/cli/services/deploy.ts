@@ -20,9 +20,26 @@ interface DeployOptions {
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
+
+  /** If true, show the env vars required by the web component */
+  outputWebEnv: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {
+  if (options.outputWebEnv) {
+    output.newline()
+    output.info(
+      output.content`Environment variables expected by the web app:
+  - ${output.token.green('SHOPIFY_API_KEY')}: API key for your Shopify app
+  - ${output.token.green('SHOPIFY_API_SECRET')}: API secret for your Shopify app
+  - ${output.token.green('SCOPES')}: Scopes required by your Shopify app
+  - ${output.token.green('HOST')}: Hostname of your app, do not add a scheme or trailing slashes
+  - ${output.token.green('BACKEND_PORT')}: Port on which your server will run
+      `,
+    )
+    return
+  }
+
   // eslint-disable-next-line prefer-const
   let {app, identifiers, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app

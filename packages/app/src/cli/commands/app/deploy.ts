@@ -16,12 +16,19 @@ export default class Deploy extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'output-web-env': Flags.boolean({
+      hidden: false,
+      description: 'Display environment values for web app deployment.',
+      env: 'SHOPIFY_FLAG_OUTPUT_WEB_ENV',
+      default: false,
+    }),
   }
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Deploy)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
-    await deploy({app, reset: flags.reset})
+    await deploy({app, reset: flags.reset, outputWebEnv: flags['output-web-env']})
   }
 }

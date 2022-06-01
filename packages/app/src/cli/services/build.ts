@@ -11,12 +11,12 @@ interface BuildOptions {
   apiKey?: string
 }
 
-async function build({app, skipDependenciesInstallation, apiKey = null}: BuildOptions) {
+async function build({app, skipDependenciesInstallation, apiKey = undefined}: BuildOptions) {
   if (!skipDependenciesInstallation) {
     await installAppDependencies(app)
   }
 
-  const env = {}
+  const env: {SHOPIFY_API_KEY?: string} = {}
   if (apiKey) {
     env.SHOPIFY_API_KEY = apiKey
   }

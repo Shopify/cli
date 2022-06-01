@@ -17,10 +17,11 @@ export default class Build extends Command {
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     'api-key': Flags.string({
       hidden: false,
       description: 'Shopify API key to use when building the React frontend.',
-      env: 'SHOPIFY_API_KEY',
+      env: 'SHOPIFY_FLAG_API_KEY',
     }),
   }
 
