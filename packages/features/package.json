@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@types/cucumber": "^7.0.0",
-    "@cucumber/cucumber": "^8.1.2",
+    "@cucumber/cucumber": "^8.2.2",
     "cucumber-junit-formatter": "^0.2.2",
     "@cucumber/pretty-formatter": "1.0.0-alpha.2",
     "cucumber-pretty": "^6.0.1",
