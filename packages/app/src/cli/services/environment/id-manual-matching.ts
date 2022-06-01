@@ -19,7 +19,7 @@ export type ManualMatchResult =
  * @param remoteExtensions {ExtensionRegistration[]} The remote extensions to match
  * @returns {Promise<ManualMatchResult>} The result of the manual matching
  */
-export async function manualMatch(
+export async function manualMatchIds(
   localExtensions: Extension[],
   remoteExtensions: ExtensionRegistration[],
 ): Promise<ManualMatchResult> {
@@ -46,12 +46,15 @@ export async function selectRegistrationPrompt(
   extension: Extension,
   registrations: ExtensionRegistration[],
 ): Promise<ExtensionRegistration> {
-  const registrationList = registrations.map((reg) => ({name: `${reg.title} (ID: ${reg.id})`, value: reg.uuid}))
+  const registrationList = registrations.map((reg) => ({
+    name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners)`,
+    value: reg.uuid,
+  }))
   registrationList.push({name: 'Create new extension', value: 'create'})
   const questions: ui.Question = {
     type: 'autocomplete',
     name: 'uuid',
-    message: `To which extension would you like to connect "${extension.localIdentifier}"?`,
+    message: `How would you like to deploy your "${extension.localIdentifier}"?`,
     choices: registrationList,
   }
   const choice: {uuid: string} = await ui.prompt([questions])

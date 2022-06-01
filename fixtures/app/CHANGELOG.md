@@ -1,5 +1,16 @@
 # app
 
+## 0.1.15
+
+### Patch Changes
+
+- 9d324502: Add locale configuration to checkout_ui_extensions
+- Updated dependencies [b911cfa2]
+- Updated dependencies [2044f14c]
+- Updated dependencies [9d324502]
+  - @shopify/cli@3.0.1
+  - @shopify/app@3.0.1
+
 ## 0.1.14
 
 ### Patch Changes

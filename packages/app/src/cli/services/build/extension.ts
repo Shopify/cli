@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {App, UIExtension} from '../../models/app/app'
+import {App, UIExtension, ThemeExtension} from '../../models/app/app'
 import {extensionConfig} from '../../utilities/extensions/configuration'
-import {error, yaml} from '@shopify/cli-kit'
+import {error, ruby, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionBuildOptions {
@@ -25,24 +25,48 @@ export interface ExtensionBuildOptions {
   buildDirectory?: string
 
   /**
-   * The extension to be built.
-   */
-  extensions: UIExtension[]
-
-  /**
-   * The app that contains the extension.
+   * The app that contains the extensions.
    */
   app: App
 }
 
+export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
+  /**
+   * The UI extensions to be built.
+   */
+  extensions: ThemeExtension[]
+}
+
 /**
- * It builds an extension.
- * @param extension {UIExtension} The extension to build.
- * @param options {ExtensionBuildOptions} Build options.
+ * It builds the theme extensions.
+ * @param options {ThemeExtensionBuildOptions} Build options.
  */
-export async function buildExtension(options: ExtensionBuildOptions): Promise<void> {
-  options.stdout.write(`Building extension...`)
-  const stdin = yaml.encode(await extensionConfig({includeResourceURL: false, ...options}))
+export async function buildThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
+  options.stdout.write(`Building theme extensions...`)
+  const themeDirectories = options.extensions.map((extension) => extension.directory)
+  await ruby.execThemeCheckCLI({
+    directories: themeDirectories,
+    args: ['-C', ':theme_app_extension'],
+    stdout: options.stdout,
+    stderr: options.stderr,
+  })
+}
+
+export interface UiExtensionBuildOptions extends ExtensionBuildOptions {
+  /**
+   * The UI extensions to be built.
+   */
+  extensions: UIExtension[]
+}
+
+/**
+ * It builds the UI extensions.
+ * @param options {UiExtensionBuildOptions} Build options.
+ */
+export async function buildUIExtensions(options: UiExtensionBuildOptions): Promise<void> {
+  options.stdout.write(`Building UI extensions...`)
+  const fullOptions = {...options, extensions: options.extensions, includeResourceURL: false}
+  const stdin = yaml.encode(await extensionConfig(fullOptions))
   await runGoExtensionsCLI(['build', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
