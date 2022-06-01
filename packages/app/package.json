@@ -29,7 +29,7 @@
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "1.7.0",
-    "@shopify/shopify-cli-extensions": "^0.2.0",
+    "@shopify/shopify-cli-extensions": "^0.2.1",
     "fastify": "^4.0.0-rc.2"
   },
   "peerDependencies": {
