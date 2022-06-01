@@ -4,7 +4,7 @@ version = "2"
 configuration_ui = true
 
 [commands]
-build = "touch ./dist/index.wasm"
+build = "echo 'building'"
 
 [meta_object]
 type = "object"

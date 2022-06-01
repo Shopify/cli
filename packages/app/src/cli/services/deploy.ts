@@ -44,16 +44,19 @@ export const deploy = async (options: DeployOptions) => {
 
     output.newline()
     output.info('Summary')
-    const outputDeployMessage = (extension: Extension) => {
+    const outputDeployedButNotLiveMessage = (extension: Extension) => {
       output.info(
         output.content`${output.token.magenta('✔')} ${
           extension.localIdentifier
         } is deployed to Shopify but not yet live`,
       )
     }
-    app.extensions.ui.forEach(outputDeployMessage)
-    app.extensions.theme.forEach(outputDeployMessage)
-    app.extensions.function.forEach(outputDeployMessage)
+    const outputDeployedAndLivedMessage = (extension: Extension) => {
+      output.info(output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is live`)
+    }
+    app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
+    app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
+    app.extensions.function.forEach(outputDeployedButNotLiveMessage)
   })
 }
 
