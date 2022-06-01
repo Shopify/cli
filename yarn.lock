@@ -1828,10 +1828,10 @@
   resolved "https://registry.yarnpkg.com/@shopify/prettier-config/-/prettier-config-1.1.2.tgz#612f87c0cd1196e8b43c85425e587d0fa7f1172d"
   integrity sha512-5ugCL9sPGzmOaZjeRGaWUWhHgAbemrS6z+R7v6gwiD+BiqSeoFhIY+imLpfdFCVpuOGalpHeCv6o3gv++EHs0A==
 
-"@shopify/shopify-cli-extensions@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-0.2.0.tgz#23f15c95c79abfe294ab5e48eb55df0a144ad3da"
-  integrity sha512-622Z4O8C+vMnocYw+vfiCKUemdThmVqT/GVx9MF8OY+n/NwQGTR+1s0mqNpxNNvoP0ThuzKFqqGNuAhtIXnF2g==
+"@shopify/shopify-cli-extensions@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-0.2.1.tgz#5d6177c3530a75ea2b7c9888efaa7e8f449276cb"
+  integrity sha512-XHFedopNSSozL3Kqd9NVjklNmdQf3sIFNept+IsXg4Fd8snU2grJV8jsB1+QJqVdrItq50MXbDdg5qSX4oKkNw==
   dependencies:
     "@luckycatfactory/esbuild-graphql-loader" "^3.6.0"
     esbuild "^0.12.22"
