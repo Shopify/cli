@@ -341,6 +341,25 @@ scopes = "read_products"
     expect(functions[0].localIdentifier).toBe('my-function-1')
     expect(functions[1].localIdentifier).toBe('my-function-2')
   })
+
+  it(`throws an error when the function's metadat.json file is missing`, async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      name = "my-function"
+      type = "payment_methods"
+      version = "2"
+      `
+    await writeBlockConfig({
+      blockType: 'function',
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file at .+metadata\.json/)
+  })
 })
 
 describe('updateAppIdentifiers', () => {

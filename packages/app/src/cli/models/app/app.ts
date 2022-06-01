@@ -62,8 +62,8 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
-  configuration: schema.define.any(),
   /* eslint-disable @typescript-eslint/naming-convention */
+  'meta-object': schema.define.any(),
   'configuration-ui': schema.define.boolean().optional().default(true),
   'app-bridge-create-path': schema.define.string().optional(),
   'app-bridge-details-path': schema.define.string().optional(),
