@@ -18,6 +18,7 @@ async function dev({directory, force, host}: DevOptions) {
 
   await server.listen()
   server.printUrls()
+  server.config.logger.info('')
 }
 
 export default dev
