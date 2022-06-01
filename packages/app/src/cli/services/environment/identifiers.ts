@@ -1,8 +1,9 @@
 import {automaticMatchmaking} from './id-matching'
+import {manualMatchIds} from './id-manual-matching'
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
-import {error, session} from '@shopify/cli-kit'
+import {error, output, session} from '@shopify/cli-kit'
 
 const WrongExtensionNumberError = (remote: number, local: number) => {
   return new error.Abort(
@@ -17,8 +18,8 @@ const NoLocalExtensionsError = () => {
 
 const ManualMatchRequired = () => {
   return new error.Abort(
-    'Manual matching is required',
-    'We are working on a a manual solution for this case, coming soon!',
+    'All remote extensions must be connected to a local extension in your project',
+    'Please check that your local project includes all extensions and execute deploy again',
   )
 }
 
@@ -71,12 +72,17 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   }
 
   let validMatches = match.identifiers ?? {}
+  const extensionsToCreate = match.toCreate ?? []
+
   if (match.toManualMatch.local.length > 0) {
-    throw ManualMatchRequired()
+    const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
+    if (matchResult.result === 'pending-remote') throw ManualMatchRequired()
+    validMatches = {...validMatches, ...matchResult.identifiers}
+    extensionsToCreate.push(...matchResult.toCreate)
   }
 
-  if (match.toCreate.length > 0) {
-    const newIdentifiers = await createExtensions(match.toCreate, options.appId)
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
     validMatches = {...validMatches, ...newIdentifiers}
   }
 
@@ -90,6 +96,7 @@ async function createExtensions(extensions: Extension[], appId: string) {
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
+    output.completed(`Created extension ${extension.localIdentifier}`)
     result[extension.localIdentifier] = registration.uuid
   }
   return result

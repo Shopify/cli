@@ -65,7 +65,8 @@ export interface UiExtensionBuildOptions extends ExtensionBuildOptions {
  */
 export async function buildUIExtensions(options: UiExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Building UI extensions...`)
-  const stdin = yaml.encode(await extensionConfig({...options, extensions: options.extensions}))
+  const fullOptions = {...options, extensions: options.extensions, includeResourceURL: false}
+  const stdin = yaml.encode(await extensionConfig(fullOptions))
   await runGoExtensionsCLI(['build', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,

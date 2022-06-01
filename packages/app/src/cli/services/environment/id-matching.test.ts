@@ -128,6 +128,22 @@ describe('automaticMatchmaking: case 3 some local extensions, no remote ones', (
   })
 })
 
+describe('automaticMatchmaking: case 3b some local extensions of the same type, no remote ones', () => {
+  it('success and creates all local extensions', async () => {
+    // When
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [], {})
+
+    // Then
+    const expected: MatchResult = {
+      result: 'ok',
+      identifiers: {},
+      toCreate: [EXTENSION_A, EXTENSION_A_2],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+})
+
 describe('automaticMatchmaking: case 4 same number of extensions local and remote with matching types', () => {
   it('suceeds automatically', async () => {
     // When

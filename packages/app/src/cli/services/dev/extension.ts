@@ -57,7 +57,7 @@ export interface ExtensionDevOptions {
 }
 
 export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
-  const config = await extensionConfig(options)
+  const config = await extensionConfig({includeResourceURL: true, ...options})
   const stdin = yaml.encode(config)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,

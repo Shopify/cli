@@ -74,6 +74,7 @@ describe('extensionConfig', () => {
       url: 'url',
       port: 8000,
       storeFqdn: 'storeFqdn',
+      includeResourceURL: true,
     }
 
     // When
