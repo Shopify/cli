@@ -1,8 +1,8 @@
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {uploadFunctionExtensions} from './deploy/upload'
+import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import {App, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
+import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {path, output, temporary, error} from '@shopify/cli-kit'
@@ -43,7 +43,7 @@ export const deploy = async (options: DeployOptions) => {
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
-    // await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+    await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     // eslint-disable-next-line require-atomic-updates
     identifiers = await uploadFunctionExtensions(app.extensions.function, {apiKey, identifiers, token})
     // eslint-disable-next-line require-atomic-updates
@@ -51,13 +51,16 @@ export const deploy = async (options: DeployOptions) => {
 
     output.newline()
     output.info('Summary')
-    app.extensions.ui.forEach((extension) => {
+    const outputDeployMessage = (extension: Extension) => {
       output.info(
-        output.content`${output.token.magenta('✔')} ${path.basename(
-          extension.directory,
-        )} is deployed to Shopify but not yet live`,
+        output.content`${output.token.magenta('✔')} ${
+          extension.localIdentifier
+        } is deployed to Shopify but not yet live`,
       )
-    })
+    }
+    app.extensions.ui.forEach(outputDeployMessage)
+    app.extensions.theme.forEach(outputDeployMessage)
+    app.extensions.function.forEach(outputDeployMessage)
   })
 }
 

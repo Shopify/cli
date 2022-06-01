@@ -114,19 +114,22 @@ export async function uploadFunctionExtensions(
     // eslint-disable-next-line require-atomic-updates
     identifiers = {
       ...identifiers,
-      ...Object.fromEntries(
-        await Promise.all(
-          extensions.map(async (extension) => {
-            const identifierKey = extension.localIdentifier
-            const remoteIdentifier = await uploadFunctionExtension(extension, {
-              apiKey: options.apiKey,
-              token: options.token,
-              identifier: identifiers.extensions[extension.localIdentifier],
-            })
-            return [identifierKey, remoteIdentifier]
-          }),
+      extensions: {
+        ...identifiers.extensions,
+        ...Object.fromEntries(
+          await Promise.all(
+            extensions.map(async (extension) => {
+              const identifierKey = extension.localIdentifier
+              const remoteIdentifier = await uploadFunctionExtension(extension, {
+                apiKey: options.apiKey,
+                token: options.token,
+                identifier: identifiers.extensions[extension.localIdentifier],
+              })
+              return [identifierKey, remoteIdentifier]
+            }),
+          ),
         ),
-      ),
+      },
     }
   } catch (error) {
     abortController.abort()
@@ -176,14 +179,13 @@ async function uploadFunctionExtension(
     },
   }
   const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(
-    options.token,
+    options.apiKey,
     query,
     options.token,
     variables,
   )
   const userErrors = res.data.appScriptSet.userErrors
   if (!userErrors) {
-    console.error(userErrors)
     throw new error.AbortSilent()
   }
   const uuid = res.data.appScriptSet.appScript.uuid

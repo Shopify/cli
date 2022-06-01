@@ -17,7 +17,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
 
     await output.concurrent([
       {
-        prefix: 'ui-extensions',
+        prefix: 'theme_extensions',
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           await buildThemeExtensions({
             app: options.app,
@@ -29,7 +29,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
         },
       },
       {
-        prefix: 'extensions',
+        prefix: 'ui_extensions',
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           /**
            * For deployment we want the build process to ouptut the artifacts directly in the directory
@@ -51,7 +51,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
       },
       ...options.app.extensions.function.map((functionExtension) => {
         return {
-          prefix: functionExtension.localIdentifier,
+          prefix: `function_${functionExtension.localIdentifier}`,
           action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
             await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
           },
