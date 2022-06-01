@@ -41,7 +41,9 @@ The Admin GraphQL API responded unsuccessfully with the HTTP status ${error.resp
 
 ${colorJson(error.response.errors)}
       `
-      throw new Abort(errorMessage)
+      const abortError = new Abort(errorMessage)
+      abortError.stack = error.stack
+      throw abortError
     } else {
       throw error
     }
