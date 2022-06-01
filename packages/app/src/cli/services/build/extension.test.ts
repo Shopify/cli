@@ -34,8 +34,7 @@ describe('buildFunctionExtension', () => {
         type: 'product_discounts',
         description: '',
         commands: {},
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        'configuration-ui': true,
+        configurationUi: true,
         version: '2',
       },
       metadata: {

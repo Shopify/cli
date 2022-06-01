@@ -97,15 +97,13 @@ export interface Extension {
 
 const FunctionExtensionMetadataSchema = schema.define.object({
   flags: schema.define
-    /* eslint-disable @typescript-eslint/naming-convention */
     .object({
-      'use-msgpack': schema.define.boolean().optional(),
+      useMsgpack: schema.define.boolean().optional(),
     })
     .default({
-      'use-msgpack': false,
+      useMsgpack: false,
     })
     .optional(),
-  /* eslint-enable @typescript-eslint/naming-convention */
   schemaVersions: schema.define.object({}).catchall(
     schema.define.object({
       major: schema.define.number(),

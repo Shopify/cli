@@ -86,9 +86,6 @@ interface UploadFunctionExtensionsOptions {
   /** The token to send authenticated requests to the partners' API  */
   token: string
 
-  // Application API key
-  apiKey: string
-
   // Set of local identifiers
   identifiers: Identifiers
 }
@@ -121,7 +118,7 @@ export async function uploadFunctionExtensions(
             extensions.map(async (extension) => {
               const identifierKey = extension.localIdentifier
               const remoteIdentifier = await uploadFunctionExtension(extension, {
-                apiKey: options.apiKey,
+                apiKey: options.identifiers.app,
                 token: options.token,
                 identifier: identifiers.extensions[extension.localIdentifier],
               })
@@ -157,7 +154,7 @@ async function uploadFunctionExtension(
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = fs.readFileSync(extension.buildWasmPath, 'binary')
-  await fetch(url, {body: functionContent, headers, method: 'PUT'})
+  await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const query = api.graphql.AppFunctionSetMutation
   const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
   const schemaMajorVersion = schemaVersions?.major
