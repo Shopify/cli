@@ -106,43 +106,32 @@ export async function uploadFunctionExtensions(
   options: UploadFunctionExtensionsOptions,
 ): Promise<Identifiers> {
   let identifiers = options.identifiers
-  const abortController = new AbortController()
-  try {
-    // eslint-disable-next-line require-atomic-updates
-    identifiers = {
-      ...identifiers,
-      extensions: {
-        ...identifiers.extensions,
-        ...Object.fromEntries(
-          await Promise.all(
-            extensions.map(async (extension) => {
-              const identifierKey = extension.localIdentifier
-              const remoteIdentifier = await uploadFunctionExtension(extension, {
-                apiKey: options.identifiers.app,
-                token: options.token,
-                identifier: identifiers.extensions[extension.localIdentifier],
-              })
-              return [identifierKey, remoteIdentifier]
-            }),
-          ),
+  // eslint-disable-next-line require-atomic-updates
+  identifiers = {
+    ...identifiers,
+    extensions: {
+      ...identifiers.extensions,
+      ...Object.fromEntries(
+        await Promise.all(
+          extensions.map(async (extension) => {
+            const identifierKey = extension.localIdentifier
+            const remoteIdentifier = await uploadFunctionExtension(extension, {
+              apiKey: options.identifiers.app,
+              token: options.token,
+              identifier: identifiers.extensions[extension.localIdentifier],
+            })
+            return [identifierKey, remoteIdentifier]
+          }),
         ),
-      },
-    }
-  } catch (error) {
-    abortController.abort()
-    throw error
+      ),
+    },
   }
   return identifiers
 }
 
 interface UploadFunctionExtensionOptions {
-  // Application API key
   apiKey: string
-
-  // The remote unique identifier of the extension
   identifier?: string
-
-  /** The token to send authenticated requests to the partners' API  */
   token: string
 }
 
