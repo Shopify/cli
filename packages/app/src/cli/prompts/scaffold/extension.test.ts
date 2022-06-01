@@ -1,5 +1,5 @@
 import scaffoldExtensionPrompt from './extension'
-import {extensions} from '../../constants'
+import {extensionTypesHumanKeys} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
 
 describe('extension prompt', () => {
@@ -20,7 +20,7 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: extensions.types,
+        choices: Object.values(extensionTypesHumanKeys.types).sort(),
       },
       {
         type: 'input',
@@ -34,7 +34,7 @@ describe('extension prompt', () => {
 
   it('when name is passed', async () => {
     const prompt = vi.fn()
-    const answers = {}
+    const answers = {name: 'my-special-extension'}
     const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: []}
 
     // Given
@@ -49,7 +49,7 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: extensions.types,
+        choices: Object.values(extensionTypesHumanKeys.types).sort(),
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -57,7 +57,7 @@ describe('extension prompt', () => {
 
   it('when extensionTypesAlreadyAtQuota is not empty', async () => {
     const prompt = vi.fn()
-    const answers = {}
+    const answers = {name: 'my-special-extension'}
     const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: ['theme']}
 
     // Given
@@ -72,7 +72,9 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: extensions.types.filter((type) => type !== 'theme'),
+        choices: Object.values(extensionTypesHumanKeys.types)
+          .sort()
+          .filter((type) => type !== 'theme app extension'),
       },
     ])
     expect(got).toEqual({...options, ...answers})

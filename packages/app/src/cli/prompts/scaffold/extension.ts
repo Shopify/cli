@@ -1,4 +1,10 @@
-import {extensions, ExtensionTypes} from '../../constants'
+import {
+  extensions,
+  ExtensionTypes,
+  ExtensionTypesHumanKeys,
+  getExtensionOutputConfig,
+  getExtensionTypeFromHumanKey,
+} from '../../constants'
 import {ui} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
@@ -9,7 +15,7 @@ interface ScaffoldExtensionOptions {
 
 interface ScaffoldExtensionOutput {
   name: string
-  extensionType: ExtensionTypes
+  extensionType: ExtensionTypes | ExtensionTypesHumanKeys
 }
 
 const scaffoldExtensionPrompt = async (
@@ -22,7 +28,10 @@ const scaffoldExtensionPrompt = async (
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type)),
+      choices: extensions.types
+        .filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+        .map((type) => getExtensionOutputConfig(type).humanKey)
+        .sort(),
     })
   }
   if (!options.name) {
@@ -34,7 +43,11 @@ const scaffoldExtensionPrompt = async (
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
-  return {...options, ...promptOutput}
+  return {
+    ...options,
+    name: promptOutput.name,
+    extensionType: getExtensionTypeFromHumanKey(promptOutput.extensionType as ExtensionTypesHumanKeys),
+  }
 }
 
 export default scaffoldExtensionPrompt

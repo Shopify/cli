@@ -1,5 +1,5 @@
 import AppScaffoldExtension from './extension'
-import {getExtensionOutputConfig} from '../../../constants'
+import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants'
 import {App, load as loadApp} from '../../../models/app/app'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
@@ -18,20 +18,20 @@ describe('after extension command finishes correctly', () => {
   it('displays a confirmation message with only the human-facing name', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Human Key',
+      humanKey: 'checkout UI',
     })
 
     // When
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatch('Find your Human Key extension in your extensions folder.')
+    expect(outputInfo.info()).toMatch('Find your checkout UI extension in your extensions folder.')
   })
 
   it('displays a confirmation message with human-facing name and help url', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Human Key',
+      humanKey: 'checkout UI',
       helpURL: 'http://help.com',
     })
 
@@ -40,14 +40,14 @@ describe('after extension command finishes correctly', () => {
 
     // Then
     expect(outputInfo.info()).toMatch(
-      'Find your Human Key extension in your extensions folder.\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
+      'Find your checkout UI extension in your extensions folder.\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
     )
   })
 
   it('displays a confirmation message with human-facing name and addtional help', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Human Key',
+      humanKey: 'checkout UI',
       additionalHelp: 'Additional help',
     })
 
@@ -55,13 +55,13 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatch('Find your Human Key extension in your extensions folder.\nAdditional help')
+    expect(outputInfo.info()).toMatch('Find your checkout UI extension in your extensions folder.\nAdditional help')
   })
 
   it('displays a confirmation message with human-facing name , help url and additional help', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Human Key',
+      humanKey: 'checkout UI',
       helpURL: 'http://help.com',
       additionalHelp: 'Additional help',
     })
@@ -71,12 +71,16 @@ describe('after extension command finishes correctly', () => {
 
     // Then
     expect(outputInfo.info()).toMatch(
-      'Find your Human Key extension in your extensions folder.\nAdditional help\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
+      'Find your checkout UI extension in your extensions folder.\nAdditional help\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
     )
   })
 })
 
-function mockSuccessfulCommandExecution(outputConfig: {humanKey: string; helpURL?: string; additionalHelp?: string}) {
+function mockSuccessfulCommandExecution(outputConfig: {
+  humanKey: ExtensionTypesHumanKeys
+  helpURL?: string
+  additionalHelp?: string
+}) {
   const appRoot = '/'
   const app: App = {
     name: 'myapp',
