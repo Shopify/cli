@@ -174,8 +174,8 @@ async function uploadFunctionExtension(
     configurationDefinition: JSON.stringify(extension.configuration['meta-object'] ?? {}),
     moduleUploadUrl: url,
     appBridge: {
-      detailsPath: extension.configuration['app-bridge-details-path'],
-      createPath: extension.configuration['app-bridge-create-path'],
+      detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+      createPath: (extension.configuration.ui?.paths ?? {}).create,
     },
   }
   const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(
