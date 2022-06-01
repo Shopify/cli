@@ -37,7 +37,7 @@
     "@shopify/mini-oxygen": "^0.0.5",
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
-    "vite": "^2.9.6"
+    "vite": "^2.9.9"
   },
   "peerDependencies": {
     "@shopify/cli-kit": "3.0.1"
@@ -78,7 +78,7 @@
     "sirv": "^1.0.14",
     "typescript": "^4.6.4",
     "unconfig": "^0.3.2",
-    "vite": "^2.9.6",
+    "vite": "^2.9.9",
     "vitest": "0.13.1"
   },
   "engine-strict": true,
