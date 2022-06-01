@@ -79,7 +79,7 @@
     "fs-extra": "^10.0.0",
     "get-port-please": "^2.5.0",
     "graphql": "^16.4.0",
-    "graphql-request": "^4.2.0",
+    "graphql-request": "^4.3.0",
     "js-yaml": "^4.1.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",
@@ -92,7 +92,7 @@
     "tempy": "^2.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
-    "vitest": "0.10.0",
+    "vitest": "0.13.1",
     "zod": "^3.17.3"
   }
 }
