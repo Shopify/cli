@@ -3,7 +3,7 @@ import {manualMatchIds} from './id-manual-matching'
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
-import {error, output, session} from '@shopify/cli-kit'
+import {error, output, session, ui} from '@shopify/cli-kit'
 
 const NoLocalExtensionsError = () => {
   return new error.Abort('There are no extensions to deploy')
@@ -23,6 +23,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   app: App
   token: string
   appId: string
+  appName: string
   envIdentifiers: Partial<Identifiers>
 }
 
@@ -44,7 +45,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     ...options.app.extensions.theme,
   ]
 
-  const GenericError = () => DeployError(options.app.name, options.app.dependencyManager)
+  const GenericError = () => DeployError(options.appName, options.app.dependencyManager)
 
   // We need local extensions to deploy
   if (localExtensions.length === 0) {
@@ -61,8 +62,17 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   if (match.result === 'invalid-environment') {
     throw GenericError()
   }
-
   let validMatches = match.identifiers ?? {}
+
+  if (match.pendingConfirmation.length > 0) {
+    for (const pending of match.pendingConfirmation) {
+      // eslint-disable-next-line no-await-in-loop
+      const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
+      if (!confirmed) throw new error.AbortSilent()
+      validMatches[pending.extension.localIdentifier] = pending.registration.uuid
+    }
+  }
+
   const extensionsToCreate = match.toCreate ?? []
 
   if (match.toManualMatch.local.length > 0) {
@@ -91,4 +101,19 @@ async function createExtensions(extensions: Extension[], appId: string) {
     result[extension.localIdentifier] = registration.uuid
   }
   return result
+}
+
+async function matchConfirmationPrompt(extension: Extension, registration: ExtensionRegistration) {
+  const choices = [
+    {name: `Yes, that's right`, value: 'yes'},
+    {name: `No, cancel deployment`, value: 'no'},
+  ]
+  const questions: ui.Question = {
+    type: 'autocomplete',
+    name: 'value',
+    message: `Deploy ${extension.localIdentifier} (local name) as ${registration.title} (name on Shopify Partners, ID: ${registration.id})?`,
+    choices,
+  }
+  const choice: {value: string} = await ui.prompt([questions])
+  return choice.value === 'yes'
 }

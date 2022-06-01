@@ -144,7 +144,13 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
   }
 
-  identifiers = await ensureDeploymentIdsPresence({app: options.app, appId: partnersApp.apiKey, token, envIdentifiers})
+  identifiers = await ensureDeploymentIdsPresence({
+    app: options.app,
+    appId: partnersApp.apiKey,
+    appName: partnersApp.title,
+    token,
+    envIdentifiers,
+  })
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
