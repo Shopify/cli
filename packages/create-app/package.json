@@ -46,7 +46,7 @@
     ]
   },
   "dependencies": {
-    "@bugsnag/js": "^7.16.2",
+    "@bugsnag/js": "^7.16.7",
     "@oclif/core": "1.7.0",
     "@shopify/cli-kit": "3.0.1"
   },
