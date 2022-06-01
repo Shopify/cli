@@ -1,13 +1,13 @@
 // CLI
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment} from '@shopify/cli-kit'
+import {constants, error as kitError, environment} from '@shopify/cli-kit'
 
 function runCLI() {
   if (environment.local.isDebug()) {
     settings.debug = true
   } else {
-    Bugsnag.start({apiKey: '9e1e6889176fd0c795d5c659225e0fae', logger: null})
+    Bugsnag.start({apiKey: '9e1e6889176fd0c795d5c659225e0fae', logger: null, appVersion: constants.versions.cli})
   }
 
   run(undefined, import.meta.url)
