@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "vitest": "0.13.1",
-    "ws": "^8.4.2",
+    "ws": "^8.7.0",
     "@fastify/http-proxy": "^8.0.1"
   }
 }
