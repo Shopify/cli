@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import {buildThemeExtensions, buildUIExtensions} from './build/extension'
-=======
-import {buildUIExtensions, buildFunctionExtension} from './build/extension'
->>>>>>> 0b86650f (Add support for building functions)
+import {buildThemeExtensions, buildUIExtensions, buildFunctionExtension} from './build/extension'
 import buildWeb from './web'
 import {installAppDependencies} from './dependencies'
 import {App, Web} from '../models/app/app'
@@ -28,7 +24,6 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
       }
     }),
     {
-<<<<<<< HEAD
       prefix: 'theme_extensions',
       action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
         await buildThemeExtensions({
@@ -50,18 +45,13 @@ async function build({app, skipDependenciesInstallation}: BuildOptions) {
           stderr,
           signal,
         })
-=======
-      prefix: 'ui-extensions',
-      action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-        await buildUIExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal})
->>>>>>> 0b86650f (Add support for building functions)
       },
     },
     ...app.extensions.function.map((functionExtension) => {
       return {
         prefix: functionExtension.localIdentifier,
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-          await buildFunctionExtension(functionExtension, {stdout, stderr, signal})
+          await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app})
         },
       }
     }),
