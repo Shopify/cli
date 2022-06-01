@@ -49,6 +49,11 @@ const UIExtensionConfigurationSchema = schema.define.object({
     .default([]),
   extensionPoints: schema.define.array(schema.define.string()).optional(),
   capabilities: schema.define.any().optional(),
+
+  // Only for WebPixel
+  runtimeContext: schema.define.string().optional(),
+  version: schema.define.string().optional(),
+  configuration: schema.define.any().optional(),
 })
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
@@ -595,7 +600,8 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'CHECKOUT_POST_PURCHASE'
     case 'theme':
       return 'THEME_APP_EXTENSION'
-    case 'beacon_extension':
+    case 'web_pixel_extension':
+      return 'WEB_PIXEL_EXTENSION'
     case 'product_discounts':
     case 'order_discounts':
     case 'shipping_discounts':

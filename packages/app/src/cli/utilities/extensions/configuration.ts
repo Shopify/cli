@@ -77,7 +77,7 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
       return {url: `/cart/${result}:1`}
     }
     case 'checkout_post_purchase':
-    case 'beacon_extension':
+    case 'web_pixel_extension':
       // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
       // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
       return {url: 'invalid_url'}
