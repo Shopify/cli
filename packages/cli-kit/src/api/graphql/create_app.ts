@@ -36,7 +36,7 @@ export interface CreateAppQueryVariables {
   title: string
   appUrl: string
   redir: string[]
-  type: 'undecided'
+  type: string
 }
 
 export interface CreateAppQuerySchema {

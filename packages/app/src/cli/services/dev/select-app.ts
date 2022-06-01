@@ -41,6 +41,7 @@ export async function createApp(orgId: string, app: App, token: string): Promise
     title: `${name}`,
     appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
     redir: ['http://localhost:3456'],
+    type: 'undecided',
   }
 
   const query = api.graphql.CreateAppQuery
