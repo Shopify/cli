@@ -6,6 +6,6 @@ configuration_ui = 'true'
 [commands]
 build = "touch ./dist/index.wasm"
 
-[meta_object]
+[meta]
 type = "object"
 fields = { }

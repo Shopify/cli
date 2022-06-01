@@ -1,5 +1,5 @@
 import {FunctionExtension, Identifiers} from '../../models/app/app'
-import {api, error, session, http, id} from '@shopify/cli-kit'
+import {api, error, session, http, id, output} from '@shopify/cli-kit'
 
 import {FunctionExtensionTypes} from 'cli/constants'
 import fs from 'fs'
@@ -172,7 +172,7 @@ async function uploadFunctionExtension(
     schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
     scriptConfigVersion: extension.configuration.version,
     configurationUi: extension.configuration.configuration_ui,
-    configurationDefinition: JSON.stringify(extension.configuration.meta_object ?? {}),
+    configurationDefinition: JSON.stringify(extension.configuration.meta ?? {}),
     moduleUploadUrl: url,
     appBridge: {
       detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -185,9 +185,12 @@ async function uploadFunctionExtension(
     options.token,
     variables,
   )
-  const userErrors = res.data.appScriptSet.userErrors
-  if (!userErrors) {
-    throw new error.AbortSilent()
+  const userErrors = res.data.appScriptSet.userErrors ?? []
+  if (userErrors.length !== 0) {
+    const errorMessage = `The deployment of functions failed with the following errors:
+${output.colorJson(userErrors)}
+    `
+    throw new error.Abort(errorMessage)
   }
   const uuid = res.data.appScriptSet.appScript.uuid
   return uuid
