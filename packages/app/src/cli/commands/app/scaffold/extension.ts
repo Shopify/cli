@@ -60,13 +60,13 @@ export default class AppScaffoldExtension extends Command {
 
     await scaffoldExtensionService({
       ...promptAnswers,
-      extensionType: promptAnswers.extensionType as ExtensionTypes,
+      extensionType: promptAnswers.extensionType,
       app,
       cloneUrl: flags['clone-url'],
       language: flags.language,
     })
 
-    output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType as ExtensionTypes))
+    output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))
   }
 
   /**
