@@ -63,8 +63,8 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
   /* eslint-disable @typescript-eslint/naming-convention */
-  'meta-object': schema.define.any(),
-  'configuration-ui': schema.define.boolean().optional().default(true),
+  meta_object: schema.define.unknown().optional(),
+  configuration_ui: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
       paths: schema.define
@@ -340,6 +340,7 @@ class AppLoader {
     let configuration: object
     try {
       configuration = decode(configurationContent)
+      console.log(configuration)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       // TOML errors have line, pos and col properties
@@ -371,6 +372,7 @@ class AppLoader {
     if (!configurationObject) return fallbackOutput
 
     const parseResult = schema.safeParse(configurationObject)
+
     if (!parseResult.success) {
       const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
       return this.abortOrReport(
