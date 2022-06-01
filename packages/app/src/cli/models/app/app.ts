@@ -58,7 +58,7 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
   /* eslint-disable @typescript-eslint/naming-convention */
-  meta_object: schema.define.unknown().optional(),
+  meta: schema.define.unknown().optional(),
   configuration_ui: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
