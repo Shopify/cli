@@ -42,7 +42,7 @@
     "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
-    "@typescript-eslint/parser": "^5.22.0",
+    "@typescript-eslint/parser": "^5.27.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.14.42",
     "eslint": "^8.12.0",
