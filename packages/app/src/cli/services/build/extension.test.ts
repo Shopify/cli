@@ -20,17 +20,26 @@ describe('buildFunctionExtension', () => {
   let stdout: any
   let stderr: any
   let signal: any
+  let app: any
 
   beforeEach(() => {
     stdout = vi.fn()
     stderr = {write: vi.fn()}
+    stdout = {write: vi.fn()}
     signal = vi.fn()
+    app = {}
     extension = {
       configuration: {
         name: 'MyFunction',
-        title: 'MyFunction',
         type: 'product_discounts',
+        description: '',
         commands: {},
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'configuration-ui': true,
+        version: '2',
+      },
+      metadata: {
+        schemaVersions: {},
       },
       buildWasmPath: '/test/myfunction/dist/index.wasm',
       graphQLType: 'product_discounts',
@@ -48,6 +57,7 @@ describe('buildFunctionExtension', () => {
         stdout,
         stderr,
         signal,
+        app,
       }),
     ).rejects.toEqual(new error.AbortSilent())
     expect(system.exec).not.toHaveBeenCalled()
@@ -65,6 +75,7 @@ describe('buildFunctionExtension', () => {
         stdout,
         stderr,
         signal,
+        app,
       }),
     ).rejects.toEqual(new error.AbortSilent())
     expect(system.exec).not.toHaveBeenCalled()
@@ -82,6 +93,7 @@ describe('buildFunctionExtension', () => {
         stdout,
         stderr,
         signal,
+        app,
       }),
     ).resolves.toBeUndefined()
 
