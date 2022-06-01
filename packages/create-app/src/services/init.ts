@@ -122,6 +122,8 @@ async function init(options: InitOptions) {
     await list.run()
 
     await file.move(templateScaffoldDir, outputDirectory)
+
+    await git.initializeRepository(outputDirectory)
   })
 
   output.info(output.content`

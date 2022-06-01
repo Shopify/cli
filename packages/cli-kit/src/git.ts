@@ -3,6 +3,10 @@ import git, {TaskOptions} from 'simple-git'
 
 export const factory = git
 
+export async function initializeRepository(directory: string) {
+  await git(directory).init()
+}
+
 export async function downloadRepository({repoUrl, destination}: {repoUrl: string; destination: string}) {
   const [repository, branch] = repoUrl.split('#')
   // eslint-disable-next-line @typescript-eslint/naming-convention
