@@ -1,5 +1,13 @@
 # @shopify/cli
 
+## 3.0.4
+
+### Patch Changes
+
+- Fix create-app not using 3.0.3
+- Updated dependencies
+  - @shopify/cli-kit@3.0.4
+
 ## 3.0.1
 
 ### Patch Changes
