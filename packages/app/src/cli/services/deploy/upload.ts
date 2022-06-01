@@ -189,7 +189,7 @@ ${output.colorJson(userErrors)}
     `
     throw new error.Abort(errorMessage)
   }
-  const uuid = res.data.appScriptSet.appScript.uuid
+  const uuid = res.data.appScriptSet.appScript?.uuid as string
   return uuid
 }
 

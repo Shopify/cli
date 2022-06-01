@@ -55,7 +55,7 @@ export interface AppFunctionSetMutationSchema {
         message: string
         tag: string
       }[]
-      appScript: {
+      appScript?: {
         uuid: string
         appKey: string
         configSchema: unknown

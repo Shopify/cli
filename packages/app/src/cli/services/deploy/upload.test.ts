@@ -201,7 +201,7 @@ describe('uploadFunctionExtensions', () => {
     })
   })
 
-  test('creates and uploads the function ', async () => {
+  test('throws if the response from updating the app function contains errors', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
@@ -220,12 +220,95 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const functionSetMutationResponse = {
+      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+        data: {
+          appScriptSet: {
+            userErrors: [
+              {
+                field: 'field',
+                message: 'missing field',
+                tag: 'tag',
+              },
+            ],
+          },
+        },
+      }
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+        /The deployment of functions failed with the following errors:/,
+      )
+
+      // Then
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        1,
+        identifiers.app,
+        api.graphql.ModuleUploadUrlGenerateMutation,
+        token,
+      )
+      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+        body: '',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        headers: {'Content-Type': 'application/wasm'},
+        method: 'PUT',
+      })
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        2,
+        identifiers.app,
+        api.graphql.AppFunctionSetMutation,
+        token,
+        {
+          uuid: undefined,
+          extensionPointName: 'PAYMENT_METHODS',
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          force: true,
+          schemaMajorVersion: '1',
+          schemaMinorVersion: '0',
+          scriptConfigVersion: extension.configuration.version,
+          configurationUi: extension.configuration.configurationUi,
+          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
+          moduleUploadUrl: uploadUrl,
+          appBridge: {
+            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+            createPath: (extension.configuration.ui?.paths ?? {}).create,
+          },
+        },
+      )
+    })
+  })
+
+  test('creates and uploads the function', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const uploadUrl = 'url'
+      const createdUUID = 'uuid'
+      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath, '')
+      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+        data: {
+          moduleUploadUrlGenerate: {
+            details: {
+              headers: {},
+              humanizedMaxSize: '200',
+              url: uploadUrl,
+            },
+            userErrors: [],
+          },
+        },
+      }
+      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
         data: {
           appScriptSet: {
             userErrors: [],
             appScript: {
               uuid: createdUUID,
+              appKey: identifiers.app,
+              configSchema: {},
+              title: extension.configuration.name,
+              extensionPointName: 'PAYMENT_METHODS',
             },
           },
         },
