@@ -42,6 +42,7 @@ export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
  * @param options {ThemeExtensionBuildOptions} Build options.
  */
 export async function buildThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
+  if (options.extensions.length === 0) return
   options.stdout.write(`Building theme extensions...`)
   const themeDirectories = options.extensions.map((extension) => extension.directory)
   await ruby.execThemeCheckCLI({
