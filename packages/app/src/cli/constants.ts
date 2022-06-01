@@ -46,7 +46,7 @@ export const limitedExtensions: {
   theme: ThemeExtensionTypes[]
   function: FunctionExtensionTypes[]
 } = {
-  ui: ['product_subscription', 'checkout_post_purchase'],
+  ui: ['product_subscription', 'checkout_post_purchase', 'web_pixel_extension'],
   theme: ['theme'],
   function: [],
 }
