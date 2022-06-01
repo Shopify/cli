@@ -9,7 +9,7 @@ import {path, output, temporary, error} from '@shopify/cli-kit'
 
 const WebPixelConfigError = (property: string) => {
   return new error.Abort(
-    `The web pixel extension configuration is missing the key "${property}"`,
+    `The Web Pixel Extension configuration is missing the key "${property}"`,
     `Please update your shopify.ui.extension.toml to include a valid "${property}"`,
   )
 }
