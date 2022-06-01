@@ -340,7 +340,6 @@ class AppLoader {
     let configuration: object
     try {
       configuration = decode(configurationContent)
-      console.log(configuration)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       // TOML errors have line, pos and col properties
