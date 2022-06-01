@@ -50,7 +50,7 @@
     "win32"
   ],
   "dependencies": {
-    "@oclif/core": "1.7.0",
+    "@oclif/core": "1.9.0",
     "envfile": "^6.17.0",
     "keytar": "^7.9.0",
     "open": "^8.4.0",
