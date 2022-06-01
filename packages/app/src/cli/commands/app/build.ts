@@ -17,12 +17,17 @@ export default class Build extends Command {
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
+    'api-key': Flags.string({
+      hidden: false,
+      description: 'Shopify API key to use when building the React frontend.',
+      env: 'SHOPIFY_API_KEY',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
-    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation']})
+    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})
   }
 }
