@@ -159,7 +159,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
             await file.mkdir(templateDownloadDir)
             await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
             const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            template.recursiveDirectoryCopy(origin, extensionDirectory, options)
+            await template.recursiveDirectoryCopy(origin, extensionDirectory, options)
             const configYamlPath = path.join(extensionDirectory, 'script.config.yml')
             if (await file.exists(configYamlPath)) {
               await file.remove(configYamlPath)
