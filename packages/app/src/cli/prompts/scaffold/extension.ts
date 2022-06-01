@@ -1,4 +1,4 @@
-import {extensions, ExtensionTypes} from '../../constants'
+import {extensions, ExtensionTypes, getExtensionOutputConfig} from '../../constants'
 import {ui} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
@@ -22,7 +22,13 @@ const scaffoldExtensionPrompt = async (
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type)),
+      choices: extensions.types
+        .filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+        .map((type) => ({
+          name: getExtensionOutputConfig(type).humanKey,
+          value: type,
+        }))
+        .sort((c1, c2) => c1.name.localeCompare(c2.name)),
     })
   }
   if (!options.name) {

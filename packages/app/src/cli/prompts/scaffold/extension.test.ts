@@ -1,5 +1,5 @@
 import scaffoldExtensionPrompt from './extension'
-import {extensions} from '../../constants'
+import {extensions, getExtensionOutputConfig} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
 
 describe('extension prompt', () => {
@@ -20,7 +20,7 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: extensions.types,
+        choices: buildChoices(),
       },
       {
         type: 'input',
@@ -34,7 +34,7 @@ describe('extension prompt', () => {
 
   it('when name is passed', async () => {
     const prompt = vi.fn()
-    const answers = {}
+    const answers = {name: 'my-special-extension'}
     const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: []}
 
     // Given
@@ -49,7 +49,7 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: extensions.types,
+        choices: buildChoices(),
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -57,7 +57,7 @@ describe('extension prompt', () => {
 
   it('when extensionTypesAlreadyAtQuota is not empty', async () => {
     const prompt = vi.fn()
-    const answers = {}
+    const answers = {name: 'my-special-extension'}
     const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: ['theme']}
 
     // Given
@@ -72,9 +72,21 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: extensions.types.filter((type) => type !== 'theme'),
+        choices: buildChoices().filter((choice) => choice.name !== 'theme app extension'),
       },
     ])
     expect(got).toEqual({...options, ...answers})
   })
 })
+
+const buildChoices = (): {
+  name: string
+  value: string
+}[] => {
+  return extensions.types
+    .map((type) => ({
+      name: getExtensionOutputConfig(type).humanKey,
+      value: type,
+    }))
+    .sort((c1, c2) => c1.name.localeCompare(c2.name))
+}
