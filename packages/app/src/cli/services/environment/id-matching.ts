@@ -5,6 +5,7 @@ export type MatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
+      pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
       toCreate: Extension[]
       toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
     }
@@ -75,6 +76,7 @@ export async function automaticMatchmaking(
   }
 
   const extensionsToCreate: Extension[] = []
+  const pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[] = []
 
   // For each pending local extension, evaluate if it can be automatically matched or needs to be created
   newLocalPending.forEach((extension) => {
@@ -84,9 +86,12 @@ export async function automaticMatchmaking(
     if (possibleMatches.length === 0) {
       // There are no remote extensions with the same type. We need to create a new extension
       extensionsToCreate.push(extension)
-    } else {
-      // There is a unique remote extension with the same type. We can automatically match them.
+    } else if (possibleMatches[0].title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
+      // There is a unique remote extension with the same type AND name. We can automatically match them.
       validIdentifiers[extension.localIdentifier] = possibleMatches[0].uuid
+    } else {
+      // There is a unique remote extension with the same type, but different name. We can match them but need to confirm
+      pendingConfirmation.push({extension, registration: possibleMatches[0]})
     }
   })
 
@@ -94,6 +99,7 @@ export async function automaticMatchmaking(
   return {
     result: 'ok',
     identifiers: validIdentifiers,
+    pendingConfirmation,
     toCreate: extensionsToCreate,
     toManualMatch: {local: localNeedsManualMatch, remote: remoteNeedsManualMatch},
   }

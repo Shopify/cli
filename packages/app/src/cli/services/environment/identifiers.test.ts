@@ -5,6 +5,7 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension, ExtensionRegistration} from '../dev/create-extension'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {App, UIExtension} from 'cli/models/app/app'
+import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',
@@ -86,6 +87,7 @@ const options = (extensions: UIExtension[], identifiers: any = {}) => {
     app: LOCAL_APP(extensions),
     token: 'token',
     appId: 'appId',
+    appName: 'appName',
     envIdentifiers: {extensions: identifiers},
   }
 }
@@ -95,9 +97,8 @@ beforeEach(() => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: async () => 'token',
-      },
+      session: {ensureAuthenticatedPartners: async () => 'token'},
+      ui: {prompt: vi.fn()},
     }
   })
   vi.mock('../dev/fetch')
@@ -143,7 +144,7 @@ describe('ensureDeploymentIdsPresence: more remote than local extensions', () =>
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A]))
 
     // Then
-    await expect(got).rejects.toThrow('This app has 2 registered extensions, but only 1 are locally available.')
+    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
   })
 })
 
@@ -159,7 +160,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
-    await expect(got).rejects.toThrow("We couldn't automatically match your local and remote extensions")
+    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
   })
 })
 
@@ -170,6 +171,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
       result: 'ok',
       identifiers: {},
       toCreate: [],
+      pendingConfirmation: [],
       toManualMatch: {
         local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
         remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -204,6 +206,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
       result: 'ok',
       identifiers: {},
       toCreate: [],
+      pendingConfirmation: [],
       toManualMatch: {
         local: [EXTENSION_A],
         remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -218,7 +221,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
-    await expect(got).rejects.toThrow('All remote extensions must be connected to a local extension in your project')
+    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
     expect(manualMatchIds).toBeCalledWith([EXTENSION_A], [REGISTRATION_A, REGISTRATION_A_2])
   })
 })
@@ -229,6 +232,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending some 
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
+      pendingConfirmation: [],
       toCreate: [EXTENSION_A, EXTENSION_A_2],
       toManualMatch: {
         local: [],
@@ -245,8 +249,57 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending some 
     const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
-    await expect(createExtension).toBeCalledTimes(2)
-    await expect(got).toEqual({app: 'appId', extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}})
+    expect(createExtension).toBeCalledTimes(2)
+    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}})
+  })
+})
+
+describe('ensureDeploymentIdsPresence: matchmaking returns ok with some pending confirmation', () => {
+  it('confirms the pending ones and suceeds', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'yes'})
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      result: 'ok',
+      identifiers: {},
+      pendingConfirmation: [{extension: EXTENSION_B, registration: REGISTRATION_B}],
+      toCreate: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: [REGISTRATION_B]}})
+
+    // When
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_B]))
+
+    // Then
+    expect(createExtension).not.toBeCalled()
+    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_B: 'UUID_B'}})
+  })
+})
+
+describe('ensureDeploymentIdsPresence: matchmaking returns ok with some pending confirmation', () => {
+  it('do not confirms the pending ones and fails', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'no'})
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      result: 'ok',
+      identifiers: {},
+      pendingConfirmation: [{extension: EXTENSION_B, registration: REGISTRATION_B}],
+      toCreate: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: [REGISTRATION_B]}})
+
+    // When
+    const got = ensureDeploymentIdsPresence(options([EXTENSION_B]))
+
+    // Then
+    await expect(got).rejects.toThrow()
   })
 })
 
@@ -257,6 +310,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with nothing pendi
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       toCreate: [],
+      pendingConfirmation: [],
       toManualMatch: {
         local: [],
         remote: [],
@@ -270,6 +324,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with nothing pendi
     const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2]))
 
     // Then
-    await expect(got).toEqual({app: 'appId', extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}})
+    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}})
   })
 })
