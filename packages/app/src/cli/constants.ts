@@ -64,17 +64,6 @@ export const functionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts', 'payment_methods', 'shipping_rate_presenter'],
 } as const
 
-export const functionExtensionPointNameMapper = (type: string) => {
-  if (type === 'product_discount_type' || type === 'order_discount_type' || type === 'shipping_discount_type') {
-    return 'DISCOUNT'
-  } else if (type === 'payment_methods') {
-    return 'PAYMENT_METHODS'
-  } else if (type === 'shipping_rate_presenter') {
-    return 'SHIPPING_METHODS'
-  }
-  return undefined
-}
-
 export const uiExtensions = {
   types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'beacon_extension'],
 } as const
@@ -103,6 +92,25 @@ export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 
     return 'function'
   }
   return 'ui'
+}
+
+/**
+ * Given a extension type, it returns the extension point name that's necessary
+ * when interacting when the API.
+ * @param type {FunctionExtensionTypes} Function extension type.
+ * @returns {string} Extension point name.
+ */
+export const getFunctionExtensionPointName = (type: FunctionExtensionTypes) => {
+  switch (type) {
+    case 'product_discounts':
+    case 'order_discounts':
+    case 'shipping_discounts':
+      return 'DISCOUNT'
+    case 'payment_methods':
+      return 'PAYMENT_METHODS'
+    case 'shipping_rate_presenter':
+      return 'SHIPPING_METHODS'
+  }
 }
 
 /**

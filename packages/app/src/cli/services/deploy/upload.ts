@@ -163,7 +163,7 @@ async function uploadFunctionExtension(
   const schemaMinorVersion = Object.values(extension.metadata.schemaVersions).shift()?.minor
   const variables: api.graphql.AppFunctionSetVariables = {
     uuid: options.identifier,
-    extensionPointName: functionExtensionPointNameMapper(extension.configuration.type),
+    extensionPointName: getFunctionExtensionPointName(extension.configuration.type),
     title: extension.configuration.name,
     description: extension.configuration.description,
     force: true,
@@ -214,7 +214,7 @@ async function getFunctionExtensionUploadURL(
   return res.data.moduleUploadUrlGenerate.details
 }
 
-export function functionExtensionPointNameMapper(type: FunctionExtensionTypes) {
+export function getFunctionExtensionPointName(type: FunctionExtensionTypes) {
   switch (type) {
     case 'product_discounts':
     case 'order_discounts':

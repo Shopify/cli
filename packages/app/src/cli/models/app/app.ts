@@ -59,7 +59,7 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   description: schema.define.string().default(''),
   configuration: schema.define.any(),
   /* eslint-disable @typescript-eslint/naming-convention */
-  'configuration-ui': schema.define.boolean().default(true),
+  'configuration-ui': schema.define.boolean().optional().default(true),
   'app-bridge-create-path': schema.define.string().optional(),
   'app-bridge-details-path': schema.define.string().optional(),
   /* eslint-enable @typescript-eslint/naming-convention */

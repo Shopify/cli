@@ -1,5 +1,11 @@
-import {ExtensionTypesHumanKeys, getExtensionOutputConfig, getExtensionTypeFromHumanKey} from './constants'
-import {describe, expect, it} from 'vitest'
+import {
+  ExtensionTypesHumanKeys,
+  getExtensionOutputConfig,
+  getExtensionTypeFromHumanKey,
+  functionExtensions,
+  getFunctionExtensionPointName,
+} from './constants'
+import {describe, expect, it, test} from 'vitest'
 
 describe('get extension type output configuration', () => {
   it('obtain the correct configuration for extension type beacon_extension', () => {
@@ -252,5 +258,21 @@ describe('get extension type from human key', () => {
 
     // Then
     expect(extensionType).toEqual('checkout_ui_extension')
+  })
+})
+
+describe('getFunctionExtensionPointName', () => {
+  test('it returns the right extension point mapper', () => {
+    // Given
+    const extensionPoints = {
+      DISCOUNT: ['product_discounts', 'order_discounts', 'shipping_discounts'],
+      PAYMENT_METHODS: ['payment_methods'],
+      SHIPPING_METHODS: ['shipping_rate_presenter'],
+    }
+
+    functionExtensions.types.forEach((functionExtensionType) => {
+      const extensionPoint = getFunctionExtensionPointName(functionExtensionType)
+      expect(extensionPoints[extensionPoint].includes(functionExtensionType)).toBeTruthy()
+    })
   })
 })
