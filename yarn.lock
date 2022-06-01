@@ -1751,10 +1751,10 @@
     unified "^8.4.0"
     unist-builder "^1.0.4"
 
-"@shopify/eslint-plugin@^41.2.0":
-  version "41.2.1"
-  resolved "https://registry.yarnpkg.com/@shopify/eslint-plugin/-/eslint-plugin-41.2.1.tgz#b3093bd1e79fe6f5a1fa8ffb06a29b09b88a0a86"
-  integrity sha512-hck0hukEaVAW4na28qGGvolWpi4c/+4SzMXGYiZ4AOXTeeIyGAFWFcyuEI0JJhFzq5trlzYY6U5hMSlU+ay5+g==
+"@shopify/eslint-plugin@^41.3.0":
+  version "41.3.0"
+  resolved "https://registry.yarnpkg.com/@shopify/eslint-plugin/-/eslint-plugin-41.3.0.tgz#136e46d260786e939bb4e5765f873bf6079c4405"
+  integrity sha512-zo8RopvylvX/NVBhNnNt6BKeYI8a4RWHRs/4SmG03KGXGkUO+koJ8k92C//mY+/LGTHcnlf1gPLEy5+7LUSGwA==
   dependencies:
     "@babel/eslint-parser" "^7.16.3"
     "@babel/eslint-plugin" "^7.14.5"
@@ -1762,6 +1762,7 @@
     "@typescript-eslint/parser" "^5.4.0"
     change-case "^4.1.2"
     common-tags "^1.8.2"
+    doctrine "^2.1.0"
     eslint-config-prettier "^8.3.0"
     eslint-module-utils "^2.7.1"
     eslint-plugin-eslint-comments "^3.2.0"
@@ -1773,7 +1774,7 @@
     eslint-plugin-node "^11.1.0"
     eslint-plugin-prettier "^4.0.0"
     eslint-plugin-promise "^6.0.0"
-    eslint-plugin-react "^7.27.1"
+    eslint-plugin-react "^7.30.0"
     eslint-plugin-react-hooks "^4.3.0"
     eslint-plugin-sort-class-members "^1.14.0"
     jsx-ast-utils "^3.2.1"
@@ -4853,7 +4854,7 @@ eslint-plugin-react-hooks@^4.3.0:
   resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-4.5.0.tgz#5f762dfedf8b2cf431c689f533c9d3fa5dcf25ad"
   integrity sha512-8k1gRt7D7h03kd+SAAlzXkQwWK22BnK6GKZG+FJA6BAGy22CFvl8kCIXKpVux0cCxMWDQUPqSok0LKaZ0aOcCw==
 
-eslint-plugin-react@^7.27.1:
+eslint-plugin-react@^7.30.0:
   version "7.30.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-react/-/eslint-plugin-react-7.30.0.tgz#8e7b1b2934b8426ac067a0febade1b13bd7064e3"
   integrity sha512-RgwH7hjW48BleKsYyHK5vUAvxtE9SMPDKmcPRQgtRCYaZA0XQPt5FSkrU3nhz5ifzMZcA8opwmRJ2cmOO8tr5A==
