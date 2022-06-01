@@ -7,7 +7,7 @@ import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {path, output, temporary, error} from '@shopify/cli-kit'
 
-const WEB_PIXEL_CONFIG_ERROR = (property: string) => {
+const WebPixelConfigError = (property: string) => {
   return new error.Abort(
     `The web pixel extension configuration is missing the key "${property}"`,
     `Please update your shopify.ui.extension.toml to include a valid "${property}"`,
@@ -84,14 +84,14 @@ async function configFor(extension: UIExtension, app: App) {
 
 function validateWebPixelConfig(extension: UIExtension) {
   if (!extension.configuration.runtimeContext) {
-    throw WEB_PIXEL_CONFIG_ERROR('runtime_context')
+    throw WebPixelConfigError('runtime_context')
   }
 
   if (!extension.configuration.configuration) {
-    throw WEB_PIXEL_CONFIG_ERROR('configuration')
+    throw WebPixelConfigError('configuration')
   }
 
   if (!extension.configuration.version) {
-    throw WEB_PIXEL_CONFIG_ERROR('version')
+    throw WebPixelConfigError('version')
   }
 }
