@@ -79,7 +79,7 @@
     "typescript": "^4.6.4",
     "unconfig": "^0.3.2",
     "vite": "^2.9.9",
-    "vitest": "0.10.0"
+    "vitest": "0.13.1"
   },
   "engine-strict": true,
   "engines": {
