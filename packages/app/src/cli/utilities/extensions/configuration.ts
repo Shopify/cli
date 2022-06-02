@@ -28,7 +28,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
       return {
-        uuid: `${extension.configuration.name}-${id.generateShortId()}`,
+        uuid: `${extension.localIdentifier}-${id.generateShortId()}`,
         title: extension.configuration.name,
         type: `${extension.configuration.type}`,
         metafields: extension.configuration.metafields,

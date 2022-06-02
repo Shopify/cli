@@ -39,7 +39,7 @@ describe('extensionConfig', () => {
       buildDirectory: `${extensionRoot}/build`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
-        name: extensionName,
+        name: 'My Extension Name',
         metafields: [],
         type: 'checkout_post_purchase',
       },
@@ -94,7 +94,7 @@ describe('extensionConfig', () => {
       extensions: [
         {
           uuid: 'myextension-id',
-          title: 'myextension',
+          title: 'My Extension Name',
           type: 'checkout_post_purchase',
           metafields: [],
           // eslint-disable-next-line @typescript-eslint/naming-convention
