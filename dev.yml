@@ -9,6 +9,8 @@ up:
         - ./docs
   - ruby:
       version: 3.1.2
+  - homebrew:
+    - jq
 
 env:
   SHOPIFY_CONFIG: debug
@@ -85,4 +87,7 @@ commands:
       scaffold:
         desc: Scaffold in the fixture project
         run: yarn --cwd fixtures/app scaffold
+  spin:
+    desc: 'Run commands in spin context'
+    run: bin/spin
 
