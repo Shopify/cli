@@ -83,7 +83,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'discount - products',
+      humanKey: 'product discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
       additionalHelp:
         'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.',
@@ -99,7 +99,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'discount - orders',
+      humanKey: 'order discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
       additionalHelp:
         'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.',
@@ -115,7 +115,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'discount - shipping rate',
+      humanKey: 'shipping discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
       additionalHelp:
         'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.',
@@ -131,7 +131,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'payment method',
+      humanKey: 'payment customizations',
     })
   })
 
@@ -144,7 +144,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'shipping rate presenter',
+      humanKey: 'delivery option presenter',
     })
   })
 })
@@ -161,9 +161,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('web_pixel_extension')
   })
 
-  it('obtain the correct extension type for human key discount - orders', () => {
+  it('obtain the correct extension type for human key order discount', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'discount - orders'
+    const humanKey: ExtensionTypesHumanKeys = 'order discount'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
@@ -172,9 +172,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('product_discounts')
   })
 
-  it('obtain the correct extension type for human key discount - products', () => {
+  it('obtain the correct extension type for human key product discount', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'discount - products'
+    const humanKey: ExtensionTypesHumanKeys = 'product discount'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
@@ -183,9 +183,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('product_discounts')
   })
 
-  it('obtain the correct extension type for human key discount - shipping rate', () => {
+  it('obtain the correct extension type for human key shipping discount', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'discount - shipping rate'
+    const humanKey: ExtensionTypesHumanKeys = 'shipping discount'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
@@ -194,9 +194,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('shipping_discounts')
   })
 
-  it('obtain the correct extension type for human key payment method', () => {
+  it('obtain the correct extension type for human key payment customizations', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'payment method'
+    const humanKey: ExtensionTypesHumanKeys = 'payment customizations'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
@@ -229,7 +229,7 @@ describe('get extension type from human key', () => {
 
   it('obtain the correct extension type for human key shipping rate representer', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'shipping rate presenter'
+    const humanKey: ExtensionTypesHumanKeys = 'delivery option presenter'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)

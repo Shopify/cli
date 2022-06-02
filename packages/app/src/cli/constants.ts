@@ -138,11 +138,11 @@ export const extensionTypesHumanKeys = {
     'theme app extension',
     'checkout UI',
     'product subscription',
-    'discount - products',
-    'discount - orders',
-    'discount - shipping rate',
-    'payment method',
-    'shipping rate presenter',
+    'product discount',
+    'order discount',
+    'shipping discount',
+    'payment customizations',
+    'delivery option presenter',
   ],
 } as const
 
@@ -168,26 +168,26 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
       return buildExtensionOutputConfig('product subscription')
     case 'product_discounts':
       return buildExtensionOutputConfig(
-        'discount - products',
+        'product discount',
         'https://shopify.dev/apps/subscriptions/discounts',
         discountAdditionalHelp,
       )
     case 'order_discounts':
       return buildExtensionOutputConfig(
-        'discount - orders',
+        'order discount',
         'https://shopify.dev/apps/subscriptions/discounts',
         discountAdditionalHelp,
       )
     case 'shipping_discounts':
       return buildExtensionOutputConfig(
-        'discount - shipping rate',
+        'shipping discount',
         'https://shopify.dev/apps/subscriptions/discounts',
         discountAdditionalHelp,
       )
     case 'payment_methods':
-      return buildExtensionOutputConfig('payment method')
+      return buildExtensionOutputConfig('payment customizations')
     case 'shipping_rate_presenter':
-      return buildExtensionOutputConfig('shipping rate presenter')
+      return buildExtensionOutputConfig('delivery option presenter')
   }
 }
 
@@ -195,19 +195,19 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
   switch (humanKey) {
     case 'checkout UI':
       return 'checkout_ui_extension'
-    case 'discount - orders':
+    case 'order discount':
       return 'product_discounts'
-    case 'discount - products':
+    case 'product discount':
       return 'product_discounts'
-    case 'discount - shipping rate':
+    case 'shipping discount':
       return 'shipping_discounts'
-    case 'payment method':
+    case 'payment customizations':
       return 'payment_methods'
     case 'post-purchase':
       return 'checkout_post_purchase'
     case 'product subscription':
       return 'product_subscription'
-    case 'shipping rate presenter':
+    case 'delivery option presenter':
       return 'shipping_rate_presenter'
     case 'theme app extension':
       return 'theme'
