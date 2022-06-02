@@ -287,7 +287,7 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1.id, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1, 'token', undefined)
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
