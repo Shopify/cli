@@ -263,7 +263,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployEnvironment({app})
+    const got = await ensureDeployEnvironment({app, reset: false})
 
     // Then
     expect(got.partnersApp.id).toEqual(APP2.id)
@@ -283,7 +283,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
-    const got = await ensureDeployEnvironment({app})
+    const got = await ensureDeployEnvironment({app, reset: false})
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')

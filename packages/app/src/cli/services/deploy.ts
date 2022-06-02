@@ -17,11 +17,14 @@ const WebPixelConfigError = (property: string) => {
 interface DeployOptions {
   /** The app to be built and uploaded */
   app: App
+
+  /** If true, ignore any cached appId or extensionId */
+  reset: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, token} = await ensureDeployEnvironment({app: options.app})
+  let {app, identifiers, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
 
   output.newline()

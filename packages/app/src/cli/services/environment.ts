@@ -121,6 +121,7 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
 
 export interface DeployEnvironmentOptions {
   app: App
+  reset: boolean
 }
 
 interface DeployEnvironmentOutput {
@@ -132,7 +133,11 @@ interface DeployEnvironmentOutput {
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  let envIdentifiers = getAppIdentifiers({app: options.app, environmentType: 'production'})
+
+  if (options.reset) {
+    envIdentifiers = {app: undefined, extensions: {}}
+  }
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
   let partnersApp: OrganizationApp
