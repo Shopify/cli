@@ -31,7 +31,7 @@ describe('extensionConfig', () => {
   test('creates config for the go binary', async () => {
     // Given
     const appRoot = '/'
-    const extensionName = 'myextension'
+    const extensionName = 'my extension'
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
       localIdentifier: extensionName,
@@ -93,7 +93,7 @@ describe('extensionConfig', () => {
       },
       extensions: [
         {
-          uuid: 'myextension-id',
+          uuid: 'my-extension-id',
           title: 'My Extension Name',
           type: 'checkout_post_purchase',
           metafields: [],
@@ -104,7 +104,7 @@ describe('extensionConfig', () => {
           development: {
             version: '1.0.0',
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            root_dir: 'extensions/myextension',
+            root_dir: 'extensions/my extension',
             // eslint-disable-next-line @typescript-eslint/naming-convention
             build_dir: 'build',
             entries: {
