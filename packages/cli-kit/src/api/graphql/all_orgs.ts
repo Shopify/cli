@@ -6,6 +6,7 @@ export interface AllOrganizationsQuerySchema {
       id: string
       businessName: string
       website: string
+      appsNext: boolean
     }[]
   }
 }
@@ -17,6 +18,7 @@ export const AllOrganizationsQuery = gql`
         id
         businessName
         website
+        appsNext
       }
     }
   }

@@ -52,7 +52,7 @@ export async function fetchOrgAndApps(orgId: string, token: string): Promise<Fet
   const result: api.graphql.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError()
-  const parsedOrg = {id: org.id, businessName: org.businessName}
+  const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
   return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
 }
 

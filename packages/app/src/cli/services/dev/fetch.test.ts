@@ -3,8 +3,8 @@ import {Organization, OrganizationApp, OrganizationStore} from '../../models/org
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
-const ORG1: Organization = {id: '1', businessName: 'org1'}
-const ORG2: Organization = {id: '2', businessName: 'org2'}
+const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
+const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
 const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
 const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
 const STORE1: OrganizationStore = {
@@ -21,6 +21,7 @@ const FETCH_ORG_RESPONSE_VALUE = {
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
+        appsNext: ORG1.appsNext,
         apps: {nodes: [APP1, APP2]},
         stores: {nodes: [STORE1]},
       },
