@@ -133,7 +133,7 @@ interface DeployEnvironmentOutput {
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  let envIdentifiers = getAppIdentifiers({app: options.app, environmentType: 'production'})
+  let envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
