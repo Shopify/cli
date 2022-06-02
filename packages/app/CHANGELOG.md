@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 3.0.5
+
+### Patch Changes
+
+- f6d0e62f: Fix issue when dev'ing extensions with spaces/uppercase in name
+  - @shopify/cli-kit@3.0.5
+
 ## 3.0.4
 
 ### Patch Changes
