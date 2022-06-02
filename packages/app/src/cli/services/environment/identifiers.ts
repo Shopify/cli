@@ -105,7 +105,7 @@ async function matchConfirmationPrompt(extension: Extension, registration: Exten
     {name: `No, cancel deployment`, value: 'no'},
   ]
   const questions: ui.Question = {
-    type: 'autocomplete',
+    type: 'select',
     name: 'value',
     message: `Deploy ${extension.localIdentifier} (local name) as ${registration.title} (name on Shopify Partners, ID: ${registration.id})?`,
     choices,

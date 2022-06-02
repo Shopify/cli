@@ -7,6 +7,7 @@ export const FindOrganizationQuery = gql`
         id
         businessName
         website
+        appsNext
         apps(first: 100) {
           nodes {
             id
@@ -29,6 +30,7 @@ export interface FindOrganizationQuerySchema {
       id: string
       businessName: string
       website: string
+      appsNext: boolean
       apps: {
         nodes: {
           id: string

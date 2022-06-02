@@ -79,7 +79,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
   conf.setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
