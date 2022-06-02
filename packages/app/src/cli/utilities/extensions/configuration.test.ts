@@ -31,7 +31,7 @@ describe('extensionConfig', () => {
   test('creates config for the go binary', async () => {
     // Given
     const appRoot = '/'
-    const extensionName = 'myextension'
+    const extensionName = 'my extension'
     const extensionRoot = `/extensions/${extensionName}`
     const extension: UIExtension = {
       localIdentifier: extensionName,
@@ -39,7 +39,7 @@ describe('extensionConfig', () => {
       buildDirectory: `${extensionRoot}/build`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
-        name: extensionName,
+        name: 'My Extension Name',
         metafields: [],
         type: 'checkout_post_purchase',
       },
@@ -93,8 +93,8 @@ describe('extensionConfig', () => {
       },
       extensions: [
         {
-          uuid: 'myextension-id',
-          title: 'myextension',
+          uuid: 'my-extension-id',
+          title: 'My Extension Name',
           type: 'checkout_post_purchase',
           metafields: [],
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -104,7 +104,7 @@ describe('extensionConfig', () => {
           development: {
             version: '1.0.0',
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            root_dir: 'extensions/myextension',
+            root_dir: 'extensions/my extension',
             // eslint-disable-next-line @typescript-eslint/naming-convention
             build_dir: 'build',
             entries: {
