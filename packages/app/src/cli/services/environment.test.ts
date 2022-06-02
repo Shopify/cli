@@ -263,7 +263,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployEnvironment({app})
+    const got = await ensureDeployEnvironment({app, reset: false})
 
     // Then
     expect(got.partnersApp.id).toEqual(APP2.id)
@@ -283,7 +283,37 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
-    const got = await ensureDeployEnvironment({app})
+    const got = await ensureDeployEnvironment({app, reset: false})
+
+    // Then
+    expect(fetchOrganizations).toHaveBeenCalledWith('token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1.id, 'token', undefined)
+    expect(updateAppIdentifiers).toBeCalledWith({
+      app,
+      identifiers,
+      environmentType: 'production',
+    })
+    expect(got.partnersApp.id).toEqual(APP1.id)
+    expect(got.partnersApp.title).toEqual(APP1.title)
+    expect(got.partnersApp.appType).toEqual(APP1.appType)
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}})
+  })
+
+  test('prompts the user to create or select an app if reset is true', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+    }
+
+    // There is a cached app but it will be ignored
+    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    // When
+    const got = await ensureDeployEnvironment({app, reset: true})
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
