@@ -79,7 +79,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     }
   }
 
-  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, orgId, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
   conf.setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
@@ -146,8 +146,8 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     partnersApp = await fetchAppFromApiKey(identifiers.app, token)
   } else {
     const orgId = await selectOrg(token)
-    const {apps} = await fetchOrgsAppsAndStores(orgId, token)
-    partnersApp = await selectOrCreateApp(options.app, apps, orgId, token, undefined)
+    const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
+    partnersApp = await selectOrCreateApp(options.app, apps, organization, token, undefined)
   }
 
   identifiers = await ensureDeploymentIdsPresence({

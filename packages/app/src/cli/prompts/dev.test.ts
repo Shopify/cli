@@ -1,6 +1,7 @@
 import {
   appNamePrompt,
   createAsNewAppPrompt,
+  appTypePrompt,
   reloadStoreListPrompt,
   selectAppPrompt,
   selectOrganizationPrompt,
@@ -23,8 +24,8 @@ beforeEach(() => {
   })
 })
 
-const ORG1: Organization = {id: '1', businessName: 'org1'}
-const ORG2: Organization = {id: '2', businessName: 'org2'}
+const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
+const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
 const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
 const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
 const STORE1: OrganizationStore = {
@@ -150,6 +151,30 @@ describe('selectStore', () => {
         choices: [
           {name: 'store1', value: '1'},
           {name: 'store2', value: '2'},
+        ],
+      },
+    ])
+  })
+})
+
+describe('appType', () => {
+  it('asks the user to select a type and returns it', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'custom'})
+
+    // When
+    const got = await appTypePrompt()
+
+    // Then
+    expect(got).toEqual('custom')
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: 'What type of app are you building?',
+        choices: [
+          {name: 'Public: An app built for a wide merchant audience.', value: 'public'},
+          {name: 'Custom: An app custom built for a single client.', value: 'custom'},
         ],
       },
     ])

@@ -40,8 +40,8 @@ beforeEach(() => {
   })
 })
 
-const ORG1: Organization = {id: '1', businessName: 'org1'}
-const ORG2: Organization = {id: '2', businessName: 'org2'}
+const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
+const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
 const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
 const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
 const CACHED1: conf.CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
@@ -317,7 +317,7 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1.id, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1, 'token', undefined)
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,

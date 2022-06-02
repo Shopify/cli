@@ -5,7 +5,7 @@ import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
-const ORG1: Organization = {id: '1', businessName: 'org1'}
+const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',

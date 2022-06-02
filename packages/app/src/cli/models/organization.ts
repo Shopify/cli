@@ -2,6 +2,7 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
+  appsNext: boolean
 }
 
 export interface OrganizationApp {

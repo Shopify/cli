@@ -1,7 +1,7 @@
 import {fetchAppFromApiKey} from './fetch'
-import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
+import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
 import {App} from '../../models/app/app'
-import {OrganizationApp} from '../../models/organization'
+import {Organization, OrganizationApp} from '../../models/organization'
 import {api, error, output} from '@shopify/cli-kit'
 
 /**
@@ -18,7 +18,7 @@ import {api, error, output} from '@shopify/cli-kit'
 export async function selectOrCreateApp(
   localApp: App,
   apps: OrganizationApp[],
-  orgId: string,
+  org: Organization,
   token: string,
   cachedApiKey?: string,
 ): Promise<OrganizationApp> {
@@ -29,18 +29,21 @@ export async function selectOrCreateApp(
 
   let createNewApp = apps.length === 0
   if (!createNewApp) createNewApp = await createAsNewAppPrompt()
-  const app = createNewApp ? await createApp(orgId, localApp, token) : await selectAppPrompt(apps)
+  const app = createNewApp ? await createApp(org, localApp, token) : await selectAppPrompt(apps)
 
   return app
 }
 
-export async function createApp(orgId: string, app: App, token: string): Promise<OrganizationApp> {
+export async function createApp(org: Organization, app: App, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.name)
+
+  const type = org.appsNext ? 'undecided' : await appTypePrompt()
   const variables: api.graphql.CreateAppQueryVariables = {
-    org: parseInt(orgId, 10),
+    org: parseInt(org.id, 10),
     title: `${name}`,
     appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
     redir: ['http://localhost:3456'],
+    type,
   }
 
   const query = api.graphql.CreateAppQuery
