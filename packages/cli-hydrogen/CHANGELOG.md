@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 3.0.6
+
+### Patch Changes
+
+- Updated dependencies [1e4d024e]
+- Updated dependencies [27677c2d]
+  - @shopify/cli-kit@3.0.6
+
 ## 3.0.5
 
 ### Patch Changes

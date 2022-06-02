@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.0.6
+
+### Patch Changes
+
+- 27677c2d: Added support for apps_next beta flag when creating apps
+- dfd212f6: Add --reset flag to deploy
+- Updated dependencies [1e4d024e]
+- Updated dependencies [27677c2d]
+  - @shopify/cli-kit@3.0.6
+
 ## 3.0.5
 
 ### Patch Changes

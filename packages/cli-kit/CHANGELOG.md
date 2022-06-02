@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.0.6
+
+### Patch Changes
+
+- 1e4d024e: Fixed randomly misfunction for detecting Fatal error types
+- 27677c2d: Added support for apps_next beta flag when creating apps
+
 ## 3.0.5
 
 ## 3.0.4
