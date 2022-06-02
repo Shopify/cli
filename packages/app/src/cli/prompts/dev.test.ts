@@ -1,6 +1,7 @@
 import {
   appNamePrompt,
   createAsNewAppPrompt,
+  appTypePrompt,
   reloadStoreListPrompt,
   selectAppPrompt,
   selectOrganizationPrompt,
@@ -150,6 +151,30 @@ describe('selectStore', () => {
         choices: [
           {name: 'store1', value: '1'},
           {name: 'store2', value: '2'},
+        ],
+      },
+    ])
+  })
+})
+
+describe('appType', () => {
+  it('asks the user to select a type and returns it', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'custom'})
+
+    // When
+    const got = await appTypePrompt()
+
+    // Then
+    expect(got).toEqual('custom')
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: 'What type of app are you building?',
+        choices: [
+          {name: 'Public: An app built for a wide merchant audience.', value: 'public'},
+          {name: 'Custom: An app custom built for a single client.', value: 'custom'},
         ],
       },
     ])
