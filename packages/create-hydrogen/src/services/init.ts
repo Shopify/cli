@@ -1,22 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
-import {
-  constants,
-  string,
-  path,
-  file,
-  output,
-  os,
-  ui,
-  npm,
-  dependency,
-  environment,
-  github,
-  template,
-  git,
-} from '@shopify/cli-kit'
+import {version as hydrogenVersion} from '../../package.json'
+/* eslint-disable @nrwl/nx/enforce-module-boundaries */
+import {version as cliVersion} from '../../../cli/package.json'
+/* eslint-enable @nrwl/nx/enforce-module-boundaries */
 
+import {string, path, file, output, os, ui, npm, dependency, environment, github, template, git} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -32,8 +22,8 @@ interface InitOptions {
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? constants.versions.cli
-  const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? constants.versions.cliHydrogen
+  const cliPackageVersion = options.shopifyCliVersion ?? cliVersion
+  const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
   const dependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
