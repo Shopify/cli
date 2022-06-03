@@ -58,18 +58,29 @@ export const extensionTypeChoiceSorterByGroupAndName = (
   c1: {name: string; value: string},
   c2: {name: string; value: string},
 ) => {
-  if (
-    (includes(uiExtensions.types, c1.value) || includes(themeExtensions.types, c1.value)) &&
-    includes(functionExtensions.types, c2.value)
-  ) {
-    return -1
-  } else if (
-    includes(functionExtensions.types, c1.value) &&
-    (includes(uiExtensions.types, c2.value) || includes(themeExtensions.types, c2.value))
-  ) {
-    return 1
+  const c1ExtensiontyCategoryPosition = extensiontypeCategoryPosition(c1.value)
+  const c2ExtensiontyCategoryPosition = extensiontypeCategoryPosition(c2.value)
+
+  if (c1ExtensiontyCategoryPosition === c2ExtensiontyCategoryPosition) {
+    return c1.name.localeCompare(c2.name)
+  } else {
+    return c1ExtensiontyCategoryPosition < c2ExtensiontyCategoryPosition ? -1 : 1
   }
-  return c1.name.localeCompare(c2.name)
+}
+
+/**
+ * It maps an extension category to a numeric value.
+ * @param extensionType {string} The extension type which will be resolved to its category.
+ * @returns The numeric value of the extension category.
+ */
+const extensiontypeCategoryPosition = (extensionType: string): number => {
+  if (includes(uiExtensions.types, extensionType) || includes(themeExtensions.types, extensionType)) {
+    return 0
+  } else if (includes(functionExtensions.types, extensionType)) {
+    return 1
+  } else {
+    return Number.MAX_VALUE
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
