@@ -46,17 +46,21 @@ async function dev(options: DevOptions) {
   const proxyPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options, proxyPort)
-  let updateMessage = ''
-  if (options.update) {
-    await updateURLs(identifiers.app, url)
-    updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
-  }
-  const message = `${updateMessage}Preview link for viewing or sharing: `
-  const storeAppUrl = `${url}/api/auth?shop=${store}`
-  output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
 
   const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
+
+  /** If the app doesn't have web/ the link message is not necessary */
+  if (frontendConfig || backendConfig) {
+    let updateMessage = ''
+    if (options.update) {
+      await updateURLs(identifiers.app, url)
+      updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
+    }
+    const message = `${updateMessage}Preview link for viewing or sharing: `
+    const storeAppUrl = `${url}/api/auth?shop=${store}`
+    output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
+  }
 
   const backendOptions = {
     apiKey: identifiers.app,
