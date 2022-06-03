@@ -77,6 +77,9 @@ async function dev(options: DevOptions) {
       devFrontendTarget({
         web: frontendConfig,
         apiKey: identifiers.app,
+        scopes: options.app.configuration.scopes,
+        apiSecret: (apiSecret as string) ?? '',
+        hostname: url,
         backendPort,
       }),
     )
@@ -90,9 +93,8 @@ async function dev(options: DevOptions) {
   await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
 }
 
-interface DevFrontendTargetOptions {
+interface DevFrontendTargetOptions extends DevWebOptions {
   web: Web
-  apiKey: string
   backendPort: number
 }
 
@@ -101,6 +103,9 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
     SHOPIFY_API_KEY: options.apiKey,
+    SHOPIFY_API_SECRET: options.apiSecret,
+    HOST: options.hostname,
+    SCOPES: options.scopes,
     BACKEND_PORT: `${options.backendPort}`,
     NODE_ENV: `development`,
   }
@@ -132,6 +137,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
     SHOPIFY_API_SECRET: options.apiSecret,
     HOST: options.hostname,
     BACKEND_PORT: `${options.backendPort}`,
+    PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
   }
@@ -143,6 +149,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
         cwd: web.directory,
         stdout,
         stderr,
+        signal,
         env: {
           ...process.env,
           ...env,

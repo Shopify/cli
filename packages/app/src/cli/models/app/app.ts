@@ -302,7 +302,7 @@ class AppLoader {
   }
 
   async loadWebs(): Promise<Web[]> {
-    const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
+    const webTomlPaths = await path.glob(path.join(this.appDirectory, `web/**/${configurationFileNames.web}`))
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
