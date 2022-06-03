@@ -17,14 +17,6 @@ function runCLI() {
       if (error instanceof kitError.AbortSilent) {
         process.exit(1)
       }
-      const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
-        if (!settings.debug) {
-          await new Promise((resolve, reject) => {
-            Bugsnag.notify(errorToReport, undefined, resolve)
-          })
-        }
-        return Promise.resolve(errorToReport)
-      }
       const kitMapper = kitError.mapper
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting
@@ -34,6 +26,15 @@ function runCLI() {
           kitHandle(error)
         })
     })
+}
+
+const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
+  if (!settings.debug && kitError.shouldReport(errorToReport)) {
+    await new Promise((resolve, reject) => {
+      Bugsnag.notify(errorToReport, undefined, resolve)
+    })
+  }
+  return Promise.resolve(errorToReport)
 }
 
 export default runCLI

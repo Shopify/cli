@@ -61,7 +61,7 @@ export class Bug extends Fatal {
  */
 export async function handler(error: Error): Promise<Error> {
   let fatal: Fatal
-  if (Object.prototype.hasOwnProperty.call(error, 'type')) {
+  if (isFatal(error)) {
     fatal = error as Fatal
   } else {
     fatal = new Bug(error.message)
@@ -83,4 +83,18 @@ export function mapper(error: Error): Promise<Error> {
   } else {
     return Promise.resolve(error)
   }
+}
+
+export function isFatal(error: Error): boolean {
+  return Object.prototype.hasOwnProperty.call(error, 'type')
+}
+
+export function shouldReport(error: Error): boolean {
+  if (!isFatal(error)) {
+    return true
+  }
+  if ((error as Fatal).type === FatalErrorType.Bug) {
+    return true
+  }
+  return false
 }

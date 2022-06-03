@@ -3,7 +3,7 @@ import {api, error, output, plugins, session} from '@shopify/cli-kit'
 
 export async function generateURL(options: DevOptions, frontendPort: number): Promise<string> {
   const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
-  if (!tunnelPlugin) throw new error.Abort('The tunnel could not be found')
+  if (!tunnelPlugin) throw new error.Bug('The tunnel could not be found')
   const url = await tunnelPlugin?.start({port: frontendPort})
   output.success('The tunnel is running and you can now view your app')
   return url
