@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.0.7
+
+### Patch Changes
+
+- 63e2fb89: Don't assume the location of the source file for extensions
+- f26960e0: Extension types selector grouped by category
+- 3b98649b: Don't output the web/ link if the app doesn't have web/
+- 8fc77262: Don't assume web is present when dev'ing an app
+- a8245232: Make web/ optional in apps
+- Updated dependencies [8de7f95d]
+  - @shopify/cli-kit@3.0.7
+
 ## 3.0.6
 
 ### Patch Changes

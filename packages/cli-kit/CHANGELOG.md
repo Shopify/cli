@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.0.7
+
+### Patch Changes
+
+- 8de7f95d: Fix an issue that causes releases not to pick the latest version of the CLI packages
+
 ## 3.0.6
 
 ### Patch Changes
