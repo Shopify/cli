@@ -8,8 +8,7 @@ interface WebOptions {
   stdout: Writable
   stderr: Writable
   signal: error.AbortSignal
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  env?: any
+  env?: {[variable: string]: string}
 }
 
 export default async function web(

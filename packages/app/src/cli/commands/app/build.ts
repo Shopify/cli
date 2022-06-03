@@ -20,7 +20,7 @@ export default class Build extends Command {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'api-key': Flags.string({
       hidden: false,
-      description: 'Shopify API key to use when building the React frontend.',
+      description: "Application's API key that will be exposed at build time.",
       env: 'SHOPIFY_FLAG_API_KEY',
     }),
   }
