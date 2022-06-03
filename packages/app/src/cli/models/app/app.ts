@@ -388,7 +388,7 @@ class AppLoader {
         )
       ).find((sourcePath) => sourcePath !== undefined)
       if (!entrySourceFilePath) {
-        return this.abortOrReport(
+        this.abortOrReport(
           `Couldn't find an index.{js,jsx} file in the extension's directory or src/ subdirectory`,
           undefined,
           directory,
