@@ -149,6 +149,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
         cwd: web.directory,
         stdout,
         stderr,
+        signal,
         env: {
           ...process.env,
           ...env,

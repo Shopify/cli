@@ -61,6 +61,7 @@ export async function devExtensions(options: ExtensionDevOptions): Promise<void>
   const stdin = yaml.encode(config)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,
+    signal: options.signal,
     stdout: options.stdout,
     stderr: options.stderr,
     stdin,
