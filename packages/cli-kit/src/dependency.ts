@@ -1,7 +1,7 @@
 import {exec} from './system'
 import {exists as fileExists, read as readFile} from './file'
 import {glob, dirname, join as pathJoin} from './path'
-import {Bug} from './error'
+import {Abort} from './error'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
@@ -10,7 +10,7 @@ export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
 export type DependencyManager = typeof dependencyManager[number]
 
 export const PackageJsonNotFoundError = (directory: string) => {
-  return new Bug(`The directory ${directory} doesn't have a package.json.`)
+  return new Abort(`The directory ${directory} doesn't have a package.json.`)
 }
 
 /**

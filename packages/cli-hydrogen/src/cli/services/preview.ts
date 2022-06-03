@@ -62,7 +62,7 @@ export async function previewInWorker({directory, port}: PreviewOptions) {
   })
 }
 
-export const OxygenPreviewExecutableNotFound = new error.Abort(
+export const OxygenPreviewExecutableNotFound = new error.Bug(
   'Could not locate the executable file to run Oxygen locally.',
 )
 
