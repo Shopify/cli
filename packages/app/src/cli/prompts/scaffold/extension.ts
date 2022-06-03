@@ -1,4 +1,11 @@
-import {extensions, ExtensionTypes, getExtensionOutputConfig} from '../../constants'
+import {
+  extensions,
+  ExtensionTypes,
+  functionExtensions,
+  getExtensionOutputConfig,
+  themeExtensions,
+  uiExtensions,
+} from '../../constants'
 import {ui} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
@@ -28,7 +35,7 @@ const scaffoldExtensionPrompt = async (
           name: getExtensionOutputConfig(type).humanKey,
           value: type,
         }))
-        .sort((c1, c2) => c1.name.localeCompare(c2.name)),
+        .sort(extensionTypeChoiceSorterByGroupAndName),
     })
   }
   if (!options.name) {
@@ -41,6 +48,44 @@ const scaffoldExtensionPrompt = async (
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
   return {...options, ...promptOutput}
+}
+
+/**
+ * Sorting method for prompt choices that sort alphabetically extensions showing first the UI ones
+ * and lastest the function ones
+ */
+export const extensionTypeChoiceSorterByGroupAndName = (
+  c1: {name: string; value: string},
+  c2: {name: string; value: string},
+) => {
+  const c1ExtensiontyCategoryPosition = extensiontypeCategoryPosition(c1.value)
+  const c2ExtensiontyCategoryPosition = extensiontypeCategoryPosition(c2.value)
+
+  if (c1ExtensiontyCategoryPosition === c2ExtensiontyCategoryPosition) {
+    return c1.name.localeCompare(c2.name)
+  } else {
+    return c1ExtensiontyCategoryPosition < c2ExtensiontyCategoryPosition ? -1 : 1
+  }
+}
+
+/**
+ * It maps an extension category to a numeric value.
+ * @param extensionType {string} The extension type which will be resolved to its category.
+ * @returns The numeric value of the extension category.
+ */
+const extensiontypeCategoryPosition = (extensionType: string): number => {
+  if (includes(uiExtensions.types, extensionType) || includes(themeExtensions.types, extensionType)) {
+    return 0
+  } else if (includes(functionExtensions.types, extensionType)) {
+    return 1
+  } else {
+    return Number.MAX_VALUE
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
+  return coll.includes(el as T)
 }
 
 export default scaffoldExtensionPrompt

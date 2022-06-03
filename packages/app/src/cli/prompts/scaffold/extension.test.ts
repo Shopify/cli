@@ -1,4 +1,4 @@
-import scaffoldExtensionPrompt from './extension'
+import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName} from './extension'
 import {extensions, getExtensionOutputConfig} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
 
@@ -88,5 +88,5 @@ const buildChoices = (): {
       name: getExtensionOutputConfig(type).humanKey,
       value: type,
     }))
-    .sort((c1, c2) => c1.name.localeCompare(c2.name))
+    .sort(extensionTypeChoiceSorterByGroupAndName)
 }
