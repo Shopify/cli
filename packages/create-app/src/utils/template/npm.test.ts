@@ -1,12 +1,12 @@
-import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
-import {constants, dependency, file, npm, path, ui} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {Writable} from 'stream'
 /* eslint-disable @nrwl/nx/enforce-module-boundaries */
+import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
 import {version as cliVersion} from '../../../../cli/package.json'
 import {version as appVersion} from '../../../../app/package.json'
 /* eslint-enable @nrwl/nx/enforce-module-boundaries*/
+import {dependency, file, npm, path, ui} from '@shopify/cli-kit'
+import {temporary} from '@shopify/cli-testing'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {Writable} from 'stream'
 
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
