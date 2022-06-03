@@ -1,5 +1,9 @@
+/* eslint-disable @nrwl/nx/enforce-module-boundaries */
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
-import {constants, dependency, file, npm, path, ui} from '@shopify/cli-kit'
+import {version as cliVersion} from '../../../../cli/package.json'
+import {version as appVersion} from '../../../../app/package.json'
+/* eslint-enable @nrwl/nx/enforce-module-boundaries*/
+import {dependency, file, npm, path, ui} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Writable} from 'stream'
@@ -10,8 +14,8 @@ describe('updateCLIDependencies', () => {
 
     await updateCLIDependencies(mockPackageJSON, false)
 
-    expect(mockPackageJSON.dependencies['@shopify/cli']).toBe(constants.versions.cli)
-    expect(mockPackageJSON.dependencies['@shopify/app']).toBe(constants.versions.app)
+    expect(mockPackageJSON.dependencies['@shopify/cli']).toBe(cliVersion)
+    expect(mockPackageJSON.dependencies['@shopify/app']).toBe(appVersion)
   })
 
   it('does not update overrides or resolutions if local is false', async () => {

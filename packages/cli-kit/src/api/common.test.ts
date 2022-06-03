@@ -22,7 +22,7 @@ describe('common API methods', () => {
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
-      'User-Agent': `Shopify CLI; v=${constants.versions.cli}`,
+      'User-Agent': `Shopify CLI; v=${constants.versions.cliKit}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
       /* eslint-enable @typescript-eslint/naming-convention */
@@ -42,7 +42,7 @@ describe('common API methods', () => {
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
-      'User-Agent': `Shopify CLI; v=${constants.versions.cli}`,
+      'User-Agent': `Shopify CLI; v=${constants.versions.cliKit}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
       /* eslint-enable @typescript-eslint/naming-convention */

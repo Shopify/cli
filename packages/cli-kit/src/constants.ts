@@ -2,15 +2,6 @@
 // @ts-ignore
 import {join as pathJoin} from './path'
 import {version as cliKitVersion} from '../package.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import {version as cliVersion} from '../../cli/package.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import {version as appVersion} from '../../app/package.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import {version as cliHydrogenVersion} from '../../cli-hydrogen/package.json'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
@@ -60,15 +51,6 @@ const constants = {
    */
   versions: {
     cliKit: cliKitVersion,
-    /**
-     * cli-kit can resolve the version of cli and app at build time because
-     * the version of both packages is tied. If it wasn't, wen'd need
-     * to resolve the version at build time.
-     * Check out the linked configuration in .changeset/config.json
-     */
-    cli: cliVersion,
-    app: appVersion,
-    cliHydrogen: cliHydrogenVersion,
   },
   keychain: {
     service: 'shopify-cli',
