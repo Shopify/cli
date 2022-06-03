@@ -122,6 +122,10 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
           ...env,
           PORT: `${port}`,
           FRONTEND_PORT: `${port}`,
+          APP_URL: options.hostname,
+          APP_ENV: 'development',
+          // Note: These are Laravel varaibles for backwards compatibility with 2.0 templates.
+          SERVER_PORT: `${port}`,
         },
         signal,
       })
@@ -136,8 +140,10 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
     SHOPIFY_API_KEY: options.apiKey,
     SHOPIFY_API_SECRET: options.apiSecret,
     HOST: options.hostname,
-    BACKEND_PORT: `${options.backendPort}`,
+    // SERVER_PORT is the convention Artisan uses
     PORT: `${options.backendPort}`,
+    SERVER_PORT: `${options.backendPort}`,
+    BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
   }

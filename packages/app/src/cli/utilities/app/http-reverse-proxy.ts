@@ -65,10 +65,8 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
           // Update `host` header to be tunnelURL when forwarding to extensions binary.
           // The binary uses this to build extensions URLs and they must use the tunnelURL always.
           rewriteRequestHeaders: (_originalReq, headers) => {
-            if (target.logPrefix !== 'extensions') {
-              return headers
-            }
-            return {...headers, host: tunnelUrl.replace(/^https?:\/\//, '')}
+            const host = tunnelUrl.replace(/^https?:\/\//, '')
+            return {...headers, host}
           },
         },
       })

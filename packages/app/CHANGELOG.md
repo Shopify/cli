@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 3.0.10
+
+### Patch Changes
+
+- Include the host header in all the proxied requests
+  - @shopify/cli-kit@3.0.10
+
 ## 3.0.9
 
 ### Patch Changes
