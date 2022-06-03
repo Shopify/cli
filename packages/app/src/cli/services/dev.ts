@@ -43,9 +43,9 @@ async function dev(options: DevOptions) {
     app: {apiSecret},
   } = await ensureDevEnvironment(options)
 
-  const frontendPort = await port.getRandomPort()
+  const proxyPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
-  const url: string = await generateURL(options, frontendPort)
+  const url: string = await generateURL(options, proxyPort)
   let updateMessage = ''
   if (options.update) {
     await updateURLs(identifiers.app, url)
@@ -55,8 +55,8 @@ async function dev(options: DevOptions) {
   const storeAppUrl = `${url}/api/auth?shop=${store}`
   output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
 
-  const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)!
-  const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)!
+  const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)
+  const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   const backendOptions = {
     apiKey: identifiers.app,
@@ -66,27 +66,46 @@ async function dev(options: DevOptions) {
     hostname: url,
   }
 
-  const devFront = devFrontendTarget(frontendConfig, identifiers.app, backendPort)
-  const devBack = devBackendTarget(backendConfig, backendOptions)
   const devExt = await devExtensionsTarget(options.app, identifiers.app, url, store)
+  const proxyTargets: ReverseHTTPProxyTarget[] = [devExt]
+  if (frontendConfig) {
+    proxyTargets.push(
+      devFrontendTarget({
+        web: frontendConfig,
+        apiKey: identifiers.app,
+        backendPort,
+      }),
+    )
+  }
 
-  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, frontendPort, [devExt, devFront], [devBack])
+  const additionalProcesses: output.OutputProcess[] = []
+  if (backendConfig) {
+    additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
+  }
+
+  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
 }
 
-function devFrontendTarget(web: Web, apiKey: string, backendPort: number): ReverseHTTPProxyTarget {
-  const {commands} = web.configuration
+interface DevFrontendTargetOptions {
+  web: Web
+  apiKey: string
+  backendPort: number
+}
+
+function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+  const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
-    SHOPIFY_API_KEY: apiKey,
-    BACKEND_PORT: `${backendPort}`,
+    SHOPIFY_API_KEY: options.apiKey,
+    BACKEND_PORT: `${options.backendPort}`,
     NODE_ENV: `development`,
   }
 
   return {
-    logPrefix: web.configuration.type,
+    logPrefix: options.web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
       await system.exec(cmd, args, {
-        cwd: web.directory,
+        cwd: options.web.directory,
         stdout,
         stderr,
         env: {
@@ -94,6 +113,7 @@ function devFrontendTarget(web: Web, apiKey: string, backendPort: number): Rever
           ...env,
           FRONTEND_PORT: `${port}`,
         },
+        signal,
       })
     },
   }
