@@ -181,6 +181,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my-extension',
     })
+    await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
     // When
     const app = await load(tmpDir)
@@ -203,6 +204,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my-extension',
     })
+    await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
     // When
     const app = await load(blockDir)
@@ -226,6 +228,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my_extension_1',
     })
+    await file.write(path.join(blockPath('my_extension_1'), 'index.js'), '')
 
     blockConfiguration = `
       name = "my_extension_2"
@@ -236,6 +239,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my_extension_2',
     })
+    await file.write(path.join(blockPath('my_extension_2'), 'index.js'), '')
 
     // When
     const app = await load(tmpDir)
@@ -249,6 +253,49 @@ scopes = "read_products"
     expect(extensions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1].configuration.name).toBe('my_extension_2')
     expect(extensions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
+  })
+
+  it('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    await Promise.all(
+      ['index.js', 'index.jsx', 'src/index.js', 'src/index.jsx'].map(async (sourcePath, index) => {
+        const blockConfiguration = `
+        name = "my_extension_${index}"
+        type = "checkout_post_purchase"
+        `
+        await writeBlockConfig({
+          blockType: 'ui',
+          blockConfiguration,
+          name: `my_extension_${index}`,
+        })
+        const sourceAbsolutePath = path.join(blockPath(`my_extension_${index}`), sourcePath)
+        await file.mkdir(path.dirname(sourceAbsolutePath))
+        await file.write(sourceAbsolutePath, '')
+      }),
+    )
+
+    // When
+    await expect(load(tmpDir)).resolves.not.toBeUndefined()
+  })
+
+  it(`throws an error if the extension doesn't have a source file`, async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my_extension"
+      type = "checkout_post_purchase"
+      `
+    const {blockDir} = await writeBlockConfig({
+      blockType: 'ui',
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(load(blockDir)).rejects.toThrow(
+      /Couldn't find an index.{js,jsx} file in the extension's directory or src\/ subdirectory/,
+    )
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {

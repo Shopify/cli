@@ -378,6 +378,23 @@ class AppLoader {
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configurationPath)
+      const entrySourceFilePath = (
+        await Promise.all(
+          ['index']
+            .flatMap((name) => [`${name}.js`, `${name}.jsx`])
+            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .map((relativePath) => path.join(directory, relativePath))
+            .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
+        )
+      ).find((sourcePath) => sourcePath !== undefined)
+      if (!entrySourceFilePath) {
+        return this.abortOrReport(
+          `Couldn't find an index.{js,jsx} file in the extension's directory or src/ subdirectory`,
+          undefined,
+          directory,
+        )
+      }
+
       return {
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         directory,
@@ -386,7 +403,7 @@ class AppLoader {
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
         buildDirectory: path.join(directory, 'dist'),
-        entrySourceFilePath: path.join(directory, 'src/index.js'),
+        entrySourceFilePath: entrySourceFilePath ?? '',
         localIdentifier: path.basename(directory),
       }
     })
