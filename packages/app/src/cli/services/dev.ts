@@ -115,6 +115,7 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
         env: {
           ...process.env,
           ...env,
+          PORT: `${port}`,
           FRONTEND_PORT: `${port}`,
         },
         signal,

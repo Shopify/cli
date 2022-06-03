@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 3.0.8
+
+### Patch Changes
+
+- Pass the PORT variable when running the frontend web side
+  - @shopify/cli-kit@3.0.8
+
 ## 3.0.7
 
 ### Patch Changes
