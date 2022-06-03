@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.0.9
+
+### Patch Changes
+
+- 3024598f: Pass the signal instance to make sure we kill the processes if one of them fails
+- 3024598f: Only load the web configuration files from the web directory
+- 3024598f: Pass environment variables to the frontend process too
+  - @shopify/cli-kit@3.0.9
+
 ## 3.0.8
 
 ### Patch Changes
