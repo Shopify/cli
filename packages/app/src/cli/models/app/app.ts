@@ -12,10 +12,6 @@ import {
 } from '../../constants'
 import {dependency, dotenv, error, file, path, schema, string, toml} from '@shopify/cli-kit'
 
-export const WebConfigurationFileNotFound = (directory: string) => {
-  return new error.Abort(`Couldn't find ${configurationFileNames.web} in ${directory}`)
-}
-
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
 }
@@ -307,10 +303,6 @@ class AppLoader {
 
   async loadWebs(): Promise<Web[]> {
     const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
-
-    if (webTomlPaths.length === 0) {
-      throw WebConfigurationFileNotFound(this.appDirectory)
-    }
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
