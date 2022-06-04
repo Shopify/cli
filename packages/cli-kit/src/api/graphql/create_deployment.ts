@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const CreateDeployment = gql`
-  mutation CreateDeployment($apiKey: String!, $uuid: String!, $bundleUrl: String!) {
-    deploymentCreate(input: {apiKey: $apiKey, uuid: $uuid, bundleUrl: $bundleUrl}) {
+  mutation CreateDeployment($apiKey: String!, $uuid: String!, $bundleUrl: String!, $extensions: [ExtensionSettings!]) {
+    deploymentCreate(input: {apiKey: $apiKey, uuid: $uuid, bundleUrl: $bundleUrl, extensions: $extensions}) {
       deployment {
         uuid
       }
@@ -14,15 +14,17 @@ export const CreateDeployment = gql`
   }
 `
 
+export interface ExtensionSettings {
+  uuid: string
+  config: string
+  context: string
+}
+
 export interface CreateDeploymentVariables {
   apiKey: string
   uuid: string
   bundleUrl: string
-  extensions: {
-    uuid: string
-    config: string
-    context: string
-  }[]
+  extensions: ExtensionSettings[]
 }
 
 export interface CreateDeploymentSchema {

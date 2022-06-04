@@ -15,11 +15,7 @@ interface UploadUIExtensionsBundleOptions {
   token: string
 
   /** Extensions extra data */
-  extensions: {
-    uuid: string
-    config: string
-    context: string
-  }[]
+  extensions: api.graphql.ExtensionSettings[]
 }
 
 /**
