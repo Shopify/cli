@@ -132,6 +132,7 @@ export function getRuntimeDependencies({extensionType}: Pick<UIExtensionInitOpti
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
+    case 'pos_ui_extension':
     case 'checkout_post_purchase': {
       const dependencies = ['react']
       const rendererDependency = getUIExtensionRendererDependency(extensionType)

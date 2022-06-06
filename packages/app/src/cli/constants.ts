@@ -65,7 +65,13 @@ export const functionExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
+  types: [
+    'product_subscription',
+    'checkout_ui_extension',
+    'checkout_post_purchase',
+    'web_pixel_extension',
+    'pos_ui_extension',
+  ],
 } as const
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
@@ -126,6 +132,8 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
       return '@shopify/checkout-ui-extensions-react'
     case 'checkout_post_purchase':
       return '@shopify/post-purchase-ui-extensions-react'
+    case 'pos_ui_extension':
+      return '@shopify/retail-ui-extensions-react'
     case 'web_pixel_extension':
       return undefined
   }
@@ -137,6 +145,7 @@ export const extensionTypesHumanKeys = {
     'post-purchase',
     'theme app extension',
     'checkout UI',
+    'point-of-sale UI',
     'product subscription',
     'product discount',
     'order discount',
@@ -166,6 +175,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
       return buildExtensionOutputConfig('checkout UI')
     case 'product_subscription':
       return buildExtensionOutputConfig('product subscription')
+    case 'pos_ui_extension':
+      return buildExtensionOutputConfig('point-of-sale UI')
     case 'product_discounts':
       return buildExtensionOutputConfig(
         'product discount',
@@ -207,6 +218,8 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
       return 'checkout_post_purchase'
     case 'product subscription':
       return 'product_subscription'
+    case 'point-of-sale UI':
+      return 'pos_ui_extension'
     case 'delivery option presenter':
       return 'shipping_rate_presenter'
     case 'theme app extension':
