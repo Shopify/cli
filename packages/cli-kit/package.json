@@ -82,6 +82,7 @@
     "get-port-please": "^2.5.0",
     "graphql": "^16.4.0",
     "graphql-request": "^4.3.0",
+    "haikunator": "^2.1.2",
     "js-yaml": "^4.1.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",
