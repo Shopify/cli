@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.0",
+    "bugsnag-build-reporter": "^2.0.0",
     "@changesets/cli": "^2.22.0",
     "nx": "^14.0.5",
     "@nrwl/eslint-plugin-nx": "^14.0.5",
