@@ -607,6 +607,8 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'CHECKOUT_UI_EXTENSION'
     case 'checkout_post_purchase':
       return 'CHECKOUT_POST_PURCHASE'
+    case 'pos_ui_extension':
+      return 'POS_UI_EXTENSION'
     case 'theme':
       return 'THEME_APP_EXTENSION'
     case 'web_pixel_extension':

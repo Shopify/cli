@@ -75,6 +75,7 @@ async function configFor(extension: UIExtension, app: App) {
   switch (extension.type as UIExtensionTypes) {
     case 'checkout_post_purchase':
       return {metafields: extension.configuration.metafields}
+    case 'pos_ui_extension':
     case 'product_subscription':
       // eslint-disable-next-line @typescript-eslint/naming-convention
       return {renderer_version: getUIExtensionRendererVersion(type, app)}
