@@ -5,7 +5,7 @@ import {ensureDeployEnvironment} from './environment'
 import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {path, output, temporary, error, api} from '@shopify/cli-kit'
+import {path, output, temporary, error} from '@shopify/cli-kit'
 
 const WebPixelConfigError = (property: string) => {
   return new error.Abort(
@@ -39,7 +39,7 @@ export const deploy = async (options: DeployOptions) => {
         uuid: identifiers.extensions[extension.localIdentifier],
         config: JSON.stringify(await configFor(extension, app)),
         context: '',
-      } as api.graphql.ExtensionSettings
+      }
     }),
   )
 
