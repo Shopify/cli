@@ -13,7 +13,7 @@ describe('extension prompt', () => {
     type: 'input',
     name: 'name',
     message: "Your extension's working name?",
-    default: 'extension',
+    default: expect.stringMatching(/^\w+-\w+-ext-\d+$/),
   }
   const extensionFlavorQuestion = {
     type: 'select',
