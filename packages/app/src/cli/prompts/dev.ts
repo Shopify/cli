@@ -73,7 +73,7 @@ export async function appNamePrompt(currentName: string): Promise<string> {
         return "App Name can't be empty"
       }
       if (value.length > 30) {
-        return 'App name is too long (maximum is 30 characters)'
+        return 'Enter a shorter name (30 character max.)'
       }
       if (value.includes('shopify')) {
         return 'Invalid app name'
