@@ -14,7 +14,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   // Eventually this list should be taken from a remote location
   // That way we don't have to update the CLI every time we add a template
   const templateURLMap = {
-    node: 'https://github.com/Shopify/starter-node-app',
+    node: 'https://github.com/Shopify/shopify-app-template-node#cli_three',
   }
 
   const defaults = {
