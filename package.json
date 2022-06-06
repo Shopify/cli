@@ -5,7 +5,7 @@
     "prerelease": "bin/prerelease.js",
     "// FIXME why postinstall": "we work around this issue https://github.com/egoist/rollup-plugin-esbuild/issues/329",
     "postinstall": "patch-package",
-    "upload-sourcemaps": "bin/upload-sourcemaps.js",
+    "update-bugsnag": "bin/update-bugsnag.js",
     "graph": "nx graph",
     "shopify": "nx build cli && packages/cli/bin/dev.js",
     "shopify:run": "packages/cli/bin/dev.js",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.0",
+    "bugsnag-build-reporter": "^2.0.0",
     "@changesets/cli": "^2.22.0",
     "nx": "^14.0.5",
     "@nrwl/eslint-plugin-nx": "^14.0.5",

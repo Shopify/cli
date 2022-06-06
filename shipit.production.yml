@@ -9,4 +9,4 @@ deploy:
   override:
     - yarn run changeset publish
   post:
-    - yarn run upload-sourcemaps
+    - yarn run update-bugsnag
