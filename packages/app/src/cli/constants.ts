@@ -145,7 +145,7 @@ export const extensionTypesHumanKeys = {
     'post-purchase',
     'theme app extension',
     'checkout UI',
-    'point-of-sale UI',
+    'Shopify POS',
     'product subscription',
     'product discount',
     'order discount',
@@ -176,7 +176,7 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
     case 'product_subscription':
       return buildExtensionOutputConfig('product subscription')
     case 'pos_ui_extension':
-      return buildExtensionOutputConfig('point-of-sale UI')
+      return buildExtensionOutputConfig('Shopify POS')
     case 'product_discounts':
       return buildExtensionOutputConfig(
         'product discount',
@@ -218,7 +218,7 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
       return 'checkout_post_purchase'
     case 'product subscription':
       return 'product_subscription'
-    case 'point-of-sale UI':
+    case 'Shopify POS':
       return 'pos_ui_extension'
     case 'delivery option presenter':
       return 'shipping_rate_presenter'
