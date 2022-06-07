@@ -70,6 +70,7 @@
     "cross-zip": "^4.0.0",
     "del": "^6.0.0",
     "enquirer": "^2.3.6",
+    "color-json": "^2.0.1",
     "env-paths": "^3.0.0",
     "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
