@@ -6,13 +6,11 @@ import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import cjs from 'color-json'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
   Command,
+  Json,
   Path,
   Link,
   Heading,
@@ -43,6 +41,10 @@ class ContentToken {
 
 export const token = {
   genericShellCommand: (value: string) => {
+    return new ContentToken(value, {}, ContentTokenType.Command)
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json: (value: any) => {
     return new ContentToken(value, {}, ContentTokenType.Command)
   },
   path: (value: string) => {
@@ -133,6 +135,9 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Path:
           output += colors.italic(enumToken.value)
+          break
+        case ContentTokenType.Json:
+          output += JSON.stringify(enumToken.value, null, 2)
           break
         case ContentTokenType.Link:
           output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
@@ -274,16 +279,6 @@ export const warn = (content: Message) => {
  */
 export const newline = () => {
   console.log()
-}
-
-/**
- * Turns the given object into a colorized JSON.
- * @param json {any} Object to turn into a JSON and colorize
- * @returns {string} Colorized JSON representation of the given object.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const colorJson = (json: any): string => {
-  return cjs(json)
 }
 
 /**

@@ -1,4 +1,5 @@
 import * as ouput from './output'
+import {Message, stringifyMessage} from './output'
 import {Errors} from '@oclif/core'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -22,8 +23,8 @@ enum FatalErrorType {
 export abstract class Fatal extends Error {
   tryMessage: string | null
   type: FatalErrorType
-  constructor(message: string, type: FatalErrorType, tryMessage: string | null = null) {
-    super(message)
+  constructor(message: Message, type: FatalErrorType, tryMessage: string | null = null) {
+    super(stringifyMessage(message))
     this.tryMessage = tryMessage
     this.type = type
   }
@@ -34,7 +35,7 @@ export abstract class Fatal extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer
  */
 export class Abort extends Fatal {
-  constructor(message: string, tryMessage: string | null = null) {
+  constructor(message: Message, tryMessage: string | null = null) {
     super(message, FatalErrorType.Abort, tryMessage)
   }
 }
@@ -49,7 +50,7 @@ export class AbortSilent extends Fatal {
  * A bug error is an error that represents a bug and therefore should be reported.
  */
 export class Bug extends Fatal {
-  constructor(message: string, tryMessage: string | null = null) {
+  constructor(message: Message, tryMessage: string | null = null) {
     super(message, FatalErrorType.Bug, tryMessage)
   }
 }
