@@ -60,7 +60,7 @@ export default class Dev extends Command {
     await dev({
       app,
       apiKey: flags['api-key'],
-      store: flags.store,
+      storeFqdn: flags.store,
       reset: flags.reset,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
