@@ -8,7 +8,9 @@ import {error, output, session, ui} from '@shopify/cli-kit'
 const DeployError = (appName: string, packageManager: string) => {
   return new error.Abort(
     `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
-    `• If you didn't intend to select this app, run "${packageManager} deploy --reset"
+    `• If you didn't intend to select this app, run ${
+      output.content`${output.token.command(packageManager, 'deploy', '--reset')}`.value
+    }
 • If this is the app you intended, check your local project and make sure
   it contains the same number and types of extensions as the Shopify app
   you've selected. You may need to scaffold missing extensions.`,
