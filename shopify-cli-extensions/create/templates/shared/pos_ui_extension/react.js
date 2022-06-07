@@ -6,7 +6,7 @@ const Tile = () => {
 
   return(
     <>
-      <Tile title="My app" subtitle="Welcome to my react app" enabled onPress={() => {api.navigation.navigateToFullScreenModal()}} />
+      <Tile title="My app" subtitle="Welcome to my react app" enabled />
     </>
   );
 }
