@@ -157,6 +157,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     token,
     envIdentifiers,
   })
+
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
