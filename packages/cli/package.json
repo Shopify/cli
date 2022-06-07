@@ -57,6 +57,10 @@
   "devDependencies": {
     "vitest": "0.13.1"
   },
+  "optionalDependencies": {
+    "@shopify/monorail": "^1.0.1-10456"
+  },
+  "bundledDependencies": ["@shopify/monorail"],
   "engine-strict": true,
   "engines": {
     "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
