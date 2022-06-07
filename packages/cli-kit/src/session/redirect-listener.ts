@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+import * as postAuthScreens from '../html/postAuthScreens'
 import {Abort, Bug} from '../error'
 import * as output from '../output'
 import http from 'http'
 import url from 'url'
 
-export const EmptyUrlError = new Abort('We received the authentication redirect but the URL is empty')
+export const EmptyUrlError = new Abort('We received the authentication redirect but the URL is empty.')
 export const AuthenticationError = (message: string) => {
   return new Abort(message)
 }
@@ -15,7 +17,7 @@ export const MissingStateError = new Bug(
   `The authentication can't continue because the redirect doesn't include the state.`,
 )
 
-export const redirectResponseBody = `You're logged in on the Shopify CLI in your terminal`
+export const redirectResponseBody = `<h1>You're logged in on the Shopify CLI in your terminal</h1>`
 
 const ResponseTimeoutSeconds = 10
 
@@ -45,11 +47,17 @@ export class RedirectListener {
     return http.createServer((request, response) => {
       const requestUrl = request.url
       if (requestUrl === '/favicon.ico') return {}
+      else if (requestUrl === '/style.css') {
+        const stylesheetFile = postAuthScreens.getStylesheet()
+        response.writeHead(200, {'Content-Type': 'text/css'})
+        response.end(stylesheetFile)
+        return {}
+      }
 
       const respond = () => {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const successFile = postAuthScreens.getSuccessHTML()
         response.writeHead(200, {'Content-Type': 'text/html'})
-        response.end(redirectResponseBody)
+        response.end(successFile)
       }
 
       if (!requestUrl) {
