@@ -199,3 +199,11 @@ function shopifyCLIDirectory() {
 function themeCheckDirectory() {
   return join(constants.paths.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
 }
+
+export async function version(): Promise<string | undefined> {
+  const parseOutput = (version: string) => version.match(/ruby (\d+\.\d+\.\d+)/)?.[1]
+  return system
+    .captureOutput('ruby', ['-v'])
+    .then(parseOutput)
+    .catch(() => undefined)
+}
