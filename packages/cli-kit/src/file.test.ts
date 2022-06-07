@@ -11,6 +11,7 @@ import {
   append,
   remove,
   stripUp,
+  format,
 } from './file'
 import {join} from './path'
 import {describe, expect, it} from 'vitest'
@@ -188,5 +189,56 @@ describe('stripUp', () => {
     await expect(newFilePath1).toEqual('b/c/d/e')
     await expect(newFilePath2).toEqual('c/d/e')
     await expect(newFilePath3).toEqual('d/e')
+  })
+})
+
+describe('format', () => {
+  it('formats JavaScript file content', async () => {
+    // Given
+    const unformatedContent = 'const foo = "bar"'
+
+    // When
+    const formattedContent = await format(unformatedContent, {path: 'someFile.js'})
+
+    // Then
+    await expect(formattedContent).toEqual(`const foo = 'bar';\n`)
+  })
+
+  it('formats TypeScript file content', async () => {
+    // Given
+    const unformatedContent = 'const array: string[] = ["bar", "baz",]'
+
+    // When
+    const formattedContent = await format(unformatedContent, {path: 'someFile.ts'})
+
+    // Then
+    await expect(formattedContent).toEqual("const array: string[] = ['bar', 'baz'];\n")
+  })
+
+  it('formats CSS file content', async () => {
+    // Given
+    const unformatedContent = 'body { color: red; }'
+
+    // When
+    const formattedContent = await format(unformatedContent, {path: 'someFile.css'})
+
+    // Then
+    await expect(formattedContent).toEqual(
+      `body {
+  color: red;
+}
+`,
+    )
+  })
+
+  it('formats HTML file content', async () => {
+    // Given
+    const unformatedContent = `<div      >much extra space</div>`
+
+    // When
+    const formattedContent = await format(unformatedContent, {path: 'someFile.html'})
+
+    // Then
+    await expect(formattedContent).toEqual('<div>much extra space</div>\n')
   })
 })
