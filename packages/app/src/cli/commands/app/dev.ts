@@ -29,12 +29,6 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
-    tunnel: Flags.boolean({
-      hidden: false,
-      description: 'Creates an HTTP tunnel to enable mobile or webhooks testing.',
-      env: 'SHOPIFY_FLAG_NO_TUNNEL',
-      default: false,
-    }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
