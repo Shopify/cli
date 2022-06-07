@@ -20,4 +20,4 @@ node.uploadMultiple({
 });
 reportBuild({apiKey, appVersion}, {})
   .then(() => console.log('Build reported!'))
-  .catch(err => console.log('Failed to report build!', err.messsage));
+  .catch(err => console.log('Failed to report build!', err.message));
