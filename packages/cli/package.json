@@ -95,6 +95,9 @@
     },
     "additionalHelpFlags": [
       "-h"
-    ]
+    ],
+    "hooks": {
+      "postrun": "dist/hooks/monorail"
+    }
   }
 }
