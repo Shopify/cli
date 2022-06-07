@@ -5,13 +5,18 @@ import {
   getDependencies,
   getPackageName,
   PackageJsonNotFoundError,
+  checkForNewVersion,
+  getOutputUpdateCLIReminder,
+  DependencyManager,
 } from './dependency'
 import {exec} from './system'
 import {join as pathJoin} from './path'
 import {write as writeFile} from './file'
+import {latestNpmPackageVersion} from './version'
 import {describe, it, expect, vi, test} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 
+vi.mock('./version')
 vi.mock('./system')
 const mockedExec = vi.mocked(exec)
 
@@ -355,5 +360,64 @@ describe('addNPMDependenciesIfNeeded', () => {
         cwd: tmpDir,
       })
     })
+  })
+})
+
+describe('checkForNewVersion', () => {
+  it('returns undefined when last version is lower or equals than current version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.2'
+    const dependency = 'dependency'
+    vi.mocked(latestNpmPackageVersion).mockResolvedValue(newestVersion)
+
+    // When
+    const result = await checkForNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBe(undefined)
+  })
+
+  it('returns undefined when last version greater than current version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestNpmPackageVersion).mockResolvedValue(newestVersion)
+
+    // When
+    const result = await checkForNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBe(newestVersion)
+  })
+
+  it('returns undefined when error is thrown retrieving newest version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const dependency = 'dependency'
+    vi.mocked(latestNpmPackageVersion).mockRejectedValue(undefined)
+
+    // When
+    const result = await checkForNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBe(undefined)
+  })
+})
+
+describe('getOutputUpdateCLIReminder', () => {
+  it.each([
+    ['yarn', 'upgrade'],
+    ['npm', 'update'],
+    ['pnpm', 'update'],
+  ])('returns upgrade reminder when using %s dependecy manager', (dependencyManager: string, updateCommand: string) => {
+    // When
+    const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager)
+
+    // Then
+    expect(result).toBe(
+      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33m${dependencyManager} ${updateCommand}\u001b[39m\u001b[22m`,
+    )
   })
 })
