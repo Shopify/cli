@@ -48,7 +48,7 @@ export const token = {
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: (value: any) => {
-    return new ContentToken(value, {}, ContentTokenType.Command)
+    return new ContentToken(value, {}, ContentTokenType.Json)
   },
   path: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Path)
