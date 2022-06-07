@@ -87,6 +87,12 @@ export const token = {
       ContentTokenType.Command,
     )
   },
+  successIcon: () => {
+    return new ContentToken('✔', {}, ContentTokenType.Green)
+  },
+  failIcon: () => {
+    return new ContentToken('✖', {}, ContentTokenType.ErrorText)
+  },
 }
 
 function formatPackageManagerCommand(
