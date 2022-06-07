@@ -80,7 +80,7 @@ export const token = {
   green: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
-  command: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
+  packagejsonScript: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
     return new ContentToken(
       formatPackageManagerCommand(dependencyManager, scriptName, scriptArgs),
       {},
