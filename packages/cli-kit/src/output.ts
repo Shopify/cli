@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {Fatal, Bug} from './error'
-import {isUnitTest} from './environment/local'
+import {isDebug, isUnitTest, isVerbose} from './environment/local'
 import {DependencyManager} from './dependency'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
@@ -218,7 +218,9 @@ const logLevelValue = (level: LogLevel): number => {
  * @returns {LogLevel} It returns the log level set by the user.
  */
 export const currentLogLevel = (): LogLevel => {
-  if (process.argv.includes('--verbose')) {
+  if (isVerbose()) {
+    return 'trace'
+  } else if (isDebug()) {
     return 'debug'
   } else {
     return 'info'

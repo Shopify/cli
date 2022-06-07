@@ -22,6 +22,15 @@ export function isDebug(env = process.env): boolean {
 }
 
 /**
+ * Returns true if the CLI is running in verbose mode.
+ * @param env The environment variables from the environment of the current process.
+ * @returns true if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed
+ */
+export function isVerbose(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.verbose]) || process.argv.includes('--verbose')
+}
+
+/**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present) or a cloud environment (spin).
  * @returns {boolean} True if the CLI is used in a Shopify environment.
