@@ -14,7 +14,7 @@ import {Writable} from 'node:stream'
 export interface DevOptions {
   app: App
   apiKey?: string
-  store?: string
+  storeFqdn?: string
   reset: boolean
   update: boolean
   plugins: Plugin[]
@@ -39,7 +39,7 @@ async function dev(options: DevOptions) {
   }
   const {
     identifiers,
-    store,
+    storeFqdn,
     app: {apiSecret},
   } = await ensureDevEnvironment(options)
 
@@ -58,7 +58,9 @@ async function dev(options: DevOptions) {
       updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
     }
     const message = `${updateMessage}Preview link for viewing or sharing: `
-    const storeAppUrl = `${url}/api/auth?shop=${store}`
+    const hostUrl = `${storeFqdn}/admin`
+    const hostParam = btoa(hostUrl).replace(/[=]/g, '')
+    const storeAppUrl = `${url}?shop=${storeFqdn}&host=${hostParam}`
     output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
   }
 
@@ -70,7 +72,7 @@ async function dev(options: DevOptions) {
     hostname: url,
   }
 
-  const devExt = await devExtensionsTarget(options.app, identifiers.app, url, store)
+  const devExt = await devExtensionsTarget(options.app, identifiers.app, url, storeFqdn)
   const proxyTargets: ReverseHTTPProxyTarget[] = [devExt]
   if (frontendConfig) {
     proxyTargets.push(
