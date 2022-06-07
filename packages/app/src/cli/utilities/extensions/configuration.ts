@@ -33,7 +33,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         type: `${extension.configuration.type}`,
         metafields: extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        extension_points: [],
+        extension_points: extension.configuration.extensionPoints || [],
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
         development: {
