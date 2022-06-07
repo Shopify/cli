@@ -1,0 +1,35 @@
+import {exists, write, read} from './file'
+import {findUp, join} from './path'
+
+/**
+ * Check if user editor is VS Code
+ */
+export const isVSCode = async (root = process.cwd()) => {
+  const config = await findUp(join(root, '.vscode'), {type: 'directory'})
+
+  if (!config) {
+    return false
+  }
+
+  return exists(config)
+}
+
+/**
+ * Add VSCode extension recommendations
+ */
+export async function addRecommendedExtensions(directory: string, recommendations: string[]) {
+  const extensionsPath = join(directory, '.vscode/extensions.json')
+
+  if (await isVSCode(directory)) {
+    let originalExtensionsJson = {recommendations: []}
+    if (await exists(extensionsPath)) {
+      const originalExtensionsFile = await read(extensionsPath)
+      originalExtensionsJson = JSON.parse(originalExtensionsFile)
+    }
+    const newExtensionsJson = {
+      ...originalExtensionsJson,
+      recommendations: [...originalExtensionsJson.recommendations, ...recommendations],
+    }
+    await write(extensionsPath, JSON.stringify(newExtensionsJson, null, 2))
+  }
+}
