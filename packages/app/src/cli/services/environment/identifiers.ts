@@ -5,10 +5,6 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
 import {error, output, session, ui} from '@shopify/cli-kit'
 
-const NoLocalExtensionsError = () => {
-  return new error.Abort('There are no extensions to deploy')
-}
-
 const DeployError = (appName: string, packageManager: string) => {
   return new error.Abort(
     `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
@@ -45,7 +41,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   // We need local extensions to deploy
   if (localExtensions.length === 0) {
-    throw NoLocalExtensionsError()
+    return {app: options.appId, extensions: {}}
   }
 
   // If there are more remote extensions than local, then something is missing and we can't continue
