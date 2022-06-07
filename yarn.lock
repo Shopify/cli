@@ -1801,6 +1801,13 @@
     semiver "^1.1.0"
     typescript "^4.6.3"
 
+"@shopify/monorail@^1.0.1-10456":
+  version "1.0.1-10456"
+  resolved "https://npm.shopify.io/node/@shopify/monorail/-/1.0.1-10456/monorail-1.0.1-10456.tgz#b95bebc226fdd51a91d4c93dec8103fb69157fc4"
+  integrity sha512-OhowsCFR7jSNnGsNG1ttK9K6f1JClTE+cdUSIUovYVHLicgJC/N97SVh88NhmHHTBMprYSeTiIQNFgQ9xwl1Ww==
+  dependencies:
+    uuid "^3.3.3"
+
 "@shopify/plugin-ngrok@^0.2.6":
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.7.tgz#c287357d21232d5917bb8810f2b62b9ae113d453"
@@ -10124,6 +10131,11 @@ uuid@8.3.2, "uuid@^7.0.0 || ^8.0.0":
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
+
+uuid@^3.3.3:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
+  integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
