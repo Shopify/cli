@@ -37,6 +37,7 @@
     "@shopify/mini-oxygen": "^0.0.5",
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
+    "unconfig": "^0.3.4",
     "vite": "^2.9.9"
   },
   "peerDependencies": {
