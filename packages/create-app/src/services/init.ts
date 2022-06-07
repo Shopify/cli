@@ -112,6 +112,13 @@ async function init(options: InitOptions) {
           task.title = 'Completed clean up'
         },
       },
+      {
+        title: 'Initializing a Git repository',
+        task: async (_, task) => {
+          await git.initializeRepository(outputDirectory)
+          task.title = 'Git repository initialized'
+        },
+      },
     ])
 
     const list = new ui.Listr(tasks, {
@@ -122,8 +129,6 @@ async function init(options: InitOptions) {
     await list.run()
 
     await file.move(templateScaffoldDir, outputDirectory)
-
-    await git.initializeRepository(outputDirectory)
   })
 
   output.info(output.content`
