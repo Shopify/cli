@@ -267,7 +267,7 @@ function showReusedValues(org: string, app: App, store: string) {
   output.info(`App:        ${app.name}`)
   output.info(`Dev store:  ${store}\n`)
   output.info(
-    output.content`To reset your default dev config, run ${output.token.command(
+    output.content`To reset your default dev config, run ${output.token.packagejsonScript(
       app.dependencyManager,
       'dev',
       '--reset',
