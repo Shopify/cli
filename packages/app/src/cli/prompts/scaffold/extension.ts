@@ -57,7 +57,7 @@ const scaffoldExtensionPrompt = async (
       {
         type: 'select',
         name: 'extensionFlavor',
-        message: "What's your language/framework preference for this extension?",
+        message: 'Choose a starting template for your extension',
         choices: [
           {name: 'React (recommended)', value: 'react'},
           {name: 'vanilla JavaScript', value: 'vanilla-js'},

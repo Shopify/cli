@@ -38,15 +38,15 @@ export default class AppScaffoldExtension extends Command {
       hidden: true,
       char: 'l',
       options: ['wasm', 'rust', 'typescript'],
-      description: 'Language of the template',
+      description: 'Language of the template, where applicable',
       env: 'SHOPIFY_FLAG_LANGUAGE',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'extension-flavor': Flags.string({
+
+    template: Flags.string({
       hidden: false,
-      description: 'For extensions which allow multiple flavors, choose the flavor of the template',
+      description: 'Choose a starting template for your extension, where applicable',
       options: ['vanilla-js', 'react'],
-      env: 'SHOPIFY_FLAG_EXTENSION_FLAVOR',
+      env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
   }
 
@@ -58,7 +58,7 @@ export default class AppScaffoldExtension extends Command {
     const app: App = await loadApp(directory)
 
     this.validateType(app, flags.type)
-    const extensionFlavor = flags['extension-flavor']
+    const extensionFlavor = flags.template
     this.validateExtensionFlavor(flags.type, extensionFlavor)
 
     const promptAnswers = await scaffoldExtensionPrompt({
@@ -94,8 +94,8 @@ export default class AppScaffoldExtension extends Command {
   validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
     if (flavor && type && !(uiExtensions.types as ReadonlyArray<string>).includes(type)) {
       throw new error.Abort(
-        'Specified extension flavor on invalid extension type',
-        `You can only specify a flavor for these extension types: ${uiExtensions.types}.`,
+        'Specified extension template on invalid extension type',
+        `You can only specify a template for these extension types: ${uiExtensions.types}.`,
       )
     }
   }

@@ -18,7 +18,7 @@ When(
       name,
       type,
       directory: this.appDirectory,
-      extraArgs: ['--extension-flavor', flavor],
+      extraArgs: ['--template', flavor],
       env: {...process.env, ...this.temporaryEnv},
     })
   },
