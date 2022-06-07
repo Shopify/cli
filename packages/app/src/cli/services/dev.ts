@@ -58,7 +58,7 @@ async function dev(options: DevOptions) {
       updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
     }
     const message = `${updateMessage}Preview link for viewing or sharing: `
-    const storeAppUrl = `${url}/api/auth?shop=${store}`
+    const storeAppUrl = `${url}?shop=${store}`
     output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
   }
 
