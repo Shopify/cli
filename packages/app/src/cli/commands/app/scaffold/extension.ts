@@ -95,7 +95,7 @@ export default class AppScaffoldExtension extends Command {
     if (flavor && type && !(uiExtensions.types as ReadonlyArray<string>).includes(type)) {
       throw new error.Abort(
         'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${uiExtensions.types}.`,
+        `You can only specify a template for these extension types: ${uiExtensions.types.join(', ')}.`,
       )
     }
   }
