@@ -481,12 +481,10 @@ export async function updateDependencies(app: App): Promise<App> {
   }
 }
 
-export type EnvironmentType = 'production'
-
 interface UpdateAppIdentifiersOptions {
   app: App
   identifiers: Identifiers
-  environmentType: EnvironmentType
+  environmentType: 'production' | 'development'
 }
 
 /**
@@ -517,7 +515,7 @@ export async function updateAppIdentifiers({
       variables[envVariable] = identifiers.extensions[identifier]
     }
   })
-  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(variables)
+  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(variables) && environmentType === 'production'
   dotenvFile.variables = variables
   if (write) {
     await dotenv.write(dotenvFile)

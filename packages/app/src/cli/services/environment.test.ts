@@ -147,7 +147,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'production',
+      environmentType: 'development',
     })
   })
 
@@ -191,7 +191,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'production',
+      environmentType: 'development',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
   })
@@ -227,7 +227,7 @@ describe('ensureDevEnvironment', () => {
         app: APP2.apiKey,
         extensions: {},
       },
-      environmentType: 'production',
+      environmentType: 'development',
     })
 
     expect(fetchOrganizations).toBeCalled()

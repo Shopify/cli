@@ -111,7 +111,7 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
       app: options.apiKey,
       extensions: {},
     },
-    environmentType: 'production',
+    environmentType: 'development',
   })
   return {
     ...options,
