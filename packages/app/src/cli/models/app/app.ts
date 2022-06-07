@@ -481,10 +481,12 @@ export async function updateDependencies(app: App): Promise<App> {
   }
 }
 
+type EnvironmentType = 'production' | 'development'
+
 interface UpdateAppIdentifiersOptions {
   app: App
   identifiers: Identifiers
-  environmentType: 'production' | 'development'
+  environmentType: EnvironmentType
 }
 
 /**
