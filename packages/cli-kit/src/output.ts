@@ -146,7 +146,6 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           } catch (_) {
             output += JSON.stringify(enumToken.value ?? {}, null, 2)
           }
-          output += JSON.stringify(enumToken.value, null, 2)
           break
         case ContentTokenType.Link:
           output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
