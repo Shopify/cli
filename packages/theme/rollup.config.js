@@ -12,8 +12,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const themeExternal = [...external, ...Object.keys(dependencies), '@shopify/cli-kit']
 
 const themeCommands = fg.sync([
-  path.join(__dirname, `/src/cli/commands/theme/**/*.ts`),
-  `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
+  path.join(__dirname, `/src/cli-main/commands/theme/**/*.ts`),
+  `!${path.join(__dirname, `/src/cli-main/commands/**/*.test.ts`)}`,
 ])
 
 const configuration = () => [
@@ -26,9 +26,9 @@ const configuration = () => [
         format: 'esm',
         sourcemap: true,
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
+          if (chunkInfo.facadeModuleId.includes('src/cli-main/commands')) {
             // Preserves the commands/... path
-            return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
+            return `commands/${chunkInfo.facadeModuleId.split('src/cli-main/commands').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

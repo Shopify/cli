@@ -1,7 +1,7 @@
 {
   "version": 2,
   "projects": {
-    "cli": "packages/cli",
+    "cli": "packages/cli-main",
     "cli-testing": "packages/cli-testing",
     "cli-kit": "packages/cli-kit",
     "app": "packages/app",

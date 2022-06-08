@@ -23,7 +23,7 @@ Business logic must be delegated to services that represent units of business lo
 
 #### Naming and directory conventions
 
-The commands' hierarchy is laid out inside the `src/cli/commands` directory. Every subdirectory represents a level of commands, and the command's name matches the file name. Below there's an example of the file structure that we need for the `shopify app build` command:
+The commands' hierarchy is laid out inside the `src/cli-main/commands` directory. Every subdirectory represents a level of commands, and the command's name matches the file name. Below there's an example of the file structure that we need for the `shopify app build` command:
 
 ```
 app/
