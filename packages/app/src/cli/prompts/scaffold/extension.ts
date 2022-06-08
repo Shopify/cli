@@ -6,7 +6,7 @@ import {
   themeExtensions,
   uiExtensions,
 } from '../../constants'
-import {ui} from '@shopify/cli-kit'
+import {haiku, ui} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
   name?: string
@@ -48,7 +48,7 @@ const scaffoldExtensionPrompt = async (
       type: 'input',
       name: 'name',
       message: "Your extension's working name?",
-      default: 'extension',
+      default: haiku.generate('ext'),
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
