@@ -1,10 +1,32 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {version} from '../../package.json'
-import {environment, os, path, ruby, store} from '@shopify/cli-kit'
+import {environment, http, os, output, path, ruby, store} from '@shopify/cli-kit'
 
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
-export const buildPayload = async (command: string, args: string[] = []) => {
+export const reportEvent = async (command: string, args: string[]) => {
+  const payload = await buildPayload(command, args)
+  const body = JSON.stringify(payload)
+  const headers = buildHeaders()
+
+  const response = await http.fetch(url, {method: 'POST', body, headers})
+  if (response.status === 200) {
+    output.debug(`Analytics event sent: ${body}`)
+  } else {
+    output.debug(`Failed to report usage analytics: ${response.statusText}`)
+  }
+}
+
+const buildHeaders = () => {
+  const currentTime = new Date().getTime()
+  return {
+    'Content-Type': 'application/json; charset=utf-8',
+    'X-Monorail-Edge-Event-Created-At-Ms': currentTime.toString(),
+    'X-Monorail-Edge-Event-Sent-At-Ms': currentTime.toString(),
+  }
+}
+
+const buildPayload = async (command: string, args: string[] = []) => {
   const currentTime = new Date().getTime()
   let directory = process.cwd()
   const pathFlagIndex = args.indexOf('--path')
@@ -31,14 +53,5 @@ export const buildPayload = async (command: string, args: string[] = []) => {
       api_key: appInfo?.appId,
       partner_id: appInfo?.orgId,
     },
-  }
-}
-
-export const buildHeaders = () => {
-  const currentTime = new Date().getTime()
-  return {
-    'Content-Type': 'application/json; charset=utf-8',
-    'X-Monorail-Edge-Event-Created-At-Ms': currentTime.toString(),
-    'X-Monorail-Edge-Event-Sent-At-Ms': currentTime.toString(),
   }
 }

@@ -1,9 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {buildHeaders, buildPayload} from './monorail'
+import {reportEvent} from './monorail'
 import {it, expect, vi, beforeEach, afterAll} from 'vitest'
-import {environment, os, ruby, store} from '@shopify/cli-kit'
+import {environment, http, os, ruby, store} from '@shopify/cli-kit'
 
 const currentDate = new Date(2022, 1, 1, 10)
+const expectedURL = 'https://monorail-edge.shopifysvc.com/v1/produce'
+const expectedHeaders = {
+  'Content-Type': 'application/json; charset=utf-8',
+  'X-Monorail-Edge-Event-Created-At-Ms': '1643706000000',
+  'X-Monorail-Edge-Event-Sent-At-Ms': '1643706000000',
+}
 
 beforeEach(() => {
   vi.setSystemTime(currentDate)
@@ -25,6 +31,9 @@ beforeEach(() => {
       store: {
         getAppInfo: vi.fn(),
       },
+      http: {
+        fetch: vi.fn(),
+      },
     }
   })
   vi.mock('../../package.json', () => {
@@ -35,22 +44,23 @@ beforeEach(() => {
   vi.mocked(environment.local.isShopify).mockResolvedValue(false)
   vi.mocked(ruby.version).mockResolvedValue('3.1.1')
   vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
+  vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
 })
 
 afterAll(() => {
   vi.useRealTimers()
 })
 
-it('returs the expected payload', async () => {
+it('makes an API call to Monorail with the expected payload and headers', async () => {
   // Given
   const command = 'app info'
   const args: string[] = []
 
   // When
-  const got = await buildPayload(command, args)
+  await reportEvent(command, args)
 
   // Then
-  const expectedResult = {
+  const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
       project_type: 'node',
@@ -69,20 +79,24 @@ it('returs the expected payload', async () => {
       partner_id: undefined,
     },
   }
-  expect(got).toEqual(expectedResult)
+  expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
+    method: 'POST',
+    body: JSON.stringify(expectedBody),
+    headers: expectedHeaders,
+  })
 })
 
-it('returs the expected payload with cached app info', async () => {
+it('makes an API call to Monorail with the expected payload with cached app info', async () => {
   // Given
   const command = 'app dev'
   const args = ['--path', 'fixtures/app']
   vi.mocked(store.getAppInfo).mockReturnValue({appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'})
 
   // When
-  const got = await buildPayload(command, args)
+  await reportEvent(command, args)
 
   // Then
-  const expectedResult = {
+  const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
       project_type: 'node',
@@ -101,17 +115,9 @@ it('returs the expected payload with cached app info', async () => {
       partner_id: '1',
     },
   }
-  expect(got).toEqual(expectedResult)
-})
-
-it('returs the expected headers', async () => {
-  // When
-  const got = await buildHeaders()
-
-  // Then
-  expect(got).toEqual({
-    'Content-Type': 'application/json; charset=utf-8',
-    'X-Monorail-Edge-Event-Created-At-Ms': '1643706000000',
-    'X-Monorail-Edge-Event-Sent-At-Ms': '1643706000000',
+  expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
+    method: 'POST',
+    body: JSON.stringify(expectedBody),
+    headers: expectedHeaders,
   })
 })
