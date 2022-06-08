@@ -17,7 +17,7 @@ const input: ui.Question = {
   name: 'template',
   message: 'Your app’s name? (You can change it later.)',
   default: 'my-app',
-  validate: (value) => value.length > 30 ? 'App name is too long (maximum is 30 characters)' : true,
+  validate: (value) => value.length > 30 ? 'Enter a shorter name (30 character max.)' : true,
 }
 
 const select: ui.Question = {
