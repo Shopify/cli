@@ -33,12 +33,16 @@ import (
 //go:embed dev-console/*
 var devConsole embed.FS
 
+const (
+	DevConsolePath string = "/dev-console"
+)
+
 func New(config *core.Config, apiRoot string) *ExtensionsApi {
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		url := r.URL
-		url.Path = "/dev-console"
+		url.Path = DevConsolePath
 		http.Redirect(rw, r, url.String(), http.StatusTemporaryRedirect)
 	})
 
@@ -268,10 +272,15 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 
 	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
 
-	api.PathPrefix("/dev-console").Handler(http.FileServer(http.FS(devConsole)))
+	devConsoleServer := http.FileServer(http.FS(devConsole))
 
-	api.PathPrefix("/dev-assets/").Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		http.Redirect(rw, r, path.Join("/dev-console", r.URL.Path), http.StatusTemporaryRedirect)
+	api.PathPrefix(DevConsolePath).Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, path.Join(DevConsolePath, "assets")) {
+			http.Redirect(rw, r, path.Join(DevConsolePath, r.URL.Path), http.StatusTemporaryRedirect)
+			return
+		}
+
+		devConsoleServer.ServeHTTP(rw, r)
 	}))
 
 	return api
