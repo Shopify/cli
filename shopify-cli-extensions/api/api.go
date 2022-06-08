@@ -271,7 +271,6 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 	api.PathPrefix("/dev-console").Handler(http.FileServer(http.FS(devConsole)))
 
 	api.PathPrefix("/dev-assets/").Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		fmt.Printf("path: %s", path.Join("/dev-console", r.URL.Path))
 		http.Redirect(rw, r, path.Join("/dev-console", r.URL.Path), http.StatusTemporaryRedirect)
 	}))
 
