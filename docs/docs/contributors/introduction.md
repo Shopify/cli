@@ -75,12 +75,12 @@ SHOPIFY_PARTNERS_ENV=spin SHOPIFY_IDENTITY_ENV=spin dev shopify {...args}
 
 #### Executing commands with default spin environment variables
 
-A `dev` script has been added to avoid setting the environments variables manually, it can be runned this ways:
+A `dev` script has been added to avoid setting the environment variables manually, it can be run this ways:
 
 ```bash
 dev spin shopify {...args}
 ```
-By default, this command uses last spin instance created. In case a different one is needed, use the `SPIN_INSTANCE` environment variable when executing the script:
+By default, this command uses the latest Spin instance created. In case a different one is needed, use the `SPIN_INSTANCE` environment variable when executing the script:
 ```bash
 SPIN_INSTANCE=[spin-instance-fqdn] dev spin shopify {...args}
 ```
