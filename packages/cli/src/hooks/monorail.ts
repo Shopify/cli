@@ -1,21 +1,29 @@
-import {buildPayload} from '../services/monorail'
+import {buildPayload, buildHeaders, url} from '../services/monorail'
 import {Hook} from '@oclif/core'
-import {Monorail, RetryMiddleware} from '@shopify/monorail'
-import {environment, output} from '@shopify/cli-kit'
+import {http, output, environment} from '@shopify/cli-kit'
 
 export const hook: Hook.Postrun = async (options) => {
   try {
-    const monorail =
-      process.env.NODE_ENV === 'production'
-        ? Monorail.createHttpProducer({production: true, middleware: [new RetryMiddleware(3, 150)]})
-        : Monorail.createLogProducer({debugMode: environment.local.isVerbose()})
-    const schemaId = 'app_cli3_command/1.0'
     const command = options.Command.id.replace(/:/g, ' ')
     const payload = await buildPayload(command, options.argv)
+    const body = JSON.stringify(payload)
+    const headers = buildHeaders()
 
-    monorail.produce({schemaId, payload})
+    if (environment.local.isProduction()) {
+      const response = await http.fetch(url, {method: 'POST', body, headers})
+      if (response.status !== 200) {
+        throw new Error(response.statusText)
+      }
+      output.debug(`Analytics event sent: ${body}`)
+    } else {
+      output.debug(`Analytics event not sent: ${body}`)
+    }
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err) {
-    output.debug('Failed to report usage analytics')
+  } catch (error: unknown) {
+    let message = 'Failed to report usage analytics'
+    if (error instanceof Error) {
+      message += `: ${error.message}`
+    }
+    output.debug(message)
   }
 }

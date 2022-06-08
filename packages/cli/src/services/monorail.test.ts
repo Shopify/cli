@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {buildPayload} from './monorail'
+import {buildHeaders, buildPayload} from './monorail'
 import {it, expect, vi, beforeEach, afterAll} from 'vitest'
 import {environment, os, ruby, store} from '@shopify/cli-kit'
 
@@ -50,22 +50,26 @@ it('returs the expected payload', async () => {
   const got = await buildPayload(command, args)
 
   // Then
-  expect(got).toEqual({
-    projectType: 'node',
-    command,
-    args: '',
-    timeStart: currentDate.getTime(),
-    timeEnd: currentDate.getTime(),
-    totalTime: 0,
-    success: true,
-    uname: 'darwin arm64',
-    cliVersion: '3.0.0',
-    rubyVersion: '3.1.1',
-    nodeVersion: process.version.replace('v', ''),
-    isEmployee: false,
-    api_key: undefined,
-    partner_id: undefined,
-  })
+  const expectedResult = {
+    schema_id: 'app_cli3_command/1.0',
+    payload: {
+      project_type: 'node',
+      command,
+      args: '',
+      time_start: 1643706000000,
+      time_end: 1643706000000,
+      total_time: 0,
+      success: true,
+      uname: 'darwin arm64',
+      cli_version: '3.0.0',
+      ruby_version: '3.1.1',
+      node_version: process.version.replace('v', ''),
+      is_employee: false,
+      api_key: undefined,
+      partner_id: undefined,
+    },
+  }
+  expect(got).toEqual(expectedResult)
 })
 
 it('returs the expected payload with cached app info', async () => {
@@ -78,20 +82,36 @@ it('returs the expected payload with cached app info', async () => {
   const got = await buildPayload(command, args)
 
   // Then
+  const expectedResult = {
+    schema_id: 'app_cli3_command/1.0',
+    payload: {
+      project_type: 'node',
+      command,
+      args: '--path fixtures/app',
+      time_start: currentDate.getTime(),
+      time_end: currentDate.getTime(),
+      total_time: 0,
+      success: true,
+      uname: 'darwin arm64',
+      cli_version: '3.0.0',
+      ruby_version: '3.1.1',
+      node_version: process.version.replace('v', ''),
+      is_employee: false,
+      api_key: 'key1',
+      partner_id: '1',
+    },
+  }
+  expect(got).toEqual(expectedResult)
+})
+
+it('returs the expected headers', async () => {
+  // When
+  const got = await buildHeaders()
+
+  // Then
   expect(got).toEqual({
-    projectType: 'node',
-    command,
-    args: '--path fixtures/app',
-    timeStart: currentDate.getTime(),
-    timeEnd: currentDate.getTime(),
-    totalTime: 0,
-    success: true,
-    uname: 'darwin arm64',
-    cliVersion: '3.0.0',
-    rubyVersion: '3.1.1',
-    nodeVersion: process.version.replace('v', ''),
-    isEmployee: false,
-    api_key: 'key1',
-    partner_id: '1',
+    'Content-Type': 'application/json; charset=utf-8',
+    'X-Monorail-Edge-Event-Created-At-Ms': '1643706000000',
+    'X-Monorail-Edge-Event-Sent-At-Ms': '1643706000000',
   })
 })
