@@ -9,7 +9,7 @@ export const hook: Hook.Postrun = async (options) => {
     const body = JSON.stringify(payload)
     const headers = buildHeaders()
 
-    if (environment.local.isProduction()) {
+    if (environment.local.isProduction() && !environment.local.analyticsEnabled()) {
       const response = await http.fetch(url, {method: 'POST', body, headers})
       if (response.status !== 200) {
         throw new Error(response.statusText)
