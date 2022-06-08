@@ -1785,8 +1785,8 @@
 
 "@shopify/mini-oxygen@^0.0.5":
   version "0.0.5"
-  resolved "https://npm.shopify.io/node/@shopify/mini-oxygen/-/0.0.5/mini-oxygen-0.0.5.tgz#9597911678142b58e5da35f4f4198991a18763cb"
-  integrity sha512-ObgKycibkYh3Qo3tWYB4/JxP0pGkL4xbDNKmLdcmpzAwlBdCy//kyM31Mihnhr2XnfSvxB11ojSR/5OwhSn6Hw==
+  resolved "https://registry.yarnpkg.com/@shopify/mini-oxygen/-/mini-oxygen-0.0.5.tgz#bb34f07c6aeaf0c346c41e79ac97e811eb2630fc"
+  integrity sha512-ZyFWNTDB+TFvr6/MGcXrRbKbCdLGKMugGLuvKWYf5Yb1GDCXK5zD88ciXNn7IM+mzIepZ0yF5PKY53eDHJDrUw==
   dependencies:
     "@miniflare/cache" "^2.3.0"
     "@miniflare/core" "^2.3.0"
@@ -7443,9 +7443,9 @@ next-tick@^1.1.0:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.1.0.tgz#1836ee30ad56d67ef281b22bd199f709449b35eb"
   integrity sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==
 
-"ngrok@git+https://github.com/Shopify/ngrok.git#0d1b1621b998c28ab2bc50f45a897799c6def417":
+"ngrok@https://github.com/Shopify/ngrok#0d1b1621b998c28ab2bc50f45a897799c6def417":
   version "4.3.1"
-  resolved "git+https://github.com/Shopify/ngrok.git#0d1b1621b998c28ab2bc50f45a897799c6def417"
+  resolved "https://github.com/Shopify/ngrok#0d1b1621b998c28ab2bc50f45a897799c6def417"
   dependencies:
     "@types/node" "^8.10.50"
     extract-zip "^2.0.1"
@@ -8292,7 +8292,7 @@ prettier@^1.19.1:
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.19.1.tgz#f7d7f5ff8a9cd872a7be4ca142095956a60797cb"
   integrity sha512-s7PoyDv/II1ObgQunCbB9PdLmUcBZcnWOcxDh7O0N/UwDEsHyqkW+Qh28jW+mVuCdx7gLB0BotYI1Y6uI9iyew==
 
-prettier@^2.6.1:
+prettier@^2.6.1, prettier@^2.6.2:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.6.2.tgz#e26d71a18a74c3d0f0597f55f01fb6c06c206032"
   integrity sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==
@@ -8895,9 +8895,9 @@ semiver@^1.1.0:
   integrity sha512-QNI2ChmuioGC1/xjyYwyZYADILWyW6AmS1UH6gDj/SFUUUS4MBAWs/7mxnkRPc/F4iHezDP+O8t0dO8WHiEOdg==
 
 semver-regex@^4.0.0:
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/semver-regex/-/semver-regex-4.0.4.tgz#101d1e277d0de2f67db635c3e053669feccabf0d"
-  integrity sha512-VVI9pu+djW/t19uRPlayYj4qjpIXgHC4Wc5nMgX+4jNsYiP0Sl+d/lFig8JrktjqNEU2YikgQOnth94eLzAVWw==
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/semver-regex/-/semver-regex-4.0.5.tgz#fbfa36c7ba70461311f5debcb3928821eb4f9180"
+  integrity sha512-hunMQrEy1T6Jr2uEVjrAIqjwWcQTgOAcIM52C8MY1EZSD3DDNft04XzvYKPqjED65bNVVko0YI38nYeEHCX3yw==
 
 "semver@2 || 3 || 4 || 5", semver@^5.4.1, semver@^5.5.0, semver@^5.6.0:
   version "5.7.1"
