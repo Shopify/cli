@@ -5,7 +5,7 @@ import {ensureDeployEnvironment} from './environment'
 import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {path, output, temporary, error} from '@shopify/cli-kit'
+import {path, output, temporary, error, file} from '@shopify/cli-kit'
 
 const WebPixelConfigError = (property: string) => {
   return new error.Abort(
@@ -45,6 +45,7 @@ export const deploy = async (options: DeployOptions) => {
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `${app.name}.zip`)
+    await file.mkdir(path.dirname(bundlePath))
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
     await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     // eslint-disable-next-line require-atomic-updates
