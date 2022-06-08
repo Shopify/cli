@@ -26,13 +26,13 @@ describe('check CLI version', () => {
   }
 
   it.each(['yarn', 'npm', 'pnpm'])(
-    'display lastest version and %s upgrade message when a newer exists',
+    'display latest version and %s upgrade message when a newer exists',
     async (dependencyManager: string) => {
       // Given
 
-      const lastestVersion = '3.0.10'
+      const latestVersion = '3.0.10'
       const outputMock = outputMocker.mockAndCapture()
-      vi.mocked(dependency.checkForNewVersion).mockResolvedValue(lastestVersion)
+      vi.mocked(dependency.checkForNewVersion).mockResolvedValue(latestVersion)
       vi.mocked(dependency.dependencyManagerUsedForCreating).mockReturnValue(dependencyManager as DependencyManager)
       const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
@@ -40,7 +40,7 @@ describe('check CLI version', () => {
       await Version.run()
 
       // Then
-      const result = `Current Shopify CLI version: \u001b[33m${currentVersion}\u001b[39m\nLastest Shopify CLI version: \u001b[33m${lastestVersion}\u001b[39m\n💡\nCLI reminder`
+      const result = `Current Shopify CLI version: \u001b[33m${currentVersion}\u001b[39m\n Latest Shopify CLI version: \u001b[33m${latestVersion}\u001b[39m\n💡\nCLI reminder`
       expect(outputMock.info()).toMatch(result)
       expect(outputReminder).toBeCalledWith(dependencyManager as DependencyManager)
     },

@@ -20,9 +20,9 @@ beforeEach(() => {
 describe('info', () => {
   it('returns update shopify cli reminder when last version is greater than current version', async () => {
     // Given
-    const lastestVersion = '2.2.3'
+    const latestVersion = '2.2.3'
     const app = mockApp()
-    vi.mocked(dependency.checkForNewVersion).mockResolvedValue(lastestVersion)
+    vi.mocked(dependency.checkForNewVersion).mockResolvedValue(latestVersion)
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
@@ -33,7 +33,6 @@ describe('info', () => {
 
   it('returns update shopify cli reminder when last version lower or equals to current version', async () => {
     // Given
-    const lastestVersion = currentVersion
     const app = mockApp()
     vi.mocked(dependency.checkForNewVersion).mockResolvedValue(undefined)
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')

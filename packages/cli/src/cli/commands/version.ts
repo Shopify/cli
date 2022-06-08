@@ -9,7 +9,7 @@ export default class Version extends Command {
     output.info(output.content`Current ${Version.description}: ${output.token.yellow(currentVersion)}`.value)
     const lastVersion = await dependency.checkForNewVersion('@shopify/cli', currentVersion)
     if (lastVersion) {
-      output.info(output.content`Lastest ${Version.description}: ${output.token.yellow(lastVersion)}\n💡`)
+      output.info(output.content` Latest ${Version.description}: ${output.token.yellow(lastVersion)}\n💡`)
       output.info(dependency.getOutputUpdateCLIReminder(dependency.dependencyManagerUsedForCreating()))
     }
   }

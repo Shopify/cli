@@ -52,7 +52,7 @@ const scaffoldExtensionPrompt = async (
 
 /**
  * Sorting method for prompt choices that sort alphabetically extensions showing first the UI ones
- * and lastest the function ones
+ * and latest the function ones
  */
 export const extensionTypeChoiceSorterByGroupAndName = (
   c1: {name: string; value: string},
