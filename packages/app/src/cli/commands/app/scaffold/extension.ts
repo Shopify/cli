@@ -1,5 +1,5 @@
 import {appFlags} from '../../../flags'
-import {extensions, ExtensionTypes, getExtensionOutputConfig, limitedExtensions} from '../../../constants'
+import {extensions, ExtensionTypes, getExtensionOutputConfig, limitedExtensions, uiExtensions} from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
@@ -38,8 +38,15 @@ export default class AppScaffoldExtension extends Command {
       hidden: true,
       char: 'l',
       options: ['wasm', 'rust', 'typescript'],
-      description: 'Language of the template',
+      description: 'Language of the template, where applicable',
       env: 'SHOPIFY_FLAG_LANGUAGE',
+    }),
+
+    template: Flags.string({
+      hidden: false,
+      description: 'Choose a starting template for your extension, where applicable',
+      options: ['vanilla-js', 'react'],
+      env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
   }
 
@@ -51,11 +58,14 @@ export default class AppScaffoldExtension extends Command {
     const app: App = await loadApp(directory)
 
     this.validateType(app, flags.type)
+    const extensionFlavor = flags.template
+    this.validateExtensionFlavor(flags.type, extensionFlavor)
 
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
       extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
+      extensionFlavor,
     })
 
     await scaffoldExtensionService({
@@ -78,6 +88,15 @@ export default class AppScaffoldExtension extends Command {
   validateType(app: App, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
       throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
+    }
+  }
+
+  validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
+    if (flavor && type && !(uiExtensions.types as ReadonlyArray<string>).includes(type)) {
+      throw new error.Abort(
+        'Specified extension template on invalid extension type',
+        `You can only specify a template for these extension types: ${uiExtensions.types.join(', ')}.`,
+      )
     }
   }
 

@@ -11,19 +11,30 @@ interface ExtensionConfiguration {
 }
 
 When(
-  /I create a extension named (.+) of type (.+)/,
+  /I create an extension named (.+) of type ([^\s]+) and flavor (.+)$/,
   {timeout: 2 * 60 * 1000},
-  async function (extensionName: string, extensionType: string) {
-    try {
-      await exec(
-        executables.cli,
-        ['app', 'scaffold', 'extension', '--name', extensionName, '--path', this.appDirectory, '--type', extensionType],
-        {env: {...process.env, ...this.temporaryEnv}},
-      )
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch {
-      assert.ok(true)
-    }
+  async function (name: string, type: string, flavor: string) {
+    await scaffoldExtension({
+      name,
+      type,
+      directory: this.appDirectory,
+      extraArgs: ['--template', flavor],
+      env: {...process.env, ...this.temporaryEnv},
+    })
+  },
+)
+
+When(
+  /I create an extension named (.+) of type ([^\s]+)$/,
+  {timeout: 2 * 60 * 1000},
+  async function (name: string, type: string) {
+    await scaffoldExtension({
+      name,
+      type,
+      directory: this.appDirectory,
+      extraArgs: [],
+      env: {...process.env, ...this.temporaryEnv},
+    })
   },
 )
 
@@ -71,3 +82,23 @@ Then(/The extension named (.+) contains the theme extension directories/, {}, as
     assert.fail(`The following paths were not found in the theme extension: ${nonExistingPaths.join(', ')}`)
   }
 })
+
+interface ScaffoldExtensionArgs {
+  name: string
+  type: string
+  directory: string
+  extraArgs: string[]
+  env: {[key: string]: string}
+}
+async function scaffoldExtension({name, type, directory, extraArgs, env}: ScaffoldExtensionArgs) {
+  try {
+    await exec(
+      executables.cli,
+      ['app', 'scaffold', 'extension', '--name', name, '--path', directory, '--type', type, ...extraArgs],
+      {env},
+    )
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    assert.ok(true)
+  }
+}

@@ -12,11 +12,13 @@ interface ScaffoldExtensionOptions {
   name?: string
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
+  extensionFlavor?: string
 }
 
 interface ScaffoldExtensionOutput {
   name: string
   extensionType: ExtensionTypes
+  extensionFlavor?: string
 }
 
 const scaffoldExtensionPrompt = async (
@@ -25,12 +27,15 @@ const scaffoldExtensionPrompt = async (
 ): Promise<ScaffoldExtensionOutput> => {
   const questions: ui.Question[] = []
   if (!options.extensionType) {
+    let relevantExtensionTypes = extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+    if (options.extensionFlavor) {
+      relevantExtensionTypes = relevantExtensionTypes.filter(isUiExtensionType)
+    }
     questions.push({
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: extensions.types
-        .filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+      choices: relevantExtensionTypes
         .map((type) => ({
           name: getExtensionOutputConfig(type).humanKey,
           value: type,
@@ -47,6 +52,21 @@ const scaffoldExtensionPrompt = async (
     })
   }
   const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
+  if (!options.extensionFlavor && isUiExtensionType({...options, ...promptOutput}.extensionType)) {
+    const promptOutput2: {extensionFlavor: string} = await prompt([
+      {
+        type: 'select',
+        name: 'extensionFlavor',
+        message: 'Choose a starting template for your extension',
+        choices: [
+          {name: 'React (recommended)', value: 'react'},
+          {name: 'vanilla JavaScript', value: 'vanilla-js'},
+        ],
+        default: 'react',
+      },
+    ])
+    promptOutput.extensionFlavor = promptOutput2.extensionFlavor
+  }
   return {...options, ...promptOutput}
 }
 
@@ -86,6 +106,10 @@ const extensiontypeCategoryPosition = (extensionType: string): number => {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
   return coll.includes(el as T)
+}
+
+function isUiExtensionType(extensionType: string) {
+  return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
 export default scaffoldExtensionPrompt
