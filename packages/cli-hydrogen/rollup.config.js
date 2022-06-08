@@ -12,9 +12,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const cliExternal = [...external, ...Object.keys(hydrogenPkg.dependencies ?? {}), '@shopify/cli-kit']
 
 const featureCommands = fg.sync([
-  path.join(__dirname, `/src/cli-main/commands/**/*.ts`),
-  path.join(__dirname, `/src/cli-main/commands/*.ts`),
-  `!${path.join(__dirname, `/src/cli-main/commands/**/*.test.ts`)}`,
+  path.join(__dirname, `/src/cli/commands/**/*.ts`),
+  path.join(__dirname, `/src/cli/commands/*.ts`),
+  `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
 ])
 const configuration = () => [
   // CLI
@@ -26,9 +26,9 @@ const configuration = () => [
         format: 'esm',
         sourcemap: true,
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.facadeModuleId.includes('src/cli-main/commands')) {
+          if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
-            return `commands/${chunkInfo.facadeModuleId.split('src/cli-main/commands').pop().replace('ts', 'js')}`
+            return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

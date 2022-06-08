@@ -2,11 +2,11 @@
 // @ts-ignore
 
 import {version as hydrogenVersion} from '../../package.json'
-
+/* eslint-disable @nrwl/nx/enforce-module-boundaries */
 import {version as cliVersion} from '../../../cli-main/package.json'
+import {string, path, file, output, os, ui, npm, dependency, environment, github, template, git} from '@shopify/cli-kit'
 /* eslint-enable @nrwl/nx/enforce-module-boundaries */
 
-import {string, path, file, output, os, ui, npm, dependency, environment, github, template, git} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {

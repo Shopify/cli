@@ -6,5 +6,5 @@ packages/features/steps/**
 packages/features/lib/**
 packages/features/features/**
 packages/features/world/**
-packages/cli-hydrogen/src/cli-main/commands/hydrogen/init.ts
+packages/cli-hydrogen/src/cli/commands/hydrogen/init.ts
 packages/cli-kit/src/constants.ts
