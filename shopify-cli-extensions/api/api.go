@@ -270,16 +270,16 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 		)
 	}
 
-	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
-
 	devConsoleServer := http.FileServer(http.FS(devConsole))
 
-	api.PathPrefix(DevConsolePath).Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, path.Join(DevConsolePath, "assets")) {
-			http.Redirect(rw, r, path.Join(DevConsolePath, r.URL.Path), http.StatusTemporaryRedirect)
-			return
-		}
+	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[^a-z][a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
 
+	api.PathPrefix(path.Join(apiRoot, DevConsolePath)).Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(strings.TrimPrefix(r.URL.Path, path.Join(api.apiRoot, DevConsolePath)), "/assets") {
+			r.URL.Path = path.Join(DevConsolePath, r.URL.Path)
+		} else {
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, api.apiRoot)
+		}
 		devConsoleServer.ServeHTTP(rw, r)
 	}))
 
