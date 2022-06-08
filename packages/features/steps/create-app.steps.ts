@@ -39,7 +39,7 @@ Then(
   },
 )
 
-Then(/I can build the app/, {}, async function () {
+Then(/I can build the app/, {timeout: 2 * 60 * 1000}, async function () {
   await exec(executables.cli, ['app', 'build', '--path', this.appDirectory], {
     env: {...process.env, ...this.temporaryEnv},
   })
