@@ -9,6 +9,7 @@ import {
   isFunctionExtensionType,
   functionExtensionTemplates,
   uiExtensionTemplates,
+  uiExtensions,
 } from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
