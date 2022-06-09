@@ -278,7 +278,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 		)
 	}
 
-	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[^a-z][a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
+	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
 
 	return api
 }
