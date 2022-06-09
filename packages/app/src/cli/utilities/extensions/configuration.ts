@@ -1,7 +1,7 @@
 import {nodeExtensionsCLIPath} from './cli'
 import {fetchProductVariant} from './fetch-product-variant'
 import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
-import {error, id, path, string} from '@shopify/cli-kit'
+import {error, path} from '@shopify/cli-kit'
 import {UIExtensionTypes} from 'cli/constants'
 
 const MissingStoreError = () => new error.Bug('You need a store to test "checkout_ui_extensions"')
@@ -28,7 +28,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
       return {
-        uuid: string.hyphenize(`${extension.localIdentifier}-${id.generateShortId()}`),
+        uuid: extension.devUUID,
         title: extension.configuration.name,
         type: `${extension.configuration.type}`,
         metafields: extension.configuration.metafields,

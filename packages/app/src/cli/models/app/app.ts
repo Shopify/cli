@@ -10,7 +10,7 @@ import {
   dotEnvFileNames,
   ExtensionTypes,
 } from '../../constants'
-import {dependency, dotenv, error, file, path, schema, string, toml} from '@shopify/cli-kit'
+import {dependency, dotenv, error, file, id, path, schema, string, toml} from '@shopify/cli-kit'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
@@ -129,6 +129,7 @@ export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
   buildDirectory: string
   entrySourceFilePath: string
+  devUUID: string
 }
 
 export enum WebType {
@@ -405,6 +406,7 @@ class AppLoader {
         buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
         localIdentifier: path.basename(directory),
+        devUUID: id.generateShortId(),
       }
     })
     return Promise.all(extensions)

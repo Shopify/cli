@@ -28,6 +28,7 @@ const EXTENSION_A: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -40,6 +41,7 @@ const EXTENSION_A_2: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 const EXTENSION_B: UIExtension = {
@@ -52,6 +54,7 @@ const EXTENSION_B: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 beforeEach(() => {
