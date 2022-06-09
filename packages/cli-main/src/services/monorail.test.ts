@@ -3,12 +3,12 @@ import {reportEvent} from './monorail'
 import {it, expect, vi, beforeEach, afterAll} from 'vitest'
 import {environment, http, os, ruby, store} from '@shopify/cli-kit'
 
-const currentDate = new Date(2022, 1, 1, 10)
+const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
 const expectedURL = 'https://monorail-edge.shopifysvc.com/v1/produce'
 const expectedHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
-  'X-Monorail-Edge-Event-Created-At-Ms': '1643706000000',
-  'X-Monorail-Edge-Event-Sent-At-Ms': '1643706000000',
+  'X-Monorail-Edge-Event-Created-At-Ms': '1643709600000',
+  'X-Monorail-Edge-Event-Sent-At-Ms': '1643709600000',
 }
 
 beforeEach(() => {
@@ -66,8 +66,8 @@ it('makes an API call to Monorail with the expected payload and headers', async 
       project_type: 'node',
       command,
       args: '',
-      time_start: 1643706000000,
-      time_end: 1643706000000,
+      time_start: 1643709600000,
+      time_end: 1643709600000,
       total_time: 0,
       success: true,
       uname: 'darwin arm64',
