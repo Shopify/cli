@@ -70,11 +70,10 @@ describe('env', () => {
 
     // Then
     expect(outputMock.output()).toMatchInlineSnapshot(`
-      "Use these environment variables when setting up your deploy of Test app:
-
-      - SHOPIFY_API_KEY: api-key
-      - SHOPIFY_API_SECRET: api-secret
-      - SCOPES: scope1,scope2
+      "Use these environment variables to set up your deployment pipeline for this app:
+      · SHOPIFY_API_KEY: api-key
+      · SHOPIFY_API_SECRET: api-secret
+      · SCOPES: scope1,scope2
       "
     `)
   })
