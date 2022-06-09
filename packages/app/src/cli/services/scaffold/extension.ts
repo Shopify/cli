@@ -32,34 +32,41 @@ interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = Extensio
   app: App
   cloneUrl?: string
   extensionFlavor?: string
+  extensionDirectory?: string
 }
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes>
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionTypes>
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionTypes>
 
-async function extensionInit(options: ExtensionInitOptions) {
+async function extensionInit(options: ExtensionInitOptions): Promise<string> {
+  const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
   switch (extensionTypeCategory(options.extensionType)) {
     case 'theme':
-      await themeExtensionInit(options as ThemeExtensionInitOptions)
+      await themeExtensionInit({extensionDirectory, ...(options as ThemeExtensionInitOptions)})
       break
     case 'function':
-      await functionExtensionInit(options as FunctionExtensionInitOptions)
+      await functionExtensionInit({extensionDirectory, ...(options as FunctionExtensionInitOptions)})
       break
     case 'ui':
-      await uiExtensionInit(options as UIExtensionInitOptions)
+      await uiExtensionInit({extensionDirectory, ...(options as UIExtensionInitOptions)})
       break
   }
+  return extensionDirectory
 }
 
-async function themeExtensionInit({name, app, extensionType}: ThemeExtensionInitOptions) {
-  const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
+async function themeExtensionInit({name, app, extensionType, extensionDirectory}: ThemeExtensionInitOptions) {
   const templatePath = await getTemplatePath('theme-extension')
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function uiExtensionInit({name, extensionType, app, extensionFlavor}: UIExtensionInitOptions) {
-  const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
+async function uiExtensionInit({
+  name,
+  extensionType,
+  app,
+  extensionFlavor,
+  extensionDirectory,
+}: UIExtensionInitOptions) {
   const list = new ui.Listr(
     [
       {
@@ -150,7 +157,6 @@ export function getRuntimeDependencies({extensionType}: Pick<UIExtensionInitOpti
 }
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
-  const extensionDirectory = await ensureExtensionDirectoryExists(options)
   const url = options.cloneUrl || blocks.functions.defaultUrl
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
@@ -163,8 +169,8 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
             await file.mkdir(templateDownloadDir)
             await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
             const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            await template.recursiveDirectoryCopy(origin, extensionDirectory, options)
-            const configYamlPath = path.join(extensionDirectory, 'script.config.yml')
+            await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+            const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
             if (await file.exists(configYamlPath)) {
               await file.remove(configYamlPath)
             }
@@ -194,7 +200,7 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
   }
 }
 
-async function ensureExtensionDirectoryExists({name, app}: {name: string; app: App}) {
+async function ensureExtensionDirectoryExists({name, app}: {name: string; app: App}): Promise<string> {
   const hyphenizedName = string.hyphenize(name)
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {
