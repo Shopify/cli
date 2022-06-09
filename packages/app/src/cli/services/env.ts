@@ -1,9 +1,9 @@
-import {session, output} from '@shopify/cli-kit'
+import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
+import {selectOrCreateApp} from './dev/select-app'
 import {selectOrganizationPrompt} from '../prompts/dev'
 
 import {App} from '../models/app/app'
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
-import {selectOrCreateApp} from './dev/select-app'
+import {session, output} from '@shopify/cli-kit'
 
 interface EnvOptions {
   app: App
