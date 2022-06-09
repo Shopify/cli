@@ -28,7 +28,7 @@ ${output.token.raw(
   extensions
     .map((extension) => {
       return output.stringifyMessage(
-        output.content`· ${output.token.green(extension.id)}: ${output.token.path(extension.path)}`,
+        output.content`• ${output.token.green(extension.id)}: ${output.token.path(extension.path)}`,
       )
     })
     .join('\n'),
