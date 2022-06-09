@@ -7,6 +7,7 @@ export default async function cleanup(webOutputDirectory: string) {
       path.join(webOutputDirectory, '**', '.github'),
       path.join(webOutputDirectory, '**', '.gitmodules'),
       path.join(webOutputDirectory, 'LICENSE*'),
+      path.join(webOutputDirectory, '**', 'frontend/LICENSE*'),
       path.join(webOutputDirectory, 'package.json.cli2'),
     ],
     {
