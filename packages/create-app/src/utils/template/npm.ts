@@ -1,5 +1,5 @@
 /* eslint-disable @nrwl/nx/enforce-module-boundaries */
-import {version as cliVersion} from '../../../../cli/package.json'
+import {version as cliVersion} from '../../../../cli-main/package.json'
 import {version as appVersion} from '../../../../app/package.json'
 /* eslint-enable @nrwl/nx/enforce-module-boundaries*/
 import {path, dependency, ui, npm} from '@shopify/cli-kit'
@@ -11,7 +11,7 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
   packageJSON.dependencies['@shopify/app'] = appVersion
 
   if (local) {
-    const cliPath = `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`
+    const cliPath = `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`
     const appPath = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
     const cliKitPath = `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`
 

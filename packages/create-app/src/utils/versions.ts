@@ -7,7 +7,7 @@ export async function cliVersion(): Promise<string> {
       cwd: path.dirname(fileURLToPath(import.meta.url)),
       type: 'file',
     })) ??
-    (await path.findUp('packages/cli/package.json', {
+    (await path.findUp('packages/cli-main/package.json', {
       cwd: path.dirname(fileURLToPath(import.meta.url)),
       type: 'file',
     }))

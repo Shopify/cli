@@ -6,4 +6,4 @@ pushd $SCRIPT_DIR/.. > /dev/null
 yarn nx build cli app
 popd > /dev/null
 
-$SCRIPT_DIR/../packages/cli/bin/dev.js $@
+$SCRIPT_DIR/../packages/cli-main/bin/dev.js $@

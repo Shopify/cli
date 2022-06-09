@@ -3,6 +3,6 @@
   "root": "packages/features",
   "sourceRoot": "packages/features",
   "projectType": "library",
-  "implicitDependencies": ["create-app", "create-hydrogen", "cli"],
+  "implicitDependencies": ["create-app", "create-hydrogen", "cli-main"],
   "tags": ["scope:e2e"]
 }
