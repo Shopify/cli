@@ -8,12 +8,14 @@ interface BundleOptions {
   app: App
   bundlePath: string
   identifiers: Identifiers
+  bundle: boolean
 }
 
 export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
   await temporary.directory(async (tmpDir) => {
     const bundleDirectory = path.join(tmpDir, 'bundle')
     await file.mkdir(bundleDirectory)
+    await file.touch(path.join(bundleDirectory, '.shopify'))
 
     await output.concurrent([
       {
@@ -62,6 +64,8 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
     output.newline()
     output.success(`${options.app.name} built`)
 
-    await archiver.zip(bundleDirectory, options.bundlePath)
+    if (options.bundle) {
+      await archiver.zip(bundleDirectory, options.bundlePath)
+    }
   })
 }

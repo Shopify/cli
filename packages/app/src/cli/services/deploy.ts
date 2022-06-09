@@ -5,7 +5,7 @@ import {ensureDeployEnvironment} from './environment'
 import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {path, output, temporary, error} from '@shopify/cli-kit'
+import {path, output, temporary, error, file} from '@shopify/cli-kit'
 
 const WebPixelConfigError = (property: string) => {
   return new error.Abort(
@@ -44,9 +44,18 @@ export const deploy = async (options: DeployOptions) => {
   )
 
   await temporary.directory(async (tmpDir) => {
-    const bundlePath = path.join(tmpDir, `${app.name}.zip`)
-    await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
-    await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+    const bundlePath = path.join(tmpDir, `bundle.zip`)
+    await file.mkdir(path.dirname(bundlePath))
+    const bundle = app.extensions.ui.length !== 0
+    await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
+
+    /**
+     * The bundles only support UI extensions for now so we only need bundle and upload
+     * the bundle if the app has UI extensions.
+     */
+    if (bundle) {
+      await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+    }
     // eslint-disable-next-line require-atomic-updates
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
     // eslint-disable-next-line require-atomic-updates
@@ -66,7 +75,7 @@ export const deploy = async (options: DeployOptions) => {
     }
     app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
     app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
-    app.extensions.function.forEach(outputDeployedButNotLiveMessage)
+    app.extensions.function.forEach(outputDeployedAndLivedMessage)
   })
 }
 
