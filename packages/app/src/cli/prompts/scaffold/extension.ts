@@ -27,7 +27,9 @@ const scaffoldExtensionPrompt = async (
 ): Promise<ScaffoldExtensionOutput> => {
   const questions: ui.Question[] = []
   if (!options.extensionType) {
-    let relevantExtensionTypes = extensions.types.filter((type) => !options.extensionTypesAlreadyAtQuota.includes(type))
+    let relevantExtensionTypes = extensions.publicTypes.filter(
+      (type) => !options.extensionTypesAlreadyAtQuota.includes(type),
+    )
     if (options.extensionFlavor) {
       relevantExtensionTypes = relevantExtensionTypes.filter(isUiExtensionType)
     }
