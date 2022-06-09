@@ -18,9 +18,11 @@ export {default as glob} from 'fast-glob'
  */
 export function relativize(path: string): string {
   const result = commondir([path, process.cwd()])
-  if (result === '/') {
+  const relativePath = relative(process.cwd(), path)
+  const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
+  if (result === '/' || relativeComponents > 2) {
     return path
   } else {
-    return relative(process.cwd(), path)
+    return relativePath
   }
 }

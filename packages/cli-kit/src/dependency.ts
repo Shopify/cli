@@ -2,6 +2,9 @@ import {exec} from './system'
 import {exists as fileExists, read as readFile} from './file'
 import {glob, dirname, join as pathJoin} from './path'
 import {Abort} from './error'
+import {latestNpmPackageVersion} from './version'
+import {Version} from './semver'
+import {content, token} from './output'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
@@ -112,6 +115,27 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
   const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
 
   return {...dependencies, ...devDependencies}
+}
+
+export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
+  try {
+    const lastVersion = await latestNpmPackageVersion(dependency)
+    if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
+      return lastVersion
+    } else {
+      return undefined
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return undefined
+  }
+}
+
+export function getOutputUpdateCLIReminder(dependencyManager: DependencyManager, packages?: string[]): string {
+  const updateCommand = dependencyManager === 'yarn' ? 'upgrade' : 'update'
+  return content`To update to the latest version of the Shopify CLI, run ${token.genericShellCommand(
+    `${dependencyManager} ${updateCommand}${packages === undefined ? '' : ` ${packages.join(', ')}`}`,
+  )}`.value
 }
 
 interface PackageJSONContents {

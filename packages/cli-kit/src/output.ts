@@ -2,6 +2,7 @@
 import {Fatal, Bug} from './error'
 import {isUnitTest} from './environment/local'
 import {DependencyManager} from './dependency'
+import {relativize as relativizePath} from './path'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
@@ -143,7 +144,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           output += colors.bold(colors.yellow(enumToken.value))
           break
         case ContentTokenType.Path:
-          output += colors.italic(enumToken.value)
+          output += colors.cyan(relativizePath(enumToken.value))
           break
         case ContentTokenType.Json:
           try {
