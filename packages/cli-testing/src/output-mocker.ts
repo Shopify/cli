@@ -1,5 +1,6 @@
 import {output} from '@shopify/cli-kit'
 import {vi} from 'vitest'
+import stripAnsi from 'strip-ansi'
 
 interface OutputMock {
   output: () => string
@@ -20,24 +21,24 @@ export function mockAndCapture() {
   const collectedWarn: string[] = []
 
   const infoSpy = vi.spyOn(output, 'info').mockImplementation((content) => {
-    collectedOutput.push(output.stringifyMessage(content))
-    collectedInfo.push(output.stringifyMessage(content))
+    collectedOutput.push(stripAnsi(output.stringifyMessage(content)))
+    collectedInfo.push(stripAnsi(output.stringifyMessage(content)))
   })
   const debugSpy = vi.spyOn(output, 'debug').mockImplementation((content) => {
-    collectedOutput.push(output.stringifyMessage(content))
-    collectedDebug.push(output.stringifyMessage(content))
+    collectedOutput.push(stripAnsi(output.stringifyMessage(content)))
+    collectedDebug.push(stripAnsi(output.stringifyMessage(content)))
   })
   const successSpy = vi.spyOn(output, 'success').mockImplementation((content) => {
-    collectedOutput.push(output.stringifyMessage(content))
-    collectedSuccess.push(output.stringifyMessage(content))
+    collectedOutput.push(stripAnsi(output.stringifyMessage(content)))
+    collectedSuccess.push(stripAnsi(output.stringifyMessage(content)))
   })
   const completedSpy = vi.spyOn(output, 'completed').mockImplementation((content) => {
-    collectedOutput.push(output.stringifyMessage(content))
-    collectedCompleted.push(output.stringifyMessage(content))
+    collectedOutput.push(stripAnsi(output.stringifyMessage(content)))
+    collectedCompleted.push(stripAnsi(output.stringifyMessage(content)))
   })
   const outputSpy = vi.spyOn(output, 'warn').mockImplementation((content) => {
-    collectedOutput.push(output.stringifyMessage(content))
-    collectedWarn.push(output.stringifyMessage(content))
+    collectedOutput.push(stripAnsi(output.stringifyMessage(content)))
+    collectedWarn.push(stripAnsi(output.stringifyMessage(content)))
   })
   return {
     output: () => collectedOutput.join('\n'),
