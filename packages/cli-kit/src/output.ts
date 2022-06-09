@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {Fatal, Bug} from './error'
-import {isDebug, isUnitTest, isVerbose} from './environment/local'
+import {isUnitTest, isVerbose} from './environment/local'
 import {DependencyManager} from './dependency'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
@@ -219,8 +219,6 @@ const logLevelValue = (level: LogLevel): number => {
  */
 export const currentLogLevel = (): LogLevel => {
   if (isVerbose()) {
-    return 'trace'
-  } else if (isDebug()) {
     return 'debug'
   } else {
     return 'info'

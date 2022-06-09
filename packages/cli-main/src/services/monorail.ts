@@ -5,9 +5,10 @@ import {environment, http, os, output, path, ruby, store} from '@shopify/cli-kit
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
 export const reportEvent = async (command: string, args: string[]) => {
-  const payload = await buildPayload(command, args)
+  const currentTime = new Date().getTime()
+  const payload = await buildPayload(command, args, currentTime)
   const body = JSON.stringify(payload)
-  const headers = buildHeaders()
+  const headers = buildHeaders(currentTime)
 
   const response = await http.fetch(url, {method: 'POST', body, headers})
   if (response.status === 200) {
@@ -17,8 +18,7 @@ export const reportEvent = async (command: string, args: string[]) => {
   }
 }
 
-const buildHeaders = () => {
-  const currentTime = new Date().getTime()
+const buildHeaders = (currentTime: number) => {
   return {
     'Content-Type': 'application/json; charset=utf-8',
     'X-Monorail-Edge-Event-Created-At-Ms': currentTime.toString(),
@@ -26,8 +26,7 @@ const buildHeaders = () => {
   }
 }
 
-const buildPayload = async (command: string, args: string[] = []) => {
-  const currentTime = new Date().getTime()
+const buildPayload = async (command: string, args: string[] = [], currentTime: number) => {
   let directory = process.cwd()
   const pathFlagIndex = args.indexOf('--path')
   if (pathFlagIndex >= 0) {

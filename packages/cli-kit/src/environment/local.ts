@@ -22,15 +22,6 @@ export function isDebug(env = process.env): boolean {
 }
 
 /**
- * Returns true if the CLI is running in production mode.
- * @param env The environment variables from the environment of the current process.
- * @returns true if NODE_ENV is production
- */
-export function isProduction(env = process.env): boolean {
-  return env.NODE_ENV === 'production'
-}
-
-/**
  * Returns true if the CLI is running in verbose mode.
  * @param env The environment variables from the environment of the current process.
  * @returns true if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed
@@ -69,6 +60,6 @@ export function isUnitTest(env = process.env): boolean {
  * @param env The environment variables from the environment of the current process.
  * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy.
  */
-export function analyticsEnabled(env = process.env): boolean {
-  return !isTruthy(env[constants.environmentVariables.noAnalytics])
+export function analyticsDisabled(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.noAnalytics])
 }
