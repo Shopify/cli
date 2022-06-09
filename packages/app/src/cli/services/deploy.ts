@@ -2,7 +2,14 @@ import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
+import {
+  App,
+  Extension,
+  FunctionExtension,
+  getUIExtensionRendererVersion,
+  UIExtension,
+  updateAppIdentifiers,
+} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {path, output, temporary, error, file} from '@shopify/cli-kit'
@@ -11,6 +18,21 @@ const WebPixelConfigError = (property: string) => {
   return new error.Abort(
     `The Web Pixel Extension configuration is missing the key "${property}"`,
     `Please update your shopify.ui.extension.toml to include a valid "${property}"`,
+  )
+}
+
+const FunctionsWithMissingWasm = (extensions: {id: string; path: string}[]) => {
+  const extensionLine = (extension: {id: string; path: string}): string => {
+    return output.stringifyMessage(
+      output.content`· ${output.token.green(extension.id)}: ${output.token.path(extension.path)}`,
+    )
+  }
+  const extensionLines = output.token.raw(extensions.map(extensionLine).join('\n'))
+  return new error.Abort(
+    output.content`The following function extensions haven't compiled the wasm in the expected path:
+${extensionLines}
+    `,
+    `Make sure the build command outputs the wasm in the expected directory.`,
   )
 }
 
@@ -56,6 +78,7 @@ export const deploy = async (options: DeployOptions) => {
     if (bundle) {
       await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     }
+    await validateFunctionsWasmPresence(app.extensions.function)
     // eslint-disable-next-line require-atomic-updates
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
     // eslint-disable-next-line require-atomic-updates
@@ -103,6 +126,24 @@ async function configFor(extension: UIExtension, app: App) {
         config_version: extension.configuration.version,
       }
     }
+  }
+}
+
+export async function validateFunctionsWasmPresence(extensions: FunctionExtension[]) {
+  const extensionsWithoutWasm = (
+    await Promise.all(
+      extensions.map(async (extension) => {
+        return (await file.exists(extension.buildWasmPath))
+          ? undefined
+          : {
+              id: extension.localIdentifier,
+              path: extension.buildWasmPath,
+            }
+      }),
+    )
+  ).filter((extension) => extension !== undefined) as {id: string; path: string}[]
+  if (extensionsWithoutWasm.length !== 0) {
+    throw FunctionsWithMissingWasm(extensionsWithoutWasm)
   }
 }
 
