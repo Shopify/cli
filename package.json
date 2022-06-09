@@ -7,7 +7,7 @@
     "postinstall": "patch-package",
     "update-bugsnag": "bin/update-bugsnag.js",
     "graph": "nx graph",
-    "shopify": "nx build cli && packages/cli-main/bin/dev.js",
+    "shopify": "nx build cli-main && packages/cli-main/bin/dev.js",
     "shopify:run": "packages/cli-main/bin/dev.js",
     "create-app": "nx build create-app && packages/create-app/bin/dev.js",
     "create-hydrogen": "nx build create-hydrogen && packages/create-hydrogen/bin/dev.js",
