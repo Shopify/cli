@@ -8,11 +8,12 @@ interface WebOptions {
   stdout: Writable
   stderr: Writable
   signal: error.AbortSignal
+  env?: {[variable: string]: string}
 }
 
 export default async function web(
   command: WebConfigurationCommands,
-  {web, stdout, stderr, signal}: WebOptions,
+  {web, stdout, stderr, signal, env = {}}: WebOptions,
 ): Promise<void> {
   const script = web.configuration.commands[command]
   if (!script) {
@@ -20,6 +21,6 @@ export default async function web(
   }
 
   const [cmd, ...args] = script.split(' ')
-  await system.exec(cmd, args, {cwd: web.directory, stdout, stderr, signal})
+  await system.exec(cmd, args, {cwd: web.directory, stdout, stderr, signal, env})
   stdout.write('Web successfully built.')
 }

@@ -45,6 +45,10 @@ export async function copy(from: string, to: string): Promise<void> {
   await fs.copy(from, to)
 }
 
+export async function touch(path: string): Promise<void> {
+  await fs.ensureFile(path)
+}
+
 export async function write(path: string, data: string): Promise<void> {
   await fs.writeFile(path, data)
 }

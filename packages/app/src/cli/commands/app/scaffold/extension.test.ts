@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension'
 import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants'
 import {App, load as loadApp} from '../../../models/app/app'
@@ -25,7 +26,7 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatch('Find your checkout UI extension in your extensions folder.')
+    expect(outputInfo.info()).toMatchInlineSnapshot('"Find your checkout UI extension in your extensions folder."')
   })
 
   it('displays a confirmation message with human-facing name and help url', async () => {
@@ -39,12 +40,16 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatch(
-      'Find your checkout UI extension in your extensions folder.\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
+
+    expect(outputInfo.info()).toMatchInlineSnapshot(
+      `
+      "Find your checkout UI extension in your extensions folder.
+      For help, see docs (​http://help.com​)."
+    `,
     )
   })
 
-  it('displays a confirmation message with human-facing name and addtional help', async () => {
+  it('displays a confirmation message with human-facing name and additional help', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
       humanKey: 'checkout UI',
@@ -55,7 +60,10 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatch('Find your checkout UI extension in your extensions folder.\nAdditional help')
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "Find your checkout UI extension in your extensions folder.
+      Additional help"
+    `)
   })
 
   it('displays a confirmation message with human-facing name , help url and additional help', async () => {
@@ -70,9 +78,11 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatch(
-      'Find your checkout UI extension in your extensions folder.\nAdditional help\nFor help, see \u001b[32mdocs\u001b[39m (​http://help.com​).',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "Find your checkout UI extension in your extensions folder.
+      Additional help
+      For help, see docs (​http://help.com​)."
+    `)
   })
 })
 
