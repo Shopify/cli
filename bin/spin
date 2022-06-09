@@ -5,7 +5,7 @@ export SPIN="${SPIN:=1}"
 export SHOPIFY_PARTNERS_ENV="${SHOPIFY_PARTNERS_ENV:=spin}"
 export SHOPIFY_SHOPIFY_ENV="${SHOPIFY_SHOPIFY_ENV:=spin}"
 export SHOPIFY_IDENTITY_ENV="${SHOPIFY_IDENTITY_ENV:=spin}"
-export SPIN_INSTANCE="${SPIN_INSTANCE:=$(spin show --latest --json | jq '.name')}"
+export SPIN_INSTANCE="${SPIN_INSTANCE:=$(spin show --latest --json | jq -r '.name')}"
 export SPIN_WORKSPACE="${SPIN_WORKSPACE:=1}"
 export SPIN_NAMESPACE="${SPIN_NAMESPACE:=1}"
 
