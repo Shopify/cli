@@ -124,7 +124,7 @@ class AppInfo {
   }
 
   webComponentsSection(): string {
-    const errors: string[] = []
+    const errors: output.Message[] = []
     const subtitle = [output.content`${output.token.subheading('web')}`.value]
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
@@ -187,8 +187,8 @@ class AppInfo {
     return `\n${this.linesToColumns(details)}\n${error}`
   }
 
-  formattedError(str: string): string {
-    const [errorFirstLine, ...errorRemainingLines] = str.split('\n')
+  formattedError(str: output.Message): string {
+    const [errorFirstLine, ...errorRemainingLines] = output.stringifyMessage(str).split('\n')
     const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
     return output.content`${output.token.errorText(errorLines.join('\n'))}`.value
   }
