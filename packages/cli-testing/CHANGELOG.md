@@ -1,5 +1,11 @@
 # @shopify/cli-testing
 
+## 3.0.12
+
+### Patch Changes
+
+- 33829af9: Improve the output mocker to strip ANSI characters
+
 ## 3.0.11
 
 ## 3.0.10
