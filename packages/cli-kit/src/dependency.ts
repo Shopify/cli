@@ -210,6 +210,13 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
   })
 }
 
+export async function addLatestNPMDependencies(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
+  await addNPMDependenciesIfNeeded(
+    dependencies.map((dependency) => `${dependency}@latest`),
+    options,
+  )
+}
+
 /**
  * Returns the arguments to add dependencies using NPM.
  * @param dependencies {string[]} The list of dependencies to add
