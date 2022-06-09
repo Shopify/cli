@@ -20,13 +20,10 @@ export default async function env(options: EnvOptions) {
 
   output.newline()
   output.info(
-    output.content`Use these environment variables when setting up your deploy of ${output.token.heading(
-      selectedApp.title,
-    )}:
-
-- ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
-- ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
-- ${output.token.green('SCOPES')}: ${options.app.configuration.scopes}
+    output.content`Use these environment variables to set up your deployment pipeline for this app:
+· ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
+· ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
+· ${output.token.green('SCOPES')}: ${options.app.configuration.scopes}
 `,
   )
 }
