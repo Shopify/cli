@@ -1,13 +1,14 @@
 import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName} from './extension'
 import {extensions, getExtensionOutputConfig} from '../../constants'
 import {describe, it, expect, vi} from 'vitest'
+import {environment} from '@shopify/cli-kit'
 
-describe('extension prompt', () => {
+describe('extension prompt', async () => {
   const extensionTypeQuestion = {
     type: 'select',
     name: 'extensionType',
     message: 'Type of extension?',
-    choices: buildChoices(),
+    choices: await buildChoices(),
   }
   const extensionNameQuestion = {
     type: 'input',
@@ -75,7 +76,7 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: buildChoices().filter((choice) => choice.name !== 'theme app extension'),
+        choices: (await buildChoices()).filter((choice) => choice.name !== 'theme app extension'),
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -124,10 +125,14 @@ describe('extension prompt', () => {
   })
 })
 
-const buildChoices = (): {
-  name: string
-  value: string
-}[] => {
+const buildChoices = async (): Promise<
+  {
+    name: string
+    value: string
+  }[]
+> => {
+  const isShopify = await environment.local.isShopify()
+  const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
   return extensions.types
     .map((type) => ({
       name: getExtensionOutputConfig(type).humanKey,
