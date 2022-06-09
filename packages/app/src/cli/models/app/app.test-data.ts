@@ -40,5 +40,6 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
     directory: uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension',
     entrySourceFilePath: uiExtension?.entrySourceFilePath ?? '/tmp/project/extensions/test-ui-extension/src/index.js',
     idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
+    devUUID: 'devUUID',
   }
 }

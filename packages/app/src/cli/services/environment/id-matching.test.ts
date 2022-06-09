@@ -62,6 +62,7 @@ const EXTENSION_A: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -74,6 +75,7 @@ const EXTENSION_A_2: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 const EXTENSION_B: UIExtension = {
@@ -86,6 +88,7 @@ const EXTENSION_B: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 const EXTENSION_C: UIExtension = {
@@ -98,6 +101,7 @@ const EXTENSION_C: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 const EXTENSION_D: UIExtension = {
@@ -110,6 +114,7 @@ const EXTENSION_D: UIExtension = {
   configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
   buildDirectory: '',
   entrySourceFilePath: '',
+  devUUID: 'devUUID',
 }
 
 describe('automaticMatchmaking: case 3 some local extensions, no remote ones', () => {
