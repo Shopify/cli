@@ -2,17 +2,8 @@ import {nodeExtensionsCLIPath} from './cli'
 import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
 import {path} from '@shopify/cli-kit'
 import {UIExtensionTypes} from 'cli/constants'
-import {Writable} from 'node:stream'
 
 export interface ExtensionConfigOptions {
-  /**
-   * Standard output stream to send the output through.
-   */
-  stdout: Writable
-  /**
-   * Standard error stream to send the error output through.
-   */
-  stderr: Writable
   app: App
   apiKey?: string
   extensions: UIExtension[]
