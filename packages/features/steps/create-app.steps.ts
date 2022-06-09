@@ -31,7 +31,7 @@ Then(
   /I have an app named (.+) scaffolded from the template with (.+) as dependency manager/,
   {},
   async function (appName: string, dependencyManager: string) {
-    const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--format', 'json'], {
+    const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {
       env: {...process.env, ...this.temporaryEnv},
     })
     const results = JSON.parse(stdout)
