@@ -1,7 +1,7 @@
 import {FunctionExtension, Identifiers} from '../../models/app/app'
+import {getFunctionExtensionPointName} from '../../constants'
 import {api, error, session, http, id, output} from '@shopify/cli-kit'
 
-import {FunctionExtensionTypes} from 'cli/constants'
 import fs from 'fs'
 
 interface UploadUIExtensionsBundleOptions {
@@ -198,17 +198,4 @@ async function getFunctionExtensionUploadURL(
     options.token,
   )
   return res.data.moduleUploadUrlGenerate.details
-}
-
-export function getFunctionExtensionPointName(type: FunctionExtensionTypes) {
-  switch (type) {
-    case 'product_discounts':
-    case 'order_discounts':
-    case 'shipping_discounts':
-      return 'DISCOUNT'
-    case 'payment_methods':
-      return 'PAYMENT_METHODS'
-    case 'shipping_rate_presenter':
-      return 'SHIPPING_METHODS'
-  }
 }
