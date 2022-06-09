@@ -1,4 +1,5 @@
 import buildService from '../../services/build'
+import {hydrogenFlags} from '../../flags'
 import {Command, Flags} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
 
@@ -11,11 +12,7 @@ export default class Build extends Command {
   static description = 'Builds a Hydrogen storefront for production'
   static flags = {
     ...cli.globalFlags,
-    path: Flags.string({
-      hidden: true,
-      description: 'the path to your hydrogen storefront',
-      env: 'SHOPIFY_FLAG_PATH',
-    }),
+    path: hydrogenFlags.path,
     base: Flags.string({
       description: ' the public path when served in production',
       env: 'SHOPIFY_FLAG_BUILD_BASE',

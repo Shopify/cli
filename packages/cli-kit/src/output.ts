@@ -13,6 +13,7 @@ import {Writable} from 'node:stream'
 
 enum ContentTokenType {
   Command,
+  Json,
   Path,
   Link,
   Heading,
@@ -45,6 +46,10 @@ export const token = {
   genericShellCommand: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Command)
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json: (value: any) => {
+    return new ContentToken(value, {}, ContentTokenType.Json)
+  },
   path: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Path)
   },
@@ -75,12 +80,18 @@ export const token = {
   green: (value: string) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
-  command: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
+  packagejsonScript: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
     return new ContentToken(
       formatPackageManagerCommand(dependencyManager, scriptName, scriptArgs),
       {},
       ContentTokenType.Command,
     )
+  },
+  successIcon: () => {
+    return new ContentToken('✔', {}, ContentTokenType.Green)
+  },
+  failIcon: () => {
+    return new ContentToken('✖', {}, ContentTokenType.ErrorText)
   },
 }
 
@@ -133,6 +144,14 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Path:
           output += colors.italic(enumToken.value)
+          break
+        case ContentTokenType.Json:
+          try {
+            output += cjs(enumToken.value ?? {})
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch (_) {
+            output += JSON.stringify(enumToken.value ?? {}, null, 2)
+          }
           break
         case ContentTokenType.Link:
           output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
@@ -277,16 +296,6 @@ export const newline = () => {
 }
 
 /**
- * Turns the given object into a colorized JSON.
- * @param json {any} Object to turn into a JSON and colorize
- * @returns {string} Colorized JSON representation of the given object.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const colorJson = (json: any): string => {
-  return cjs(json)
-}
-
-/**
  * Formats and outputs a fatal error.
  * Note: This API is not intended to be used internally. If you want to
  * abort the execution due to an error, raise a fatal error and let the
@@ -401,7 +410,7 @@ export async function concurrent(processes: OutputProcess[]) {
           write(chunk, _encoding, next) {
             const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
             for (const line of lines) {
-              message(content`${linePrefix(process.prefix, index)}${colors.bold('ERROR')} ${line}`, 'error')
+              message(content`${linePrefix(process.prefix, index)}${colors.bold(line)}`, 'error')
             }
             next()
           },

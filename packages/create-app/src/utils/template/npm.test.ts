@@ -1,6 +1,6 @@
 /* eslint-disable @nrwl/nx/enforce-module-boundaries */
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
-import {version as cliVersion} from '../../../../cli/package.json'
+import {version as cliVersion} from '../../../../cli-main/package.json'
 import {version as appVersion} from '../../../../app/package.json'
 /* eslint-enable @nrwl/nx/enforce-module-boundaries*/
 import {dependency, file, npm, path, ui} from '@shopify/cli-kit'

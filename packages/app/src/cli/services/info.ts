@@ -48,17 +48,17 @@ class AppInfo {
     let appName = NOT_CONFIGURED_TEXT
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
-    let postscript = output.content`💡 These will be populated when you run ${output.token.command(
+    let postscript = output.content`💡 These will be populated when you run ${output.token.packagejsonScript(
       this.app.dependencyManager,
-      'shopify dev',
+      'dev',
     )}`.value
     if (this.cachedAppInfo) {
       if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
       if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
       if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
-      postscript = output.content`💡 To change these, run ${output.token.command(
+      postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
         this.app.dependencyManager,
-        'shopify dev',
+        'dev',
         '--reset',
       )}`.value
     }

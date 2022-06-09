@@ -245,7 +245,7 @@ class AppLoader {
 
     const app: App = {
       name,
-      idEnvironmentVariableName: 'SHOPIFY_APP_API_KEY',
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory: this.appDirectory,
       webs: await this.loadWebs(),
       configuration,
@@ -481,7 +481,7 @@ export async function updateDependencies(app: App): Promise<App> {
   }
 }
 
-export type EnvironmentType = 'production'
+type EnvironmentType = 'production' | 'development'
 
 interface UpdateAppIdentifiersOptions {
   app: App
@@ -517,7 +517,7 @@ export async function updateAppIdentifiers({
       variables[envVariable] = identifiers.extensions[identifier]
     }
   })
-  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(variables)
+  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(variables) && environmentType === 'production'
   dotenvFile.variables = variables
   if (write) {
     await dotenv.write(dotenvFile)
@@ -607,6 +607,8 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'CHECKOUT_UI_EXTENSION'
     case 'checkout_post_purchase':
       return 'CHECKOUT_POST_PURCHASE'
+    case 'pos_ui_extension':
+      return 'POS_UI_EXTENSION'
     case 'theme':
       return 'THEME_APP_EXTENSION'
     case 'web_pixel_extension':

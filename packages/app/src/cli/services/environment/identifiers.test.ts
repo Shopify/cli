@@ -107,32 +107,6 @@ beforeEach(() => {
   vi.mock('./id-manual-matching')
 })
 
-describe('ensureDeploymentIdsPresence: case 1 no local nor remote extensions', () => {
-  it('throw a nothing to deploy error', async () => {
-    // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: []}})
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([]))
-
-    // Then
-    await expect(got).rejects.toThrow('There are no extensions to deploy')
-  })
-})
-
-describe('ensureDeploymentIdsPresence: case 2 no local extension, some remote', () => {
-  it('throw a nothing to deploy error', async () => {
-    // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({app: {extensionRegistrations: [REGISTRATION_A]}})
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([]))
-
-    // Then
-    await expect(got).rejects.toThrow('There are no extensions to deploy')
-  })
-})
-
 describe('ensureDeploymentIdsPresence: more remote than local extensions', () => {
   it('throw an invalid environment error', async () => {
     // Given

@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { serve } from "./serve.js";
 
-describe("starter-node-app server", async () => {
+describe("shopify-app-template-node server", async () => {
   const { app } = await serve(process.cwd(), false);
 
   test("loads html on /", async () => {

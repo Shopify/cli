@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.0.11
+
+### Patch Changes
+
+- 1f10093b: Add support for tokenized messages in errors
+
 ## 3.0.10
 
 ## 3.0.9

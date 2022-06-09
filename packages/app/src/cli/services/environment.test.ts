@@ -94,7 +94,7 @@ const INPUT_WITH_DATA: DevEnvironmentOptions = {
   app: LOCAL_APP,
   reset: false,
   apiKey: 'key1',
-  store: 'domain1',
+  storeFqdn: 'domain1',
 }
 
 const FETCH_RESPONSE = {
@@ -124,7 +124,7 @@ describe('ensureDevEnvironment', () => {
     // Then
     expect(got).toEqual({
       app: {...APP1, apiSecret: 'secret1'},
-      store: STORE1.shopDomain,
+      storeFqdn: STORE1.shopDomain,
       identifiers: {
         app: 'key1',
         extensions: {},
@@ -147,7 +147,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'production',
+      environmentType: 'development',
     })
   })
 
@@ -166,7 +166,7 @@ describe('ensureDevEnvironment', () => {
     // Then
     expect(got).toEqual({
       app: {...APP1, apiSecret: 'secret1'},
-      store: STORE1.shopDomain,
+      storeFqdn: STORE1.shopDomain,
       identifiers: {
         app: 'key1',
         extensions: {},
@@ -191,7 +191,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'production',
+      environmentType: 'development',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
   })
@@ -209,7 +209,7 @@ describe('ensureDevEnvironment', () => {
     // Then
     expect(got).toEqual({
       app: {...APP2, apiSecret: 'secret2'},
-      store: STORE1.shopDomain,
+      storeFqdn: STORE1.shopDomain,
       identifiers: {
         app: 'key2',
         extensions: {},
@@ -227,7 +227,7 @@ describe('ensureDevEnvironment', () => {
         app: APP2.apiKey,
         extensions: {},
       },
-      environmentType: 'production',
+      environmentType: 'development',
     })
 
     expect(fetchOrganizations).toBeCalled()

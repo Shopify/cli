@@ -1,7 +1,7 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {ScriptServiceProxyQuery} from './graphql'
 import {partners as partnersFqdn} from '../environment/fqdn'
-import {debug, colorJson} from '../output'
+import {debug, content, token as outputToken} from '../output'
 import {Abort} from '../error'
 import {request as graphqlRequest, Variables, RequestDocument, ClientError} from 'graphql-request'
 
@@ -25,10 +25,10 @@ ${sanitizedHeadersOutput(headers)}
     return response
   } catch (error) {
     if (error instanceof ClientError) {
-      const errorMessage = `
-The Partners GraphQL API responded unsuccessfully with the HTTP status ${error.response.status} and errors:
+      const errorMessage = content`
+The Partners GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
 
-${colorJson(error.response.errors)}
+${outputToken.json(error.response.errors)}
       `
       const abortError = new Abort(errorMessage)
       abortError.stack = error.stack

@@ -32,6 +32,7 @@ interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = Extensio
   app: App
   cloneUrl?: string
   language?: string
+  extensionFlavor?: string
 }
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes>
@@ -58,13 +59,14 @@ async function themeExtensionInit({name, app, extensionType}: ThemeExtensionInit
   await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
 }
 
-async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOptions) {
+async function uiExtensionInit({name, extensionType, app, extensionFlavor}: UIExtensionInitOptions) {
   const extensionDirectory = await ensureExtensionDirectoryExists({app, name})
   const list = new ui.Listr(
     [
       {
-        title: 'Installing additional dependencies',
+        title: 'Install additional dependencies',
         task: async (_, task) => {
+          task.title = 'Installing additional dependencies...'
           const requiredDependencies = getRuntimeDependencies({extensionType})
           await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
             dependencyManager: app.dependencyManager,
@@ -87,8 +89,9 @@ async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOption
         },
       },
       {
-        title: `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`,
+        title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
+          task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
           const stdin = yaml.encode({
             extensions: [
               {
@@ -99,6 +102,7 @@ async function uiExtensionInit({name, extensionType, app}: UIExtensionInitOption
                 development: {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   root_dir: '.',
+                  template: extensionFlavor,
                 },
               },
             ],
@@ -132,6 +136,7 @@ export function getRuntimeDependencies({extensionType}: Pick<UIExtensionInitOpti
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
+    case 'pos_ui_extension':
     case 'checkout_post_purchase': {
       const dependencies = ['react']
       const rendererDependency = getUIExtensionRendererDependency(extensionType)

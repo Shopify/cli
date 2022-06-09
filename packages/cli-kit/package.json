@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.0.10",
+  "version": "3.0.11",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -55,7 +55,8 @@
     "keytar": "^7.9.0",
     "open": "^8.4.0",
     "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8"
+    "stacktracey": "^2.1.8",
+    "prettier": "^2.6.2"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
@@ -65,12 +66,12 @@
     "abort-controller": "^3.0.0",
     "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
-    "color-json": "^2.0.1",
     "commondir": "^1.0.1",
     "conf": "^10.1.2",
     "cross-zip": "^4.0.0",
     "del": "^6.0.0",
     "enquirer": "^2.3.6",
+    "color-json": "^2.0.1",
     "env-paths": "^3.0.0",
     "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
@@ -81,6 +82,7 @@
     "get-port-please": "^2.5.0",
     "graphql": "^16.4.0",
     "graphql-request": "^4.3.0",
+    "haikunator": "^2.1.2",
     "js-yaml": "^4.1.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",

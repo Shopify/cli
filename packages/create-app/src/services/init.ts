@@ -25,8 +25,9 @@ async function init(options: InitOptions) {
 
     tasks = tasks.concat([
       {
-        title: 'Downloading template',
+        title: 'Download template',
         task: async (_, task) => {
+          task.title = 'Downloading template'
           await git.downloadRepository({
             repoUrl: options.template,
             destination: templateDownloadDir,
@@ -35,12 +36,14 @@ async function init(options: InitOptions) {
         },
       },
       {
-        title: `Initializing your app ${hyphenizedName}`,
+        title: `Initialize your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
+          parentTask.title = `Initializing your app ${hyphenizedName}`
           return parentTask.newListr([
             {
-              title: 'Parsing liquid',
+              title: 'Parse liquid',
               task: async (_, task) => {
+                task.title = 'Parsing liquid'
                 await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   dependency_manager: dependencyManager,
@@ -50,8 +53,9 @@ async function init(options: InitOptions) {
               },
             },
             {
-              title: 'Updating package.json',
+              title: 'Update package.json',
               task: async (_, task) => {
+                task.title = 'Updating package.json'
                 const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
 
                 await npm.updateAppData(packageJSON, hyphenizedName)
@@ -59,7 +63,7 @@ async function init(options: InitOptions) {
 
                 await npm.writePackageJSON(templateScaffoldDir, packageJSON)
 
-                task.title = 'Package.json updated'
+                task.title = 'Updated package.json'
                 parentTask.title = 'App initialized'
               },
             },
@@ -70,8 +74,9 @@ async function init(options: InitOptions) {
 
     if (await environment.local.isShopify()) {
       tasks.push({
-        title: "[Shopifolks-only] Configuring the project's NPM registry",
+        title: "[Shopifolks-only] Configure the project's NPM registry",
         task: async (_, task) => {
+          task.title = "[Shopifolks-only] Configuring the project's NPM registry"
           const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
           const npmrcContent = `@shopify:registry=https://registry.npmjs.org\n`
           await file.append(npmrcPath, npmrcContent)
@@ -82,8 +87,9 @@ async function init(options: InitOptions) {
 
     tasks = tasks.concat([
       {
-        title: `Installing dependencies with ${dependencyManager}`,
+        title: `Install dependencies with ${dependencyManager}`,
         task: async (_, parentTask) => {
+          parentTask.title = `Installing dependencies with ${dependencyManager}`
           function didInstallEverything() {
             parentTask.title = `Dependencies installed with ${dependencyManager}`
           }
@@ -99,8 +105,9 @@ async function init(options: InitOptions) {
         },
       },
       {
-        title: 'Cleaning up',
+        title: 'Clean up',
         task: async (_, task) => {
+          task.title = 'Cleaning up'
           await cleanup(templateScaffoldDir)
           task.title = 'Completed clean up'
         },
@@ -119,14 +126,14 @@ async function init(options: InitOptions) {
 
   output.info(output.content`
   ${hyphenizedName} is ready for you to build! Remember to ${output.token.genericShellCommand(`cd ${hyphenizedName}`)}
-  To preview your project, run ${output.token.command(dependencyManager, 'dev')}
-  To add extensions, run ${output.token.command(dependencyManager, 'scaffold extension')}
+  To preview your project, run ${output.token.packagejsonScript(dependencyManager, 'dev')}
+  To add extensions, run ${output.token.packagejsonScript(dependencyManager, 'scaffold extension')}
   For more details on all that you can build, see the docs: ${output.token.link(
     'shopify.dev',
     'https://shopify.dev',
   )}. ✨
 
-  For help and a list of commands, enter ${output.token.command(dependencyManager, 'shopify app', '--help')}
+  For help and a list of commands, enter ${output.token.packagejsonScript(dependencyManager, 'shopify app', '--help')}
   `)
 }
 

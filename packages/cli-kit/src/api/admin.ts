@@ -1,6 +1,6 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {AdminSession} from '../session'
-import {debug, colorJson} from '../output'
+import {debug, content, token as outputToken} from '../output'
 import {Bug, Abort} from '../error'
 import {request as graphqlRequest, gql, RequestDocument, Variables, ClientError} from 'graphql-request'
 
@@ -36,10 +36,10 @@ ${sanitizedHeadersOutput(headers)}
     return response
   } catch (error) {
     if (error instanceof ClientError) {
-      const errorMessage = `
-The Admin GraphQL API responded unsuccessfully with the HTTP status ${error.response.status} and errors:
+      const errorMessage = content`
+The Admin GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
 
-${colorJson(error.response.errors)}
+${outputToken.json(error.response.errors)}
       `
       const abortError = new Abort(errorMessage)
       abortError.stack = error.stack

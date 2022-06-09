@@ -1,7 +1,16 @@
 import fs from 'fs-extra'
 import del from 'del'
 import tempy from 'tempy'
-import {sep, join} from 'pathe'
+import {sep, join, extname} from 'pathe'
+import prettier from 'prettier'
+import type {Options} from 'prettier'
+
+const DEFAULT_PRETTIER_CONFIG: Options = {
+  arrowParens: 'always',
+  singleQuote: true,
+  bracketSpacing: false,
+  trailingComma: 'all',
+}
 
 export function stripUp(path: string, strip: number) {
   const parts = path.split(sep)
@@ -111,4 +120,26 @@ export async function exists(path: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/**
+ * Format a string using prettier. Return the formatted content.
+ */
+export async function format(content: string, options: {path: string}) {
+  const ext = extname(options.path)
+  const prettierConfig: Options = {
+    ...DEFAULT_PRETTIER_CONFIG,
+    parser: 'babel',
+  }
+
+  switch (ext) {
+    case '.html':
+    case '.css':
+      prettierConfig.parser = ext.slice(1)
+      break
+  }
+
+  const formattedContent = await prettier.format(content, prettierConfig)
+
+  return formattedContent
 }

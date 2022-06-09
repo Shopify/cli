@@ -8,7 +8,12 @@ function runCLI() {
   if (environment.local.isDebug()) {
     settings.debug = true
   } else {
-    Bugsnag.start({apiKey: '9e1e6889176fd0c795d5c659225e0fae', logger: null, appVersion: cliVersion})
+    Bugsnag.start({
+      apiKey: '9e1e6889176fd0c795d5c659225e0fae',
+      logger: null,
+      appVersion: cliVersion,
+      autoTrackSessions: false,
+    })
   }
 
   run(undefined, import.meta.url)
@@ -30,8 +35,10 @@ function runCLI() {
 
 const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
   if (!settings.debug && kitError.shouldReport(errorToReport)) {
+    const reportedError = Object.assign(Object.create(errorToReport), {})
+    if (reportedError.stack) reportedError.stack = reportedError.stack.replace(new RegExp('file:///', 'g'), '/')
     await new Promise((resolve, reject) => {
-      Bugsnag.notify(errorToReport, undefined, resolve)
+      Bugsnag.notify(reportedError, undefined, resolve)
     })
   }
   return Promise.resolve(errorToReport)

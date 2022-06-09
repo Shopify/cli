@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.0.11
+
+### Patch Changes
+
+- 279cfc37: Removed the --tunnel flag from the dev command
+- d79cdf1b: Not throw an error when generating the ids if the app doesn't have UI or theme extensions
+- 1f10093b: Fix a bug that arises when we try to colorize the JSON response that we get from the API
+- 3de7c180: Don't store app metadata in development
+- Updated dependencies [1f10093b]
+  - @shopify/cli-kit@3.0.11
+
 ## 3.0.10
 
 ### Patch Changes

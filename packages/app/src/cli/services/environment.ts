@@ -17,13 +17,13 @@ const InvalidApiKeyError = (apiKey: string) => {
 export interface DevEnvironmentOptions {
   app: App
   apiKey?: string
-  store?: string
+  storeFqdn?: string
   reset: boolean
 }
 
 interface DevEnvironmentOutput {
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
-  store: string
+  storeFqdn: string
   identifiers: Identifiers
 }
 
@@ -71,7 +71,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
         ...selectedApp,
         apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
       },
-      store: selectedStore,
+      storeFqdn: selectedStore,
       identifiers: {
         app: selectedApp.apiKey,
         extensions: {},
@@ -96,7 +96,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
       ...selectedApp,
       apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
     },
-    store: selectedStore,
+    storeFqdn: selectedStore,
     identifiers: {
       app: selectedApp.apiKey,
       extensions: {},
@@ -111,7 +111,7 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
       app: options.apiKey,
       extensions: {},
     },
-    environmentType: 'production',
+    environmentType: 'development',
   })
   return {
     ...options,
@@ -157,6 +157,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     token,
     envIdentifiers,
   })
+
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
@@ -214,9 +215,9 @@ async function dataFromInput(
     if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
   }
 
-  if (options.store) {
-    await convertToTestStoreIfNeeded(options.store, stores, org, token)
-    selectedStore = options.store
+  if (options.storeFqdn) {
+    await convertToTestStoreIfNeeded(options.storeFqdn, stores, org, token)
+    selectedStore = options.storeFqdn
   }
 
   return {app: selectedApp, store: selectedStore}
@@ -266,7 +267,7 @@ function showReusedValues(org: string, app: App, store: string) {
   output.info(`App:        ${app.name}`)
   output.info(`Dev store:  ${store}\n`)
   output.info(
-    output.content`To reset your default dev config, run ${output.token.command(
+    output.content`To reset your default dev config, run ${output.token.packagejsonScript(
       app.dependencyManager,
       'dev',
       '--reset',

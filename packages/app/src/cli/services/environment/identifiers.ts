@@ -3,16 +3,14 @@ import {manualMatchIds} from './id-manual-matching'
 import {App, Extension, Identifiers} from '../../models/app/app'
 import {fetchAppExtensionRegistrations} from '../dev/fetch'
 import {createExtension} from '../dev/create-extension'
-import {error, output, session, ui} from '@shopify/cli-kit'
+import {dependency, error, output, session, ui} from '@shopify/cli-kit'
 
-const NoLocalExtensionsError = () => {
-  return new error.Abort('There are no extensions to deploy')
-}
-
-const DeployError = (appName: string, packageManager: string) => {
+const DeployError = (appName: string, packageManager: dependency.DependencyManager) => {
   return new error.Abort(
     `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
-    `• If you didn't intend to select this app, run "${packageManager} deploy --reset"
+    `• If you didn't intend to select this app, run ${
+      output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
+    }
 • If this is the app you intended, check your local project and make sure
   it contains the same number and types of extensions as the Shopify app
   you've selected. You may need to scaffold missing extensions.`,
@@ -45,7 +43,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   // We need local extensions to deploy
   if (localExtensions.length === 0) {
-    throw NoLocalExtensionsError()
+    return {app: options.appId, extensions: {}}
   }
 
   // If there are more remote extensions than local, then something is missing and we can't continue

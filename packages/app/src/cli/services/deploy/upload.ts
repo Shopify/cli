@@ -15,11 +15,7 @@ interface UploadUIExtensionsBundleOptions {
   token: string
 
   /** Extensions extra data */
-  extensions: {
-    uuid: string
-    config: string
-    context: string
-  }[]
+  extensions: api.graphql.ExtensionSettings[]
 }
 
 /**
@@ -173,8 +169,8 @@ async function uploadFunctionExtension(
   )
   const userErrors = res.data.appScriptSet.userErrors ?? []
   if (userErrors.length !== 0) {
-    const errorMessage = `The deployment of functions failed with the following errors:
-${output.colorJson(userErrors)}
+    const errorMessage = output.content`The deployment of functions failed with the following errors:
+${output.token.json(userErrors)}
     `
     throw new error.Abort(errorMessage)
   }

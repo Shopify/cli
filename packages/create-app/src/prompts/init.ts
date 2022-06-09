@@ -1,4 +1,4 @@
-import {ui} from '@shopify/cli-kit'
+import {haiku, ui} from '@shopify/cli-kit'
 
 interface InitOptions {
   name?: string
@@ -14,11 +14,12 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   // Eventually this list should be taken from a remote location
   // That way we don't have to update the CLI every time we add a template
   const templateURLMap = {
-    node: 'https://github.com/Shopify/starter-node-app',
+    node: 'https://github.com/Shopify/shopify-app-template-node#cli_three',
+    php: 'https://github.com/Shopify/shopify-app-template-php#cli_three',
   }
 
   const defaults = {
-    name: 'app',
+    name: haiku.generate('app'),
     template: templateURLMap.node,
   }
 
@@ -35,7 +36,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
           return "App Name can't be empty"
         }
         if (value.length > 30) {
-          return 'App name is too long (maximum is 30 characters)'
+          return 'Enter a shorter name (30 character max.)'
         }
         return true
       },
