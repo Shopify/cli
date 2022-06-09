@@ -10,7 +10,7 @@ import {
   dotEnvFileNames,
   ExtensionTypes,
 } from '../../constants'
-import {dependency, dotenv, error, file, path, schema, string, toml} from '@shopify/cli-kit'
+import {dependency, dotenv, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
@@ -129,6 +129,7 @@ export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
   buildDirectory: string
   entrySourceFilePath: string
+  devUUID: string
 }
 
 export enum WebType {
@@ -186,14 +187,14 @@ interface AppLoaderConstructorArgs {
 
 class AppErrors {
   private errors: {
-    [key: string]: string
+    [key: string]: output.Message
   } = {}
 
-  addError(path: string, message: string): void {
+  addError(path: string, message: output.Message): void {
     this.errors[path] = message
   }
 
-  getError(path: string): string {
+  getError(path: string): output.Message {
     return this.errors[path]
   }
 
@@ -201,7 +202,7 @@ class AppErrors {
     return Object.keys(this.errors).length === 0
   }
 
-  toJSON(): string[] {
+  toJSON(): output.Message[] {
     return Object.values(this.errors)
   }
 }
@@ -281,7 +282,7 @@ class AppLoader {
 
   async findAppDirectory() {
     if (!(await file.exists(this.directory))) {
-      throw new error.Abort(`Couldn't find directory ${this.directory}`)
+      throw new error.Abort(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
     }
     return path.dirname(await this.getConfigurationPath())
   }
@@ -294,7 +295,11 @@ class AppLoader {
       type: 'file',
     })
     if (!configurationPath) {
-      throw new error.Abort(`Couldn't find the configuration file for ${this.directory}, are you in an app directory?`)
+      throw new error.Abort(
+        output.content`Couldn't find the configuration file for ${output.token.path(
+          this.directory,
+        )}, are you in an app directory?`,
+      )
     }
 
     this.configurationPath = configurationPath
@@ -322,7 +327,11 @@ class AppLoader {
     decode: (input: any) => any = toml.decode,
   ): Promise<unknown> {
     if (!(await file.exists(filepath))) {
-      return this.abortOrReport(`Couldn't find the configuration file at ${filepath}`, '', filepath)
+      return this.abortOrReport(
+        output.content`Couldn't find the configuration file at ${output.token.path(filepath)}`,
+        '',
+        filepath,
+      )
     }
     const configurationContent = await file.read(filepath)
     let configuration: object
@@ -333,7 +342,7 @@ class AppLoader {
       // TOML errors have line, pos and col properties
       if (err.line && err.pos && err.col) {
         return this.abortOrReport(
-          `Fix the following error in ${path.relative(this.appDirectory, filepath)}:\n${err.message}`,
+          output.content`Fix the following error in ${output.token.path(filepath)}:\n${err.message}`,
           null,
           filepath,
         )
@@ -363,7 +372,7 @@ class AppLoader {
     if (!parseResult.success) {
       const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
       return this.abortOrReport(
-        `Fix a schema error in ${path.relative(this.appDirectory, filepath)}:\n${formattedError}`,
+        output.content`Fix a schema error in ${output.token.path(filepath)}:\n${formattedError}`,
         fallbackOutput,
         filepath,
       )
@@ -381,7 +390,7 @@ class AppLoader {
       const entrySourceFilePath = (
         await Promise.all(
           ['index']
-            .flatMap((name) => [`${name}.js`, `${name}.jsx`])
+            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
             .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
             .map((relativePath) => path.join(directory, relativePath))
             .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
@@ -389,7 +398,9 @@ class AppLoader {
       ).find((sourcePath) => sourcePath !== undefined)
       if (!entrySourceFilePath) {
         this.abortOrReport(
-          `Couldn't find an index.{js,jsx} file in the extension's directory or src/ subdirectory`,
+          output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+            directory,
+          )} or ${output.token.path(path.join(directory, 'src'))}`,
           undefined,
           directory,
         )
@@ -405,6 +416,7 @@ class AppLoader {
         buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
         localIdentifier: path.basename(directory),
+        devUUID: id.generateShortId(),
       }
     })
     return Promise.all(extensions)
@@ -457,7 +469,7 @@ class AppLoader {
     return Promise.all(themeExtensions)
   }
 
-  abortOrReport<T>(errorMessage: string, fallback: T, configurationPath: string): T {
+  abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
       throw new error.Abort(errorMessage)
     } else {

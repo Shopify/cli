@@ -293,9 +293,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load(blockDir)).rejects.toThrow(
-      /Couldn't find an index.{js,jsx} file in the extension's directory or src\/ subdirectory/,
-    )
+    await expect(load(blockDir)).rejects.toThrow(/Couldn't find an index.{js,jsx,ts,tsx} file in the directories/)
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {

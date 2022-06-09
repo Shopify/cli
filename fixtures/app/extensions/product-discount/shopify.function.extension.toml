@@ -1,0 +1,11 @@
+name = "product-discount"
+type = "product_discounts"
+version = "2"
+
+[meta_object]
+type = "object"
+
+[meta_object.fields]
+
+[commands]
+build = "echo 'build the wasm'"
