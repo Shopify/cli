@@ -47,6 +47,7 @@ describe('extensionConfig', () => {
       graphQLType: 'CHECKOUT_POST_PURCHASE',
       directory: extensionRoot,
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
+      devUUID: 'devUUID',
     }
     const app: App = {
       name: 'myapp',
@@ -93,7 +94,7 @@ describe('extensionConfig', () => {
       },
       extensions: [
         {
-          uuid: 'my-extension-id',
+          uuid: 'devUUID',
           title: 'My Extension Name',
           type: 'checkout_post_purchase',
           metafields: [],
