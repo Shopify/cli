@@ -1,6 +1,6 @@
 import {concurrent as concurrentOutput, shouldDisplayColors, debug} from './output'
 import {Abort} from './error'
-import {execa} from 'execa'
+import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 
@@ -24,12 +24,27 @@ export const open = async (url: string) => {
  * @param args {string[]} Arguments to pass to the command.
  * @returns A promise that resolves with the aggregatted stdout of the command.
  */
-export const captureOutput = async (command: string, args: string[]): Promise<string> => {
-  const result = await execa(command, args)
+export const captureOutput = async (command: string, args: string[], options?: ExecOptions): Promise<string> => {
+  const result = await buildExec(command, args, options)
   return result.stdout
 }
 
 export const exec = (command: string, args: string[], options?: ExecOptions) => {
+  const commandProcess = buildExec(command, args, options)
+  if (options?.stderr) {
+    commandProcess.stderr?.pipe(options.stderr)
+  }
+  if (options?.stdout) {
+    commandProcess.stdout?.pipe(options.stdout)
+  }
+  return commandProcess.catch((processError) => {
+    const abortError = new Abort(processError.message)
+    abortError.stack = processError.stack
+    throw abortError
+  })
+}
+
+const buildExec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
   const env = options?.env ?? process.env
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
@@ -44,17 +59,7 @@ Running system process:
   · Command: ${command} ${args.join(' ')}
   · Working directory: ${options?.cwd ?? process.cwd()}
 `)
-  if (options?.stderr) {
-    commandProcess.stderr?.pipe(options.stderr)
-  }
-  if (options?.stdout) {
-    commandProcess.stdout?.pipe(options.stdout)
-  }
-  return commandProcess.catch((processError) => {
-    const abortError = new Abort(processError.message)
-    abortError.stack = processError.stack
-    throw abortError
-  })
+  return commandProcess
 }
 
 interface ConcurrentExecCommand {

@@ -64,8 +64,9 @@ async function uiExtensionInit({name, extensionType, app, extensionFlavor}: UIEx
   const list = new ui.Listr(
     [
       {
-        title: 'Installing additional dependencies',
+        title: 'Install additional dependencies',
         task: async (_, task) => {
+          task.title = 'Installing additional dependencies...'
           const requiredDependencies = getRuntimeDependencies({extensionType})
           await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
             dependencyManager: app.dependencyManager,
@@ -88,8 +89,9 @@ async function uiExtensionInit({name, extensionType, app, extensionFlavor}: UIEx
         },
       },
       {
-        title: `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`,
+        title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
+          task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
           const stdin = yaml.encode({
             extensions: [
               {

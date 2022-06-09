@@ -1,4 +1,4 @@
-import {ui} from '@shopify/cli-kit'
+import {haiku, ui} from '@shopify/cli-kit'
 
 interface InitOptions {
   name?: string
@@ -19,7 +19,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   }
 
   const defaults = {
-    name: 'app',
+    name: haiku.generate('app'),
     template: templateURLMap.node,
   }
 
@@ -36,7 +36,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
           return "App Name can't be empty"
         }
         if (value.length > 30) {
-          return 'App name is too long (maximum is 30 characters)'
+          return 'Enter a shorter name (30 character max.)'
         }
         return true
       },

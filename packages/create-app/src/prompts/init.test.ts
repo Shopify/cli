@@ -23,7 +23,7 @@ describe('init', () => {
         name: 'name',
         preface: 'Welcome. Let’s get started by naming your app. You can change it later.',
         message: "Your app's name?",
-        default: 'app',
+        default: expect.stringMatching(/^\w+-\w+-app-\d+$/),
         validate: expect.any(Function),
       },
     ])

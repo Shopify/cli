@@ -3,10 +3,10 @@
 
 import {version as hydrogenVersion} from '../../package.json'
 /* eslint-disable @nrwl/nx/enforce-module-boundaries */
-import {version as cliVersion} from '../../../cli/package.json'
+import {version as cliVersion} from '../../../cli-main/package.json'
+import {string, path, file, output, os, ui, npm, dependency, environment, github, template, git} from '@shopify/cli-kit'
 /* eslint-enable @nrwl/nx/enforce-module-boundaries */
 
-import {string, path, file, output, os, ui, npm, dependency, environment, github, template, git} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -216,7 +216,7 @@ async function updateCLIDependencies(
   if (local) {
     const devDependencyOverrides = {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      '@shopify/cli': `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`,
+      '@shopify/cli': `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`,
       // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli-hydrogen': `file:${(await path.findUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
     }

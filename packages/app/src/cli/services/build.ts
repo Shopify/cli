@@ -8,18 +8,25 @@ import {Writable} from 'node:stream'
 interface BuildOptions {
   app: App
   skipDependenciesInstallation: boolean
+  apiKey?: string
 }
 
-async function build({app, skipDependenciesInstallation}: BuildOptions) {
+async function build({app, skipDependenciesInstallation, apiKey = undefined}: BuildOptions) {
   if (!skipDependenciesInstallation) {
     await installAppDependencies(app)
   }
+
+  const env: {SHOPIFY_API_KEY?: string} = {}
+  if (apiKey) {
+    env.SHOPIFY_API_KEY = apiKey
+  }
+
   await output.concurrent([
     ...app.webs.map((web: Web) => {
       return {
         prefix: web.configuration.type,
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-          await buildWeb('build', {web, stdout, stderr, signal})
+          await buildWeb('build', {web, stdout, stderr, signal, env})
         },
       }
     }),
