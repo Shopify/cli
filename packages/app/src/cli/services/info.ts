@@ -1,6 +1,6 @@
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
 import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
-import {os, output, path, store} from '@shopify/cli-kit'
+import {os, output, path, store, dependency} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -10,7 +10,7 @@ interface Configurable {
   configuration?: {type?: string}
 }
 
-export function info(app: App, {format}: InfoOptions): output.Message {
+export async function info(app: App, {format}: InfoOptions): Promise<output.Message> {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {
@@ -31,13 +31,13 @@ class AppInfo {
     this.cachedAppInfo = store.getAppInfo(app.directory)
   }
 
-  output(): string {
+  async output(): Promise<string> {
     const sections: [string, string][] = [
       this.devConfigsSection(),
       this.projectSettingsSection(),
       this.appComponentsSection(),
       this.accessScopesSection(),
-      this.systemInfoSection(),
+      await this.systemInfoSection(),
     ]
     return sections.map((sectionContents: [string, string]) => this.section(...sectionContents)).join('\n\n')
   }
@@ -199,22 +199,17 @@ class AppInfo {
     return [title, this.linesToColumns(lines)]
   }
 
-  systemInfoSection(): [string, string] {
+  async systemInfoSection(): Promise<[string, string]> {
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
     const lines: string[][] = [
-      ['Shopify CLI', this.app.nodeDependencies['@shopify/cli']],
+      ['Shopify CLI', await this.getVersionInformation()],
       ['Package manager', this.app.dependencyManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    const updateCommand = this.app.dependencyManager === 'yarn' ? 'upgrade' : 'update'
-    const postscript =
-      output.content`💡 To update to the latest version of the Shopify CLI, run ${output.token.genericShellCommand(
-        `${this.app.dependencyManager} ${updateCommand}`,
-      )}`.value
-    return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
+    return [title, `${this.linesToColumns(lines)}`]
   }
 
   linesToColumns(lines: string[][]): string {
@@ -239,5 +234,19 @@ class AppInfo {
   section(title: string, body: string): string {
     const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
     return output.content`${output.token.heading(formattedTitle)}\n${body}`.value
+  }
+
+  async getVersionInformation(): Promise<string> {
+    const cliDependency = '@shopify/cli'
+    let currentVersion = this.app.nodeDependencies[cliDependency]
+    const newestVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
+    if (newestVersion) {
+      const content = output.content` ${output.token.errorText(
+        `! ${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, [cliDependency])}`,
+      )}`
+      currentVersion = currentVersion.concat(content.value)
+    }
+
+    return currentVersion
   }
 }
