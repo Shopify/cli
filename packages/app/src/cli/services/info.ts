@@ -280,7 +280,11 @@ class AppInfo {
     const newestVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
     if (newestVersion) {
       const content = output.content` ${output.token.errorText(
-        `! ${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, [cliDependency], newestVersion)}`,
+        `! ${dependency.getOutputUpdateCLIReminder(
+          this.app.dependencyManager,
+          [cliDependency, '@shopify/app'],
+          newestVersion,
+        )}`,
       )}`
       currentVersion = currentVersion.concat(content.value)
     }

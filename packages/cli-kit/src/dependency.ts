@@ -163,7 +163,7 @@ export function getOutputUpdateCLIReminder(
   version?: string,
 ): string {
   const updateCommand = dependencyManager === 'yarn' ? 'upgrade' : 'update'
-  const packageString = packages === undefined ? '' : ` ${packages.join(', ')}`
+  const packageString = packages === undefined ? '' : ` ${packages.join(' ')}`
   let reminderString = ''
   if (version) {
     reminderString = `Version ${version} of the Shopify CLI is available! To update`

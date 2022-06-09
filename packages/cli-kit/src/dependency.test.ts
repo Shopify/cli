@@ -450,7 +450,7 @@ describe('getOutputUpdateCLIReminder', () => {
 
     // Then
     expect(result).toBe(
-      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33myarn upgrade package1, package2\u001b[39m\u001b[22m`,
+      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33myarn upgrade package1 package2\u001b[39m\u001b[22m`,
     )
   })
 })
