@@ -22,17 +22,15 @@ const WebPixelConfigError = (property: string) => {
 }
 
 const FunctionsWithMissingWasm = (extensions: {id: string; path: string}[]) => {
+  const extensionLine = (extension: {id: string; path: string}): string => {
+    return output.stringifyMessage(
+      output.content`· ${output.token.green(extension.id)}: ${output.token.path(extension.path)}`,
+    )
+  }
+  const extensionLines = output.token.raw(extensions.map(extensionLine).join('\n'))
   return new error.Abort(
     output.content`The following function extensions haven't compiled the wasm in the expected path:
-${output.token.raw(
-  extensions
-    .map((extension) => {
-      return output.stringifyMessage(
-        output.content`• ${output.token.green(extension.id)}: ${output.token.path(extension.path)}`,
-      )
-    })
-    .join('\n'),
-)}
+${extensionLines}
     `,
     `Make sure the build command outputs the wasm in the expected directory.`,
   )
