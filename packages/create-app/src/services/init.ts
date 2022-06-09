@@ -112,6 +112,13 @@ async function init(options: InitOptions) {
           task.title = 'Completed clean up'
         },
       },
+      {
+        title: 'Initializing a Git repository',
+        task: async (_, task) => {
+          await git.initializeRepository(templateScaffoldDir)
+          task.title = 'Git repository initialized'
+        },
+      },
     ])
 
     const list = new ui.Listr(tasks, {
