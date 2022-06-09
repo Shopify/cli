@@ -242,7 +242,7 @@ class AppInfo {
     const newestVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
     if (newestVersion) {
       const content = output.content` ${output.token.errorText(
-        `! ${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager)}`,
+        `! ${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, [cliDependency])}`,
       )}`
       currentVersion = currentVersion.concat(content.value)
     }

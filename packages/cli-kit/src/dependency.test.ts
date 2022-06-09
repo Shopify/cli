@@ -420,4 +420,14 @@ describe('getOutputUpdateCLIReminder', () => {
       `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33m${dependencyManager} ${updateCommand}\u001b[39m\u001b[22m`,
     )
   })
+
+  it('returns upgrade reminder only for specific pacakges if they are included', () => {
+    // When
+    const result = getOutputUpdateCLIReminder('yarn', ['package1', 'package2'])
+
+    // Then
+    expect(result).toBe(
+      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33myarn upgrade package1, package2\u001b[39m\u001b[22m`,
+    )
+  })
 })

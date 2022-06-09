@@ -42,7 +42,10 @@ describe('check CLI version', () => {
       // Then
       const result = `Current Shopify CLI version: \u001b[33m${currentVersion}\u001b[39m\n Latest Shopify CLI version: \u001b[33m${latestVersion}\u001b[39m\n💡\nCLI reminder`
       expect(outputMock.info()).toMatch(result)
-      expect(outputReminder).toBeCalledWith(dependencyManager as DependencyManager)
+      expect(outputReminder).toBeCalledWith(
+        dependencyManager as DependencyManager,
+        expect.arrayContaining(['@shopify/cli']),
+      )
     },
   )
 
