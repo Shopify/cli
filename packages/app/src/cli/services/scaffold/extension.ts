@@ -32,24 +32,26 @@ interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = Extensio
   app: App
   cloneUrl?: string
   extensionFlavor?: string
-  extensionDirectory?: string
+}
+interface ExtensionDirectory {
+  extensionDirectory: string
 }
 
-type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes>
-type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionTypes>
-type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionTypes>
+type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes> & ExtensionDirectory
+type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionTypes> & ExtensionDirectory
+type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionTypes> & ExtensionDirectory
 
 async function extensionInit(options: ExtensionInitOptions): Promise<string> {
   const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
   switch (extensionTypeCategory(options.extensionType)) {
     case 'theme':
-      await themeExtensionInit({extensionDirectory, ...(options as ThemeExtensionInitOptions)})
+      await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
       break
     case 'function':
-      await functionExtensionInit({extensionDirectory, ...(options as FunctionExtensionInitOptions)})
+      await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
       break
     case 'ui':
-      await uiExtensionInit({extensionDirectory, ...(options as UIExtensionInitOptions)})
+      await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
       break
   }
   return extensionDirectory

@@ -168,6 +168,7 @@ export default class AppScaffoldExtension extends Command {
   }
 
   isUiExtension(type: string | undefined): boolean {
+    if (!type) return false
     return (uiExtensions.types as ReadonlyArray<string>).includes(type)
   }
 }

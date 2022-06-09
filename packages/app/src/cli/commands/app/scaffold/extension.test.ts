@@ -117,7 +117,7 @@ function mockSuccessfulCommandExecution(outputConfig: {
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(scaffoldExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
-  vi.mocked(scaffoldExtensionService).mockResolvedValue()
+  vi.mocked(scaffoldExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
 
   return outputMocker.mockAndCapture()
 }
