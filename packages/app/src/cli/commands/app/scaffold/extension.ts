@@ -3,7 +3,7 @@ import {extensions, ExtensionTypes, getExtensionOutputConfig, limitedExtensions,
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
-import {output, path, cli, error} from '@shopify/cli-kit'
+import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class AppScaffoldExtension extends Command {
@@ -56,7 +56,7 @@ export default class AppScaffoldExtension extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
 
-    this.validateExtensionType(app, flags.type)
+    await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
     const extensionFlavor = flags.template
     this.validateExtensionFlavor(flags.type, extensionFlavor)
@@ -79,11 +79,16 @@ export default class AppScaffoldExtension extends Command {
     output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))
   }
 
-  validateExtensionType(app: App, type: string | undefined) {
-    if (!(extensions.types as string[]).includes(type ?? '')) {
+  async validateExtensionType(type: string | undefined) {
+    if (!type) {
+      return
+    }
+    const isShopify = await environment.local.isShopify()
+    const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
+    if (!(extensions.types as string[]).includes(type)) {
       throw new error.Abort(
         `Invalid extension type ${type}`,
-        `The following extension types are supported: ${extensions.publicTypes.join(', ')}`,
+        `The following extension types are supported: ${supportedExtensions.join(', ')}`,
       )
     }
   }

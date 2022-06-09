@@ -6,7 +6,7 @@ import {
   themeExtensions,
   uiExtensions,
 } from '../../constants'
-import {haiku, ui} from '@shopify/cli-kit'
+import {haiku, ui, environment} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
   name?: string
@@ -26,8 +26,10 @@ const scaffoldExtensionPrompt = async (
   prompt = ui.prompt,
 ): Promise<ScaffoldExtensionOutput> => {
   const questions: ui.Question[] = []
+  const isShopify = await environment.local.isShopify()
+  const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
   if (!options.extensionType) {
-    let relevantExtensionTypes = extensions.publicTypes.filter(
+    let relevantExtensionTypes = supportedExtensions.filter(
       (type) => !options.extensionTypesAlreadyAtQuota.includes(type),
     )
     if (options.extensionFlavor) {
