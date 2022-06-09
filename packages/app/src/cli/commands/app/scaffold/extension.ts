@@ -78,14 +78,16 @@ export default class AppScaffoldExtension extends Command {
     })
 
     const extensionOutputConfig = getExtensionOutputConfig(promptAnswers.extensionType)
-    output.success(
-      output.content`Your ${
-        extensionOutputConfig.humanKey
-      } extension was added to your project, and can be found in ${output.token.path(
-        path.relative(app.directory, extensionDirectory),
-      )}`,
+    output.success(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
+    output.info(
+      output.content`It can be found in ${output.token.path(path.relative(app.directory, extensionDirectory))}`,
     )
     output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType, extensionOutputConfig))
+    if (this.isUiExtension(promptAnswers.extensionType)) {
+      output.info(
+        output.content`To preview your project, run ${output.token.packagejsonScript(app.dependencyManager, 'dev')}`,
+      )
+    }
   }
 
   async validateExtensionType(type: string | undefined) {
@@ -163,5 +165,9 @@ export default class AppScaffoldExtension extends Command {
     }
 
     return outputTokens.join('\n')
+  }
+
+  isUiExtension(type: string | undefined): boolean {
+    return (uiExtensions.types as ReadonlyArray<string>).includes(type)
   }
 }
