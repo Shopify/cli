@@ -97,14 +97,6 @@ export interface Extension {
 }
 
 const FunctionExtensionMetadataSchema = schema.define.object({
-  flags: schema.define
-    .object({
-      useMsgpack: schema.define.boolean().optional(),
-    })
-    .default({
-      useMsgpack: false,
-    })
-    .optional(),
   schemaVersions: schema.define.object({}).catchall(
     schema.define.object({
       major: schema.define.number(),
