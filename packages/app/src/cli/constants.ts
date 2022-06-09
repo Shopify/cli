@@ -109,9 +109,11 @@ export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 
 export const getFunctionExtensionPointName = (type: FunctionExtensionTypes) => {
   switch (type) {
     case 'product_discounts':
+      return 'PRODUCT_DISCOUNTS'
     case 'order_discounts':
+      return 'ORDER_DISCOUNTS'
     case 'shipping_discounts':
-      return 'DISCOUNT'
+      return 'SHIPPING_DISCOUNTS'
     case 'payment_methods':
       return 'PAYMENT_METHODS'
     case 'shipping_rate_presenter':
