@@ -44,7 +44,7 @@ export const deploy = async (options: DeployOptions) => {
   )
 
   await temporary.directory(async (tmpDir) => {
-    const bundlePath = path.join(tmpDir, `${app.name}.zip`)
+    const bundlePath = path.join(tmpDir, `bundle.zip`)
     await file.mkdir(path.dirname(bundlePath))
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers})
     await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
