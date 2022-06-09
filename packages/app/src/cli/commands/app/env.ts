@@ -1,8 +1,8 @@
 import {appFlags} from '../../flags'
 import {App, load as loadApp} from '../../models/app/app'
+import env from '../../services/env'
 import {Command} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
-import env from '../../services/env'
 
 export default class Env extends Command {
   static description = 'Deploy your Shopify app'

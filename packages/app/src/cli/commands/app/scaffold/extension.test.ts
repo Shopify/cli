@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension'
 import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants'
 import {App, load as loadApp} from '../../../models/app/app'
@@ -39,10 +40,13 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatchInlineSnapshot(`
+
+    expect(outputInfo.info()).toMatchInlineSnapshot(
+      `
       "Find your checkout UI extension in your extensions folder.
       For help, see docs (​http://help.com​)."
-    `)
+    `,
+    )
   })
 
   it('displays a confirmation message with human-facing name and additional help', async () => {
