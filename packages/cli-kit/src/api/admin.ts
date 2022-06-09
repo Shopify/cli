@@ -5,12 +5,10 @@ import {Bug, Abort} from '../error'
 import {request as graphqlRequest, gql, RequestDocument, Variables, ClientError} from 'graphql-request'
 
 const UnauthorizedAccessError = (store: string) => {
+  const adminLink = outputToken.link(`https://${store}/admin`, `https://${store}/admin`)
   return new Abort(
     content`Looks like you need API access to this dev store: ${outputToken.link(store, store)}`,
-    `If you’re listed as the store owner, then simply log in to the store at ${outputToken.link(
-      `${store}admin`,
-      `${store}admin`,
-    )}.
+    content`If you’re listed as the store owner, then simply log in to the store at ${adminLink}.
 Otherwise, ask the store owner for staff access to the store.
 
 (Note: staff access to a dev store is separate from staff access to Shopify Partners.)

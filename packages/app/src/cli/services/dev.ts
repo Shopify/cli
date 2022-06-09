@@ -202,7 +202,7 @@ async function devExtensionsTarget(
  */
 async function retrieveProductVariantIDIfNeeded(extensions: UIExtension[], store: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
-  // if (!hasUIExtension) return
+  if (!hasUIExtension) return
   return fetchProductVariant(store)
 }
 
