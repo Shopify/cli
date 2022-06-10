@@ -139,35 +139,72 @@ async function installCLIDependencies() {
 }
 
 async function validateRubyEnv() {
+  await validateRuby()
+  await validateRubyGems()
+  await validateBundler()
+}
+
+async function validateRuby() {
+  let version
   try {
-    await system.exec('ruby', ['-v'])
+    const {stdout} = await system.exec('ruby', ['-v'])
+    version = coerce(stdout)
   } catch {
     throw new Abort(
       'Ruby environment not found',
-      'Make sure you have ruby installed on your system: https://www.ruby-lang.org/en/documentation/installation/',
+      `Make sure you have ruby installed on your system: ${
+        content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      }`,
     )
   }
 
-  const bundlerVersion = await getBundlerVersion()
-  const isValid = bundlerVersion?.compare(MinBundlerVersion)
+  const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Bundler version ${bundlerVersion} is not supported`,
-      `To update to the latest version of Bundler, run ${
-        content`${token.genericShellCommand('gem install bundler')}`.value
+      `Ruby version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `Make sure you have at lease ${
+        content`${token.yellow(MinRubyVersion)}`.value
+      } ruby version installed on your system: ${
+        content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
       }`,
     )
   }
 }
 
-async function getBundlerVersion() {
+async function validateRubyGems() {
+  const {stdout} = await system.exec('gem', ['-v'])
+  const version = coerce(stdout)
+
+  const isValid = version?.compare(MinRubyGemVersion)
+  if (isValid === -1 || isValid === undefined) {
+    throw new Abort(
+      `RubyGems  version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `To update to the latest version of RubyGems, run ${
+        content`${token.genericShellCommand('gem update --system')}`.value
+      }`,
+    )
+  }
+}
+
+async function validateBundler() {
+  let version
   try {
     const {stdout} = await system.exec('bundler', ['-v'])
-    return coerce(stdout)
+    version = coerce(stdout)
   } catch {
     throw new Abort(
       'Bundler not found',
       `To install the latest version of Bundler, run ${
+        content`${token.genericShellCommand('gem install bundler')}`.value
+      }`,
+    )
+  }
+
+  const isValid = version?.compare(MinBundlerVersion)
+  if (isValid === -1 || isValid === undefined) {
+    throw new Abort(
+      `Bundler version ${version} is not supported`,
+      `To update to the latest version of Bundler, run ${
         content`${token.genericShellCommand('gem install bundler')}`.value
       }`,
     )
