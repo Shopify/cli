@@ -13,12 +13,14 @@ interface ScaffoldExtensionOptions {
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
   extensionFlavor?: string
+  extensionLanguage?: string
 }
 
 interface ScaffoldExtensionOutput {
   name: string
   extensionType: ExtensionTypes
   extensionFlavor?: string
+  extensionLanguage?: string
 }
 
 const scaffoldExtensionPrompt = async (
@@ -55,21 +57,46 @@ const scaffoldExtensionPrompt = async (
       default: haiku.generate('ext'),
     })
   }
-  const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
+  let promptOutput: ScaffoldExtensionOutput = await prompt(questions)
   if (!options.extensionFlavor && isUiExtensionType({...options, ...promptOutput}.extensionType)) {
-    const promptOutput2: {extensionFlavor: string} = await prompt([
-      {
-        type: 'select',
-        name: 'extensionFlavor',
-        message: 'Choose a starting template for your extension',
-        choices: [
-          {name: 'React', value: 'react'},
-          {name: 'vanilla JavaScript', value: 'vanilla-js'},
-        ],
-        default: 'react',
-      },
-    ])
-    promptOutput.extensionFlavor = promptOutput2.extensionFlavor
+    promptOutput = {
+      ...promptOutput,
+      extensionFlavor: (
+        (await prompt([
+          {
+            type: 'select',
+            name: 'extensionFlavor',
+            message: 'Choose a starting template for your extension',
+            choices: [
+              {name: 'React', value: 'react'},
+              {name: 'vanilla JavaScript', value: 'vanilla-js'},
+            ],
+            default: 'react',
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ])) as any
+      ).extensionFlavor,
+    }
+  }
+  if (!options.extensionLanguage && isFunctionExtensionType({...options, ...promptOutput}.extensionType)) {
+    promptOutput = {
+      ...promptOutput,
+      extensionLanguage: (
+        (await prompt([
+          {
+            type: 'select',
+            name: 'extensionLanguage',
+            message: 'Choose a language for your extension',
+            choices: [
+              {name: 'Wasm', value: 'wasm'},
+              {name: 'Rust', value: 'rust'},
+            ],
+            default: 'wasm',
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ])) as any
+      ).extensionLanguage,
+    }
   }
   return {...options, ...promptOutput}
 }
@@ -114,6 +141,10 @@ function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
 
 function isUiExtensionType(extensionType: string) {
   return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
+}
+
+function isFunctionExtensionType(extensionType: string) {
+  return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
 export default scaffoldExtensionPrompt

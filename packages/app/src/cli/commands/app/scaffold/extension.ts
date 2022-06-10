@@ -34,9 +34,9 @@ export default class AppScaffoldExtension extends Command {
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
     language: Flags.string({
-      hidden: true,
+      hidden: false,
       char: 'l',
-      options: ['wasm', 'rust', 'typescript'],
+      options: ['wasm', 'rust'],
       description: 'Language of the template, where applicable',
       env: 'SHOPIFY_FLAG_LANGUAGE',
     }),
@@ -62,6 +62,7 @@ export default class AppScaffoldExtension extends Command {
     this.validateExtensionFlavor(flags.type, extensionFlavor)
 
     const promptAnswers = await scaffoldExtensionPrompt({
+      extensionLanguage: flags.language,
       extensionType: flags.type,
       extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
