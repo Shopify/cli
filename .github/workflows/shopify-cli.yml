@@ -44,8 +44,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
-      - name: Install Playwright dependencies
-        run: npx playwright install-deps chromium
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Install dependencies
@@ -86,8 +84,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
-      - name: Install Playwright dependencies
-        run: npx playwright install-deps chromium
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Install dependencies
