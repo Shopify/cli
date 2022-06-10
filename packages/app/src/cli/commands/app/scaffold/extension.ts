@@ -112,17 +112,17 @@ export default class AppScaffoldExtension extends Command {
     const uiExtensionTemplateNames = uiExtensionTemplates.map((template) => template.value)
     const functionExtensionTemplateNames = functionExtensionTemplates.map((template) => template.value)
 
-    if (isUiExtensionType(type) && !uiExtensionTemplateNames.includes(flavor)) {
-      throw new error.Abort(
+    const invalidTemplateError = (templates: string[]) => {
+      return new error.Abort(
         'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${uiExtensionTemplateNames.join(', ')}.`,
+        `You can only specify a template for these extension types: ${templates.join(', ')}.`,
       )
     }
+    if (isUiExtensionType(type) && !uiExtensionTemplateNames.includes(flavor)) {
+      throw invalidTemplateError(uiExtensionTemplateNames)
+    }
     if (isFunctionExtensionType(type) && !functionExtensionTemplateNames.includes(flavor)) {
-      throw new error.Abort(
-        'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${functionExtensionTemplateNames.join(', ')}.`,
-      )
+      throw invalidTemplateError(functionExtensionTemplateNames)
     }
   }
 
