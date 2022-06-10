@@ -11,7 +11,7 @@ export const dotEnvFileNames = {
 export const genericConfigurationFileNames = {
   tailwind: 'tailwind.config',
   postCSS: 'postcss.config',
-  eslint: 'eslint.config',
+  eslint: '.eslintrc.js',
   typescript: {
     config: 'tsconfig.json',
   },

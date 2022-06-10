@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {Fatal, Bug} from './error'
-import {isUnitTest} from './environment/local'
+import {isUnitTest, isVerbose} from './environment/local'
 import {DependencyManager} from './dependency'
 import {relativize as relativizePath} from './path'
 import terminalLink from 'terminal-link'
@@ -13,6 +13,7 @@ import cjs from 'color-json'
 import {Writable} from 'node:stream'
 
 enum ContentTokenType {
+  Raw,
   Command,
   Json,
   Path,
@@ -33,10 +34,10 @@ interface ContentMetadata {
 
 class ContentToken {
   type: ContentTokenType
-  value: string
+  value: Message
   metadata: ContentMetadata
 
-  constructor(value: string, metadata: ContentMetadata = {}, type: ContentTokenType) {
+  constructor(value: Message, metadata: ContentMetadata = {}, type: ContentTokenType) {
     this.type = type
     this.value = value
     this.metadata = metadata
@@ -44,41 +45,44 @@ class ContentToken {
 }
 
 export const token = {
-  genericShellCommand: (value: string) => {
+  raw: (value: Message) => {
+    return new ContentToken(value, {}, ContentTokenType.Raw)
+  },
+  genericShellCommand: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Command)
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: (value: any) => {
     return new ContentToken(value, {}, ContentTokenType.Json)
   },
-  path: (value: string) => {
+  path: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Path)
   },
-  link: (value: string, link: string) => {
+  link: (value: Message, link: string) => {
     return new ContentToken(value, {link}, ContentTokenType.Link)
   },
-  heading: (value: string) => {
+  heading: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Heading)
   },
-  subheading: (value: string) => {
+  subheading: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.SubHeading)
   },
-  italic: (value: string) => {
+  italic: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Italic)
   },
-  errorText: (value: string) => {
+  errorText: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.ErrorText)
   },
-  cyan: (value: string) => {
+  cyan: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Cyan)
   },
-  yellow: (value: string) => {
+  yellow: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Yellow)
   },
-  magenta: (value: string) => {
+  magenta: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Magenta)
   },
-  green: (value: string) => {
+  green: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
   packagejsonScript: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
@@ -135,51 +139,55 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
       return
     }
     const token = keys[i]
+
     if (typeof token === 'string') {
       output += token
     } else {
       const enumToken = token as ContentToken
       switch (enumToken.type) {
+        case ContentTokenType.Raw:
+          output += enumToken.value
+          break
         case ContentTokenType.Command:
-          output += colors.bold(colors.yellow(enumToken.value))
+          output += colors.bold(colors.yellow(stringifyMessage(enumToken.value)))
           break
         case ContentTokenType.Path:
-          output += colors.cyan(relativizePath(enumToken.value))
+          output += colors.cyan(relativizePath(stringifyMessage(enumToken.value)))
           break
         case ContentTokenType.Json:
           try {
-            output += cjs(enumToken.value ?? {})
+            output += cjs(stringifyMessage(enumToken.value) ?? {})
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (_) {
-            output += JSON.stringify(enumToken.value ?? {}, null, 2)
+            output += JSON.stringify(stringifyMessage(enumToken.value) ?? {}, null, 2)
           }
           break
         case ContentTokenType.Link:
-          output += terminalLink(colors.green(enumToken.value), enumToken.metadata.link ?? '')
+          output += terminalLink(colors.green(stringifyMessage(enumToken.value)), enumToken.metadata.link ?? '')
           break
         case ContentTokenType.Heading:
-          output += colors.bold.underline(enumToken.value)
+          output += colors.bold.underline(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.SubHeading:
-          output += colors.underline(enumToken.value)
+          output += colors.underline(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.Italic:
-          output += colors.italic(enumToken.value)
+          output += colors.italic(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.ErrorText:
-          output += colors.bold.redBright(enumToken.value)
+          output += colors.bold.redBright(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.Yellow:
-          output += colors.yellow(enumToken.value)
+          output += colors.yellow(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.Cyan:
-          output += colors.cyan(enumToken.value)
+          output += colors.cyan(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.Magenta:
-          output += colors.magenta(enumToken.value)
+          output += colors.magenta(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.Green:
-          output += colors.green(enumToken.value)
+          output += colors.green(stringifyMessage(enumToken.value))
           break
       }
     }
@@ -219,7 +227,7 @@ const logLevelValue = (level: LogLevel): number => {
  * @returns {LogLevel} It returns the log level set by the user.
  */
 export const currentLogLevel = (): LogLevel => {
-  if (process.argv.includes('--verbose')) {
+  if (isVerbose()) {
     return 'debug'
   } else {
     return 'info'

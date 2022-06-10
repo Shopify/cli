@@ -15,6 +15,16 @@ const cliCommands = fg.sync([
   `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
 ])
 
+const cliHooks = fg.sync([
+  path.join(__dirname, `/src/hooks/**/*.ts`),
+  `!${path.join(__dirname, `/src/hooks/**/*.test.ts`)}`,
+])
+
+const cliServices = fg.sync([
+  path.join(__dirname, `/src/services/**/*.ts`),
+  `!${path.join(__dirname, `/src/services/**/*.test.ts`)}`,
+])
+
 const configuration = () => [
   // CLI
   {
@@ -30,7 +40,7 @@ const configuration = () => [
     external: cliExternal,
   },
   {
-    input: [...cliCommands],
+    input: [...cliCommands, ...cliHooks, ...cliServices],
     output: [
       {
         dir: distDir(__dirname),
@@ -40,6 +50,12 @@ const configuration = () => [
           if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
             return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
+          } else if (chunkInfo.facadeModuleId.includes('src/hooks')) {
+            // Preserves the hooks/... path
+            return `hooks/${chunkInfo.facadeModuleId.split('src/hooks').pop().replace('ts', 'js')}`
+          } else if (chunkInfo.facadeModuleId.includes('src/services')) {
+            // Preserves the services/... path
+            return `services/${chunkInfo.facadeModuleId.split('src/services').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

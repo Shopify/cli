@@ -265,7 +265,9 @@ describe('getFunctionExtensionPointName', () => {
   test('it returns the right extension point mapper', () => {
     // Given
     const extensionPoints = {
-      DISCOUNT: ['product_discounts', 'order_discounts', 'shipping_discounts'],
+      PRODUCT_DISCOUNTS: ['product_discounts'],
+      ORDER_DISCOUNTS: ['order_discounts'],
+      SHIPPING_DISCOUNTS: ['shipping_discounts'],
       PAYMENT_METHODS: ['payment_methods'],
       SHIPPING_METHODS: ['shipping_rate_presenter'],
     }

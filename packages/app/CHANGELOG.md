@@ -1,5 +1,29 @@
 # @shopify/app
 
+## 3.0.12
+
+### Patch Changes
+
+- 8c690cca: Provide haikunator-style default names for apps and extensions
+- 783a3714: Support Typescript UI extensions
+- 8178cf2d: Add Shopify POS extension type
+- 504b502a: Accept a flag to specify extension template for scaffolding, React or vanilla JS
+- cb8e2c25: Copy improvements
+- 7ad2b9fa: Fix the extension point name used for discounts
+- 11d09f7f: Encourage upgrading if not up-to-date
+- 783a3714: Add support for dev'ing Typescript extensions
+- 9ee5feb5: Rename SHOPIFY_APP_API_KEY to SHOPIFY_API_KEY for consistency with Shopify CLI 2.0
+- 687bd47b: Do not include the extension name in the extension URL
+- Updated dependencies [e05749dc]
+- Updated dependencies [89a48ba9]
+- Updated dependencies [1f45ddc4]
+- Updated dependencies [8c690cca]
+- Updated dependencies [11d09f7f]
+- Updated dependencies [783a3714]
+- Updated dependencies [e12c82b3]
+- Updated dependencies [cb8e2c25]
+  - @shopify/cli-kit@3.0.12
+
 ## 3.0.11
 
 ### Patch Changes

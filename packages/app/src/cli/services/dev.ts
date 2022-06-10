@@ -44,6 +44,10 @@ async function dev(options: DevOptions) {
     app: {apiSecret},
   } = await ensureDevEnvironment(options)
 
+  if (Object.values(identifiers.extensions).length > 0) {
+    output.completed("A production app was selected. We'll use the extensions IDs present in your .env file")
+  }
+
   const proxyPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options, proxyPort)
@@ -112,6 +116,9 @@ async function dev(options: DevOptions) {
     apiSecret: (apiSecret as string) ?? '',
     hostname: url,
   }
+
+  // If we have a real UUID for an extension, use that instead of a random one
+  options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
 
   const devExt = await devExtensionsTarget(options.app, identifiers.app, url, storeFqdn)
   const proxyTargets: ReverseHTTPProxyTarget[] = [devExt]

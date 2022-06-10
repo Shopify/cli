@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.0.12
+
+### Patch Changes
+
+- e05749dc: Adds format to the @shopify/cli-kit `file` module that formats a file content using prettier.
+- 89a48ba9: Helpers to check ruby version, analytics enabled and verbose mode
+- 1f45ddc4: New module called `vscode` for integrating with the user's VSCode editor. The initial utilities are focused on determining if the user is using VSCode and adding recommended extensions to the project.
+- 8c690cca: Add generator for haiku-style names
+- 11d09f7f: Encourage upgrading if not up-to-date
+- 783a3714: Relativize path tokens before printing them
+- e12c82b3: Fixed error executing CLI connected to a spin instance using SPIN_INSTANCE environment variable
+- cb8e2c25: Output stderr in bold instead of prefacing with scary ERROR
+
 ## 3.0.11
 
 ### Patch Changes
