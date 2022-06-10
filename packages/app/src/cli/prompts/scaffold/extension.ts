@@ -63,7 +63,7 @@ const scaffoldExtensionPrompt = async (
         name: 'extensionFlavor',
         message: 'Choose a starting template for your extension',
         choices: [
-          {name: 'React (recommended)', value: 'react'},
+          {name: 'React', value: 'react'},
           {name: 'vanilla JavaScript', value: 'vanilla-js'},
         ],
         default: 'react',
