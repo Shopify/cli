@@ -408,7 +408,8 @@ class AppLoader {
         buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
         localIdentifier: path.basename(directory),
-        devUUID: id.generateShortId(),
+        // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
+        devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
     return Promise.all(extensions)
