@@ -33,20 +33,16 @@ import (
 //go:embed dev-console/*
 var devConsole embed.FS
 
-const (
-	DevConsolePath string = "/dev-console"
-)
-
-func New(config *core.Config, apiRoot string) *ExtensionsApi {
+func New(config *core.Config) *ExtensionsApi {
 	mux := mux.NewRouter()
-	api := configureExtensionsApi(config, mux, apiRoot)
+	api := configureExtensionsApi(config, mux)
 
 	return api
 }
 
 func (api *ExtensionsApi) sendUpdateEvent(extensions []core.Extension) {
 	api.notifyClients(func(rootUrl string) (message notification, err error) {
-		return api.getNotification("update", extensions, api.publicUrl)
+		return api.getNotification("update", extensions, rootUrl)
 	})
 }
 
@@ -241,18 +237,17 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 	api.sendUpdateEvent(updatedExtensions)
 }
 
-func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot string) *ExtensionsApi {
+func configureExtensionsApi(config *core.Config, router *mux.Router) *ExtensionsApi {
+	service := core.NewExtensionService(config)
 	api := &ExtensionsApi{
-		core.NewExtensionService(config, apiRoot),
+		service,
 		router,
-		root.New(config, apiRoot),
+		root.New(config, service.ApiRoot),
 		sync.Map{},
-		apiRoot,
 		sync.Map{},
-		config.PublicUrl + "/extensions/",
 	}
 
-	devConsoleServerPath := getDevConsoleServerPath(apiRoot)
+	devConsoleServerPath := api.getDevConsoleServerPath()
 	devConsoleServer := http.FileServer(http.FS(devConsole))
 
 	// Redirect root url to /extensions/dev-console
@@ -263,22 +258,22 @@ func configureExtensionsApi(config *core.Config, router *mux.Router, apiRoot str
 	})
 
 	api.PathPrefix(devConsoleServerPath).Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		r.URL.Path = getDevConsoleFilePath(r.URL.Path, apiRoot)
+		r.URL.Path = api.getDevConsoleFilePath(r.URL.Path)
 		devConsoleServer.ServeHTTP(rw, r)
 	}))
 
-	api.HandleFunc(strings.TrimSuffix(apiRoot, "/"), handlerWithCors(api.extensionsHandler))
-	api.HandleFunc(apiRoot, handlerWithCors(api.extensionsHandler))
+	api.HandleFunc(api.ApiRoot+"/", handlerWithCors(api.extensionsHandler))
+	api.HandleFunc(api.ApiRoot, handlerWithCors(api.extensionsHandler))
 
 	for _, extension := range api.Extensions {
-		assets := path.Join(apiRoot, extension.UUID, "assets")
+		assets := path.Join(api.ApiRoot, extension.UUID, "assets")
 		buildDir := filepath.Join(".", extension.Development.RootDir, extension.Development.BuildDir)
 		api.PathPrefix(assets).Handler(
 			withoutCache(withCors(http.StripPrefix(assets, http.FileServer(http.Dir(buildDir))))),
 		)
 	}
 
-	api.HandleFunc(path.Join(apiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
+	api.HandleFunc(path.Join(api.ApiRoot, "{uuid:(?:[a-z]|[0-9]|-)+\\/?}"), handlerWithCors(api.extensionRootHandler))
 
 	return api
 }
@@ -325,7 +320,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		notifications <- update
 	}, closeConnection)
 
-	notification, err := api.getNotification("connected", api.Extensions, api.publicUrl)
+	notification, err := api.getNotification("connected", api.Extensions, connection.rootUrl)
 	if err != nil {
 		closeConnection(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
 	}
@@ -385,7 +380,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 		return
 	}
 
-	re := regexp.MustCompile(fmt.Sprintf(`^\/?%v(?P<uuid>([a-z]|[0-9]|-)+)\/?`, api.apiRoot))
+	re := regexp.MustCompile(fmt.Sprintf(`^\/?%v\/(?P<uuid>([a-z]|[0-9]|-)+)\/?`, api.ApiRoot))
 	matches := re.FindStringSubmatch(requestUrl.Path)
 	uuidIndex := re.SubexpIndex("uuid")
 	if uuidIndex < 0 || uuidIndex >= len(matches) {
@@ -468,7 +463,7 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 
 		case "dispatch":
 			api.notifyClients(func(rootUrl string) (message notification, err error) {
-				return api.getDispatchNotification(jsonMessage.Data, api.publicUrl)
+				return api.getDispatchNotification(jsonMessage.Data, ws.rootUrl)
 			})
 		}
 	}
@@ -482,7 +477,15 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 		return original
 	}
 
-	extension.Development.Root.Url = fmt.Sprintf("%s%s", rootUrl, extension.UUID)
+	u, err := url.Parse(rootUrl)
+
+	if err != nil {
+		return original
+	}
+
+	u.Path = path.Join(u.Path, extension.UUID)
+
+	extension.Development.Root.Url = u.String()
 
 	for entry := range extension.Assets {
 		name := extension.Assets[entry].Name
@@ -566,6 +569,7 @@ func (api *ExtensionsApi) getResponse(r *http.Request) *Response {
 		api.Version,
 		core.Url{Url: api.GetApiRootUrlFromRequest(r)},
 		core.Url{Url: api.GetWebsocketUrlFromRequest(r)},
+		core.Url{Url: api.GetDevConsoleUrlFromRequest(r, api.DevConsolePath)},
 		api.Store,
 	}
 }
@@ -590,16 +594,16 @@ func handlerWithCors(responseFunc func(w http.ResponseWriter, r *http.Request)) 
 	return withCors(http.HandlerFunc(responseFunc))
 }
 
-func getDevConsoleServerPath(apiRoot string) string {
-	return path.Join(apiRoot, DevConsolePath)
+func (api *ExtensionsApi) getDevConsoleServerPath() string {
+	return path.Join(api.ApiRoot, api.DevConsolePath)
 }
 
-func getDevConsoleFilePath(requestPath string, apiRoot string) string {
-	if strings.HasPrefix(strings.TrimPrefix(requestPath, getDevConsoleServerPath(apiRoot)), "/assets") {
-		return path.Join(DevConsolePath, requestPath)
+func (api *ExtensionsApi) getDevConsoleFilePath(requestPath string) string {
+	if strings.HasPrefix(strings.TrimPrefix(requestPath, api.getDevConsoleServerPath()), "/assets") {
+		return path.Join(api.DevConsolePath, requestPath)
 	}
 
-	return strings.TrimPrefix(requestPath, apiRoot)
+	return strings.TrimPrefix(requestPath, api.ApiRoot)
 }
 
 type ExtensionsApi struct {
@@ -607,9 +611,7 @@ type ExtensionsApi struct {
 	*mux.Router
 	*root.RootHandler
 	connections sync.Map
-	apiRoot     string
 	updates     sync.Map
-	publicUrl   string
 }
 
 type notification struct {
@@ -640,11 +642,12 @@ type websocketMessage struct {
 }
 
 type Response struct {
-	App     core.App `json:"app" yaml:"-"`
-	Version string   `json:"version"`
-	Root    core.Url `json:"root"`
-	Socket  core.Url `json:"socket"`
-	Store   string   `json:"store"`
+	App        core.App `json:"app" yaml:"-"`
+	Version    string   `json:"version"`
+	Root       core.Url `json:"root"`
+	Socket     core.Url `json:"socket"`
+	DevConsole core.Url `json:"devConsole"`
+	Store      string   `json:"store"`
 }
 
 type websocketConnection struct {

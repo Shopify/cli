@@ -20,7 +20,7 @@ var (
 	config *core.Config
 )
 
-var apiRoot = "/extensions/"
+var apiRoot = "/extensions"
 var secureHost = "123.ngrok-url"
 var localhost = "localhost:8000"
 
@@ -41,36 +41,84 @@ func init() {
 	}
 }
 
+func TestInitializeWithProvidedConfigOptions(t *testing.T) {
+	api := New(config)
+
+	if api.ApiRoot != apiRoot {
+		t.Errorf("Expected api root to be %s but got %v", apiRoot, api.ApiRoot)
+	}
+
+	if api.App == nil || api.App["api_key"] != "app_api_key" {
+		t.Errorf("Expected app to have apiKey \"app_api_key\" but got %v", api.App["api_key"])
+	}
+
+	if len(api.Extensions) != 3 {
+		t.Errorf("Expected 3 extension got %d", len(api.Extensions))
+	}
+
+	if api.Version != "4" {
+		t.Errorf("expect service version to be 4 but got %s", api.Version)
+	}
+
+	if api.Store != "test-shop.myshopify.com" {
+		t.Errorf("expect service store to be test-shop.myshopify.com but got %s", api.Store)
+	}
+
+	extension := api.Extensions[0]
+
+	if extension.Assets == nil {
+		t.Error("expect assets to not be null")
+	}
+
+	if extension.Assets["main"].Name != "main" {
+		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
+	}
+
+	metafields := core.Metafield{Namespace: "my-namespace", Key: "my-key"}
+
+	if extension.Metafields[0] != metafields {
+		t.Errorf("expected metafields to be %v but got %v", metafields, extension.Metafields[0])
+	}
+
+	if extension.Localization != nil {
+		t.Error("expect localization to be nil without defined locales")
+	}
+}
+
 func TestGetExtensions(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	response := extensionsResponse{}
 
-	getJSONResponse(api, t, secureHost, "/extensions/", &response)
+	getAllExtensionsJSONResponse(api, t, secureHost, &response)
 
-	if response.App == nil || response.App["apiKey"] != "app_api_key" {
-		t.Errorf("Expected app to have apiKey \"app_api_key\" but got %v", response.App)
+	if response.App == nil {
+		t.Error("Expected app to not be nil")
 	}
 
-	if len(response.Extensions) != 3 {
-		t.Errorf("Expected 3 extension got %d", len(response.Extensions))
+	if response.App["apiKey"] != api.App["api_key"] {
+		t.Errorf("Expected app to have apiKey \"%s\" but got %s", api.App["api_key"], response.App)
 	}
 
-	if response.Version != "3" {
-		t.Errorf("expect service version to be 3 but got %s", response.Version)
+	if len(response.Extensions) != len(api.Extensions) {
+		t.Errorf("Expected %d extension got %d", len(api.Extensions), len(response.Extensions))
 	}
 
-	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.apiRoot)
+	if response.Version != api.Version {
+		t.Errorf("expect service version to be %s but got %s", api.Version, response.Version)
+	}
+
+	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
 	if response.Root.Url != rootUrl {
 		t.Errorf("expect service root url to be %s but got %s", rootUrl, response.Root.Url)
 	}
 
-	socketUrl := fmt.Sprintf("wss://%s%s", secureHost, api.apiRoot)
+	socketUrl := fmt.Sprintf("wss://%s%s", secureHost, api.ApiRoot)
 	if response.Socket.Url != socketUrl {
 		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
 
-	if response.Store != "test-shop.myshopify.com" {
-		t.Errorf("expect service store to be test-shop.myshopify.com but got %s", response.Store)
+	if response.Store != api.Store {
+		t.Errorf("expect service store to be %s but got %s", api.Store, response.Store)
 	}
 
 	extension := response.Extensions[0]
@@ -83,11 +131,11 @@ func TestGetExtensions(t *testing.T) {
 		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
 	}
 
-	if extension.Assets["main"].Url != "https://123.ngrok-url/extensions/00000000-0000-0000-0000-000000000000/assets/main.js" {
+	if extension.Assets["main"].Url != fmt.Sprintf("%s/%s/assets/main.js", rootUrl, api.Extensions[0].UUID) {
 		t.Errorf("expect a main asset url, got %s", extension.Assets["main"].Url)
 	}
 
-	if extension.Development.Root.Url != "https://123.ngrok-url/extensions/00000000-0000-0000-0000-000000000000" {
+	if extension.Development.Root.Url != fmt.Sprintf("%s/%s", rootUrl, api.Extensions[0].UUID) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
 	}
 
@@ -107,36 +155,40 @@ func TestGetExtensions(t *testing.T) {
 }
 
 func TestGetSingleExtension(t *testing.T) {
-	host := secureHost
-	api := New(config, apiRoot)
+	api := New(config)
 	response := singleExtensionResponse{}
 
-	getJSONResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000000", &response)
+	getSingleExtensionJSONResponse(api, t, secureHost, api.Extensions[0].UUID, &response)
 
-	if response.App == nil || response.App["apiKey"] != "app_api_key" {
-		t.Errorf("Expected app to have apiKey \"app_api_key\" but got %v", response.App)
+	if response.App == nil {
+		t.Error("Expected app to not be nil")
 	}
 
-	if response.Version != "3" {
-		t.Errorf("expect service version to be 3 but got %s", response.Version)
+	if response.App["apiKey"] != api.App["api_key"] {
+		t.Errorf("Expected app to have apiKey \"%s\" but got %v", api.App["api_key"], response.App)
 	}
 
-	rootUrl := fmt.Sprintf("https://%s%s", host, api.apiRoot)
+	if response.Version != api.Version {
+		t.Errorf("expect service version to be %s but got %s", api.Version, response.Version)
+	}
+
+	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
 	if response.Root.Url != rootUrl {
 		t.Errorf("expect service root url to be %s but got %s", rootUrl, response.Root.Url)
 	}
 
-	socketUrl := fmt.Sprintf("wss://%s%s", host, api.apiRoot)
+	socketUrl := fmt.Sprintf("wss://%s%s", secureHost, api.ApiRoot)
 	if response.Socket.Url != socketUrl {
 		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
 
-	if response.App == nil {
-		t.Error("Expected app to not be null")
+	devConsoleUrl := fmt.Sprintf("https://%s%s/dev-console", secureHost, api.ApiRoot)
+	if response.DevConsole.Url != devConsoleUrl {
+		t.Errorf("expect service dev console url to be %s but got %s", devConsoleUrl, response.DevConsole.Url)
 	}
 
-	if response.Store != "test-shop.myshopify.com" {
-		t.Errorf("expect service store to be test-shop.myshopify.com but got %s", response.Store)
+	if response.Store != api.Store {
+		t.Errorf("expect service store to be %s but got %s", api.Store, response.Store)
 	}
 
 	extension := response.Extension
@@ -149,11 +201,11 @@ func TestGetSingleExtension(t *testing.T) {
 		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
 	}
 
-	if extension.Assets["main"].Url != fmt.Sprintf("https://%s/extensions/%s/assets/main.js", host, extension.UUID) {
+	if extension.Assets["main"].Url != fmt.Sprintf("%s/%s/assets/main.js", rootUrl, extension.UUID) {
 		t.Errorf("expect a main asset url, got %s", extension.Assets["main"].Url)
 	}
 
-	if extension.Development.Root.Url != fmt.Sprintf("https://%s/extensions/%s", host, extension.UUID) {
+	if extension.Development.Root.Url != fmt.Sprintf("%s/%s", rootUrl, extension.UUID) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
 	}
 
@@ -177,8 +229,9 @@ func TestGetSingleExtension(t *testing.T) {
 }
 
 func TestServeAssets(t *testing.T) {
-	api := New(config, apiRoot)
-	response := getHTMLRequest(api, t, localhost, "/extensions/00000000-0000-0000-0000-000000000000/assets/main.js")
+	api := New(config)
+	mainAssetUrl := fmt.Sprintf("%s/%s/assets/main.js", api.ApiRoot, api.Extensions[0].UUID)
+	response := getHTMLRequest(api, t, localhost, mainAssetUrl)
 
 	if response.Result().StatusCode != http.StatusOK {
 		t.Error("expected status code ok received")
@@ -197,11 +250,11 @@ func TestServeAssets(t *testing.T) {
 }
 
 func TestCheckoutTunnelError(t *testing.T) {
-	host := "localhost:8000"
-	api := New(config, apiRoot)
-	response := getHTMLResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000000")
+	api := New(config)
+	uuid := api.Extensions[0].UUID
+	response := getSingleExtensionHTMLResponse(api, t, localhost, uuid)
 
-	message := "Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL/extensions/00000000-0000-0000-0000-000000000000</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL."
+	message := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL%s/%s</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
 
 	t.Logf("response: %s", response)
 
@@ -211,11 +264,11 @@ func TestCheckoutTunnelError(t *testing.T) {
 }
 
 func TestAdminTunnelError(t *testing.T) {
-	host := "localhost:8000"
-	api := New(config, apiRoot)
-	response := getHTMLResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000001")
+	api := New(config)
+	uuid := api.Extensions[1].UUID
+	response := getSingleExtensionHTMLResponse(api, t, "localhost:8000", uuid)
 
-	instructions := "Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL/extensions/00000000-0000-0000-0000-000000000001</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL."
+	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL%s/%s</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
 
 	t.Logf("response: %s", response)
 
@@ -225,11 +278,10 @@ func TestAdminTunnelError(t *testing.T) {
 }
 
 func TestPostPurchaseTunnelError(t *testing.T) {
-	host := "localhost:8000"
-	api := New(config, apiRoot)
-	response := getHTMLResponse(api, t, host, "/extensions/00000000-0000-0000-0000-000000000002")
+	api := New(config)
+	response := getSingleExtensionHTMLResponse(api, t, "localhost:8000", api.Extensions[2].UUID)
 
-	instructions := "Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL/extensions/</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL"
+	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL%s</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL", api.ApiRoot)
 
 	t.Logf("response: %s", response)
 
@@ -239,8 +291,8 @@ func TestPostPurchaseTunnelError(t *testing.T) {
 }
 
 func TestCheckoutRedirect(t *testing.T) {
-	api := New(config, apiRoot)
-	rec := getHTMLRequest(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000000")
+	api := New(config)
+	rec := getSingleExtensionHTMLRequest(api, t, secureHost, api.Extensions[0].UUID)
 
 	if rec.Code != http.StatusTemporaryRedirect {
 		t.Errorf("expected redirect status – received: %d", rec.Code)
@@ -248,7 +300,8 @@ func TestCheckoutRedirect(t *testing.T) {
 
 	redirectUrl, err := rec.Result().Location()
 
-	expectedUrl := "https://test-shop.myshopify.com/cart/1234?dev=https://123.ngrok-url/extensions/"
+	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
+	expectedUrl := fmt.Sprintf("https://%s/%s?dev=%s", api.Store, api.Extensions[0].Development.Resource.Url, rootUrl)
 
 	if err != nil || redirectUrl.String() != expectedUrl {
 		t.Errorf("Expected redirect url to be %s but received: %s", expectedUrl, redirectUrl.String())
@@ -256,15 +309,18 @@ func TestCheckoutRedirect(t *testing.T) {
 }
 
 func TestAdminRedirect(t *testing.T) {
-	api := New(config, apiRoot)
-	rec := getHTMLRequest(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000001")
+	api := New(config)
+	uuid := api.Extensions[1].UUID
+	rec := getSingleExtensionHTMLRequest(api, t, secureHost, uuid)
 
 	if rec.Code != http.StatusTemporaryRedirect {
 		t.Errorf("Expected redirect status – received: %d", rec.Code)
 	}
 
 	redirectUrl, err := rec.Result().Location()
-	expectedUrl := "https://test-shop.myshopify.com/admin/extensions-dev?url=https://123.ngrok-url/extensions/00000000-0000-0000-0000-000000000001"
+
+	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
+	expectedUrl := fmt.Sprintf("https://%s/admin/extensions-dev?url=%s/%s", api.Store, rootUrl, uuid)
 
 	if err != nil || redirectUrl.String() != expectedUrl {
 		t.Errorf("Expected redirect url to be %s but received: %s", expectedUrl, redirectUrl.String())
@@ -272,13 +328,15 @@ func TestAdminRedirect(t *testing.T) {
 }
 
 func TestPostPurchaseIndex(t *testing.T) {
-	api := New(config, apiRoot)
-	response := getHTMLResponse(api, t, secureHost, "/extensions/00000000-0000-0000-0000-000000000002")
+	api := New(config)
+	uuid := api.Extensions[2].UUID
+	response := getSingleExtensionHTMLResponse(api, t, secureHost, uuid)
 
+	expectedLink := fmt.Sprintf("https://example.ngrok.io%s/%s", api.ApiRoot, uuid)
 	contents := [...]string{
 		"This page is served by your local UI Extension development server. Instead of visiting this page directly, you will need to connect your local development environment to a real checkout environment.",
 		"If this is the first time you're testing a Post Purchase extension, please install the browser extension from <a href=\"https://github.com/Shopify/post-purchase-devtools/releases\">https://github.com/Shopify/post-purchase-devtools/releases</a>.",
-		"Once installed, simply enter your extension URL <a href=\"https://example.ngrok.io/extensions/00000000-0000-0000-0000-000000000002\">https://example.ngrok.io/extensions/00000000-0000-0000-0000-000000000002</a>.",
+		fmt.Sprintf("Once installed, simply enter your extension URL <a href=\"%s\">%s</a>.", expectedLink, expectedLink),
 	}
 
 	t.Logf("response: %s", response)
@@ -295,7 +353,7 @@ func TestPostPurchaseIndex(t *testing.T) {
 }
 
 func TestWebsocketNotify(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 
 	firstConnection, err := createWebsocket(server)
@@ -312,10 +370,12 @@ func TestWebsocketNotify(t *testing.T) {
 	firstConnection.ReadJSON(&websocketMessage{})
 	secondConnection.ReadJSON(&websocketMessage{})
 
+	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
+
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl),
-		getExpectedExtensionWithUrls(api.Extensions[1], api.publicUrl),
-		getExpectedExtensionWithUrls(api.Extensions[2], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[0], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], rootUrl),
 	}
 
 	api.Notify(api.Extensions)
@@ -330,7 +390,7 @@ func TestWebsocketNotify(t *testing.T) {
 }
 
 func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 
 	ws, err := createWebsocket(server)
@@ -409,7 +469,7 @@ func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
 }
 
 func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 	first_connection, err := createWebsocket(server)
 	second_connection, err := createWebsocket(server)
@@ -418,10 +478,12 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
+
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl),
-		getExpectedExtensionWithUrls(api.Extensions[1], api.publicUrl),
-		getExpectedExtensionWithUrls(api.Extensions[2], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[0], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], rootUrl),
 	}
 
 	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
@@ -452,7 +514,7 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 }
 
 func TestWebsocketConnectionClientClose(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 	first_connection, err := createWebsocket(server)
 	second_connection, err := createWebsocket(server)
@@ -461,10 +523,12 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
+
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl),
-		getExpectedExtensionWithUrls(api.Extensions[1], api.publicUrl),
-		getExpectedExtensionWithUrls(api.Extensions[2], api.publicUrl),
+		getExpectedExtensionWithUrls(api.Extensions[0], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], rootUrl),
 	}
 
 	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
@@ -490,7 +554,7 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 }
 
 func TestWebsocketClientUpdateAppEvent(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 
 	ws, err := createWebsocket(server)
@@ -515,7 +579,7 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 	}
 
 	response := extensionsResponse{}
-	getJSONResponse(api, t, server.URL, "/extensions/", &response)
+	getAllExtensionsJSONResponse(api, t, server.URL, &response)
 
 	if response.App == nil {
 		t.Error("Expected app to not be null")
@@ -535,7 +599,7 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 }
 
 func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 
 	ws, err := createWebsocket(server)
@@ -546,7 +610,11 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	// First message received is the connected message which can be ignored
 	ws.ReadJSON(&websocketMessage{})
 
-	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl)}
+	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
+	updateExtensionUUID := api.Extensions[0].UUID
+	unchangedExtensionUUID := api.Extensions[1].UUID
+
+	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], rootUrl)}
 	updatedExtensions[0].Development.Hidden = true
 	updatedExtensions[0].Development.Status = "error"
 
@@ -554,10 +622,13 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	deadline := time.Now().Add(duration)
 
 	ws.SetWriteDeadline(deadline)
-	data := []byte(`{"extensions": [
-		{"uuid": "00000000-0000-0000-0000-000000000000", "development": {"status": "error", "hidden": true}},
+
+	dataJSONString := fmt.Sprintf(`{"extensions": [
+		{"uuid": "%s", "development": {"status": "error", "hidden": true}},
 		{"uuid": "NON_MATCHING_UUID", "development": {"status": "error", "hidden": true}}
-	]}`)
+	]}`, updateExtensionUUID)
+
+	data := []byte(dataJSONString)
 	ws.WriteJSON(websocketClientMessage{Event: "update", Data: data})
 
 	<-time.After(duration)
@@ -568,48 +639,51 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 
 	apiUpdatedExtension := api.Extensions[0]
 	updated := singleExtensionResponse{}
-	getJSONResponse(api, t, server.URL, "/extensions/00000000-0000-0000-0000-000000000000", &updated)
+
+	getSingleExtensionJSONResponse(api, t, server.URL, updateExtensionUUID, &updated)
 
 	if updated.Extension.Development.Hidden != true {
-		t.Errorf("expected response for extension 00000000-0000-0000-0000-000000000000 Development.Hidden to be true but got %v", updated.Extension.Development.Hidden)
+		t.Errorf("expected response for extension %s Development.Hidden to be true but got %v", updateExtensionUUID, updated.Extension.Development.Hidden)
 	}
 
 	if updated.Extension.Development.Status != "error" {
-		t.Errorf("expected response for extension 00000000-0000-0000-0000-000000000000 Development.Status to be \"error\" but got %v", updated.Extension.Development.Status)
+		t.Errorf("expected response for extension %s Development.Status to be \"error\" but got %v", updateExtensionUUID, updated.Extension.Development.Status)
 	}
 
 	if apiUpdatedExtension.Development.Hidden != true {
-		t.Errorf("expected API extension 00000000-0000-0000-0000-000000000000 Development.Hidden to be true  but got %v", apiUpdatedExtension.Development.Hidden)
+		t.Errorf("expected API extension %s Development.Hidden to be true  but got %v", updateExtensionUUID, apiUpdatedExtension.Development.Hidden)
 	}
 
 	if apiUpdatedExtension.Development.Status != "error" {
-		t.Errorf("expected API extension 00000000-0000-0000-0000-000000000000 Development.Status to be \"error\" but got %v", apiUpdatedExtension.Development.Status)
+		t.Errorf("expected API extension %s Development.Status to be \"error\" but got %v", updateExtensionUUID, apiUpdatedExtension.Development.Status)
 	}
 
 	apiUnchangedExtension := api.Extensions[1]
 	unchanged := singleExtensionResponse{}
-	getJSONResponse(api, t, server.URL, "/extensions/00000000-0000-0000-0000-000000000001", &unchanged)
+	getSingleExtensionJSONResponse(api, t, server.URL, unchangedExtensionUUID, &unchanged)
 
 	if unchanged.Extension.Development.Hidden != false {
-		t.Errorf("expected response for extension 00000000-0000-0000-0000-000000000001 Development.Hidden to be unchanged but got %v", unchanged.Extension.Development.Hidden)
+		t.Errorf("expected response for extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, unchanged.Extension.Development.Hidden)
 	}
 
 	if unchanged.Extension.Development.Status != "" {
-		t.Errorf("expected response for extension 00000000-0000-0000-0000-000000000001 Development.Status to be unchanged but got %v", unchanged.Extension.Development.Status)
+		t.Errorf("expected response for extension %s Development.Status to be unchanged but got %v", unchangedExtensionUUID, unchanged.Extension.Development.Status)
 	}
 
 	if apiUnchangedExtension.Development.Hidden != false {
-		t.Errorf("expected API extension 00000000-0000-0000-0000-000000000001 Development.Hidden to be unchanged but got %v", apiUpdatedExtension.Development.Hidden)
+		t.Errorf("expected API extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, apiUpdatedExtension.Development.Hidden)
 	}
 
 	if apiUnchangedExtension.Development.Status != "" {
-		t.Errorf("expected API extension 00000000-0000-0000-0000-000000000001 Development.Status to be unchanged but got %v", apiUpdatedExtension.Development.Status)
+		t.Errorf("expected API extension %s Development.Status to be unchanged but got %v", unchangedExtensionUUID, apiUpdatedExtension.Development.Status)
 	}
 }
 
 func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
-	api := New(config, apiRoot)
-	api.Extensions[0].Development.Hidden = true
+	api := New(config)
+	updateExtension := api.Extensions[0]
+
+	updateExtension.Development.Hidden = true
 
 	server := httptest.NewServer(api)
 
@@ -625,14 +699,14 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	deadline := time.Now().Add(duration)
 
 	ws.SetWriteDeadline(deadline)
-	data := []byte(`{
+	data := []byte(fmt.Sprintf(`{
 		"extensions": [
 		  {
-			"uuid": "00000000-0000-0000-0000-000000000000",
+			"uuid": "%s",
 			"development": {"hidden": false}
 		  }
 		]
-	  }`)
+	  }`, updateExtension.UUID))
 	err = ws.WriteJSON(websocketClientMessage{Event: "update", Data: data})
 
 	if err != nil {
@@ -641,7 +715,9 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 
 	<-time.After(duration)
 
-	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], api.publicUrl)}
+	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
+
+	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], rootUrl)}
 	updatedExtensions[0].Development.Hidden = false
 
 	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions, api.Store); err != nil {
@@ -650,22 +726,24 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 
 	apiUpdatedExtension := api.Extensions[0]
 	updated := singleExtensionResponse{}
-	getJSONResponse(api, t, server.URL, "/extensions/00000000-0000-0000-0000-000000000000", &updated)
+	getSingleExtensionJSONResponse(api, t, server.URL, updateExtension.UUID, &updated)
 
 	if updated.Extension.Development.Hidden != false {
-		t.Errorf("expected response for extension 00000000-0000-0000-0000-000000000000 Development.Hidden to be false but got %v", updated.Extension.Development.Hidden)
+		t.Errorf("expected response for extension %s Development.Hidden to be false but got %v", updateExtension.UUID, updated.Extension.Development.Hidden)
 	}
 	if apiUpdatedExtension.Development.Hidden != false {
-		t.Errorf("expected API extension 00000000-0000-0000-0000-000000000000 Development.Hidden to be false but got %v", apiUpdatedExtension.Development.Hidden)
+		t.Errorf("expected API extension %s Development.Hidden to be false but got %v", updateExtension.UUID, apiUpdatedExtension.Development.Hidden)
 	}
 }
 
 func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
-	api := New(config, apiRoot)
+	api := New(config)
 	server := httptest.NewServer(api)
 
+	dispatchExtensionUUID := api.Extensions[0].UUID
+
 	initialResponse := extensionsResponse{}
-	getJSONResponse(api, t, server.URL, "/extensions/", &initialResponse)
+	getAllExtensionsJSONResponse(api, t, server.URL, &initialResponse)
 
 	ws, err := createWebsocket(server)
 	if err != nil {
@@ -680,7 +758,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 
 	ws.SetWriteDeadline(deadline)
 
-	data := []byte(`{
+	data := []byte(fmt.Sprintf(`{
 		"type": "focus",
 		"customData": "foo",
 		"app": {
@@ -689,13 +767,14 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 		},
 		"extensions": [
 		  {
-			"uuid": "00000000-0000-0000-0000-000000000000",
+			"uuid": "%s",
 			"customData": "baz",
 			"development": {"status": "success"},
 			"metafields": [{"namespace": "another-namespace", "key": "another-key"}]
 		  }
 		]
-	  }`)
+	  }`, dispatchExtensionUUID))
+
 	err = ws.WriteJSON(websocketClientMessage{Event: "dispatch", Data: data})
 
 	if err != nil {
@@ -747,27 +826,30 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 	if err != nil {
 		t.Errorf("converting extensions in message to JSON failed with error: %v", err)
 	}
+
+	extensionRootUrl := fmt.Sprintf("%s%s/%s", server.URL, api.ApiRoot, dispatchExtensionUUID)
+	extensionAssetUrl := fmt.Sprintf("%s/assets/main.js", extensionRootUrl)
 	expectedExtensions := fmt.Sprintf(`[
 		{
 			"customData": "baz",
 			"assets": {
 			"main": {
 				"name": "main",
-				"url": "%v00000000-0000-0000-0000-000000000000/assets/main.js",
+				"url": "%s",
 				"lastUpdated": 0
 			}
 			},
 			"development": {
 			"hidden": false,
 			"resource": {"url": ""},
-			"root": {"url": "%v00000000-0000-0000-0000-000000000000"},
+			"root": {"url": "%s"},
 			"localizationStatus": "",
 			"status": "success",
 			"resource": {"url": "cart/1234"}
 			},
 			"type": "checkout_ui_extension",
 			"metafields": [{"namespace": "another-namespace", "key": "another-key"}],
-			"uuid": "00000000-0000-0000-0000-000000000000",
+			"uuid": "%s",
 			"version": "",
 			"extensionPoints": null,
 			"localization": null,
@@ -776,7 +858,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 				"networkAccess": false
 			}
 		}
-		]`, api.publicUrl, api.publicUrl)
+		]`, extensionAssetUrl, extensionRootUrl, dispatchExtensionUUID)
 
 	match, err := isEqualJSON(expectedExtensions, string(extensions))
 	if err != nil {
@@ -787,7 +869,8 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 	}
 
 	response := extensionsResponse{}
-	getJSONResponse(api, t, server.URL, "/extensions/", &response)
+
+	getAllExtensionsJSONResponse(api, t, server.URL, &response)
 
 	if !reflect.DeepEqual(response, initialResponse) {
 		t.Error("Expected api data not to be mutated but it was modified")
@@ -893,7 +976,7 @@ func verifyConnectionShutdown(api *ExtensionsApi, ws *websocket.Conn) error {
 }
 
 func createWebsocket(server *httptest.Server) (*websocket.Conn, error) {
-	url := "ws" + strings.TrimPrefix(server.URL, "http") + "/extensions/"
+	url := fmt.Sprintf("ws%s%s", strings.TrimPrefix(server.URL, "http"), apiRoot)
 	connection, _, err := websocket.DefaultDialer.Dial(url, nil)
 	return connection, err
 }
@@ -923,6 +1006,14 @@ func getJSONResponse(api *ExtensionsApi, t *testing.T, host, requestUri string, 
 	return response
 }
 
+func getSingleExtensionJSONResponse(api *ExtensionsApi, t *testing.T, host string, uuid string, response interface{}) interface{} {
+	return getJSONResponse(api, t, host, apiRoot+"/"+uuid, response)
+}
+
+func getAllExtensionsJSONResponse(api *ExtensionsApi, t *testing.T, host string, response interface{}) interface{} {
+	return getJSONResponse(api, t, host, apiRoot, response)
+}
+
 func getHTMLRequest(api *ExtensionsApi, t *testing.T, host, requestUri string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest("GET", requestUri, nil)
 	req.Header.Add("accept", "text/html")
@@ -938,8 +1029,12 @@ func getHTMLRequest(api *ExtensionsApi, t *testing.T, host, requestUri string) *
 	return rec
 }
 
-func getHTMLResponse(api *ExtensionsApi, t *testing.T, host, requestUri string) string {
-	rec := getHTMLRequest(api, t, host, requestUri)
+func getSingleExtensionHTMLRequest(api *ExtensionsApi, t *testing.T, host string, uuid string) *httptest.ResponseRecorder {
+	return getHTMLRequest(api, t, host, apiRoot+"/"+uuid)
+}
+
+func getSingleExtensionHTMLResponse(api *ExtensionsApi, t *testing.T, host, uuid string) string {
+	rec := getSingleExtensionHTMLRequest(api, t, host, uuid)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected ok status – received: %d", rec.Code)
@@ -950,8 +1045,8 @@ func getHTMLResponse(api *ExtensionsApi, t *testing.T, host, requestUri string) 
 }
 
 func getExpectedExtensionWithUrls(extension core.Extension, host string) core.Extension {
-	extension.Development.Root.Url = fmt.Sprintf("%s%s", host, extension.UUID)
-	extension.Assets["main"] = core.Asset{Name: "main", Url: fmt.Sprintf("%s%s/assets/main.js", host, extension.UUID)}
+	extension.Development.Root.Url = fmt.Sprintf("%s/%s", host, extension.UUID)
+	extension.Assets["main"] = core.Asset{Name: "main", Url: fmt.Sprintf("%s/assets/main.js", extension.Development.Root.Url)}
 	return extension
 }
 

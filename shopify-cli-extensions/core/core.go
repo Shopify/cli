@@ -17,7 +17,7 @@ const (
 	POS          string = "pos"
 )
 
-func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
+func NewExtensionService(config *Config) *ExtensionService {
 	// Create a copy so we don't mutate the configs
 	extensions := []Extension{}
 	for _, extension := range config.Extensions {
@@ -45,11 +45,13 @@ func NewExtensionService(config *Config, apiRoot string) *ExtensionService {
 	app["api_key"] = config.App.ApiKey
 
 	service := ExtensionService{
-		App:        app,
-		Version:    "3",
-		Extensions: extensions,
-		Port:       config.Port,
-		Store:      config.Store,
+		App:            app,
+		Version:        "4",
+		Extensions:     extensions,
+		Port:           config.Port,
+		Store:          config.Store,
+		ApiRoot:        "/extensions",
+		DevConsolePath: "/dev-console",
 	}
 
 	return &service
@@ -79,12 +81,14 @@ type IntegrationContext struct {
 }
 
 type ExtensionService struct {
-	App        App
-	Extensions []Extension
-	Port       int
-	Store      string
-	Version    string
-	PublicUrl  string
+	App            App
+	Extensions     []Extension
+	Port           int
+	Store          string
+	Version        string
+	PublicUrl      string
+	ApiRoot        string `json:"-" yaml:"-"`
+	DevConsolePath string `json:"-" yaml:"-"`
 }
 
 type Localization struct {

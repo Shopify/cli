@@ -129,6 +129,7 @@ declare global {
         app: App;
         root: ResourceURL;
         socket: ResourceURL;
+        devConsole: ResourceURL;
         store: string;
         version: string;
       }

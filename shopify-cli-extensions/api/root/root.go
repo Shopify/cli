@@ -5,6 +5,8 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -32,7 +34,7 @@ func (root *RootHandler) HandleHTMLRequest(rw http.ResponseWriter, r *http.Reque
 	templateData := &extensionHtmlTemplateData{
 		extension,
 		root.apiConfig,
-		fmt.Sprintf("%s%s", root.ApiRoot, extension.UUID),
+		path.Join(root.ApiRoot, extension.UUID),
 	}
 
 	if !IsSecureRequest(r) {
@@ -73,14 +75,7 @@ func IsSecureRequest(r *http.Request) bool {
 }
 
 func (root *RootHandler) GetApiRootUrlFromRequest(r *http.Request) string {
-	var protocol string
-	if IsSecureRequest(r) {
-		protocol = "https"
-	} else {
-		protocol = "http"
-	}
-
-	return fmt.Sprintf("%s://%s%s", protocol, r.Host, root.ApiRoot)
+	return getUrlFromRequest(r, root.ApiRoot)
 }
 
 func (root *RootHandler) GetWebsocketUrlFromRequest(r *http.Request) string {
@@ -91,7 +86,12 @@ func (root *RootHandler) GetWebsocketUrlFromRequest(r *http.Request) string {
 		protocol = "ws"
 	}
 
-	return fmt.Sprintf("%s://%s%s", protocol, r.Host, root.ApiRoot)
+	u := url.URL{Host: r.Host, Scheme: protocol, Path: root.ApiRoot}
+	return u.String()
+}
+
+func (root *RootHandler) GetDevConsoleUrlFromRequest(r *http.Request, devConsolePath string) string {
+	return getUrlFromRequest(r, path.Join(root.ApiRoot, devConsolePath))
 }
 
 func (root *RootHandler) getTunnelError(templateData *extensionHtmlTemplateData) (mergedContent []byte, err error) {
@@ -119,7 +119,7 @@ func (root *RootHandler) getIndexContent(templateData *extensionHtmlTemplateData
 	return root.MergeTemplateData(templateData, specificTemplatePath)
 }
 
-func (root *RootHandler) getRedirectUrl(r *http.Request, extension *core.Extension) (url string, err error) {
+func (root *RootHandler) getRedirectUrl(r *http.Request, extension *core.Extension) (redirectUrl string, err error) {
 	if root.Store == "" {
 		err = fmt.Errorf("store is not defined")
 		return
@@ -131,11 +131,13 @@ func (root *RootHandler) getRedirectUrl(r *http.Request, extension *core.Extensi
 			return
 		}
 
-		url = fmt.Sprintf("https://%s/%s?dev=%s", root.Store, extension.Development.Resource.Url, root.GetApiRootUrlFromRequest(r))
+		rawUrl := url.URL{Scheme: "https", Host: root.Store, Path: extension.Development.Resource.Url, RawQuery: "dev=" + root.GetApiRootUrlFromRequest(r)}
+		redirectUrl = rawUrl.String()
 		return
 	}
 
-	url = fmt.Sprintf("https://%s/admin/extensions-dev?url=%s", root.Store, extension.Development.Root.Url)
+	rawUrl := url.URL{Scheme: "https", Host: root.Store, Path: "admin/extensions-dev", RawQuery: "url=" + extension.Development.Root.Url}
+	redirectUrl = rawUrl.String()
 	return
 }
 
@@ -150,6 +152,18 @@ func (root *RootHandler) handleError(rw http.ResponseWriter, errorMessage error)
 		return
 	}
 	rw.Write(content.Bytes())
+}
+
+func getUrlFromRequest(r *http.Request, path string) string {
+	var protocol string
+	if IsSecureRequest(r) {
+		protocol = "https"
+	} else {
+		protocol = "http"
+	}
+
+	u := url.URL{Host: r.Host, Scheme: protocol, Path: path}
+	return u.String()
 }
 
 type apiConfig struct {
