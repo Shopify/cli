@@ -60,8 +60,11 @@ export const genericConfigurationFileNames = {
   },
 } as const
 
+export const publicFunctionExtensions = {
+  types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
+} as const
 export const functionExtensions = {
-  types: ['product_discounts', 'order_discounts', 'shipping_discounts', 'payment_methods', 'shipping_rate_presenter'],
+  types: [...publicFunctionExtensions.types, 'payment_methods', 'shipping_rate_presenter'],
 } as const
 
 export const uiExtensions = {
@@ -86,6 +89,7 @@ export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
+  publicTypes: [...themeExtensions.types, ...uiExtensions.types, ...publicFunctionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
