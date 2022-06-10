@@ -5,6 +5,10 @@ import {
   getExtensionOutputConfig,
   themeExtensions,
   uiExtensions,
+  isUiExtensionType,
+  isFunctionExtensionType,
+  uiExtensionTemplates,
+  functionExtensionTemplates,
 } from '../../constants'
 import {haiku, ui, environment} from '@shopify/cli-kit'
 
@@ -19,6 +23,23 @@ interface ScaffoldExtensionOutput {
   name: string
   extensionType: ExtensionTypes
   extensionFlavor?: string
+}
+
+export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
+  let choices: {name: string; value: string}[] = []
+  if (isUiExtensionType(extensionType)) {
+    choices = choices.concat(uiExtensionTemplates)
+  }
+  if (isFunctionExtensionType(extensionType)) {
+    choices = choices.concat(functionExtensionTemplates)
+  }
+  return {
+    type: 'select',
+    name: 'extensionFlavor',
+    message: 'Choose a starting template for your extension',
+    choices,
+    default: 'react',
+  }
 }
 
 const scaffoldExtensionPrompt = async (
@@ -55,21 +76,18 @@ const scaffoldExtensionPrompt = async (
       default: haiku.generate('ext'),
     })
   }
-  const promptOutput: ScaffoldExtensionOutput = await prompt(questions)
-  if (!options.extensionFlavor && isUiExtensionType({...options, ...promptOutput}.extensionType)) {
-    const promptOutput2: {extensionFlavor: string} = await prompt([
-      {
-        type: 'select',
-        name: 'extensionFlavor',
-        message: 'Choose a starting template for your extension',
-        choices: [
-          {name: 'React', value: 'react'},
-          {name: 'vanilla JavaScript', value: 'vanilla-js'},
-        ],
-        default: 'react',
-      },
-    ])
-    promptOutput.extensionFlavor = promptOutput2.extensionFlavor
+  let promptOutput: ScaffoldExtensionOutput = await prompt(questions)
+  const extensionType = {...options, ...promptOutput}.extensionType
+  if ((!options.extensionFlavor && isUiExtensionType(extensionType)) || isFunctionExtensionType(extensionType)) {
+    promptOutput = {
+      ...promptOutput,
+      extensionFlavor: (
+        (await prompt([
+          extensionFlavorQuestion(extensionType),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ])) as any
+      ).extensionFlavor,
+    }
   }
   return {...options, ...promptOutput}
 }
@@ -110,10 +128,6 @@ const extensiontypeCategoryPosition = (extensionType: string): number => {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
   return coll.includes(el as T)
-}
-
-function isUiExtensionType(extensionType: string) {
-  return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
 export default scaffoldExtensionPrompt

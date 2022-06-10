@@ -31,7 +31,6 @@ interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = Extensio
   extensionType: TExtensionTypes
   app: App
   cloneUrl?: string
-  language?: string
   extensionFlavor?: string
 }
 
@@ -179,8 +178,8 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   })
 }
 
-function functionTemplatePath({extensionType, language}: FunctionExtensionInitOptions): string {
-  const lang = language || blocks.functions.defaultLanguage
+function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensionInitOptions): string {
+  const lang = extensionFlavor || blocks.functions.defaultLanguage
   switch (extensionType) {
     case 'product_discounts':
       return `discounts/${lang}/product-discounts/default`

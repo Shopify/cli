@@ -1,4 +1,4 @@
-import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName} from './extension'
+import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionFlavorQuestion} from './extension'
 import {extensions, getExtensionOutputConfig} from '../../constants'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
@@ -31,16 +31,6 @@ describe('extension prompt', async () => {
     name: 'name',
     message: "Your extension's working name?",
     default: expect.stringMatching(/^\w+-\w+-ext-\d+$/),
-  }
-  const extensionFlavorQuestion = {
-    type: 'select',
-    name: 'extensionFlavor',
-    message: 'Choose a starting template for your extension',
-    choices: [
-      {name: 'React', value: 'react'},
-      {name: 'vanilla JavaScript', value: 'vanilla-js'},
-    ],
-    default: 'react',
   }
 
   it('when name is not passed', async () => {
@@ -115,7 +105,7 @@ describe('extension prompt', async () => {
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])
-    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion('checkout_post_purchase')])
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -139,6 +129,28 @@ describe('extension prompt', async () => {
     expect(prompt).not.toHaveBeenCalledWith([extensionFlavorQuestion])
     expect(got).toEqual({...options, ...answers})
   })
+
+  it('when scaffolding a function extension prompts for the language', async () => {
+    const prompt = vi.fn()
+    const answers = {extensionLanguage: 'rust'}
+    const options = {
+      name: 'my-product-discount',
+      extensionTypesAlreadyAtQuota: [],
+      extensionType: 'product_discounts',
+    }
+
+    // Given
+    prompt.mockResolvedValue(answers)
+
+    // When
+    const got = await scaffoldExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenNthCalledWith(1, [])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion('product_discounts')])
+
+    expect(got).toEqual({...options, ...answers})
+  })
 })
 
 const buildChoices = async (): Promise<
@@ -147,8 +159,6 @@ const buildChoices = async (): Promise<
     value: string
   }[]
 > => {
-  const isShopify = await environment.local.isShopify()
-  const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
   return extensions.types
     .map((type) => ({
       name: getExtensionOutputConfig(type).humanKey,

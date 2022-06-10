@@ -130,7 +130,6 @@ async function createFromTemplate({name, extensionType, appDirectory}: CreateFro
     extensionType,
     app: await loadApp(appDirectory),
     cloneUrl: 'cloneurl',
-    language: 'wasm',
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
