@@ -54,6 +54,12 @@ export interface ExtensionDevOptions {
    * The development store where the extension wants to be previewed
    */
   storeFqdn: string
+
+  /**
+   * Product variant ID, used for checkout_ui_extensions
+   * If that extension is present, this is mandatory
+   */
+  productVariantId?: string
 }
 
 export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
