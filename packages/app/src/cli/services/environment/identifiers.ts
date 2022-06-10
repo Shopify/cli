@@ -37,13 +37,23 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
   const remoteRegistrations: ExtensionRegistration[] = remoteSpecifications.app.extensionRegistrations
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
+  const functionLocalIdentifiers = Object.fromEntries(
+    options.app.extensions.function
+      .map((extension) => extension.localIdentifier)
+      .map((extensionIdentifier) => {
+        return validIdentifiers[extensionIdentifier]
+          ? [extensionIdentifier, validIdentifiers[extensionIdentifier]]
+          : undefined
+      })
+      .filter((entry) => entry !== undefined) as string[][],
+  )
   const localExtensions: Extension[] = [...options.app.extensions.ui, ...options.app.extensions.theme]
 
   const GenericError = () => DeployError(options.appName, options.app.dependencyManager)
 
   // We need local extensions to deploy
   if (localExtensions.length === 0) {
-    return {app: options.appId, extensions: {}}
+    return {app: options.appId, extensions: {...functionLocalIdentifiers}}
   }
 
   // If there are more remote extensions than local, then something is missing and we can't continue
@@ -81,7 +91,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     validMatches = {...validMatches, ...newIdentifiers}
   }
 
-  return {app: options.appId, extensions: validMatches}
+  return {app: options.appId, extensions: {...validMatches, ...functionLocalIdentifiers}}
 }
 
 async function createExtensions(extensions: Extension[], appId: string) {
