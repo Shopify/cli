@@ -65,14 +65,16 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
     }),
   )
 
-  await output.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
-    abortSignal.addEventListener('abort', async () => {
-      await server.close()
-    })
-  })
-
   const availablePort = portNumber ?? (await port.getRandomPort())
-  await server.listen({
-    port: availablePort,
-  })
+
+  await Promise.all([
+    output.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
+      abortSignal.addEventListener('abort', async () => {
+        await server.close()
+      })
+    }),
+    server.listen({
+      port: availablePort,
+    }),
+  ])
 }
