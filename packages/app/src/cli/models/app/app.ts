@@ -416,7 +416,7 @@ class AppLoader {
         buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
         localIdentifier: path.basename(directory),
-        devUUID: id.generateShortId(),
+        devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
     return Promise.all(extensions)

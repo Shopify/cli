@@ -72,6 +72,9 @@ async function dev(options: DevOptions) {
     hostname: url,
   }
 
+  // If we have a real UUID for an extension, use that instead of a random one
+  options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
+
   const devExt = await devExtensionsTarget(options.app, identifiers.app, url, storeFqdn)
   const proxyTargets: ReverseHTTPProxyTarget[] = [devExt]
   if (frontendConfig) {
