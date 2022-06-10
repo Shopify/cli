@@ -4,7 +4,7 @@ import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment} from './environment'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {App, WebType, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
+import {App, WebType, updateAppIdentifiers, getAppIdentifiers, UIExtension} from '../models/app/app'
 import {selectOrganizationPrompt} from '../prompts/dev'
 import {testApp} from '../models/app/app.test-data'
 import {store as conf} from '@shopify/cli-kit'
@@ -61,6 +61,19 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
+const EXTENSION_A: UIExtension = {
+  idEnvironmentVariableName: 'EXTENSION_A_ID',
+  localIdentifier: 'EXTENSION_A',
+  configurationPath: '',
+  directory: '',
+  type: 'checkout_post_purchase',
+  graphQLType: 'CHECKOUT_POST_PURCHASE',
+  configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
+  buildDirectory: '',
+  entrySourceFilePath: '',
+  devUUID: 'devUUID',
+}
+
 const LOCAL_APP: App = {
   name: 'my-app',
   idEnvironmentVariableName: 'SHOPIFY_APP_ID',
@@ -82,7 +95,7 @@ const LOCAL_APP: App = {
     dotenv: {},
     env: {},
   },
-  extensions: {ui: [], theme: [], function: []},
+  extensions: {ui: [EXTENSION_A], theme: [], function: []},
 }
 
 const INPUT: DevEnvironmentOptions = {
@@ -157,6 +170,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: 'key1',
+      extensions: {},
     })
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
@@ -194,6 +208,50 @@ describe('ensureDevEnvironment', () => {
       environmentType: 'development',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
+  })
+
+  it('returns extensions Ids if the selected app matches the env one', async () => {
+    // Given
+    vi.mocked(getAppIdentifiers).mockResolvedValue({
+      app: 'key1',
+      extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
+    })
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
+
+    // When
+    const got = await ensureDevEnvironment(INPUT)
+
+    // Then
+    expect(got).toEqual({
+      app: {...APP1, apiSecret: 'secret1'},
+      storeFqdn: STORE1.shopDomain,
+      identifiers: {
+        app: 'key1',
+        extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
+      },
+    })
+  })
+
+  it('ignores extensions Ids if the selected app does not match the env one', async () => {
+    // Given
+    vi.mocked(getAppIdentifiers).mockResolvedValue({
+      app: 'env-app',
+      extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
+    })
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
+
+    // When
+    const got = await ensureDevEnvironment(INPUT)
+
+    // Then
+    expect(got).toEqual({
+      app: {...APP1, apiSecret: 'secret1'},
+      storeFqdn: STORE1.shopDomain,
+      identifiers: {
+        app: 'key1',
+        extensions: {},
+      },
+    })
   })
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {

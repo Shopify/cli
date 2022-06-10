@@ -43,8 +43,8 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  const envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
-  const envExtensionsIds = envIdentifiers.extensions || {}
+  const prodEnvIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
@@ -68,7 +68,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
     conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
-    const extensions = envIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
+    const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
     return {
       app: {
         ...selectedApp,
@@ -94,7 +94,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     showReusedValues(organization.businessName, options.app, selectedStore)
   }
 
-  const extensions = envIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
+  const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
   return {
     app: {
       ...selectedApp,
