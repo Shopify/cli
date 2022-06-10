@@ -13,9 +13,9 @@ const cliExternal = [...external, ...Object.keys(hydrogenPkg.dependencies ?? {})
 
 const featureCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/**/*.ts`),
-  path.join(__dirname, `/src/cli/commands/*.ts`),
   `!${path.join(__dirname, `/src/cli/commands/**/*.test.ts`)}`,
 ])
+
 const configuration = () => [
   // CLI
   {
@@ -28,7 +28,7 @@ const configuration = () => [
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
-            return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
+            return `commands${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

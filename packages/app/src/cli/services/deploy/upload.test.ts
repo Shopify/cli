@@ -42,7 +42,7 @@ describe('uploadFunctionExtensions', () => {
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'function',
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      metadata: {schemaVersions: {payment_methods: {major: 1, minor: 0}}, flags: {useMsgpack: true}},
+      metadata: {schemaVersions: {payment_methods: {major: 1, minor: 0}}},
       type: 'payment_methods',
       graphQLType: 'payment_methods',
     }

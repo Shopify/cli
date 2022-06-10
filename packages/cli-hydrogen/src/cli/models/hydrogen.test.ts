@@ -1,6 +1,6 @@
 import {load} from './hydrogen'
-import {HydrogenConfig} from './types'
 import {genericConfigurationFileNames} from '../constants'
+import {HydrogenConfig} from '@shopify/hydrogen/config'
 import {describe, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
