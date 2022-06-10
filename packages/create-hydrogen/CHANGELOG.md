@@ -1,5 +1,14 @@
 # @shopify/create-hydrogen
 
+## 3.0.13
+
+### Patch Changes
+
+- 604d7d97: Fix some unhandled promises and errors
+- e9850d38: Fix create-hydrogen on Windows
+- Updated dependencies [604d7d97]
+  - @shopify/cli-kit@3.0.13
+
 ## 3.0.12
 
 ### Patch Changes

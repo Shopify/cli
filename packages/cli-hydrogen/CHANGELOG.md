@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 3.0.13
+
+### Patch Changes
+
+- 26bd9fc8: Add `info` command to print information about the current project.
+- Updated dependencies [604d7d97]
+  - @shopify/cli-kit@3.0.13
+
 ## 3.0.12
 
 ### Patch Changes

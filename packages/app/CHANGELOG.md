@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.0.13
+
+### Patch Changes
+
+- 29669e3b: Remove use_msgpack flag from functions metadata
+- 3a76edd8: Remove unused use_msgpack metadata field for functions
+- 604d7d97: Fix some unhandled promises and errors
+- 5a46a903: Keep shipping and payment functions as internal
+- 3e7815fe: Re-use functions' ids across deploys
+- Updated dependencies [604d7d97]
+  - @shopify/cli-kit@3.0.13
+
 ## 3.0.12
 
 ### Patch Changes

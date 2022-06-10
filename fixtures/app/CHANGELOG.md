@@ -1,5 +1,18 @@
 # app
 
+## 3.0.13
+
+### Patch Changes
+
+- 3a76edd8: Remove unused use_msgpack metadata field for functions
+- Updated dependencies [29669e3b]
+- Updated dependencies [3a76edd8]
+- Updated dependencies [604d7d97]
+- Updated dependencies [5a46a903]
+- Updated dependencies [3e7815fe]
+  - @shopify/app@3.0.13
+  - @shopify/cli@3.0.13
+
 ## 3.0.12
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.0.13
+
+### Patch Changes
+
+- 604d7d97: Fix some unhandled promises and errors
+
 ## 3.0.12
 
 ### Patch Changes

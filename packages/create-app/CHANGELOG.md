@@ -1,5 +1,14 @@
 # @shopify/create-app
 
+## 3.0.13
+
+### Patch Changes
+
+- 533165e5: Fix app creation on Windows
+- 604d7d97: Fix some unhandled promises and errors
+- Updated dependencies [604d7d97]
+  - @shopify/cli-kit@3.0.13
+
 ## 3.0.12
 
 ### Patch Changes
