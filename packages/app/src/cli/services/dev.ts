@@ -2,12 +2,12 @@ import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {devExtensions} from './dev/extension'
+import {showExtensionsURLs, showAppURL, showFunctionsMessage} from './dev/dev-output'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy'
-import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
-import {getExtensionOutputConfig, UIExtensionTypes} from '../constants'
+import {App, AppConfiguration, Web, WebType} from '../models/app/app'
 import {error, output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 import {Writable} from 'node:stream'
@@ -57,57 +57,12 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   if (frontendConfig || backendConfig) {
-    let updateMessage = ''
-    if (options.update) {
-      await updateURLs(identifiers.app, url)
-      updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
-    }
-    const message = `${updateMessage}\nYour app will be available here: `
-    const hostUrl = `${storeFqdn}/admin`
-    const hostParam = btoa(hostUrl).replace(/[=]/g, '')
-    const storeAppUrl = `${url}?shop=${storeFqdn}&host=${hostParam}`
-    output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
+    if (options.update) await updateURLs(identifiers.app, url)
+    showAppURL(options.update, storeFqdn, url)
   }
 
-  extensionsURLsOutput(options.app.extensions.ui, storeFqdn, url)
-  //   options.app.extensions.ui.forEach((extension) => {
-  //     switch (extension.type as UIExtensionTypes) {
-  //       case 'checkout_post_purchase': {
-  //         output.info(output.content`
-  // To view your ${output.token.italic(getExtensionOutputConfig(extension.type).humanKey)} extension:
-  //   1. Set up your post-purchase browser extension:
-  //       a. Install the ${output.token.link(
-  //         'chrome extension',
-  //         'https://github.com/shopify/post-purchase-devtools/releases',
-  //       )}
-  //       b. Enter the root URL into the chrome extension: ${url}/extensions/something
-  //   2. Make sure your dev store can process test orders: ${output.token.link(
-  //     'Test order documentation',
-  //     'https://help.shopify.com/en/partners/dashboard/managing-stores/test-orders-in-dev-stores',
-  //   )}
-  //   3. Go to ${output.token.link('your store', `https://${storeFqdn}`)} to make a test order and view your extension.
-  // `)
-  //         break
-  //       }
-  //       case 'checkout_ui_extension':
-  //         const productVariantId = 123
-  //         output.info(output.content`
-  // To view your ${output.token.italic(getExtensionOutputConfig(extension.type).humanKey)} extension:
-  //   1. Log in to your ${output.token.link('dev storefront', `https://${storeFqdn}/password`)}.
-  //   2. Visit this ${output.token.link('URL', `https://${storeFqdn}/cart/${productVariantId}:1?dev=${url}/extensions`)}.
-  // `)
-  //         break
-  //       case 'product_subscription':
-  //         output.info(output.content`
-  // To view your ${output.token.italic(getExtensionOutputConfig(extension.type).humanKey)} extension:
-  //   1. Visit this ${output.token.link('URL', `https://${storeFqdn}/admin/extensions-dev?url=${url}/extensions`)}.
-  // `)
-  //         break
-  //       case 'web_pixel_extension':
-  //       case 'pos_ui_extension':
-  //         break
-  //     }
-  //   })
+  showExtensionsURLs(options.app.extensions.ui, storeFqdn, url)
+  showFunctionsMessage(options.app.extensions.function)
 
   const backendOptions = {
     apiKey: identifiers.app,
@@ -228,58 +183,6 @@ async function devExtensionsTarget(
       await devExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
     },
   }
-}
-
-function extensionsURLsOutput(extensions: UIExtension[], storeFqdn: string, url: string) {
-  for (const extension of extensions) {
-    let message: output.TokenizedString
-    switch (extension.type as UIExtensionTypes) {
-      case 'checkout_post_purchase':
-        {
-          message = output.content`
-  1. Set up your post-purchase browser extension:
-      a. Install the ${output.token.link(
-        'chrome extension',
-        'https://github.com/shopify/post-purchase-devtools/releases',
-      )}
-      b. Enter the root URL into the chrome extension: ${url}/extensions/${extension.localIdentifier}
-  2. Make sure your dev store can process test orders: ${output.token.link(
-    'Test orders documentation',
-    'https://help.shopify.com/en/partners/dashboard/managing-stores/test-orders-in-dev-stores',
-  )}
-  3. Go to ${output.token.link('your store', `https://${storeFqdn}`)} to make a test order and view your extension.
-`
-        }
-        break
-      case 'checkout_ui_extension':
-        const productVariantId = 123
-        message = output.content`
-  1. Log in to your ${output.token.link('dev storefront', `https://${storeFqdn}/password`)}.
-  2. Visit this ${output.token.link(
-    'URL',
-    `https://${storeFqdn}/cart/${productVariantId}:1?dev=${url}/extensions/${extension.localIdentifier}`,
-  )}.
-`
-        break
-      case 'product_subscription':
-        message = output.content`
-  1. Visit this ${output.token.link(
-    'URL',
-    `https://${storeFqdn}/admin/extensions-dev?url=${url}/extensions/${extension.localIdentifier}`,
-  )}.
-`
-        break
-      case 'web_pixel_extension':
-      case 'pos_ui_extension':
-        continue
-    }
-    output.info(`${extensionTitle(extension)}${message.value}`)
-  }
-}
-
-function extensionTitle(extension: UIExtension) {
-  const humanKey = getExtensionOutputConfig(extension.type).humanKey
-  return output.content`To view your ${output.token.italic(humanKey)} extension:`.value
 }
 
 export default dev
