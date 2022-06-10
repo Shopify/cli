@@ -8332,7 +8332,7 @@ pkg-up@^3.1.0:
   dependencies:
     find-up "^3.0.0"
 
-playwright-chromium@^1.20.1:
+playwright-chromium@^1.22.2:
   version "1.22.2"
   resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.22.2.tgz#9057602b75009848a37d9f75187ce3c928a44354"
   integrity sha512-msRcdCIJkdM2R6S+NMJZ02uyZHzJ7TIzkjzs3usDJ1Pwacp9HMhv9T/S4AxtpFXFmvMZq7UJYb0x+tCdHx9+0w==
