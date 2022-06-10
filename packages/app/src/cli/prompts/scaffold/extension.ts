@@ -5,6 +5,10 @@ import {
   getExtensionOutputConfig,
   themeExtensions,
   uiExtensions,
+  isUiExtensionType,
+  isFunctionExtensionType,
+  uiExtensionTemplates,
+  functionExtensionTemplates,
 } from '../../constants'
 import {haiku, ui, environment} from '@shopify/cli-kit'
 
@@ -24,16 +28,10 @@ interface ScaffoldExtensionOutput {
 export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   let choices: {name: string; value: string}[] = []
   if (isUiExtensionType(extensionType)) {
-    choices = choices.concat([
-      {name: 'React', value: 'react'},
-      {name: 'vanilla JavaScript', value: 'vanilla-js'},
-    ])
+    choices = choices.concat(uiExtensionTemplates)
   }
   if (isFunctionExtensionType(extensionType)) {
-    choices = choices.concat([
-      {name: 'Wasm', value: 'wasm'},
-      {name: 'Rust', value: 'rust'},
-    ])
+    choices = choices.concat(functionExtensionTemplates)
   }
   return {
     type: 'select',
@@ -130,14 +128,6 @@ const extensiontypeCategoryPosition = (extensionType: string): number => {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
   return coll.includes(el as T)
-}
-
-function isUiExtensionType(extensionType: string) {
-  return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
-}
-
-function isFunctionExtensionType(extensionType: string) {
-  return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
 export default scaffoldExtensionPrompt

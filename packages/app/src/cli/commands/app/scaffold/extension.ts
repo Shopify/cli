@@ -1,5 +1,14 @@
 import {appFlags} from '../../../flags'
-import {extensions, ExtensionTypes, getExtensionOutputConfig, limitedExtensions, uiExtensions} from '../../../constants'
+import {
+  extensions,
+  ExtensionTypes,
+  getExtensionOutputConfig,
+  limitedExtensions,
+  isUiExtensionType,
+  isFunctionExtensionType,
+  functionExtensionTemplates,
+  uiExtensionTemplates,
+} from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
@@ -97,10 +106,22 @@ export default class AppScaffoldExtension extends Command {
   }
 
   validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
-    if (flavor && type && !(uiExtensions.types as ReadonlyArray<string>).includes(type)) {
+    if (!flavor || !type) {
+      return
+    }
+    const uiExtensionTemplateNames = uiExtensionTemplates.map((template) => template.value)
+    const functionExtensionTemplateNames = functionExtensionTemplates.map((template) => template.value)
+
+    if (isUiExtensionType(type) && !uiExtensionTemplateNames.includes(flavor)) {
       throw new error.Abort(
         'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${uiExtensions.types.join(', ')}.`,
+        `You can only specify a template for these extension types: ${uiExtensionTemplateNames.join(', ')}.`,
+      )
+    }
+    if (isFunctionExtensionType(type) && !functionExtensionTemplateNames.includes(flavor)) {
+      throw new error.Abort(
+        'Specified extension template on invalid extension type',
+        `You can only specify a template for these extension types: ${functionExtensionTemplateNames.join(', ')}.`,
       )
     }
   }

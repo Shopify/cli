@@ -67,6 +67,15 @@ export const functionExtensions = {
   types: [...publicFunctionExtensions.types, 'payment_methods', 'shipping_rate_presenter'],
 } as const
 
+export const functionExtensionTemplates = [
+  {name: 'Wasm', value: 'wasm'},
+  {name: 'Rust', value: 'rust'},
+]
+
+export function isFunctionExtensionType(extensionType: string) {
+  return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
+}
+
 export const uiExtensions = {
   types: [
     'product_subscription',
@@ -78,6 +87,15 @@ export const uiExtensions = {
 } as const
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
+
+export const uiExtensionTemplates = [
+  {name: 'React', value: 'react'},
+  {name: 'vanilla JavaScript', value: 'vanilla-js'},
+]
+
+export function isUiExtensionType(extensionType: string) {
+  return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
+}
 
 export const themeExtensions = {
   types: ['theme'],
