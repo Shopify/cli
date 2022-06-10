@@ -43,8 +43,11 @@ interface DevEnvironmentOutput {
  */
 export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
+
+  // We retrieve the production identifiers to know if the user has selected the prod app for `dev`
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
+
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
@@ -68,6 +71,8 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
     conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
+
+    // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
     const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
     return {
       app: {
@@ -94,6 +99,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     showReusedValues(organization.businessName, options.app, selectedStore)
   }
 
+  // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
   return {
     app: {

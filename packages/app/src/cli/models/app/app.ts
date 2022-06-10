@@ -406,6 +406,7 @@ class AppLoader {
         )
       }
 
+      // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
       return {
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         directory,
