@@ -74,7 +74,7 @@ export default class AppScaffoldExtension extends Command {
       extensionType: promptAnswers.extensionType,
       app,
       cloneUrl: flags['clone-url'],
-      language: flags.language,
+      language: promptAnswers.extensionLanguage,
     })
 
     output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))

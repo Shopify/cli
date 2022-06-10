@@ -23,6 +23,32 @@ interface ScaffoldExtensionOutput {
   extensionLanguage?: string
 }
 
+export const extensionFlavorQuestion = (): ui.Question => {
+  return {
+    type: 'select',
+    name: 'extensionFlavor',
+    message: 'Choose a starting template for your extension',
+    choices: [
+      {name: 'React', value: 'react'},
+      {name: 'vanilla JavaScript', value: 'vanilla-js'},
+    ],
+    default: 'react',
+  }
+}
+
+export const extensionLanguageQuestion = (): ui.Question => {
+  return {
+    type: 'select',
+    name: 'extensionLanguage',
+    message: 'Choose a language for your extension',
+    choices: [
+      {name: 'Wasm', value: 'wasm'},
+      {name: 'Rust', value: 'rust'},
+    ],
+    default: 'wasm',
+  }
+}
+
 const scaffoldExtensionPrompt = async (
   options: ScaffoldExtensionOptions,
   prompt = ui.prompt,
@@ -63,16 +89,7 @@ const scaffoldExtensionPrompt = async (
       ...promptOutput,
       extensionFlavor: (
         (await prompt([
-          {
-            type: 'select',
-            name: 'extensionFlavor',
-            message: 'Choose a starting template for your extension',
-            choices: [
-              {name: 'React', value: 'react'},
-              {name: 'vanilla JavaScript', value: 'vanilla-js'},
-            ],
-            default: 'react',
-          },
+          extensionFlavorQuestion(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ])) as any
       ).extensionFlavor,
@@ -83,16 +100,7 @@ const scaffoldExtensionPrompt = async (
       ...promptOutput,
       extensionLanguage: (
         (await prompt([
-          {
-            type: 'select',
-            name: 'extensionLanguage',
-            message: 'Choose a language for your extension',
-            choices: [
-              {name: 'Wasm', value: 'wasm'},
-              {name: 'Rust', value: 'rust'},
-            ],
-            default: 'wasm',
-          },
+          extensionLanguageQuestion(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ])) as any
       ).extensionLanguage,

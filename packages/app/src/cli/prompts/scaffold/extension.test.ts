@@ -1,4 +1,4 @@
-import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName} from './extension'
+import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionLanguageQuestion} from './extension'
 import {extensions, getExtensionOutputConfig} from '../../constants'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
@@ -139,6 +139,29 @@ describe('extension prompt', async () => {
     expect(prompt).not.toHaveBeenCalledWith([extensionFlavorQuestion])
     expect(got).toEqual({...options, ...answers})
   })
+
+  it('when scaffolding a function extension prompts for the language', async () => {
+    const prompt = vi.fn()
+    const answers = {extensionLanguage: 'rust'}
+    const options = {
+      name: 'my-product-discount',
+      extensionTypesAlreadyAtQuota: [],
+      extensionType: 'product_discounts',
+    }
+
+    // Given
+    prompt.mockResolvedValue(answers)
+
+    // When
+    const got = await scaffoldExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenNthCalledWith(1, [])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionLanguageQuestion()])
+
+    expect(prompt).not.toHaveBeenCalledWith([extensionFlavorQuestion])
+    expect(got).toEqual({...options, ...answers})
+  })
 })
 
 const buildChoices = async (): Promise<
@@ -147,8 +170,6 @@ const buildChoices = async (): Promise<
     value: string
   }[]
 > => {
-  const isShopify = await environment.local.isShopify()
-  const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
   return extensions.types
     .map((type) => ({
       name: getExtensionOutputConfig(type).humanKey,
