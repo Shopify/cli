@@ -7,19 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"github.com/Shopify/shopify-cli-extensions/create"
 	"gopkg.in/yaml.v3"
 
 	"text/template"
 )
-
-const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
-const rwxr_xr_x = 0755
 
 func Build(extension core.Extension, report ResultHandler) {
 	var err error
@@ -99,8 +94,6 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 	logProcessors := sync.WaitGroup{}
 	logProcessors.Add(2)
 
-	templateBytes, _ := create.ReadTemplateFile(fmt.Sprintf(nextStepsTemplatePath, strings.ToLower(extension.Type)))
-
 	go processLogs(stdout, logProcessingHandlers{
 		onCompletion: func() { logProcessors.Done() },
 		onMessage: func(message string) {
@@ -108,10 +101,6 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 				reportAndUpdateDevelopmentStatus(Result{false, err.Error(), extension}, report)
 			} else {
 				reportAndUpdateDevelopmentStatus(Result{true, message, extension}, report)
-				if len(templateBytes) > 0 {
-					fmt.Fprintf(os.Stdout, "%s\n", generateNextSteps(string(templateBytes), extension, integrationCtx))
-					templateBytes = nil
-				}
 			}
 		},
 	})
@@ -150,7 +139,7 @@ type ResultHandler func(result Result)
 
 func ensureBuildDirectoryExists(ext core.Extension) {
 	if _, err := os.Stat(ext.BuildDir()); errors.Is(err, os.ErrNotExist) {
-		os.MkdirAll(ext.BuildDir(), rwxr_xr_x)
+		os.MkdirAll(ext.BuildDir(), 0755)
 	}
 }
 
