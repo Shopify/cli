@@ -13,39 +13,34 @@ interface ScaffoldExtensionOptions {
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
   extensionFlavor?: string
-  extensionLanguage?: string
 }
 
 interface ScaffoldExtensionOutput {
   name: string
   extensionType: ExtensionTypes
   extensionFlavor?: string
-  extensionLanguage?: string
 }
 
-export const extensionFlavorQuestion = (): ui.Question => {
+export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
+  let choices: {name: string; value: string}[] = []
+  if (isUiExtensionType(extensionType)) {
+    choices = choices.concat([
+      {name: 'React', value: 'react'},
+      {name: 'vanilla JavaScript', value: 'vanilla-js'},
+    ])
+  }
+  if (isFunctionExtensionType(extensionType)) {
+    choices = choices.concat([
+      {name: 'Wasm', value: 'wasm'},
+      {name: 'Rust', value: 'rust'},
+    ])
+  }
   return {
     type: 'select',
     name: 'extensionFlavor',
     message: 'Choose a starting template for your extension',
-    choices: [
-      {name: 'React', value: 'react'},
-      {name: 'vanilla JavaScript', value: 'vanilla-js'},
-    ],
+    choices,
     default: 'react',
-  }
-}
-
-export const extensionLanguageQuestion = (): ui.Question => {
-  return {
-    type: 'select',
-    name: 'extensionLanguage',
-    message: 'Choose a language for your extension',
-    choices: [
-      {name: 'Wasm', value: 'wasm'},
-      {name: 'Rust', value: 'rust'},
-    ],
-    default: 'wasm',
   }
 }
 
@@ -84,26 +79,16 @@ const scaffoldExtensionPrompt = async (
     })
   }
   let promptOutput: ScaffoldExtensionOutput = await prompt(questions)
-  if (!options.extensionFlavor && isUiExtensionType({...options, ...promptOutput}.extensionType)) {
+  const extensionType = {...options, ...promptOutput}.extensionType
+  if ((!options.extensionFlavor && isUiExtensionType(extensionType)) || isFunctionExtensionType(extensionType)) {
     promptOutput = {
       ...promptOutput,
       extensionFlavor: (
         (await prompt([
-          extensionFlavorQuestion(),
+          extensionFlavorQuestion(extensionType),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ])) as any
       ).extensionFlavor,
-    }
-  }
-  if (!options.extensionLanguage && isFunctionExtensionType({...options, ...promptOutput}.extensionType)) {
-    promptOutput = {
-      ...promptOutput,
-      extensionLanguage: (
-        (await prompt([
-          extensionLanguageQuestion(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ])) as any
-      ).extensionLanguage,
     }
   }
   return {...options, ...promptOutput}

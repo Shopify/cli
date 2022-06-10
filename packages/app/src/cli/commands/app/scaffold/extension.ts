@@ -33,18 +33,10 @@ export default class AppScaffoldExtension extends Command {
         'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/scripts-apis-examples',
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
-    language: Flags.string({
-      hidden: false,
-      char: 'l',
-      options: ['wasm', 'rust'],
-      description: 'Language of the template, where applicable',
-      env: 'SHOPIFY_FLAG_LANGUAGE',
-    }),
-
     template: Flags.string({
       hidden: false,
       description: 'Choose a starting template for your extension, where applicable',
-      options: ['vanilla-js', 'react'],
+      options: ['vanilla-js', 'react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
   }
@@ -62,7 +54,6 @@ export default class AppScaffoldExtension extends Command {
     this.validateExtensionFlavor(flags.type, extensionFlavor)
 
     const promptAnswers = await scaffoldExtensionPrompt({
-      extensionLanguage: flags.language,
       extensionType: flags.type,
       extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
@@ -74,7 +65,6 @@ export default class AppScaffoldExtension extends Command {
       extensionType: promptAnswers.extensionType,
       app,
       cloneUrl: flags['clone-url'],
-      language: promptAnswers.extensionLanguage,
     })
 
     output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))
