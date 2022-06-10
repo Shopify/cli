@@ -1,5 +1,5 @@
-import {FunctionExtension, UIExtension} from '../../models/app/app'
-import {getExtensionOutputConfig, UIExtensionTypes} from '../../constants'
+import {App, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/app'
+import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants'
 import {output, string} from '@shopify/cli-kit'
 
 export function showAppURL(updated: boolean, storeFqdn: string, url: string) {
@@ -13,9 +13,15 @@ export function showAppURL(updated: boolean, storeFqdn: string, url: string) {
   output.info(message)
 }
 
-export function showExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
+export function showExtensionsMessages(app: App, storeFqdn: string, url: string) {
+  showUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
+  showFunctionsMessage(app.extensions.function)
+  showThemeExtensionsMessage(app.extensions.theme)
+}
+
+function showUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
   for (const extension of extensions) {
-    const heading = output.token.heading(`${getHumanKey(extension)} (${extension.configuration.name})`)
+    const heading = output.token.heading(`${getHumanKey(extension.type)} (${extension.configuration.name})`)
     let message: string
     switch (extension.type as UIExtensionTypes) {
       case 'checkout_post_purchase': {
@@ -34,18 +40,28 @@ export function showExtensionsURLs(extensions: UIExtension[], storeFqdn: string,
       case 'web_pixel_extension':
         continue
     }
-    output.info(output.content`${heading}
-${message}
-`)
+    output.info(output.content`${heading}\n${message}\n`)
   }
 }
 
-export function showFunctionsMessage(extensions: FunctionExtension[]) {
+function showFunctionsMessage(extensions: FunctionExtension[]) {
+  if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)
   const heading = output.token.heading(names.join(', '))
   const message = `These extensions need to be deployed to be manually tested.
 One testing option is to use a separate app dedicated to staging.`
-  output.info(output.content`${heading}${message}`)
+  output.info(output.content`${heading}\n${message}\n`)
+}
+
+function showThemeExtensionsMessage(extensions: ThemeExtension[]) {
+  if (extensions.length === 0) return
+  const heading = output.token.heading(getHumanKey(extensions[0].type))
+  const link = output.token.link(
+    'dev doc instructions',
+    'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-4-test-your-changeseckout/post-purchase/getting-started-post-purchase-extension#step-2-test-the-extension',
+  )
+  const message = output.content`Follow the ${link} by deploying your work as a draft`.value
+  output.info(output.content`${heading}\n${message}\n`)
 }
 
 function buildAppURL(storeFqdn: string, publicURL: string) {
@@ -69,8 +85,7 @@ function postPurchaseMessage(url: string, extension: UIExtension) {
   2. Open the Chrome extension and paste this URL into it: ${publicURL}
   3. Run a test purchase on your store to view your extension
 
-For more detail, see the ${devDocsLink}
-    `
+For more detail, see the ${devDocsLink}`
 }
 
 function checkoutUIMessage(url: string, extension: UIExtension) {
@@ -83,6 +98,6 @@ function productSubscriptionMessage(url: string, extension: UIExtension) {
   return output.content`Preview link: ${publicURL}`
 }
 
-function getHumanKey(extension: UIExtension) {
-  return string.capitalize(getExtensionOutputConfig(extension.type).humanKey)
+function getHumanKey(type: ExtensionTypes) {
+  return string.capitalize(getExtensionOutputConfig(type).humanKey)
 }

@@ -2,7 +2,7 @@ import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {devExtensions} from './dev/extension'
-import {showExtensionsURLs, showAppURL, showFunctionsMessage} from './dev/dev-output'
+import {showAppURL, showExtensionsMessages} from './dev/dev-output'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -62,8 +62,7 @@ async function dev(options: DevOptions) {
     showAppURL(options.update, storeFqdn, url)
   }
 
-  showExtensionsURLs(options.app.extensions.ui, storeFqdn, url)
-  showFunctionsMessage(options.app.extensions.function)
+  showExtensionsMessages(options.app, storeFqdn, url)
 
   const backendOptions = {
     apiKey: identifiers.app,
