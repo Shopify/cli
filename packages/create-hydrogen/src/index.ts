@@ -4,10 +4,7 @@ import {error as kitError, environment} from '@shopify/cli-kit'
 function runCreateHydrogen() {
   const initIndex = process.argv.findIndex((arg) => arg.includes('init'))
   if (initIndex === -1) {
-    const initIndex =
-      process.argv.findIndex(
-        (arg) => arg.includes('bin/create-hydrogen') || arg.includes('bin/dev') || arg.includes('bin/run'),
-      ) + 1
+    const initIndex = process.argv.findIndex((arg) => arg.match(/bin(\/|\\)(create-hydrogen|dev|run)/)) + 1
     process.argv.splice(initIndex, 0, 'init')
   }
 
