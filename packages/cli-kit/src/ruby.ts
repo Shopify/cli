@@ -157,7 +157,7 @@ async function validateRubyEnv() {
 
 async function getBundlerVersion() {
   try {
-    const {stdout} = await system.exec('bundler', ['-v'])
+    const stdout = await system.captureOutput('bundler', ['-v'])
     return coerce(stdout)
   } catch {
     throw new Abort('Bundler not found', 'Make sure you have Bundler installed on your system: https://bundler.io/')

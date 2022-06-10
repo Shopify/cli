@@ -1,10 +1,7 @@
 import {nodeExtensionsCLIPath} from './cli'
-import {fetchProductVariant} from './fetch-product-variant'
 import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
-import {error, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {UIExtensionTypes} from 'cli/constants'
-
-const MissingStoreError = () => new error.Bug('You need a store to test "checkout_ui_extensions"')
 
 export interface ExtensionConfigOptions {
   app: App
@@ -15,6 +12,7 @@ export interface ExtensionConfigOptions {
   port?: number
   storeFqdn?: string
   includeResourceURL?: boolean
+  productVariantId?: string
 }
 
 /**
@@ -49,7 +47,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
           resource: options.includeResourceURL
-            ? await getUIExtensionResourceURL(extension.configuration.type, options.storeFqdn)
+            ? await getUIExtensionResourceURL(extension.configuration.type, options.productVariantId)
             : null,
         },
       }
@@ -69,12 +67,10 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   }
 }
 
-export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, store?: string) {
+export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, productVariantId?: string) {
   switch (uiExtensionType) {
     case 'checkout_ui_extension': {
-      if (!store) throw MissingStoreError()
-      const result = await fetchProductVariant(store)
-      return {url: `/cart/${result}:1`}
+      return {url: `/cart/${productVariantId}:1`}
     }
     case 'checkout_post_purchase':
     case 'pos_ui_extension':

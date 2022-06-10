@@ -7,7 +7,8 @@ import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy'
-import {App, AppConfiguration, Web, WebType} from '../models/app/app'
+import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
+import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
 import {error, output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 import {Writable} from 'node:stream'
@@ -176,13 +177,36 @@ async function devExtensionsTarget(
   url: string,
   storeFqdn: string,
 ): Promise<ReverseHTTPProxyTarget> {
+  const productVariantId = await retrieveProductVariantIDIfNeeded(app.extensions.ui, storeFqdn)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await devExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
+      await devExtensions({
+        app,
+        extensions: app.extensions.ui,
+        stdout,
+        stderr,
+        signal,
+        url,
+        port,
+        storeFqdn,
+        apiKey,
+        productVariantId,
+      })
     },
   }
+}
+
+/**
+ * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
+ * @param extensions {UIExtension[]} - The UI Extensions to dev
+ * @param store {string} - The store FQDN
+ */
+async function retrieveProductVariantIDIfNeeded(extensions: UIExtension[], store: string) {
+  const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
+  if (!hasUIExtension) return
+  return fetchProductVariant(store)
 }
 
 export default dev

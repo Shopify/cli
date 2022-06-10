@@ -22,9 +22,13 @@ function runCreateApp() {
       const kitMapper = kitError.mapper
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting
-      return kitMapper(error).then((error: Error) => {
-        kitHandle(error)
-      })
+      return kitMapper(error)
+        .then((error: Error) => {
+          return kitHandle(error)
+        })
+        .then(() => {
+          process.exit(1)
+        })
     })
 }
 

@@ -4,12 +4,14 @@ import {debug, content, token as outputToken} from '../output'
 import {Bug, Abort} from '../error'
 import {request as graphqlRequest, gql, RequestDocument, Variables, ClientError} from 'graphql-request'
 
-const UnauthorizedAccessError = () => {
+const UnauthorizedAccessError = (store: string) => {
+  const adminLink = outputToken.link(`URL`, `https://${store}/admin`)
+  const storeName = store.replace('.myshopify.com', '')
   return new Abort(
-    `You can't use Shopify CLI with development stores if you only have Partner staff member access.
-If you want to use Shopify CLI to work on a development store, then you should be the store owner or create a staff account on the store`,
-    `If you're the store owner, then you need to log in to the store directly using the store URL at least once (for example, using %s.myshopify.com/admin) before you log in using Shopify CLI.
-Logging in to the Shopify admin directly connects the development store with your Shopify login.`,
+    content`Looks like you need access to this dev store (${outputToken.link(storeName, `https://${store}`)})`,
+    content`• Log in to the store directly from this ${adminLink}. If you're the store owner, then that direct log in should solve your access issue.
+• If you're not the owner, create a dev store staff account for yourself. Then log in directly from the link above.
+    `,
   )
 }
 
@@ -62,7 +64,7 @@ ${query}
   const data = await graphqlRequest<{
     publicApiVersions: {handle: string; supported: boolean}[]
   }>(url, query, {}, headers).catch((err) => {
-    throw err.response.status === 403 ? UnauthorizedAccessError() : UnknownError()
+    throw err.response.status === 403 ? UnauthorizedAccessError(session.storeFqdn) : UnknownError()
   })
 
   return data.publicApiVersions

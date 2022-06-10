@@ -23,9 +23,9 @@ enum FatalErrorType {
 export abstract class Fatal extends Error {
   tryMessage: string | null
   type: FatalErrorType
-  constructor(message: Message, type: FatalErrorType, tryMessage: string | null = null) {
+  constructor(message: Message, type: FatalErrorType, tryMessage: Message | null = null) {
     super(stringifyMessage(message))
-    this.tryMessage = tryMessage
+    this.tryMessage = tryMessage ? stringifyMessage(tryMessage) : null
     this.type = type
   }
 }
@@ -35,7 +35,7 @@ export abstract class Fatal extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer
  */
 export class Abort extends Fatal {
-  constructor(message: Message, tryMessage: string | null = null) {
+  constructor(message: Message, tryMessage: Message | null = null) {
     super(message, FatalErrorType.Abort, tryMessage)
   }
 }

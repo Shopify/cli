@@ -391,8 +391,14 @@ export interface OutputProcess {
  *
  * @param processes {OutputProcess[]} A list of processes to run concurrently.
  */
-export async function concurrent(processes: OutputProcess[]) {
+export async function concurrent(
+  processes: OutputProcess[],
+  callback: ((signal: AbortSignal) => void) | undefined = undefined,
+) {
   const abortController = new AbortController()
+
+  // eslint-disable-next-line node/callback-return
+  if (callback) callback(abortController.signal)
 
   const concurrentColors = [token.yellow, token.cyan, token.magenta, token.green]
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
