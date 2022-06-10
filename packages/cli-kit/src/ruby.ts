@@ -6,13 +6,16 @@ import {glob, join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
-// eslint-disable-next-line no-restricted-imports
+
+import {content, token} from './output'
 import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
 
 const RubyCLIVersion = '2.16.0'
 const ThemeCheckVersion = '1.10.2'
 const MinBundlerVersion = '2.3.8'
+const MinRubyVersion = '2.3.0'
+const MinRubyGemVersion = '2.5.0'
 
 /**
  * Execute CLI 2.0 commands.
@@ -150,7 +153,9 @@ async function validateRubyEnv() {
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
       `Bundler version ${bundlerVersion} is not supported`,
-      `Make sure you have Bundler version ${MinBundlerVersion} or higher installed on your system: https://bundler.io/`,
+      `To update to the latest version of Bundler, run ${
+        content`${token.genericShellCommand('gem install bundler')}`.value
+      }`,
     )
   }
 }
@@ -160,7 +165,12 @@ async function getBundlerVersion() {
     const {stdout} = await system.exec('bundler', ['-v'])
     return coerce(stdout)
   } catch {
-    throw new Abort('Bundler not found', 'Make sure you have Bundler installed on your system: https://bundler.io/')
+    throw new Abort(
+      'Bundler not found',
+      `To install the latest version of Bundler, run ${
+        content`${token.genericShellCommand('gem install bundler')}`.value
+      }`,
+    )
   }
 }
 
