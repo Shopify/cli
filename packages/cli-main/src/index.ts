@@ -28,7 +28,10 @@ function runCLI() {
       return kitMapper(error)
         .then(bugsnagHandle)
         .then((error: Error) => {
-          kitHandle(error)
+          return kitHandle(error)
+        })
+        .then(() => {
+          process.exit(1)
         })
     })
 }

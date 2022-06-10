@@ -29,7 +29,7 @@ export const captureOutput = async (command: string, args: string[], options?: E
   return result.stdout
 }
 
-export const exec = (command: string, args: string[], options?: ExecOptions) => {
+export const exec = async (command: string, args: string[], options?: ExecOptions) => {
   const commandProcess = buildExec(command, args, options)
   if (options?.stderr) {
     commandProcess.stderr?.pipe(options.stderr)
@@ -37,11 +37,17 @@ export const exec = (command: string, args: string[], options?: ExecOptions) => 
   if (options?.stdout) {
     commandProcess.stdout?.pipe(options.stdout)
   }
-  return commandProcess.catch((processError) => {
+  options?.signal?.addEventListener('abort', () => {
+    commandProcess.kill('SIGTERM', {forceKillAfterTimeout: 1000})
+  })
+  try {
+    await commandProcess
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (processError: any) {
     const abortError = new Abort(processError.message)
     abortError.stack = processError.stack
     throw abortError
-  })
+  }
 }
 
 const buildExec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
