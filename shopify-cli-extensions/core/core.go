@@ -37,6 +37,14 @@ func NewExtensionService(config *Config) *ExtensionService {
 			extension.Surface = GetSurface(&extension)
 		}
 
+		if extension.Capabilities.NetworkAccess == nil {
+			extension.Capabilities.NetworkAccess = NewBoolPointer(false)
+		}
+
+		if extension.Development.Hidden == nil {
+			extension.Development.Hidden = NewBoolPointer(false)
+		}
+
 		extensions = append(extensions, extension)
 	}
 	// TODO: Improve this when we need to read more app configs,
@@ -98,7 +106,7 @@ type Localization struct {
 }
 
 type Capabilities struct {
-	NetworkAccess bool `json:"networkAccess" yaml:"network_access"`
+	NetworkAccess *bool `json:"networkAccess" yaml:"network_access"`
 }
 
 type Extension struct {
@@ -150,7 +158,7 @@ type Development struct {
 	Renderer           Renderer          `json:"-" yaml:"renderer,omitempty"`
 	Root               Url               `json:"root" yaml:"root,omitempty"`
 	RootDir            string            `json:"-" yaml:"root_dir,omitempty"`
-	Hidden             bool              `json:"hidden" yaml:"-"`
+	Hidden             *bool             `json:"hidden" yaml:"-"`
 	Status             string            `json:"status" yaml:"-"`
 	LocalizationStatus string            `json:"localizationStatus" yaml:"-"`
 	Template           string            `json:"-" yaml:"template,omitempty"`
@@ -209,6 +217,12 @@ func GetSurface(extension *Extension) string {
 		return POS
 	}
 	return Admin
+}
+
+func NewBoolPointer(boolState bool) *bool {
+	boolPointer := new(bool)
+	*boolPointer = boolState
+	return boolPointer
 }
 
 type Fragment map[string]interface{}

@@ -615,7 +615,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	unchangedExtensionUUID := api.Extensions[1].UUID
 
 	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], rootUrl)}
-	updatedExtensions[0].Development.Hidden = true
+	*updatedExtensions[0].Development.Hidden = true
 	updatedExtensions[0].Development.Status = "error"
 
 	duration := 1 * time.Second
@@ -642,7 +642,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 
 	getSingleExtensionJSONResponse(api, t, server.URL, updateExtensionUUID, &updated)
 
-	if updated.Extension.Development.Hidden != true {
+	if *updated.Extension.Development.Hidden != true {
 		t.Errorf("expected response for extension %s Development.Hidden to be true but got %v", updateExtensionUUID, updated.Extension.Development.Hidden)
 	}
 
@@ -650,7 +650,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 		t.Errorf("expected response for extension %s Development.Status to be \"error\" but got %v", updateExtensionUUID, updated.Extension.Development.Status)
 	}
 
-	if apiUpdatedExtension.Development.Hidden != true {
+	if *apiUpdatedExtension.Development.Hidden != true {
 		t.Errorf("expected API extension %s Development.Hidden to be true  but got %v", updateExtensionUUID, apiUpdatedExtension.Development.Hidden)
 	}
 
@@ -662,7 +662,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	unchanged := singleExtensionResponse{}
 	getSingleExtensionJSONResponse(api, t, server.URL, unchangedExtensionUUID, &unchanged)
 
-	if unchanged.Extension.Development.Hidden != false {
+	if *unchanged.Extension.Development.Hidden != false {
 		t.Errorf("expected response for extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, unchanged.Extension.Development.Hidden)
 	}
 
@@ -670,7 +670,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 		t.Errorf("expected response for extension %s Development.Status to be unchanged but got %v", unchangedExtensionUUID, unchanged.Extension.Development.Status)
 	}
 
-	if apiUnchangedExtension.Development.Hidden != false {
+	if *apiUnchangedExtension.Development.Hidden != false {
 		t.Errorf("expected API extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, apiUpdatedExtension.Development.Hidden)
 	}
 
@@ -683,7 +683,7 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	api := New(config)
 	updateExtension := api.Extensions[0]
 
-	updateExtension.Development.Hidden = true
+	*updateExtension.Development.Hidden = true
 
 	server := httptest.NewServer(api)
 
@@ -718,7 +718,7 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
 
 	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], rootUrl)}
-	updatedExtensions[0].Development.Hidden = false
+	*updatedExtensions[0].Development.Hidden = false
 
 	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions, api.Store); err != nil {
 		t.Error(err)
@@ -728,10 +728,10 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 	updated := singleExtensionResponse{}
 	getSingleExtensionJSONResponse(api, t, server.URL, updateExtension.UUID, &updated)
 
-	if updated.Extension.Development.Hidden != false {
+	if *updated.Extension.Development.Hidden != false {
 		t.Errorf("expected response for extension %s Development.Hidden to be false but got %v", updateExtension.UUID, updated.Extension.Development.Hidden)
 	}
-	if apiUpdatedExtension.Development.Hidden != false {
+	if *apiUpdatedExtension.Development.Hidden != false {
 		t.Errorf("expected API extension %s Development.Hidden to be false but got %v", updateExtension.UUID, apiUpdatedExtension.Development.Hidden)
 	}
 }

@@ -46,8 +46,8 @@ extensions:
 		t.Errorf("invalid name - expected Alternate Name got %s", extension.Name)
 	}
 
-	if extension.Capabilities.NetworkAccess != true {
-		t.Errorf("invalid value for Capabilities - expected network_access got %t", extension.Capabilities.NetworkAccess)
+	if *extension.Capabilities.NetworkAccess != true {
+		t.Errorf("invalid value for Capabilities - expected network_access got %t", *extension.Capabilities.NetworkAccess)
 	}
 }
 
