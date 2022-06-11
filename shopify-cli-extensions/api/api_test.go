@@ -401,71 +401,26 @@ func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
 	// First message received is the connected message which can be ignored
 	ws.ReadJSON(&websocketMessage{})
 
+	lastUpdated := time.Now().Unix()
 	updatedExtensions := []core.Extension{api.Extensions[0]}
+	updatedExtensions[0].Assets["main"] = core.Asset{Name: "main", LastUpdated: lastUpdated}
 	updatedExtensions[0].Development.Status = "success"
 
 	api.Notify(updatedExtensions)
 
-	first_success, err := getExtensionsFromMessage(ws)
+	result, err := getExtensionsFromMessage(ws)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if first_success[0].Development.Status != "success" {
-		t.Errorf("expecting extensions Development.Status to be success but received %v", first_success[0].Development.Status)
+	if result[0].Development.Status != "success" {
+		t.Errorf("expecting extensions Development.Status to be success but received %v", result[0].Development.Status)
 	}
 
-	if first_success[0].Assets["main"].LastUpdated <= 0 {
-		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to contain timestamp but received %v", first_success[0].Assets["main"].LastUpdated)
+	if result[0].Assets["main"].LastUpdated != lastUpdated {
+		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to contain timestamp %v but received %v", lastUpdated, result[0].Assets["main"].LastUpdated)
 	}
-
-	duration := 1 * time.Second
-
-	<-time.After(duration)
-
-	api.Notify(updatedExtensions)
-
-	second_success, err := getExtensionsFromMessage(ws)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	if second_success[0].Development.Status != "success" {
-		t.Errorf("expecting extension Development.Status to be success but received %v", second_success[0].Development.Status)
-	}
-
-	if second_success[0].Assets["main"].LastUpdated <= 0 {
-		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to contain timestamp but received %v", second_success[0].Assets["main"].LastUpdated)
-	}
-
-	if second_success[0].Assets["main"].LastUpdated == first_success[0].Assets["main"].LastUpdated {
-		t.Logf("previous extension Assets[\"main\"].LastUpdated %d", first_success[0].Assets["main"].LastUpdated)
-		t.Errorf("expecting extension Assets[\"main\"].LastUpdated to be updated with a new timestamp but received %v", second_success[0].Assets["main"].LastUpdated)
-	}
-
-	<-time.After(duration)
-
-	updatedExtensions[0].Development.Status = "error"
-
-	api.Notify(updatedExtensions)
-
-	third_error, err := getExtensionsFromMessage(ws)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	if third_error[0].Development.Status != "error" {
-		t.Errorf("expecting extension Development.Status to be error but received %v", third_error[0].Development.Status)
-	}
-
-	if third_error[0].Assets["main"].Url != second_success[0].Assets["main"].Url {
-		t.Logf("previous extension Assets[\"main\"].Url %s", second_success[0].Assets["main"].Url)
-		t.Errorf("expecting extension Assets[\"main\"].Url to be unchanged from previous if the asset failed to build but received %v", third_error[0].Assets["main"].Url)
-	}
-
 }
 
 func TestWebsocketConnectionStartAndShutdown(t *testing.T) {

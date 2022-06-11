@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -210,22 +209,9 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 		updateData, found := api.updates.LoadAndDelete(api.Extensions[index].UUID)
 		if found {
 			castedData := updateData.(core.Extension)
-
-			if castedData.Development.Status == "success" {
-				for entry := range api.Extensions[index].Assets {
-					api.Extensions[index].Assets[entry] = core.Asset{
-						Name:        api.Extensions[index].Assets[entry].Name,
-						LastUpdated: time.Now().Unix(),
-					}
-				}
-			}
 			err := mergeWithOverwrite(&api.Extensions[index], &castedData)
 			if err != nil {
 				log.Printf("failed to merge update data %v", err)
-			}
-			// manually overwite localization data
-			if castedData.Localization != nil && (api.Extensions[index].Localization == nil || castedData.Localization.LastUpdated > api.Extensions[index].Localization.LastUpdated) {
-				api.Extensions[index].Localization = castedData.Localization
 			}
 			updatedExtensions = append(updatedExtensions, api.Extensions[index])
 		}
@@ -489,7 +475,6 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 
 	for entry := range extension.Assets {
 		name := extension.Assets[entry].Name
-
 		extension.Assets[entry] = core.Asset{
 			LastUpdated: extension.Assets[entry].LastUpdated,
 			Url:         fmt.Sprintf("%s/assets/%s.js", extension.Development.Root.Url, name),
@@ -498,42 +483,6 @@ func setExtensionUrls(original core.Extension, rootUrl string) core.Extension {
 	}
 
 	return extension
-}
-
-func GetFileNames(folderPath string) ([]string, error) {
-	files := []string{}
-	items, err := os.ReadDir(folderPath)
-	if err != nil {
-		return files, err
-	}
-	for _, item := range items {
-		if !item.IsDir() {
-			files = append(files, item.Name())
-		}
-	}
-	return files, nil
-}
-
-func GetMapFromJsonFile(filePath string) (map[string]interface{}, error) {
-	var result map[string]interface{}
-
-	byteValue, err := os.ReadFile(filePath)
-
-	if err != nil {
-		return result, err
-	}
-
-	err = json.Unmarshal([]byte(byteValue), &result)
-
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
-}
-
-func IsDefaultLocale(fileName string) bool {
-	return strings.HasSuffix(fileName, ".default.json")
 }
 
 func formatData(data map[string]interface{}, formatter func(str string) string) map[string]interface{} {
@@ -554,13 +503,18 @@ func forEachValueInMap(data map[string]interface{}, onEachValue func(key string,
 	}
 }
 
-func mergeWithOverwrite(source interface{}, destination interface{}) error {
-	// Allow overwriting existing data and allow setting booleans to false
-	// There is a weird quirk in the library where false is treated as empty
-	// We need to use a custom transformer to fix this issue because universally allowing
-	// overwriting with empty values leads to unexpected results overriding arrays and maps
-	// https://github.com/imdario/mergo/issues/89#issuecomment-562954181
-	return mergo.Merge(source, destination, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
+func mergeWithOverwrite(destination interface{}, source interface{}) error {
+	/**
+	 * Allow overwriting existing data and also use a custom transformer with the following rules:
+	 *
+	 * 1. Allow booleans with false values to override true values. There is a weird quirk in the library where false is treated as empty.
+	 * We need to use a custom transformer to fix this issue because universally allowing
+	 * overwriting with empty values leads to unexpected results overriding arrays and maps
+	 * see here for more info: https://github.com/imdario/mergo/issues/89#issuecomment-562954181
+	 *
+	 * 2. Allow overwriting Localization data completely if it has been set
+	 */
+	return mergo.Merge(destination, source, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
 }
 
 func (api *ExtensionsApi) getResponse(r *http.Request) *Response {

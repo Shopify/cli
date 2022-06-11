@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/api"
 	"github.com/Shopify/shopify-cli-extensions/build"
@@ -96,29 +95,20 @@ func (cli *CLI) serve(args ...string) {
 
 	for _, extension := range cli.config.Extensions {
 		go build.Watch(extension, cli.config.IntegrationContext, func(result build.Result) {
-			extension := result.Extension
-
 			if result.Success {
-				extension.Development.Status = "success"
 				fmt.Println(result)
 			} else {
-				extension.Development.Status = "error"
 				fmt.Fprintln(os.Stderr, result)
 			}
 
-			api.Notify([]core.Extension{extension})
+			api.Notify([]core.Extension{result.Extension})
 		})
 
 		go build.WatchLocalization(ctx, extension, func(result build.Result) {
-			extension := result.Extension
-
 			if result.Success {
-				extension.Localization.LastUpdated = time.Now().Unix()
-				extension.Development.LocalizationStatus = "success"
-				api.Notify([]core.Extension{extension})
+				api.Notify([]core.Extension{result.Extension})
 				fmt.Println(result)
 			} else {
-				extension.Development.LocalizationStatus = "error"
 				fmt.Fprintln(os.Stderr, result)
 			}
 		})

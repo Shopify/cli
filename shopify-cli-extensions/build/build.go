@@ -2,26 +2,24 @@ package build
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/Shopify/shopify-cli-extensions/api"
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"github.com/Shopify/shopify-cli-extensions/create"
-	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 
 	"text/template"
 )
 
 const nextStepsTemplatePath = "templates/shared/%s/next-steps.txt"
+const rwxr_xr_x = 0755
 
 func Build(extension core.Extension, report ResultHandler) {
 	var err error
@@ -55,6 +53,26 @@ func Build(extension core.Extension, report ResultHandler) {
 	report(Result{true, string(output), extension})
 }
 
+func reportAndUpdateDevelopmentStatus(result Result, report ResultHandler) {
+	extension := result.Extension
+	if result.Success {
+		result.Extension.Development.Status = "success"
+		// Recreate the asset struct otherwise we will have data leakage from previous results
+		result.Extension.Assets = core.CreateAssetsEntries(&extension)
+
+		for entry := range result.Extension.Assets {
+			result.Extension.Assets[entry] = core.Asset{
+				Name:        extension.Assets[entry].Name,
+				LastUpdated: time.Now().Unix(),
+			}
+		}
+	} else {
+		result.Extension.Development.Status = "error"
+	}
+
+	report(result)
+}
+
 func Watch(extension core.Extension, integrationCtx core.IntegrationContext, report ResultHandler) {
 	var err error
 	var command *exec.Cmd
@@ -64,7 +82,7 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 		command, err = script(extension.BuildDir(), "develop")
 	}
 	if err != nil {
-		report(Result{false, err.Error(), extension})
+		reportAndUpdateDevelopmentStatus(Result{false, err.Error(), extension}, report)
 		return
 	}
 
@@ -72,7 +90,7 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 	stderr, _ := command.StderrPipe()
 
 	if err := configureScript(command, extension); err != nil {
-		report(Result{false, err.Error(), extension})
+		reportAndUpdateDevelopmentStatus(Result{false, err.Error(), extension}, report)
 	}
 	ensureBuildDirectoryExists(extension)
 
@@ -87,9 +105,9 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 		onCompletion: func() { logProcessors.Done() },
 		onMessage: func(message string) {
 			if err := verifyAssets(extension); err != nil {
-				report(Result{false, err.Error(), extension})
+				reportAndUpdateDevelopmentStatus(Result{false, err.Error(), extension}, report)
 			} else {
-				report(Result{true, message, extension})
+				reportAndUpdateDevelopmentStatus(Result{true, message, extension}, report)
 				if len(templateBytes) > 0 {
 					fmt.Fprintf(os.Stdout, "%s\n", generateNextSteps(string(templateBytes), extension, integrationCtx))
 					templateBytes = nil
@@ -101,7 +119,7 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 	go processLogs(stderr, logProcessingHandlers{
 		onCompletion: func() { logProcessors.Done() },
 		onMessage: func(message string) {
-			report(Result{false, message, extension})
+			reportAndUpdateDevelopmentStatus(Result{false, message, extension}, report)
 		},
 	})
 
@@ -159,128 +177,4 @@ func configureScript(script *exec.Cmd, extension core.Extension) error {
 	}
 	script.Stdin = bytes.NewReader(data)
 	return nil
-}
-
-const rwxr_xr_x = 0755
-
-func getLocalization(extension *core.Extension) (*core.Localization, error) {
-	path := filepath.Join(".", extension.Development.RootDir, "locales")
-	emptyResponse := &core.Localization{
-		DefaultLocale: "",
-		Translations:  make(map[string]interface{}),
-	}
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// The extension does not have a locales directory.
-		return emptyResponse, nil
-	}
-
-	fileNames, err := api.GetFileNames(path)
-	if err != nil {
-		return emptyResponse, err
-	}
-	translations := make(map[string]interface{})
-	defaultLocale := ""
-	defaultLocalesFound := []string{}
-
-	for _, fileName := range fileNames {
-		data, err := api.GetMapFromJsonFile(filepath.Join(path, fileName))
-		if err != nil {
-			return emptyResponse, err
-		}
-
-		locale := strings.Split(fileName, ".")[0]
-
-		if api.IsDefaultLocale(fileName) {
-			defaultLocalesFound = append(defaultLocalesFound, locale)
-		}
-
-		translations[locale] = data
-	}
-
-	if len(translations) == 0 {
-		return emptyResponse, nil
-	} else {
-
-		if len(defaultLocalesFound) == 0 {
-			log.Println("could not determine a default locale, please ensure you have a {locale}.default.json file")
-		} else {
-			if len(defaultLocalesFound) > 1 {
-				log.Println("multiple default locales found, please ensure you only have a single {locale}.default.json file")
-			}
-			defaultLocale = defaultLocalesFound[0]
-		}
-
-		return &core.Localization{
-			DefaultLocale: defaultLocale,
-			Translations:  translations,
-		}, nil
-	}
-}
-
-func setLocalization(extension *core.Extension) error {
-	localization, err := getLocalization(extension)
-
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	extension.Localization = localization
-	return nil
-}
-
-func WatchLocalization(ctx context.Context, extension core.Extension, report ResultHandler) {
-	directory := filepath.Join(".", extension.Development.RootDir, "locales")
-	if _, err := os.Stat(directory); os.IsNotExist(err) {
-		// The extension does not have a locales directory.
-		return
-	}
-
-	err := setLocalization(&extension)
-	if err != nil {
-		report(Result{false, err.Error(), extension})
-	}
-	report(Result{true, "successfully built localization", extension})
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer watcher.Close()
-
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-
-				triggers := map[string]bool{
-					fsnotify.Create.String(): true,
-					fsnotify.Rename.String(): true,
-					fsnotify.Write.String():  true,
-				}
-
-				if triggers[event.Op.String()] {
-					err := setLocalization(&extension)
-					if err != nil {
-						report(Result{false, fmt.Sprintf("could not resolve localization, error: %s\n", err.Error()), extension})
-					}
-					report(Result{true, "successfully built localization", extension})
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
-			}
-		}
-	}()
-
-	err = watcher.Add(directory)
-	log.Println("Watcher added for:", directory)
-	if err != nil {
-		log.Fatal(err)
-	}
-	<-ctx.Done()
 }

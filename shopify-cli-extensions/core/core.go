@@ -21,30 +21,8 @@ func NewExtensionService(config *Config) *ExtensionService {
 	// Create a copy so we don't mutate the configs
 	extensions := []Extension{}
 	for _, extension := range config.Extensions {
-		extension.Assets = make(map[string]Asset)
-		keys := make([]string, 0, len(extension.Development.Entries))
-
-		for key := range extension.Development.Entries {
-			keys = append(keys, key)
-		}
-
-		for entry := range keys {
-			name := keys[entry]
-			extension.Assets[name] = Asset{Name: name}
-		}
-
-		if extension.Surface == "" {
-			extension.Surface = GetSurface(&extension)
-		}
-
-		if extension.Capabilities.NetworkAccess == nil {
-			extension.Capabilities.NetworkAccess = NewBoolPointer(false)
-		}
-
-		if extension.Development.Hidden == nil {
-			extension.Development.Hidden = NewBoolPointer(false)
-		}
-
+		// Structs inside of maps cannot be copied and have to be re-created
+		extension.Assets = CreateAssetsEntries(&extension)
 		extensions = append(extensions, extension)
 	}
 	// TODO: Improve this when we need to read more app configs,
@@ -65,10 +43,47 @@ func NewExtensionService(config *Config) *ExtensionService {
 	return &service
 }
 
+func CreateAssetsEntries(extension *Extension) map[string]Asset {
+	assets := make(map[string]Asset)
+	keys := make([]string, 0, len(extension.Development.Entries))
+
+	for key := range extension.Development.Entries {
+		keys = append(keys, key)
+	}
+
+	for entry := range keys {
+		name := keys[entry]
+		assets[name] = Asset{Name: name}
+	}
+
+	return assets
+}
+
+func normalizeConfig(config *Config) {
+	// Normalize configs
+	for index := range config.Extensions {
+		config.Extensions[index].Assets = CreateAssetsEntries(&config.Extensions[index])
+
+		if config.Extensions[index].Surface == "" {
+			config.Extensions[index].Surface = GetSurface(&config.Extensions[index])
+		}
+
+		if config.Extensions[index].Capabilities.NetworkAccess == nil {
+			config.Extensions[index].Capabilities.NetworkAccess = NewBoolPointer(false)
+		}
+
+		if config.Extensions[index].Development.Hidden == nil {
+			config.Extensions[index].Development.Hidden = NewBoolPointer(false)
+		}
+	}
+
+}
+
 func LoadConfig(r io.Reader) (config *Config, err error) {
 	config = &Config{}
 	decoder := yaml.NewDecoder(r)
 	err = decoder.Decode(config)
+	normalizeConfig(config)
 	return
 }
 
@@ -196,6 +211,16 @@ type Url struct {
 	Url string `json:"url" yaml:"url"`
 }
 
+/**
+ * A custom transformer for mergo with the following rules:
+ *
+ * 1. Allow booleans with false values to override true values. There is a weird quirk in the library where false is treated as empty.
+ * We need to use a custom transformer to fix this issue because universally allowing
+ * overwriting with empty values leads to unexpected results overriding arrays and maps
+ * see here for more info: https://github.com/imdario/mergo/issues/89#issuecomment-562954181
+ *
+ * 2. Allow overwriting Localization data completely if it has been set
+ */
 func (t Extension) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
 	if typ.Kind() == reflect.Bool {
 		return func(dst, src reflect.Value) error {
@@ -203,6 +228,19 @@ func (t Extension) Transformer(typ reflect.Type) func(dst, src reflect.Value) er
 			return nil
 		}
 	}
+
+	if typ.Kind() == reflect.Struct && typ.Name() == "Localization" {
+		return func(dst, src reflect.Value) error {
+			for i := 0; i < src.NumField(); i++ {
+				srcValue := src.Field(i)
+				if dst.Field(i).IsValid() {
+					dst.Field(i).Set(srcValue)
+				}
+			}
+			return nil
+		}
+	}
+
 	return nil
 }
 

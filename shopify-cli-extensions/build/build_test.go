@@ -76,8 +76,16 @@ func TestWatch(t *testing.T) {
 		t.Error("expected first build to fail")
 	}
 
+	if results[0].Extension.Assets["main"].LastUpdated != 0 {
+		t.Errorf("expected first build to not update the last updated timestamp but got %d", results[0].Extension.Assets["main"].LastUpdated)
+	}
+
 	if !results[1].Success {
 		t.Error("expected second build to succeed")
+	}
+
+	if results[1].Extension.Assets["main"].LastUpdated == 0 {
+		t.Errorf("expected second build to update the last updated timestamp but got %d", results[1].Extension.Assets["main"].LastUpdated)
 	}
 
 	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js")); err != nil {
