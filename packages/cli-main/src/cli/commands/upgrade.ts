@@ -1,8 +1,6 @@
 import {Command, Flags} from '@oclif/core'
 import {dependency, error, file, output, path} from '@shopify/cli-kit'
 
-type JSONDepsOpts = [dependency.DependencyType, {[key: string]: string}]
-
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'
 
@@ -49,27 +47,10 @@ export default class Upgrade extends Command {
       )}...`,
     )
 
-    await Promise.all(
-      (
-        [
-          ['prod', packageJsonDependencies],
-          ['dev', packageJsonDevDependencies],
-        ] as JSONDepsOpts[]
-      ).map(async (opts: JSONDepsOpts): Promise<void> => {
-        const [depsEnv, deps] = opts
-        const packages = ['@shopify/cli', '@shopify/app', '@shopify/hydrogen', '@shopify/cli-hydrogen']
-        const packagesToUpdate = packages.filter((pkg: string): boolean => {
-          const pkgRequirement: string | undefined = deps[pkg]
-          return Boolean(pkgRequirement)
-        })
+    await this.installJsonDependencies('prod', packageJsonDependencies, projectDir)
+    await this.installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
 
-        await dependency.addLatestNPMDependencies(packagesToUpdate, {
-          dependencyManager: dependency.dependencyManagerUsedForCreating(),
-          type: depsEnv,
-          directory: projectDir,
-        })
-      }),
-    )
+    output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
   }
 
   async getProjectDir(directory: string) {
@@ -87,5 +68,27 @@ export default class Upgrade extends Command {
         type: 'directory',
       },
     )
+  }
+
+  async installJsonDependencies(
+    depsEnv: dependency.DependencyType,
+    deps: {[key: string]: string},
+    directory: string,
+  ): Promise<void> {
+    const packages = ['@shopify/cli', '@shopify/app', '@shopify/hydrogen', '@shopify/cli-hydrogen']
+    const packagesToUpdate = packages.filter((pkg: string): boolean => {
+      const pkgRequirement: string | undefined = deps[pkg]
+      return Boolean(pkgRequirement)
+    })
+
+    if (packagesToUpdate.length > 0) {
+      await dependency.addLatestNPMDependencies(packagesToUpdate, {
+        dependencyManager: dependency.dependencyManagerUsedForCreating(),
+        type: depsEnv,
+        directory,
+        stdout: process.stdout,
+        stderr: process.stderr,
+      })
+    }
   }
 }
