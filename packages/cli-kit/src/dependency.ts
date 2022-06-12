@@ -9,6 +9,15 @@ import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
+export const genericConfigurationFileNames = {
+  yarn: {
+    lockfile: 'yarn.lock',
+  },
+  pnpm: {
+    lockfile: 'pnpm-lock.yaml',
+  },
+} as const
+
 export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
 export type DependencyManager = typeof dependencyManager[number]
 
@@ -25,6 +34,26 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
+    return 'pnpm'
+  } else {
+    return 'npm'
+  }
+}
+
+/**
+ * Returns the dependency manager used by an existing project.
+ * @param directory {string} The root directory of the project.
+ * @returns The dependency manager
+ */
+export async function getDependencyManager(directory: string): Promise<DependencyManager> {
+  const yarnLockPath = pathJoin(directory, genericConfigurationFileNames.yarn.lockfile)
+  const yarnLockExists = await fileExists(yarnLockPath)
+  const pnpmLockPath = pathJoin(directory, genericConfigurationFileNames.pnpm.lockfile)
+  const pnpmLockExists = await fileExists(pnpmLockPath)
+  let dependencyManager: DependencyManager
+  if (yarnLockExists) {
+    return 'yarn'
+  } else if (pnpmLockExists) {
     return 'pnpm'
   } else {
     return 'npm'

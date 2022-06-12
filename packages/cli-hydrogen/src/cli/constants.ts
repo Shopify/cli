@@ -1,3 +1,5 @@
+import {dependency} from '@shopify/cli-kit'
+
 export const configurationFileNames = {
   hydrogen: 'hydrogen.config',
 } as const
@@ -15,10 +17,5 @@ export const genericConfigurationFileNames = {
   typescript: {
     config: 'tsconfig.json',
   },
-  yarn: {
-    lockfile: 'yarn.lock',
-  },
-  pnpm: {
-    lockfile: 'pnpm-lock.yaml',
-  },
+  ...dependency.genericConfigurationFileNames,
 } as const

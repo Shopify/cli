@@ -83,7 +83,7 @@ export default class Upgrade extends Command {
 
     if (packagesToUpdate.length > 0) {
       await dependency.addLatestNPMDependencies(packagesToUpdate, {
-        dependencyManager: dependency.dependencyManagerUsedForCreating(),
+        dependencyManager: await dependency.getDependencyManager(directory),
         type: depsEnv,
         directory,
         stdout: process.stdout,
