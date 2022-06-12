@@ -151,7 +151,7 @@ async function packageJSONContents(packageJsonPath: string): Promise<PackageJSON
   return JSON.parse(await readFile(packageJsonPath))
 }
 
-type DependencyType = 'dev' | 'prod' | 'peer'
+export type DependencyType = 'dev' | 'prod' | 'peer'
 
 interface AddNPMDependenciesIfNeededOptions {
   /** How dependencies should be added */

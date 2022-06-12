@@ -1,5 +1,7 @@
 import {Command} from '@oclif/core'
-import {dependency, file, output, path} from '@shopify/cli-kit'
+import {dependency, error, file, output, path} from '@shopify/cli-kit'
+
+type JSONDepsOpts = [dependency.DependencyType, {[key: string]: string}]
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'
@@ -7,7 +9,6 @@ export default class Upgrade extends Command {
   async run(): Promise<void> {
     const cliDependency = '@shopify/cli'
     const currentVersion = this.config.version
-    output.info(output.content`Current ${Version.description}: ${output.token.yellow(currentVersion)}`.value)
     const newestVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
 
     if (!newestVersion) {
@@ -23,26 +24,42 @@ export default class Upgrade extends Command {
       )}...`,
     )
 
-    const projectDir = await path.findUp(async (dir) => {
+    const projectDir = await path.findUp(async (dir: string) => {
+      console.log(dir)
       const configFilesExist = await Promise.all(
         ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'].map(async (configFile) => {
           return file.exists(path.join(dir, configFile))
         }),
       )
-      return configFilesExist.some((bool) => bool)
+      if (configFilesExist.some((bool) => bool)) return dir
     })
+    if (!projectDir) {
+      throw new error.Abort(
+        output.content`Couldn't find the configuration file for ${output.token.path(
+          process.cwd(),
+        )}, are you in a Shopify project directory?`,
+      )
+    }
     const packageJson = JSON.parse(await file.read(path.join(projectDir, 'package.json')))
+    const packageJsonDependencies: {[key: string]: string} = packageJson.dependencies || {}
+    const packageJsonDevDependencies: {[key: string]: string} = packageJson.devDependencies || {}
     await Promise.all(
-      [
-        ['prod', packageJson.dependencies],
-        ['dev', packageJson.devDependencies],
-      ].map(async (env, deps) => {
+      (
+        [
+          ['prod', packageJsonDependencies],
+          ['dev', packageJsonDevDependencies],
+        ] as JSONDepsOpts[]
+      ).map(async (opts: JSONDepsOpts): Promise<void> => {
+        const [depsEnv, deps] = opts
         const packages = ['@shopify/cli', '@shopify/app', '@shopify/hydrogen', '@shopify/cli-hydrogen']
-        const packagesToUpdate = packages.filter((package) => deps[package])
+        const packagesToUpdate = packages.filter((pkg: string): boolean => {
+          const pkgRequirement: string | undefined = deps[pkg]
+          return Boolean(pkgRequirement)
+        })
 
         await dependency.addLatestNPMDependencies(packagesToUpdate, {
           dependencyManager: dependency.dependencyManagerUsedForCreating(),
-          type: env,
+          type: depsEnv,
           directory: projectDir,
         })
       }),
