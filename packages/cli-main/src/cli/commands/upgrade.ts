@@ -75,7 +75,7 @@ export default class Upgrade extends Command {
     deps: {[key: string]: string},
     directory: string,
   ): Promise<void> {
-    const packages = ['@shopify/cli', '@shopify/app', '@shopify/hydrogen', '@shopify/cli-hydrogen']
+    const packages = ['@shopify/cli', '@shopify/app', '@shopify/cli-hydrogen']
     const packagesToUpdate = packages.filter((pkg: string): boolean => {
       const pkgRequirement: string | undefined = deps[pkg]
       return Boolean(pkgRequirement)
