@@ -3,7 +3,6 @@ import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import env from './env'
 import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
@@ -16,21 +15,9 @@ interface DeployOptions {
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
-
-  /** When true the command outputs the env. variables necessary to deploy and run web/ */
-  outputWebEnv: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {
-  /**
-   * If the user only wants to see the web environment we
-   * output it and return.
-   */
-  if (options.outputWebEnv) {
-    await env({app: options.app})
-    return
-  }
-
   // eslint-disable-next-line prefer-const
   let {app, identifiers, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
