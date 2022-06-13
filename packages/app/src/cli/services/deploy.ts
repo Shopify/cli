@@ -1,40 +1,13 @@
+/* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import {
-  App,
-  Extension,
-  FunctionExtension,
-  getUIExtensionRendererVersion,
-  UIExtension,
-  updateAppIdentifiers,
-} from '../models/app/app'
+import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
 import {UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {path, output, temporary, error, file} from '@shopify/cli-kit'
-
-const WebPixelConfigError = (property: string) => {
-  return new error.Abort(
-    `The Web Pixel Extension configuration is missing the key "${property}"`,
-    `Please update your shopify.ui.extension.toml to include a valid "${property}"`,
-  )
-}
-
-const FunctionsWithMissingWasm = (extensions: {id: string; path: string}[]) => {
-  const extensionLine = (extension: {id: string; path: string}): string => {
-    return output.stringifyMessage(
-      output.content`· ${output.token.green(extension.id)}: ${output.token.path(extension.path)}`,
-    )
-  }
-  const extensionLines = output.token.raw(extensions.map(extensionLine).join('\n'))
-  return new error.Abort(
-    output.content`The following function extensions haven't compiled the wasm in the expected path:
-${extensionLines}
-    `,
-    `Make sure the build command outputs the wasm in the expected directory.`,
-  )
-}
+import {validateExtensions} from '../validators/extensions'
+import {path, output, temporary, file} from '@shopify/cli-kit'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -70,36 +43,35 @@ export const deploy = async (options: DeployOptions) => {
     await file.mkdir(path.dirname(bundlePath))
     const bundle = app.extensions.ui.length !== 0
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
+    await validateExtensions(app)
 
-    /**
-     * The bundles only support UI extensions for now so we only need bundle and upload
-     * the bundle if the app has UI extensions.
-     */
     if (bundle) {
+      /**
+       * The bundles only support UI extensions for now so we only need bundle and upload
+       * the bundle if the app has UI extensions.
+       */
       await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     }
-    await validateFunctionsWasmPresence(app.extensions.function)
-    // eslint-disable-next-line require-atomic-updates
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
-    // eslint-disable-next-line require-atomic-updates
     app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
-
-    output.newline()
-    output.info('Summary')
-    const outputDeployedButNotLiveMessage = (extension: Extension) => {
-      output.info(
-        output.content`${output.token.magenta('✔')} ${
-          extension.localIdentifier
-        } is deployed to Shopify but not yet live`,
-      )
-    }
-    const outputDeployedAndLivedMessage = (extension: Extension) => {
-      output.info(output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is live`)
-    }
-    app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
-    app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
-    app.extensions.function.forEach(outputDeployedAndLivedMessage)
+    outputCompletionMessage(app)
   })
+}
+
+function outputCompletionMessage(app: App) {
+  output.newline()
+  output.info('Summary')
+  const outputDeployedButNotLiveMessage = (extension: Extension) => {
+    output.info(
+      output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is deployed to Shopify but not yet live`,
+    )
+  }
+  const outputDeployedAndLivedMessage = (extension: Extension) => {
+    output.info(output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is live`)
+  }
+  app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
+  app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
+  app.extensions.function.forEach(outputDeployedAndLivedMessage)
 }
 
 async function configFor(extension: UIExtension, app: App) {
@@ -116,7 +88,6 @@ async function configFor(extension: UIExtension, app: App) {
       return {localization: localizationConfig, ...extension.configuration}
     }
     case 'web_pixel_extension': {
-      validateWebPixelConfig(extension)
       return {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         runtime_context: extension.configuration.runtimeContext,
@@ -126,37 +97,5 @@ async function configFor(extension: UIExtension, app: App) {
         config_version: extension.configuration.version,
       }
     }
-  }
-}
-
-export async function validateFunctionsWasmPresence(extensions: FunctionExtension[]) {
-  const extensionsWithoutWasm = (
-    await Promise.all(
-      extensions.map(async (extension) => {
-        return (await file.exists(extension.buildWasmPath))
-          ? undefined
-          : {
-              id: extension.localIdentifier,
-              path: extension.buildWasmPath,
-            }
-      }),
-    )
-  ).filter((extension) => extension !== undefined) as {id: string; path: string}[]
-  if (extensionsWithoutWasm.length !== 0) {
-    throw FunctionsWithMissingWasm(extensionsWithoutWasm)
-  }
-}
-
-function validateWebPixelConfig(extension: UIExtension) {
-  if (!extension.configuration.runtimeContext) {
-    throw WebPixelConfigError('runtime_context')
-  }
-
-  if (!extension.configuration.configuration) {
-    throw WebPixelConfigError('configuration')
-  }
-
-  if (!extension.configuration.version) {
-    throw WebPixelConfigError('version')
   }
 }
