@@ -1,6 +1,12 @@
-import {getBinaryPathOrDownload, getBinaryLocalPath, validatePlatformSupport, UnsupportedPlatformError} from './binary'
+import {
+  getBinaryPathOrDownload,
+  getBinaryLocalPath,
+  validatePlatformSupport,
+  UnsupportedPlatformError,
+  getArtifactName,
+} from './binary'
 import {versions} from '../../constants'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, it, expect, vi, test} from 'vitest'
 import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
 import {createGzip} from 'node:zlib'
@@ -201,5 +207,40 @@ describe('getBinaryPathOrDownload', () => {
       await expect(file.read(outputBinary)).resolves.toEqual(binaryContent)
       await expect(file.hasExecutablePermissions(outputBinary)).resolves.toEqual(true)
     })
+  })
+})
+
+describe('getArtifactName', () => {
+  test("returns the right name when it's darwin", () => {
+    // When
+    const got = getArtifactName({
+      arch: 'amd64',
+      platform: 'darwin',
+    })
+
+    // Then
+    expect(got).toMatchInlineSnapshot('"shopify-extensions-darwin-amd64"')
+  })
+
+  test("returns the right name when it's windows", () => {
+    // When
+    const got = getArtifactName({
+      arch: 'amd64',
+      platform: 'windows',
+    })
+
+    // Then
+    expect(got).toMatchInlineSnapshot('"shopify-extensions-windows-amd64.exe"')
+  })
+
+  test("returns the right name when it's win32", () => {
+    // When
+    const got = getArtifactName({
+      arch: 'amd64',
+      platform: 'win32',
+    })
+
+    // Then
+    expect(got).toMatchInlineSnapshot('"shopify-extensions-windows-amd64.exe"')
   })
 })
