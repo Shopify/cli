@@ -39,6 +39,7 @@ export function ExtensionRow({
     },
     [extension, onSelect],
   );
+
   const [isFocus, setFocus] = useState(false);
 
   const textClass = hidden ? styles.Hidden : undefined;
@@ -58,7 +59,12 @@ export function ExtensionRow({
       onMouseLeave={onClearHighlight}
     >
       <td>
-        <Checkbox label="" checked={selected} onChange={() => handleSelect()} />
+        {
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+          <div onClick={(event) => event.stopPropagation()}>
+            <Checkbox label="" checked={selected} onChange={() => handleSelect()} />
+          </div>
+        }
       </td>
       <td className={textClass}>{extension.title}</td>
       <td className={textClass}>{extension.type}</td>
