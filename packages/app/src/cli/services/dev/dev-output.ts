@@ -5,12 +5,12 @@ import {output, string} from '@shopify/cli-kit'
 export function showAppURL(updated: boolean, storeFqdn: string, url: string) {
   const appURL = buildAppURL(storeFqdn, url)
   const heading = output.token.heading('App URL')
-  const message = output.content`\n${heading}\n\nOnce everything's built, your app's shareable link will be: ${appURL}.`
+  let message = `Once everything's built, your app's shareable link will be: ${appURL}`
   if (updated) {
-    message.value += `\nNote that your app's URL in Shopify Partners will be updated.\n`
+    message += `\nNote that your app's URL in Shopify Partners will be updated.`
   }
 
-  output.info(message)
+  output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 
 export function showExtensionsMessages(app: App, storeFqdn: string, url: string) {
@@ -21,7 +21,7 @@ export function showExtensionsMessages(app: App, storeFqdn: string, url: string)
 
 function showUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
   for (const extension of extensions) {
-    const heading = output.token.heading(`${getHumanKey(extension.type)} (${extension.configuration.name})`)
+    const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)}) `)
     let message: string
     switch (extension.type as UIExtensionTypes) {
       case 'checkout_post_purchase': {
