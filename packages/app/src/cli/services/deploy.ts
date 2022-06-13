@@ -55,11 +55,22 @@ export const deploy = async (options: DeployOptions) => {
 
   const themeExtension = options.app.extensions.theme[0]
   if (themeExtension) {
-    console.log(JSON.stringify(identifiers.extensions, null, 2))
+    const files: {[key: string]: string} = {}
+    const themeFiles = await path.glob(path.join(themeExtension.directory, '*/*'))
+    await Promise.all(
+      themeFiles.map(async (filepath) => {
+        const relativePath = path.relative(themeExtension.directory, filepath)
+        const dirname = path.dirname(filepath)
+        const encoding = dirname === 'assets' ? 'binary' : 'utf8'
+        const fileContents = await file.read(filepath, {encoding})
+        files[relativePath] = Buffer.from(fileContents).toString('base64')
+      }),
+    )
+
     const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
       apiKey,
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      config: JSON.stringify({theme_extension: {files: {}}}),
+      config: JSON.stringify({theme_extension: {files}}),
       context: undefined,
       registrationId: identifiers.extensionIds[themeExtension.localIdentifier],
     }
