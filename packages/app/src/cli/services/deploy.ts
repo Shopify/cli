@@ -16,7 +16,7 @@ import {
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {validateExtensions} from '../validators/extensions'
-import {path, output, temporary, file} from '@shopify/cli-kit'
+import {api, error, path, output, temporary, file} from '@shopify/cli-kit'
 import {OrganizationApp} from 'cli/models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
@@ -52,6 +52,28 @@ export const deploy = async (options: DeployOptions) => {
       }
     }),
   )
+
+  const themeExtension = options.app.extensions.theme[0]
+  if (themeExtension) {
+    console.log(JSON.stringify(identifiers.extensions, null, 2))
+    const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
+      apiKey,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      config: JSON.stringify({theme_extension: {files: {}}}),
+      context: undefined,
+      registrationId: identifiers.extensionIds[themeExtension.localIdentifier],
+    }
+    const mutation = api.graphql.ExtensionUpdateDraftMutation
+    const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
+    if (
+      result.extensionUpdateDraft &&
+      result.extensionUpdateDraft.userErrors &&
+      result.extensionUpdateDraft.userErrors.length > 0
+    ) {
+      const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+      throw new error.Abort(errors)
+    }
+  }
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `bundle.zip`)

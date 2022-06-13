@@ -15,6 +15,10 @@ export interface IdentifiersExtensions {
   [localIdentifier: string]: string
 }
 
+export interface NumericIdentifiersExtensions {
+  [localIdentifier: string]: number
+}
+
 export interface Identifiers {
   /** Application's API Key */
   app: string
@@ -23,6 +27,11 @@ export interface Identifiers {
    * The extensions' unique identifiers.
    */
   extensions: IdentifiersExtensions
+
+  /**
+   * The extensions' numeric identifiers.
+   */
+  extensionIds: NumericIdentifiersExtensions
 }
 
 export const AppConfigurationSchema = schema.define.object({

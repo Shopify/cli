@@ -91,7 +91,17 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     validMatches = {...validMatches, ...newIdentifiers}
   }
 
-  return {app: options.appId, extensions: {...validMatches, ...functionLocalIdentifiers}}
+  const validMatchesById: {[key: string]: number} = {}
+  for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
+    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
+    validMatchesById[localIdentifier] = registration.id
+  }
+
+  return {
+    app: options.appId,
+    extensions: {...validMatches, ...functionLocalIdentifiers},
+    extensionIds: validMatchesById,
+  }
 }
 
 async function createExtensions(extensions: Extension[], appId: string) {
