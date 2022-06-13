@@ -1,9 +1,18 @@
 import {appFlags} from '../../../flags'
-import {extensions, ExtensionTypes, getExtensionOutputConfig, limitedExtensions, uiExtensions} from '../../../constants'
+import {
+  extensions,
+  ExtensionTypes,
+  getExtensionOutputConfig,
+  limitedExtensions,
+  isUiExtensionType,
+  isFunctionExtensionType,
+  functionExtensionTemplates,
+  uiExtensionTemplates,
+} from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
-import {output, path, cli, error} from '@shopify/cli-kit'
+import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class AppScaffoldExtension extends Command {
@@ -16,8 +25,7 @@ export default class AppScaffoldExtension extends Command {
     type: Flags.string({
       char: 't',
       hidden: false,
-      description: 'Extension type',
-      options: extensions.types,
+      description: `Extension type\n<options: ${extensions.publicTypes.join('|')}>`,
       env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
     }),
     name: Flags.string({
@@ -34,18 +42,10 @@ export default class AppScaffoldExtension extends Command {
         'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/scripts-apis-examples',
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
-    language: Flags.string({
-      hidden: true,
-      char: 'l',
-      options: ['wasm', 'rust', 'typescript'],
-      description: 'Language of the template, where applicable',
-      env: 'SHOPIFY_FLAG_LANGUAGE',
-    }),
-
     template: Flags.string({
       hidden: false,
       description: 'Choose a starting template for your extension, where applicable',
-      options: ['vanilla-js', 'react'],
+      options: ['vanilla-js', 'react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
   }
@@ -57,7 +57,8 @@ export default class AppScaffoldExtension extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
 
-    this.validateType(app, flags.type)
+    await this.validateExtensionType(flags.type)
+    this.validateExtensionTypeLimit(app, flags.type)
     const extensionFlavor = flags.template
     this.validateExtensionFlavor(flags.type, extensionFlavor)
 
@@ -73,10 +74,23 @@ export default class AppScaffoldExtension extends Command {
       extensionType: promptAnswers.extensionType,
       app,
       cloneUrl: flags['clone-url'],
-      language: flags.language,
     })
 
     output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))
+  }
+
+  async validateExtensionType(type: string | undefined) {
+    if (!type) {
+      return
+    }
+    const isShopify = await environment.local.isShopify()
+    const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
+    if (!(extensions.types as string[]).includes(type)) {
+      throw new error.Abort(
+        `Invalid extension type ${type}`,
+        `The following extension types are supported: ${supportedExtensions.join(', ')}`,
+      )
+    }
   }
 
   /**
@@ -85,18 +99,30 @@ export default class AppScaffoldExtension extends Command {
    * @param app {App} current App
    * @param type {string} extension type
    */
-  validateType(app: App, type: string | undefined) {
+  validateExtensionTypeLimit(app: App, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
       throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
     }
   }
 
   validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
-    if (flavor && type && !(uiExtensions.types as ReadonlyArray<string>).includes(type)) {
-      throw new error.Abort(
+    if (!flavor || !type) {
+      return
+    }
+    const uiExtensionTemplateNames = uiExtensionTemplates.map((template) => template.value)
+    const functionExtensionTemplateNames = functionExtensionTemplates.map((template) => template.value)
+
+    const invalidTemplateError = (templates: string[]) => {
+      return new error.Abort(
         'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${uiExtensions.types.join(', ')}.`,
+        `You can only specify a template for these extension types: ${templates.join(', ')}.`,
       )
+    }
+    if (isUiExtensionType(type) && !uiExtensionTemplateNames.includes(flavor)) {
+      throw invalidTemplateError(uiExtensionTemplateNames)
+    }
+    if (isFunctionExtensionType(type) && !functionExtensionTemplateNames.includes(flavor)) {
+      throw invalidTemplateError(functionExtensionTemplateNames)
     }
   }
 

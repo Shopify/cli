@@ -6,7 +6,8 @@ import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy'
-import {App, AppConfiguration, Web, WebType} from '../models/app/app'
+import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
+import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
 import {error, output, port, system} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 import {Writable} from 'node:stream'
@@ -43,6 +44,10 @@ async function dev(options: DevOptions) {
     app: {apiSecret},
   } = await ensureDevEnvironment(options)
 
+  if (Object.values(identifiers.extensions).length > 0) {
+    output.completed("A production app was selected. We'll use the extensions IDs present in your .env file")
+  }
+
   const proxyPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options, proxyPort)
@@ -71,6 +76,9 @@ async function dev(options: DevOptions) {
     apiSecret: (apiSecret as string) ?? '',
     hostname: url,
   }
+
+  // If we have a real UUID for an extension, use that instead of a random one
+  options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
 
   const devExt = await devExtensionsTarget(options.app, identifiers.app, url, storeFqdn)
   const proxyTargets: ReverseHTTPProxyTarget[] = [devExt]
@@ -173,13 +181,36 @@ async function devExtensionsTarget(
   url: string,
   storeFqdn: string,
 ): Promise<ReverseHTTPProxyTarget> {
+  const productVariantId = await retrieveProductVariantIDIfNeeded(app.extensions.ui, storeFqdn)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await devExtensions({app, extensions: app.extensions.ui, stdout, stderr, signal, url, port, storeFqdn, apiKey})
+      await devExtensions({
+        app,
+        extensions: app.extensions.ui,
+        stdout,
+        stderr,
+        signal,
+        url,
+        port,
+        storeFqdn,
+        apiKey,
+        productVariantId,
+      })
     },
   }
+}
+
+/**
+ * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
+ * @param extensions {UIExtension[]} - The UI Extensions to dev
+ * @param store {string} - The store FQDN
+ */
+async function retrieveProductVariantIDIfNeeded(extensions: UIExtension[], store: string) {
+  const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
+  if (!hasUIExtension) return
+  return fetchProductVariant(store)
 }
 
 export default dev

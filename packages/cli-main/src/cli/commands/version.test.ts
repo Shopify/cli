@@ -40,12 +40,17 @@ describe('check CLI version', () => {
       await Version.run()
 
       // Then
-      const result = `Current Shopify CLI version: \u001b[33m${currentVersion}\u001b[39m\n Latest Shopify CLI version: \u001b[33m${latestVersion}\u001b[39m\n💡\nCLI reminder`
-      expect(outputMock.info()).toMatch(result)
+      expect(outputMock.info()).toMatchInlineSnapshot(`
+        "Current Shopify CLI version: 2.2.2
+         Latest Shopify CLI version: 3.0.10
+        💡
+        CLI reminder"
+      `)
       expect(outputReminder).toBeCalledWith(
         dependencyManager as DependencyManager,
         expect.arrayContaining(['@shopify/cli']),
       )
+      outputMock.clear()
     },
   )
 
@@ -58,7 +63,13 @@ describe('check CLI version', () => {
     await Version.run()
 
     // Then
-    expect(outputMock.info()).toMatch(`Current Shopify CLI version: \u001b[33m${currentVersion}\u001b[39m`)
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+      "Current Shopify CLI version: 2.2.2
+       Latest Shopify CLI version: 2.2.2
+      💡
+      "
+    `)
+    outputMock.clear()
   })
 
   it('display only current version when an error is thrown when getting latest version', async () => {
@@ -70,6 +81,7 @@ describe('check CLI version', () => {
     await Version.run()
 
     // Then
-    expect(outputMock.info()).toMatch(`Current Shopify CLI version: \u001b[33m${currentVersion}\u001b[39m`)
+    expect(outputMock.info()).toMatchInlineSnapshot('"Current Shopify CLI version: 2.2.2"')
+    outputMock.clear()
   })
 })

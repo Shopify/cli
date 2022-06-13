@@ -3,20 +3,6 @@ import Fastify from 'fastify'
 import {port, output, error} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
-/**
- * An interface that represents an instance of a reverse proxy.
- */
-export interface ReverseHTTPProxy {
-  /**
-   * The port the reverse proxy is running on.
-   */
-  port: number
-  /**
-   * Stops the reverse proxy.
-   */
-  close: () => Promise<void>
-}
-
 export interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
    *   [vite] Output coming from Vite
@@ -50,7 +36,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   portNumber: number | undefined = undefined,
   proxyTargets: ReverseHTTPProxyTarget[],
   additionalProcesses: output.OutputProcess[],
-): Promise<ReverseHTTPProxy> {
+): Promise<void> {
   const server = Fastify()
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
@@ -73,18 +59,22 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
       return {
         prefix: target.logPrefix,
         action: async (stdout, stderr, signal) => {
-          target.action(stdout, stderr, signal, targetPort)
+          await target.action(stdout, stderr, signal, targetPort)
         },
       }
     }),
   )
 
-  output.concurrent([...processes, ...additionalProcesses])
-
   const availablePort = portNumber ?? (await port.getRandomPort())
-  server.listen(availablePort)
-  return {
-    port: availablePort,
-    close: server.close,
-  }
+
+  await Promise.all([
+    output.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
+      abortSignal.addEventListener('abort', async () => {
+        await server.close()
+      })
+    }),
+    server.listen({
+      port: availablePort,
+    }),
+  ])
 }

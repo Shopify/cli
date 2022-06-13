@@ -148,7 +148,7 @@ async function validateRubyEnv() {
 async function validateRuby() {
   let version
   try {
-    const {stdout} = await system.exec('ruby', ['-v'])
+    const stdout = await system.captureOutput('ruby', ['-v'])
     version = coerce(stdout)
   } catch {
     throw new Abort(
@@ -171,7 +171,7 @@ async function validateRuby() {
 }
 
 async function validateRubyGems() {
-  const {stdout} = await system.exec('gem', ['-v'])
+  const stdout = await system.captureOutput('gem', ['-v'])
   const version = coerce(stdout)
 
   const isValid = version?.compare(MinRubyGemVersion)
@@ -188,7 +188,7 @@ async function validateRubyGems() {
 async function validateBundler() {
   let version
   try {
-    const {stdout} = await system.exec('bundler', ['-v'])
+    const stdout = await system.captureOutput('bundler', ['-v'])
     version = coerce(stdout)
   } catch {
     throw new Abort(
@@ -244,4 +244,12 @@ function shopifyCLIDirectory() {
 
 function themeCheckDirectory() {
   return join(constants.paths.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
+}
+
+export async function version(): Promise<string | undefined> {
+  const parseOutput = (version: string) => version.match(/ruby (\d+\.\d+\.\d+)/)?.[1]
+  return system
+    .captureOutput('ruby', ['-v'])
+    .then(parseOutput)
+    .catch(() => undefined)
 }

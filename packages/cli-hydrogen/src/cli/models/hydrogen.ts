@@ -1,5 +1,5 @@
-import {HydrogenConfig} from './types'
 import {configurationFileNames, genericConfigurationFileNames, supportedConfigExtensions} from '../constants'
+import {HydrogenConfig} from '@shopify/hydrogen/config'
 import {dependency, path, file, error} from '@shopify/cli-kit'
 import {createServer} from 'vite'
 

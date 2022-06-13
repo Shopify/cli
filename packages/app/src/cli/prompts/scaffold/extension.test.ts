@@ -1,29 +1,36 @@
-import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName} from './extension'
+import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionFlavorQuestion} from './extension'
 import {extensions, getExtensionOutputConfig} from '../../constants'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {environment} from '@shopify/cli-kit'
 
-describe('extension prompt', () => {
+vi.mock('@shopify/cli-kit', async () => {
+  const cliKit: any = await vi.importActual('@shopify/cli-kit')
+  return {
+    ...cliKit,
+    environment: {
+      local: {
+        isShopify: vi.fn(),
+      },
+    },
+  }
+})
+
+beforeEach(() => {
+  vi.mocked(environment.local.isShopify).mockResolvedValue(true)
+})
+
+describe('extension prompt', async () => {
   const extensionTypeQuestion = {
     type: 'select',
     name: 'extensionType',
     message: 'Type of extension?',
-    choices: buildChoices(),
+    choices: await buildChoices(),
   }
   const extensionNameQuestion = {
     type: 'input',
     name: 'name',
     message: "Your extension's working name?",
     default: expect.stringMatching(/^\w+-\w+-ext-\d+$/),
-  }
-  const extensionFlavorQuestion = {
-    type: 'select',
-    name: 'extensionFlavor',
-    message: 'Choose a starting template for your extension',
-    choices: [
-      {name: 'React (recommended)', value: 'react'},
-      {name: 'vanilla JavaScript', value: 'vanilla-js'},
-    ],
-    default: 'react',
   }
 
   it('when name is not passed', async () => {
@@ -75,7 +82,7 @@ describe('extension prompt', () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: buildChoices().filter((choice) => choice.name !== 'theme app extension'),
+        choices: (await buildChoices()).filter((choice) => choice.name !== 'theme app extension'),
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -98,7 +105,7 @@ describe('extension prompt', () => {
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])
-    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion('checkout_post_purchase')])
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -122,12 +129,36 @@ describe('extension prompt', () => {
     expect(prompt).not.toHaveBeenCalledWith([extensionFlavorQuestion])
     expect(got).toEqual({...options, ...answers})
   })
+
+  it('when scaffolding a function extension prompts for the language', async () => {
+    const prompt = vi.fn()
+    const answers = {extensionLanguage: 'rust'}
+    const options = {
+      name: 'my-product-discount',
+      extensionTypesAlreadyAtQuota: [],
+      extensionType: 'product_discounts',
+    }
+
+    // Given
+    prompt.mockResolvedValue(answers)
+
+    // When
+    const got = await scaffoldExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenNthCalledWith(1, [])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion('product_discounts')])
+
+    expect(got).toEqual({...options, ...answers})
+  })
 })
 
-const buildChoices = (): {
-  name: string
-  value: string
-}[] => {
+const buildChoices = async (): Promise<
+  {
+    name: string
+    value: string
+  }[]
+> => {
   return extensions.types
     .map((type) => ({
       name: getExtensionOutputConfig(type).humanKey,

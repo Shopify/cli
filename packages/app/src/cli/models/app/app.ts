@@ -97,14 +97,6 @@ export interface Extension {
 }
 
 const FunctionExtensionMetadataSchema = schema.define.object({
-  flags: schema.define
-    .object({
-      useMsgpack: schema.define.boolean().optional(),
-    })
-    .default({
-      useMsgpack: false,
-    })
-    .optional(),
   schemaVersions: schema.define.object({}).catchall(
     schema.define.object({
       major: schema.define.number(),
@@ -416,7 +408,8 @@ class AppLoader {
         buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
         localIdentifier: path.basename(directory),
-        devUUID: id.generateShortId(),
+        // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
+        devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
     return Promise.all(extensions)

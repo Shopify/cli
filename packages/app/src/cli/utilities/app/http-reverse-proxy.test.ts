@@ -60,10 +60,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     const concurrentProcesses = concurrentCalls[0][0]
     expect(concurrentProcesses[0].prefix).toEqual('extensions')
     expect(concurrentProcesses[1].prefix).toEqual('web')
-    expect(got.port).toEqual(3000)
     expect(server.close).not.toHaveBeenCalled()
-    await got.close()
-    expect(server.close).toHaveBeenCalled()
   })
 
   test('uses a random port when no port is passed', async () => {
@@ -76,9 +73,6 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     const got = await runConcurrentHTTPProcessesAndPathForwardTraffic('tunnelUrl', undefined, [], [])
 
     // Then
-    expect(got.port).toEqual(4000)
     expect(server.close).not.toHaveBeenCalled()
-    await got.close()
-    expect(server.close).toHaveBeenCalled()
   })
 })

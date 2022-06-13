@@ -1,5 +1,31 @@
 # @shopify/create-app
 
+## 3.0.13
+
+### Patch Changes
+
+- 533165e5: Fix app creation on Windows
+- 604d7d97: Fix some unhandled promises and errors
+- Updated dependencies [604d7d97]
+  - @shopify/cli-kit@3.0.13
+
+## 3.0.12
+
+### Patch Changes
+
+- 8c690cca: Provide haikunator-style default names for apps and extensions
+- cb8e2c25: Copy improvements
+- 200c9aa0: Initialize git when generating projects with @shopify/create-app
+- Updated dependencies [e05749dc]
+- Updated dependencies [89a48ba9]
+- Updated dependencies [1f45ddc4]
+- Updated dependencies [8c690cca]
+- Updated dependencies [11d09f7f]
+- Updated dependencies [783a3714]
+- Updated dependencies [e12c82b3]
+- Updated dependencies [cb8e2c25]
+  - @shopify/cli-kit@3.0.12
+
 ## 3.0.11
 
 ### Patch Changes
