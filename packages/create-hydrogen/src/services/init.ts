@@ -161,7 +161,7 @@ async function init(options: InitOptions) {
   })
 
   output.info(output.content`
-✨ ${output.token.yellow(`${hyphenizedName}`)} is ready to build!
+✨ ${hyphenizedName} is ready to build!
 🚀 Run ${output.token.packagejsonScript(
     dependencyManager,
     'dev',
