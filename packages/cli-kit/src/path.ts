@@ -7,6 +7,7 @@ export * from 'pathe'
 
 export {findUp} from 'find-up'
 export {default as glob} from 'fast-glob'
+export {pathToFileURL} from 'node:url'
 
 /**
  * Given an absolute filesystem path, it makes it relative to
