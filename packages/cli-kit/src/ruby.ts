@@ -8,6 +8,7 @@ import {coerce} from './semver'
 import {AdminSession} from './session'
 
 import {content, token} from './output'
+// eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
 
@@ -152,7 +153,7 @@ async function validateRuby() {
   } catch {
     throw new Abort(
       'Ruby environment not found',
-      `Make sure you have ruby installed on your system: ${
+      `Make sure you have Ruby installed on your system: ${
         content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
       }`,
     )
@@ -162,9 +163,7 @@ async function validateRuby() {
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
       `Ruby version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
-      `Make sure you have at lease ${
-        content`${token.yellow(MinRubyVersion)}`.value
-      } ruby version installed on your system: ${
+      `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system: ${
         content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
       }`,
     )
@@ -178,7 +177,7 @@ async function validateRubyGems() {
   const isValid = version?.compare(MinRubyGemVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `RubyGems  version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `RubyGems version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
       `To update to the latest version of RubyGems, run ${
         content`${token.genericShellCommand('gem update --system')}`.value
       }`,
@@ -203,7 +202,7 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Bundler version ${version} is not supported`,
+      `Bundler version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
         content`${token.genericShellCommand('gem install bundler')}`.value
       }`,
