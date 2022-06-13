@@ -77,11 +77,7 @@ describe('updateURLs', () => {
     const expectedVariables = {
       apiKey: 'apiKey',
       appUrl: 'http://localhost:3456',
-      redir: [
-        'http://localhost:3456/auth/callback',
-        'http://localhost:3456/auth/shopify/callback',
-        'http://localhost:3456/api/auth/callback',
-      ],
+      redir: ['http://localhost:3456/auth/callback'],
     }
 
     // When
