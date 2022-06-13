@@ -13,7 +13,7 @@ const host = (import.meta.env.VITE_WEBSOCKET_HOST as string) || location.host;
 const surface = new URLSearchParams(location.search).get('surface');
 const extensionServerOptions = {
   connection: {
-    url: `${protocol}//${host}/extensions/`,
+    url: `${protocol}//${host}/extensions`,
   },
   surface: isValidSurface(surface) ? surface : undefined,
 };
