@@ -2,7 +2,7 @@ import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {devExtensions} from './dev/extension'
-import {showAppURL, showExtensionsMessages} from './dev/dev-output'
+import {outputAppURL, outputExtensionsMessages} from './dev/output'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -59,10 +59,10 @@ async function dev(options: DevOptions) {
   /** If the app doesn't have web/ the link message is not necessary */
   if (frontendConfig || backendConfig) {
     if (options.update) await updateURLs(identifiers.app, url)
-    showAppURL(options.update, storeFqdn, url)
+    outputAppURL(options.update, storeFqdn, url)
   }
 
-  showExtensionsMessages(options.app, storeFqdn, url)
+  outputExtensionsMessages(options.app, storeFqdn, url)
 
   const backendOptions = {
     apiKey: identifiers.app,

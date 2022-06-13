@@ -2,7 +2,7 @@ import {App, FunctionExtension, ThemeExtension, UIExtension} from '../../models/
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants'
 import {output, string} from '@shopify/cli-kit'
 
-export function showAppURL(updated: boolean, storeFqdn: string, url: string) {
+export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
   const appURL = buildAppURL(storeFqdn, url)
   const heading = output.token.heading('App URL')
   let message = `Once everything's built, your app's shareable link will be: ${appURL}`
@@ -13,13 +13,13 @@ export function showAppURL(updated: boolean, storeFqdn: string, url: string) {
   output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 
-export function showExtensionsMessages(app: App, storeFqdn: string, url: string) {
-  showUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
-  showFunctionsMessage(app.extensions.function)
-  showThemeExtensionsMessage(app.extensions.theme)
+export function outputExtensionsMessages(app: App, storeFqdn: string, url: string) {
+  outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
+  outputFunctionsMessage(app.extensions.function)
+  outputThemeExtensionsMessage(app.extensions.theme)
 }
 
-function showUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
+function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
   for (const extension of extensions) {
     const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)}) `)
     let message: string
@@ -44,7 +44,7 @@ function showUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url:
   }
 }
 
-function showFunctionsMessage(extensions: FunctionExtension[]) {
+function outputFunctionsMessage(extensions: FunctionExtension[]) {
   if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)
   const heading = output.token.heading(names.join(', '))
@@ -53,7 +53,7 @@ One testing option is to use a separate app dedicated to staging.`
   output.info(output.content`${heading}\n${message}\n`)
 }
 
-function showThemeExtensionsMessage(extensions: ThemeExtension[]) {
+function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
   const heading = output.token.heading(getHumanKey(extensions[0].type))
   const link = output.token.link(
