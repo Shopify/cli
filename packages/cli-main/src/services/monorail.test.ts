@@ -112,7 +112,7 @@ it('makes an API call to Monorail with the expected payload with cached app info
       node_version: process.version.replace('v', ''),
       is_employee: false,
       api_key: 'key1',
-      partner_id: '1',
+      partner_id: 1,
     },
   }
   expect(http.fetch).toHaveBeenCalledWith(expectedURL, {

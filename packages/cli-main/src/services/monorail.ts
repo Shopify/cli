@@ -34,6 +34,16 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
   }
   const appInfo = store.getAppInfo(directory)
   const {platform, arch} = os.platformAndArch()
+
+  const rawPartnerId = appInfo?.orgId
+  let partnerIdAsInt: number | undefined
+  if (rawPartnerId !== undefined) {
+    partnerIdAsInt = parseInt(rawPartnerId, 10)
+    if (isNaN(partnerIdAsInt)) {
+      partnerIdAsInt = undefined
+    }
+  }
+
   return {
     schema_id: 'app_cli3_command/1.0',
     payload: {
@@ -50,7 +60,7 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
       api_key: appInfo?.appId,
-      partner_id: appInfo?.orgId,
+      partner_id: partnerIdAsInt,
     },
   }
 }
