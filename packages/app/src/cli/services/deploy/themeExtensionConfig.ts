@@ -60,7 +60,7 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
       if (['blocks', 'snippets'].includes(dirname)) liquidBytes.push(filesize)
       const encoding = dirname === 'assets' ? 'binary' : 'utf8'
       const fileContents = await file.read(filepath, {encoding})
-      files[relativePath] = Buffer.from(fileContents).toString('base64')
+      files[relativePath] = Buffer.from(fileContents, encoding).toString('base64')
     }),
   )
   const extensionBytesTotal = arraySum(extensionBytes)
