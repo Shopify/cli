@@ -6,28 +6,39 @@ html {
     -moz-osx-font-smoothing: grayscale;
 }
 
-button,
-input,
-optgroup,
-select,
-textarea {
+body {
+    font-size: 16px;
+    line-height: normal;
+    margin: 0;
+    padding: 0;
+}
+
+button, input, optgroup, select, textarea {
     font-family: inherit;
 }
 
-p { font-weight: 400; }
-h1 { font-weight: 600; }
-a { color: #458FFF }
-a:hover { color: #458FFF }
+h1 {
+    font-weight: 600;
+}
 
-body {
-    font-size: 16px;
-    margin: 0;
-    padding: 0;
-    line-height: normal;
+p {
+    font-weight: 400;
+}
+
+a:link, a:visited {
+    color: #458FFF;
+    text-decoration-color: #458FFF;
+    transition: all 0.5s ease;
+}
+
+a:hover, a:active {
+    color: #3b7ad9;
+    text-decoration-color: transparent;
+    transition: all 0.5s ease;
 }
 
 .body-success {
-    color: white;
+    color: #F6F6F7;
 }
 
 .body-error {
@@ -55,4 +66,9 @@ body {
     width: 100%;
     height: 100%;
     padding-left: 50px;
+}
+
+.subtext-container {
+    width: 35em;
+    color: #6D7175;
 }
