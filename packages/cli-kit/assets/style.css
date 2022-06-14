@@ -1,0 +1,58 @@
+html {
+    font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+    text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+    font-family: inherit;
+}
+
+p { font-weight: 400; }
+h1 { font-weight: 600; }
+a { color: #458FFF }
+a:hover { color: #458FFF }
+
+body {
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: normal;
+}
+
+.body-success {
+    color: white;
+}
+
+.body-error {
+    color: #202223;
+}
+
+.app-success {
+    width: 100vw;
+    height: 100vh;
+    background-color: #054A49;
+    display: flex;
+}
+
+.app-error {
+    width: 100vw;
+    height: 100vh;
+    background-color: #F6F6F7;
+    display: flex;
+}
+
+.container {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding-left: 50px;
+}
