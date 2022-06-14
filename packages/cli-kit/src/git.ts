@@ -8,11 +8,11 @@ export async function initializeRepository(directory: string) {
 }
 
 export async function downloadRepository({
-  repository,
+  repoUrl,
   branch,
   destination,
 }: {
-  repository: string
+  repoUrl: string
   branch?: string
   destination: string
 }) {
@@ -22,7 +22,7 @@ export async function downloadRepository({
     options['--branch'] = branch
   }
 
-  await git().clone(repository, destination, options, (err) => {
+  await git().clone(repoUrl, destination, options, (err) => {
     if (err) {
       throw new Abort(err.message)
     }
