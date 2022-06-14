@@ -96,6 +96,6 @@ export function parseGithubRepoReference(src: string): GithubRepoReference {
   return {
     repoBaseUrl: `${url.origin}/${user}/${repo}`,
     branch,
-    filePath
+    filePath,
   }
 }

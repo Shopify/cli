@@ -18,7 +18,8 @@ export default class Init extends Command {
       hidden: false,
     }),
     template: Flags.string({
-      description: 'The app template. Accepts any GitHub repo with optional branch and subpath. Eg, --template https://github.com/Shopify/<repository>/[subpath]#[branch]',
+      description:
+        'The app template. Accepts any GitHub repo with optional branch and subpath. Eg, --template https://github.com/Shopify/<repository>/[subpath]#[branch]',
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
