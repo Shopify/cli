@@ -7,6 +7,7 @@ interface InitOptions {
   name: string
   directory: string
   template: string
+  templatePath: string | undefined
   dependencyManager: string | undefined
   local: boolean
 }
@@ -18,6 +19,7 @@ async function init(options: InitOptions) {
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
+    const templatePathDir = options.templatePath ? path.join(templateDownloadDir, options.templatePath) : templateDownloadDir
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
     await file.mkdir(templateDownloadDir)
@@ -44,9 +46,11 @@ async function init(options: InitOptions) {
               title: 'Parse liquid',
               task: async (_, task) => {
                 task.title = 'Parsing liquid'
-                await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, {
+                await template.recursiveDirectoryCopy(templatePathDir, templateScaffoldDir, {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   dependency_manager: dependencyManager,
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  app_name: options.name,
                 })
 
                 task.title = 'Liquid parsed'
