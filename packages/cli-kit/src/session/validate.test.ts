@@ -1,13 +1,16 @@
 import {applicationId} from './identity'
 import {IdentityToken} from './schema'
-import {validateScopes, validateSession} from './validate'
+import {validateSession} from './validate'
 import {OAuthApplications} from '../session'
+import {partners} from '../api'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
+import {ClientError} from 'graphql-request'
 
 const pastDate = new Date(2022, 1, 1, 9)
 const currentDate = new Date(2022, 1, 1, 10)
 const futureDate = new Date(2022, 1, 1, 11)
 const storeName = 'store.myshopify.io'
+const requestedScopes = ['scope', 'scope2']
 
 const validIdentity: IdentityToken = {
   accessToken: 'access_token',
@@ -71,6 +74,8 @@ beforeEach(() => {
   vi.mock('./identity')
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
+  vi.mock('../api')
+  vi.mocked(partners.validationQuery).mockResolvedValue({})
 })
 
 afterAll(() => {
@@ -78,32 +83,8 @@ afterAll(() => {
   vi.useRealTimers()
 })
 
-describe('validateScopes', () => {
-  it('returns true if requested scopes are included in token', () => {
-    // Given
-    const requestedScopes = ['scope', 'scope2']
-
-    // When
-    const got = validateScopes(requestedScopes, validIdentity)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  it('returns false if requested scopes are not included in token', () => {
-    // Given
-    const requestedScopes = ['scope4', 'scope5']
-
-    // When
-    const got = validateScopes(requestedScopes, validIdentity)
-
-    // Then
-    expect(got).toBe(false)
-  })
-})
-
 describe('validateSession', () => {
-  it('returns true if session is valid', () => {
+  it('returns ok if session is valid', async () => {
     // Given
     const session = {
       identity: validIdentity,
@@ -111,24 +92,51 @@ describe('validateSession', () => {
     }
 
     // When
-    const got = validateSession(defaultApps, session)
+    const got = await validateSession(requestedScopes, defaultApps, session)
 
     // Then
-    expect(got).toBe(true)
+    expect(got).toBe('ok')
   })
 
-  it('returns false if there is no session', () => {
+  it('returns needs_full_auth if there is no session', async () => {
     // Given
     const session: any = undefined
 
     // When
-    const got = validateSession(defaultApps, session)
+    const got = await validateSession(requestedScopes, defaultApps, session)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('needs_full_auth')
   })
 
-  it('returns false if identity is expired', () => {
+  it('returns needs_full_auth if there is requested scopes are not included in token', async () => {
+    // Given
+    const session = {
+      identity: validIdentity,
+      applications: validApplications,
+    }
+
+    // When
+    const got = await validateSession(['random_scope'], defaultApps, session)
+
+    // Then
+    expect(got).toBe('needs_full_auth')
+  })
+
+  it('returns needs_full_auth if partners token is revoked', async () => {
+    // Given
+    const session = {identity: validIdentity, applications: validApplications}
+    const graphQLError = new ClientError({status: 401}, {query: ''})
+    vi.mocked(partners.validationQuery).mockRejectedValueOnce(graphQLError)
+
+    // When
+    const got = await validateSession(requestedScopes, defaultApps, session)
+
+    // Then
+    expect(got).toBe('needs_full_auth')
+  })
+
+  it('returns needs_refresh if identity is expired', async () => {
     // Given
     const session = {
       identity: expiredIdentity,
@@ -136,13 +144,13 @@ describe('validateSession', () => {
     }
 
     // When
-    const got = validateSession(defaultApps, session)
+    const got = await validateSession(requestedScopes, defaultApps, session)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('needs_refresh')
   })
 
-  it('returns false if requesting partners and is expired', () => {
+  it('returns needs_refresh if requesting partners and is expired', async () => {
     // Given
     const applications = {
       partnersApi: {scopes: []},
@@ -153,13 +161,13 @@ describe('validateSession', () => {
     }
 
     // When
-    const got = validateSession(applications, session)
+    const got = await validateSession(requestedScopes, applications, session)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('needs_refresh')
   })
 
-  it('returns false if requesting storefront and is expired', () => {
+  it('returns needs_refresh if requesting storefront and is expired', async () => {
     // Given
     const applications = {
       storefrontRendererApi: {scopes: []},
@@ -170,13 +178,13 @@ describe('validateSession', () => {
     }
 
     // When
-    const got = validateSession(applications, session)
+    const got = await validateSession(requestedScopes, applications, session)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('needs_refresh')
   })
 
-  it('returns false if requesting admin and is expired', () => {
+  it('returns needs_refresh if requesting admin and is expired', async () => {
     // Given
     const applications: OAuthApplications = {
       adminApi: {scopes: [], storeFqdn: storeName},
@@ -187,13 +195,13 @@ describe('validateSession', () => {
     }
 
     // When
-    const got = validateSession(applications, session)
+    const got = await validateSession(requestedScopes, applications, session)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('needs_refresh')
   })
 
-  it('returns false if session does not include requested store', () => {
+  it('returns needs_refresh if session does not include requested store', async () => {
     // Given
     const applications: OAuthApplications = {
       adminApi: {scopes: [], storeFqdn: 'NotMyStore'},
@@ -204,9 +212,9 @@ describe('validateSession', () => {
     }
 
     // When
-    const got = validateSession(applications, session)
+    const got = await validateSession(requestedScopes, applications, session)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('needs_refresh')
   })
 })
