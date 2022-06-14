@@ -71,8 +71,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
 export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: ExtensionConfigOptions) {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
-      if (options.cartUrl) return options.cartUrl
-      break
+      return {url: options.cartUrl}
     case 'checkout_post_purchase':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
@@ -80,6 +79,6 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
       // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
       return {url: 'invalid_url'}
     case 'product_subscription':
-      return options.subscriptionProductUrl
+      return {url: options.subscriptionProductUrl}
   }
 }
