@@ -1,5 +1,5 @@
 import {applicationId} from './session/identity'
-import {validateScopes, validateSession} from './session/validate'
+import {validateSession} from './session/validate'
 import {allDefaultScopes} from './session/scopes'
 import {store as secureStore, fetch as secureFetch} from './session/store'
 import {ApplicationToken, IdentityToken, Session} from './session/schema'
@@ -122,6 +122,7 @@ beforeEach(() => {
 describe('ensureAuthenticated when previous session is invalid', () => {
   it('executes complete auth flow if there is no session', async () => {
     // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(secureFetch).mockResolvedValue(undefined)
 
     // When
@@ -138,6 +139,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
   it('executes complete auth flow if session is for a different fqdn', async () => {
     // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(secureFetch).mockResolvedValue(invalidSession)
     const newSession: Session = {...invalidSession, ...validSession}
 
@@ -155,8 +157,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
   it('executes complete auth flow if requesting additional scopes', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(false)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
@@ -175,8 +176,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 describe('when existing session is valid', () => {
   it('does nothing', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
@@ -193,8 +193,7 @@ describe('when existing session is valid', () => {
 
   it('overwrites partners token if provided with a custom CLI token', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
     const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
     const expected = {...validTokens, partners: 'custom_partners_token'}
@@ -215,8 +214,7 @@ describe('when existing session is valid', () => {
 describe('when existing session is expired', () => {
   it('refreshes the tokens', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(false)
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
@@ -235,8 +233,7 @@ describe('when existing session is expired', () => {
     // Given
     const tokenResponseError = new InvalidGrantError('Invalid grant')
 
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(false)
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
     vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
 
@@ -256,8 +253,7 @@ describe('when existing session is expired', () => {
 describe('ensureAuthenticatedStorefront', () => {
   it('returns only storefront token if success', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
@@ -269,8 +265,7 @@ describe('ensureAuthenticatedStorefront', () => {
 
   it('throws error if there is no storefront token', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
 
     // When
@@ -284,8 +279,7 @@ describe('ensureAuthenticatedStorefront', () => {
 describe('ensureAuthenticatedAdmin', () => {
   it('returns only admin token if success', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
@@ -297,8 +291,7 @@ describe('ensureAuthenticatedAdmin', () => {
 
   it('throws error if there is no token', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
 
     // When
@@ -312,8 +305,7 @@ describe('ensureAuthenticatedAdmin', () => {
 describe('ensureAuthenticatedPartners', () => {
   it('returns only partners token if success', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
@@ -325,8 +317,7 @@ describe('ensureAuthenticatedPartners', () => {
 
   it('throws error if there is no partners token', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
 
     // When
@@ -338,8 +329,7 @@ describe('ensureAuthenticatedPartners', () => {
 
   it('returns custom partners token if envvar is defined', async () => {
     // Given
-    vi.mocked(validateScopes).mockReturnValue(true)
-    vi.mocked(validateSession).mockReturnValue(true)
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
     const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
 
