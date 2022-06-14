@@ -1,7 +1,14 @@
 import {info} from './info'
+import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
+import {selectOrCreateApp} from './dev/select-app'
 import {App} from '../models/app/app'
+import {selectOrganizationPrompt} from '../prompts/dev'
+import {path, dependency, session, output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {path, dependency} from '@shopify/cli-kit'
+
+vi.mock('./dev/fetch')
+vi.mock('./dev/select-app')
+vi.mock('../prompts/dev')
 
 const currentVersion = '2.2.2'
 beforeEach(() => {
@@ -12,6 +19,9 @@ beforeEach(() => {
       dependency: {
         checkForNewVersion: vi.fn(),
         getOutputUpdateCLIReminder: vi.fn(),
+      },
+      session: {
+        ensureAuthenticatedPartners: vi.fn(),
       },
     }
   })
@@ -26,7 +36,7 @@ describe('info', () => {
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
-    const result = info(app, {format: 'text'})
+    const result = info(app, {format: 'text', webEnv: false})
     // Then
     expect(result).resolves.toMatch('Shopify CLI       2.2.2 \u001b[1m\u001b[91m! CLI reminder\u001b[39m\u001b[22m')
   })
@@ -38,10 +48,93 @@ describe('info', () => {
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
-    const result = info(app, {format: 'text'})
+    const result = info(app, {format: 'text', webEnv: false})
     // Then
     expect(result).resolves.toMatch('Shopify CLI       2.2.2')
     expect(result).resolves.not.toMatch(' \u001b[1m\u001b[91m! CLI reminder\u001b[39m\u001b[22m')
+  })
+
+  it('returns the web environment as a text when webEnv is true', async () => {
+    // Given
+    const app = mockApp()
+    const token = 'token'
+    const organization = {
+      id: '123',
+      appsNext: false,
+      businessName: 'test',
+    }
+    const apiKey = 'api-key'
+    const apiSecret = 'api-secret'
+    const organizationApp = {
+      id: '123',
+      title: 'Test app',
+      appType: 'custom',
+      apiSecretKeys: [{secret: apiSecret}],
+      apiKey,
+    }
+    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
+    vi.mocked(fetchOrgAndApps).mockResolvedValue({
+      organization,
+      stores: [],
+      apps: [organizationApp],
+    })
+    vi.mocked(selectOrCreateApp).mockResolvedValue(organizationApp)
+    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+
+    // When
+    const result = await info(app, {format: 'text', webEnv: true})
+
+    // Then
+    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      "
+      Use these environment variables to set up your deployment pipeline for this app:
+        · SHOPIFY_API_KEY: api-key
+        · SHOPIFY_API_SECRET: api-secret
+        · SCOPES: my-scope
+          "
+    `)
+  })
+
+  it('returns the web environment as a json when webEnv is true', async () => {
+    // Given
+    const app = mockApp()
+    const token = 'token'
+    const organization = {
+      id: '123',
+      appsNext: false,
+      businessName: 'test',
+    }
+    const apiKey = 'api-key'
+    const apiSecret = 'api-secret'
+    const organizationApp = {
+      id: '123',
+      title: 'Test app',
+      appType: 'custom',
+      apiSecretKeys: [{secret: apiSecret}],
+      apiKey,
+    }
+    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
+    vi.mocked(fetchOrgAndApps).mockResolvedValue({
+      organization,
+      stores: [],
+      apps: [organizationApp],
+    })
+    vi.mocked(selectOrCreateApp).mockResolvedValue(organizationApp)
+    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+
+    // When
+    const result = await info(app, {format: 'json', webEnv: true})
+
+    // Then
+    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      "{
+        \\"SHOPIFY_API_KEY\\": \\"api-key\\",
+        \\"SHOPIFY_API_SECRET\\": \\"api-secret\\",
+        \\"SCOPES\\": \\"my-scope\\"
+      }"
+    `)
   })
 })
 
@@ -55,7 +148,7 @@ function mockApp(): App {
     dependencyManager: 'yarn',
     configurationPath: path.join('/', 'shopify.app.toml'),
     configuration: {
-      scopes: '',
+      scopes: 'my-scope',
     },
     webs: [],
     nodeDependencies,

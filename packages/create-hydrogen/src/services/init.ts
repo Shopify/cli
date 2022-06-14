@@ -161,15 +161,19 @@ async function init(options: InitOptions) {
   })
 
   output.info(output.content`
-  ${hyphenizedName} is ready to build! ✨
-    Run ${output.token.packagejsonScript(dependencyManager, 'dev')} to start developing.
-    Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}
-  `)
+✨ ${hyphenizedName} is ready to build!
+🚀 Run ${output.token.packagejsonScript(
+    dependencyManager,
+    'dev',
+  )} to start your local development server and start building.
 
-  output.info(output.content`Your project will display inventory from the Hydrogen Demo Store.
-    To connect this project to your Shopify store's inventory instead,
-    update ${output.token.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your
-    store ID and Storefront API key.\n`)
+📚 Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
+
+  output.info(output.content`
+👋 Note: your project will display inventory from the Hydrogen Demo Store.\
+ To connect this project to your Shopify store’s inventory instead,\
+ update ${output.token.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
+ store ID and Storefront API key.\n`)
 }
 
 function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {

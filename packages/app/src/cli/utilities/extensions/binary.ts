@@ -20,11 +20,10 @@ export async function getBinaryPathOrDownload(): Promise<string> {
   if (await binaryExists()) {
     return binaryLocalPath
   }
-  const {platform, arch} = os.platformAndArch()
-  validatePlatformSupport({platform, arch})
 
-  let artifact = `shopify-extensions-${platform}-${arch}`
-  if (platform === 'windows') artifact += '.exe'
+  const {platform, arch} = os.platformAndArch()
+  const artifact = getArtifactName({platform, arch})
+  validatePlatformSupport({platform, arch})
 
   return file.inTemporaryDirectory(async (tmpDir) => {
     const outputBinary = await download({into: tmpDir, artifact})
@@ -33,6 +32,16 @@ export async function getBinaryPathOrDownload(): Promise<string> {
     await file.chmod(binaryLocalPath, 0o755)
     return binaryLocalPath
   })
+}
+
+export function getArtifactName(options: {platform: string; arch: string}) {
+  let platform = options.platform
+  if (platform.match(/^win.+/)) {
+    platform = 'windows'
+  }
+  let artifact = `shopify-extensions-${platform}-${options.arch}`
+  if (platform === 'windows') artifact += '.exe'
+  return artifact
 }
 
 async function download({into, artifact}: {into: string; artifact: string}): Promise<string> {
