@@ -37,8 +37,8 @@ export async function runGoExtensionsCLI(args: string[], options: system.ExecOpt
         stdout.write('Building extensions CLI...')
         await system.exec('make', ['build'], {
           ...options,
-          stdout: options.stdout,
-          stderr: options.stderr,
+          stdout: undefined,
+          stderr: undefined,
           cwd: projectDirectory,
         })
         built = true
