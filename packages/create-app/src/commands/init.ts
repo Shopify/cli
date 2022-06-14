@@ -21,10 +21,6 @@ export default class Init extends Command {
       description: 'The app template repository. Eg, --template https://github.com/Shopify/shopify-app-template-node',
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
-    templatePath: Flags.string({
-      description: 'The (optional) subpath of the template within the template repository.',
-      env: 'SHOPIFY_FLAG_TEMPLATE_PATH',
-    }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'dependency-manager': Flags.string({
       char: 'd',
@@ -51,7 +47,6 @@ export default class Init extends Command {
       name: promptAnswers.name,
       dependencyManager: flags['dependency-manager'],
       template: promptAnswers.template,
-      templatePath: flags.templatePath,
       local: flags.local,
       directory,
     })

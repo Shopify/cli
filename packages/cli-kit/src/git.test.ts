@@ -17,27 +17,28 @@ vi.mock('simple-git', async () => {
 describe('downloadRepository()', () => {
   it('calls simple-git to clone a repo without branch', async () => {
     // Given
-    const repoUrl = 'http://repoUrl'
+    const repository = 'http://repoUrl'
     const destination = 'destination'
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null}
 
     // When
-    await git.downloadRepository({repoUrl, destination})
+    await git.downloadRepository({repository, destination})
 
     // Then
-    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options, expect.any(Function))
+    expect(mockedClone).toHaveBeenCalledWith(repository, destination, options, expect.any(Function))
   })
 
   it('calls simple-git to clone a repo with branch', async () => {
     // Given
-    const repoUrl = 'http://repoUrl#my-branch'
+    const repository = 'http://repoUrl'
+    const branch = 'my-branch'
     const destination = 'destination'
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null, '--branch': 'my-branch'}
 
     // When
-    await git.downloadRepository({repoUrl, destination})
+    await git.downloadRepository({repository, branch, destination})
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options, expect.any(Function))

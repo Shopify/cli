@@ -1,5 +1,5 @@
 import {fetch} from './http'
-import {getLatestRelease, parseRepoUrl, GithubRelease} from './github'
+import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoUrl} from './github'
 import {Response} from 'node-fetch'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -80,6 +80,77 @@ describe('parseRepoUrl', () => {
     })
   })
 })
+
+describe('parseGithubRepoUrl', () => {
+
+  it('parses a repository url', async () => {
+    // Given
+    const url = 'https://github.com/Shopify/foo';
+
+    // When
+    const repoUrl = parseGithubRepoUrl(url);
+
+    // Then
+    await expect(repoUrl).toMatchObject({
+      repoBaseUrl: 'https://github.com/Shopify/foo',
+      branch: undefined,
+      filePath: undefined
+    });
+  });
+
+  it('parses a repository url with a branch', async () => {
+    // Given
+    const url = 'https://github.com/Shopify/foo/tree/main';
+
+    // When
+    const repoUrl = parseGithubRepoUrl(url);
+
+    // Then
+    await expect(repoUrl).toMatchObject({
+      repoBaseUrl: 'https://github.com/Shopify/foo',
+      branch: 'main',
+      filePath: undefined
+    });
+  });
+
+  it('parses a repository url with a branch and path', async () => {
+    // Given
+    const url = 'https://github.com/Shopify/foo/tree/main/bar/baz';
+
+    // When
+    const repoUrl = parseGithubRepoUrl(url);
+
+    // Then
+    await expect(repoUrl).toMatchObject({
+      repoBaseUrl: 'https://github.com/Shopify/foo',
+      branch: 'main',
+      filePath: 'bar/baz'
+    });
+  });
+
+  it('throws for a non github URL', async () => {
+    // Given
+    const url = 'https://NOTgithub.com/Shopify/foo';
+
+    // When
+    const parseRepoUrl = () => parseGithubRepoUrl(url);
+
+    // Then
+    await expect(parseRepoUrl).toThrow('Only GitHub repository URLs are supported.');
+  });
+
+  it('throws for a non URL', async () => {
+    // Given
+    const url = 'abc';
+
+    // When
+    const parseRepoUrl = () => parseGithubRepoUrl(url);
+
+    // Then
+    await expect(parseRepoUrl).toThrow('Invalid URL');
+  });
+
+});
 
 function createMockRelease(size = 1, mocks: Partial<GithubRelease> = {}): GithubRelease[] {
   return Array.from({length: size}, (_, index) => ({

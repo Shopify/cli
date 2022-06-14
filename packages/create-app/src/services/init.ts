@@ -1,13 +1,12 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
 import cleanup from '../utils/template/cleanup'
 
-import {string, path, file, output, ui, dependency, template, npm, git, environment} from '@shopify/cli-kit'
+import {string, path, file, output, ui, dependency, template, npm, git, github, environment} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
   directory: string
   template: string
-  templatePath: string | undefined
   dependencyManager: string | undefined
   local: boolean
 }
@@ -16,11 +15,12 @@ async function init(options: InitOptions) {
   const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
+  const githubRepo = github.parseGithubRepoUrl(options.template)
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
-    const templatePathDir = options.templatePath
-      ? path.join(templateDownloadDir, options.templatePath)
+    const templatePathDir = githubRepo.filePath
+      ? path.join(templateDownloadDir, githubRepo.filePath)
       : templateDownloadDir
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
@@ -33,7 +33,8 @@ async function init(options: InitOptions) {
         task: async (_, task) => {
           task.title = 'Downloading template'
           await git.downloadRepository({
-            repoUrl: options.template,
+            repository: githubRepo.repoBaseUrl,
+            branch: githubRepo.branch,
             destination: templateDownloadDir,
           })
           task.title = 'Template downloaded'
