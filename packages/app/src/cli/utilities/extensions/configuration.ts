@@ -12,7 +12,8 @@ export interface ExtensionConfigOptions {
   port?: number
   storeFqdn?: string
   includeResourceURL?: boolean
-  productVariantId?: string
+  cartUrl?: string
+  subscriptionProductUrl?: string
 }
 
 /**
@@ -47,7 +48,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           },
           renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
           resource: options.includeResourceURL
-            ? await getUIExtensionResourceURL(extension.configuration.type, options.productVariantId)
+            ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,
         },
       }
@@ -67,11 +68,10 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   }
 }
 
-export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, productVariantId?: string) {
+export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: ExtensionConfigOptions) {
   switch (uiExtensionType) {
-    case 'checkout_ui_extension': {
-      return {url: `/cart/${productVariantId}:1`}
-    }
+    case 'checkout_ui_extension':
+      return {url: options.cartUrl}
     case 'checkout_post_purchase':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
@@ -79,6 +79,6 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
       // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
       return {url: 'invalid_url'}
     case 'product_subscription':
-      return undefined
+      return {url: options.subscriptionProductUrl}
   }
 }

@@ -43,6 +43,18 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'subscription-product-url': Flags.string({
+      hidden: false,
+      description: 'Resource URL for product subscription extension. Format: "/products/{productId}"',
+      env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
+    }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'checkout-cart-url': Flags.string({
+      hidden: false,
+      description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
+      env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -60,6 +72,8 @@ export default class Dev extends Command {
         update: !flags['no-update'],
         skipDependenciesInstallation: flags['skip-dependencies-installation'],
         plugins,
+        subscriptionProductUrl: flags['subscription-product-url'],
+        checkoutCartUrl: flags['checkout-cart-url'],
       })
     } catch (err) {
       if (!(err instanceof error.CancelExecution)) {
