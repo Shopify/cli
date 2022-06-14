@@ -2,7 +2,7 @@ import {appFlags} from '../../flags'
 import {load as loadApp, App} from '../../models/app/app'
 import dev from '../../services/dev'
 import {Command, Flags} from '@oclif/core'
-import {path, string, cli} from '@shopify/cli-kit'
+import {path, string, cli, error} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -51,14 +51,20 @@ export default class Dev extends Command {
     const app: App = await loadApp(directory)
     const plugins = this.config.plugins
 
-    await dev({
-      app,
-      apiKey: flags['api-key'],
-      storeFqdn: flags.store,
-      reset: flags.reset,
-      update: !flags['no-update'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      plugins,
-    })
+    try {
+      await dev({
+        app,
+        apiKey: flags['api-key'],
+        storeFqdn: flags.store,
+        reset: flags.reset,
+        update: !flags['no-update'],
+        skipDependenciesInstallation: flags['skip-dependencies-installation'],
+        plugins,
+      })
+    } catch (err) {
+      if (!(err instanceof error.CancelExecution)) {
+        throw err
+      }
+    }
   }
 }
