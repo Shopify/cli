@@ -2,7 +2,16 @@ import {isTruthy} from './utilities'
 import {isSpin} from './spin'
 import constants from '../constants'
 import {exists as fileExists} from '../file'
+import isInteractive from 'is-interactive'
 import {homedir} from 'node:os'
+
+/**
+ * It returns true if the terminal is interactive.
+ * @returns {boolean} True if the terminal is interactive.
+ */
+export function isTerminalInteractive(): boolean {
+  return isInteractive()
+}
 
 /**
  * Returns the path to the user's home directory.
