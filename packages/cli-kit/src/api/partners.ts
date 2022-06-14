@@ -3,7 +3,7 @@ import {ScriptServiceProxyQuery} from './graphql'
 import {partners as partnersFqdn} from '../environment/fqdn'
 import {debug, content, token as outputToken} from '../output'
 import {Abort} from '../error'
-import {request as graphqlRequest, Variables, RequestDocument, ClientError} from 'graphql-request'
+import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
   const fqdn = await partnersFqdn()
@@ -36,6 +36,38 @@ ${outputToken.json(error.response.errors)}
     } else {
       throw error
     }
+  }
+}
+
+/**
+ * Check if the given token is revoked and no longer valid to interact with the Partners API.
+ * @param token {string} - The token to check
+ * @returns {Promise<boolean>} - True if the token is revoked, false otherwise
+ */
+export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
+  const query = gql`
+    {
+      organizations(first: 1) {
+        nodes {
+          id
+        }
+      }
+    }
+  `
+
+  const fqdn = await partnersFqdn()
+  const url = `https://${fqdn}/api/cli/graphql`
+  const headers = await buildHeaders(token)
+
+  try {
+    await graphqlRequest(url, query, {}, headers)
+    return false
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    if (error instanceof ClientError) {
+      return error.response.status === 401
+    }
+    return false
   }
 }
 

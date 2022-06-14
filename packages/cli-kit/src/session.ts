@@ -1,6 +1,6 @@
 import {applicationId} from './session/identity'
 import {Bug} from './error'
-import {validateScopes, validateSession} from './session/validate'
+import {validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
 import {
@@ -140,14 +140,13 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
   const fqdnSession = currentSession[fqdn]
   const scopes = getFlattenScopes(applications)
 
-  const needFullAuth = !fqdnSession || !validateScopes(scopes, fqdnSession.identity)
-  const sessionIsInvalid = !validateSession(applications, fqdnSession)
+  const validationResult = await validateSession(scopes, applications, fqdnSession)
 
   let newSession = {}
 
-  if (needFullAuth) {
+  if (validationResult === 'needs_full_auth') {
     newSession = await executeCompleteFlow(applications, fqdn)
-  } else if (sessionIsInvalid) {
+  } else if (validationResult === 'needs_refresh') {
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
