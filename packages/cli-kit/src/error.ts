@@ -16,6 +16,8 @@ enum FatalErrorType {
   Bug,
 }
 
+export class CancelExecution extends Error {}
+
 /**
  * A fatal error represents an error shouldn't be rescued and that causes the execution to terminate.
  * There shouldn't be code that catches fatal errors.
