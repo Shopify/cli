@@ -1,16 +1,54 @@
+import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
+import {selectOrCreateApp} from './dev/select-app'
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
 import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
-import {os, output, path, store, dependency} from '@shopify/cli-kit'
+import {selectOrganizationPrompt} from '../prompts/dev'
+import {os, output, path, session, store, dependency} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
   format: Format
+  /** When true the command outputs the env. variables necessary to deploy and run web/ */
+  webEnv: boolean
 }
 interface Configurable {
   configuration?: {type?: string}
 }
 
-export async function info(app: App, {format}: InfoOptions): Promise<output.Message> {
+export async function info(app: App, {format, webEnv}: InfoOptions): Promise<output.Message> {
+  if (webEnv) {
+    return infoWeb(app, {format})
+  } else {
+    return infoApp(app, {format})
+  }
+}
+
+export async function infoWeb(app: App, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+  const token = await session.ensureAuthenticatedPartners()
+
+  const orgs = await fetchOrganizations(token)
+  const org = await selectOrganizationPrompt(orgs)
+  const {organization, apps} = await fetchOrgAndApps(org.id, token)
+
+  const selectedApp = await selectOrCreateApp(app, apps, organization, token)
+
+  if (format === 'json') {
+    return output.content`${output.token.json({
+      SHOPIFY_API_KEY: selectedApp.apiKey,
+      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
+      SCOPES: app.configuration.scopes,
+    })}`
+  } else {
+    return output.content`
+Use these environment variables to set up your deployment pipeline for this app:
+  · ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
+  · ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
+  · ${output.token.green('SCOPES')}: ${app.configuration.scopes}
+    `
+  }
+}
+
+export async function infoApp(app: App, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {

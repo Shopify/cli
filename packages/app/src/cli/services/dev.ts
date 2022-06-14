@@ -2,6 +2,7 @@ import {ensureDevEnvironment} from './environment'
 import {generateURL, updateURLs} from './dev/urls'
 import {installAppDependencies} from './dependencies'
 import {devExtensions} from './dev/extension'
+import {outputAppURL, outputExtensionsMessages} from './dev/output'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -57,17 +58,11 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   if (frontendConfig || backendConfig) {
-    let updateMessage = ''
-    if (options.update) {
-      await updateURLs(identifiers.app, url)
-      updateMessage = `\nYour app's URLs in Shopify Partners have been updated. `
-    }
-    const message = `${updateMessage}Preview link for viewing or sharing: `
-    const hostUrl = `${storeFqdn}/admin`
-    const hostParam = btoa(hostUrl).replace(/[=]/g, '')
-    const storeAppUrl = `${url}?shop=${storeFqdn}&host=${hostParam}`
-    output.info(output.content`${message}${output.token.link(storeAppUrl, storeAppUrl)}\n`)
+    if (options.update) await updateURLs(identifiers.app, url)
+    outputAppURL(options.update, storeFqdn, url)
   }
+
+  outputExtensionsMessages(options.app, storeFqdn, url)
 
   const backendOptions = {
     apiKey: identifiers.app,
