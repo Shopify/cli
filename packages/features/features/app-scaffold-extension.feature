@@ -28,5 +28,5 @@ Scenario: I scaffold two theme extensions
 Scenario: I scaffold a function extension
   Given I have a working directory
   And I create an app named MyExtendedApp with yarn as dependency manager
-  When I create an extension named MyExtension of type payment_methods
+  When I create an extension named MyExtension of type payment_methods and flavor wasm
   Then I have a function extension named MyExtension of type payment_methods
