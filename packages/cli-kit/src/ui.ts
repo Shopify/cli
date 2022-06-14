@@ -5,7 +5,7 @@ import {Input} from './ui/input'
 import {Select} from './ui/select'
 import {AbortSilent} from './error'
 import {remove, exists} from './file'
-import {info, debug, content, token} from './output'
+import {info, content, token} from './output'
 import {relative} from './path'
 import {isTerminalInteractive} from './environment/local'
 
@@ -25,11 +25,10 @@ export interface Question {
 
 export const prompt = async <T>(questions: Question[]): Promise<T> => {
   if (!isTerminalInteractive()) {
-    debug(content`
+    throw new Bug(content`
 The CLI prompted in a non-interactive terminal with the following questions:
 ${token.json(questions)}
     `)
-    throw new AbortSilent()
   }
   const mappedQuestions: unknown = questions.map(mapper)
   const value: unknown = {}
