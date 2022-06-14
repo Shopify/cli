@@ -1,23 +1,13 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as postAuthScreens from '../html/postAuthScreens'
+import * as postAuthScreens from './postAuthScreens'
 import {Abort, Bug} from '../error'
 import * as output from '../output'
 import http from 'http'
 import url from 'url'
 
-export const EmptyUrlError = new Abort('We received the authentication redirect but the URL is empty.')
 export const AuthenticationError = (message: string) => {
   return new Abort(message)
 }
-export const MissingCodeError = new Bug(
-  `The authentication can't continue because the redirect doesn't include the code.`,
-)
-
-export const MissingStateError = new Bug(
-  `The authentication can't continue because the redirect doesn't include the state.`,
-)
-
-export const redirectResponseBody = `<h1>You're logged in on the Shopify CLI in your terminal</h1>`
 
 const ResponseTimeoutSeconds = 10
 
@@ -33,6 +23,7 @@ type RedirectCallback = (error: Error | undefined, state: string | undefined, co
 interface RedirectListenerOptions {
   host: string
   port: number
+  url: string
   callback: RedirectCallback
 }
 /**
@@ -44,55 +35,63 @@ interface RedirectListenerOptions {
  */
 export class RedirectListener {
   private static createServer(callback: RedirectCallback): http.Server {
-    return http.createServer((request, response) => {
+    return http.createServer(async (request, response) => {
       const requestUrl = request.url
-      if (requestUrl === '/favicon.ico') return {}
-      else if (requestUrl === '/style.css') {
-        const stylesheetFile = postAuthScreens.getStylesheet()
+      if (!postAuthScreens.areFilesLoaded()) await postAuthScreens.loadFiles()
+
+      if (requestUrl === '/favicon.svg') {
+        const faviconFile = await postAuthScreens.getFavicon()
+        response.writeHead(200, {'Content-Type': 'image/svg+xml'})
+        response.end(faviconFile)
+        return {}
+      } else if (requestUrl === '/style.css') {
+        const stylesheetFile = await postAuthScreens.getStylesheet()
         response.writeHead(200, {'Content-Type': 'text/css'})
         response.end(stylesheetFile)
         return {}
       }
 
-      const respond = () => {
-        const successFile = postAuthScreens.getSuccessHTML()
+      const respond = async () => {
+        const successFile = await postAuthScreens.getSuccessHTML()
         response.writeHead(200, {'Content-Type': 'text/html'})
         response.end(successFile)
       }
 
       if (!requestUrl) {
-        respond()
-        return callback(EmptyUrlError, undefined, undefined)
+        await respond()
+        return callback(new Bug('EmptyUrlError'), undefined, undefined)
       }
       const queryObject = url.parse(requestUrl, true).query
 
       if (queryObject.error && queryObject.error_description) {
-        respond()
+        await respond()
         return callback(AuthenticationError(`${queryObject.error_description}`), undefined, undefined)
       }
 
       if (!queryObject.code) {
-        respond()
-        return callback(MissingCodeError, undefined, undefined)
+        await respond()
+        return callback(new Bug('MissingCodeError'), undefined, undefined)
       }
 
       if (!queryObject.state) {
-        respond()
-        return callback(MissingStateError, undefined, undefined)
+        await respond()
+        return callback(new Bug('MissingStateError'), undefined, undefined)
       }
 
-      respond()
+      await respond()
       return callback(undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
   }
 
   port: number
   host: string
+  url: string
   server: http.Server
 
   constructor(options: RedirectListenerOptions) {
     this.port = options.port
     this.host = options.host
+    this.url = options.url
     this.server = RedirectListener.createServer(options.callback)
   }
 
@@ -127,6 +126,7 @@ export async function listenRedirect(host: string, port: number, url: string): P
     const redirectListener = new RedirectListener({
       host,
       port,
+      url,
       callback: (error, code, state) => {
         clearTimeout(timeout)
         redirectListener.stop()
