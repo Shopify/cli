@@ -1,7 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import commondir from 'commondir'
-import {relative} from 'pathe'
+import {relative, dirname} from 'pathe'
+import {fileURLToPath} from 'url'
 
 export * from 'pathe'
 
@@ -26,4 +27,13 @@ export function relativize(path: string): string {
   } else {
     return relativePath
   }
+}
+
+/**
+ * Given a module's import.meta.url it returns the directory containing the module.
+ * @param moduleURL {string} The value of import.meta.url in the context of the caller module.
+ * @returns {string} The path to the directory containing the caller module.
+ */
+export function moduleDirectory(moduleURL: string): string {
+  return dirname(fileURLToPath(moduleURL))
 }
