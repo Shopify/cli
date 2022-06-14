@@ -72,7 +72,7 @@ describe('QRCodeModal', () => {
     );
 
     expect(container?.find(QRCode)?.prop('value')).toStrictEqual(
-      `com.shopify.pos://pos-ui-extensions?scriptUrl=${extension.development.root.url}`,
+      `com.shopify.pos://pos-ui-extensions?url=${extension.development.root.url}`,
     );
   });
 });
