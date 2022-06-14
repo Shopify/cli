@@ -21,6 +21,8 @@ export interface DevOptions {
   update: boolean
   plugins: Plugin[]
   skipDependenciesInstallation: boolean
+  subscriptionProductUrl?: string
+  checkoutCartUrl?: string
 }
 
 interface DevWebOptions {
@@ -175,8 +177,10 @@ async function devExtensionsTarget(
   apiKey: string,
   url: string,
   storeFqdn: string,
+  subscriptionProductUrl?: string,
+  checkoutCartUrl?: string,
 ): Promise<ReverseHTTPProxyTarget> {
-  const productVariantId = await retrieveProductVariantIDIfNeeded(app.extensions.ui, storeFqdn)
+  const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
@@ -191,7 +195,8 @@ async function devExtensionsTarget(
         port,
         storeFqdn,
         apiKey,
-        productVariantId,
+        cartUrl,
+        subscriptionProductUrl,
       })
     },
   }
@@ -202,10 +207,12 @@ async function devExtensionsTarget(
  * @param extensions {UIExtension[]} - The UI Extensions to dev
  * @param store {string} - The store FQDN
  */
-async function retrieveProductVariantIDIfNeeded(extensions: UIExtension[], store: string) {
+async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
-  if (!hasUIExtension) return
-  return fetchProductVariant(store)
+  if (!hasUIExtension) return undefined
+  if (checkoutCartUrl) return checkoutCartUrl
+  const variantId = await fetchProductVariant(store)
+  return `/cart/${variantId}:1`
 }
 
 export default dev

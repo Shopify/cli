@@ -59,7 +59,13 @@ export interface ExtensionDevOptions {
    * Product variant ID, used for checkout_ui_extensions
    * If that extension is present, this is mandatory
    */
-  productVariantId?: string
+  cartUrl?: string
+
+  /**
+   * Subscription product URL, used for subscription_ui_extensions
+   * If not provided the first product in the store will be used
+   */
+  subscriptionProductUrl?: string
 }
 
 export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
