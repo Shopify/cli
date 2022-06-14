@@ -1,5 +1,3 @@
-const path = require('pathe')
-
 const isCI = process.env.NODE_ENV === 'ci'
 const featureToRun = process.env.FEATURE
 const nodeVersion = process.version.match(/^v(\d+\.\d+)/)[1]

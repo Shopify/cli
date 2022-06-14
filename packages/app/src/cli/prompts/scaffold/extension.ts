@@ -78,7 +78,7 @@ const scaffoldExtensionPrompt = async (
   }
   let promptOutput: ScaffoldExtensionOutput = await prompt(questions)
   const extensionType = {...options, ...promptOutput}.extensionType
-  if ((!options.extensionFlavor && isUiExtensionType(extensionType)) || isFunctionExtensionType(extensionType)) {
+  if (!options.extensionFlavor && (isUiExtensionType(extensionType) || isFunctionExtensionType(extensionType))) {
     promptOutput = {
       ...promptOutput,
       extensionFlavor: (
