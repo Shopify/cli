@@ -55,7 +55,7 @@ export async function selectStore(
 
   output.info(`\n${CreateStoreLink(org.id)}`)
   const reload = await reloadStoreListPrompt()
-  if (!reload) throw new error.AbortSilent()
+  if (!reload) process.exit(0)
 
   const data = await fetchAllStores(org.id, token)
   return selectStore(data, org, token)
