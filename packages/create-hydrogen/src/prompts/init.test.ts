@@ -60,7 +60,7 @@ describe('init', () => {
         {
           type: 'select',
           name: 'template',
-          choices: ['Demo store', 'Hello world'],
+          choices: ['Demo store', 'Hello world', 'Hello world in TypeScript'],
           message: 'Choose a template',
           default: 'Demo store',
           result: expect.any(Function),

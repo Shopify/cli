@@ -1,15 +1,18 @@
 import {ui, string} from '@shopify/cli-kit'
 
 export enum Template {
-  Minimum = 'Hello world',
-  DemoStore = 'Demo store',
+  HelloWorld = 'Hello World',
+  DemoStore = 'Demo Store',
+  HelloWorldTypeScript = 'Hello World in TypeScript',
 }
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const TEMPLATE_MAP = {
   [Template.DemoStore]: 'demo-store',
-  [Template.Minimum]: 'hello-world',
+  [Template.HelloWorld]: 'hello-world-js',
+  [Template.HelloWorldTypeScript]: 'hello-world-ts',
 }
+
 const BRANCH = `stackblitz`
 
 interface InitOptions {
@@ -31,7 +34,11 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   let explicitTemplate
 
   if (options.template) {
-    const normalizedTemplate = string.hyphenize(options.template)
+    let normalizedTemplate = string.hyphenize(options.template)
+
+    if (normalizedTemplate !== 'demo-store' && !normalizedTemplate.endsWith('-js')) {
+      normalizedTemplate = `${normalizedTemplate}-js`
+    }
 
     explicitTemplate = `${TEMPLATE_BASE}${normalizedTemplate}#${BRANCH}`
   } else {

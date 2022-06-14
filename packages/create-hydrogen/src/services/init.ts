@@ -4,7 +4,21 @@
 import {version as hydrogenVersion} from '../../package.json'
 /* eslint-disable @nrwl/nx/enforce-module-boundaries */
 import {version as cliVersion} from '../../../cli-main/package.json'
-import {string, path, file, output, os, ui, npm, dependency, environment, github, template, git} from '@shopify/cli-kit'
+import {
+  string,
+  path,
+  error,
+  file,
+  output,
+  os,
+  ui,
+  npm,
+  dependency,
+  environment,
+  github,
+  template,
+  git,
+} from '@shopify/cli-kit'
 /* eslint-enable @nrwl/nx/enforce-module-boundaries */
 
 import {Writable} from 'stream'
@@ -19,6 +33,12 @@ interface InitOptions {
   hydrogenVersion?: string
   local: boolean
 }
+
+const suggestHydrogenSupport = () => `
+Help us make Hydrogen better by reporting this error so we can improve this message and/or fix the error.
+  - Chat with us on Discord: https://discord.com/invite/ppSbThrFaS
+  - Create an issue in GitHub: https://github.com/Shopify/hydrogen/issues/new
+`
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
@@ -51,6 +71,10 @@ async function init(options: InitOptions) {
             repoUrl: `${templateInfo.http}#${templateInfo.ref}`,
             destination: templateDownloadDir,
           })
+
+          if (!(await file.exists(path.join(templateDownloadDir, templateInfo.subDirectory, 'package.json')))) {
+            throw new error.Abort(`The template ${templateInfo.subDirectory} was not found.`, suggestHydrogenSupport())
+          }
           task.title = 'Template downloaded'
         },
       },
