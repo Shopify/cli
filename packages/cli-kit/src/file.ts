@@ -78,6 +78,10 @@ export async function isDirectory(path: string): Promise<boolean> {
   return (await fs.promises.lstat(path)).isDirectory()
 }
 
+export async function size(path: string): Promise<number> {
+  return (await fs.stat(path)).size
+}
+
 /**
  * Moves a file.
  * @param src {string} File to be moved.
