@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 3.0.14
+
+### Patch Changes
+
+- 8f82bd36: Fix lookupTunnelPlugin on Windows
+- ae3823c8: Abort the execution if prompts are attempted in a non-interactive terminal
+- 8f82bd36: Add pathToFileURL helper
+- c383ed42: Gracefully handle revoked tokens
+
 ## 3.0.13
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.0.14
+
+### Patch Changes
+
+- 4be13097: Show all output URLs before the build process
+- 788fedb1: Fix binary the extensions' binary download on Windows OSs
+- 9fa8e79b: Add two new flags: subscription-product-url and checkout-cart-url as resource urls
+- 8f82bd36: Remove unneeded callbacks while updating Partners URLs
+- 9d9a1d97: Add --output-web-env flag to deploy to output the web environment
+- Updated dependencies [8f82bd36]
+- Updated dependencies [ae3823c8]
+- Updated dependencies [8f82bd36]
+- Updated dependencies [c383ed42]
+  - @shopify/cli-kit@3.0.14
+
 ## 3.0.13
 
 ### Patch Changes

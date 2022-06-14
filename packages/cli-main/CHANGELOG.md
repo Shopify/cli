@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.0.14
+
+### Patch Changes
+
+- Updated dependencies [8f82bd36]
+- Updated dependencies [ae3823c8]
+- Updated dependencies [8f82bd36]
+- Updated dependencies [c383ed42]
+  - @shopify/cli-kit@3.0.14
+
 ## 3.0.13
 
 ### Patch Changes

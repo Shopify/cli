@@ -1,6 +1,6 @@
 {
   "name": "@shopify/fixtures-app",
-  "version": "3.0.13",
+  "version": "3.0.14",
   "main": "web/backend/index.js",
   "license": "UNLICENSED",
   "private": true,
@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@shopify/admin-ui-extensions-react": "^1.0.1",
-    "@shopify/app": "3.0.13",
-    "@shopify/cli": "3.0.13",
+    "@shopify/app": "3.0.14",
+    "@shopify/cli": "3.0.14",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.3",
     "react": "^18.1.0"
   },
