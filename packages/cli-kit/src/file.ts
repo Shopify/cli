@@ -31,8 +31,8 @@ export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | 
  * @param path {string} Path to the file to read.
  * @returns {Promise<string>} A promise that resolves with the content of the file.
  */
-export async function read(path: string): Promise<string> {
-  const content = await fs.readFile(path, {encoding: 'utf-8'})
+export async function read(path: string, options: object = {encoding: 'utf-8'}): Promise<string> {
+  const content = await fs.readFile(path, options)
   return content
 }
 

@@ -354,6 +354,7 @@ describe('ensureDeployEnvironment', () => {
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
+      extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -376,6 +377,7 @@ describe('ensureDeployEnvironment', () => {
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
+      extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -394,6 +396,7 @@ describe('ensureDeployEnvironment', () => {
     const identifiers = {
       app: APP1.apiKey,
       extensions: {},
+      extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -412,7 +415,7 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
-    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}})
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {
@@ -421,6 +424,7 @@ describe('ensureDeployEnvironment', () => {
     const identifiers = {
       app: APP1.apiKey,
       extensions: {},
+      extensionIds: {},
     }
 
     // There is a cached app but it will be ignored
@@ -442,6 +446,6 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
-    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}})
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
   })
 })

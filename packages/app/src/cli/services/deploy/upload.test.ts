@@ -50,6 +50,7 @@ describe('uploadFunctionExtensions', () => {
     identifiers = {
       app: 'api=key',
       extensions: {},
+      extensionIds: {},
     }
   })
 

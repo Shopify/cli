@@ -16,10 +16,10 @@ export interface IdentifiersExtensions {
 }
 
 export interface NumericIdentifiersExtensions {
-  [localIdentifier: string]: number
+  [localIdentifier: string]: string
 }
 
-export interface Identifiers {
+export interface UuidOnlyIdentifiers {
   /** Application's API Key */
   app: string
 
@@ -27,9 +27,11 @@ export interface Identifiers {
    * The extensions' unique identifiers.
    */
   extensions: IdentifiersExtensions
+}
 
+export interface Identifiers extends UuidOnlyIdentifiers {
   /**
-   * The extensions' numeric identifiers.
+   * The extensions' numeric identifiers (expressed as a string).
    */
   extensionIds: NumericIdentifiersExtensions
 }
@@ -487,7 +489,7 @@ type EnvironmentType = 'production' | 'development'
 
 interface UpdateAppIdentifiersOptions {
   app: App
-  identifiers: Identifiers
+  identifiers: UuidOnlyIdentifiers
   environmentType: EnvironmentType
 }
 
@@ -546,7 +548,7 @@ interface GetAppIdentifiersOptions {
  * @param options {GetAppIdentifiersOptions} Options.
  * @returns
  */
-export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<Identifiers> {
+export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
     ...app.environment.env,
     ...app.environment.dotenv.production?.variables,

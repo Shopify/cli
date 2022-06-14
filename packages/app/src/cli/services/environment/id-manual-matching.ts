@@ -1,11 +1,12 @@
 import {ExtensionRegistration} from '../dev/create-extension'
-import {Extension, IdentifiersExtensions} from 'cli/models/app/app'
+import {Extension, IdentifiersExtensions, NumericIdentifiersExtensions} from 'cli/models/app/app'
 import {ui} from '@shopify/cli-kit'
 
 export type ManualMatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
+      idIdentifiers: NumericIdentifiersExtensions
       toCreate: Extension[]
     }
   | {result: 'pending-remote'}
@@ -24,6 +25,7 @@ export async function manualMatchIds(
   remoteExtensions: ExtensionRegistration[],
 ): Promise<ManualMatchResult> {
   const identifiers: {[key: string]: string} = {}
+  const idIdentifiers: {[key: string]: string} = {}
   let pendingRemote = remoteExtensions
   let pendingLocal = localExtensions
   for (const extension of localExtensions) {
@@ -34,12 +36,13 @@ export async function manualMatchIds(
     if (!selected) continue
 
     identifiers[extension.localIdentifier] = selected.uuid
+    idIdentifiers[extension.localIdentifier] = selected.id
     pendingRemote = pendingRemote.filter((reg) => reg.uuid !== selected.uuid)
     pendingLocal = pendingLocal.filter((reg) => reg.localIdentifier !== extension.localIdentifier)
   }
 
   if (pendingRemote.length > 0) return {result: 'pending-remote'}
-  return {result: 'ok', identifiers, toCreate: pendingLocal}
+  return {result: 'ok', identifiers, idIdentifiers, toCreate: pendingLocal}
 }
 
 export async function selectRegistrationPrompt(

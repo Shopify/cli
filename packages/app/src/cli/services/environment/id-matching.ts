@@ -1,10 +1,11 @@
 import {ExtensionRegistration} from '../dev/create-extension'
-import {Extension, IdentifiersExtensions} from 'cli/models/app/app'
+import {Extension, IdentifiersExtensions, NumericIdentifiersExtensions} from 'cli/models/app/app'
 
 export type MatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
+      idIdentifiers: NumericIdentifiersExtensions
       pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
       toCreate: Extension[]
       toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
@@ -23,7 +24,11 @@ export async function automaticMatchmaking(
   }
 
   const validIdentifiers = identifiers
-  const idIdentifiers: {[localIdentifier: string]: number} = {}
+  const idIdentifiers: {[localIdentifier: string]: string} = {}
+  for (const [identifier, uuid] of Object.entries(validIdentifiers)) {
+    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
+    if (registration) idIdentifiers[identifier] = registration.id
+  }
 
   // Get the local UUID of an extension, if exists
   const localId = (extension: Extension) => validIdentifiers[extension.localIdentifier]

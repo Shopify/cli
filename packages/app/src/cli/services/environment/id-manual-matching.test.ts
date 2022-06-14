@@ -82,6 +82,7 @@ describe('manualMatch: when all extensions are matched', () => {
     const expected: ManualMatchResult = {
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      idIdentifiers: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
       toCreate: [],
     }
     expect(got).toEqual(expected)
@@ -100,6 +101,7 @@ describe('manualMatch: when there are more local extensions', () => {
     const expected: ManualMatchResult = {
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A'},
+      idIdentifiers: {EXTENSION_A: 'A'},
       toCreate: [EXTENSION_A_2],
     }
     expect(got).toEqual(expected)
@@ -120,6 +122,7 @@ describe('manualMatch: when there are more local extensions and user selects to 
     const expected: ManualMatchResult = {
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_A_2'},
+      idIdentifiers: {EXTENSION_A: 'A', EXTENSION_B: 'A_2'},
       toCreate: [EXTENSION_A_2],
     }
     expect(got).toEqual(expected)

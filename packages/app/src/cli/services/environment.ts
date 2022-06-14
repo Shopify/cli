@@ -3,7 +3,7 @@ import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations,
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
+import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
@@ -30,7 +30,7 @@ export interface DevEnvironmentOptions {
 interface DevEnvironmentOutput {
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   storeFqdn: string
-  identifiers: Identifiers
+  identifiers: UuidOnlyIdentifiers
 }
 
 /**
