@@ -15,7 +15,7 @@ async function init(options: InitOptions) {
   const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  const githubRepo = github.parseGithubRepoUrl(options.template)
+  const githubRepo = github.parseGithubRepoReference(options.template)
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')

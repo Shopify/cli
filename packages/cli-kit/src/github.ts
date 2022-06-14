@@ -77,19 +77,20 @@ export function parseRepoUrl(src: string) {
   return {site: normalizedSite, user, name, ref, subDirectory, ssh, http}
 }
 
-export interface GithubRepoUrl {
+export interface GithubRepoReference {
   repoBaseUrl: string
   branch?: string
   filePath?: string
 }
 
-export function parseGithubRepoUrl(src: string): GithubRepoUrl {
+export function parseGithubRepoReference(src: string): GithubRepoReference {
   const url = new URL(src)
   if (url.origin !== 'https://github.com') {
-    throw new Abort('Only GitHub repository URLs are supported.')
+    throw new Abort('Only GitHub repository references are supported.')
   }
 
-  const [_, user, repo, tree, branch, ...repoPath] = url.pathname.split('/')
+  const branch = url.hash ? url.hash.slice(1) : undefined
+  const [_, user, repo, ...repoPath] = url.pathname.split('/')
   const filePath = repoPath.length > 0 ? repoPath.join('/') : undefined
 
   return {

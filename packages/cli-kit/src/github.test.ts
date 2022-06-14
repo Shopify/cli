@@ -1,5 +1,5 @@
 import {fetch} from './http'
-import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoUrl} from './github'
+import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoReference} from './github'
 import {Response} from 'node-fetch'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -81,14 +81,14 @@ describe('parseRepoUrl', () => {
   })
 })
 
-describe('parseGithubRepoUrl', () => {
+describe('parseGithubRepoReference', () => {
 
-  it('parses a repository url', async () => {
+  it('parses a repository reference', async () => {
     // Given
     const url = 'https://github.com/Shopify/foo';
 
     // When
-    const repoUrl = parseGithubRepoUrl(url);
+    const repoUrl = parseGithubRepoReference(url);
 
     // Then
     await expect(repoUrl).toMatchObject({
@@ -98,12 +98,12 @@ describe('parseGithubRepoUrl', () => {
     });
   });
 
-  it('parses a repository url with a branch', async () => {
+  it('parses a repository reference with a branch', async () => {
     // Given
-    const url = 'https://github.com/Shopify/foo/tree/main';
+    const url = 'https://github.com/Shopify/foo#main';
 
     // When
-    const repoUrl = parseGithubRepoUrl(url);
+    const repoUrl = parseGithubRepoReference(url);
 
     // Then
     await expect(repoUrl).toMatchObject({
@@ -113,12 +113,12 @@ describe('parseGithubRepoUrl', () => {
     });
   });
 
-  it('parses a repository url with a branch and path', async () => {
+  it('parses a repository reference with a branch and path', async () => {
     // Given
-    const url = 'https://github.com/Shopify/foo/tree/main/bar/baz';
+    const url = 'https://github.com/Shopify/foo/bar/baz#main';
 
     // When
-    const repoUrl = parseGithubRepoUrl(url);
+    const repoUrl = parseGithubRepoReference(url);
 
     // Then
     await expect(repoUrl).toMatchObject({
@@ -128,15 +128,15 @@ describe('parseGithubRepoUrl', () => {
     });
   });
 
-  it('throws for a non github URL', async () => {
+  it('throws for a non github reference', async () => {
     // Given
     const url = 'https://NOTgithub.com/Shopify/foo';
 
     // When
-    const parseRepoUrl = () => parseGithubRepoUrl(url);
+    const parseRepoUrl = () => parseGithubRepoReference(url);
 
     // Then
-    await expect(parseRepoUrl).toThrow('Only GitHub repository URLs are supported.');
+    await expect(parseRepoUrl).toThrow('Only GitHub repository references are supported.');
   });
 
   it('throws for a non URL', async () => {
@@ -144,7 +144,7 @@ describe('parseGithubRepoUrl', () => {
     const url = 'abc';
 
     // When
-    const parseRepoUrl = () => parseGithubRepoUrl(url);
+    const parseRepoUrl = () => parseGithubRepoReference(url);
 
     // Then
     await expect(parseRepoUrl).toThrow('Invalid URL');
