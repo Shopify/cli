@@ -19,7 +19,8 @@
     }
   },
   "files": [
-    "/dist"
+    "/dist",
+    "/assets"
   ],
   "publishConfig": {
     "access": "public",
