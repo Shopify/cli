@@ -3,7 +3,6 @@ import {ApplicationToken, IdentityToken} from './schema'
 import constants from '../constants'
 import {OAuthApplications} from '../session'
 import {partners} from '../api'
-import {ClientError} from 'graphql-request'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -71,16 +70,7 @@ function isTokenExpired(token: ApplicationToken): boolean {
 
 async function isPartnersTokenRevoked(token: ApplicationToken) {
   if (!token) return false
-  try {
-    await partners.validationQuery(token.accessToken)
-    return false
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    if (error instanceof ClientError) {
-      return error.response.status === 401
-    }
-    return false
-  }
+  return partners.checkIfTokenIsRevoked(token.accessToken)
 }
 
 function expireThreshold(): Date {

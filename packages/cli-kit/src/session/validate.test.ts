@@ -4,7 +4,6 @@ import {validateSession} from './validate'
 import {OAuthApplications} from '../session'
 import {partners} from '../api'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
-import {ClientError} from 'graphql-request'
 
 const pastDate = new Date(2022, 1, 1, 9)
 const currentDate = new Date(2022, 1, 1, 10)
@@ -75,7 +74,7 @@ beforeEach(() => {
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
   vi.mock('../api')
-  vi.mocked(partners.validationQuery).mockResolvedValue({})
+  vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValue(false)
 })
 
 afterAll(() => {
@@ -126,8 +125,7 @@ describe('validateSession', () => {
   it('returns needs_full_auth if partners token is revoked', async () => {
     // Given
     const session = {identity: validIdentity, applications: validApplications}
-    const graphQLError = new ClientError({status: 401}, {query: ''})
-    vi.mocked(partners.validationQuery).mockRejectedValueOnce(graphQLError)
+    vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValueOnce(true)
 
     // When
     const got = await validateSession(requestedScopes, defaultApps, session)
