@@ -3,7 +3,7 @@ import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
 import {selectOrCreateApp} from './dev/select-app'
 import {App} from '../models/app/app'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {path, dependency, session, string, output} from '@shopify/cli-kit'
+import {path, dependency, session, output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('./dev/fetch')
@@ -86,7 +86,7 @@ describe('info', () => {
     const result = await info(app, {format: 'text', webEnv: true})
 
     // Then
-    expect(string.stringStrippingAnsi(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
       "
       Use these environment variables to set up your deployment pipeline for this app:
         · SHOPIFY_API_KEY: api-key
@@ -128,7 +128,7 @@ describe('info', () => {
     const result = await info(app, {format: 'json', webEnv: true})
 
     // Then
-    expect(string.stringStrippingAnsi(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
       "{
         \\"SHOPIFY_API_KEY\\": \\"api-key\\",
         \\"SHOPIFY_API_SECRET\\": \\"api-secret\\",
