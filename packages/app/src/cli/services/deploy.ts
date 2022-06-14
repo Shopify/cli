@@ -1,6 +1,7 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {themeExtensionConfig} from './deploy/themeExtensionConfig'
+import {deployThemeExtension} from './deploy/themeExtension'
+import {ThemeExtensionConfig, themeExtensionConfig as generateThemeExtensionConfig} from './deploy/themeExtensionConfig'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
@@ -17,7 +18,7 @@ import {
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {validateExtensions} from '../validators/extensions'
-import {api, error, path, output, temporary, file} from '@shopify/cli-kit'
+import {path, output, temporary, file} from '@shopify/cli-kit'
 import {OrganizationApp} from 'cli/models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
@@ -55,24 +56,8 @@ export const deploy = async (options: DeployOptions) => {
   )
 
   const themeExtension = options.app.extensions.theme[0]
-  if (themeExtension) {
-    const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
-      apiKey,
-      config: JSON.stringify(await themeExtensionConfig(themeExtension)),
-      context: undefined,
-      registrationId: identifiers.extensionIds[themeExtension.localIdentifier],
-    }
-    const mutation = api.graphql.ExtensionUpdateDraftMutation
-    const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
-    if (
-      result.extensionUpdateDraft &&
-      result.extensionUpdateDraft.userErrors &&
-      result.extensionUpdateDraft.userErrors.length > 0
-    ) {
-      const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-      throw new error.Abort(errors)
-    }
-  }
+  let themeExtensionConfig: ThemeExtensionConfig
+  if (themeExtension) themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
 
   await temporary.directory(async (tmpDir) => {
     const bundlePath = path.join(tmpDir, `bundle.zip`)
@@ -96,7 +81,10 @@ export const deploy = async (options: DeployOptions) => {
        */
       await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     }
-
+    if (themeExtension) {
+      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+      await deployThemeExtension({apiKey, themeExtensionConfig, themeId, token})
+    }
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
     app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
