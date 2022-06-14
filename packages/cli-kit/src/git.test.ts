@@ -31,14 +31,13 @@ describe('downloadRepository()', () => {
 
   it('calls simple-git to clone a repo with branch', async () => {
     // Given
-    const repoUrl = 'http://repoUrl'
-    const branch = 'my-branch'
+    const repoUrl = 'http://repoUrl#my-branch'
     const destination = 'destination'
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null, '--branch': 'my-branch'}
 
     // When
-    await git.downloadRepository({repoUrl, branch, destination})
+    await git.downloadRepository({repoUrl, destination})
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options, expect.any(Function))

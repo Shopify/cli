@@ -33,8 +33,7 @@ async function init(options: InitOptions) {
         task: async (_, task) => {
           task.title = 'Downloading template'
           await git.downloadRepository({
-            repoUrl: githubRepo.repoBaseUrl,
-            branch: githubRepo.branch,
+            repoUrl: `${githubRepo.repoBaseUrl}#${githubRepo.branch}`,
             destination: templateDownloadDir,
           })
           task.title = 'Template downloaded'

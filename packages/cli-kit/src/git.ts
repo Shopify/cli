@@ -7,22 +7,15 @@ export async function initializeRepository(directory: string) {
   await git(directory).init()
 }
 
-export async function downloadRepository({
-  repoUrl,
-  branch,
-  destination,
-}: {
-  repoUrl: string
-  branch?: string
-  destination: string
-}) {
+export async function downloadRepository({repoUrl, destination}: {repoUrl: string; destination: string}) {
+  const [repository, branch] = repoUrl.split('#')
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const options: TaskOptions = {'--recurse-submodules': null}
   if (branch) {
     options['--branch'] = branch
   }
 
-  await git().clone(repoUrl, destination, options, (err) => {
+  await git().clone(repository, destination, options, (err) => {
     if (err) {
       throw new Abort(err.message)
     }
