@@ -19,7 +19,9 @@ async function init(options: InitOptions) {
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
-    const templatePathDir = options.templatePath ? path.join(templateDownloadDir, options.templatePath) : templateDownloadDir
+    const templatePathDir = options.templatePath
+      ? path.join(templateDownloadDir, options.templatePath)
+      : templateDownloadDir
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
     await file.mkdir(templateDownloadDir)
