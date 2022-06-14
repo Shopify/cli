@@ -3,7 +3,7 @@
 import {AutoComplete} from './ui/autocomplete'
 import {Input} from './ui/input'
 import {Select} from './ui/select'
-import {AbortSilent} from './error'
+import {Bug} from './error'
 import {remove, exists} from './file'
 import {info, content, token} from './output'
 import {relative} from './path'
@@ -24,7 +24,7 @@ export interface Question {
 }
 
 export const prompt = async <T>(questions: Question[]): Promise<T> => {
-  if (!isTerminalInteractive()) {
+  if (!isTerminalInteractive() && questions.length !== 0) {
     throw new Bug(content`
 The CLI prompted in a non-interactive terminal with the following questions:
 ${token.json(questions)}
