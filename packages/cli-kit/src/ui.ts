@@ -5,8 +5,9 @@ import {Input} from './ui/input'
 import {Select} from './ui/select'
 import {AbortSilent} from './error'
 import {remove, exists} from './file'
-import {info} from './output'
+import {info, debug, content, token} from './output'
 import {relative} from './path'
+import {isTerminalInteractive} from './environment/local'
 
 export {Listr} from 'listr2'
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
@@ -23,6 +24,13 @@ export interface Question {
 }
 
 export const prompt = async <T>(questions: Question[]): Promise<T> => {
+  if (!isTerminalInteractive()) {
+    debug(content`
+The CLI prompted in a non-interactive terminal with the following questions:
+${token.json(questions)}
+    `)
+    throw new AbortSilent()
+  }
   const mappedQuestions: unknown = questions.map(mapper)
   const value: unknown = {}
   for (const question of mappedQuestions) {
