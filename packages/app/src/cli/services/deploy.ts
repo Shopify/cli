@@ -75,7 +75,6 @@ export const deploy = async (options: DeployOptions) => {
        */
       await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     }
-    await validateFunctionsWasmPresence(app.extensions.function)
 
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
     app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})

@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags'
 import {load as loadApp, App} from '../../models/app/app'
-import {info} from '../../services/info'
+import {Format, info} from '../../services/info'
 import {Command, Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
 
