@@ -6,6 +6,8 @@ import {glob, join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
+
+import {content, token} from './output'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
@@ -13,6 +15,8 @@ import {Writable} from 'node:stream'
 const RubyCLIVersion = '2.16.0'
 const ThemeCheckVersion = '1.10.2'
 const MinBundlerVersion = '2.3.8'
+const MinRubyVersion = '2.3.0'
+const MinRubyGemVersion = '2.5.0'
 
 /**
  * Execute CLI 2.0 commands.
@@ -136,31 +140,73 @@ async function installCLIDependencies() {
 }
 
 async function validateRubyEnv() {
+  await validateRuby()
+  await validateRubyGems()
+  await validateBundler()
+}
+
+async function validateRuby() {
+  let version
   try {
-    await system.exec('ruby', ['-v'])
+    const stdout = await system.captureOutput('ruby', ['-v'])
+    version = coerce(stdout)
   } catch {
     throw new Abort(
       'Ruby environment not found',
-      'Make sure you have ruby installed on your system: https://www.ruby-lang.org/en/documentation/installation/',
+      `Make sure you have Ruby installed on your system: ${
+        content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      }`,
     )
   }
 
-  const bundlerVersion = await getBundlerVersion()
-  const isValid = bundlerVersion?.compare(MinBundlerVersion)
+  const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Bundler version ${bundlerVersion} is not supported`,
-      `Make sure you have Bundler version ${MinBundlerVersion} or higher installed on your system: https://bundler.io/`,
+      `Ruby version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system: ${
+        content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      }`,
     )
   }
 }
 
-async function getBundlerVersion() {
+async function validateRubyGems() {
+  const stdout = await system.captureOutput('gem', ['-v'])
+  const version = coerce(stdout)
+
+  const isValid = version?.compare(MinRubyGemVersion)
+  if (isValid === -1 || isValid === undefined) {
+    throw new Abort(
+      `RubyGems version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `To update to the latest version of RubyGems, run ${
+        content`${token.genericShellCommand('gem update --system')}`.value
+      }`,
+    )
+  }
+}
+
+async function validateBundler() {
+  let version
   try {
     const stdout = await system.captureOutput('bundler', ['-v'])
-    return coerce(stdout)
+    version = coerce(stdout)
   } catch {
-    throw new Abort('Bundler not found', 'Make sure you have Bundler installed on your system: https://bundler.io/')
+    throw new Abort(
+      'Bundler not found',
+      `To install the latest version of Bundler, run ${
+        content`${token.genericShellCommand('gem install bundler')}`.value
+      }`,
+    )
+  }
+
+  const isValid = version?.compare(MinBundlerVersion)
+  if (isValid === -1 || isValid === undefined) {
+    throw new Abort(
+      `Bundler version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `To update to the latest version of Bundler, run ${
+        content`${token.genericShellCommand('gem install bundler')}`.value
+      }`,
+    )
   }
 }
 

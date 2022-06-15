@@ -9,6 +9,15 @@ import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
+export const genericConfigurationFileNames = {
+  yarn: {
+    lockfile: 'yarn.lock',
+  },
+  pnpm: {
+    lockfile: 'pnpm-lock.yaml',
+  },
+} as const
+
 export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
 export type DependencyManager = typeof dependencyManager[number]
 
@@ -25,6 +34,23 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
+    return 'pnpm'
+  } else {
+    return 'npm'
+  }
+}
+
+/**
+ * Returns the dependency manager used by an existing project.
+ * @param directory {string} The root directory of the project.
+ * @returns The dependency manager
+ */
+export async function getDependencyManager(directory: string): Promise<DependencyManager> {
+  const yarnLockPath = pathJoin(directory, genericConfigurationFileNames.yarn.lockfile)
+  const pnpmLockPath = pathJoin(directory, genericConfigurationFileNames.pnpm.lockfile)
+  if (await fileExists(yarnLockPath)) {
+    return 'yarn'
+  } else if (await fileExists(pnpmLockPath)) {
     return 'pnpm'
   } else {
     return 'npm'
@@ -152,7 +178,7 @@ export async function packageJSONContents(packageJsonPath: string): Promise<Pack
   return JSON.parse(await readFile(packageJsonPath))
 }
 
-type DependencyType = 'dev' | 'prod' | 'peer'
+export type DependencyType = 'dev' | 'prod' | 'peer'
 
 interface AddNPMDependenciesIfNeededOptions {
   /** How dependencies should be added */
@@ -209,6 +235,13 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
     stderr: options.stderr,
     signal: options.signal,
   })
+}
+
+export async function addLatestNPMDependencies(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
+  await addNPMDependenciesIfNeeded(
+    dependencies.map((dependency) => `${dependency}@latest`),
+    options,
+  )
 }
 
 /**

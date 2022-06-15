@@ -1,14 +1,13 @@
 import {
   blocks,
   configurationFileNames,
-  genericConfigurationFileNames,
   functionExtensions,
   themeExtensions,
   uiExtensions,
+  getUIExtensionRendererDependency,
   UIExtensionTypes,
   dotEnvFileNames,
   ExtensionTypes,
-  getUIExtensionRendererDependency,
 } from '../../constants'
 import {dependency, dotenv, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 
@@ -220,21 +219,10 @@ class AppLoader {
     const functions = await this.loadFunctions(extensionsPath)
     const uiExtensions = await this.loadUIExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
-    const yarnLockPath = path.join(this.appDirectory, genericConfigurationFileNames.yarn.lockfile)
-    const yarnLockExists = await file.exists(yarnLockPath)
-    const pnpmLockPath = path.join(this.appDirectory, genericConfigurationFileNames.pnpm.lockfile)
-    const pnpmLockExists = await file.exists(pnpmLockPath)
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
     const name = await dependency.getPackageName(packageJSONPath)
     const nodeDependencies = await dependency.getDependencies(packageJSONPath)
-    let dependencyManager: dependency.DependencyManager
-    if (yarnLockExists) {
-      dependencyManager = 'yarn'
-    } else if (pnpmLockExists) {
-      dependencyManager = 'pnpm'
-    } else {
-      dependencyManager = 'npm'
-    }
+    const dependencyManager = await dependency.getDependencyManager(this.appDirectory)
 
     const app: App = {
       name,
