@@ -1,9 +1,9 @@
-import { extend, Text } from "@shopify/checkout-ui-extensions";
+import { extend, Banner } from "@shopify/checkout-ui-extensions";
 
 extend("Checkout::Dynamic::Render", (root, { extensionPoint, i18n }) => {
   root.appendChild(
     root.createComponent(
-      Text,
+      Banner,
       {},
       i18n.translate('welcome', {extensionPoint})
     )
