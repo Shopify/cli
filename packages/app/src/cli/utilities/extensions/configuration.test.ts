@@ -42,6 +42,8 @@ describe('extensionConfig', () => {
         name: 'My Extension Name',
         metafields: [],
         type: 'checkout_post_purchase',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        capabilities: {network_access: true},
       },
       type: 'checkout_post_purchase',
       graphQLType: 'CHECKOUT_POST_PURCHASE',
@@ -114,6 +116,8 @@ describe('extensionConfig', () => {
             renderer: 'renderer-version',
             resource: {url: 'invalid_url'},
           },
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          capabilities: {network_access: true},
         },
       ],
     })
