@@ -47,13 +47,10 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
  */
 export async function getDependencyManager(directory: string): Promise<DependencyManager> {
   const yarnLockPath = pathJoin(directory, genericConfigurationFileNames.yarn.lockfile)
-  const yarnLockExists = await fileExists(yarnLockPath)
   const pnpmLockPath = pathJoin(directory, genericConfigurationFileNames.pnpm.lockfile)
-  const pnpmLockExists = await fileExists(pnpmLockPath)
-  let dependencyManager: DependencyManager
-  if (yarnLockExists) {
+  if (await fileExists(yarnLockPath)) {
     return 'yarn'
-  } else if (pnpmLockExists) {
+  } else if (await fileExists(pnpmLockPath)) {
     return 'pnpm'
   } else {
     return 'npm'
