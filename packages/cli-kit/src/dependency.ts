@@ -157,11 +157,9 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
   }
 }
 
-export function getOutputUpdateCLIReminder(dependencyManager: DependencyManager, packages?: string[]): string {
-  const updateCommand = dependencyManager === 'yarn' ? 'upgrade' : 'update'
-  return content`To update to the latest version of the Shopify CLI, run ${token.genericShellCommand(
-    `${dependencyManager} ${updateCommand}${packages === undefined ? '' : ` ${packages.join(', ')}`}`,
-  )}`.value
+export function getOutputUpdateCLIReminder(dependencyManager: DependencyManager, version: string): string {
+  const updateCommand = token.packagejsonScript(dependencyManager, 'shopify', 'upgrade')
+  return content`💡 Version ${version} available! Run ${updateCommand}`.value
 }
 
 interface PackageJSONContents {

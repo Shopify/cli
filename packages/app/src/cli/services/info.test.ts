@@ -36,9 +36,9 @@ describe('info', () => {
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
-    const result = info(app, {format: 'text', webEnv: false})
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
     // Then
-    expect(result).resolves.toMatch('Shopify CLI       2.2.2 \u001b[1m\u001b[91m! CLI reminder\u001b[39m\u001b[22m')
+    expect(output.unstyled(result)).toMatch('Shopify CLI       2.2.2 CLI reminder')
   })
 
   it('returns update shopify cli reminder when last version lower or equals to current version', async () => {
@@ -48,10 +48,10 @@ describe('info', () => {
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
-    const result = info(app, {format: 'text', webEnv: false})
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
     // Then
-    expect(result).resolves.toMatch('Shopify CLI       2.2.2')
-    expect(result).resolves.not.toMatch(' \u001b[1m\u001b[91m! CLI reminder\u001b[39m\u001b[22m')
+    expect(output.unstyled(result)).toMatch('Shopify CLI       2.2.2')
+    expect(output.unstyled(result)).not.toMatch('CLI reminder')
   })
 
   it('returns the web environment as a text when webEnv is true', async () => {

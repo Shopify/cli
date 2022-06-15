@@ -26,7 +26,8 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.info()).toMatchInlineSnapshot('"Find your checkout UI extension in your extensions folder."')
+    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.info()).toMatchInlineSnapshot('"It can be found in extensions/name\n"')
   })
 
   it('displays a confirmation message with human-facing name and help url', async () => {
@@ -41,9 +42,10 @@ describe('after extension command finishes correctly', () => {
 
     // Then
 
+    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
       `
-      "Find your checkout UI extension in your extensions folder.
+      "It can be found in extensions/name
       For help, see docs (​http://help.com​)."
     `,
     )
@@ -60,8 +62,9 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
+    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(`
-      "Find your checkout UI extension in your extensions folder.
+      "It can be found in extensions/name
       Additional help"
     `)
   })
@@ -78,8 +81,9 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
+    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(`
-      "Find your checkout UI extension in your extensions folder.
+      "It can be found in extensions/name
       Additional help
       For help, see docs (​http://help.com​)."
     `)
@@ -113,7 +117,7 @@ function mockSuccessfulCommandExecution(outputConfig: {
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(scaffoldExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
-  vi.mocked(scaffoldExtensionService).mockResolvedValue()
+  vi.mocked(scaffoldExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
 
   return outputMocker.mockAndCapture()
 }

@@ -2,12 +2,14 @@ import {appFlags} from '../../../flags'
 import {
   extensions,
   ExtensionTypes,
+  ExtensionOutputConfig,
   getExtensionOutputConfig,
   limitedExtensions,
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
   uiExtensionTemplates,
+  uiExtensions,
 } from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
@@ -69,14 +71,24 @@ export default class AppScaffoldExtension extends Command {
       extensionFlavor,
     })
 
-    await scaffoldExtensionService({
+    const extensionDirectory = await scaffoldExtensionService({
       ...promptAnswers,
       extensionType: promptAnswers.extensionType,
       app,
       cloneUrl: flags['clone-url'],
     })
 
-    output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType))
+    const extensionOutputConfig = getExtensionOutputConfig(promptAnswers.extensionType)
+    output.success(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
+    output.info(
+      output.content`It can be found in ${output.token.path(path.relative(app.directory, extensionDirectory))}`,
+    )
+    output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType, extensionOutputConfig))
+    if (this.isUiExtension(promptAnswers.extensionType)) {
+      output.info(
+        output.content`To preview your project, run ${output.token.packagejsonScript(app.dependencyManager, 'dev')}`,
+      )
+    }
   }
 
   async validateExtensionType(type: string | undefined) {
@@ -142,12 +154,8 @@ export default class AppScaffoldExtension extends Command {
     return [...themeExtensions, ...uiExtensions]
   }
 
-  formatSuccessfulRunMessage(extensionType: ExtensionTypes): string {
-    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+  formatSuccessfulRunMessage(extensionType: ExtensionTypes, extensionOutputConfig: ExtensionOutputConfig): string {
     const outputTokens = []
-    outputTokens.push(
-      output.content`Find your ${extensionOutputConfig.humanKey} extension in your extensions folder.`.value,
-    )
     if (extensionOutputConfig.additionalHelp) {
       outputTokens.push(extensionOutputConfig.additionalHelp)
     }
@@ -158,5 +166,10 @@ export default class AppScaffoldExtension extends Command {
     }
 
     return outputTokens.join('\n')
+  }
+
+  isUiExtension(type: string | undefined): boolean {
+    if (!type) return false
+    return (uiExtensions.types as ReadonlyArray<string>).includes(type)
   }
 }

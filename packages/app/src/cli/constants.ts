@@ -175,12 +175,13 @@ export const extensionTypesHumanKeys = {
 } as const
 
 export type ExtensionTypesHumanKeys = typeof extensionTypesHumanKeys.types[number]
-
-export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
+export interface ExtensionOutputConfig {
   humanKey: ExtensionTypesHumanKeys
   helpURL?: string
   additionalHelp?: string
-} {
+}
+
+export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
   const discountAdditionalHelp =
     'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.'
   switch (extensionType) {

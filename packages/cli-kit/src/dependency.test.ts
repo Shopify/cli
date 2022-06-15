@@ -12,6 +12,7 @@ import {
 } from './dependency'
 import {exec} from './system'
 import {join as pathJoin} from './path'
+import {unstyled} from './output'
 import {write as writeFile} from './file'
 import {latestNpmPackageVersion} from './version'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -430,27 +431,20 @@ describe('checkForNewVersion', () => {
 })
 
 describe('getOutputUpdateCLIReminder', () => {
-  it.each([
-    ['yarn', 'upgrade'],
-    ['npm', 'update'],
-    ['pnpm', 'update'],
-  ])('returns upgrade reminder when using %s dependecy manager', (dependencyManager: string, updateCommand: string) => {
-    // When
-    const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager)
+  it.each([['yarn'], ['npm'], ['pnpm']])(
+    'returns upgrade reminder when using %s dependency manager',
+    (dependencyManager: string) => {
+      const isYarn = dependencyManager === 'yarn'
 
-    // Then
-    expect(result).toBe(
-      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33m${dependencyManager} ${updateCommand}\u001b[39m\u001b[22m`,
-    )
-  })
+      // When
+      const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager, '1.2.3')
 
-  it('returns upgrade reminder only for specific pacakges if they are included', () => {
-    // When
-    const result = getOutputUpdateCLIReminder('yarn', ['package1', 'package2'])
-
-    // Then
-    expect(result).toBe(
-      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33myarn upgrade package1, package2\u001b[39m\u001b[22m`,
-    )
-  })
+      // Then
+      expect(unstyled(result)).toBe(
+        `💡 Version 1.2.3 available! Run ${dependencyManager}${isYarn ? '' : ' run'} shopify${
+          isYarn ? '' : ' --'
+        } upgrade`,
+      )
+    },
+  )
 })

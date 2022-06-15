@@ -10,13 +10,10 @@ export default class AppInfo extends Command {
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
-    format: Flags.string({
+    json: Flags.boolean({
       hidden: false,
-      char: 'f',
-      description: 'output format',
-      options: ['json', 'text'],
-      default: 'text',
-      env: 'SHOPIFY_FLAG_FORMAT',
+      description: 'format output as JSON',
+      env: 'SHOPIFY_FLAG_JSON',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'web-env': Flags.boolean({
@@ -31,7 +28,7 @@ export default class AppInfo extends Command {
     const {flags} = await this.parse(AppInfo)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory, 'report')
-    output.info(await info(app, {format: flags.format as Format, webEnv: flags['web-env']}))
+    output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
     if (app.errors) process.exit(2)
   }
 }
