@@ -161,22 +161,23 @@ function getExtensionPublishURL({
 }): string {
   const identifier = identifiers.extensions[extension.localIdentifier]
   if (isUiExtensionType(extension.type)) {
+    /**
+     * The source of truth for UI extensions' slugs is the client-side
+     * Partners' React application:
+     * https://github.com/Shopify/partners/tree/master/app/assets/javascripts/sections/apps/app-extensions/extensions
+     */
     let pathComponent: string
     switch (extension.type as UIExtensionTypes) {
+      case 'checkout_ui_extension':
+      case 'pos_ui_extension':
+      case 'product_subscription':
+        pathComponent = extension.type
+        break
       case 'checkout_post_purchase':
         pathComponent = 'post_purchase'
         break
-      case 'checkout_ui_extension':
-        pathComponent = 'checkout_ui_extension'
-        break
-      case 'pos_ui_extension':
-        pathComponent = ''
-        break
       case 'web_pixel_extension':
         pathComponent = 'beacon_extension'
-        break
-      case 'product_subscription':
-        pathComponent = ''
         break
     }
     return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${identifier}`
