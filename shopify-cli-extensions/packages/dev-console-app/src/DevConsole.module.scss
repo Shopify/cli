@@ -1,7 +1,7 @@
 .OuterContainer {
   height: 100vh;
   background: var(--dc-background);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .Hidden {
@@ -12,6 +12,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  height: 100%;
   width: 100%;
   color: var(--dc-text);
   font-family: var(--dc-font);
@@ -19,6 +20,7 @@
   overflow: hidden;
   border-radius: var(--border-radius) var(--border-radius) 0 0;
 
+  
   h1 {
     font-weight: 700;
   }
