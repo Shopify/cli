@@ -51,6 +51,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,
         },
+        capabilities: extension.configuration.capabilities,
       }
     }),
   )
