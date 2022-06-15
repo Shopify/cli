@@ -578,57 +578,7 @@ describe('getAppIdentifiers', () => {
 describe('getUIExtensionRendererVersion', () => {
   test("returns undefined when the UI extension type doesn't have a runtime dependency", async () => {
     // Given/When
-    const app: App = {
-      name: 'App',
-      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
-      configuration: {
-        scopes: '',
-      },
-      dependencyManager: 'yarn',
-      directory: '/tmp/project',
-      extensions: {
-        ui: [],
-        function: [],
-        theme: [],
-      },
-      webs: [],
-      nodeDependencies: {},
-      environment: {
-        dotenv: {},
-        env: {},
-      },
-      configurationPath: '/tmp/project/shopify.app.toml',
-    }
-    const got = await getUIExtensionRendererVersion('web_pixel_extension', app)
-
-    // Then
-    expect(got).to.toBeUndefined()
-  })
-
-  test('returns undefined when the renderer dependency is not a dependency of the app', async () => {
-    // Given/When
-    const app: App = {
-      name: 'App',
-      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
-      configuration: {
-        scopes: '',
-      },
-      dependencyManager: 'yarn',
-      directory: '/tmp/project',
-      extensions: {
-        ui: [],
-        function: [],
-        theme: [],
-      },
-      webs: [],
-      nodeDependencies: {},
-      environment: {
-        dotenv: {},
-        env: {},
-      },
-      configurationPath: '/tmp/project/shopify.app.toml',
-    }
-    const got = await getUIExtensionRendererVersion('product_subscription', app)
+    const got = await getUIExtensionRendererVersion('web_pixel_extension', DEFAULT_APP)
 
     // Then
     expect(got).to.toBeUndefined()

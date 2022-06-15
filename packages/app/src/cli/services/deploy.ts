@@ -82,7 +82,7 @@ async function configFor(extension: UIExtension, app: App) {
     case 'pos_ui_extension':
     case 'product_subscription':
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      return {renderer_version: getUIExtensionRendererVersion(type, app)?.version}
+      return {renderer_version: (await getUIExtensionRendererVersion(type, app))?.version}
     case 'checkout_ui_extension': {
       return {
         // eslint-disable-next-line @typescript-eslint/naming-convention

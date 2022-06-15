@@ -573,15 +573,14 @@ export async function getUIExtensionRendererVersion(
   const fullName = getUIExtensionRendererDependency(uiExtensionType)?.replace('-react', '')
   if (!fullName) return undefined
   // Split the dependency name to avoid using "/" in windows
-  const rendererDependencyName = fullName.split('/')
+  const dependencyName = fullName.split('/')
 
-  const dependencyName = rendererDependencyName[1].replace('-react', '')
-  const realPath = path.join('node_modules', rendererDependencyName[0], dependencyName, 'package.json')
-  const packagePath = await path.findUp(realPath, {
-    type: 'file',
-    cwd: app.directory,
-  })
+  // Find the package.json in the project structure
+  const realPath = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
+  const packagePath = await path.findUp(realPath, {type: 'file', cwd: app.directory})
   if (!packagePath) return undefined
+
+  // Load the package.json and extract the version
   const packageContent = await dependency.packageJSONContents(packagePath)
   if (!packageContent.version) return undefined
   return {name: fullName, version: packageContent.version}
