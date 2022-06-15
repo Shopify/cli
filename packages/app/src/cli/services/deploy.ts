@@ -12,14 +12,7 @@ import {
   UIExtension,
   updateAppIdentifiers,
 } from '../models/app/app'
-import {
-  isFunctionExtensionType,
-  isThemeExtensionType,
-  isUiExtensionType,
-  UIExtensionTypes,
-  getFunctionExtensionPointName,
-  FunctionExtensionTypes,
-} from '../constants'
+import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {validateExtensions} from '../validators/extensions'
 import {path, output, temporary, file} from '@shopify/cli-kit'
@@ -191,11 +184,9 @@ function getExtensionPublishURL({
     }
     return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
   } else if (isFunctionExtensionType(extension.type)) {
-    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${
-      partnersApp.id
-    }/extensions/functions/${getFunctionExtensionPointName(extension.type as FunctionExtensionTypes)}/${extensionId}`
-  } else if (isThemeExtensionType(extension.type)) {
     return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions`
+  } else if (isThemeExtensionType(extension.type)) {
+    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/theme_app_extension/${extensionId}`
   } else {
     return ''
   }
