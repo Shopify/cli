@@ -12,6 +12,7 @@ import {
 } from './dependency'
 import {exec} from './system'
 import {join as pathJoin} from './path'
+import {unstyled} from './output'
 import {write as writeFile} from './file'
 import {latestNpmPackageVersion} from './version'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -439,8 +440,8 @@ describe('getOutputUpdateCLIReminder', () => {
     const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager)
 
     // Then
-    expect(result).toBe(
-      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33m${dependencyManager} ${updateCommand}\u001b[39m\u001b[22m`,
+    expect(unstyled(result)).toBe(
+      `To update to the latest version of the Shopify CLI, run ${dependencyManager} ${updateCommand}`,
     )
   })
 
@@ -449,8 +450,6 @@ describe('getOutputUpdateCLIReminder', () => {
     const result = getOutputUpdateCLIReminder('yarn', ['package1', 'package2'])
 
     // Then
-    expect(result).toBe(
-      `To update to the latest version of the Shopify CLI, run \u001b[1m\u001b[33myarn upgrade package1 package2\u001b[39m\u001b[22m`,
-    )
+    expect(unstyled(result)).toBe('To update to the latest version of the Shopify CLI, run yarn upgrade package1 package2')
   })
 })
