@@ -36,8 +36,7 @@ describe('info', () => {
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
-    const result = await info(app, {format: 'text', webEnv: false})
-    console.log(result)
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
     // Then
     expect(output.unstyled(result)).toMatch('Shopify CLI       2.2.2 CLI reminder')
   })
@@ -49,7 +48,7 @@ describe('info', () => {
     const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
     // When
-    const result = await info(app, {format: 'text', webEnv: false})
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
     // Then
     expect(output.unstyled(result)).toMatch('Shopify CLI       2.2.2')
     expect(output.unstyled(result)).not.toMatch('CLI reminder')

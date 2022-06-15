@@ -284,10 +284,7 @@ class AppInfo {
     const cliDependency = '@shopify/cli'
     const newestVersion = await dependency.checkForNewVersion(cliDependency, this.currentCliVersion())
     if (newestVersion) {
-      return output.content`${dependency.getOutputUpdateCLIReminder(
-        this.app.dependencyManager,
-        newestVersion,
-      )}`.value
+      return output.content`${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, newestVersion)}`.value
     }
     return ''
   }
