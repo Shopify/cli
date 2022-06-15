@@ -1,11 +1,6 @@
 import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app'
 import {testApp, testUIExtension} from './app.test-data'
-import {
-  configurationFileNames,
-  blocks,
-  genericConfigurationFileNames,
-  getUIExtensionRendererDependency,
-} from '../../constants'
+import {configurationFileNames, blocks, genericConfigurationFileNames} from '../../constants'
 import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
 import {file, path, dotenv} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
@@ -559,7 +554,7 @@ describe('getAppIdentifiers', () => {
 })
 
 describe('getUIExtensionRendererVersion', () => {
-  test("returns undefined when the UI extension type doesn't have a runtime dependency", () => {
+  test("returns undefined when the UI extension type doesn't have a runtime dependency", async () => {
     // Given/When
     const app: App = {
       name: 'App',
@@ -582,13 +577,13 @@ describe('getUIExtensionRendererVersion', () => {
       },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
-    const got = getUIExtensionRendererVersion('web_pixel_extension', app)
+    const got = await getUIExtensionRendererVersion('web_pixel_extension', app)
 
     // Then
     expect(got).to.toBeUndefined()
   })
 
-  test('returns undefined when the renderer dependency is not a dependency of the app', () => {
+  test('returns undefined when the renderer dependency is not a dependency of the app', async () => {
     // Given/When
     const app: App = {
       name: 'App',
@@ -611,42 +606,57 @@ describe('getUIExtensionRendererVersion', () => {
       },
       configurationPath: '/tmp/project/shopify.app.toml',
     }
-    const got = getUIExtensionRendererVersion('product_subscription', app)
+    const got = await getUIExtensionRendererVersion('product_subscription', app)
 
     // Then
     expect(got).to.toBeUndefined()
   })
 
-  test('returns the name of the renderer package and the version if it is dependency of the app', () => {
+  test('returns the name of the renderer package and the version if it is dependency of the app', async () => {
     // Given/When
-    const nodeDependencies: {[key: string]: string} = {}
-    const rendererDependency = getUIExtensionRendererDependency('product_subscription') as string
-    nodeDependencies[rendererDependency] = '1.2.3'
-    const app: App = {
-      name: 'App',
-      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
-      configuration: {
-        scopes: '',
-      },
-      dependencyManager: 'yarn',
-      directory: '/tmp/project',
-      extensions: {
-        ui: [],
-        function: [],
-        theme: [],
-      },
-      webs: [],
-      nodeDependencies,
-      environment: {
-        dotenv: {},
-        env: {},
-      },
-      configurationPath: '/tmp/project/shopify.app.toml',
-    }
-    const got = getUIExtensionRendererVersion('product_subscription', app)
+    await temporary.directory(async (tmpDir) => {
+      const packagePath = path.join(tmpDir, 'node_modules', '@shopify', 'admin-ui-extensions', 'package.json')
+      const packageJson = {
+        name: 'name',
+        version: '1.4.5',
+      }
+      const dirPath = path.join(tmpDir, 'node_modules', '@shopify', 'admin-ui-extensions')
+      await file.mkdir(dirPath)
+      await file.write(packagePath, JSON.stringify(packageJson))
+      const app: App = {
+        name: 'App',
+        idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+        configuration: {
+          scopes: '',
+        },
+        dependencyManager: 'yarn',
+        directory: tmpDir,
+        extensions: {
+          ui: [],
+          function: [],
+          theme: [],
+        },
+        webs: [],
+        nodeDependencies: {},
+        environment: {
+          dotenv: {},
+          env: {},
+        },
+        configurationPath: '/tmp/project/shopify.app.toml',
+      }
 
-    // Then
-    expect(got?.name).to.toEqual(rendererDependency)
-    expect(got?.version).toEqual('1.2.3')
+      // await sleep()
+      const got = await getUIExtensionRendererVersion('product_subscription', app)
+
+      // Then
+      expect(got?.name).to.toEqual('@shopify/admin-ui-extensions-react')
+      expect(got?.version).toEqual('1.4.5')
+    })
   })
 })
+
+const sleep = async () => {
+  await new Promise((resolve) => {
+    setTimeout(resolve, 60 * 60 * 1000)
+  })
+}

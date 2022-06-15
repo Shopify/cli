@@ -582,19 +582,21 @@ export async function getUIExtensionRendererVersion(
   app: App,
 ): Promise<{name: string; version: string} | undefined> {
   // Split the dependency name to avoid using "/" in windows
-  const rendererDependencyName = getUIExtensionRendererDependency(uiExtensionType)?.split('/')
-  if (!rendererDependencyName) return undefined
+  const fullName = getUIExtensionRendererDependency(uiExtensionType)
+  if (!fullName) return undefined
+  const rendererDependencyName = fullName.split('/')
 
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const dependencyName = rendererDependencyName[1].replace('-react', '')
-  const packagePath = await path.findUp(['node_modules', rendererDependencyName[0], dependencyName, 'package.json'], {
+  const realPath = path.join('node_modules', rendererDependencyName[0], dependencyName, 'package.json')
+  const packagePath = await path.findUp(realPath, {
     type: 'file',
     cwd: app.directory,
   })
   if (!packagePath) return undefined
   const packageContent = await dependency.packageJSONContents(packagePath)
   if (!packageContent.version) return undefined
-  return {name: rendererDependencyName[1], version: packageContent.version}
+  return {name: fullName, version: packageContent.version}
 }
 
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
