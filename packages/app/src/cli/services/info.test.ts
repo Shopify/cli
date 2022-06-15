@@ -62,6 +62,8 @@ describe('info', () => {
       id: '123',
       appsNext: false,
       businessName: 'test',
+      website: '',
+      apps: {nodes: []},
     }
     const apiKey = 'api-key'
     const apiSecret = 'api-secret'
@@ -104,6 +106,8 @@ describe('info', () => {
       id: '123',
       appsNext: false,
       businessName: 'test',
+      website: '',
+      apps: {nodes: []},
     }
     const apiKey = 'api-key'
     const apiSecret = 'api-secret'

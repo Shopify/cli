@@ -7,14 +7,14 @@ import {App, Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../mode
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
-const InvalidApiKeyError = (apiKey: string) => {
+export const InvalidApiKeyError = (apiKey: string) => {
   return new error.Abort(
     `Invalid API key: ${apiKey}`,
     'You can find the apiKey in the app settings in the Partner Dashboard.',
   )
 }
 
-const AppOrganizationNotFound = (apiKey: string, organizations: string[]) => {
+export const AppOrganizationNotFoundError = (apiKey: string, organizations: string[]) => {
   return new error.Abort(
     `The application with API Key ${apiKey} doesn't belong to any of your organizations: ${organizations.join(', ')}`,
   )
@@ -169,7 +169,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     if (organization) {
       orgId = organization.id
     } else {
-      throw AppOrganizationNotFound(
+      throw AppOrganizationNotFoundError(
         envIdentifiers.app,
         organizations.map((organization) => organization.businessName),
       )
