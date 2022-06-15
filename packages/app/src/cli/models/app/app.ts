@@ -559,8 +559,8 @@ export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptio
 }
 
 /**
- * Given a UI extension and the app it belongs to, it returns the version of the renderer
- * package.
+ * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
+ * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
  * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
  * @param app {App} App object containing the extension.
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
