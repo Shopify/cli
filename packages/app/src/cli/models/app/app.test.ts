@@ -1,13 +1,8 @@
 import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app'
 import {testApp, testUIExtension} from './app.test-data'
-import {
-  configurationFileNames,
-  blocks,
-  genericConfigurationFileNames,
-  getUIExtensionRendererDependency,
-} from '../../constants'
+import {configurationFileNames, blocks, getUIExtensionRendererDependency} from '../../constants'
 import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
-import {file, path, dotenv} from '@shopify/cli-kit'
+import {dependency, dotenv, file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
 
 describe('load', () => {
@@ -123,7 +118,7 @@ scopes = "read_products"
   it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile)
+    const yarnLockPath = path.join(tmpDir, dependency.genericConfigurationFileNames.yarn.lockfile)
     await file.write(yarnLockPath, '')
 
     // When
@@ -136,7 +131,7 @@ scopes = "read_products"
   it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile)
+    const pnpmLockPath = path.join(tmpDir, dependency.genericConfigurationFileNames.pnpm.lockfile)
     await file.write(pnpmLockPath, '')
 
     // When

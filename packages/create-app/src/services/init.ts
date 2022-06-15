@@ -113,7 +113,7 @@ async function init(options: InitOptions) {
         },
       },
       {
-        title: 'Initializing a Git repository',
+        title: 'Initializing a Git repository...',
         task: async (_, task) => {
           await git.initializeRepository(templateScaffoldDir)
           task.title = 'Git repository initialized'
@@ -138,7 +138,7 @@ async function init(options: InitOptions) {
   For more details on all that you can build, see the docs: ${output.token.link(
     'shopify.dev',
     'https://shopify.dev',
-  )}. ✨
+  )} ✨
 
   For help and a list of commands, enter ${output.token.packagejsonScript(dependencyManager, 'shopify app', '--help')}
   `)

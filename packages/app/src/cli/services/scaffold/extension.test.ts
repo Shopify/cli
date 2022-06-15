@@ -22,6 +22,7 @@ vi.mock('@shopify/cli-kit', async () => {
       addNPMDependenciesIfNeeded: vi.fn(),
       getDependencies: cliKit.dependency.getDependencies,
       getPackageName: cliKit.dependency.getPackageName,
+      getDependencyManager: cliKit.dependency.getDependencyManager,
     },
   }
 })
