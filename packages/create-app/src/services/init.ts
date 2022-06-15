@@ -113,7 +113,7 @@ async function init(options: InitOptions) {
         },
       },
       {
-        title: 'Initializing a Git repository',
+        title: 'Initializing a Git repository...',
         task: async (_, task) => {
           await git.initializeRepository(templateScaffoldDir)
           task.title = 'Git repository initialized'
