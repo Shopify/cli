@@ -431,25 +431,20 @@ describe('checkForNewVersion', () => {
 })
 
 describe('getOutputUpdateCLIReminder', () => {
-  it.each([
-    ['yarn', 'upgrade'],
-    ['npm', 'update'],
-    ['pnpm', 'update'],
-  ])('returns upgrade reminder when using %s dependecy manager', (dependencyManager: string, updateCommand: string) => {
-    // When
-    const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager)
+  it.each([['yarn'], ['npm'], ['pnpm']])(
+    'returns upgrade reminder when using %s dependency manager',
+    (dependencyManager: string) => {
+      const isYarn = dependencyManager === 'yarn'
 
-    // Then
-    expect(unstyled(result)).toBe(
-      `To update to the latest version of the Shopify CLI, run ${dependencyManager} ${updateCommand}`,
-    )
-  })
+      // When
+      const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager, '1.2.3')
 
-  it('returns upgrade reminder only for specific pacakges if they are included', () => {
-    // When
-    const result = getOutputUpdateCLIReminder('yarn', ['package1', 'package2'])
-
-    // Then
-    expect(unstyled(result)).toBe('To update to the latest version of the Shopify CLI, run yarn upgrade package1 package2')
-  })
+      // Then
+      expect(unstyled(result)).toBe(
+        `💡 Version 1.2.3 available! Run ${dependencyManager}${isYarn ? '' : ' run'} shopify${
+          isYarn ? '' : ' --'
+        } upgrade`,
+      )
+    },
+  )
 })
