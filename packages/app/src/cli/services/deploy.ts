@@ -1,7 +1,10 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {deployThemeExtension} from './deploy/themeExtension'
-import {ThemeExtensionConfig, themeExtensionConfig as generateThemeExtensionConfig} from './deploy/themeExtensionConfig'
+import {deployThemeExtension} from './deploy/theme-extension'
+import {
+  ThemeExtensionConfig,
+  themeExtensionConfig as generateThemeExtensionConfig,
+} from './deploy/theme-extension-config'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'

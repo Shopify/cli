@@ -1,4 +1,4 @@
-import {ThemeExtensionConfig} from './themeExtensionConfig'
+import {ThemeExtensionConfig} from './theme-extension-config'
 import {api, error} from '@shopify/cli-kit'
 
 interface DeployThemeExtensionOptions {
