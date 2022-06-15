@@ -8,6 +8,7 @@ import {
   App,
   Extension,
   getUIExtensionRendererVersion,
+  hasExtensions,
   Identifiers,
   UIExtension,
   updateAppIdentifiers,
@@ -28,6 +29,12 @@ interface DeployOptions {
 }
 
 export const deploy = async (options: DeployOptions) => {
+  if (!hasExtensions(options.app)) {
+    output.newline()
+    output.info(`No extensions to deploy to Shopify Partners yet.`)
+    return
+  }
+
   // eslint-disable-next-line prefer-const
   let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
