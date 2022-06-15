@@ -5,6 +5,28 @@ import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
 import {dependency, dotenv, file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
 
+const DEFAULT_APP: App = {
+  name: 'App',
+  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+  configuration: {
+    scopes: '',
+  },
+  dependencyManager: 'yarn',
+  directory: '',
+  extensions: {
+    ui: [],
+    function: [],
+    theme: [],
+  },
+  webs: [],
+  nodeDependencies: {},
+  environment: {
+    dotenv: {},
+    env: {},
+  },
+  configurationPath: '/tmp/project/shopify.app.toml',
+}
+
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
 
@@ -612,51 +634,55 @@ describe('getUIExtensionRendererVersion', () => {
     expect(got).to.toBeUndefined()
   })
 
-  test('returns the name of the renderer package and the version if it is dependency of the app', async () => {
-    // Given/When
+  test('returns the version of the dependency package for product_subscription', async () => {
     await temporary.directory(async (tmpDir) => {
-      const packagePath = path.join(tmpDir, 'node_modules', '@shopify', 'admin-ui-extensions', 'package.json')
-      const packageJson = {
-        name: 'name',
-        version: '1.4.5',
-      }
-      const dirPath = path.join(tmpDir, 'node_modules', '@shopify', 'admin-ui-extensions')
-      await file.mkdir(dirPath)
-      await file.write(packagePath, JSON.stringify(packageJson))
-      const app: App = {
-        name: 'App',
-        idEnvironmentVariableName: 'SHOPIFY_APP_ID',
-        configuration: {
-          scopes: '',
-        },
-        dependencyManager: 'yarn',
-        directory: tmpDir,
-        extensions: {
-          ui: [],
-          function: [],
-          theme: [],
-        },
-        webs: [],
-        nodeDependencies: {},
-        environment: {
-          dotenv: {},
-          env: {},
-        },
-        configurationPath: '/tmp/project/shopify.app.toml',
-      }
+      // Given
+      await createPackageJson(tmpDir, 'admin-ui-extensions', '2.4.5')
+      DEFAULT_APP.directory = tmpDir
 
-      // await sleep()
-      const got = await getUIExtensionRendererVersion('product_subscription', app)
+      // When
+      const got = await getUIExtensionRendererVersion('product_subscription', DEFAULT_APP)
 
       // Then
-      expect(got?.name).to.toEqual('@shopify/admin-ui-extensions-react')
+      expect(got?.name).to.toEqual('@shopify/admin-ui-extensions')
+      expect(got?.version).toEqual('2.4.5')
+    })
+  })
+
+  test('returns the version of the dependency package for checkout_ui_extension', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await createPackageJson(tmpDir, 'checkout-ui-extensions', '1.4.5')
+      DEFAULT_APP.directory = tmpDir
+
+      // When
+      const got = await getUIExtensionRendererVersion('checkout_ui_extension', DEFAULT_APP)
+
+      // Then
+      expect(got?.name).to.toEqual('@shopify/checkout-ui-extensions')
       expect(got?.version).toEqual('1.4.5')
+    })
+  })
+
+  test('returns the version of the dependency package for checkout_post_purchase', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await createPackageJson(tmpDir, 'post-purchase-ui-extensions', '3.4.5')
+      DEFAULT_APP.directory = tmpDir
+
+      // When
+      const got = await getUIExtensionRendererVersion('checkout_post_purchase', DEFAULT_APP)
+
+      // Then
+      expect(got?.name).to.toEqual('@shopify/post-purchase-ui-extensions')
+      expect(got?.version).toEqual('3.4.5')
     })
   })
 })
 
-const sleep = async () => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, 60 * 60 * 1000)
-  })
+function createPackageJson(tmpDir: string, type: string, version: string) {
+  const packagePath = path.join(tmpDir, 'node_modules', '@shopify', type, 'package.json')
+  const packageJson = {name: 'name', version}
+  const dirPath = path.join(tmpDir, 'node_modules', '@shopify', type)
+  return file.mkdir(dirPath).then(() => file.write(packagePath, JSON.stringify(packageJson)))
 }
