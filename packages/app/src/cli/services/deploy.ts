@@ -84,8 +84,14 @@ async function configFor(extension: UIExtension, app: App) {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       return {renderer_version: getUIExtensionRendererVersion(type, app)?.version}
     case 'checkout_ui_extension': {
-      const localizationConfig = await loadLocalesConfig(extension.directory)
-      return {localization: localizationConfig, ...extension.configuration}
+      return {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        extension_points: extension.configuration.extensionPoints,
+        capabilities: extension.configuration.capabilities,
+        metafields: extension.configuration.metafields,
+        name: extension.configuration.name,
+        localization: await loadLocalesConfig(extension.directory),
+      }
     }
     case 'web_pixel_extension': {
       return {

@@ -8,6 +8,7 @@ import {
   checkForNewVersion,
   getOutputUpdateCLIReminder,
   DependencyManager,
+  packageJSONContents,
 } from './dependency'
 import {exec} from './system'
 import {join as pathJoin} from './path'
@@ -85,6 +86,28 @@ describe('getPackageName', () => {
 
       // Then
       expect(got).toEqual('packageName')
+    })
+  })
+})
+
+describe('packageJSONContents', () => {
+  test('returns full package content', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+        dependencies: {prod: '1.2.3'},
+        devDependencies: {dev: '4.5.6'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await packageJSONContents(packageJsonPath)
+
+      // Then
+      expect(got).toEqual(packageJson)
     })
   })
 })
