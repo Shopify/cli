@@ -57,14 +57,14 @@ describe('init', () => {
     // Then
     expect(prompt).toHaveBeenCalledWith(
       expect.arrayContaining([
-        {
+        expect.objectContaining({
           type: 'select',
           name: 'template',
-          choices: ['Demo store', 'Hello world', 'Hello world in TypeScript'],
+          choices: ['Demo Store', 'Hello World', 'Hello World in TypeScript'],
           message: 'Choose a template',
-          default: 'Demo store',
+          default: 'Demo Store',
           result: expect.any(Function),
-        },
+        }),
       ]),
     )
     expect(got).toEqual({...options, ...answers})
