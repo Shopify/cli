@@ -14,6 +14,12 @@ const InvalidApiKeyError = (apiKey: string) => {
   )
 }
 
+const AppOrganizationNotFound = (apiKey: string, organizations: string[]) => {
+  return new error.Abort(
+    `The application with API Key ${apiKey} doesn't belong to any of your organizations: ${organizations.join(', ')}`,
+  )
+}
+
 export interface DevEnvironmentOptions {
   app: App
   apiKey?: string
@@ -137,6 +143,7 @@ export interface DeployEnvironmentOptions {
 interface DeployEnvironmentOutput {
   app: App
   token: string
+  partnersOrganizationId: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
 }
@@ -152,10 +159,23 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   let identifiers: Identifiers = envIdentifiers as Identifiers
   let partnersApp: OrganizationApp
 
+  let orgId: string
   if (envIdentifiers.app) {
     partnersApp = await fetchAppFromApiKey(identifiers.app, token)
+    const organizations = await fetchOrganizations(token)
+    const organization = organizations.find((organization) =>
+      organization.apps.nodes.map((app) => app.apiKey).includes(envIdentifiers.app as string),
+    )
+    if (organization) {
+      orgId = organization.id
+    } else {
+      throw AppOrganizationNotFound(
+        envIdentifiers.app,
+        organizations.map((organization) => organization.businessName),
+      )
+    }
   } else {
-    const orgId = await selectOrg(token)
+    orgId = await selectOrg(token)
     const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
     partnersApp = await selectOrCreateApp(options.app, apps, organization, token, undefined)
   }
@@ -180,6 +200,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       title: partnersApp.title,
       appType: partnersApp.appType,
     },
+    partnersOrganizationId: orgId,
     identifiers,
     token,
   }

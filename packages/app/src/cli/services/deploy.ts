@@ -3,11 +3,26 @@ import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
-import {App, Extension, getUIExtensionRendererVersion, UIExtension, updateAppIdentifiers} from '../models/app/app'
-import {UIExtensionTypes} from '../constants'
+import {
+  App,
+  Extension,
+  getUIExtensionRendererVersion,
+  Identifiers,
+  UIExtension,
+  updateAppIdentifiers,
+} from '../models/app/app'
+import {
+  isFunctionExtensionType,
+  isThemeExtensionType,
+  isUiExtensionType,
+  UIExtensionTypes,
+  getFunctionExtensionPointName,
+  FunctionExtensionTypes,
+} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {validateExtensions} from '../validators/extensions'
 import {path, output, temporary, file} from '@shopify/cli-kit'
+import {OrganizationApp} from 'cli/models/organization'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -19,14 +34,12 @@ interface DeployOptions {
 
 export const deploy = async (options: DeployOptions) => {
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, token} = await ensureDeployEnvironment(options)
+  let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
 
   output.newline()
-  output.info('Pushing your code to Shopify...')
-
+  output.info(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
   output.newline()
-  output.success(`${app.name} deployed to Shopify Partners`)
 
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {
@@ -43,7 +56,15 @@ export const deploy = async (options: DeployOptions) => {
     await file.mkdir(path.dirname(bundlePath))
     const bundle = app.extensions.ui.length !== 0
     await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
+
+    output.newline()
+    output.info(`Running validation…`)
+
     await validateExtensions(app)
+
+    output.newline()
+    output.info(`Pushing your code to Shopify…`)
+    output.newline()
 
     if (bundle) {
       /**
@@ -52,26 +73,53 @@ export const deploy = async (options: DeployOptions) => {
        */
       await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
     }
+
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
     app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
-    outputCompletionMessage(app)
+
+    output.success('Deployed to Shopify')
+
+    outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers})
   })
 }
 
-function outputCompletionMessage(app: App) {
+function outputCompletionMessage({
+  app,
+  partnersApp,
+  partnersOrganizationId,
+  identifiers,
+}: {
+  app: App
+  partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  partnersOrganizationId: string
+  identifiers: Identifiers
+}) {
   output.newline()
-  output.info('Summary')
+  output.info('  Summary:')
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(
-      output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is deployed to Shopify but not yet live`,
-    )
+    output.info(output.content`    · ${extension.localIdentifier} is deployed to Shopify but not yet live`)
   }
   const outputDeployedAndLivedMessage = (extension: Extension) => {
-    output.info(output.content`${output.token.magenta('✔')} ${extension.localIdentifier} is live`)
+    output.info(output.content`    · ${extension.localIdentifier} is live`)
   }
   app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
   app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
   app.extensions.function.forEach(outputDeployedAndLivedMessage)
+
+  output.newline()
+  output.info('  Next steps:')
+  const outputNextStep = (extension: Extension) => {
+    output.info(
+      output.content`    · Publish ${extension.localIdentifier} from Shopify partners:
+          ${output.token.link(
+            'Link',
+            getExtensionPublishURL({extension, partnersApp, partnersOrganizationId, identifiers}),
+          )}`,
+    )
+  }
+  app.extensions.ui.forEach(outputNextStep)
+  app.extensions.theme.forEach(outputNextStep)
+  app.extensions.function.forEach(outputNextStep)
 }
 
 async function configFor(extension: UIExtension, app: App) {
@@ -97,5 +145,48 @@ async function configFor(extension: UIExtension, app: App) {
         config_version: extension.configuration.version,
       }
     }
+  }
+}
+
+function getExtensionPublishURL({
+  extension,
+  partnersApp,
+  partnersOrganizationId,
+  identifiers,
+}: {
+  extension: Extension
+  partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  partnersOrganizationId: string
+  identifiers: Identifiers
+}): string {
+  const identifier = identifiers.extensions[extension.localIdentifier]
+  if (isUiExtensionType(extension.type)) {
+    let pathComponent: string
+    switch (extension.type as UIExtensionTypes) {
+      case 'checkout_post_purchase':
+        pathComponent = 'post_purchase'
+        break
+      case 'checkout_ui_extension':
+        pathComponent = 'checkout_ui_extension'
+        break
+      case 'pos_ui_extension':
+        pathComponent = ''
+        break
+      case 'web_pixel_extension':
+        pathComponent = 'beacon_extension'
+        break
+      case 'product_subscription':
+        pathComponent = ''
+        break
+    }
+    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${identifier}`
+  } else if (isFunctionExtensionType(extension.type)) {
+    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${
+      partnersApp.id
+    }/extensions/functions/${getFunctionExtensionPointName(extension.type as FunctionExtensionTypes)}/${identifier}`
+  } else if (isThemeExtensionType(extension.type)) {
+    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/theme_app_extension/${identifier}`
+  } else {
+    return ''
   }
 }

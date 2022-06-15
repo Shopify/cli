@@ -61,9 +61,6 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
       }),
     ])
 
-    output.newline()
-    output.success(`${options.app.name} built`)
-
     if (options.bundle) {
       await archiver.zip(bundleDirectory, options.bundlePath)
     }

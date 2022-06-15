@@ -7,6 +7,17 @@ export interface AllOrganizationsQuerySchema {
       businessName: string
       website: string
       appsNext: boolean
+      apps: {
+        nodes: {
+          id: string
+          title: string
+          apiKey: string
+          apiSecretKeys: {
+            secret: string
+          }[]
+          appType: string
+        }[]
+      }
     }[]
   }
 }
@@ -19,6 +30,17 @@ export const AllOrganizationsQuery = gql`
         businessName
         website
         appsNext
+        apps {
+          nodes {
+            id
+            title
+            apiKey
+            apiSecretKeys {
+              secret
+            }
+            appType
+          }
+        }
       }
     }
   }
