@@ -5,10 +5,10 @@ import {
   functionExtensions,
   themeExtensions,
   uiExtensions,
-  getUIExtensionRendererDependency,
   UIExtensionTypes,
   dotEnvFileNames,
   ExtensionTypes,
+  getUIExtensionRendererDependency,
 } from '../../constants'
 import {dependency, dotenv, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 
@@ -577,20 +577,24 @@ export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptio
  * @param app {App} App object containing the extension.
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
  */
-export function getUIExtensionRendererVersion(
+export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,
   app: App,
-): {name: string; version: string} | undefined {
-  const nodeDependencies = app.nodeDependencies
-  const rendererDependencyName = getUIExtensionRendererDependency(uiExtensionType)
-  if (!rendererDependencyName) {
-    return undefined
-  }
-  const rendererDependency = nodeDependencies[rendererDependencyName]
-  if (!rendererDependency) {
-    return undefined
-  }
-  return {name: rendererDependencyName, version: rendererDependency}
+): Promise<{name: string; version: string} | undefined> {
+  // Split the dependency name to avoid using "/" in windows
+  const rendererDependencyName = getUIExtensionRendererDependency(uiExtensionType)?.split('/')
+  if (!rendererDependencyName) return undefined
+
+  // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
+  const dependencyName = rendererDependencyName[1].replace('-react', '')
+  const packagePath = await path.findUp(['node_modules', rendererDependencyName[0], dependencyName, 'package.json'], {
+    type: 'file',
+    cwd: app.directory,
+  })
+  if (!packagePath) return undefined
+  const packageContent = await dependency.packageJSONContents(packagePath)
+  if (!packageContent.version) return undefined
+  return {name: rendererDependencyName[1], version: packageContent.version}
 }
 
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {

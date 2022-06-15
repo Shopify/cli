@@ -46,7 +46,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           entries: {
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
-          renderer: getUIExtensionRendererVersion(extension.configuration.type, options.app),
+          renderer: await getUIExtensionRendererVersion(extension.configuration.type, options.app),
           resource: options.includeResourceURL
             ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,

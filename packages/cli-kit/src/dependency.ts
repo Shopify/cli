@@ -140,11 +140,12 @@ export function getOutputUpdateCLIReminder(dependencyManager: DependencyManager,
 
 interface PackageJSONContents {
   name: string
+  version?: string
   dependencies?: {[key: string]: string}
   devDependencies?: {[key: string]: string}
 }
 
-async function packageJSONContents(packageJsonPath: string): Promise<PackageJSONContents> {
+export async function packageJSONContents(packageJsonPath: string): Promise<PackageJSONContents> {
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(dirname(packageJsonPath))
   }
