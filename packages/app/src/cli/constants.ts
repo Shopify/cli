@@ -94,6 +94,10 @@ export const themeExtensions = {
 
 export type ThemeExtensionTypes = typeof themeExtensions.types[number]
 
+export function isThemeExtensionType(extensionType: string) {
+  return (themeExtensions.types as ReadonlyArray<string>).includes(extensionType)
+}
+
 export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {

@@ -586,6 +586,10 @@ export async function load(directory: string, mode: AppLoaderMode = 'strict'): P
   return loader.loaded()
 }
 
+export function hasExtensions(app: App): boolean {
+  return app.extensions.ui.length !== 0 || app.extensions.function.length !== 0 || app.extensions.theme.length !== 0
+}
+
 /**
  * Each extension has a different ID in graphQL.
  * Sometimes the ID is the same as the type, sometimes it's different.
