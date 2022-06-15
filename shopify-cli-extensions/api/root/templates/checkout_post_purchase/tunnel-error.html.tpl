@@ -35,7 +35,7 @@
   <body>
   <div class="content">
       <p>This page is served by your local UI Extension development server. Instead of visiting this page directly, you will need to connect your local development environment to a real checkout environment.</p>
-      <p>Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port={{ .Port }}</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL{{ .ApiRoot }}</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.</p>
+      <p>Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port={{ .Port }}</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL{{.ApiRoot}}/{{.UUID}}</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.</p>
   </div>
   </body>
 </html>

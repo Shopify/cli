@@ -30,14 +30,25 @@ func NewExtensionService(config *Config) *ExtensionService {
 	app := make(App)
 	app["api_key"] = config.App.ApiKey
 
+	apiRoot := "/extensions"
+
+	var apiRootUrl string
+
+	if config.PublicUrl != "" {
+		apiRootUrl = fmt.Sprintf("%s%s", config.PublicUrl, apiRoot)
+	} else {
+		apiRootUrl = fmt.Sprintf("http://localhost:%d%s", config.Port, apiRoot)
+	}
+
 	service := ExtensionService{
 		App:            app,
 		Version:        "4",
 		Extensions:     extensions,
 		Port:           config.Port,
 		Store:          config.Store,
-		ApiRoot:        "/extensions",
+		ApiRoot:        apiRoot,
 		DevConsolePath: "/dev-console",
+		ApiRootUrl:     apiRootUrl,
 	}
 
 	return &service
@@ -92,15 +103,11 @@ type appYaml struct {
 }
 
 type Config struct {
-	App                appYaml     `yaml:"app"`
-	Extensions         []Extension `yaml:"extensions"`
-	Port               int
-	IntegrationContext `yaml:",inline"`
-}
-
-type IntegrationContext struct {
-	PublicUrl string `yaml:"public_url"`
-	Store     string `yaml:"store"`
+	App        appYaml     `yaml:"app"`
+	Extensions []Extension `yaml:"extensions"`
+	Port       int
+	PublicUrl  string `yaml:"public_url"`
+	Store      string `yaml:"store"`
 }
 
 type ExtensionService struct {
@@ -109,7 +116,7 @@ type ExtensionService struct {
 	Port           int
 	Store          string
 	Version        string
-	PublicUrl      string
+	ApiRootUrl     string
 	ApiRoot        string `json:"-" yaml:"-"`
 	DevConsolePath string `json:"-" yaml:"-"`
 }
@@ -229,6 +236,16 @@ func (t Extension) Transformer(typ reflect.Type) func(dst, src reflect.Value) er
 		}
 	}
 
+	// if typ.Name() == "Url" {
+	// 	return func(dst, src reflect.Value) error {
+	// 		fmt.Printf("type %v interface %v", src.Type(), src.Interface())
+	// 		if src.String() == "" {
+	// 			dst.SetString(src.String())
+	// 		}
+	// 		return nil
+	// 	}
+	// }
+
 	if typ.Kind() == reflect.Struct && typ.Name() == "Localization" {
 		return func(dst, src reflect.Value) error {
 			for i := 0; i < src.NumField(); i++ {
@@ -261,6 +278,12 @@ func NewBoolPointer(boolState bool) *bool {
 	boolPointer := new(bool)
 	*boolPointer = boolState
 	return boolPointer
+}
+
+func NewStringPointer(value string) *string {
+	stringPointer := new(string)
+	*stringPointer = value
+	return stringPointer
 }
 
 type Fragment map[string]interface{}

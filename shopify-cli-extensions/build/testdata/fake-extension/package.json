@@ -4,7 +4,7 @@
   "main": "build/main.js",
   "license": "MIT",
   "scripts": {
-    "build": "touch build/main.js build/main.js.LEGAL.txt",
+    "build": "touch build/main.js",
     "develop": "../scripts/develop.sh"
   }
 }

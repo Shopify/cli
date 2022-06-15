@@ -49,10 +49,6 @@ func TestBuild(t *testing.T) {
 	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js")); err != nil {
 		t.Error("expected main.js to exist")
 	}
-
-	if _, err = os.Stat(filepath.Join(extension.BuildDir(), "main.js.LEGAL.txt")); err != nil {
-		t.Error("expected main.js.LEGAL.txt to exist")
-	}
 }
 
 func TestWatch(t *testing.T) {
@@ -64,7 +60,7 @@ func TestWatch(t *testing.T) {
 	}
 
 	results := []Result{}
-	Watch(extension, config.IntegrationContext, func(result Result) {
+	Watch(extension, func(result Result) {
 		results = append(results, result)
 	})
 

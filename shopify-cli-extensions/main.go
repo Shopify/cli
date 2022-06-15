@@ -94,7 +94,7 @@ func (cli *CLI) serve(args ...string) {
 	api := api.New(cli.config)
 
 	for _, extension := range cli.config.Extensions {
-		go build.Watch(extension, cli.config.IntegrationContext, func(result build.Result) {
+		go build.Watch(extension, func(result build.Result) {
 			if result.Success {
 				fmt.Println(result)
 			} else {
@@ -122,11 +122,7 @@ func (cli *CLI) serve(args ...string) {
 		server.Shutdown(ctx)
 	})
 
-	if cli.config.PublicUrl != "" {
-		fmt.Printf("Shopify CLI Extensions Server is now available at %s\n", cli.config.PublicUrl)
-	} else {
-		fmt.Printf("Shopify CLI Extensions Server is now available at http://localhost:%d/\n", cli.config.Port)
-	}
+	fmt.Printf("Shopify CLI Extensions Server is now available at %s\n", api.GetDevConsoleUrl())
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		panic(err)

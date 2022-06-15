@@ -12,8 +12,6 @@ import (
 
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"gopkg.in/yaml.v3"
-
-	"text/template"
 )
 
 func Build(extension core.Extension, report ResultHandler) {
@@ -68,7 +66,7 @@ func reportAndUpdateDevelopmentStatus(result Result, report ResultHandler) {
 	report(result)
 }
 
-func Watch(extension core.Extension, integrationCtx core.IntegrationContext, report ResultHandler) {
+func Watch(extension core.Extension, report ResultHandler) {
 	var err error
 	var command *exec.Cmd
 	if extension.NodeExecutable != "" {
@@ -114,25 +112,6 @@ func Watch(extension core.Extension, integrationCtx core.IntegrationContext, rep
 
 	command.Wait()
 	logProcessors.Wait()
-}
-
-// Builds 'Next Steps'
-func generateNextSteps(rawTemplate string, ext core.Extension, ctx core.IntegrationContext) string {
-	type contextRoot struct { // Wraps top-level elements, allowing them to be referenced in next-steps.txt
-		core.Extension
-		core.IntegrationContext
-	}
-
-	var buf bytes.Buffer
-
-	templ := template.New("templ")
-	templ, err := templ.Parse(rawTemplate)
-	if err == nil {
-		contextRoot := contextRoot{ext, ctx}
-		templ.Execute(&buf, contextRoot)
-	}
-
-	return buf.String()
 }
 
 type ResultHandler func(result Result)

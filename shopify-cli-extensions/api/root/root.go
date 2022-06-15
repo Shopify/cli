@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
@@ -18,14 +17,14 @@ import (
 //go:embed templates/*
 var templates embed.FS
 
-func New(config *core.Config, apiRoot string) *RootHandler {
+func New(service *core.ExtensionService) *RootHandler {
 	return &RootHandler{
 		fsutils.NewFS(&templates, "templates"),
 		&apiConfig{
-			ApiRoot:            apiRoot,
-			Port:               config.Port,
-			Store:              config.Store,
-			IntegrationContext: config.IntegrationContext,
+			ApiRootUrl: service.ApiRootUrl,
+			ApiRoot:    service.ApiRoot,
+			Port:       service.Port,
+			Store:      service.Store,
 		},
 	}
 }
@@ -37,7 +36,7 @@ func (root *RootHandler) HandleHTMLRequest(rw http.ResponseWriter, r *http.Reque
 		path.Join(root.ApiRoot, extension.UUID),
 	}
 
-	if !IsSecureRequest(r) {
+	if !strings.HasPrefix(root.ApiRootUrl, "https") {
 		content, err := root.getTunnelError(templateData)
 		if err != nil {
 			root.handleError(rw, fmt.Errorf("failed to render index page: %v", err))
@@ -64,34 +63,6 @@ func (root *RootHandler) HandleHTMLRequest(rw http.ResponseWriter, r *http.Reque
 	}
 
 	http.Redirect(rw, r, url, http.StatusTemporaryRedirect)
-}
-
-func IsSecureRequest(r *http.Request) bool {
-	// TODO: Find a better way to handle this - looks like there's no easy way to get the request protocol
-	re := regexp.MustCompile(`:([0-9])+$`)
-	hasPort := re.MatchString(r.Host)
-	return !strings.HasPrefix(r.Host, "localhost") && !hasPort
-
-}
-
-func (root *RootHandler) GetApiRootUrlFromRequest(r *http.Request) string {
-	return getUrlFromRequest(r, root.ApiRoot)
-}
-
-func (root *RootHandler) GetWebsocketUrlFromRequest(r *http.Request) string {
-	var protocol string
-	if IsSecureRequest(r) {
-		protocol = "wss"
-	} else {
-		protocol = "ws"
-	}
-
-	u := url.URL{Host: r.Host, Scheme: protocol, Path: root.ApiRoot}
-	return u.String()
-}
-
-func (root *RootHandler) GetDevConsoleUrlFromRequest(r *http.Request, devConsolePath string) string {
-	return getUrlFromRequest(r, path.Join(root.ApiRoot, devConsolePath))
 }
 
 func (root *RootHandler) getTunnelError(templateData *extensionHtmlTemplateData) (mergedContent []byte, err error) {
@@ -131,7 +102,7 @@ func (root *RootHandler) getRedirectUrl(r *http.Request, extension *core.Extensi
 			return
 		}
 
-		rawUrl := url.URL{Scheme: "https", Host: root.Store, Path: extension.Development.Resource.Url, RawQuery: "dev=" + root.GetApiRootUrlFromRequest(r)}
+		rawUrl := url.URL{Scheme: "https", Host: root.Store, Path: extension.Development.Resource.Url, RawQuery: "dev=" + root.ApiRootUrl}
 		redirectUrl = rawUrl.String()
 		return
 	}
@@ -154,23 +125,11 @@ func (root *RootHandler) handleError(rw http.ResponseWriter, errorMessage error)
 	rw.Write(content.Bytes())
 }
 
-func getUrlFromRequest(r *http.Request, path string) string {
-	var protocol string
-	if IsSecureRequest(r) {
-		protocol = "https"
-	} else {
-		protocol = "http"
-	}
-
-	u := url.URL{Host: r.Host, Scheme: protocol, Path: path}
-	return u.String()
-}
-
 type apiConfig struct {
-	ApiRoot string
-	Port    int
-	Store   string
-	core.IntegrationContext
+	ApiRoot    string
+	Port       int
+	Store      string
+	ApiRootUrl string
 }
 
 type RootHandler struct {

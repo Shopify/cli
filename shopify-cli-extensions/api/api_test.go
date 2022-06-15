@@ -16,13 +16,10 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-var (
-	config *core.Config
-)
+var config *core.Config
+var noPublicUrlConfig *core.Config
 
 var apiRoot = "/extensions"
-var secureHost = "123.ngrok-url"
-var localhost = "localhost:8000"
 
 func init() {
 	configFile, err := os.Open("testdata/extension.config.yml")
@@ -32,6 +29,15 @@ func init() {
 	defer configFile.Close()
 
 	config, err = core.LoadConfig(configFile)
+
+	noPublicUrlConfig = &core.Config{
+		App:        config.App,
+		Extensions: config.Extensions,
+		Port:       config.Port,
+		Store:      config.Store,
+		PublicUrl:  "",
+	}
+
 	if err != nil {
 		panic(fmt.Errorf("unable to load config: %w", err))
 	}
@@ -87,9 +93,10 @@ func TestInitializeWithProvidedConfigOptions(t *testing.T) {
 
 func TestGetExtensions(t *testing.T) {
 	api := New(config)
+
 	response := extensionsResponse{}
 
-	getAllExtensionsJSONResponse(api, t, secureHost, &response)
+	getAllExtensionsJSONResponse(api, t, &response)
 
 	if response.App == nil {
 		t.Error("Expected app to not be nil")
@@ -107,12 +114,11 @@ func TestGetExtensions(t *testing.T) {
 		t.Errorf("expect service version to be %s but got %s", api.Version, response.Version)
 	}
 
-	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
-	if response.Root.Url != rootUrl {
-		t.Errorf("expect service root url to be %s but got %s", rootUrl, response.Root.Url)
+	if response.Root.Url != api.ApiRootUrl {
+		t.Errorf("expect service root url to be %s but got %s", api.ApiRootUrl, response.Root.Url)
 	}
 
-	socketUrl := fmt.Sprintf("wss://%s%s", secureHost, api.ApiRoot)
+	socketUrl := fmt.Sprintf("wss%s", strings.TrimPrefix(api.ApiRootUrl, "https"))
 	if response.Socket.Url != socketUrl {
 		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
@@ -131,11 +137,11 @@ func TestGetExtensions(t *testing.T) {
 		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
 	}
 
-	if extension.Assets["main"].Url != fmt.Sprintf("%s/%s/assets/main.js", rootUrl, api.Extensions[0].UUID) {
+	if extension.Assets["main"].Url != fmt.Sprintf("%s/%s/assets/main.js", api.ApiRootUrl, api.Extensions[0].UUID) {
 		t.Errorf("expect a main asset url, got %s", extension.Assets["main"].Url)
 	}
 
-	if extension.Development.Root.Url != fmt.Sprintf("%s/%s", rootUrl, api.Extensions[0].UUID) {
+	if extension.Development.Root.Url != fmt.Sprintf("%s/%s", api.ApiRootUrl, api.Extensions[0].UUID) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
 	}
 
@@ -158,7 +164,7 @@ func TestGetSingleExtension(t *testing.T) {
 	api := New(config)
 	response := singleExtensionResponse{}
 
-	getSingleExtensionJSONResponse(api, t, secureHost, api.Extensions[0].UUID, &response)
+	getSingleExtensionJSONResponse(api, t, api.Extensions[0].UUID, &response)
 
 	if response.App == nil {
 		t.Error("Expected app to not be nil")
@@ -172,17 +178,16 @@ func TestGetSingleExtension(t *testing.T) {
 		t.Errorf("expect service version to be %s but got %s", api.Version, response.Version)
 	}
 
-	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
-	if response.Root.Url != rootUrl {
-		t.Errorf("expect service root url to be %s but got %s", rootUrl, response.Root.Url)
+	if response.Root.Url != api.ApiRootUrl {
+		t.Errorf("expect service root url to be %s but got %s", api.ApiRootUrl, response.Root.Url)
 	}
 
-	socketUrl := fmt.Sprintf("wss://%s%s", secureHost, api.ApiRoot)
+	socketUrl := fmt.Sprintf("wss%s", strings.TrimPrefix(api.ApiRootUrl, "https"))
 	if response.Socket.Url != socketUrl {
 		t.Errorf("expect service socket url to be %s but got %s", socketUrl, response.Socket.Url)
 	}
 
-	devConsoleUrl := fmt.Sprintf("https://%s%s/dev-console", secureHost, api.ApiRoot)
+	devConsoleUrl := api.GetDevConsoleUrl()
 	if response.DevConsole.Url != devConsoleUrl {
 		t.Errorf("expect service dev console url to be %s but got %s", devConsoleUrl, response.DevConsole.Url)
 	}
@@ -201,11 +206,11 @@ func TestGetSingleExtension(t *testing.T) {
 		t.Errorf("expect an asset with the name main, got %s", extension.Assets["main"].Name)
 	}
 
-	if extension.Assets["main"].Url != fmt.Sprintf("%s/%s/assets/main.js", rootUrl, extension.UUID) {
+	if extension.Assets["main"].Url != fmt.Sprintf("%s/%s/assets/main.js", api.ApiRootUrl, extension.UUID) {
 		t.Errorf("expect a main asset url, got %s", extension.Assets["main"].Url)
 	}
 
-	if extension.Development.Root.Url != fmt.Sprintf("%s/%s", rootUrl, extension.UUID) {
+	if extension.Development.Root.Url != fmt.Sprintf("%s/%s", api.ApiRootUrl, extension.UUID) {
 		t.Errorf("expect an extension root url, got %s", extension.Development.Root.Url)
 	}
 
@@ -231,7 +236,7 @@ func TestGetSingleExtension(t *testing.T) {
 func TestServeAssets(t *testing.T) {
 	api := New(config)
 	mainAssetUrl := fmt.Sprintf("%s/%s/assets/main.js", api.ApiRoot, api.Extensions[0].UUID)
-	response := getHTMLRequest(api, t, localhost, mainAssetUrl)
+	response := getHTMLRequest(api, t, mainAssetUrl)
 
 	if response.Result().StatusCode != http.StatusOK {
 		t.Error("expected status code ok received")
@@ -250,9 +255,9 @@ func TestServeAssets(t *testing.T) {
 }
 
 func TestCheckoutTunnelError(t *testing.T) {
-	api := New(config)
+	api := New(noPublicUrlConfig)
 	uuid := api.Extensions[0].UUID
-	response := getSingleExtensionHTMLResponse(api, t, localhost, uuid)
+	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
 	message := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL%s/%s</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
 
@@ -264,9 +269,9 @@ func TestCheckoutTunnelError(t *testing.T) {
 }
 
 func TestAdminTunnelError(t *testing.T) {
-	api := New(config)
+	api := New(noPublicUrlConfig)
 	uuid := api.Extensions[1].UUID
-	response := getSingleExtensionHTMLResponse(api, t, "localhost:8000", uuid)
+	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
 	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL%s/%s</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
 
@@ -278,8 +283,8 @@ func TestAdminTunnelError(t *testing.T) {
 }
 
 func TestPostPurchaseTunnelError(t *testing.T) {
-	api := New(config)
-	response := getSingleExtensionHTMLResponse(api, t, "localhost:8000", api.Extensions[2].UUID)
+	api := New(noPublicUrlConfig)
+	response := getSingleExtensionHTMLResponse(api, t, api.Extensions[2].UUID)
 
 	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL%s</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL", api.ApiRoot)
 
@@ -292,7 +297,7 @@ func TestPostPurchaseTunnelError(t *testing.T) {
 
 func TestCheckoutRedirect(t *testing.T) {
 	api := New(config)
-	rec := getSingleExtensionHTMLRequest(api, t, secureHost, api.Extensions[0].UUID)
+	rec := getSingleExtensionHTMLRequest(api, t, api.Extensions[0].UUID)
 
 	if rec.Code != http.StatusTemporaryRedirect {
 		t.Errorf("expected redirect status – received: %d", rec.Code)
@@ -300,8 +305,7 @@ func TestCheckoutRedirect(t *testing.T) {
 
 	redirectUrl, err := rec.Result().Location()
 
-	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
-	expectedUrl := fmt.Sprintf("https://%s/%s?dev=%s", api.Store, api.Extensions[0].Development.Resource.Url, rootUrl)
+	expectedUrl := fmt.Sprintf("https://%s/%s?dev=%s", api.Store, api.Extensions[0].Development.Resource.Url, api.ApiRootUrl)
 
 	if err != nil || redirectUrl.String() != expectedUrl {
 		t.Errorf("Expected redirect url to be %s but received: %s", expectedUrl, redirectUrl.String())
@@ -311,7 +315,7 @@ func TestCheckoutRedirect(t *testing.T) {
 func TestAdminRedirect(t *testing.T) {
 	api := New(config)
 	uuid := api.Extensions[1].UUID
-	rec := getSingleExtensionHTMLRequest(api, t, secureHost, uuid)
+	rec := getSingleExtensionHTMLRequest(api, t, uuid)
 
 	if rec.Code != http.StatusTemporaryRedirect {
 		t.Errorf("Expected redirect status – received: %d", rec.Code)
@@ -319,8 +323,7 @@ func TestAdminRedirect(t *testing.T) {
 
 	redirectUrl, err := rec.Result().Location()
 
-	rootUrl := fmt.Sprintf("https://%s%s", secureHost, api.ApiRoot)
-	expectedUrl := fmt.Sprintf("https://%s/admin/extensions-dev?url=%s/%s", api.Store, rootUrl, uuid)
+	expectedUrl := fmt.Sprintf("https://%s/admin/extensions-dev?url=%s/%s", api.Store, api.ApiRootUrl, uuid)
 
 	if err != nil || redirectUrl.String() != expectedUrl {
 		t.Errorf("Expected redirect url to be %s but received: %s", expectedUrl, redirectUrl.String())
@@ -330,7 +333,7 @@ func TestAdminRedirect(t *testing.T) {
 func TestPostPurchaseIndex(t *testing.T) {
 	api := New(config)
 	uuid := api.Extensions[2].UUID
-	response := getSingleExtensionHTMLResponse(api, t, secureHost, uuid)
+	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
 	expectedLink := fmt.Sprintf("https://example.ngrok.io%s/%s", api.ApiRoot, uuid)
 	contents := [...]string{
@@ -370,12 +373,10 @@ func TestWebsocketNotify(t *testing.T) {
 	firstConnection.ReadJSON(&websocketMessage{})
 	secondConnection.ReadJSON(&websocketMessage{})
 
-	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
-
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], rootUrl),
-		getExpectedExtensionWithUrls(api.Extensions[1], rootUrl),
-		getExpectedExtensionWithUrls(api.Extensions[2], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[0], api.ApiRootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], api.ApiRootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], api.ApiRootUrl),
 	}
 
 	api.Notify(api.Extensions)
@@ -433,12 +434,10 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
-
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], rootUrl),
-		getExpectedExtensionWithUrls(api.Extensions[1], rootUrl),
-		getExpectedExtensionWithUrls(api.Extensions[2], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[0], api.ApiRootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], api.ApiRootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], api.ApiRootUrl),
 	}
 
 	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
@@ -478,12 +477,10 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
-
 	expectedExtensions := []core.Extension{
-		getExpectedExtensionWithUrls(api.Extensions[0], rootUrl),
-		getExpectedExtensionWithUrls(api.Extensions[1], rootUrl),
-		getExpectedExtensionWithUrls(api.Extensions[2], rootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[0], api.ApiRootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[1], api.ApiRootUrl),
+		getExpectedExtensionWithUrls(api.Extensions[2], api.ApiRootUrl),
 	}
 
 	if err := verifyWebsocketMessage(first_connection, "connected", api.Version, api.App, expectedExtensions, api.Store); err != nil {
@@ -534,7 +531,7 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 	}
 
 	response := extensionsResponse{}
-	getAllExtensionsJSONResponse(api, t, server.URL, &response)
+	getAllExtensionsJSONResponse(api, t, &response)
 
 	if response.App == nil {
 		t.Error("Expected app to not be null")
@@ -565,11 +562,10 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	// First message received is the connected message which can be ignored
 	ws.ReadJSON(&websocketMessage{})
 
-	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
 	updateExtensionUUID := api.Extensions[0].UUID
 	unchangedExtensionUUID := api.Extensions[1].UUID
 
-	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], rootUrl)}
+	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], api.ApiRootUrl)}
 	*updatedExtensions[0].Development.Hidden = true
 	updatedExtensions[0].Development.Status = "error"
 
@@ -595,10 +591,10 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	apiUpdatedExtension := api.Extensions[0]
 	updated := singleExtensionResponse{}
 
-	getSingleExtensionJSONResponse(api, t, server.URL, updateExtensionUUID, &updated)
+	getSingleExtensionJSONResponse(api, t, updateExtensionUUID, &updated)
 
 	if *updated.Extension.Development.Hidden != true {
-		t.Errorf("expected response for extension %s Development.Hidden to be true but got %v", updateExtensionUUID, updated.Extension.Development.Hidden)
+		t.Errorf("expected response for extension %s Development.Hidden to be true but got %v", updateExtensionUUID, *updated.Extension.Development.Hidden)
 	}
 
 	if updated.Extension.Development.Status != "error" {
@@ -606,7 +602,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	}
 
 	if *apiUpdatedExtension.Development.Hidden != true {
-		t.Errorf("expected API extension %s Development.Hidden to be true  but got %v", updateExtensionUUID, apiUpdatedExtension.Development.Hidden)
+		t.Errorf("expected API extension %s Development.Hidden to be true  but got %v", updateExtensionUUID, *apiUpdatedExtension.Development.Hidden)
 	}
 
 	if apiUpdatedExtension.Development.Status != "error" {
@@ -615,10 +611,10 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 
 	apiUnchangedExtension := api.Extensions[1]
 	unchanged := singleExtensionResponse{}
-	getSingleExtensionJSONResponse(api, t, server.URL, unchangedExtensionUUID, &unchanged)
+	getSingleExtensionJSONResponse(api, t, unchangedExtensionUUID, &unchanged)
 
 	if *unchanged.Extension.Development.Hidden != false {
-		t.Errorf("expected response for extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, unchanged.Extension.Development.Hidden)
+		t.Errorf("expected response for extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, *unchanged.Extension.Development.Hidden)
 	}
 
 	if unchanged.Extension.Development.Status != "" {
@@ -626,7 +622,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 	}
 
 	if *apiUnchangedExtension.Development.Hidden != false {
-		t.Errorf("expected API extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, apiUpdatedExtension.Development.Hidden)
+		t.Errorf("expected API extension %s Development.Hidden to be unchanged but got %v", unchangedExtensionUUID, *apiUpdatedExtension.Development.Hidden)
 	}
 
 	if apiUnchangedExtension.Development.Status != "" {
@@ -670,9 +666,7 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 
 	<-time.After(duration)
 
-	rootUrl := fmt.Sprintf("%s%s", server.URL, api.ApiRoot)
-
-	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], rootUrl)}
+	updatedExtensions := []core.Extension{getExpectedExtensionWithUrls(api.Extensions[0], api.ApiRootUrl)}
 	*updatedExtensions[0].Development.Hidden = false
 
 	if err := verifyWebsocketMessage(ws, "update", api.Version, api.App, updatedExtensions, api.Store); err != nil {
@@ -681,13 +675,13 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 
 	apiUpdatedExtension := api.Extensions[0]
 	updated := singleExtensionResponse{}
-	getSingleExtensionJSONResponse(api, t, server.URL, updateExtension.UUID, &updated)
+	getSingleExtensionJSONResponse(api, t, updateExtension.UUID, &updated)
 
 	if *updated.Extension.Development.Hidden != false {
-		t.Errorf("expected response for extension %s Development.Hidden to be false but got %v", updateExtension.UUID, updated.Extension.Development.Hidden)
+		t.Errorf("expected response for extension %s Development.Hidden to be false but got %v", updateExtension.UUID, *updated.Extension.Development.Hidden)
 	}
 	if *apiUpdatedExtension.Development.Hidden != false {
-		t.Errorf("expected API extension %s Development.Hidden to be false but got %v", updateExtension.UUID, apiUpdatedExtension.Development.Hidden)
+		t.Errorf("expected API extension %s Development.Hidden to be false but got %v", updateExtension.UUID, *apiUpdatedExtension.Development.Hidden)
 	}
 }
 
@@ -698,7 +692,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 	dispatchExtensionUUID := api.Extensions[0].UUID
 
 	initialResponse := extensionsResponse{}
-	getAllExtensionsJSONResponse(api, t, server.URL, &initialResponse)
+	getAllExtensionsJSONResponse(api, t, &initialResponse)
 
 	ws, err := createWebsocket(server)
 	if err != nil {
@@ -782,7 +776,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 		t.Errorf("converting extensions in message to JSON failed with error: %v", err)
 	}
 
-	extensionRootUrl := fmt.Sprintf("%s%s/%s", server.URL, api.ApiRoot, dispatchExtensionUUID)
+	extensionRootUrl := fmt.Sprintf("%s/%s", api.ApiRootUrl, dispatchExtensionUUID)
 	extensionAssetUrl := fmt.Sprintf("%s/assets/main.js", extensionRootUrl)
 	expectedExtensions := fmt.Sprintf(`[
 		{
@@ -825,7 +819,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 
 	response := extensionsResponse{}
 
-	getAllExtensionsJSONResponse(api, t, server.URL, &response)
+	getAllExtensionsJSONResponse(api, t, &response)
 
 	if !reflect.DeepEqual(response, initialResponse) {
 		t.Error("Expected api data not to be mutated but it was modified")
@@ -936,9 +930,9 @@ func createWebsocket(server *httptest.Server) (*websocket.Conn, error) {
 	return connection, err
 }
 
-func getJSONResponse(api *ExtensionsApi, t *testing.T, host, requestUri string, response interface{}) interface{} {
+func getJSONResponse(api *ExtensionsApi, t *testing.T, requestUri string, response interface{}) interface{} {
+	fmt.Printf("GET %s\n", requestUri)
 	req, err := http.NewRequest("GET", requestUri, nil)
-	req.Host = host
 	req.RequestURI = requestUri
 
 	if err != nil {
@@ -961,18 +955,17 @@ func getJSONResponse(api *ExtensionsApi, t *testing.T, host, requestUri string, 
 	return response
 }
 
-func getSingleExtensionJSONResponse(api *ExtensionsApi, t *testing.T, host string, uuid string, response interface{}) interface{} {
-	return getJSONResponse(api, t, host, apiRoot+"/"+uuid, response)
+func getSingleExtensionJSONResponse(api *ExtensionsApi, t *testing.T, uuid string, response interface{}) interface{} {
+	return getJSONResponse(api, t, apiRoot+"/"+uuid, response)
 }
 
-func getAllExtensionsJSONResponse(api *ExtensionsApi, t *testing.T, host string, response interface{}) interface{} {
-	return getJSONResponse(api, t, host, apiRoot, response)
+func getAllExtensionsJSONResponse(api *ExtensionsApi, t *testing.T, response interface{}) interface{} {
+	return getJSONResponse(api, t, apiRoot, response)
 }
 
-func getHTMLRequest(api *ExtensionsApi, t *testing.T, host, requestUri string) *httptest.ResponseRecorder {
+func getHTMLRequest(api *ExtensionsApi, t *testing.T, requestUri string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest("GET", requestUri, nil)
 	req.Header.Add("accept", "text/html")
-	req.Host = host
 	req.RequestURI = requestUri
 
 	if err != nil {
@@ -984,12 +977,12 @@ func getHTMLRequest(api *ExtensionsApi, t *testing.T, host, requestUri string) *
 	return rec
 }
 
-func getSingleExtensionHTMLRequest(api *ExtensionsApi, t *testing.T, host string, uuid string) *httptest.ResponseRecorder {
-	return getHTMLRequest(api, t, host, apiRoot+"/"+uuid)
+func getSingleExtensionHTMLRequest(api *ExtensionsApi, t *testing.T, uuid string) *httptest.ResponseRecorder {
+	return getHTMLRequest(api, t, apiRoot+"/"+uuid)
 }
 
-func getSingleExtensionHTMLResponse(api *ExtensionsApi, t *testing.T, host, uuid string) string {
-	rec := getSingleExtensionHTMLRequest(api, t, host, uuid)
+func getSingleExtensionHTMLResponse(api *ExtensionsApi, t *testing.T, uuid string) string {
+	rec := getSingleExtensionHTMLRequest(api, t, uuid)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected ok status – received: %d", rec.Code)

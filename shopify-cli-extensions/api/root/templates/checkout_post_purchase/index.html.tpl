@@ -38,7 +38,7 @@
       <br> 
       If this is the first time you're testing a Post Purchase extension, please install the browser extension from <a href="https://github.com/Shopify/post-purchase-devtools/releases">https://github.com/Shopify/post-purchase-devtools/releases</a>.<br>
       <br>
-      Once installed, simply enter your extension URL <a href="{{.PublicUrl}}/extensions/{{.UUID}}">{{.PublicUrl}}/extensions/{{.UUID}}</a>.</p>
+      Once installed, simply enter your extension URL <a href="{{.ApiRootUrl}}/{{.UUID}}">{{.ApiRootUrl}}/{{.UUID}}</a>.</p>
   </div>
   </body>
 </html>

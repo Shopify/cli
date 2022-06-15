@@ -40,14 +40,14 @@ func New(config *core.Config) *ExtensionsApi {
 }
 
 func (api *ExtensionsApi) sendUpdateEvent(extensions []core.Extension) {
-	api.notifyClients(func(rootUrl string) (message notification, err error) {
-		return api.getNotification("update", extensions, rootUrl)
+	api.notifyClients(func() (message notification, err error) {
+		return api.getNotification("update", extensions)
 	})
 }
 
-func (api *ExtensionsApi) notifyClients(createNotification func(rootUrl string) (message notification, err error)) {
+func (api *ExtensionsApi) notifyClients(createNotification func() (message notification, err error)) {
 	api.connections.Range(func(connection, clientHandlers interface{}) bool {
-		notification, err := createNotification(connection.(*websocketConnection).rootUrl)
+		notification, err := createNotification()
 		if err != nil {
 			log.Printf("failed to construct notification with error: %v", err)
 			return false
@@ -57,8 +57,8 @@ func (api *ExtensionsApi) notifyClients(createNotification func(rootUrl string) 
 	})
 }
 
-func (api *ExtensionsApi) getNotification(event string, extensions []core.Extension, rootUrl string) (message notification, err error) {
-	extensionsWithUrls := getExtensionsWithUrl(extensions, rootUrl)
+func (api *ExtensionsApi) getNotification(event string, extensions []core.Extension) (message notification, err error) {
+	extensionsWithUrls := getExtensionsWithUrl(extensions, api.ApiRootUrl)
 	app := formatData(api.App, strcase.ToLowerCamel)
 
 	data, err := api.getNotificationData(extensionsWithUrls, app)
@@ -89,7 +89,7 @@ func (api *ExtensionsApi) getNotificationData(extensions interface{}, app interf
 
 // Returns a notification that combines arbitrary data
 // with the API's own data for app and extensions
-func (api *ExtensionsApi) getDispatchNotification(rawData json.RawMessage, rootUrl string) (message notification, err error) {
+func (api *ExtensionsApi) getDispatchNotification(rawData json.RawMessage) (message notification, err error) {
 	dispatchData := make(map[string]interface{})
 	if err = json.Unmarshal(rawData, &dispatchData); err != nil {
 		return
@@ -101,7 +101,7 @@ func (api *ExtensionsApi) getDispatchNotification(rawData json.RawMessage, rootU
 	}
 
 	mergedApp, _ := api.getMergedAppMap(data.App, false)
-	extensions := api.getMergedExtensionsMap(data.Extensions, rootUrl)
+	extensions := api.getMergedExtensionsMap(data.Extensions)
 
 	appAndExtensions, err := api.getNotificationData(extensions, mergedApp)
 
@@ -159,7 +159,7 @@ func (api *ExtensionsApi) getMergedAppMap(additionalInfo map[string]interface{},
 	return
 }
 
-func (api *ExtensionsApi) getMergedExtensionsMap(extensions []map[string]interface{}, rootUrl string) []map[string]interface{} {
+func (api *ExtensionsApi) getMergedExtensionsMap(extensions []map[string]interface{}) []map[string]interface{} {
 	targetExtensions := make(map[string]map[string]interface{})
 	for _, extension := range extensions {
 		targetExtensions[fmt.Sprintf("%v", extension["uuid"])] = extension
@@ -168,7 +168,7 @@ func (api *ExtensionsApi) getMergedExtensionsMap(extensions []map[string]interfa
 	results := make([]map[string]interface{}, 0)
 	for _, extension := range api.Extensions {
 		if target, found := targetExtensions[extension.UUID]; found {
-			extensionWithUrls := setExtensionUrls(extension, rootUrl)
+			extensionWithUrls := setExtensionUrls(extension, api.ApiRootUrl)
 			extensionData, err := interfaceToMap(extensionWithUrls)
 			if err != nil {
 				continue
@@ -228,7 +228,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router) *Extensions
 	api := &ExtensionsApi{
 		service,
 		router,
-		root.New(config, service.ApiRoot),
+		root.New(service),
 		sync.Map{},
 		sync.Map{},
 	}
@@ -286,7 +286,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	connection := &websocketConnection{upgradedConnection, api.GetApiRootUrlFromRequest(r), sync.Mutex{}}
+	connection := &websocketConnection{upgradedConnection, sync.Mutex{}}
 	doOnce := sync.Once{}
 	notifications := make(chan notification)
 	done := make(chan struct{})
@@ -306,7 +306,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		notifications <- update
 	}, closeConnection)
 
-	notification, err := api.getNotification("connected", api.Extensions, connection.rootUrl)
+	notification, err := api.getNotification("connected", api.Extensions)
 	if err != nil {
 		closeConnection(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
 	}
@@ -350,10 +350,10 @@ func (api *ExtensionsApi) listExtensions(rw http.ResponseWriter, r *http.Request
 	rw.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(rw)
 
-	extensions := getExtensionsWithUrl(api.Extensions, api.GetApiRootUrlFromRequest(r))
+	extensions := getExtensionsWithUrl(api.Extensions, api.ApiRootUrl)
 
 	encoder.Encode(extensionsResponse{
-		api.getResponse(r),
+		api.getResponse(),
 		extensions,
 	})
 }
@@ -378,7 +378,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 
 	for _, extension := range api.Extensions {
 		if extension.UUID == uuid {
-			extensionWithUrls := setExtensionUrls(extension, api.GetApiRootUrlFromRequest(r))
+			extensionWithUrls := setExtensionUrls(extension, api.ApiRootUrl)
 
 			if strings.HasPrefix(r.Header.Get("accept"), "text/html") {
 				api.HandleHTMLRequest(rw, r, &extensionWithUrls)
@@ -387,7 +387,7 @@ func (api *ExtensionsApi) extensionRootHandler(rw http.ResponseWriter, r *http.R
 
 			rw.Header().Add("Content-Type", "application/json")
 			encoder := json.NewEncoder(rw)
-			encoder.Encode(singleExtensionResponse{api.getResponse(r), extensionWithUrls})
+			encoder.Encode(singleExtensionResponse{api.getResponse(), extensionWithUrls})
 			return
 		}
 	}
@@ -448,8 +448,8 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 			api.Notify(data.Extensions)
 
 		case "dispatch":
-			api.notifyClients(func(rootUrl string) (message notification, err error) {
-				return api.getDispatchNotification(jsonMessage.Data, ws.rootUrl)
+			api.notifyClients(func() (message notification, err error) {
+				return api.getDispatchNotification(jsonMessage.Data)
 			})
 		}
 	}
@@ -517,13 +517,25 @@ func mergeWithOverwrite(destination interface{}, source interface{}) error {
 	return mergo.Merge(destination, source, mergo.WithOverride, mergo.WithTransformers(core.Extension{}))
 }
 
-func (api *ExtensionsApi) getResponse(r *http.Request) *Response {
+func (api *ExtensionsApi) GetWebsocketUrl() string {
+	apiURl, _ := url.Parse(api.ApiRootUrl)
+	apiURl.Scheme = "wss"
+	return apiURl.String()
+}
+
+func (api *ExtensionsApi) GetDevConsoleUrl() string {
+	apiURl, _ := url.Parse(api.ApiRootUrl)
+	apiURl.Path = path.Join(api.ApiRoot, api.DevConsolePath)
+	return apiURl.String()
+}
+
+func (api *ExtensionsApi) getResponse() *Response {
 	return &Response{
 		formatData(api.App, strcase.ToLowerCamel),
 		api.Version,
-		core.Url{Url: api.GetApiRootUrlFromRequest(r)},
-		core.Url{Url: api.GetWebsocketUrlFromRequest(r)},
-		core.Url{Url: api.GetDevConsoleUrlFromRequest(r, api.DevConsolePath)},
+		core.Url{Url: api.ApiRootUrl},
+		core.Url{Url: api.GetWebsocketUrl()},
+		core.Url{Url: api.GetDevConsoleUrl()},
 		api.Store,
 	}
 }
@@ -606,8 +618,7 @@ type Response struct {
 
 type websocketConnection struct {
 	*websocket.Conn
-	rootUrl string
-	mu      sync.Mutex
+	mu sync.Mutex
 }
 
 type extensionsResponse struct {
