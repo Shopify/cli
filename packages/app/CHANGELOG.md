@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.0.15
+
+### Patch Changes
+
+- 99378ca0: Push dependency manager detection into cli-kit
+- af64c637: Improve deploy copies including next steps
+- 99378ca0: Add command to upgrade all project types
+- 6989f388: Fix the extension configuration sent to dev/deploy to match the required fields
+- Updated dependencies [c3b711ec]
+- Updated dependencies [99378ca0]
+  - @shopify/cli-kit@3.0.15
+
 ## 3.0.14
 
 ### Patch Changes

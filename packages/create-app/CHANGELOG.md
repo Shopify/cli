@@ -1,5 +1,15 @@
 # @shopify/create-app
 
+## 3.0.15
+
+### Patch Changes
+
+- 854be4a0: - Updated `template` argument on `create-app` to support GitHub repository references with a file path.
+  - Added `app_name` as a variable for liquid file templating.
+- Updated dependencies [c3b711ec]
+- Updated dependencies [99378ca0]
+  - @shopify/cli-kit@3.0.15
+
 ## 3.0.14
 
 ### Patch Changes
