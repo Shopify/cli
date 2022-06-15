@@ -22,11 +22,7 @@ export async function deployThemeExtension({
   }
   const mutation = api.graphql.ExtensionUpdateDraftMutation
   const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
-  if (
-    result.extensionUpdateDraft &&
-    result.extensionUpdateDraft.userErrors &&
-    result.extensionUpdateDraft.userErrors.length > 0
-  ) {
+  if (result.extensionUpdateDraft?.userErrors?.length > 0) {
     const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
