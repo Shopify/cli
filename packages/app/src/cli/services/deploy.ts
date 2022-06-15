@@ -113,18 +113,17 @@ function outputCompletionMessage({
   app.extensions.function.forEach(outputDeployedAndLivedMessage)
 
   output.newline()
-  output.info('  Next steps:')
+  output.info('  Next steps in Shopify Partners:')
   const outputNextStep = (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
         return registration.uuid === identifiers.extensions[extension.localIdentifier]
       })?.id ?? ''
     output.info(
-      output.content`    · Publish ${extension.localIdentifier} from Shopify partners:
-          ${output.token.link(
-            'Link',
-            getExtensionPublishURL({extension, partnersApp, partnersOrganizationId, extensionId}),
-          )}`,
+      output.content`    · Publish ${output.token.link(
+        extension.localIdentifier,
+        getExtensionPublishURL({extension, partnersApp, partnersOrganizationId, extensionId}),
+      )}`,
     )
   }
   app.extensions.ui.forEach(outputNextStep)
