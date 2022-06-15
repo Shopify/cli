@@ -51,15 +51,6 @@ export const limitedExtensions: {
   function: [],
 }
 
-export const genericConfigurationFileNames = {
-  yarn: {
-    lockfile: 'yarn.lock',
-  },
-  pnpm: {
-    lockfile: 'pnpm-lock.yaml',
-  },
-} as const
-
 export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
