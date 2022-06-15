@@ -1,7 +1,7 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
 import cleanup from '../utils/template/cleanup'
 
-import {string, path, file, output, ui, dependency, template, npm, git, environment} from '@shopify/cli-kit'
+import {string, path, file, output, ui, dependency, template, npm, git, github, environment} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
@@ -15,9 +15,13 @@ async function init(options: InitOptions) {
   const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
+  const githubRepo = github.parseGithubRepoReference(options.template)
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
+    const templatePathDir = githubRepo.filePath
+      ? path.join(templateDownloadDir, githubRepo.filePath)
+      : templateDownloadDir
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
     await file.mkdir(templateDownloadDir)
@@ -29,7 +33,7 @@ async function init(options: InitOptions) {
         task: async (_, task) => {
           task.title = 'Downloading template'
           await git.downloadRepository({
-            repoUrl: options.template,
+            repoUrl: `${githubRepo.repoBaseUrl}#${githubRepo.branch}`,
             destination: templateDownloadDir,
           })
           task.title = 'Template downloaded'
@@ -44,9 +48,11 @@ async function init(options: InitOptions) {
               title: 'Parse liquid',
               task: async (_, task) => {
                 task.title = 'Parsing liquid'
-                await template.recursiveDirectoryCopy(templateDownloadDir, templateScaffoldDir, {
+                await template.recursiveDirectoryCopy(templatePathDir, templateScaffoldDir, {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   dependency_manager: dependencyManager,
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  app_name: options.name,
                 })
 
                 task.title = 'Liquid parsed'

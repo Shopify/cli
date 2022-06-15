@@ -1,5 +1,5 @@
 import {fetch} from './http'
-import {getLatestRelease, parseRepoUrl, GithubRelease} from './github'
+import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoReference} from './github'
 import {Response} from 'node-fetch'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -78,6 +78,75 @@ describe('parseRepoUrl', () => {
       subDirectory: 'examples/template-hydrogen-default',
       ssh: 'git@github.com:Shopify/hydrogen',
     })
+  })
+})
+
+describe('parseGithubRepoReference', () => {
+  it('parses a repository reference', async () => {
+    // Given
+    const url = 'https://github.com/Shopify/foo'
+
+    // When
+    const repoUrl = parseGithubRepoReference(url)
+
+    // Then
+    await expect(repoUrl).toMatchObject({
+      repoBaseUrl: 'https://github.com/Shopify/foo',
+      branch: undefined,
+      filePath: undefined,
+    })
+  })
+
+  it('parses a repository reference with a branch', async () => {
+    // Given
+    const url = 'https://github.com/Shopify/foo#main'
+
+    // When
+    const repoUrl = parseGithubRepoReference(url)
+
+    // Then
+    await expect(repoUrl).toMatchObject({
+      repoBaseUrl: 'https://github.com/Shopify/foo',
+      branch: 'main',
+      filePath: undefined,
+    })
+  })
+
+  it('parses a repository reference with a branch and path', async () => {
+    // Given
+    const url = 'https://github.com/Shopify/foo/bar/baz#main'
+
+    // When
+    const repoUrl = parseGithubRepoReference(url)
+
+    // Then
+    await expect(repoUrl).toMatchObject({
+      repoBaseUrl: 'https://github.com/Shopify/foo',
+      branch: 'main',
+      filePath: 'bar/baz',
+    })
+  })
+
+  it('throws for a non github reference', async () => {
+    // Given
+    const url = 'https://NOTgithub.com/Shopify/foo'
+
+    // When
+    const parseRepoUrl = () => parseGithubRepoReference(url)
+
+    // Then
+    await expect(parseRepoUrl).toThrow('Only GitHub repository references are supported.')
+  })
+
+  it('throws for a non URL', async () => {
+    // Given
+    const url = 'abc'
+
+    // When
+    const parseRepoUrl = () => parseGithubRepoReference(url)
+
+    // Then
+    await expect(parseRepoUrl).toThrow('Invalid URL')
   })
 })
 
