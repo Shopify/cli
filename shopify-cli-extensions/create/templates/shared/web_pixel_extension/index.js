@@ -1,5 +1,5 @@
 shopify.extend(
-  "Analytics",
+  "WebPixel::Render",
   (api) => {
     const { config, subscribe, unsubscribe } = api;
     // Bootstrap and insert pixel script tag here
