@@ -349,7 +349,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      version = "2"
+      apiVersion = "2022-07"
 
       [build]
       command = "make build"
@@ -377,7 +377,7 @@ scopes = "read_products"
     let blockConfiguration = `
       name = "my-function-1"
       type = "payment_methods"
-      version = "2"
+      apiVersion = "2022-07"
 
       [build]
       command = "make build"
@@ -392,7 +392,7 @@ scopes = "read_products"
     blockConfiguration = `
       name = "my-function-2"
       type = "product_discounts"
-      version = "2"
+      apiVersion = "2022-07"
 
       [build]
       command = "make build"
@@ -429,7 +429,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      version = "2"
+      apiVersion = "2022-07"
 
       [build]
       command = "make build"
@@ -451,7 +451,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      version = "2"
+      apiVersion = "2022-07"
 
       [build]
       command = "make build"
@@ -477,7 +477,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      version = "2"
+      apiVersion = "2022-07"
 
       [build]
       command = "make build"

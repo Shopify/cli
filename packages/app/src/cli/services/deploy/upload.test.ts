@@ -45,6 +45,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
         configurationUi: false,
+        apiVersion: '2022-07',
       },
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: () => '/function/dist/index.wasm',
@@ -202,6 +203,7 @@ describe('uploadFunctionExtensions', () => {
           schemaMinorVersion: '0',
           configurationUi: extension.configuration.configurationUi,
           moduleUploadUrl: uploadUrl,
+          apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -279,6 +281,7 @@ describe('uploadFunctionExtensions', () => {
           schemaMinorVersion: '0',
           configurationUi: extension.configuration.configurationUi,
           moduleUploadUrl: uploadUrl,
+          apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -356,6 +359,7 @@ describe('uploadFunctionExtensions', () => {
           schemaMinorVersion: '0',
           configurationUi: extension.configuration.configurationUi,
           moduleUploadUrl: uploadUrl,
+          apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -420,6 +424,7 @@ describe('uploadFunctionExtensions', () => {
           schemaMinorVersion: '0',
           configurationUi: extension.configuration.configurationUi,
           moduleUploadUrl: uploadUrl,
+          apiVersion: extension.configuration.apiVersion,
           appBridge: undefined,
         },
       )
