@@ -1,8 +1,14 @@
 import {nodeExtensionsCLIPath} from './cli'
 import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
-import {path} from '@shopify/cli-kit'
+import {error, path} from '@shopify/cli-kit'
 import {UIExtensionTypes} from 'cli/constants'
 
+const RendererNotFoundBug = (extension: string) => {
+  return new error.Bug(
+    `Couldn't find renderer version for extension ${extension}`,
+    'Make sure you have all your dependencies up to date',
+  )
+}
 export interface ExtensionConfigOptions {
   app: App
   apiKey?: string
@@ -26,6 +32,8 @@ export interface ExtensionConfigOptions {
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
+      const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
+      if (!renderer) throw RendererNotFoundBug(extension.configuration.type)
       return {
         uuid: extension.devUUID,
         title: extension.configuration.name,
@@ -46,7 +54,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           entries: {
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
-          renderer: await getUIExtensionRendererVersion(extension.configuration.type, options.app),
+          renderer,
           resource: options.includeResourceURL
             ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,

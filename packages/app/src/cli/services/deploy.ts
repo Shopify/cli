@@ -21,9 +21,16 @@ import {
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {validateExtensions} from '../validators/extensions'
-import {path, output, temporary, file} from '@shopify/cli-kit'
+import {path, output, temporary, file, error} from '@shopify/cli-kit'
 import {OrganizationApp} from 'cli/models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
+
+const RendererNotFoundBug = (extension: string) => {
+  return new error.Bug(
+    `Couldn't find renderer version for extension ${extension}`,
+    'Make sure you have all your dependencies up to date',
+  )
+}
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -148,9 +155,12 @@ async function configFor(extension: UIExtension, app: App) {
     case 'checkout_post_purchase':
       return {metafields: extension.configuration.metafields}
     case 'pos_ui_extension':
-    case 'product_subscription':
+    case 'product_subscription': {
+      const renderer = await getUIExtensionRendererVersion(type, app)
+      if (!renderer) throw RendererNotFoundBug(type)
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      return {renderer_version: (await getUIExtensionRendererVersion(type, app))?.version}
+      return {renderer_version: renderer.version}
+    }
     case 'checkout_ui_extension': {
       return {
         // eslint-disable-next-line @typescript-eslint/naming-convention
