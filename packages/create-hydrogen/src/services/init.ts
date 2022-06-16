@@ -2,7 +2,7 @@
 // @ts-ignore
 
 import {version as hydrogenVersion} from '../../package.json'
-/* eslint-disable @nrwl/nx/enforce-module-boundaries */
+
 import {version as cliVersion} from '../../../cli-main/package.json'
 import {
   string,
@@ -41,6 +41,8 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
+  await git.ensurePresentOrAbort()
+
   const user = (await os.username()) ?? ''
   const cliPackageVersion = options.shopifyCliVersion ?? cliVersion
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion

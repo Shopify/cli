@@ -12,6 +12,8 @@ interface InitOptions {
 }
 
 async function init(options: InitOptions) {
+  await git.ensurePresentOrAbort()
+
   const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)

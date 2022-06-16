@@ -82,7 +82,11 @@ module.exports = {
           },
           {
             sourceTag: 'scope:cli',
-            onlyDependOnLibsWithTargs: ['scope:foundation', 'features'],
+            onlyDependOnLibsWithTargs: ['scope:foundation', 'scope:feature'],
+          },
+          {
+            sourceTag: 'scope:create-cli',
+            onlyDependOnLibsWithTargs: ['scope:foundation'],
           },
         ],
       },
