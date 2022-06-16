@@ -382,7 +382,7 @@ scopes = "read_products"
     expect(functions[1].localIdentifier).toBe('my-function-2')
   })
 
-  it(`throws an error when the function's metadat.json file is missing`, async () => {
+  it(`throws an error when the function's metadata.json file is missing`, async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -399,6 +399,51 @@ scopes = "read_products"
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file at .+metadata\.json/)
+  })
+
+  it(`uses a custom function wasm path if configured`, async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my-function"
+      type = "payment_methods"
+      buildWasmPath = "target/wasm32-wasi/release/my-function.wasm"
+      version = "2"
+      `
+    await writeBlockConfig({
+      blockType: 'function',
+      blockConfiguration,
+      name: 'my-function',
+    })
+    await file.write(path.join(blockPath('my-function'), 'metadata.json'), JSON.stringify({schemaVersions: {}}))
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.extensions.function[0].buildWasmPath).toMatch(/.+target\/wasm32-wasi\/release\/my-function\.wasm$/)
+  })
+
+  it(`defaults the function wasm path if not configured`, async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my-function"
+      type = "payment_methods"
+      version = "2"
+      `
+    await writeBlockConfig({
+      blockType: 'function',
+      blockConfiguration,
+      name: 'my-function',
+    })
+    await file.write(path.join(blockPath('my-function'), 'metadata.json'), JSON.stringify({schemaVersions: {}}))
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.extensions.function[0].buildWasmPath).toMatch(/.+dist\/index.wasm$/)
   })
 })
 
