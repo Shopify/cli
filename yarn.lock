@@ -1814,7 +1814,7 @@
   optionalDependencies:
     hpagent "^0.1.2"
 
-"@shopify/plugin-ngrok@^0.2.6":
+"@shopify/plugin-ngrok@^0.2.9":
   version "0.2.9"
   resolved "https://registry.yarnpkg.com/@shopify/plugin-ngrok/-/plugin-ngrok-0.2.9.tgz#dbe01d5cd5b902df2f2bfbd58c33d8bbc780b297"
   integrity sha512-u16d77BE2moGtA9K5iIPDJkQJJ6+5JHOFKYus1r3W1hGtBvVYgKaVdOWkWrt7fifyfKIQ9Q1emmuBn/9QePnMA==
