@@ -200,6 +200,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     expect(got).toEqual({
       app: 'appId',
       extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B'},
+      extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', EXTENSION_B: 'B'},
     })
   })
 })
@@ -255,7 +256,11 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending some 
 
     // Then
     expect(createExtension).toBeCalledTimes(2)
-    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}})
+    expect(got).toEqual({
+      app: 'appId',
+      extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
+    })
   })
 })
 
@@ -280,7 +285,11 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with some pending 
 
     // Then
     expect(createExtension).not.toBeCalled()
-    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_B: 'UUID_B'}})
+    expect(got).toEqual({
+      app: 'appId',
+      extensions: {EXTENSION_B: 'UUID_B'},
+      extensionIds: {EXTENSION_B: 'B'},
+    })
   })
 })
 
@@ -329,7 +338,11 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with nothing pendi
     const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], []))
 
     // Then
-    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}})
+    expect(got).toEqual({
+      app: 'appId',
+      extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
+    })
   })
 })
 
@@ -345,7 +358,7 @@ describe("ensureDeploymentIdsPresence: doesn't override existing functions' ids"
     const got = await ensureDeploymentIdsPresence(options([], [EXTENSION_C], envIdentifiers))
 
     // Then
-    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_C: 'UUID_C'}})
+    expect(got).toEqual({app: 'appId', extensions: {EXTENSION_C: 'UUID_C'}, extensionIds: {}})
   })
 
   it('returns the ids of matched UI extensions and existing functions', async () => {
@@ -380,6 +393,7 @@ describe("ensureDeploymentIdsPresence: doesn't override existing functions' ids"
     expect(got).toEqual({
       app: 'appId',
       extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B', EXTENSION_C: 'UUID_C'},
+      extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', EXTENSION_B: 'B'},
     })
   })
 })

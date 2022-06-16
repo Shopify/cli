@@ -23,7 +23,14 @@ export interface Identifiers {
    * The extensions' unique identifiers.
    */
   extensions: IdentifiersExtensions
+
+  /**
+   * The extensions' numeric identifiers (expressed as a string).
+   */
+  extensionIds: IdentifiersExtensions
 }
+
+export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
@@ -478,7 +485,7 @@ type EnvironmentType = 'production' | 'development'
 
 interface UpdateAppIdentifiersOptions {
   app: App
-  identifiers: Identifiers
+  identifiers: UuidOnlyIdentifiers
   environmentType: EnvironmentType
 }
 
@@ -537,7 +544,7 @@ interface GetAppIdentifiersOptions {
  * @param options {GetAppIdentifiersOptions} Options.
  * @returns
  */
-export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<Identifiers> {
+export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
     ...app.environment.env,
     ...app.environment.dotenv.production?.variables,
