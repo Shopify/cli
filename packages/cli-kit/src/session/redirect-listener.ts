@@ -5,10 +5,6 @@ import * as output from '../output'
 import http from 'http'
 import url from 'url'
 
-export const AuthenticationError = (message: string) => {
-  return new Abort(message)
-}
-
 const ResponseTimeoutSeconds = 10
 
 /**
@@ -46,26 +42,23 @@ export class RedirectListener {
 
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await postAuth.getFavicon()
-        response.writeHead(200, {'Content-Type': 'image/svg+xml'})
-        response.end(faviconFile)
+        response.writeHead(200, {'Content-Type': 'image/svg+xml'}).end(faviconFile)
         return {}
       } else if (requestUrl === '/style.css') {
         const stylesheetFile = await postAuth.getStylesheet()
-        response.writeHead(200, {'Content-Type': 'text/css'})
-        response.end(stylesheetFile)
+        response.writeHead(200, {'Content-Type': 'text/css'}).end(stylesheetFile)
         return {}
       }
 
       const respond = async (file: Buffer, error?: Error, state?: string, code?: string, loginUrl?: string) => {
         output.info(`Responding to ${requestUrl}`)
-        response.writeHead(200, {'Content-Type': 'text/html'})
-        response.end(file)
+        response.writeHead(200, {'Content-Type': 'text/html'}).end(file)
         return callback(error, state, code, loginUrl)
       }
 
       if (!requestUrl) {
         const file = await postAuth.getEmptyUrlHTML()
-        const err = new Bug('EmptyUrlError')
+        const err = new Bug(postAuth.EmptyUrlString)
         return respond(file, err, undefined, undefined, undefined)
       }
 
@@ -74,19 +67,19 @@ export class RedirectListener {
 
       if (queryObject.error && queryObject.error_description) {
         const file = await postAuth.getAuthErrorHTML()
-        const err = AuthenticationError(`${queryObject.error_description}`)
+        const err = new Abort(`${queryObject.error_description}`)
         return respond(file, err, undefined, undefined, loginUrl)
       }
 
       if (!queryObject.code) {
         const file = await postAuth.getMissingCodeHTML()
-        const err = new Bug('MissingCodeError')
+        const err = new Bug(postAuth.MissingCodeString)
         return respond(file, err, undefined, undefined, loginUrl)
       }
 
       if (!queryObject.state) {
         const file = await postAuth.getMissingStateHTML()
-        const err = new Bug('MissingStateError')
+        const err = new Bug(postAuth.MissingStateString)
         return respond(file, err, undefined, undefined, loginUrl)
       }
 

@@ -1,9 +1,9 @@
 import {findUp, moduleDirectory} from '../path'
 import fs from 'fs'
 
-const HTML_FILE_NAMES = ['empty-url', 'auth-error', 'missing-code', 'missing-state', 'success']
-const STYLESHEET_FILE_NAME = 'style.css'
-const FAVICON_FILE_NAME = 'favicon.svg'
+const HTMLFileNames = ['empty-url', 'auth-error', 'missing-code', 'missing-state', 'success']
+const StylesheetFilename = 'style.css'
+const FaviconFileName = 'favicon.svg'
 const filePathMap: {[key: string]: string} = {}
 
 /**
@@ -32,15 +32,15 @@ export const areFilesLoaded = (): boolean => Object.keys(filePathMap).length > 0
  * Dyamically finds and stores all the file paths into the filePathMap.
  */
 export const loadFiles = async () => {
-  HTML_FILE_NAMES.forEach(async (fileName: string) => {
+  HTMLFileNames.forEach(async (fileName: string) => {
     const filePath = await getFilePath(`${fileName}.html`)
     if (filePath) filePathMap[fileName] = filePath as string
   })
 
-  const stylesheetPath = await getFilePath(STYLESHEET_FILE_NAME)
+  const stylesheetPath = await getFilePath(StylesheetFilename)
   if (stylesheetPath) filePathMap.style = stylesheetPath as string
 
-  const faviconPath = await getFilePath(FAVICON_FILE_NAME)
+  const faviconPath = await getFilePath(FaviconFileName)
   if (faviconPath) filePathMap.favicon = faviconPath as string
 }
 
@@ -78,3 +78,11 @@ export const getFavicon = async (): Promise<Buffer> => {
   const filePath = filePathMap.favicon
   return fs.readFileSync(filePath)
 }
+
+export const EmptyUrlString = 'We received the authentication redirect but the URL is empty.'
+
+export const AuthErrorString = 'There was an issue while trying to authenticate.'
+
+export const MissingCodeString = "The authentication can't continue because the redirect doesn't include the code."
+
+export const MissingStateString = "The authentication can't continue because the redirect doesn't include the state."
