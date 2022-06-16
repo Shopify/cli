@@ -67,14 +67,12 @@ export function isFunctionExtensionType(extensionType: string) {
   return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
+export const publicUIExtensions = {
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
+} as const
+
 export const uiExtensions = {
-  types: [
-    'product_subscription',
-    'checkout_ui_extension',
-    'checkout_post_purchase',
-    'web_pixel_extension',
-    'pos_ui_extension',
-  ],
+  types: [...publicUIExtensions.types, 'pos_ui_extension'],
 } as const
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
@@ -102,7 +100,7 @@ export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
-  publicTypes: [...themeExtensions.types, ...uiExtensions.types, ...publicFunctionExtensions.types],
+  publicTypes: [...themeExtensions.types, ...publicUIExtensions.types, ...publicFunctionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
