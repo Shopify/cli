@@ -13,10 +13,12 @@ export const GitNotPresentError = () => {
 }
 
 export async function initializeRepository(directory: string) {
+  await ensurePresentOrAbort()
   await git(directory).init()
 }
 
 export async function downloadRepository({repoUrl, destination}: {repoUrl: string; destination: string}) {
+  await ensurePresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const options: TaskOptions = {'--recurse-submodules': null}

@@ -41,8 +41,6 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
-  await git.ensurePresentOrAbort()
-
   const user = (await os.username()) ?? ''
   const cliPackageVersion = options.shopifyCliVersion ?? cliVersion
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
