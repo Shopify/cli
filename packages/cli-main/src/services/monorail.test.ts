@@ -2,6 +2,7 @@
 import {reportEvent} from './monorail'
 import {it, expect, vi, beforeEach, afterAll} from 'vitest'
 import {environment, http, os, ruby, store} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-testing'
 
 const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
 const expectedURL = 'https://monorail-edge.shopifysvc.com/v1/produce'
@@ -20,6 +21,8 @@ beforeEach(() => {
       environment: {
         local: {
           isShopify: vi.fn(),
+          isDebug: vi.fn(),
+          analyticsDisabled: vi.fn(),
         },
       },
       ruby: {
@@ -42,6 +45,8 @@ beforeEach(() => {
     }
   })
   vi.mocked(environment.local.isShopify).mockResolvedValue(false)
+  vi.mocked(environment.local.isDebug).mockReturnValue(false)
+  vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
   vi.mocked(ruby.version).mockResolvedValue('3.1.1')
   vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
   vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
@@ -120,4 +125,60 @@ it('makes an API call to Monorail with the expected payload with cached app info
     body: JSON.stringify(expectedBody),
     headers: expectedHeaders,
   })
+})
+
+it('does nothing in Debug mode', async () => {
+  // Given
+  vi.mocked(environment.local.isDebug).mockReturnValue(true)
+  const command = 'app dev'
+  const args: string[] = []
+
+  // When
+  await reportEvent(command, args)
+
+  // Then
+  expect(http.fetch).not.toHaveBeenCalled()
+})
+
+it('does nothing when analytics are disabled', async () => {
+  // Given
+  vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
+  const command = 'app dev'
+  const args: string[] = []
+
+  // When
+  await reportEvent(command, args)
+
+  // Then
+  expect(http.fetch).not.toHaveBeenCalled()
+})
+
+it('shows an error if the Monorail request fails', async () => {
+  // Given
+  const command = 'app dev'
+  const args: string[] = []
+  vi.mocked(http.fetch).mockResolvedValueOnce({status: 500, statusText: 'Monorail is down'} as any)
+  const outputMock = outputMocker.mockAndCapture()
+
+  // When
+  await reportEvent(command, args)
+
+  // Then
+  expect(outputMock.debug()).toMatch('Failed to report usage analytics: Monorail is down')
+})
+
+it('shows an error if something else fails', async () => {
+  // Given
+  const command = 'app dev'
+  const args: string[] = []
+  vi.mocked(os.platformAndArch).mockImplementationOnce(() => {
+    throw new Error('Boom!')
+  })
+  const outputMock = outputMocker.mockAndCapture()
+
+  // When
+  await reportEvent(command, args)
+
+  // Then
+  expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
 })

@@ -1,8 +1,8 @@
-import {DevOptions} from '../dev'
 import {api, error, output, plugins, session} from '@shopify/cli-kit'
+import {Plugin} from '@oclif/core/lib/interfaces'
 
-export async function generateURL(options: DevOptions, frontendPort: number): Promise<string> {
-  const tunnelPlugin = await plugins.lookupTunnelPlugin(options.plugins)
+export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
+  const tunnelPlugin = await plugins.lookupTunnelPlugin(pluginList)
   if (!tunnelPlugin) throw new error.Bug('The tunnel could not be found')
   const url = await tunnelPlugin?.start({port: frontendPort})
   output.success('The tunnel is running and you can now view your app')

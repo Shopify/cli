@@ -5,16 +5,28 @@ import {environment, http, os, output, path, ruby, store} from '@shopify/cli-kit
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
 export const reportEvent = async (command: string, args: string[]) => {
-  const currentTime = new Date().getTime()
-  const payload = await buildPayload(command, args, currentTime)
-  const body = JSON.stringify(payload)
-  const headers = buildHeaders(currentTime)
+  if (environment.local.isDebug() || environment.local.analyticsDisabled()) {
+    return
+  }
+  try {
+    const currentTime = new Date().getTime()
+    const payload = await buildPayload(command, args, currentTime)
+    const body = JSON.stringify(payload)
+    const headers = buildHeaders(currentTime)
 
-  const response = await http.fetch(url, {method: 'POST', body, headers})
-  if (response.status === 200) {
-    output.debug(`Analytics event sent: ${body}`)
-  } else {
-    output.debug(`Failed to report usage analytics: ${response.statusText}`)
+    const response = await http.fetch(url, {method: 'POST', body, headers})
+    if (response.status === 200) {
+      output.debug(`Analytics event sent: ${body}`)
+    } else {
+      output.debug(`Failed to report usage analytics: ${response.statusText}`)
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    let message = 'Failed to report usage analytics'
+    if (error instanceof Error) {
+      message = message.concat(`: ${error.message}`)
+    }
+    output.debug(message)
   }
 }
 

@@ -10,7 +10,7 @@ import {
 import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
 import {error, output, port, system} from '@shopify/cli-kit'
-import {Plugin} from '@oclif/core/lib/interfaces'
+import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -19,7 +19,7 @@ export interface DevOptions {
   storeFqdn?: string
   reset: boolean
   update: boolean
-  plugins: Plugin[]
+  commandConfig: Config
   skipDependenciesInstallation: boolean
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
@@ -53,7 +53,7 @@ async function dev(options: DevOptions) {
 
   const proxyPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
-  const url: string = await generateURL(options, proxyPort)
+  const url: string = await generateURL(options.commandConfig.plugins, proxyPort)
 
   const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
@@ -103,6 +103,7 @@ async function dev(options: DevOptions) {
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
+  await options.commandConfig.runHook('monorail', {id: 'app dev'})
 
   await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
 }

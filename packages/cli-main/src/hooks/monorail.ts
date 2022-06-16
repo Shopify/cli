@@ -1,20 +1,9 @@
 import {reportEvent} from '../services/monorail'
-import {Hook} from '@oclif/core'
-import {environment, output} from '@shopify/cli-kit'
 
-export const hook: Hook.Postrun = async (options) => {
-  try {
-    if (environment.local.isDebug() || environment.local.analyticsDisabled()) {
-      return
-    }
-    const command = options.Command.id.replace(/:/g, ' ')
-    await reportEvent(command, options.argv)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    const message = 'Failed to report usage analytics'
-    if (error instanceof Error) {
-      message.concat(`: ${error.message}`)
-    }
-    output.debug(message)
-  }
+// This hook is called manually from the code. More info: https://oclif.io/docs/hooks#custom-events
+export const monorail = async (options: {id: string}) => {
+  const command = options.id.split(' ').pop() || ''
+  const commandIndex = process.argv.indexOf(command)
+  const args = process.argv.slice(commandIndex + 1)
+  await reportEvent(options.id, args)
 }

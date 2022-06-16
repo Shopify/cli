@@ -2,6 +2,7 @@ import {updateURLs, generateURL} from './urls'
 import {App, WebType} from '../../models/app/app'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
+import {Plugin} from '@oclif/core/lib/interfaces'
 
 const LOCAL_APP: App = {
   name: 'my-app',
@@ -53,17 +54,10 @@ beforeEach(() => {
 describe('generateURL', () => {
   it('returns a tunnel URL by default', async () => {
     // Given
-    const options = {
-      app: LOCAL_APP,
-      reset: false,
-      tunnel: true,
-      update: false,
-      plugins: [],
-      skipDependenciesInstallation: true,
-    }
-
+    const pluginList: Plugin[] = []
     // When
-    const got = await generateURL(options, 3456)
+
+    const got = await generateURL(pluginList, 3456)
 
     // Then
     expect(got).toEqual('https://fake-url.ngrok.io')
