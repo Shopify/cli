@@ -10,12 +10,7 @@ const ResponseTimeoutSeconds = 10
 /**
  * It represents the result of a redirect.
  */
-type RedirectCallback = (
-  error: Error | undefined,
-  state: string | undefined,
-  code: string | undefined,
-  loginUrl: string | undefined,
-) => void
+type RedirectCallback = (error: Error | undefined, state: string | undefined, code: string | undefined) => void
 
 /**
  * Defines the interface of the options that
@@ -24,7 +19,6 @@ type RedirectCallback = (
 interface RedirectListenerOptions {
   host: string
   port: number
-  loginUrl: string
   callback: RedirectCallback
 }
 /**
@@ -39,7 +33,6 @@ export class RedirectListener {
     return http.createServer(async (request, response) => {
       if (!postAuth.areFilesLoaded()) await postAuth.loadFiles()
       const requestUrl = request.url
-
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await postAuth.getFavicon()
         response.writeHead(200, {'Content-Type': 'image/svg+xml'}).end(faviconFile)
@@ -50,53 +43,49 @@ export class RedirectListener {
         return {}
       }
 
-      const respond = async (file: Buffer, error?: Error, state?: string, code?: string, loginUrl?: string) => {
+      const respond = async (file: Buffer, error?: Error, state?: string, code?: string) => {
         output.info(`Responding to ${requestUrl}`)
         response.writeHead(200, {'Content-Type': 'text/html'}).end(file)
-        return callback(error, state, code, loginUrl)
+        return callback(error, state, code)
       }
 
       if (!requestUrl) {
         const file = await postAuth.getEmptyUrlHTML()
         const err = new Bug(postAuth.EmptyUrlString)
-        return respond(file, err, undefined, undefined, undefined)
+        return respond(file, err, undefined, undefined)
       }
 
       const queryObject = url.parse(requestUrl, true).query
-      const loginUrl = `${queryObject.loginUrl}`
-
       if (queryObject.error && queryObject.error_description) {
         const file = await postAuth.getAuthErrorHTML()
         const err = new Abort(`${queryObject.error_description}`)
-        return respond(file, err, undefined, undefined, loginUrl)
+        return respond(file, err, undefined, undefined)
       }
 
       if (!queryObject.code) {
         const file = await postAuth.getMissingCodeHTML()
         const err = new Bug(postAuth.MissingCodeString)
-        return respond(file, err, undefined, undefined, loginUrl)
+        return respond(file, err, undefined, undefined)
       }
 
       if (!queryObject.state) {
         const file = await postAuth.getMissingStateHTML()
         const err = new Bug(postAuth.MissingStateString)
-        return respond(file, err, undefined, undefined, loginUrl)
+        return respond(file, err, undefined, undefined)
       }
 
       const file = await postAuth.getSuccessHTML()
-      return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`, loginUrl)
+      return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
   }
 
   port: number
   host: string
-  loginUrl: string
   server: http.Server
 
   constructor(options: RedirectListenerOptions) {
     this.port = options.port
     this.host = options.host
-    this.loginUrl = options.loginUrl
     this.server = RedirectListener.createServer(options.callback)
   }
 
@@ -122,20 +111,15 @@ export class RedirectListener {
   }
 }
 
-export async function listenRedirect(
-  host: string,
-  port: number,
-  loginUrl: string,
-): Promise<{code: string; state: string; loginUrl: string}> {
-  const result = await new Promise<{code: string; state: string; loginUrl: string}>((resolve, reject) => {
+export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
+  const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
       const message = '\nAuto-open timed out. Open the login page: '
-      output.info(output.content`${message}${output.token.link('Log in to Shopify Partners', loginUrl)}\n`)
+      output.info(output.content`${message}${output.token.link('Log in to Shopify Partners', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,
       port,
-      loginUrl,
       callback: (error, code, state) => {
         clearTimeout(timeout)
         redirectListener.stop()
@@ -145,7 +129,6 @@ export async function listenRedirect(
           resolve({
             code: code as string,
             state: state as string,
-            loginUrl: loginUrl as string,
           })
         }
       },
