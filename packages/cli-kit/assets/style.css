@@ -25,18 +25,6 @@ p {
     font-weight: 400;
 }
 
-a:link, a:visited {
-    color: #458FFF;
-    text-decoration-color: #458FFF;
-    transition: all 0.5s ease;
-}
-
-a:hover, a:active {
-    color: #3b7ad9;
-    text-decoration-color: transparent;
-    transition: all 0.5s ease;
-}
-
 .body-success {
     color: #F6F6F7;
 }
