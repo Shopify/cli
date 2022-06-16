@@ -8,9 +8,8 @@ import {
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
-  isValidUIExtensionTemplate,
-  getUIExtensionTemplates,
 } from '../../constants'
+import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration'
 import {haiku, ui, environment} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {

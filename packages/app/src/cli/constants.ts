@@ -86,25 +86,6 @@ export const uiExtensionTemplates = [
   {name: 'vanilla JavaScript', value: 'vanilla-js'},
 ]
 
-export function getUIExtensionTemplates(extensionType: string): {name: string; value: string}[] {
-  const filteredFlavors: string[] = []
-  if (extensionType === 'web_pixel_extension') {
-    filteredFlavors.push('react')
-  }
-  return uiExtensionTemplates.filter((template) => !filteredFlavors.includes(template.value))
-}
-
-export function isValidUIExtensionTemplate(extensionType: string, uiExtensionTemplateValue?: string): boolean {
-  return (
-    isUiExtensionType(extensionType) &&
-    Boolean(
-      getUIExtensionTemplates(extensionType).find(
-        (extensionTemplate) => extensionTemplate.value === uiExtensionTemplateValue,
-      ),
-    )
-  )
-}
-
 export function isUiExtensionType(extensionType: string) {
   return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }

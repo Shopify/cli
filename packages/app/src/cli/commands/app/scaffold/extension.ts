@@ -8,11 +8,11 @@ import {
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
-  getUIExtensionTemplates,
 } from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
+import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
