@@ -34,6 +34,7 @@ describe('buildFunctionExtension', () => {
         type: 'product_discounts',
         description: '',
         commands: {},
+        buildWasmPath: 'dist/index.wasm',
         configurationUi: true,
         version: '2',
       },

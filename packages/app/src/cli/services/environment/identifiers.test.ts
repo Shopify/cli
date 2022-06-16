@@ -89,6 +89,7 @@ const EXTENSION_C: FunctionExtension = {
     type: 'product_discounts',
     description: 'Function',
     version: '1',
+    buildWasmPath: 'dist/index.wasm',
     metaObject: {},
     configurationUi: false,
   },
