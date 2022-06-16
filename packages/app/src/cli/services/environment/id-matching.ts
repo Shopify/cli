@@ -5,7 +5,6 @@ export type MatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
-      idIdentifiers: IdentifiersExtensions
       pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
       toCreate: Extension[]
       toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
@@ -24,11 +23,6 @@ export async function automaticMatchmaking(
   }
 
   const validIdentifiers = identifiers
-  const idIdentifiers: {[localIdentifier: string]: string} = {}
-  for (const [identifier, uuid] of Object.entries(validIdentifiers)) {
-    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
-    if (registration) idIdentifiers[identifier] = registration.id
-  }
 
   // Get the local UUID of an extension, if exists
   const localId = (extension: Extension) => validIdentifiers[extension.localIdentifier]
@@ -95,7 +89,6 @@ export async function automaticMatchmaking(
     } else if (possibleMatches[0].title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
       // There is a unique remote extension with the same type AND name. We can automatically match them.
       validIdentifiers[extension.localIdentifier] = possibleMatches[0].uuid
-      idIdentifiers[extension.localIdentifier] = possibleMatches[0].id
     } else {
       // There is a unique remote extension with the same type, but different name. We can match them but need to confirm
       pendingConfirmation.push({extension, registration: possibleMatches[0]})
@@ -106,7 +99,6 @@ export async function automaticMatchmaking(
   return {
     result: 'ok',
     identifiers: validIdentifiers,
-    idIdentifiers,
     pendingConfirmation,
     toCreate: extensionsToCreate,
     toManualMatch: {local: localNeedsManualMatch, remote: remoteNeedsManualMatch},

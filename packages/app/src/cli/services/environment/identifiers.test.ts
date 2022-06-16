@@ -175,7 +175,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
-      idIdentifiers: {},
       toCreate: [],
       pendingConfirmation: [],
       toManualMatch: {
@@ -189,7 +188,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     vi.mocked(manualMatchIds).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-      idIdentifiers: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
       toCreate: [EXTENSION_B],
     })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
@@ -213,7 +211,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manua
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
-      idIdentifiers: {},
       toCreate: [],
       pendingConfirmation: [],
       toManualMatch: {
@@ -241,7 +238,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending some 
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
-      idIdentifiers: {},
       pendingConfirmation: [],
       toCreate: [EXTENSION_A, EXTENSION_A_2],
       toManualMatch: {
@@ -275,7 +271,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with some pending 
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
-      idIdentifiers: {},
       pendingConfirmation: [{extension: EXTENSION_B, registration: REGISTRATION_B}],
       toCreate: [],
       toManualMatch: {
@@ -305,7 +300,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with some pending 
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
-      idIdentifiers: {},
       pendingConfirmation: [{extension: EXTENSION_B, registration: REGISTRATION_B}],
       toCreate: [],
       toManualMatch: {
@@ -329,7 +323,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns ok with nothing pendi
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-      idIdentifiers: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
       toCreate: [],
       pendingConfirmation: [],
       toManualMatch: {
@@ -375,7 +368,6 @@ describe("ensureDeploymentIdsPresence: doesn't override existing functions' ids"
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {},
-      idIdentifiers: {},
       toCreate: [],
       pendingConfirmation: [],
       toManualMatch: {
@@ -389,7 +381,6 @@ describe("ensureDeploymentIdsPresence: doesn't override existing functions' ids"
     vi.mocked(manualMatchIds).mockResolvedValueOnce({
       result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-      idIdentifiers: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
       toCreate: [EXTENSION_B],
     })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)

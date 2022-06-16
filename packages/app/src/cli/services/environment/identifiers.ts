@@ -73,10 +73,6 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   }
   let validMatches = match.identifiers ?? {}
   let validMatchesById: {[key: string]: string} = {}
-  for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
-    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
-    if (registration) validMatchesById[localIdentifier] = registration.id
-  }
 
   if (match.pendingConfirmation.length > 0) {
     for (const pending of match.pendingConfirmation) {
@@ -84,7 +80,6 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
       const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
       if (!confirmed) throw new error.AbortSilent()
       validMatches[pending.extension.localIdentifier] = pending.registration.uuid
-      validMatchesById[pending.extension.localIdentifier] = pending.registration.id
     }
   }
 
@@ -94,7 +89,6 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
     if (matchResult.result === 'pending-remote') throw GenericError()
     validMatches = {...validMatches, ...matchResult.identifiers}
-    validMatchesById = {...validMatchesById, ...matchResult.idIdentifiers}
     extensionsToCreate.push(...matchResult.toCreate)
   }
 
@@ -104,6 +98,11 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id
     }
+  }
+
+  for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
+    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
+    if (registration) validMatchesById[localIdentifier] = registration.id
   }
 
   return {
