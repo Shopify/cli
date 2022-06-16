@@ -23,6 +23,7 @@ async function init(options: InitOptions) {
       ? path.join(templateDownloadDir, githubRepo.filePath)
       : templateDownloadDir
     const templateScaffoldDir = path.join(tmpDir, 'app')
+    const repoUrl = githubRepo.branch ? `${githubRepo.repoBaseUrl}#${githubRepo.branch}` : githubRepo.repoBaseUrl
 
     await file.mkdir(templateDownloadDir)
     let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
@@ -33,7 +34,7 @@ async function init(options: InitOptions) {
         task: async (_, task) => {
           task.title = 'Downloading template'
           await git.downloadRepository({
-            repoUrl: `${githubRepo.repoBaseUrl}#${githubRepo.branch}`,
+            repoUrl,
             destination: templateDownloadDir,
           })
           task.title = 'Template downloaded'
