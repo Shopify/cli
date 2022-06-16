@@ -19,7 +19,6 @@ import {
   template,
   git,
 } from '@shopify/cli-kit'
-/* eslint-enable @nrwl/nx/enforce-module-boundaries */
 
 import {Writable} from 'stream'
 
