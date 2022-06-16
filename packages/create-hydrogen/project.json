@@ -3,5 +3,5 @@
     "root": "packages/create-hydrogen",
     "sourceRoot": "packages/create-hydrogen/src",
     "projectType": "library",
-    "tags": ["scope:create-hydrogen"]
+    "tags": ["scope:create-cli"]
 }
