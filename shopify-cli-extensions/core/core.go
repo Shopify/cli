@@ -236,16 +236,6 @@ func (t Extension) Transformer(typ reflect.Type) func(dst, src reflect.Value) er
 		}
 	}
 
-	// if typ.Name() == "Url" {
-	// 	return func(dst, src reflect.Value) error {
-	// 		fmt.Printf("type %v interface %v", src.Type(), src.Interface())
-	// 		if src.String() == "" {
-	// 			dst.SetString(src.String())
-	// 		}
-	// 		return nil
-	// 	}
-	// }
-
 	if typ.Kind() == reflect.Struct && typ.Name() == "Localization" {
 		return func(dst, src reflect.Value) error {
 			for i := 0; i < src.NumField(); i++ {

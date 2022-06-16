@@ -1,9 +1,9 @@
 port: 8000
-public_url: http://26e8-142-115-44-232.ngrok.io
-store: shop1.shopify.app-bridge-ep5t.trish-ta.us.spin.dev
+public_url: https://example.ngrok.io
+store: test-shop.myshopify.com
 
 app:
-  api_key: app_bridge_key
+  api_key: app_api_key
 extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
     type: checkout_ui_extension
@@ -53,20 +53,20 @@ extensions:
         version: '^1.0.1'
       entries:
         main: 'src/index.tsx'
-  # - uuid: 00000000-0000-0000-0000-000000000003
-  #   type: product_subscription_next
-  #   title: Product Subscription Test Extension Next
-  #   node_executable: packages/shopify-cli-extensions/cli.js
-  #   surface: admin
-  #   development:
-  #     root_dir: 'tmp/product_subscription_next'
-  #     build_dir: 'build'
-  #     template: 'javascript-react'
-  #     renderer:
-  #       name: '@shopify/app'
-  #       version: '^1.0.0'
-  #     entries:
-  #       main: 'src/index.js'
+  - uuid: 00000000-0000-0000-0000-000000000003
+    type: product_subscription_next
+    title: Product Subscription Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    surface: admin
+    development:
+      root_dir: 'tmp/product_subscription_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
   - uuid: 00000000-0000-0000-0000-000000000004
     type: checkout_post_purchase
     title: Post Purchase Test Extension
