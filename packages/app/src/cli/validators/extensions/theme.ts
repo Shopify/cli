@@ -42,7 +42,7 @@ export async function validateThemeExtensions(extensions: ThemeExtension[]) {
   await Promise.all(extensions.map((extension) => validateThemeExtension(extension)))
 }
 
-async function validateThemeExtension(extension: ThemeExtension): void {
+async function validateThemeExtension(extension: ThemeExtension): Promise<void> {
   const themeFiles = await path.glob(path.join(extension.directory, '*/*'))
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []

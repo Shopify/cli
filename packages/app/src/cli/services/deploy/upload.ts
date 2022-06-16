@@ -1,8 +1,41 @@
+import {ThemeExtensionConfig} from './theme-extension-config'
 import {FunctionExtension, Identifiers, IdentifiersExtensions} from '../../models/app/app'
 import {getFunctionExtensionPointName} from '../../constants'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
+
+interface DeployThemeExtensionOptions {
+  apiKey: string
+  themeExtensionConfig: ThemeExtensionConfig
+  themeId: string
+  token: string
+}
+
+/**
+ * Uploads a theme extension
+ * @param options {DeployThemeExtensionOptions} The upload options
+ */
+
+export async function uploadThemeExtension({
+  apiKey,
+  themeExtensionConfig,
+  themeId,
+  token,
+}: DeployThemeExtensionOptions) {
+  const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
+    apiKey,
+    config: JSON.stringify(themeExtensionConfig),
+    context: undefined,
+    registrationId: themeId,
+  }
+  const mutation = api.graphql.ExtensionUpdateDraftMutation
+  const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
+  if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+    const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+    throw new error.Abort(errors)
+  }
+}
 
 interface UploadUIExtensionsBundleOptions {
   /** The application API key */
