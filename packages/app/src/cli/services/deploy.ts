@@ -1,10 +1,7 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
 import {deployThemeExtension} from './deploy/theme-extension'
-import {
-  ThemeExtensionConfig,
-  themeExtensionConfig as generateThemeExtensionConfig,
-} from './deploy/theme-extension-config'
+import {themeExtensionConfig as generateThemeExtensionConfig} from './deploy/theme-extension-config'
 import {uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
@@ -65,10 +62,6 @@ export const deploy = async (options: DeployOptions) => {
     }),
   )
 
-  const themeExtension = options.app.extensions.theme[0]
-  let themeExtensionConfig: ThemeExtensionConfig
-  if (themeExtension) themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
-
   await temporary.directory(async (tmpDir) => {
     try {
       const bundlePath = path.join(tmpDir, `bundle.zip`)
@@ -92,10 +85,13 @@ export const deploy = async (options: DeployOptions) => {
          */
         await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
-      if (themeExtension) {
-        const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
-        await deployThemeExtension({apiKey, themeExtensionConfig, themeId, token})
-      }
+      await Promise.all(
+        options.app.extensions.theme.map(async (themeExtension) => {
+          const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+          const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+          await deployThemeExtension({apiKey, themeExtensionConfig, themeId, token})
+        }),
+      )
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
