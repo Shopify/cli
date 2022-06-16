@@ -25,6 +25,7 @@ describe('downloadRepository()', () => {
     const destination = 'destination'
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null}
+    vi.mocked(hasGit).mockResolvedValue(true)
 
     // When
     await downloadRepository({repoUrl, destination})
@@ -39,6 +40,7 @@ describe('downloadRepository()', () => {
     const destination = 'destination'
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null, '--branch': 'my-branch'}
+    vi.mocked(hasGit).mockResolvedValue(true)
 
     // When
     await downloadRepository({repoUrl, destination})
@@ -51,6 +53,8 @@ describe('downloadRepository()', () => {
 describe('initializeRepository()', () => {
   it('calls simple-git to init a repo in the given directory', async () => {
     const simpleGit = await import('simple-git')
+    vi.mocked(hasGit).mockResolvedValue(true)
+
     vi.spyOn(simpleGit, 'default')
 
     // Given
