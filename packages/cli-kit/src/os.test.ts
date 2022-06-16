@@ -29,4 +29,16 @@ describe('platformAndArch', () => {
     expect(got.platform).toEqual('darwin')
     expect(got.arch).toEqual('arm64')
   })
+
+  it('returns the right platform', () => {
+    // Given
+    vi.mocked(osArch).mockReturnValue('arm64')
+
+    // When
+    const got = platformAndArch('win32')
+
+    // Got
+    expect(got.platform).toEqual('windows')
+    expect(got.arch).toEqual('arm64')
+  })
 })

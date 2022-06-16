@@ -232,15 +232,4 @@ describe('getArtifactName', () => {
     // Then
     expect(got).toMatchInlineSnapshot('"shopify-extensions-windows-amd64.exe"')
   })
-
-  test("returns the right name when it's win32", () => {
-    // When
-    const got = getArtifactName({
-      arch: 'amd64',
-      platform: 'win32',
-    })
-
-    // Then
-    expect(got).toMatchInlineSnapshot('"shopify-extensions-windows-amd64.exe"')
-  })
 })
