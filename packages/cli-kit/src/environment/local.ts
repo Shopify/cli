@@ -2,6 +2,7 @@ import {isTruthy} from './utilities'
 import {isSpin} from './spin'
 import constants from '../constants'
 import {exists as fileExists} from '../file'
+import {exec} from '../system'
 import isInteractive from 'is-interactive'
 import {homedir} from 'node:os'
 
@@ -71,4 +72,18 @@ export function isUnitTest(env = process.env): boolean {
  */
 export function analyticsDisabled(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.noAnalytics])
+}
+
+/**
+ * Returns whether the environment has Git available.
+ * @returns {Promise<boolean>} A promise that resolves with the value.
+ */
+export async function hasGit(): Promise<boolean> {
+  try {
+    await exec('git', ['--version'])
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
