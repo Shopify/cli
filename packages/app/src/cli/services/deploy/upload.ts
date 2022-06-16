@@ -1,40 +1,49 @@
-import {ThemeExtensionConfig} from './theme-extension-config'
-import {FunctionExtension, Identifiers, IdentifiersExtensions} from '../../models/app/app'
+import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config'
+import {FunctionExtension, Identifiers, IdentifiersExtensions, ThemeExtension} from '../../models/app/app'
 import {getFunctionExtensionPointName} from '../../constants'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
 
 interface DeployThemeExtensionOptions {
+  /** The application API key */
   apiKey: string
-  themeExtensionConfig: ThemeExtensionConfig
-  themeId: string
+
+  /** Set of local identifiers */
+  identifiers: Identifiers
+
+  /** The token to send authenticated requests to the partners' API  */
   token: string
 }
 
 /**
- * Uploads a theme extension
+ * Uploads theme extension(s)
  * @param options {DeployThemeExtensionOptions} The upload options
  */
 
-export async function uploadThemeExtension({
-  apiKey,
-  themeExtensionConfig,
-  themeId,
-  token,
-}: DeployThemeExtensionOptions) {
-  const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
-    apiKey,
-    config: JSON.stringify(themeExtensionConfig),
-    context: undefined,
-    registrationId: themeId,
-  }
-  const mutation = api.graphql.ExtensionUpdateDraftMutation
-  const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
-  if (result.extensionUpdateDraft?.userErrors?.length > 0) {
-    const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
-  }
+export async function uploadThemeExtensions(
+  themeExtensions: ThemeExtension[],
+  options: DeployThemeExtensionOptions,
+): Promise<void> {
+  const {apiKey, identifiers, token} = options
+  await Promise.all(
+    themeExtensions.map(async (themeExtension) => {
+      const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+      const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
+        apiKey,
+        config: JSON.stringify(themeExtensionConfig),
+        context: undefined,
+        registrationId: themeId,
+      }
+      const mutation = api.graphql.ExtensionUpdateDraftMutation
+      const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
+      if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+        const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+        throw new error.Abort(errors)
+      }
+    }),
+  )
 }
 
 interface UploadUIExtensionsBundleOptions {

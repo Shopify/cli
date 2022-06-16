@@ -1,7 +1,6 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {themeExtensionConfig as generateThemeExtensionConfig} from './deploy/theme-extension-config'
-import {uploadThemeExtension, uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
+import {uploadThemeExtensions, uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
 import {fetchAppExtensionRegistrations} from './dev/fetch'
@@ -84,13 +83,7 @@ export const deploy = async (options: DeployOptions) => {
          */
         await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
-      await Promise.all(
-        options.app.extensions.theme.map(async (themeExtension) => {
-          const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
-          const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
-          await uploadThemeExtension({apiKey, themeExtensionConfig, themeId, token})
-        }),
-      )
+      await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
