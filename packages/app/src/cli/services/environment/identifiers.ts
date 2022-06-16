@@ -72,7 +72,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     throw GenericError()
   }
   let validMatches = match.identifiers ?? {}
-  let validMatchesById: {[key: string]: string} = {}
+  const validMatchesById: {[key: string]: string} = {}
 
   if (match.pendingConfirmation.length > 0) {
     for (const pending of match.pendingConfirmation) {
