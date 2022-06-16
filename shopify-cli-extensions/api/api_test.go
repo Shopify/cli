@@ -284,9 +284,10 @@ func TestAdminTunnelError(t *testing.T) {
 
 func TestPostPurchaseTunnelError(t *testing.T) {
 	api := New(noPublicUrlConfig)
+	uuid := api.Extensions[2].UUID
 	response := getSingleExtensionHTMLResponse(api, t, api.Extensions[2].UUID)
 
-	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL%s</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL", api.ApiRoot)
+	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL%s/%s</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
 
 	t.Logf("response: %s", response)
 
