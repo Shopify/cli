@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 3.0.16
+
+### Patch Changes
+
+- eb915dee: Loose version requirements to help dependency managers dedupe dependencies
+- 85ee088d: Add a utility function to know whether Git is present in the environment
+- 2ecbff43: Fix issues with windows being reported as unsuported platform
+- a750e67c: Improve dependency upgrade messages to leverage new shopify upgrade command
+
 ## 3.0.15
 
 ### Patch Changes

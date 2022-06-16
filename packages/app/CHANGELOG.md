@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.0.16
+
+### Patch Changes
+
+- eb915dee: Loose version requirements to help dependency managers dedupe dependencies
+- d532467d: Use the exact renderer version for extensions instead of a relative one
+- 3f6c188b: Remove the next steps message for functions
+- a750e67c: Update app info format to --json not --format=json
+- a750e67c: Improve extension scaffolding copy
+- 2ecbff43: Fix issues with windows being reported as unsuported platform
+- a750e67c: Improve dependency upgrade messages to leverage new shopify upgrade command
+
 ## 3.0.15
 
 ### Patch Changes

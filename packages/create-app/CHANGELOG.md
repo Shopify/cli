@@ -1,5 +1,18 @@
 # @shopify/create-app
 
+## 3.0.16
+
+### Patch Changes
+
+- a750e67c: Force line wrapping on create-app welcome message (affects wide screens)
+- eb915dee: Loose version requirements to help dependency managers dedupe dependencies
+- dd065f59: Fail the creation if Git is not present
+- Updated dependencies [eb915dee]
+- Updated dependencies [85ee088d]
+- Updated dependencies [2ecbff43]
+- Updated dependencies [a750e67c]
+  - @shopify/cli-kit@3.0.16
+
 ## 3.0.15
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @shopify/cli-hydrogen
 
+## 3.0.16
+
+### Patch Changes
+
+- eb915dee: Loose version requirements to help dependency managers dedupe dependencies
+- Updated dependencies [eb915dee]
+- Updated dependencies [85ee088d]
+- Updated dependencies [2ecbff43]
+- Updated dependencies [a750e67c]
+  - @shopify/cli-kit@3.0.16
+
 ## 3.0.15
 
 ### Patch Changes
