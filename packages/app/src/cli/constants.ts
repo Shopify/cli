@@ -67,15 +67,17 @@ export function isFunctionExtensionType(extensionType: string) {
   return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
-export const uiExtensions = {
-  types: [
-    'product_subscription',
-    'checkout_ui_extension',
-    'checkout_post_purchase',
-    'web_pixel_extension',
-    'pos_ui_extension',
-  ],
+export const publicUIExtensions = {
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
 } as const
+
+export const uiExtensions = {
+  types: [...publicUIExtensions.types, 'pos_ui_extension'],
+} as const
+
+export const activeUIExtensions = {
+  types: [...publicUIExtensions.types, 'pos_ui_extension'].filter,
+}
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
 
@@ -83,6 +85,25 @@ export const uiExtensionTemplates = [
   {name: 'React', value: 'react'},
   {name: 'vanilla JavaScript', value: 'vanilla-js'},
 ]
+
+export function getUIExtensionTemplates(extensionType: string): {name: string; value: string}[] {
+  const filteredFlavors: string[] = []
+  if (extensionType === 'web_pixel_extension') {
+    filteredFlavors.push('react')
+  }
+  return uiExtensionTemplates.filter((template) => !filteredFlavors.includes(template.value))
+}
+
+export function isValidUIExtensionTemplate(extensionType: string, uiExtensionTemplateValue?: string): boolean {
+  return (
+    isUiExtensionType(extensionType) &&
+    Boolean(
+      getUIExtensionTemplates(extensionType).find(
+        (extensionTemplate) => extensionTemplate.value === uiExtensionTemplateValue,
+      ),
+    )
+  )
+}
 
 export function isUiExtensionType(extensionType: string) {
   return (uiExtensions.types as ReadonlyArray<string>).includes(extensionType)
@@ -102,7 +123,7 @@ export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
-  publicTypes: [...themeExtensions.types, ...uiExtensions.types, ...publicFunctionExtensions.types],
+  publicTypes: [...themeExtensions.types, ...publicUIExtensions.types, ...publicFunctionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]

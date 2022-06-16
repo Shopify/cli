@@ -4,6 +4,10 @@ import {
   getExtensionTypeFromHumanKey,
   functionExtensions,
   getFunctionExtensionPointName,
+  uiExtensions,
+  getUIExtensionTemplates,
+  uiExtensionTemplates,
+  isValidUIExtensionTemplate,
 } from './constants'
 import {describe, expect, it, test} from 'vitest'
 
@@ -275,6 +279,53 @@ describe('getFunctionExtensionPointName', () => {
     functionExtensions.types.forEach((functionExtensionType) => {
       const extensionPoint = getFunctionExtensionPointName(functionExtensionType)
       expect(extensionPoints[extensionPoint].includes(functionExtensionType)).toBeTruthy()
+    })
+  })
+
+  describe('get ui extension template types', () => {
+    it.each(uiExtensions.types.filter((extension) => extension !== 'web_pixel_extension'))(
+      'obtain all kind of template types for %s extention',
+      (extension: string) => {
+        // When
+        const result = getUIExtensionTemplates(extension)
+
+        // Then
+        expect(result).toEqual(uiExtensionTemplates)
+      },
+    )
+    it.each(uiExtensions.types.filter((extension) => extension === 'web_pixel_extension'))(
+      'obtain filtered template types for %s extention',
+      (extension: string) => {
+        // When
+        const result = getUIExtensionTemplates(extension)
+
+        // Then
+        expect(result).toEqual([{name: 'vanilla JavaScript', value: 'vanilla-js'}])
+      },
+    )
+  })
+
+  describe('is valid ui extension template', () => {
+    it('is invalid when no ui extension type', () => {
+      // When
+      const result = isValidUIExtensionTemplate('product_discounts', 'react')
+
+      // Then
+      expect(result).toEqual(false)
+    })
+    it('is invalid when template not supported', () => {
+      // When
+      const result = isValidUIExtensionTemplate('web_pixel_extension', 'react')
+
+      // Then
+      expect(result).toEqual(false)
+    })
+    it('is invalid when template is supported', () => {
+      // When
+      const result = isValidUIExtensionTemplate('checkout_ui_extension', 'react')
+
+      // Then
+      expect(result).toEqual(true)
     })
   })
 })
