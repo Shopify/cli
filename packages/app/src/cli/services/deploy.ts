@@ -140,7 +140,6 @@ function outputCompletionMessage({
   }
   app.extensions.ui.forEach(outputNextStep)
   app.extensions.theme.forEach(outputNextStep)
-  app.extensions.function.forEach(outputNextStep)
 }
 
 async function configFor(extension: UIExtension, app: App) {
