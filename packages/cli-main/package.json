@@ -48,11 +48,11 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.16.7",
-    "@oclif/core": "1.9.0",
+    "@oclif/core": "^1.0",
     "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",
-    "@shopify/cli-kit": "3.0.15",
-    "@shopify/plugin-ngrok": "^0.2.6"
+    "@shopify/plugin-ngrok": "^0.2.9",
+    "@shopify/cli-kit": "^3.0.15"
   },
   "devDependencies": {
     "vitest": "0.13.1"
