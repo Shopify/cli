@@ -44,7 +44,7 @@ export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundle
 
   const mutation = api.graphql.CreateDeployment
   const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
-  if (result.deploymentCreate && result.deploymentCreate.userErrors && result.deploymentCreate.userErrors.length > 0) {
+  if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
@@ -66,11 +66,7 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
   }
 
   const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.request(mutation, token, variables)
-  if (
-    result.deploymentGenerateSignedUploadUrl &&
-    result.deploymentGenerateSignedUploadUrl.userErrors &&
-    result.deploymentGenerateSignedUploadUrl.userErrors.length > 0
-  ) {
+  if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
