@@ -57,7 +57,7 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
-  buildWasmPath: schema.define.string().optional(),
+  buildWasmPath: schema.define.string().optional().default('dist/index.wasm'),
   metaObject: schema.define.any(),
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
@@ -425,7 +425,7 @@ class AppLoader {
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
-        buildWasmPath: path.join(directory, configuration.buildWasmPath ?? 'dist/index.wasm'),
+        buildWasmPath: path.join(directory, configuration.buildWasmPath),
       }
     })
     return Promise.all(functions)
