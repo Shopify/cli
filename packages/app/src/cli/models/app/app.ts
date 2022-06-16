@@ -15,7 +15,7 @@ export interface IdentifiersExtensions {
   [localIdentifier: string]: string
 }
 
-export interface UuidOnlyIdentifiers {
+export interface Identifiers {
   /** Application's API Key */
   app: string
 
@@ -23,14 +23,14 @@ export interface UuidOnlyIdentifiers {
    * The extensions' unique identifiers.
    */
   extensions: IdentifiersExtensions
-}
 
-export interface Identifiers extends UuidOnlyIdentifiers {
   /**
    * The extensions' numeric identifiers (expressed as a string).
    */
   extensionIds: IdentifiersExtensions
 }
+
+export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
