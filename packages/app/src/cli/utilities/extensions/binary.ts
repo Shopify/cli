@@ -35,10 +35,7 @@ export async function getBinaryPathOrDownload(): Promise<string> {
 }
 
 export function getArtifactName(options: {platform: string; arch: string}) {
-  let platform = options.platform
-  if (platform.match(/^win.+/)) {
-    platform = 'windows'
-  }
+  const platform = options.platform
   let artifact = `shopify-extensions-${platform}-${options.arch}`
   if (platform === 'windows') artifact += '.exe'
   return artifact

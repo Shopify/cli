@@ -1693,14 +1693,6 @@
     "@remote-ui/rpc" "^1.3.0"
     "@remote-ui/types" "^1.1.2"
 
-"@remote-ui/core@^2.1.11", "@remote-ui/core@^2.1.6":
-  version "2.1.11"
-  resolved "https://registry.yarnpkg.com/@remote-ui/core/-/core-2.1.11.tgz#56d002fe0aafb336b364cc2c5114e3aed5ac3d66"
-  integrity sha512-DWot+l/vJ4gEBtUKg3FaVonZ6M/DJE5/kbQgMwW3GOtgZGP/bsu6fy3fKmSQuBvh5IafuViLZ9XOsDa7c1Nlag==
-  dependencies:
-    "@remote-ui/rpc" "^1.3.0"
-    "@remote-ui/types" "^1.1.2"
-
 "@remote-ui/react@^4.1.3", "@remote-ui/react@^4.1.5":
   version "4.5.2"
   resolved "https://registry.yarnpkg.com/@remote-ui/react/-/react-4.5.2.tgz#e58992cfe5b5bdcc60bd75ce4dcc431e29e6bae7"
@@ -1708,18 +1700,6 @@
   dependencies:
     "@remote-ui/async-subscription" "^2.1.9"
     "@remote-ui/core" "^2.1.10"
-    "@remote-ui/rpc" "^1.3.0"
-    "@types/react" ">=17.0.0 <18.0.0"
-    "@types/react-reconciler" "^0.26.0"
-    react-reconciler ">=0.26.0 <0.27.0"
-
-"@remote-ui/react@^4.5.0":
-  version "4.5.3"
-  resolved "https://registry.yarnpkg.com/@remote-ui/react/-/react-4.5.3.tgz#74c9d7abd2df2ccef6649c855ea8e400d0e7ddeb"
-  integrity sha512-LN39k/zudBnqEkuDL2LTLLlI0yiG1UBYqwhtESyb9d8WRxpfAigX5Un7ID71SSd3amcdjOwEBo43TfNQTeTmKQ==
-  dependencies:
-    "@remote-ui/async-subscription" "^2.1.9"
-    "@remote-ui/core" "^2.1.11"
     "@remote-ui/rpc" "^1.3.0"
     "@types/react" ">=17.0.0 <18.0.0"
     "@types/react-reconciler" "^0.26.0"
@@ -1925,22 +1905,6 @@
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@shopify/prettier-config/-/prettier-config-1.1.2.tgz#612f87c0cd1196e8b43c85425e587d0fa7f1172d"
   integrity sha512-5ugCL9sPGzmOaZjeRGaWUWhHgAbemrS6z+R7v6gwiD+BiqSeoFhIY+imLpfdFCVpuOGalpHeCv6o3gv++EHs0A==
-
-"@shopify/retail-ui-extensions-react@^0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@shopify/retail-ui-extensions-react/-/retail-ui-extensions-react-0.8.0.tgz#442ab27b1c0b06c0838ca91abeae8c854eafb7d2"
-  integrity sha512-3eQ7fnCScmqw/pjKupK4fg/UqLQiwoOga42EK4Xfo70QWQX3euYY+IMCjT53f6lCpIf5i2YU8JEVvOxJP4uvBg==
-  dependencies:
-    "@remote-ui/react" "^4.5.0"
-    "@shopify/retail-ui-extensions" "^0.8.0"
-    "@types/react" ">=17.0.0 <18.0.0"
-
-"@shopify/retail-ui-extensions@^0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@shopify/retail-ui-extensions/-/retail-ui-extensions-0.8.0.tgz#8b03c1d1fcf5ad0695c55131241cb117d2aa14f0"
-  integrity sha512-ATmyQXbmawYWS6ndF9ZRTGpB+IWj/8kv++9x34xvyTl9ZFjt9Uc7nyxLvd5aLh6w4tWOGc2M/VsxdRUeUlKDHg==
-  dependencies:
-    "@remote-ui/core" "^2.1.6"
 
 "@shopify/shopify-cli-extensions@^0.2.1":
   version "0.2.1"

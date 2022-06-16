@@ -69,5 +69,9 @@ export const platformAndArch = (
   if (arch === 'x64') {
     arch = 'amd64'
   }
-  return {platform, arch}
+  let platformString = platform as string
+  if (platform.match(/^win.+/)) {
+    platformString = 'windows'
+  }
+  return {platform: platformString, arch}
 }
