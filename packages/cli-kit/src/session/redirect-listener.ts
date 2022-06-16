@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as postAuthScreens from './postAuthScreens'
+import * as postAuth from './post-auth'
 import {Abort, Bug} from '../error'
 import * as output from '../output'
 import http from 'http'
@@ -14,7 +14,12 @@ const ResponseTimeoutSeconds = 10
 /**
  * It represents the result of a redirect.
  */
-type RedirectCallback = (error: Error | undefined, state: string | undefined, code: string | undefined) => void
+type RedirectCallback = (
+  error: Error | undefined,
+  state: string | undefined,
+  code: string | undefined,
+  loginUrl: string | undefined,
+) => void
 
 /**
  * Defines the interface of the options that
@@ -23,7 +28,7 @@ type RedirectCallback = (error: Error | undefined, state: string | undefined, co
 interface RedirectListenerOptions {
   host: string
   port: number
-  url: string
+  loginUrl: string
   callback: RedirectCallback
 }
 /**
@@ -36,62 +41,69 @@ interface RedirectListenerOptions {
 export class RedirectListener {
   private static createServer(callback: RedirectCallback): http.Server {
     return http.createServer(async (request, response) => {
+      if (!postAuth.areFilesLoaded()) await postAuth.loadFiles()
       const requestUrl = request.url
-      if (!postAuthScreens.areFilesLoaded()) await postAuthScreens.loadFiles()
 
       if (requestUrl === '/favicon.svg') {
-        const faviconFile = await postAuthScreens.getFavicon()
+        const faviconFile = await postAuth.getFavicon()
         response.writeHead(200, {'Content-Type': 'image/svg+xml'})
         response.end(faviconFile)
         return {}
       } else if (requestUrl === '/style.css') {
-        const stylesheetFile = await postAuthScreens.getStylesheet()
+        const stylesheetFile = await postAuth.getStylesheet()
         response.writeHead(200, {'Content-Type': 'text/css'})
         response.end(stylesheetFile)
         return {}
       }
 
-      const respond = async () => {
-        const successFile = await postAuthScreens.getSuccessHTML()
+      const respond = async (file: Buffer, error?: Error, state?: string, code?: string, loginUrl?: string) => {
+        output.info(`Responding to ${requestUrl}`)
         response.writeHead(200, {'Content-Type': 'text/html'})
-        response.end(successFile)
+        response.end(file)
+        return callback(error, state, code, loginUrl)
       }
 
       if (!requestUrl) {
-        await respond()
-        return callback(new Bug('EmptyUrlError'), undefined, undefined)
+        const file = await postAuth.getEmptyUrlHTML()
+        const err = new Bug('EmptyUrlError')
+        return respond(file, err, undefined, undefined, undefined)
       }
+
       const queryObject = url.parse(requestUrl, true).query
+      const loginUrl = `${queryObject.loginUrl}`
 
       if (queryObject.error && queryObject.error_description) {
-        await respond()
-        return callback(AuthenticationError(`${queryObject.error_description}`), undefined, undefined)
+        const file = await postAuth.getAuthErrorHTML()
+        const err = AuthenticationError(`${queryObject.error_description}`)
+        return respond(file, err, undefined, undefined, loginUrl)
       }
 
       if (!queryObject.code) {
-        await respond()
-        return callback(new Bug('MissingCodeError'), undefined, undefined)
+        const file = await postAuth.getMissingCodeHTML()
+        const err = new Bug('MissingCodeError')
+        return respond(file, err, undefined, undefined, loginUrl)
       }
 
       if (!queryObject.state) {
-        await respond()
-        return callback(new Bug('MissingStateError'), undefined, undefined)
+        const file = await postAuth.getMissingStateHTML()
+        const err = new Bug('MissingStateError')
+        return respond(file, err, undefined, undefined, loginUrl)
       }
 
-      await respond()
-      return callback(undefined, `${queryObject.code}`, `${queryObject.state}`)
+      const file = await postAuth.getSuccessHTML()
+      return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`, loginUrl)
     })
   }
 
   port: number
   host: string
-  url: string
+  loginUrl: string
   server: http.Server
 
   constructor(options: RedirectListenerOptions) {
     this.port = options.port
     this.host = options.host
-    this.url = options.url
+    this.loginUrl = options.loginUrl
     this.server = RedirectListener.createServer(options.callback)
   }
 
@@ -117,16 +129,20 @@ export class RedirectListener {
   }
 }
 
-export async function listenRedirect(host: string, port: number, url: string): Promise<{code: string; state: string}> {
-  const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
+export async function listenRedirect(
+  host: string,
+  port: number,
+  loginUrl: string,
+): Promise<{code: string; state: string; loginUrl: string}> {
+  const result = await new Promise<{code: string; state: string; loginUrl: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
       const message = '\nAuto-open timed out. Open the login page: '
-      output.info(output.content`${message}${output.token.link('Log in to Shopify Partners', url)}\n`)
+      output.info(output.content`${message}${output.token.link('Log in to Shopify Partners', loginUrl)}\n`)
     }, ResponseTimeoutSeconds * 1000)
     const redirectListener = new RedirectListener({
       host,
       port,
-      url,
+      loginUrl,
       callback: (error, code, state) => {
         clearTimeout(timeout)
         redirectListener.stop()
@@ -136,6 +152,7 @@ export async function listenRedirect(host: string, port: number, url: string): P
           resolve({
             code: code as string,
             state: state as string,
+            loginUrl: loginUrl as string,
           })
         }
       },
