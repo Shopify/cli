@@ -79,6 +79,9 @@ export interface UiExtensionBuildOptions extends ExtensionBuildOptions {
  * @param options {UiExtensionBuildOptions} Build options.
  */
 export async function buildUIExtensions(options: UiExtensionBuildOptions): Promise<void> {
+  if (options.extensions.length === 0) {
+    return
+  }
   options.stdout.write(`Building UI extensions...`)
   const fullOptions = {...options, extensions: options.extensions, includeResourceURL: false}
   const stdin = yaml.encode(await extensionConfig(fullOptions))

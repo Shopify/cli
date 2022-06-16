@@ -94,6 +94,10 @@ export const themeExtensions = {
 
 export type ThemeExtensionTypes = typeof themeExtensions.types[number]
 
+export function isThemeExtensionType(extensionType: string) {
+  return (themeExtensions.types as ReadonlyArray<string>).includes(extensionType)
+}
+
 export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {
@@ -171,12 +175,13 @@ export const extensionTypesHumanKeys = {
 } as const
 
 export type ExtensionTypesHumanKeys = typeof extensionTypesHumanKeys.types[number]
-
-export function getExtensionOutputConfig(extensionType: ExtensionTypes): {
+export interface ExtensionOutputConfig {
   humanKey: ExtensionTypesHumanKeys
   helpURL?: string
   additionalHelp?: string
-} {
+}
+
+export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
   const discountAdditionalHelp =
     'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.'
   switch (extensionType) {

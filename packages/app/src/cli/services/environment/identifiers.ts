@@ -53,7 +53,12 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   // We need local extensions to deploy
   if (localExtensions.length === 0) {
-    return {app: options.appId, extensions: {...functionLocalIdentifiers}}
+    return {
+      app: options.appId,
+      extensions: {...functionLocalIdentifiers},
+      // Numeric extension IDs aren't relevant for functions
+      extensionIds: {},
+    }
   }
 
   // If there are more remote extensions than local, then something is missing and we can't continue
@@ -67,6 +72,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     throw GenericError()
   }
   let validMatches = match.identifiers ?? {}
+  const validMatchesById: {[key: string]: string} = {}
 
   if (match.pendingConfirmation.length > 0) {
     for (const pending of match.pendingConfirmation) {
@@ -88,21 +94,33 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
-    validMatches = {...validMatches, ...newIdentifiers}
+    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
+      validMatches[localIdentifier] = registration.uuid
+      validMatchesById[localIdentifier] = registration.id
+    }
   }
 
-  return {app: options.appId, extensions: {...validMatches, ...functionLocalIdentifiers}}
+  for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
+    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
+    if (registration) validMatchesById[localIdentifier] = registration.id
+  }
+
+  return {
+    app: options.appId,
+    extensions: {...validMatches, ...functionLocalIdentifiers},
+    extensionIds: validMatchesById,
+  }
 }
 
 async function createExtensions(extensions: Extension[], appId: string) {
   // PENDING: Function extensions can't be created before being deployed we'll need to handle that differently
   const token = await session.ensureAuthenticatedPartners()
-  const result: {[localIdentifier: string]: string} = {}
+  const result: {[localIdentifier: string]: ExtensionRegistration} = {}
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
     output.completed(`Created extension ${extension.localIdentifier}`)
-    result[extension.localIdentifier] = registration.uuid
+    result[extension.localIdentifier] = registration
   }
   return result
 }

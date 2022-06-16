@@ -21,7 +21,7 @@ describe('init', () => {
       {
         type: 'input',
         name: 'name',
-        preface: 'Welcome. Let’s get started by naming your app. You can change it later.',
+        preface: '\nWelcome. Let’s get started by naming your app. You can change it later.',
         message: "Your app's name?",
         default: expect.stringMatching(/^\w+-\w+-app-\d+$/),
         validate: expect.any(Function),

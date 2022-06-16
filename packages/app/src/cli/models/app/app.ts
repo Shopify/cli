@@ -23,7 +23,14 @@ export interface Identifiers {
    * The extensions' unique identifiers.
    */
   extensions: IdentifiersExtensions
+
+  /**
+   * The extensions' numeric identifiers (expressed as a string).
+   */
+  extensionIds: IdentifiersExtensions
 }
+
+export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
@@ -57,6 +64,7 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
+  buildWasmPath: schema.define.string().optional().default('dist/index.wasm'),
   metaObject: schema.define.any(),
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
@@ -424,7 +432,7 @@ class AppLoader {
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
-        buildWasmPath: path.join(directory, 'dist/index.wasm'),
+        buildWasmPath: path.join(directory, configuration.buildWasmPath),
       }
     })
     return Promise.all(functions)
@@ -478,7 +486,7 @@ type EnvironmentType = 'production' | 'development'
 
 interface UpdateAppIdentifiersOptions {
   app: App
-  identifiers: Identifiers
+  identifiers: UuidOnlyIdentifiers
   environmentType: EnvironmentType
 }
 
@@ -537,7 +545,7 @@ interface GetAppIdentifiersOptions {
  * @param options {GetAppIdentifiersOptions} Options.
  * @returns
  */
-export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<Identifiers> {
+export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
     ...app.environment.env,
     ...app.environment.dotenv.production?.variables,
@@ -589,6 +597,10 @@ export async function getUIExtensionRendererVersion(
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
   const loader = new AppLoader({directory, mode})
   return loader.loaded()
+}
+
+export function hasExtensions(app: App): boolean {
+  return app.extensions.ui.length !== 0 || app.extensions.function.length !== 0 || app.extensions.theme.length !== 0
 }
 
 /**

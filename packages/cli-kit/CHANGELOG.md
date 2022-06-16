@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.0.15
+
+### Patch Changes
+
+- c3b711ec: Improve Ruby Bundler upgrade message
+- 99378ca0: Push dependency manager detection into cli-kit
+
 ## 3.0.14
 
 ### Patch Changes

@@ -42,14 +42,9 @@ describe('check CLI version', () => {
       // Then
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Current Shopify CLI version: 2.2.2
-         Latest Shopify CLI version: 3.0.10
-        💡
         CLI reminder"
       `)
-      expect(outputReminder).toBeCalledWith(
-        dependencyManager as DependencyManager,
-        expect.arrayContaining(['@shopify/cli']),
-      )
+      expect(outputReminder).toBeCalledWith(dependencyManager as DependencyManager, latestVersion)
       outputMock.clear()
     },
   )
@@ -65,8 +60,6 @@ describe('check CLI version', () => {
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "Current Shopify CLI version: 2.2.2
-       Latest Shopify CLI version: 2.2.2
-      💡
       "
     `)
     outputMock.clear()

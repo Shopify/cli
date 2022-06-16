@@ -34,6 +34,7 @@ describe('uploadFunctionExtensions', () => {
         name: 'function',
         type: 'payment_methods',
         description: 'my function',
+        buildWasmPath: 'dist/index.wasm',
         configurationUi: false,
         version: '2',
       },
@@ -50,6 +51,7 @@ describe('uploadFunctionExtensions', () => {
     identifiers = {
       app: 'api=key',
       extensions: {},
+      extensionIds: {},
     }
   })
 

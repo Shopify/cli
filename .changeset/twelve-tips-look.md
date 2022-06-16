@@ -4,4 +4,4 @@
 '@shopify/cli': patch
 ---
 
-Push dependency manager detection into cli-kit
+Improve dependency upgrade messages to leverage new shopify upgrade command

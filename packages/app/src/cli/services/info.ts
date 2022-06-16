@@ -240,8 +240,10 @@ class AppInfo {
   async systemInfoSection(): Promise<[string, string]> {
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
+    const versionUpgradeMessage = await this.versionUpgradeMessage()
+    const cliVersionInfo = [this.currentCliVersion(), versionUpgradeMessage].join(' ').trim()
     const lines: string[][] = [
-      ['Shopify CLI', await this.getVersionInformation()],
+      ['Shopify CLI', cliVersionInfo],
       ['Package manager', this.app.dependencyManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
@@ -274,17 +276,16 @@ class AppInfo {
     return output.content`${output.token.heading(formattedTitle)}\n${body}`.value
   }
 
-  async getVersionInformation(): Promise<string> {
-    const cliDependency = '@shopify/cli'
-    let currentVersion = this.app.nodeDependencies[cliDependency]
-    const newestVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
-    if (newestVersion) {
-      const content = output.content` ${output.token.errorText(
-        `! ${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, [cliDependency])}`,
-      )}`
-      currentVersion = currentVersion.concat(content.value)
-    }
+  currentCliVersion(): string {
+    return this.app.nodeDependencies['@shopify/cli']
+  }
 
-    return currentVersion
+  async versionUpgradeMessage(): Promise<string> {
+    const cliDependency = '@shopify/cli'
+    const newestVersion = await dependency.checkForNewVersion(cliDependency, this.currentCliVersion())
+    if (newestVersion) {
+      return output.content`${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, newestVersion)}`.value
+    }
+    return ''
   }
 }

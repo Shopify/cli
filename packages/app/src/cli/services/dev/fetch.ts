@@ -33,7 +33,7 @@ export async function fetchAppExtensionRegistrations({
  * @param token {string} Token to access partners API
  * @returns {Promise<Organization[]>} List of organizations
  */
-export async function fetchOrganizations(token: string): Promise<Organization[]> {
+export async function fetchOrganizations(token: string) {
   const query = api.graphql.AllOrganizationsQuery
   const result: api.graphql.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
