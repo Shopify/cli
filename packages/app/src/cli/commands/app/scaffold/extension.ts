@@ -41,7 +41,7 @@ export default class AppScaffoldExtension extends Command {
       hidden: true,
       char: 'u',
       description:
-        'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/scripts-apis-examples',
+        'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples',
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
     template: Flags.string({
