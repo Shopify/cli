@@ -1,11 +1,11 @@
 import {ExtensionRegistration} from '../dev/create-extension'
-import {Extension, IdentifiersExtensions, NumericIdentifiersExtensions} from 'cli/models/app/app'
+import {Extension, IdentifiersExtensions} from 'cli/models/app/app'
 
 export type MatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
-      idIdentifiers: NumericIdentifiersExtensions
+      idIdentifiers: IdentifiersExtensions
       pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
       toCreate: Extension[]
       toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}

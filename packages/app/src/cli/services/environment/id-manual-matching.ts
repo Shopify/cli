@@ -1,12 +1,12 @@
 import {ExtensionRegistration} from '../dev/create-extension'
-import {Extension, IdentifiersExtensions, NumericIdentifiersExtensions} from 'cli/models/app/app'
+import {Extension, IdentifiersExtensions} from 'cli/models/app/app'
 import {ui} from '@shopify/cli-kit'
 
 export type ManualMatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
-      idIdentifiers: NumericIdentifiersExtensions
+      idIdentifiers: IdentifiersExtensions
       toCreate: Extension[]
     }
   | {result: 'pending-remote'}
