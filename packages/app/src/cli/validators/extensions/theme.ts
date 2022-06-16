@@ -42,7 +42,7 @@ export async function validateThemeExtensions(extensions: ThemeExtension[]) {
   await Promise.all(extensions.map((extension) => validateThemeExtension(extension)))
 }
 
-async function validateThemeExtension(extension: ThemeExtension) {
+async function validateThemeExtension(extension: ThemeExtension): void {
   const themeFiles = await path.glob(path.join(extension.directory, '*/*'))
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
@@ -56,7 +56,11 @@ async function validateThemeExtension(extension: ThemeExtension) {
       if (['blocks', 'snippets'].includes(dirname)) liquidBytes.push(filesize)
     }),
   )
-  const extensionBytesTotal = arraySum(extensionBytes)
+  validateExtensionBytes(arraySum(extensionBytes))
+  validateLiquidBytes(arraySum(liquidBytes))
+}
+
+function validateExtensionBytes(extensionBytesTotal: number): void {
   if (extensionBytesTotal > BUNDLE_SIZE_LIMIT) {
     const humanBundleSize = `${(extensionBytesTotal / megabytes).toFixed(2)} MB`
     throw new error.Abort(
@@ -64,7 +68,9 @@ async function validateThemeExtension(extension: ThemeExtension) {
       `Reduce your total file size and try again.`,
     )
   }
-  const liquidBytesTotal = arraySum(liquidBytes)
+}
+
+function validateLiquidBytes(liquidBytesTotal: number): void {
   if (liquidBytesTotal > LIQUID_SIZE_LIMIT) {
     const humanLiquidSize = `${(liquidBytesTotal / kilobytes).toFixed(2)} kB`
     throw new error.Abort(
