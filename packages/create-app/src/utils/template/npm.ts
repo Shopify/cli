@@ -1,7 +1,5 @@
-/* eslint-disable @nrwl/nx/enforce-module-boundaries */
 import {version as cliVersion} from '../../../../cli-main/package.json'
 import {version as appVersion} from '../../../../app/package.json'
-/* eslint-enable @nrwl/nx/enforce-module-boundaries*/
 import {path, dependency, ui, npm} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 

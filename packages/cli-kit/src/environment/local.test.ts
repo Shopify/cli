@@ -1,9 +1,11 @@
 import {isSpin} from './spin'
-import {isDebug, isShopify, isUnitTest} from './local'
+import {hasGit, isDebug, isShopify, isUnitTest} from './local'
 import {exists as fileExists} from '../file'
-import {expect, it, describe, vi} from 'vitest'
+import {exec} from '../system'
+import {expect, it, describe, vi, test} from 'vitest'
 
 vi.mock('../file')
+vi.mock('../system')
 vi.mock('./spin', () => ({
   isSpin: vi.fn(),
 }))
@@ -57,5 +59,29 @@ describe('isShopify', () => {
 
     // When
     await expect(isShopify()).resolves.toBe(true)
+  })
+})
+
+describe('hasGit', () => {
+  test('returns false if git --version errors', async () => {
+    // Given
+    vi.mocked(exec).mockRejectedValue(new Error('git not found'))
+
+    // When
+    const got = await hasGit()
+
+    // Then
+    expect(got).toBeFalsy()
+  })
+
+  test('returns true if git --version succeeds', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    const got = await hasGit()
+
+    // Then
+    expect(got).toBeTruthy()
   })
 })
