@@ -567,26 +567,31 @@ export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptio
 }
 
 /**
- * Given a UI extension and the app it belongs to, it returns the version of the renderer
- * package.
+ * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
+ * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
  * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
  * @param app {App} App object containing the extension.
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
  */
-export function getUIExtensionRendererVersion(
+export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,
   app: App,
-): {name: string; version: string} | undefined {
-  const nodeDependencies = app.nodeDependencies
-  const rendererDependencyName = getUIExtensionRendererDependency(uiExtensionType)
-  if (!rendererDependencyName) {
-    return undefined
-  }
-  const rendererDependency = nodeDependencies[rendererDependencyName]
-  if (!rendererDependency) {
-    return undefined
-  }
-  return {name: rendererDependencyName, version: rendererDependency}
+): Promise<{name: string; version: string} | undefined> {
+  // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
+  const fullName = getUIExtensionRendererDependency(uiExtensionType)?.replace('-react', '')
+  if (!fullName) return undefined
+  // Split the dependency name to avoid using "/" in windows
+  const dependencyName = fullName.split('/')
+
+  // Find the package.json in the project structure
+  const realPath = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
+  const packagePath = await path.findUp(realPath, {type: 'file', cwd: app.directory})
+  if (!packagePath) return undefined
+
+  // Load the package.json and extract the version
+  const packageContent = await dependency.packageJSONContents(packagePath)
+  if (!packageContent.version) return undefined
+  return {name: fullName, version: packageContent.version}
 }
 
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
