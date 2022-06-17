@@ -5,17 +5,17 @@ import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {error, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
+import {error as kitError, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
 
 export const InvalidApiKeyError = (apiKey: string) => {
-  return new error.Abort(
-    `Invalid API key: ${apiKey}`,
-    'You can find the apiKey in the app settings in the Partner Dashboard.',
+  return new kitError.Abort(
+    output.content`Invalid API key: ${apiKey}`,
+    output.content`You can find the apiKey in the app settings in the Partner Dashboard.`,
   )
 }
 
 export const AppOrganizationNotFoundError = (apiKey: string, organizations: string[]) => {
-  return new error.Abort(
+  return new kitError.Abort(
     `The application with API Key ${apiKey} doesn't belong to any of your organizations: ${organizations.join(', ')}`,
   )
 }
@@ -157,27 +157,22 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   }
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
-  let partnersApp: OrganizationApp
 
+  let partnersApp: OrganizationApp
   let orgId: string
+
   if (envIdentifiers.app) {
-    partnersApp = await fetchAppFromApiKey(identifiers.app, token)
-    const organizations = await fetchOrganizations(token)
-    const organization = organizations.find((organization) =>
-      organization.apps.nodes.map((app) => app.apiKey).includes(envIdentifiers.app as string),
-    )
-    if (organization) {
-      orgId = organization.id
+    const partnersAppResponse = await fetchAppFromApiKey(identifiers.app, token)
+    if (partnersAppResponse) {
+      partnersApp = partnersAppResponse
+      orgId = await fetchAppOrganization(identifiers.app, token)
     } else {
-      throw AppOrganizationNotFoundError(
-        envIdentifiers.app,
-        organizations.map((organization) => organization.businessName),
-      )
+      throw InvalidApiKeyError(identifiers.app)
     }
   } else {
-    orgId = await selectOrg(token)
-    const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-    partnersApp = await selectOrCreateApp(options.app, apps, organization, token, undefined)
+    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
+    partnersApp = result.partnersApp
+    orgId = result.orgId
   }
 
   identifiers = await ensureDeploymentIdsPresence({
@@ -203,6 +198,31 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     partnersOrganizationId: orgId,
     identifiers,
     token,
+  }
+}
+
+export async function fetchOrganizationAndFetchOrCreateApp(
+  app: App,
+  token: string,
+): Promise<{partnersApp: OrganizationApp; orgId: string}> {
+  const orgId = await selectOrg(token)
+  const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
+  const partnersApp = await selectOrCreateApp(app, apps, organization, token, undefined)
+  return {orgId, partnersApp}
+}
+
+async function fetchAppOrganization(apiKey: string, token: string): Promise<string> {
+  const organizations = await fetchOrganizations(token)
+  const organization = organizations.find((organization) =>
+    organization.apps.nodes.map((app) => app.apiKey).includes(apiKey),
+  )
+  if (organization) {
+    return organization.id
+  } else {
+    throw AppOrganizationNotFoundError(
+      apiKey,
+      organizations.map((organization) => organization.businessName),
+    )
   }
 }
 
