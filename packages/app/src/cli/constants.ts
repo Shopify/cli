@@ -29,7 +29,7 @@ export const blocks = {
     configurationName: configurationFileNames.extension,
   },
   functions: {
-    defaultUrl: 'https://github.com/Shopify/scripts-apis-examples',
+    defaultUrl: 'https://github.com/Shopify/function-examples',
     defaultLanguage: 'wasm',
   },
   web: {
