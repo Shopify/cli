@@ -107,14 +107,13 @@ export async function uploadFunctionExtensions(
 
   // Functions are uploaded sequentially to avoid reaching the API limit
   for (const extension of extensions) {
-    const identifierKey = extension.localIdentifier
     // eslint-disable-next-line no-await-in-loop
     const remoteIdentifier = await uploadFunctionExtension(extension, {
       apiKey: options.identifiers.app,
       token: options.token,
       identifier: identifiers.extensions[extension.localIdentifier],
     })
-    functionUUIDs[identifierKey] = remoteIdentifier
+    functionUUIDs[extension.localIdentifier] = remoteIdentifier
   }
 
   identifiers = {
