@@ -5,7 +5,7 @@ shopify.extend(
     // Bootstrap and insert pixel script tag here
 
     // Sample subscribe to page view
-    analytics.subscribe('pageView', (event) => {
+    analytics.subscribe('page_viewed', (event) => {
      
     });
   }
