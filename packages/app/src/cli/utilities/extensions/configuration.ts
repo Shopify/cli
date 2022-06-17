@@ -32,8 +32,8 @@ export interface ExtensionConfigOptions {
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
-      const result = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
-      if (result === 'not_found') throw RendererNotFoundBug(extension.configuration.type)
+      const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
+      if (renderer === 'not_found') throw RendererNotFoundBug(extension.configuration.type)
       return {
         uuid: extension.devUUID,
         title: extension.configuration.name,
@@ -43,7 +43,8 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         extension_points: extension.configuration.extensionPoints || [],
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
-        version: result?.version,
+        surface: getUIExtensionSurface(extension.configuration.type),
+        version: renderer?.version,
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           root_dir: path.relative(options.app.directory, extension.directory),
@@ -54,6 +55,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           entries: {
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
+          renderer,
           resource: options.includeResourceURL
             ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,
@@ -88,5 +90,21 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
       return {url: 'invalid_url'}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl}
+  }
+}
+
+export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
+  switch (uiExtensionType) {
+    case 'checkout_ui_extension':
+      return 'checkout'
+    case 'checkout_post_purchase':
+      return 'post_purchase'
+    case 'pos_ui_extension':
+      return 'pos'
+    case 'product_subscription':
+      return 'admin'
+    case 'web_pixel_extension':
+      // This value is mandatory but is not yet defined for web_pixel
+      return 'unknown'
   }
 }
