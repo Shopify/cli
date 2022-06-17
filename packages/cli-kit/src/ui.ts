@@ -44,12 +44,6 @@ export type Question<TName extends string = string> =
   | AutocompleteQuestion<TName>
   | PasswordQuestion<TName>
 
-type QuestionNames<T> = T extends ReadonlyArray<BaseQuestion<infer TName>> ? TName : never
-
-type PromptResults<T> = {
-  [key in QuestionNames<T>]: string
-}
-
 export const prompt = async <
   TName extends string & keyof TAnswers,
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},

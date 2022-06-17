@@ -51,12 +51,13 @@ export async function selectRegistrationPrompt(
     value: reg.uuid,
   }))
   registrationList.push({name: 'Create new extension', value: 'create'})
-  const questions = {
-    type: 'autocomplete',
-    name: 'uuid',
-    message: `How would you like to deploy your "${extension.localIdentifier}"?`,
-    choices: registrationList,
-  } as const
-  const choice: {uuid: string} = await ui.prompt([questions])
+  const choice: {uuid: string} = await ui.prompt([
+    {
+      type: 'autocomplete',
+      name: 'uuid',
+      message: `How would you like to deploy your "${extension.localIdentifier}"?`,
+      choices: registrationList,
+    },
+  ])
   return registrations.find((reg) => reg.uuid === choice.uuid)!
 }

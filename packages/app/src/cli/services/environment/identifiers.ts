@@ -130,12 +130,13 @@ async function matchConfirmationPrompt(extension: Extension, registration: Exten
     {name: `Yes, that's right`, value: 'yes'},
     {name: `No, cancel deployment`, value: 'no'},
   ]
-  const questions = {
-    type: 'select',
-    name: 'value',
-    message: `Deploy ${extension.localIdentifier} (local name) as ${registration.title} (name on Shopify Partners, ID: ${registration.id})?`,
-    choices,
-  } as const
-  const choice: {value: string} = await ui.prompt([questions])
+  const choice: {value: string} = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: `Deploy ${extension.localIdentifier} (local name) as ${registration.title} (name on Shopify Partners, ID: ${registration.id})?`,
+      choices,
+    },
+  ])
   return choice.value === 'yes'
 }

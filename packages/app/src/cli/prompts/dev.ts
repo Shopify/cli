@@ -6,25 +6,27 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     return organizations[0]
   }
   const orgList = organizations.map((org) => ({name: org.businessName, value: org.id}))
-  const questions = {
-    type: 'autocomplete',
-    name: 'id',
-    message: 'Which Partners organization is this work for?',
-    choices: orgList,
-  } as const
-  const choice = await ui.prompt([questions])
+  const choice = await ui.prompt([
+    {
+      type: 'autocomplete',
+      name: 'id',
+      message: 'Which Partners organization is this work for?',
+      choices: orgList,
+    },
+  ])
   return organizations.find((org) => org.id === choice.id)!
 }
 
 export async function selectAppPrompt(apps: OrganizationApp[]): Promise<OrganizationApp> {
   const appList = apps.map((app) => ({name: app.title, value: app.apiKey}))
-  const questions = {
-    type: 'autocomplete',
-    name: 'apiKey',
-    message: 'Which existing app is this for?',
-    choices: appList,
-  } as const
-  const choice = await ui.prompt([questions])
+  const choice = await ui.prompt([
+    {
+      type: 'autocomplete',
+      name: 'apiKey',
+      message: 'Which existing app is this for?',
+      choices: appList,
+    },
+  ])
   return apps.find((app) => app.apiKey === choice.apiKey)!
 }
 
@@ -36,13 +38,14 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
   }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))
 
-  const questions = {
-    type: 'autocomplete',
-    name: 'id',
-    message: 'Which development store would you like to use to view your project?',
-    choices: storeList,
-  } as const
-  const choice = await ui.prompt([questions])
+  const choice = await ui.prompt([
+    {
+      type: 'autocomplete',
+      name: 'id',
+      message: 'Which development store would you like to use to view your project?',
+      choices: storeList,
+    },
+  ])
   return stores.find((store) => store.shopId === choice.id)
 }
 
@@ -52,36 +55,38 @@ export async function appTypePrompt(): Promise<'public' | 'custom'> {
     {name: 'Custom: An app custom built for a single client.', value: 'custom'},
   ]
 
-  const questions = {
-    type: 'select',
-    name: 'value',
-    message: 'What type of app are you building?',
-    choices: options,
-  } as const
-  const choice: {value: 'public' | 'custom'} = await ui.prompt([questions])
+  const choice: {value: 'public' | 'custom'} = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'What type of app are you building?',
+      choices: options,
+    },
+  ])
   return choice.value
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {
-  const questions: ui.Question<'name'> = {
-    type: 'input',
-    name: 'name',
-    message: 'App Name',
-    default: currentName,
-    validate: (value) => {
-      if (value.length === 0) {
-        return "App name can't be empty"
-      }
-      if (value.length > 30) {
-        return 'Enter a shorter name (30 character max.)'
-      }
-      if (value.includes('shopify')) {
-        return 'Name can\'t contain "shopify." Enter another name.'
-      }
-      return true
+  const input = await ui.prompt([
+    {
+      type: 'input',
+      name: 'name',
+      message: 'App Name',
+      default: currentName,
+      validate: (value) => {
+        if (value.length === 0) {
+          return "App name can't be empty"
+        }
+        if (value.length > 30) {
+          return 'Enter a shorter name (30 character max.)'
+        }
+        if (value.includes('shopify')) {
+          return 'Name can\'t contain "shopify." Enter another name.'
+        }
+        return true
+      },
     },
-  } as const
-  const input = await ui.prompt([questions])
+  ])
   return input.name
 }
 
@@ -91,13 +96,14 @@ export async function reloadStoreListPrompt(): Promise<boolean> {
     {name: 'No, cancel dev', value: 'cancel'},
   ]
 
-  const questions = {
-    type: 'select',
-    name: 'value',
-    message: 'Have you created a new dev store?',
-    choices: options,
-  } as const
-  const choice = await ui.prompt([questions])
+  const choice = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'Have you created a new dev store?',
+      choices: options,
+    },
+  ])
   return choice.value === 'reload'
 }
 
@@ -107,12 +113,13 @@ export async function createAsNewAppPrompt(): Promise<boolean> {
     {name: 'No, connect it to an existing app', value: 'cancel'},
   ]
 
-  const questions = {
-    type: 'select',
-    name: 'value',
-    message: 'Create this project as a new app on Shopify?',
-    choices: options,
-  } as const
-  const choice = await ui.prompt([questions])
+  const choice = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'Create this project as a new app on Shopify?',
+      choices: options,
+    },
+  ])
   return choice.value === 'yes'
 }
