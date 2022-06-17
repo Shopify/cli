@@ -49,6 +49,7 @@ export const prompt = async <
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},
 >(
   questions: ReadonlyArray<Question<TName>>,
+  debugForceInquirer = false,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
     throw new Bug(content`
@@ -57,7 +58,7 @@ ${token.json(questions)}
     `)
   }
 
-  if (process.env.SHOPIFY_USE_INQUIRER === '1') {
+  if (debugForceInquirer || process.env.SHOPIFY_USE_INQUIRER === '1') {
     const results = []
     for (const question of questions) {
       if (question.preface) {
@@ -66,7 +67,7 @@ ${token.json(questions)}
 
       const questionName = question.name
       // eslint-disable-next-line no-await-in-loop
-      const answer = (await inquirer.prompt([question]))[questionName]
+      const answer = (await inquirer.prompt([convertQuestionForInquirer(question)]))[questionName]
       results.push([questionName, answer])
     }
 
@@ -109,6 +110,23 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
     }
 
     remove(directory)
+  }
+}
+
+function convertQuestionForInquirer<
+  TName extends string & keyof TAnswers,
+  TAnswers extends {[key in TName]: string} = {[key in TName]: string},
+>(question: Question<TName>): inquirer.DistinctQuestion<TAnswers> {
+  switch (question.type) {
+    case 'input':
+    case 'password':
+      return question
+    case 'select':
+    case 'autocomplete':
+      return {
+        ...question,
+        type: 'list',
+      }
   }
 }
 
