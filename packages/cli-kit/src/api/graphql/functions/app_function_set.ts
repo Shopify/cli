@@ -9,9 +9,9 @@ export const AppFunctionSetMutation = gql`
     $force: Boolean
     $schemaMajorVersion: String
     $schemaMinorVersion: String
-    $scriptConfigVersion: String!
+    $scriptConfigVersion: String
     $configurationUi: Boolean!
-    $configurationDefinition: String!
+    $configurationDefinition: String
     $moduleUploadUrl: String!
     $library: LibraryInput
     $inputQuery: String
@@ -74,9 +74,9 @@ export interface AppFunctionSetVariables {
   force?: boolean
   schemaMajorVersion?: string
   schemaMinorVersion?: string
-  scriptConfigVersion: string
+  scriptConfigVersion?: string
   configurationUi: boolean
-  configurationDefinition: string
+  configurationDefinition?: string
   moduleUploadUrl: string
   library?: {
     language: string

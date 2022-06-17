@@ -155,9 +155,7 @@ async function uploadFunctionExtension(
     force: true,
     schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
     schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
-    scriptConfigVersion: extension.configuration.version,
     configurationUi: extension.configuration.configurationUi,
-    configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
     moduleUploadUrl: url,
     appBridge: {
       detailsPath: (extension.configuration.ui?.paths ?? {}).details,

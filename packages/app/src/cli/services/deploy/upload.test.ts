@@ -39,7 +39,6 @@ describe('uploadFunctionExtensions', () => {
           path: 'dist/index.wasm',
         },
         configurationUi: false,
-        version: '2',
       },
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: () => '/function/dist/index.wasm',
@@ -194,9 +193,7 @@ describe('uploadFunctionExtensions', () => {
           force: true,
           schemaMajorVersion: '1',
           schemaMinorVersion: '0',
-          scriptConfigVersion: extension.configuration.version,
           configurationUi: extension.configuration.configurationUi,
-          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
           moduleUploadUrl: uploadUrl,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -273,9 +270,7 @@ describe('uploadFunctionExtensions', () => {
           force: true,
           schemaMajorVersion: '1',
           schemaMinorVersion: '0',
-          scriptConfigVersion: extension.configuration.version,
           configurationUi: extension.configuration.configurationUi,
-          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
           moduleUploadUrl: uploadUrl,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -352,9 +347,7 @@ describe('uploadFunctionExtensions', () => {
           force: true,
           schemaMajorVersion: '1',
           schemaMinorVersion: '0',
-          scriptConfigVersion: extension.configuration.version,
           configurationUi: extension.configuration.configurationUi,
-          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
           moduleUploadUrl: uploadUrl,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
