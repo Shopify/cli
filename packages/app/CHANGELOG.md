@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.0.17
+
+### Patch Changes
+
+- 336ae141: Fix analytics report for dev command
+- 1400291a: Include input.query when uploading functions
+- e982e9d3: Fix web pixel extension's URL in the "next steps" section in the deploy's output
+- 94cea939: Fix some issues with surface/renderer in extensions server
+- e982e9d3: Use the right FQDN in the URLs that are output in the next steps section of the deploy command
+- e982e9d3: Ensure that identifiers are persisted in the .env file on failing deployments
+- c7918e9e: Fix renderer version for web_pixel (and other configs)
+- e982e9d3: Not include the next steps section if there are no next steps in deployment
+- bc7dd282: Deploy functions sequentially to avoid API rate issues
+- e982e9d3: Throw an error if the API key in the .env is invalid or points to an app that the user doesn't have access to
+- df0d0347: Use inquirer with SHOPIFY_USE_INQUIRER
+- a8f5b806: Remove React template option for web pixel extension
+- 6657a57c: Stop passing configuration when deploying a function
+
 ## 3.0.16
 
 ### Patch Changes

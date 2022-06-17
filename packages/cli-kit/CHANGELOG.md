@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.0.17
+
+### Patch Changes
+
+- df0d0347: Use inquirer with SHOPIFY_USE_INQUIRER
+- 6657a57c: Stop passing configuration when deploying a function
+
 ## 3.0.16
 
 ### Patch Changes
