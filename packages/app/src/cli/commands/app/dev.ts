@@ -61,7 +61,7 @@ export default class Dev extends Command {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
-    const plugins = this.config.plugins
+    const commandConfig = this.config
 
     try {
       await dev({
@@ -71,7 +71,7 @@ export default class Dev extends Command {
         reset: flags.reset,
         update: !flags['no-update'],
         skipDependenciesInstallation: flags['skip-dependencies-installation'],
-        plugins,
+        commandConfig,
         subscriptionProductUrl: flags['subscription-product-url'],
         checkoutCartUrl: flags['checkout-cart-url'],
       })
