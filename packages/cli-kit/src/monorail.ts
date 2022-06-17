@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {version} from '../../package.json'
-import {environment, http, os, output, path, ruby, store} from '@shopify/cli-kit'
+import * as environment from './environment'
+import {fetch} from './http'
+import {platformAndArch} from './os'
+import {debug} from './output'
+import {resolve} from './path'
+import {version as rubyVersion} from './ruby'
+import {getAppInfo} from './store'
+import {cliVersion} from './version'
 
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -14,11 +20,11 @@ export const reportEvent = async (command: string, args: string[]) => {
     const body = JSON.stringify(payload)
     const headers = buildHeaders(currentTime)
 
-    const response = await http.fetch(url, {method: 'POST', body, headers})
+    const response = await fetch(url, {method: 'POST', body, headers})
     if (response.status === 200) {
-      output.debug(`Analytics event sent: ${body}`)
+      debug(`Analytics event sent: ${body}`)
     } else {
-      output.debug(`Failed to report usage analytics: ${response.statusText}`)
+      debug(`Failed to report usage analytics: ${response.statusText}`)
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -26,7 +32,7 @@ export const reportEvent = async (command: string, args: string[]) => {
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
     }
-    output.debug(message)
+    debug(message)
   }
 }
 
@@ -42,10 +48,10 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
   let directory = process.cwd()
   const pathFlagIndex = args.indexOf('--path')
   if (pathFlagIndex >= 0) {
-    directory = path.resolve(args[pathFlagIndex + 1])
+    directory = resolve(args[pathFlagIndex + 1])
   }
-  const appInfo = store.getAppInfo(directory)
-  const {platform, arch} = os.platformAndArch()
+  const appInfo = getAppInfo(directory)
+  const {platform, arch} = platformAndArch()
 
   const rawPartnerId = appInfo?.orgId
   let partnerIdAsInt: number | undefined
@@ -67,8 +73,8 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
       total_time: 0,
       success: true,
       uname: `${platform} ${arch}`,
-      cli_version: version,
-      ruby_version: (await ruby.version()) || '',
+      cli_version: cliVersion(),
+      ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
       api_key: appInfo?.appId,
