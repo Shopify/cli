@@ -140,12 +140,13 @@ async function uploadFunctionExtension(
   const {url, headers} = await getFunctionExtensionUploadURL({apiKey: options.apiKey, token: options.token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = fs.readFileSync(extension.buildWasmPath, 'binary')
+  const functionContent = fs.readFileSync(extension.buildWasmPath(), 'binary')
   await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const query = api.graphql.AppFunctionSetMutation
   const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
   const schemaMajorVersion = schemaVersions?.major
   const schemaMinorVersion = schemaVersions?.minor
+
   const variables: api.graphql.AppFunctionSetVariables = {
     uuid: options.identifier,
     extensionPointName: getFunctionExtensionPointName(extension.configuration.type),

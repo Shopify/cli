@@ -89,11 +89,14 @@ const EXTENSION_C: FunctionExtension = {
     type: 'product_discounts',
     description: 'Function',
     version: '1',
-    buildWasmPath: 'dist/index.wasm',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
     metaObject: {},
     configurationUi: false,
   },
-  buildWasmPath: '/function/dist/index.wasm',
+  buildWasmPath: () => '/function/dist/index.wasm',
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {

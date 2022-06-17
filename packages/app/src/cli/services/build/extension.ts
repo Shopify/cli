@@ -4,20 +4,6 @@ import {extensionConfig} from '../../utilities/extensions/configuration'
 import {error, ruby, system, yaml} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
-export const MissingBuildCommandError = (extensionIdentifier: string) => {
-  return new error.Abort(
-    `The function extension ${extensionIdentifier} doesn't have a build command or it's empty`,
-    `
-Edit the shopify.function.extension.toml configuration file and set how to build the extension.
-
-[commands]
-build = "{COMMAND}"
-
-Note that the command must output a dist/index.wasm file.
-  `,
-  )
-}
-
 export interface ExtensionBuildOptions {
   /**
    * Standard output stream to send the output through.
@@ -104,7 +90,7 @@ export async function buildFunctionExtension(
   extension: FunctionExtension,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  const buildCommand = extension.configuration.commands?.build
+  const buildCommand = extension.configuration.build?.command
   if (!buildCommand || buildCommand.trim() === '') {
     options.stderr.write(
       `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
@@ -112,8 +98,8 @@ export async function buildFunctionExtension(
     options.stderr.write(`
     Edit the shopify.function.extension.toml configuration file and set how to build the extension.
 
-    [commands]
-    build = "{COMMAND}"
+    [build]
+    command = "{COMMAND}"
 
     Note that the command must output a dist/index.wasm file.
     `)
