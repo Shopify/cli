@@ -162,10 +162,12 @@ async function uploadFunctionExtension(
     schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
     configurationUi: extension.configuration.configurationUi,
     moduleUploadUrl: url,
-    appBridge: {
-      detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-      createPath: (extension.configuration.ui?.paths ?? {}).create,
-    },
+    appBridge: extension.configuration.ui?.paths
+      ? {
+          detailsPath: extension.configuration.ui.paths.details,
+          createPath: extension.configuration.ui.paths.create,
+        }
+      : undefined,
     inputQuery,
   }
   const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(

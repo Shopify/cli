@@ -15,6 +15,7 @@ export const AppFunctionSetMutation = gql`
     $moduleUploadUrl: String!
     $library: LibraryInput
     $inputQuery: String
+    $appBridge: AppBridgeInput
   ) {
     appScriptSet(
       uuid: $uuid
@@ -30,6 +31,7 @@ export const AppFunctionSetMutation = gql`
       moduleUploadUrl: $moduleUploadUrl
       library: $library
       inputQuery: $inputQuery
+      appBridge: $appBridge
     ) {
       userErrors {
         field

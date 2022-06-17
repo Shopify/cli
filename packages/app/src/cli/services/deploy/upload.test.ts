@@ -38,6 +38,12 @@ describe('uploadFunctionExtensions', () => {
           command: 'make build',
           path: 'dist/index.wasm',
         },
+        ui: {
+          paths: {
+            create: '/create',
+            details: '/details/:id',
+          },
+        },
         configurationUi: false,
       },
       configurationPath: '/function/shopify.function.extension.toml',
@@ -354,6 +360,67 @@ describe('uploadFunctionExtensions', () => {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+        },
+      )
+    })
+  })
+
+  test('appBridge is set to undefined when there is no configuration.ui.paths', async () => {
+    await temporary.directory(async (tmpDir) => {
+      extension.configuration.ui = undefined
+
+      const uploadUrl = 'url'
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+        data: {
+          moduleUploadUrlGenerate: {
+            details: {
+              headers: {},
+              humanizedMaxSize: '200',
+              url: uploadUrl,
+            },
+            userErrors: [],
+          },
+        },
+      }
+      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+        data: {
+          appScriptSet: {
+            userErrors: [],
+            appScript: {
+              uuid: 'uuid',
+              appKey: identifiers.app,
+              configSchema: {},
+              title: extension.configuration.name,
+              extensionPointName: 'PAYMENT_METHODS',
+            },
+          },
+        },
+      }
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      await uploadFunctionExtensions([extension], {token, identifiers})
+
+      // Then
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        2,
+        identifiers.app,
+        api.graphql.AppFunctionSetMutation,
+        token,
+        {
+          uuid: undefined,
+          extensionPointName: 'PAYMENT_METHODS',
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          force: true,
+          schemaMajorVersion: '1',
+          schemaMinorVersion: '0',
+          configurationUi: extension.configuration.configurationUi,
+          moduleUploadUrl: uploadUrl,
+          appBridge: undefined,
         },
       )
     })

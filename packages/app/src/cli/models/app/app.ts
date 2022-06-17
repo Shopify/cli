@@ -73,8 +73,8 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
     .object({
       paths: schema.define
         .object({
-          create: schema.define.string().optional(),
-          details: schema.define.string().optional(),
+          create: schema.define.string(),
+          details: schema.define.string(),
         })
         .optional(),
     })
