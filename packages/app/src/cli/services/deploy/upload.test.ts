@@ -182,7 +182,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -259,7 +259,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -336,7 +336,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
