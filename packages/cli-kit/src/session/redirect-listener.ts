@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-// change to named imports
 import {
   getFavicon,
   getStylesheet,
@@ -14,10 +12,11 @@ import {
 } from './post-auth'
 import {Abort, Bug} from '../error'
 import * as output from '../output'
-import http from 'http'
+import Fastify from 'fastify'
 import url from 'url'
 
 const ResponseTimeoutSeconds = 10
+const ServerStopDelaySeconds = 0.5
 
 /**
  * It represents the result of a redirect.
@@ -41,30 +40,33 @@ interface RedirectListenerOptions {
  * an HTTP server that runs and listens to the request.
  */
 export class RedirectListener {
-  private static createServer(callback: RedirectCallback): http.Server {
-    return http.createServer(async (request, response) => {
+  private static createServer(callback: RedirectCallback) {
+    const server = Fastify().get('*', async (request, reply) => {
       const requestUrl = request.url
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await getFavicon()
-        response.writeHead(200, {'Content-Type': 'image/svg+xml'}).end(faviconFile)
+        reply.header('Content-Type', 'image/svg+xml').send(faviconFile)
         return {}
       } else if (requestUrl === '/style.css') {
         const stylesheetFile = await getStylesheet()
-        response.writeHead(200, {'Content-Type': 'text/css'}).end(stylesheetFile)
+        reply.header('Content-Type', 'text/css').send(stylesheetFile)
         return {}
       }
 
-      const respond = async (file: Buffer | string, error?: Error, state?: string, code?: string) => {
-        response.writeHead(200, {'Content-Type': 'text/html'}).end(file)
-        return callback(error, state, code)
+      const respond = (contents: string, error?: Error, state?: string, code?: string) => {
+        reply.header('Content-Type', 'text/html').send(contents)
+        callback(error, state, code)
+        return {}
       }
 
+      // If there was an empty/malformed URL sent back.
       if (!requestUrl) {
         const file = await getEmptyUrlHTML()
         const err = new Bug(EmptyUrlString)
         return respond(file, err, undefined, undefined)
       }
 
+      // If an error was returned by the Identity server.
       const queryObject = url.parse(requestUrl, true).query
       if (queryObject.error && queryObject.error_description) {
         const file = await getAuthErrorHTML()
@@ -72,12 +74,14 @@ export class RedirectListener {
         return respond(file, err, undefined, undefined)
       }
 
+      // If the code isn't present in the URL.
       if (!queryObject.code) {
         const file = await getMissingCodeHTML()
         const err = new Bug(MissingCodeString)
         return respond(file, err, undefined, undefined)
       }
 
+      // If the state isn't present in the URL.
       if (!queryObject.state) {
         const file = await getMissingStateHTML()
         const err = new Bug(MissingStateString)
@@ -87,11 +91,12 @@ export class RedirectListener {
       const file = await getSuccessHTML()
       return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
+    return server
   }
 
   port: number
   host: string
-  server: http.Server
+  server: ReturnType<typeof RedirectListener.createServer>
 
   constructor(options: RedirectListenerOptions) {
     this.port = options.port
@@ -99,25 +104,12 @@ export class RedirectListener {
     this.server = RedirectListener.createServer(options.callback)
   }
 
-  async start(): Promise<void> {
-    await new Promise<void>((resolve) => {
-      this.server.listen(this.port, this.host, undefined, () => {
-        resolve()
-      })
-    })
+  start(): void {
+    this.server.listen({port: this.port, host: this.host}, () => {})
   }
 
-  async stop(): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      this.server.setTimeout(1)
-      this.server.close((error) => {
-        if (error) {
-          reject(error)
-        } else {
-          resolve()
-        }
-      })
-    })
+  stop(): void {
+    this.server.close()
   }
 }
 
@@ -127,22 +119,17 @@ export async function listenRedirect(host: string, port: number, url: string): P
       const message = '\nAuto-open timed out. Open the login page: '
       output.info(output.content`${message}${output.token.link('Log in to Shopify Partners', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
-    const redirectListener = new RedirectListener({
-      host,
-      port,
-      callback: (error, code, state) => {
-        clearTimeout(timeout)
+
+    const callback: RedirectCallback = async (error, code, state) => {
+      clearTimeout(timeout)
+      setTimeout(() => {
         redirectListener.stop()
-        if (error) {
-          reject(error)
-        } else {
-          resolve({
-            code: code as string,
-            state: state as string,
-          })
-        }
-      },
-    })
+        if (error) reject(error)
+        else resolve({code: code as string, state: state as string})
+      }, ServerStopDelaySeconds * 1000)
+    }
+
+    const redirectListener = new RedirectListener({host, port, callback})
     redirectListener.start()
   })
   return result
