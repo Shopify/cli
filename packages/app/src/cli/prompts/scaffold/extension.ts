@@ -46,7 +46,7 @@ const scaffoldExtensionPrompt = async (
   options: ScaffoldExtensionOptions,
   prompt = ui.prompt,
 ): Promise<ScaffoldExtensionOutput> => {
-  const questions: ui.Question[] = []
+  const questions: ui.Question<'name' | 'extensionType'>[] = []
   const isShopify = await environment.local.isShopify()
   const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
   if (!options.extensionType) {
