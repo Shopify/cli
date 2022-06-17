@@ -34,12 +34,15 @@ describe('uploadFunctionExtensions', () => {
         name: 'function',
         type: 'payment_methods',
         description: 'my function',
-        buildWasmPath: 'dist/index.wasm',
+        build: {
+          command: 'make build',
+          path: 'dist/index.wasm',
+        },
         configurationUi: false,
         version: '2',
       },
       configurationPath: '/function/shopify.function.extension.toml',
-      buildWasmPath: '/function/dist/index.wasm',
+      buildWasmPath: () => '/function/dist/index.wasm',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'function',
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -60,8 +63,9 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -95,8 +99,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -131,8 +135,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -208,8 +212,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -287,8 +291,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {

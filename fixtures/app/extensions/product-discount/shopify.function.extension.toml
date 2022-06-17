@@ -7,5 +7,9 @@ type = "object"
 
 [meta_object.fields]
 
-[commands]
-build = "echo 'build the wasm'"
+[build]
+command = "echo 'build the wasm'"
+
+[ui.paths]
+details = "/details"
+create = "/create"

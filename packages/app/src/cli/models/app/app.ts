@@ -64,7 +64,10 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
-  buildWasmPath: schema.define.string().optional().default('dist/index.wasm'),
+  build: schema.define.object({
+    command: schema.define.string(),
+    path: schema.define.string().optional(),
+  }),
   metaObject: schema.define.any(),
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
@@ -78,11 +81,6 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
     })
     .optional(),
   version: schema.define.string(),
-  commands: schema.define
-    .object({
-      build: schema.define.string().optional(),
-    })
-    .optional(),
 })
 
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
@@ -117,7 +115,7 @@ type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMet
 export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
   metadata: FunctionExtensionMetadata
-  buildWasmPath: string
+  buildWasmPath: () => string
 }
 
 export type ThemeExtension = Extension & {
@@ -432,7 +430,11 @@ class AppLoader {
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
-        buildWasmPath: path.join(directory, configuration.buildWasmPath),
+        buildWasmPath() {
+          return configuration.build.path
+            ? path.join(directory, configuration.build.path)
+            : path.join(directory, 'dist/index.wasm')
+        },
       }
     })
     return Promise.all(functions)
