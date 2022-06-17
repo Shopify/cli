@@ -96,6 +96,7 @@ export const deploy = async (options: DeployOptions) => {
       await deployThemeExtension({apiKey, themeExtensionConfig, themeId, token})
     }
     identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+
     app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
 
     output.success('Deployed to Shopify')
