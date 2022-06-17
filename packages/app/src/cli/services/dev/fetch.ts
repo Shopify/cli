@@ -56,7 +56,7 @@ export async function fetchOrgAndApps(orgId: string, token: string): Promise<Fet
   return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
 }
 
-export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp> {
+export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
   const res: api.graphql.FindAppQuerySchema = await api.partners.request(api.graphql.FindAppQuery, token, {apiKey})
   return res.app
 }
