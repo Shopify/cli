@@ -101,10 +101,10 @@ export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
       return 'post_purchase'
     case 'pos_ui_extension':
       return 'pos'
+    case 'product_subscription':
+      return 'admin'
     case 'web_pixel_extension':
       // This value is mandatory but is not yet defined for web_pixel
       return 'unknown'
-    case 'product_subscription':
-      return 'admin'
   }
 }
