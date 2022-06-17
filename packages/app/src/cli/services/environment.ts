@@ -5,12 +5,21 @@ import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {error as kitError, output, session, store as conf, ui, environment} from '@shopify/cli-kit'
+import {error as kitError, output, session, store as conf, ui, environment, dependency} from '@shopify/cli-kit'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
     output.content`Invalid API key: ${apiKey}`,
-    output.content`You can find the apiKey in the app settings in the Partner Dashboard.`,
+    output.content`You can find the API key in the app settings in the Partner Dashboard.`,
+  )
+}
+
+export const DeployAppNotFound = (apiKey: string, dependencyManager: dependency.DependencyManager) => {
+  return new kitError.Abort(
+    output.content`Couldn't find the app with API key ${apiKey}`,
+    output.content`• If you didn't intend to select this app, run ${
+      output.content`${output.token.packagejsonScript(dependencyManager, 'deploy', '--reset')}`.value
+    }`,
   )
 }
 
@@ -71,7 +80,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
-  let {app: selectedApp, store: selectedStore} = await dataFromInput(options, organization, stores, token)
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, organization, stores, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
@@ -167,7 +176,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       partnersApp = partnersAppResponse
       orgId = await fetchAppOrganization(identifiers.app, token)
     } else {
-      throw InvalidApiKeyError(identifiers.app)
+      throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
     }
   } else {
     const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
@@ -252,7 +261,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
  * @param input
  * @returns
  */
-async function dataFromInput(
+async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
   org: Organization,
   stores: OrganizationStore[],
@@ -263,7 +272,7 @@ async function dataFromInput(
 
   if (options.apiKey) {
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
-    if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
+    if (!selectedApp) throw InvalidApiKeyError(options.apiKey, 'dev')
   }
 
   if (options.storeFqdn) {
