@@ -16,14 +16,14 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   const templateURLMap = {
     node: 'https://github.com/Shopify/shopify-app-template-node#cli_three',
     php: 'https://github.com/Shopify/shopify-app-template-php#cli_three',
-  }
+  } as const
 
   const defaults = {
     name: haiku.generate('app'),
     template: templateURLMap.node,
-  }
+  } as const
 
-  const questions: ui.Question[] = []
+  const questions: ui.Question<'name' | 'template'>[] = []
   if (!options.name) {
     questions.push({
       type: 'input',

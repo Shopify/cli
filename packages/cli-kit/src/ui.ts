@@ -1,45 +1,95 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 import {AutoComplete} from './ui/autocomplete'
 import {Input} from './ui/input'
 import {Select} from './ui/select'
-import {Bug} from './error'
+import {Bug, AbortSilent} from './error'
 import {remove, exists} from './file'
 import {info, content, token} from './output'
 import {relative} from './path'
 import {isTerminalInteractive} from './environment/local'
+import inquirer from 'inquirer'
 
 export {Listr} from 'listr2'
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
-export interface Question {
-  type: 'input' | 'select' | 'autocomplete' | 'password'
-  name: string
+interface BaseQuestion<TName extends string> {
+  name: TName
   message: string
-  validate?: (value: string) => string | boolean
-  default?: string
   preface?: string
-  choices?: string[] | {name: string; value: string}[]
+  validate?: (value: string) => string | true
+  default?: string
   result?: (value: string) => string | boolean
 }
 
-export const prompt = async <T>(questions: Question[]): Promise<T> => {
+export type InputQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'input'
+}
+
+export type SelectQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'select'
+  choices: string[] | {name: string; value: string}[]
+}
+
+export type AutocompleteQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'autocomplete'
+  choices: string[] | {name: string; value: string}[]
+}
+
+export type PasswordQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'password'
+}
+
+export type Question<TName extends string = string> =
+  | InputQuestion<TName>
+  | SelectQuestion<TName>
+  | AutocompleteQuestion<TName>
+  | PasswordQuestion<TName>
+
+type QuestionNames<T> = T extends ReadonlyArray<BaseQuestion<infer TName>> ? TName : never
+
+type PromptResults<T> = {
+  [key in QuestionNames<T>]: string
+}
+
+export const prompt = async <
+  TName extends string & keyof TAnswers,
+  TAnswers extends {[key in TName]: string} = {[key in TName]: string},
+>(
+  questions: ReadonlyArray<Question<TName>>,
+): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
     throw new Bug(content`
 The CLI prompted in a non-interactive terminal with the following questions:
 ${token.json(questions)}
     `)
   }
-  const mappedQuestions: unknown = questions.map(mapper)
-  const value: unknown = {}
-  for (const question of mappedQuestions) {
-    if (question.preface) {
-      info(question.preface)
+
+  if (process.env.SHOPIFY_USE_INQUIRER === '1') {
+    const results = []
+    for (const question of questions) {
+      if (question.preface) {
+        info(question.preface)
+      }
+
+      const questionName = question.name
+      // eslint-disable-next-line no-await-in-loop
+      const answer = (await inquirer.prompt([question]))[questionName]
+      results.push([questionName, answer])
     }
-    // eslint-disable-next-line no-await-in-loop
-    value[question.name] = await question.run()
+
+    return Object.fromEntries(results) as TAnswers
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mappedQuestions: any[] = questions.map(mapper)
+    const value = {} as TAnswers
+    for (const question of mappedQuestions) {
+      if (question.preface) {
+        info(question.preface)
+      }
+      // eslint-disable-next-line no-await-in-loop
+      value[question.name as keyof TAnswers] = await question.run()
+    }
+    return value
   }
-  return value
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {
@@ -51,14 +101,14 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
 
     const relativeDirectory = relative(process.cwd(), directory)
 
-    const questions: Question = {
+    const questions: Question<'value'> = {
       type: 'select',
       name: 'value',
       message: `${relativeDirectory} is not an empty directory. Do you want to delete the existing files and continue?`,
       choices: options,
     }
 
-    const choice: {value: string} = await prompt([questions])
+    const choice = await prompt([questions])
 
     if (choice.value === 'abort') {
       throw new AbortSilent()
