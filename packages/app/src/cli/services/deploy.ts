@@ -156,10 +156,10 @@ async function configFor(extension: UIExtension, app: App) {
       return {metafields: extension.configuration.metafields}
     case 'pos_ui_extension':
     case 'product_subscription': {
-      const renderer = await getUIExtensionRendererVersion(type, app)
-      if (!renderer) throw RendererNotFoundBug(type)
+      const result = await getUIExtensionRendererVersion(type, app)
+      if (result === 'not_found') throw RendererNotFoundBug(type)
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      return {renderer_version: renderer.version}
+      return {renderer_version: result?.version}
     }
     case 'checkout_ui_extension': {
       return {
