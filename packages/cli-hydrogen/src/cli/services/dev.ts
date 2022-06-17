@@ -1,5 +1,5 @@
 import {createServer} from 'vite'
-import {error} from '@shopify/cli-kit'
+import {error as kitError} from '@shopify/cli-kit'
 
 interface DevOptions {
   directory: string
@@ -22,9 +22,9 @@ async function dev({directory, force, host}: DevOptions) {
     server.printUrls()
     server.config.logger.info('')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (_error: any) {
-    const abortError = new error.Abort(_error.message)
-    abortError.stack = _error.stack
+  } catch (error: any) {
+    const abortError = new kitError.Abort(error.message)
+    abortError.stack = error.stack
     throw abortError
   }
 }
