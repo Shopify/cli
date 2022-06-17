@@ -7,6 +7,7 @@ import {info, content, token} from './output'
 import {relative} from './path'
 import {isTerminalInteractive} from './environment/local'
 import inquirer from 'inquirer'
+import {isTruthy} from 'environment/utilities'
 
 export {Listr} from 'listr2'
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
@@ -58,7 +59,7 @@ ${token.json(questions)}
     `)
   }
 
-  if (debugForceInquirer || process.env.SHOPIFY_USE_INQUIRER === '1') {
+  if (debugForceInquirer || isTruthy(process.env.SHOPIFY_USE_INQUIRER)) {
     const results = []
     for (const question of questions) {
       if (question.preface) {
