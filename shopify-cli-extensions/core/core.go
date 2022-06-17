@@ -42,7 +42,7 @@ func NewExtensionService(config *Config) *ExtensionService {
 
 	service := ExtensionService{
 		App:            app,
-		Version:        "4",
+		Version:        "3",
 		Extensions:     extensions,
 		Port:           config.Port,
 		Store:          config.Store,
