@@ -65,7 +65,7 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
   return {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: 'node',
+      project_type: undefined,
       command,
       args: args.join(' '),
       time_start: currentTime,
