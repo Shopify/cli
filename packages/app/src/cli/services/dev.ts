@@ -9,7 +9,7 @@ import {
 } from '../utilities/app/http-reverse-proxy'
 import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
-import {error, monorail, output, port, system} from '@shopify/cli-kit'
+import {error, analytics, output, port, system} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
@@ -226,7 +226,7 @@ async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, ch
 async function reportEvent(): Promise<void> {
   const commandIndex = process.argv.indexOf('dev')
   const args = process.argv.slice(commandIndex + 1)
-  await monorail.reportEvent('app dev', args)
+  await analytics.reportEvent('app dev', args)
 }
 
 export default dev

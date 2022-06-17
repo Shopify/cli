@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent} from './monorail'
+import {reportEvent} from './analytics'
 import * as environment from './environment'
 import * as http from './http'
 import * as os from './os'
@@ -50,7 +50,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: 'node',
+      project_type: undefined,
       command,
       args: '',
       time_start: 1643709600000,
@@ -91,7 +91,7 @@ it('makes an API call to Monorail with the expected payload with cached app info
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: 'node',
+      project_type: undefined,
       command,
       args: '--path fixtures/app',
       time_start: currentDate.getTime(),

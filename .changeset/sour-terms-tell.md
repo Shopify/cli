@@ -5,4 +5,4 @@
 '@shopify/create-hydrogen': patch
 ---
 
-Report events with the monorail helper from cli-kit
+Report events with the analytics helper from cli-kit
