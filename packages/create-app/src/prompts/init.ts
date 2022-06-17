@@ -16,6 +16,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   const templateURLMap = {
     node: 'https://github.com/Shopify/shopify-app-template-node#cli_three',
     php: 'https://github.com/Shopify/shopify-app-template-php#cli_three',
+    ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
   } as const
 
   const defaults = {

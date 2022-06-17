@@ -1,4 +1,4 @@
-import {FunctionExtension, Identifiers} from '../../models/app/app'
+import {FunctionExtension, Identifiers, IdentifiersExtensions} from '../../models/app/app'
 import {getFunctionExtensionPointName} from '../../constants'
 import {api, error, session, http, id, output} from '@shopify/cli-kit'
 
@@ -102,26 +102,28 @@ export async function uploadFunctionExtensions(
   options: UploadFunctionExtensionsOptions,
 ): Promise<Identifiers> {
   let identifiers = options.identifiers
-  // eslint-disable-next-line require-atomic-updates
+
+  const functionUUIDs: IdentifiersExtensions = {}
+
+  // Functions are uploaded sequentially to avoid reaching the API limit
+  for (const extension of extensions) {
+    // eslint-disable-next-line no-await-in-loop
+    const remoteIdentifier = await uploadFunctionExtension(extension, {
+      apiKey: options.identifiers.app,
+      token: options.token,
+      identifier: identifiers.extensions[extension.localIdentifier],
+    })
+    functionUUIDs[extension.localIdentifier] = remoteIdentifier
+  }
+
   identifiers = {
     ...identifiers,
     extensions: {
       ...identifiers.extensions,
-      ...Object.fromEntries(
-        await Promise.all(
-          extensions.map(async (extension) => {
-            const identifierKey = extension.localIdentifier
-            const remoteIdentifier = await uploadFunctionExtension(extension, {
-              apiKey: options.identifiers.app,
-              token: options.token,
-              identifier: identifiers.extensions[extension.localIdentifier],
-            })
-            return [identifierKey, remoteIdentifier]
-          }),
-        ),
-      ),
+      ...functionUUIDs,
     },
   }
+
   return identifiers
 }
 

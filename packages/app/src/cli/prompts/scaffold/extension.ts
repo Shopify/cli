@@ -7,9 +7,9 @@ import {
   uiExtensions,
   isUiExtensionType,
   isFunctionExtensionType,
-  uiExtensionTemplates,
   functionExtensionTemplates,
 } from '../../constants'
+import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration'
 import {haiku, ui, environment} from '@shopify/cli-kit'
 
 interface ScaffoldExtensionOptions {
@@ -28,7 +28,7 @@ interface ScaffoldExtensionOutput {
 export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   let choices: {name: string; value: string}[] = []
   if (isUiExtensionType(extensionType)) {
-    choices = choices.concat(uiExtensionTemplates)
+    choices = choices.concat(getUIExtensionTemplates(extensionType))
   }
   if (isFunctionExtensionType(extensionType)) {
     choices = choices.concat(functionExtensionTemplates)
@@ -54,7 +54,9 @@ const scaffoldExtensionPrompt = async (
       (type) => !options.extensionTypesAlreadyAtQuota.includes(type),
     )
     if (options.extensionFlavor) {
-      relevantExtensionTypes = relevantExtensionTypes.filter(isUiExtensionType)
+      relevantExtensionTypes = relevantExtensionTypes.filter((relevantExtensionType) =>
+        isValidUIExtensionTemplate(relevantExtensionType, options.extensionFlavor),
+      )
     }
     questions.push({
       type: 'select',

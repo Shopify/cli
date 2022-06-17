@@ -1,7 +1,7 @@
 import {nodeExtensionsCLIPath} from './cli'
 import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
+import {UIExtensionTypes} from '../../constants'
 import {error, path} from '@shopify/cli-kit'
-import {UIExtensionTypes} from 'cli/constants'
 
 const RendererNotFoundBug = (extension: string) => {
   return new error.Bug(
@@ -32,8 +32,8 @@ export interface ExtensionConfigOptions {
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
     options.extensions.map(async (extension) => {
-      const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
-      if (!renderer) throw RendererNotFoundBug(extension.configuration.type)
+      const result = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
+      if (result === 'not_found') throw RendererNotFoundBug(extension.configuration.type)
       return {
         uuid: extension.devUUID,
         title: extension.configuration.name,
@@ -43,8 +43,8 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         extension_points: extension.configuration.extensionPoints || [],
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
+        version: result?.version,
         development: {
-          version: '1.0.0',
           // eslint-disable-next-line @typescript-eslint/naming-convention
           root_dir: path.relative(options.app.directory, extension.directory),
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -54,7 +54,6 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           entries: {
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
-          renderer,
           resource: options.includeResourceURL
             ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,
