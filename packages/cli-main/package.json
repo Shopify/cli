@@ -96,8 +96,7 @@
       "-h"
     ],
     "hooks": {
-      "postrun": "dist/hooks/postrun",
-      "monorail": "dist/hooks/monorail"
+      "postrun": "dist/hooks/postrun"
     }
   }
 }
