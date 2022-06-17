@@ -85,10 +85,6 @@ export interface GithubRepoReference {
 
 export function parseGithubRepoReference(src: string): GithubRepoReference {
   const url = new URL(src)
-  if (url.origin !== 'https://github.com') {
-    throw new Abort('Only GitHub repository references are supported.')
-  }
-
   const branch = url.hash ? url.hash.slice(1) : undefined
   const [_, user, repo, ...repoPath] = url.pathname.split('/')
   const filePath = repoPath.length > 0 ? repoPath.join('/') : undefined

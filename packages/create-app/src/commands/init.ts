@@ -1,7 +1,7 @@
-import initPrompt from '../prompts/init'
+import initPrompt, {templateURLMap} from '../prompts/init'
 import initService from '../services/init'
 import {Command, Flags} from '@oclif/core'
-import {path, cli} from '@shopify/cli-kit'
+import {path, cli, error, output} from '@shopify/cli-kit'
 
 export default class Init extends Command {
   static flags = {
@@ -18,8 +18,9 @@ export default class Init extends Command {
       hidden: false,
     }),
     template: Flags.string({
-      description:
-        'The app template. Accepts any GitHub repo with optional branch and subpath. Eg, --template https://github.com/Shopify/<repository>/[subpath]#[branch]',
+      description: `The app template. Accepts one of the following:
+       - <${Object.keys(templateURLMap).join('|')}>
+       - Any GitHub repo with optional branch and subpath eg: https://github.com/Shopify/<repository>/[subpath]#[branch]`,
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -40,10 +41,14 @@ export default class Init extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+
+    this.validateTemplateValue(flags.template)
+
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
     })
+
     await initService({
       name: promptAnswers.name,
       dependencyManager: flags['dependency-manager'],
@@ -51,5 +56,36 @@ export default class Init extends Command {
       local: flags.local,
       directory,
     })
+  }
+
+  validateTemplateValue(template: string | undefined) {
+    if (!template) {
+      return
+    }
+
+    const url = this.parseURL(template)
+
+    if (url && url.origin !== 'https://github.com') {
+      throw new error.Abort(
+        'Only GitHub repository references are supported. eg: https://github.com/Shopify/<repository>/[subpath]#[branch]',
+      )
+    }
+
+    if (!url && !Object.keys(templateURLMap).includes(template)) {
+      throw new error.Abort(
+        output.content`Only ${output.token.yellow(
+          Object.keys(templateURLMap).join(', '),
+        )} template alias are supported`,
+      )
+    }
+  }
+
+  parseURL(url: string): URL | undefined {
+    try {
+      return new URL(url)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return undefined
+    }
   }
 }
