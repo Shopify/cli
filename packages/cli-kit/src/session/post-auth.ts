@@ -66,6 +66,4 @@ export const MissingCodeString = "The authentication can't continue because the 
 
 export const MissingStateString = "The authentication can't continue because the redirect doesn't include the state."
 
-export const RedirectPageAssetNotFoundError = () => {
-  return new Bug(`Redirect page asset not found`)
-}
+export const RedirectPageAssetNotFoundError = () => new Bug(`Redirect page asset not found`)
