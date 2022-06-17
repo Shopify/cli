@@ -175,7 +175,7 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.ModuleUploadUrlGenerateMutation,
         token,
       )
-      expect(http.fetch).toHaveBeenCalled
+      expect(http.fetch).toHaveBeenCalled()
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
@@ -247,7 +247,7 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.ModuleUploadUrlGenerateMutation,
         token,
       )
-      expect(http.fetch).toHaveBeenCalled
+      expect(http.fetch).toHaveBeenCalled()
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
@@ -319,7 +319,7 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.ModuleUploadUrlGenerateMutation,
         token,
       )
-      expect(http.fetch).toHaveBeenCalled
+      expect(http.fetch).toHaveBeenCalled()
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
