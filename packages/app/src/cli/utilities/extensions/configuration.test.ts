@@ -116,6 +116,10 @@ describe('extensionConfig', () => {
               main: 'src/index.js',
             },
             resource: {url: 'invalid_url'},
+            renderer: {
+              name: 'renderer-name',
+              version: '2.1.5',
+            },
           },
           // eslint-disable-next-line @typescript-eslint/naming-convention
           capabilities: {network_access: true},

@@ -43,6 +43,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         extension_points: extension.configuration.extensionPoints || [],
         // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
+        surface: getUIExtensionSurface(extension.configuration.type),
         version: renderer?.version,
         development: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -89,5 +90,21 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
       return {url: 'invalid_url'}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl}
+  }
+}
+
+export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
+  switch (uiExtensionType) {
+    case 'checkout_ui_extension':
+      return 'checkout'
+    case 'checkout_post_purchase':
+      return 'post_purchase'
+    case 'pos_ui_extension':
+      return 'pos'
+    case 'web_pixel_extension':
+      // This value is mandatory but is not yet defined for web_pixel
+      return 'unknown'
+    case 'product_subscription':
+      return 'admin'
   }
 }
