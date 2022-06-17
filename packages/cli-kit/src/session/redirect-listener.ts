@@ -1,6 +1,17 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 // change to named imports
-import * as postAuth from './post-auth'
+import {
+  getFavicon,
+  getStylesheet,
+  getEmptyUrlHTML,
+  getAuthErrorHTML,
+  getMissingCodeHTML,
+  getMissingStateHTML,
+  getSuccessHTML,
+  EmptyUrlString,
+  MissingCodeString,
+  MissingStateString,
+} from './post-auth'
 import {Abort, Bug} from '../error'
 import * as output from '../output'
 import http from 'http'
@@ -34,47 +45,46 @@ export class RedirectListener {
     return http.createServer(async (request, response) => {
       const requestUrl = request.url
       if (requestUrl === '/favicon.svg') {
-        const faviconFile = await postAuth.getFavicon()
+        const faviconFile = await getFavicon()
         response.writeHead(200, {'Content-Type': 'image/svg+xml'}).end(faviconFile)
         return {}
       } else if (requestUrl === '/style.css') {
-        const stylesheetFile = await postAuth.getStylesheet()
+        const stylesheetFile = await getStylesheet()
         response.writeHead(200, {'Content-Type': 'text/css'}).end(stylesheetFile)
         return {}
       }
 
       const respond = async (file: Buffer | string, error?: Error, state?: string, code?: string) => {
-        output.info(`Responding to ${requestUrl}`)
         response.writeHead(200, {'Content-Type': 'text/html'}).end(file)
         return callback(error, state, code)
       }
 
       if (!requestUrl) {
-        const file = await postAuth.getEmptyUrlHTML()
-        const err = new Bug(postAuth.EmptyUrlString)
+        const file = await getEmptyUrlHTML()
+        const err = new Bug(EmptyUrlString)
         return respond(file, err, undefined, undefined)
       }
 
       const queryObject = url.parse(requestUrl, true).query
       if (queryObject.error && queryObject.error_description) {
-        const file = await postAuth.getAuthErrorHTML()
+        const file = await getAuthErrorHTML()
         const err = new Abort(`${queryObject.error_description}`)
         return respond(file, err, undefined, undefined)
       }
 
       if (!queryObject.code) {
-        const file = await postAuth.getMissingCodeHTML()
-        const err = new Bug(postAuth.MissingCodeString)
+        const file = await getMissingCodeHTML()
+        const err = new Bug(MissingCodeString)
         return respond(file, err, undefined, undefined)
       }
 
       if (!queryObject.state) {
-        const file = await postAuth.getMissingStateHTML()
-        const err = new Bug(postAuth.MissingStateString)
+        const file = await getMissingStateHTML()
+        const err = new Bug(MissingStateString)
         return respond(file, err, undefined, undefined)
       }
 
-      const file = await postAuth.getSuccessHTML()
+      const file = await getSuccessHTML()
       return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
   }
