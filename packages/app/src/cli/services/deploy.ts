@@ -21,7 +21,7 @@ import {
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
 import {validateExtensions} from '../validators/extensions'
-import {path, output, temporary, file, error} from '@shopify/cli-kit'
+import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
 import {OrganizationApp} from 'cli/models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
@@ -106,7 +106,7 @@ export const deploy = async (options: DeployOptions) => {
   })
 }
 
-function outputCompletionMessage({
+async function outputCompletionMessage({
   app,
   partnersApp,
   partnersOrganizationId,
@@ -132,22 +132,20 @@ function outputCompletionMessage({
   app.extensions.function.forEach(outputDeployedAndLivedMessage)
 
   output.newline()
-  const outputNextStep = (extension: Extension) => {
+  const outputNextStep = async (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
         return registration.uuid === identifiers.extensions[extension.localIdentifier]
       })?.id ?? ''
-    output.info(
-      output.content`    · Publish ${output.token.link(
-        extension.localIdentifier,
-        getExtensionPublishURL({extension, partnersApp, partnersOrganizationId, extensionId}),
-      )}`,
-    )
+    return output.content`    · Publish ${output.token.link(
+      extension.localIdentifier,
+      await getExtensionPublishURL({extension, partnersApp, partnersOrganizationId, extensionId}),
+    )}`
   }
   if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
     output.info('  Next steps in Shopify Partners:')
-    app.extensions.ui.forEach(outputNextStep)
-    app.extensions.theme.forEach(outputNextStep)
+    const lines = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
+    lines.forEach(output.info)
   }
 }
 
@@ -186,7 +184,7 @@ async function configFor(extension: UIExtension, app: App) {
   }
 }
 
-function getExtensionPublishURL({
+async function getExtensionPublishURL({
   extension,
   partnersApp,
   partnersOrganizationId,
@@ -196,7 +194,8 @@ function getExtensionPublishURL({
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   partnersOrganizationId: string
   extensionId: string
-}): string {
+}): Promise<string> {
+  const partnersFqdn = await environment.fqdn.partners()
   if (isUiExtensionType(extension.type)) {
     /**
      * The source of truth for UI extensions' slugs is the client-side
@@ -217,11 +216,11 @@ function getExtensionPublishURL({
         pathComponent = 'web_pixel'
         break
     }
-    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
+    return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
   } else if (isFunctionExtensionType(extension.type)) {
-    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions`
+    return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions`
   } else if (isThemeExtensionType(extension.type)) {
-    return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/theme_app_extension/${extensionId}`
+    return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/theme_app_extension/${extensionId}`
   } else {
     return ''
   }
