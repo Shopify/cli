@@ -70,39 +70,49 @@ export const deploy = async (options: DeployOptions) => {
   if (themeExtension) themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
 
   await temporary.directory(async (tmpDir) => {
-    const bundlePath = path.join(tmpDir, `bundle.zip`)
-    await file.mkdir(path.dirname(bundlePath))
-    const bundle = app.extensions.ui.length !== 0
-    await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
+    try {
+      const bundlePath = path.join(tmpDir, `bundle.zip`)
+      await file.mkdir(path.dirname(bundlePath))
+      const bundle = app.extensions.ui.length !== 0
+      await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
 
-    output.newline()
-    output.info(`Running validation…`)
+      output.newline()
+      output.info(`Running validation…`)
 
-    await validateExtensions(app)
+      await validateExtensions(app)
 
-    output.newline()
-    output.info(`Pushing your code to Shopify…`)
-    output.newline()
+      output.newline()
+      output.info(`Pushing your code to Shopify…`)
+      output.newline()
 
-    if (bundle) {
+      if (bundle) {
+        /**
+         * The bundles only support UI extensions for now so we only need bundle and upload
+         * the bundle if the app has UI extensions.
+         */
+        await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+      }
+      if (themeExtension) {
+        const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+        await deployThemeExtension({apiKey, themeExtensionConfig, themeId, token})
+      }
+      identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+      app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
+
+      output.success('Deployed to Shopify')
+
+      const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
+
+      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations})
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       /**
-       * The bundles only support UI extensions for now so we only need bundle and upload
-       * the bundle if the app has UI extensions.
+       * If deployment fails when uploading we want the identifiers to be persisted
+       * for the next run.
        */
-      await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+      await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
+      throw error
     }
-    if (themeExtension) {
-      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
-      await deployThemeExtension({apiKey, themeExtensionConfig, themeId, token})
-    }
-    identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
-    app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
-
-    output.success('Deployed to Shopify')
-
-    const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
-
-    outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations})
   })
 }
 
