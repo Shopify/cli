@@ -214,7 +214,7 @@ function getExtensionPublishURL({
         pathComponent = 'post_purchase'
         break
       case 'web_pixel_extension':
-        pathComponent = 'beacon_extension'
+        pathComponent = 'web_pixel'
         break
     }
     return `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
