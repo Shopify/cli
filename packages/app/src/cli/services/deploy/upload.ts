@@ -145,7 +145,7 @@ async function uploadFunctionExtension(
     inputQuery = await file.read(extension.inputQueryPath())
   }
 
-  const functionContent = fs.readFileSync(extension.buildWasmPath(), 'binary')
+  const functionContent = fs.readFileSync(extension.buildWasmPath())
   await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const query = api.graphql.AppFunctionSetMutation
   const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
