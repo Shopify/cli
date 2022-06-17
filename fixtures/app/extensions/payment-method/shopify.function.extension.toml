@@ -4,7 +4,7 @@ version = "2"
 configuration_ui = true
 
 [commands]
-build = "echo 'building'"
+build = "echo 'build the wasm'"
 
 [meta_object]
 type = "object"
