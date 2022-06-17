@@ -62,7 +62,7 @@ func TestInitializeWithProvidedConfigOptions(t *testing.T) {
 		t.Errorf("Expected 3 extension got %d", len(api.Extensions))
 	}
 
-	if api.Version != "4" {
+	if api.Version != "3" {
 		t.Errorf("expect service version to be 4 but got %s", api.Version)
 	}
 
