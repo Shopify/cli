@@ -126,11 +126,18 @@ class AppLoader {
       server: {middlewareMode: 'ssr'},
     })
 
-    const config = (await server.ssrLoadModule(filepath)).default
+    try {
+      const config = (await server.ssrLoadModule(filepath)).default
 
-    await server.close()
+      await server.close()
 
-    return config
+      return config
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (_error: any) {
+      const abortError = new error.Abort(_error.message)
+      abortError.stack = _error.stack
+      throw abortError
+    }
   }
 
   abortOrReport<T>(errorMessage: string, fallback: T, configurationPath: string): T {
