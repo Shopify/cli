@@ -272,7 +272,7 @@ async function fetchDevDataFromOptions(
 
   if (options.apiKey) {
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
-    if (!selectedApp) throw InvalidApiKeyError(options.apiKey, 'dev')
+    if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
   }
 
   if (options.storeFqdn) {
