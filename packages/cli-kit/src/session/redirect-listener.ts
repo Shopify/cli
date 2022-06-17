@@ -11,7 +11,7 @@ import {
   MissingStateString,
 } from './post-auth'
 import {Abort, Bug} from '../error'
-import {info} from '../output'
+import {content, info, token} from '../output'
 import Fastify from 'fastify'
 import url from 'url'
 
@@ -117,7 +117,7 @@ export async function listenRedirect(host: string, port: number, url: string): P
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
       const message = '\nAuto-open timed out. Open the login page: '
-      info(output.content`${message}${output.token.link('Log in to Shopify Partners', url)}\n`)
+      info(content`${message}${token.link('Log in to Shopify Partners', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
 
     const callback: RedirectCallback = async (error, code, state) => {
