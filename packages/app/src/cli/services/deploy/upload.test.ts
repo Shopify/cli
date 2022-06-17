@@ -175,7 +175,12 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.ModuleUploadUrlGenerateMutation,
         token,
       )
-      expect(http.fetch).toHaveBeenCalled()
+      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+        body: Buffer.from(''),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        headers: {'Content-Type': 'application/wasm'},
+        method: 'PUT',
+      })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
@@ -247,7 +252,12 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.ModuleUploadUrlGenerateMutation,
         token,
       )
-      expect(http.fetch).toHaveBeenCalled()
+      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+        body: Buffer.from(''),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        headers: {'Content-Type': 'application/wasm'},
+        method: 'PUT',
+      })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
@@ -319,7 +329,12 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.ModuleUploadUrlGenerateMutation,
         token,
       )
-      expect(http.fetch).toHaveBeenCalled()
+      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+        body: Buffer.from(''),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        headers: {'Content-Type': 'application/wasm'},
+        method: 'PUT',
+      })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
