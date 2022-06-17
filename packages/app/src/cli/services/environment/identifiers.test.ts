@@ -97,7 +97,7 @@ const EXTENSION_C: FunctionExtension = {
     configurationUi: false,
   },
   buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.query',
+  inputQueryPath: () => '/function/input.graphql',
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {

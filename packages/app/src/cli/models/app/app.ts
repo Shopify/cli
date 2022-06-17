@@ -437,7 +437,7 @@ class AppLoader {
             : path.join(directory, 'dist/index.wasm')
         },
         inputQueryPath() {
-          return path.join(directory, 'input.query')
+          return path.join(directory, 'input.graphql')
         },
       }
     })
