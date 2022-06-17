@@ -68,7 +68,6 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
     command: schema.define.string(),
     path: schema.define.string().optional(),
   }),
-  metaObject: schema.define.any(),
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
@@ -80,7 +79,6 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
         .optional(),
     })
     .optional(),
-  version: schema.define.string(),
 })
 
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
