@@ -132,7 +132,6 @@ function outputCompletionMessage({
   app.extensions.function.forEach(outputDeployedAndLivedMessage)
 
   output.newline()
-  output.info('  Next steps in Shopify Partners:')
   const outputNextStep = (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
@@ -145,8 +144,11 @@ function outputCompletionMessage({
       )}`,
     )
   }
-  app.extensions.ui.forEach(outputNextStep)
-  app.extensions.theme.forEach(outputNextStep)
+  if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
+    output.info('  Next steps in Shopify Partners:')
+    app.extensions.ui.forEach(outputNextStep)
+    app.extensions.theme.forEach(outputNextStep)
+  }
 }
 
 async function configFor(extension: UIExtension, app: App) {
