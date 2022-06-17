@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+// change to named imports
 import * as postAuth from './post-auth'
 import {Abort, Bug} from '../error'
 import * as output from '../output'
@@ -31,7 +32,6 @@ interface RedirectListenerOptions {
 export class RedirectListener {
   private static createServer(callback: RedirectCallback): http.Server {
     return http.createServer(async (request, response) => {
-      if (!postAuth.areFilesLoaded()) await postAuth.loadFiles()
       const requestUrl = request.url
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await postAuth.getFavicon()
@@ -43,7 +43,7 @@ export class RedirectListener {
         return {}
       }
 
-      const respond = async (file: Buffer, error?: Error, state?: string, code?: string) => {
+      const respond = async (file: Buffer | string, error?: Error, state?: string, code?: string) => {
         output.info(`Responding to ${requestUrl}`)
         response.writeHead(200, {'Content-Type': 'text/html'}).end(file)
         return callback(error, state, code)
