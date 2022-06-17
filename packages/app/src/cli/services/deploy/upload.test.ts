@@ -43,6 +43,7 @@ describe('uploadFunctionExtensions', () => {
       },
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: () => '/function/dist/index.wasm',
+      inputQueryPath: () => '/function/input.query',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'function',
       // eslint-disable-next-line @typescript-eslint/naming-convention

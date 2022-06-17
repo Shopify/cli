@@ -116,6 +116,7 @@ export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
   metadata: FunctionExtensionMetadata
   buildWasmPath: () => string
+  inputQueryPath: () => string
 }
 
 export type ThemeExtension = Extension & {
@@ -434,6 +435,9 @@ class AppLoader {
           return configuration.build.path
             ? path.join(directory, configuration.build.path)
             : path.join(directory, 'dist/index.wasm')
+        },
+        inputQueryPath() {
+          return path.join(directory, 'input.query')
         },
       }
     })

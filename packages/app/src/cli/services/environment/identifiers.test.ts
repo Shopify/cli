@@ -97,6 +97,7 @@ const EXTENSION_C: FunctionExtension = {
     configurationUi: false,
   },
   buildWasmPath: () => '/function/dist/index.wasm',
+  inputQueryPath: () => '/function/input.query',
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {

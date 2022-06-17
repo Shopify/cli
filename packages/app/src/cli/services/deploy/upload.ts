@@ -1,6 +1,6 @@
 import {FunctionExtension, Identifiers, IdentifiersExtensions} from '../../models/app/app'
 import {getFunctionExtensionPointName} from '../../constants'
-import {api, error, session, http, id, output} from '@shopify/cli-kit'
+import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
 
@@ -140,6 +140,11 @@ async function uploadFunctionExtension(
   const {url, headers} = await getFunctionExtensionUploadURL({apiKey: options.apiKey, token: options.token})
   headers['Content-Type'] = 'application/wasm'
 
+  let inputQuery: string | undefined
+  if (await file.exists(extension.inputQueryPath())) {
+    inputQuery = await file.read(extension.inputQueryPath())
+  }
+
   const functionContent = fs.readFileSync(extension.buildWasmPath(), 'binary')
   await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const query = api.graphql.AppFunctionSetMutation
@@ -163,6 +168,7 @@ async function uploadFunctionExtension(
       detailsPath: (extension.configuration.ui?.paths ?? {}).details,
       createPath: (extension.configuration.ui?.paths ?? {}).create,
     },
+    inputQuery,
   }
   const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(
     options.apiKey,
