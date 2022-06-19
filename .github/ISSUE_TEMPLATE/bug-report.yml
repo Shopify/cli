@@ -8,12 +8,12 @@ body:
       value: |-
         Hi! 👋 Thanks for taking the time to open an issue.
 
-        ## Before you begin
+        ## 📝 Before you begin
   - type: checkboxes
     id: preflight_checks
     attributes:
       label: |-
-        📝 Please confirm that you have:
+        Please confirm that you have:
       options:
         - label: Searched [existing issues](https://github.com/Shopify/shopify-cli-next/issues) to see if your issue is a duplicate. (If you’ve found a duplicate issue, feel free to add additional information in a comment on it.)
           required: true
