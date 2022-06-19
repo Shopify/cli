@@ -3,7 +3,7 @@ import {Fatal, Bug} from './error'
 import {isUnitTest, isVerbose} from './environment/local'
 import constants from './constants'
 import {DependencyManager} from './dependency'
-import {append as fileAppend} from './file'
+import {append as fileAppend, read as fileRead, size as fileSize, write as fileWrite} from './file'
 import {join as pathJoin, relativize as relativizePath} from './path'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
@@ -486,9 +486,37 @@ function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) =
   logToFile(message, logLevel.toUpperCase())
 }
 
+let logsClearing = false
+let writesActive = false
+let toAppendToLogfile: string[] = []
+
 function logToFile(message: string, logLevel: string): void {
   const timestamp = new Date().toISOString()
-  fileAppend(logFile, `[${timestamp} ${logLevel}]: ${message}\n`)
+  toAppendToLogfile.push(`[${timestamp} ${logLevel}]: ${message}\n`)
+  rotateLogFileAndKickoffWrites()
+}
+
+async function rotateLogFileAndKickoffWrites(): Promise<void> {
+  if (!writesActive) await clearLogs()
+  flushToLogFile()
+}
+
+function flushToLogFile() {
+  let lines: string[] = []
+  ;[lines, toAppendToLogfile] = [toAppendToLogfile, lines]
+  fileAppend(logFile, lines.join('\n'))
+}
+
+async function clearLogs() {
+  if (logsClearing) return
+  logsClearing = true
+  if ((await fileSize(logFile)) > 5 * 1024 * 1024) {
+    const contents = await fileRead(logFile)
+    const splitContents = contents.split('\n')
+    const newContents = splitContents.slice(1000, splitContents.length).join('\n')
+    await fileWrite(logFile, newContents)
+  }
+  writesActive = true
 }
 
 function withOrWithoutStyle(message: string): string {
