@@ -36,6 +36,11 @@ export async function read(path: string, options: object = {encoding: 'utf-8'}):
   return content
 }
 
+export function readSync(path: string, options: object = {encoding: 'utf-8'}): string {
+  const content = fs.readFileSync(path, options)
+  return content.toString()
+}
+
 /**
  * Copies a file
  * @param from {string} Path to the directory or file to be copied.
@@ -51,6 +56,10 @@ export async function touch(path: string): Promise<void> {
 
 export async function write(path: string, data: string): Promise<void> {
   await fs.writeFile(path, data)
+}
+
+export function writeSync(path: string, data: string): void {
+  fs.writeFileSync(path, data)
 }
 
 export async function append(path: string, data: string): Promise<void> {
@@ -80,6 +89,10 @@ export async function isDirectory(path: string): Promise<boolean> {
 
 export async function size(path: string): Promise<number> {
   return (await fs.stat(path)).size
+}
+
+export function sizeSync(path: string): number {
+  return fs.statSync(path).size
 }
 
 /**
