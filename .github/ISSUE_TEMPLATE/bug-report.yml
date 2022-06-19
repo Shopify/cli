@@ -35,6 +35,7 @@ body:
         - Function
         - Theme
         - Other
+      multiple: true
     validations:
       required: true
   - type: textarea
