@@ -19,7 +19,7 @@ body:
         - Hydrogen custom storefront
         - Function
         - Theme
-        - Local development experience
+        - Running your code locally
         - Deployment
         - Other
       multiple: true
