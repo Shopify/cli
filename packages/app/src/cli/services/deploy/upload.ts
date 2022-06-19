@@ -1,8 +1,50 @@
-import {FunctionExtension, Identifiers, IdentifiersExtensions} from '../../models/app/app'
+import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config'
+import {FunctionExtension, Identifiers, IdentifiersExtensions, ThemeExtension} from '../../models/app/app'
 import {getFunctionExtensionPointName} from '../../constants'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
+
+interface DeployThemeExtensionOptions {
+  /** The application API key */
+  apiKey: string
+
+  /** Set of local identifiers */
+  identifiers: Identifiers
+
+  /** The token to send authenticated requests to the partners' API  */
+  token: string
+}
+
+/**
+ * Uploads theme extension(s)
+ * @param options {DeployThemeExtensionOptions} The upload options
+ */
+
+export async function uploadThemeExtensions(
+  themeExtensions: ThemeExtension[],
+  options: DeployThemeExtensionOptions,
+): Promise<void> {
+  const {apiKey, identifiers, token} = options
+  await Promise.all(
+    themeExtensions.map(async (themeExtension) => {
+      const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+      const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
+        apiKey,
+        config: JSON.stringify(themeExtensionConfig),
+        context: undefined,
+        registrationId: themeId,
+      }
+      const mutation = api.graphql.ExtensionUpdateDraftMutation
+      const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
+      if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+        const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+        throw new error.Abort(errors)
+      }
+    }),
+  )
+}
 
 interface UploadUIExtensionsBundleOptions {
   /** The application API key */
@@ -44,7 +86,7 @@ export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundle
 
   const mutation = api.graphql.CreateDeployment
   const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
-  if (result.deploymentCreate && result.deploymentCreate.userErrors && result.deploymentCreate.userErrors.length > 0) {
+  if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
@@ -66,11 +108,7 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
   }
 
   const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.request(mutation, token, variables)
-  if (
-    result.deploymentGenerateSignedUploadUrl &&
-    result.deploymentGenerateSignedUploadUrl.userErrors &&
-    result.deploymentGenerateSignedUploadUrl.userErrors.length > 0
-  ) {
+  if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
