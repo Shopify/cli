@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest a new feature, or changes to an existing one
-title: "[Feature]: <YOUR FEATURE>"
+title: "✨ [Feature]: <YOUR FEATURE>"
 labels: ["enhancement"]
 body:
   - type: markdown
@@ -12,13 +12,15 @@ body:
   - type: dropdown
     id: app_type
     attributes:
-      label: What type of project(s) will this request affect?
+      label: What area(s) will this request affect?
       options:
         - App
         - Extension
         - Hydrogen custom storefront
-        - Script
+        - Function
         - Theme
+        - Running your code locally
+        - Deployment
         - Other
       multiple: true
     validations:
