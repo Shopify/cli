@@ -14,6 +14,11 @@ import {
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
+import {
+  convertExtensionTypeKeyToExtensionType,
+  convertExtensionTypesToExtensionTypeKeys,
+  convertExtensionTypeToExtensionTypeKey,
+} from '../../../utilities/extensions/name-mapper'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
@@ -27,7 +32,9 @@ export default class AppScaffoldExtension extends Command {
     type: Flags.string({
       char: 't',
       hidden: false,
-      description: `Extension type\n<options: ${extensions.publicTypes.join('|')}>`,
+      description: `Extension type\n<options: ${convertExtensionTypesToExtensionTypeKeys(extensions.publicTypes).join(
+        '|',
+      )}>`,
       env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
     }),
     name: Flags.string({
@@ -58,6 +65,8 @@ export default class AppScaffoldExtension extends Command {
     const {flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
+
+    flags.type = convertExtensionTypeKeyToExtensionType(flags.type)
 
     await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
@@ -97,10 +106,12 @@ export default class AppScaffoldExtension extends Command {
     }
     const isShopify = await environment.local.isShopify()
     const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
-    if (!(extensions.types as string[]).includes(type)) {
+    if (!(supportedExtensions as string[]).includes(type)) {
       throw new error.Abort(
         `Invalid extension type ${type}`,
-        `The following extension types are supported: ${supportedExtensions.join(', ')}`,
+        `The following extension types are supported: ${convertExtensionTypesToExtensionTypeKeys(
+          supportedExtensions,
+        ).join(', ')}`,
       )
     }
   }
@@ -113,7 +124,12 @@ export default class AppScaffoldExtension extends Command {
    */
   validateExtensionTypeLimit(app: App, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
-      throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
+      throw new error.Abort(
+        'Invalid extension type',
+        `You can only scaffold one extension of type ${convertExtensionTypeToExtensionTypeKey(
+          type as ExtensionTypes,
+        )} per app`,
+      )
     }
   }
 

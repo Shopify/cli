@@ -1,5 +1,6 @@
 import {ThemeExtension} from '../../models/app/app'
 import {error, file, output, path} from '@shopify/cli-kit'
+import {ExtensionTypesHumanKeys} from 'cli/constants'
 
 export interface ThemeExtensionConfig {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -44,6 +45,7 @@ const SUPPORTED_EXTS: {[dirname: string]: FilenameValidation} = {
   },
 }
 const SUPPORTED_BUCKETS = Object.keys(SUPPORTED_EXTS)
+const THEME_APP_EXTENSION_HUMAN_KEY: ExtensionTypesHumanKeys = 'theme app extension'
 
 export async function themeExtensionConfig(themeExtension: ThemeExtension): Promise<ThemeExtensionConfig> {
   const files: {[key: string]: string} = {}
@@ -67,7 +69,7 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
   if (extensionBytesTotal > BUNDLE_SIZE_LIMIT) {
     const humanBundleSize = `${(extensionBytesTotal / megabytes).toFixed(2)} MB`
     throw new error.Abort(
-      `Your theme app extension exceeds the file size limit (${BUNDLE_SIZE_LIMIT_MB} MB). It's currently ${humanBundleSize}.`,
+      `Your ${THEME_APP_EXTENSION_HUMAN_KEY} exceeds the file size limit (${BUNDLE_SIZE_LIMIT_MB} MB). It's currently ${humanBundleSize}.`,
       `Reduce your total file size and try again.`,
     )
   }
@@ -75,7 +77,7 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
   if (liquidBytesTotal > LIQUID_SIZE_LIMIT) {
     const humanLiquidSize = `${(liquidBytesTotal / kilobytes).toFixed(2)} kB`
     throw new error.Abort(
-      `Your theme app extension exceeds the total liquid file size limit (${LIQUID_SIZE_LIMIT_KB} kB). It's currently ${humanLiquidSize}.`,
+      `Your ${THEME_APP_EXTENSION_HUMAN_KEY} exceeds the total liquid file size limit (${LIQUID_SIZE_LIMIT_KB} kB). It's currently ${humanLiquidSize}.`,
       `Reduce your total file size and try again.`,
     )
   }
@@ -86,15 +88,17 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
 function validateFile(filepath: string, dirname: string): void {
   if (!SUPPORTED_BUCKETS.includes(dirname)) {
     throw new error.Abort(
-      output.content`Your theme app extension includes files in an unsupported directory, ${output.token.path(
+      output.content`Your ${THEME_APP_EXTENSION_HUMAN_KEY} includes files in an unsupported directory, ${output.token.path(
         dirname,
       )}`,
-      `Make sure all theme app extension files are in the supported directories: ${SUPPORTED_BUCKETS.join(', ')}`,
+      `Make sure all ${THEME_APP_EXTENSION_HUMAN_KEY} files are in the supported directories: ${SUPPORTED_BUCKETS.join(
+        ', ',
+      )}`,
     )
   }
   const filenameValidation = SUPPORTED_EXTS[dirname]
   if (!filepath.match(filenameValidation.validator)) {
-    throw new error.Abort(`Invalid filename in your theme app extension: ${filepath}
+    throw new error.Abort(`Invalid filename in your ${THEME_APP_EXTENSION_HUMAN_KEY}: ${filepath}
 ${filenameValidation.failureMessage(filepath)}`)
   }
 }
