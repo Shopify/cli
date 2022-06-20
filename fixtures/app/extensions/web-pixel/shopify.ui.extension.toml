@@ -2,7 +2,6 @@ type = "web_pixel_extension"
 name = "web-pixel"
 
 runtime_context = "strict"
-version = "1"
 
 [configuration]
 type = "object"

@@ -175,8 +175,6 @@ async function configFor(extension: UIExtension, app: App) {
         runtime_context: extension.configuration.runtimeContext,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         runtime_configuration_definition: extension.configuration.configuration,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        config_version: extension.configuration.version,
       }
     }
   }
