@@ -8,8 +8,6 @@ import {
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
-  uiExtensionTemplates,
-  uiExtensions,
 } from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
@@ -19,6 +17,7 @@ import {
   convertExtensionTypesToExtensionTypeKeys,
   convertExtensionTypeToExtensionTypeKey,
 } from '../../../utilities/extensions/name-mapper'
+import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
@@ -48,7 +47,7 @@ export default class AppScaffoldExtension extends Command {
       hidden: true,
       char: 'u',
       description:
-        'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/scripts-apis-examples',
+        'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples',
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
     template: Flags.string({
@@ -93,7 +92,7 @@ export default class AppScaffoldExtension extends Command {
       output.content`It can be found in ${output.token.path(path.relative(app.directory, extensionDirectory))}`,
     )
     output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType, extensionOutputConfig))
-    if (this.isUiExtension(promptAnswers.extensionType)) {
+    if (isUiExtensionType(promptAnswers.extensionType)) {
       output.info(
         output.content`To preview your project, run ${output.token.packagejsonScript(app.dependencyManager, 'dev')}`,
       )
@@ -137,7 +136,7 @@ export default class AppScaffoldExtension extends Command {
     if (!flavor || !type) {
       return
     }
-    const uiExtensionTemplateNames = uiExtensionTemplates.map((template) => template.value)
+    const uiExtensionTemplateNames = getUIExtensionTemplates(type).map((template) => template.value)
     const functionExtensionTemplateNames = functionExtensionTemplates.map((template) => template.value)
 
     const invalidTemplateError = (templates: string[]) => {
@@ -182,10 +181,5 @@ export default class AppScaffoldExtension extends Command {
     }
 
     return outputTokens.join('\n')
-  }
-
-  isUiExtension(type: string | undefined): boolean {
-    if (!type) return false
-    return (uiExtensions.types as ReadonlyArray<string>).includes(type)
   }
 }

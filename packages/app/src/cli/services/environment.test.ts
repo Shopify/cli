@@ -7,6 +7,7 @@ import {
   ensureDevEnvironment,
   ensureDeployEnvironment,
   AppOrganizationNotFoundError,
+  DeployAppNotFound,
 } from './environment'
 import {OrganizationApp, OrganizationStore} from '../models/organization'
 import {App, WebType, updateAppIdentifiers, getAppIdentifiers, UIExtension} from '../models/app/app'
@@ -416,6 +417,23 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+  })
+
+  test("throws a AppOrganizationNotFoundError error if the app with the API key doesn't exist", async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP1.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
+
+    // When
+    await expect(ensureDeployEnvironment({app, reset: false})).rejects.toThrow(
+      DeployAppNotFound(APP1.apiKey, LOCAL_APP.dependencyManager),
+    )
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {

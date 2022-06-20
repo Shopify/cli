@@ -88,12 +88,14 @@ const EXTENSION_C: FunctionExtension = {
     name: '',
     type: 'product_discounts',
     description: 'Function',
-    version: '1',
-    buildWasmPath: 'dist/index.wasm',
-    metaObject: {},
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
     configurationUi: false,
   },
-  buildWasmPath: '/function/dist/index.wasm',
+  buildWasmPath: () => '/function/dist/index.wasm',
+  inputQueryPath: () => '/function/input.graphql',
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {

@@ -1,5 +1,14 @@
 # @shopify/cli-hydrogen
 
+## 3.0.17
+
+### Patch Changes
+
+- 64d4b6a8: Report Vite errors as aborts to not get them reported to Bugsnag
+- Updated dependencies [df0d0347]
+- Updated dependencies [6657a57c]
+  - @shopify/cli-kit@3.0.17
+
 ## 3.0.16
 
 ### Patch Changes

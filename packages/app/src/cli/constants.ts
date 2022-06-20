@@ -20,7 +20,7 @@ export const environmentVariables = {
 } as const
 
 export const versions = {
-  extensionsBinary: 'v0.19.0',
+  extensionsBinary: 'v0.20.0',
 } as const
 
 export const blocks = {
@@ -29,7 +29,7 @@ export const blocks = {
     configurationName: configurationFileNames.extension,
   },
   functions: {
-    defaultUrl: 'https://github.com/Shopify/scripts-apis-examples',
+    defaultUrl: 'https://github.com/Shopify/function-examples',
     defaultLanguage: 'wasm',
   },
   web: {
@@ -67,15 +67,17 @@ export function isFunctionExtensionType(extensionType: string) {
   return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
-export const uiExtensions = {
-  types: [
-    'product_subscription',
-    'checkout_ui_extension',
-    'checkout_post_purchase',
-    'web_pixel_extension',
-    'pos_ui_extension',
-  ],
+export const publicUIExtensions = {
+  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
 } as const
+
+export const uiExtensions = {
+  types: [...publicUIExtensions.types, 'pos_ui_extension'],
+} as const
+
+export const activeUIExtensions = {
+  types: [...publicUIExtensions.types, 'pos_ui_extension'].filter,
+}
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
 
@@ -102,7 +104,7 @@ export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
-  publicTypes: [...themeExtensions.types, ...uiExtensions.types, ...publicFunctionExtensions.types],
+  publicTypes: [...themeExtensions.types, ...publicUIExtensions.types, ...publicFunctionExtensions.types],
 }
 
 export type ExtensionTypes = typeof extensions.types[number]

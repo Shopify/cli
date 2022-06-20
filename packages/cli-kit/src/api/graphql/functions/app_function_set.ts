@@ -9,12 +9,13 @@ export const AppFunctionSetMutation = gql`
     $force: Boolean
     $schemaMajorVersion: String
     $schemaMinorVersion: String
-    $scriptConfigVersion: String!
+    $scriptConfigVersion: String
     $configurationUi: Boolean!
-    $configurationDefinition: String!
+    $configurationDefinition: String
     $moduleUploadUrl: String!
     $library: LibraryInput
     $inputQuery: String
+    $appBridge: AppBridgeInput
   ) {
     appScriptSet(
       uuid: $uuid
@@ -30,6 +31,7 @@ export const AppFunctionSetMutation = gql`
       moduleUploadUrl: $moduleUploadUrl
       library: $library
       inputQuery: $inputQuery
+      appBridge: $appBridge
     ) {
       userErrors {
         field
@@ -74,9 +76,9 @@ export interface AppFunctionSetVariables {
   force?: boolean
   schemaMajorVersion?: string
   schemaMinorVersion?: string
-  scriptConfigVersion: string
+  scriptConfigVersion?: string
   configurationUi: boolean
-  configurationDefinition: string
+  configurationDefinition?: string
   moduleUploadUrl: string
   library?: {
     language: string

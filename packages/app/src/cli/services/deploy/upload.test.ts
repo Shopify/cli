@@ -34,12 +34,21 @@ describe('uploadFunctionExtensions', () => {
         name: 'function',
         type: 'payment_methods',
         description: 'my function',
-        buildWasmPath: 'dist/index.wasm',
+        build: {
+          command: 'make build',
+          path: 'dist/index.wasm',
+        },
+        ui: {
+          paths: {
+            create: '/create',
+            details: '/details/:id',
+          },
+        },
         configurationUi: false,
-        version: '2',
       },
       configurationPath: '/function/shopify.function.extension.toml',
-      buildWasmPath: '/function/dist/index.wasm',
+      buildWasmPath: () => '/function/dist/index.wasm',
+      inputQueryPath: () => '/function/input.graphql',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'function',
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -60,8 +69,9 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -95,8 +105,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -131,8 +141,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -172,7 +182,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -190,9 +200,7 @@ describe('uploadFunctionExtensions', () => {
           force: true,
           schemaMajorVersion: '1',
           schemaMinorVersion: '0',
-          scriptConfigVersion: extension.configuration.version,
           configurationUi: extension.configuration.configurationUi,
-          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
           moduleUploadUrl: uploadUrl,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -208,8 +216,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -251,7 +259,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -269,9 +277,7 @@ describe('uploadFunctionExtensions', () => {
           force: true,
           schemaMajorVersion: '1',
           schemaMinorVersion: '0',
-          scriptConfigVersion: extension.configuration.version,
           configurationUi: extension.configuration.configurationUi,
-          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
           moduleUploadUrl: uploadUrl,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -287,8 +293,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
-      extension.buildWasmPath = path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath, '')
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
         data: {
           moduleUploadUrlGenerate: {
@@ -330,7 +336,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -348,14 +354,73 @@ describe('uploadFunctionExtensions', () => {
           force: true,
           schemaMajorVersion: '1',
           schemaMinorVersion: '0',
-          scriptConfigVersion: extension.configuration.version,
           configurationUi: extension.configuration.configurationUi,
-          configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
           moduleUploadUrl: uploadUrl,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+        },
+      )
+    })
+  })
+
+  test('appBridge is set to undefined when there is no configuration.ui.paths', async () => {
+    await temporary.directory(async (tmpDir) => {
+      extension.configuration.ui = undefined
+
+      const uploadUrl = 'url'
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+        data: {
+          moduleUploadUrlGenerate: {
+            details: {
+              headers: {},
+              humanizedMaxSize: '200',
+              url: uploadUrl,
+            },
+            userErrors: [],
+          },
+        },
+      }
+      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+        data: {
+          appScriptSet: {
+            userErrors: [],
+            appScript: {
+              uuid: 'uuid',
+              appKey: identifiers.app,
+              configSchema: {},
+              title: extension.configuration.name,
+              extensionPointName: 'PAYMENT_METHODS',
+            },
+          },
+        },
+      }
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      await uploadFunctionExtensions([extension], {token, identifiers})
+
+      // Then
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        2,
+        identifiers.app,
+        api.graphql.AppFunctionSetMutation,
+        token,
+        {
+          uuid: undefined,
+          extensionPointName: 'PAYMENT_METHODS',
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          force: true,
+          schemaMajorVersion: '1',
+          schemaMinorVersion: '0',
+          configurationUi: extension.configuration.configurationUi,
+          moduleUploadUrl: uploadUrl,
+          appBridge: undefined,
         },
       )
     })

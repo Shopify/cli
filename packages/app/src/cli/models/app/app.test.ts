@@ -192,6 +192,10 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my_extension"
       type = "checkout_post_purchase"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'ui',
@@ -336,7 +340,7 @@ scopes = "read_products"
     await expect(load(tmpDir)).rejects.toThrowError()
   })
 
-  it('loads the app when it has a functions with a valid configuration', async () => {
+  it('loads the app when it has a function with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -344,6 +348,10 @@ scopes = "read_products"
       name = "my-function"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -368,6 +376,10 @@ scopes = "read_products"
       name = "my-function-1"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -379,6 +391,10 @@ scopes = "read_products"
       name = "my-function-2"
       type = "product_discounts"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -412,6 +428,10 @@ scopes = "read_products"
       name = "my-function"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "target/wasm32-wasi/release/my-function.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -429,8 +449,11 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      buildWasmPath = "target/wasm32-wasi/release/my-function.wasm"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "target/wasm32-wasi/release/my-function.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -443,7 +466,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath).toMatch(/.+target\/wasm32-wasi\/release\/my-function\.wasm$/)
+    expect(app.extensions.function[0].buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   it(`defaults the function wasm path if not configured`, async () => {
@@ -453,6 +476,9 @@ scopes = "read_products"
       name = "my-function"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -465,7 +491,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath).toMatch(/.+dist\/index.wasm$/)
+    expect(app.extensions.function[0].buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
   })
 })
 
@@ -639,6 +665,8 @@ describe('getUIExtensionRendererVersion', () => {
       const got = await getUIExtensionRendererVersion('product_subscription', DEFAULT_APP)
 
       // Then
+      expect(got).not.toEqual('not-found')
+      if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/admin-ui-extensions')
       expect(got?.version).toEqual('2.4.5')
     })
@@ -654,6 +682,8 @@ describe('getUIExtensionRendererVersion', () => {
       const got = await getUIExtensionRendererVersion('checkout_ui_extension', DEFAULT_APP)
 
       // Then
+      expect(got).not.toEqual('not-found')
+      if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/checkout-ui-extensions')
       expect(got?.version).toEqual('1.4.5')
     })
@@ -669,8 +699,30 @@ describe('getUIExtensionRendererVersion', () => {
       const got = await getUIExtensionRendererVersion('checkout_post_purchase', DEFAULT_APP)
 
       // Then
+      expect(got).not.toEqual('not-found')
+      if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/post-purchase-ui-extensions')
       expect(got?.version).toEqual('3.4.5')
+    })
+  })
+
+  test('returns the version of the dependency package for web_pixel', async () => {
+    // When
+    const got = await getUIExtensionRendererVersion('web_pixel_extension', DEFAULT_APP)
+
+    // Then
+    expect(got).toEqual(undefined)
+  })
+
+  test('returns not_found if there is no renderer package', async () => {
+    await temporary.directory(async (tmpDir) => {
+      DEFAULT_APP.directory = tmpDir
+
+      // When
+      const got = await getUIExtensionRendererVersion('product_subscription', DEFAULT_APP)
+
+      // Then
+      expect(got).toEqual('not_found')
     })
   })
 })
