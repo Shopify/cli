@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent} from './monorail'
+import {reportEvent} from './analytics'
+import * as environment from './environment'
+import * as http from './http'
+import * as os from './os'
+import * as ruby from './ruby'
+import * as store from './store'
+import * as version from './version'
 import {it, expect, vi, beforeEach, afterAll} from 'vitest'
-import {environment, http, os, ruby, store} from '@shopify/cli-kit'
 import {outputMocker} from '@shopify/cli-testing'
 
 const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
@@ -14,42 +19,19 @@ const expectedHeaders = {
 
 beforeEach(() => {
   vi.setSystemTime(currentDate)
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      environment: {
-        local: {
-          isShopify: vi.fn(),
-          isDebug: vi.fn(),
-          analyticsDisabled: vi.fn(),
-        },
-      },
-      ruby: {
-        version: vi.fn(),
-      },
-      os: {
-        platformAndArch: vi.fn(),
-      },
-      store: {
-        getAppInfo: vi.fn(),
-      },
-      http: {
-        fetch: vi.fn(),
-      },
-    }
-  })
-  vi.mock('../../package.json', () => {
-    return {
-      version: '3.0.0',
-    }
-  })
+  vi.mock('./environment')
+  vi.mock('./ruby')
+  vi.mock('./os')
+  vi.mock('./store')
+  vi.mock('./http')
+  vi.mock('./version')
   vi.mocked(environment.local.isShopify).mockResolvedValue(false)
   vi.mocked(environment.local.isDebug).mockReturnValue(false)
   vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
   vi.mocked(ruby.version).mockResolvedValue('3.1.1')
   vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
   vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
+  vi.mocked(version.cliVersion).mockReturnValue('3.0.0')
 })
 
 afterAll(() => {
@@ -68,7 +50,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: 'node',
+      project_type: undefined,
       command,
       args: '',
       time_start: 1643709600000,
@@ -95,7 +77,12 @@ it('makes an API call to Monorail with the expected payload with cached app info
   // Given
   const command = 'app dev'
   const args = ['--path', 'fixtures/app']
-  vi.mocked(store.getAppInfo).mockReturnValue({appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'})
+  vi.mocked(store.getAppInfo).mockReturnValueOnce({
+    appId: 'key1',
+    orgId: '1',
+    storeFqdn: 'domain1',
+    directory: '/cached',
+  })
 
   // When
   await reportEvent(command, args)
@@ -104,7 +91,7 @@ it('makes an API call to Monorail with the expected payload with cached app info
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: 'node',
+      project_type: undefined,
       command,
       args: '--path fixtures/app',
       time_start: currentDate.getTime(),

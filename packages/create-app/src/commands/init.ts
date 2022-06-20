@@ -1,7 +1,7 @@
 import initPrompt, {templateURLMap} from '../prompts/init'
 import initService from '../services/init'
 import {Command, Flags} from '@oclif/core'
-import {path, cli, error, output} from '@shopify/cli-kit'
+import {path, cli, analytics, error, output} from '@shopify/cli-kit'
 
 const InvalidGithubRepository = () => {
   return new error.Abort(
@@ -69,6 +69,13 @@ export default class Init extends Command {
       local: flags.local,
       directory,
     })
+    await this.reportEvent()
+  }
+
+  async reportEvent(): Promise<void> {
+    const commandIndex = process.argv.indexOf('init')
+    const args = process.argv.slice(commandIndex + 1)
+    await analytics.reportEvent('create-app', args)
   }
 
   validateTemplateValue(template: string | undefined) {

@@ -1,6 +1,6 @@
 import initPrompt from '../prompts/init'
 import initService from '../services/init'
-import {path, cli} from '@shopify/cli-kit'
+import {path, cli, analytics} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class Init extends Command {
@@ -65,5 +65,12 @@ export default class Init extends Command {
       directory,
       local: flags.local,
     })
+    await this.reportEvent()
+  }
+
+  async reportEvent(): Promise<void> {
+    const commandIndex = process.argv.indexOf('init')
+    const args = process.argv.slice(commandIndex + 1)
+    await analytics.reportEvent('create-app', args)
   }
 }

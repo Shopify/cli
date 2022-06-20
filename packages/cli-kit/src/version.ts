@@ -1,3 +1,4 @@
+import {version} from '../package.json'
 import latestVersion from 'latest-version'
 
 /**
@@ -7,4 +8,8 @@ import latestVersion from 'latest-version'
  */
 export async function latestNpmPackageVersion(name: string) {
   return latestVersion(name)
+}
+
+export function cliVersion(): string {
+  return version
 }
