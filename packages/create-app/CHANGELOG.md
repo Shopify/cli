@@ -1,5 +1,18 @@
 # @shopify/create-app
 
+## 3.0.18
+
+### Patch Changes
+
+- fa518a0d: Report events with the analytics helper from cli-kit
+- cb1caa7c: Improve create app error message when using an invalid template flag value
+- Updated dependencies [84438079]
+- Updated dependencies [fa518a0d]
+- Updated dependencies [fd10fc01]
+- Updated dependencies [0243890b]
+- Updated dependencies [cb1caa7c]
+  - @shopify/cli-kit@3.0.18
+
 ## 3.0.17
 
 ### Patch Changes
