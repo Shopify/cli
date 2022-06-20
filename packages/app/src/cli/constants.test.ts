@@ -79,8 +79,6 @@ describe('get extension type output configuration', () => {
     expect(extensionOutputConfig).toEqual({
       humanKey: 'product discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
-      additionalHelp:
-        'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.',
     })
   })
 
@@ -95,8 +93,6 @@ describe('get extension type output configuration', () => {
     expect(extensionOutputConfig).toEqual({
       humanKey: 'order discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
-      additionalHelp:
-        'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.',
     })
   })
 
@@ -111,8 +107,6 @@ describe('get extension type output configuration', () => {
     expect(extensionOutputConfig).toEqual({
       humanKey: 'shipping discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
-      additionalHelp:
-        'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.',
     })
   })
 
