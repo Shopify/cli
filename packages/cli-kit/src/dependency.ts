@@ -198,35 +198,47 @@ interface AddNPMDependenciesIfNeededOptions {
   signal?: AbortSignal
 }
 
+export interface DependencyVersion {
+  name: string
+  version: string | undefined
+}
+
 /**
  * Adds dependencies to a Node project (i.e. a project that has a package.json)
  * @param dependencies {string[]} List of dependencies to be added.
  * @param options {AddNPMDependenciesIfNeededOptions} Options for adding dependencies.
  */
-export async function addNPMDependenciesIfNeeded(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
+export async function addNPMDependenciesIfNeeded(
+  dependencies: DependencyVersion[],
+  options: AddNPMDependenciesIfNeededOptions,
+) {
   const packageJsonPath = pathJoin(options.directory, 'package.json')
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(options.directory)
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
   const dependenciesToAdd = dependencies.filter((dep) => {
-    return !existingDependencies.includes(dep)
+    return !existingDependencies.includes(dep.name)
   })
   if (dependenciesToAdd.length === 0) {
     return
   }
   let args: string[]
+  const depedenciesWithVersion = dependenciesToAdd.map((dep) => {
+    return dep.version ? `${dep.name}@${dep.version}` : dep.name
+  })
   switch (options.dependencyManager) {
     case 'npm':
-      args = argumentsToAddDependenciesWithNPM(dependenciesToAdd, options.type)
+      args = argumentsToAddDependenciesWithNPM(depedenciesWithVersion, options.type)
       break
     case 'yarn':
-      args = argumentsToAddDependenciesWithYarn(dependenciesToAdd, options.type)
+      args = argumentsToAddDependenciesWithYarn(depedenciesWithVersion, options.type)
       break
     case 'pnpm':
-      args = argumentsToAddDependenciesWithPNPM(dependenciesToAdd, options.type)
+      args = argumentsToAddDependenciesWithPNPM(depedenciesWithVersion, options.type)
       break
   }
+  options.stdout?.write(`Executing...${args.join(' ')}`)
   await exec(options.dependencyManager, args, {
     cwd: options.directory,
     stdout: options.stdout,
@@ -235,9 +247,23 @@ export async function addNPMDependenciesIfNeeded(dependencies: string[], options
   })
 }
 
+export async function addNPMDependenciesWithoutVersionIfNeeded(
+  dependencies: string[],
+  options: AddNPMDependenciesIfNeededOptions,
+) {
+  await addNPMDependenciesIfNeeded(
+    dependencies.map((dependency) => {
+      return {name: dependency, version: undefined}
+    }),
+    options,
+  )
+}
+
 export async function addLatestNPMDependencies(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
   await addNPMDependenciesIfNeeded(
-    dependencies.map((dependency) => `${dependency}@latest`),
+    dependencies.map((dependency) => {
+      return {name: dependency, version: 'latest'}
+    }),
     options,
   )
 }

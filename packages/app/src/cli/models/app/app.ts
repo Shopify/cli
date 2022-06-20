@@ -584,7 +584,7 @@ export async function getUIExtensionRendererVersion(
   app: App,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
-  const fullName = getUIExtensionRendererDependency(uiExtensionType)?.replace('-react', '')
+  const fullName = getUIExtensionRendererDependency(uiExtensionType)?.name.replace('-react', '')
   if (!fullName) return undefined
   // Split the dependency name to avoid using "/" in windows
   const dependencyName = fullName.split('/')

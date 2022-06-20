@@ -1,3 +1,5 @@
+import {dependency} from '@shopify/cli-kit'
+
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: {
@@ -145,16 +147,18 @@ export const getFunctionExtensionPointName = (type: FunctionExtensionTypes) => {
  * @param extensionType {UIExtensionTypes} Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
-export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): string | undefined {
+export function getUIExtensionRendererDependency(
+  extensionType: UIExtensionTypes,
+): dependency.DependencyVersion | undefined {
   switch (extensionType) {
     case 'product_subscription':
-      return '@shopify/admin-ui-extensions-react'
+      return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
-      return '@shopify/checkout-ui-extensions-react'
+      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.15.0'}
     case 'checkout_post_purchase':
-      return '@shopify/post-purchase-ui-extensions-react'
+      return {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
     case 'pos_ui_extension':
-      return '@shopify/retail-ui-extensions-react'
+      return {name: '@shopify/retail-ui-extensions-react', version: '^0.1.0'}
     case 'web_pixel_extension':
       return undefined
   }
