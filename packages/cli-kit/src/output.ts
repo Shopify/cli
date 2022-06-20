@@ -24,14 +24,14 @@ import {Writable} from 'node:stream'
 let logFile: string
 
 export function initiateLogging({
-  logFilePath = constants.paths.directories.cache.path(),
+  logDir = constants.paths.directories.cache.path(),
   filename = 'shopify.log',
 }: {
-  logFilePath: string
+  logDir: string
   filename: string
 }) {
-  fileMkdirSync(logFilePath)
-  logFile = pathJoin(logFilePath, filename)
+  fileMkdirSync(logDir)
+  logFile = pathJoin(logDir, filename)
   truncateLogs()
 }
 
