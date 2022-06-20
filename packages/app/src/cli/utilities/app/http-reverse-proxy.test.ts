@@ -1,10 +1,8 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy'
 import fastifyHttpProxy from './fastify-http-proxy/index.cjs'
 import {describe, expect, test, vi} from 'vitest'
-import Fastify from 'fastify'
-import {port, output} from '@shopify/cli-kit'
+import {port, output, fastify} from '@shopify/cli-kit'
 
-vi.mock('fastify')
 vi.mock('@shopify/cli-kit')
 vi.mock('./fastify-http-proxy/index.cjs')
 
@@ -12,7 +10,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('proxies to all the targets using the Fastify HTTP Proxy', async () => {
     // Given
     const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(Fastify).mockReturnValue(server)
+    vi.mocked(fastify.fastify).mockReturnValue(server)
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(3001)
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(3002)
 
@@ -66,7 +64,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('uses a random port when no port is passed', async () => {
     // Given
     const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(Fastify).mockReturnValue(server)
+    vi.mocked(fastify.fastify).mockReturnValue(server)
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(4000)
 
     // When

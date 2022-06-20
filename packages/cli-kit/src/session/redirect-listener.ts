@@ -91,6 +91,7 @@ export class RedirectListener {
       const file = await getSuccessHTML()
       return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
+
     return server
   }
 

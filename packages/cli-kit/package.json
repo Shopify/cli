@@ -58,7 +58,8 @@
     "open": "^8.4.0",
     "prettier": "^2.6.2",
     "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8"
+    "stacktracey": "^2.1.8",
+    "fastify": "^4.0.0-rc.4"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
