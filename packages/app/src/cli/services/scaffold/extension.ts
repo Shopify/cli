@@ -140,13 +140,15 @@ async function uiExtensionInit({
   await list.run()
 }
 
-export function getRuntimeDependencies({extensionType}: Pick<UIExtensionInitOptions, 'extensionType'>): string[] {
+export function getRuntimeDependencies({
+  extensionType,
+}: Pick<UIExtensionInitOptions, 'extensionType'>): dependency.DependencyVersion[] {
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
     case 'pos_ui_extension':
     case 'checkout_post_purchase': {
-      const dependencies = ['react']
+      const dependencies: dependency.DependencyVersion[] = [{name: 'react', version: undefined}]
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)
