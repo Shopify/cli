@@ -19,7 +19,8 @@
     }
   },
   "files": [
-    "/dist"
+    "/dist",
+    "/assets"
   ],
   "publishConfig": {
     "access": "public",
@@ -57,7 +58,8 @@
     "open": "^8.4.0",
     "prettier": "^2.6.2",
     "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8"
+    "stacktracey": "^2.1.8",
+    "fastify": "^4.0.0-rc.4"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
@@ -98,7 +100,7 @@
     "tempy": "^2.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
-    "vitest": "0.13.1",
+    "vitest": "^0.15.1",
     "zod": "^3.17.3"
   }
 }

@@ -1,6 +1,5 @@
 import fastifyHTTPProxy from './fastify-http-proxy/index.cjs'
-import Fastify from 'fastify'
-import {port, output, error} from '@shopify/cli-kit'
+import {port, output, error, fastify} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 export interface ReverseHTTPProxyTarget {
@@ -37,7 +36,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   proxyTargets: ReverseHTTPProxyTarget[],
   additionalProcesses: output.OutputProcess[],
 ): Promise<void> {
-  const server = Fastify()
+  const server = fastify.fastify()
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
       const targetPort = await port.getRandomPort()
