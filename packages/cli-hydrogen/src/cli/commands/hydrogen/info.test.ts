@@ -18,32 +18,9 @@ describe('hydrogen info', () => {
     await InfoCommand.run()
 
     // Then
-    expect(outputMock.output()).toMatchInlineSnapshot(
-      `
-      "YOUR PROJECT                       
-      Name               snow-devil
-      Project location   ./some/path
-
-      STOREFRONT                         
-      storeDomain            Not yet configured
-      storefrontApiVersion   Not yet configured
-      storefrontToken        Not yet configured
-      ! StoreDomain must be a valid shopify domain
-
-      ESLINT                             
-      eslint                   Not found
-      eslint-plugin-hydrogen   Not found
-
-      TOOLING AND SYSTEM                 
-      @shopify/hydrogen       Not found
-      @shopify/cli-hydrogen   Not found
-      @shopify/cli            Not found
-      Package manager         npm
-      OS                      darwin-arm64
-      Shell                   /bin/zsh
-      Node.js version         v18.0.0"
-    `,
-    )
+    expect(outputMock.output()).toMatch(/Name snow-devil/)
+    expect(outputMock.output()).toMatch(/Project location .\/some\/path/)
+    expect(outputMock.output()).toMatch(/Package manager npm/)
   })
 })
 
@@ -65,5 +42,15 @@ function mockOutput(mockHydrogenApp: Partial<HydrogenApp> = {}) {
 
   vi.mocked(loadApp).mockResolvedValue(app)
 
-  return outputMocker.mockAndCapture()
+  const mocker = outputMocker.mockAndCapture()
+
+  return {
+    ...mocker,
+    output() {
+      const output = mocker.output()
+      const trimmedOuput = (output as string).replace(/\s+/g, ' ').trim()
+
+      return trimmedOuput
+    },
+  }
 }
