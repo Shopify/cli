@@ -17,7 +17,7 @@ const NodeExtensionsCLINotFoundError = () => {
  * @param args {string[]} Arguments to pass to the CLI
  * @param options {system.ExecOptions} Options to configure the process execution.
  */
-export async function runGoExtensionsCLI(args: string[], options: system.ExecOptions = {}) {
+export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
   if (useExtensionsCLISources()) {
     const projectDirectory = path.join(

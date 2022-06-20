@@ -1,8 +1,17 @@
 /* eslint-disable no-console */
 import {Fatal, Bug} from './error'
 import {isUnitTest, isVerbose} from './environment/local'
+import constants from './constants'
 import {DependencyManager} from './dependency'
-import {relativize as relativizePath} from './path'
+import {
+  append as fileAppend,
+  mkdirSync as fileMkdirSync,
+  readSync as fileReadSync,
+  sizeSync as fileSizeSync,
+  writeSync as fileWriteSync,
+} from './file'
+import {join as pathJoin, relativize as relativizePath} from './path'
+import {page} from './system'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
@@ -11,6 +20,34 @@ import {AbortController, AbortSignal} from 'abort-controller'
 // @ts-ignore
 import cjs from 'color-json'
 import {Writable} from 'node:stream'
+
+let logFile: string
+
+export function initiateLogging({
+  logDir = constants.paths.directories.cache.path(),
+  filename = 'shopify.log',
+}: {
+  logDir?: string
+  filename?: string
+}) {
+  fileMkdirSync(logDir)
+  logFile = pathJoin(logDir, filename)
+  truncateLogs()
+}
+
+// Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long.
+// Rescues in case the file hasn't been created yet.
+function truncateLogs() {
+  try {
+    if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
+      const contents = fileReadSync(logFile)
+      const splitContents = contents.split('\n')
+      const newContents = splitContents.slice(10000, splitContents.length).join('\n')
+      fileWriteSync(logFile, newContents)
+    }
+    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
+  } catch {}
+}
 
 enum ContentTokenType {
   Raw,
@@ -260,9 +297,8 @@ export const info = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const success = (content: Message) => {
-  if (shouldOutput('info')) {
-    consoleLog(colors.bold(`✅ Success! ${stringifyMessage(content)}.`))
-  }
+  const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
+  outputWhereAppropriate('info', consoleLog, message)
 }
 
 /**
@@ -272,9 +308,8 @@ export const success = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const completed = (content: Message) => {
-  if (shouldOutput('info')) {
-    consoleLog(`${colors.green('✔')} ${stringifyMessage(content)}.`)
-  }
+  const message = `${colors.green('✔')} ${stringifyMessage(content)}.`
+  outputWhereAppropriate('info', consoleLog, message)
 }
 
 /**
@@ -312,50 +347,50 @@ export const newline = () => {
  * @param content {Fatal} The fatal error to be output.
  */
 export const error = async (content: Fatal) => {
-  if (shouldOutput('error')) {
-    if (!content.message) {
-      return
-    }
-    const message = content.message
-    const padding = '    '
-    const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
-    const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-    consoleError(header)
-    const lines = message.split('\n')
-    for (const line of lines) {
-      consoleError(`${padding}${line}`)
-    }
-    if (content.tryMessage) {
-      consoleError(`\n${padding}${colors.bold('What to try:')}`)
-      const lines = content.tryMessage.split('\n')
-      for (const line of lines) {
-        consoleError(`${padding}${line}`)
-      }
-    }
-
-    let stack = await new StackTracey(content).withSourcesAsync()
-    stack = stack
-      .filter((entry) => {
-        return !entry.file.includes('@oclif/core')
-      })
-      .map((item) => {
-        item.calleeShort = colors.yellow(item.calleeShort)
-        /** We make the paths relative to the packages/ directory */
-        const fileShortComponents = item.fileShort.split('packages/')
-        item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1] : fileShortComponents[0]
-        return item
-      })
-    if (content instanceof Bug) {
-      if (stack.items.length !== 0) {
-        consoleError(`\n${padding}${colors.bold('Stack trace:')}`)
-        const stackLines = stack.asTable({}).split('\n')
-        for (const stackLine of stackLines) {
-          consoleError(`${padding}${stackLine}`)
-        }
-      }
-    }
-    consoleError(footer)
+  if (!content.message) {
+    return
   }
+  let outputString = ''
+  const message = content.message
+  const padding = '    '
+  const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
+  const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+  outputString += header
+  const lines = message.split('\n')
+  for (const line of lines) {
+    outputString += `${padding}${line}\n`
+  }
+  if (content.tryMessage) {
+    outputString += `\n${padding}${colors.bold('What to try:')}\n`
+    const lines = content.tryMessage.split('\n')
+    for (const line of lines) {
+      outputString += `${padding}${line}`
+    }
+  }
+
+  let stack = await new StackTracey(content).withSourcesAsync()
+  stack = stack
+    .filter((entry) => {
+      return !entry.file.includes('@oclif/core')
+    })
+    .map((item) => {
+      item.calleeShort = colors.yellow(item.calleeShort)
+      /** We make the paths relative to the packages/ directory */
+      const fileShortComponents = item.fileShort.split('packages/')
+      item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1] : fileShortComponents[0]
+      return item
+    })
+  if (content instanceof Bug) {
+    if (stack.items.length !== 0) {
+      outputString += `\n${padding}${colors.bold('Stack trace:')}`
+      const stackLines = stack.asTable({}).split('\n')
+      for (const stackLine of stackLines) {
+        outputString += `${padding}${stackLine}`
+      }
+    }
+  }
+  outputString += footer
+  outputWhereAppropriate('error', consoleError, outputString)
 }
 
 export function stringifyMessage(message: Message): string {
@@ -367,9 +402,8 @@ export function stringifyMessage(message: Message): string {
 }
 
 const message = (content: Message, level: LogLevel = 'info') => {
-  if (shouldOutput(level)) {
-    consoleLog(stringifyMessage(content))
-  }
+  const stringifiedMessage = stringifyMessage(content)
+  outputWhereAppropriate(level, consoleLog, stringifiedMessage)
 }
 
 export interface OutputProcess {
@@ -478,6 +512,24 @@ function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
+function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) => void, message: string): void {
+  if (shouldOutput(logLevel)) {
+    logFunc(message)
+  }
+  logToFile(message, logLevel.toUpperCase())
+}
+
+function logFileExists(): boolean {
+  return Boolean(logFile)
+}
+
+function logToFile(message: string, logLevel: string): void {
+  // If file logging hasn't been initiated, skip it
+  if (!logFileExists()) return
+  const timestamp = new Date().toISOString()
+  fileAppend(logFile, `[${timestamp} ${logLevel}]: ${message}\n`)
+}
+
 function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
     return message
@@ -492,6 +544,10 @@ export function unstyled(message: string): string {
 
 export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+}
+
+export async function pageLogs() {
+  await page(logFile)
 }
 
 /* eslint-enable no-console */

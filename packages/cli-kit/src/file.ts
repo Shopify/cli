@@ -36,6 +36,11 @@ export async function read(path: string, options: object = {encoding: 'utf-8'}):
   return content
 }
 
+export function readSync(path: string, options: object = {encoding: 'utf-8'}): string {
+  const content = fs.readFileSync(path, options)
+  return content.toString()
+}
+
 /**
  * Copies a file
  * @param from {string} Path to the directory or file to be copied.
@@ -53,12 +58,20 @@ export async function write(path: string, data: string): Promise<void> {
   await fs.writeFile(path, data)
 }
 
+export function writeSync(path: string, data: string): void {
+  fs.writeFileSync(path, data)
+}
+
 export async function append(path: string, data: string): Promise<void> {
   await fs.appendFile(path, data)
 }
 
 export async function mkdir(path: string): Promise<void> {
   await fs.mkdirp(path)
+}
+
+export function mkdirSync(path: string): void {
+  fs.mkdirpSync(path)
 }
 
 export async function remove(path: string): Promise<void> {
@@ -80,6 +93,10 @@ export async function isDirectory(path: string): Promise<boolean> {
 
 export async function size(path: string): Promise<number> {
   return (await fs.stat(path)).size
+}
+
+export function sizeSync(path: string): number {
+  return fs.statSync(path).size
 }
 
 /**
