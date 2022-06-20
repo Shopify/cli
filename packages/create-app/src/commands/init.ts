@@ -4,13 +4,13 @@ import {Command, Flags} from '@oclif/core'
 import {path, cli, error, output} from '@shopify/cli-kit'
 
 const InvalidGithubRepository = () => {
-  throw new error.Abort(
+  return new error.Abort(
     'Only GitHub repository references are supported. eg: https://github.com/Shopify/<repository>/[subpath]#[branch]',
   )
 }
 
 const UnsupportedTemplateAlias = () => {
-  throw new error.Abort(
+  return new error.Abort(
     output.content`Only ${output.token.yellow(Object.keys(templateURLMap).join(', '))} template alias are supported`,
   )
 }
