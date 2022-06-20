@@ -519,9 +519,13 @@ function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) =
   logToFile(message, logLevel.toUpperCase())
 }
 
+function logFileExists(): boolean {
+  return Boolean(logFile)
+}
+
 function logToFile(message: string, logLevel: string): void {
   // If file logging hasn't been initiated, skip it
-  if (!logFile) return
+  if (!logFileExists()) return
   const timestamp = new Date().toISOString()
   fileAppend(logFile, `[${timestamp} ${logLevel}]: ${message}\n`)
 }
