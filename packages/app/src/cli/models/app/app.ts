@@ -64,23 +64,19 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
-  buildWasmPath: schema.define.string().optional().default('dist/index.wasm'),
-  metaObject: schema.define.any(),
+  build: schema.define.object({
+    command: schema.define.string(),
+    path: schema.define.string().optional(),
+  }),
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
       paths: schema.define
         .object({
-          create: schema.define.string().optional(),
-          details: schema.define.string().optional(),
+          create: schema.define.string(),
+          details: schema.define.string(),
         })
         .optional(),
-    })
-    .optional(),
-  version: schema.define.string(),
-  commands: schema.define
-    .object({
-      build: schema.define.string().optional(),
     })
     .optional(),
 })
@@ -117,7 +113,8 @@ type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMet
 export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
   metadata: FunctionExtensionMetadata
-  buildWasmPath: string
+  buildWasmPath: () => string
+  inputQueryPath: () => string
 }
 
 export type ThemeExtension = Extension & {
@@ -432,7 +429,14 @@ class AppLoader {
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
-        buildWasmPath: path.join(directory, configuration.buildWasmPath),
+        buildWasmPath() {
+          return configuration.build.path
+            ? path.join(directory, configuration.build.path)
+            : path.join(directory, 'dist/index.wasm')
+        },
+        inputQueryPath() {
+          return path.join(directory, 'input.graphql')
+        },
       }
     })
     return Promise.all(functions)

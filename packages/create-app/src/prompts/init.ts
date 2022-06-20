@@ -10,20 +10,21 @@ interface InitOutput {
   template: string
 }
 
-const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
-  // Eventually this list should be taken from a remote location
-  // That way we don't have to update the CLI every time we add a template
-  const templateURLMap = {
-    node: 'https://github.com/Shopify/shopify-app-template-node#cli_three',
-    php: 'https://github.com/Shopify/shopify-app-template-php#cli_three',
-  }
+// Eventually this list should be taken from a remote location
+// That way we don't have to update the CLI every time we add a template
+export const templateURLMap = {
+  node: 'https://github.com/Shopify/shopify-app-template-node#cli_three',
+  php: 'https://github.com/Shopify/shopify-app-template-php#cli_three',
+  ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
+} as const
 
+const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
   const defaults = {
     name: haiku.generate('app'),
     template: templateURLMap.node,
-  }
+  } as const
 
-  const questions: ui.Question[] = []
+  const questions: ui.Question<'name' | 'template'>[] = []
   if (!options.name) {
     questions.push({
       type: 'input',

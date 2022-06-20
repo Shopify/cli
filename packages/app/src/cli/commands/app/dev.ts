@@ -46,7 +46,7 @@ export default class Dev extends Command {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'subscription-product-url': Flags.string({
       hidden: false,
-      description: 'Resource URL for product subscription extension. Format: "/products/{productId}"',
+      description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
       env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention

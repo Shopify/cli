@@ -92,11 +92,13 @@ scopes = "read_products"
   }
 
   it("throws an error if the directory doesn't exist", async () => {
-    // Given
-    const directory = '/tmp/doesnt/exist'
+    await temporary.directory(async (tmp) => {
+      // Given
+      await file.rmdir(tmp, {force: true})
 
-    // When/Then
-    await expect(load(directory)).rejects.toThrow(/Couldn't find directory/)
+      // When/Then
+      await expect(load(tmp)).rejects.toThrow(/Couldn't find directory/)
+    })
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
@@ -192,6 +194,10 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my_extension"
       type = "checkout_post_purchase"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'ui',
@@ -336,7 +342,7 @@ scopes = "read_products"
     await expect(load(tmpDir)).rejects.toThrowError()
   })
 
-  it('loads the app when it has a functions with a valid configuration', async () => {
+  it('loads the app when it has a function with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -344,6 +350,10 @@ scopes = "read_products"
       name = "my-function"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -368,6 +378,10 @@ scopes = "read_products"
       name = "my-function-1"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -379,6 +393,10 @@ scopes = "read_products"
       name = "my-function-2"
       type = "product_discounts"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -412,6 +430,10 @@ scopes = "read_products"
       name = "my-function"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "target/wasm32-wasi/release/my-function.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -429,8 +451,11 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "payment_methods"
-      buildWasmPath = "target/wasm32-wasi/release/my-function.wasm"
       version = "2"
+
+      [build]
+      command = "make build"
+      path = "target/wasm32-wasi/release/my-function.wasm"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -443,7 +468,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath).toMatch(/.+target\/wasm32-wasi\/release\/my-function\.wasm$/)
+    expect(app.extensions.function[0].buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   it(`defaults the function wasm path if not configured`, async () => {
@@ -453,6 +478,9 @@ scopes = "read_products"
       name = "my-function"
       type = "payment_methods"
       version = "2"
+
+      [build]
+      command = "make build"
       `
     await writeBlockConfig({
       blockType: 'function',
@@ -465,7 +493,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath).toMatch(/.+dist\/index.wasm$/)
+    expect(app.extensions.function[0].buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
   })
 })
 

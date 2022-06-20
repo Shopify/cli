@@ -126,28 +126,6 @@ describe('parseGithubRepoReference', () => {
       filePath: 'bar/baz',
     })
   })
-
-  it('throws for a non github reference', async () => {
-    // Given
-    const url = 'https://NOTgithub.com/Shopify/foo'
-
-    // When
-    const parseRepoUrl = () => parseGithubRepoReference(url)
-
-    // Then
-    await expect(parseRepoUrl).toThrow('Only GitHub repository references are supported.')
-  })
-
-  it('throws for a non URL', async () => {
-    // Given
-    const url = 'abc'
-
-    // When
-    const parseRepoUrl = () => parseGithubRepoReference(url)
-
-    // Then
-    await expect(parseRepoUrl).toThrow('Invalid URL')
-  })
 })
 
 function createMockRelease(size = 1, mocks: Partial<GithubRelease> = {}): GithubRelease[] {

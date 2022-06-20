@@ -1,7 +1,8 @@
 import {run, flush, settings} from '@oclif/core'
-import {error as kitError, environment} from '@shopify/cli-kit'
+import {error as kitError, environment, output} from '@shopify/cli-kit'
 
 function runCreateApp() {
+  output.initiateLogging({filename: 'shopify.create-app.log'})
   const initIndex = process.argv.findIndex((arg) => arg.includes('init'))
   if (initIndex === -1) {
     const initIndex = process.argv.findIndex((arg) => arg.match(/bin(\/|\\)(create-app|dev|run)/)) + 1

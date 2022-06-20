@@ -1,7 +1,7 @@
 import {buildFunctionExtension} from './extension'
 import {FunctionExtension} from '../../models/app/app'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {system, error} from '@shopify/cli-kit'
+import {system} from '@shopify/cli-kit'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -33,15 +33,16 @@ describe('buildFunctionExtension', () => {
         name: 'MyFunction',
         type: 'product_discounts',
         description: '',
-        commands: {},
-        buildWasmPath: 'dist/index.wasm',
+        build: {
+          command: 'make build',
+        },
         configurationUi: true,
-        version: '2',
       },
       metadata: {
         schemaVersions: {},
       },
-      buildWasmPath: '/test/myfunction/dist/index.wasm',
+      buildWasmPath: () => '/test/myfunction/dist/index.wasm',
+      inputQueryPath: () => '/test/myfunction/input.graphql',
       graphQLType: 'product_discounts',
       directory: '/test/myfunction',
       configurationPath: '/test/myfunction/shopify.function.extension.toml',
@@ -50,41 +51,11 @@ describe('buildFunctionExtension', () => {
       type: 'product_discounts',
     }
   })
-  test('throws a MissingBuildCommandError when the build command is missing', async () => {
-    // When
-    await expect(
-      buildFunctionExtension(extension, {
-        stdout,
-        stderr,
-        signal,
-        app,
-      }),
-    ).rejects.toEqual(new error.AbortSilent())
-    expect(system.exec).not.toHaveBeenCalled()
-  })
-
-  test('throws a MissingBuildCommandError when the build command is empty', async () => {
-    // Given
-    extension.configuration.commands = {
-      build: '   ',
-    }
-
-    // When
-    await expect(
-      buildFunctionExtension(extension, {
-        stdout,
-        stderr,
-        signal,
-        app,
-      }),
-    ).rejects.toEqual(new error.AbortSilent())
-    expect(system.exec).not.toHaveBeenCalled()
-  })
 
   test('delegates the build to system when the build command is present', async () => {
     // Given
-    extension.configuration.commands = {
-      build: './scripts/build.sh argument',
+    extension.configuration.build = {
+      command: './scripts/build.sh argument',
     }
 
     // When

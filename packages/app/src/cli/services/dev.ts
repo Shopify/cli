@@ -47,10 +47,6 @@ async function dev(options: DevOptions) {
     app: {apiSecret},
   } = await ensureDevEnvironment(options)
 
-  if (Object.values(identifiers.extensions).length > 0) {
-    output.completed("A production app was selected. We'll use the extensions IDs present in your .env file")
-  }
-
   const proxyPort = await port.getRandomPort()
   const backendPort = await port.getRandomPort()
   const url: string = await generateURL(options.commandConfig.plugins, proxyPort)

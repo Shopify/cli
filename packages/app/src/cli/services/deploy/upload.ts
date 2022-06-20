@@ -1,8 +1,50 @@
-import {FunctionExtension, Identifiers} from '../../models/app/app'
+import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config'
+import {FunctionExtension, Identifiers, IdentifiersExtensions, ThemeExtension} from '../../models/app/app'
 import {getFunctionExtensionPointName} from '../../constants'
-import {api, error, session, http, id, output} from '@shopify/cli-kit'
+import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
+
+interface DeployThemeExtensionOptions {
+  /** The application API key */
+  apiKey: string
+
+  /** Set of local identifiers */
+  identifiers: Identifiers
+
+  /** The token to send authenticated requests to the partners' API  */
+  token: string
+}
+
+/**
+ * Uploads theme extension(s)
+ * @param options {DeployThemeExtensionOptions} The upload options
+ */
+
+export async function uploadThemeExtensions(
+  themeExtensions: ThemeExtension[],
+  options: DeployThemeExtensionOptions,
+): Promise<void> {
+  const {apiKey, identifiers, token} = options
+  await Promise.all(
+    themeExtensions.map(async (themeExtension) => {
+      const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+      const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
+        apiKey,
+        config: JSON.stringify(themeExtensionConfig),
+        context: undefined,
+        registrationId: themeId,
+      }
+      const mutation = api.graphql.ExtensionUpdateDraftMutation
+      const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
+      if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+        const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+        throw new error.Abort(errors)
+      }
+    }),
+  )
+}
 
 interface UploadUIExtensionsBundleOptions {
   /** The application API key */
@@ -44,7 +86,7 @@ export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundle
 
   const mutation = api.graphql.CreateDeployment
   const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
-  if (result.deploymentCreate && result.deploymentCreate.userErrors && result.deploymentCreate.userErrors.length > 0) {
+  if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
@@ -66,11 +108,7 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
   }
 
   const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.request(mutation, token, variables)
-  if (
-    result.deploymentGenerateSignedUploadUrl &&
-    result.deploymentGenerateSignedUploadUrl.userErrors &&
-    result.deploymentGenerateSignedUploadUrl.userErrors.length > 0
-  ) {
+  if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
@@ -102,26 +140,28 @@ export async function uploadFunctionExtensions(
   options: UploadFunctionExtensionsOptions,
 ): Promise<Identifiers> {
   let identifiers = options.identifiers
-  // eslint-disable-next-line require-atomic-updates
+
+  const functionUUIDs: IdentifiersExtensions = {}
+
+  // Functions are uploaded sequentially to avoid reaching the API limit
+  for (const extension of extensions) {
+    // eslint-disable-next-line no-await-in-loop
+    const remoteIdentifier = await uploadFunctionExtension(extension, {
+      apiKey: options.identifiers.app,
+      token: options.token,
+      identifier: identifiers.extensions[extension.localIdentifier],
+    })
+    functionUUIDs[extension.localIdentifier] = remoteIdentifier
+  }
+
   identifiers = {
     ...identifiers,
     extensions: {
       ...identifiers.extensions,
-      ...Object.fromEntries(
-        await Promise.all(
-          extensions.map(async (extension) => {
-            const identifierKey = extension.localIdentifier
-            const remoteIdentifier = await uploadFunctionExtension(extension, {
-              apiKey: options.identifiers.app,
-              token: options.token,
-              identifier: identifiers.extensions[extension.localIdentifier],
-            })
-            return [identifierKey, remoteIdentifier]
-          }),
-        ),
-      ),
+      ...functionUUIDs,
     },
   }
+
   return identifiers
 }
 
@@ -138,12 +178,18 @@ async function uploadFunctionExtension(
   const {url, headers} = await getFunctionExtensionUploadURL({apiKey: options.apiKey, token: options.token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = fs.readFileSync(extension.buildWasmPath, 'binary')
+  let inputQuery: string | undefined
+  if (await file.exists(extension.inputQueryPath())) {
+    inputQuery = await file.read(extension.inputQueryPath())
+  }
+
+  const functionContent = fs.readFileSync(extension.buildWasmPath())
   await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const query = api.graphql.AppFunctionSetMutation
   const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
   const schemaMajorVersion = schemaVersions?.major
   const schemaMinorVersion = schemaVersions?.minor
+
   const variables: api.graphql.AppFunctionSetVariables = {
     uuid: options.identifier,
     extensionPointName: getFunctionExtensionPointName(extension.configuration.type),
@@ -152,14 +198,15 @@ async function uploadFunctionExtension(
     force: true,
     schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
     schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
-    scriptConfigVersion: extension.configuration.version,
     configurationUi: extension.configuration.configurationUi,
-    configurationDefinition: JSON.stringify(extension.configuration.metaObject ?? {}),
     moduleUploadUrl: url,
-    appBridge: {
-      detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-      createPath: (extension.configuration.ui?.paths ?? {}).create,
-    },
+    appBridge: extension.configuration.ui?.paths
+      ? {
+          detailsPath: extension.configuration.ui.paths.details,
+          createPath: extension.configuration.ui.paths.create,
+        }
+      : undefined,
+    inputQuery,
   }
   const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(
     options.apiKey,

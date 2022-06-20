@@ -12,6 +12,7 @@ vi.mock('./redirect-listener')
 vi.mock('../string')
 vi.mock('../environment/fqdn')
 vi.mock('./identity')
+vi.mock('../ui')
 
 const port = 3456
 const host = '127.0.0.1'

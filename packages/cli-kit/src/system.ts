@@ -1,4 +1,5 @@
 import {concurrent as concurrentOutput, shouldDisplayColors, debug} from './output'
+import {platformAndArch} from './os'
 import {Abort} from './error'
 import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
@@ -7,11 +8,12 @@ import type {Writable} from 'node:stream'
 export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
-  stdout?: Writable
+  stdout?: Writable | 'inherit'
   stderr?: Writable
   stdin?: string
   signal?: AbortSignal
 }
+export type WritableExecOptions = Omit<ExecOptions, 'stdout'> & {stdout?: Writable}
 
 export const open = async (url: string) => {
   const externalOpen = await import('open')
@@ -34,7 +36,7 @@ export const exec = async (command: string, args: string[], options?: ExecOption
   if (options?.stderr) {
     commandProcess.stderr?.pipe(options.stderr)
   }
-  if (options?.stdout) {
+  if (options?.stdout && options.stdout !== 'inherit') {
     commandProcess.stdout?.pipe(options.stdout)
   }
   options?.signal?.addEventListener('abort', () => {
@@ -59,6 +61,7 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
     env,
     cwd: options?.cwd,
     input: options?.stdin,
+    stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
   })
   debug(`
 Running system process:
@@ -102,4 +105,23 @@ export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise
       }
     }),
   )
+}
+
+/**
+ * Displays a large file using the terminal pager set by the user, or a
+ * reasonable default for the user's OS:
+ *
+ * @param filename string The path to the file to be displayed.
+ */
+export async function page(filename: string) {
+  let executable: string
+  if (process.env.PAGER) {
+    executable = process.env.PAGER
+  } else if ((await platformAndArch()).platform === 'windows') {
+    executable = 'more'
+  } else {
+    executable = 'less -NR'
+  }
+  const [command, ...args] = [...executable.split(' '), filename]
+  await exec(command, args, {stdout: 'inherit', stdin: 'inherit'})
 }

@@ -3,8 +3,8 @@ type = "payment_methods"
 version = "2"
 configuration_ui = true
 
-[commands]
-build = "echo 'building'"
+[build]
+command = "echo 'build the wasm'"
 
 [meta_object]
 type = "object"
