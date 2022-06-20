@@ -5,6 +5,7 @@ import {open} from '../system'
 import {Abort} from '../error'
 import {identity as identityFqdn} from '../environment/fqdn'
 import * as output from '../output'
+import {keypress} from '../ui'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
@@ -38,9 +39,13 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   }
   /* eslint-enable @typescript-eslint/naming-convention */
 
+  output.info('\nTo run this command, log in to Shopify Partners.')
+  output.info('👉 Press any key to open the login page on your browser')
+  await keypress()
+
   url = `${url}?${new URLSearchParams(params).toString()}`
   open(url)
-  output.info('\nTo run this command, log in to Shopify Partners.')
+
   const result = await listenRedirect(host, port, url)
 
   if (result.state !== state) {

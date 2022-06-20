@@ -5,7 +5,7 @@ import {output, string} from '@shopify/cli-kit'
 export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
   const appURL = buildAppURL(storeFqdn, url)
   const heading = output.token.heading('App URL')
-  let message = `Once everything's built, your app's shareable link will be: ${appURL}`
+  let message = `Once everything's built, your app's shareable link will be:\n${appURL}`
   if (updated) {
     message += `\nNote that your app's URL in Shopify Partners will be updated.`
   }
@@ -21,7 +21,7 @@ export function outputExtensionsMessages(app: App, storeFqdn: string, url: strin
 
 function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
   for (const extension of extensions) {
-    const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)}) `)
+    const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)})`)
     let message: string
     switch (extension.type as UIExtensionTypes) {
       case 'checkout_post_purchase': {
@@ -55,7 +55,7 @@ One testing option is to use a separate app dedicated to staging.`
 
 function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
-  const heading = output.token.heading(getHumanKey(extensions[0].type))
+  const heading = output.token.heading(`${extensions[0].configuration.name} (${getHumanKey(extensions[0].type)})`)
   const link = output.token.link(
     'dev doc instructions',
     'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-4-test-your-changeseckout/post-purchase/getting-started-post-purchase-extension#step-2-test-the-extension',

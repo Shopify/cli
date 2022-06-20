@@ -114,6 +114,16 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
   }
 }
 
+export const keypress = async () => {
+  process.stdin.setRawMode(true)
+  return new Promise<void>((resolve) =>
+    process.stdin.once('data', () => {
+      process.stdin.setRawMode(false)
+      resolve()
+    }),
+  )
+}
+
 function convertQuestionForInquirer<
   TName extends string & keyof TAnswers,
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},
