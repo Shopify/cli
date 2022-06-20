@@ -9,7 +9,9 @@ import {
   sizeSync as fileSizeSync,
   writeSync as fileWriteSync,
 } from './file'
+import {platformAndArch} from './os'
 import {join as pathJoin, relativize as relativizePath} from './path'
+import {exec} from './system'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
@@ -526,6 +528,19 @@ export function unstyled(message: string): string {
 
 export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+}
+
+export async function page(filename: string) {
+  let executable: string
+  if (process.env.PAGER) {
+    executable = process.env.PAGER
+  } else if ((await platformAndArch()).platform === 'windows') {
+    executable = 'more'
+  } else {
+    executable = 'less -NR'
+  }
+  const [command, ...args] = [...executable.split(' '), filename]
+  await exec(command, args, {stdout: 'inherit', stdin: 'inherit'})
 }
 
 /* eslint-enable no-console */

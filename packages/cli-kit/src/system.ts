@@ -7,7 +7,7 @@ import type {Writable} from 'node:stream'
 export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
-  stdout?: Writable
+  stdout?: Writable | 'inherit'
   stderr?: Writable
   stdin?: string
   signal?: AbortSignal
@@ -34,7 +34,7 @@ export const exec = async (command: string, args: string[], options?: ExecOption
   if (options?.stderr) {
     commandProcess.stderr?.pipe(options.stderr)
   }
-  if (options?.stdout) {
+  if (options?.stdout && options.stdout !== 'inherit') {
     commandProcess.stdout?.pipe(options.stdout)
   }
   options?.signal?.addEventListener('abort', () => {
@@ -59,6 +59,7 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
     env,
     cwd: options?.cwd,
     input: options?.stdin,
+    stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
   })
   debug(`
 Running system process:
