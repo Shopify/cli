@@ -4,7 +4,9 @@ import {validateThemeExtensions} from './extensions/theme'
 import {App} from '../models/app/app'
 
 export async function validateExtensions(app: App) {
-  await validateFunctionExtensions(app.extensions.function)
-  await validateUIExtensions(app.extensions.ui)
-  await validateThemeExtensions(app.extensions.theme)
+  await Promise.all([
+    validateFunctionExtensions(app.extensions.function),
+    validateUIExtensions(app.extensions.ui),
+    validateThemeExtensions(app.extensions.theme),
+  ])
 }
