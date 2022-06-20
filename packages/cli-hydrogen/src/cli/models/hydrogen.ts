@@ -1,6 +1,6 @@
 import {configurationFileNames, genericConfigurationFileNames, supportedConfigExtensions} from '../constants'
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-import {dependency, path, file, error} from '@shopify/cli-kit'
+import {dependency, path, file, error as kitError} from '@shopify/cli-kit'
 import {createServer} from 'vite'
 
 export interface HydrogenApp {
@@ -94,7 +94,7 @@ class AppLoader {
 
   async findAppDirectory() {
     if (!(await file.exists(this.directory))) {
-      throw new error.Abort(`Couldn't find directory ${this.directory}`)
+      throw new kitError.Abort(`Couldn't find directory ${this.directory}`)
     }
     return path.dirname(await this.getConfigurationPath())
   }
@@ -114,7 +114,9 @@ class AppLoader {
     const configurationPath = configurationPathResults.find((result) => result !== undefined)
 
     if (!configurationPath) {
-      throw new error.Abort(`Couldn't find the configuration file for ${this.directory}, are you in an app directory?`)
+      throw new kitError.Abort(
+        `Couldn't find the configuration file for ${this.directory}, are you in an app directory?`,
+      )
     }
 
     this.configurationPath = configurationPath
@@ -126,16 +128,23 @@ class AppLoader {
       server: {middlewareMode: 'ssr'},
     })
 
-    const config = (await server.ssrLoadModule(filepath)).default
+    try {
+      const config = (await server.ssrLoadModule(filepath)).default
 
-    await server.close()
+      await server.close()
 
-    return config
+      return config
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const abortError = new kitError.Abort(error.message)
+      abortError.stack = error.stack
+      throw abortError
+    }
   }
 
   abortOrReport<T>(errorMessage: string, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
-      throw new error.Abort(errorMessage)
+      throw new kitError.Abort(errorMessage)
     } else {
       this.errors.addError(configurationPath, errorMessage)
       return fallback

@@ -23,7 +23,9 @@ beforeEach(() => {
   })
   vi.mock('../../models/app/app', async () => {
     return {
-      getUIExtensionRendererVersion: () => 'renderer-version',
+      getUIExtensionRendererVersion: () => {
+        return {name: 'renderer-name', version: '2.1.5'}
+      },
     }
   })
 })
@@ -99,13 +101,14 @@ describe('extensionConfig', () => {
           uuid: 'devUUID',
           title: 'My Extension Name',
           type: 'checkout_post_purchase',
+          version: '2.1.5',
           metafields: [],
+          surface: 'post_purchase',
           // eslint-disable-next-line @typescript-eslint/naming-convention
           node_executable: 'node-path',
           // eslint-disable-next-line @typescript-eslint/naming-convention
           extension_points: [],
           development: {
-            version: '1.0.0',
             // eslint-disable-next-line @typescript-eslint/naming-convention
             root_dir: 'extensions/my extension',
             // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -113,8 +116,11 @@ describe('extensionConfig', () => {
             entries: {
               main: 'src/index.js',
             },
-            renderer: 'renderer-version',
             resource: {url: 'invalid_url'},
+            renderer: {
+              name: 'renderer-name',
+              version: '2.1.5',
+            },
           },
           // eslint-disable-next-line @typescript-eslint/naming-convention
           capabilities: {network_access: true},

@@ -64,23 +64,19 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
   description: schema.define.string().default(''),
-  buildWasmPath: schema.define.string().optional().default('dist/index.wasm'),
-  metaObject: schema.define.any(),
+  build: schema.define.object({
+    command: schema.define.string(),
+    path: schema.define.string().optional(),
+  }),
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
       paths: schema.define
         .object({
-          create: schema.define.string().optional(),
-          details: schema.define.string().optional(),
+          create: schema.define.string(),
+          details: schema.define.string(),
         })
         .optional(),
-    })
-    .optional(),
-  version: schema.define.string(),
-  commands: schema.define
-    .object({
-      build: schema.define.string().optional(),
     })
     .optional(),
 })
@@ -117,7 +113,8 @@ type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMet
 export type FunctionExtension = Extension & {
   configuration: FunctionExtensionConfiguration
   metadata: FunctionExtensionMetadata
-  buildWasmPath: string
+  buildWasmPath: () => string
+  inputQueryPath: () => string
 }
 
 export type ThemeExtension = Extension & {
@@ -432,7 +429,14 @@ class AppLoader {
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         localIdentifier: path.basename(directory),
-        buildWasmPath: path.join(directory, configuration.buildWasmPath),
+        buildWasmPath() {
+          return configuration.build.path
+            ? path.join(directory, configuration.build.path)
+            : path.join(directory, 'dist/index.wasm')
+        },
+        inputQueryPath() {
+          return path.join(directory, 'input.graphql')
+        },
       }
     })
     return Promise.all(functions)
@@ -566,6 +570,8 @@ export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptio
   }
 }
 
+type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
+
 /**
  * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
@@ -576,7 +582,7 @@ export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptio
 export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,
   app: App,
-): Promise<{name: string; version: string} | undefined> {
+): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const fullName = getUIExtensionRendererDependency(uiExtensionType)?.replace('-react', '')
   if (!fullName) return undefined
@@ -586,11 +592,11 @@ export async function getUIExtensionRendererVersion(
   // Find the package.json in the project structure
   const realPath = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
   const packagePath = await path.findUp(realPath, {type: 'file', cwd: app.directory})
-  if (!packagePath) return undefined
+  if (!packagePath) return 'not_found'
 
   // Load the package.json and extract the version
   const packageContent = await dependency.packageJSONContents(packagePath)
-  if (!packageContent.version) return undefined
+  if (!packageContent.version) return 'not_found'
   return {name: fullName, version: packageContent.version}
 }
 
