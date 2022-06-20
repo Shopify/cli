@@ -5,13 +5,15 @@ import {path, cli, error, output} from '@shopify/cli-kit'
 
 const InvalidGithubRepository = () => {
   return new error.Abort(
-    'Only GitHub repository references are supported. eg: https://github.com/Shopify/<repository>/[subpath]#[branch]',
+    'Only GitHub repository references are supported. e.g.: https://github.com/Shopify/<repository>/[subpath]#[branch]',
   )
 }
 
 const UnsupportedTemplateAlias = () => {
   return new error.Abort(
-    output.content`Only ${output.token.yellow(Object.keys(templateURLMap).join(', '))} template alias are supported`,
+    output.content`Only ${Object.keys(templateURLMap)
+      .map((alias) => output.content`${output.token.yellow(alias)}`.value)
+      .join(', ')} template aliases are supported`,
   )
 }
 export default class Init extends Command {

@@ -43,7 +43,9 @@ describe('create app command', () => {
     const result = Init.run(['--template', 'java'])
 
     // Then
-    await expect(result).rejects.toThrow('Only \u001b[33mnode, php, ruby\u001b[39m template alias are supported')
+    await expect(result).rejects.toThrow(
+      'Only \u001b[33mnode\u001b[39m, \u001b[33mphp\u001b[39m, \u001b[33mruby\u001b[39m template aliases are supported',
+    )
   })
 
   it('throw an error when using a non github url repo', async () => {
@@ -52,7 +54,7 @@ describe('create app command', () => {
 
     // Then
     await expect(result).rejects.toThrow(
-      'Only GitHub repository references are supported. eg: https://github.com/Shopify/<repository>/[subpath]#[branch]',
+      'Only GitHub repository references are supported. e.g.: https://github.com/Shopify/<repository>/[subpath]#[branch]',
     )
   })
 })
