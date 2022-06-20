@@ -503,7 +503,6 @@ function logToFile(message: string, logLevel: string): void {
 
 // Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long
 function clearLogs() {
-  console.log(`starting to clear logs at ${new Date().toISOString()}`)
   if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
     const contents = fileReadSync(logFile)
     const splitContents = contents.split('\n')
@@ -511,7 +510,6 @@ function clearLogs() {
     fileWriteSync(logFile, newContents)
   }
   logsCleared = true
-  console.log(`finished clearing logs at ${new Date().toISOString()}`)
 }
 
 function withOrWithoutStyle(message: string): string {
@@ -541,6 +539,10 @@ export async function page(filename: string) {
   }
   const [command, ...args] = [...executable.split(' '), filename]
   await exec(command, args, {stdout: 'inherit', stdin: 'inherit'})
+}
+
+export async function pageLogs() {
+  await page(logFile)
 }
 
 /* eslint-enable no-console */
