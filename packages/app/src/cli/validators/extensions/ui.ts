@@ -28,8 +28,4 @@ export function validateWebPixelConfig(extension: UIExtension) {
   if (!extension.configuration.configuration) {
     throw WebPixelConfigError('configuration')
   }
-
-  if (!extension.configuration.version) {
-    throw WebPixelConfigError('version')
-  }
 }
