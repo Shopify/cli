@@ -12,6 +12,7 @@ export interface ExecOptions {
   stdin?: string
   signal?: AbortSignal
 }
+export type WritableExecOptions = Omit<ExecOptions, 'stdout'> & {stdout?: Writable}
 
 export const open = async (url: string) => {
   const externalOpen = await import('open')
