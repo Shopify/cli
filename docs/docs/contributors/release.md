@@ -22,5 +22,4 @@ create a branch with the name of the version,
 run the command `yarn changeset version`,
 commit and push the changes and open a PR.
 Changesets will automatically detect the changes and update the `package.json`s and the dependencies between them.
-Once the PR is merged,
-a developer from Shopify will go ahead and initiate the publishing process that will result in the packages being pushed to the [NPM registry](https://www.npmjs.com/).
+Once the PR is merged, a developer from Shopify will go ahead and initiate the publishing through [Shipit](https://shipit.shopify.io/shopify/shopify-cli-next/production/) that will result in the packages being pushed to the [NPM registry](https://www.npmjs.com/).
