@@ -21,12 +21,17 @@ import {AbortController, AbortSignal} from 'abort-controller'
 import cjs from 'color-json'
 import {Writable} from 'node:stream'
 
-const logFilePath = constants.paths.directories.cache.path()
-fileMkdirSync(logFilePath)
-export const logFile = pathJoin(logFilePath, 'shopify.log')
+let logFile: string
 
-// Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long
-function clearLogs() {
+export function initiateLogging(logFilePath: string = constants.paths.directories.cache.path()) {
+  fileMkdirSync(logFilePath)
+  logFile = pathJoin(logFilePath, 'shopify.log')
+  truncateLogs()
+}
+
+// Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long.
+// Rescues in case the file hasn't been created yet.
+function truncateLogs() {
   try {
     if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
       const contents = fileReadSync(logFile)
@@ -37,7 +42,6 @@ function clearLogs() {
     // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
   } catch {}
 }
-clearLogs()
 
 enum ContentTokenType {
   Raw,
@@ -510,6 +514,8 @@ function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) =
 }
 
 function logToFile(message: string, logLevel: string): void {
+  // If file logging hasn't been initiated, skip it
+  if (!logFile) return
   const timestamp = new Date().toISOString()
   fileAppend(logFile, `[${timestamp} ${logLevel}]: ${message}\n`)
 }
