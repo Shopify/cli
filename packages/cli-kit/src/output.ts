@@ -26,6 +26,20 @@ const logFilePath = constants.paths.directories.cache.path()
 fileMkdirSync(logFilePath)
 export const logFile = pathJoin(logFilePath, 'shopify.log')
 
+// Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long
+function clearLogs() {
+  try {
+    if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
+      const contents = fileReadSync(logFile)
+      const splitContents = contents.split('\n')
+      const newContents = splitContents.slice(10000, splitContents.length).join('\n')
+      fileWriteSync(logFile, newContents)
+    }
+    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
+  } catch {}
+}
+clearLogs()
+
 enum ContentTokenType {
   Raw,
   Command,
@@ -496,26 +510,9 @@ function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) =
   logToFile(message, logLevel.toUpperCase())
 }
 
-let logsCleared = false
-
 function logToFile(message: string, logLevel: string): void {
   const timestamp = new Date().toISOString()
-  if (!logsCleared) clearLogs()
   fileAppend(logFile, `[${timestamp} ${logLevel}]: ${message}\n`)
-}
-
-// Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long
-function clearLogs() {
-  try {
-    if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
-      const contents = fileReadSync(logFile)
-      const splitContents = contents.split('\n')
-      const newContents = splitContents.slice(10000, splitContents.length).join('\n')
-      fileWriteSync(logFile, newContents)
-    }
-    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
-  } catch {}
-  logsCleared = true
 }
 
 function withOrWithoutStyle(message: string): string {
