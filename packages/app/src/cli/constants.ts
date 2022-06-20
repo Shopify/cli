@@ -160,18 +160,36 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   }
 }
 
+export const extensionTypesKeys = {
+  types: [
+    'web_pixel',
+    'post_purchase_ui',
+    'theme_app_extension',
+    'checkout_ui',
+    'pos_ui',
+    'subscription_ui',
+    'product_discount',
+    'order_discount',
+    'shipping_discount',
+    'payment_customization',
+    'delivery_option_presenter',
+  ],
+} as const
+
+export type ExtensionTypeslKeys = typeof extensionTypesKeys.types[number]
+
 export const extensionTypesHumanKeys = {
   types: [
     'web pixel',
-    'post-purchase',
+    'post-purchase UI',
     'theme app extension',
     'checkout UI',
-    'Shopify POS',
-    'product subscription',
+    'POS UI',
+    'subscription UI',
     'product discount',
     'order discount',
     'shipping discount',
-    'payment customizations',
+    'payment customization',
     'delivery option presenter',
   ],
 } as const
@@ -190,15 +208,15 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
     case 'web_pixel_extension':
       return buildExtensionOutputConfig('web pixel')
     case 'checkout_post_purchase':
-      return buildExtensionOutputConfig('post-purchase', 'https://shopify.dev/apps/checkout/post-purchase')
+      return buildExtensionOutputConfig('post-purchase UI', 'https://shopify.dev/apps/checkout/post-purchase')
     case 'theme':
       return buildExtensionOutputConfig('theme app extension')
     case 'checkout_ui_extension':
       return buildExtensionOutputConfig('checkout UI')
     case 'product_subscription':
-      return buildExtensionOutputConfig('product subscription')
+      return buildExtensionOutputConfig('subscription UI')
     case 'pos_ui_extension':
-      return buildExtensionOutputConfig('Shopify POS')
+      return buildExtensionOutputConfig('POS UI')
     case 'product_discounts':
       return buildExtensionOutputConfig(
         'product discount',
@@ -218,36 +236,9 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
         discountAdditionalHelp,
       )
     case 'payment_methods':
-      return buildExtensionOutputConfig('payment customizations')
+      return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('delivery option presenter')
-  }
-}
-
-export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys): ExtensionTypes {
-  switch (humanKey) {
-    case 'checkout UI':
-      return 'checkout_ui_extension'
-    case 'order discount':
-      return 'product_discounts'
-    case 'product discount':
-      return 'product_discounts'
-    case 'shipping discount':
-      return 'shipping_discounts'
-    case 'payment customizations':
-      return 'payment_methods'
-    case 'post-purchase':
-      return 'checkout_post_purchase'
-    case 'product subscription':
-      return 'product_subscription'
-    case 'Shopify POS':
-      return 'pos_ui_extension'
-    case 'delivery option presenter':
-      return 'shipping_rate_presenter'
-    case 'theme app extension':
-      return 'theme'
-    case 'web pixel':
-      return 'web_pixel_extension'
   }
 }
 
