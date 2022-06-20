@@ -247,6 +247,18 @@ export async function addNPMDependenciesIfNeeded(
   })
 }
 
+export async function addNPMDependenciesWithoutVersionIfNeeded(
+  dependencies: string[],
+  options: AddNPMDependenciesIfNeededOptions,
+) {
+  await addNPMDependenciesIfNeeded(
+    dependencies.map((dependency) => {
+      return {name: dependency, version: undefined}
+    }),
+    options,
+  )
+}
+
 export async function addLatestNPMDependencies(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
   await addNPMDependenciesIfNeeded(
     dependencies.map((dependency) => {

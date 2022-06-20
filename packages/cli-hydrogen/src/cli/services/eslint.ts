@@ -16,7 +16,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
       skip: () => !install,
       task: async (_, task) => {
         const requiredDependencies = ['eslint', 'eslint-plugin-hydrogen', 'prettier', '@shopify/prettier-config']
-        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+        await dependency.addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
           dependencyManager: app.dependencyManager,
           type: 'prod',
           directory: app.directory,

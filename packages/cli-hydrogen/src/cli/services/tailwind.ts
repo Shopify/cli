@@ -25,7 +25,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       skip: () => !install,
       task: async (_, task) => {
         const requiredDependencies = ['postcss', 'postcss-loader', 'tailwindcss', 'autoprefixer']
-        await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
+        await dependency.addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
           dependencyManager: app.dependencyManager,
           type: 'prod',
           directory: app.directory,
