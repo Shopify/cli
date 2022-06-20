@@ -9,6 +9,7 @@ export interface OrganizationApp {
   id: string
   title: string
   apiKey: string
+  organizationId: string
   apiSecretKeys: {
     secret: string
   }[]
