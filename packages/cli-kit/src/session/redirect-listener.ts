@@ -109,8 +109,8 @@ export class RedirectListener {
     this.server.listen({port: this.port, host: this.host}, () => {})
   }
 
-  stop(): void {
-    this.server.close()
+  async stop(): Promise<void> {
+    await this.server.close()
   }
 }
 
