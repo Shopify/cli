@@ -55,7 +55,7 @@
     "@shopify/cli-kit": "^3.0.18"
   },
   "devDependencies": {
-    "vitest": "0.13.1"
+    "vitest": "^0.15.1"
   },
   "engine-strict": true,
   "engines": {

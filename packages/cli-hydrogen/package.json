@@ -76,7 +76,7 @@
     "sirv": "^1.0.14",
     "typescript": "^4.6.4",
     "vite": "^2.9.9",
-    "vitest": "0.13.1"
+    "vitest": "^0.15.1"
   },
   "engine-strict": true,
   "engines": {

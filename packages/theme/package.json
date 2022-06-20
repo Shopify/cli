@@ -26,7 +26,7 @@
     "@shopify/cli-kit": "^3.0.16"
   },
   "devDependencies": {
-    "vitest": "0.13.1"
+    "vitest": "^0.15.1"
   },
   "oclif": {
     "commands": "dist/commands"

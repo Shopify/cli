@@ -47,7 +47,7 @@
     "commands": "dist/commands"
   },
   "devDependencies": {
-    "vitest": "0.13.1",
+    "vitest": "^0.15.1",
     "ws": "^8.7.0",
     "@fastify/http-proxy": "^8.0.1"
   }
