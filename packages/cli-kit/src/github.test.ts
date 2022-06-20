@@ -55,7 +55,6 @@ describe('parseRepoUrl', () => {
         site: 'github.com',
         user: 'Shopify',
         name: 'hydrogen-app',
-        ref: 'HEAD',
         subDirectory: undefined,
         ssh: 'git@github.com:Shopify/hydrogen-app',
       })
@@ -74,7 +73,24 @@ describe('parseRepoUrl', () => {
       site: 'github.com',
       user: 'Shopify',
       name: 'hydrogen',
-      ref: 'HEAD',
+      subDirectory: 'examples/template-hydrogen-default',
+      ssh: 'git@github.com:Shopify/hydrogen',
+    })
+  })
+
+  it('supports branches with #', async () => {
+    // Given
+    const url = 'git@github.com:Shopify/hydrogen/examples/template-hydrogen-default#someBranch'
+
+    // When
+    const latest = parseRepoUrl(url)
+
+    // Then
+    await expect(latest).toMatchObject({
+      site: 'github.com',
+      user: 'Shopify',
+      name: 'hydrogen',
+      ref: 'someBranch',
       subDirectory: 'examples/template-hydrogen-default',
       ssh: 'git@github.com:Shopify/hydrogen',
     })

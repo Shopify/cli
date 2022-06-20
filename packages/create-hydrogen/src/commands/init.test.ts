@@ -1,6 +1,6 @@
 import Init from './init'
 import initService from '../services/init'
-import initPrompt, {Template} from '../prompts/init'
+import initPrompt from '../prompts/init'
 import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('../utils/paths')
@@ -15,7 +15,7 @@ describe('Init', function () {
     // Given
     const directory = '/path/to/output'
     const name = 'snow-devil'
-    const template = Template.DemoStore
+    const template = 'demo-store-js'
 
     initPromptMock.mockReturnValue(Promise.resolve({name, template}))
 

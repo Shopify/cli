@@ -62,6 +62,7 @@ export function parseRepoUrl(src: string) {
       'user/repo#dev',
       'https://github.com/user/repo',
     ]
+
     throw new Abort(`Parsing the url ${src} failed. Supported formats are ${exampleFormats.join(', ')}.`)
   }
 
@@ -70,11 +71,13 @@ export function parseRepoUrl(src: string) {
   const user = match[4]
   const name = match[5].replace(/\.git$/, '')
   const subDirectory = match[6]?.slice(1)
-  const ref = match[7] || 'HEAD'
+  const ref = match[7]
+  const branch = ref ? `#${ref}` : ''
   const ssh = `git@${normalizedSite}:${user}/${name}`
   const http = `https://${normalizedSite}/${user}/${name}`
+  const full = ['https:/', normalizedSite, user, name, subDirectory].join('/').concat(branch)
 
-  return {site: normalizedSite, user, name, ref, subDirectory, ssh, http}
+  return {full, site: normalizedSite, user, name, ref, subDirectory, ssh, http}
 }
 
 export interface GithubRepoReference {
