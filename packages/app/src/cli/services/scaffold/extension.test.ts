@@ -62,12 +62,18 @@ describe('initialize a extension', () => {
         expect(scaffoldedExtension2.configuration.name).toBe(name2)
 
         const firstDependenciesCallArgs = addDependenciesCalls[0]
-        expect(firstDependenciesCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
+        expect(firstDependenciesCallArgs[0]).toEqual([
+          {name: 'react', version: undefined},
+          {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
+        ])
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
         expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
 
         const secondDependencyCallArgs = addDependenciesCalls[1]
-        expect(secondDependencyCallArgs[0]).toEqual(['react', '@shopify/post-purchase-ui-extensions-react'])
+        expect(firstDependenciesCallArgs[0]).toEqual([
+          {name: 'react', version: undefined},
+          {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
+        ])
         expect(secondDependencyCallArgs[1].type).toEqual('prod')
         expect(secondDependencyCallArgs[1].directory).toEqual(loadedApp.directory)
       })
@@ -101,7 +107,8 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     extensions.forEach((extensionType) => {
-      expect(getRuntimeDependencies({extensionType}).includes('react')).toBeTruthy()
+      const got = getRuntimeDependencies({extensionType})
+      expect(got.find((dep) => dep.name === 'react' && dep.version === undefined)).toBeTruthy()
     })
   })
 
@@ -111,9 +118,10 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     extensions.forEach((extensionType) => {
-      const rendererDependency = getUIExtensionRendererDependency(extensionType)
-      if (rendererDependency) {
-        expect(getRuntimeDependencies({extensionType}).includes(rendererDependency)).toBeTruthy()
+      const reference = getUIExtensionRendererDependency(extensionType)
+      if (reference) {
+        const got = getRuntimeDependencies({extensionType})
+        expect(got.find((dep) => dep.name === reference.name && dep.version === reference.version)).toBeTruthy()
       }
     })
   })

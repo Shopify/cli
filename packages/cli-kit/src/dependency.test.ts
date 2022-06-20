@@ -179,6 +179,29 @@ describe('getDependencies', () => {
 })
 
 describe('addNPMDependenciesIfNeeded', () => {
+  test('runs the right command when there is no version in dependency', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        dependencies: {existing: '1.2.3'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      await addNPMDependenciesIfNeeded([{name: 'new', version: undefined}], {
+        type: 'dev',
+        dependencyManager: 'npm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new', '--save-dev'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
   test("runs the right command when it's npm and dev dependencies", async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
@@ -189,14 +212,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'dev',
         dependencyManager: 'npm',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new', '--save-dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-dev'], {
         cwd: tmpDir,
       })
     })
@@ -212,14 +235,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'prod',
         dependencyManager: 'npm',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new', '--save-prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-prod'], {
         cwd: tmpDir,
       })
     })
@@ -235,14 +258,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'peer',
         dependencyManager: 'npm',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new', '--save-peer'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-peer'], {
         cwd: tmpDir,
       })
     })
@@ -258,14 +281,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'dev',
         dependencyManager: 'yarn',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new', '--dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--dev'], {
         cwd: tmpDir,
       })
     })
@@ -281,14 +304,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'prod',
         dependencyManager: 'yarn',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new', '--prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--prod'], {
         cwd: tmpDir,
       })
     })
@@ -304,14 +327,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'peer',
         dependencyManager: 'yarn',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new', '--peer'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--peer'], {
         cwd: tmpDir,
       })
     })
@@ -327,14 +350,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'dev',
         dependencyManager: 'pnpm',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new', '--save-dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-dev'], {
         cwd: tmpDir,
       })
     })
@@ -350,14 +373,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'prod',
         dependencyManager: 'pnpm',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new', '--save-prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-prod'], {
         cwd: tmpDir,
       })
     })
@@ -373,14 +396,14 @@ describe('addNPMDependenciesIfNeeded', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await addNPMDependenciesIfNeeded(['new'], {
+      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'peer',
         dependencyManager: 'pnpm',
         directory: tmpDir,
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new', '--save-peer'], {
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-peer'], {
         cwd: tmpDir,
       })
     })
