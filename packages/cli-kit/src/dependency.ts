@@ -224,18 +224,18 @@ export async function addNPMDependenciesIfNeeded(
     return
   }
   let args: string[]
-  const depedencyWithVersion = dependenciesToAdd.map((dep) => {
+  const depedenciesWithVersion = dependenciesToAdd.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
   switch (options.dependencyManager) {
     case 'npm':
-      args = argumentsToAddDependenciesWithNPM(depedencyWithVersion, options.type)
+      args = argumentsToAddDependenciesWithNPM(depedenciesWithVersion, options.type)
       break
     case 'yarn':
-      args = argumentsToAddDependenciesWithYarn(depedencyWithVersion, options.type)
+      args = argumentsToAddDependenciesWithYarn(depedenciesWithVersion, options.type)
       break
     case 'pnpm':
-      args = argumentsToAddDependenciesWithPNPM(depedencyWithVersion, options.type)
+      args = argumentsToAddDependenciesWithPNPM(depedenciesWithVersion, options.type)
       break
   }
   options.stdout?.write(`Executing...${args.join(' ')}`)
