@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.0.18
+
+### Patch Changes
+
+- d23daa09: Sending a buffer instead of a string when uploading the function .wasm file
+- 1b3a3a45: Human-facing extension type names
+- 84438079: Add logging to file and command to access logs
+- 0426f958: Remove POS UI extension type from scaffold
+- fd10fc01: Add a confirmation prompt before opening the browser to continue auth
+- 8ef8a3ab: Add deployment of theme extensions
+- 0243890b: Fix function appBridge variables not being set during GraphQL mutation
+- fa518a0d: Report events with the analytics helper from cli-kit
+- cb1caa7c: Improve create app error message when using an invalid template flag value
+
 ## 3.0.17
 
 ### Patch Changes

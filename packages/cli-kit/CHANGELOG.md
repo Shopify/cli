@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.0.18
+
+### Patch Changes
+
+- 84438079: Add logging to file and command to access logs
+- fa518a0d: Add analytics helper to report events
+- fd10fc01: Add a confirmation prompt before opening the browser to continue auth
+- 0243890b: Fix function appBridge variables not being set during GraphQL mutation
+- cb1caa7c: Improve create app error message when using an invalid template flag value
+
 ## 3.0.17
 
 ### Patch Changes
