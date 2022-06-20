@@ -70,6 +70,10 @@ export async function mkdir(path: string): Promise<void> {
   await fs.mkdirp(path)
 }
 
+export function mkdirSync(path: string): void {
+  fs.mkdirpSync(path)
+}
+
 export async function remove(path: string): Promise<void> {
   await fs.remove(path)
 }

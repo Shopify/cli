@@ -5,6 +5,7 @@ import constants from './constants'
 import {DependencyManager} from './dependency'
 import {
   append as fileAppend,
+  mkdirSync as fileMkdirSync,
   readSync as fileReadSync,
   sizeSync as fileSizeSync,
   writeSync as fileWriteSync,
@@ -21,7 +22,9 @@ import {AbortController, AbortSignal} from 'abort-controller'
 import cjs from 'color-json'
 import {Writable} from 'node:stream'
 
-export const logFile = pathJoin(constants.paths.directories.cache.path(), 'shopify.log')
+const logFilePath = constants.paths.directories.cache.path()
+fileMkdirSync(logFilePath)
+export const logFile = pathJoin(logFilePath, 'shopify.log')
 
 enum ContentTokenType {
   Raw,
