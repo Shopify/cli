@@ -1,4 +1,5 @@
 import {concurrent as concurrentOutput, shouldDisplayColors, debug} from './output'
+import {platformAndArch} from './os'
 import {Abort} from './error'
 import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
@@ -104,4 +105,23 @@ export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise
       }
     }),
   )
+}
+
+/**
+ * Displays a large file using the terminal pager set by the user, or a
+ * reasonable default for the user's OS:
+ *
+ * @param filename string The path to the file to be displayed.
+ */
+export async function page(filename: string) {
+  let executable: string
+  if (process.env.PAGER) {
+    executable = process.env.PAGER
+  } else if ((await platformAndArch()).platform === 'windows') {
+    executable = 'more'
+  } else {
+    executable = 'less -NR'
+  }
+  const [command, ...args] = [...executable.split(' '), filename]
+  await exec(command, args, {stdout: 'inherit', stdin: 'inherit'})
 }
