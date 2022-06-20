@@ -27,8 +27,8 @@ export function initiateLogging({
   logDir = constants.paths.directories.cache.path(),
   filename = 'shopify.log',
 }: {
-  logDir: string
-  filename: string
+  logDir?: string
+  filename?: string
 }) {
   fileMkdirSync(logDir)
   logFile = pathJoin(logDir, filename)
