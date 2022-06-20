@@ -8,6 +8,7 @@ import {
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
+  ExtensionTypeslKeys,
 } from '../../../constants'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
@@ -65,7 +66,7 @@ export default class AppScaffoldExtension extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: App = await loadApp(directory)
 
-    flags.type = convertExtensionTypeKeyToExtensionType(flags.type)
+    flags.type = convertExtensionTypeKeyToExtensionType(flags.type as ExtensionTypeslKeys)
 
     await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
