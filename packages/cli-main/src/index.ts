@@ -5,7 +5,7 @@ import Bugsnag from '@bugsnag/js'
 import {error as kitError, environment, output} from '@shopify/cli-kit'
 
 function runCLI() {
-  output.initiateLogging()
+  output.initiateLogging({filename: 'shopify.cli.log'})
   if (environment.local.isDebug()) {
     settings.debug = true
   } else {
