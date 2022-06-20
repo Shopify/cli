@@ -92,11 +92,13 @@ scopes = "read_products"
   }
 
   it("throws an error if the directory doesn't exist", async () => {
-    // Given
-    const directory = '/tmp/doesnt/exist'
+    await temporary.directory(async (tmp) => {
+      // Given
+      await file.rmdir(tmp, {force: true})
 
-    // When/Then
-    await expect(load(directory)).rejects.toThrow(/Couldn't find directory/)
+      // When/Then
+      await expect(load(tmp)).rejects.toThrow(/Couldn't find directory/)
+    })
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
