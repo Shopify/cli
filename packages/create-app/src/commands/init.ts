@@ -3,6 +3,17 @@ import initService from '../services/init'
 import {Command, Flags} from '@oclif/core'
 import {path, cli, error, output} from '@shopify/cli-kit'
 
+const InvalidGithubRepository = () => {
+  throw new error.Abort(
+    'Only GitHub repository references are supported. eg: https://github.com/Shopify/<repository>/[subpath]#[branch]',
+  )
+}
+
+const UnsupportedTemplateAlias = () => {
+  throw new error.Abort(
+    output.content`Only ${output.token.yellow(Object.keys(templateURLMap).join(', '))} template alias are supported`,
+  )
+}
 export default class Init extends Command {
   static flags = {
     ...cli.globalFlags,
@@ -64,20 +75,8 @@ export default class Init extends Command {
     }
 
     const url = this.parseURL(template)
-
-    if (url && url.origin !== 'https://github.com') {
-      throw new error.Abort(
-        'Only GitHub repository references are supported. eg: https://github.com/Shopify/<repository>/[subpath]#[branch]',
-      )
-    }
-
-    if (!url && !Object.keys(templateURLMap).includes(template)) {
-      throw new error.Abort(
-        output.content`Only ${output.token.yellow(
-          Object.keys(templateURLMap).join(', '),
-        )} template alias are supported`,
-      )
-    }
+    if (url && url.origin !== 'https://github.com') throw InvalidGithubRepository()
+    if (!url && !Object.keys(templateURLMap).includes(template)) throw UnsupportedTemplateAlias()
   }
 
   parseURL(url: string): URL | undefined {
