@@ -503,12 +503,15 @@ function logToFile(message: string, logLevel: string): void {
 
 // Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long
 function clearLogs() {
-  if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
-    const contents = fileReadSync(logFile)
-    const splitContents = contents.split('\n')
-    const newContents = splitContents.slice(10000, splitContents.length).join('\n')
-    fileWriteSync(logFile, newContents)
-  }
+  try {
+    if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
+      const contents = fileReadSync(logFile)
+      const splitContents = contents.split('\n')
+      const newContents = splitContents.slice(10000, splitContents.length).join('\n')
+      fileWriteSync(logFile, newContents)
+    }
+    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
+  } catch {}
   logsCleared = true
 }
 
