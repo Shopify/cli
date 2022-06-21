@@ -6,9 +6,8 @@ import {glob, join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
-import {exec} from './system'
 import {content, token} from './output'
-
+import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
 
 const RubyCLIVersion = '2.16.0'
@@ -33,7 +32,7 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
   }
 
-  exec('bundle', ['exec', 'shopify'].concat(args), {
+  spawn('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
     cwd: shopifyCLIDirectory(),
     env,
