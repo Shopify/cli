@@ -172,7 +172,11 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
           task: async (_, task) => {
             await file.mkdir(templateDownloadDir)
-            await git.downloadRepository({repoUrl: url, destination: templateDownloadDir})
+            await git.downloadRepository({
+              repoUrl: url,
+              destination: templateDownloadDir,
+              shallow: true,
+            })
             const origin = path.join(templateDownloadDir, functionTemplatePath(options))
             await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
             const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')

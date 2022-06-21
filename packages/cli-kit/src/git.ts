@@ -18,7 +18,15 @@ export async function initializeRepository(directory: string) {
   await git(directory).init()
 }
 
-export async function downloadRepository({repoUrl, destination}: {repoUrl: string; destination: string}) {
+export async function downloadRepository({
+  repoUrl,
+  destination,
+  shallow,
+}: {
+  repoUrl: string
+  destination: string
+  shallow?: boolean
+}) {
   debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
   await ensurePresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
@@ -26,6 +34,9 @@ export async function downloadRepository({repoUrl, destination}: {repoUrl: strin
   const options: TaskOptions = {'--recurse-submodules': null}
   if (branch) {
     options['--branch'] = branch
+  }
+  if (shallow) {
+    options['--depth'] = 1
   }
 
   await git().clone(repository, destination, options, (err) => {

@@ -36,6 +36,7 @@ async function init(options: InitOptions) {
           await git.downloadRepository({
             repoUrl,
             destination: templateDownloadDir,
+            shallow: true,
           })
           task.title = 'Template downloaded'
         },

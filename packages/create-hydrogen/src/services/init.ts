@@ -69,6 +69,7 @@ async function init(options: InitOptions) {
           await git.downloadRepository({
             repoUrl: `${templateInfo.http}#${templateInfo.ref}`,
             destination: templateDownloadDir,
+            shallow: true,
           })
 
           if (!(await file.exists(path.join(templateDownloadDir, templateInfo.subDirectory, 'package.json')))) {
