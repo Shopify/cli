@@ -36,6 +36,7 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
   spawn('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
     cwd: shopifyCLIDirectory(),
+    shell: true,
     env,
   })
 }
