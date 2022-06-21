@@ -155,7 +155,7 @@ export function getUIExtensionRendererDependency(
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
-      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.16.0'}
+      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.17.0'}
     case 'checkout_post_purchase':
       return {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
     case 'pos_ui_extension':
