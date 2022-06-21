@@ -1,5 +1,6 @@
 import {fetch} from './http'
 import {Abort} from './error'
+import {content, debug} from './output'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,6 +37,7 @@ export async function getLatestRelease(
   repo: string,
   {filter}: Options = {filter: () => true},
 ): Promise<GithubRelease> {
+  debug(content`Getting the latest release of GitHub repository ${user}/${repo}...`)
   const url = `https://api.github.com/repos/${user}/${repo}/releases`
   const fetchResult = await fetch(url)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

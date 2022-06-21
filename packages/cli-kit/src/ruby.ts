@@ -6,7 +6,6 @@ import {glob, join} from './path'
 import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
-
 import {content, token} from './output'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
@@ -36,7 +35,6 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
 
   spawn('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
-    shell: true,
     cwd: shopifyCLIDirectory(),
     env,
   })

@@ -11,6 +11,8 @@ import {
   refreshAccessToken,
   InvalidGrantError,
 } from './session/exchange'
+import {content, token, debug} from './output'
+
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
 import * as secureStore from './session/store'
@@ -86,6 +88,9 @@ export interface OAuthSession {
  * @returns {Promise<string>} The access token for the Partners API.
  */
 export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
+  debug(content`Ensuring that the user is authenticated with the Partners API with the following scopes:
+${token.json(scopes)}
+`)
   const envToken = env[constants.environmentVariables.partnersToken]
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
@@ -103,6 +108,9 @@ export async function ensureAuthenticatedPartners(scopes: string[] = [], env = p
  * @returns {Promise<string>} The access token for the Storefront API.
  */
 export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<string> {
+  debug(content`Ensuring that the user is authenticated with the Storefront API with the following scopes:
+${token.json(scopes)}
+`)
   const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
   if (!tokens.storefront) {
     throw MissingStorefrontTokenError
@@ -117,6 +125,11 @@ export async function ensureAuthenticatedStorefront(scopes: string[] = []): Prom
  * @returns {Promise<string>} The access token for the Admin API
  */
 export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
+  debug(content`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${token.raw(
+    store,
+  )}:
+${token.json(scopes)}
+`)
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
   if (!tokens.admin) {
     throw MissingAdminTokenError
@@ -140,13 +153,20 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
   const fqdnSession = currentSession[fqdn]
   const scopes = getFlattenScopes(applications)
 
+  debug(content`Validating existing session against the scopes:
+${token.json(scopes)}
+For applications:
+${token.json(applications)}
+`)
   const validationResult = await validateSession(scopes, applications, fqdnSession)
 
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
+    debug(content`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh') {
+    debug(content`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
@@ -177,12 +197,15 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   const store = applications.adminApi?.storeFqdn
 
   // Authorize user via browser
+  debug(content`Authorizing through Identity's website...`)
   const code = await authorize(scopes)
 
   // Exchange code for identity token
+  debug(content`Authorization code received. Exchanging it for a CLI token...`)
   const identityToken = await exchangeCodeForAccessToken(code)
 
   // Exchange identity token for application tokens
+  debug(content`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   const session: Session = {

@@ -1,3 +1,4 @@
+import {debug, content} from './output'
 import {execa} from 'execa'
 import {platform as processPlatform} from 'node:process'
 import {userInfo as osUserInfo, arch as osArch} from 'node:os'
@@ -25,6 +26,7 @@ const makeUsernameFromId = (userId: string) => `no-username-${userId}`
 // because adding it as a transtive dependency causes conflicts with other
 // packages that haven't been yet migrated to the latest version.
 export const username = async (platform: typeof processPlatform = processPlatform): Promise<string | null> => {
+  debug(content`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
   if (environmentVariable) {
     return environmentVariable

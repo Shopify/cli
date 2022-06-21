@@ -1,5 +1,6 @@
 import {glob, join, dirname, relative} from './path'
 import {mkdir, read, copy, chmod, isDirectory, write, hasExecutablePermissions} from './file'
+import {content, token, debug} from './output'
 import {Liquid} from 'liquidjs'
 
 // This line is necessary to register additional helpers.
@@ -20,6 +21,7 @@ export function create(templateContent: string) {
  * @param data {string} Data to feed the template engine.
  */
 export async function recursiveDirectoryCopy(from: string, to: string, data: object) {
+  debug(content`Copying template from directory ${token.path(from)} to ${token.path(to)}`)
   const templateFiles: string[] = await glob(join(from, '**/*'), {dot: true})
 
   const sortedTemplateFiles = templateFiles

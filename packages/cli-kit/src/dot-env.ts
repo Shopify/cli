@@ -1,5 +1,6 @@
 import {Abort} from './error'
 import {exists, read as readFile, write as writeFile} from './file'
+import {debug, content as outputContent, token} from './output'
 import {parse, stringify} from 'envfile'
 
 /**
@@ -26,6 +27,7 @@ export interface DotEnvFile {
 }
 
 export async function read(path: string): Promise<DotEnvFile> {
+  debug(outputContent`Reading the .env file at ${token.path(path)}`)
   if (!(await exists(path))) {
     throw DotEnvNotFoundError(path)
   }

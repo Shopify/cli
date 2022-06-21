@@ -1,6 +1,7 @@
 import {join} from './path'
 import * as file from './file'
 import * as os from './os'
+import {debug, token, content} from './output'
 
 interface JSON {
   [key: string]: JSONValue
@@ -19,6 +20,7 @@ export interface PackageJSON extends JSON {
 }
 
 export async function readPackageJSON(directory: string): Promise<PackageJSON> {
+  debug(content`Reading and decoding the content from package.json at ${token.path(directory)}...`)
   const packagePath = join(directory, 'package.json')
   const packageJSON = JSON.parse(await file.read(packagePath))
 
@@ -26,6 +28,7 @@ export async function readPackageJSON(directory: string): Promise<PackageJSON> {
 }
 
 export async function writePackageJSON(directory: string, packageJSON: JSON): Promise<void> {
+  debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
   const packagePath = join(directory, 'package.json')
   await file.write(packagePath, JSON.stringify(packageJSON, null, 2))
 }

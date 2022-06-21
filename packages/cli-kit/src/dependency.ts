@@ -4,7 +4,7 @@ import {glob, dirname, join as pathJoin} from './path'
 import {Abort} from './error'
 import {latestNpmPackageVersion} from './version'
 import {Version} from './semver'
-import {content, token} from './output'
+import {content, token, debug} from './output'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
@@ -46,6 +46,7 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
  * @returns The dependency manager
  */
 export async function getDependencyManager(directory: string): Promise<DependencyManager> {
+  debug(content`Obtaining the dependency manager in directory ${token.path(directory)}...`)
   const yarnLockPath = pathJoin(directory, genericConfigurationFileNames.yarn.lockfile)
   const pnpmLockPath = pathJoin(directory, genericConfigurationFileNames.pnpm.lockfile)
   if (await fileExists(yarnLockPath)) {
@@ -144,6 +145,7 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
 }
 
 export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
+  debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
     const lastVersion = await latestNpmPackageVersion(dependency)
     if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
@@ -212,6 +214,11 @@ export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
 ) {
+  debug(content`Adding the following dependencies if needed:
+${token.json(dependencies)}
+With options:
+${token.json(options)}
+  `)
   const packageJsonPath = pathJoin(options.directory, 'package.json')
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(options.directory)

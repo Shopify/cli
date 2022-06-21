@@ -2,11 +2,11 @@
 import * as environment from './environment'
 import {fetch} from './http'
 import {platformAndArch} from './os'
-import {debug} from './output'
 import {resolve} from './path'
 import {version as rubyVersion} from './ruby'
 import {getAppInfo} from './store'
 import {cliVersion} from './version'
+import {debug, content, token} from './output'
 
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -22,7 +22,7 @@ export const reportEvent = async (command: string, args: string[]) => {
 
     const response = await fetch(url, {method: 'POST', body, headers})
     if (response.status === 200) {
-      debug(`Analytics event sent: ${body}`)
+      debug(content`Analytics event sent: ${token.json(payload)}`)
     } else {
       debug(`Failed to report usage analytics: ${response.statusText}`)
     }
