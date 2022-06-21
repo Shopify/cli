@@ -47,6 +47,7 @@ export interface CreateAppQuerySchema {
       title: string
       applicationUrl: string
       redirectUrlWhitelist: string[]
+      organizationId: string
       apiSecretKeys: {
         secret: string
       }[]

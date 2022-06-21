@@ -26,8 +26,20 @@ beforeEach(() => {
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
-const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
-const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
+const APP1: OrganizationApp = {
+  id: '1',
+  title: 'app1',
+  apiKey: 'key1',
+  apiSecretKeys: [{secret: 'secret1'}],
+  organizationId: '1',
+}
+const APP2: OrganizationApp = {
+  id: '2',
+  title: 'app2',
+  apiKey: 'key2',
+  apiSecretKeys: [{secret: 'secret2'}],
+  organizationId: '1',
+}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',

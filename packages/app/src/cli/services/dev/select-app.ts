@@ -54,5 +54,7 @@ export async function createApp(org: Organization, app: App, token: string): Pro
   }
 
   output.success(`${result.appCreate.app.title} has been created on your Partners account`)
-  return result.appCreate.app
+  const createdApp = result.appCreate.app
+  createdApp.organizationId = org.id
+  return createdApp
 }
