@@ -1,7 +1,7 @@
 import {fetchAllStores} from './fetch'
 import {Organization, OrganizationStore} from '../../models/organization'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
-import {error, output, api} from '@shopify/cli-kit'
+import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
 
 const ConvertToDevError = (storeName: string, message: string) => {
   return new error.Bug(
@@ -23,7 +23,10 @@ const InvalidStore = (storeName: string) => {
 
 const CreateStoreLink = (orgId: string) => {
   const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
-  return `Click here to create a new dev store to preview your project:\n${url}\n`
+  return (
+    `Looks like you don't have a dev store in the Partners org you selected. ` +
+    `Keep going — create a dev store on Shopify Partners:\n${url}\n`
+  )
 }
 
 /**
@@ -54,13 +57,51 @@ export async function selectStore(
   }
 
   output.info(`\n${CreateStoreLink(org.id)}`)
-  const reload = await reloadStoreListPrompt()
+  await system.sleep(5)
+
+  const reload = await reloadStoreListPrompt(org)
   if (!reload) {
     throw new error.CancelExecution()
   }
 
-  const data = await fetchAllStores(org.id, token)
+  const data = await waitForCreatedStore(org.id, token)
   return selectStore(data, org, token)
+}
+
+/**
+ * Retrieves the list of stores from an organization, retrying a few times if the list is empty.
+ * That is because after creating the dev store, it can take some seconds for the API to return it.
+ * @param orgId {string} Current organization ID
+ * @param token {string} Token to access partners API
+ * @returns {Promise<OrganizationStore[]>} List of stores
+ */
+async function waitForCreatedStore(orgId: string, token: string): Promise<OrganizationStore[]> {
+  const retries = 10
+  const secondsToWait = 3
+  let data = [] as OrganizationStore[]
+  const list = new ui.Listr(
+    [
+      {
+        title: 'Fetching organization data',
+        task: async () => {
+          for (let i = 0; i < retries; i++) {
+            // eslint-disable-next-line no-await-in-loop
+            const stores = await fetchAllStores(orgId, token)
+            if (stores.length > 0) {
+              data = stores
+              return
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await system.sleep(secondsToWait)
+          }
+        },
+      },
+    ],
+    {rendererSilent: environment.local.isUnitTest()},
+  )
+  await list.run()
+
+  return data
 }
 
 /**

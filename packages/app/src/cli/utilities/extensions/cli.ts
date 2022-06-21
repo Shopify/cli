@@ -30,7 +30,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
         // eslint-disable-next-line no-unmodified-loop-condition
         while (!built) {
           // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve) => setTimeout(resolve, 1000))
+          await system.sleep(1)
         }
       } else {
         building = true
