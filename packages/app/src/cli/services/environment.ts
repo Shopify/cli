@@ -165,27 +165,14 @@ interface DeployEnvironmentOutput {
 }
 
 /**
- * If there is an ApiKey in the ENV, retrieve that App and return it
- * If not, but there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
- * if not, return undefined
+ * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
  * @param app {App} The local app object
- * @param envApiKey {string} The API key saved in the .env
  * @param token {string} The token to use to access the Partners API
- * @returns {Promise<OrganizationApp | undefined | 'not_found'>}
+ * @returns {Promise<OrganizationApp | undefined>}
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
- * not_found if there is cached value but is not found in the API
  */
-async function getCachedApp(
-  app: App,
-  envApiKey: string | undefined,
-  token: string,
-): Promise<OrganizationApp | undefined | 'not_found'> {
-  if (envApiKey) {
-    const response = await fetchAppFromApiKey(envApiKey, token)
-    return response ?? 'not_found'
-  }
-
+async function fetchDevAppAndPrompt(app: App, token: string): Promise<OrganizationApp | undefined> {
   const devAppId = conf.getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
@@ -207,10 +194,11 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
+  } else if (envIdentifiers.app) {
+    partnersApp = await fetchAppFromApiKey(envIdentifiers.app, token)
+    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.dependencyManager)
   } else {
-    const result = await getCachedApp(options.app, envIdentifiers.app, token)
-    if (result === 'not_found') throw DeployAppNotFound(envIdentifiers.app ?? 'unknown', options.app.dependencyManager)
-    partnersApp = result
+    partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
