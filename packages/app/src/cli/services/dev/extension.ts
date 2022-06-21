@@ -1,7 +1,7 @@
 import {App, UIExtension} from '../../models/app/app'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {extensionConfig} from '../../utilities/extensions/configuration'
-import {error, yaml} from '@shopify/cli-kit'
+import {error, yaml, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionDevOptions {
@@ -70,6 +70,9 @@ export interface ExtensionDevOptions {
 
 export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
   const config = await extensionConfig({includeResourceURL: true, ...options})
+  output.debug(output.content`Dev'ing extension with configuration:
+${output.token.json(config)}
+`)
   const stdin = yaml.encode(config)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,

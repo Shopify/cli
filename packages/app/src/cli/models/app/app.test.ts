@@ -7,7 +7,7 @@ import {temporary} from '@shopify/cli-testing'
 
 const DEFAULT_APP: App = {
   name: 'App',
-  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   configuration: {
     scopes: '',
   },
@@ -20,10 +20,6 @@ const DEFAULT_APP: App = {
   },
   webs: [],
   nodeDependencies: {},
-  environment: {
-    dotenv: {},
-    env: {},
-  },
   configurationPath: '/tmp/project/shopify.app.toml',
 }
 
@@ -498,7 +494,7 @@ scopes = "read_products"
 })
 
 describe('updateAppIdentifiers', () => {
-  test("persists the ids that are not environment variables in the system and it's production", async () => {
+  test("persists the ids that are not environment variables in the system and it's deploy", async () => {
     await temporary.directory(async (tmpDir: string) => {
       // Given
       const uiExtension = testUIExtension()
@@ -521,31 +517,24 @@ describe('updateAppIdentifiers', () => {
             my_extension: 'BAR',
           },
         },
-        environmentType: 'production',
+        command: 'deploy',
       })
 
       // Then
       const dotEnvFile = await dotenv.read(path.join(tmpDir, '.env'))
-      expect(dotEnvFile.variables.SHOPIFY_APP_ID).toEqual('FOO')
+      expect(dotEnvFile.variables.SHOPIFY_API_KEY).toEqual('FOO')
       expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
-      expect(gotApp.environment.dotenv.production?.variables.SHOPIFY_APP_ID).toEqual('FOO')
-      expect(gotApp.environment.dotenv.production?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+      expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toEqual('FOO')
+      expect(gotApp.dotenv?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
     })
   })
 
-  test("doesn't persist the ids that come from the system's environment and it's production", async () => {
+  test("doesn't persist the ids that come from the system's environment and it's deploy", async () => {
     await temporary.directory(async (tmpDir: string) => {
       // Given
       const uiExtension = testUIExtension()
       const app = testApp({
         directory: tmpDir,
-        environment: {
-          dotenv: {},
-          env: {
-            SHOPIFY_APP_ID: 'ENV_FOO',
-            SHOPIFY_MY_EXTENSION_ID: 'ENV_BAR',
-          },
-        },
         extensions: {
           ui: [uiExtension],
           function: [],
@@ -554,23 +543,26 @@ describe('updateAppIdentifiers', () => {
       })
 
       // When
-      await updateAppIdentifiers({
-        app,
-        identifiers: {
-          app: 'FOO',
-          extensions: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            my_extension: 'BAR',
+      await updateAppIdentifiers(
+        {
+          app,
+          identifiers: {
+            app: 'FOO',
+            extensions: {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              my_extension: 'BAR',
+            },
           },
+          command: 'deploy',
         },
-        environmentType: 'production',
-      })
+        {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+      )
 
       // Then
       const dotEnvFilePath = path.join(tmpDir, '.env')
       if (await file.exists(dotEnvFilePath)) {
         const dotEnvFile = await dotenv.read(dotEnvFilePath)
-        expect(dotEnvFile.variables.SHOPIFY_APP_ID).toBeUndefined()
+        expect(dotEnvFile.variables.SHOPIFY_API_KEY).toBeUndefined()
         expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
       }
     })
@@ -587,14 +579,9 @@ describe('getAppIdentifiers', () => {
       })
       const app = testApp({
         directory: tmpDir,
-        environment: {
-          dotenv: {
-            production: {
-              path: path.join(tmpDir, '.env'),
-              variables: {SHOPIFY_APP_ID: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
-            },
-          },
-          env: {},
+        dotenv: {
+          path: path.join(tmpDir, '.env'),
+          variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
         },
         extensions: {
           ui: [uiExtension],
@@ -606,7 +593,6 @@ describe('getAppIdentifiers', () => {
       // When
       const got = await getAppIdentifiers({
         app,
-        environmentType: 'production',
       })
 
       // Then
@@ -624,10 +610,6 @@ describe('getAppIdentifiers', () => {
       })
       const app = testApp({
         directory: tmpDir,
-        environment: {
-          dotenv: {},
-          env: {SHOPIFY_APP_ID: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
-        },
         extensions: {
           ui: [uiExtension],
           function: [],
@@ -636,10 +618,12 @@ describe('getAppIdentifiers', () => {
       })
 
       // When
-      const got = await getAppIdentifiers({
-        app,
-        environmentType: 'production',
-      })
+      const got = await getAppIdentifiers(
+        {
+          app,
+        },
+        {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+      )
 
       // Then
       expect(got.app).toEqual('FOO')

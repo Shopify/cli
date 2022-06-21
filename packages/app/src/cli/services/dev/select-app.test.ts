@@ -6,7 +6,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
 const LOCAL_APP: App = {
-  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
@@ -22,10 +22,6 @@ const LOCAL_APP: App = {
   ],
   name: 'my-app',
   nodeDependencies: {},
-  environment: {
-    dotenv: {},
-    env: {},
-  },
   extensions: {ui: [], theme: [], function: []},
 }
 

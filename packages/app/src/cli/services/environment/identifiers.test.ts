@@ -102,17 +102,13 @@ const EXTENSION_C: FunctionExtension = {
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {
   return {
     name: 'my-app',
-    idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: '/app',
     dependencyManager: 'yarn',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products'},
     webs: [],
     nodeDependencies: {},
-    environment: {
-      dotenv: {},
-      env: {},
-    },
     extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
   }
 }

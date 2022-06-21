@@ -59,6 +59,12 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           resource: options.includeResourceURL
             ? await getUIExtensionResourceURL(extension.configuration.type, options)
             : null,
+          build: {
+            env: options.app.dotenv?.variables ?? {},
+          },
+          develop: {
+            env: options.app.dotenv?.variables ?? {},
+          },
         },
         capabilities: extension.configuration.capabilities,
       }

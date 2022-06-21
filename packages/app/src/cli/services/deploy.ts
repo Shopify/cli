@@ -85,7 +85,7 @@ export const deploy = async (options: DeployOptions) => {
       }
       await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
-      app = await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
+      app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
       output.success('Deployed to Shopify')
 
@@ -98,7 +98,7 @@ export const deploy = async (options: DeployOptions) => {
        * If deployment fails when uploading we want the identifiers to be persisted
        * for the next run.
        */
-      await updateAppIdentifiers({app, identifiers, environmentType: 'production'})
+      await updateAppIdentifiers({app, identifiers, command: 'deploy'})
       throw error
     }
   })
