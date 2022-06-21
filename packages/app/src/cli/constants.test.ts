@@ -30,7 +30,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'post-purchase',
+      humanKey: 'post-purchase UI',
       helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
     })
   })
@@ -70,7 +70,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'product subscription',
+      humanKey: 'subscription UI',
     })
   })
 
@@ -125,7 +125,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'payment customizations',
+      humanKey: 'payment customization',
     })
   })
 
@@ -188,9 +188,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('shipping_discounts')
   })
 
-  it('obtain the correct extension type for human key payment customizations', () => {
+  it('obtain the correct extension type for human key payment customization', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'payment customizations'
+    const humanKey: ExtensionTypesHumanKeys = 'payment customization'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
@@ -199,9 +199,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('payment_methods')
   })
 
-  it('obtain the correct extension type for human key post-purchase', () => {
+  it('obtain the correct extension type for human key post-purchase UI', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'post-purchase'
+    const humanKey: ExtensionTypesHumanKeys = 'post-purchase UI'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
@@ -210,9 +210,9 @@ describe('get extension type from human key', () => {
     expect(extensionType).toEqual('checkout_post_purchase')
   })
 
-  it('obtain the correct extension type for human key product subscription', () => {
+  it('obtain the correct extension type for human key subscription UI', () => {
     // Given
-    const humanKey: ExtensionTypesHumanKeys = 'product subscription'
+    const humanKey: ExtensionTypesHumanKeys = 'subscription UI'
 
     // When
     const extensionType = getExtensionTypeFromHumanKey(humanKey)
