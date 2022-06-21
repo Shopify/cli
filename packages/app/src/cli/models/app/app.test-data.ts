@@ -16,10 +16,7 @@ export function testApp(app: Partial<App> = {}): App {
     },
     webs: app?.webs ?? [],
     nodeDependencies: app?.nodeDependencies ?? {},
-    environment: {
-      dotenv: app?.environment?.dotenv ?? {},
-      env: app?.environment?.env ?? {},
-    },
+    dotenv: app.dotenv,
     configurationPath: app?.configurationPath ?? '/tmp/project/shopify.app.toml',
   }
 }

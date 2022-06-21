@@ -22,10 +22,6 @@ const LOCAL_APP: App = {
   ],
   name: 'my-app',
   nodeDependencies: {},
-  environment: {
-    dotenv: {},
-    env: {},
-  },
   extensions: {ui: [], theme: [], function: []},
 }
 

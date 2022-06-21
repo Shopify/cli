@@ -107,10 +107,6 @@ function mockSuccessfulCommandExecution(outputConfig: {
     },
     webs: [],
     nodeDependencies: {},
-    environment: {
-      dotenv: {},
-      env: {},
-    },
     extensions: {ui: [], function: [], theme: []},
   }
 

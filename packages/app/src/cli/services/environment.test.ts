@@ -115,10 +115,6 @@ const LOCAL_APP: App = {
     },
   ],
   nodeDependencies: {},
-  environment: {
-    dotenv: {},
-    env: {},
-  },
   extensions: {ui: [EXTENSION_A], theme: [], function: []},
 }
 

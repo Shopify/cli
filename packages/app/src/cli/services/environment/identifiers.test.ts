@@ -109,10 +109,6 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     configuration: {scopes: 'read_products'},
     webs: [],
     nodeDependencies: {},
-    environment: {
-      dotenv: {},
-      env: {},
-    },
     extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
   }
 }

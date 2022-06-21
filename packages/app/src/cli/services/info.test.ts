@@ -158,10 +158,6 @@ function mockApp(): App {
     },
     webs: [],
     nodeDependencies,
-    environment: {
-      dotenv: {},
-      env: {},
-    },
     extensions: {ui: [], function: [], theme: []},
   }
 }

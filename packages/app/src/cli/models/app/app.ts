@@ -150,13 +150,6 @@ export interface Web {
   configuration: WebConfiguration
 }
 
-export interface AppEnvironment {
-  dotenv: {
-    production?: dotenv.DotEnvFile
-  }
-  env: {[key: string]: string}
-}
-
 export interface App {
   name: string
   idEnvironmentVariableName: string
@@ -166,7 +159,7 @@ export interface App {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
-  environment: AppEnvironment
+  dotenv?: dotenv.DotEnvFile
   extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
@@ -221,7 +214,7 @@ class AppLoader {
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
-    const environment = await this.loadEnvironment()
+    const dotenv = await this.loadDotEnv()
     const functions = await this.loadFunctions(extensionsPath)
     const uiExtensions = await this.loadUIExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
@@ -237,7 +230,7 @@ class AppLoader {
       webs: await this.loadWebs(),
       configuration,
       configurationPath,
-      environment,
+      dotenv,
       extensions: {ui: uiExtensions, theme: themeExtensions, function: functions},
       dependencyManager,
       nodeDependencies,
@@ -246,24 +239,13 @@ class AppLoader {
     return app
   }
 
-  async loadEnvironment(systemEnv: {[key: string]: string | undefined} = process.env): Promise<AppEnvironment> {
-    const env = Object.fromEntries(
-      Object.entries(systemEnv).filter(([key, value]) => {
-        return key.startsWith('SHOPIFY_') && value
-      }),
-    ) as {[key: string]: string}
-
-    let productionEnv: dotenv.DotEnvFile | undefined
-    const productionEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
-    if (await file.exists(productionEnvPath)) {
-      productionEnv = await dotenv.read(productionEnvPath)
+  async loadDotEnv(): Promise<dotenv.DotEnvFile | undefined> {
+    let dotEnvFile: dotenv.DotEnvFile | undefined
+    const dotEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
+    if (await file.exists(dotEnvPath)) {
+      dotEnvFile = await dotenv.read(dotEnvPath)
     }
-    return {
-      dotenv: {
-        production: productionEnv,
-      },
-      env,
-    }
+    return dotEnvFile
   }
 
   async findAppDirectory() {
@@ -487,12 +469,12 @@ export async function updateDependencies(app: App): Promise<App> {
   }
 }
 
-type EnvironmentType = 'production' | 'development'
+type UpdateAppIdentifiersCommand = 'dev' | 'deploy'
 
 interface UpdateAppIdentifiersOptions {
   app: App
   identifiers: UuidOnlyIdentifiers
-  environmentType: EnvironmentType
+  command: UpdateAppIdentifiersCommand
 }
 
 /**
@@ -500,48 +482,27 @@ interface UpdateAppIdentifiersOptions {
  * @param options {UpdateAppIdentifiersOptions} Options.
  * @returns {App} An copy of the app with the environment updated to reflect the updated identifiers.
  */
-export async function updateAppIdentifiers({
-  app,
-  identifiers,
-  environmentType,
-}: UpdateAppIdentifiersOptions): Promise<App> {
-  const envVariables = Object.keys(app.environment.env)
-  let dotenvFile = app.environment.dotenv.production
+export async function updateAppIdentifiers({app, command}: UpdateAppIdentifiersOptions): Promise<App> {
+  let dotenvFile = app.dotenv
   if (!dotenvFile) {
     dotenvFile = {
       path: path.join(app.directory, dotEnvFileNames.production),
       variables: {},
     }
   }
-  const variables: {[key: string]: string} = {}
-  if (!envVariables.includes(app.idEnvironmentVariableName)) {
-    variables[app.idEnvironmentVariableName] = identifiers.app
-  }
-  Object.keys(identifiers.extensions).forEach((identifier) => {
-    const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
-    if (!envVariables.includes(envVariable)) {
-      variables[envVariable] = identifiers.extensions[identifier]
-    }
-  })
-  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(variables) && environmentType === 'production'
-  dotenvFile.variables = variables
+  const write =
+    JSON.stringify(dotenvFile.variables) !== JSON.stringify(app.dotenv?.variables ?? {}) && command === 'deploy'
   if (write) {
     await dotenv.write(dotenvFile)
   }
   return {
     ...app,
-    environment: {
-      env: app.environment.env,
-      dotenv: {
-        production: dotenvFile,
-      },
-    },
+    dotenv: dotenvFile,
   }
 }
 
 interface GetAppIdentifiersOptions {
   app: App
-  environmentType: EnvironmentType
 }
 
 /**
@@ -550,10 +511,9 @@ interface GetAppIdentifiersOptions {
  * @param options {GetAppIdentifiersOptions} Options.
  * @returns
  */
-export function getAppIdentifiers({app, environmentType}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
+export function getAppIdentifiers({app}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
-    ...app.environment.env,
-    ...app.environment.dotenv.production?.variables,
+    ...app.dotenv?.variables,
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {

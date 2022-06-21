@@ -60,7 +60,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   const token = await session.ensureAuthenticatedPartners()
 
   // We retrieve the production identifiers to know if the user has selected the prod app for `dev`
-  const prodEnvIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
   const cachedInfo = getAppDevCachedInfo({
@@ -136,7 +136,7 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
       app: options.apiKey,
       extensions: {},
     },
-    environmentType: 'development',
+    command: 'dev',
   })
   return {
     ...options,
@@ -159,7 +159,7 @@ interface DeployEnvironmentOutput {
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  let envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  let envIdentifiers = await getAppIdentifiers({app: options.app})
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
@@ -195,7 +195,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, environmentType: 'production'}),
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
   return {
     app: options.app,
