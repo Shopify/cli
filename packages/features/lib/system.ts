@@ -21,7 +21,12 @@ export function exec(command: string, args: string[] = [], options?: ExecOptions
     console.log(colors.gray(`Running: ${command} ${args.join(' ')}`))
   }
 
-  const _options = {...options, stdout: undefined, stderr: undefined, env: {...process.env, SHOPIFY_RUN_AS_USER: '0'}}
+  const _options = {
+    ...options,
+    stdout: undefined,
+    stderr: undefined,
+    env: {...process.env, ...(options?.env ?? {}), SHOPIFY_RUN_AS_USER: '0'},
+  }
   const shortCommand = command.split('/').slice(-1).pop() || ''
   const commandProcess = execa(command, args, _options)
   commandProcess.stdout.on('data', (data: string) => {
