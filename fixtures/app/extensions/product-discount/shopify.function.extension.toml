@@ -1,6 +1,7 @@
 name = "product-discount"
 type = "product_discounts"
 version = "2"
+apiVersion = "2022-07"
 
 [meta_object]
 type = "object"

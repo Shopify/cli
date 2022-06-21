@@ -2,6 +2,7 @@ name = "payment-method"
 type = "payment_methods"
 version = "2"
 configuration_ui = true
+apiVersion = "2022-07"
 
 [build]
 command = "echo 'build the wasm'"
