@@ -1,7 +1,20 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
 import cleanup from '../utils/template/cleanup'
 
-import {string, path, file, output, ui, dependency, template, npm, git, github, environment} from '@shopify/cli-kit'
+import {
+  string,
+  path,
+  file,
+  output,
+  ui,
+  dependency,
+  template,
+  npm,
+  git,
+  github,
+  environment,
+  error,
+} from '@shopify/cli-kit'
 
 interface InitOptions {
   name: string
@@ -11,11 +24,17 @@ interface InitOptions {
   local: boolean
 }
 
+const DirectoryExistsError = (name: string) => {
+  return new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
+}
+
 async function init(options: InitOptions) {
   const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
   const githubRepo = github.parseGithubRepoReference(options.template)
+
+  await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
@@ -159,6 +178,11 @@ function inferDependencyManager(optionsDependencyManager: string | undefined): d
     return optionsDependencyManager as dependency.DependencyManager
   }
   return dependency.dependencyManagerUsedForCreating()
+}
+
+async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
+  const exists = await file.exists(directory)
+  if (exists) throw DirectoryExistsError(name)
 }
 
 export default init
