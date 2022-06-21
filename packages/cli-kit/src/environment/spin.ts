@@ -2,9 +2,12 @@ import {isTruthy} from './utilities'
 import constants from '../constants'
 import {captureOutput} from '../system'
 import {Abort} from '../error'
+import {content, token} from '../output'
 
 export const SpinInstanceNotFound = (spinInstance: string | undefined, error: string) => {
-  const errorMessage = `Spin yielded the following error trying to obtain the Spin instance:
+  const errorMessage = content`${token.genericShellCommand(
+    `spin`,
+  )} yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
 ${error}
   `
   let nextSteps: string | undefined
