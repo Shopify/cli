@@ -26,8 +26,8 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
-    expect(outputInfo.info()).toMatchInlineSnapshot('"\n\tTo find your extension, remember to cd extensions/name\n"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.info()).toMatchInlineSnapshot('"\n  To find your extension, remember to cd extensions/name\n"')
   })
 
   it('displays a confirmation message with human-facing name and help url', async () => {
@@ -42,9 +42,9 @@ describe('after extension command finishes correctly', () => {
 
     // Then
 
-    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      `"\n\tTo find your extension, remember to cd extensions/name\n\tFor more details, see the docs (​http://help.com​).\n"`,
+      `"\n  To find your extension, remember to cd extensions/name\n  For more details, see the docs (​http://help.com​) ✨\n"`,
     )
   })
 
@@ -59,9 +59,9 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      `"\n\tTo find your extension, remember to cd extensions/name\n\tAdditional help\n"`,
+      `"\n  To find your extension, remember to cd extensions/name\n  Additional help\n"`,
     )
   })
 
@@ -77,9 +77,9 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.success()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      `"\n\tTo find your extension, remember to cd extensions/name\n\tAdditional help\n\tFor more details, see the docs (​http://help.com​).\n"`,
+      `"\n  To find your extension, remember to cd extensions/name\n  Additional help\n  For more details, see the docs (​http://help.com​) ✨\n"`,
     )
   })
 })

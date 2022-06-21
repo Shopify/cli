@@ -153,28 +153,29 @@ export default class AppScaffoldExtension extends Command {
     depndencyManager: dependency.DependencyManager,
   ): string {
     const extensionOutputConfig = getExtensionOutputConfig(extensionType)
-    output.success(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
+    output.completed(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
 
     const outputTokens = []
     outputTokens.push(
-      output.content`\n\tTo find your extension, remember to ${output.token.genericShellCommand(
+      output.content`\n  To find your extension, remember to ${output.token.genericShellCommand(
         `cd ${extensionDirectory}`,
       )}`.value,
     )
 
     if (isUiExtensionType(extensionType)) {
       outputTokens.push(
-        output.content`\tTo preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
+        output.content`  To preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
       )
     }
 
     if (extensionOutputConfig.additionalHelp) {
-      outputTokens.push(`\t${extensionOutputConfig.additionalHelp}`)
+      outputTokens.push(`  ${extensionOutputConfig.additionalHelp}`)
     }
 
     if (extensionOutputConfig.helpURL) {
       outputTokens.push(
-        output.content`\tFor more details, see the ${output.token.link('docs', extensionOutputConfig.helpURL)}.`.value,
+        output.content`  For more details, see the ${output.token.link('docs', extensionOutputConfig.helpURL)} ✨`
+          .value,
       )
     }
 
