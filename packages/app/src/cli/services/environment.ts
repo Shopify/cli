@@ -1,8 +1,15 @@
 import {selectOrCreateApp} from './dev/select-app'
-import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
+import {
+  fetchAllStores,
+  fetchAppFromApiKey,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  fetchOrgFromId,
+  FetchResponse,
+} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
-import {selectOrganizationPrompt} from '../prompts/dev'
+import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error as kitError, output, session, store as conf, ui, environment, dependency} from '@shopify/cli-kit'
@@ -157,31 +164,48 @@ interface DeployEnvironmentOutput {
   identifiers: Identifiers
 }
 
+/**
+ * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
+ * @param app {App} The local app object
+ * @param token {string} The token to use to access the Partners API
+ * @returns {Promise<OrganizationApp | undefined>}
+ * OrganizationApp if a cached value is valid.
+ * undefined if there is no cached value or the user doesn't want to use it.
+ */
+async function fetchDevAppAndPrompt(app: App, token: string): Promise<OrganizationApp | undefined> {
+  const devAppId = conf.getAppInfo(app.directory)?.appId
+  if (!devAppId) return undefined
+
+  const partnersResponse = await fetchAppFromApiKey(devAppId, token)
+  if (!partnersResponse) return undefined
+
+  const org: Organization | undefined = await fetchOrgFromId(partnersResponse.organizationId, token)
+
+  showDevValues(org?.businessName ?? 'unknown', partnersResponse.title)
+  const reuse = await reuseDevConfigPrompt()
+  return reuse ? partnersResponse : undefined
+}
+
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
   let envIdentifiers = await getAppIdentifiers({app: options.app})
 
+  let partnersApp: OrganizationApp | undefined
+
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
+  } else if (envIdentifiers.app) {
+    partnersApp = await fetchAppFromApiKey(envIdentifiers.app, token)
+    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.dependencyManager)
+  } else {
+    partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
-  let partnersApp: OrganizationApp
-  let orgId: string
-
-  if (envIdentifiers.app) {
-    const partnersAppResponse = await fetchAppFromApiKey(identifiers.app, token)
-    if (partnersAppResponse) {
-      partnersApp = partnersAppResponse
-      orgId = partnersAppResponse.organizationId
-    } else {
-      throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
-    }
-  } else {
+  if (!partnersApp) {
     const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
     partnersApp = result.partnersApp
-    orgId = result.orgId
   }
 
   identifiers = await ensureDeploymentIdsPresence({
@@ -205,7 +229,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,
     },
-    partnersOrganizationId: orgId,
+    partnersOrganizationId: partnersApp.organizationId,
     identifiers,
     token,
   }
@@ -319,4 +343,16 @@ function showReusedValues(org: string, app: App, store: string) {
       '--reset',
     )}\n`,
   )
+}
+
+/**
+ * Message shown to the user in case we are reusing a previous configuration
+ * @param org {string} Organization name
+ * @param app {string} App name
+ * @param store {string} Store domain
+ */
+function showDevValues(org: string, appName: string) {
+  output.info('\nYour configs for dev were:')
+  output.info(`Org:        ${org}`)
+  output.info(`App:        ${appName}\n`)
 }
