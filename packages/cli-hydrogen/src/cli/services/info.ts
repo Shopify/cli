@@ -64,13 +64,6 @@ class AppInfo {
 
     const storefrontInfo = this.configurationCheck(fields, this.app.configuration.shopify)
 
-    if (!this.app.configuration.shopify?.storeDomain.endsWith('.myshopify.com')) {
-      const error = 'StoreDomain must be a valid shopify domain'
-
-      errors.push(error)
-      this.app.errors?.addError('storeDomain', error)
-    }
-
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
 
     if (errorContent.trim() === '') errorContent = ''
