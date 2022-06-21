@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.0.20
+
+### Patch Changes
+
+- 5d422ea9: - Use a shallow repo clone to speed up cloning template repos
+  - Display progress of git clones
+- 7cccc42d: Update checkout ui extensions dependency to ^0.17.0
+- 742e70aa: Last version of human facing extension names
+- a0b066ca: Fix checking against the wrong list of extension types
+
 ## 3.0.19
 
 ### Patch Changes

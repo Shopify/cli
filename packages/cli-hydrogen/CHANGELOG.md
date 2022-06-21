@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 3.0.20
+
+### Patch Changes
+
+- e0964b48: Remove storeDomain validation from `shopify hydrogen info`.
+- Updated dependencies [5d422ea9]
+  - @shopify/cli-kit@3.0.20
+
 ## 3.0.19
 
 ### Patch Changes

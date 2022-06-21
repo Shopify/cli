@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.0.20
+
+### Patch Changes
+
+- 5d422ea9: - Use a shallow repo clone to speed up cloning template repos
+  - Display progress of git clones
+
 ## 3.0.19
 
 ### Patch Changes
