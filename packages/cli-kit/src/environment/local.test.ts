@@ -42,7 +42,7 @@ describe('isShopify', () => {
     const env = {SHOPIFY_RUN_AS_USER: '1'}
 
     // When
-    await expect(isShopify(env)).resolves.toBe(false)
+    await expect(isShopify(env)).resolves.toEqual(false)
   })
 
   it('returns true when dev is installed', async () => {
