@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.0.19
+
+### Patch Changes
+
+- d73ea66a: Ask to reuse dev config if it's the first time deploying
+- 3015a702: removed version from web_pixel_extension payload
+- f5a73830: Abort create-app if a directory with the same name already exists
+- 8e9e3486: Validate all extension types simultaneously
+- 45866b2a: include apiVersion from toml when deploying a function
+- 57cc65b1: Reverted Human-facing extension type names
+- 9bf1af7c: Set react version to ^17.0.0 when scaffolding extensions
+- 5f3d2fc8: update to extensions version v0.20.1
+- cc4c0151: Simplify query complexity when fetching organizations
+- 8548577c: Pass the environment variables in .env to the Go binary
+
 ## 3.0.18
 
 ### Patch Changes

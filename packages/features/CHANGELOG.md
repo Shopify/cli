@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.3.2
+
+### Patch Changes
+
+- 57cc65b1: Reverted Human-facing extension type names
+
 ## 0.3.1
 
 ### Patch Changes

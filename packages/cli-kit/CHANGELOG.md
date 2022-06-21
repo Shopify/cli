@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.0.19
+
+### Patch Changes
+
+- d73ea66a: Ask to reuse dev config if it's the first time deploying
+- 45866b2a: include apiVersion from toml when deploying a function
+- 3c9519fa: Improve authentication completion screen
+- 0550cb31: Gracefully handle the scenario where the given SPIN_INSTANCE is invalid or non-existing
+- fd254893: Add additional verbose logs
+- cc4c0151: Simplify query complexity when fetching organizations
+
 ## 3.0.18
 
 ### Patch Changes
