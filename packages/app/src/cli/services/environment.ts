@@ -202,7 +202,6 @@ async function getCachedApp(
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
   let envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
-  let identifiers: Identifiers = envIdentifiers as Identifiers
 
   let partnersApp: OrganizationApp | undefined
 
@@ -210,9 +209,11 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     envIdentifiers = {app: undefined, extensions: {}}
   } else {
     const result = await getCachedApp(options.app, envIdentifiers.app, token)
-    if (result === 'not_found') throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
+    if (result === 'not_found') throw DeployAppNotFound(envIdentifiers.app ?? 'unknown', options.app.dependencyManager)
     partnersApp = result
   }
+
+  let identifiers: Identifiers = envIdentifiers as Identifiers
 
   if (!partnersApp) {
     const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
