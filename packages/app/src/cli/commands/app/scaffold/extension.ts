@@ -96,7 +96,7 @@ export default class AppScaffoldExtension extends Command {
     }
     const isShopify = await environment.local.isShopify()
     const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
-    if (!(extensions.types as string[]).includes(type)) {
+    if (!(supportedExtensions as string[]).includes(type)) {
       throw new error.Abort(
         `Invalid extension type ${type}`,
         `The following extension types are supported: ${supportedExtensions.join(', ')}`,
