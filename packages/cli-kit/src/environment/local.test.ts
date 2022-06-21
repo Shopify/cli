@@ -45,6 +45,14 @@ describe('isShopify', () => {
     await expect(isShopify(env)).resolves.toEqual(false)
   })
 
+  it('returns false when the SHOPIFY_RUN_AS_USER env. variable is falsy', async () => {
+    // Given
+    const env = {SHOPIFY_RUN_AS_USER: '0'}
+
+    // When
+    await expect(isShopify(env)).resolves.toEqual(true)
+  })
+
   it('returns true when dev is installed', async () => {
     // Given
     vi.mocked(fileExists).mockResolvedValue(true)

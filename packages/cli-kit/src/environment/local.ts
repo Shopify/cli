@@ -46,7 +46,7 @@ export function isVerbose(env = process.env): boolean {
  * @returns {boolean} True if the CLI is used in a Shopify environment.
  */
 export async function isShopify(env = process.env): Promise<boolean> {
-  if (env[constants.environmentVariables.runAsUser]) {
+  if (Object.prototype.hasOwnProperty.call(env, constants.environmentVariables.runAsUser)) {
     return !isTruthy(env[constants.environmentVariables.runAsUser])
   }
   const devInstalled = await fileExists(constants.paths.executables.dev)
