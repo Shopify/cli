@@ -1,5 +1,12 @@
 import {selectOrCreateApp} from './dev/select-app'
-import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
+import {
+  fetchAllStores,
+  fetchAppFromApiKey,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  fetchOrgFromId,
+  FetchResponse,
+} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
@@ -157,41 +164,59 @@ interface DeployEnvironmentOutput {
   identifiers: Identifiers
 }
 
+/**
+ * If there is an ApiKey in the ENV, retrieve that App and return it
+ * If not, but there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
+ * if not, return undefined
+ * @param app {App} The local app object
+ * @param envApiKey {string} The API key saved in the .env
+ * @param token {string} The token to use to access the Partners API
+ * @returns {Promise<OrganizationApp | undefined | 'not_found'>}
+ * OrganizationApp if a cached value is valid.
+ * undefined if there is no cached value or the user doesn't want to use it.
+ * not_found if there is cached value but is not found in the API
+ */
+async function getCachedApp(
+  app: App,
+  envApiKey: string | undefined,
+  token: string,
+): Promise<OrganizationApp | undefined | 'not_found'> {
+  if (envApiKey) {
+    const response = await fetchAppFromApiKey(envApiKey, token)
+    return response ?? 'not_found'
+  }
+
+  const devAppId = conf.getAppInfo(app.directory)?.appId
+  if (!devAppId) return undefined
+
+  const partnersResponse = await fetchAppFromApiKey(devAppId, token)
+  if (!partnersResponse) return undefined
+
+  const org: Organization | undefined = await fetchOrgFromId(partnersResponse.organizationId, token)
+
+  showDevValues(org?.businessName ?? 'unknown', partnersResponse.title)
+  const reuse = await reuseDevConfigPrompt()
+  return reuse ? partnersResponse : undefined
+}
+
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
   let envIdentifiers = await getAppIdentifiers({app: options.app, environmentType: 'production'})
+  let identifiers: Identifiers = envIdentifiers as Identifiers
+
+  let partnersApp: OrganizationApp | undefined
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
+  } else {
+    const result = await getCachedApp(options.app, envIdentifiers.app, token)
+    if (result === 'not_found') throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
+    partnersApp = result
   }
 
-  let identifiers: Identifiers = envIdentifiers as Identifiers
-  const devAppId = conf.getAppInfo(options.app.directory)?.appId
-  const cachedInfo = getAppDevCachedInfo({reset: false, directory: options.app.directory, apiKey: devAppId})
-
-  let partnersApp: OrganizationApp | undefined
-  let orgId: string
-
-  if (envIdentifiers.app) {
-    const partnersAppResponse = await fetchAppFromApiKey(identifiers.app, token)
-    if (partnersAppResponse) {
-      partnersApp = partnersAppResponse
-      orgId = partnersAppResponse.organizationId
-    } else {
-      throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
-    }
-  } else if (cachedInfo) {
-    const reuse = await reuseDevConfigPrompt()
-    if (reuse) {
-      partnersApp = await fetchAppFromApiKey(cachedInfo.appId, token)
-      orgId = partnersApp?.organizationId
-    }
-    // you have dev info
-  }
   if (!partnersApp) {
     const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
     partnersApp = result.partnersApp
-    orgId = result.orgId
   }
 
   identifiers = await ensureDeploymentIdsPresence({
@@ -215,7 +240,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,
     },
-    partnersOrganizationId: orgId,
+    partnersOrganizationId: partnersApp.organizationId,
     identifiers,
     token,
   }
@@ -337,8 +362,8 @@ function showReusedValues(org: string, app: App, store: string) {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showDevValues(org: string, app: App) {
+function showDevValues(org: string, appName: string) {
   output.info('\nYour configs for dev were:')
   output.info(`Org:        ${org}`)
-  output.info(`App:        ${app.name}\n`)
+  output.info(`App:        ${appName}\n`)
 }
