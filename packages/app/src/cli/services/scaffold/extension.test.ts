@@ -89,7 +89,7 @@ describe('initialize a extension', () => {
         const extensionType = 'checkout_post_purchase'
         await createFromTemplate({name, extensionType, appDirectory: tmpDir})
         await expect(createFromTemplate({name, extensionType, appDirectory: tmpDir})).rejects.toThrow(
-          `A directory with this name ${name} already exists.\nChoose a new name for your extension."`,
+          `A directory with this name (${name}) already exists.\nChoose a new name for your extension.`,
         )
       })
     },

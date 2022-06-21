@@ -209,7 +209,7 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {
     throw new error.Abort(
-      `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension`,
+      `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension.`,
     )
   }
   await file.mkdir(extensionDirectory)
