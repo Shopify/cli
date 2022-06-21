@@ -123,3 +123,20 @@ export async function createAsNewAppPrompt(): Promise<boolean> {
   ])
   return choice.value === 'yes'
 }
+
+export async function reuseDevConfigPrompt(): Promise<boolean> {
+  const options = [
+    {name: 'Yes, deploy in the same way', value: 'yes'},
+    {name: 'No, use a different org or app', value: 'cancel'},
+  ]
+
+  const choice = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'Deploy to the same org and app as you used for dev?',
+      choices: options,
+    },
+  ])
+  return choice.value === 'yes'
+}

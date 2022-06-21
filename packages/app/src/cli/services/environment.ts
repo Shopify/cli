@@ -2,7 +2,7 @@ import {selectOrCreateApp} from './dev/select-app'
 import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from './dev/fetch'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
-import {selectOrganizationPrompt} from '../prompts/dev'
+import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
 import {error as kitError, output, session, store as conf, ui, environment, dependency} from '@shopify/cli-kit'
@@ -166,8 +166,10 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   }
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
+  const devAppId = conf.getAppInfo(options.app.directory)?.appId
+  const cachedInfo = getAppDevCachedInfo({reset: false, directory: options.app.directory, apiKey: devAppId})
 
-  let partnersApp: OrganizationApp
+  let partnersApp: OrganizationApp | undefined
   let orgId: string
 
   if (envIdentifiers.app) {
@@ -178,7 +180,15 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     } else {
       throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
     }
-  } else {
+  } else if (cachedInfo) {
+    const reuse = await reuseDevConfigPrompt()
+    if (reuse) {
+      partnersApp = await fetchAppFromApiKey(cachedInfo.appId, token)
+      orgId = partnersApp?.organizationId
+    }
+    // you have dev info
+  }
+  if (!partnersApp) {
     const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
     partnersApp = result.partnersApp
     orgId = result.orgId
@@ -333,4 +343,16 @@ function showReusedValues(org: string, app: App, store: string) {
       '--reset',
     )}\n`,
   )
+}
+
+/**
+ * Message shown to the user in case we are reusing a previous configuration
+ * @param org {string} Organization name
+ * @param app {string} App name
+ * @param store {string} Store domain
+ */
+function showDevValues(org: string, app: App) {
+  output.info('\nYour configs for dev were:')
+  output.info(`Org:        ${org}`)
+  output.info(`App:        ${app.name}\n`)
 }
