@@ -5,7 +5,7 @@ import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment, DeployAppNotFound} from './environment'
 import {OrganizationApp, OrganizationStore} from '../models/organization'
 import {App, WebType, updateAppIdentifiers, getAppIdentifiers, UIExtension} from '../models/app/app'
-import {selectOrganizationPrompt} from '../prompts/dev'
+import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
 import {testApp} from '../models/app/app.test-data'
 import {store as conf, api} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
@@ -349,6 +349,33 @@ describe('ensureDeployEnvironment', () => {
     const got = await ensureDeployEnvironment({app, reset: false})
 
     // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(got.partnersApp.id).toEqual(APP2.id)
+    expect(got.partnersApp.title).toEqual(APP2.title)
+    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.identifiers).toEqual(identifiers)
+  })
+
+  test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev config", async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+    vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
+
+    // When
+    const got = await ensureDeployEnvironment({app, reset: false})
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(reuseDevConfigPrompt).toHaveBeenCalled()
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
