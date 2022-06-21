@@ -94,12 +94,24 @@ module.exports = {
     'rulesdir/command-flags-with-env': 'error',
     'rulesdir/command-conventional-flag-env': 'error',
     'rulesdir/command-reserved-flags': 'error',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'Literal[value=/(cannot|will not|do not)/i]',
+        message: "Be human - prefer don't to do not, won't to will not etc.",
+      },
+      {
+        selector: 'TemplateElement[value.raw=/(cannot|will not|do not)/i]',
+        message: "Be human - prefer don't to do not, won't to will not etc.",
+      },
+    ],
   },
   overrides: [
     {
       files: ['**/*.test.ts'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
+        'no-restricted-syntax': 'off',
       },
     },
   ],
