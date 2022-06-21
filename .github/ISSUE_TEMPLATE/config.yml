@@ -4,5 +4,5 @@ contact_links:
     url: https://www.shopify.com/partners/community#conversation
     about: Connect with Shopify and other Shopify Partners through our online communities!
   - name: Ruby CLI Issues
-    url: https://www.github.com/Shopify/shopify/cli-issues/new/choose
+    url: https://www.github.com/Shopify/shopify-cli/issues/new/choose
     about: Are you using our previous Ruby CLI? Please create an issue there instead.
