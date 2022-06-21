@@ -3,7 +3,7 @@ import {App, UIExtension} from './app'
 export function testApp(app: Partial<App> = {}): App {
   return {
     name: app?.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_APP_ID',
+    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     configuration: {
       scopes: app?.configuration?.scopes ?? '',
     },

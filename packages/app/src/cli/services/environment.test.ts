@@ -100,7 +100,7 @@ const EXTENSION_A: UIExtension = {
 
 const LOCAL_APP: App = {
   name: 'my-app',
-  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '/app',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',
@@ -180,7 +180,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'development',
+      command: 'dev',
     })
   })
 
@@ -225,7 +225,7 @@ describe('ensureDevEnvironment', () => {
         app: APP1.apiKey,
         extensions: {},
       },
-      environmentType: 'development',
+      command: 'dev',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
   })
@@ -305,7 +305,7 @@ describe('ensureDevEnvironment', () => {
         app: APP2.apiKey,
         extensions: {},
       },
-      environmentType: 'development',
+      command: 'dev',
     })
 
     expect(fetchOrganizations).toBeCalled()
@@ -371,7 +371,7 @@ describe('ensureDeployEnvironment', () => {
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
-      environmentType: 'production',
+      command: 'deploy',
     })
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
@@ -414,7 +414,7 @@ describe('ensureDeployEnvironment', () => {
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
-      environmentType: 'production',
+      command: 'deploy',
     })
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)

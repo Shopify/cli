@@ -149,7 +149,7 @@ function mockApp(): App {
   nodeDependencies['@shopify/cli'] = currentVersion
   return {
     name: 'myapp',
-    idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: '/',
     dependencyManager: 'yarn',
     configurationPath: path.join('/', 'shopify.app.toml'),

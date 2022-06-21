@@ -55,7 +55,7 @@ describe('extensionConfig', () => {
     }
     const app: App = {
       name: 'myapp',
-      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory: appRoot,
       dependencyManager: 'yarn',
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
@@ -105,6 +105,8 @@ describe('extensionConfig', () => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           extension_points: [],
           development: {
+            build: {env: {}},
+            develop: {env: {}},
             // eslint-disable-next-line @typescript-eslint/naming-convention
             root_dir: 'extensions/my extension',
             // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -6,7 +6,7 @@ import {Plugin} from '@oclif/core/lib/interfaces'
 
 const LOCAL_APP: App = {
   name: 'my-app',
-  idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '',
   dependencyManager: 'yarn',
   configurationPath: '/shopify.app.toml',

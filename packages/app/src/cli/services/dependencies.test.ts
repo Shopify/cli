@@ -29,7 +29,7 @@ describe('installAppDependencies', () => {
     // Given
     const app: App = {
       name: 'App',
-      idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       configuration: {
         scopes: '',
       },

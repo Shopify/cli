@@ -482,7 +482,10 @@ interface UpdateAppIdentifiersOptions {
  * @param options {UpdateAppIdentifiersOptions} Options.
  * @returns {App} An copy of the app with the environment updated to reflect the updated identifiers.
  */
-export async function updateAppIdentifiers({app, command}: UpdateAppIdentifiersOptions): Promise<App> {
+export async function updateAppIdentifiers(
+  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  systemEnvironment = process.env,
+): Promise<App> {
   let dotenvFile = app.dotenv
   if (!dotenvFile) {
     dotenvFile = {
@@ -490,8 +493,19 @@ export async function updateAppIdentifiers({app, command}: UpdateAppIdentifiersO
       variables: {},
     }
   }
-  const write =
-    JSON.stringify(dotenvFile.variables) !== JSON.stringify(app.dotenv?.variables ?? {}) && command === 'deploy'
+  const updatedVariables: {[key: string]: string} = {...(app.dotenv?.variables ?? {})}
+  if (!systemEnvironment[app.idEnvironmentVariableName]) {
+    updatedVariables[app.idEnvironmentVariableName] = identifiers.app
+  }
+  Object.keys(identifiers.extensions).forEach((identifier) => {
+    const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
+    if (!systemEnvironment[envVariable]) {
+      updatedVariables[envVariable] = identifiers.extensions[identifier]
+    }
+  })
+
+  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) && command === 'deploy'
+  dotenvFile.variables = updatedVariables
   if (write) {
     await dotenv.write(dotenvFile)
   }
@@ -511,9 +525,13 @@ interface GetAppIdentifiersOptions {
  * @param options {GetAppIdentifiersOptions} Options.
  * @returns
  */
-export function getAppIdentifiers({app}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
+export function getAppIdentifiers(
+  {app}: GetAppIdentifiersOptions,
+  systemEnvironment = process.env,
+): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
     ...app.dotenv?.variables,
+    ...(systemEnvironment as {[variable: string]: string}),
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {

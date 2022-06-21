@@ -98,7 +98,7 @@ function mockSuccessfulCommandExecution(outputConfig: {
   const appRoot = '/'
   const app: App = {
     name: 'myapp',
-    idEnvironmentVariableName: 'SHOPIFY_APP_ID',
+    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: appRoot,
     dependencyManager: 'yarn',
     configurationPath: path.join(appRoot, 'shopify.app.toml'),
