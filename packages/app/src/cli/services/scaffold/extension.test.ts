@@ -63,7 +63,7 @@ describe('initialize a extension', () => {
 
         const firstDependenciesCallArgs = addDependenciesCalls[0]
         expect(firstDependenciesCallArgs[0]).toEqual([
-          {name: 'react', version: undefined},
+          {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
         ])
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
@@ -71,7 +71,7 @@ describe('initialize a extension', () => {
 
         const secondDependencyCallArgs = addDependenciesCalls[1]
         expect(firstDependenciesCallArgs[0]).toEqual([
-          {name: 'react', version: undefined},
+          {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
         ])
         expect(secondDependencyCallArgs[1].type).toEqual('prod')
@@ -108,7 +108,7 @@ describe('getRuntimeDependencies', () => {
     // When/then
     extensions.forEach((extensionType) => {
       const got = getRuntimeDependencies({extensionType})
-      expect(got.find((dep) => dep.name === 'react' && dep.version === undefined)).toBeTruthy()
+      expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
     })
   })
 
