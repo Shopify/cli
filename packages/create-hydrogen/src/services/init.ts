@@ -66,9 +66,15 @@ async function init(options: InitOptions) {
         title: 'Downloading template',
 
         task: async (_, task) => {
+          const url = `${templateInfo.http}#${templateInfo.ref}`
           await git.downloadRepository({
-            repoUrl: `${templateInfo.http}#${templateInfo.ref}`,
+            repoUrl: url,
             destination: templateDownloadDir,
+            shallow: true,
+            progressUpdater: (statusString: string) => {
+              const taskOutput = `Cloning template from ${url}:\n${statusString}`
+              task.output = taskOutput
+            },
           })
 
           if (!(await file.exists(path.join(templateDownloadDir, templateInfo.subDirectory, 'package.json')))) {
