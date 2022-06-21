@@ -38,7 +38,7 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
     })
   })
 
@@ -56,7 +56,7 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
     })
   })
 
@@ -73,7 +73,7 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Missing default language in checkout_ui configuration/)
+      await expect(got).rejects.toThrow(/Missing default language in checkout_ui_extension configuration/)
     })
   })
 
@@ -90,7 +90,7 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
     })
   })
 
@@ -109,7 +109,7 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
     })
   })
 })
