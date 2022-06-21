@@ -8,6 +8,7 @@ import {
   ThemeExtensionTypes,
   UIExtensionTypes,
   FunctionExtensionTypes,
+  versions,
 } from '../../constants'
 import {App} from '../../models/app/app'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
@@ -148,7 +149,7 @@ export function getRuntimeDependencies({
     case 'checkout_ui_extension':
     case 'pos_ui_extension':
     case 'checkout_post_purchase': {
-      const dependencies: dependency.DependencyVersion[] = [{name: 'react', version: undefined}]
+      const dependencies: dependency.DependencyVersion[] = [{name: 'react', version: versions.react}]
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)

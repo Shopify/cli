@@ -23,6 +23,7 @@ export const environmentVariables = {
 
 export const versions = {
   extensionsBinary: 'v0.20.1',
+  react: '^17.0.0',
 } as const
 
 export const blocks = {
