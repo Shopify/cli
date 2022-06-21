@@ -37,6 +37,10 @@ async function init(options: InitOptions) {
             repoUrl,
             destination: templateDownloadDir,
             shallow: true,
+            progressUpdater: (statusString: string) => {
+              const taskOutput = `Cloning template from ${repoUrl}:\n${statusString}`
+              task.output = taskOutput
+            },
           })
           task.title = 'Template downloaded'
         },
