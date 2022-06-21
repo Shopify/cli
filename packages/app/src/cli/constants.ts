@@ -206,8 +206,6 @@ export interface ExtensionOutputConfig {
 }
 
 export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
-  const discountAdditionalHelp =
-    'This function will use your app’s toml file to point to the discount UI that you add to your web/ folder.'
   switch (extensionType) {
     case 'web_pixel_extension':
       return buildExtensionOutputConfig('web pixel')
@@ -222,23 +220,11 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
     case 'pos_ui_extension':
       return buildExtensionOutputConfig('POS UI')
     case 'product_discounts':
-      return buildExtensionOutputConfig(
-        'product discount',
-        'https://shopify.dev/apps/subscriptions/discounts',
-        discountAdditionalHelp,
-      )
+      return buildExtensionOutputConfig('product discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'order_discounts':
-      return buildExtensionOutputConfig(
-        'order discount',
-        'https://shopify.dev/apps/subscriptions/discounts',
-        discountAdditionalHelp,
-      )
+      return buildExtensionOutputConfig('order discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'shipping_discounts':
-      return buildExtensionOutputConfig(
-        'shipping discount',
-        'https://shopify.dev/apps/subscriptions/discounts',
-        discountAdditionalHelp,
-      )
+      return buildExtensionOutputConfig('shipping discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'payment_methods':
       return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':
