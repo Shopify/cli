@@ -1,4 +1,10 @@
-import {getExtensionOutputConfig, functionExtensions, getFunctionExtensionPointName} from './constants'
+import {
+  ExtensionTypesHumanKeys,
+  getExtensionOutputConfig,
+  getExtensionTypeFromHumanKey,
+  functionExtensions,
+  getFunctionExtensionPointName,
+} from './constants'
 import {describe, expect, it, test} from 'vitest'
 
 describe('get extension type output configuration', () => {
@@ -24,7 +30,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'post-purchase UI',
+      humanKey: 'post-purchase',
       helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
     })
   })
@@ -64,7 +70,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'subscription UI',
+      humanKey: 'product subscription',
     })
   })
 
@@ -125,7 +131,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'payment customization',
+      humanKey: 'payment customizations',
     })
   })
 
@@ -140,6 +146,118 @@ describe('get extension type output configuration', () => {
     expect(extensionOutputConfig).toEqual({
       humanKey: 'delivery option presenter',
     })
+  })
+})
+
+describe('get extension type from human key', () => {
+  it('obtain the correct extension type for human key web pixel', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'web pixel'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('web_pixel_extension')
+  })
+
+  it('obtain the correct extension type for human key order discount', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'order discount'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('product_discounts')
+  })
+
+  it('obtain the correct extension type for human key product discount', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'product discount'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('product_discounts')
+  })
+
+  it('obtain the correct extension type for human key shipping discount', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'shipping discount'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('shipping_discounts')
+  })
+
+  it('obtain the correct extension type for human key payment customizations', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'payment customizations'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('payment_methods')
+  })
+
+  it('obtain the correct extension type for human key post-purchase', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'post-purchase'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('checkout_post_purchase')
+  })
+
+  it('obtain the correct extension type for human key product subscription', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'product subscription'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('product_subscription')
+  })
+
+  it('obtain the correct extension type for human key shipping rate representer', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'delivery option presenter'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('shipping_rate_presenter')
+  })
+
+  it('obtain the correct extension type for human key shipping theme app extension', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'theme app extension'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('theme')
+  })
+
+  it('obtain the correct extension type for human key shipping theme checkout UI', () => {
+    // Given
+    const humanKey: ExtensionTypesHumanKeys = 'checkout UI'
+
+    // When
+    const extensionType = getExtensionTypeFromHumanKey(humanKey)
+
+    // Then
+    expect(extensionType).toEqual('checkout_ui_extension')
   })
 })
 

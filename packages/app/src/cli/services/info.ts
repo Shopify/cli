@@ -1,9 +1,8 @@
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
 import {selectOrCreateApp} from './dev/select-app'
 import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
-import {configurationFileNames, ExtensionTypes, functionExtensions, themeExtensions, uiExtensions} from '../constants'
+import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {convertExtensionTypeToExtensionTypeKey} from '../utilities/extensions/name-mapper'
 import {os, output, path, session, store, dependency} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
@@ -134,11 +133,7 @@ class AppInfo {
           return configurationType === extensionType
         })
         if (relevantExtensions[0]) {
-          body += `\n\n${
-            output.content`${output.token.subheading(
-              convertExtensionTypeToExtensionTypeKey(extensionType as ExtensionTypes),
-            )}`.value
-          }`
+          body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
             body += `${outputFormatter(extension)}`
           })

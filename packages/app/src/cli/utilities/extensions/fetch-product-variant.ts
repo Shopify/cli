@@ -1,12 +1,9 @@
-import {convertExtensionTypeToExtensionTypeKey} from './name-mapper'
 import {api, error, session} from '@shopify/cli-kit'
 
 const NoProductsError = (storeFqdn: string) => {
   return new error.Abort(
     'Could not find a product variant',
-    `Your store needs to have at least one product to test a ${convertExtensionTypeToExtensionTypeKey(
-      'checkout_ui_extension',
-    )}\n
+    `Your store needs to have at least one product to test a "checkout_ui_extension",\n
 You can add a new product here: https://${storeFqdn}/admin/products/new`,
   )
 }
