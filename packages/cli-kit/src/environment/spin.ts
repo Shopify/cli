@@ -14,7 +14,7 @@ ${error}
   if (spinInstance) {
     nextSteps = `Make sure ${spinInstance} is the instance name and not a fully qualified domain name`
   }
-  return new Abort(errorMessage)
+  return new Abort(errorMessage, nextSteps)
 }
 
 /**
