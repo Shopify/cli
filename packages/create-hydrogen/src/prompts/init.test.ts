@@ -89,7 +89,7 @@ describe('init', () => {
   })
 
   describe('demo-store-js', () => {
-    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#stackblitz'
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
 
     test('when "demo-store"', async () => {
       // Given
@@ -168,7 +168,7 @@ describe('init', () => {
   })
 
   describe('demo-store-ts', () => {
-    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#stackblitz'
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#dist'
 
     test('when "demo-store-ts"', async () => {
       // Given
@@ -232,7 +232,7 @@ describe('init', () => {
   })
 
   describe('hello-world-js', () => {
-    const expected = 'https://github.com/Shopify/hydrogen/templates/hello-world-js#stackblitz'
+    const expected = 'https://github.com/Shopify/hydrogen/templates/hello-world-js#dist'
 
     test('when "hello-world"', async () => {
       // Given
@@ -311,7 +311,7 @@ describe('init', () => {
   })
 
   describe('hello-world-ts', () => {
-    const expected = 'https://github.com/Shopify/hydrogen/templates/hello-world-ts#stackblitz'
+    const expected = 'https://github.com/Shopify/hydrogen/templates/hello-world-ts#dist'
 
     test('when "hello-world-ts"', async () => {
       // Given
