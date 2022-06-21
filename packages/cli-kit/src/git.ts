@@ -1,7 +1,7 @@
 import {Abort} from './error'
 import {hasGit} from './environment/local'
 import {content, token, debug} from './output'
-import git, {TaskOptions} from 'simple-git'
+import git, {TaskOptions, SimpleGitProgressEvent} from 'simple-git'
 
 export const factory = git
 
@@ -21,10 +21,12 @@ export async function initializeRepository(directory: string) {
 export async function downloadRepository({
   repoUrl,
   destination,
+  progressUpdater,
   shallow,
 }: {
   repoUrl: string
   destination: string
+  progressUpdater?: (statusString: string) => void
   shallow?: boolean
 }) {
   debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
@@ -38,8 +40,12 @@ export async function downloadRepository({
   if (shallow) {
     options['--depth'] = 1
   }
+  const progress = ({stage, progress, processed, total}: SimpleGitProgressEvent) => {
+    const updateString = `${stage}, ${processed}/${total} objects (${progress}% complete)`
+    if (progressUpdater) progressUpdater(updateString)
+  }
 
-  await git().clone(repository, destination, options, (err) => {
+  await git({progress}).clone(repository, destination, options, (err) => {
     if (err) {
       const abortError = new Abort(err.message)
       abortError.stack = err.stack

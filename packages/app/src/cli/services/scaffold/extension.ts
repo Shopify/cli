@@ -176,6 +176,10 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
               repoUrl: url,
               destination: templateDownloadDir,
               shallow: true,
+              progressUpdater: (statusString: string) => {
+                const taskOutput = `Cloning template from ${url}:\n${statusString}`
+                task.output = taskOutput
+              },
             })
             const origin = path.join(templateDownloadDir, functionTemplatePath(options))
             await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
