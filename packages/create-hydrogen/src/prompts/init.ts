@@ -1,7 +1,7 @@
 import {ui, github, string} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
-const BRANCH = `stackblitz`
+const BRANCH = `dist`
 const TEMPLATE_DATA = {
   /* eslint-disable @typescript-eslint/naming-convention */
   'demo-store-js': {

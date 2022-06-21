@@ -176,7 +176,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     const partnersAppResponse = await fetchAppFromApiKey(identifiers.app, token)
     if (partnersAppResponse) {
       partnersApp = partnersAppResponse
-      orgId = await fetchAppOrganization(identifiers.app, token)
+      orgId = partnersAppResponse.organizationId
     } else {
       throw DeployAppNotFound(identifiers.app, options.app.dependencyManager)
     }
@@ -213,6 +213,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       id: partnersApp.id,
       title: partnersApp.title,
       appType: partnersApp.appType,
+      organizationId: partnersApp.organizationId,
     },
     partnersOrganizationId: orgId,
     identifiers,
@@ -228,21 +229,6 @@ export async function fetchOrganizationAndFetchOrCreateApp(
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const partnersApp = await selectOrCreateApp(app, apps, organization, token, undefined)
   return {orgId, partnersApp}
-}
-
-async function fetchAppOrganization(apiKey: string, token: string): Promise<string> {
-  const organizations = await fetchOrganizations(token)
-  const organization = organizations.find((organization) =>
-    organization.apps.nodes.map((app) => app.apiKey).includes(apiKey),
-  )
-  if (organization) {
-    return organization.id
-  } else {
-    throw AppOrganizationNotFoundError(
-      apiKey,
-      organizations.map((organization) => organization.businessName),
-    )
-  }
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {

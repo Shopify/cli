@@ -2,13 +2,7 @@ import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fet
 import {selectOrCreateApp} from './dev/select-app'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
 import {ensureDeploymentIdsPresence} from './environment/identifiers'
-import {
-  DevEnvironmentOptions,
-  ensureDevEnvironment,
-  ensureDeployEnvironment,
-  AppOrganizationNotFoundError,
-  DeployAppNotFound,
-} from './environment'
+import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment, DeployAppNotFound} from './environment'
 import {OrganizationApp, OrganizationStore} from '../models/organization'
 import {App, WebType, updateAppIdentifiers, getAppIdentifiers, UIExtension} from '../models/app/app'
 import {selectOrganizationPrompt} from '../prompts/dev'
@@ -46,42 +40,32 @@ beforeEach(() => {
   })
 })
 
-const APP1: OrganizationApp = {id: '1', title: 'app1', apiKey: 'key1', apiSecretKeys: [{secret: 'secret1'}]}
-const APP2: OrganizationApp = {id: '2', title: 'app2', apiKey: 'key2', apiSecretKeys: [{secret: 'secret2'}]}
+const APP1: OrganizationApp = {
+  id: '1',
+  title: 'app1',
+  apiKey: 'key1',
+  organizationId: '1',
+  apiSecretKeys: [{secret: 'secret1'}],
+}
+const APP2: OrganizationApp = {
+  id: '2',
+  title: 'app2',
+  apiKey: 'key2',
+  organizationId: '1',
+  apiSecretKeys: [{secret: 'secret2'}],
+}
 
 const ORG1: api.graphql.AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
   appsNext: true,
   website: '',
-  apps: {
-    nodes: [
-      {
-        apiKey: APP1.apiKey,
-        appType: 'custom',
-        id: '1',
-        apiSecretKeys: [{secret: 'secret'}],
-        title: '1',
-      },
-    ],
-  },
 }
 const ORG2: api.graphql.AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
   appsNext: false,
   website: '',
-  apps: {
-    nodes: [
-      {
-        apiKey: APP2.apiKey,
-        appType: 'custom',
-        id: '2',
-        apiSecretKeys: [{secret: 'secret'}],
-        title: '2',
-      },
-    ],
-  },
 }
 
 const CACHED1: conf.CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
@@ -360,7 +344,6 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
 
     // When
     const got = await ensureDeployEnvironment({app, reset: false})
@@ -370,25 +353,6 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-  })
-
-  test("throws a AppOrganizationNotFound if the user's organizations dont' contain the app", async () => {
-    // Given
-    const app = testApp()
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(fetchOrganizations).mockResolvedValue([ORG1])
-
-    // When
-    await expect(ensureDeployEnvironment({app, reset: false})).rejects.toThrowError(
-      AppOrganizationNotFoundError(APP2.apiKey, [ORG1.businessName]),
-    )
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -422,11 +386,6 @@ describe('ensureDeployEnvironment', () => {
   test("throws a AppOrganizationNotFoundError error if the app with the API key doesn't exist", async () => {
     // Given
     const app = testApp()
-    const identifiers = {
-      app: APP1.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 

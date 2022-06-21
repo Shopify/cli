@@ -72,6 +72,7 @@ describe('info', () => {
       title: 'Test app',
       appType: 'custom',
       apiSecretKeys: [{secret: apiSecret}],
+      organizationId: '1',
       apiKey,
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
@@ -116,6 +117,7 @@ describe('info', () => {
       title: 'Test app',
       appType: 'custom',
       apiSecretKeys: [{secret: apiSecret}],
+      organizationId: '1',
       apiKey,
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])

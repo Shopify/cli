@@ -1,4 +1,4 @@
-import {show, fqdn, isSpin, instance, workspace, namespace, host} from './spin'
+import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin'
 import {captureOutput} from '../system'
 import {describe, test, expect, vi, it} from 'vitest'
 
@@ -17,7 +17,7 @@ describe('fqdn', () => {
 
     // Then
     expect(got).toEqual('fqdn')
-    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'])
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'], {env})
   })
   it("doesn't show the latest when SPIN_INSTANCE is present", async () => {
     // Given
@@ -30,7 +30,7 @@ describe('fqdn', () => {
 
     // Then
     expect(got).toEqual('fqdn')
-    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--json'])
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--json'], {env})
   })
 })
 
@@ -39,26 +39,39 @@ describe('show', () => {
     // Given
     const showResponse = {fqdn: 'fqdn'}
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
+    const env = {}
 
     // When
-    const got = await show(true)
+    const got = await show(undefined, env)
 
     // Then
     expect(got).toEqual(showResponse)
-    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'])
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'], {env})
   })
 
   test("calls 'spin show' without --latest when latest is false", async () => {
     // Given
     const showResponse = {fqdn: 'fqdn'}
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
+    const env = {}
 
     // When
-    const got = await show(false)
+    const got = await show('instance', env)
 
     // Then
     expect(got).toEqual(showResponse)
-    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--json'])
+    expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--json'], {env})
+  })
+
+  test("throws an error when 'show --json' returns a JSON response with an error key", async () => {
+    // Given
+    const errorMessage = 'Something went wrong'
+    const showResponse = {error: errorMessage}
+    mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
+    const env = {}
+
+    // When
+    await expect(show('instance', env)).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
   })
 })
 
