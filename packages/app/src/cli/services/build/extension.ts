@@ -1,7 +1,7 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
 import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app'
 import {extensionConfig} from '../../utilities/extensions/configuration'
-import {error, ruby, system, yaml} from '@shopify/cli-kit'
+import {error, ruby, system, yaml, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionBuildOptions {
@@ -70,7 +70,11 @@ export async function buildUIExtensions(options: UiExtensionBuildOptions): Promi
   }
   options.stdout.write(`Building UI extensions...`)
   const fullOptions = {...options, extensions: options.extensions, includeResourceURL: false}
-  const stdin = yaml.encode(await extensionConfig(fullOptions))
+  const configuration = await extensionConfig(fullOptions)
+  output.debug(output.content`Dev'ing extension with configuration:
+${output.token.json(configuration)}
+`)
+  const stdin = yaml.encode(configuration)
   await runGoExtensionsCLI(['build', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
