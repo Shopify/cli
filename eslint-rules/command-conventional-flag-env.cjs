@@ -1,4 +1,6 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
+const VALID_FLAGS = ['SHOPIFY_FLAG_', 'SHOPIFY_HYDROGEN_FLAG_']
+
 module.exports = {
   meta: {
     type: 'problem',
@@ -19,8 +21,14 @@ module.exports = {
             }
             const envProperty = argument.properties.find((property) => property.key.name === 'env')?.value?.value
             if (envProperty) {
-              if (!envProperty.startsWith('SHOPIFY_FLAG_')) {
-                context.report(argument, "Flags' environment variable must start with SHOPIFY_FLAG")
+              if (!VALID_FLAGS.some((flag) => envProperty.startsWith(flag))) {
+                context.report(
+                  argument,
+                  `Flags' environment variable must start with ${new Intl.ListFormat('en', {
+                    style: 'long',
+                    type: 'disjunction',
+                  }).format(VALID_FLAGS)}.`,
+                )
               }
             }
           })

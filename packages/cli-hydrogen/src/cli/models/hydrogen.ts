@@ -1,24 +1,24 @@
-import {configurationFileNames, genericConfigurationFileNames, supportedConfigExtensions} from '../constants'
+import {genericConfigurationFileNames} from '../constants'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-import {dependency, path, file, error as kitError} from '@shopify/cli-kit'
-import {createServer} from 'vite'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {loadConfig} from '@shopify/hydrogen/load-config'
+import {dependency, path, error as kitError, file} from '@shopify/cli-kit'
 
 export interface HydrogenApp {
   name: string
   directory: string
   dependencyManager: dependency.DependencyManager
   configuration: HydrogenConfig
-  configurationPath: string
   nodeDependencies: {[key: string]: string}
-  language: 'javascript' | 'typescript'
+  language: 'JavaScript' | 'TypeScript'
   errors?: AppErrors
 }
 
-export type AppLoaderMode = 'strict' | 'report'
-
 interface AppLoaderConstructorArgs {
   directory: string
-  mode: AppLoaderMode
 }
 
 class AppErrors {
@@ -43,31 +43,30 @@ class AppErrors {
   }
 }
 
-class AppLoader {
+class HydrogenAppLoader {
   private directory: string
-  private mode: AppLoaderMode
-  private appDirectory = ''
-  private configurationPath = ''
   private errors: AppErrors = new AppErrors()
 
-  constructor({directory, mode}: AppLoaderConstructorArgs) {
-    this.mode = mode
+  constructor({directory}: AppLoaderConstructorArgs) {
     this.directory = directory
   }
 
   async loaded() {
-    this.appDirectory = await this.findAppDirectory()
-    const configurationPath = await this.getConfigurationPath()
-    const configuration = await this.loadConfigurationFile<HydrogenConfig>(configurationPath)
-    const yarnLockPath = path.join(this.appDirectory, genericConfigurationFileNames.yarn.lockfile)
+    if (!(await file.exists(this.directory))) {
+      throw new kitError.Abort(`Couldn't find directory ${this.directory}`)
+    }
+
+    const {configuration} = await this.loadConfig()
+
+    const yarnLockPath = path.join(this.directory, genericConfigurationFileNames.yarn.lockfile)
     const yarnLockExists = await file.exists(yarnLockPath)
-    const pnpmLockPath = path.join(this.appDirectory, genericConfigurationFileNames.pnpm.lockfile)
+    const pnpmLockPath = path.join(this.directory, genericConfigurationFileNames.pnpm.lockfile)
     const pnpmLockExists = await file.exists(pnpmLockPath)
-    const packageJSONPath = path.join(this.appDirectory, 'package.json')
+    const packageJSONPath = path.join(this.directory, 'package.json')
     const name = await dependency.getPackageName(packageJSONPath)
     const nodeDependencies = await dependency.getDependencies(packageJSONPath)
-    const tsConfigExists = await file.exists(path.join(this.appDirectory, 'tsconfig.json'))
-    const language = tsConfigExists && nodeDependencies.typescript ? 'typescript' : 'javascript'
+    const tsConfigExists = await file.exists(path.join(this.directory, 'tsconfig.json'))
+    const language = tsConfigExists && nodeDependencies.typescript ? 'TypeScript' : 'JavaScript'
 
     let dependencyManager: dependency.DependencyManager
     if (yarnLockExists) {
@@ -80,79 +79,39 @@ class AppLoader {
 
     const app: HydrogenApp = {
       name,
-      directory: this.appDirectory,
+      directory: this.directory,
       configuration,
-      configurationPath,
       dependencyManager,
       nodeDependencies,
       language,
     }
+
     if (!this.errors.isEmpty()) app.errors = this.errors
 
     return app
   }
 
-  async findAppDirectory() {
-    if (!(await file.exists(this.directory))) {
-      throw new kitError.Abort(`Couldn't find directory ${this.directory}`)
-    }
-    return path.dirname(await this.getConfigurationPath())
-  }
-
-  async getConfigurationPath() {
-    if (this.configurationPath) return this.configurationPath
-
-    const promises = supportedConfigExtensions.map((ext) =>
-      path.findUp([configurationFileNames.hydrogen, ext].join('.'), {
-        cwd: this.directory,
-        type: 'file',
-      }),
-    )
-
-    const configurationPathResults = await Promise.all(promises)
-
-    const configurationPath = configurationPathResults.find((result) => result !== undefined)
-
-    if (!configurationPath) {
-      throw new kitError.Abort(
-        `Couldn't find the configuration file for ${this.directory}, are you in an app directory?`,
-      )
-    }
-
-    this.configurationPath = configurationPath
-    return configurationPath
-  }
-
-  async loadConfigurationFile<T>(filepath: string): Promise<T> {
-    const server = await createServer({
-      server: {middlewareMode: 'ssr'},
-    })
+  async loadConfig() {
+    const abortError = new kitError.Abort(`Couldn't find hydrogen configuration file`)
 
     try {
-      const config = (await server.ssrLoadModule(filepath)).default
+      const config = await loadConfig({root: this.directory})
 
-      await server.close()
+      if (!config) {
+        throw abortError
+      }
 
       return config
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const abortError = new kitError.Abort(error.message)
       abortError.stack = error.stack
       throw abortError
     }
   }
-
-  abortOrReport<T>(errorMessage: string, fallback: T, configurationPath: string): T {
-    if (this.mode === 'strict') {
-      throw new kitError.Abort(errorMessage)
-    } else {
-      this.errors.addError(configurationPath, errorMessage)
-      return fallback
-    }
-  }
 }
 
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<HydrogenApp> {
-  const loader = new AppLoader({directory, mode})
+export async function load(directory: string): Promise<HydrogenApp> {
+  const loader = new HydrogenAppLoader({directory})
+
   return loader.loaded()
 }

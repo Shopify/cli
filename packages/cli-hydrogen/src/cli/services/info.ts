@@ -1,22 +1,17 @@
 import {HydrogenApp} from '../models/hydrogen'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-
 import {output, string, os} from '@shopify/cli-kit'
 
-export type Format = 'json' | 'text'
-
 interface InfoOptions {
-  format: Format
+  showPrivateData: boolean
 }
 
-export function info(app: HydrogenApp, {format}: InfoOptions): output.Message {
-  if (format === 'json') {
-    return output.content`${JSON.stringify(app, null, 2)}`
-  } else {
-    const appInfo = new HydrogenAppInfo(app)
+export function info(app: HydrogenApp, {showPrivateData}: InfoOptions): output.Message {
+  const appInfo = new HydrogenAppInfo(app)
 
-    return appInfo.output()
-  }
+  return appInfo.output({showPrivateData})
 }
 
 const NOT_FOUND_TEXT = output.content`${output.token.italic('Not found')}`.value
@@ -28,10 +23,10 @@ class AppInfo {
     this.app = app
   }
 
-  output(): string {
+  output({showPrivateData}: InfoOptions): string {
     const sections: [string, string][] = [
       this.projectSettingsSection(),
-      this.storefrontSettingsSection(),
+      this.storefrontSettingsSection({showPrivateData}),
       this.eslintSection(),
       this.systemInfoSection(),
     ]
@@ -44,13 +39,14 @@ class AppInfo {
     const lines = [
       ['Name', this.app.name],
       ['Project location', this.app.directory],
+      ['Language', this.app.language],
     ]
 
     const projectInfo = this.linesToColumns(lines)
     return [title, projectInfo]
   }
 
-  storefrontSettingsSection(): [string, string] {
+  storefrontSettingsSection({showPrivateData}: InfoOptions): [string, string] {
     const errors: string[] = []
     const title = 'Storefront'
 
@@ -58,10 +54,15 @@ class AppInfo {
       return [title, 'Storefront settings defined as a function are not supported in this command.']
     }
 
-    const storefrontInfo = this.configurationCheck(
-      ['storeDomain', 'storefrontApiVersion', 'storefrontToken'] as unknown as keyof HydrogenConfig['shopify'][],
-      this.app.configuration.shopify,
-    )
+    const privateFields = showPrivateData ? ['storefrontToken'] : []
+
+    const fields = [
+      'storeDomain',
+      'storefrontApiVersion',
+      ...privateFields,
+    ] as unknown as keyof HydrogenConfig['shopify'][]
+
+    const storefrontInfo = this.configurationCheck(fields, this.app.configuration.shopify)
 
     if (!this.app.configuration.shopify?.storeDomain.endsWith('.myshopify.com')) {
       const error = 'StoreDomain must be a valid shopify domain'
@@ -95,11 +96,13 @@ class AppInfo {
   ): string[][] {
     const keys = Array.isArray(key) ? key : [key]
 
-    const result = (keys as [keyof HydrogenConfig]).reduce((acc: string[][], key: keyof HydrogenConfig) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const result = keys.reduce((acc, key) => {
       const found = configObject[key as keyof HydrogenConfig & keyof HydrogenConfig['shopify']]
 
       if (typeof found === 'string') {
-        const result = [string.capitalize(key), found]
+        const result = [string.capitalize(key.toString()), found]
         return [...acc, result]
       }
 

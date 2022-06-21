@@ -1,9 +1,16 @@
 import {load} from './hydrogen'
 import {genericConfigurationFileNames} from '../constants'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-import {describe, it, expect} from 'vitest'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {loadConfig} from '@shopify/hydrogen/load-config'
+import {describe, vi, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {temporary} from '@shopify/cli-testing'
+
+vi.mock('@shopify/hydrogen/load-config')
 
 interface PackageJSONContents {
   name?: string
@@ -32,6 +39,11 @@ describe('load', () => {
       const appConfigurationPath = path.join(directory, configFileName)
       let configContent = JSON.stringify(appConfiguration, null, 2)
 
+      vi.mocked(loadConfig).mockResolvedValue({
+        configuration: appConfiguration,
+        configurationPath: appConfigurationPath,
+      })
+
       switch (path.extname(configFileName)) {
         case '.json':
           configContent = JSON.stringify(appConfiguration, null, 2)
@@ -48,7 +60,7 @@ describe('load', () => {
 
   it("throws an error if the directory doesn't exist", async () => {
     // Given
-    const directory = '/tmp/doesnt/exist'
+    const directory = '/tmp/non-existent-directory'
 
     // When/Then
     await expect(load(directory)).rejects.toThrow(/Couldn't find directory/)
@@ -57,7 +69,7 @@ describe('load', () => {
   it("throws an error if the configuration file doesn't exist", async () => {
     await temporary.directory(async (tmpDir) => {
       // When/Then
-      await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
+      await expect(load(tmpDir)).rejects.toThrow(/Couldn't find hydrogen configuration file/)
     })
   })
 
@@ -155,7 +167,7 @@ describe('load', () => {
       const app = await load(tmpDir)
 
       // Then
-      expect(app.language).toEqual('javascript')
+      expect(app.language).toEqual('JavaScript')
     })
   })
 
@@ -179,7 +191,7 @@ describe('load', () => {
       const app = await load(tmpDir)
 
       // Then
-      expect(app.language).toEqual('typescript')
+      expect(app.language).toEqual('TypeScript')
     })
   })
 })
