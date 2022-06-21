@@ -18,7 +18,6 @@ export const CreateAppQuery = gql`
         appType
         applicationUrl
         redirectUrlWhitelist
-        organizationId
         apiSecretKeys {
           secret
         }
