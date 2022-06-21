@@ -544,7 +544,7 @@ func withCors(h http.Handler) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, ngrok-skip-browser-warning")
 		h.ServeHTTP(rw, r)
 	}
 }
