@@ -93,6 +93,7 @@ const EXTENSION_C: FunctionExtension = {
       path: 'dist/index.wasm',
     },
     configurationUi: false,
+    apiVersion: '2022-07',
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',

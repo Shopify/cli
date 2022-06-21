@@ -37,6 +37,7 @@ describe('buildFunctionExtension', () => {
           command: 'make build',
         },
         configurationUi: true,
+        apiVersion: '2022-07',
       },
       metadata: {
         schemaVersions: {},

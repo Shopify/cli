@@ -79,6 +79,7 @@ const FunctionExtensionConfigurationSchema = schema.define.object({
         .optional(),
     })
     .optional(),
+  apiVersion: schema.define.string(),
 })
 
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>

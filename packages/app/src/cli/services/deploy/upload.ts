@@ -200,6 +200,7 @@ async function uploadFunctionExtension(
     schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
     configurationUi: extension.configuration.configurationUi,
     moduleUploadUrl: url,
+    apiVersion: extension.configuration.apiVersion,
     appBridge: extension.configuration.ui?.paths
       ? {
           detailsPath: extension.configuration.ui.paths.details,

@@ -16,6 +16,7 @@ export const AppFunctionSetMutation = gql`
     $library: LibraryInput
     $inputQuery: String
     $appBridge: AppBridgeInput
+    $apiVersion: String
   ) {
     appScriptSet(
       uuid: $uuid
@@ -32,6 +33,7 @@ export const AppFunctionSetMutation = gql`
       library: $library
       inputQuery: $inputQuery
       appBridge: $appBridge
+      apiVersion: $apiVersion
     ) {
       userErrors {
         field
@@ -89,4 +91,5 @@ export interface AppFunctionSetVariables {
     detailsPath?: string
   }
   inputQuery?: string
+  apiVersion?: string
 }
