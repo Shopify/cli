@@ -2,7 +2,6 @@ import {appFlags} from '../../../flags'
 import {
   extensions,
   ExtensionTypes,
-  ExtensionOutputConfig,
   getExtensionOutputConfig,
   limitedExtensions,
   isUiExtensionType,
@@ -13,7 +12,7 @@ import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import {load as loadApp, App} from '../../../models/app/app'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration'
-import {output, path, cli, error, environment} from '@shopify/cli-kit'
+import {output, path, cli, error, environment, dependency} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
 export default class AppScaffoldExtension extends Command {
@@ -77,17 +76,12 @@ export default class AppScaffoldExtension extends Command {
       cloneUrl: flags['clone-url'],
     })
 
-    const extensionOutputConfig = getExtensionOutputConfig(promptAnswers.extensionType)
-    output.success(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
-    output.info(
-      output.content`It can be found in ${output.token.path(path.relative(app.directory, extensionDirectory))}`,
+    const formattedSuccessfulMessage = this.formatSuccessfulRunMessage(
+      promptAnswers.extensionType,
+      path.relative(app.directory, extensionDirectory),
+      app.dependencyManager,
     )
-    output.info(this.formatSuccessfulRunMessage(promptAnswers.extensionType, extensionOutputConfig))
-    if (isUiExtensionType(promptAnswers.extensionType)) {
-      output.info(
-        output.content`To preview your project, run ${output.token.packagejsonScript(app.dependencyManager, 'dev')}`,
-      )
-    }
+    output.info(formattedSuccessfulMessage)
   }
 
   async validateExtensionType(type: string | undefined) {
@@ -153,17 +147,37 @@ export default class AppScaffoldExtension extends Command {
     return [...themeExtensions, ...uiExtensions]
   }
 
-  formatSuccessfulRunMessage(extensionType: ExtensionTypes, extensionOutputConfig: ExtensionOutputConfig): string {
+  formatSuccessfulRunMessage(
+    extensionType: ExtensionTypes,
+    extensionDirectory: string,
+    depndencyManager: dependency.DependencyManager,
+  ): string {
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+    output.success(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
+
     const outputTokens = []
-    if (extensionOutputConfig.additionalHelp) {
-      outputTokens.push(extensionOutputConfig.additionalHelp)
-    }
-    if (extensionOutputConfig.helpURL) {
+    outputTokens.push(
+      output.content`\n\tTo find your extension, remember to ${output.token.genericShellCommand(
+        `cd ${extensionDirectory}`,
+      )}`.value,
+    )
+
+    if (isUiExtensionType(extensionType)) {
       outputTokens.push(
-        output.content`For help, see ${output.token.link('docs', extensionOutputConfig.helpURL)}.`.value,
+        output.content`\tTo preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
       )
     }
 
-    return outputTokens.join('\n')
+    if (extensionOutputConfig.additionalHelp) {
+      outputTokens.push(`\t${extensionOutputConfig.additionalHelp}`)
+    }
+
+    if (extensionOutputConfig.helpURL) {
+      outputTokens.push(
+        output.content`\tFor more details, see the ${output.token.link('docs', extensionOutputConfig.helpURL)}.`.value,
+      )
+    }
+
+    return outputTokens.join('\n').concat('\n')
   }
 }
