@@ -3,13 +3,14 @@ import {platformAndArch} from './os'
 import {Abort} from './error'
 import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
-import type {Writable} from 'node:stream'
+import type {Writable, Readable} from 'node:stream'
 
 export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
   stdout?: Writable | 'inherit'
   stderr?: Writable
+  stdio?: Readable | 'inherit'
   stdin?: string
   signal?: AbortSignal
 }

@@ -1,10 +1,12 @@
 import {exists, write, read} from './file'
 import {findUp, join} from './path'
+import {content, token, debug} from './output'
 
 /**
  * Check if user editor is VS Code
  */
 export const isVSCode = async (root = process.cwd()) => {
+  debug(content`Checking if the directory ${token.path(root)} or any of its parents has a .vscode directory... `)
   const config = await findUp(join(root, '.vscode'), {type: 'directory'})
 
   if (!config) {
@@ -18,6 +20,9 @@ export const isVSCode = async (root = process.cwd()) => {
  * Add VSCode extension recommendations
  */
 export async function addRecommendedExtensions(directory: string, recommendations: string[]) {
+  debug(content`Adding VSCode recommended extensions at ${token.path(directory)}:
+${token.json(recommendations)}
+  `)
   const extensionsPath = join(directory, '.vscode/extensions.json')
 
   if (await isVSCode(directory)) {

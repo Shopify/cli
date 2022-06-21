@@ -1,3 +1,4 @@
+import {debug, content, token} from './output'
 import * as port from 'get-port-please'
 
 /**
@@ -5,5 +6,8 @@ import * as port from 'get-port-please'
  * @returns {Promise<number>} A promise that resolves with an availabe port.
  */
 export async function getRandomPort(): Promise<number> {
-  return port.getRandomPort()
+  debug(content`Getting a random port...`)
+  const randomPort = await port.getRandomPort()
+  debug(content`Random port obtained: ${token.raw(`${randomPort}`)}`)
+  return randomPort
 }

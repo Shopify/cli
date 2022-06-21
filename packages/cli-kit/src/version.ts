@@ -1,3 +1,4 @@
+import {content, token, debug} from './output'
 import {version} from '../package.json'
 import latestVersion from 'latest-version'
 
@@ -7,6 +8,7 @@ import latestVersion from 'latest-version'
  * @returns A promise to get the latest available version of a package.
  */
 export async function latestNpmPackageVersion(name: string) {
+  debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
   return latestVersion(name)
 }
 

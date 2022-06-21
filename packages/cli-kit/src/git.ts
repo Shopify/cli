@@ -1,6 +1,6 @@
 import {Abort} from './error'
 import {hasGit} from './environment/local'
-import {content, token} from './output'
+import {content, token, debug} from './output'
 import git, {TaskOptions} from 'simple-git'
 
 export const factory = git
@@ -13,11 +13,13 @@ export const GitNotPresentError = () => {
 }
 
 export async function initializeRepository(directory: string) {
+  debug(content`Initializing git repository at ${token.path(directory)}...`)
   await ensurePresentOrAbort()
   await git(directory).init()
 }
 
 export async function downloadRepository({repoUrl, destination}: {repoUrl: string; destination: string}) {
+  debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
   await ensurePresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
   // eslint-disable-next-line @typescript-eslint/naming-convention

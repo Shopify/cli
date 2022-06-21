@@ -1,3 +1,4 @@
+import {content, token, debug} from './output'
 import cliKitPackageJson from '../package.json'
 import Conf, {Schema} from 'conf'
 
@@ -47,6 +48,7 @@ export const cliKit = new Conf<ConfSchema>({
 })
 
 export function getAppInfo(directory: string): CachedAppInfo | undefined {
+  debug(content`Reading cached app information for directory ${token.path(directory)}...`)
   const apps = cliKit.get('appInfo') ?? []
   return apps.find((app: CachedAppInfo) => app.directory === directory)
 }
@@ -58,6 +60,9 @@ export function setAppInfo(options: {
   storeFqdn?: string
   orgId?: string
 }): void {
+  debug(content`Storing app information for directory ${token.path(options.directory)}:
+${token.json(options)}
+`)
   const apps = cliKit.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
   if (index === -1) {
@@ -76,6 +81,7 @@ export function setAppInfo(options: {
 }
 
 export function clearAppInfo(directory: string): void {
+  debug(content`Clearning app information for directory ${token.path(directory)}...`)
   const apps = cliKit.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
   if (index !== -1) {
@@ -85,9 +91,11 @@ export function clearAppInfo(directory: string): void {
 }
 
 export function getThemeStore(): string | undefined {
+  debug(content`Getting theme store...`)
   return cliKit.get('themeStore')
 }
 
 export function setThemeStore(store: string): void {
+  debug(content`Setting theme store...`)
   cliKit.set('themeStore', store)
 }
