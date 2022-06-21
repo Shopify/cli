@@ -7,6 +7,7 @@ import constants from './constants'
 import {coerce} from './semver'
 import {AdminSession} from './session'
 import {content, token} from './output'
+// eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
 
