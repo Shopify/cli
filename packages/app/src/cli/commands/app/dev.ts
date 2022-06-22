@@ -55,6 +55,12 @@ export default class Dev extends Command {
       description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'tunnel-url': Flags.string({
+      hidden: false,
+      description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
+      env: 'SHOPIFY_FLAG_TUNNEL_URL',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -74,6 +80,7 @@ export default class Dev extends Command {
         commandConfig,
         subscriptionProductUrl: flags['subscription-product-url'],
         checkoutCartUrl: flags['checkout-cart-url'],
+        tunnelUrl: flags['tunnel-url'],
       })
     } catch (err) {
       if (!(err instanceof error.CancelExecution)) {
