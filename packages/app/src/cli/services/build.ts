@@ -43,7 +43,7 @@ async function build({app, skipDependenciesInstallation, apiKey = undefined}: Bu
       },
     },
     {
-      prefix: 'ui_extensions',
+      prefix: 'extensions',
       action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
         await buildUIExtensions({
           app,
