@@ -12,6 +12,7 @@ import {
   refreshAccessToken,
   InvalidGrantError,
 } from './session/exchange'
+
 import {content, token, debug} from './output'
 import {keypress} from './ui'
 
@@ -21,7 +22,8 @@ import * as secureStore from './session/store'
 import constants from './constants'
 import {normalizeStoreName} from './string'
 import * as output from './output'
-import {partners, graphql} from './api'
+import {partners} from './api'
+import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -205,9 +207,19 @@ ${token.json(applications)}
  */
 export async function ensureUserHasPartnerAccount(partnersToken: string) {
   debug(content`Verifying that the user has a Partner organization`)
-  const query = graphql.AllOrganizationsQuery
   try {
-    await partners.request(query, partnersToken)
+    await partners.request(
+      gql`
+        {
+          organizations(first: 1) {
+            nodes {
+              id
+            }
+          }
+        }
+      `,
+      partnersToken,
+    )
   } catch (error) {
     if (error instanceof partners.RequestClientError && error.statusCode === 404) {
       output.info(`\nA Shopify partner account is needed to proceed.`)
