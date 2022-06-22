@@ -572,3 +572,16 @@ describe('uploadFunctionExtensions', () => {
     })
   })
 })
+
+describe('getUIExtensionUploadURL', () => {
+  beforeEach(() => {})
+  test('Rejects promise when `GenerateSignedUploadUrl` mutation includes errors', async () => {})
+  test('Resolves promise when `GenerateSignedUploadUrl` mutation does not include errors', async () => {})
+})
+
+describe('uploadUIExtensionsBundle', () => {
+  beforeEach(() => {})
+  test('Retries `getUIExtensionUploadURL` 3 times when there is an error', async () => {})
+  test('Throws an error if `getUIExtensionUploadURL` fails 3 times', async () => {})
+  test('Does not retry `getUIExtensionUploadURL` when a valid URL is returned', async () => {})
+})

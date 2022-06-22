@@ -60,35 +60,57 @@ interface UploadUIExtensionsBundleOptions {
   extensions: api.graphql.ExtensionSettings[]
 }
 
+const hasError = (result: api.graphql.GenerateSignedUploadUrlSchema) => {
+  return (
+    result.deploymentGenerateSignedUploadUrl &&
+    result.deploymentGenerateSignedUploadUrl.userErrors &&
+    result.deploymentGenerateSignedUploadUrl.userErrors.length > 0
+  )
+}
+
 /**
  * Uploads a bundle.
  * @param options {UploadUIExtensionsBundleOptions} The upload options
  */
 export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundleOptions) {
   const deploymentUUID = id.generateRandomUUID()
-  const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
-  const formData = http.formData()
-  const buffer = fs.readFileSync(options.bundlePath)
-  formData.append('my_upload', buffer)
-  await http.fetch(signedURL, {
-    method: 'put',
-    body: buffer,
-    headers: formData.getHeaders(),
-  })
+  try {
+    const getUploadUrlOperation = () => getUIExtensionUploadURL(options.apiKey, deploymentUUID)
+    const signedURL = await http.retriedPromise(getUploadUrlOperation, {
+      onFailedAttempt: (error) => {
+        output.info(`Something went wrong, retrying... (${error.retriesLeft} retries remaining)`)
+      },
+      retries: 2,
+    })
 
-  const variables: api.graphql.CreateDeploymentVariables = {
-    apiKey: options.apiKey,
-    uuid: deploymentUUID,
-    bundleUrl: signedURL,
-    extensions: options.extensions,
-  }
+    const formData = http.formData()
+    const buffer = fs.readFileSync(options.bundlePath)
+    formData.append('my_upload', buffer)
+    await http.fetch(signedURL, {
+      method: 'put',
+      body: buffer,
+      headers: formData.getHeaders(),
+    })
 
-  const mutation = api.graphql.CreateDeployment
-  const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
-  if (result.deploymentCreate?.userErrors?.length > 0) {
-    const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    const variables: api.graphql.CreateDeploymentVariables = {
+      apiKey: options.apiKey,
+      uuid: deploymentUUID,
+      bundleUrl: signedURL,
+      extensions: options.extensions,
+    }
+
+    const mutation = api.graphql.CreateDeployment
+    const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
+    if (result.deploymentCreate?.userErrors?.length > 0) {
+      const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
+      throw new error.Abort(errors)
+    }
+
+    output.info('Upload success')
+  } catch (errors) {
+    const errorMessage = `Unable to push your code to Shopify. ${errors}`
+    throw new error.Abort(errorMessage)
   }
 }
 
@@ -98,7 +120,7 @@ export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundle
  * @param deploymentUUID {string} The unique identifier of the deployment.
  * @returns
  */
-export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string) {
+export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string): Promise<string | Error> {
   const mutation = api.graphql.GenerateSignedUploadUrl
   const token = await session.ensureAuthenticatedPartners()
   const variables: api.graphql.GenerateSignedUploadUrlVariables = {
@@ -110,10 +132,10 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
   const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.request(mutation, token, variables)
   if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    return Promise.reject(new error.Abort(errors))
   }
 
-  return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
+  return Promise.resolve(result.deploymentGenerateSignedUploadUrl.signedUploadUrl)
 }
 
 interface UploadFunctionExtensionsOptions {
