@@ -50,8 +50,14 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
           }
         }
 
+        const extended = [`'plugin:hydrogen/recommended'`]
+
+        if (app.language === 'TypeScript') {
+          extended.push(`'plugin:hydrogen/typescript'`)
+        }
+
         const eslintConfig = await file.format(
-          ['module.exports = {', 'extends: [', `'plugin:hydrogen/recommended'`, ' ],', ' };'].join('\n'),
+          ['module.exports = {', 'extends: [', `${extended.join(',')}`, ' ],', ' };'].join('\n'),
           {path: genericConfigurationFileNames.eslint},
         )
 
