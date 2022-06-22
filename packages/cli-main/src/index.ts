@@ -38,12 +38,17 @@ function runCLI() {
 }
 
 const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (!settings.debug && kitError.shouldReport(errorToReport) && Object.prototype.isPrototypeOf(errorToReport)) {
-    const reportedError = Object.assign(Object.create(errorToReport), {})
-    if (reportedError.stack) reportedError.stack = reportedError.stack.replace(new RegExp('file:///', 'g'), '/')
+  if (!settings.debug && kitError.shouldReport(errorToReport)) {
+    let mappedError: Error
+    // eslint-disable-next-line no-prototype-builtins
+    if (Object.prototype.isPrototypeOf(errorToReport)) {
+      const mappedError = Object.assign(Object.create(errorToReport), {})
+      if (mappedError.stack) mappedError.stack = mappedError.stack.replace(new RegExp('file:///', 'g'), '/')
+    } else {
+      mappedError = errorToReport
+    }
     await new Promise((resolve, reject) => {
-      Bugsnag.notify(reportedError, undefined, resolve)
+      Bugsnag.notify(mappedError, undefined, resolve)
     })
   }
   return Promise.resolve(errorToReport)
