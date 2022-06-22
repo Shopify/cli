@@ -6,7 +6,6 @@ up:
       version: v18.0.0
       packages:
         - ./
-        - ./docs
   - ruby:
       version: 3.1.2
   - homebrew:
@@ -53,22 +52,6 @@ commands:
   tsc:
     desc: 'Type-check the project'
     run: yarn run tsc:affected
-  server:
-    depends-isogun: true
-    desc: Run docusaurus documentation local server
-    run: yarn --cwd docs run start --no-open
-  docs:
-    desc: 'Commands to interact with the documentation website.'
-    subcommands:
-      server:
-        desc: Run docusaurus documentation local server
-        run: yarn --cwd docs run start --no-open
-
-      build:
-        desc: build and serve the static website
-        run: |
-          yarn --cwd docs run build
-          yarn --cwd docs run serve
   fixture:
     desc: 'Commands to interact with the fixture project'
     subcommands:
