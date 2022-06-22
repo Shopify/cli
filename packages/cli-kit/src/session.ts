@@ -3,6 +3,7 @@ import {Bug} from './error'
 import {validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
+import {open} from './system'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -12,6 +13,7 @@ import {
   InvalidGrantError,
 } from './session/exchange'
 import {content, token, debug} from './output'
+import {keypress} from './ui'
 
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
@@ -19,6 +21,7 @@ import * as secureStore from './session/store'
 import constants from './constants'
 import {normalizeStoreName} from './string'
 import * as output from './output'
+import {partners, graphql} from './api'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -187,8 +190,37 @@ ${token.json(applications)}
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
+  if (!envToken && tokens.partners) {
+    await ensureUserHasPartnerAccount(tokens.partners)
+  }
 
   return tokens
+}
+
+/**
+ * If the user creates an account from the Identity website, the created
+ * account won't get a Partner organization created. We need to detect that
+ * and take the user to create a partner organization.
+ * @param partnersToken {string} Partners token
+ */
+export async function ensureUserHasPartnerAccount(partnersToken: string) {
+  debug(content`Verifying that the user has a Partner organization`)
+  const query = graphql.AllOrganizationsQuery
+  try {
+    await partners.request(query, partnersToken)
+  } catch (error) {
+    if (error instanceof partners.RequestClientError && error.statusCode === 404) {
+      output.info(`\nA Shopify partner account is needed to proceed.`)
+      output.info(`👉 Press any key to create one`)
+      await keypress()
+      open(`https://partners.shopify.com/signup`)
+      output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
+      output.warn(output.content`Make sure you've confirmed your Shopify and the Partner accounts from the email`)
+      await keypress()
+    } else {
+      throw error
+    }
+  }
 }
 
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {

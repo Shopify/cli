@@ -1,9 +1,17 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common'
 import {ScriptServiceProxyQuery} from './graphql'
 import {partners as partnersFqdn} from '../environment/fqdn'
-import {debug, content, token as outputToken} from '../output'
-import {Abort} from '../error'
+import {debug, stringifyMessage, content, token as outputToken} from '../output'
+import {ExtendableError} from '../error'
 import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
+
+export class RequestClientError extends ExtendableError {
+  statusCode: number
+  public constructor(message: string, statusCode: number) {
+    super(message)
+    this.statusCode = statusCode
+  }
+}
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
   const fqdn = await partnersFqdn()
@@ -25,14 +33,14 @@ ${sanitizedHeadersOutput(headers)}
     return response
   } catch (error) {
     if (error instanceof ClientError) {
-      const errorMessage = content`
+      const errorMessage = stringifyMessage(content`
 The Partners GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
 
 ${outputToken.json(error.response.errors)}
-      `
-      const abortError = new Abort(errorMessage)
-      abortError.stack = error.stack
-      throw abortError
+      `)
+      const mappedError = new RequestClientError(errorMessage, error.response.status)
+      mappedError.stack = error.stack
+      throw mappedError
     } else {
       throw error
     }
