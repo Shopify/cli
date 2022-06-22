@@ -189,7 +189,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           output += colors.bold(colors.yellow(stringifyMessage(enumToken.value)))
           break
         case ContentTokenType.Path:
-          output += colors.cyan(relativizePath(stringifyMessage(enumToken.value)))
+          output += relativizePath(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.Json:
           try {
