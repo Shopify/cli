@@ -1,11 +1,25 @@
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {api, error} from '@shopify/cli-kit'
+import {api, error, output} from '@shopify/cli-kit'
 
-const NoOrgError = () =>
-  new error.Abort(
-    'No Organization found',
-    'You need to create a Shopify Partners organization: https://partners.shopify.com/signup ',
+const NoOrgError = (organizationId?: string) => {
+  const nextSteps = [
+    output.content`Have you ${output.token.link(
+      'created a Shopify Partners organization',
+      'https://partners.shopify.com/signup',
+    )}`,
+    output.content`Need to connect to a different App or organization? Run the command again with ${output.token.genericShellCommand(
+      '--reset',
+    )}`,
+    output.content`Do you have access to the right Shopify Partners organization? The CLI is loading ${output.token.link(
+      'this organization',
+      `https://partner.shopify.com/${organizationId}`,
+    )}`,
+  ]
+  return new error.Abort(
+    `No Organization found`,
+    nextSteps.map((content) => `· ${output.stringifyMessage(content)}`).join('\n'),
   )
+}
 
 export interface FetchResponse {
   organization: Organization
@@ -51,7 +65,7 @@ export async function fetchOrgAndApps(orgId: string, token: string): Promise<Fet
   const query = api.graphql.FindOrganizationQuery
   const result: api.graphql.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
   const org = result.organizations.nodes[0]
-  if (!org) throw NoOrgError()
+  if (!org) throw NoOrgError(orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
   return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
 }
