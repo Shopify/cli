@@ -18,7 +18,7 @@ env:
 jobs:
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: ${{ github.event_name != 'pull_request' }}
     strategy:
       matrix:
@@ -58,7 +58,7 @@ jobs:
         run: npx nx affected --target=tsc --skip-nx-cache
   pr:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
     strategy:
       matrix:
