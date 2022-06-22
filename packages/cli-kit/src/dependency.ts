@@ -213,6 +213,7 @@ export interface DependencyVersion {
 export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
+  force = false,
 ) {
   debug(content`Adding the following dependencies if needed:
 ${token.json(dependencies)}
@@ -224,9 +225,12 @@ ${token.json(options)}
     throw PackageJsonNotFoundError(options.directory)
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
-  const dependenciesToAdd = dependencies.filter((dep) => {
-    return !existingDependencies.includes(dep.name)
-  })
+  let dependenciesToAdd = dependencies
+  if (!force) {
+    dependenciesToAdd = dependencies.filter((dep) => {
+      return !existingDependencies.includes(dep.name)
+    })
+  }
   if (dependenciesToAdd.length === 0) {
     return
   }
@@ -266,12 +270,16 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
   )
 }
 
+// eslint-disable-next-line no-warning-comments
+// TODO: Switch it around so add-if-needed depends on this, rather than calling
+// if-needed with force: true which is counterintuitive.
 export async function addLatestNPMDependencies(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
   await addNPMDependenciesIfNeeded(
     dependencies.map((dependency) => {
       return {name: dependency, version: 'latest'}
     }),
     options,
+    true,
   )
 }
 
