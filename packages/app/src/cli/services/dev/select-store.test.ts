@@ -1,5 +1,5 @@
 import {selectStore} from './select-store'
-import {fetchOrgAndApps} from './fetch'
+import {fetchAllStores} from './fetch'
 import {Organization, OrganizationStore} from '../../models/organization'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -51,6 +51,9 @@ beforeEach(() => {
           request: vi.fn(),
         },
         graphql: cliKit.api.graphql,
+      },
+      system: {
+        sleep: vi.fn(),
       },
     }
   })
@@ -130,17 +133,18 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('prompts user to create & reload, fetches and tries again if reload is true', async () => {
+  it('prompts user to create & reload, fetches 10 times and tries again if reload is true', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({organization: ORG1, stores: [], apps: []})
+    vi.mocked(fetchAllStores).mockResolvedValue([])
 
     // When
     const got = selectStore([], ORG1, 'token')
 
     // Then
-    expect(got).rejects.toThrow()
+    await expect(got).rejects.toThrow()
+    expect(fetchAllStores).toHaveBeenCalledTimes(10)
   })
 })

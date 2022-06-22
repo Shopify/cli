@@ -126,3 +126,9 @@ export async function page(filename: string) {
   const [command, ...args] = [...executable.split(' '), filename]
   await exec(command, args, {stdout: 'inherit', stdin: 'inherit'})
 }
+
+export async function sleep(seconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 1000 * seconds)
+  })
+}

@@ -90,9 +90,9 @@ export async function appNamePrompt(currentName: string): Promise<string> {
   return input.name
 }
 
-export async function reloadStoreListPrompt(): Promise<boolean> {
+export async function reloadStoreListPrompt(org: Organization): Promise<boolean> {
   const options = [
-    {name: 'Yes, reload my stores', value: 'reload'},
+    {name: `Yes, ${org.businessName} has a new dev store`, value: 'reload'},
     {name: 'No, cancel dev', value: 'cancel'},
   ]
 
@@ -100,7 +100,7 @@ export async function reloadStoreListPrompt(): Promise<boolean> {
     {
       type: 'select',
       name: 'value',
-      message: 'Have you created a new dev store?',
+      message: 'Finished creating a dev store?',
       choices: options,
     },
   ])

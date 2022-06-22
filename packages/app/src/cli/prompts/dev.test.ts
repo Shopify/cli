@@ -221,7 +221,7 @@ describe('reloadStoreList', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'reload'})
 
     // When
-    const got = await reloadStoreListPrompt()
+    const got = await reloadStoreListPrompt(ORG1)
 
     // Then
     expect(got).toEqual(true)
@@ -229,9 +229,9 @@ describe('reloadStoreList', () => {
       {
         type: 'select',
         name: 'value',
-        message: 'Have you created a new dev store?',
+        message: 'Finished creating a dev store?',
         choices: [
-          {name: 'Yes, reload my stores', value: 'reload'},
+          {name: 'Yes, org1 has a new dev store', value: 'reload'},
           {name: 'No, cancel dev', value: 'cancel'},
         ],
       },
