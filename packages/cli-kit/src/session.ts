@@ -1,5 +1,5 @@
 import {applicationId} from './session/identity'
-import {Bug} from './error'
+import {Abort, Bug} from './error'
 import {validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
@@ -83,6 +83,12 @@ export interface OAuthSession {
   admin?: AdminSession
   partners?: string
   storefront?: string
+}
+export const PartnerOrganizationNotFoundError = () => {
+  return new Abort(
+    `Couldn't find your Shopify Partners organization`,
+    `Have you confirmed your accounts from the emails you received?`,
+  )
 }
 
 /**
@@ -199,14 +205,7 @@ ${token.json(applications)}
   return tokens
 }
 
-/**
- * If the user creates an account from the Identity website, the created
- * account won't get a Partner organization created. We need to detect that
- * and take the user to create a partner organization.
- * @param partnersToken {string} Partners token
- */
-export async function ensureUserHasPartnerAccount(partnersToken: string) {
-  debug(content`Verifying that the user has a Partner organization`)
+export async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
   try {
     await partners.request(
       gql`
@@ -220,17 +219,35 @@ export async function ensureUserHasPartnerAccount(partnersToken: string) {
       `,
       partnersToken,
     )
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     if (error instanceof partners.RequestClientError && error.statusCode === 404) {
-      output.info(`\nA Shopify partner account is needed to proceed.`)
-      output.info(`👉 Press any key to create one`)
-      await keypress()
-      open(`https://partners.shopify.com/signup`)
-      output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
-      output.warn(output.content`Make sure you've confirmed your Shopify and the Partner accounts from the email`)
-      await keypress()
+      return false
     } else {
-      throw error
+      return true
+    }
+  }
+}
+
+/**
+ * If the user creates an account from the Identity website, the created
+ * account won't get a Partner organization created. We need to detect that
+ * and take the user to create a partner organization.
+ * @param partnersToken {string} Partners token
+ */
+export async function ensureUserHasPartnerAccount(partnersToken: string) {
+  debug(content`Verifying that the user has a Partner organization`)
+  if (!(await hasPartnerAccount(partnersToken))) {
+    output.info(`\nA Shopify Partners organization is needed to proceed.`)
+    output.info(`👉 Press any key to create one`)
+    await keypress()
+    open(`https://partners.shopify.com/signup`)
+    output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
+    output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
+    await keypress()
+    if (!(await hasPartnerAccount(partnersToken))) {
+      throw PartnerOrganizationNotFoundError()
     }
   }
 }
