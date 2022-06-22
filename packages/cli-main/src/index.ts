@@ -38,7 +38,8 @@ function runCLI() {
 }
 
 const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
-  if (!settings.debug && kitError.shouldReport(errorToReport)) {
+  // eslint-disable-next-line no-prototype-builtins
+  if (!settings.debug && kitError.shouldReport(errorToReport) && Object.prototype.isPrototypeOf(errorToReport)) {
     const reportedError = Object.assign(Object.create(errorToReport), {})
     if (reportedError.stack) reportedError.stack = reportedError.stack.replace(new RegExp('file:///', 'g'), '/')
     await new Promise((resolve, reject) => {
