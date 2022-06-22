@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-testing",
-  "version": "3.0.23",
+  "version": "3.0.24",
   "private": true,
   "description": "A set of utilities for writing unit tests",
   "type": "module",
@@ -39,7 +39,7 @@
     "win32"
   ],
   "devDependencies": {
-    "@shopify/cli-kit": "^3.0.23",
+    "@shopify/cli-kit": "^3.0.24",
     "strip-ansi": "^7.0.1",
     "tempy": "^2.0.0",
     "vitest": "^0.15.1"

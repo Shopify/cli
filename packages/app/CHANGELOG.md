@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 3.0.24
+
+### Patch Changes
+
+- 73ca5002: Automatically add the @shopify/web-pixels-extension dependency when scaffolding a web pixel extension
+- 687c2835: Check before "Next steps in Shopify Partners"
+
 ## 3.0.23
 
 ## 3.0.22
