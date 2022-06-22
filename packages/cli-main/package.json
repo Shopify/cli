@@ -3,6 +3,7 @@
   "version": "3.0.24",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
+  "homepage": "https://github.com/shopify/cli#readme",
   "type": "module",
   "main": "src/index.js",
   "module": "src/index.js",

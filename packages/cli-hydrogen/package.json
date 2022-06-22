@@ -3,6 +3,7 @@
   "version": "3.0.24",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
+  "homepage": "https://github.com/shopify/cli#readme",
   "type": "module",
   "files": [
     "/dist"
