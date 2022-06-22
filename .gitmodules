@@ -1,3 +1,3 @@
 [submodule "wiki"]
 	path = wiki
-	url = git@github.com:Shopify/shopify-cli-next.wiki.git
+	url = git@github.com:Shopify/cli.wiki.git
