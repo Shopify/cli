@@ -6,6 +6,4 @@ contact_links:
   - name: Shopify CLI 2.0 issues 📝
     url: https://www.github.com/Shopify/shopify-cli/issues/new/choose
     about: |-
-      This is where you can create issues for Shopify CLI 3.0.
-      
-      Are you using our previous CLI? Please create an issue there instead.
+      You're about to open an issue about Shopify CLI 3.0. Are you actually using our previous CLI? If so, please create an issue there instead.
