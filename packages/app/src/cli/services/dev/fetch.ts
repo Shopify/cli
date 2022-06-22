@@ -6,6 +6,8 @@ const NoOrgError = (organizationId?: string) => {
     output.content`Have you ${output.token.link(
       'created a Shopify Partners organization',
       'https://partners.shopify.com/signup',
+    )}?`,
+    output.content`Have you confirmed your accounts from the emails you received?',
     )}`,
     output.content`Need to connect to a different App or organization? Run the command again with ${output.token.genericShellCommand(
       '--reset',
