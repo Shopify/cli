@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 3.0.23
+
+### Patch Changes
+
+- d115df3b: Check that the error has object as a prototype
+  - @shopify/cli-kit@3.0.23
+
 ## 3.0.22
 
 ### Patch Changes
