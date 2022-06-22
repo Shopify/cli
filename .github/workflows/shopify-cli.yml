@@ -23,8 +23,8 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14', '16', '17', '18']
-        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -64,8 +64,8 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14', '16', '17', '18']
-        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
       max-parallel: 6
     steps:
       - uses: actions/checkout@v2
