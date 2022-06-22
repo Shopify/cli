@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.0.23",
+  "version": "3.0.24",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "type": "module",
@@ -52,7 +52,7 @@
     "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",
     "@shopify/plugin-ngrok": "^0.2.9",
-    "@shopify/cli-kit": "^3.0.23"
+    "@shopify/cli-kit": "^3.0.24"
   },
   "devDependencies": {
     "vitest": "^0.15.1"
