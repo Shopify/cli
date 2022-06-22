@@ -24,7 +24,7 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "rimraf dist/ && rollup -c",
-    "prepack": "cross-env NODE_ENV=production yarn run build",
+    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "prettier src/** -w && eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
