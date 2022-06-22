@@ -3,6 +3,9 @@ contact_links:
   - name: Shopify Partners Community 🙌
     url: https://www.shopify.com/partners/community#conversation
     about: Connect with Shopify and other Shopify Partners through our online communities!
-  - name: Ruby CLI issues 📝
+  - name: Shopify CLI 2.0 issues 📝
     url: https://www.github.com/Shopify/shopify-cli/issues/new/choose
-    about: Are you using our previous Ruby CLI? Please create an issue there instead.
+    about: |-
+      This is where you can create issues for Shopify CLI 3.0.
+      
+      Are you using our previous CLI? Please create an issue there instead.
