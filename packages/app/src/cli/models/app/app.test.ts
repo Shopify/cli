@@ -633,14 +633,6 @@ describe('getAppIdentifiers', () => {
 })
 
 describe('getUIExtensionRendererVersion', () => {
-  test("returns undefined when the UI extension type doesn't have a runtime dependency", async () => {
-    // Given/When
-    const got = await getUIExtensionRendererVersion('web_pixel_extension', DEFAULT_APP)
-
-    // Then
-    expect(got).to.toBeUndefined()
-  })
-
   test('returns the version of the dependency package for product_subscription', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
@@ -693,11 +685,20 @@ describe('getUIExtensionRendererVersion', () => {
   })
 
   test('returns the version of the dependency package for web_pixel', async () => {
-    // When
-    const got = await getUIExtensionRendererVersion('web_pixel_extension', DEFAULT_APP)
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await createPackageJson(tmpDir, '@shopify/web-pixels-extension', '3.4.5')
+      DEFAULT_APP.directory = tmpDir
 
-    // Then
-    expect(got).toEqual(undefined)
+      // When
+      const got = await getUIExtensionRendererVersion('web_pixel_extension', DEFAULT_APP)
+
+      // Then
+      expect(got).not.toEqual('not-found')
+      if (got === 'not_found') return
+      expect(got?.name).to.toEqual('@shopify/web-pixels-extension')
+      expect(got?.version).toEqual('3.4.5')
+    })
   })
 
   test('returns not_found if there is no renderer package', async () => {
