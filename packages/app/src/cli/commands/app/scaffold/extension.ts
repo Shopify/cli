@@ -158,7 +158,7 @@ export default class AppScaffoldExtension extends Command {
     const outputTokens = []
     outputTokens.push(
       output.content`\n  To find your extension, remember to ${output.token.genericShellCommand(
-        `cd ${extensionDirectory}`,
+        output.content`cd ${output.token.path(extensionDirectory)}`,
       )}`.value,
     )
 
