@@ -23,6 +23,7 @@ export interface DevOptions {
   skipDependenciesInstallation: boolean
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
+  tunnelUrl?: string
 }
 
 interface DevWebOptions {
@@ -47,9 +48,18 @@ async function dev(options: DevOptions) {
     app: {apiSecret},
   } = await ensureDevEnvironment(options)
 
-  const proxyPort = await port.getRandomPort()
+  let proxyPort: number
+  let url: string
+  if (options.tunnelUrl) {
+    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
+    proxyPort = +matches[2]
+    url = matches[1]
+  } else {
+    proxyPort = await port.getRandomPort()
+    url = await generateURL(options.commandConfig.plugins, proxyPort)
+  }
+
   const backendPort = await port.getRandomPort()
-  const url: string = await generateURL(options.commandConfig.plugins, proxyPort)
 
   const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
