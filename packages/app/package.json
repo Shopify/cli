@@ -3,6 +3,9 @@
   "version": "3.0.24",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url" : "https://github.com/Shopify/cli/issues"
+  },
   "type": "module",
   "files": [
     "/dist",
