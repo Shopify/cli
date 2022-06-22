@@ -18,6 +18,8 @@ import {
   OAuthApplications,
   OAuthSession,
 } from './session'
+import {partners} from './api'
+
 import {identity} from './environment/fqdn'
 import {authorize} from './session/authorize'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
@@ -104,8 +106,8 @@ beforeAll(() => {
   vi.mock('./session/scopes')
   vi.mock('./session/store')
   vi.mock('./session/validate')
+  vi.mock('./api')
   vi.mock('./store')
-
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
 
@@ -117,6 +119,9 @@ beforeEach(() => {
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(applicationId).mockImplementation((app) => app)
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue(partnersToken)
+  // eslint-disable-next-line no-warning-comments
+  // TODO: Add tests for ensureUserHasPartnerAccount
+  vi.mocked(partners.request).mockResolvedValue(undefined)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {

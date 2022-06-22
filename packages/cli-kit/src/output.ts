@@ -385,7 +385,7 @@ export const error = async (content: Fatal) => {
       outputString += `\n${padding}${colors.bold('Stack trace:')}`
       const stackLines = stack.asTable({}).split('\n')
       for (const stackLine of stackLines) {
-        outputString += `${padding}${stackLine}`
+        outputString += `${padding}${stackLine}\n`
       }
     }
   }

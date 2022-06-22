@@ -53,13 +53,13 @@
   "dependencies": {
     "@oclif/core": "^1.0",
     "envfile": "^6.17.0",
+    "fastify": "^4.0.0-rc.4",
     "inquirer": "^8.2.4",
     "keytar": "^7.9.0",
     "open": "^8.4.0",
     "prettier": "^2.6.2",
     "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8",
-    "fastify": "^4.0.0-rc.4"
+    "stacktracey": "^2.1.8"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
@@ -100,6 +100,7 @@
     "tempy": "^2.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
+    "ts-error": "^1.0.6",
     "vitest": "^0.15.1",
     "zod": "^3.17.3"
   }

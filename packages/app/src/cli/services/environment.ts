@@ -252,8 +252,9 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
       {
         title: 'Fetching organization data',
         task: async () => {
-          const responses = await Promise.all([fetchOrgAndApps(orgId, token), fetchAllStores(orgId, token)])
-          data = {...responses[0], stores: responses[1]} as FetchResponse
+          const organizationAndApps = await fetchOrgAndApps(orgId, token)
+          const stores = await fetchAllStores(orgId, token)
+          data = {...organizationAndApps, stores} as FetchResponse
           // We need ALL stores so we can validate the selected one.
           // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
         },

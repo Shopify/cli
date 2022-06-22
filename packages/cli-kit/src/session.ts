@@ -1,8 +1,9 @@
 import {applicationId} from './session/identity'
-import {Bug} from './error'
+import {Abort, Bug} from './error'
 import {validateSession} from './session/validate'
 import {allDefaultScopes, apiScopes} from './session/scopes'
 import {identity as identityFqdn} from './environment/fqdn'
+import {open} from './system'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -11,7 +12,9 @@ import {
   refreshAccessToken,
   InvalidGrantError,
 } from './session/exchange'
+
 import {content, token, debug} from './output'
+import {keypress} from './ui'
 
 import {authorize} from './session/authorize'
 import {IdentityToken, Session} from './session/schema'
@@ -19,6 +22,8 @@ import * as secureStore from './session/store'
 import constants from './constants'
 import {normalizeStoreName} from './string'
 import * as output from './output'
+import {partners} from './api'
+import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -78,6 +83,12 @@ export interface OAuthSession {
   admin?: AdminSession
   partners?: string
   storefront?: string
+}
+export const PartnerOrganizationNotFoundError = () => {
+  return new Abort(
+    `Couldn't find your Shopify Partners organization`,
+    `Have you confirmed your accounts from the emails you received?`,
+  )
 }
 
 /**
@@ -187,8 +198,58 @@ ${token.json(applications)}
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
+  if (!envToken && tokens.partners) {
+    await ensureUserHasPartnerAccount(tokens.partners)
+  }
 
   return tokens
+}
+
+export async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
+  try {
+    await partners.request(
+      gql`
+        {
+          organizations(first: 1) {
+            nodes {
+              id
+            }
+          }
+        }
+      `,
+      partnersToken,
+    )
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    if (error instanceof partners.RequestClientError && error.statusCode === 404) {
+      return false
+    } else {
+      return true
+    }
+  }
+}
+
+/**
+ * If the user creates an account from the Identity website, the created
+ * account won't get a Partner organization created. We need to detect that
+ * and take the user to create a partner organization.
+ * @param partnersToken {string} Partners token
+ */
+export async function ensureUserHasPartnerAccount(partnersToken: string) {
+  debug(content`Verifying that the user has a Partner organization`)
+  if (!(await hasPartnerAccount(partnersToken))) {
+    output.info(`\nA Shopify Partners organization is needed to proceed.`)
+    output.info(`👉 Press any key to create one`)
+    await keypress()
+    open(`https://partners.shopify.com/signup`)
+    output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
+    output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
+    await keypress()
+    if (!(await hasPartnerAccount(partnersToken))) {
+      throw PartnerOrganizationNotFoundError()
+    }
+  }
 }
 
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
