@@ -20,6 +20,7 @@ jobs:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name != 'pull_request' }}
+    timeout-minutes: 15
     strategy:
       matrix:
         node: ['14', '16', '17', '18']
@@ -60,6 +61,7 @@ jobs:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
+    timeout-minutes: 15
     strategy:
       matrix:
         node: ['14', '16', '17', '18']
