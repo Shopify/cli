@@ -3,7 +3,7 @@
 # Shopify CLI
 <a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
 <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
-<a href="https://github.com/Shopify/shopify-cli-next/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/shopify-cli-next/actions/workflows/shopify-cli.yml/badge.svg)</a>
+<a href="https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml/badge.svg)</a>
 
 With the Shopify command line interface (Shopify CLI 3.0), you can:
 - build custom storefronts and manage their hosting
