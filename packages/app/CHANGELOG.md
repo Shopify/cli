@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.0.22
+
+### Patch Changes
+
+- 8916cac2: Tweak post-scaffolding line breaks and indents
+- 7f32e9ac: Fix race-condition when the organization can't be found and improve the error message
+- c17e5b56: Add flag to override tunnel URL
+
 ## 3.0.21
 
 ## 3.0.20

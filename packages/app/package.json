@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.0.21",
+  "version": "3.0.22",
   "description": "Utilities for loading, building, and publishing apps.",
   "type": "module",
   "files": [

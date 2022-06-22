@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.0.22
+
+### Patch Changes
+
+- 7f32e9ac: Add an interface to delete the global store
+- 7f32e9ac: Make sure the user has a partner organization associated to the session
+
 ## 3.0.21
 
 ## 3.0.20
