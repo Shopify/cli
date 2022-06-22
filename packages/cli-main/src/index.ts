@@ -1,7 +1,7 @@
 // CLI
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment, output, store, constants, analytics} from '@shopify/cli-kit'
+import {error as kitError, environment, output, store, constants, analytics, toml} from '@shopify/cli-kit'
 
 async function runCLI() {
   await store.initializeCliKitStore()
@@ -59,9 +59,20 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
   return Promise.resolve(errorToReport)
 }
 
+interface Message {
+  id: number
+  version: string
+  content: string
+}
+
 const displayMessageBoard = async (): Promise<void> => {
-  const message = 'foo'
-  output.messageBoard(message)
+  try {
+    const response = await fetch(MESSAGE_BOARD_URL)
+    const body = await response.text()
+    const messages: Message[] = toml.decode(body).messages
+    output.messageBoard(messages[0].content)
+    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
+  } catch (err) {}
 }
 
 export default runCLI
