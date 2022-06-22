@@ -15,7 +15,7 @@ body:
       label: |-
         Please confirm that you have:
       options:
-        - label: Searched [existing issues](https://github.com/Shopify/shopify-cli-next/issues) to see if your issue is a duplicate. (If you’ve found a duplicate issue, feel free to add additional information in a comment on it.)
+        - label: Searched [existing issues](..) to see if your issue is a duplicate. (If you’ve found a duplicate issue, feel free to add additional information in a comment on it.)
           required: true
         - label: Reproduced the issue in [the latest CLI version](https://www.npmjs.com/package/@shopify/cli).
           required: true
