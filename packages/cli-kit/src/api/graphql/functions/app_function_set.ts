@@ -92,4 +92,5 @@ export interface AppFunctionSetVariables {
   }
   inputQuery?: string
   apiVersion?: string
+  skipCompilationJob: boolean
 }
