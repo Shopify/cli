@@ -47,6 +47,10 @@ export const cliKit = new Conf<ConfSchema>({
   projectVersion: cliKitPackageJson.version,
 })
 
+export function remove() {
+  cliKit.clear()
+}
+
 export function getAppInfo(directory: string): CachedAppInfo | undefined {
   debug(content`Reading cached app information for directory ${token.path(directory)}...`)
   const apps = cliKit.get('appInfo') ?? []
