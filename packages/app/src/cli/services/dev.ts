@@ -52,7 +52,10 @@ async function dev(options: DevOptions) {
   let url: string
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    proxyPort = +matches[2]
+    if (!matches) {
+      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    }
+    proxyPort = Number(matches[2])
     url = matches[1]
   } else {
     proxyPort = await port.getRandomPort()
