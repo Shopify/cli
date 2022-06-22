@@ -31,7 +31,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
         },
       },
       {
-        prefix: 'ui_extensions',
+        prefix: 'extensions',
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
           /**
            * For deployment we want the build process to ouptut the artifacts directly in the directory
