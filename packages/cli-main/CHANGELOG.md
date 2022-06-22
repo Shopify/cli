@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 3.0.21
+
+### Patch Changes
+
+- Consume a new release of the extensions binary that allows setting the ngrok header
+  - @shopify/cli-kit@3.0.21
+
 ## 3.0.20
 
 ### Patch Changes

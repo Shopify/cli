@@ -1,5 +1,7 @@
 # @shopify/app
 
+## 3.0.21
+
 ## 3.0.20
 
 ### Patch Changes
