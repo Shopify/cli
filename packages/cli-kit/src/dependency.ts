@@ -22,7 +22,7 @@ export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
 export type DependencyManager = typeof dependencyManager[number]
 
 export const PackageJsonNotFoundError = (directory: string) => {
-  return new Abort(`The directory ${directory} doesn't have a package.json.`)
+  return new Abort(`The directory  ${directory} doesn't have a package.json.`)
 }
 
 /**
