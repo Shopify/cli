@@ -17,7 +17,10 @@ async function runCLI() {
     })
   }
 
-  run(undefined, import.meta.url)
+  displayMessageBoard()
+    .then(() => {
+      run(undefined, import.meta.url)
+    })
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
       if (error instanceof kitError.AbortSilent) {
@@ -54,6 +57,11 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
     })
   }
   return Promise.resolve(errorToReport)
+}
+
+const displayMessageBoard = async (): Promise<void> => {
+  const message = 'foo'
+  output.messageBoard(message)
 }
 
 export default runCLI

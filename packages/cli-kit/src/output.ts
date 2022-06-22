@@ -371,6 +371,25 @@ export const newline = () => {
 }
 
 /**
+ * Formats and outputs a message to the user.
+ * @param message {string} The string to be output.
+ */
+export const messageBoard = (message: string) => {
+  let outputString = ''
+  const padding = '    '
+  const header = colors.greenBright(`\n━━━━━━ A message from Shopify! ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
+  const footer = colors.greenBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+  outputString += header
+  outputString += '\n'
+  const lines = message.split('\n')
+  for (const line of lines) {
+    outputString += `${padding}${line}\n`
+  }
+  outputString += footer
+  outputWhereAppropriate('info', consoleLog, outputString)
+}
+
+/**
  * Formats and outputs a fatal error.
  * Note: This API is not intended to be used internally. If you want to
  * abort the execution due to an error, raise a fatal error and let the
