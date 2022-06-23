@@ -33,7 +33,7 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
-    output.completed(`Using your default dev store (${stores[0].shopName}) to preview your project`)
+    output.completed(`Using your default dev store (${stores[0].shopName}) to preview your project.`)
     return stores[0]
   }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))

@@ -276,7 +276,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     },
   }
 
-  output.completed('Logged in')
+  output.completed('Logged in.')
 
   return session
 }

@@ -119,7 +119,7 @@ async function createExtensions(extensions: Extension[], appId: string) {
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
-    output.completed(`Created extension ${extension.localIdentifier}`)
+    output.completed(`Created extension ${extension.localIdentifier}.`)
     result[extension.localIdentifier] = registration
   }
   return result
