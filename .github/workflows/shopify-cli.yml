@@ -121,9 +121,9 @@ jobs:
         run: yarn install --ignore-engines
       - name: Build
         run: npx nx affected --target=build --skip-nx-cache
-      - name: Test
-        run: npx nx affected --target=test --skip-nx-cache
-      - name: Lint
-        run: npx nx affected --target=lint --skip-nx-cache
       - name: Type-check
         run: npx nx affected --target=tsc --skip-nx-cache
+      - name: Lint
+        run: npx nx affected --target=lint --skip-nx-cache
+      - name: Test
+        run: npx nx affected --target=test --skip-nx-cache
