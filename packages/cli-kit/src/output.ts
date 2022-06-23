@@ -308,7 +308,7 @@ export const success = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const completed = (content: Message) => {
-  const message = `${colors.green('✔')} ${stringifyMessage(content)}.`
+  const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   outputWhereAppropriate('info', consoleLog, message)
 }
 
