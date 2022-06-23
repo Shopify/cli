@@ -3,6 +3,10 @@
   "version": "3.0.24",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
+  "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url" : "https://github.com/Shopify/cli/issues"
+  },
   "type": "module",
   "main": "src/index.js",
   "module": "src/index.js",
@@ -34,7 +38,7 @@
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "rimraf dist/ && rollup -c",
-    "prepack": "cross-env NODE_ENV=production yarn run build",
+    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
