@@ -1,5 +1,7 @@
+import {platformAndArch} from './os'
 import constants from './constants'
 import {content as outputContent, debug} from './output'
+import {Abort} from './error'
 
 /**
  * Fetches secured content from the system's keychain.
@@ -12,14 +14,12 @@ export async function fetch(identifier: string): Promise<string | null> {
     const keytar = await import('keytar')
     const content = await keytar.getPassword(constants.keychain.service, identifier)
     return content
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     let message = 'Unable to read from the secure store'
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
     }
-    debug(message)
-    return null
+    throw new Abort(message)
   }
 }
 
@@ -34,13 +34,12 @@ export async function store(identifier: string, content: string): Promise<void> 
   try {
     const keytar = await import('keytar')
     await keytar.default.setPassword(constants.keychain.service, identifier, content)
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     let message = 'Unable to update the secure store'
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
     }
-    debug(message)
+    throw new Abort(message)
   }
 }
 
@@ -55,13 +54,34 @@ export async function remove(identifier: string): Promise<boolean> {
     const keytar = await import('keytar')
     const result = await keytar.default.deletePassword(constants.keychain.service, identifier)
     return result
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     let message = 'Unable to remove from the secure store'
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
     }
-    debug(message)
+    throw new Abort(message)
+  }
+}
+
+/**
+ * Returns true if the secure store is available on the system.
+ * Keytar it's not supported on some Linux environments or Windows.
+ * More details: https://github.com/Shopify/shopify-cli-planning/issues/261
+ * @returns a boolean indicating if the secure store is available.
+ */
+export async function secureStoreAvailable(
+  loadKeytar: () => Promise<{
+    default: typeof import('keytar')
+  }> = async () => {
+    return import('keytar')
+  },
+) {
+  try {
+    const keytar = await loadKeytar()
+    await keytar.default.findCredentials(constants.keychain.service)
+    return platformAndArch().platform !== 'windows'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (_error) {
     return false
   }
 }

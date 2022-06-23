@@ -1,9 +1,21 @@
-import {clearAppInfo, cliKit, getAppInfo, setAppInfo} from './store'
-import {describe, expect, it} from 'vitest'
+import {
+  clearAppInfo,
+  cliKit,
+  getAppInfo,
+  getSessionStore,
+  removeSessionStore,
+  setAppInfo,
+  setSessionStore,
+} from './store'
+import {beforeEach, describe, expect, it} from 'vitest'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
+
+beforeEach(() => {
+  cliKit.clear()
+})
 
 describe('getAppInfo', () => {
   it('returns cached info if exists', () => {
@@ -66,5 +78,44 @@ describe('clearAppInfo', () => {
 
     // Then
     expect(got).toEqual([APP2])
+  })
+})
+
+describe('getSessionStore', () => {
+  it('returns the content of the SessionStore key', () => {
+    // Given
+    cliKit.set('SessionStore', 'my-session')
+
+    // When
+    const got = getSessionStore()
+
+    // Then
+    expect(got).toEqual('my-session')
+  })
+})
+
+describe('setSessionStore', () => {
+  it('saves the desired content in the SessionStore key', () => {
+    // Given
+    cliKit.set('SessionStore', 'my-session')
+
+    // When
+    setSessionStore('my-session')
+
+    // Then
+    expect(cliKit.get('SessionStore')).toEqual('my-session')
+  })
+})
+
+describe('removeSessionStore', () => {
+  it('removes the SessionStore key', () => {
+    // Given
+    cliKit.set('SessionStore', 'my-session')
+
+    // When
+    removeSessionStore()
+
+    // Then
+    expect(cliKit.get('SessionStore')).toEqual('')
   })
 })

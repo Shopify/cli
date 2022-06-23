@@ -18,6 +18,7 @@ export interface CachedAppInfo {
 interface ConfSchema {
   appInfo: CachedAppInfo[]
   themeStore: string
+  session: string
 }
 
 const schema = {
@@ -102,4 +103,19 @@ export function getThemeStore(): string | undefined {
 export function setThemeStore(store: string): void {
   debug(content`Setting theme store...`)
   cliKit.set('themeStore', store)
+}
+
+export function getSessionStore(): string | undefined {
+  debug(content`Getting session store...`)
+  return cliKit.get('SessionStore')
+}
+
+export function setSessionStore(store: string): void {
+  debug(content`Setting session store...`)
+  cliKit.set('SessionStore', store)
+}
+
+export function removeSessionStore(): void {
+  debug(content`Removing session store...`)
+  cliKit.set('SessionStore', '')
 }
