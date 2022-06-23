@@ -48,12 +48,13 @@ export async function getDeepInstallNPMTasks({
   dependencyManager: dependency.DependencyManager
   didInstallEverything(): void
 }): Promise<ui.ListrTask[]> {
-  const packageJSONFiles = await path.glob([path.join(from, '**/package.json')])
+  const root = path.normalize(from)
+  const packageJSONFiles = await path.glob([path.join(root, '**/package.json')])
   let foldersInstalled = 0
 
   return packageJSONFiles.map((filePath) => {
     const folderPath = filePath.replace('package.json', '')
-    const titlePath = folderPath.replace(from, '')
+    const titlePath = folderPath.replace(root, '')
 
     return {
       title: `Installing dependencies in ${titlePath}`,

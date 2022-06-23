@@ -48,12 +48,10 @@ jobs:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name != 'pull_request' }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       matrix:
-        # When windows CI has been fixed, restore this:
-        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        os: ['ubuntu-latest', 'macos-latest']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14', '16', '17', '18']
     steps:
       - uses: actions/checkout@v2
@@ -91,12 +89,10 @@ jobs:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       matrix:
-        # When windows CI has been fixed, restore this:
-        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        os: ['ubuntu-latest', 'macos-latest']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14', '16', '17', '18']
       max-parallel: 6
     steps:
@@ -125,9 +121,9 @@ jobs:
         run: yarn install --ignore-engines
       - name: Build
         run: npx nx affected --target=build --skip-nx-cache
-      - name: Test
-        run: npx nx affected --target=test --skip-nx-cache
-      - name: Lint
-        run: npx nx affected --target=lint --skip-nx-cache
       - name: Type-check
         run: npx nx affected --target=tsc --skip-nx-cache
+      - name: Lint
+        run: npx nx affected --target=lint --skip-nx-cache
+      - name: Test
+        run: npx nx affected --target=test --skip-nx-cache

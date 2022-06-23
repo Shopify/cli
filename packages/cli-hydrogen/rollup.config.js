@@ -26,9 +26,10 @@ const configuration = () => [
         format: 'esm',
         sourcemap: true,
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
+          const facadeModuleId = path.normalize(chunkInfo.facadeModuleId)
+          if (facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
-            return `commands${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
+            return `commands${facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }

@@ -93,8 +93,20 @@ interface ScaffoldExtensionArgs {
 async function scaffoldExtension({name, type, directory, extraArgs, env}: ScaffoldExtensionArgs) {
   try {
     await exec(
-      executables.cli,
-      ['app', 'scaffold', 'extension', '--name', name, '--path', directory, '--type', type, ...extraArgs],
+      'node',
+      [
+        executables.cli,
+        'app',
+        'scaffold',
+        'extension',
+        '--name',
+        name,
+        '--path',
+        directory,
+        '--type',
+        type,
+        ...extraArgs,
+      ],
       {env},
     )
     // eslint-disable-next-line no-catch-all/no-catch-all

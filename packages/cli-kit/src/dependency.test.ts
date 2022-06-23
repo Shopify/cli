@@ -11,7 +11,7 @@ import {
   packageJSONContents,
 } from './dependency'
 import {exec} from './system'
-import {join as pathJoin} from './path'
+import {join as pathJoin, normalize as pathNormalize} from './path'
 import {unstyled} from './output'
 import {write as writeFile} from './file'
 import {latestNpmPackageVersion} from './version'
@@ -173,7 +173,7 @@ describe('getDependencies', () => {
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
 
       // When
-      await expect(getDependencies(packageJsonPath)).rejects.toEqual(PackageJsonNotFoundError(tmpDir))
+      await expect(getDependencies(packageJsonPath)).rejects.toEqual(PackageJsonNotFoundError(pathNormalize(tmpDir)))
     })
   })
 })

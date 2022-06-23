@@ -8,8 +8,9 @@ When(
   {timeout: 2 * 60 * 1000},
   async function (appName: string, dependencyManager: string) {
     const {stdout} = await exec(
-      executables.createApp,
+      'node',
       [
+        executables.createApp,
         '--name',
         appName,
         '--path',
@@ -40,7 +41,7 @@ Then(
 )
 
 Then(/I can build the app/, {timeout: 2 * 60 * 1000}, async function () {
-  await exec(executables.cli, ['app', 'build', '--path', this.appDirectory], {
+  await exec('node', [executables.cli, 'app', 'build', '--path', this.appDirectory], {
     env: {...process.env, ...this.temporaryEnv},
   })
 })
