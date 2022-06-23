@@ -1,12 +1,11 @@
-shopify.extend(
-  "Analytics",
-  (api) => {
-    const { config, subscribe, unsubscribe } = api;
+import {register} from "@shopify/web-pixels-extension";
+
+register(({ configuration, analytics, browser }) => {
     // Bootstrap and insert pixel script tag here
 
     // Sample subscribe to page view
-    subscribe('pageView', (event) => {
-
+    analytics.subscribe('page_viewed', (event) => {
+      console.log('Page viewed', event);
     });
-  }
-);
+});
+
