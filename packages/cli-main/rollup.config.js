@@ -42,12 +42,13 @@ const configuration = () => [
         format: 'esm',
         sourcemap: true,
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.facadeModuleId.includes('src/cli/commands')) {
+          const facadeModuleId = path.normalize(chunkInfo.facadeModuleId)
+          if (facadeModuleId.includes('src/cli/commands')) {
             // Preserves the commands/... path
-            return `commands/${chunkInfo.facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
-          } else if (chunkInfo.facadeModuleId.includes('src/hooks')) {
+            return `commands/${facadeModuleId.split('src/cli/commands').pop().replace('ts', 'js')}`
+          } else if (facadeModuleId.includes('src/hooks')) {
             // Preserves the hooks/... path
-            return `hooks/${chunkInfo.facadeModuleId.split('src/hooks').pop().replace('ts', 'js')}`
+            return `hooks/${facadeModuleId.split('src/hooks').pop().replace('ts', 'js')}`
           } else {
             return '[name].js'
           }
