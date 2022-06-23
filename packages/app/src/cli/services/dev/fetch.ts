@@ -53,7 +53,6 @@ export async function fetchAppExtensionRegistrations({
  * @returns {Promise<Organization[]>} List of organizations
  */
 export async function fetchOrganizations(token: string) {
-  throw NoOrgError()
   const query = api.graphql.AllOrganizationsQuery
   const result: api.graphql.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
