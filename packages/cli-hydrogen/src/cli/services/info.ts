@@ -132,8 +132,6 @@ class AppInfo {
   systemInfoSection(): [string, string] {
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
-    const dependencyResults = this.dependencyCheck(['eslint', 'eslint-plugin-hydrogen'])
-
     const lines: string[][] = [
       ...this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli']),
       ['Package manager', this.app.dependencyManager],
