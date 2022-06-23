@@ -7,16 +7,19 @@ const NoOrgError = (organizationId?: string) => {
       'created a Shopify Partners organization',
       'https://partners.shopify.com/signup',
     )}?`,
-    output.content`Have you confirmed your accounts from the emails you received?',
-    )}`,
+    output.content`Have you confirmed your accounts from the emails you received?`,
     output.content`Need to connect to a different App or organization? Run the command again with ${output.token.genericShellCommand(
       '--reset',
     )}`,
-    output.content`Do you have access to the right Shopify Partners organization? The CLI is loading ${output.token.link(
-      'this organization',
-      `https://partner.shopify.com/${organizationId}`,
-    )}`,
   ]
+  if (organizationId) {
+    nextSteps.push(
+      output.content`Do you have access to the right Shopify Partners organization? The CLI is loading ${output.token.link(
+        'this organization',
+        `https://partner.shopify.com/${organizationId}`,
+      )}`,
+    )
+  }
   return new error.Abort(
     `No Organization found`,
     nextSteps.map((content) => `· ${output.stringifyMessage(content)}`).join('\n'),
@@ -50,6 +53,7 @@ export async function fetchAppExtensionRegistrations({
  * @returns {Promise<Organization[]>} List of organizations
  */
 export async function fetchOrganizations(token: string) {
+  throw NoOrgError()
   const query = api.graphql.AllOrganizationsQuery
   const result: api.graphql.AllOrganizationsQuerySchema = await api.partners.request(query, token)
   const organizations = result.organizations.nodes
