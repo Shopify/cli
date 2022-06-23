@@ -20,6 +20,11 @@ vi.mock('@shopify/cli-kit', async () => {
 })
 
 describe('addEslint', () => {
+  const defaultOptions = {
+    install: true,
+    force: false,
+  }
+
   it('adds a eslintrc file with recommended config if none exists', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
@@ -28,7 +33,7 @@ describe('addEslint', () => {
       })
 
       // When
-      await addESLint({app, force: false, install: true})
+      await addESLint({app, ...defaultOptions})
 
       // Then
       await expect(file.read(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
@@ -51,7 +56,7 @@ describe('addEslint', () => {
       })
 
       // When
-      await addESLint({app, force: false, install: true})
+      await addESLint({app, ...defaultOptions})
 
       // Then
       await expect(file.read(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
@@ -73,7 +78,7 @@ describe('addEslint', () => {
       })
 
       // When
-      await addESLint({app, force: false, install: true})
+      await addESLint({app, ...defaultOptions, install: true})
 
       // Then
       await expect(dependency.addNPMDependenciesWithoutVersionIfNeeded).toHaveBeenCalledWith(
@@ -91,7 +96,7 @@ describe('addEslint', () => {
       })
 
       // When
-      await addESLint({app, force: false, install: false})
+      await addESLint({app, ...defaultOptions, install: false})
 
       // Then
       await expect(dependency.addNPMDependenciesWithoutVersionIfNeeded).not.toHaveBeenCalled()
@@ -107,14 +112,14 @@ describe('addEslint', () => {
       })
 
       // When
-      await addESLint({app, force: false, install: true})
+      await addESLint({app, ...defaultOptions})
 
       // Then
       await expect(vscode.addRecommendedExtensions).toHaveBeenCalledWith(tmpDir, ['dbaeumer.vscode-eslint'])
     })
   })
 
-  it('throws error when eslint config already exists', async () => {
+  it('throws error when eslintrc already exists', async () => {
     await temporary.directory(async (tmpDir) => {
       // Given
       await file.write(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
@@ -123,7 +128,7 @@ describe('addEslint', () => {
       })
 
       // When/Then
-      await expect(addESLint({app, force: false, install: true})).rejects.toThrowError('ESLint config already exists.')
+      await expect(addESLint({app, ...defaultOptions})).rejects.toThrowError('ESLint config already exists.')
     })
   })
 })
