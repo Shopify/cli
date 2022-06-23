@@ -60,13 +60,17 @@ async function init(options: InitOptions) {
     let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
 
     const templateInfo = await github.parseRepoUrl(options.template)
+    const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
+    const templatePath = templateInfo.subDirectory
+      ? path.join(templateDownloadDir, templateInfo.subDirectory)
+      : templateDownloadDir
 
     tasks = tasks.concat([
       {
         title: 'Downloading template',
 
         task: async (_, task) => {
-          const url = `${templateInfo.http}#${templateInfo.ref}`
+          const url = `${templateInfo.http}${branch}`
           await git.downloadRepository({
             repoUrl: url,
             destination: templateDownloadDir,
@@ -77,8 +81,8 @@ async function init(options: InitOptions) {
             },
           })
 
-          if (!(await file.exists(path.join(templateDownloadDir, templateInfo.subDirectory, 'package.json')))) {
-            throw new error.Abort(`The template ${templateInfo.subDirectory} was not found.`, suggestHydrogenSupport())
+          if (!(await file.exists(path.join(templatePath, 'package.json')))) {
+            throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
           }
           task.title = 'Template downloaded'
         },
@@ -102,11 +106,7 @@ async function init(options: InitOptions) {
                     // eslint-disable-next-line @typescript-eslint/naming-convention
                     dependency_manager: options.dependencyManager,
                   }
-                  await template.recursiveDirectoryCopy(
-                    `${templateDownloadDir}/${templateInfo.subDirectory}`,
-                    templateScaffoldDir,
-                    templateData,
-                  )
+                  await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
 
                   task.title = 'Template files parsed'
                 },
