@@ -29,11 +29,11 @@ function mockOutput(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     name: 'snow-devil',
     configuration: {
       shopify: {
-        ...mockHydrogenApp,
+        ...mockHydrogenApp?.configuration?.shopify,
       },
     },
     dependencyManager: 'npm',
-    language: 'javascript',
+    language: 'JavaScript',
     configurationPath: '',
     nodeDependencies: {},
     directory: './some/path',
