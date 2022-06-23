@@ -66,7 +66,7 @@ async function init(options: InitOptions) {
         title: 'Downloading template',
 
         task: async (_, task) => {
-          const url = `${templateInfo.http}#${templateInfo.ref}`
+          const url = templateInfo.ref ? `${templateInfo.http}#${templateInfo.ref}` : templateInfo.http
           await git.downloadRepository({
             repoUrl: url,
             destination: templateDownloadDir,
@@ -77,8 +77,17 @@ async function init(options: InitOptions) {
             },
           })
 
-          if (!(await file.exists(path.join(templateDownloadDir, templateInfo.subDirectory, 'package.json')))) {
-            throw new error.Abort(`The template ${templateInfo.subDirectory} was not found.`, suggestHydrogenSupport())
+          if (
+            !(await file.exists(
+              templateInfo.subDirectory
+                ? path.join(templateDownloadDir, templateInfo.subDirectory, 'package.json')
+                : path.join(templateDownloadDir, 'package.json'),
+            ))
+          ) {
+            throw new error.Abort(
+              `The template ${templateInfo.subDirectory || templateInfo.name} was not found.`,
+              suggestHydrogenSupport(),
+            )
           }
           task.title = 'Template downloaded'
         },
@@ -103,7 +112,7 @@ async function init(options: InitOptions) {
                     dependency_manager: options.dependencyManager,
                   }
                   await template.recursiveDirectoryCopy(
-                    `${templateDownloadDir}/${templateInfo.subDirectory}`,
+                    `${templateDownloadDir}/${templateInfo.subDirectory || ''}`,
                     templateScaffoldDir,
                     templateData,
                   )
