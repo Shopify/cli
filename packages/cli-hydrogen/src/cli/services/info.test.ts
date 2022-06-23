@@ -17,24 +17,32 @@ describe('Project settings', () => {
   })
 })
 
-describe('Shopify settings', () => {
-  it('shows an error when the Shopify domain is invalid', async () => {
+describe('ESLint settings', () => {
+  it('shows an error when the ESLint exists, but the eslint-plugin-hydrogen does not', async () => {
     // Given
-    const shopify: HydrogenApp['configuration']['shopify'] = {
-      storeDomain: 'snow-devil.myspotify.com',
+    const app = {
+      configuration: {
+        nodeDependencies: {
+          eslint: '^7.1.0',
+        },
+      },
     }
 
     // When
-    const output = await mockInfoWithApp({configuration: {shopify}})
+    const output = await mockInfoWithApp(app)
 
     // Then
-    expect(output).toMatch(`! StoreDomain must be a valid shopify domain`)
+    expect(output).toMatch('! Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
   })
 
-  it('does not show an error when the Shopify domain is valid', async () => {
+  it('does not show an error when both the ESLint and the eslint-plugin-hydrogen exist', async () => {
     // Given
-    const shopify: HydrogenApp['configuration']['shopify'] = {
-      storeDomain: 'snow-devil.myshopify.com',
+    const shopify: HydrogenApp['configuration'] = {
+      nodeDependencies: {
+        eslint: '^7.1.0',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'eslint-plugin-hydrogen': '^1.0.0',
+      },
     }
 
     // When
@@ -54,14 +62,15 @@ async function mockInfoWithApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
       },
     },
     dependencyManager: 'npm',
-    language: 'javascript',
-    configurationPath: '',
-    nodeDependencies: {},
+    language: 'JavaScript',
+    nodeDependencies: {
+      ...mockHydrogenApp.configuration?.nodeDependencies,
+    },
     directory: './some/path',
     ...mockHydrogenApp,
   } as const
 
-  const output = await info(app, {format: 'text'})
+  const output = await info(app, {showPrivateData: false})
   const trimmedOuput = (output as string).replace(/\s+/g, ' ').trim()
 
   return trimmedOuput
