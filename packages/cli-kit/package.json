@@ -30,7 +30,7 @@
     "clean": "shx rm -rf dist",
     "build": "rimraf dist/ && rollup -c",
     "prepack": "cross-env NODE_ENV=production yarn run build",
-    "lint": "prettier -c src/** && eslint 'src/**/*.ts'",
+    "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
     "test:watch": "vitest watch",
