@@ -16,33 +16,34 @@ env:
   RUBY_VERSION: "3.1.2"
 
 jobs:
-  fixture: Fixture
-  runs-on: 'ubuntu-latest'
-  timeout-minutes: 15
-  steps:
-    - uses: actions/checkout@v2
-      name: Checkout [main]
-      with:
-        fetch-depth: 0
-    - name: Set Git configuration
-      run: |
-        git config --global user.email "development-lifecycle@shopify.com"
-        git config --global user.name "Development Lifecycle"
-    - name: Set Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ env.RUBY_VERSION }}
-    - name: Set Node.js
-      uses: actions/setup-node@master
-      with:
-        node-version: ${{ matrix.node }}
-        cache: 'yarn'
-    - name: Install yarn
-      run: npm install --global yarn@${{ env.YARN_VERSION }}
-    - name: Install dependencies
-      run: yarn install --ignore-engines
-    - name: Build the fixture app
-      run: yarn shopify app build --path ./fixtures/app
+  fixture:
+    name: Fixture
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout [main]
+        with:
+          fetch-depth: 0
+      - name: Set Git configuration
+        run: |
+          git config --global user.email "development-lifecycle@shopify.com"
+          git config --global user.name "Development Lifecycle"
+      - name: Set Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+      - name: Set Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'yarn'
+      - name: Install yarn
+        run: npm install --global yarn@${{ env.YARN_VERSION }}
+      - name: Install dependencies
+        run: yarn install --ignore-engines
+      - name: Build the fixture app
+        run: yarn shopify app build --path ./fixtures/app
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
