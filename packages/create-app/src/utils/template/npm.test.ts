@@ -144,7 +144,7 @@ describe('getDeepInstallNPMTasks', () => {
       await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
 
       expect(dependency.install).toHaveBeenCalledWith(
-        `${tmpDir}/`,
+        `${path.normalize(tmpDir)}/`,
         defaultArgs.dependencyManager,
         expect.any(Writable),
         expect.any(Writable),
