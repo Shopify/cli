@@ -37,19 +37,21 @@ describe('ESLint settings', () => {
 
   it('does not show an error when both the ESLint and the eslint-plugin-hydrogen exist', async () => {
     // Given
-    const shopify: HydrogenApp['configuration'] = {
-      nodeDependencies: {
-        eslint: '^7.1.0',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        'eslint-plugin-hydrogen': '^1.0.0',
+    const app = {
+      configuration: {
+        nodeDependencies: {
+          eslint: '^7.1.0',
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'eslint-plugin-hydrogen': '^1.0.0',
+        },
       },
     }
 
     // When
-    const output = await mockInfoWithApp({configuration: {shopify}})
+    const output = await mockInfoWithApp(app)
 
     // Then
-    expect(output).not.toMatch(`! StoreDomain must be a valid shopify domain`)
+    expect(output).not.toMatch('! Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
   })
 })
 
@@ -58,7 +60,7 @@ async function mockInfoWithApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     name: 'snow-devil',
     configuration: {
       shopify: {
-        ...mockHydrogenApp,
+        ...mockHydrogenApp.configuration?.shopify,
       },
     },
     dependencyManager: 'npm',
@@ -71,6 +73,7 @@ async function mockInfoWithApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
   } as const
 
   const output = await info(app, {showPrivateData: false})
+
   const trimmedOuput = (output as string).replace(/\s+/g, ' ').trim()
 
   return trimmedOuput
