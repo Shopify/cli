@@ -3656,6 +3656,11 @@ crypto-random-string@^4.0.0:
   dependencies:
     type-fest "^1.0.1"
 
+crypto-randomuuid@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/crypto-randomuuid/-/crypto-randomuuid-1.0.0.tgz#acf583e5e085e867ae23e107ff70279024f9e9e7"
+  integrity sha512-/RC5F4l1SCqD/jazwUF6+t34Cd8zTSAGZ7rvvZu1whZUhD2a5MOGKjSGowoGcpj/cbVZk1ZODIooJEQQq3nNAA==
+
 cssom@^0.4.4:
   version "0.4.4"
   resolved "https://registry.yarnpkg.com/cssom/-/cssom-0.4.4.tgz#5a66cf93d2d0b661d80bf6a44fb65f5c2e4e0a10"

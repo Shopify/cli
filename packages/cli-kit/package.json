@@ -74,6 +74,7 @@
     "commondir": "^1.0.1",
     "conf": "^10.1.2",
     "cross-zip": "^4.0.0",
+    "crypto-randomuuid": "^1.0.0",
     "del": "^6.0.0",
     "enquirer": "^2.3.6",
     "env-paths": "^3.0.0",

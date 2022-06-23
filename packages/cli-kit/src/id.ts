@@ -1,4 +1,6 @@
-import {randomUUID} from 'crypto'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import randomUUID from 'crypto-randomuuid'
 
 /**
  * Generates and returns a random UUID.
