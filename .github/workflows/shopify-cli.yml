@@ -50,9 +50,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        # When windows CI has been fixed, restore this:
-        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        os: ['ubuntu-latest', 'macos-latest']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14', '16', '17', '18']
     steps:
       - uses: actions/checkout@v2
@@ -93,9 +91,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        # When windows CI has been fixed, restore this:
-        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        os: ['ubuntu-latest', 'macos-latest']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14', '16', '17', '18']
       max-parallel: 6
     steps:
