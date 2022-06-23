@@ -1,6 +1,7 @@
 const {convertUrlToWebSocket} = require('./utils.cjs')
 const From = require('@fastify/reply-from')
 const WebSocket = require('ws')
+const {time} = require('console')
 
 const httpMethods = ['DELETE', 'GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'OPTIONS']
 const urlPattern = /^https?:\/\//
@@ -43,7 +44,10 @@ function proxyWebSockets(source, target) {
 
   source.on('message', (data) => waitConnection(target, () => target.send(data, {binary: false})))
   source.on('ping', (data) => waitConnection(target, () => target.ping(data)))
-  source.on('pong', (data) => waitConnection(target, () => target.pong(data)))
+  source.on('pong', (data) => {
+    console.log('PONG!')
+    waitConnection(target, () => target.pong(data))
+  })
   source.on('close', close)
   source.on('error', (error) => close(1011, error.message))
   source.on('unexpected-response', () => close(1011, 'unexpected response'))
@@ -57,6 +61,7 @@ function proxyWebSockets(source, target) {
   target.on('unexpected-response', () => close(1011, 'unexpected response'))
 }
 
+let totalTime = 0
 function setupWebSocketProxy(fastify, options, rewritePrefix) {
   const server = new WebSocket.Server({
     server: fastify.server,
@@ -83,8 +88,23 @@ function setupWebSocketProxy(fastify, options, rewritePrefix) {
   })
 
   server.on('connection', (source, request) => {
+    console.log('New Connection')
+
+    const timer = setInterval(() => {
+      if (source.readyState >= 2) {
+        console.log('closed connection, finishing up')
+        clearInterval(timer)
+      } else {
+        totalTime += 5
+        console.log('Sending ping, total time: ', totalTime)
+        source.ping()
+      }
+    }, 5000)
+
     if (fastify.prefix && !request.url.startsWith(fastify.prefix)) {
       fastify.log.debug({url: request.url}, 'not matching prefix')
+      console.log('CLOSING INTERVAL!')
+      clearInterval(timer)
       source.close()
       return
     }
