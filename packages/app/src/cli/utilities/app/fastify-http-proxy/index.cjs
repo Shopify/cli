@@ -1,7 +1,6 @@
 const {convertUrlToWebSocket} = require('./utils.cjs')
 const From = require('@fastify/reply-from')
 const WebSocket = require('ws')
-const {time} = require('console')
 
 const httpMethods = ['DELETE', 'GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'OPTIONS']
 const urlPattern = /^https?:\/\//
@@ -44,7 +43,7 @@ function proxyWebSockets(source, target) {
 
   source.on('message', (data) => waitConnection(target, () => target.send(data, {binary: false})))
   source.on('ping', (data) => waitConnection(target, () => target.ping(data)))
-  source.on('pong', (data) => target.pong(data))
+  source.on('pong', (data) => waitConnection(target, () => target.pong(data)))
   source.on('close', close)
   source.on('error', (error) => close(1011, error.message))
   source.on('unexpected-response', () => close(1011, 'unexpected response'))
@@ -85,6 +84,7 @@ function setupWebSocketProxy(fastify, options, rewritePrefix) {
 
   server.on('connection', (source, request) => {
     // Send a ping to the client every 10s to make sure the connection stays alive
+    // If the conneciton is closed, the interval is cancelled
     const timer = setInterval(() => {
       source.readyState >= 2 ? clearInterval(timer) : source.ping()
     }, 10000)
