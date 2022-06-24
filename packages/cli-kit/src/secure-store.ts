@@ -1,4 +1,3 @@
-import {platformAndArch} from './os'
 import constants from './constants'
 import {content as outputContent, debug} from './output'
 import {Abort} from './error'
@@ -60,28 +59,5 @@ export async function remove(identifier: string): Promise<boolean> {
       message = message.concat(`: ${error.message}`)
     }
     throw new Abort(message)
-  }
-}
-
-/**
- * Returns true if the secure store is available on the system.
- * Keytar it's not supported on some Linux environments or Windows.
- * More details: https://github.com/Shopify/shopify-cli-planning/issues/261
- * @returns a boolean indicating if the secure store is available.
- */
-export async function secureStoreAvailable(
-  loadKeytar: () => Promise<{
-    default: typeof import('keytar')
-  }> = async () => {
-    return import('keytar')
-  },
-) {
-  try {
-    const keytar = await loadKeytar()
-    await keytar.default.findCredentials(constants.keychain.service)
-    return platformAndArch().platform !== 'windows'
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_error) {
-    return false
   }
 }

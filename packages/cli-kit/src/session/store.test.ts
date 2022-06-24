@@ -1,13 +1,26 @@
 import {ApplicationToken, Session} from './schema'
 import {store, fetch, remove, identifier} from './store'
 import {setSessionStore as localStore, removeSessionStore as localRemove, getSessionStore as localFetch} from '../store'
-import {store as secureStore, fetch as secureFetch, remove as secureRemove, secureStoreAvailable} from '../secure-store'
+import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
+import {platformAndArch} from '../os'
 import {describe, expect, vi, it, beforeEach} from 'vitest'
 
+const findCredentials = vi.fn()
+
 beforeEach(() => {
+  vi.resetAllMocks()
+  vi.clearAllMocks()
   vi.mock('../secure-store')
   vi.mock('../store')
-  vi.mocked(secureStoreAvailable).mockResolvedValue(true)
+  vi.mock('../os')
+  vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'x64'})
+  vi.mock('keytar', () => {
+    return {
+      default: {
+        findCredentials,
+      },
+    }
+  })
 })
 
 describe('store', () => {
@@ -22,10 +35,22 @@ describe('store', () => {
     expect(vi.mocked(secureStore)).toHaveBeenCalledWith(identifier, JSON.stringify(session))
   })
 
-  it('saves the serialized session to the local store when the secure store is not available', async () => {
+  it('saves the serialized session to the local store on Windows', async () => {
     // Given
     const session = testSession()
-    vi.mocked(secureStoreAvailable).mockResolvedValueOnce(false)
+    vi.mocked(platformAndArch).mockReturnValueOnce({platform: 'windows', arch: 'x64'})
+
+    // When
+    await store(session)
+
+    // Then
+    expect(vi.mocked(localStore)).toHaveBeenCalledWith(JSON.stringify(session))
+  })
+
+  it('saves the serialized session to the local store when keytar fails to load', async () => {
+    // Given
+    const session = testSession()
+    vi.mocked(findCredentials).mockRejectedValueOnce(new Error('Not found'))
 
     // When
     await store(session)
@@ -70,9 +95,20 @@ describe('fetch', () => {
     expect(got).toEqual(session)
   })
 
-  it('reads the session from the local store when the secure store is not available', async () => {
+  it('reads the session from the local store on Windows', async () => {
     // Given
-    vi.mocked(secureStoreAvailable).mockResolvedValueOnce(false)
+    vi.mocked(platformAndArch).mockReturnValueOnce({platform: 'windows', arch: 'x64'})
+
+    // When
+    await fetch()
+
+    // Then
+    expect(vi.mocked(localFetch)).toHaveBeenCalled()
+  })
+
+  it('reads the session from the local store when keytar fails to load', async () => {
+    // Given
+    vi.mocked(findCredentials).mockRejectedValueOnce(new Error('Not found'))
 
     // When
     await fetch()
@@ -91,9 +127,22 @@ describe('remove', () => {
     expect(vi.mocked(secureRemove)).toHaveBeenCalledWith(identifier)
   })
 
-  it('removes the session from the secure store when the secure store is not available', async () => {
+  it('removes the session from the secure store on Windows', async () => {
+    // Given
+    vi.mocked(platformAndArch).mockReturnValueOnce({platform: 'windows', arch: 'x64'})
+
     // When
-    vi.mocked(secureStoreAvailable).mockResolvedValueOnce(false)
+    await remove()
+
+    // Then
+    expect(vi.mocked(localRemove)).toHaveBeenCalled()
+  })
+
+  it('removes the session from the secure store when keytar fails to load', async () => {
+    // Given
+    vi.mocked(findCredentials).mockRejectedValueOnce(new Error('Not found'))
+
+    // When
     await remove()
 
     // Then

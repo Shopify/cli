@@ -1,5 +1,7 @@
 import {SessionSchema} from './schema'
-import {store as secureStore, fetch as secureFetch, remove as secureRemove, secureStoreAvailable} from '../secure-store'
+import constants from '../constants'
+import {platformAndArch} from '../os'
+import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 import {setSessionStore, getSessionStore, removeSessionStore} from '../store'
 
 import type {Session} from './schema'
@@ -59,5 +61,22 @@ export async function remove() {
     await secureRemove(identifier)
   } else {
     removeSessionStore()
+  }
+}
+
+/**
+ * Returns true if the secure store is available on the system.
+ * Keytar it's not supported on some Linux environments or Windows.
+ * More details: https://github.com/Shopify/shopify-cli-planning/issues/261
+ * @returns a boolean indicating if the secure store is available.
+ */
+async function secureStoreAvailable(): Promise<boolean> {
+  try {
+    const keytar = await import('keytar')
+    await keytar.default.findCredentials(constants.keychain.service)
+    return platformAndArch().platform !== 'windows'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (_error) {
+    return false
   }
 }
