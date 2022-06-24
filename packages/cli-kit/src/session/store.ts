@@ -3,8 +3,9 @@ import constants from '../constants'
 import {platformAndArch} from '../os'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 import {setSessionStore, getSessionStore, removeSessionStore} from '../store'
-
+import {content, debug} from '../output'
 import type {Session} from './schema'
+
 /**
  * The identifier of the session in the secure store.
  */
@@ -74,9 +75,15 @@ async function secureStoreAvailable(): Promise<boolean> {
   try {
     const keytar = await import('keytar')
     await keytar.default.findCredentials(constants.keychain.service)
-    return platformAndArch().platform !== 'windows'
+    if (platformAndArch().platform === 'windows') {
+      debug(content`Secure store not supported on Windows`)
+      return false
+    }
+    debug(content`Secure store is available`)
+    return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (_error) {
+    debug(content`Failed to load secure store`)
     return false
   }
 }
