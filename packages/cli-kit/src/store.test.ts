@@ -84,7 +84,7 @@ describe('clearAppInfo', () => {
 describe('getSessionStore', () => {
   it('returns the content of the SessionStore key', () => {
     // Given
-    cliKit.set('SessionStore', 'my-session')
+    cliKit.set('sessionStore', 'my-session')
 
     // When
     const got = getSessionStore()
@@ -97,25 +97,25 @@ describe('getSessionStore', () => {
 describe('setSessionStore', () => {
   it('saves the desired content in the SessionStore key', () => {
     // Given
-    cliKit.set('SessionStore', 'my-session')
+    cliKit.set('sessionStore', 'my-session')
 
     // When
     setSessionStore('my-session')
 
     // Then
-    expect(cliKit.get('SessionStore')).toEqual('my-session')
+    expect(cliKit.get('sessionStore')).toEqual('my-session')
   })
 })
 
 describe('removeSessionStore', () => {
   it('removes the SessionStore key', () => {
     // Given
-    cliKit.set('SessionStore', 'my-session')
+    cliKit.set('sessionStore', 'my-session')
 
     // When
     removeSessionStore()
 
     // Then
-    expect(cliKit.get('SessionStore')).toEqual('')
+    expect(cliKit.get('sessionStore')).toEqual('')
   })
 })

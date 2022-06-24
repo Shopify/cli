@@ -107,15 +107,15 @@ export function setThemeStore(store: string): void {
 
 export function getSessionStore(): string | undefined {
   debug(content`Getting session store...`)
-  return cliKit.get('SessionStore')
+  return cliKit.get('sessionStore')
 }
 
 export function setSessionStore(store: string): void {
   debug(content`Setting session store...`)
-  cliKit.set('SessionStore', store)
+  cliKit.set('sessionStore', store)
 }
 
 export function removeSessionStore(): void {
   debug(content`Removing session store...`)
-  cliKit.set('SessionStore', '')
+  cliKit.set('sessionStore', '')
 }
