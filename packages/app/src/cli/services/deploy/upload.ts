@@ -272,6 +272,7 @@ async function waitForCompilation(
 
   const poll = async (): Promise<void> => {
     const compilationStatus = await getCompilationStatus(options, compilationJobId)
+    // eslint-disable-next-line no-empty
     if (compilationStatus === 'completed') {
     } else if (compilationStatus !== 'pending') {
       throw new error.Abort(output.content`Function ${extension.localIdentifier} compilation failed.`)
