@@ -21,6 +21,7 @@ export async function previewInNode({directory, port}: PreviewOptions) {
     await system.exec('yarn', ['shopify', 'hydrogen', 'build', '--target=node'], {
       cwd: directory,
       stdout: process.stdout,
+      stderr: process.stderr,
     })
   }
 
@@ -28,6 +29,7 @@ export async function previewInNode({directory, port}: PreviewOptions) {
     env: {PORT: `${port}`},
     cwd: directory,
     stdout: process.stdout,
+    stderr: process.stderr,
   })
 }
 
@@ -59,6 +61,7 @@ export async function previewInWorker({directory, port}: PreviewOptions) {
     env: {NODE_OPTIONS: '--experimental-vm-modules'},
     cwd: directory,
     stdout: process.stdout,
+    stderr: process.stderr,
   })
 }
 
