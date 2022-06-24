@@ -1,4 +1,4 @@
-import {ui, github, string} from '@shopify/cli-kit'
+import {ui, github, string, output} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
@@ -38,6 +38,8 @@ interface InitOptions {
 }
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<InitOptions>> => {
+  output.debug(output.content`create-hydrogen prompts for init with options: ${output.token.json(options)}`)
+
   const questions: ui.Question[] = []
   if (!options.name) {
     questions.push({
@@ -82,8 +84,11 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   }
 
   const {template = explicitTemplate, ...promptOutput}: InitOptions = await prompt(questions)
+  const result = {...options, ...promptOutput, template}
 
-  return {...options, ...promptOutput, template} as Required<InitOptions>
+  output.debug(output.content`create-hydrogen prompts completed with ${output.token.json(result)}`)
+
+  return result as Required<InitOptions>
 }
 
 export default init
