@@ -9,6 +9,7 @@ import {
   readSync as fileReadSync,
   sizeSync as fileSizeSync,
   writeSync as fileWriteSync,
+  touchSync as fileTouchSync,
 } from './file'
 import {join as pathJoin, relativize as relativizePath} from './path'
 import {page} from './system'
@@ -32,6 +33,7 @@ export function initiateLogging({
 }) {
   fileMkdirSync(logDir)
   logFile = pathJoin(logDir, filename)
+  fileTouchSync(pathJoin)
   truncateLogs()
 }
 
