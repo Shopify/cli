@@ -1,7 +1,7 @@
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {api, error, output} from '@shopify/cli-kit'
 
-const NoOrgError = (organizationId?: string) => {
+export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
     output.content`Have you ${output.token.link(
       'created a Shopify Partners organization',

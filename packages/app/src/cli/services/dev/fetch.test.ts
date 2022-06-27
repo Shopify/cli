@@ -1,6 +1,6 @@
-import {fetchAllStores, fetchOrgAndApps, fetchOrganizations, fetchAppExtensionRegistrations} from './fetch'
+import {fetchAllStores, fetchOrgAndApps, fetchOrganizations, fetchAppExtensionRegistrations, NoOrgError} from './fetch'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, test, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
@@ -75,7 +75,7 @@ describe('fetchOrganizations', async () => {
     const got = fetchOrganizations('token')
 
     // Then
-    expect(got).rejects.toThrow('No Organization found')
+    expect(got).rejects.toThrow(NoOrgError())
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
   })
 })
@@ -101,7 +101,7 @@ describe('fetchApp', async () => {
     const got = fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
-    expect(got).rejects.toThrow('No Organization found')
+    expect(got).rejects.toThrowError(NoOrgError())
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
@@ -148,5 +148,23 @@ describe('fetchAppExtensionRegistrations', () => {
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllAppExtensionRegistrationsQuery, 'token', {
       apiKey: 'api-key',
     })
+  })
+})
+
+describe('NoOrgError', () => {
+  test('tryMessage has the right content', () => {
+    // Given
+    const subject = NoOrgError('3')
+
+    // When
+    const got = subject.tryMessage
+
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "· Have you [32mcreated a Shopify Partners organization[39m (​https://partners.shopify.com/signup​)?
+      · Have you confirmed your accounts from the emails you received?
+      · Need to connect to a different App or organization? Run the command again with [1m[33m--reset[39m[22m
+      · Do you have access to the right Shopify Partners organization? The CLI is loading [32mthis organization[39m (​https://partner.shopify.com/3​)"
+    `)
   })
 })
