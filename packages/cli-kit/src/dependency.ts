@@ -6,7 +6,7 @@ import {latestNpmPackageVersion} from './version'
 import {Version} from './semver'
 import {content, token, debug} from './output'
 import {AbortController, AbortSignal} from 'abort-controller'
-import type {Writable} from 'node:stream'
+import {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
 export const genericConfigurationFileNames = {
@@ -119,6 +119,7 @@ export async function install(
 ) {
   const options: ExecOptions = {cwd: directory, stdout, stderr, signal}
   let done = false
+  const yarnOut = yarnStdout(stdout)
   const getDone = () => done
   try {
     switch (dependencyManager) {
@@ -126,7 +127,7 @@ export async function install(
         await exec(dependencyManager, ['install'], options)
         break
       case 'yarn':
-        await exec(dependencyManager, ['install'], options)
+        await exec(dependencyManager, ['install', '--json'], {...options, stdout: yarnOut, stderr: yarnOut})
         break
       case 'npm':
         updateNpmOutput(directory, getDone, stdout)
@@ -136,6 +137,75 @@ export async function install(
   } finally {
     done = true
   }
+}
+
+interface YarnJSON {
+  type: string
+  data:
+    | string
+    | {
+        id: number
+        name?: string
+        message?: string
+        current?: number
+        total?: number
+      }
+}
+
+function yarnStdout(originalOut?: Writable): Writable | undefined {
+  if (originalOut === undefined) return undefined
+  let outputPrefix = ''
+  let outputSuffix = ''
+  let progressTotal = 0
+  return new Writable({
+    write(chunk, _, next) {
+      try {
+        debug(chunk.toString())
+        chunk
+          .toString()
+          .split('\n')
+          .filter((str: string) => str.trim())
+          .forEach((subChunk: string) => {
+            const chunkContents: YarnJSON = JSON.parse(subChunk)
+            const data = chunkContents.data
+            if (typeof data === 'string') {
+              switch (chunkContents.type) {
+                case 'info':
+                  outputPrefix = data
+                  outputSuffix = ''
+                  break
+                case 'warning':
+                  outputPrefix += `\nWarning: ${data}`
+                  break
+              }
+            } else {
+              switch (chunkContents.type) {
+                case 'step':
+                  outputPrefix = `${data.message} (${data.current}/${data.total})`
+                  outputSuffix = ''
+                  break
+                case 'activityTick':
+                  if (typeof data.name === 'string') outputSuffix = data.name
+                  break
+                case 'progressStart':
+                  if (typeof data.total === 'number') progressTotal = data.total
+                  break
+                case 'progressTick':
+                  outputSuffix = `${data.current}/${progressTotal}`
+                  break
+                case 'progressFinish':
+                  outputSuffix = ''
+                  break
+              }
+            }
+          })
+        originalOut?.write([outputPrefix, outputSuffix].filter((str) => str).join('\n'))
+        // If yarn changes its output format without warning, create-app shouldn't fail!
+        // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
+      } catch (err) {}
+      next()
+    },
+  })
 }
 
 async function updateNpmOutput(directory: string, getDone: () => boolean, stdout?: Writable): Promise<void> {
