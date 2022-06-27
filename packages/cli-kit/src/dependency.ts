@@ -6,6 +6,7 @@ import {latestNpmPackageVersion} from './version'
 import {Version} from './semver'
 import {content, token, debug} from './output'
 import {AbortController, AbortSignal} from 'abort-controller'
+import cliProgress from 'cli-progress'
 import {Writable} from 'node:stream'
 import type {ExecOptions} from './system'
 
@@ -160,12 +161,43 @@ function yarnStdout(originalOut?: Writable): Writable | undefined {
   if (originalOut === undefined) return undefined
   let outputPrefix = ''
   let outputSuffix = ''
+  let progressValue = 0
   let progressTotal = 0
   let currentStep = ''
+  let progressBarString = ''
+  const writeOutput = () => {
+    originalOut?.write([outputPrefix, outputSuffix, progressBarString].filter((str) => str).join('\n'))
+  }
+
+  const progressBarOutputStream: Writable & {isTTY?: boolean} = new Writable({
+    write(chunk, _, next) {
+      let chunkString: string = chunk.toString()
+      // Ignore escape sequences, just look at bars!
+      if (!(chunkString.slice(0, 1) === '\u001b')) {
+        if (progressTotal) {
+          chunkString += ` (${progressValue}/${progressTotal})`
+        }
+        progressBarString = chunkString
+        writeOutput()
+      }
+      next()
+    },
+  })
+  progressBarOutputStream.isTTY = process.stdout.isTTY
+  const progressBar = new cliProgress.SingleBar(
+    {
+      format: '{bar}| {percentage}%',
+      stream: progressBarOutputStream,
+      stopOnComplete: true,
+    },
+    cliProgress.Presets.shades_classic,
+  )
+  let barStartTime = new Date().valueOf()
+  let barIncrementerInterval: ReturnType<typeof setInterval>
+
   return new Writable({
     write(chunk, _, next) {
       try {
-        debug(chunk.toString())
         chunk
           .toString()
           .split('\n')
@@ -181,6 +213,10 @@ function yarnStdout(originalOut?: Writable): Writable | undefined {
                   break
                 case 'warning':
                   outputPrefix += `\nWarning: ${data}`
+                  break
+                case 'success':
+                  progressBar.stop()
+                  clearInterval(barIncrementerInterval)
                   break
                 case 'verbose':
                   if (currentStep === 'Resolving packages') {
@@ -198,23 +234,47 @@ function yarnStdout(originalOut?: Writable): Writable | undefined {
                   currentStep = data.message as string
                   outputPrefix = `${data.message} (${data.current}/${data.total})`
                   outputSuffix = ''
+                  switch (data.message) {
+                    case 'Resolving packages':
+                    case 'Building fresh packages':
+                      progressBar.start(100, 0)
+                      barStartTime = new Date().valueOf()
+                      barIncrementerInterval = setInterval(() => {
+                        const timePassed = (new Date().valueOf() - barStartTime) / 1000
+                        // This function approaches, but never reaches, 100!
+                        progressBar.update((timePassed * 100) / (timePassed + 10))
+                      }, 200)
+                      break
+                    default:
+                      clearInterval(barIncrementerInterval)
+                      progressBar.update(progressBar.getTotal())
+                      progressBarString = ''
+                  }
                   break
                 case 'activityTick':
                   if (typeof data.name === 'string') outputSuffix = data.name
                   break
                 case 'progressStart':
-                  if (typeof data.total === 'number') progressTotal = data.total
+                  if (typeof data.total === 'number') {
+                    progressTotal = data.total
+                    progressBar.start(progressTotal, 0)
+                  }
                   break
                 case 'progressTick':
-                  outputSuffix = `${data.current}/${progressTotal}`
+                  if (typeof data.current === 'number') {
+                    progressValue = data.current
+                    progressBar.update(progressValue)
+                  }
                   break
                 case 'progressFinish':
+                  progressBar.update(progressBar.getTotal())
+                  progressTotal = 0
                   outputSuffix = ''
                   break
               }
             }
           })
-        originalOut?.write([outputPrefix, outputSuffix].filter((str) => str).join('\n'))
+        writeOutput()
         // If yarn changes its output format without warning, create-app shouldn't fail!
         // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
       } catch (err) {}
