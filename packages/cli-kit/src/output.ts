@@ -33,7 +33,7 @@ export function initiateLogging({
 }) {
   fileMkdirSync(logDir)
   logFile = pathJoin(logDir, filename)
-  fileTouchSync(pathJoin)
+  fileTouchSync(logFile)
   truncateLogs()
 }
 
