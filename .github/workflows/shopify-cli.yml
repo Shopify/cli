@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      nxLevel:
+        description: "command to pass to nx, to run everything: 'run-many --all'"
+        required: true
+        default: "affected"
   pull_request:
 
 concurrency:
@@ -78,13 +84,13 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx affected --target=build --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=build --skip-nx-cache
       - name: Test
-        run: npx nx affected --target=test --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=test --skip-nx-cache
       - name: Lint
-        run: npx nx affected --target=lint --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=lint --skip-nx-cache
       - name: Type-check
-        run: npx nx affected --target=tsc --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=tsc --skip-nx-cache
   pr:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -120,10 +126,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx affected --target=build --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=build --skip-nx-cache
       - name: Type-check
-        run: npx nx affected --target=tsc --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=tsc --skip-nx-cache
       - name: Lint
-        run: npx nx affected --target=lint --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=lint --skip-nx-cache
       - name: Test
-        run: npx nx affected --target=test --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel }} --target=test --skip-nx-cache
