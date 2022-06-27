@@ -41,34 +41,43 @@ const schema = {
   },
 } as unknown as Schema<ConfSchema>
 
-export const cliKit = new Conf<ConfSchema>({
-  schema,
-  migrations,
-  projectName: 'shopify-cli-kit',
-  projectVersion: cliKitPackageJson.version,
-})
+export type LocalStore = Conf<ConfSchema>
+
+export function createConf(projectName = 'shopify-cli-kit'): LocalStore {
+  return new Conf<ConfSchema>({
+    schema,
+    migrations,
+    projectName,
+    projectVersion: cliKitPackageJson.version,
+  })
+}
+
+const cliKit = createConf()
 
 export function remove() {
   cliKit.clear()
 }
 
-export function getAppInfo(directory: string): CachedAppInfo | undefined {
+export function getAppInfo(directory: string, localConf: LocalStore = cliKit): CachedAppInfo | undefined {
   debug(content`Reading cached app information for directory ${token.path(directory)}...`)
-  const apps = cliKit.get('appInfo') ?? []
+  const apps = localConf.get('appInfo') ?? []
   return apps.find((app: CachedAppInfo) => app.directory === directory)
 }
 
-export function setAppInfo(options: {
-  directory: string
-  appId: string
-  title?: string
-  storeFqdn?: string
-  orgId?: string
-}): void {
+export function setAppInfo(
+  options: {
+    directory: string
+    appId: string
+    title?: string
+    storeFqdn?: string
+    orgId?: string
+  },
+  localConf: LocalStore = cliKit,
+): void {
   debug(content`Storing app information for directory ${token.path(options.directory)}:
 ${token.json(options)}
 `)
-  const apps = cliKit.get('appInfo') ?? []
+  const apps = localConf.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
   if (index === -1) {
     apps.push(options)
@@ -82,40 +91,40 @@ ${token.json(options)}
       orgId: options.orgId ?? app.orgId,
     }
   }
-  cliKit.set('appInfo', apps)
+  localConf.set('appInfo', apps)
 }
 
-export function clearAppInfo(directory: string): void {
+export function clearAppInfo(directory: string, localConf: LocalStore = cliKit): void {
   debug(content`Clearning app information for directory ${token.path(directory)}...`)
-  const apps = cliKit.get('appInfo') ?? []
+  const apps = localConf.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
   if (index !== -1) {
     apps.splice(index, 1)
   }
-  cliKit.set('appInfo', apps)
+  localConf.set('appInfo', apps)
 }
 
-export function getThemeStore(): string | undefined {
+export function getThemeStore(localConf: LocalStore = cliKit): string | undefined {
   debug(content`Getting theme store...`)
-  return cliKit.get('themeStore')
+  return localConf.get('themeStore')
 }
 
-export function setThemeStore(store: string): void {
+export function setThemeStore(store: string, localConf: LocalStore = cliKit): void {
   debug(content`Setting theme store...`)
-  cliKit.set('themeStore', store)
+  localConf.set('themeStore', store)
 }
 
-export function getSessionStore(): string | undefined {
+export function getSessionStore(localConf: LocalStore = cliKit): string | undefined {
   debug(content`Getting session store...`)
-  return cliKit.get('sessionStore')
+  return localConf.get('sessionStore')
 }
 
-export function setSessionStore(store: string): void {
+export function setSessionStore(store: string, localConf: LocalStore = cliKit): void {
   debug(content`Setting session store...`)
-  cliKit.set('sessionStore', store)
+  localConf.set('sessionStore', store)
 }
 
-export function removeSessionStore(): void {
+export function removeSessionStore(localConf: LocalStore = cliKit): void {
   debug(content`Removing session store...`)
-  cliKit.set('sessionStore', '')
+  localConf.set('sessionStore', '')
 }

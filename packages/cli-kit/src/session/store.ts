@@ -73,12 +73,12 @@ export async function remove() {
  */
 async function secureStoreAvailable(): Promise<boolean> {
   try {
-    const keytar = await import('keytar')
-    await keytar.default.findCredentials(constants.keychain.service)
     if (platformAndArch().platform === 'windows') {
       debug(content`Secure store not supported on Windows`)
       return false
     }
+    const keytar = await import('keytar')
+    await keytar.default.findCredentials(constants.keychain.service)
     debug(content`Secure store is available`)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all

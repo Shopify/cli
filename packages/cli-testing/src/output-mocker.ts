@@ -1,3 +1,4 @@
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import {output} from '@shopify/cli-kit'
 import {vi} from 'vitest'
 import stripAnsi from 'strip-ansi'

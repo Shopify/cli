@@ -14,11 +14,7 @@ export async function fetch(identifier: string): Promise<string | null> {
     const content = await keytar.getPassword(constants.keychain.service, identifier)
     return content
   } catch (error) {
-    let message = 'Unable to read from the secure store'
-    if (error instanceof Error) {
-      message = message.concat(`: ${error.message}`)
-    }
-    throw new Abort(message)
+    throw createAbort(error, 'Unable to read from the secure store')
   }
 }
 
@@ -34,11 +30,7 @@ export async function store(identifier: string, content: string): Promise<void> 
     const keytar = await import('keytar')
     await keytar.default.setPassword(constants.keychain.service, identifier, content)
   } catch (error) {
-    let message = 'Unable to update the secure store'
-    if (error instanceof Error) {
-      message = message.concat(`: ${error.message}`)
-    }
-    throw new Abort(message)
+    throw createAbort(error, 'Unable to update the secure store')
   }
 }
 
@@ -54,10 +46,18 @@ export async function remove(identifier: string): Promise<boolean> {
     const result = await keytar.default.deletePassword(constants.keychain.service, identifier)
     return result
   } catch (error) {
-    let message = 'Unable to remove from the secure store'
-    if (error instanceof Error) {
-      message = message.concat(`: ${error.message}`)
-    }
-    throw new Abort(message)
+    throw createAbort(error, 'Unable to remove from the secure store')
   }
+}
+
+function createAbort(error: unknown, message: string) {
+  let newMessage = message
+  let stack: string | undefined = ''
+  if (error instanceof Error) {
+    newMessage = message.concat(`: ${error.message}`)
+    stack = error.stack
+  }
+  const abort = new Abort(newMessage)
+  abort.stack = stack
+  return abort
 }
