@@ -59,6 +59,11 @@ export async function touch(path: string): Promise<void> {
   await fs.ensureFile(path)
 }
 
+export async function touchSync(path: string): Promise<void> {
+  debug(outputContent`Creating an empty file at ${token.path(path)}...`)
+  await fs.ensureFileSync(path)
+}
+
 export async function write(path: string, data: string): Promise<void> {
   debug(outputContent`Writing some content to file at ${token.path(path)}...`)
   await fs.writeFile(path, data)
