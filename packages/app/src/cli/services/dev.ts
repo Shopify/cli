@@ -86,26 +86,28 @@ async function dev(options: DevOptions) {
     hostname: url,
   }
 
-  const devExt = await devExtensionsTarget(
-    options.app,
-    identifiers.app,
-    url,
-    storeFqdn,
-    options.subscriptionProductUrl,
-    options.checkoutCartUrl,
-  )
-  const proxyTargets: ReverseHTTPProxyTarget[] = [devExt]
-  if (frontendConfig) {
-    proxyTargets.push(
-      devFrontendTarget({
-        web: frontendConfig,
-        apiKey: identifiers.app,
-        scopes: options.app.configuration.scopes,
-        apiSecret: (apiSecret as string) ?? '',
-        hostname: url,
-        backendPort,
-      }),
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
+  if (options.app.extensions.ui.length > 0) {
+    const devExt = await devExtensionsTarget(
+      options.app,
+      identifiers.app,
+      url,
+      storeFqdn,
+      options.subscriptionProductUrl,
+      options.checkoutCartUrl,
     )
+    proxyTargets.push(devExt)
+  }
+  if (frontendConfig) {
+    const devFrontend = devFrontendTarget({
+      web: frontendConfig,
+      apiKey: identifiers.app,
+      scopes: options.app.configuration.scopes,
+      apiSecret: (apiSecret as string) ?? '',
+      hostname: url,
+      backendPort,
+    })
+    proxyTargets.push(devFrontend)
   }
 
   const additionalProcesses: output.OutputProcess[] = []
