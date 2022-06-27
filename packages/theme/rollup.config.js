@@ -9,7 +9,7 @@ import {dependencies} from './package.json'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const themeExternal = [...external, ...Object.keys(dependencies), '@shopify/cli-kit']
+const themeExternal = [...external, ...Object.keys(dependencies)]
 
 const themeCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/theme/**/*.ts`),

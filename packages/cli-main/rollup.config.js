@@ -8,7 +8,7 @@ import {external, plugins, distDir} from '../../configurations/rollup.config'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const hydrogenExternal = [/@miniflare/, /prettier/]
-const cliExternal = ['@shopify/cli-kit', ...external, ...hydrogenExternal]
+const cliExternal = [...external, ...hydrogenExternal]
 
 const cliCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/**/*.ts`),
