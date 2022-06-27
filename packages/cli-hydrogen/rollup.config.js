@@ -9,7 +9,7 @@ import hydrogenPkg from './package.json'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const cliExternal = [...external, ...Object.keys(hydrogenPkg.dependencies ?? {}), '@shopify/cli-kit']
+const cliExternal = [...external, ...Object.keys(hydrogenPkg.dependencies ?? {})]
 
 const featureCommands = fg.sync([
   path.join(__dirname, `/src/cli/commands/**/*.ts`),
