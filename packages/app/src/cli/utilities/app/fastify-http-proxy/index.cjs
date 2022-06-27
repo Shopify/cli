@@ -83,8 +83,15 @@ function setupWebSocketProxy(fastify, options, rewritePrefix) {
   })
 
   server.on('connection', (source, request) => {
+    // Send a ping to the client every 10s to make sure the connection stays alive
+    // If the conneciton is closed, the interval is cancelled
+    const timer = setInterval(() => {
+      source.readyState >= 2 ? clearInterval(timer) : source.ping()
+    }, 10000)
+
     if (fastify.prefix && !request.url.startsWith(fastify.prefix)) {
       fastify.log.debug({url: request.url}, 'not matching prefix')
+      clearInterval(timer)
       source.close()
       return
     }
