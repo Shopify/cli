@@ -8,8 +8,8 @@ Scenario: I scaffold theme, ui, and function extensions
   When I create an extension named TestThemeExtension of type theme
   Then I have a theme extension named TestThemeExtension of type theme
   Then The extension named TestThemeExtension contains the theme extension directories
-  Then I have a theme extension named TestThemeExtension2 of type theme
-  Then The extension named TestThemeExtension2 contains the theme extension directories
+  Then I create an extension named MyThemeExtension2 of type theme
+  Then I do not have a theme extension named TestThemeExtension2 of type theme
   When I create an extension named TestPaymentMethod of type payment_methods and flavor wasm
   Then I have a function extension named TestPaymentMethod of type payment_methods
   Then I can build the app
