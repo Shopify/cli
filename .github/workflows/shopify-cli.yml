@@ -131,5 +131,8 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc --skip-nx-cache
       - name: Lint
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint --skip-nx-cache
-      - name: Test
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --skip-nx-cache
+      - name: Unit tests
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
+      - name: Acceptance tests
+        if: matrix.os == 'ubuntu-latest'
+        run: npx nx ${{ github.event.inputs.nxLevel || 'run' }} features:test --skip-nx-cache
