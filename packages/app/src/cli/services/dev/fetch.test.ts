@@ -160,11 +160,13 @@ describe('NoOrgError', () => {
     const got = subject.tryMessage
 
     // Then
+    /* eslint-disable no-irregular-whitespace */
     expect(got).toMatchInlineSnapshot(`
       "· Have you [32mcreated a Shopify Partners organization[39m (​https://partners.shopify.com/signup​)?
       · Have you confirmed your accounts from the emails you received?
       · Need to connect to a different App or organization? Run the command again with [1m[33m--reset[39m[22m
       · Do you have access to the right Shopify Partners organization? The CLI is loading [32mthis organization[39m (​https://partner.shopify.com/3​)"
     `)
+    /* eslint-enable no-irregular-whitespace */
   })
 })
