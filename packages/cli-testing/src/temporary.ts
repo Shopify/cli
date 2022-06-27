@@ -1,4 +1,3 @@
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import {store, file} from '@shopify/cli-kit'
 import tempy from 'tempy'
 import uniqueString from 'unique-string'
