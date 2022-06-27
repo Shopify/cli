@@ -104,27 +104,27 @@ export function clearAppInfo(directory: string, localConf: LocalStore = cliKit):
   localConf.set('appInfo', apps)
 }
 
-export function getThemeStore(localConf: LocalStore = cliKit): string | undefined {
+export function getTheme(localConf: LocalStore = cliKit): string | undefined {
   debug(content`Getting theme store...`)
   return localConf.get('themeStore')
 }
 
-export function setThemeStore(store: string, localConf: LocalStore = cliKit): void {
+export function setTheme(store: string, localConf: LocalStore = cliKit): void {
   debug(content`Setting theme store...`)
   localConf.set('themeStore', store)
 }
 
-export function getSessionStore(localConf: LocalStore = cliKit): string | undefined {
+export function getSession(localConf: LocalStore = cliKit): string | undefined {
   debug(content`Getting session store...`)
   return localConf.get('sessionStore')
 }
 
-export function setSessionStore(store: string, localConf: LocalStore = cliKit): void {
+export function setSession(store: string, localConf: LocalStore = cliKit): void {
   debug(content`Setting session store...`)
   localConf.set('sessionStore', store)
 }
 
-export function removeSessionStore(localConf: LocalStore = cliKit): void {
+export function removeSession(localConf: LocalStore = cliKit): void {
   debug(content`Removing session store...`)
   localConf.set('sessionStore', '')
 }

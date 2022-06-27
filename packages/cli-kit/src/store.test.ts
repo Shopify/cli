@@ -1,4 +1,4 @@
-import {clearAppInfo, getAppInfo, getSessionStore, removeSessionStore, setAppInfo, setSessionStore} from './store'
+import {clearAppInfo, getAppInfo, getSession, removeSession, setAppInfo, setSession} from './store'
 import {describe, expect, it} from 'vitest'
 import {temporary} from '@shopify/cli-testing'
 
@@ -83,14 +83,14 @@ describe('clearAppInfo', () => {
   })
 })
 
-describe('getSessionStore', () => {
+describe('getSession', () => {
   it('returns the content of the SessionStore key', () => {
     temporary.localConf(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
       // When
-      const got = getSessionStore(localConf)
+      const got = getSession(localConf)
 
       // Then
       expect(got).toEqual('my-session')
@@ -98,14 +98,14 @@ describe('getSessionStore', () => {
   })
 })
 
-describe('setSessionStore', () => {
+describe('setSession', () => {
   it('saves the desired content in the SessionStore key', () => {
     temporary.localConf(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
       // When
-      setSessionStore('my-session', localConf)
+      setSession('my-session', localConf)
 
       // Then
       expect(localConf.get('sessionStore')).toEqual('my-session')
@@ -113,14 +113,14 @@ describe('setSessionStore', () => {
   })
 })
 
-describe('removeSessionStore', () => {
+describe('removeSession', () => {
   it('removes the SessionStore key', () => {
     temporary.localConf(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
       // When
-      removeSessionStore(localConf)
+      removeSession(localConf)
 
       // Then
       expect(localConf.get('sessionStore')).toEqual('')

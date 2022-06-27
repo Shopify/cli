@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {path, ruby, session, string} from '@shopify/cli-kit'
 
@@ -51,7 +51,7 @@ export default class Dev extends Command {
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Dev)
 
-    const store = getThemeStore(flags)
+    const store = getTheme(flags)
 
     const command = ['theme', 'serve', flags.path]
 

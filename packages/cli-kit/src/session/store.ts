@@ -2,7 +2,7 @@ import {SessionSchema} from './schema'
 import constants from '../constants'
 import {platformAndArch} from '../os'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
-import {setSessionStore, getSessionStore, removeSessionStore} from '../store'
+import {setSession, getSession, removeSession} from '../store'
 import {content, debug} from '../output'
 import type {Session} from './schema'
 
@@ -21,7 +21,7 @@ export async function store(session: Session) {
   if (await secureStoreAvailable()) {
     await secureStore(identifier, jsonSession)
   } else {
-    setSessionStore(jsonSession)
+    setSession(jsonSession)
   }
 }
 
@@ -38,7 +38,7 @@ export async function fetch(): Promise<Session | undefined> {
   if (await secureStoreAvailable()) {
     content = await secureFetch(identifier)
   } else {
-    content = getSessionStore()
+    content = getSession()
   }
 
   if (!content) {
@@ -61,7 +61,7 @@ export async function remove() {
   if (await secureStoreAvailable()) {
     await secureRemove(identifier)
   } else {
-    removeSessionStore()
+    removeSession()
   }
 }
 

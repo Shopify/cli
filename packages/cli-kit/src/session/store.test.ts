@@ -1,6 +1,6 @@
 import {ApplicationToken, Session} from './schema'
 import {store, fetch, remove, identifier} from './store'
-import {setSessionStore as localStore, removeSessionStore as localRemove, getSessionStore as localFetch} from '../store'
+import {setSession as localStore, removeSession as localRemove, getSession as localFetch} from '../store'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
 import {platformAndArch} from '../os'
 import {describe, expect, vi, it, beforeEach} from 'vitest'

@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {path, ruby, session, string} from '@shopify/cli-kit'
 
@@ -78,7 +78,7 @@ export default class Pull extends Command {
       command.push('-n')
     }
 
-    const store = getThemeStore(flags)
+    const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await ruby.execCLI(command, adminSession)
   }
