@@ -1,6 +1,6 @@
 ---
-'@shopify/app': minor
-'@shopify/cli-kit': minor
+'@shopify/app': patch
+'@shopify/cli-kit': patch
 ---
 
 Compile function module before deploying function to the registry
