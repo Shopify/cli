@@ -1,6 +1,7 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'
+import path from 'pathe'
 import {strict as assert} from 'assert'
 
 When(
@@ -24,7 +25,7 @@ When(
       {env: {...process.env, ...this.temporaryEnv}},
     )
     const hyphenatedAppName = stdout.match(/Initializing your app ([\w-]+)/)[1]
-    this.appDirectory = `${this.temporaryDirectory}/${hyphenatedAppName}`
+    this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
   },
 )
 
