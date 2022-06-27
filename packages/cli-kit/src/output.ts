@@ -366,7 +366,7 @@ export const error = async (content: Fatal) => {
     outputString += `\n${padding}${colors.bold('What to try:')}\n`
     const lines = content.tryMessage.split('\n')
     for (const line of lines) {
-      outputString += `${padding}${line}`
+      outputString += `${padding}${line}\n`
     }
   }
 

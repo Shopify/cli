@@ -1,22 +1,25 @@
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
 import {api, error, output} from '@shopify/cli-kit'
 
-const NoOrgError = (organizationId?: string) => {
+export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
     output.content`Have you ${output.token.link(
       'created a Shopify Partners organization',
       'https://partners.shopify.com/signup',
     )}?`,
-    output.content`Have you confirmed your accounts from the emails you received?',
-    )}`,
+    output.content`Have you confirmed your accounts from the emails you received?`,
     output.content`Need to connect to a different App or organization? Run the command again with ${output.token.genericShellCommand(
       '--reset',
     )}`,
-    output.content`Do you have access to the right Shopify Partners organization? The CLI is loading ${output.token.link(
-      'this organization',
-      `https://partner.shopify.com/${organizationId}`,
-    )}`,
   ]
+  if (organizationId) {
+    nextSteps.push(
+      output.content`Do you have access to the right Shopify Partners organization? The CLI is loading ${output.token.link(
+        'this organization',
+        `https://partner.shopify.com/${organizationId}`,
+      )}`,
+    )
+  }
   return new error.Abort(
     `No Organization found`,
     nextSteps.map((content) => `· ${output.stringifyMessage(content)}`).join('\n'),
