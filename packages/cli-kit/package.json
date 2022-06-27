@@ -64,7 +64,7 @@
     "prettier": "^2.6.2",
     "source-map-support": "^0.5.21",
     "stacktracey": "^2.1.8",
-    "pathe": "^0.3.0",
+    "pathe": "0.2.0",
     "abort-controller": "^3.0.0",
     "ts-error": "^1.0.6",
     "find-up": "^6.2.0",
