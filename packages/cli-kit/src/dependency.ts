@@ -118,7 +118,71 @@ export async function install(
   signal?: AbortSignal,
 ) {
   const options: ExecOptions = {cwd: directory, stdout, stderr, signal}
-  await exec(dependencyManager, ['install'], options)
+  let done = false
+  const getDone = () => done
+  try {
+    switch (dependencyManager) {
+      case 'pnpm':
+        await exec(dependencyManager, ['install'], options)
+        break
+      case 'yarn':
+        await exec(dependencyManager, ['install'], options)
+        break
+      case 'npm':
+        updateNpmOutput(directory, getDone, stdout)
+        await exec(dependencyManager, ['install'], {cwd: options.cwd, signal: options.signal})
+        break
+    }
+  } finally {
+    done = true
+  }
+}
+
+async function updateNpmOutput(directory: string, getDone: () => boolean, stdout?: Writable): Promise<void> {
+  let outputPrefix = ''
+  let outputSuffix = ''
+  let currentByteCount = 0
+  let currentFileCount = 0
+  const resolvingPackagesMessage = 'Resolving dependencies...'
+  const installingPackagesMessage = 'Installing packages...'
+  const buildingPackagesMessage = 'Performing build steps...'
+  const interval = setInterval(async () => {
+    if (getDone()) {
+      clearInterval(interval)
+      return
+    }
+    if (!outputPrefix) {
+      outputPrefix = resolvingPackagesMessage
+    }
+    const nodeModulesDir = pathJoin(directory, 'node_modules')
+    const {bytes, fileCount} = await getFolderSize(nodeModulesDir)
+    if (fileCount > 0) {
+      if (outputPrefix === resolvingPackagesMessage) {
+        outputPrefix = installingPackagesMessage
+      }
+      if (bytes > currentByteCount && currentFileCount === fileCount) {
+        // Apparently we're growing in bytes but not files, which means we've
+        // finished downloading and are in the building stage...
+        if (outputPrefix === installingPackagesMessage) {
+          outputPrefix = buildingPackagesMessage
+        }
+      }
+      currentFileCount = fileCount
+      currentByteCount = bytes
+      outputSuffix = `${bytes} bytes, ${fileCount} files loaded`
+    }
+    stdout?.write([outputPrefix, outputSuffix].filter((str) => str).join('\n'))
+  }, 200)
+}
+
+async function getFolderSize(directory: string): Promise<{bytes: number; fileCount: number}> {
+  const files = await glob(pathJoin(directory, '**/*'), {stats: true})
+  const fileCount = files.length
+  const bytes: number = files.reduce((sum: number, file: glob.Entry): number => {
+    const nextFileSize = typeof file?.stats?.size === undefined ? 0 : file?.stats?.size || 0
+    return sum + nextFileSize
+  }, 0)
+  return {bytes, fileCount}
 }
 
 /**
