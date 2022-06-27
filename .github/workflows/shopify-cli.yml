@@ -92,7 +92,7 @@ jobs:
       - name: Unit tests
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'run' }} features:test --skip-nx-cache
+        run: npx nx run features:test --skip-nx-cache
   pr:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -137,4 +137,4 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
         if: matrix.os == 'ubuntu-latest'
-        run: npx nx ${{ github.event.inputs.nxLevel || 'run' }} features:test --skip-nx-cache
+        run: npx nx run features:test --skip-nx-cache
