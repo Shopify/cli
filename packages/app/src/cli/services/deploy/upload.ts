@@ -1,6 +1,6 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config'
 import {FunctionExtension, Identifiers, IdentifiersExtensions, ThemeExtension} from '../../models/app/app'
-import {getFunctionExtensionPointName} from '../../constants'
+import {blocks, getFunctionExtensionPointName} from '../../constants'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
@@ -185,6 +185,8 @@ async function uploadFunctionExtension(
 
   const functionContent = fs.readFileSync(extension.buildWasmPath())
   await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
+  await compileFunctionExtension(extension, options, url)
+
   const query = api.graphql.AppFunctionSetMutation
   const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
   const schemaMajorVersion = schemaVersions?.major
@@ -201,6 +203,7 @@ async function uploadFunctionExtension(
     configurationUi: extension.configuration.configurationUi,
     moduleUploadUrl: url,
     apiVersion: extension.configuration.apiVersion,
+    skipCompilationJob: true,
     appBridge: extension.configuration.ui?.paths
       ? {
           detailsPath: extension.configuration.ui.paths.details,
@@ -224,6 +227,68 @@ ${output.token.json(userErrors)}
   }
   const uuid = res.data.appScriptSet.appScript?.uuid as string
   return uuid
+}
+
+async function compileFunctionExtension(
+  extension: FunctionExtension,
+  options: UploadFunctionExtensionOptions,
+  moduleUploadUrl: string,
+): Promise<void> {
+  const query = api.graphql.CompileModuleMutation
+  const variables: api.graphql.CompileModuleMutationVariables = {
+    moduleUploadUrl,
+  }
+  const res: api.graphql.CompileModuleMutationSchema = await api.partners.functionProxyRequest(
+    options.apiKey,
+    query,
+    options.token,
+    variables,
+  )
+  const jobId = res.data.compileModule.jobId
+
+  await waitForCompilation(extension, options, jobId)
+}
+
+async function getCompilationStatus(options: UploadFunctionExtensionOptions, compilationJobId: string) {
+  const query = api.graphql.ModuleCompilationStatusQuery
+  const variables: api.graphql.ModuleCompilationQueryVariables = {
+    jobId: compilationJobId,
+  }
+  const res: api.graphql.ModuleCompilationStatusQuerySchema = await api.partners.functionProxyRequest(
+    options.apiKey,
+    query,
+    options.token,
+    variables,
+  )
+  return res.data.moduleCompilationStatus.status
+}
+
+async function waitForCompilation(
+  extension: FunctionExtension,
+  options: UploadFunctionExtensionOptions,
+  compilationJobId: string,
+) {
+  let retries = 0
+
+  const poll = async (): Promise<void> => {
+    const compilationStatus = await getCompilationStatus(options, compilationJobId)
+    // eslint-disable-next-line no-empty
+    if (compilationStatus === 'completed') {
+    } else if (compilationStatus !== 'pending') {
+      throw new error.Abort(output.content`Function ${extension.localIdentifier} compilation failed.`)
+    } else if (retries < blocks.functions.maxCompilationStatusCheckCount) {
+      retries++
+      return sleep(blocks.functions.compilationStatusWaitMs).then(() => poll())
+    } else {
+      throw new error.Abort(output.content`Function ${extension.localIdentifier} compilation timed out.`)
+    }
+  }
+
+  return poll()
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 interface GetFunctionExtensionUploadURLOptions {
