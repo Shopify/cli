@@ -76,6 +76,10 @@ class AppInfo {
     const title = 'ESLint'
     const dependencyResults = this.dependencyCheck(['eslint', 'eslint-plugin-hydrogen'])
 
+    if (this.app.nodeDependencies.eslint && !this.app.nodeDependencies['eslint-plugin-hydrogen']) {
+      errors.push('Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
+    }
+
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
 
     if (errorContent.trim() === '') errorContent = ''

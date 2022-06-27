@@ -59,11 +59,13 @@ describe('load', () => {
   }
 
   it("throws an error if the directory doesn't exist", async () => {
-    // Given
-    const directory = '/tmp/non-existent-directory'
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await file.rmdir(tmpDir, {force: true})
 
-    // When/Then
-    await expect(load(directory)).rejects.toThrow(/Couldn't find directory/)
+      // When/Then
+      await expect(load(tmpDir)).rejects.toThrow(/Couldn't find directory/)
+    })
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
