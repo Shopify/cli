@@ -1,10 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import commondir from 'commondir'
-import {relative, dirname} from 'pathe'
+import {relative, dirname, join, normalize, resolve} from 'pathe'
 import {fileURLToPath} from 'url'
 
-export * from 'pathe'
+export {join, relative, dirname, normalize, resolve}
 
 export {findUp} from 'find-up'
 export {default as glob} from 'fast-glob'

@@ -1,6 +1,7 @@
 import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension'
 import {App, Identifiers} from '../../models/app/app'
-import {path, output, archiver, temporary, file, error} from '@shopify/cli-kit'
+import {path, output, temporary, file, error} from '@shopify/cli-kit'
+import {zip} from '@shopify/cli-kit/node/archiver'
 
 import {Writable} from 'node:stream'
 
@@ -62,7 +63,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
     ])
 
     if (options.bundle) {
-      await archiver.zip(bundleDirectory, options.bundlePath)
+      await zip(bundleDirectory, options.bundlePath)
     }
   })
 }

@@ -1,6 +1,11 @@
 import {debug, content, token} from '../output'
 import {zip as crossZip} from 'cross-zip'
 
+/**
+ * It zips a directory.
+ * @param inputDirectory {string} The absolute path to the directory to be zipped.
+ * @param outputZipPath {string} The absolute path to the output zip file.
+ */
 export async function zip(inputDirectory: string, outputZipPath: string): Promise<void> {
   debug(content`Zipping ${token.path(inputDirectory)} into ${token.path(outputZipPath)}`)
   const cwd = process.cwd()
@@ -17,5 +22,3 @@ export async function zip(inputDirectory: string, outputZipPath: string): Promis
     })
   })
 }
-
-export async function unzip(inputDirectory: string, outputZipPath: string): Promise<void> {}
