@@ -42,6 +42,7 @@
     "@shopify/cli-kit": "^3.0.24",
     "strip-ansi": "^7.0.1",
     "tempy": "^2.0.0",
+    "unique-string": "^3.0.0",
     "vitest": "^0.15.1"
   }
 }

@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {path, ruby, session, string} from '@shopify/cli-kit'
 
@@ -107,7 +107,7 @@ export default class Push extends Command {
       command.push('-a')
     }
 
-    const store = getThemeStore(flags)
+    const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await ruby.execCLI(command, adminSession)
   }

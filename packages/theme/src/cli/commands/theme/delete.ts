@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {session, string, ruby} from '@shopify/cli-kit'
 
@@ -35,7 +35,7 @@ export default class Delete extends Command {
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Delete)
 
-    const store = getThemeStore(flags)
+    const store = getTheme(flags)
 
     const command = ['theme', 'delete']
     if (args.themeId) {

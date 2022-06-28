@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {ruby, session, string} from '@shopify/cli-kit'
 
@@ -31,7 +31,7 @@ export default class Open extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Open)
-    const store = getThemeStore(flags)
+    const store = getTheme(flags)
 
     const command = ['theme', 'open']
     if (flags.theme) {

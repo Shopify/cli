@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store'
 import {Command, Flags} from '@oclif/core'
 import {ruby, session, string} from '@shopify/cli-kit'
 
@@ -24,7 +24,7 @@ export default class Publish extends Command {
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Publish)
 
-    const store = getThemeStore(flags)
+    const store = getTheme(flags)
 
     const command = ['theme', 'publish']
     if (args.themeId) {
