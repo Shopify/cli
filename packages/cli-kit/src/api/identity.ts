@@ -20,7 +20,7 @@ export async function validateIdentityToken(token: string) {
 }
 
 async function getInstrospectionEndpoint(): Promise<string> {
-  const response = await fetch(`https://${identity()}/.well-known/openid-configuration.json`)
+  const response = await fetch(`https://${await identity()}/.well-known/openid-configuration.json`)
   const json = await response.json()
   return json.introspection_endpoint
 }
