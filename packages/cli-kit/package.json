@@ -71,7 +71,6 @@
     "execa": "^6.0.0",
     "listr2": "^4.0.5",
     "@iarna/toml": "^2.2.5",
-    "ansi-colors": "^4.1.1",
     "change-case": "^4.1.2",
     "color-json": "^2.0.1",
     "commondir": "^1.0.1",
@@ -106,6 +105,7 @@
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
     "vitest": "^0.15.1",
-    "semver": "^7.3.6"
+    "semver": "^7.3.6",
+    "ansi-colors": "^4.1.1"
   }
 }
