@@ -18,12 +18,18 @@ export async function directory<T>(callback: (directory: string) => Promise<T>):
  * @returns {Promise<T>} Promise that resolves with the value returned by the callback.
  */
 export function localConf<T>(callback: (localConf: store.LocalStore) => Promise<T>): Promise<T> {
-  const name = `shopify-cli-test-${uniqueString()}`
-  const localConfig = store.createConf(name)
-  // eslint-disable-next-line node/callback-return
-  const result = callback(localConfig)
-  file.remove(localConfig.path)
-  const configFolder = localConfig.path.replace(/\/config.json$/, '')
-  file.remove(configFolder)
-  return result
+  let localConf: store.LocalStore | undefined
+  try {
+    const name = `shopify-cli-test-${uniqueString()}`
+    localConf = store.createConf(name)
+    // eslint-disable-next-line node/callback-return
+    const result = callback(localConf)
+    return result
+  } finally {
+    if (localConf) {
+      file.remove(localConf.path)
+      const configFolder = localConf.path.replace(/\/config.json$/, '')
+      file.remove(configFolder)
+    }
+  }
 }
