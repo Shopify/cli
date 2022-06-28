@@ -1,12 +1,20 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common.js'
 import {isShopify} from '../environment/local.js'
 import constants from '../constants.js'
-import {test, vi, expect, describe} from 'vitest'
+import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {randomUUID} from 'crypto'
 
-vi.mock('crypto')
-vi.mock('../environment/local')
-vi.mock('../version')
+beforeEach(() => {
+  vi.mock('crypto')
+  vi.mock('../environment/local', async () => {
+    return {
+      isVerbose: vi.fn(),
+      isShopify: vi.fn(),
+      isUnitTest: vi.fn(() => true),
+    }
+  })
+  vi.mock('../version')
+})
 
 describe('common API methods', () => {
   test('headers are built correctly when user is employee', async () => {
@@ -17,12 +25,13 @@ describe('common API methods', () => {
     const headers = await buildHeaders('my-token')
 
     // Then
+    const version = await constants.versions.cliKit()
     expect(headers).toEqual({
       /* eslint-disable @typescript-eslint/naming-convention */
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
-      'User-Agent': `Shopify CLI; v=${constants.versions.cliKit}`,
+      'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
       /* eslint-enable @typescript-eslint/naming-convention */
@@ -37,12 +46,13 @@ describe('common API methods', () => {
     const headers = await buildHeaders('my-token')
 
     // Then
+    const version = await constants.versions.cliKit()
     expect(headers).toEqual({
       /* eslint-disable @typescript-eslint/naming-convention */
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
-      'User-Agent': `Shopify CLI; v=${constants.versions.cliKit}`,
+      'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
       /* eslint-enable @typescript-eslint/naming-convention */
