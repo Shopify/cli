@@ -1,5 +1,20 @@
 # @shopify/cli-hydrogen
 
+## 3.0.25
+
+### Patch Changes
+
+- 0621bd1d: Add warning for eslint-plugin-hydrogen missing if eslint exists during `hydrogen info` command.
+- ec9e9a47: Fix TypeScript support in `hydrogen add eslint`. This command will now add the TypeScript eslint configuration in addition to the recommended configuration for TypeScript projects.
+- 66cf3dee: Fix error messages to show up when running hydrogen preview
+- Updated dependencies [a6ea9c8d]
+- Updated dependencies [822d0fd3]
+- Updated dependencies [bf8137c2]
+- Updated dependencies [e650b499]
+- Updated dependencies [3360289d]
+- Updated dependencies [2a666db7]
+  - @shopify/cli-kit@3.0.25
+
 ## 3.0.24
 
 ### Patch Changes

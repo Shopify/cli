@@ -2,11 +2,12 @@
 import * as environment from './environment'
 import {fetch} from './http'
 import {platformAndArch} from './os'
-import {resolve} from './path'
+import {join, resolve} from './path'
 import {version as rubyVersion} from './ruby'
 import {getAppInfo} from './store'
 import {cliVersion} from './version'
 import {debug, content, token} from './output'
+import {getProjectType} from './dependency'
 
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -65,7 +66,7 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
   return {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: undefined,
+      project_type: await getProjectType(join(directory, 'web')),
       command,
       args: args.join(' '),
       time_start: currentTime,

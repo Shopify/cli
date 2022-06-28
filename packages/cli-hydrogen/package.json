@@ -1,10 +1,10 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "3.0.24",
+  "version": "3.0.25",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "bugs": {
-    "url" : "https://github.com/Shopify/cli/issues"
+    "url": "https://github.com/Shopify/cli/issues"
   },
   "homepage": "https://github.com/shopify/cli#readme",
   "type": "module",
@@ -43,10 +43,10 @@
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
     "vite": "^2.9.9",
-    "@shopify/cli-kit": "^3.0.24"
+    "@shopify/cli-kit": "^3.0.25"
   },
   "devDependencies": {
-    "@shopify/cli-testing": "3.0.24",
+    "@shopify/cli-testing": "3.0.25",
     "@shopify/prettier-config": "^1.1.2",
     "@types/fs-extra": "^9.0.12",
     "fast-glob": "^3.2.11",
