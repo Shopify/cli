@@ -95,7 +95,7 @@ ${token.json(options)}
 }
 
 export function clearAppInfo(directory: string, localConf: LocalStore = cliKit): void {
-  debug(content`Clearning app information for directory ${token.path(directory)}...`)
+  debug(content`Clearing app information for directory ${token.path(directory)}...`)
   const apps = localConf.get('appInfo') ?? []
   const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
   if (index !== -1) {
