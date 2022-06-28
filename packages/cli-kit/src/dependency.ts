@@ -285,39 +285,99 @@ function yarnStdout(originalOut?: Writable): Writable | undefined {
 
 async function updateNpmOutput(directory: string, getDone: () => boolean, stdout?: Writable): Promise<void> {
   let outputPrefix = ''
-  let outputSuffix = ''
   let currentByteCount = 0
   let currentFileCount = 0
+  let progressBarSuffix = ''
+  let progressBarString = ''
+
+  const writeOutput = () => {
+    stdout?.write([outputPrefix, progressBarString].filter((str) => str).join('\n'))
+  }
+
+  const progressBarOutputStream: Writable & {isTTY?: boolean} = new Writable({
+    write(chunk, _, next) {
+      const chunkString: string = chunk.toString()
+      // Ignore escape sequences, just look at bars!
+      if (!(chunkString.slice(0, 1) === '\u001b')) {
+        progressBarString = [chunkString, progressBarSuffix].filter((str) => str).join(' ')
+        writeOutput()
+      }
+      next()
+    },
+  })
+  progressBarOutputStream.isTTY = process.stdout.isTTY
+  const progressBar = new cliProgress.SingleBar(
+    {
+      format: '{bar}| {percentage}%',
+      stream: progressBarOutputStream,
+      stopOnComplete: true,
+    },
+    cliProgress.Presets.shades_classic,
+  )
+  let barStartTime = new Date().valueOf()
+  let barIncrementerInterval: ReturnType<typeof setInterval>
+  const initiateFakeProgressBar = () => {
+    progressBar.start(100, 0)
+    barStartTime = new Date().valueOf()
+    barIncrementerInterval = setInterval(() => {
+      const timePassed = (new Date().valueOf() - barStartTime) / 1000
+      // This function approaches, but never reaches, 100!
+      progressBar.update((timePassed * 100) / (timePassed + 10))
+    }, 200)
+  }
+
   const resolvingPackagesMessage = 'Resolving dependencies...'
   const installingPackagesMessage = 'Installing packages...'
   const buildingPackagesMessage = 'Performing build steps...'
   const interval = setInterval(async () => {
     if (getDone()) {
+      clearInterval(barIncrementerInterval)
+      progressBar.update(progressBar.getTotal())
+      progressBar.stop()
       clearInterval(interval)
       return
     }
     if (!outputPrefix) {
       outputPrefix = resolvingPackagesMessage
+      initiateFakeProgressBar()
     }
     const nodeModulesDir = pathJoin(directory, 'node_modules')
     const {bytes, fileCount} = await getFolderSize(nodeModulesDir)
     if (fileCount > 0) {
       if (outputPrefix === resolvingPackagesMessage) {
         outputPrefix = installingPackagesMessage
+        clearInterval(barIncrementerInterval)
+        initiateFakeProgressBar()
       }
       if (bytes > currentByteCount && currentFileCount === fileCount) {
         // Apparently we're growing in bytes but not files, which means we've
         // finished downloading and are in the building stage...
         if (outputPrefix === installingPackagesMessage) {
           outputPrefix = buildingPackagesMessage
+          clearInterval(barIncrementerInterval)
+          progressBarSuffix = ''
+          initiateFakeProgressBar()
         }
       }
       currentFileCount = fileCount
       currentByteCount = bytes
-      outputSuffix = `${bytes} bytes, ${fileCount} files loaded`
+      if (outputPrefix === installingPackagesMessage) {
+        progressBarSuffix = `(${fileCount} files, ${humanBytes(bytes)})`
+      }
     }
-    stdout?.write([outputPrefix, outputSuffix].filter((str) => str).join('\n'))
+    writeOutput()
   }, 200)
+}
+
+const KB = 1024
+const MB = KB * 1024
+const GB = MB * 1024
+
+function humanBytes(bytes: number): string {
+  if (bytes > GB) return `${(bytes / GB).toFixed(2)} GB`
+  if (bytes > MB) return `${(bytes / MB).toFixed(2)} MB`
+  if (bytes > KB) return `${(bytes / MB).toFixed(2)} KB`
+  return `${bytes.toString()} bytes`
 }
 
 async function getFolderSize(directory: string): Promise<{bytes: number; fileCount: number}> {
