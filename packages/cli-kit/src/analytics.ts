@@ -12,9 +12,8 @@ import {getProjectType} from './dependency'
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
 export const reportEvent = async (command: string, args: string[]) => {
-  if (environment.local.isDebug() || environment.local.analyticsDisabled()) {
-    return
-  }
+  if (noTracking()) return
+
   try {
     const currentTime = new Date().getTime()
     const payload = await buildPayload(command, args, currentTime)
@@ -35,6 +34,21 @@ export const reportEvent = async (command: string, args: string[]) => {
     }
     debug(message)
   }
+}
+
+const noTracking = (): boolean => {
+  return environment.local.isDebug() || environment.local.analyticsDisabled()
+}
+
+let startTime: number | undefined
+
+export const startTimer = (currentTime: number = new Date().getTime()) => {
+  startTime = currentTime
+}
+
+const totalTime = (currentTime: number): number | undefined => {
+  if (startTime === undefined) return undefined
+  return currentTime - startTime
 }
 
 const buildHeaders = (currentTime: number) => {
@@ -69,9 +83,9 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
       project_type: await getProjectType(join(directory, 'web')),
       command,
       args: args.join(' '),
-      time_start: currentTime,
+      time_start: startTime,
       time_end: currentTime,
-      total_time: 0,
+      total_time: totalTime(currentTime),
       success: true,
       uname: `${platform} ${arch}`,
       cli_version: cliVersion(),

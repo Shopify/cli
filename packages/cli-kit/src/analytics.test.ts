@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent} from './analytics'
+import {reportEvent, startTimer} from './analytics'
 import * as environment from './environment'
 import * as http from './http'
 import * as os from './os'
@@ -35,6 +35,7 @@ beforeEach(() => {
   vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
   vi.mocked(version.cliVersion).mockReturnValue('3.0.0')
   vi.mocked(dependency.getProjectType).mockResolvedValue('node')
+  startTimer(currentDate.getTime() - 100)
 })
 
 afterEach(() => {
@@ -56,9 +57,9 @@ it('makes an API call to Monorail with the expected payload and headers', async 
       project_type: 'node',
       command,
       args: '',
-      time_start: 1643709600000,
+      time_start: 1643709599900,
       time_end: 1643709600000,
-      total_time: 0,
+      total_time: 100,
       success: true,
       uname: 'darwin arm64',
       cli_version: '3.0.0',
@@ -69,6 +70,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
       partner_id: undefined,
     },
   }
+  expect(http.fetch).toHaveBeenCalled()
   expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
     method: 'POST',
     body: JSON.stringify(expectedBody),
@@ -97,9 +99,9 @@ it('makes an API call to Monorail with the expected payload with cached app info
       project_type: 'node',
       command,
       args: '--path fixtures/app',
-      time_start: currentDate.getTime(),
-      time_end: currentDate.getTime(),
-      total_time: 0,
+      time_start: 1643709599900,
+      time_end: 1643709600000,
+      total_time: 100,
       success: true,
       uname: 'darwin arm64',
       cli_version: '3.0.0',
