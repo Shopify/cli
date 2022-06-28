@@ -119,19 +119,6 @@ it('makes an API call to Monorail with the expected payload with cached app info
   })
 })
 
-it('does nothing in Debug mode', async () => {
-  // Given
-  vi.mocked(environment.local.isDebug).mockReturnValue(true)
-  const command = 'app dev'
-  const args: string[] = []
-
-  // When
-  await reportEvent(command, args)
-
-  // Then
-  expect(http.fetch).not.toHaveBeenCalled()
-})
-
 it('does nothing when analytics are disabled', async () => {
   // Given
   vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)

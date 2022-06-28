@@ -67,10 +67,10 @@ export function isUnitTest(env = process.env): boolean {
 /**
  * Returns true if reporting analytics is enabled.
  * @param env The environment variables from the environment of the current process.
- * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy.
+ * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.noAnalytics])
+  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
 }
 
 /**

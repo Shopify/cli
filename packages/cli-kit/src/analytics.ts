@@ -12,7 +12,7 @@ import {getProjectType} from './dependency'
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
 export const reportEvent = async (command: string, args: string[]) => {
-  if (noTracking()) return
+  if (environment.local.analyticsDisabled()) return
 
   try {
     const currentTime = new Date().getTime()
@@ -34,10 +34,6 @@ export const reportEvent = async (command: string, args: string[]) => {
     }
     debug(message)
   }
-}
-
-const noTracking = (): boolean => {
-  return environment.local.isDebug() || environment.local.analyticsDisabled()
 }
 
 let startTime: number | undefined
