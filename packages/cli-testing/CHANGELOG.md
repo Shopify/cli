@@ -1,5 +1,11 @@
 # @shopify/cli-testing
 
+## 3.0.25
+
+### Patch Changes
+
+- d80d3ae1: Add temporary.localConfig to run tests against a temporary local store
+
 ## 3.0.24
 
 ## 3.0.23
