@@ -1,5 +1,5 @@
-import {Environment} from '../network/service'
-import constants from '../constants'
+import {Environment} from '../network/service.js'
+import constants from '../constants.js'
 
 /**
  * Given an environment variable that represents the environment to use for a given serve,

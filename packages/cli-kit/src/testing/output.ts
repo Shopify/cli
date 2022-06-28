@@ -1,8 +1,8 @@
-import {output} from '@shopify/cli-kit'
+import * as output from '../output.js'
 import {vi} from 'vitest'
 import stripAnsi from 'strip-ansi'
 
-export function mockAndCapture() {
+export function mockAndCaptureOutput() {
   const collectedOutput: string[] = []
   const collectedInfo: string[] = []
   const collectedDebug: string[] = []

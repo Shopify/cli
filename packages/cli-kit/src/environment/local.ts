@@ -1,8 +1,8 @@
-import {isTruthy} from './utilities'
-import {isSpin} from './spin'
-import constants from '../constants'
-import {exists as fileExists} from '../file'
-import {exec} from '../system'
+import {isTruthy} from './utilities.js'
+import {isSpin} from './spin.js'
+import constants from '../constants.js'
+import {exists as fileExists} from '../file.js'
+import {exec} from '../system.js'
 import isInteractive from 'is-interactive'
 import {homedir} from 'node:os'
 

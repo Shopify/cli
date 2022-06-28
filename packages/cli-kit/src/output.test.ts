@@ -1,4 +1,4 @@
-import {token} from './output'
+import {token} from './output.js'
 import {describe, expect, it} from 'vitest'
 
 describe('Output helpers', () => {

@@ -1,6 +1,6 @@
-import {findUp, moduleDirectory} from '../path'
-import {read} from '../file'
-import {Bug} from '../error'
+import {findUp, moduleDirectory} from '../path.js'
+import {read} from '../file.js'
+import {Bug} from '../error.js'
 
 const HTMLFileNames = ['empty-url.html', 'auth-error.html', 'missing-code.html', 'missing-state.html', 'success.html']
 const StylesheetFilename = 'style.css'

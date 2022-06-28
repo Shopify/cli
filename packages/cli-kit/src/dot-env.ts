@@ -1,6 +1,6 @@
-import {Abort} from './error'
-import {exists, read as readFile, write as writeFile} from './file'
-import {debug, content as outputContent, token} from './output'
+import {Abort} from './error.js'
+import {exists, read as readFile, write as writeFile} from './file.js'
+import {debug, content as outputContent, token} from './output.js'
 import {parse, stringify} from 'envfile'
 
 /**

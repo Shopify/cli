@@ -7,9 +7,9 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+    "./*": {
+      "node": "./dist/*.js",
+      "types": "./dist/*.d.ts"
     }
   },
   "files": [
@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "cd .",
+    "build": "tsc -b --verbose",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
     "test": "cd .",
@@ -39,10 +39,7 @@
     "win32"
   ],
   "devDependencies": {
-    "@shopify/cli-kit": "^3.0.24",
-    "strip-ansi": "^7.0.1",
     "tempy": "^2.0.0",
-    "unique-string": "^3.0.0",
     "vitest": "^0.15.1"
   }
 }

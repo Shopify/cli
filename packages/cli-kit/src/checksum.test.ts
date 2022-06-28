@@ -1,15 +1,15 @@
-import {join as pathJoin} from './path'
-import {write as fileWrite} from './file'
-import {validateMD5, InvalidChecksumError} from './checksum'
-import {fetch} from './http'
-import {temporary} from '@shopify/cli-testing'
+import {join as pathJoin} from './path.js'
+import {write as fileWrite} from './file.js'
+import {validateMD5, InvalidChecksumError} from './checksum.js'
+import {fetch} from './http.js'
+import {temporaryDirectory} from '@shopify/cli-testing/temporary'
 import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('./http')
 
 describe('validate', () => {
   it("resolves if the MD5 matches the file's", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await temporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const hash = '098f6bcd4621d373cade4e832627b4f6'
@@ -28,7 +28,7 @@ describe('validate', () => {
   })
 
   it('rejects when the hash is invalid', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await temporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const remoteHash = 'other'

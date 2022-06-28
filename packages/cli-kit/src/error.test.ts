@@ -1,5 +1,5 @@
-import {Abort, Bug, handler} from './error'
-import {error} from './output'
+import {Abort, Bug, handler} from './error.js'
+import {error} from './output.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 beforeEach(() => {

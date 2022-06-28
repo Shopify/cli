@@ -1,5 +1,5 @@
-import {initializeRepository, downloadRepository, GitNotPresentError, ensurePresentOrAbort} from './git'
-import {hasGit} from './environment/local'
+import {initializeRepository, downloadRepository, GitNotPresentError, ensurePresentOrAbort} from './git.js'
+import {hasGit} from './environment/local.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 
 const mockedClone = vi.fn(() => Promise.resolve({current: 'Mocked'}))

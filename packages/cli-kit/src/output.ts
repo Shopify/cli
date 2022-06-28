@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import {Fatal, Bug} from './error'
-import {isUnitTest, isVerbose} from './environment/local'
-import constants from './constants'
-import {DependencyManager} from './dependency'
+import {Fatal, Bug} from './error.js'
+import {isUnitTest, isVerbose} from './environment/local.js'
+import constants from './constants.js'
+import {DependencyManager} from './dependency.js'
 import {
   append as fileAppend,
   mkdirSync as fileMkdirSync,
@@ -10,9 +10,9 @@ import {
   sizeSync as fileSizeSync,
   writeSync as fileWriteSync,
   touchSync as fileTouchSync,
-} from './file'
-import {join as pathJoin, relativize as relativizePath} from './path'
-import {page} from './system'
+} from './file.js'
+import {join as pathJoin, relativize as relativizePath} from './path.js'
+import {page} from './system.js'
 import terminalLink from 'terminal-link'
 import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'

@@ -1,4 +1,4 @@
-import {generateRandomUUID} from './id'
+import {generateRandomUUID} from './id.js'
 import {describe, expect, test} from 'vitest'
 
 describe('generateRandomUUID', () => {

@@ -1,4 +1,4 @@
-import {Version} from './semver'
+import {Version} from './semver.js'
 import {describe, expect, it} from 'vitest'
 
 describe('Version', () => {

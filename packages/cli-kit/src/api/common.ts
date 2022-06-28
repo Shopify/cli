@@ -1,5 +1,5 @@
-import {isShopify} from '../environment/local'
-import constants from '../constants'
+import {isShopify} from '../environment/local.js'
+import constants from '../constants.js'
 import {randomUUID} from 'crypto'
 
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {

@@ -1,4 +1,4 @@
-import {platformAndArch} from './os'
+import {platformAndArch} from './os.js'
 import {describe, it, expect, vi} from 'vitest'
 import {arch as osArch} from 'node:os'
 

@@ -1,5 +1,5 @@
-import {partners, shopify, identity} from './service'
-import {Environment} from '../network/service'
+import {partners, shopify, identity} from './service.js'
+import {Environment} from '../network/service.js'
 import {expect, it, describe} from 'vitest'
 
 describe('partners', () => {

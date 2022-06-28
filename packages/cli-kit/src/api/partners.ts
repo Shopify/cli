@@ -1,8 +1,8 @@
-import {buildHeaders, sanitizedHeadersOutput} from './common'
-import {ScriptServiceProxyQuery} from './graphql'
-import {partners as partnersFqdn} from '../environment/fqdn'
-import {debug, stringifyMessage, content, token as outputToken} from '../output'
-import {ExtendableError} from '../error'
+import {buildHeaders, sanitizedHeadersOutput} from './common.js'
+import {ScriptServiceProxyQuery} from './graphql/index.js'
+import {partners as partnersFqdn} from '../environment/fqdn.js'
+import {debug, stringifyMessage, content, token as outputToken} from '../output.js'
+import {ExtendableError} from '../error.js'
 import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
 
 export class RequestClientError extends ExtendableError {

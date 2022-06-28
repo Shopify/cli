@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {join as pathJoin} from './path'
-import {version as cliKitVersion} from '../package.json'
+import {join as pathJoin, findUp} from './path.js'
+import {read} from './file.js'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
@@ -52,7 +52,11 @@ const constants = {
    * Versions are resolved at build time by Rollup's JSON plugin.
    */
   versions: {
-    cliKit: cliKitVersion,
+    cliKit: async () => {
+      const packageJsonPath = (await findUp('package.json', {type: 'file'})) as string
+      const packageJson = JSON.parse(await read(packageJsonPath))
+      return packageJson.version as string
+    },
   },
   keychain: {
     service: 'shopify-cli',

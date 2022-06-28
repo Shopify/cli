@@ -1,4 +1,4 @@
-import {content as outputContent, token, debug} from './output'
+import {content as outputContent, token, debug} from './output.js'
 import fs from 'fs-extra'
 import del from 'del'
 import tempy from 'tempy'

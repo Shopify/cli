@@ -1,6 +1,6 @@
-import {buildHeaders, sanitizedHeadersOutput} from './common'
-import {isShopify} from '../environment/local'
-import constants from '../constants'
+import {buildHeaders, sanitizedHeadersOutput} from './common.js'
+import {isShopify} from '../environment/local.js'
+import constants from '../constants.js'
 import {test, vi, expect, describe} from 'vitest'
 import {randomUUID} from 'crypto'
 

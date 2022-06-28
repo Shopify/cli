@@ -1,6 +1,6 @@
-import * as admin from './admin'
-import {buildHeaders} from './common'
-import {AdminSession} from '../session'
+import * as admin from './admin.js'
+import {buildHeaders} from './common.js'
+import {AdminSession} from '../session.js'
 import {test, vi, expect, describe} from 'vitest'
 import {request as graphqlRequest} from 'graphql-request'
 

@@ -20,6 +20,10 @@
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
+    },
+    "./testing/*": {
+      "node": "./dist/testing/*.js",
+      "types": "./dist/testing/*.d.ts"
     }
   },
   "files": [
@@ -32,7 +36,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "tsc -b",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
@@ -106,6 +110,9 @@
     "@types/semver": "^7.3.9",
     "vitest": "^0.15.1",
     "semver": "^7.3.6",
-    "ansi-colors": "^4.1.1"
+    "ansi-colors": "^4.1.1",
+    "@shopify/cli-testing": "^3.0.24",
+    "unique-string": "^3.0.0",
+    "strip-ansi": "^7.0.1"
   }
 }

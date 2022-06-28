@@ -1,6 +1,6 @@
-import * as partnersApi from './partners'
-import {buildHeaders} from './common'
-import {partners} from '../environment/fqdn'
+import * as partnersApi from './partners.js'
+import {buildHeaders} from './common.js'
+import {partners} from '../environment/fqdn.js'
 import {test, vi, expect, describe, it} from 'vitest'
 import {ClientError, request as graphqlRequest} from 'graphql-request'
 

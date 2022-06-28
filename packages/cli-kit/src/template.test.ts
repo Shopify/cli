@@ -1,7 +1,7 @@
-import {join} from './path'
-import {write, mkdir, read} from './file'
-import {create, recursiveDirectoryCopy} from './template'
-import {temporary} from '@shopify/cli-testing'
+import {join} from './path.js'
+import {write, mkdir, read} from './file.js'
+import {create, recursiveDirectoryCopy} from './template.js'
+import {temporaryDirectory} from '@shopify/cli-testing/temporary'
 import {describe, expect, it} from 'vitest'
 
 describe('create', () => {
@@ -20,7 +20,7 @@ describe('create', () => {
 describe('recursiveDirectoryCopy', () => {
   it('copies the template and only runs liquid on the files with the .liquid extension', async () => {
     // Given
-    await temporary.directory(async (tmpDir) => {
+    await temporaryDirectory(async (tmpDir) => {
       // Given
       const from = join(tmpDir, 'from')
       const fromPackages = join(from, 'packages')
