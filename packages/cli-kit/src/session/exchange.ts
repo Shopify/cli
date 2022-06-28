@@ -5,6 +5,7 @@ import {Abort} from '../error'
 import {API} from '../network/api'
 import {fetch} from '../http'
 import {identity as identityFqdn} from '../environment/fqdn'
+import {identity} from '../api'
 
 export class InvalidGrantError extends Error {}
 
@@ -105,6 +106,12 @@ async function requestAppToken(
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
 
+  const isValid = await identity.validateIdentityToken(token)
+
+  if (!isValid) {
+    throw new InvalidGrantError('Invalid identity token')
+  }
+
   /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
@@ -113,7 +120,7 @@ async function requestAppToken(
     client_id: clientId,
     audience: appId,
     scope: scopes.join(' '),
-    subject_token: token,
+    subject_token: 'token',
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
   /* eslint-enable @typescript-eslint/naming-convention */
