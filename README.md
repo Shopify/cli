@@ -1,4 +1,4 @@
-<img src="assets/logo.png" width="150"/>
+<img src="https://github.com/Shopify/cli/blob/main/assets/logo.png?raw=true" width="150"/>
 
 # Shopify CLI
 <a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
@@ -46,7 +46,7 @@ Get started using one of the following commands:
 
 If you encounter issues using the CLI or have feedback you'd like to share with us, below are some options:
 
-- [Open a GitHub issue](https://github.com/Shopify/shopify-cli-next/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
+- [Open a GitHub issue](https://github.com/Shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
 - [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.
 
 <p>&nbsp;</p>
