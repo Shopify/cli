@@ -13,8 +13,8 @@ import {
 } from './file.js'
 import {join as pathJoin, relativize as relativizePath} from './path.js'
 import {page} from './system.js'
+import {colors} from './ui.js'
 import terminalLink from 'terminal-link'
-import colors from 'ansi-colors'
 import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

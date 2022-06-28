@@ -3,7 +3,7 @@ import constants from '../constants.js'
 import {randomUUID} from 'crypto'
 
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
-  const userAgent = `Shopify CLI; v=${constants.versions.cliKit}`
+  const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
   const isEmployee = await isShopify()
 
   const headers = {
