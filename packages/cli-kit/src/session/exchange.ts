@@ -146,6 +146,8 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
       // using a valid refresh token. When that happens, we take the user through the authentication flow.
       throw new InvalidGrantError(payload.error_description)
     } else if (payload.error_description === "Invalid 'subject_token' value: invalid") {
+      // There's an scenario when Identity returns "invalid_requests" when exchanging an identity token.
+      // This means the token is invalid. We clear the session and throw an error to let the caller know.
       secureStore.remove()
       throw InvalidIdentityError
     } else {
