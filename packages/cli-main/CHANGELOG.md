@@ -1,5 +1,18 @@
 # @shopify/cli
 
+## 3.0.25
+
+### Patch Changes
+
+- a6ea9c8d: Fix shopify upgrade
+- Updated dependencies [a6ea9c8d]
+- Updated dependencies [822d0fd3]
+- Updated dependencies [bf8137c2]
+- Updated dependencies [e650b499]
+- Updated dependencies [3360289d]
+- Updated dependencies [2a666db7]
+  - @shopify/cli-kit@3.0.25
+
 ## 3.0.24
 
 ### Patch Changes
