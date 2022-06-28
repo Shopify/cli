@@ -1,13 +1,18 @@
 import {ApplicationToken, IdentityToken} from './schema'
 import {applicationId, clientId as getIdentityClientId} from './identity'
 import {CodeAuthResult} from './authorize'
+import * as secureStore from './store'
 import {Abort} from '../error'
 import {API} from '../network/api'
 import {fetch} from '../http'
 import {identity as identityFqdn} from '../environment/fqdn'
-import {identity} from '../api'
 
 export class InvalidGrantError extends Error {}
+
+const InvalidIdentityError = new Abort(
+  '\nError validating auth session',
+  "We've cleared the current session, Please try again",
+)
 
 export interface ExchangeScopes {
   admin: string[]
@@ -106,12 +111,6 @@ async function requestAppToken(
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
 
-  const isValid = await identity.validateIdentityToken(token)
-
-  if (!isValid) {
-    throw new InvalidGrantError('Invalid identity token')
-  }
-
   /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
@@ -146,6 +145,9 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
       // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
       // using a valid refresh token. When that happens, we take the user through the authentication flow.
       throw new InvalidGrantError(payload.error_description)
+    } else if (payload.error_description === "Invalid 'subject_token' value: invalid") {
+      secureStore.remove()
+      throw InvalidIdentityError
     } else {
       throw new Abort(payload.error_description)
     }
