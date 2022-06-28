@@ -127,7 +127,11 @@ export async function install(
         await exec(dependencyManager, ['install'], options)
         break
       case 'yarn':
-        await exec(dependencyManager, ['install', '--json'], {...options, stdout: yarnOut, stderr: yarnOut})
+        await exec(dependencyManager, ['install', '--json', '--verbose'], {
+          ...options,
+          stdout: yarnOut,
+          stderr: yarnOut,
+        })
         break
       case 'npm':
         updateNpmOutput(directory, getDone, stdout)
@@ -157,6 +161,7 @@ function yarnStdout(originalOut?: Writable): Writable | undefined {
   let outputPrefix = ''
   let outputSuffix = ''
   let progressTotal = 0
+  let currentStep = ''
   return new Writable({
     write(chunk, _, next) {
       try {
@@ -177,10 +182,20 @@ function yarnStdout(originalOut?: Writable): Writable | undefined {
                 case 'warning':
                   outputPrefix += `\nWarning: ${data}`
                   break
+                case 'verbose':
+                  if (currentStep === 'Resolving packages') {
+                    const matchData = data.match(/Performing "GET" request to "http?s:\/\/.*\/(.*)"\./)
+                    if (matchData) {
+                      const packageName = matchData[1]
+                      outputPrefix = `Resolving packages (${decodeURIComponent(packageName)})`
+                    }
+                  }
+                  break
               }
             } else {
               switch (chunkContents.type) {
                 case 'step':
+                  currentStep = data.message as string
                   outputPrefix = `${data.message} (${data.current}/${data.total})`
                   outputSuffix = ''
                   break
