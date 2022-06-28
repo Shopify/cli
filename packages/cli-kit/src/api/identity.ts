@@ -1,3 +1,5 @@
+import {identity} from '../environment/fqdn'
+
 export async function validateIdentityToken(token: string) {
   try {
     const instrospectionURL = await getInstrospectionEndpoint()
@@ -9,7 +11,6 @@ export async function validateIdentityToken(token: string) {
     }
 
     const response = await fetch(instrospectionURL, options)
-
     const json = await response.json()
     return json.valid
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -19,7 +20,7 @@ export async function validateIdentityToken(token: string) {
 }
 
 async function getInstrospectionEndpoint(): Promise<string> {
-  const response = await fetch('https://accounts.shopify.com/.well-known/openid-configuration.json')
+  const response = await fetch(`https://${identity()}/.well-known/openid-configuration.json`)
   const json = await response.json()
   return json.introspection_endpoint
 }
