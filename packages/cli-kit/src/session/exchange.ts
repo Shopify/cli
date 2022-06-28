@@ -11,7 +11,7 @@ export class InvalidGrantError extends Error {}
 
 const InvalidIdentityError = new Abort(
   '\nError validating auth session',
-  "We've cleared the current session, Please try again",
+  "We've cleared the current session, please try again",
 )
 
 export interface ExchangeScopes {
@@ -119,7 +119,7 @@ async function requestAppToken(
     client_id: clientId,
     audience: appId,
     scope: scopes.join(' '),
-    subject_token: 'token',
+    subject_token: token,
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
   /* eslint-enable @typescript-eslint/naming-convention */
