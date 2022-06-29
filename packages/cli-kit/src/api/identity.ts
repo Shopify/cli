@@ -10,17 +10,11 @@ export async function validateIdentityToken(token: string) {
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
       body: JSON.stringify({token}),
     }
-    debug(`
-Sending Identity Introspection request:
-URL: ${instrospectionURL}
-
-With options:
-${JSON.stringify(options, null, 2)}
-}
-`)
+    debug(`Sending Identity Introspection request to URL: ${instrospectionURL}`)
 
     const response = await fetch(instrospectionURL, options)
     const json = await response.json()
+
     debug(`The identity token is valid: ${json.valid}`)
     return json.valid
     // eslint-disable-next-line no-catch-all/no-catch-all

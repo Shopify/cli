@@ -3,6 +3,7 @@ import {ApplicationToken, IdentityToken} from './schema'
 import constants from '../constants'
 import {OAuthApplications} from '../session'
 import {identity, partners} from '../api'
+import {debug} from '../output'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -35,7 +36,7 @@ export async function validateSession(
   if (!session) return 'needs_full_auth'
   const scopesAreValid = validateScopes(scopes, session.identity)
   const identityIsValid = await identity.validateIdentityToken(session.identity.accessToken)
-  if (!scopesAreValid || !identityIsValid) return 'needs_full_auth'
+  if (!scopesAreValid) return 'needs_full_auth'
   let tokensAreExpired = isTokenExpired(session.identity)
   let tokensAreRevoked = false
 
@@ -59,8 +60,14 @@ export async function validateSession(
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
+  debug(`
+tokensAreExpired: ${tokensAreExpired}
+tokensAreRevoked: ${tokensAreRevoked}
+identityIsValid: ${identityIsValid}
+  `)
   if (tokensAreRevoked) return 'needs_full_auth'
   if (tokensAreExpired) return 'needs_refresh'
+  if (!identityIsValid) return 'needs_full_auth'
   return 'ok'
 }
 

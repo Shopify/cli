@@ -1,4 +1,4 @@
-import {api, error, output, plugins, session} from '@shopify/cli-kit'
+import {api, error, output, plugins} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
@@ -9,9 +9,7 @@ export async function generateURL(pluginList: Plugin[], frontendPort: number): P
   return url
 }
 
-export async function updateURLs(apiKey: string, url: string): Promise<void> {
-  const token = await session.ensureAuthenticatedPartners()
-
+export async function updateURLs(apiKey: string, url: string, token: string): Promise<void> {
   const variables: api.graphql.UpdateURLsQueryVariables = {
     apiKey,
     appUrl: url,
