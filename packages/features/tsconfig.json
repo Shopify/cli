@@ -8,5 +8,8 @@
     "target": "ES2020",
     "outDir": "dist",
     "baseUrl": "src"
-  }
+  },
+  "references": [
+    {"path": "../cli-kit"}
+  ]
 }
