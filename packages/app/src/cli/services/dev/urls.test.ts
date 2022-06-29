@@ -75,7 +75,7 @@ describe('updateURLs', () => {
     }
 
     // When
-    await updateURLs('apiKey', 'http://localhost:3456')
+    await updateURLs('apiKey', 'http://localhost:3456', 'token')
 
     // Then
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
@@ -86,7 +86,7 @@ describe('updateURLs', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
 
     // When
-    const got = updateURLs('apiKey', 'http://localhost:3456')
+    const got = updateURLs('apiKey', 'http://localhost:3456', 'token')
 
     // Then
     expect(got).rejects.toThrow(new error.Abort(`Boom!`))

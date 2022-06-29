@@ -2,7 +2,8 @@ import {applicationId} from './identity'
 import {ApplicationToken, IdentityToken} from './schema'
 import constants from '../constants'
 import {OAuthApplications} from '../session'
-import {partners} from '../api'
+import {identity, partners} from '../api'
+import {debug} from '../output'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -34,6 +35,7 @@ export async function validateSession(
 ): Promise<ValidationResult> {
   if (!session) return 'needs_full_auth'
   const scopesAreValid = validateScopes(scopes, session.identity)
+  const identityIsValid = await identity.validateIdentityToken(session.identity.accessToken)
   if (!scopesAreValid) return 'needs_full_auth'
   let tokensAreExpired = isTokenExpired(session.identity)
   let tokensAreRevoked = false
@@ -58,8 +60,16 @@ export async function validateSession(
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
+  debug(`
+The validation of the token for application/identity completed with the following results:
+- It's expired: ${tokensAreExpired}
+- It's been revoked: ${tokensAreRevoked}
+- It's invalid in identity: ${!identityIsValid}
+  `)
+
   if (tokensAreRevoked) return 'needs_full_auth'
   if (tokensAreExpired) return 'needs_refresh'
+  if (!identityIsValid) return 'needs_full_auth'
   return 'ok'
 }
 
