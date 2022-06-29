@@ -61,10 +61,12 @@ export async function validateSession(
   }
 
   debug(`
-tokensAreExpired: ${tokensAreExpired}
-tokensAreRevoked: ${tokensAreRevoked}
-identityIsValid: ${identityIsValid}
+The validation of the token for application/identity completed with the following results:
+- It's expired: ${tokensAreExpired}
+- It's been revoked: ${tokensAreRevoked}
+- It's invalid in identity: ${!identityIsValid}
   `)
+
   if (tokensAreRevoked) return 'needs_full_auth'
   if (tokensAreExpired) return 'needs_refresh'
   if (!identityIsValid) return 'needs_full_auth'
