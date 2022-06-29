@@ -2,9 +2,11 @@ import {path, dependency, ui, npm, constants} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local: boolean): Promise<npm.PackageJSON> {
+  const cliKitVersion = await constants.versions.cliKit()
+
   packageJSON.dependencies = packageJSON.dependencies || {}
-  packageJSON.dependencies['@shopify/cli'] = await constants.versions.cliKit()
-  packageJSON.dependencies['@shopify/app'] = await constants.versions.cliKit()
+  packageJSON.dependencies['@shopify/cli'] = cliKitVersion
+  packageJSON.dependencies['@shopify/app'] = cliKitVersion
 
   if (local) {
     const cliPath = `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`
