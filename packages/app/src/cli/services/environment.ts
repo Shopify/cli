@@ -63,9 +63,10 @@ interface DevEnvironmentOutput {
  * @param options {DevEnvironmentInput} Current dev environment options
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
-export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
-  const token = await session.ensureAuthenticatedPartners()
-
+export async function ensureDevEnvironment(
+  options: DevEnvironmentOptions,
+  token: string,
+): Promise<DevEnvironmentOutput> {
   // We retrieve the production identifiers to know if the user has selected the prod app for `dev`
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}

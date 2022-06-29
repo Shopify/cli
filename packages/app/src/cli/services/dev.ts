@@ -9,7 +9,7 @@ import {
 } from '../utilities/app/http-reverse-proxy'
 import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
-import {error, analytics, output, port, system} from '@shopify/cli-kit'
+import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
@@ -42,11 +42,12 @@ async function dev(options: DevOptions) {
       app: await installAppDependencies(options.app),
     }
   }
+  const token = await session.ensureAuthenticatedPartners()
   const {
     identifiers,
     storeFqdn,
     app: {apiSecret},
-  } = await ensureDevEnvironment(options)
+  } = await ensureDevEnvironment(options, token)
 
   let proxyPort: number
   let url: string
@@ -69,7 +70,7 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   if (frontendConfig || backendConfig) {
-    if (options.update) await updateURLs(identifiers.app, url)
+    if (options.update) await updateURLs(identifiers.app, url, token)
     outputAppURL(options.update, storeFqdn, url)
   }
 

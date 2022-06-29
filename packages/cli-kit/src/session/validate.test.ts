@@ -2,7 +2,7 @@ import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {validateSession} from './validate.js'
 import {OAuthApplications} from '../session.js'
-import {partners} from '../api.js'
+import {identity, partners} from '../api.js'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
@@ -75,6 +75,7 @@ beforeEach(() => {
   vi.setSystemTime(currentDate)
   vi.mock('../api')
   vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValue(false)
+  vi.mocked(identity.validateIdentityToken).mockResolvedValue(true)
 })
 
 afterAll(() => {
@@ -100,6 +101,21 @@ describe('validateSession', () => {
   it('returns needs_full_auth if there is no session', async () => {
     // Given
     const session: any = undefined
+
+    // When
+    const got = await validateSession(requestedScopes, defaultApps, session)
+
+    // Then
+    expect(got).toBe('needs_full_auth')
+  })
+
+  it('returns needs_full_auth if identity token is invalid', async () => {
+    // Given
+    const session = {
+      identity: validIdentity,
+      applications: validApplications,
+    }
+    vi.mocked(identity.validateIdentityToken).mockResolvedValueOnce(false)
 
     // When
     const got = await validateSession(requestedScopes, defaultApps, session)
