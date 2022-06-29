@@ -31,14 +31,15 @@ beforeEach(() => {
         graphql: cliKit.api.graphql,
       },
       store: {
-        cliKitStore: () => ({
-          setAppInfo: vi.fn(),
-          getAppInfo: vi.fn(),
-          clearAppInfo: vi.fn(),
-        }),
+        cliKitStore: vi.fn(),
       },
     }
   })
+  vi.mocked(store.cliKitStore).mockReturnValue({
+    getAppInfo: vi.fn(),
+    setAppInfo: vi.fn(),
+    clearAppInfo: vi.fn(),
+  } as any)
 })
 
 const APP1: OrganizationApp = {
