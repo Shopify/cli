@@ -9,6 +9,7 @@ import {
   getOutputUpdateCLIReminder,
   DependencyManager,
   packageJSONContents,
+  getProjectType,
 } from './dependency.js'
 import {exec} from './system.js'
 import {join as pathJoin, normalize as pathNormalize} from './path.js'
@@ -17,6 +18,7 @@ import {write as writeFile} from './file.js'
 import {latestNpmPackageVersion} from './version.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import {temporaryDirectory} from '@shopify/cli-testing/temporary'
+import {temporary} from 'index.js'
 
 vi.mock('./version')
 vi.mock('./system')
@@ -470,4 +472,58 @@ describe('getOutputUpdateCLIReminder', () => {
       )
     },
   )
+})
+
+describe('getProjectType', () => {
+  it('returns node when the directory contains a package.json', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await writeFile(pathJoin(tmpDir, 'package.json'), '')
+
+      // When
+      const got = await getProjectType(tmpDir)
+
+      // Then
+      expect(got).toBe('node')
+    })
+  })
+
+  it('returns ruby when the directory contains a Gemfile', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await writeFile(pathJoin(tmpDir, 'Gemfile'), '')
+
+      // When
+      const got = await getProjectType(tmpDir)
+
+      // Then
+      expect(got).toBe('ruby')
+    })
+  })
+
+  it('returns php when the directory contains a composer.json', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await writeFile(pathJoin(tmpDir, 'composer.json'), '')
+
+      // When
+      const got = await getProjectType(tmpDir)
+
+      // Then
+      expect(got).toBe('php')
+    })
+  })
+
+  it('returns undefined when the directory does not contain a known config file', async () => {
+    await temporary.directory(async (tmpDir) => {
+      // Given
+      await writeFile(pathJoin(tmpDir, 'config.toml'), '')
+
+      // When
+      const got = await getProjectType(tmpDir)
+
+      // Then
+      expect(got).toBe(undefined)
+    })
+  })
 })

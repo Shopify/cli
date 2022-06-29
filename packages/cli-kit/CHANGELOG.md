@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.0.25
+
+### Patch Changes
+
+- a6ea9c8d: Fix shopify upgrade
+- 822d0fd3: Move archiver to @shopify/node/archiver and export it from the package.json
+- bf8137c2: Save session to local storage when secure storage (keychain) is not available
+- e650b499: Add project type to analytics reports
+- 3360289d: Compile function module before deploying function to the registry
+- 2a666db7: Fix the formatting of errors' next steps not respecting the line breaks
+
 ## 3.0.24
 
 ## 3.0.23

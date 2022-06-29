@@ -5,8 +5,9 @@ import * as http from './http.js'
 import * as os from './os.js'
 import * as ruby from './ruby.js'
 import * as store from './store.js'
+import * as dependency from './dependency.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {it, expect, vi, beforeEach, afterAll} from 'vitest'
+import {it, expect, vi, beforeEach, afterEach} from 'vitest'
 
 const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
 const expectedURL = 'https://monorail-edge.shopifysvc.com/v1/produce'
@@ -39,16 +40,17 @@ beforeEach(() => {
   })
   vi.mock('./http')
   vi.mock('./version')
-  // vi.mock('./constants')
+  vi.mock('./dependency')
   vi.mocked(environment.local.isShopify).mockResolvedValue(false)
   vi.mocked(environment.local.isDebug).mockReturnValue(false)
   vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
   vi.mocked(ruby.version).mockResolvedValue('3.1.1')
   vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
   vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
+  vi.mocked(dependency.getProjectType).mockResolvedValue('node')
 })
 
-afterAll(() => {
+afterEach(() => {
   vi.useRealTimers()
 })
 
@@ -64,7 +66,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: undefined,
+      project_type: 'node',
       command,
       args: '',
       time_start: 1643709600000,
@@ -105,7 +107,7 @@ it('makes an API call to Monorail with the expected payload with cached app info
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: undefined,
+      project_type: 'node',
       command,
       args: '--path fixtures/app',
       time_start: currentDate.getTime(),

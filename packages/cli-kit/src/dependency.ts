@@ -351,3 +351,20 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
   }
   return command
 }
+
+export type ProjectType = 'node' | 'php' | 'ruby' | undefined
+
+export async function getProjectType(directory: string): Promise<ProjectType> {
+  const nodeConfigFile = pathJoin(directory, 'package.json')
+  const rubyConfigFile = pathJoin(directory, 'Gemfile')
+  const phpConfigFile = pathJoin(directory, 'composer.json')
+
+  if (await fileExists(nodeConfigFile)) {
+    return 'node'
+  } else if (await fileExists(rubyConfigFile)) {
+    return 'ruby'
+  } else if (await fileExists(phpConfigFile)) {
+    return 'php'
+  }
+  return undefined
+}

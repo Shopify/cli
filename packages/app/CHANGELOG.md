@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 3.0.25
+
+### Patch Changes
+
+- 2a666db7: Only include the "do you have access" next step if the organization id is passed
+- 1b735810: Add ping to the websocket proxy to keep connections alive
+- 0c3aba7d: Make @shopify/cli-kit a dependency instead of a peerDependency
+- 025be76b: Run extensions server only when there are UI extensions
+- 3360289d: Compile function module before deploying function to the registry
+- Updated dependencies [a6ea9c8d]
+- Updated dependencies [822d0fd3]
+- Updated dependencies [bf8137c2]
+- Updated dependencies [e650b499]
+- Updated dependencies [3360289d]
+- Updated dependencies [2a666db7]
+  - @shopify/cli-kit@3.0.25
+
 ## 3.0.24
 
 ### Patch Changes

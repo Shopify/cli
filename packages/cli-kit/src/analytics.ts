@@ -2,9 +2,10 @@
 import * as environment from './environment.js'
 import {fetch} from './http.js'
 import {platformAndArch} from './os.js'
-import {resolve} from './path.js'
+import {join, resolve} from './path.js'
 import {version as rubyVersion} from './ruby.js'
 import {debug, content, token} from './output.js'
+import {getProjectType} from './dependency.js'
 import constants from './constants.js'
 import {cliKitStore} from './store.js'
 
@@ -65,7 +66,7 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
   return {
     schema_id: 'app_cli3_command/1.0',
     payload: {
-      project_type: undefined,
+      project_type: await getProjectType(join(directory, 'web')),
       command,
       args: args.join(' '),
       time_start: currentTime,
