@@ -185,6 +185,8 @@ async function configFor(extension: UIExtension, app: App) {
         capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        configuration_schema: extension.configuration.configurationSchema,
         localization: await loadLocalesConfig(extension.directory),
       }
     }
