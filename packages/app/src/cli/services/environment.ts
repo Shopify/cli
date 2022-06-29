@@ -180,6 +180,8 @@ interface DeployEnvironmentOutput {
  */
 async function fetchDevAppAndPrompt(app: App, token: string): Promise<OrganizationApp | undefined> {
   const devAppId = store.cliKitStore().getAppInfo(app.directory)?.appId
+  console.log(store.cliKitStore().getAppInfo(app.directory))
+  console.log(devAppId)
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)

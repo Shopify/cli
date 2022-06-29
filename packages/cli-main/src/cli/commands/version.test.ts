@@ -1,6 +1,6 @@
 import Version from './version'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {dependency, outputMock as outputMocker} from '@shopify/cli-kit'
+import {dependency, outputMocker} from '@shopify/cli-kit'
 import {DependencyManager} from '@shopify/cli-kit/src/dependency'
 
 const currentVersion = '2.2.2'

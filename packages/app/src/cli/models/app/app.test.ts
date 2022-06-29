@@ -3,7 +3,6 @@ import {testApp, testUIExtension} from './app.test-data'
 import {configurationFileNames, blocks} from '../../constants'
 import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
 import {dependency, dotenv, file, path} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
 
 const DEFAULT_APP: App = {
   name: 'App',
@@ -88,7 +87,7 @@ scopes = "read_products"
   }
 
   it("throws an error if the directory doesn't exist", async () => {
-    await temporary.directory(async (tmp) => {
+    await file.inTemporaryDirectory(async (tmp) => {
       // Given
       await file.rmdir(tmp, {force: true})
 
@@ -495,7 +494,7 @@ scopes = "read_products"
 
 describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's deploy", async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = testUIExtension()
       const app = testApp({
@@ -530,7 +529,7 @@ describe('updateAppIdentifiers', () => {
   })
 
   test("doesn't persist the ids that come from the system's environment and it's deploy", async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = testUIExtension()
       const app = testApp({
@@ -571,7 +570,7 @@ describe('updateAppIdentifiers', () => {
 
 describe('getAppIdentifiers', () => {
   test('returns the right identifiers when variables are defined in the .env file', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = testUIExtension({
         localIdentifier: 'my-extension',
@@ -602,7 +601,7 @@ describe('getAppIdentifiers', () => {
   })
 
   test('returns the right identifiers when variables are defined in the system environment', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = testUIExtension({
         localIdentifier: 'my-extension',
@@ -634,7 +633,7 @@ describe('getAppIdentifiers', () => {
 
 describe('getUIExtensionRendererVersion', () => {
   test('returns the version of the dependency package for product_subscription', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'admin-ui-extensions', '2.4.5')
       DEFAULT_APP.directory = tmpDir
@@ -651,7 +650,7 @@ describe('getUIExtensionRendererVersion', () => {
   })
 
   test('returns the version of the dependency package for checkout_ui_extension', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'checkout-ui-extensions', '1.4.5')
       DEFAULT_APP.directory = tmpDir
@@ -668,7 +667,7 @@ describe('getUIExtensionRendererVersion', () => {
   })
 
   test('returns the version of the dependency package for checkout_post_purchase', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'post-purchase-ui-extensions', '3.4.5')
       DEFAULT_APP.directory = tmpDir
@@ -685,7 +684,7 @@ describe('getUIExtensionRendererVersion', () => {
   })
 
   test('returns the version of the dependency package for web_pixel', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, '@shopify/web-pixels-extension', '3.4.5')
       DEFAULT_APP.directory = tmpDir
@@ -702,7 +701,7 @@ describe('getUIExtensionRendererVersion', () => {
   })
 
   test('returns not_found if there is no renderer package', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       DEFAULT_APP.directory = tmpDir
 
       // When

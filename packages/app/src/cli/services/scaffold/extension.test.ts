@@ -12,7 +12,6 @@ import {
 import {load as loadApp} from '../../models/app/app'
 import {describe, it, expect, vi, test} from 'vitest'
 import {file, output, path, dependency} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -142,7 +141,7 @@ async function createFromTemplate({name, extensionType, appDirectory}: CreateFro
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
-  await temporary.directory(async (tmpDir) => {
+  await file.inTemporaryDirectory(async (tmpDir) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
     const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 

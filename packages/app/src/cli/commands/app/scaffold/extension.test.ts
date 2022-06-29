@@ -5,8 +5,7 @@ import {App, load as loadApp} from '../../../models/app/app'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
 import {describe, expect, it, vi, beforeAll} from 'vitest'
-import {path} from '@shopify/cli-kit'
-import {outputMocker} from '@shopify/cli-testing'
+import {path, outputMocker} from '@shopify/cli-kit'
 
 beforeAll(() => {
   vi.mock('../../../constants')
@@ -109,5 +108,5 @@ function mockSuccessfulCommandExecution(outputConfig: {
   vi.mocked(scaffoldExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
   vi.mocked(scaffoldExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
 
-  return outputMocker.mockAndCapture()
+  return outputMocker.mockAndCaptureOutput()
 }

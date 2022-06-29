@@ -8,7 +8,6 @@ import {
 import {versions} from '../../constants'
 import {describe, it, expect, vi, test} from 'vitest'
 import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
 import {createGzip} from 'node:zlib'
 import {createReadStream, createWriteStream} from 'node:fs'
 import {promisify} from 'node:util'
@@ -105,7 +104,7 @@ describe('validatePlatformSupport', () => {
 
 describe('getBinaryPathOrDownload', () => {
   it('returns the binary path if the binary already exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binariesDirectory = path.join(tmpDir, 'binaries')
       vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
@@ -125,7 +124,7 @@ describe('getBinaryPathOrDownload', () => {
   })
 
   it('throws an error if the platform and architecture are not supported', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binariesDirectory = path.join(tmpDir, 'binaries')
       vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
@@ -143,7 +142,7 @@ describe('getBinaryPathOrDownload', () => {
   })
 
   it('throws if the validation of the MD5 fails', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binaryContent = 'binary'
       const binariesDirectory = path.join(tmpDir, 'binaries')
@@ -176,7 +175,7 @@ describe('getBinaryPathOrDownload', () => {
   })
 
   it('downloads, untars, and gives executable permissions', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binaryContent = 'binary'
       const binariesDirectory = path.join(tmpDir, 'binaries')

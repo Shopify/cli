@@ -2,7 +2,6 @@ import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
 import {version as cliVersion} from '../../../../cli-main/package.json'
 import {version as appVersion} from '../../../../app/package.json'
 import {dependency, file, npm, path, ui} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Writable} from 'stream'
 
@@ -99,7 +98,7 @@ describe('updateCLIDependencies', () => {
 
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'web'))
       await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([

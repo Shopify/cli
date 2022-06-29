@@ -1,5 +1,5 @@
 import * as output from '../output.js'
-import {vi} from 'vitest'
+import {it, vi} from 'vitest'
 import stripAnsi from 'strip-ansi'
 
 export function mockAndCaptureOutput() {
@@ -46,3 +46,5 @@ export function mockAndCaptureOutput() {
     },
   }
 }
+
+it('empty test', () => {})
