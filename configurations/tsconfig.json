@@ -20,7 +20,6 @@
         "@shopify/cli-hydrogen/commands/hydrogen/init": ["../../cli-hydrogen/src/cli/commands/hydrogen/init.ts"],
         "@shopify/cli-kit": ["../../cli-kit/src/index.ts"],
         "@shopify/cli-kit/node/*": ["../../cli-kit/src/node/*.ts"],
-        "@shopify/cli-testing/*": ["../../cli-testing/src/*.ts"],
       }
     },
     "exclude": ["**/dist/**"]

@@ -5,9 +5,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "baseUrl": "src",
-    "rootDir": "src"
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
-  "references": [
-    {"path": "../cli-testing"}
-  ]
+  "references": []
 }

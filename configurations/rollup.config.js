@@ -12,8 +12,6 @@ export const distDir = (packagePath) => {
 
 export const aliases = (packagePath) => {
   return [
-    {find: '@shopify/cli-testing', replacement: path.join(packagePath, '../cli-testing/src/index.ts')},
-    {find: /@shopify\/cli-testing\/(.+)/, replacement: path.join(packagePath, '../cli-testing/src/$1.ts')},
     {find: /@shopify\/cli-kit\/(.+)/, replacement: path.join(packagePath, '../cli-kit/src/$1.ts')},
     {find: '@shopify/cli-kit', replacement: path.join(packagePath, '../cli-kit/src/index.ts')},
   ]
