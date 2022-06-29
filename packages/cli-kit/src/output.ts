@@ -20,6 +20,7 @@ import {AbortController, AbortSignal} from 'abort-controller'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import cjs from 'color-json'
+import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
 let logFile: string
@@ -282,6 +283,29 @@ export const shouldOutput = (logLevel: LogLevel): boolean => {
   return messageLogLevelValue >= currentLogLevelValue
 }
 
+// eslint-disable-next-line import/no-mutable-exports
+export let collectedLogs: {[key: string]: string[]} = {}
+
+/**
+ * This is only used during UnitTesting.
+ * If we are in a testing context, instead of printing the logs to the console,
+ * we will store them in a variable that can be accessed from the tests.
+ * @param key {string} The key of the log.
+ * @param content {string} The content of the log.
+ */
+const collectLog = (key: string, content: Message) => {
+  const output = collectedLogs.output ?? []
+  const data = collectedLogs[key] ?? []
+  data.push(stripAnsi(stringifyMessage(content) ?? ''))
+  output.push(stripAnsi(stringifyMessage(content) ?? ''))
+  collectedLogs[key] = data
+  collectedLogs.output = output
+}
+
+export const clearCollectedLogs = () => {
+  collectedLogs = {}
+}
+
 /**
  * Ouputs information to the user. This is akin to "console.log"
  * Info messages don't get additional formatting.
@@ -289,6 +313,7 @@ export const shouldOutput = (logLevel: LogLevel): boolean => {
  * @param content {string} The content to be output to the user.
  */
 export const info = (content: Message) => {
+  if (isUnitTest()) collectLog('info', content)
   message(content, 'info')
 }
 
@@ -300,6 +325,7 @@ export const info = (content: Message) => {
  */
 export const success = (content: Message) => {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
+  if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', consoleLog, message)
 }
 
@@ -311,6 +337,7 @@ export const success = (content: Message) => {
  */
 export const completed = (content: Message) => {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
+  if (isUnitTest()) collectLog('completed', content)
   outputWhereAppropriate('info', consoleLog, message)
 }
 
@@ -321,6 +348,7 @@ export const completed = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const debug = (content: Message) => {
+  if (isUnitTest()) collectLog('debug', content)
   message(colors.gray(stringifyMessage(content)), 'debug')
 }
 
@@ -331,6 +359,7 @@ export const debug = (content: Message) => {
  * @param content {string} The content to be output to the user.
  */
 export const warn = (content: Message) => {
+  if (isUnitTest()) collectLog('warn', content)
   consoleWarn(colors.yellow(stringifyMessage(content)))
 }
 

@@ -4,7 +4,7 @@ import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../consta
 import {App, load as loadApp} from '../../../models/app/app'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
 import scaffoldExtensionService from '../../../services/scaffold/extension'
-import {describe, expect, it, vi, beforeAll} from 'vitest'
+import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker} from '@shopify/cli-kit'
 
 beforeAll(() => {
@@ -12,6 +12,10 @@ beforeAll(() => {
   vi.mock('../../../models/app/app')
   vi.mock('../../../prompts/scaffold/extension')
   vi.mock('../../../services/scaffold/extension')
+})
+
+afterEach(() => {
+  outputMocker.mockAndCaptureOutput().clear()
 })
 
 describe('after extension command finishes correctly', () => {

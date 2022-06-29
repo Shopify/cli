@@ -1,5 +1,5 @@
 import Version from './version'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {dependency, outputMocker} from '@shopify/cli-kit'
 import {DependencyManager} from '@shopify/cli-kit/src/dependency'
 
@@ -17,6 +17,10 @@ beforeEach(() => {
     }
   })
   vi.spyOn(Version.prototype as any, 'getCurrentVersion').mockReturnValue(currentVersion)
+})
+
+afterEach(() => {
+  outputMocker.mockAndCaptureOutput().clear()
 })
 
 describe('check CLI version', () => {
