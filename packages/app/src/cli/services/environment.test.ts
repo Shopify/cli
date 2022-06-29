@@ -152,7 +152,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
-    const got = await ensureDevEnvironment(INPUT)
+    const got = await ensureDevEnvironment(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
@@ -195,7 +195,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
-    const got = await ensureDevEnvironment(INPUT)
+    const got = await ensureDevEnvironment(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
@@ -239,7 +239,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
-    const got = await ensureDevEnvironment(INPUT)
+    const got = await ensureDevEnvironment(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
@@ -261,7 +261,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
-    const got = await ensureDevEnvironment(INPUT)
+    const got = await ensureDevEnvironment(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
@@ -282,7 +282,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
-    const got = await ensureDevEnvironment(INPUT_WITH_DATA)
+    const got = await ensureDevEnvironment(INPUT_WITH_DATA, 'token')
 
     // Then
     expect(got).toEqual({
@@ -321,7 +321,7 @@ describe('ensureDevEnvironment', () => {
       directory: LOCAL_APP.directory,
     })
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
-    await ensureDevEnvironment({...INPUT, reset: true})
+    await ensureDevEnvironment({...INPUT, reset: true}, 'token')
 
     // Then
     expect(conf.clearAppInfo).toHaveBeenCalledWith(LOCAL_APP.directory)
