@@ -1,5 +1,5 @@
-import {exec} from './system'
-import {exists as fileExists, read as readFile} from './file'
+import {captureOutput, exec} from './system'
+import {exists as fileExists, read as readFile, touch as touchFile} from './file'
 import {glob, dirname, join as pathJoin} from './path'
 import {Abort} from './error'
 import {latestNpmPackageVersion} from './version'
@@ -120,19 +120,27 @@ export async function install(
 ) {
   const options: ExecOptions = {cwd: directory, stdout, stderr, signal}
   let done = false
-  const yarnOut = yarnStdout(stdout)
   const getDone = () => done
+
+  const yarnOut = yarnStdout(stdout)
+  let yarnVersion = '0.0.1'
   try {
     switch (dependencyManager) {
       case 'pnpm':
         await exec(dependencyManager, ['install'], options)
         break
       case 'yarn':
-        await exec(dependencyManager, ['install', '--json', '--verbose'], {
-          ...options,
-          stdout: yarnOut,
-          stderr: yarnOut,
-        })
+        yarnVersion = await captureOutput('yarn', ['-v'])
+        if (yarnVersion < '2') {
+          await exec(dependencyManager, ['install', '--json', '--verbose'], {
+            ...options,
+            stdout: yarnOut,
+            stderr: yarnOut,
+          })
+        } else {
+          await touchFile(pathJoin(directory, 'yarn.lock'))
+          await exec(dependencyManager, ['install'], options)
+        }
         break
       case 'npm':
         updateNpmOutput(directory, getDone, stdout)
