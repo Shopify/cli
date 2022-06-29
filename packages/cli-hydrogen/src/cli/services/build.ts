@@ -35,7 +35,7 @@ async function build({directory, targets, base}: DevOptions) {
       }
     })
 
-  const list = new ui.Listr(tasks, {rendererSilent: environment.local.isUnitTest()})
+  const list = ui.newListr(tasks, {rendererSilent: environment.local.isUnitTest()})
 
   await list.run()
 }

@@ -79,7 +79,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Fetching organization data',

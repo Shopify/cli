@@ -9,7 +9,7 @@ import {dependency, ui, environment} from '@shopify/cli-kit'
  * @returns {Promise<App>} An copy of the app with the Node dependencies updated.
  */
 export async function installAppDependencies(app: App) {
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Installing any necessary dependencies',

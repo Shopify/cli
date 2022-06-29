@@ -254,7 +254,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Fetching organization data',

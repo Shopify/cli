@@ -57,7 +57,7 @@ async function init(options: InitOptions) {
     await file.mkdir(templateDownloadDir)
     await file.mkdir(templateScaffoldDir)
 
-    let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
+    let tasks: ui.ListrTasks = []
 
     const templateInfo = await github.parseRepoUrl(options.template)
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
@@ -178,7 +178,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    const list = new ui.Listr(tasks, {
+    const list = ui.newListr(tasks, {
       concurrent: false,
       rendererOptions: {collapse: false},
       rendererSilent: environment.local.isUnitTest(),
