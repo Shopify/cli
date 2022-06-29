@@ -4,9 +4,10 @@ import * as environment from './environment.js'
 import * as http from './http.js'
 import * as os from './os.js'
 import * as ruby from './ruby.js'
-import * as store from './store.js'
 import * as dependency from './dependency.js'
 import {mockAndCaptureOutput} from './testing/output.js'
+import {cliKitStore} from './store.js'
+import constants from './constants.js'
 import {it, expect, vi, beforeEach, afterEach} from 'vitest'
 
 const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
@@ -22,22 +23,8 @@ beforeEach(() => {
   vi.mock('./environment')
   vi.mock('./ruby')
   vi.mock('./os')
-  vi.mock('./store', () => {
-    return {
-      cliKitStore: () => {
-        return {
-          getAppInfo: () => {
-            return {
-              appId: 'key1',
-              orgId: '1',
-              storeFqdn: 'domain1',
-              directory: '/cached',
-            }
-          },
-        }
-      },
-    }
-  })
+  vi.mock('./store')
+
   vi.mock('./http')
   vi.mock('./version')
   vi.mock('./dependency')
@@ -48,6 +35,13 @@ beforeEach(() => {
   vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
   vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
   vi.mocked(dependency.getProjectType).mockResolvedValue('node')
+
+  vi.mocked(cliKitStore).mockReturnValue({
+    setSession: vi.fn(),
+    getSession: vi.fn(),
+    removeSession: vi.fn(),
+    getAppInfo: vi.fn(),
+  } as any)
 })
 
 afterEach(() => {
@@ -63,6 +57,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
   await reportEvent(command, args)
 
   // Then
+  const version = await constants.versions.cliKit()
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
@@ -74,7 +69,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
       total_time: 0,
       success: true,
       uname: 'darwin arm64',
-      cli_version: '3.0.0',
+      cli_version: version,
       ruby_version: '3.1.1',
       node_version: process.version.replace('v', ''),
       is_employee: false,
@@ -93,7 +88,8 @@ it('makes an API call to Monorail with the expected payload with cached app info
   // Given
   const command = 'app dev'
   const args = ['--path', 'fixtures/app']
-  vi.mocked(store.cliKitStore().getAppInfo).mockReturnValueOnce({
+
+  vi.mocked(cliKitStore().getAppInfo).mockReturnValueOnce({
     appId: 'key1',
     orgId: '1',
     storeFqdn: 'domain1',
@@ -104,6 +100,7 @@ it('makes an API call to Monorail with the expected payload with cached app info
   await reportEvent(command, args)
 
   // Then
+  const version = await constants.versions.cliKit()
   const expectedBody = {
     schema_id: 'app_cli3_command/1.0',
     payload: {
@@ -115,7 +112,7 @@ it('makes an API call to Monorail with the expected payload with cached app info
       total_time: 0,
       success: true,
       uname: 'darwin arm64',
-      cli_version: '3.0.0',
+      cli_version: version,
       ruby_version: '3.1.1',
       node_version: process.version.replace('v', ''),
       is_employee: false,
@@ -167,7 +164,6 @@ it('shows an error if the Monorail request fails', async () => {
   await reportEvent(command, args)
 
   // Then
-  console.log(outputMock.debug())
   expect(outputMock.debug()).toMatch('Failed to report usage analytics: Monorail is down')
 })
 

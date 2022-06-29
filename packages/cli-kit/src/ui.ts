@@ -8,12 +8,9 @@ import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {isTruthy} from './environment/utilities.js'
 import inquirer from 'inquirer'
-import {createRequire} from 'module'
 
 export {Listr} from 'listr2'
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
-const require = createRequire(import.meta.url)
-export const colors = require('ansi-colors')
 
 interface BaseQuestion<TName extends string> {
   name: TName

@@ -1,7 +1,7 @@
 // Enquirer types are totally broken so we need to disable typescript checks for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import {colors} from '../ui.js'
+import {colors} from '../colors.js'
 import enquirer from 'enquirer'
 
 export class AutoComplete extends enquirer.AutoComplete {
