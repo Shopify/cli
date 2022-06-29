@@ -1,6 +1,11 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {uploadThemeExtensions, uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
+import {
+  uploadThemeExtensions,
+  uploadFunctionExtensions,
+  uploadUIExtensionsBundle,
+  ValidationErrors,
+} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
 import {fetchAppExtensionRegistrations} from './dev/fetch'
@@ -76,13 +81,16 @@ export const deploy = async (options: DeployOptions) => {
       output.info(`Pushing your code to Shopify…`)
       output.newline()
 
+      let validationErrors: ValidationErrors | undefined
       if (bundle) {
         /**
          * The bundles only support UI extensions for now so we only need bundle and upload
          * the bundle if the app has UI extensions.
          */
-        await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+        validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
+      console.log('VALIDATION ERRORS: ')
+      console.log(JSON.stringify(validationErrors, null, 2))
       await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
@@ -91,7 +99,7 @@ export const deploy = async (options: DeployOptions) => {
 
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
-      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations})
+      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations, validationErrors})
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
@@ -110,17 +118,27 @@ async function outputCompletionMessage({
   partnersOrganizationId,
   identifiers,
   registrations,
+  validationErrors,
 }: {
   app: App
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   partnersOrganizationId: string
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
+  validationErrors?: ValidationErrors
 }) {
   output.newline()
   output.info('  Summary:')
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(output.content`    · ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    const uuid = identifiers.extensions[extension.localIdentifier]
+    const error = validationErrors && validationErrors[uuid]
+    if (error) {
+      output.info(output.content`       - ${output.token.errorText('Validation errors found:')}`)
+      error.forEach((err) => {
+        output.info(output.content`         ${err.message} in ${err.field.join(', ')}`)
+      })
+    }
   }
   const outputDeployedAndLivedMessage = (extension: Extension) => {
     output.info(output.content`    · ${extension.localIdentifier} is live`)

@@ -60,11 +60,15 @@ interface UploadUIExtensionsBundleOptions {
   extensions: api.graphql.ExtensionSettings[]
 }
 
+export interface ValidationErrors {
+  [key: string]: {message: string; field: string[]}[]
+}
+
 /**
  * Uploads a bundle.
  * @param options {UploadUIExtensionsBundleOptions} The upload options
  */
-export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundleOptions) {
+export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundleOptions): Promise<ValidationErrors> {
   const deploymentUUID = id.generateRandomUUID()
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
@@ -86,10 +90,20 @@ export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundle
 
   const mutation = api.graphql.CreateDeployment
   const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
+
   if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
+
+  return result.deploymentCreate.deployment.deployedVersions
+    .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
+    .reduce((acc, curr) => {
+      return {
+        ...acc,
+        ...{[curr.extensionVersion.registrationUuid]: curr.extensionVersion.validationErrors},
+      }
+    }, {})
 }
 
 /**
