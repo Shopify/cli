@@ -1,8 +1,7 @@
 import {DotEnvNotFoundError, read, write} from './dot-env.js'
 import {join as pathJoin} from './path.js'
-import {write as writeFile} from './file.js'
+import {inTemporaryDirectory, write as writeFile} from './file.js'
 import {describe, expect, test} from 'vitest'
-import {temporaryDirectory} from '@shopify/cli-testing/temporary'
 
 describe('read', () => {
   test('throws an error if the file does not exist', async () => {
@@ -14,7 +13,7 @@ describe('read', () => {
   })
 
   test('returns the file if it exists and the format is valid', async () => {
-    await temporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const dotEnvPath = pathJoin(tmpDir, '.env')
       await writeFile(dotEnvPath, 'FOO=BAR')
@@ -31,7 +30,7 @@ describe('read', () => {
 
 describe('write', () => {
   test('creates a file if the .env does not exist', async () => {
-    await temporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const dotEnvPath = pathJoin(tmpDir, '.env')
 
@@ -51,7 +50,7 @@ describe('write', () => {
   })
 
   test('overrides any existing file', async () => {
-    await temporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const dotEnvPath = pathJoin(tmpDir, '.env')
       await writeFile(dotEnvPath, 'FOO=BAR')

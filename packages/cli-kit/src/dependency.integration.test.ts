@@ -1,12 +1,11 @@
 import {join as pathJoin, dirname} from './path.js'
-import {write as writeFile, mkdir} from './file.js'
+import {write as writeFile, mkdir, inTemporaryDirectory} from './file.js'
 import {installNPMDependenciesRecursively} from './dependency.js'
 import {describe, expect, test} from 'vitest'
-import {temporaryDirectory} from '@shopify/cli-testing/temporary'
 
 describe('installNPMDependenciesRecursively', () => {
   test('runs install in all the directories containing a package.json', async () => {
-    await temporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const rootPackage = pathJoin(tmpDir, 'package.json')
       const webPackage = pathJoin(tmpDir, 'web/package.json')
