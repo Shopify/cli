@@ -1,6 +1,5 @@
-const {convertUrlToWebSocket} = require('./utils.cjs')
-const From = require('@fastify/reply-from')
-const WebSocket = require('ws')
+import From from '@fastify/reply-from'
+import WebSocket, {WebSocketServer} from 'ws'
 
 const httpMethods = ['DELETE', 'GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'OPTIONS']
 const urlPattern = /^https?:\/\//
@@ -57,8 +56,12 @@ function proxyWebSockets(source, target) {
   target.on('unexpected-response', () => close(1011, 'unexpected response'))
 }
 
+function convertUrlToWebSocket(urlString) {
+  return urlString.replace(/^(http)(s)?:\/\//, 'ws$2://')
+}
+
 function setupWebSocketProxy(fastify, options, rewritePrefix) {
-  const server = new WebSocket.Server({
+  const server = new WebSocketServer({
     server: fastify.server,
     ...options.wsServerOptions,
   })
@@ -215,6 +218,5 @@ httpProxy[Symbol.for('plugin-meta')] = {
   name: '@fastify/http-proxy',
 }
 
-module.exports = httpProxy
-module.exports.default = httpProxy
-module.exports.fastifyHttpProxy = httpProxy
+export default httpProxy
+export const fastifyHttpProxy = httpProxy
