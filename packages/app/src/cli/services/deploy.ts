@@ -16,8 +16,8 @@ import {
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
+import {OrganizationApp} from '../models/organization.js'
 import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
-import {OrganizationApp} from 'models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
 const RendererNotFoundBug = (extension: string) => {
