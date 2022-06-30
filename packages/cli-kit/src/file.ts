@@ -88,6 +88,10 @@ export async function append(path: string, data: string): Promise<void> {
   await fs.appendFile(path, data)
 }
 
+export function appendSync(path: string, data: string): void {
+  fs.appendFileSync(path, data)
+}
+
 export async function mkdir(path: string): Promise<void> {
   debug(outputContent`Creating directory at ${token.path(path)}...`)
   await fs.mkdirp(path)
