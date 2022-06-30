@@ -1,5 +1,5 @@
-import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
-import cleanup from '../utils/template/cleanup'
+import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
+import cleanup from '../utils/template/cleanup.js'
 
 import {
   string,

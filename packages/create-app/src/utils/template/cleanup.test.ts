@@ -1,4 +1,4 @@
-import cleanup from './cleanup'
+import cleanup from './cleanup.js'
 import {file, path} from '@shopify/cli-kit'
 import {describe, expect, it} from 'vitest'
 

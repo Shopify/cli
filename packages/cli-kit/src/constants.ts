@@ -53,7 +53,7 @@ const constants = {
    */
   versions: {
     cliKit: async () => {
-      const packageJsonPath = (await findUp('package.json', {type: 'file'})) as string
+      const packageJsonPath = (await findUp('@shopify/cli-kit/package.json', {type: 'file'})) as string
       const packageJson = JSON.parse(await read(packageJsonPath))
       return packageJson.version as string
     },

@@ -1,5 +1,5 @@
-import initPrompt, {templateURLMap} from '../prompts/init'
-import initService from '../services/init'
+import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initService from '../services/init.js'
 import {Command, Flags} from '@oclif/core'
 import {path, cli, analytics, error, output} from '@shopify/cli-kit'
 
