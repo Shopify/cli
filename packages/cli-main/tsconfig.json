@@ -7,7 +7,6 @@
     "baseUrl": "src"
   },
   "references": [
-    {"path": "../cli-kit"},
-    {"path": "../app"},
+    {"path": "../cli-kit"}
   ]
 }
