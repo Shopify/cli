@@ -3,6 +3,7 @@ import {Fatal, Bug} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
 import constants from './constants.js'
 import {PackageManager} from './node/node-package-manager.js'
+import {generateRandomUUID} from './id.js'
 import {
   append as fileAppend,
   appendSync as fileAppendSync,
@@ -25,6 +26,7 @@ import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
 let logFile: string
+let commandUuid: string
 
 export function initiateLogging({
   logDir = constants.paths.directories.cache.path(),
@@ -37,6 +39,7 @@ export function initiateLogging({
   logFile = pathJoin(logDir, filename)
   fileTouchSync(logFile)
   truncateLogs()
+  commandUuid = generateRandomUUID()
 }
 
 // Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long.
@@ -563,7 +566,7 @@ export function logToFile(message: string, logLevel: string, sync = false): void
   // If file logging hasn't been initiated, skip it
   if (!logFileExists()) return
   const timestamp = new Date().toISOString()
-  const logContents = `[${timestamp} ${logLevel}]: ${message}\n`
+  const logContents = `[${timestamp} ${commandUuid} ${logLevel}]: ${message}\n`
   if (sync) {
     fileAppendSync(logFile, logContents)
   } else {
