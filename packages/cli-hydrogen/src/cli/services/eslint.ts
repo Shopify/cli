@@ -10,7 +10,7 @@ interface AddESlintOptions {
 }
 
 export async function addESLint({app, force, install}: AddESlintOptions) {
-  const list = new ui.Listr([
+  const list = ui.newListr([
     {
       title: 'Installing additional dependencies',
       skip: () => !install,

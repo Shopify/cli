@@ -19,7 +19,7 @@ const tailwindImportsExist = (indexCSS: string) =>
   tailwindImports.map((el) => new RegExp(el)).every((tailwindDirective) => tailwindDirective.test(indexCSS))
 
 export async function addTailwind({app, force, install, directory}: AddTailwindOptions) {
-  const list = new ui.Listr([
+  const list = ui.newListr([
     {
       title: 'Installing additional dependencies',
       skip: () => !install,

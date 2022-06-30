@@ -8,7 +8,7 @@ vi.mock('@shopify/cli-kit', async () => {
   return {
     ...cliKit,
     ui: {
-      Listr: vi.fn(),
+      newListr: vi.fn(),
     },
     dependency: {
       installNPMDependenciesRecursively: vi.fn(),
@@ -46,14 +46,14 @@ describe('installAppDependencies', () => {
     }
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}
-    vi.mocked(ui.Listr).mockReturnValue(list)
+    vi.mocked(ui.newListr).mockReturnValue(list)
 
     // When
     await installAppDependencies(app)
 
     // Then
-    expect(vi.mocked(ui.Listr).mock.calls.length).toEqual(1)
-    const tasks = vi.mocked(ui.Listr).mock.calls[0][0] as any
+    expect(vi.mocked(ui.newListr).mock.calls.length).toEqual(1)
+    const tasks = vi.mocked(ui.newListr).mock.calls[0][0] as any
     expect(tasks.length).toEqual(1)
     const task = tasks[0]
     expect(task.title).not.toBe('')

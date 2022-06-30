@@ -70,7 +70,7 @@ async function uiExtensionInit({
   extensionFlavor,
   extensionDirectory,
 }: UIExtensionInitOptions) {
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Install additional dependencies',
@@ -165,7 +165,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    const list = new ui.Listr(
+    const list = ui.newListr(
       [
         {
           title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
