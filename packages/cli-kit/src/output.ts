@@ -344,9 +344,9 @@ export const completed = (content: Message) => {
  * Note: Debug messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
  */
-export const debug = (content: Message) => {
+export const debug = (content: Message, sync = false) => {
   if (isUnitTest()) collectLog('debug', content)
-  message(colors.gray(stringifyMessage(content)), 'debug')
+  message(colors.gray(stringifyMessage(content)), 'debug', sync)
 }
 
 /**
@@ -374,7 +374,7 @@ export const newline = () => {
  * error handler handle and format it.
  * @param content {Fatal} The fatal error to be output.
  */
-export const error = async (content: Fatal) => {
+export const error = async (content: Fatal, sync = false) => {
   if (!content.message) {
     return
   }
@@ -418,7 +418,7 @@ export const error = async (content: Fatal) => {
     }
   }
   outputString += footer
-  outputWhereAppropriate('error', consoleError, outputString)
+  outputWhereAppropriate('error', consoleError, outputString, sync)
 }
 
 export function stringifyMessage(message: Message): string {
@@ -429,9 +429,9 @@ export function stringifyMessage(message: Message): string {
   }
 }
 
-const message = (content: Message, level: LogLevel = 'info') => {
+const message = (content: Message, level: LogLevel = 'info', sync = false) => {
   const stringifiedMessage = stringifyMessage(content)
-  outputWhereAppropriate(level, consoleLog, stringifiedMessage)
+  outputWhereAppropriate(level, consoleLog, stringifiedMessage, sync)
 }
 
 export interface OutputProcess {
@@ -540,11 +540,16 @@ function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) => void, message: string): void {
+function outputWhereAppropriate(
+  logLevel: LogLevel,
+  logFunc: (message: string) => void,
+  message: string,
+  sync = false,
+): void {
   if (shouldOutput(logLevel)) {
     logFunc(message)
   }
-  logToFile(message, logLevel.toUpperCase())
+  logToFile(message, logLevel.toUpperCase(), sync)
 }
 
 export function logFileExists(): boolean {
@@ -554,14 +559,12 @@ export function logFileExists(): boolean {
 // DO NOT USE THIS FUNCTION DIRECTLY under normal circumstances.
 // It is exported purely for use in cases where output is already being logged
 // to the terminal but is not reflected in the logfile, e.g. Listr output.
-export function logToFile(message: string, logLevel: string): void {
+export function logToFile(message: string, logLevel: string, sync = false): void {
   // If file logging hasn't been initiated, skip it
   if (!logFileExists()) return
   const timestamp = new Date().toISOString()
   const logContents = `[${timestamp} ${logLevel}]: ${message}\n`
-  if (logLevel === 'ERROR') {
-    // Error logs usually happen just before process exits. We need to handle
-    // this synchronously to give time for the file to be written before exit.
+  if (sync) {
     fileAppendSync(logFile, logContents)
   } else {
     fileAppend(logFile, logContents)
