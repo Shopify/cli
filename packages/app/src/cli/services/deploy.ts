@@ -1,11 +1,6 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {
-  uploadThemeExtensions,
-  uploadFunctionExtensions,
-  uploadUIExtensionsBundle,
-  UploadExtensionsValidationErrors,
-} from './deploy/upload'
+import {uploadThemeExtensions, uploadUIExtensionsBundle, UploadExtensionValidationError} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
 import {fetchAppExtensionRegistrations} from './dev/fetch'
@@ -20,7 +15,6 @@ import {
 } from '../models/app/app'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {validateExtensions} from '../validators/extensions'
 import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
 import {OrganizationApp} from 'cli/models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
@@ -81,7 +75,7 @@ export const deploy = async (options: DeployOptions) => {
       output.info(`Pushing your code to Shopify…`)
       output.newline()
 
-      let validationErrors: UploadExtensionsValidationErrors | undefined
+      let validationErrors: UploadExtensionValidationError[] = []
       if (bundle) {
         /**
          * The bundles only support UI extensions for now so we only need bundle and upload
@@ -94,7 +88,11 @@ export const deploy = async (options: DeployOptions) => {
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
-      output.success('Deployed to Shopify')
+      if (validationErrors.length > 0) {
+        output.completed('Deployed to Shopify, but fixes are needed')
+      } else {
+        output.success('Deployed to Shopify')
+      }
 
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
@@ -124,18 +122,19 @@ async function outputCompletionMessage({
   partnersOrganizationId: string
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
-  validationErrors?: UploadExtensionsValidationErrors
+  validationErrors: UploadExtensionValidationError[]
 }) {
   output.newline()
   output.info('  Summary:')
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
     output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
     const uuid = identifiers.extensions[extension.localIdentifier]
-    const error = validationErrors && validationErrors[uuid]
-    if (error) {
+    const validationError = validationErrors.find((error) => error.uuid === uuid)
+
+    if (validationError) {
       const title = output.token.errorText('Validation errors found in your extension toml file')
       output.info(output.content`       - ${title} `)
-      error.forEach((err) => {
+      validationError.errors.forEach((err) => {
         output.info(output.content`       └ ${output.token.italic(err.message)}`)
       })
     }

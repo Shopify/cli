@@ -60,8 +60,12 @@ interface UploadUIExtensionsBundleOptions {
   extensions: api.graphql.ExtensionSettings[]
 }
 
-export interface UploadExtensionsValidationErrors {
-  [key: string]: {message: string; field: string[]}[]
+export interface UploadExtensionValidationError {
+  uuid: string
+  errors: {
+    message: string
+    field: string[]
+  }[]
 }
 
 /**
@@ -70,7 +74,7 @@ export interface UploadExtensionsValidationErrors {
  */
 export async function uploadUIExtensionsBundle(
   options: UploadUIExtensionsBundleOptions,
-): Promise<UploadExtensionsValidationErrors> {
+): Promise<UploadExtensionValidationError[]> {
   const deploymentUUID = id.generateRandomUUID()
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
@@ -98,14 +102,12 @@ export async function uploadUIExtensionsBundle(
     throw new error.Abort(errors)
   }
 
-  return result.deploymentCreate.deployment.deployedVersions
+  const validationErrors = result.deploymentCreate.deployment.deployedVersions
     .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
-    .reduce((acc, curr) => {
-      return {
-        ...acc,
-        ...{[curr.extensionVersion.registrationUuid]: curr.extensionVersion.validationErrors},
-      }
-    }, {})
+    .map((ver) => {
+      return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
+    })
+  return validationErrors
 }
 
 /**

@@ -46,7 +46,7 @@ export interface CreateDeploymentSchema {
           uuid: string
           registrationUuid: string
           validationErrors: {
-            field: string
+            field: string[]
             message: string
           }[]
         }
