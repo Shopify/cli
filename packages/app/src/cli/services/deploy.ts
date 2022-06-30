@@ -4,7 +4,7 @@ import {
   uploadThemeExtensions,
   uploadFunctionExtensions,
   uploadUIExtensionsBundle,
-  ValidationErrors,
+  UploadExtensionsValidationErrors,
 } from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
@@ -81,7 +81,7 @@ export const deploy = async (options: DeployOptions) => {
       output.info(`Pushing your code to Shopify…`)
       output.newline()
 
-      let validationErrors: ValidationErrors | undefined
+      let validationErrors: UploadExtensionsValidationErrors | undefined
       if (bundle) {
         /**
          * The bundles only support UI extensions for now so we only need bundle and upload
@@ -89,8 +89,7 @@ export const deploy = async (options: DeployOptions) => {
          */
         validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
-      console.log('VALIDATION ERRORS: ')
-      console.log(JSON.stringify(validationErrors, null, 2))
+
       await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
@@ -125,7 +124,7 @@ async function outputCompletionMessage({
   partnersOrganizationId: string
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
-  validationErrors?: ValidationErrors
+  validationErrors?: UploadExtensionsValidationErrors
 }) {
   output.newline()
   output.info('  Summary:')

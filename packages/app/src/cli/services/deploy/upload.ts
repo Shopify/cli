@@ -60,7 +60,7 @@ interface UploadUIExtensionsBundleOptions {
   extensions: api.graphql.ExtensionSettings[]
 }
 
-export interface ValidationErrors {
+export interface UploadExtensionsValidationErrors {
   [key: string]: {message: string; field: string[]}[]
 }
 
@@ -68,7 +68,9 @@ export interface ValidationErrors {
  * Uploads a bundle.
  * @param options {UploadUIExtensionsBundleOptions} The upload options
  */
-export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundleOptions): Promise<ValidationErrors> {
+export async function uploadUIExtensionsBundle(
+  options: UploadUIExtensionsBundleOptions,
+): Promise<UploadExtensionsValidationErrors> {
   const deploymentUUID = id.generateRandomUUID()
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
