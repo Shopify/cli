@@ -2,9 +2,10 @@
 import {version as cliVersion} from '../package.json'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment, output} from '@shopify/cli-kit'
+import {error as kitError, environment, output, store} from '@shopify/cli-kit'
 
-function runCLI() {
+async function runCLI() {
+  await store.initializeCliKitStore()
   output.initiateLogging({filename: 'shopify.cli.log'})
   if (environment.local.isDebug()) {
     settings.debug = true

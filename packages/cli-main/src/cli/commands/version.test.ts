@@ -1,7 +1,6 @@
 import Version from './version'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {outputMocker} from '@shopify/cli-testing'
-import {dependency} from '@shopify/cli-kit'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {dependency, outputMocker} from '@shopify/cli-kit'
 import {DependencyManager} from '@shopify/cli-kit/src/dependency'
 
 const currentVersion = '2.2.2'
@@ -20,18 +19,18 @@ beforeEach(() => {
   vi.spyOn(Version.prototype as any, 'getCurrentVersion').mockReturnValue(currentVersion)
 })
 
-describe('check CLI version', () => {
-  function getDependencyManagerUpgradeCommand(dependencyManager: string): string {
-    return `${dependencyManager} ${dependencyManager === 'yarn' ? 'upgrade' : 'update'}`
-  }
+afterEach(() => {
+  outputMocker.mockAndCaptureOutput().clear()
+})
 
+describe('check CLI version', () => {
   it.each(['yarn', 'npm', 'pnpm'])(
     'display latest version and %s upgrade message when a newer exists',
     async (dependencyManager: string) => {
       // Given
 
       const latestVersion = '3.0.10'
-      const outputMock = outputMocker.mockAndCapture()
+      const outputMock = outputMocker.mockAndCaptureOutput()
       vi.mocked(dependency.checkForNewVersion).mockResolvedValue(latestVersion)
       vi.mocked(dependency.dependencyManagerUsedForCreating).mockReturnValue(dependencyManager as DependencyManager)
       const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
@@ -51,7 +50,7 @@ describe('check CLI version', () => {
 
   it('display only current version when no newer version exists', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCapture()
+    const outputMock = outputMocker.mockAndCaptureOutput()
     vi.mocked(dependency.checkForNewVersion).mockResolvedValue(currentVersion)
 
     // When
@@ -67,7 +66,7 @@ describe('check CLI version', () => {
 
   it('display only current version when an error is thrown when getting latest version', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCapture()
+    const outputMock = outputMocker.mockAndCaptureOutput()
     vi.mocked(dependency.checkForNewVersion).mockResolvedValue(undefined)
 
     // When

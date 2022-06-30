@@ -4,6 +4,9 @@
   "exclude": ["./dist", "./src/templates/**/*"],
   "compilerOptions": {
     "outDir": "dist",
-    "baseUrl": "src"
-  }
+    "baseUrl": "src",
+  },
+  "references": [
+    {"path": "../cli-kit"}
+  ]
 }

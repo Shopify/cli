@@ -1,6 +1,6 @@
-import {lookupTunnelPlugin} from './plugins'
-import {mkdir, mkTmpDir, rmdir, write} from './file'
-import {join} from './path'
+import {lookupTunnelPlugin} from './plugins.js'
+import {mkdir, mkTmpDir, rmdir, write} from './file.js'
+import {join} from './path.js'
 import {describe, expect, it} from 'vitest'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
@@ -31,7 +31,7 @@ describe('lookupTunnelPlugin', () => {
 
   it('returns the tunnel module when the ngrok plugin is present', async () => {
     // Given
-    // Using mkTmpDir instead of temporary.directory because the folder needs to be inside the project to be imported
+    // Using mkTmpDir instead of temporaryDirectory because the folder needs to be inside the project to be imported
     const tmpDir = await mkTmpDir()
     const distDir = join(tmpDir, 'dist')
     await mkdir(distDir)

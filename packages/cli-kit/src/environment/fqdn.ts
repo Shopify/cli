@@ -2,9 +2,9 @@ import {
   partners as partnersEnvironment,
   shopify as shopifyEnvironment,
   identity as identityEnvironment,
-} from './service'
-import {fqdn as spinFqdn} from './spin'
-import {Abort} from '../error'
+} from './service.js'
+import {fqdn as spinFqdn} from './spin.js'
+import {Abort} from '../error.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",

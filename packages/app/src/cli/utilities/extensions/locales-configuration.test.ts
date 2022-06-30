@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {loadLocalesConfig} from './locales-configuration'
 import {describe, expect, it} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 import {file, path} from '@shopify/cli-kit'
 
 describe('loadLocalesConfig', () => {
   it('Works if all locales are correct', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
@@ -26,7 +25,7 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if one locale is empty', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
@@ -43,7 +42,7 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if one locale is too big', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
@@ -61,7 +60,7 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if there are no defaults', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.json')
@@ -78,7 +77,7 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if there are multiple defaults', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.default.json')
@@ -95,7 +94,7 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if bundle is too big', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.default.json')

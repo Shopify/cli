@@ -12,7 +12,7 @@ import {ensureDeploymentIdsPresence} from './environment/identifiers'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {error as kitError, output, session, store as conf, ui, environment, dependency} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, ui, environment, dependency} from '@shopify/cli-kit'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
@@ -74,7 +74,7 @@ export async function ensureDevEnvironment(
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
-    apiKey: options.apiKey ?? conf.getAppInfo(options.app.directory)?.appId,
+    apiKey: options.apiKey ?? store.cliKitStore().getAppInfo(options.app.directory)?.appId,
   })
 
   const explanation =
@@ -93,7 +93,9 @@ export async function ensureDevEnvironment(
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
-    conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
+    store
+      .cliKitStore()
+      .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
 
     // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
     const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
@@ -111,12 +113,16 @@ export async function ensureDevEnvironment(
   }
 
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
-  conf.setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
+  store
+    .cliKitStore()
+    .setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
-  conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
+  store
+    .cliKitStore()
+    .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
     showReusedValues(organization.businessName, options.app, selectedStore)
@@ -174,7 +180,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 async function fetchDevAppAndPrompt(app: App, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = conf.getAppInfo(app.directory)?.appId
+  const devAppId = store.cliKitStore().getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -310,10 +316,10 @@ function getAppDevCachedInfo({
   reset: boolean
   directory: string
   apiKey?: string
-}): conf.CachedAppInfo | undefined {
+}): store.CachedAppInfo | undefined {
   if (!apiKey) return undefined
-  if (apiKey && reset) conf.clearAppInfo(directory)
-  return conf.getAppInfo(directory)
+  if (apiKey && reset) store.cliKitStore().clearAppInfo(directory)
+  return store.cliKitStore().getAppInfo(directory)
 }
 
 /**

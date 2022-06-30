@@ -1,11 +1,11 @@
-import {listenRedirect} from './redirect-listener'
-import {clientId} from './identity'
-import {generateRandomChallengePair, randomHex} from '../string'
-import {open} from '../system'
-import {Abort} from '../error'
-import {identity as identityFqdn} from '../environment/fqdn'
-import * as output from '../output'
-import {keypress} from '../ui'
+import {listenRedirect} from './redirect-listener.js'
+import {clientId} from './identity.js'
+import {generateRandomChallengePair, randomHex} from '../string.js'
+import {open} from '../system.js'
+import {Abort} from '../error.js'
+import {identity as identityFqdn} from '../environment/fqdn.js'
+import * as output from '../output.js'
+import {keypress} from '../ui.js'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",

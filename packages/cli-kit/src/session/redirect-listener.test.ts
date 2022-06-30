@@ -1,4 +1,4 @@
-import {RedirectListener} from './redirect-listener'
+import {RedirectListener} from './redirect-listener.js'
 import {beforeEach, describe, it, vi, expect} from 'vitest'
 import Fastify from 'fastify'
 

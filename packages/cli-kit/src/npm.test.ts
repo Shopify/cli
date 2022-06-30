@@ -1,6 +1,6 @@
 import {file, npm, os, path} from '.'
-import {updateAppData} from './npm'
-import {temporary} from '@shopify/cli-testing'
+import {updateAppData} from './npm.js'
+import {inTemporaryDirectory} from './file'
 import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('node:os')
@@ -8,7 +8,7 @@ vi.mock('node:process')
 
 describe('readPackageJSON()', () => {
   async function mockPackageJSON(callback: (tmpDir: string) => Promise<void>) {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       const packageJSON = {name: 'mock name'}
       await file.write(path.join(tmpDir, 'package.json'), JSON.stringify(packageJSON))
 
@@ -27,7 +27,7 @@ describe('readPackageJSON()', () => {
 
 describe('writePackageJSON()', () => {
   it('writes the package.json and returns it parsed', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       vi.spyOn(file, 'write')
 
       const packageJSON = {name: 'mock name'}

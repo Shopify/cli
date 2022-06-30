@@ -1,7 +1,7 @@
-import {buildHeaders, sanitizedHeadersOutput} from './common'
-import {AdminSession} from '../session'
-import {debug, content, token as outputToken} from '../output'
-import {Bug, Abort} from '../error'
+import {buildHeaders, sanitizedHeadersOutput} from './common.js'
+import {AdminSession} from '../session.js'
+import {debug, content, token as outputToken} from '../output.js'
+import {Bug, Abort} from '../error.js'
 import {request as graphqlRequest, gql, RequestDocument, Variables, ClientError} from 'graphql-request'
 
 const UnauthorizedAccessError = (store: string) => {

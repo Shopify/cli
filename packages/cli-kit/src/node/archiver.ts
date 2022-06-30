@@ -1,4 +1,4 @@
-import {debug, content, token} from '../output'
+import {debug, content, token} from '../output.js'
 import {zip as crossZip} from 'cross-zip'
 
 /**

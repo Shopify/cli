@@ -1,11 +1,14 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
-import {version as cliVersion} from '../../../../cli-main/package.json'
-import {version as appVersion} from '../../../../app/package.json'
-import {dependency, file, npm, path, ui} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {dependency, file, npm, path, ui, constants} from '@shopify/cli-kit'
+import {beforeAll, beforeEach, describe, expect, it, vi} from 'vitest'
 import {Writable} from 'stream'
 
+let cliVersion: undefined | string
+let appVersion: undefined | string
+beforeAll(async () => {
+  cliVersion = await constants.versions.cliKit()
+  appVersion = await constants.versions.cliKit()
+})
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
     const mockPackageJSON = {} as npm.PackageJSON
@@ -99,7 +102,7 @@ describe('updateCLIDependencies', () => {
 
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'web'))
       await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([

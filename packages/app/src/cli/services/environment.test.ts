@@ -7,9 +7,8 @@ import {OrganizationApp, OrganizationStore} from '../models/organization'
 import {App, WebType, updateAppIdentifiers, getAppIdentifiers, UIExtension} from '../models/app/app'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
 import {testApp} from '../models/app/app.test-data'
-import {store as conf, api} from '@shopify/cli-kit'
+import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
-import {outputMocker} from '@shopify/cli-testing'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
@@ -32,12 +31,15 @@ beforeEach(() => {
         graphql: cliKit.api.graphql,
       },
       store: {
-        setAppInfo: vi.fn(),
-        getAppInfo: vi.fn(),
-        clearAppInfo: vi.fn(),
+        cliKitStore: vi.fn(),
       },
     }
   })
+  vi.mocked(store.cliKitStore).mockReturnValue({
+    getAppInfo: vi.fn(),
+    setAppInfo: vi.fn(),
+    clearAppInfo: vi.fn(),
+  } as any)
 })
 
 const APP1: OrganizationApp = {
@@ -68,7 +70,7 @@ const ORG2: api.graphql.AllOrganizationsQuerySchemaOrganization = {
   website: '',
 }
 
-const CACHED1: conf.CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
+const CACHED1: store.CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -148,7 +150,7 @@ beforeEach(async () => {
 describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
-    vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(undefined)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
@@ -163,13 +165,13 @@ describe('ensureDevEnvironment', () => {
         extensions: {},
       },
     })
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
       directory: LOCAL_APP.directory,
       orgId: ORG1.id,
     })
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, {
+    expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(2, {
       appId: APP1.apiKey,
       directory: LOCAL_APP.directory,
       storeFqdn: STORE1.shopDomain,
@@ -186,8 +188,8 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCapture()
-    vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
+    const outputMock = outputMocker.mockAndCaptureOutput()
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: 'key1',
       extensions: {},
@@ -208,13 +210,13 @@ describe('ensureDevEnvironment', () => {
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
       directory: LOCAL_APP.directory,
       orgId: ORG1.id,
     })
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(2, {
+    expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(2, {
       appId: APP1.apiKey,
       directory: LOCAL_APP.directory,
       storeFqdn: STORE1.shopDomain,
@@ -276,7 +278,7 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
-    vi.mocked(conf.getAppInfo).mockReturnValue(undefined)
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
@@ -293,7 +295,7 @@ describe('ensureDevEnvironment', () => {
         extensions: {},
       },
     })
-    expect(conf.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
       directory: LOCAL_APP.directory,
       storeFqdn: STORE1.shopDomain,
@@ -316,7 +318,7 @@ describe('ensureDevEnvironment', () => {
 
   it('resets cached state if reset is true', async () => {
     // When
-    vi.mocked(conf.getAppInfo).mockReturnValue({
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue({
       appId: APP1.apiKey,
       directory: LOCAL_APP.directory,
     })
@@ -324,7 +326,7 @@ describe('ensureDevEnvironment', () => {
     await ensureDevEnvironment({...INPUT, reset: true}, 'token')
 
     // Then
-    expect(conf.clearAppInfo).toHaveBeenCalledWith(LOCAL_APP.directory)
+    expect(store.cliKitStore().clearAppInfo).toHaveBeenCalledWith(LOCAL_APP.directory)
   })
 })
 
@@ -352,7 +354,7 @@ describe('ensureDeployEnvironment', () => {
     expect(got.identifiers).toEqual(identifiers)
   })
 
-  test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev config", async () => {
+  test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {
     // Given
     const app = testApp()
     const identifiers = {
@@ -361,7 +363,7 @@ describe('ensureDeployEnvironment', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
-    vi.mocked(conf.getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)

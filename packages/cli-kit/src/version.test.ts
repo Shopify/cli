@@ -1,4 +1,4 @@
-import {latestNpmPackageVersion} from './version'
+import {latestNpmPackageVersion} from './version.js'
 import {describe, it, expect, vi} from 'vitest'
 import latestVersion from 'latest-version'
 

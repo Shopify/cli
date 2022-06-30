@@ -1,4 +1,4 @@
-import {normalizeStoreName} from './string'
+import {normalizeStoreName} from './string.js'
 import {describe, expect, it} from 'vitest'
 
 describe('normalizeStore', () => {

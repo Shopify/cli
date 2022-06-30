@@ -1,9 +1,9 @@
-import {applicationId} from './session/identity'
-import {Abort, Bug} from './error'
-import {validateSession} from './session/validate'
-import {allDefaultScopes, apiScopes} from './session/scopes'
-import {identity as identityFqdn} from './environment/fqdn'
-import {open} from './system'
+import {applicationId} from './session/identity.js'
+import {Abort, Bug} from './error.js'
+import {validateSession} from './session/validate.js'
+import {allDefaultScopes, apiScopes} from './session/scopes.js'
+import {identity as identityFqdn} from './environment/fqdn.js'
+import {open} from './system.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -11,18 +11,18 @@ import {
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
-} from './session/exchange'
+} from './session/exchange.js'
 
-import {content, token, debug} from './output'
-import {keypress} from './ui'
+import {content, token, debug} from './output.js'
+import {keypress} from './ui.js'
 
-import {authorize} from './session/authorize'
-import {IdentityToken, Session} from './session/schema'
-import * as secureStore from './session/store'
-import constants from './constants'
-import {normalizeStoreName} from './string'
-import * as output from './output'
-import {partners} from './api'
+import {authorize} from './session/authorize.js'
+import {IdentityToken, Session} from './session/schema.js'
+import * as secureStore from './session/store.js'
+import constants from './constants.js'
+import {normalizeStoreName} from './string.js'
+import * as output from './output.js'
+import {partners} from './api.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')

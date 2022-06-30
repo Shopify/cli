@@ -1,8 +1,8 @@
-import {applicationId} from './identity'
-import {IdentityToken} from './schema'
-import {validateSession} from './validate'
-import {OAuthApplications} from '../session'
-import {identity, partners} from '../api'
+import {applicationId} from './identity.js'
+import {IdentityToken} from './schema.js'
+import {validateSession} from './validate.js'
+import {OAuthApplications} from '../session.js'
+import {identity, partners} from '../api.js'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)

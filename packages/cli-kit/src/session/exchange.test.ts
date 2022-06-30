@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange'
-import {applicationId, clientId} from './identity'
-import {IdentityToken} from './schema'
-import {fetch} from '../http'
-import {identity} from '../environment/fqdn'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange.js'
+import {applicationId, clientId} from './identity.js'
+import {IdentityToken} from './schema.js'
+import {fetch} from '../http.js'
+import {identity} from '../environment/fqdn.js'
 import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 

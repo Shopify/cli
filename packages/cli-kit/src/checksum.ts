@@ -1,6 +1,6 @@
-import {fetch} from './http'
-import {Abort} from './error'
-import {debug, token} from './output'
+import {fetch} from './http.js'
+import {Abort} from './error.js'
+import {debug, token} from './output.js'
 import md5File from 'md5-file'
 
 export const InvalidChecksumError = ({file, expected, got}: {file: string; expected: string; got: string}) => {

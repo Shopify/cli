@@ -1,6 +1,6 @@
-import {Abort} from './error'
-import {hasGit} from './environment/local'
-import {content, token, debug} from './output'
+import {Abort} from './error.js'
+import {hasGit} from './environment/local.js'
+import {content, token, debug} from './output.js'
 import git, {TaskOptions, SimpleGitProgressEvent} from 'simple-git'
 
 export const factory = git

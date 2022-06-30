@@ -1,6 +1,6 @@
-import * as file from './file'
-import * as system from './system'
-import {execCLI} from './ruby'
+import * as file from './file.js'
+import * as system from './system.js'
+import {execCLI} from './ruby.js'
 import {beforeAll, describe, expect, it, vi} from 'vitest'
 
 beforeAll(() => {

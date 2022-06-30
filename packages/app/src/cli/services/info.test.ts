@@ -3,15 +3,16 @@ import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
 import {selectOrCreateApp} from './dev/select-app'
 import {App} from '../models/app/app'
 import {selectOrganizationPrompt} from '../prompts/dev'
-import {path, dependency, session, output} from '@shopify/cli-kit'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {path, dependency, session, output, store} from '@shopify/cli-kit'
+import {describe, it, expect, vi, beforeAll} from 'vitest'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-app')
 vi.mock('../prompts/dev')
 
 const currentVersion = '2.2.2'
-beforeEach(() => {
+beforeAll(async () => {
+  await store.initializeCliKitStore()
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {

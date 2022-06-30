@@ -1,8 +1,8 @@
-import {isTruthy} from './utilities'
-import {isSpin} from './spin'
-import constants from '../constants'
-import {exists as fileExists} from '../file'
-import {exec} from '../system'
+import {isTruthy} from './utilities.js'
+import {isSpin} from './spin.js'
+import constants from '../constants.js'
+import {exists as fileExists} from '../file.js'
+import {exec} from '../system.js'
 import isInteractive from 'is-interactive'
 import {homedir} from 'node:os'
 
@@ -67,10 +67,10 @@ export function isUnitTest(env = process.env): boolean {
 /**
  * Returns true if reporting analytics is enabled.
  * @param env The environment variables from the environment of the current process.
- * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy.
+ * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.noAnalytics])
+  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
 }
 
 /**

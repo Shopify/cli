@@ -80,7 +80,6 @@ describe('extensionConfig', () => {
 
     // When
     const got = await extensionConfig(options)
-    // console.log(JSON.stringify(got, null, 2))
 
     // Then
     expect(got).toEqual({

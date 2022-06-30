@@ -3,7 +3,6 @@
 
 import {version as hydrogenVersion} from '../../package.json'
 
-import {version as cliVersion} from '../../../cli-main/package.json'
 import {
   string,
   path,
@@ -18,6 +17,7 @@ import {
   github,
   template,
   git,
+  constants,
 } from '@shopify/cli-kit'
 
 import {Writable} from 'stream'
@@ -41,7 +41,7 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 
 async function init(options: InitOptions) {
   const user = (await os.username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? cliVersion
+  const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
   const dependencyManager = inferDependencyManager(options.dependencyManager)
@@ -115,7 +115,7 @@ async function init(options: InitOptions) {
                 title: 'Updating package.json',
                 task: async (_, task) => {
                   const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-
+                  const cliVersion = await constants.versions.cliKit()
                   await npm.updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
@@ -126,7 +126,7 @@ async function init(options: InitOptions) {
                       // eslint-disable-next-line @typescript-eslint/naming-convention
                       '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
                       // eslint-disable-next-line @typescript-eslint/naming-convention
-                      '@shopify/cli': cliPackageVersion,
+                      '@shopify/cli': cliVersion,
                     },
                   })
                   await updateCLIScripts(packageJSON)

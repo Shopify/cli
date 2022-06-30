@@ -1,15 +1,15 @@
-import {applicationId} from './session/identity'
-import {validateSession} from './session/validate'
-import {allDefaultScopes} from './session/scopes'
-import {store as secureStore, fetch as secureFetch} from './session/store'
-import {ApplicationToken, IdentityToken, Session} from './session/schema'
+import {applicationId} from './session/identity.js'
+import {validateSession} from './session/validate.js'
+import {allDefaultScopes} from './session/scopes.js'
+import {store as secureStore, fetch as secureFetch} from './session/store.js'
+import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   refreshAccessToken,
   InvalidGrantError,
-} from './session/exchange'
+} from './session/exchange.js'
 import {
   ensureAuthenticated,
   ensureAuthenticatedAdmin,
@@ -17,11 +17,11 @@ import {
   ensureAuthenticatedStorefront,
   OAuthApplications,
   OAuthSession,
-} from './session'
-import {partners} from './api'
+} from './session.js'
+import {partners} from './api.js'
 
-import {identity} from './environment/fqdn'
-import {authorize} from './session/authorize'
+import {identity} from './environment/fqdn.js'
+import {authorize} from './session/authorize.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)

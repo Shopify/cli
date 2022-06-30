@@ -66,7 +66,7 @@ class AppInfo {
 
   constructor(app: App) {
     this.app = app
-    this.cachedAppInfo = store.getAppInfo(app.directory)
+    this.cachedAppInfo = store.cliKitStore().getAppInfo(app.directory)
   }
 
   async output(): Promise<string> {

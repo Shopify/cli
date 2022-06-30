@@ -1,8 +1,8 @@
-import {isTruthy} from './utilities'
-import constants from '../constants'
-import {captureOutput} from '../system'
-import {Abort} from '../error'
-import {content, token} from '../output'
+import {isTruthy} from './utilities.js'
+import constants from '../constants.js'
+import {captureOutput} from '../system.js'
+import {Abort} from '../error.js'
+import {content, token} from '../output.js'
 
 export const SpinInstanceNotFound = (spinInstance: string | undefined, error: string) => {
   const errorMessage = content`${token.genericShellCommand(

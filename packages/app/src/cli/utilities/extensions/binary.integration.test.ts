@@ -1,6 +1,5 @@
 import {getBinaryPathOrDownload} from './binary'
 import {expect, it, vi} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 import {file, constants} from '@shopify/cli-kit'
 
 vi.mock('@shopify/cli-kit', async () => {
@@ -24,7 +23,7 @@ vi.mock('@shopify/cli-kit', async () => {
 it(
   'downloads, validates, and untars the binary',
   async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(tmpDir)
 
