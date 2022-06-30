@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent} from './analytics.js'
+import {reportEvent, startTimer} from './analytics.js'
 import * as environment from './environment.js'
 import * as http from './http.js'
 import * as os from './os.js'
@@ -42,6 +42,7 @@ beforeEach(() => {
     removeSession: vi.fn(),
     getAppInfo: vi.fn(),
   } as any)
+  startTimer(currentDate.getTime() - 100)
 })
 
 afterEach(() => {
@@ -64,9 +65,9 @@ it('makes an API call to Monorail with the expected payload and headers', async 
       project_type: 'node',
       command,
       args: '',
-      time_start: 1643709600000,
+      time_start: 1643709599900,
       time_end: 1643709600000,
-      total_time: 0,
+      total_time: 100,
       success: true,
       uname: 'darwin arm64',
       cli_version: version,
@@ -77,6 +78,7 @@ it('makes an API call to Monorail with the expected payload and headers', async 
       partner_id: undefined,
     },
   }
+  expect(http.fetch).toHaveBeenCalled()
   expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
     method: 'POST',
     body: JSON.stringify(expectedBody),
@@ -107,9 +109,9 @@ it('makes an API call to Monorail with the expected payload with cached app info
       project_type: 'node',
       command,
       args: '--path fixtures/app',
-      time_start: currentDate.getTime(),
-      time_end: currentDate.getTime(),
-      total_time: 0,
+      time_start: 1643709599900,
+      time_end: 1643709600000,
+      total_time: 100,
       success: true,
       uname: 'darwin arm64',
       cli_version: version,
@@ -125,19 +127,6 @@ it('makes an API call to Monorail with the expected payload with cached app info
     body: JSON.stringify(expectedBody),
     headers: expectedHeaders,
   })
-})
-
-it('does nothing in Debug mode', async () => {
-  // Given
-  vi.mocked(environment.local.isDebug).mockReturnValue(true)
-  const command = 'app dev'
-  const args: string[] = []
-
-  // When
-  await reportEvent(command, args)
-
-  // Then
-  expect(http.fetch).not.toHaveBeenCalled()
 })
 
 it('does nothing when analytics are disabled', async () => {
