@@ -1,9 +1,15 @@
 /* eslint-disable require-atomic-updates */
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {uploadThemeExtensions, uploadUIExtensionsBundle, UploadExtensionValidationError} from './deploy/upload'
+import {
+  uploadThemeExtensions,
+  uploadUIExtensionsBundle,
+  UploadExtensionValidationError,
+  uploadFunctionExtensions,
+} from './deploy/upload'
 
 import {ensureDeployEnvironment} from './environment'
 import {fetchAppExtensionRegistrations} from './dev/fetch'
+import {validateExtensions} from '../validators/extensions'
 import {
   App,
   Extension,
@@ -15,8 +21,8 @@ import {
 } from '../models/app/app'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
+import {OrganizationApp} from '../models/organization'
 import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
-import {OrganizationApp} from 'cli/models/organization'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
 const RendererNotFoundBug = (extension: string) => {
