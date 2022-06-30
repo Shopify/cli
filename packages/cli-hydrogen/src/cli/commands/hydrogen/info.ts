@@ -1,5 +1,5 @@
-import {info} from '../../services/info'
-import {load as loadApp, HydrogenApp} from '../../models/hydrogen'
+import {info} from '../../services/info.js'
+import {load as loadApp, HydrogenApp} from '../../models/hydrogen.js'
 import {hydrogenFlags} from '../../flags'
 import {Command, Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'

@@ -1,6 +1,6 @@
-import {hydrogenFlags} from '../../../flags'
-import {addTailwind} from '../../../services/tailwind'
-import {load as loadApp, HydrogenApp} from '../../../models/hydrogen'
+import {hydrogenFlags} from '../../../flags.js'
+import {addTailwind} from '../../../services/tailwind.js'
+import {load as loadApp, HydrogenApp} from '../../../models/hydrogen.js'
 import {Command, Flags} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
 
