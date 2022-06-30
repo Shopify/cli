@@ -36,11 +36,11 @@ export function initiateLogging({
   logDir?: string
   filename?: string
 }) {
+  commandUuid = generateRandomUUID()
   fileMkdirSync(logDir)
   logFile = pathJoin(logDir, filename)
   fileTouchSync(logFile)
   truncateLogs()
-  commandUuid = generateRandomUUID()
 }
 
 // Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long.
