@@ -67,8 +67,8 @@ The validation of the token for application/identity completed with the followin
 - It's invalid in identity: ${!identityIsValid}
   `)
 
-  if (tokensAreRevoked) return 'needs_full_auth'
   if (tokensAreExpired) return 'needs_refresh'
+  if (tokensAreRevoked) return 'needs_full_auth'
   if (!identityIsValid) return 'needs_full_auth'
   return 'ok'
 }
