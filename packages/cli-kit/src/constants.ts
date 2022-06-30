@@ -28,6 +28,11 @@ const constants = {
     verbose: 'SHOPIFY_FLAG_VERBOSE',
     noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
   },
+  logStreams: {
+    cli: 'shopify.cli.log',
+    createApp: 'shopify.create-app.log',
+    createHydrogen: 'shopify.create-hydrogen.log',
+  },
   paths: {
     executables: {
       dev: '/opt/dev/bin/dev',

@@ -14,6 +14,7 @@ import {
   touchSync as fileTouchSync,
 } from './file.js'
 import {join as pathJoin, relativize as relativizePath} from './path.js'
+import {camelize} from './string.js'
 import {page} from './system.js'
 import {colors} from './node/colors.js'
 import terminalLink from 'terminal-link'
@@ -590,7 +591,14 @@ export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
 }
 
-export async function pageLogs() {
+type LogType = keyof typeof constants.logStreams
+
+export async function pageLogs(logStream: string) {
+  const logDir = constants.paths.directories.cache.path()
+  const logType = camelize(logStream) as LogType
+  const logFile = pathJoin(logDir, constants.logStreams[logType])
+  // Ensure file exists in case they deleted it or something
+  fileTouchSync(logFile)
   await page(logFile)
 }
 
