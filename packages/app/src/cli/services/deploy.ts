@@ -134,9 +134,10 @@ async function outputCompletionMessage({
     const uuid = identifiers.extensions[extension.localIdentifier]
     const error = validationErrors && validationErrors[uuid]
     if (error) {
-      output.info(output.content`       - ${output.token.errorText('Validation errors found:')}`)
+      const title = output.token.errorText('Validation errors found in your extension toml file')
+      output.info(output.content`       - ${title} `)
       error.forEach((err) => {
-        output.info(output.content`         ${err.message} in ${err.field.join(', ')}`)
+        output.info(output.content`       └ ${output.token.italic(err.message)}`)
       })
     }
   }
