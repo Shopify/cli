@@ -1,6 +1,6 @@
-import {glob, join, dirname, relative} from './path'
-import {mkdir, read, copy, chmod, isDirectory, write, hasExecutablePermissions} from './file'
-import {content, token, debug} from './output'
+import {glob, join, dirname, relative} from './path.js'
+import {mkdir, read, copy, chmod, isDirectory, write, hasExecutablePermissions} from './file.js'
+import {content, token, debug} from './output.js'
 import {Liquid} from 'liquidjs'
 
 // This line is necessary to register additional helpers.

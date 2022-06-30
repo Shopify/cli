@@ -1,5 +1,5 @@
-import {fetch} from './http'
-import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoReference} from './github'
+import {fetch} from './http.js'
+import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoReference} from './github.js'
 import {Response} from 'node-fetch'
 import {describe, expect, it, vi} from 'vitest'
 

@@ -1,5 +1,5 @@
-import {Bug} from '../error'
-import {allAPIs, API} from '../network/api'
+import {Bug} from '../error.js'
+import {allAPIs, API} from '../network/api.js'
 
 /**
  * Generate a flat array with all the default scopes for all the APIs plus

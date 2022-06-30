@@ -1,5 +1,5 @@
-import {identity} from '../environment/fqdn'
-import {debug} from '../output'
+import {identity} from '../environment/fqdn.js'
+import {debug} from '../output.js'
 
 export async function validateIdentityToken(token: string) {
   try {

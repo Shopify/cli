@@ -1,6 +1,6 @@
-import {fetch} from './http'
-import {Abort} from './error'
-import {content, debug} from './output'
+import {fetch} from './http.js'
+import {Abort} from './error.js'
+import {content, debug} from './output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

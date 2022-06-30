@@ -1,7 +1,7 @@
-import {isSpin} from './spin'
-import {hasGit, isDebug, isShopify, isUnitTest, analyticsDisabled} from './local'
-import {exists as fileExists} from '../file'
-import {exec} from '../system'
+import {isSpin} from './spin.js'
+import {hasGit, isDebug, isShopify, isUnitTest, analyticsDisabled} from './local.js'
+import {exists as fileExists} from '../file.js'
+import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
 
 vi.mock('../file')

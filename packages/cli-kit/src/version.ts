@@ -1,5 +1,4 @@
-import {content, token, debug} from './output'
-import {version} from '../package.json'
+import {content, token, debug} from './output.js'
 import latestVersion from 'latest-version'
 
 /**
@@ -10,8 +9,4 @@ import latestVersion from 'latest-version'
 export async function latestNpmPackageVersion(name: string) {
   debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
   return latestVersion(name)
-}
-
-export function cliVersion(): string {
-  return version
 }

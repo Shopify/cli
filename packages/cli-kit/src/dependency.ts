@@ -1,13 +1,13 @@
-import {exec} from './system'
-import {exists as fileExists, read as readFile} from './file'
-import {glob, dirname, join as pathJoin} from './path'
-import {Abort} from './error'
-import {latestNpmPackageVersion} from './version'
-import {Version} from './semver'
-import {content, token, debug} from './output'
+import {exec} from './system.js'
+import {exists as fileExists, read as readFile} from './file.js'
+import {glob, dirname, join as pathJoin} from './path.js'
+import {Abort} from './error.js'
+import {latestNpmPackageVersion} from './version.js'
+import {Version} from './semver.js'
+import {content, token, debug} from './output.js'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
-import type {ExecOptions} from './system'
+import type {ExecOptions} from './system.js'
 
 export const genericConfigurationFileNames = {
   yarn: {

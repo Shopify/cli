@@ -9,9 +9,9 @@ import {
   EmptyUrlString,
   MissingCodeString,
   MissingStateString,
-} from './post-auth'
-import {Abort, Bug} from '../error'
-import {content, info, token} from '../output'
+} from './post-auth.js'
+import {Abort, Bug} from '../error.js'
+import {content, info, token} from '../output.js'
 import Fastify from 'fastify'
 import url from 'url'
 

@@ -1,7 +1,7 @@
 import InfoCommand from './info'
 import {HydrogenApp, load as loadApp} from '../../models/hydrogen'
 import {describe, expect, vi, it, beforeAll} from 'vitest'
-import {outputMocker} from '@shopify/cli-testing'
+import {outputMocker} from '@shopify/cli-kit'
 
 beforeAll(() => {
   vi.mock('../../models/hydrogen')
@@ -42,7 +42,7 @@ function mockOutput(mockHydrogenApp: Partial<HydrogenApp> = {}) {
 
   vi.mocked(loadApp).mockResolvedValue(app)
 
-  const mocker = outputMocker.mockAndCapture()
+  const mocker = outputMocker.mockAndCaptureOutput()
 
   return {
     ...mocker,

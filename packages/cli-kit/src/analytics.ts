@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as environment from './environment'
-import {fetch} from './http'
-import {platformAndArch} from './os'
-import {join, resolve} from './path'
-import {version as rubyVersion} from './ruby'
-import {getAppInfo} from './store'
-import {cliVersion} from './version'
-import {debug, content, token} from './output'
-import {getProjectType} from './dependency'
+import * as environment from './environment.js'
+import {fetch} from './http.js'
+import {platformAndArch} from './os.js'
+import {join, resolve} from './path.js'
+import {version as rubyVersion} from './ruby.js'
+import {debug, content, token} from './output.js'
+import {getProjectType} from './dependency.js'
+import constants from './constants.js'
+import {cliKitStore} from './store.js'
 
 export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -61,7 +61,7 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
   if (pathFlagIndex >= 0) {
     directory = resolve(args[pathFlagIndex + 1])
   }
-  const appInfo = getAppInfo(directory)
+  const appInfo = cliKitStore().getAppInfo(directory)
   const {platform, arch} = platformAndArch()
 
   const rawPartnerId = appInfo?.orgId
@@ -84,7 +84,7 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
       total_time: totalTime(currentTime),
       success: true,
       uname: `${platform} ${arch}`,
-      cli_version: cliVersion(),
+      cli_version: await constants.versions.cliKit(),
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),

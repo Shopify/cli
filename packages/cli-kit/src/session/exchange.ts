@@ -1,11 +1,11 @@
-import {ApplicationToken, IdentityToken} from './schema'
-import {applicationId, clientId as getIdentityClientId} from './identity'
-import {CodeAuthResult} from './authorize'
-import * as secureStore from './store'
-import {Abort} from '../error'
-import {API} from '../network/api'
-import {fetch} from '../http'
-import {identity as identityFqdn} from '../environment/fqdn'
+import {ApplicationToken, IdentityToken} from './schema.js'
+import {applicationId, clientId as getIdentityClientId} from './identity.js'
+import {CodeAuthResult} from './authorize.js'
+import * as secureStore from './store.js'
+import {Abort} from '../error.js'
+import {API} from '../network/api.js'
+import {fetch} from '../http.js'
+import {identity as identityFqdn} from '../environment/fqdn.js'
 
 export class InvalidGrantError extends Error {}
 

@@ -1,6 +1,5 @@
 import {previewInWorker} from './preview'
 import {describe, it, expect, vi, afterEach} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 import {path, file, system} from '@shopify/cli-kit'
 
 vi.mock('@shopify/cli-kit', async () => {
@@ -31,7 +30,7 @@ describe('hydrogen preview', () => {
 
   describe('worker', () => {
     it('writes a local mini oxygen config file', async () => {
-      await temporary.directory(async (tmpDir) => {
+      await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         const port = 5000
         const expectedConfig = {
@@ -60,7 +59,7 @@ describe('hydrogen preview', () => {
     })
 
     it('runs the mini-oxygen executable from the app directory', async () => {
-      await temporary.directory(async (tmpDir) => {
+      await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
         file.write(pathToExecutable, '// some executable file')
@@ -82,7 +81,7 @@ describe('hydrogen preview', () => {
       // Given
       vi.mocked(path.findUp).mockResolvedValue(undefined)
 
-      await temporary.directory(async (tmpDir) => {
+      await file.inTemporaryDirectory(async (tmpDir) => {
         // When
         const run = previewInWorker({directory: tmpDir, port: 4000})
 

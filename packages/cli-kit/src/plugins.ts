@@ -1,5 +1,5 @@
-import {join, pathToFileURL} from './path'
-import {debug, content} from './output'
+import {join, pathToFileURL} from './path.js'
+import {debug, content} from './output.js'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']

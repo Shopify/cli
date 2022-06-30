@@ -1,4 +1,4 @@
-import {debug, content, token} from './output'
+import {debug, content, token} from './output.js'
 import * as port from 'get-port-please'
 
 /**

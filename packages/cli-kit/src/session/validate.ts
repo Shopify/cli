@@ -1,9 +1,9 @@
-import {applicationId} from './identity'
-import {ApplicationToken, IdentityToken} from './schema'
-import constants from '../constants'
-import {OAuthApplications} from '../session'
-import {identity, partners} from '../api'
-import {debug} from '../output'
+import {applicationId} from './identity.js'
+import {ApplicationToken, IdentityToken} from './schema.js'
+import constants from '../constants.js'
+import {OAuthApplications} from '../session.js'
+import {identity, partners} from '../api.js'
+import {debug} from '../output.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 

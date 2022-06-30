@@ -3,7 +3,6 @@ import {genericConfigurationFileNames} from '../constants'
 import {HydrogenApp} from '../models/hydrogen'
 import {describe, vi, it, expect} from 'vitest'
 import {file, dependency, vscode, path} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -26,7 +25,7 @@ describe('addEslint', () => {
   }
 
   it('adds a eslintrc file with recommended config if none exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -48,7 +47,7 @@ describe('addEslint', () => {
   })
 
   it('adds a eslintrc file with typescript config for typescript projects', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -71,7 +70,7 @@ describe('addEslint', () => {
   })
 
   it('adds eslint and prettier dependencies when install is true', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -89,7 +88,7 @@ describe('addEslint', () => {
   })
 
   it('does not add eslint and prettier dependencies when install is false', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -104,7 +103,7 @@ describe('addEslint', () => {
   })
 
   it('adds vscode recommendations', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(vscode.isVSCode).mockResolvedValue(true)
       const app = await createMockApp({
@@ -120,7 +119,7 @@ describe('addEslint', () => {
   })
 
   it('throws error when eslintrc already exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await file.write(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
       const app = await createMockApp({

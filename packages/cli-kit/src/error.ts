@@ -1,5 +1,4 @@
-import * as ouput from './output'
-import {Message, stringifyMessage} from './output'
+import {Message, stringifyMessage, error as outputError} from './output.js'
 import {Errors} from '@oclif/core'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -75,7 +74,7 @@ export async function handler(error: Error): Promise<Error> {
     fatal.stack = error.stack
   }
 
-  await ouput.error(fatal)
+  await outputError(fatal)
   return Promise.resolve(error)
 }
 

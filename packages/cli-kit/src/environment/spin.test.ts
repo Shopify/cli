@@ -1,5 +1,5 @@
-import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin'
-import {captureOutput} from '../system'
+import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin.js'
+import {captureOutput} from '../system.js'
 import {describe, test, expect, vi, it} from 'vitest'
 
 vi.mock('../system')

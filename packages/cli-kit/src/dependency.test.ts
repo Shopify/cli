@@ -10,14 +10,13 @@ import {
   DependencyManager,
   packageJSONContents,
   getProjectType,
-} from './dependency'
-import {exec} from './system'
-import {join as pathJoin, normalize as pathNormalize} from './path'
-import {unstyled} from './output'
-import {write as writeFile} from './file'
-import {latestNpmPackageVersion} from './version'
+} from './dependency.js'
+import {exec} from './system.js'
+import {join as pathJoin, normalize as pathNormalize} from './path.js'
+import {unstyled} from './output.js'
+import {inTemporaryDirectory, write as writeFile} from './file.js'
+import {latestNpmPackageVersion} from './version.js'
 import {describe, it, expect, vi, test} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 
 vi.mock('./version')
 vi.mock('./system')
@@ -75,7 +74,7 @@ describe('install', () => {
 
 describe('getPackageName', () => {
   test('returns package name', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -94,7 +93,7 @@ describe('getPackageName', () => {
 
 describe('packageJSONContents', () => {
   test('returns full package content', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -116,7 +115,7 @@ describe('packageJSONContents', () => {
 
 describe('getDependencies', () => {
   test('returns dev and production dependencies', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -135,7 +134,7 @@ describe('getDependencies', () => {
   })
 
   test('returns dev dependencies when production dependencies do not exist', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -152,7 +151,7 @@ describe('getDependencies', () => {
   })
 
   test('returns production dependencies when dev dependencies do not exist', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -169,7 +168,7 @@ describe('getDependencies', () => {
   })
 
   test('throws an error if the package.json file does not exist', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
 
@@ -181,7 +180,7 @@ describe('getDependencies', () => {
 
 describe('addNPMDependenciesIfNeeded', () => {
   test('runs the right command when there is no version in dependency', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -204,7 +203,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's npm and dev dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -227,7 +226,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's npm and production dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -250,7 +249,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's npm and peer dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -273,7 +272,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's yarn and dev dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -296,7 +295,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's yarn and production dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -319,7 +318,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's yarn and peer dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -342,7 +341,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's pnpm and dev dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -365,7 +364,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's pnpm and production dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -388,7 +387,7 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 
   test("runs the right command when it's pnpm and peer dependencies", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {
@@ -475,7 +474,7 @@ describe('getOutputUpdateCLIReminder', () => {
 
 describe('getProjectType', () => {
   it('returns node when the directory contains a package.json', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await writeFile(pathJoin(tmpDir, 'package.json'), '')
 
@@ -488,7 +487,7 @@ describe('getProjectType', () => {
   })
 
   it('returns ruby when the directory contains a Gemfile', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await writeFile(pathJoin(tmpDir, 'Gemfile'), '')
 
@@ -501,7 +500,7 @@ describe('getProjectType', () => {
   })
 
   it('returns php when the directory contains a composer.json', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await writeFile(pathJoin(tmpDir, 'composer.json'), '')
 
@@ -514,7 +513,7 @@ describe('getProjectType', () => {
   })
 
   it('returns undefined when the directory does not contain a known config file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await writeFile(pathJoin(tmpDir, 'config.toml'), '')
 

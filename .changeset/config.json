@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@1.6.3/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["@shopify/cli", "@shopify/app", "@shopify/cli-hydrogen", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit", "@shopify/cli-testing", "@shopify/fixtures-app"]],
+  "fixed": [["@shopify/cli", "@shopify/app", "@shopify/cli-hydrogen", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit", "@shopify/fixtures-app"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

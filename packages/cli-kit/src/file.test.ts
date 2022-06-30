@@ -12,10 +12,9 @@ import {
   remove,
   stripUp,
   format,
-} from './file'
-import {join} from './path'
+} from './file.js'
+import {join} from './path.js'
 import {describe, expect, it} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 
 describe('inTemporaryDirectory', () => {
   it('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -36,7 +35,7 @@ describe('inTemporaryDirectory', () => {
 })
 describe('copy', () => {
   it('copies the file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const from = join(tmpDir, 'from')
@@ -53,7 +52,7 @@ describe('copy', () => {
   })
 
   it('copies the directory recursively including dot files', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const from = join(tmpDir, 'from')
@@ -76,7 +75,7 @@ describe('copy', () => {
 
 describe('move', () => {
   it('moves files', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const from = join(tmpDir, 'from')
@@ -95,7 +94,7 @@ describe('move', () => {
 
 describe('exists', () => {
   it('returns true when the file exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
@@ -110,7 +109,7 @@ describe('exists', () => {
   })
 
   it('returns false when the file does not exist', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const filePath = join(tmpDir, 'from')
 
@@ -125,7 +124,7 @@ describe('exists', () => {
 
 describe('append', () => {
   it('appends content to an existing file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
@@ -143,7 +142,7 @@ describe('append', () => {
 
 describe('chmod', () => {
   it('changes the permissions of a file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
@@ -160,7 +159,7 @@ describe('chmod', () => {
 
 describe('remove', () => {
   it('removes a file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')

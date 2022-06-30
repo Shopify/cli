@@ -2,7 +2,6 @@
   "version": 2,
   "projects": {
     "cli-main": "packages/cli-main",
-    "cli-testing": "packages/cli-testing",
     "cli-kit": "packages/cli-kit",
     "app": "packages/app",
     "cli-hydrogen": "packages/cli-hydrogen",

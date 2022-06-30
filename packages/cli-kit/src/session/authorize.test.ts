@@ -1,9 +1,9 @@
-import {authorize, MismatchStateError} from './authorize'
-import {listenRedirect} from './redirect-listener'
-import {clientId} from './identity'
-import {generateRandomChallengePair, randomHex} from '../string'
-import {open} from '../system'
-import {identity} from '../environment/fqdn'
+import {authorize, MismatchStateError} from './authorize.js'
+import {listenRedirect} from './redirect-listener.js'
+import {clientId} from './identity.js'
+import {generateRandomChallengePair, randomHex} from '../string.js'
+import {open} from '../system.js'
+import {identity} from '../environment/fqdn.js'
 
 import {describe, it, expect, vi} from 'vitest'
 

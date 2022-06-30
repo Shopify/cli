@@ -1,6 +1,6 @@
-import constants from './constants'
-import {content as outputContent, debug} from './output'
-import {Abort} from './error'
+import constants from './constants.js'
+import {content as outputContent, debug} from './output.js'
+import {Abort} from './error.js'
 
 /**
  * Fetches secured content from the system's keychain.
