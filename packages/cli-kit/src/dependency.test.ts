@@ -10,11 +10,13 @@ import {
   DependencyManager,
   packageJSONContents,
   getProjectType,
+  findUpAndReadPackageJson,
+  FindUpAndReadPackageJsonNotFoundError,
 } from './dependency.js'
 import {exec} from './system.js'
 import {join as pathJoin, normalize as pathNormalize} from './path.js'
 import {unstyled} from './output.js'
-import {inTemporaryDirectory, write as writeFile} from './file.js'
+import {inTemporaryDirectory, mkdir, write, write as writeFile} from './file.js'
 import {latestNpmPackageVersion} from './version.js'
 import {describe, it, expect, vi, test} from 'vitest'
 
@@ -522,6 +524,40 @@ describe('getProjectType', () => {
 
       // Then
       expect(got).toBe(undefined)
+    })
+  })
+})
+
+describe('findUpAndReadPackageJson', () => {
+  it('returns the content of the package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const subDirectory = pathJoin(tmpDir, 'subdir')
+      const version = '1.2.3'
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      await mkdir(subDirectory)
+      const packageJson = {version}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await findUpAndReadPackageJson(subDirectory)
+
+      // Then
+      expect(got.path).toEqual(packageJsonPath)
+      expect(got.content as any).toEqual(packageJson)
+    })
+  })
+
+  it("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const subDirectory = pathJoin(tmpDir, 'subdir')
+      await mkdir(subDirectory)
+
+      // When/Then
+      await expect(findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
+        FindUpAndReadPackageJsonNotFoundError(subDirectory),
+      )
     })
   })
 })
