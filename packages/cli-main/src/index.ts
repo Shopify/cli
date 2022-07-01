@@ -2,7 +2,7 @@
 import {version as cliVersion} from '../package.json'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment, output, store} from '@shopify/cli-kit'
+import {error as kitError, environment, output, store, analytics} from '@shopify/cli-kit'
 
 async function runCLI() {
   await store.initializeCliKitStore()
@@ -28,7 +28,7 @@ async function runCLI() {
       const kitHandle = kitError.handler
       // eslint-disable-next-line promise/no-nesting
       return kitMapper(error)
-        .then(bugsnagHandle)
+        .then(reportError)
         .then((error: Error) => {
           return kitHandle(error)
         })
@@ -38,7 +38,9 @@ async function runCLI() {
     })
 }
 
-const bugsnagHandle = async (errorToReport: Error): Promise<Error> => {
+const reportError = async (errorToReport: Error): Promise<Error> => {
+  await analytics.reportEvent(errorToReport.message)
+
   if (!settings.debug && kitError.shouldReport(errorToReport)) {
     let mappedError: Error
     // eslint-disable-next-line no-prototype-builtins

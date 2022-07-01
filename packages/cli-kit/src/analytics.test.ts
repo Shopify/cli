@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent, startTimer} from './analytics.js'
+import {reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import * as http from './http.js'
 import * as os from './os.js'
@@ -42,20 +42,20 @@ beforeEach(() => {
     removeSession: vi.fn(),
     getAppInfo: vi.fn(),
   } as any)
-  startTimer(currentDate.getTime() - 100)
 })
 
 afterEach(() => {
   vi.useRealTimers()
 })
 
-it('makes an API call to Monorail with the expected payload and headers', async () => {
+it('sends the expected data to Monorail', async () => {
   // Given
   const command = 'app info'
-  const args: string[] = []
+  const args = ''
+  start(command, args, currentDate.getTime() - 100)
 
   // When
-  await reportEvent(command, args)
+  await reportEvent()
 
   // Then
   const version = await constants.versions.cliKit()
@@ -86,20 +86,20 @@ it('makes an API call to Monorail with the expected payload and headers', async 
   })
 })
 
-it('makes an API call to Monorail with the expected payload with cached app info', async () => {
+it('sends the expected data to Monorail with cached app info', async () => {
   // Given
   const command = 'app dev'
-  const args = ['--path', 'fixtures/app']
-
+  const args = '--path fixtures/app'
   vi.mocked(cliKitStore().getAppInfo).mockReturnValueOnce({
     appId: 'key1',
     orgId: '1',
     storeFqdn: 'domain1',
     directory: '/cached',
   })
+  start(command, args, currentDate.getTime() - 100)
 
   // When
-  await reportEvent(command, args)
+  await reportEvent()
 
   // Then
   const version = await constants.versions.cliKit()
@@ -129,14 +129,53 @@ it('makes an API call to Monorail with the expected payload with cached app info
   })
 })
 
+it('sends the expected data to Monorail when there is an error message', async () => {
+  // Given
+  const command = 'app dev'
+  const args = ''
+  start(command, args, currentDate.getTime() - 100)
+
+  // When
+  await reportEvent('Permission denied')
+
+  // Then
+  const version = await constants.versions.cliKit()
+  const expectedBody = {
+    schema_id: 'app_cli3_command/1.0',
+    payload: {
+      project_type: 'node',
+      command,
+      args: '',
+      time_start: 1643709599900,
+      time_end: 1643709600000,
+      total_time: 100,
+      success: false,
+      error_message: 'Permission denied',
+      uname: 'darwin arm64',
+      cli_version: version,
+      ruby_version: '3.1.1',
+      node_version: process.version.replace('v', ''),
+      is_employee: false,
+      api_key: undefined,
+      partner_id: undefined,
+    },
+  }
+  expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
+    method: 'POST',
+    body: JSON.stringify(expectedBody),
+    headers: expectedHeaders,
+  })
+})
+
 it('does nothing when analytics are disabled', async () => {
   // Given
   vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
   const command = 'app dev'
-  const args: string[] = []
+  const args = ''
+  start(command, args, currentDate.getTime() - 100)
 
   // When
-  await reportEvent(command, args)
+  await reportEvent()
 
   // Then
   expect(http.fetch).not.toHaveBeenCalled()
@@ -145,12 +184,13 @@ it('does nothing when analytics are disabled', async () => {
 it('shows an error if the Monorail request fails', async () => {
   // Given
   const command = 'app dev'
-  const args: string[] = []
+  const args = ''
   vi.mocked(http.fetch).mockResolvedValueOnce({status: 500, statusText: 'Monorail is down'} as any)
   const outputMock = mockAndCaptureOutput()
+  start(command, args)
 
   // When
-  await reportEvent(command, args)
+  await reportEvent()
 
   // Then
   expect(outputMock.debug()).toMatch('Failed to report usage analytics: Monorail is down')
@@ -159,14 +199,15 @@ it('shows an error if the Monorail request fails', async () => {
 it('shows an error if something else fails', async () => {
   // Given
   const command = 'app dev'
-  const args: string[] = []
+  const args = ''
   vi.mocked(os.platformAndArch).mockImplementationOnce(() => {
     throw new Error('Boom!')
   })
   const outputMock = mockAndCaptureOutput()
+  start(command, args)
 
   // When
-  await reportEvent(command, args)
+  await reportEvent()
 
   // Then
   expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
