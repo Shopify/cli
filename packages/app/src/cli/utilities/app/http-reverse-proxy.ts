@@ -1,4 +1,5 @@
-import fastifyHTTPProxy from './fastify-http-proxy/index.cjs'
+// eslint-disable-next-line import/extensions
+import {fastifyHttpProxy} from './fastify-http-proxy/index.js'
 import {port, output, error, fastify} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -40,7 +41,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
       const targetPort = await port.getRandomPort()
-      server.register(fastifyHTTPProxy, {
+      server.register(fastifyHttpProxy, {
         upstream: `http://localhost:${targetPort}`,
         prefix: target.pathPrefix,
         rewritePrefix: target.pathPrefix,

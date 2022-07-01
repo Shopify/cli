@@ -1,6 +1,6 @@
-import {fetchAllStores} from './fetch'
-import {Organization, OrganizationStore} from '../../models/organization'
-import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
+import {fetchAllStores} from './fetch.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
 
 const ConvertToDevError = (storeName: string, message: string) => {

@@ -1,8 +1,7 @@
 // CLI
-import {version as cliVersion} from '../package.json'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment, output, store, analytics} from '@shopify/cli-kit'
+import {error as kitError, environment, output, store, constants, analytics} from '@shopify/cli-kit'
 
 async function runCLI() {
   await store.initializeCliKitStore()
@@ -13,7 +12,7 @@ async function runCLI() {
     Bugsnag.start({
       apiKey: '9e1e6889176fd0c795d5c659225e0fae',
       logger: null,
-      appVersion: cliVersion,
+      appVersion: await constants.versions.cliKit(),
       autoTrackSessions: false,
     })
   }

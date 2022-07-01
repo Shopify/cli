@@ -1,6 +1,6 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app'
-import {extensionConfig} from '../../utilities/extensions/configuration'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
+import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app.js'
+import {extensionConfig} from '../../utilities/extensions/configuration.js'
 import {error, ruby, system, yaml, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 

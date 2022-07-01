@@ -8,7 +8,7 @@ import {
   UIExtensionTypes,
   dotEnvFileNames,
   ExtensionTypes,
-} from '../../constants'
+} from '../../constants.js'
 import {dependency, dotenv, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 
 export interface IdentifiersExtensions {

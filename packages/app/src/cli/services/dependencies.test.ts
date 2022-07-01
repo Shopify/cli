@@ -1,5 +1,5 @@
-import {installAppDependencies} from './dependencies'
-import {App} from '../models/app/app'
+import {installAppDependencies} from './dependencies.js'
+import {App} from '../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {dependency, ui} from '@shopify/cli-kit'
 

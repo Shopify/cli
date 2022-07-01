@@ -1,4 +1,4 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {
   blocks,
   extensionTypeCategory,
@@ -9,8 +9,8 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
-} from '../../constants'
-import {App} from '../../models/app/app'
+} from '../../constants.js'
+import {App} from '../../models/app/app.js'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
