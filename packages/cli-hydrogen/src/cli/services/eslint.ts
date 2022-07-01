@@ -1,5 +1,5 @@
-import {HydrogenApp} from '../models/hydrogen.js'
-import {genericConfigurationFileNames} from '../constants.js'
+import {HydrogenApp} from '../models/hydrogen'
+import {genericConfigurationFileNames} from '../constants'
 import {ui, vscode, npm, file, dependency, path, error, environment} from '@shopify/cli-kit'
 import stream from 'node:stream'
 
@@ -37,6 +37,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
           task.title = 'Dependencies installed'
         },
       },
+
       {
         title: 'Adding ESLint configuration',
         task: async (_, task) => {
