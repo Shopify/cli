@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {exec} from './system.js'
 import {exists as fileExists, read as readFile} from './file.js'
 import {glob, dirname, join as pathJoin} from './path.js'
