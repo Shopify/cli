@@ -6,7 +6,7 @@ import type {HydrogenConfig} from '@shopify/hydrogen/config'
 
 const require = createRequire(import.meta.url)
 const {loadConfig} = require('@shopify/hydrogen/load-config') as {
-  loadConfig: () => Promise<HydrogenConfig>
+  loadConfig: (options: {root: string}) => Promise<HydrogenConfig>
 }
 
 export {loadConfig}
