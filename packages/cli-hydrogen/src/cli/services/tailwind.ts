@@ -1,4 +1,4 @@
-import {HydrogenApp} from '../models/hydrogen'
+import {HydrogenApp} from '../models/hydrogen.js'
 import {ui, vscode, system, path, file, error, dependency} from '@shopify/cli-kit'
 import stream from 'node:stream'
 

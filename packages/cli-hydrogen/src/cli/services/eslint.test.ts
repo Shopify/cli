@@ -1,6 +1,6 @@
-import {addESLint} from './eslint'
-import {genericConfigurationFileNames} from '../constants'
-import {HydrogenApp} from '../models/hydrogen'
+import {addESLint} from './eslint.js'
+import {genericConfigurationFileNames} from '../constants.js'
+import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, vi, it, expect} from 'vitest'
 import {file, dependency, vscode, path} from '@shopify/cli-kit'
 

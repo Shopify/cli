@@ -1,5 +1,5 @@
-import InfoCommand from './info'
-import {HydrogenApp, load as loadApp} from '../../models/hydrogen'
+import InfoCommand from './info.js'
+import {HydrogenApp, load as loadApp} from '../../models/hydrogen.js'
 import {describe, expect, vi, it, beforeAll} from 'vitest'
 import {outputMocker} from '@shopify/cli-kit'
 

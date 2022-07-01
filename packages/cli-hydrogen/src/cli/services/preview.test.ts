@@ -1,4 +1,4 @@
-import {previewInWorker} from './preview'
+import {previewInWorker} from './preview.js'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {path, file, system} from '@shopify/cli-kit'
 

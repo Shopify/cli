@@ -1,4 +1,4 @@
-import {HydrogenApp} from '../models/hydrogen'
+import {HydrogenApp} from '../models/hydrogen.js'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'

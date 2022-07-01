@@ -1,5 +1,5 @@
-import {info} from './info'
-import {HydrogenApp} from '../models/hydrogen'
+import {info} from './info.js'
+import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, expect, it} from 'vitest'
 
 describe('Project settings', () => {

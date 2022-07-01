@@ -1,5 +1,5 @@
-import buildService from '../../services/build'
-import {hydrogenFlags} from '../../flags'
+import buildService from '../../services/build.js'
+import {hydrogenFlags} from '../../flags.js'
 import {Command, Flags} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
 
