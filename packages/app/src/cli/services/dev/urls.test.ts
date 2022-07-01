@@ -1,5 +1,5 @@
-import {updateURLs, generateURL} from './urls'
-import {App, WebType} from '../../models/app/app'
+import {updateURLs, generateURL} from './urls.js'
+import {App, WebType} from '../../models/app/app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'

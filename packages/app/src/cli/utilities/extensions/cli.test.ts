@@ -1,6 +1,6 @@
-import {runGoExtensionsCLI, nodeExtensionsCLIPath} from './cli'
-import {getBinaryPathOrDownload} from './binary'
-import {useExtensionsCLISources} from '../../environment'
+import {runGoExtensionsCLI, nodeExtensionsCLIPath} from './cli.js'
+import {getBinaryPathOrDownload} from './binary.js'
+import {useExtensionsCLISources} from '../../environment.js'
 import {describe, test, expect, vi} from 'vitest'
 import {system, environment, path} from '@shopify/cli-kit'
 

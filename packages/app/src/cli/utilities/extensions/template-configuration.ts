@@ -1,4 +1,4 @@
-import {isUiExtensionType, uiExtensionTemplates} from '../../constants'
+import {isUiExtensionType, uiExtensionTemplates} from '../../constants.js'
 
 export function getUIExtensionTemplates(extensionType: string): {name: string; value: string}[] {
   const filteredFlavors: string[] = []

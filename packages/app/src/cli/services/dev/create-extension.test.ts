@@ -1,4 +1,4 @@
-import {createExtension} from './create-extension'
+import {createExtension} from './create-extension.js'
 import {api} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 

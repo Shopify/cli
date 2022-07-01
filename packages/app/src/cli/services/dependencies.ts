@@ -1,4 +1,4 @@
-import {App, updateDependencies} from '../models/app/app'
+import {App, updateDependencies} from '../models/app/app.js'
 import {dependency, ui, environment} from '@shopify/cli-kit'
 
 /**

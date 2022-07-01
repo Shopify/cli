@@ -1,14 +1,14 @@
-import {ensureDevEnvironment} from './environment'
-import {generateURL, updateURLs} from './dev/urls'
-import {installAppDependencies} from './dependencies'
-import {devExtensions} from './dev/extension'
-import {outputAppURL, outputExtensionsMessages} from './dev/output'
+import {ensureDevEnvironment} from './environment.js'
+import {generateURL, updateURLs} from './dev/urls.js'
+import {installAppDependencies} from './dependencies.js'
+import {devExtensions} from './dev/extension.js'
+import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
-} from '../utilities/app/http-reverse-proxy'
-import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
-import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
+} from '../utilities/app/http-reverse-proxy.js'
+import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app.js'
+import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'

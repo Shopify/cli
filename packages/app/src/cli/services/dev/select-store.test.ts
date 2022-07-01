@@ -1,7 +1,7 @@
-import {selectStore} from './select-store'
-import {fetchAllStores} from './fetch'
-import {Organization, OrganizationStore} from '../../models/organization'
-import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
+import {selectStore} from './select-store.js'
+import {fetchAllStores} from './fetch.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 

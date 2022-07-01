@@ -1,4 +1,4 @@
-import {versions} from '../../constants'
+import {versions} from '../../constants.js'
 import {http, file, path, os, error, checksum, constants} from '@shopify/cli-kit'
 import zlib from 'node:zlib'
 import {createWriteStream} from 'node:fs'

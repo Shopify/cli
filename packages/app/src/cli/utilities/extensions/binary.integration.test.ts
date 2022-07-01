@@ -1,4 +1,4 @@
-import {getBinaryPathOrDownload} from './binary'
+import {getBinaryPathOrDownload} from './binary.js'
 import {expect, it, vi} from 'vitest'
 import {file, constants} from '@shopify/cli-kit'
 
