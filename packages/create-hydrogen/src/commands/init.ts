@@ -1,5 +1,5 @@
-import initPrompt from '../prompts/init'
-import initService from '../services/init'
+import initPrompt from '../prompts/init.js'
+import initService from '../services/init.js'
 import {path, cli, analytics} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 

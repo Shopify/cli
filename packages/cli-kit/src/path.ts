@@ -34,6 +34,6 @@ export function relativize(path: string): string {
  * @param moduleURL {string} The value of import.meta.url in the context of the caller module.
  * @returns {string} The path to the directory containing the caller module.
  */
-export function moduleDirectory(moduleURL: string): string {
+export function moduleDirectory(moduleURL: string | URL): string {
   return dirname(fileURLToPath(moduleURL))
 }
