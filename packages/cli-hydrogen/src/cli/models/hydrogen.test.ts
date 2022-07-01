@@ -1,15 +1,17 @@
 import {load} from './hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {HydrogenConfig} from '@shopify/hydrogen/config'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import {loadConfig} from '@shopify/hydrogen/load-config'
+import {loadConfig} from '../utilities/load-config.js'
 import {describe, vi, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore
+import type {HydrogenConfig} from '@shopify/hydrogen/config'
+/* eslint-enable @typescript-eslint/ban-ts-comment */
 
-vi.mock('@shopify/hydrogen/load-config')
+vi.mock('../utilities/load-config.js')
 
 interface PackageJSONContents {
   name?: string
