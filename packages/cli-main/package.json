@@ -51,7 +51,6 @@
     ]
   },
   "dependencies": {
-    "@bugsnag/js": "^7.16.7",
     "@oclif/core": "^1.0",
     "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",

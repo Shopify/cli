@@ -105,7 +105,8 @@
     "semver": "^7.3.6",
     "ansi-colors": "^4.1.1",
     "unique-string": "^3.0.0",
-    "strip-ansi": "^7.0.1"
+    "strip-ansi": "^7.0.1",
+    "@bugsnag/js": "^7.16.7"
   },
   "devDependencies": {
     "@types/cross-zip": "^4.0.0",
