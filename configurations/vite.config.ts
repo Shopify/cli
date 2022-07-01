@@ -2,17 +2,11 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {plugins, aliases} from './rollup.config'
 import path from 'pathe'
 import {defineConfig} from 'vite'
 
 export default function config(packagePath: string) {
   return defineConfig({
-    build: {
-      rollupOptions: {
-        plugins: plugins(packagePath),
-      },
-    },
     resolve: {
       alias: aliases(packagePath),
     },
@@ -24,4 +18,11 @@ export default function config(packagePath: string) {
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
     },
   })
+}
+
+export const aliases = (packagePath: string) => {
+  return [
+    {find: /@shopify\/cli-kit\/(.+)/, replacement: path.join(packagePath, '../cli-kit/src/$1.ts')},
+    {find: '@shopify/cli-kit', replacement: path.join(packagePath, '../cli-kit/src/index.ts')},
+  ]
 }

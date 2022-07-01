@@ -48,9 +48,6 @@ const constants = {
       },
     },
   },
-  /**
-   * Versions are resolved at build time by Rollup's JSON plugin.
-   */
   versions: {
     cliKit: async () => {
       return findPackageVersionUp({fromModuleURL: import.meta.url})
