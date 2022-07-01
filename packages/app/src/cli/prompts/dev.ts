@@ -1,4 +1,4 @@
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {output, ui} from '@shopify/cli-kit'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {

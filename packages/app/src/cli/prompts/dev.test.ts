@@ -6,8 +6,8 @@ import {
   selectAppPrompt,
   selectOrganizationPrompt,
   selectStorePrompt,
-} from './dev'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
+} from './dev.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui, outputMocker} from '@shopify/cli-kit'
 

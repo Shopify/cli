@@ -1,5 +1,11 @@
-import {fetchAllStores, fetchOrgAndApps, fetchOrganizations, fetchAppExtensionRegistrations, NoOrgError} from './fetch'
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {
+  fetchAllStores,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  fetchAppExtensionRegistrations,
+  NoOrgError,
+} from './fetch.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {describe, expect, it, test, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 

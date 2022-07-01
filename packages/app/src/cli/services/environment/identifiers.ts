@@ -1,8 +1,8 @@
-import {automaticMatchmaking} from './id-matching'
-import {manualMatchIds} from './id-manual-matching'
-import {App, Extension, Identifiers} from '../../models/app/app'
-import {fetchAppExtensionRegistrations} from '../dev/fetch'
-import {createExtension} from '../dev/create-extension'
+import {automaticMatchmaking} from './id-matching.js'
+import {manualMatchIds} from './id-manual-matching.js'
+import {App, Extension, Identifiers} from '../../models/app/app.js'
+import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {createExtension} from '../dev/create-extension.js'
 import {dependency, error, output, session, ui} from '@shopify/cli-kit'
 
 const DeployError = (appName: string, packageManager: dependency.DependencyManager) => {

@@ -1,7 +1,7 @@
-import {createApp, selectOrCreateApp} from './select-app'
-import {App, WebType} from '../../models/app/app'
-import {Organization, OrganizationApp} from '../../models/organization'
-import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
+import {createApp, selectOrCreateApp} from './select-app.js'
+import {App, WebType} from '../../models/app/app.js'
+import {Organization, OrganizationApp} from '../../models/organization.js'
+import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 

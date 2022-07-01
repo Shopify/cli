@@ -1,5 +1,5 @@
-import {getUIExtensionTemplates, isValidUIExtensionTemplate} from './template-configuration'
-import {uiExtensions, uiExtensionTemplates} from '../../constants'
+import {getUIExtensionTemplates, isValidUIExtensionTemplate} from './template-configuration.js'
+import {uiExtensions, uiExtensionTemplates} from '../../constants.js'
 import {describe, expect, it} from 'vitest'
 
 describe('get ui extension template types', () => {

@@ -1,5 +1,5 @@
-import {App, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/app'
-import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants'
+import {App, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/app.js'
+import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {output, string} from '@shopify/cli-kit'
 
 export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {

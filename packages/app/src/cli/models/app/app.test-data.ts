@@ -1,4 +1,4 @@
-import {App, UIExtension} from './app'
+import {App, UIExtension} from './app.js'
 
 export function testApp(app: Partial<App> = {}): App {
   return {

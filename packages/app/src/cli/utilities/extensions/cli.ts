@@ -1,5 +1,5 @@
-import {getBinaryPathOrDownload} from './binary'
-import {useExtensionsCLISources} from '../../environment'
+import {getBinaryPathOrDownload} from './binary.js'
+import {useExtensionsCLISources} from '../../environment.js'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 

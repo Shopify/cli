@@ -1,9 +1,9 @@
 /* eslint-disable no-irregular-whitespace */
-import AppScaffoldExtension from './extension'
-import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants'
-import {App, load as loadApp} from '../../../models/app/app'
-import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
-import scaffoldExtensionService from '../../../services/scaffold/extension'
+import AppScaffoldExtension from './extension.js'
+import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants.js'
+import {App, load as loadApp} from '../../../models/app/app.js'
+import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
+import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker} from '@shopify/cli-kit'
 

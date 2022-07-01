@@ -4,8 +4,8 @@ import {
   validatePlatformSupport,
   UnsupportedPlatformError,
   getArtifactName,
-} from './binary'
-import {versions} from '../../constants'
+} from './binary.js'
+import {versions} from '../../constants.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
 import {createGzip} from 'node:zlib'

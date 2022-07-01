@@ -37,7 +37,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ && tsc -b",
     "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
@@ -72,7 +72,7 @@
   ],
   "oclif": {
     "bin": "shopify",
-    "commands": "dist/commands",
+    "commands": "dist/cli/commands",
     "plugins": [
       "@shopify/app",
       "@shopify/theme",

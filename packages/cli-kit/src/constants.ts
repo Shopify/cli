@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {join as pathJoin, findUp} from './path.js'
+import {join as pathJoin, findUp, moduleDirectory} from './path.js'
 import {read} from './file.js'
 import envPaths from 'env-paths'
 
@@ -53,7 +53,9 @@ const constants = {
    */
   versions: {
     cliKit: async () => {
-      const packageJsonPath = (await findUp('@shopify/cli-kit/package.json', {type: 'file'})) as string
+      const dirname = moduleDirectory(import.meta.url)
+      const relativePath = pathJoin('node_modules', '@shopify', 'cli-kit', 'package.json')
+      const packageJsonPath = (await findUp(relativePath, {type: 'file', cwd: dirname})) as string
       const packageJson = JSON.parse(await read(packageJsonPath))
       return packageJson.version as string
     },

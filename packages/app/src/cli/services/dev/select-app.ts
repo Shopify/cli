@@ -1,7 +1,7 @@
-import {fetchAppFromApiKey} from './fetch'
-import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev'
-import {App} from '../../models/app/app'
-import {Organization, OrganizationApp} from '../../models/organization'
+import {fetchAppFromApiKey} from './fetch.js'
+import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {App} from '../../models/app/app.js'
+import {Organization, OrganizationApp} from '../../models/organization.js'
 import {api, error, output} from '@shopify/cli-kit'
 
 /**

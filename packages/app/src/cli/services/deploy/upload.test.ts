@@ -1,5 +1,5 @@
-import {uploadFunctionExtensions} from './upload'
-import {FunctionExtension, Identifiers} from 'cli/models/app/app'
+import {uploadFunctionExtensions} from './upload.js'
+import {FunctionExtension, Identifiers} from '../../models/app/app.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {path, file, api, http} from '@shopify/cli-kit'
 

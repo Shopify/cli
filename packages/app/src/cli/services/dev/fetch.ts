@@ -1,4 +1,4 @@
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {api, error, output} from '@shopify/cli-kit'
 
 export const NoOrgError = (organizationId?: string) => {

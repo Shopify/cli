@@ -1,4 +1,4 @@
-import {environmentVariables} from './constants'
+import {environmentVariables} from './constants.js'
 import {environment} from '@shopify/cli-kit'
 
 /**

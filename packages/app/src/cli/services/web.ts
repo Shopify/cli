@@ -1,6 +1,5 @@
-import {Web} from '../models/app/app'
+import {Web, WebConfigurationCommands} from '../models/app/app.js'
 import {error, system} from '@shopify/cli-kit'
-import {WebConfigurationCommands} from 'cli/models/app/app'
 import {Writable} from 'node:stream'
 
 interface WebOptions {

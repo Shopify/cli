@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import extensionInit, {getRuntimeDependencies} from './extension'
+import extensionInit, {getRuntimeDependencies} from './extension.js'
 import {
   blocks,
   configurationFileNames,
@@ -8,8 +8,8 @@ import {
   uiExtensions,
   getUIExtensionRendererDependency,
   UIExtensionTypes,
-} from '../../constants'
-import {load as loadApp} from '../../models/app/app'
+} from '../../constants.js'
+import {load as loadApp} from '../../models/app/app.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import {file, output, path, dependency} from '@shopify/cli-kit'
 

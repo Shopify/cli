@@ -1,8 +1,8 @@
-import {info} from './info'
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
-import {selectOrCreateApp} from './dev/select-app'
-import {App} from '../models/app/app'
-import {selectOrganizationPrompt} from '../prompts/dev'
+import {info} from './info.js'
+import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
+import {selectOrCreateApp} from './dev/select-app.js'
+import {App} from '../models/app/app.js'
+import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {path, dependency, session, output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeAll} from 'vitest'
 

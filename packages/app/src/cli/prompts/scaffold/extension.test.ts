@@ -1,5 +1,5 @@
-import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionFlavorQuestion} from './extension'
-import {extensions, getExtensionOutputConfig} from '../../constants'
+import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionFlavorQuestion} from './extension.js'
+import {extensions, getExtensionOutputConfig} from '../../constants.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
 
