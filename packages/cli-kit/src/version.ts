@@ -1,12 +1,8 @@
 import {content, token, debug} from './output.js'
-import {moduleDirectory, findUp} from './path.js'
-import {read} from './file.js'
+import {moduleDirectory} from './path.js'
 import {Bug} from './error.js'
+import {findUpAndReadPackageJson} from './dependency.js'
 import latestVersion from 'latest-version'
-
-export const PackageJsonNotFoundError = (directory: string) => {
-  return new Bug(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
-}
 
 export const PackageJsonVersionNotFoundError = (packageJsonPath: string) => {
   return new Bug(content`The package.json at path ${token.path(packageJsonPath)} doesn't contain a version`)
@@ -34,14 +30,11 @@ interface FindPackageVersionUpOptions {
  */
 export async function findPackageVersionUp(options: FindPackageVersionUpOptions): Promise<string> {
   const fromDirectory = moduleDirectory(options.fromModuleURL)
-  const packageJsonPath = await findUp('package.json', {cwd: fromDirectory, type: 'file'})
-  if (packageJsonPath) {
-    const packageJson = JSON.parse(await read(packageJsonPath))
-    if (!packageJson.version) {
-      throw PackageJsonVersionNotFoundError(packageJsonPath)
-    }
-    return packageJson.version
-  } else {
-    throw PackageJsonNotFoundError(fromDirectory)
+  const packageJson = await findUpAndReadPackageJson(fromDirectory)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const version = (packageJson.content as any).version
+  if (!version) {
+    throw PackageJsonVersionNotFoundError(packageJson.path)
   }
+  return version
 }

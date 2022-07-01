@@ -1,7 +1,7 @@
 import {exec} from './system.js'
 import {exists as fileExists, read as readFile} from './file.js'
-import {glob, dirname, join as pathJoin} from './path.js'
-import {Abort} from './error.js'
+import {glob, dirname, join as pathJoin, findUp} from './path.js'
+import {Abort, Bug} from './error.js'
 import {latestNpmPackageVersion} from './version.js'
 import {Version} from './semver.js'
 import {content, token, debug} from './output.js'
@@ -23,6 +23,10 @@ export type DependencyManager = typeof dependencyManager[number]
 
 export const PackageJsonNotFoundError = (directory: string) => {
   return new Abort(`The directory ${directory} doesn't have a package.json.`)
+}
+
+export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
+  return new Bug(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
 }
 
 /**
@@ -367,4 +371,21 @@ export async function getProjectType(directory: string): Promise<ProjectType> {
     return 'php'
   }
   return undefined
+}
+
+/**
+ * Given a directory it traverses the directory up looking for a package.json and if found, it reads it
+ * decodes the JSON, and returns its content as a Javascript object.
+ * @param options {string} The directory from which traverse up.
+ * @returns {Promise<{path: string; content: unknown}>} If found, the promise resolves with the path to the
+ *  package.json and its content. If not found, it throws a FindUpAndReadPackageJsonNotFoundError error.
+ */
+export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: unknown}> {
+  const packageJsonPath = await findUp('package.json', {cwd: fromDirectory, type: 'file'})
+  if (packageJsonPath) {
+    const packageJson = JSON.parse(await readFile(packageJsonPath))
+    return {path: packageJsonPath, content: packageJson}
+  } else {
+    throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
+  }
 }

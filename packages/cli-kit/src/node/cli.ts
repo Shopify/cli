@@ -10,6 +10,8 @@ import {
   AbortSilent,
   shouldReport as shouldReportError,
 } from '../error.js'
+import {findUpAndReadPackageJson} from '../dependency.js'
+import {moduleDirectory} from '../path.js'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
 
@@ -57,7 +59,15 @@ export async function runCLI(options: RunCLIOptions) {
     })
 }
 
-export async function runCreateCLI(name: string, options: RunCLIOptions) {
+/**
+ * A function for create-x CLIs that automatically runs the "init" command.
+ * @param options
+ */
+export async function runCreateCLI(options: RunCLIOptions) {
+  const packageJson = await findUpAndReadPackageJson(moduleDirectory(options.moduleURL))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const packageName = (packageJson.content as any).name as string
+  const name = packageName.replace('@shopify/create-', '')
   const initIndex = process.argv.findIndex((arg) => arg.includes('init'))
   if (initIndex === -1) {
     const initIndex = process.argv.findIndex((arg) => arg.match(new RegExp(`bin(/|)(create-${name}|dev|run)`))) + 1

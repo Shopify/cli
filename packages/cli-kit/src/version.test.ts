@@ -1,4 +1,4 @@
-import {findPackageVersionUp, latestNpmPackageVersion, PackageJsonNotFoundError} from './version.js'
+import {findPackageVersionUp, latestNpmPackageVersion} from './version.js'
 import {inTemporaryDirectory, mkdir, write} from './file.js'
 import {join as pathJoin} from './path.js'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -40,20 +40,6 @@ describe('findPackageVersionUp', () => {
 
       // Then
       expect(got).toEqual(version)
-    })
-  })
-
-  test("throws a PackageJsonNotFoundError error if a package.json doesn't exist", async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const subDirectory = pathJoin(tmpDir, 'subdir')
-      await mkdir(subDirectory)
-
-      // When/Then
-
-      await expect(
-        findPackageVersionUp({fromModuleURL: pathToFileURL(pathJoin(subDirectory, 'file.js'))}),
-      ).rejects.toThrowError(PackageJsonNotFoundError(subDirectory))
     })
   })
 })
