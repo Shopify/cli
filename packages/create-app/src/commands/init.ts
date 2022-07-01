@@ -76,7 +76,7 @@ export default class Init extends Command {
   async startEvent(): Promise<void> {
     const commandIndex = process.argv.indexOf('init')
     const args = process.argv.slice(commandIndex + 1).join(' ')
-    analytics.start('create-app', args)
+    analytics.start({command: 'create-app', args})
   }
 
   validateTemplateValue(template: string | undefined) {

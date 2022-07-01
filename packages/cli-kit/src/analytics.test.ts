@@ -52,7 +52,7 @@ it('sends the expected data to Monorail', async () => {
   // Given
   const command = 'app info'
   const args = ''
-  start(command, args, currentDate.getTime() - 100)
+  start({command, args, currentTime: currentDate.getTime() - 100})
 
   // When
   await reportEvent()
@@ -96,7 +96,7 @@ it('sends the expected data to Monorail with cached app info', async () => {
     storeFqdn: 'domain1',
     directory: '/cached',
   })
-  start(command, args, currentDate.getTime() - 100)
+  start({command, args, currentTime: currentDate.getTime() - 100})
 
   // When
   await reportEvent()
@@ -133,10 +133,10 @@ it('sends the expected data to Monorail when there is an error message', async (
   // Given
   const command = 'app dev'
   const args = ''
-  start(command, args, currentDate.getTime() - 100)
+  start({command, args, currentTime: currentDate.getTime() - 100})
 
   // When
-  await reportEvent('Permission denied')
+  await reportEvent({errorMessage: 'Permission denied'})
 
   // Then
   const version = await constants.versions.cliKit()
@@ -172,7 +172,7 @@ it('does nothing when analytics are disabled', async () => {
   vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
   const command = 'app dev'
   const args = ''
-  start(command, args, currentDate.getTime() - 100)
+  start({command, args, currentTime: currentDate.getTime() - 100})
 
   // When
   await reportEvent()
@@ -187,7 +187,7 @@ it('shows an error if the Monorail request fails', async () => {
   const args = ''
   vi.mocked(http.fetch).mockResolvedValueOnce({status: 500, statusText: 'Monorail is down'} as any)
   const outputMock = mockAndCaptureOutput()
-  start(command, args)
+  start({command, args})
 
   // When
   await reportEvent()
@@ -204,7 +204,7 @@ it('shows an error if something else fails', async () => {
     throw new Error('Boom!')
   })
   const outputMock = mockAndCaptureOutput()
-  start(command, args)
+  start({command, args})
 
   // When
   await reportEvent()

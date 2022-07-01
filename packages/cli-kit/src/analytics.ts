@@ -11,22 +11,32 @@ import {cliKitStore} from './store.js'
 
 const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 let startTime: number | undefined
-let command: string
-let args: string
+let startCommand: string
+let startArgs: string
 
-export const start = (startCommand: string, startArgs: string, currentTime: number = new Date().getTime()) => {
-  command = startCommand
-  args = startArgs
+interface startOptions {
+  command: string
+  args: string
+  currentTime?: number
+}
+
+export const start = ({command, args, currentTime = new Date().getTime()}: startOptions) => {
+  startCommand = command
+  startArgs = args
   startTime = currentTime
 }
 
-export const reportEvent = async (errorMessage: string | undefined = undefined) => {
+interface ReportEventOptions {
+  errorMessage?: string
+}
+
+export const reportEvent = async (options: ReportEventOptions = {}) => {
   if (environment.local.analyticsDisabled()) return
-  if (command === undefined) return
+  if (startCommand === undefined) return
 
   try {
     const currentTime = new Date().getTime()
-    const payload = await buildPayload(errorMessage, currentTime)
+    const payload = await buildPayload(options.errorMessage, currentTime)
     const body = JSON.stringify(payload)
     const headers = buildHeaders(currentTime)
 
@@ -61,9 +71,9 @@ const buildHeaders = (currentTime: number) => {
 
 const buildPayload = async (errorMessage: string | undefined, currentTime: number) => {
   let directory = process.cwd()
-  const pathFlagIndex = args.indexOf('--path')
+  const pathFlagIndex = startArgs.indexOf('--path')
   if (pathFlagIndex >= 0) {
-    directory = resolve(args[pathFlagIndex + 1])
+    directory = resolve(startArgs[pathFlagIndex + 1])
   }
   const appInfo = cliKitStore().getAppInfo(directory)
   const {platform, arch} = platformAndArch()
@@ -81,8 +91,8 @@ const buildPayload = async (errorMessage: string | undefined, currentTime: numbe
     schema_id: 'app_cli3_command/1.0',
     payload: {
       project_type: await getProjectType(join(directory, 'web')),
-      command,
-      args,
+      command: startCommand,
+      args: startArgs,
       time_start: startTime,
       time_end: currentTime,
       total_time: totalTime(currentTime),

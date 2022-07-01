@@ -39,7 +39,7 @@ async function runCLI() {
 }
 
 const reportError = async (errorToReport: Error): Promise<Error> => {
-  await analytics.reportEvent(errorToReport.message)
+  await analytics.reportEvent({errorMessage: errorToReport.message})
 
   if (!settings.debug && kitError.shouldReport(errorToReport)) {
     let mappedError: Error

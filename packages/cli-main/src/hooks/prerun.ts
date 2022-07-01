@@ -5,5 +5,5 @@ import {Hook} from '@oclif/core'
 export const hook: Hook.Prerun = async (options) => {
   const command = options.Command.id.replace(/:/g, ' ')
   const args = options.argv.join(' ')
-  analytics.start(command, args)
+  analytics.start({command, args})
 }

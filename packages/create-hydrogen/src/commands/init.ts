@@ -72,6 +72,6 @@ export default class Init extends Command {
   async startEvent(): Promise<void> {
     const commandIndex = process.argv.indexOf('init')
     const args = process.argv.slice(commandIndex + 1).join(' ')
-    analytics.start('create-hydrogen', args)
+    analytics.start({command: 'create-hydrogen', args})
   }
 }
