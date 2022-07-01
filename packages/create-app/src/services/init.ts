@@ -1,5 +1,5 @@
-import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm'
-import cleanup from '../utils/template/cleanup'
+import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
+import cleanup from '../utils/template/cleanup.js'
 
 import {
   string,
@@ -45,7 +45,7 @@ async function init(options: InitOptions) {
     const repoUrl = githubRepo.branch ? `${githubRepo.repoBaseUrl}#${githubRepo.branch}` : githubRepo.repoBaseUrl
 
     await file.mkdir(templateDownloadDir)
-    let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
+    let tasks: ui.ListrTasks = []
 
     tasks = tasks.concat([
       {
@@ -152,7 +152,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    const list = new ui.Listr(tasks, {
+    const list = ui.newListr(tasks, {
       concurrent: false,
       rendererOptions: {collapse: false},
       rendererSilent: environment.local.isUnitTest(),

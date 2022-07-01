@@ -1,4 +1,4 @@
-import {HydrogenApp} from '../models/hydrogen'
+import {HydrogenApp} from '../models/hydrogen.js'
 import {ui, vscode, system, path, file, error, dependency} from '@shopify/cli-kit'
 import stream from 'node:stream'
 
@@ -19,7 +19,7 @@ const tailwindImportsExist = (indexCSS: string) =>
   tailwindImports.map((el) => new RegExp(el)).every((tailwindDirective) => tailwindDirective.test(indexCSS))
 
 export async function addTailwind({app, force, install, directory}: AddTailwindOptions) {
-  const list = new ui.Listr([
+  const list = ui.newListr([
     {
       title: 'Installing additional dependencies',
       skip: () => !install,

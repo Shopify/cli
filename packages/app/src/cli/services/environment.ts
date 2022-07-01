@@ -1,4 +1,4 @@
-import {selectOrCreateApp} from './dev/select-app'
+import {selectOrCreateApp} from './dev/select-app.js'
 import {
   fetchAllStores,
   fetchAppFromApiKey,
@@ -6,12 +6,12 @@ import {
   fetchOrganizations,
   fetchOrgFromId,
   FetchResponse,
-} from './dev/fetch'
-import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
-import {ensureDeploymentIdsPresence} from './environment/identifiers'
-import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
+} from './dev/fetch.js'
+import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
+import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
+import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
+import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {error as kitError, output, session, store, ui, environment, dependency} from '@shopify/cli-kit'
 
 export const InvalidApiKeyError = (apiKey: string) => {
@@ -254,7 +254,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Fetching organization data',

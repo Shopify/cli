@@ -93,7 +93,7 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
   const exists = await file.exists(themeCheckDirectory())
 
   if (!exists) stdout.write('Installing theme dependencies...')
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Installing theme dependencies',
@@ -121,7 +121,7 @@ async function installCLIDependencies() {
   const exists = await file.exists(shopifyCLIDirectory())
   const renderer = exists ? 'silent' : 'default'
 
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Installing theme dependencies',

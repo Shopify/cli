@@ -1,6 +1,4 @@
-/* eslint-disable */
-/// <reference types='node' />
-
+// eslint-disable-next-line import/no-extraneous-dependencies
 import {FastifyPluginCallback, preHandlerHookHandler} from 'fastify'
 
 import {FastifyReplyFromOptions, FastifyReplyFromHooks} from '@fastify/reply-from'
@@ -14,13 +12,13 @@ export interface FastifyHttpProxyOptions extends FastifyReplyFromOptions {
   proxyPayloads?: boolean
   preHandler?: preHandlerHookHandler
   beforeHandler?: preHandlerHookHandler
-  config?: Object
+  config?: object
   replyOptions?: FastifyReplyFromHooks
   websocket?: boolean
   wsClientOptions?: ClientOptions
   wsServerOptions?: ServerOptions
   httpMethods?: string[]
-  constraints?: {[name: string]: any}
+  constraints?: {[name: string]: unknown}
 }
 
 export const fastifyHttpProxy: FastifyPluginCallback<FastifyHttpProxyOptions>

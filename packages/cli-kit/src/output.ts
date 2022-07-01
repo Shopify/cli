@@ -550,11 +550,14 @@ function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) =
   logToFile(message, logLevel.toUpperCase())
 }
 
-function logFileExists(): boolean {
+export function logFileExists(): boolean {
   return Boolean(logFile)
 }
 
-function logToFile(message: string, logLevel: string): void {
+// DO NOT USE THIS FUNCTION DIRECTLY under normal circumstances.
+// It is exported purely for use in cases where output is already being logged
+// to the terminal but is not reflected in the logfile, e.g. Listr output.
+export function logToFile(message: string, logLevel: string): void {
   // If file logging hasn't been initiated, skip it
   if (!logFileExists()) return
   const timestamp = new Date().toISOString()

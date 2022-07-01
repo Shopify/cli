@@ -1,4 +1,4 @@
-import {appFlags} from '../../../flags'
+import {appFlags} from '../../../flags.js'
 import {
   extensions,
   ExtensionTypes,
@@ -7,11 +7,11 @@ import {
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
-} from '../../../constants'
-import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension'
-import {load as loadApp, App} from '../../../models/app/app'
-import scaffoldExtensionService from '../../../services/scaffold/extension'
-import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration'
+} from '../../../constants.js'
+import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
+import {load as loadApp, App} from '../../../models/app/app.js'
+import scaffoldExtensionService from '../../../services/scaffold/extension.js'
+import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {output, path, cli, error, environment, dependency} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 

@@ -1,15 +1,14 @@
 /* eslint-disable require-atomic-updates */
-import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
+import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {
   uploadThemeExtensions,
+  uploadFunctionExtensions,
   uploadUIExtensionsBundle,
   UploadExtensionValidationError,
-  uploadFunctionExtensions,
-} from './deploy/upload'
+} from './deploy/upload.js'
 
-import {ensureDeployEnvironment} from './environment'
-import {fetchAppExtensionRegistrations} from './dev/fetch'
-import {validateExtensions} from '../validators/extensions'
+import {ensureDeployEnvironment} from './environment.js'
+import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {
   App,
   Extension,
@@ -18,10 +17,11 @@ import {
   Identifiers,
   UIExtension,
   updateAppIdentifiers,
-} from '../models/app/app'
-import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
-import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {OrganizationApp} from '../models/organization'
+} from '../models/app/app.js'
+import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
+import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
+import {validateExtensions} from '../validators/extensions.js'
+import {OrganizationApp} from '../models/organization.js'
 import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 

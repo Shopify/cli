@@ -1,4 +1,4 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {
   blocks,
   extensionTypeCategory,
@@ -9,8 +9,8 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
-} from '../../constants'
-import {App} from '../../models/app/app'
+} from '../../constants.js'
+import {App} from '../../models/app/app.js'
 import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
@@ -70,7 +70,7 @@ async function uiExtensionInit({
   extensionFlavor,
   extensionDirectory,
 }: UIExtensionInitOptions) {
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Install additional dependencies',
@@ -165,7 +165,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    const list = new ui.Listr(
+    const list = ui.newListr(
       [
         {
           title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,

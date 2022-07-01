@@ -1,6 +1,6 @@
-import {appFlags} from '../../flags'
-import {deploy} from '../../services/deploy'
-import {App, load as loadApp} from '../../models/app/app'
+import {appFlags} from '../../flags.js'
+import {deploy} from '../../services/deploy.js'
+import {App, load as loadApp} from '../../models/app/app.js'
 import {Command, Flags} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
 

@@ -1,5 +1,5 @@
-import initPrompt from '../prompts/init'
-import initService from '../services/init'
+import initPrompt from '../prompts/init.js'
+import initService from '../services/init.js'
 import {path, cli, analytics} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 
@@ -50,6 +50,7 @@ export default class Init extends Command {
   }
 
   async run(): Promise<void> {
+    this.startEvent()
     const {flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const promptAnswers = await initPrompt({
@@ -65,12 +66,12 @@ export default class Init extends Command {
       directory,
       local: flags.local,
     })
-    await this.reportEvent()
+    await analytics.reportEvent()
   }
 
-  async reportEvent(): Promise<void> {
+  async startEvent(): Promise<void> {
     const commandIndex = process.argv.indexOf('init')
-    const args = process.argv.slice(commandIndex + 1)
-    await analytics.reportEvent('create-app', args)
+    const args = process.argv.slice(commandIndex + 1).join(' ')
+    analytics.start({command: 'create-hydrogen', args})
   }
 }

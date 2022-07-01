@@ -1,4 +1,4 @@
-import {useExtensionsCLISources} from './environment'
+import {useExtensionsCLISources} from './environment.js'
 import {describe, expect, test} from 'vitest'
 
 describe('useExtensionsCLISources', () => {

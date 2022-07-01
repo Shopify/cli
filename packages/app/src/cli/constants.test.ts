@@ -4,7 +4,7 @@ import {
   getExtensionTypeFromHumanKey,
   functionExtensions,
   getFunctionExtensionPointName,
-} from './constants'
+} from './constants.js'
 import {describe, expect, it, test} from 'vitest'
 
 describe('get extension type output configuration', () => {

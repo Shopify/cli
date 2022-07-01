@@ -1,8 +1,8 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
-import {selectOrCreateApp} from './dev/select-app'
-import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
-import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
-import {selectOrganizationPrompt} from '../prompts/dev'
+import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
+import {selectOrCreateApp} from './dev/select-app.js'
+import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app.js'
+import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
+import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {os, output, path, session, store, dependency} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'

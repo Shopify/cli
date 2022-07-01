@@ -1,10 +1,10 @@
-import {ensureDeploymentIdsPresence} from './identifiers'
-import {automaticMatchmaking} from './id-matching'
-import {manualMatchIds} from './id-manual-matching'
-import {fetchAppExtensionRegistrations} from '../dev/fetch'
-import {createExtension, ExtensionRegistration} from '../dev/create-extension'
+import {ensureDeploymentIdsPresence} from './identifiers.js'
+import {automaticMatchmaking} from './id-matching.js'
+import {manualMatchIds} from './id-manual-matching.js'
+import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
+import {App, FunctionExtension, UIExtension} from '../../models/app/app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {App, FunctionExtension, UIExtension} from 'cli/models/app/app'
 import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: ExtensionRegistration = {

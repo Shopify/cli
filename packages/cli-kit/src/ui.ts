@@ -3,13 +3,40 @@ import {Input} from './ui/input.js'
 import {Select} from './ui/select.js'
 import {Bug, AbortSilent} from './error.js'
 import {remove, exists} from './file.js'
-import {info, content, token} from './output.js'
+import {info, content, token, logToFile} from './output.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {isTruthy} from './environment/utilities.js'
 import inquirer from 'inquirer'
+import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
 
-export {Listr} from 'listr2'
+export function newListr(tasks: ListrTask[], options?: object) {
+  const listr = new OriginalListr(tasks, options)
+  listr.tasks.forEach((task) => {
+    const loggedSubtaskTitles: string[] = []
+    task.subscribe((event: ListrEvent) => {
+      if (event.type === 'TITLE' && typeof event.data === 'string') {
+        logToFile(event.data, 'INFO')
+      }
+    })
+    task.renderHook$.subscribe(() => {
+      if (task.hasSubtasks()) {
+        const activeSubtasks = task.subtasks.filter((subtask) => {
+          return [ListrTaskState.PENDING, ListrTaskState.COMPLETED].includes(subtask.state as ListrTaskState)
+        })
+        activeSubtasks.forEach((subtask) => {
+          if (subtask.title && !loggedSubtaskTitles.includes(subtask.title)) {
+            loggedSubtaskTitles.push(subtask.title)
+            logToFile(subtask.title, 'INFO')
+          }
+        })
+      }
+    })
+  })
+  return listr
+}
+
+export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
 interface BaseQuestion<TName extends string> {

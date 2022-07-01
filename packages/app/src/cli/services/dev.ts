@@ -1,14 +1,14 @@
-import {ensureDevEnvironment} from './environment'
-import {generateURL, updateURLs} from './dev/urls'
-import {installAppDependencies} from './dependencies'
-import {devExtensions} from './dev/extension'
-import {outputAppURL, outputExtensionsMessages} from './dev/output'
+import {ensureDevEnvironment} from './environment.js'
+import {generateURL, updateURLs} from './dev/urls.js'
+import {installAppDependencies} from './dependencies.js'
+import {devExtensions} from './dev/extension.js'
+import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
-} from '../utilities/app/http-reverse-proxy'
-import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
-import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
+} from '../utilities/app/http-reverse-proxy.js'
+import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app.js'
+import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
@@ -115,7 +115,7 @@ async function dev(options: DevOptions) {
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
-  await reportEvent()
+  await analytics.reportEvent()
 
   await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
 }
@@ -233,12 +233,6 @@ async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, ch
   if (checkoutCartUrl) return checkoutCartUrl
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
-}
-
-async function reportEvent(): Promise<void> {
-  const commandIndex = process.argv.indexOf('dev')
-  const args = process.argv.slice(commandIndex + 1)
-  await analytics.reportEvent('app dev', args)
 }
 
 export default dev

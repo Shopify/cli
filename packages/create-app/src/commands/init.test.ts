@@ -1,6 +1,6 @@
-import Init from './init'
-import initPrompt from '../prompts/init'
-import initService from '../services/init'
+import Init from './init.js'
+import initPrompt from '../prompts/init.js'
+import initService from '../services/init.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 
 beforeEach(() => {

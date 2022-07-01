@@ -1,5 +1,5 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension'
-import {App, Identifiers} from '../../models/app/app'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
+import {App, Identifiers} from '../../models/app/app.js'
 import {path, output, temporary, file, error} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 

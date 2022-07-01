@@ -1,6 +1,6 @@
-import {fetchAllStores} from './fetch'
-import {Organization, OrganizationStore} from '../../models/organization'
-import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
+import {fetchAllStores} from './fetch.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
 
 const ConvertToDevError = (storeName: string, message: string) => {
@@ -79,7 +79,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Fetching organization data',

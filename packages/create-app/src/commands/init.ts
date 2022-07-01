@@ -1,5 +1,5 @@
-import initPrompt, {templateURLMap} from '../prompts/init'
-import initService from '../services/init'
+import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initService from '../services/init.js'
 import {Command, Flags} from '@oclif/core'
 import {path, cli, analytics, error, output} from '@shopify/cli-kit'
 
@@ -52,6 +52,7 @@ export default class Init extends Command {
   }
 
   async run(): Promise<void> {
+    this.startEvent()
     const {flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
@@ -69,13 +70,13 @@ export default class Init extends Command {
       local: flags.local,
       directory,
     })
-    await this.reportEvent()
+    await analytics.reportEvent()
   }
 
-  async reportEvent(): Promise<void> {
+  async startEvent(): Promise<void> {
     const commandIndex = process.argv.indexOf('init')
-    const args = process.argv.slice(commandIndex + 1)
-    await analytics.reportEvent('create-app', args)
+    const args = process.argv.slice(commandIndex + 1).join(' ')
+    analytics.start({command: 'create-app', args})
   }
 
   validateTemplateValue(template: string | undefined) {

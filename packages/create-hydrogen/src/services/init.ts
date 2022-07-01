@@ -1,8 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-
-import {version as hydrogenVersion} from '../../package.json'
-
 import {
   string,
   path,
@@ -18,6 +13,7 @@ import {
   template,
   git,
   constants,
+  version,
 } from '@shopify/cli-kit'
 
 import {Writable} from 'stream'
@@ -40,6 +36,7 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
+  const hydrogenVersion = await version.findPackageVersionUp({fromModuleURL: import.meta.url})
   const user = (await os.username()) ?? ''
   const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
@@ -57,7 +54,7 @@ async function init(options: InitOptions) {
     await file.mkdir(templateDownloadDir)
     await file.mkdir(templateScaffoldDir)
 
-    let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
+    let tasks: ui.ListrTasks = []
 
     const templateInfo = await github.parseRepoUrl(options.template)
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
@@ -178,7 +175,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    const list = new ui.Listr(tasks, {
+    const list = ui.newListr(tasks, {
       concurrent: false,
       rendererOptions: {collapse: false},
       rendererSilent: environment.local.isUnitTest(),

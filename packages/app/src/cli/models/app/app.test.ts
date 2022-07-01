@@ -1,6 +1,6 @@
-import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app'
-import {testApp, testUIExtension} from './app.test-data'
-import {configurationFileNames, blocks} from '../../constants'
+import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app.js'
+import {testApp, testUIExtension} from './app.test-data.js'
+import {configurationFileNames, blocks} from '../../constants.js'
 import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
 import {dependency, dotenv, file, path} from '@shopify/cli-kit'
 

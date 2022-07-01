@@ -1,5 +1,6 @@
-import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy'
-import fastifyHttpProxy from './fastify-http-proxy/index.cjs'
+import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
+// eslint-disable-next-line import/extensions
+import {fastifyHttpProxy} from './fastify-http-proxy/index.js'
 import {describe, expect, test, vi} from 'vitest'
 import {port, output, fastify} from '@shopify/cli-kit'
 
