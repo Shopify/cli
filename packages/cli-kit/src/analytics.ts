@@ -9,14 +9,34 @@ import {getProjectType} from './dependency.js'
 import constants from './constants.js'
 import {cliKitStore} from './store.js'
 
-export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
+const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
+let startTime: number | undefined
+let startCommand: string
+let startArgs: string
 
-export const reportEvent = async (command: string, args: string[]) => {
+interface startOptions {
+  command: string
+  args: string
+  currentTime?: number
+}
+
+export const start = ({command, args, currentTime = new Date().getTime()}: startOptions) => {
+  startCommand = command
+  startArgs = args
+  startTime = currentTime
+}
+
+interface ReportEventOptions {
+  errorMessage?: string
+}
+
+export const reportEvent = async (options: ReportEventOptions = {}) => {
   if (environment.local.analyticsDisabled()) return
+  if (startCommand === undefined) return
 
   try {
     const currentTime = new Date().getTime()
-    const payload = await buildPayload(command, args, currentTime)
+    const payload = await buildPayload(options.errorMessage, currentTime)
     const body = JSON.stringify(payload)
     const headers = buildHeaders(currentTime)
 
@@ -36,12 +56,6 @@ export const reportEvent = async (command: string, args: string[]) => {
   }
 }
 
-let startTime: number | undefined
-
-export const startTimer = (currentTime: number = new Date().getTime()) => {
-  startTime = currentTime
-}
-
 const totalTime = (currentTime: number): number | undefined => {
   if (startTime === undefined) return undefined
   return currentTime - startTime
@@ -55,11 +69,11 @@ const buildHeaders = (currentTime: number) => {
   }
 }
 
-const buildPayload = async (command: string, args: string[] = [], currentTime: number) => {
+const buildPayload = async (errorMessage: string | undefined, currentTime: number) => {
   let directory = process.cwd()
-  const pathFlagIndex = args.indexOf('--path')
+  const pathFlagIndex = startArgs.indexOf('--path')
   if (pathFlagIndex >= 0) {
-    directory = resolve(args[pathFlagIndex + 1])
+    directory = resolve(startArgs[pathFlagIndex + 1])
   }
   const appInfo = cliKitStore().getAppInfo(directory)
   const {platform, arch} = platformAndArch()
@@ -77,12 +91,13 @@ const buildPayload = async (command: string, args: string[] = [], currentTime: n
     schema_id: 'app_cli3_command/1.0',
     payload: {
       project_type: await getProjectType(join(directory, 'web')),
-      command,
-      args: args.join(' '),
+      command: startCommand,
+      args: startArgs,
       time_start: startTime,
       time_end: currentTime,
       total_time: totalTime(currentTime),
-      success: true,
+      success: errorMessage === undefined,
+      error_message: errorMessage,
       uname: `${platform} ${arch}`,
       cli_version: await constants.versions.cliKit(),
       ruby_version: (await rubyVersion()) || '',

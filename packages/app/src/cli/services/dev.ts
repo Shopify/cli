@@ -115,7 +115,7 @@ async function dev(options: DevOptions) {
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
-  await reportEvent()
+  await analytics.reportEvent()
 
   await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
 }
@@ -233,12 +233,6 @@ async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, ch
   if (checkoutCartUrl) return checkoutCartUrl
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
-}
-
-async function reportEvent(): Promise<void> {
-  const commandIndex = process.argv.indexOf('dev')
-  const args = process.argv.slice(commandIndex + 1)
-  await analytics.reportEvent('app dev', args)
 }
 
 export default dev
