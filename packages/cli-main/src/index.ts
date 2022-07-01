@@ -1,21 +1,21 @@
 // CLI
 import {run, flush, settings} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, output, store, constants, analytics} from '@shopify/cli-kit'
+import {error as kitError, output, store, constants, analytics, environment} from '@shopify/cli-kit'
 
 async function runCLI() {
   await store.initializeCliKitStore()
   output.initiateLogging({filename: 'shopify.cli.log'})
-  // if (environment.local.isDebug()) {
-  //   settings.debug = true
-  // } else {
-  Bugsnag.start({
-    apiKey: '9e1e6889176fd0c795d5c659225e0fae',
-    logger: null,
-    appVersion: await constants.versions.cliKit(),
-    autoTrackSessions: false,
-  })
-  // }
+  if (environment.local.isDebug()) {
+    settings.debug = true
+  } else {
+    Bugsnag.start({
+      apiKey: '9e1e6889176fd0c795d5c659225e0fae',
+      logger: null,
+      appVersion: await constants.versions.cliKit(),
+      autoTrackSessions: false,
+    })
+  }
 
   run(undefined, import.meta.url)
     .then(flush)
