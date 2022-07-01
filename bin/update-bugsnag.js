@@ -22,7 +22,8 @@ const apiKey = '9e1e6889176fd0c795d5c659225e0fae';
       directory: '.'
     });
     await reportBuild({apiKey, appVersion}, {})
-    console.log('Build reported!')    } catch (err) {
+    console.log('Build reported!')
+  } catch (err) {
     console.log('Failed to report build!', err.message)
   }
 })();
