@@ -1,4 +1,4 @@
-import {getTheme} from '../../utilities/theme-store'
+import {getTheme} from '../../utilities/theme-store.js'
 import {Command, Flags} from '@oclif/core'
 import {session, string, ruby} from '@shopify/cli-kit'
 
