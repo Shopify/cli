@@ -1,21 +1,21 @@
 // CLI
-import {run, settings, flush} from '@oclif/core'
+import {run, flush, settings} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment, output, store, constants, analytics} from '@shopify/cli-kit'
+import {error as kitError, output, store, constants, analytics} from '@shopify/cli-kit'
 
 async function runCLI() {
   await store.initializeCliKitStore()
   output.initiateLogging({filename: 'shopify.cli.log'})
-  if (environment.local.isDebug()) {
-    settings.debug = true
-  } else {
-    Bugsnag.start({
-      apiKey: '9e1e6889176fd0c795d5c659225e0fae',
-      logger: null,
-      appVersion: await constants.versions.cliKit(),
-      autoTrackSessions: false,
-    })
-  }
+  // if (environment.local.isDebug()) {
+  //   settings.debug = true
+  // } else {
+  Bugsnag.start({
+    apiKey: '9e1e6889176fd0c795d5c659225e0fae',
+    logger: null,
+    appVersion: await constants.versions.cliKit(),
+    autoTrackSessions: false,
+  })
+  // }
 
   run(undefined, import.meta.url)
     .then(flush)
@@ -39,21 +39,24 @@ async function runCLI() {
 
 const reportError = async (errorToReport: Error): Promise<Error> => {
   await analytics.reportEvent({errorMessage: errorToReport.message})
+  if (settings.debug || !kitError.shouldReport(errorToReport)) return errorToReport
 
-  if (!settings.debug && kitError.shouldReport(errorToReport)) {
-    let mappedError: Error
-    // eslint-disable-next-line no-prototype-builtins
-    if (Object.prototype.isPrototypeOf(errorToReport)) {
-      const mappedError = Object.assign(Object.create(errorToReport), {})
-      if (mappedError.stack) mappedError.stack = mappedError.stack.replace(new RegExp('file:///', 'g'), '/')
-    } else {
-      mappedError = errorToReport
-    }
-    await new Promise((resolve, reject) => {
-      Bugsnag.notify(mappedError, undefined, resolve)
-    })
+  let mappedError: Error
+
+  // eslint-disable-next-line no-prototype-builtins
+  if (Error.prototype.isPrototypeOf(errorToReport)) {
+    mappedError = new Error(errorToReport.message)
+    if (errorToReport.stack) mappedError.stack = errorToReport.stack.replace(new RegExp('file:///', 'g'), '/')
+  } else if (typeof errorToReport === 'string') {
+    mappedError = new Error(errorToReport)
+  } else {
+    mappedError = new Error('Unknown error')
   }
-  return Promise.resolve(errorToReport)
+
+  await new Promise((resolve, reject) => {
+    Bugsnag.notify(mappedError, undefined, resolve)
+  })
+  return mappedError
 }
 
 export default runCLI
