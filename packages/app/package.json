@@ -30,12 +30,6 @@
       "../../.eslintrc.cjs"
     ]
   },
-  "dependencies": {
-    "@fastify/reply-from": "^8.0.0",
-    "@oclif/core": "^1.0",
-    "@shopify/shopify-cli-extensions": "^0.2.1",
-    "@shopify/cli-kit": "^3.0.25"
-  },
   "engine-strict": true,
   "engines": {
     "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
@@ -49,7 +43,13 @@
     "commands": "dist/cli/commands"
   },
   "devDependencies": {
-    "vitest": "^0.15.1",
+    "vitest": "^0.15.1"
+  },
+  "dependencies": {
+    "@fastify/reply-from": "^8.0.0",
+    "@oclif/core": "^1.0",
+    "@shopify/shopify-cli-extensions": "^0.2.1",
+    "@shopify/cli-kit": "^3.0.25",
     "ws": "^8.7.0",
     "@fastify/http-proxy": "^8.0.1"
   }
