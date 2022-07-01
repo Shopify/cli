@@ -31,6 +31,7 @@ describe('initialize a extension', () => {
     'successfully scaffolds the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
+        console.log(output)
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
