@@ -77,7 +77,7 @@ export async function handler(error: Error): Promise<Error> {
     fatal.stack = error.stack
   }
 
-  await outputError(fatal, true)
+  await outputError(fatal)
   return Promise.resolve(error)
 }
 

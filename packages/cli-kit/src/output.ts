@@ -5,8 +5,6 @@ import constants from './constants.js'
 import {PackageManager} from './node/node-package-manager.js'
 import {generateRandomUUID} from './id.js'
 import {
-  append as fileAppend,
-  appendSync as fileAppendSync,
   mkdirSync as fileMkdirSync,
   readSync as fileReadSync,
   sizeSync as fileSizeSync,
@@ -25,8 +23,9 @@ import {AbortController, AbortSignal} from 'abort-controller'
 import cjs from 'color-json'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
+import {WriteStream, createWriteStream} from 'node:fs'
 
-let logFile: string
+let logFileStream: WriteStream
 let commandUuid: string
 
 export function initiateLogging({
@@ -38,14 +37,15 @@ export function initiateLogging({
 }) {
   commandUuid = generateRandomUUID()
   fileMkdirSync(logDir)
-  logFile = pathJoin(logDir, filename)
+  const logFile = pathJoin(logDir, filename)
   fileTouchSync(logFile)
-  truncateLogs()
+  truncateLogs(logFile)
+  logFileStream = createWriteStream(logFile, {flags: 'a'})
 }
 
 // Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long.
 // Rescues in case the file hasn't been created yet.
-function truncateLogs() {
+function truncateLogs(logFile: string): void {
   try {
     if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
       const contents = fileReadSync(logFile)
@@ -348,9 +348,9 @@ export const completed = (content: Message) => {
  * Note: Debug messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
  */
-export const debug = (content: Message, sync = false) => {
+export const debug = (content: Message) => {
   if (isUnitTest()) collectLog('debug', content)
-  message(colors.gray(stringifyMessage(content)), 'debug', sync)
+  message(colors.gray(stringifyMessage(content)), 'debug')
 }
 
 /**
@@ -378,7 +378,7 @@ export const newline = () => {
  * error handler handle and format it.
  * @param content {Fatal} The fatal error to be output.
  */
-export const error = async (content: Fatal, sync = false) => {
+export const error = async (content: Fatal) => {
   if (!content.message) {
     return
   }
@@ -422,7 +422,7 @@ export const error = async (content: Fatal, sync = false) => {
     }
   }
   outputString += footer
-  outputWhereAppropriate('error', consoleError, outputString, sync)
+  outputWhereAppropriate('error', consoleError, outputString)
 }
 
 export function stringifyMessage(message: Message): string {
@@ -433,9 +433,9 @@ export function stringifyMessage(message: Message): string {
   }
 }
 
-const message = (content: Message, level: LogLevel = 'info', sync = false) => {
+const message = (content: Message, level: LogLevel = 'info') => {
   const stringifiedMessage = stringifyMessage(content)
-  outputWhereAppropriate(level, consoleLog, stringifiedMessage, sync)
+  outputWhereAppropriate(level, consoleLog, stringifiedMessage)
 }
 
 export interface OutputProcess {
@@ -544,35 +544,26 @@ function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-function outputWhereAppropriate(
-  logLevel: LogLevel,
-  logFunc: (message: string) => void,
-  message: string,
-  sync = false,
-): void {
+function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) => void, message: string): void {
   if (shouldOutput(logLevel)) {
     logFunc(message)
   }
-  logToFile(message, logLevel.toUpperCase(), sync)
+  logToFile(message, logLevel.toUpperCase())
 }
 
 export function logFileExists(): boolean {
-  return Boolean(logFile)
+  return Boolean(logFileStream)
 }
 
 // DO NOT USE THIS FUNCTION DIRECTLY under normal circumstances.
 // It is exported purely for use in cases where output is already being logged
 // to the terminal but is not reflected in the logfile, e.g. Listr output.
-export function logToFile(message: string, logLevel: string, sync = false): void {
+export function logToFile(message: string, logLevel: string): void {
   // If file logging hasn't been initiated, skip it
   if (!logFileExists()) return
   const timestamp = new Date().toISOString()
   const logContents = `[${timestamp} ${commandUuid} ${logLevel}]: ${message}\n`
-  if (sync) {
-    fileAppendSync(logFile, logContents)
-  } else {
-    fileAppend(logFile, logContents)
-  }
+  logFileStream.write(logContents)
 }
 
 function withOrWithoutStyle(message: string): string {
