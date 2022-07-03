@@ -36,17 +36,14 @@ const displayMessageBoard = async (topics: string[]): Promise<void> => {
     const relevantToTopic = [...topics, 'general'].includes(msg.topic)
     return relevantToVersion && relevantToTopic
   })
-  const latestId = store.cliKitStore().getLatestMessageId()
-  let message: Message | undefined
-  if (latestId) {
-    message = relevantMessages.sort((msg1, msg2) => msg1.id - msg2.id).find((msg) => msg.id > latestId)
-  } else {
-    message = relevantMessages[0]
-  }
+  const message = relevantMessages
+    .sort((msg1, msg2) => msg1.id - msg2.id)
+    .find((msg) => {
+      const latestId = store.cliKitStore().getLatestMessageId(msg.topic)
+      return !latestId || msg.id > latestId
+    })
   if (message) {
-    store.cliKitStore().setLatestMessageId(message.id)
+    store.cliKitStore().setLatestMessageId(message.topic, message.id)
     output.messageBoard(message.content)
-  } else {
-    store.cliKitStore().setLatestMessageId(0)
   }
 }

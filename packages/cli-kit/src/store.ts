@@ -8,6 +8,8 @@ import Conf, {Schema} from 'conf'
 
 const migrations = {}
 
+type MessageTopics = 'general' | 'cli' | 'app' | 'hydrogen'
+
 export interface CachedAppInfo {
   directory: string
   appId: string
@@ -17,7 +19,7 @@ export interface CachedAppInfo {
 }
 
 interface Messages {
-  latestId: number
+  latestIds: {[topic in MessageTopics]: number}
 }
 
 interface ConfSchema {
@@ -48,8 +50,14 @@ const schema = {
   messages: {
     type: 'object',
     properties: {
-      latestId: {
-        type: 'number',
+      latestIds: {
+        type: 'object',
+        patternProperties: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          '.': {
+            type: 'number',
+          },
+        },
       },
     },
   },
@@ -114,15 +122,19 @@ ${token.json(options)}
     this.set('appInfo', apps)
   }
 
-  getLatestMessageId(): number | undefined {
+  getLatestMessageId(topic: MessageTopics): number | undefined {
     debug(content`Getting latest message ID...`)
-    return this.get('messages')?.latestId
+    const messages = this.get('messages')
+    if (messages?.latestIds) {
+      return messages.latestIds[topic]
+    }
   }
 
-  setLatestMessageId(id: number): void {
+  setLatestMessageId(topic: MessageTopics, id: number): void {
     debug(content`Setting latest message ID...`)
     const messages = this.get('messages') || {}
-    messages.latestId = id
+    if (!messages.latestIds) messages.latestIds = {} as {[topic in MessageTopics]: number}
+    messages.latestIds[topic] = id
     this.set('messages', messages)
   }
 
