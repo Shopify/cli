@@ -1,7 +1,7 @@
 // CLI
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
-import {error as kitError, environment, output, semver, store, constants, analytics, toml} from '@shopify/cli-kit'
+import {error as kitError, environment, output, store, constants, analytics} from '@shopify/cli-kit'
 
 async function runCLI() {
   await store.initializeCliKitStore()
@@ -17,10 +17,7 @@ async function runCLI() {
     })
   }
 
-  displayMessageBoard()
-    .then(() => {
-      run(undefined, import.meta.url)
-    })
+  run(undefined, import.meta.url)
     .then(flush)
     .catch((error: Error): Promise<void | Error> => {
       if (error instanceof kitError.AbortSilent) {
@@ -57,35 +54,6 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
     })
   }
   return Promise.resolve(errorToReport)
-}
-
-interface Message {
-  id: number
-  version: string
-  content: string
-}
-
-const displayMessageBoard = async (): Promise<void> => {
-  try {
-    const response = await fetch(MESSAGE_BOARD_URL)
-    const body = await response.text()
-    const messages: Message[] = (toml.decode(body) as {messages: Message[]}).messages
-    const currentVersion = await constants.versions.cliKit()
-    const relevantMessages = messages.filter((msg) => !msg.version || semver.satisfies(currentVersion, msg.version))
-    const latestId = store.cliKitStore().getLatestMessageId()
-    let message: Message | undefined
-    if (latestId) {
-      message = relevantMessages.sort((msg1, msg2) => msg2.id - msg1.id).find((msg) => msg.id > latestId)
-    } else {
-      message = relevantMessages[0]
-    }
-    if (message) {
-      store.cliKitStore().setLatestMessageId(message.id)
-      output.messageBoard(message.content)
-    }
-    // Catch all errors, as message board failures should never break the CLI.
-    // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
-  } catch (err) {}
 }
 
 export default runCLI
