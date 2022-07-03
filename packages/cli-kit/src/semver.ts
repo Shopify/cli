@@ -1,7 +1,6 @@
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
-const {coerce, SemVer} = require('semver')
+const {coerce, satisfies, SemVer} = require('semver')
 
-export {SemVer as Version}
-export {coerce}
+export {coerce, satisfies, SemVer as Version}

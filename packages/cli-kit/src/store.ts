@@ -16,8 +16,13 @@ export interface CachedAppInfo {
   storeFqdn?: string
 }
 
+interface Messages {
+  latestId: number
+}
+
 interface ConfSchema {
   appInfo: CachedAppInfo[]
+  messages: Messages
   themeStore: string
   session: string
 }
@@ -37,6 +42,14 @@ const schema = {
         storeFqdn: {
           type: 'string',
         },
+      },
+    },
+  },
+  messages: {
+    type: 'object',
+    properties: {
+      latestId: {
+        type: 'number',
       },
     },
   },
@@ -99,6 +112,18 @@ ${token.json(options)}
       apps.splice(index, 1)
     }
     this.set('appInfo', apps)
+  }
+
+  getLatestMessageId(): number | undefined {
+    debug(content`Getting latest message ID...`)
+    return this.get('messages')?.latestId
+  }
+
+  setLatestMessageId(id: number): void {
+    debug(content`Setting latest message ID...`)
+    const messages = this.get('messages') || {}
+    messages.latestId = id
+    this.set('messages', messages)
   }
 
   getTheme(): string | undefined {
