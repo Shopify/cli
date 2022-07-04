@@ -85,7 +85,13 @@ export async function ensureDevEnvironment(
     output.info(explanation)
   }
 
+  // 1. You run the CLI passing --store (options.storeFqdn)
+  // 2. You run the CLI without passing any --store
+  // 2.1 If it's the first time, then we show you all the stores and you pick one
+  // 2.2 It's not the first time, then we take cached storeFqdn (cachedInfo?.storeFqdn) // my-store
+
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
+
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, organization, stores, token)
@@ -303,7 +309,7 @@ async function fetchDevDataFromOptions(
 
 /**
  * Retrieve cached info from the global configuration based on the current local app
- * @param reset {boolean} Wheter to reset the cache or not
+ * @param reset {boolean} Whether to reset the cache or not
  * @param directory {string} The directory containing the app.
  * @param appId {string} Current local app id, used to retrieve the cached info
  * @returns
