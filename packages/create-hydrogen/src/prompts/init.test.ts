@@ -5,7 +5,7 @@ describe('init', () => {
   it('uses default name "hydrogen-app" when name is not passed', async () => {
     const prompt = vi.fn()
     const input = {}
-    const output = {name: 'hydrogen-app', template: 'test'}
+    const output = {name: 'hydrogen-app', template: 'test', language: 'js'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -31,7 +31,7 @@ describe('init', () => {
   it('uses the name when passed to the prompt', async () => {
     const prompt = vi.fn()
     const input = {name: 'snow-devil'}
-    const output = {name: 'hydrogen-app', template: 'test'}
+    const output = {name: 'hydrogen-app', template: 'test', language: 'js'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -47,7 +47,7 @@ describe('init', () => {
   it('when template is not passed', async () => {
     const prompt = vi.fn()
     const input = {name: 'snow-devil'}
-    const output = {name: 'snow-devil', template: 'test'}
+    const output = {name: 'snow-devil', template: 'test', language: 'js'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -64,23 +64,15 @@ describe('init', () => {
           choices: [
             {
               name: 'Demo Store',
-              value: 'demo-store-js',
-            },
-            {
-              name: 'Demo Store (TypeScript)',
-              value: 'demo-store-ts',
+              value: 'demo-store',
             },
             {
               name: 'Hello World',
-              value: 'hello-world-js',
-            },
-            {
-              name: 'Hello World (TypeScript)',
-              value: 'hello-world-ts',
+              value: 'hello-world',
             },
           ],
           message: 'Choose a template',
-          default: 'demo-store-js',
+          default: 'demo-store',
           result: expect.any(Function),
         }),
       ]),
