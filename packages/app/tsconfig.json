@@ -5,7 +5,6 @@
   "compilerOptions": {
     "outDir": "dist",
     "allowJs": true,
-    "baseUrl": "src",
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
