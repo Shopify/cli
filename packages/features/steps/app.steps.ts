@@ -12,7 +12,7 @@ interface ExtensionConfiguration {
 
 When(
   /I create an extension named (.+) of type ([^\s]+) and flavor (.+)$/,
-  {timeout: 2 * 60 * 1000},
+  {timeout: 5 * 60 * 1000},
   async function (name: string, type: string, flavor: string) {
     await scaffoldExtension({
       name,
@@ -26,7 +26,7 @@ When(
 
 When(
   /I create an extension named (.+) of type ([^\s]+)$/,
-  {timeout: 2 * 60 * 1000},
+  {timeout: 5 * 60 * 1000},
   async function (name: string, type: string) {
     await scaffoldExtension({
       name,
