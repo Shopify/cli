@@ -2,13 +2,25 @@
 // @ts-ignore
 import commondir from 'commondir'
 import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute} from 'pathe'
+import {findUp as internalFindUp, Match as FindUpMatch} from 'find-up'
 import {fileURLToPath} from 'url'
 
 export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolute}
 
-export {findUp} from 'find-up'
 export {default as glob} from 'fast-glob'
 export {pathToFileURL} from 'node:url'
+
+type FindUpMatcher = (directory: string) => FindUpMatch | Promise<FindUpMatch>
+
+export async function findUp(
+  matcher: string | ReadonlyArray<string> | FindUpMatcher,
+  options: Parameters<typeof internalFindUp>[1],
+): ReturnType<typeof internalFindUp> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const got = await internalFindUp(matcher, options)
+  return got ? normalize(got) : undefined
+}
 
 /**
  * Given an absolute filesystem path, it makes it relative to
@@ -22,7 +34,7 @@ export function relativize(path: string): string {
   const result = commondir([path, process.cwd()])
   const relativePath = relative(process.cwd(), path)
   const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
-  if (result === '/' || relativeComponents > 2) {
+  if (result === '/' || relativePath === '' || relativeComponents > 2) {
     return path
   } else {
     return relativePath

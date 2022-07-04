@@ -61,4 +61,6 @@ const constants = {
   },
 }
 
+export const bugsnagApiKey = '9e1e6889176fd0c795d5c659225e0fae'
+
 export default constants

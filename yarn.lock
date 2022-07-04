@@ -9562,15 +9562,14 @@ tempy@^1.0.1:
     type-fest "^0.16.0"
     unique-string "^2.0.0"
 
-tempy@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/tempy/-/tempy-2.0.0.tgz#c434b89486e112151d5e91ef25592c8ee6fec4f6"
-  integrity sha512-m+QReZVhpa0Y56fmfoLFRZN4aDFdd3qVd8a9k3RfyTw/1utVYNg+Ar4BY6l4/TlkhYCCJFfhYWt9uy0127buJg==
+tempy@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/tempy/-/tempy-3.0.0.tgz#a6c0a15f5534a820e92c3e1369f1c1e87ebd6b68"
+  integrity sha512-B2I9X7+o2wOaW4r/CWMkpOO9mdiTRCxXNgob6iGvPmfPWgH/KyUD6Uy5crtWBxIBe3YrNZKR2lSzv1JJKWD4vA==
   dependencies:
-    del "^6.0.0"
     is-stream "^3.0.0"
     temp-dir "^2.0.0"
-    type-fest "^2.0.0"
+    type-fest "^2.12.2"
     unique-string "^3.0.0"
 
 term-size@^2.1.0:
@@ -9928,10 +9927,10 @@ type-fest@^1.0.1, type-fest@^1.0.2:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-1.4.0.tgz#e9fb813fe3bf1744ec359d55d1affefa76f14be1"
   integrity sha512-yGSza74xk0UG8k+pLh5oeoYirvIiWo5t0/o3zHHAO2tRDiZcxWP7fywNlXhqb6/r6sWvwi+RsyQMWhVLe4BVuA==
 
-type-fest@^2.0.0:
-  version "2.13.1"
-  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-2.13.1.tgz#621c84220df0e01a8469002594fc005714f0cfba"
-  integrity sha512-hXYyrPFwETT2swFLHeoKtJrvSF/ftG/sA15/8nGaLuaDGfVAaq8DYFpu4yOyV4tzp082WqnTEoMsm3flKMI2FQ==
+type-fest@^2.12.2:
+  version "2.16.0"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-2.16.0.tgz#1250fbd64dafaf4c8e405e393ef3fb16d9651db2"
+  integrity sha512-qpaThT2HQkFb83gMOrdKVsfCN7LKxP26Yq+smPzY1FqoHRjqmjqHXA7n5Gkxi8efirtbeEUxzfEdePthQWCuHw==
 
 type-is@~1.6.18:
   version "1.6.18"

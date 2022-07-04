@@ -98,14 +98,15 @@
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
     "simple-git": "^3.5.0",
-    "tempy": "^2.0.0",
+    "tempy": "^3.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "zod": "^3.17.3",
     "semver": "^7.3.6",
     "ansi-colors": "^4.1.1",
     "unique-string": "^3.0.0",
-    "strip-ansi": "^7.0.1"
+    "strip-ansi": "^7.0.1",
+    "@bugsnag/js": "^7.16.7"
   },
   "devDependencies": {
     "@types/cross-zip": "^4.0.0",

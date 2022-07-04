@@ -22,7 +22,7 @@ import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExte
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
+import {path, output, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
 const RendererNotFoundBug = (extension: string) => {
@@ -65,7 +65,7 @@ export const deploy = async (options: DeployOptions) => {
     }),
   )
 
-  await temporary.directory(async (tmpDir) => {
+  await file.inTemporaryDirectory(async (tmpDir) => {
     try {
       const bundlePath = path.join(tmpDir, `bundle.zip`)
       await file.mkdir(path.dirname(bundlePath))
