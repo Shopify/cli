@@ -81,6 +81,8 @@ jobs:
           cache: 'yarn'
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
+      - name: Increase yarn timeout
+        run: yarn config set network-timeout 300000
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
@@ -125,6 +127,8 @@ jobs:
           cache: 'yarn'
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
+      - name: Increase yarn timeout
+        run: yarn config set network-timeout 300000
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
