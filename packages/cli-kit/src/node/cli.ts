@@ -88,7 +88,8 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
     if (errorToReport.stack) {
       // For mac/linux, remove `file:///` from stacktrace
       // For windows, remove `file:///C:/` from stacktrace
-      mappedError.stack = errorToReport.stack.replace(new RegExp('file:///([a-zA-Z]:/)?', 'g'), '/')
+      const regex = '\\((.*node_modules/)(@shopify/)?'
+      mappedError.stack = errorToReport.stack.replace(new RegExp(regex, 'g'), '(')
     }
   } else if (typeof errorToReport === 'string') {
     mappedError = new Error(errorToReport)
