@@ -98,7 +98,7 @@
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
     "simple-git": "^3.5.0",
-    "tempy": "^2.0.0",
+    "tempy": "^3.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
     "zod": "^3.17.3",
