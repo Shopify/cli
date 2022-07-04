@@ -1,6 +1,6 @@
-import {Abort} from './error.js'
-import {exists, read as readFile, write as writeFile} from './file.js'
-import {debug, content as outputContent, token} from './output.js'
+import {Abort} from '../error.js'
+import {exists, read as readFile, write as writeFile} from '../file.js'
+import {debug, content as outputContent, token} from '../output.js'
 import {parse, stringify} from 'envfile'
 
 /**
@@ -26,7 +26,12 @@ export interface DotEnvFile {
   variables: {[name: string]: string}
 }
 
-export async function read(path: string): Promise<DotEnvFile> {
+/**
+ * Reads and parses a .env file.
+ * @param path {string} Path to the .env file
+ * @returns {Promise<DotEnvFile>} An in-memory representation of the .env file.
+ */
+export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
   debug(outputContent`Reading the .env file at ${token.path(path)}`)
   if (!(await exists(path))) {
     throw DotEnvNotFoundError(path)

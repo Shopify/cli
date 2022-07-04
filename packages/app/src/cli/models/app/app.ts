@@ -9,7 +9,8 @@ import {
   dotEnvFileNames,
   ExtensionTypes,
 } from '../../constants.js'
-import {dependency, dotenv, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {dependency, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
@@ -159,7 +160,7 @@ export interface App {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
-  dotenv?: dotenv.DotEnvFile
+  dotenv?: DotEnvFile
   extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
@@ -239,11 +240,11 @@ class AppLoader {
     return app
   }
 
-  async loadDotEnv(): Promise<dotenv.DotEnvFile | undefined> {
-    let dotEnvFile: dotenv.DotEnvFile | undefined
+  async loadDotEnv(): Promise<DotEnvFile | undefined> {
+    let dotEnvFile: DotEnvFile | undefined
     const dotEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
     if (await file.exists(dotEnvPath)) {
-      dotEnvFile = await dotenv.read(dotEnvPath)
+      dotEnvFile = await readAndParseDotEnv(dotEnvPath)
     }
     return dotEnvFile
   }
