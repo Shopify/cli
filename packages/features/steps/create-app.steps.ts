@@ -6,7 +6,7 @@ import {strict as assert} from 'assert'
 
 When(
   /I create an app named (.+) with (.+) as dependency manager/,
-  {timeout: 2 * 60 * 1000},
+  {timeout: 5 * 60 * 1000},
   async function (appName: string, dependencyManager: string) {
     const {stdout} = await exec(
       'node',
