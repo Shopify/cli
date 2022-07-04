@@ -10,8 +10,11 @@ export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolu
 export {default as glob} from 'fast-glob'
 export {pathToFileURL} from 'node:url'
 
-export async function findUp(...options: Parameters<typeof internalFindUp>): ReturnType<typeof internalFindUp> {
-  const got = await internalFindUp(...options)
+export async function findUp(
+  name: string | ReadonlyArray<string>,
+  options: Parameters<typeof internalFindUp>[1],
+): ReturnType<typeof internalFindUp> {
+  const got = await internalFindUp(name, options)
   return got ? normalize(got) : undefined
 }
 
