@@ -92,13 +92,16 @@ scopes = "read_products"
       await file.rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(load(tmp)).rejects.toThrow(/Couldn't find directory/)
+      await expect(load(tmp)).rejects.toThrow(`Couldn't find directory ${tmp}`)
     })
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
+    // Given
+    const currentDir = process.cwd()
+
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(load(currentDir)).rejects.toThrow(`Couldn't find the configuration file for ${currentDir}`)
   })
 
   it('throws an error when the configuration file is invalid', async () => {
