@@ -1,5 +1,5 @@
 import {build as viteBuild} from 'vite'
-import {ui, environment} from '@shopify/cli-kit'
+import {ui, environment, error as kitError} from '@shopify/cli-kit'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -21,14 +21,21 @@ async function build({directory, targets, base}: DevOptions) {
           if (key === 'worker') {
             process.env.WORKER = 'true'
           }
-          await viteBuild({
-            ...commonConfig,
-            build: {
-              outDir: `dist/${key}`,
-              ssr: typeof value === 'string' ? value : undefined,
-              manifest: key === 'client',
-            },
-          })
+          try {
+            await viteBuild({
+              ...commonConfig,
+              build: {
+                outDir: `dist/${key}`,
+                ssr: typeof value === 'string' ? value : undefined,
+                manifest: key === 'client',
+              },
+            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (error: any) {
+            const abortError = new kitError.Abort(error.message)
+            abortError.stack = error.stack
+            throw abortError
+          }
 
           task.title = `Built ${key} code`
         },

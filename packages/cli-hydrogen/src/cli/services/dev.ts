@@ -8,16 +8,15 @@ interface DevOptions {
 }
 
 async function dev({directory, force, host}: DevOptions) {
-  const server = await createServer({
-    root: directory,
-    server: {
-      open: true,
-      force,
-      host,
-    },
-  })
-
   try {
+    const server = await createServer({
+      root: directory,
+      server: {
+        open: true,
+        force,
+        host,
+      },
+    })
     await server.listen()
     server.printUrls()
     server.config.logger.info('')
