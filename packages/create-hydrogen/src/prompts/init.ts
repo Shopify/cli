@@ -1,40 +1,34 @@
-import {ui, github, string} from '@shopify/cli-kit'
+import {ui, github} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
-const TEMPLATE_DATA = {
+const TEMPLATE_NAME_DATA = {
   /* eslint-disable @typescript-eslint/naming-convention */
-  'demo-store-js': {
+  'demo-store': {
     description: 'Demo Store',
   },
-  'demo-store-ts': {
-    description: 'Demo Store (TypeScript)',
-  },
-  'hello-world-js': {
+  'hello-world': {
     description: 'Hello World',
   },
-  'hello-world-ts': {
-    description: 'Hello World (TypeScript)',
+}
+
+const LANGUAGE_NAME_DATA = {
+  js: {
+    description: 'JavaScript',
   },
-  /* eslint-enable @typescript-eslint/naming-convention */
+  ts: {
+    description: 'TypeScript',
+  },
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
-const TEMPLATE_NAMES = Object.keys(TEMPLATE_DATA)
-
-function toHydrogenTemplateName(key: string) {
-  const normalized = string.hyphenize(key).toLocaleLowerCase()
-  const withExtension = normalized.endsWith('-ts') || normalized.endsWith('-js') ? normalized : `${normalized}-js`
-
-  return TEMPLATE_NAMES.includes(withExtension) ? withExtension : false
-}
-
-function toHydrogenTemplateUrl(key: string) {
-  return `${TEMPLATE_BASE}${key}#${BRANCH}`
-}
+const TEMPLATE_NAMES = Object.keys(TEMPLATE_NAME_DATA)
+const LANGUAGE_NAMES = Object.keys(LANGUAGE_NAME_DATA)
 
 interface InitOptions {
   name?: string
   template?: string
+  language?: string
 }
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<InitOptions>> => {
@@ -48,42 +42,44 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
-  let explicitTemplate = options.template
-
-  if (explicitTemplate) {
-    const hydrogenTemplate = toHydrogenTemplateName(explicitTemplate)
-
-    if (hydrogenTemplate) {
-      const url = toHydrogenTemplateUrl(hydrogenTemplate)
-      explicitTemplate = url
-    }
-
-    const parsedTemplate = github.parseRepoUrl(explicitTemplate)
-    const missingBranch = !parsedTemplate.ref
-    const looksLikeHydrogenTemplate =
-      parsedTemplate.name === 'hydrogen' &&
-      parsedTemplate.user === 'Shopify' &&
-      parsedTemplate.subDirectory.startsWith('templates/')
-
-    explicitTemplate =
-      looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
-  } else {
+  if (!options.template) {
     questions.push({
       type: 'select',
-      name: 'template',
+      name: 'templateName',
       message: 'Choose a template',
-      choices: Object.keys(TEMPLATE_DATA).map((value) => ({
-        name: TEMPLATE_DATA[value as keyof typeof TEMPLATE_DATA].description,
+      choices: Object.keys(TEMPLATE_NAME_DATA).map((value) => ({
+        name: TEMPLATE_NAME_DATA[value as keyof typeof TEMPLATE_NAME_DATA].description,
         value,
       })),
       default: TEMPLATE_NAMES[0],
-      result: toHydrogenTemplateUrl,
+    })
+
+    questions.push({
+      type: 'select',
+      name: 'language',
+      message: 'Choose a language',
+      choices: Object.keys(LANGUAGE_NAME_DATA).map((value) => ({
+        name: LANGUAGE_NAME_DATA[value as keyof typeof LANGUAGE_NAME_DATA].description,
+        value,
+      })),
+      default: LANGUAGE_NAMES[0],
     })
   }
 
-  const {template = explicitTemplate, ...promptOutput}: InitOptions = await prompt(questions)
+  let {name, templateName, language} = await prompt(questions)
+  if (options.name) name = options.name
+  if (options.template) templateName = options.template
+  if (options.language) language = options.language
 
-  return {...options, ...promptOutput, template} as Required<InitOptions>
+  const parsedTemplate = github.parseRepoUrl(`${TEMPLATE_BASE}${templateName}-${language}#${BRANCH}`)
+  const missingBranch = !parsedTemplate.ref
+  const looksLikeHydrogenTemplate =
+    parsedTemplate.name === 'hydrogen' &&
+    parsedTemplate.user === 'Shopify' &&
+    parsedTemplate.subDirectory.startsWith('templates/')
+  const template = looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
+
+  return {name, template, language} as Required<InitOptions>
 }
 
 export default init
