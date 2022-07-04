@@ -1,7 +1,7 @@
 import {content as outputContent, token, debug} from './output.js'
 import fs from 'fs-extra'
 import del from 'del'
-import tempy from 'tempy'
+import {temporaryDirectoryTask} from 'tempy'
 import {sep, join, extname} from 'pathe'
 import prettier from 'prettier'
 import type {Options} from 'prettier'
@@ -23,7 +23,7 @@ export function stripUp(path: string, strip: number) {
  * @param callback - The callback that receives the temporary directory.
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
-  return tempy.directory.task(callback)
+  return temporaryDirectoryTask(callback)
 }
 
 /**
