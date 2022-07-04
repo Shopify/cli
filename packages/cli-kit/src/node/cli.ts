@@ -78,21 +78,29 @@ export async function runCreateCLI(options: RunCLIOptions) {
 
 const reportError = async (errorToReport: Error): Promise<Error> => {
   await reportEvent({errorMessage: errorToReport.message})
+  if (settings.debug || !shouldReportError(errorToReport)) return errorToReport
 
-  if (!settings.debug && shouldReportError(errorToReport)) {
-    let mappedError: Error
-    // eslint-disable-next-line no-prototype-builtins
-    if (Object.prototype.isPrototypeOf(errorToReport)) {
-      const mappedError = Object.assign(Object.create(errorToReport), {})
-      if (mappedError.stack) mappedError.stack = mappedError.stack.replace(new RegExp('file:///', 'g'), '/')
-    } else {
-      mappedError = errorToReport
+  let mappedError: Error
+
+  // eslint-disable-next-line no-prototype-builtins
+  if (Error.prototype.isPrototypeOf(errorToReport)) {
+    mappedError = new Error(errorToReport.message)
+    if (errorToReport.stack) {
+      // For mac/linux, remove `file:///` from stacktrace
+      // For windows, remove `file:///C:/` from stacktrace
+      const regex = '\\((.*node_modules.)(@shopify.)?'
+      mappedError.stack = errorToReport.stack.replace(new RegExp(regex, 'g'), '(')
     }
-    await new Promise((resolve, reject) => {
-      Bugsnag.notify(mappedError, undefined, resolve)
-    })
+  } else if (typeof errorToReport === 'string') {
+    mappedError = new Error(errorToReport)
+  } else {
+    mappedError = new Error('Unknown error')
   }
-  return Promise.resolve(errorToReport)
+
+  await new Promise((resolve, reject) => {
+    Bugsnag.notify(mappedError, undefined, resolve)
+  })
+  return mappedError
 }
 
 export default runCLI
