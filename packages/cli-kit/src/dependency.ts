@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {exec} from './system.js'
 import {exists as fileExists, read as readFile} from './file.js'
 import {glob, dirname, join as pathJoin} from './path.js'
@@ -82,20 +81,17 @@ interface InstallNPMDependenciesRecursivelyOptions {
  * @param options {InstallNPMDependenciesRecursivelyOptions} Options to install dependencies recursively.
  */
 export async function installNPMDependenciesRecursively(options: InstallNPMDependenciesRecursivelyOptions) {
-  console.log('DEBUG: GLOBBING')
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
     ignore: [pathJoin(options.directory, 'node_modules/**/package.json')],
     cwd: options.directory,
     onlyFiles: true,
     deep: options.deep,
   })
-  console.log(`DEBUG: PackageJsons ${JSON.stringify(packageJsons)}`)
   const abortController = new AbortController()
   try {
     await Promise.all(
       packageJsons.map(async (packageJsonPath) => {
         const directory = dirname(packageJsonPath)
-        console.log(`DEBUG: Installing at ${directory}`)
         await install(directory, options.dependencyManager, undefined, undefined, abortController.signal)
       }),
     )
