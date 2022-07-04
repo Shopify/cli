@@ -2,7 +2,7 @@
 // @ts-ignore
 import commondir from 'commondir'
 import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute} from 'pathe'
-import {findUp as internalFindUp} from 'find-up'
+import {findUp as internalFindUp, Match as FindUpMatch} from 'find-up'
 import {fileURLToPath} from 'url'
 
 export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolute}
@@ -10,11 +10,15 @@ export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolu
 export {default as glob} from 'fast-glob'
 export {pathToFileURL} from 'node:url'
 
+type FindUpMatcher = (directory: string) => FindUpMatch | Promise<FindUpMatch>
+
 export async function findUp(
-  name: string | ReadonlyArray<string>,
+  matcher: string | ReadonlyArray<string> | FindUpMatcher,
   options: Parameters<typeof internalFindUp>[1],
 ): ReturnType<typeof internalFindUp> {
-  const got = await internalFindUp(name, options)
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const got = await internalFindUp(matcher, options)
   return got ? normalize(got) : undefined
 }
 
