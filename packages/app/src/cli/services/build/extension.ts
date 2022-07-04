@@ -1,7 +1,9 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app.js'
 import {extensionConfig} from '../../utilities/extensions/configuration.js'
-import {error, ruby, system, yaml, output} from '@shopify/cli-kit'
+import {error, system, yaml, output} from '@shopify/cli-kit'
+import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
+
 import {Writable} from 'node:stream'
 
 export interface ExtensionBuildOptions {
@@ -45,7 +47,7 @@ export async function buildThemeExtensions(options: ThemeExtensionBuildOptions):
   if (options.extensions.length === 0) return
   options.stdout.write(`Building theme extensions...`)
   const themeDirectories = options.extensions.map((extension) => extension.directory)
-  await ruby.execThemeCheckCLI({
+  await execThemeCheckCLI({
     directories: themeDirectories,
     args: ['-C', ':theme_app_extension'],
     stdout: options.stdout,

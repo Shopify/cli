@@ -47,6 +47,6 @@ export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
  * Writes a .env file to disk.
  * @param file {DotEnvFile} .env file to be written.
  */
-export async function write(file: DotEnvFile) {
+export async function writeDotEnv(file: DotEnvFile) {
   await writeFile(file.path, stringify(file.variables))
 }

@@ -10,7 +10,7 @@ import {
   ExtensionTypes,
 } from '../../constants.js'
 import {dependency, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
-import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {readAndParseDotEnv, writeDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
@@ -508,7 +508,7 @@ export async function updateAppIdentifiers(
   const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) && command === 'deploy'
   dotenvFile.variables = updatedVariables
   if (write) {
-    await dotenv.write(dotenvFile)
+    await writeDotEnv(dotenvFile)
   }
   return {
     ...app,
