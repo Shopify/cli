@@ -121,7 +121,7 @@ export async function install(
   stderr?: Writable,
   signal?: AbortSignal,
 ) {
-  const options: ExecOptions = {cwd: directory, stdout, stderr, signal}
+  const options: ExecOptions = {cwd: directory, stdin: undefined, stdout, stderr, signal}
   await exec(dependencyManager, ['install'], options)
 }
 
