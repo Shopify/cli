@@ -70,7 +70,8 @@ export async function runCreateCLI(options: RunCLIOptions) {
   const name = packageName.replace('@shopify/create-', '')
   const initIndex = process.argv.findIndex((arg) => arg.includes('init'))
   if (initIndex === -1) {
-    const initIndex = process.argv.findIndex((arg) => arg.match(new RegExp(`bin(/|)(create-${name}|dev|run)`))) + 1
+    const initIndex =
+      process.argv.findIndex((arg) => arg.match(new RegExp(`bin(\\/|\\\\)+(create-${name}|dev|run)`))) + 1
     process.argv.splice(initIndex, 0, 'init')
   }
   await runCLI(options)
