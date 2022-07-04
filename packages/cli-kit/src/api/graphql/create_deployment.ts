@@ -5,6 +5,16 @@ export const CreateDeployment = gql`
     deploymentCreate(input: {apiKey: $apiKey, uuid: $uuid, bundleUrl: $bundleUrl, extensions: $extensions}) {
       deployment {
         uuid
+        deployedVersions {
+          extensionVersion {
+            uuid
+            registrationUuid
+            validationErrors {
+              message
+              field
+            }
+          }
+        }
       }
       userErrors {
         message
@@ -31,6 +41,16 @@ export interface CreateDeploymentSchema {
   deploymentCreate: {
     deployment: {
       uuid: string
+      deployedVersions: {
+        extensionVersion: {
+          uuid: string
+          registrationUuid: string
+          validationErrors: {
+            field: string[]
+            message: string
+          }[]
+        }
+      }[]
     }
     userErrors: {
       field: string[]

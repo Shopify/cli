@@ -1,5 +1,5 @@
-import {previewInWorker, previewInNode} from '../../services/preview'
-import {hydrogenFlags} from '../../flags'
+import {previewInWorker, previewInNode} from '../../services/preview.js'
+import {hydrogenFlags} from '../../flags.js'
 import {path, cli} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 

@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {join as pathJoin, findUp, moduleDirectory} from './path.js'
-import {read} from './file.js'
+import {join as pathJoin} from './path.js'
+import {findPackageVersionUp} from './version.js'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
@@ -48,16 +48,9 @@ const constants = {
       },
     },
   },
-  /**
-   * Versions are resolved at build time by Rollup's JSON plugin.
-   */
   versions: {
     cliKit: async () => {
-      const dirname = moduleDirectory(import.meta.url)
-      const relativePath = pathJoin('node_modules', '@shopify', 'cli-kit', 'package.json')
-      const packageJsonPath = (await findUp(relativePath, {type: 'file', cwd: dirname})) as string
-      const packageJson = JSON.parse(await read(packageJsonPath))
-      return packageJson.version as string
+      return findPackageVersionUp({fromModuleURL: import.meta.url})
     },
   },
   keychain: {

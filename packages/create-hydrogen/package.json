@@ -33,7 +33,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
@@ -70,7 +70,7 @@
   ],
   "oclif": {
     "bin": "create-hydrogen",
-    "commands": "./dist/commands",
+    "commands": "dist/commands",
     "additionalHelpFlags": [
       "-h"
     ]
