@@ -1,5 +1,7 @@
 import {versions} from '../../constants.js'
-import {http, file, path, os, error, checksum, constants} from '@shopify/cli-kit'
+import {http, file, path, os, error, constants} from '@shopify/cli-kit'
+import {validateMD5} from '@shopify/cli-kit/node/checksum'
+
 import zlib from 'node:zlib'
 import {createWriteStream} from 'node:fs'
 import {pipeline} from 'node:stream'
@@ -55,7 +57,7 @@ async function download({into, artifact}: {into: string; artifact: string}): Pro
     name: artifact,
     extension: 'md5',
   })
-  await checksum.validateMD5({file: outputBinary, md5FileURL: md5DownloadUrl})
+  await validateMD5({file: outputBinary, md5FileURL: md5DownloadUrl})
   return outputBinary
 }
 
