@@ -46,7 +46,11 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
   // eslint-disable-next-line no-prototype-builtins
   if (Error.prototype.isPrototypeOf(errorToReport)) {
     mappedError = new Error(errorToReport.message)
-    if (errorToReport.stack) mappedError.stack = errorToReport.stack.replace(new RegExp('file:///', 'g'), '/')
+    if (errorToReport.stack) {
+      // For mac/linux, remove `file:///` from stacktrace
+      // For windows, remove `file:///C:/` from stacktrace
+      mappedError.stack = errorToReport.stack.replace(new RegExp('file:///([a-zA-Z]:/)?', 'g'), '/')
+    }
   } else if (typeof errorToReport === 'string') {
     mappedError = new Error(errorToReport)
   } else {
