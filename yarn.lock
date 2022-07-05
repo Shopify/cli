@@ -1680,6 +1680,35 @@
     pkg-dir "^5.0.0"
     pluralize "^8.0.0"
 
+"@shopify/hydrogen@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@shopify/hydrogen/-/hydrogen-1.0.2.tgz#1564ad896049a668a8f9274ad3bb9cf001c4c74f"
+  integrity sha512-dT+RJyfp7vca4Gv10noRnWTkmHMOYwcGI57QxJ3ReN1D2XbbkSadrgAYlu0EFpJdjCvVrEr6e4Qzbtx5pJOY/g==
+  dependencies:
+    "@vitejs/plugin-react" "^1.3.0"
+    abort-controller "^3.0.0"
+    body-parser "^1.20.0"
+    compression "^1.7.4"
+    connect "^3.7.0"
+    es-module-lexer "^0.10.0"
+    fast-glob "^3.2.11"
+    graphql "^16.3.0"
+    graphql-tag "^2.12.6"
+    history "^5.3.0"
+    kolorist "^1.5.1"
+    magic-string "^0.26.1"
+    node-fetch "^2.6.7"
+    path-to-regexp "^6.2.0"
+    react-error-boundary "^3.1.3"
+    react-helmet-async "^1.3.0"
+    serve-static "^1.15.0"
+    set-cookie-parser "^2.5.0"
+    undici "^5.5.1"
+    uuid "^8.3.2"
+    vite-plugin-inspect "^0.3.6"
+    web-streams-polyfill "^3.2.0"
+    worktop "^0.7.3"
+
 "@shopify/hydrogen@^0.26.0":
   version "0.26.0"
   resolved "https://registry.yarnpkg.com/@shopify/hydrogen/-/hydrogen-0.26.0.tgz#4eb5b9462ca54a4a19cc2027eef4bde08ff56819"
@@ -8452,7 +8481,7 @@ react-fast-compare@^3.2.0:
   resolved "https://registry.yarnpkg.com/react-fast-compare/-/react-fast-compare-3.2.0.tgz#641a9da81b6a6320f270e89724fb45a0b39e43bb"
   integrity sha512-rtGImPZ0YyLrscKI9xTpV8psd6I8VAtjKCzQDlzyDvqJA8XOW78TXYQwNRNd8g8JZnDu8q9Fu/1v4HPAVwVdHA==
 
-react-helmet-async@^1.2.3:
+react-helmet-async@^1.2.3, react-helmet-async@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/react-helmet-async/-/react-helmet-async-1.3.0.tgz#7bd5bf8c5c69ea9f02f6083f14ce33ef545c222e"
   integrity sha512-9jZ57/dAn9t3q6hneQS0wukqC2ENOBgMNVEhb/ZG9ZSxUetzVIw4iAmEU38IaVg3QGYauQPhSeUTuIUtFglWpg==

@@ -1,0 +1,10 @@
+{
+    "extends": "../../configurations/tsconfig.json",
+    "include": ["./**/*.ts","./src/**/*.js", "hydrogen.config.ts"],
+    "exclude": ["./dist"],
+    "compilerOptions": {
+      "allowJs": true,
+      "rootDir": "."
+    },
+    "references": [{"path": "../../packages/app"}]
+  }

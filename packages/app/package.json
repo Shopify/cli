@@ -25,6 +25,12 @@
     "test:watch": "vitest watch",
     "tsc": "tsc --noEmit"
   },
+  "exports": {
+    "./hydrogen/*": {
+      "node": "./dist/hydrogen/*.js",
+      "types": "./dist/hydrogen/*.d.ts"
+    }
+  },
   "eslintConfig": {
     "extends": [
       "../../.eslintrc.cjs"

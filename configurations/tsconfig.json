@@ -18,6 +18,7 @@
       "inlineSources": true,
       "paths": {
         "@shopify/cli-hydrogen/commands/hydrogen/init": ["../packages/cli-hydrogen/src/cli/commands/hydrogen/init.ts"],
+        "@shopify/app/hydrogen/*": ["../packages/app/src/hydrogen/*.ts"],
         "@shopify/cli-kit": ["../packages/cli-kit/src/index.ts"],
         "@shopify/cli-kit/node/*": ["../packages/cli-kit/src/node/*.ts"],
         "@shopify/cli-kit/common/*": ["../packages/cli-kit/src/common/*.ts"],
