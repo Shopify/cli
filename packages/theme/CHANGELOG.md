@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 0.5.14
+
+### Patch Changes
+
+- 022a4e24: Internal: build cli-kit using tsc instead of rollup+esbuild
+- Updated dependencies [dbcffdbb]
+- Updated dependencies [022a4e24]
+- Updated dependencies [e81e52b1]
+- Updated dependencies [c16035f1]
+- Updated dependencies [61f595df]
+- Updated dependencies [87f7843f]
+- Updated dependencies [8ff4e3d7]
+- Updated dependencies [168bb4c6]
+- Updated dependencies [0a9dbc63]
+- Updated dependencies [2d8e4458]
+  - @shopify/cli-kit@3.0.26
+
 ## 0.5.13
 
 ### Patch Changes

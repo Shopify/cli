@@ -1,5 +1,20 @@
 # @shopify/cli-kit
 
+## 3.0.26
+
+### Patch Changes
+
+- dbcffdbb: Fix issue when exchanging an identity token fails
+- 022a4e24: Internal: build cli-kit using tsc instead of rollup+esbuild
+- e81e52b1: Report error events
+- c16035f1: Fix post auth screen styling
+- 61f595df: Fix an issue that will force the users to re-login when the token expires
+- 87f7843f: Show validation errors when deploying UI extensions
+- 8ff4e3d7: Fix runCreateCLI's detection of the executable index
+- 168bb4c6: Add total time to analytics reports
+- 0a9dbc63: Fix path outputs for the working directory
+- 2d8e4458: Log Listr task titles to logfile
+
 ## 3.0.25
 
 ### Patch Changes
