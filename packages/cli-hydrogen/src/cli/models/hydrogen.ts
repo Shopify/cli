@@ -1,6 +1,12 @@
-import {genericConfigurationFileNames} from '../constants.js'
 import {loadConfig} from '../utilities/load-config.js'
-import {dependency, path, error as kitError, file} from '@shopify/cli-kit'
+import {path, error as kitError, file} from '@shopify/cli-kit'
+import {
+  getDependencies,
+  getPackageName,
+  PackageManager,
+  pnpmLockfile,
+  yarnLockfile,
+} from '@shopify/cli-kit/node/node-package-manager'
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
@@ -10,7 +16,7 @@ import type {HydrogenConfig} from '@shopify/hydrogen/config'
 export interface HydrogenApp {
   name: string
   directory: string
-  dependencyManager: dependency.DependencyManager
+  packageManager: PackageManager
   configuration: HydrogenConfig
   nodeDependencies: {[key: string]: string}
   language: 'JavaScript' | 'TypeScript'
@@ -58,30 +64,30 @@ class HydrogenAppLoader {
 
     const {configuration} = await this.loadConfig()
 
-    const yarnLockPath = path.join(this.directory, genericConfigurationFileNames.yarn.lockfile)
+    const yarnLockPath = path.join(this.directory, yarnLockfile)
     const yarnLockExists = await file.exists(yarnLockPath)
-    const pnpmLockPath = path.join(this.directory, genericConfigurationFileNames.pnpm.lockfile)
+    const pnpmLockPath = path.join(this.directory, pnpmLockfile)
     const pnpmLockExists = await file.exists(pnpmLockPath)
     const packageJSONPath = path.join(this.directory, 'package.json')
-    const name = await dependency.getPackageName(packageJSONPath)
-    const nodeDependencies = await dependency.getDependencies(packageJSONPath)
+    const name = await getPackageName(packageJSONPath)
+    const nodeDependencies = await getDependencies(packageJSONPath)
     const tsConfigExists = await file.exists(path.join(this.directory, 'tsconfig.json'))
     const language = tsConfigExists && nodeDependencies.typescript ? 'TypeScript' : 'JavaScript'
 
-    let dependencyManager: dependency.DependencyManager
+    let packageManager: PackageManager
     if (yarnLockExists) {
-      dependencyManager = 'yarn'
+      packageManager = 'yarn'
     } else if (pnpmLockExists) {
-      dependencyManager = 'pnpm'
+      packageManager = 'pnpm'
     } else {
-      dependencyManager = 'npm'
+      packageManager = 'npm'
     }
 
     const app: HydrogenApp = {
       name,
       directory: this.directory,
       configuration,
-      dependencyManager,
+      packageManager,
       nodeDependencies,
       language,
     }

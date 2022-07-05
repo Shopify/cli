@@ -9,8 +9,15 @@ import {
   dotEnvFileNames,
   ExtensionTypes,
 } from '../../constants.js'
-import {dependency, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, writeDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {
+  getDependencies,
+  getPackageManager,
+  getPackageName,
+  PackageManager,
+  readAndParsePackageJson,
+} from '@shopify/cli-kit/node/node-package-manager'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
@@ -155,7 +162,7 @@ export interface App {
   name: string
   idEnvironmentVariableName: string
   directory: string
-  dependencyManager: dependency.DependencyManager
+  packageManager: PackageManager
   configuration: AppConfiguration
   configurationPath: string
   nodeDependencies: {[key: string]: string}
@@ -220,9 +227,9 @@ class AppLoader {
     const uiExtensions = await this.loadUIExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
-    const name = await dependency.getPackageName(packageJSONPath)
-    const nodeDependencies = await dependency.getDependencies(packageJSONPath)
-    const dependencyManager = await dependency.getDependencyManager(this.appDirectory)
+    const name = await getPackageName(packageJSONPath)
+    const nodeDependencies = await getDependencies(packageJSONPath)
+    const packageManager = await getPackageManager(this.appDirectory)
 
     const app: App = {
       name,
@@ -233,7 +240,7 @@ class AppLoader {
       configurationPath,
       dotenv,
       extensions: {ui: uiExtensions, theme: themeExtensions, function: functions},
-      dependencyManager,
+      packageManager,
       nodeDependencies,
     }
     if (!this.errors.isEmpty()) app.errors = this.errors
@@ -463,7 +470,7 @@ class AppLoader {
  * @returns {Promise<App>} The app with the Node dependencies updated.
  */
 export async function updateDependencies(app: App): Promise<App> {
-  const nodeDependencies = await dependency.getDependencies(path.join(app.directory, 'package.json'))
+  const nodeDependencies = await getDependencies(path.join(app.directory, 'package.json'))
   return {
     ...app,
     nodeDependencies,
@@ -575,7 +582,7 @@ export async function getUIExtensionRendererVersion(
   if (!packagePath) return 'not_found'
 
   // Load the package.json and extract the version
-  const packageContent = await dependency.packageJSONContents(packagePath)
+  const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: fullName, version: packageContent.version}
 }

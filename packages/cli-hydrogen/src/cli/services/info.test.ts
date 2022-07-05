@@ -63,7 +63,7 @@ async function mockInfoWithApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
         ...mockHydrogenApp.configuration?.shopify,
       },
     },
-    dependencyManager: 'npm',
+    packageManager: 'npm',
     language: 'JavaScript',
     nodeDependencies: {
       ...mockHydrogenApp.configuration?.nodeDependencies,

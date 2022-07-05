@@ -8,7 +8,7 @@ import {api} from '@shopify/cli-kit'
 const LOCAL_APP: App = {
   idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '',
-  dependencyManager: 'yarn',
+  packageManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {scopes: 'read_products'},
   webs: [

@@ -2,7 +2,7 @@
 import {Fatal, Bug} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
 import constants from './constants.js'
-import {DependencyManager} from './dependency.js'
+import {PackageManager} from './node/node-package-manager.js'
 import {
   append as fileAppend,
   mkdirSync as fileMkdirSync,
@@ -125,9 +125,9 @@ export const token = {
   green: (value: Message) => {
     return new ContentToken(value, {}, ContentTokenType.Green)
   },
-  packagejsonScript: (dependencyManager: DependencyManager, scriptName: string, ...scriptArgs: string[]) => {
+  packagejsonScript: (packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]) => {
     return new ContentToken(
-      formatPackageManagerCommand(dependencyManager, scriptName, scriptArgs),
+      formatPackageManagerCommand(packageManager, scriptName, scriptArgs),
       {},
       ContentTokenType.Command,
     )
@@ -140,19 +140,15 @@ export const token = {
   },
 }
 
-function formatPackageManagerCommand(
-  dependencyManager: DependencyManager,
-  scriptName: string,
-  scriptArgs: string[],
-): string {
-  switch (dependencyManager) {
+function formatPackageManagerCommand(packageManager: PackageManager, scriptName: string, scriptArgs: string[]): string {
+  switch (packageManager) {
     case 'yarn': {
       const pieces = ['yarn', scriptName, ...scriptArgs]
       return pieces.join(' ')
     }
     case 'pnpm':
     case 'npm': {
-      const pieces = [dependencyManager, 'run', scriptName]
+      const pieces = [packageManager, 'run', scriptName]
       if (scriptArgs.length > 0) {
         pieces.push('--')
         pieces.push(...scriptArgs)
@@ -582,6 +578,17 @@ export function shouldDisplayColors(): boolean {
 
 export async function pageLogs() {
   await page(logFile)
+}
+
+/**
+ *
+ * @param packageManager {PackageManager} The package manager that is being used.
+ * @param version {string} The version to update to
+ * @returns {te}
+ */
+export function getOutputUpdateCLIReminder(packageManager: PackageManager, version: string): string {
+  const updateCommand = token.packagejsonScript(packageManager, 'shopify', 'upgrade')
+  return content`💡 Version ${version} available! Run ${updateCommand}`.value
 }
 
 /* eslint-enable no-console */

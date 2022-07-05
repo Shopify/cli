@@ -7,7 +7,7 @@ export function testApp(app: Partial<App> = {}): App {
     configuration: {
       scopes: app?.configuration?.scopes ?? '',
     },
-    dependencyManager: app.dependencyManager ?? 'yarn',
+    packageManager: app.packageManager ?? 'yarn',
     directory: app.directory ?? '/tmp/project',
     extensions: {
       ui: app?.extensions?.ui ?? [],

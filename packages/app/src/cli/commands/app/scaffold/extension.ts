@@ -12,8 +12,9 @@ import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {load as loadApp, App} from '../../../models/app/app.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
-import {output, path, cli, error, environment, dependency} from '@shopify/cli-kit'
+import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an Extension'
@@ -79,7 +80,7 @@ export default class AppScaffoldExtension extends Command {
     const formattedSuccessfulMessage = this.formatSuccessfulRunMessage(
       promptAnswers.extensionType,
       path.relative(app.directory, extensionDirectory),
-      app.dependencyManager,
+      app.packageManager,
     )
     output.info(formattedSuccessfulMessage)
   }
@@ -150,7 +151,7 @@ export default class AppScaffoldExtension extends Command {
   formatSuccessfulRunMessage(
     extensionType: ExtensionTypes,
     extensionDirectory: string,
-    depndencyManager: dependency.DependencyManager,
+    depndencyManager: PackageManager,
   ): string {
     const extensionOutputConfig = getExtensionOutputConfig(extensionType)
     output.completed(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)

@@ -1,5 +1,6 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, vscode, system, path, file, error, dependency} from '@shopify/cli-kit'
+import {ui, vscode, system, path, file, error} from '@shopify/cli-kit'
+import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import stream from 'node:stream'
 
 interface AddTailwindOptions {
@@ -25,8 +26,8 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       skip: () => !install,
       task: async (_, task) => {
         const requiredDependencies = ['postcss', 'postcss-loader', 'tailwindcss', 'autoprefixer']
-        await dependency.addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
-          dependencyManager: app.dependencyManager,
+        await addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
+          packageManager: app.packageManager,
           type: 'prod',
           directory: app.directory,
           stderr: new stream.Writable({
@@ -83,7 +84,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
           }
         }
 
-        await system.exec(app.dependencyManager, ['tailwindcss', 'init', tailwindConfigurationPath], {
+        await system.exec(app.packageManager, ['tailwindcss', 'init', tailwindConfigurationPath], {
           cwd: directory,
         })
 

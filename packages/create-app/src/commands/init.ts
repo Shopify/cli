@@ -37,9 +37,9 @@ export default class Init extends Command {
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    'dependency-manager': Flags.string({
+    'package-manager': Flags.string({
       char: 'd',
-      env: 'SHOPIFY_FLAG_DEPENDENCY_MANAGER',
+      env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
       hidden: false,
       options: ['npm', 'yarn', 'pnpm'],
     }),
@@ -65,7 +65,7 @@ export default class Init extends Command {
 
     await initService({
       name: promptAnswers.name,
-      dependencyManager: flags['dependency-manager'],
+      packageManager: flags['package-manager'],
       template: promptAnswers.template,
       local: flags.local,
       directory,
@@ -75,7 +75,7 @@ export default class Init extends Command {
 
   async startEvent(): Promise<void> {
     const commandIndex = process.argv.indexOf('init')
-    const args = process.argv.slice(commandIndex + 1).join(' ')
+    const args = process.argv.slice(commandIndex + 1)
     analytics.start({command: 'create-app', args})
   }
 
