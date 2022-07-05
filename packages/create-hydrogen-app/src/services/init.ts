@@ -1,25 +1,9 @@
-import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
-import cleanup from '../utils/template/cleanup.js'
-
-import {
-  string,
-  path,
-  file,
-  output,
-  ui,
-  dependency,
-  template,
-  npm,
-  git,
-  github,
-  environment,
-  error,
-} from '@shopify/cli-kit'
+import {string, path, file, output, ui, constants, dependency, git, environment, error} from '@shopify/cli-kit'
+import {Writable} from 'node:stream'
 
 interface InitOptions {
   name: string
   directory: string
-  template: string
   dependencyManager: string | undefined
   local: boolean
 }
@@ -32,73 +16,17 @@ async function init(options: InitOptions) {
   const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  const githubRepo = github.parseGithubRepoReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
 
   await file.inTemporaryDirectory(async (tmpDir) => {
-    const templateDownloadDir = path.join(tmpDir, 'download')
-    const templatePathDir = githubRepo.filePath
-      ? path.join(templateDownloadDir, githubRepo.filePath)
-      : templateDownloadDir
-    const templateScaffoldDir = path.join(tmpDir, 'app')
-    const repoUrl = githubRepo.branch ? `${githubRepo.repoBaseUrl}#${githubRepo.branch}` : githubRepo.repoBaseUrl
-
-    await file.mkdir(templateDownloadDir)
     let tasks: ui.ListrTasks = []
 
     tasks = tasks.concat([
       {
-        title: 'Download template',
-        task: async (_, task) => {
-          task.title = 'Downloading template'
-          await git.downloadRepository({
-            repoUrl,
-            destination: templateDownloadDir,
-            shallow: true,
-            progressUpdater: (statusString: string) => {
-              const taskOutput = `Cloning template from ${repoUrl}:\n${statusString}`
-              task.output = taskOutput
-            },
-          })
-          task.title = 'Template downloaded'
-        },
-      },
-      {
-        title: `Initialize your app ${hyphenizedName}`,
+        title: `Initializing your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
-          parentTask.title = `Initializing your app ${hyphenizedName}`
-          return parentTask.newListr([
-            {
-              title: 'Parse liquid',
-              task: async (_, task) => {
-                task.title = 'Parsing liquid'
-                await template.recursiveDirectoryCopy(templatePathDir, templateScaffoldDir, {
-                  // eslint-disable-next-line @typescript-eslint/naming-convention
-                  dependency_manager: dependencyManager,
-                  // eslint-disable-next-line @typescript-eslint/naming-convention
-                  app_name: options.name,
-                })
-
-                task.title = 'Liquid parsed'
-              },
-            },
-            {
-              title: 'Update package.json',
-              task: async (_, task) => {
-                task.title = 'Updating package.json'
-                const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-
-                await npm.updateAppData(packageJSON, hyphenizedName)
-                await updateCLIDependencies(packageJSON, options.local)
-
-                await npm.writePackageJSON(templateScaffoldDir, packageJSON)
-
-                task.title = 'Updated package.json'
-                parentTask.title = 'App initialized'
-              },
-            },
-          ])
+          await createApp(tmpDir, options)
         },
       },
     ])
@@ -108,7 +36,7 @@ async function init(options: InitOptions) {
         title: "[Shopifolks-only] Configure the project's NPM registry",
         task: async (_, task) => {
           task.title = "[Shopifolks-only] Configuring the project's NPM registry"
-          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
+          const npmrcPath = path.join(tmpDir, '.npmrc')
           const npmrcContent = `@shopify:registry=https://registry.npmjs.org\n`
           await file.append(npmrcPath, npmrcContent)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
@@ -119,34 +47,31 @@ async function init(options: InitOptions) {
     tasks = tasks.concat([
       {
         title: `Install dependencies with ${dependencyManager}`,
-        task: async (_, parentTask) => {
-          parentTask.title = `Installing dependencies with ${dependencyManager}`
-          function didInstallEverything() {
-            parentTask.title = `Dependencies installed with ${dependencyManager}`
-          }
-
-          return parentTask.newListr(
-            await getDeepInstallNPMTasks({
-              from: templateScaffoldDir,
-              dependencyManager,
-              didInstallEverything,
-            }),
-            {concurrent: false},
-          )
-        },
-      },
-      {
-        title: 'Clean up',
         task: async (_, task) => {
-          task.title = 'Cleaning up'
-          await cleanup(templateScaffoldDir)
-          task.title = 'Completed clean up'
+          await dependency.install(
+            tmpDir,
+            dependencyManager,
+            new Writable({
+              write(chunk, _, next) {
+                task.output = chunk.toString()
+                next()
+              },
+            }),
+            new Writable({
+              write(chunk, _, next) {
+                task.output = chunk.toString()
+                next()
+              },
+            }),
+          )
+
+          task.title = `Installed dependencies`
         },
       },
       {
         title: 'Initializing a Git repository...',
         task: async (_, task) => {
-          await git.initializeRepository(templateScaffoldDir)
+          await git.initializeRepository(tmpDir)
           task.title = 'Git repository initialized'
         },
       },
@@ -159,7 +84,7 @@ async function init(options: InitOptions) {
     })
     await list.run()
 
-    await file.move(templateScaffoldDir, outputDirectory)
+    await file.move(tmpDir, outputDirectory)
   })
 
   output.info(output.content`
@@ -188,6 +113,63 @@ function inferDependencyManager(optionsDependencyManager: string | undefined): d
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
   const exists = await file.exists(directory)
   if (exists) throw DirectoryExistsError(name)
+}
+
+export async function createApp(directory: string, options: InitOptions) {
+  await createPackageJson(directory, options)
+}
+
+export async function createPackageJson(directory: string, options: InitOptions) {
+  const packageJsonPath = path.join(directory, 'package.json')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const packageJSON: any = {
+    name: options.name,
+    license: 'UNLICENSED',
+    private: true,
+    scripts: {
+      shopify: 'shopify',
+      build: 'shopify app build',
+      dev: 'shopify app dev',
+      push: 'shopify app push',
+      scaffold: 'shopify app scaffold',
+      deploy: 'shopify app deploy',
+    },
+    dependencies: {
+      react: '^18.1.0',
+    },
+  }
+  const cliKitVersion = await constants.versions.cliKit()
+
+  packageJSON.dependencies['@shopify/cli'] = cliKitVersion
+  packageJSON.dependencies['@shopify/app'] = cliKitVersion
+
+  if (options.local) {
+    const cliPath = `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`
+    const appPath = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
+    const cliKitPath = `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`
+
+    packageJSON.dependencies['@shopify/cli'] = cliPath
+
+    packageJSON.dependencies['@shopify/app'] = appPath
+
+    const dependencyOverrides = {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      '@shopify/cli': cliPath,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      '@shopify/app': appPath,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      '@shopify/cli-kit': cliKitPath,
+    }
+    packageJSON.overrides = packageJSON.overrides
+      ? {...packageJSON.overrides, ...dependencyOverrides}
+      : dependencyOverrides
+
+    packageJSON.resolutions = packageJSON.resolutions
+      ? {...packageJSON.resolutions, ...dependencyOverrides}
+      : dependencyOverrides
+  }
+
+  await file.write(packageJsonPath, JSON.stringify(packageJSON, null, 2))
 }
 
 export default init
