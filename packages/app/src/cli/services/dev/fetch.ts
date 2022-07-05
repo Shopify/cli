@@ -92,8 +92,8 @@ export async function fetchAllStores(orgId: string, token: string): Promise<Orga
   return result.organizations.nodes[0].stores.nodes
 }
 
-export async function fetchStoresByName(orgId: string, token: string, shopName: string): Promise<OrganizationStore[]> {
-  const query = api.graphql.FindStoreByNameQuery
-  const result: api.graphql.FindStoreByNameSchema = await api.partners.request(query, token, {id: orgId, shopName: shopName})
+export async function fetchStoresByDomain(orgId: string, token: string, shopDomain: string): Promise<OrganizationStore[]> {
+  const query = api.graphql.FindStoreByDomainQuery
+  const result: api.graphql.FindStoreByDomainSchema = await api.partners.request(query, token, {id: orgId, shopDomain: shopDomain})
   return result.organizations.nodes[0].stores.nodes
 }
