@@ -8,6 +8,7 @@
     "theme": "packages/theme",
     "features": "packages/features",
     "create-app": "packages/create-app",
-    "create-hydrogen": "packages/create-hydrogen"
+    "create-hydrogen": "packages/create-hydrogen",
+    "create-hydrogen-app": "packages/create-hydrogen-app"
   }
 }

@@ -9,6 +9,7 @@
     "shopify:run": "packages/cli-main/bin/dev.js",
     "create-app": "nx build create-app && packages/create-app/bin/dev.js",
     "create-hydrogen": "nx build create-hydrogen && packages/create-hydrogen/bin/dev.js",
+    "create-hydrogen-app": "nx build create-hydrogen-app && packages/create-hydrogen-app/bin/dev.js",
     "clean": "nx run-many --target=clean --all --skip-nx-cache && nx reset",
     "lint": "nx run-many --target=lint --all --skip-nx-cache",
     "lint:affected": "nx affected --target=lint --all",

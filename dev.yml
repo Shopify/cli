@@ -31,6 +31,9 @@ commands:
   create-app:
     desc: 'Runs the create-app CLI'
     run: yarn create-app
+  create-hydrogen-app:
+    desc: 'Runs the create-hydrogen-app CLI'
+    run: yarn create-hydrogen-app
   create-hydrogen:
     desc: 'Runs the create-hydrogen CLI'
     run: yarn create-hydrogen
