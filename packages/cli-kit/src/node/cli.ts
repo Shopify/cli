@@ -12,7 +12,7 @@ import {
 } from '../error.js'
 import {findUpAndReadPackageJson} from '../dependency.js'
 import {moduleDirectory} from '../path.js'
-import {run, settings, flush} from '@oclif/core'
+import {Errors, run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
 
 interface RunCLIOptions {
@@ -20,6 +20,8 @@ interface RunCLIOptions {
   moduleURL: string
   /** The logs file name */
   logFilename: string
+  /** The type of project we expect commands to be prefaced with **/
+  projectType?: string
 }
 
 /**
@@ -40,23 +42,41 @@ export async function runCLI(options: RunCLIOptions) {
       autoTrackSessions: false,
     })
   }
+  await _runCLI(options)
+}
 
-  run(undefined, options.moduleURL)
-    .then(flush)
-    .catch((error: Error): Promise<void | Error> => {
-      if (error instanceof AbortSilent) {
+async function _runCLI(options: RunCLIOptions, {withPrefix}: {withPrefix?: boolean} = {}): Promise<void> {
+  let runArgv = process.argv.slice(2)
+  if (withPrefix && options.projectType) runArgv = [options.projectType, ...runArgv]
+  try {
+    await run(runArgv, options.moduleURL).then(flush)
+  } catch (error) {
+    await handleCliError(error as Error, options)
+  }
+}
+
+async function handleCliError(error: Error, options: RunCLIOptions): Promise<void | Error> {
+  const errorMessageMatch = error.message?.match(/^command (.*) not found$/)
+  if (
+    options.projectType &&
+    error instanceof Errors.CLIError &&
+    errorMessageMatch &&
+    errorMessageMatch[1].split(':')[0] !== options.projectType
+  ) {
+    const result = await _runCLI(options, {withPrefix: true})
+    return result
+  } else if (error instanceof AbortSilent) {
+    process.exit(1)
+  } else {
+    return errorMapper(error)
+      .then(reportError)
+      .then((error: Error) => {
+        return errorHandler(error)
+      })
+      .then(() => {
         process.exit(1)
-      }
-      // eslint-disable-next-line promise/no-nesting
-      return errorMapper(error)
-        .then(reportError)
-        .then((error: Error) => {
-          return errorHandler(error)
-        })
-        .then(() => {
-          process.exit(1)
-        })
-    })
+      })
+  }
 }
 
 /**
