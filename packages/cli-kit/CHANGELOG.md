@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.0.27
+
+### Patch Changes
+
+- e2e8b4db: Fix identity token validation which is requiring a new login every time
+
 ## 3.0.26
 
 ### Patch Changes
