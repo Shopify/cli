@@ -31,7 +31,7 @@ describe('downloadRepository()', () => {
     await downloadRepository({repoUrl, destination})
 
     // Then
-    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options, expect.any(Function))
+    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options)
   })
 
   it('calls simple-git to clone a repo with branch', async () => {
@@ -46,7 +46,7 @@ describe('downloadRepository()', () => {
     await downloadRepository({repoUrl, destination})
 
     // Then
-    expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options, expect.any(Function))
+    expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
   })
 })
 
