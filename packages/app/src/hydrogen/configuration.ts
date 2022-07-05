@@ -1,11 +1,12 @@
-export interface Config {
+export interface UserConfiguration {
   // noop
 }
 
-export function defineConfig(config: Config) {
+export function defineConfiguration(config: UserConfiguration) {
   return config
 }
 
+/** Current Hydrogen configuration */
 // import {defineConfig, CookieSessionStorage} from '@shopify/hydrogen/config';
 
 // export default defineConfig({

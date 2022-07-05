@@ -1,3 +1,3 @@
-import {defineConfig} from "@shopify/app/hydrogen/config"
+import {defineConfiguration} from "@shopify/app/hydrogen/configuration"
 
-export default defineConfig({})
+export default defineConfiguration({})
