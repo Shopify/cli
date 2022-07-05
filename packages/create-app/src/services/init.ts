@@ -47,23 +47,14 @@ async function init(options: InitOptions) {
     await file.mkdir(templateDownloadDir)
     let tasks: ui.ListrTasks = []
 
+    output.info(output.content`❯ Downloading template from ${repoUrl}`)
+    await git.downloadRepository({
+      repoUrl,
+      destination: templateDownloadDir,
+      shallow: true,
+    })
+
     tasks = tasks.concat([
-      {
-        title: 'Download template',
-        task: async (_, task) => {
-          task.title = 'Downloading template'
-          await git.downloadRepository({
-            repoUrl,
-            destination: templateDownloadDir,
-            shallow: true,
-            progressUpdater: (statusString: string) => {
-              const taskOutput = `Cloning template from ${repoUrl}:\n${statusString}`
-              task.output = taskOutput
-            },
-          })
-          task.title = 'Template downloaded'
-        },
-      },
       {
         title: `Initialize your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
