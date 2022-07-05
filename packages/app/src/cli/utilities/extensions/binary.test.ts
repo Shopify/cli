@@ -7,11 +7,14 @@ import {
 } from './binary.js'
 import {versions} from '../../constants.js'
 import {describe, it, expect, vi, test} from 'vitest'
-import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
+import {http, file, path, os, constants} from '@shopify/cli-kit'
+import {validateMD5} from '@shopify/cli-kit/node/checksum'
 import {createGzip} from 'node:zlib'
 import {createReadStream, createWriteStream} from 'node:fs'
 import {promisify} from 'node:util'
 import {pipeline} from 'node:stream'
+
+vi.mock('@shopify/cli-kit/node/checksum')
 
 vi.mock('@shopify/cli-kit', async () => {
   const module: any = await vi.importActual('@shopify/cli-kit')
@@ -19,9 +22,6 @@ vi.mock('@shopify/cli-kit', async () => {
     ...module,
     http: {
       fetch: vi.fn(),
-    },
-    checksum: {
-      validateMD5: vi.fn(),
     },
     os: {
       platformAndArch: vi.fn(),
@@ -166,7 +166,7 @@ describe('getBinaryPathOrDownload', () => {
         body: createReadStream(relaseArtifact),
       }
       vi.mocked(http.fetch).mockResolvedValue(response)
-      vi.mocked(checksum.validateMD5).mockRejectedValue(md5ValidationError)
+      vi.mocked(validateMD5).mockRejectedValue(md5ValidationError)
       const binaryLocalPath = await getBinaryLocalPath()
 
       // When

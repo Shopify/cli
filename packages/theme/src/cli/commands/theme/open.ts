@@ -1,6 +1,7 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {session, string} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Open extends Command {
   static description = 'Opens the preview of your remote theme.'
@@ -46,6 +47,6 @@ export default class Open extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.execCLI(command, adminSession)
+    await execCLI2(command, adminSession)
   }
 }

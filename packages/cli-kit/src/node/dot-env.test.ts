@@ -1,14 +1,14 @@
-import {DotEnvNotFoundError, read, write} from './dot-env.js'
-import {join as pathJoin} from './path.js'
-import {inTemporaryDirectory, write as writeFile} from './file.js'
+import {DotEnvNotFoundError, readAndParseDotEnv, writeDotEnv} from './dot-env.js'
+import {join as pathJoin} from '../path.js'
+import {inTemporaryDirectory, write as writeFile} from '../file.js'
 import {describe, expect, test} from 'vitest'
 
-describe('read', () => {
+describe('readAndParseDotEnv', () => {
   test('throws an error if the file does not exist', async () => {
     // Given/When
     const dotEnvPath = '/invalid/path/.env'
     await expect(async () => {
-      await read(dotEnvPath)
+      await readAndParseDotEnv(dotEnvPath)
     }).rejects.toEqual(DotEnvNotFoundError(dotEnvPath))
   })
 
@@ -19,7 +19,7 @@ describe('read', () => {
       await writeFile(dotEnvPath, 'FOO=BAR')
 
       // When
-      const got = await read(dotEnvPath)
+      const got = await readAndParseDotEnv(dotEnvPath)
 
       // Then
       expect(got.path).toEqual(dotEnvPath)
@@ -28,20 +28,20 @@ describe('read', () => {
   })
 })
 
-describe('write', () => {
+describe('writeDotEnv', () => {
   test('creates a file if the .env does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const dotEnvPath = pathJoin(tmpDir, '.env')
 
       // When
-      await write({
+      await writeDotEnv({
         path: dotEnvPath,
         variables: {
           FOO: 'BAR',
         },
       })
-      const got = await read(dotEnvPath)
+      const got = await readAndParseDotEnv(dotEnvPath)
 
       // Then
       expect(got.path).toEqual(dotEnvPath)
@@ -56,13 +56,13 @@ describe('write', () => {
       await writeFile(dotEnvPath, 'FOO=BAR')
 
       // When
-      await write({
+      await writeDotEnv({
         path: dotEnvPath,
         variables: {
           FOO2: 'BAR2',
         },
       })
-      const got = await read(dotEnvPath)
+      const got = await readAndParseDotEnv(dotEnvPath)
 
       // Then
       expect(got.path).toEqual(dotEnvPath)

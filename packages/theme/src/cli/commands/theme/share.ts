@@ -1,6 +1,7 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Command, Flags} from '@oclif/core'
-import {path, ruby, session, string} from '@shopify/cli-kit'
+import {path, session, string} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Share extends Command {
   static description =
@@ -25,6 +26,6 @@ export default class Share extends Command {
     const {flags} = await this.parse(Share)
     const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.execCLI(['theme', 'share', flags.path], adminSession)
+    await execCLI2(['theme', 'share', flags.path], adminSession)
   }
 }

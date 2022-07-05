@@ -1,12 +1,12 @@
-import * as file from './file.js'
-import * as ui from './ui.js'
-import * as system from './system.js'
-import {Abort} from './error.js'
-import {glob, join} from './path.js'
-import constants from './constants.js'
-import {coerce} from './semver.js'
-import {AdminSession} from './session.js'
-import {content, token} from './output.js'
+import * as file from '../file.js'
+import * as ui from '../ui.js'
+import * as system from '../system.js'
+import {Abort} from '../error.js'
+import {glob, join} from '../path.js'
+import constants from '../constants.js'
+import {coerce} from '../semver.js'
+import {AdminSession} from '../session.js'
+import {content, token} from '../output.js'
 // eslint-disable-next-line no-restricted-imports
 import {spawn} from 'child_process'
 import {Writable} from 'node:stream'
@@ -25,7 +25,7 @@ const MinRubyGemVersion = '2.5.0'
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
  * @param adminSession {AdminSession} Contains token and store to pass to CLI 2.0, which will be set as environment variables
  */
-export async function execCLI(args: string[], adminSession?: AdminSession) {
+export async function execCLI2(args: string[], adminSession?: AdminSession) {
   await installCLIDependencies()
   const env = {
     ...process.env,
@@ -42,11 +42,21 @@ export async function execCLI(args: string[], adminSession?: AdminSession) {
 }
 
 interface ExecThemeCheckCLIOptions {
+  /** A list of directories in which theme-check should run */
   directories: string[]
+  /** Arguments to pass to the theme-check CLI */
   args?: string[]
+  /** Writable to send standard output content through */
   stdout: Writable
+  /** Writable to send standard error content through */
   stderr: Writable
 }
+
+/**
+ * A function that installs (if needed) and runs the theme-check CLI.
+ * @param options {ExecThemeCheckCLIOptions} Options to customize the execution of theme-check.
+ * @returns {Promise<void>} A promise that resolves or rejects depending on the result of the underlying theme-check process.
+ */
 export async function execThemeCheckCLI({
   directories,
   args,

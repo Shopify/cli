@@ -1,8 +1,13 @@
-import {fetch} from './http.js'
-import {Abort} from './error.js'
-import {debug, token} from './output.js'
+import {fetch} from '../http.js'
+import {Abort} from '../error.js'
+import {debug, token} from '../output.js'
 import md5File from 'md5-file'
 
+/**
+ * An error that's thrown when a file's MD5 doesn't match the expected value.
+ * @param options An options object that includes the file path, and the expected and actual MD5.
+ * @returns An instance of Abort.
+ */
 export const InvalidChecksumError = ({file, expected, got}: {file: string; expected: string; got: string}) => {
   return new Abort(`The validation of ${file} failed. We expected the checksum ${expected}, but got ${got})`)
 }

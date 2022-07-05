@@ -1,10 +1,10 @@
-import {join as pathJoin} from './path.js'
-import {inTemporaryDirectory, write as fileWrite} from './file.js'
 import {validateMD5, InvalidChecksumError} from './checksum.js'
-import {fetch} from './http.js'
+import {fetch} from '../http.js'
+import {inTemporaryDirectory, write as fileWrite} from '../file.js'
+import {join as pathJoin} from '../path.js'
 import {describe, it, expect, vi} from 'vitest'
 
-vi.mock('./http')
+vi.mock('../http.js')
 
 describe('validate', () => {
   it("resolves if the MD5 matches the file's", async () => {

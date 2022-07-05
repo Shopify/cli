@@ -3,7 +3,7 @@ import {reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import * as http from './http.js'
 import * as os from './os.js'
-import * as ruby from './ruby.js'
+import * as ruby from './node/ruby.js'
 import * as dependency from './dependency.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {cliKitStore} from './store.js'
@@ -20,14 +20,14 @@ const expectedHeaders = {
 
 beforeEach(() => {
   vi.setSystemTime(currentDate)
-  vi.mock('./environment')
-  vi.mock('./ruby')
-  vi.mock('./os')
-  vi.mock('./store')
+  vi.mock('./environment.js')
+  vi.mock('./node/ruby.js')
+  vi.mock('./os.js')
+  vi.mock('./store.js')
 
-  vi.mock('./http')
-  vi.mock('./version')
-  vi.mock('./dependency')
+  vi.mock('./http.js')
+  vi.mock('./version.js')
+  vi.mock('./dependency.js')
   vi.mocked(environment.local.isShopify).mockResolvedValue(false)
   vi.mocked(environment.local.isDebug).mockReturnValue(false)
   vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
