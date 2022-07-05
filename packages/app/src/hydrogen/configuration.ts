@@ -1,5 +1,6 @@
 export interface UserConfiguration {
-  // noop
+  name: string
+  scopes: string[]
 }
 
 export function defineConfiguration(config: UserConfiguration) {

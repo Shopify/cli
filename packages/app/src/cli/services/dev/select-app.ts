@@ -16,7 +16,7 @@ import {api, error, output} from '@shopify/cli-kit'
  * @returns {Promise<OrganizationApp>} The selected (or created) app
  */
 export async function selectOrCreateApp(
-  localApp: App,
+  localApp: Pick<App, 'name'>,
   apps: OrganizationApp[],
   org: Organization,
   token: string,
@@ -34,7 +34,7 @@ export async function selectOrCreateApp(
   return app
 }
 
-export async function createApp(org: Organization, app: App, token: string): Promise<OrganizationApp> {
+export async function createApp(org: Organization, app: Pick<App, 'name'>, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.name)
 
   const type = org.appsNext ? 'undecided' : await appTypePrompt()

@@ -1,7 +1,7 @@
 import {HydrogenApp} from '../models/app.js'
 import {Configuration} from '../models/configuration.js'
 import {getModuleLoader} from '../utilities/module-loader.js'
-import {path, error, output} from '@shopify/cli-kit'
+import {path, error, output, dependency} from '@shopify/cli-kit'
 
 export async function loadHydrogenApp(fromDirectory: string): Promise<HydrogenApp> {
   const configurationFilePath = await path.findUp(['hydrogen.config.js', 'hydrogen.config.ts'], {
@@ -14,11 +14,16 @@ export async function loadHydrogenApp(fromDirectory: string): Promise<HydrogenAp
       'Hydrogen apps have a hydrogen.config.{ts,js} configuration file at their root.',
     )
   }
+  const appDirectory = path.dirname(configurationFilePath)
   const configuration = await loadConfiguration(configurationFilePath)
-  return {
-    path: path.dirname(configurationFilePath),
+  const dependencyManager = await dependency.getDependencyManager(appDirectory)
+  const app = {
+    directory: appDirectory,
     configuration,
+    dependencyManager,
+    name: configuration.name,
   }
+  return app
 }
 
 export async function loadConfiguration(configurationFilePath: string): Promise<Configuration> {

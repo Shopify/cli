@@ -1,5 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {loadHydrogenApp} from '../../hydrogen/loaders/app.js'
+import dev from '../../services/hydrogen-app/dev.js'
 import {Command, Flags} from '@oclif/core'
 import {path, string, cli} from '@shopify/cli-kit'
 
@@ -66,5 +67,15 @@ export default class Dev extends Command {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app = await loadHydrogenApp(directory)
+    await dev({
+      app,
+      apiKey: flags['api-key'],
+      storeFqdn: flags.store,
+      reset: flags.reset,
+      update: !flags['no-update'],
+      commandConfig: this.config,
+      tunnelUrl: flags['tunnel-url'],
+    })
+    console.log('finished')
   }
 }
