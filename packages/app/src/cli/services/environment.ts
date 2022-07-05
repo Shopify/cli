@@ -92,8 +92,7 @@ export async function ensureDevEnvironment(
   // 2.2 It's not the first time, then we take cached storeFqdn (cachedInfo?.storeFqdn) // my-store
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
-  // 'shop1006.myshopify.io'
-  const shopDomain = cachedInfo?.storeFqdn
+  const shopDomain = options.storeFqdn || cachedInfo?.storeFqdn
 
   const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token, shopDomain)
 
