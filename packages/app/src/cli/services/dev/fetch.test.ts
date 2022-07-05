@@ -137,7 +137,10 @@ describe('fetchStoresByDomain', async () => {
 
     // Then
     expect(got).toEqual([STORE1])
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {id: ORG1.id, shopDomain: STORE1.shopDomain})
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {
+      id: ORG1.id,
+      shopDomain: STORE1.shopDomain,
+    })
   })
 })
 

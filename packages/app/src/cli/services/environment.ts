@@ -5,6 +5,7 @@ import {
   fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
+  fetchStoresByDomain,
   FetchResponse,
 } from './dev/fetch.js'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
@@ -91,8 +92,10 @@ export async function ensureDevEnvironment(
   // 2.2 It's not the first time, then we take cached storeFqdn (cachedInfo?.storeFqdn) // my-store
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
+  // 'shop1006.myshopify.io'
+  const shopDomain = cachedInfo?.storeFqdn
 
-  const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
+  const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token, shopDomain)
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, organization, stores, token)
   if (selectedApp && selectedStore) {
@@ -258,7 +261,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
   return {orgId, partnersApp}
 }
 
-async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
+async function fetchOrgsAppsAndStores(orgId: string, token: string, shopDomain?: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
   const list = ui.newListr(
     [
@@ -266,7 +269,9 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
         title: 'Fetching organization data',
         task: async () => {
           const organizationAndApps = await fetchOrgAndApps(orgId, token)
-          const stores = await fetchAllStores(orgId, token)
+          const stores = shopDomain
+            ? await fetchStoresByDomain(orgId, token, shopDomain)
+            : await fetchAllStores(orgId, token)
           data = {...organizationAndApps, stores} as FetchResponse
           // We need ALL stores so we can validate the selected one.
           // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
