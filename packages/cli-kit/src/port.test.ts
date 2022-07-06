@@ -37,4 +37,3 @@ describe('getRandomPort', () => {
     await expect(getRandomPort()).rejects.toThrowError(new Abort(errorMessage))
   })
 })
-∫
