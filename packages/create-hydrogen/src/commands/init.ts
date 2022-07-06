@@ -16,6 +16,11 @@ export default class Init extends Command {
       env: 'SHOPIFY_FLAG_TEMPLATE',
       hidden: false,
     }),
+    language: Flags.string({
+      char: 'a',
+      env: 'SHOPIFY_FLAG_LANGUAGE',
+      hidden: false,
+    }),
     path: Flags.string({
       char: 'p',
       env: 'SHOPIFY_FLAG_PATH',
@@ -55,10 +60,12 @@ export default class Init extends Command {
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
+      language: flags.language,
     })
     await initService({
       name: promptAnswers.name,
       template: promptAnswers.template,
+      language: promptAnswers.language,
       dependencyManager: flags['dependency-manager'],
       shopifyCliVersion: flags['shopify-cli-version'],
       hydrogenVersion: flags['hydrogen-version'],
