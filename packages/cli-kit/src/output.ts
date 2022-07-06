@@ -49,7 +49,7 @@ function truncateLogs() {
       fileWriteSync(logFile, newContents)
     }
     // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
-  } catch {}
+  } catch { }
 }
 
 enum ContentTokenType {
