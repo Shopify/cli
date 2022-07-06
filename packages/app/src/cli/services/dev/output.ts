@@ -66,7 +66,7 @@ function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
 
 function buildAppURL(storeFqdn: string, publicURL: string) {
   const hostUrl = `${storeFqdn}/admin`
-  const hostParam = btoa(hostUrl).replace(/[=]/g, '')
+  const hostParam = Buffer.from(hostUrl, 'binary').toString('base64').replace(/[=]/g, '')
   return `${publicURL}?shop=${storeFqdn}&host=${hostParam}`
 }
 
