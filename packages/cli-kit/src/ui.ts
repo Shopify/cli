@@ -3,7 +3,7 @@ import {Input} from './ui/input.js'
 import {Select} from './ui/select.js'
 import {Bug, AbortSilent} from './error.js'
 import {remove, exists} from './file.js'
-import {info, content, token, logToFile} from './output.js'
+import {info, started, failed, completed, content, token, logUpdate, logToFile} from './output.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {isTruthy} from './environment/utilities.js'
@@ -46,6 +46,31 @@ interface BaseQuestion<TName extends string> {
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
+}
+
+export interface SimpleTaskOptions {
+  title: string
+  success?: string
+  task: () => Promise<void | string>
+}
+
+/**
+ * Performs a task with the title kept up to date and stdout available to the
+ * task while it runs (there is no re-writing stdout while the task runs).
+ */
+export const simpleTask = async ({title, success: _success, task}: SimpleTaskOptions) => {
+  let success
+  started(title, logUpdate)
+  try {
+    const result = await task()
+    success = _success || result || title
+  } catch (err) {
+    failed(title, logUpdate)
+    logUpdate.done()
+    throw err
+  }
+  completed(success, logUpdate)
+  logUpdate.done()
 }
 
 export type InputQuestion<TName extends string> = BaseQuestion<TName> & {

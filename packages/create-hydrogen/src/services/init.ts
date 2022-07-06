@@ -67,29 +67,23 @@ async function init(options: InitOptions) {
       ? path.join(templateDownloadDir, templateInfo.subDirectory)
       : templateDownloadDir
 
-    tasks = tasks.concat([
-      {
-        title: 'Downloading template',
-
-        task: async (_, task) => {
-          const url = `${templateInfo.http}${branch}`
-          await git.downloadRepository({
-            repoUrl: url,
-            destination: templateDownloadDir,
-            shallow: true,
-            progressUpdater: (statusString: string) => {
-              const taskOutput = `Cloning template from ${url}:\n${statusString}`
-              task.output = taskOutput
-            },
-          })
-
-          if (!(await file.exists(path.join(templatePath, 'package.json')))) {
-            throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
-          }
-          task.title = 'Template downloaded'
-        },
+    const repoUrl = `${templateInfo.http}${branch}`
+    await ui.simpleTask({
+      title: `Downloading template from ${repoUrl}`,
+      success: `Downloaded template from ${repoUrl}`,
+      task: async () => {
+        await git.downloadRepository({
+          repoUrl,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        if (!(await file.exists(path.join(templatePath, 'package.json')))) {
+          throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
+        }
       },
+    })
 
+    tasks = tasks.concat([
       {
         title: `Initializing your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
