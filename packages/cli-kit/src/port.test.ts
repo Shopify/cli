@@ -31,7 +31,6 @@ describe('getRandomPort', () => {
     for (let i = 0; i < maxTries; i++) {
       vi.mocked(port.getRandomPort).mockRejectedValueOnce(new Error(errorMessage))
     }
-    const debugError = vi.spyOn(System, 'sleep')
 
     // When/Then
     await expect(getRandomPort()).rejects.toThrowError(new Abort(errorMessage))
