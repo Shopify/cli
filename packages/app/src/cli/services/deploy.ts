@@ -16,7 +16,7 @@ import {
   Identifiers,
   updateAppIdentifiers,
 } from '../models/app/app.js'
-import {Extension, UIExtension} from '../models/app/extensions'
+import {Extension, UIExtension} from '../models/app/extensions.js'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
