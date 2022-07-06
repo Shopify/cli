@@ -25,7 +25,7 @@ describe('getRandomPort', () => {
     expect(debugError).toHaveBeenCalledOnce()
   })
 
-  it('thwrows an abort expection with same error message if the number retries is not exceeded', async () => {
+  it('throws an abort exception with same error message received from third party getRandomPort if the number retries is exceeded', async () => {
     // Given
     const maxTries = 5
     for (let i = 0; i < maxTries; i++) {
@@ -37,3 +37,4 @@ describe('getRandomPort', () => {
     await expect(getRandomPort()).rejects.toThrowError(new Abort(errorMessage))
   })
 })
+∫
