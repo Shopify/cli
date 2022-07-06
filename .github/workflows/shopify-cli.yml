@@ -89,8 +89,10 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
       - name: Lint
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint --skip-nx-cache
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Type-check
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc --skip-nx-cache
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Unit tests
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
@@ -136,8 +138,10 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
       - name: Type-check
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc --skip-nx-cache
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Lint
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint --skip-nx-cache
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Unit tests
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
