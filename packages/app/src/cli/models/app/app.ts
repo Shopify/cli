@@ -1,9 +1,16 @@
 import {
+  UIExtension,
+  ThemeExtension,
+  FunctionExtension,
+  UIExtensionConfigurationSchema,
+  FunctionExtensionConfigurationSchema,
+  FunctionExtensionMetadataSchema,
+  ThemeExtensionConfigurationSchema,
+  Extension,
+} from './extensions.js'
+import {
   blocks,
   configurationFileNames,
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
   getUIExtensionRendererDependency,
   UIExtensionTypes,
   dotEnvFileNames,
@@ -38,97 +45,6 @@ export const AppConfigurationSchema = schema.define.object({
 })
 
 export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
-
-const UIExtensionConfigurationSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.enum(uiExtensions.types),
-  metafields: schema.define
-    .array(
-      schema.define.object({
-        namespace: schema.define.string(),
-        key: schema.define.string(),
-      }),
-    )
-    .default([]),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
-  capabilities: schema.define.any().optional(),
-
-  // Only for WebPixel
-  runtimeContext: schema.define.string().optional(),
-  version: schema.define.string().optional(),
-  configuration: schema.define.any().optional(),
-})
-
-type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
-
-const FunctionExtensionConfigurationSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.enum(functionExtensions.types),
-  description: schema.define.string().default(''),
-  build: schema.define.object({
-    command: schema.define.string(),
-    path: schema.define.string().optional(),
-  }),
-  configurationUi: schema.define.boolean().optional().default(true),
-  ui: schema.define
-    .object({
-      paths: schema.define
-        .object({
-          create: schema.define.string(),
-          details: schema.define.string(),
-        })
-        .optional(),
-    })
-    .optional(),
-  apiVersion: schema.define.string(),
-})
-
-type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
-
-const ThemeExtensionConfigurationSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.enum(themeExtensions.types),
-})
-
-type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
-
-export interface Extension {
-  idEnvironmentVariableName: string
-  localIdentifier: string
-  configurationPath: string
-  directory: string
-  type: ExtensionTypes
-  graphQLType: string
-}
-
-const FunctionExtensionMetadataSchema = schema.define.object({
-  schemaVersions: schema.define.object({}).catchall(
-    schema.define.object({
-      major: schema.define.number(),
-      minor: schema.define.number(),
-    }),
-  ),
-})
-
-type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
-
-export type FunctionExtension = Extension & {
-  configuration: FunctionExtensionConfiguration
-  metadata: FunctionExtensionMetadata
-  buildWasmPath: () => string
-  inputQueryPath: () => string
-}
-
-export type ThemeExtension = Extension & {
-  configuration: ThemeExtensionConfiguration
-}
-
-export type UIExtension = Extension & {
-  configuration: UIExtensionConfiguration
-  buildDirectory: string
-  entrySourceFilePath: string
-  devUUID: string
-}
 
 export enum WebType {
   Frontend = 'frontend',

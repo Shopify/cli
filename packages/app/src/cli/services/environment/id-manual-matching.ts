@@ -1,5 +1,6 @@
 import {ExtensionRegistration} from '../dev/create-extension.js'
-import {Extension, IdentifiersExtensions} from '../../models/app/app.js'
+import {IdentifiersExtensions} from '../../models/app/app.js'
+import {Extension} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
 
 export type ManualMatchResult =

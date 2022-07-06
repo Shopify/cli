@@ -1,6 +1,6 @@
 import {automaticMatchmaking, MatchResult} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
-import {UIExtension} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 beforeEach(() => {

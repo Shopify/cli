@@ -1,4 +1,5 @@
-import {App, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/app.js'
+import {App} from '../../models/app/app.js'
+import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {output, string} from '@shopify/cli-kit'
 

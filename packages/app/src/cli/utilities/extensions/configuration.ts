@@ -1,5 +1,6 @@
 import {nodeExtensionsCLIPath} from './cli.js'
-import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app.js'
+import {App, getUIExtensionRendererVersion} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
 import {error, path} from '@shopify/cli-kit'
 

@@ -11,13 +11,12 @@ import {ensureDeployEnvironment} from './environment.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {
   App,
-  Extension,
   getUIExtensionRendererVersion,
   hasExtensions,
   Identifiers,
-  UIExtension,
   updateAppIdentifiers,
 } from '../models/app/app.js'
+import {Extension, UIExtension} from '../models/app/extensions'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'

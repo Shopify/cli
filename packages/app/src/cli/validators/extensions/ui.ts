@@ -1,4 +1,4 @@
-import {UIExtension} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {error} from '@shopify/cli-kit'
 
 const WebPixelConfigError = (property: string) => {

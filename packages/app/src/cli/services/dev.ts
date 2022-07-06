@@ -7,7 +7,8 @@ import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
-import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app.js'
+import {App, AppConfiguration, Web, WebType} from '../models/app/app.js'
+import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
