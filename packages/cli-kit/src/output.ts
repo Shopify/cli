@@ -21,6 +21,7 @@ import {AbortController, AbortSignal} from 'abort-controller'
 // @ts-ignore
 import cjs from 'color-json'
 import stripAnsi from 'strip-ansi'
+import logUpdate from 'log-update'
 import {Writable} from 'node:stream'
 
 let logFile: string
@@ -582,6 +583,15 @@ export function shouldDisplayColors(): boolean {
 
 export async function pageLogs() {
   await page(logFile)
+}
+
+export function logWithOverwrites(str: string) {
+  logUpdate(str)
+}
+
+export function clearLogWithOverwrites() {
+  logUpdate.clear()
+  logUpdate.done()
 }
 
 /* eslint-enable no-console */

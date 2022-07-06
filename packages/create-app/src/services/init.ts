@@ -52,7 +52,12 @@ async function init(options: InitOptions) {
       repoUrl,
       destination: templateDownloadDir,
       shallow: true,
+      progressUpdater: (statusString: string) => {
+        const taskOutput = `    Cloning template from ${repoUrl}:\n    ${statusString}`
+        output.logWithOverwrites(taskOutput)
+      },
     })
+    output.clearLogWithOverwrites()
 
     tasks = tasks.concat([
       {

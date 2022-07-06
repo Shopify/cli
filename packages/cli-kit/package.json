@@ -95,6 +95,7 @@
     "js-yaml": "^4.1.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",
+    "log-update": "^4.0.0",
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
     "simple-git": "^3.5.0",
