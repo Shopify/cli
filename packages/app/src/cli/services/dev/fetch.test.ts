@@ -2,7 +2,7 @@ import {
   fetchAllStores,
   fetchOrgAndApps,
   fetchOrganizations,
-  fetchStoresByDomain,
+  fetchStoreByDomain,
   fetchAppExtensionRegistrations,
   NoOrgError,
 } from './fetch.js'
@@ -42,6 +42,19 @@ const FETCH_ORG_RESPONSE_VALUE = {
         businessName: ORG1.businessName,
         appsNext: ORG1.appsNext,
         apps: {nodes: [APP1, APP2]},
+        stores: {nodes: [STORE1]},
+      },
+    ],
+  },
+}
+const FETCH_STORE_RESPONSE_VALUE = {
+  organizations: {
+    nodes: [
+      {
+        id: ORG1.id,
+        businessName: ORG1.businessName,
+        appsNext: ORG1.appsNext,
+        website: ORG1.website,
         stores: {nodes: [STORE1]},
       },
     ],
@@ -127,16 +140,16 @@ describe('fetchAllStores', async () => {
   })
 })
 
-describe('fetchStoresByDomain', async () => {
-  it('returns fetched store', async () => {
+describe('fetchStoreByDomain', async () => {
+  it('returns fetched store and organization', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
+    vi.mocked(api.partners.request).mockResolvedValue(FETCH_STORE_RESPONSE_VALUE)
 
     // When
-    const got = await fetchStoresByDomain(ORG1.id, 'token', 'domain1')
+    const got = await fetchStoreByDomain(ORG1.id, 'token', 'domain1')
 
     // Then
-    expect(got).toEqual([STORE1])
+    expect(got).toEqual({organization: ORG1, store: STORE1})
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {
       id: ORG1.id,
       shopDomain: STORE1.shopDomain,
