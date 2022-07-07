@@ -15,7 +15,6 @@ import {join as pathJoin, relativize as relativizePath} from './path.js'
 import {page} from './system.js'
 import {colors} from './node/colors.js'
 import terminalLink from 'terminal-link'
-import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore

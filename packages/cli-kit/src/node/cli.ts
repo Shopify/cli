@@ -34,10 +34,12 @@ export async function runCLI(options: RunCLIOptions) {
     settings.debug = true
   } else {
     Bugsnag.start({
+      appType: 'node',
       apiKey: bugsnagApiKey,
       logger: null,
       appVersion: await constants.versions.cliKit(),
       autoTrackSessions: false,
+      autoDetectErrors: false,
     })
   }
 
