@@ -315,11 +315,11 @@ async function fetchDevDataFromOptions(
   if (options.storeFqdn) {
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw OrganizationNotFoundError(orgId)
-
     if (!orgWithStore.store) throw StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
     if (!orgWithStore.store.transferDisabled && !orgWithStore.store.convertableToPartnerTest)
       throw InvalidStore(orgWithStore.store.shopDomain)
     if (!orgWithStore.store.transferDisabled) await convertStoreToTest(orgWithStore.store, orgId, token)
+    selectedStore = orgWithStore.store
   }
 
   return {app: selectedApp, store: selectedStore}
