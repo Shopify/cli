@@ -1,4 +1,5 @@
-import {load, getUIExtensionRendererVersion, App, updateAppIdentifiers, getAppIdentifiers} from './app.js'
+import {load, getUIExtensionRendererVersion, App} from './app.js'
+import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'

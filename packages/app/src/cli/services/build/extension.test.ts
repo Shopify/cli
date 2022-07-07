@@ -1,5 +1,5 @@
 import {buildFunctionExtension} from './extension.js'
-import {FunctionExtension} from '../../models/app/app.js'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {system} from '@shopify/cli-kit'
 

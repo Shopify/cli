@@ -1,4 +1,4 @@
-import {ThemeExtension} from '../../models/app/app.js'
+import {ThemeExtension} from '../../models/app/extensions.js'
 import {file, path} from '@shopify/cli-kit'
 
 export interface ThemeExtensionConfig {

@@ -117,6 +117,6 @@
     "@types/inquirer": "^8.2.1",
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
-    "vitest": "^0.15.1"
+    "vitest": "^0.17.1"
   }
 }

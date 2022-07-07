@@ -1,4 +1,5 @@
-import {App, UIExtension} from '../../models/app/app.js'
+import {App} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {extensionConfig} from '../../utilities/extensions/configuration.js'
 import {error, yaml, output} from '@shopify/cli-kit'

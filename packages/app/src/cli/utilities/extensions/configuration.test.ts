@@ -1,5 +1,6 @@
 import {extensionConfig, ExtensionConfigOptions} from './configuration.js'
-import {App, UIExtension} from '../../models/app/app.js'
+import {App} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {path} from '@shopify/cli-kit'
 

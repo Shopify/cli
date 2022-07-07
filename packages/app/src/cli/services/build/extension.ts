@@ -1,5 +1,6 @@
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
-import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app.js'
+import {App} from '../../models/app/app.js'
+import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {extensionConfig} from '../../utilities/extensions/configuration.js'
 import {error, system, yaml, output} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'

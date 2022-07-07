@@ -1,5 +1,5 @@
 import {installAppDependencies} from './dependencies.js'
-import {App} from '../models/app/app.js'
+import {App, updateDependencies} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
@@ -19,13 +19,7 @@ beforeEach(() => {
   })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 
-  vi.mock('../models/app/app', async () => {
-    const app: any = await vi.importActual('../models/app/app')
-    return {
-      ...app,
-      updateDependencies: async (app: App) => app,
-    }
-  })
+  vi.mock('../models/app/app')
 })
 
 describe('installAppDependencies', () => {
@@ -51,6 +45,7 @@ describe('installAppDependencies', () => {
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}
     vi.mocked(ui.newListr).mockReturnValue(list)
+    vi.mocked(updateDependencies).mockResolvedValueOnce(app)
 
     // When
     await installAppDependencies(app)
