@@ -1,5 +1,31 @@
 # @shopify/create-hydrogen
 
+## 3.0.27
+
+### Patch Changes
+
+- Updated dependencies [e2e8b4db]
+  - @shopify/cli-kit@3.0.27
+
+## 3.0.26
+
+### Patch Changes
+
+- 022a4e24: Internal: build cli-kit using tsc instead of rollup+esbuild
+- e81e52b1: Report error events
+- 2d8e4458: Log Listr task titles to logfile
+- Updated dependencies [dbcffdbb]
+- Updated dependencies [022a4e24]
+- Updated dependencies [e81e52b1]
+- Updated dependencies [c16035f1]
+- Updated dependencies [61f595df]
+- Updated dependencies [87f7843f]
+- Updated dependencies [8ff4e3d7]
+- Updated dependencies [168bb4c6]
+- Updated dependencies [0a9dbc63]
+- Updated dependencies [2d8e4458]
+  - @shopify/cli-kit@3.0.26
+
 ## 3.0.25
 
 ### Patch Changes

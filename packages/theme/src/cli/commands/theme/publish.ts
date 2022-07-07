@@ -1,6 +1,7 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {session, string} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Publish extends Command {
   static description = 'Set a remote theme as the live theme.'
@@ -35,6 +36,6 @@ export default class Publish extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.execCLI(command, adminSession)
+    await execCLI2(command, adminSession)
   }
 }

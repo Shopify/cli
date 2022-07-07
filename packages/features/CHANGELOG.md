@@ -1,5 +1,12 @@
 # @shopify/features
 
+## 0.3.3
+
+### Patch Changes
+
+- dbcffdbb: Fix issue when exchanging an identity token fails
+- 022a4e24: Internal: build cli-kit using tsc instead of rollup+esbuild
+
 ## 0.3.2
 
 ### Patch Changes

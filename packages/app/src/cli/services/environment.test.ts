@@ -104,7 +104,7 @@ const LOCAL_APP: App = {
   name: 'my-app',
   idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '/app',
-  dependencyManager: 'yarn',
+  packageManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {scopes: 'read_products'},
   webs: [
@@ -437,7 +437,7 @@ describe('ensureDeployEnvironment', () => {
 
     // When
     await expect(ensureDeployEnvironment({app, reset: false})).rejects.toThrow(
-      DeployAppNotFound(APP1.apiKey, LOCAL_APP.dependencyManager),
+      DeployAppNotFound(APP1.apiKey, LOCAL_APP.packageManager),
     )
   })
 

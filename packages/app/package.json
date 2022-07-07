@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.0.25",
+  "version": "3.0.27",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -32,7 +32,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",
@@ -49,7 +49,7 @@
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "^1.0",
     "@shopify/shopify-cli-extensions": "^0.2.1",
-    "@shopify/cli-kit": "^3.0.25",
+    "@shopify/cli-kit": "^3.0.27",
     "ws": "^8.7.0",
     "@fastify/http-proxy": "^8.0.1"
   }

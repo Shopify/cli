@@ -1,6 +1,7 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Command, Flags} from '@oclif/core'
-import {session, string, ruby} from '@shopify/cli-kit'
+import {session, string} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Delete extends Command {
   static description = "Delete remote themes from the connected store. This command can't be undone"
@@ -52,6 +53,6 @@ export default class Delete extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.execCLI(command, adminSession)
+    await execCLI2(command, adminSession)
   }
 }

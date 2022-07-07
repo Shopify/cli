@@ -1,6 +1,7 @@
 import {HydrogenApp} from '../models/hydrogen'
 import {genericConfigurationFileNames} from '../constants'
-import {ui, vscode, npm, file, dependency, path, error, environment} from '@shopify/cli-kit'
+import {ui, vscode, npm, file, path, error, environment} from '@shopify/cli-kit'
+import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import stream from 'node:stream'
 
 interface AddESlintOptions {
@@ -17,8 +18,8 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
         skip: () => !install,
         task: async (_, task) => {
           const requiredDependencies = ['eslint', 'eslint-plugin-hydrogen', 'prettier', '@shopify/prettier-config']
-          await dependency.addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
-            dependencyManager: app.dependencyManager,
+          await addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
+            packageManager: app.packageManager,
             type: 'prod',
             directory: app.directory,
             stderr: new stream.Writable({

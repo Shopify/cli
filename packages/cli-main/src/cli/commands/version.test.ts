@@ -1,22 +1,26 @@
 import Version from './version'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {dependency, outputMocker} from '@shopify/cli-kit'
-import {DependencyManager} from '@shopify/cli-kit/src/dependency'
+import {outputMocker, output} from '@shopify/cli-kit'
+import {
+  checkForNewVersion,
+  PackageManager,
+  packageManagerUsedForCreating,
+} from '@shopify/cli-kit/node/node-package-manager'
 
 const currentVersion = '2.2.2'
 beforeEach(() => {
+  vi.spyOn(Version.prototype as any, 'getCurrentVersion').mockReturnValue(currentVersion)
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    const module: any = await vi.importActual('@shopify/cli-kit')
     return {
-      ...cliKit,
-      dependency: {
-        dependencyManagerUsedForCreating: vi.fn(),
-        checkForNewVersion: vi.fn(),
+      ...module,
+      output: {
+        ...module.output,
         getOutputUpdateCLIReminder: vi.fn(),
       },
     }
   })
-  vi.spyOn(Version.prototype as any, 'getCurrentVersion').mockReturnValue(currentVersion)
 })
 
 afterEach(() => {
@@ -26,14 +30,14 @@ afterEach(() => {
 describe('check CLI version', () => {
   it.each(['yarn', 'npm', 'pnpm'])(
     'display latest version and %s upgrade message when a newer exists',
-    async (dependencyManager: string) => {
+    async (packageManager: string) => {
       // Given
 
       const latestVersion = '3.0.10'
       const outputMock = outputMocker.mockAndCaptureOutput()
-      vi.mocked(dependency.checkForNewVersion).mockResolvedValue(latestVersion)
-      vi.mocked(dependency.dependencyManagerUsedForCreating).mockReturnValue(dependencyManager as DependencyManager)
-      const outputReminder = vi.mocked(dependency.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
+      vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
+      vi.mocked(packageManagerUsedForCreating).mockReturnValue(packageManager as PackageManager)
+      const outputReminder = vi.mocked(output.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
       // When
       await Version.run()
@@ -43,7 +47,7 @@ describe('check CLI version', () => {
         "Current Shopify CLI version: 2.2.2
         CLI reminder"
       `)
-      expect(outputReminder).toBeCalledWith(dependencyManager as DependencyManager, latestVersion)
+      expect(outputReminder).toBeCalledWith(packageManager as PackageManager, latestVersion)
       outputMock.clear()
     },
   )
@@ -51,7 +55,7 @@ describe('check CLI version', () => {
   it('display only current version when no newer version exists', async () => {
     // Given
     const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(dependency.checkForNewVersion).mockResolvedValue(currentVersion)
+    vi.mocked(checkForNewVersion).mockResolvedValue(currentVersion)
 
     // When
     await Version.run()
@@ -67,7 +71,7 @@ describe('check CLI version', () => {
   it('display only current version when an error is thrown when getting latest version', async () => {
     // Given
     const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(dependency.checkForNewVersion).mockResolvedValue(undefined)
+    vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
     // When
     await Version.run()

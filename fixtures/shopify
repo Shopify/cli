@@ -3,7 +3,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 pushd $SCRIPT_DIR/.. > /dev/null
-yarn nx build cli app
+yarn nx run-many --target=build --projects=cli-main,app,cli-hydrogen
 popd > /dev/null
 
 $SCRIPT_DIR/../packages/cli-main/bin/dev.js $@

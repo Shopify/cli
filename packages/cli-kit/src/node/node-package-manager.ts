@@ -1,30 +1,53 @@
-import {exec} from './system.js'
-import {exists as fileExists, read as readFile} from './file.js'
-import {glob, dirname, join as pathJoin, findUp} from './path.js'
-import {Abort, Bug} from './error.js'
-import {latestNpmPackageVersion} from './version.js'
-import {Version} from './semver.js'
-import {content, token, debug} from './output.js'
+import {exec} from '../system.js'
+import {exists as fileExists, read as readFile} from '../file.js'
+import {glob, dirname, join as pathJoin, findUp} from '../path.js'
+import {Abort, Bug} from '../error.js'
+import {latestNpmPackageVersion} from '../version.js'
+import {Version} from '../semver.js'
+import {content, token, debug} from '../output.js'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
-import type {ExecOptions} from './system.js'
+import type {ExecOptions} from '../system.js'
 
-export const genericConfigurationFileNames = {
-  yarn: {
-    lockfile: 'yarn.lock',
-  },
-  pnpm: {
-    lockfile: 'pnpm-lock.yaml',
-  },
-} as const
+/** The name of the Yarn lock file */
+export const yarnLockfile = 'yarn.lock'
 
-export const dependencyManager = ['yarn', 'npm', 'pnpm'] as const
-export type DependencyManager = typeof dependencyManager[number]
+/** The name of the pnpm lock file */
+export const pnpmLockfile = 'pnpm-lock.yaml'
 
+/** An array containing the lockfiles from all the package managers */
+export const lockfiles = [yarnLockfile, pnpmLockfile]
+
+/**
+ * A union type that represents the type of dependencies in the package.json
+ * - dev: devDependencies
+ * - prod: dependencies
+ * - peer: peerDependencies
+ */
+export type DependencyType = 'dev' | 'prod' | 'peer'
+
+/**
+ * A union that represents the package managers available.
+ */
+export const packageManager = ['yarn', 'npm', 'pnpm'] as const
+export type PackageManager = typeof packageManager[number]
+
+/**
+ * Returns an abort error that's thrown when a directory that's expected to have
+ * a package.json doesn't have it.
+ * @param directory {string} The path to the directory that should contain a package.json
+ * @returns {Abort} An abort error.
+ */
 export const PackageJsonNotFoundError = (directory: string) => {
   return new Abort(`The directory ${directory} doesn't have a package.json.`)
 }
 
+/**
+ * Returns a bug error that's thrown when the lookup of the package.json traversing the directory
+ * hierarchy up can't find a package.json
+ * @param directory {string} The directory from which the traverse has been done
+ * @returns {Abort} An abort error.
+ */
 export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
   return new Bug(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
 }
@@ -34,7 +57,7 @@ export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
  * @param env {Object} The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function dependencyManagerUsedForCreating(env = process.env): DependencyManager {
+export function packageManagerUsedForCreating(env = process.env): PackageManager {
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
@@ -49,10 +72,10 @@ export function dependencyManagerUsedForCreating(env = process.env): DependencyM
  * @param directory {string} The root directory of the project.
  * @returns The dependency manager
  */
-export async function getDependencyManager(directory: string): Promise<DependencyManager> {
+export async function getPackageManager(directory: string): Promise<PackageManager> {
   debug(content`Obtaining the dependency manager in directory ${token.path(directory)}...`)
-  const yarnLockPath = pathJoin(directory, genericConfigurationFileNames.yarn.lockfile)
-  const pnpmLockPath = pathJoin(directory, genericConfigurationFileNames.pnpm.lockfile)
+  const yarnLockPath = pathJoin(directory, yarnLockfile)
+  const pnpmLockPath = pathJoin(directory, pnpmLockfile)
   if (await fileExists(yarnLockPath)) {
     return 'yarn'
   } else if (await fileExists(pnpmLockPath)) {
@@ -66,7 +89,7 @@ interface InstallNPMDependenciesRecursivelyOptions {
   /**
    * The dependency manager to use to install the dependencies.
    */
-  dependencyManager: DependencyManager
+  packageManager: PackageManager
   /**
    * The directory from where we'll find package.json's recursively
    */
@@ -96,7 +119,7 @@ export async function installNPMDependenciesRecursively(options: InstallNPMDepen
     await Promise.all(
       packageJsons.map(async (packageJsonPath) => {
         const directory = dirname(packageJsonPath)
-        await install(directory, options.dependencyManager, undefined, undefined, abortController.signal)
+        await installNodeModules(directory, options.packageManager, undefined, undefined, abortController.signal)
       }),
     )
   } catch (error) {
@@ -108,21 +131,21 @@ export async function installNPMDependenciesRecursively(options: InstallNPMDepen
 /**
  * Installs the dependencies in the given directory.
  * @param directory {string} The directory that contains the package.json
- * @param dependencyManager {DependencyManager} The dependency manager to use to install the dependencies.
+ * @param packageManager {PackageManager} The package manager to use to install the dependencies.
  * @param stdout {Writable} Standard output stream.
  * @param stderr {Writable} Standard error stream.
  * @param signal {AbortSignal} Abort signal.
  * @returns stderr {Writable} Standard error stream.
  */
-export async function install(
+export async function installNodeModules(
   directory: string,
-  dependencyManager: DependencyManager,
+  packageManager: PackageManager,
   stdout?: Writable,
   stderr?: Writable,
   signal?: AbortSignal,
 ) {
   const options: ExecOptions = {cwd: directory, stdin: undefined, stdout, stderr, signal}
-  await exec(dependencyManager, ['install'], options)
+  await exec(packageManager, ['install'], options)
 }
 
 /**
@@ -131,7 +154,7 @@ export async function install(
  * @returns A promise that resolves with the name.
  */
 export async function getPackageName(packageJsonPath: string): Promise<string> {
-  const packageJsonContent = await packageJSONContents(packageJsonPath)
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return packageJsonContent.name
 }
 
@@ -141,13 +164,19 @@ export async function getPackageName(packageJsonPath: string): Promise<string> {
  * @returns A promise that resolves with the list of dependencies.
  */
 export async function getDependencies(packageJsonPath: string): Promise<{[key: string]: string}> {
-  const packageJsonContent = await packageJSONContents(packageJsonPath)
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   const dependencies: {[key: string]: string} = packageJsonContent.dependencies ?? {}
   const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
 
   return {...dependencies, ...devDependencies}
 }
 
+/**
+ * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
+ * @param dependency {string} The dependency name (e.g. react)
+ * @param currentVersion {string} The current version.
+ * @returns {Promise<string>} A promise that resolves with a more recent version or undefined if there's no more recent version.
+ */
 export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
   debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
@@ -163,33 +192,56 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
   }
 }
 
-export function getOutputUpdateCLIReminder(dependencyManager: DependencyManager, version: string): string {
-  const updateCommand = token.packagejsonScript(dependencyManager, 'shopify', 'upgrade')
-  return content`💡 Version ${version} available! Run ${updateCommand}`.value
-}
+/**
+ * An interface that represents a package.json
+ */
+interface PackageJson {
+  /**
+   * The absolute path to the package.json
+   */
+  path: string
 
-interface PackageJSONContents {
+  /**
+   * The name attribute of the package.json
+   */
   name: string
+
+  /**
+   * The version attribute of the package.json
+   */
   version?: string
+
+  /**
+   * The dependencies attribute of the package.json
+   */
   dependencies?: {[key: string]: string}
+
+  /**
+   * The devDependencies attribute of the package.json
+   */
   devDependencies?: {[key: string]: string}
 }
 
-export async function packageJSONContents(packageJsonPath: string): Promise<PackageJSONContents> {
+/**
+ * Reads and parses a package.json
+ * @param packageJsonPath {string} Path to the package.json
+ * @returns {Promise<PackageJson>} An promise that resolves with an in-memory representation
+ *    of the package.json or rejects with an error if the file is not found or the content is
+ *    not decodable.
+ */
+export async function readAndParsePackageJson(packageJsonPath: string): Promise<PackageJson> {
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(dirname(packageJsonPath))
   }
   return JSON.parse(await readFile(packageJsonPath))
 }
 
-export type DependencyType = 'dev' | 'prod' | 'peer'
-
 interface AddNPMDependenciesIfNeededOptions {
   /** How dependencies should be added */
   type: DependencyType
 
   /** The dependency manager to use to add dependencies */
-  dependencyManager: DependencyManager
+  packageManager: PackageManager
 
   /** The directory that contains the package.json where dependencies will be added */
   directory: string
@@ -204,8 +256,30 @@ interface AddNPMDependenciesIfNeededOptions {
   signal?: AbortSignal
 }
 
+/**
+ * An interface that represents a dependency name with its version
+ */
 export interface DependencyVersion {
+  /**
+   * The name of the NPM dependency as it's reflected in the package.json:
+   *
+   * @example
+   *  In the example below name would be "react"
+   *  {
+   *    "react": "1.2.3"
+   *  }
+   */
   name: string
+
+  /**
+   * The version of the NPM dependency as it's reflected in the package.json:
+   *
+   * @example
+   *  In the example below version would be "1.2.3"
+   *  {
+   *    "react": "1.2.3"
+   *  }
+   */
   version: string | undefined
 }
 
@@ -242,7 +316,7 @@ ${token.json(options)}
   const depedenciesWithVersion = dependenciesToAdd.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
-  switch (options.dependencyManager) {
+  switch (options.packageManager) {
     case 'npm':
       args = argumentsToAddDependenciesWithNPM(depedenciesWithVersion, options.type)
       break
@@ -254,7 +328,7 @@ ${token.json(options)}
       break
   }
   options.stdout?.write(`Executing...${args.join(' ')}`)
-  await exec(options.dependencyManager, args, {
+  await exec(options.packageManager, args, {
     cwd: options.directory,
     stdout: options.stdout,
     stderr: options.stderr,
@@ -354,23 +428,6 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
       break
   }
   return command
-}
-
-export type ProjectType = 'node' | 'php' | 'ruby' | undefined
-
-export async function getProjectType(directory: string): Promise<ProjectType> {
-  const nodeConfigFile = pathJoin(directory, 'package.json')
-  const rubyConfigFile = pathJoin(directory, 'Gemfile')
-  const phpConfigFile = pathJoin(directory, 'composer.json')
-
-  if (await fileExists(nodeConfigFile)) {
-    return 'node'
-  } else if (await fileExists(rubyConfigFile)) {
-    return 'ruby'
-  } else if (await fileExists(phpConfigFile)) {
-    return 'php'
-  }
-  return undefined
 }
 
 /**

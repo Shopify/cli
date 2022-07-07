@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.0.25",
+  "version": "3.0.27",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -20,6 +20,10 @@
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
+    },
+    "./common/*": {
+      "node": "./dist/common/*.js",
+      "types": "./dist/common/*.d.ts"
     },
     "./testing/*": {
       "node": "./dist/testing/*.js",
@@ -51,7 +55,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",

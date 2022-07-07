@@ -1,5 +1,6 @@
 import {Command, Flags} from '@oclif/core'
-import {path, ruby, ui} from '@shopify/cli-kit'
+import {path, ui} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Init extends Command {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -27,7 +28,7 @@ export default class Init extends Command {
     const {args} = await this.parse(Init)
     const workingPath = args.name || (await this.promptName())
     const command = ['theme', 'init', workingPath]
-    await ruby.execCLI(command)
+    await execCLI2(command)
   }
 
   async promptName() {

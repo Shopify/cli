@@ -8,10 +8,10 @@ import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker} from '@shopify/cli-kit'
 
 beforeAll(() => {
-  vi.mock('../../../constants')
-  vi.mock('../../../models/app/app')
-  vi.mock('../../../prompts/scaffold/extension')
-  vi.mock('../../../services/scaffold/extension')
+  vi.mock('../../../constants.js')
+  vi.mock('../../../models/app/app.js')
+  vi.mock('../../../prompts/scaffold/extension.js')
+  vi.mock('../../../services/scaffold/extension.js')
 })
 
 afterEach(() => {
@@ -97,7 +97,7 @@ function mockSuccessfulCommandExecution(outputConfig: {
     name: 'myapp',
     idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: appRoot,
-    dependencyManager: 'yarn',
+    packageManager: 'yarn',
     configurationPath: path.join(appRoot, 'shopify.app.toml'),
     configuration: {
       scopes: '',

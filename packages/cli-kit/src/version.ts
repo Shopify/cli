@@ -1,7 +1,7 @@
 import {content, token, debug} from './output.js'
 import {moduleDirectory} from './path.js'
 import {Bug} from './error.js'
-import {findUpAndReadPackageJson} from './dependency.js'
+import {findUpAndReadPackageJson} from './node/node-package-manager.js'
 import latestVersion from 'latest-version'
 
 export const PackageJsonVersionNotFoundError = (packageJsonPath: string) => {
