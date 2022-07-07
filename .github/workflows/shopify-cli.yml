@@ -44,6 +44,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      - name: Cache node_modules pre-install
+        id: cache_node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: cache-node-modules-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Install dependencies
@@ -79,6 +85,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      - name: Cache node_modules pre-install
+        id: cache_node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: cache-node-modules-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
@@ -128,6 +140,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      - name: Cache node_modules pre-install
+        id: cache_node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: cache-node-modules-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
