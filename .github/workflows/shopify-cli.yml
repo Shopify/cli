@@ -48,7 +48,9 @@ jobs:
         id: cache_node_modules
         uses: actions/cache@v2
         with:
-          path: '**/node_modules/**'
+          path: |
+            **/node_modules
+            **/node_modules/.yarn-integrity
           key: cache-node-modules-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
@@ -89,7 +91,9 @@ jobs:
         id: cache_node_modules
         uses: actions/cache@v2
         with:
-          path: '**/node_modules/**'
+          path: |
+            **/node_modules
+            **/node_modules/.yarn-integrity
           key: cache-node-modules-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
@@ -144,7 +148,9 @@ jobs:
         id: cache_node_modules
         uses: actions/cache@v2
         with:
-          path: '**/node_modules/**'
+          path: |
+            **/node_modules
+            **/node_modules/.yarn-integrity
           key: cache-node-modules-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
