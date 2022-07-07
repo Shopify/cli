@@ -43,7 +43,7 @@
     "commands": "dist/cli/commands"
   },
   "devDependencies": {
-    "vitest": "^0.15.1"
+    "vitest": "^0.17.1"
   },
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",
