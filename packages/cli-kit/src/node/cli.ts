@@ -92,7 +92,8 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
     const mappedStacktrace = new StackTracey(errorToReport)
       .clean()
       .items.map((item) => {
-        return `    at ${item.callee} (${normalize(item.file).replace('file:/', '/')}:${item.line}:${item.column})`
+        const filePath = normalize(item.file).replace('file:/', '/').replace('C:/', '')
+        return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
       })
       .join('\n')
     mappedError.stack = `Error: ${errorToReport.message}\n${mappedStacktrace}`
