@@ -85,16 +85,17 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('throws if cachedApiKey is invalid', async () => {
+  it('prompts to select a new store if cachedApiKey is invalid', async () => {
     // Given
-    const fqdn = 'invalid-store'
+    const fqdn = 'invalid-store-domain'
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+    vi.mocked(fetchStoreByDomain).mockResolvedValueOnce({organization: ORG1, store: undefined})
 
     // When
-    const got = selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
 
     // Then
-    expect(got).rejects.toThrow('Could not find invalid-store')
+    expect(got).toEqual(STORE1)
   })
 
   it('prompts user to convert store to non-transferable if selection is invalid', async () => {

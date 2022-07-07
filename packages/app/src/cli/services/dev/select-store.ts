@@ -10,13 +10,6 @@ const ConvertToDevError = (storeName: string, message: string) => {
   )
 }
 
-const StoreNotFoundError = (storeName: string, org: Organization) => {
-  return new error.Bug(
-    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
-  )
-}
-
 const InvalidStore = (storeName: string) => {
   return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
 }
@@ -47,13 +40,15 @@ export async function selectStore(
 ): Promise<OrganizationStore> {
   if (cachedStoreName) {
     const result = await fetchStoreByDomain(org.id, token, cachedStoreName)
-    await convertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
-    if (result?.store) return result.store
+    if (result?.store) {
+      await convertToTestStoreIfNeeded(result.store, org, token)
+      return result.store
+    }
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
+    await convertToTestStoreIfNeeded(store, org, token)
     return store
   }
 
@@ -116,13 +111,10 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
  * @throws {Fatal} If the store can't be found in the organization or we fail to make it a test store
  */
 export async function convertToTestStoreIfNeeded(
-  storeDomain: string,
-  stores: OrganizationStore[],
+  store: OrganizationStore,
   org: Organization,
   token: string,
 ): Promise<void> {
-  const store = stores.find((store) => store.shopDomain === storeDomain)
-  if (!store) throw StoreNotFoundError(storeDomain, org)
   if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }

@@ -8,7 +8,7 @@ import {
   fetchStoreByDomain,
   FetchResponse,
 } from './dev/fetch.js'
-import {convertStoreToTest, selectStore} from './dev/select-store.js'
+import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app.js'
@@ -34,6 +34,17 @@ export const DeployAppNotFound = (apiKey: string, dependencyManager: dependency.
 export const AppOrganizationNotFoundError = (apiKey: string, organizations: string[]) => {
   return new kitError.Abort(
     `The application with API Key ${apiKey} doesn't belong to any of your organizations: ${organizations.join(', ')}`,
+  )
+}
+
+const OrganizationNotFoundError = (orgId: string) => {
+  return new error.Bug(`Could not find Organization for id ${orgId}.`)
+}
+
+const StoreNotFoundError = (storeName: string, org: Organization) => {
+  return new error.Bug(
+    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
+    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
   )
 }
 
@@ -279,20 +290,6 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
   return data
 }
 
-const OrganizationNotFoundError = (orgId: string) => {
-  return new error.Bug(`Could not find Organization for id ${orgId}.`)
-}
-
-const StoreNotFoundError = (storeName: string, org: Organization) => {
-  return new error.Bug(
-    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
-  )
-}
-const InvalidStore = (storeName: string) => {
-  return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
-}
-
 /**
  * Any data sent via input flags takes precedence and needs to be validated.
  * If any of the inputs is invalid, we must throw an error and stop the execution.
@@ -316,9 +313,7 @@ async function fetchDevDataFromOptions(
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw OrganizationNotFoundError(orgId)
     if (!orgWithStore.store) throw StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
-    if (!orgWithStore.store.transferDisabled && !orgWithStore.store.convertableToPartnerTest)
-      throw InvalidStore(orgWithStore.store.shopDomain)
-    if (!orgWithStore.store.transferDisabled) await convertStoreToTest(orgWithStore.store, orgId, token)
+    await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
     selectedStore = orgWithStore.store
   }
 

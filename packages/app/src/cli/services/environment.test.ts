@@ -136,7 +136,7 @@ const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
   app: LOCAL_APP,
   reset: false,
   apiKey: 'key1',
-  storeFqdn: 'invalid_store',
+  storeFqdn: 'invalid_store_domain',
 }
 
 const FETCH_RESPONSE = {
@@ -334,7 +334,7 @@ describe('ensureDevEnvironment', () => {
     // When
     const got = ensureDevEnvironment(BAD_INPUT_WITH_DATA, 'token')
 
-    await expect(got).rejects.toThrow(/Could not find invalid_store/)
+    await expect(got).rejects.toThrow(/Could not find invalid_store_domain/)
   })
 
   it('resets cached state if reset is true', async () => {
