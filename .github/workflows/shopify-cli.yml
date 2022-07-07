@@ -58,7 +58,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14', '16', '17', '18']
+        node: ['14', '16', '18']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -105,7 +105,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14', '16', '17', '18']
+        node: ['14', '16', '18']
       max-parallel: 6
     steps:
       - uses: actions/checkout@v2
