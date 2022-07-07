@@ -1,26 +1,14 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {
-  string,
-  path,
-  file,
-  output,
-  ui,
-  dependency,
-  template,
-  npm,
-  git,
-  github,
-  environment,
-  error,
-} from '@shopify/cli-kit'
+import {string, path, file, output, ui, template, npm, git, github, environment, error} from '@shopify/cli-kit'
+import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 
 interface InitOptions {
   name: string
   directory: string
   template: string
-  dependencyManager: string | undefined
+  packageManager: string | undefined
   local: boolean
 }
 
@@ -29,7 +17,7 @@ const DirectoryExistsError = (name: string) => {
 }
 
 async function init(options: InitOptions) {
-  const dependencyManager: dependency.DependencyManager = inferDependencyManager(options.dependencyManager)
+  const packageManager: PackageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
   const githubRepo = github.parseGithubRepoReference(options.template)
@@ -75,7 +63,7 @@ async function init(options: InitOptions) {
                 task.title = 'Parsing liquid'
                 await template.recursiveDirectoryCopy(templatePathDir, templateScaffoldDir, {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
-                  dependency_manager: dependencyManager,
+                  dependency_manager: packageManager,
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   app_name: options.name,
                 })
@@ -118,17 +106,17 @@ async function init(options: InitOptions) {
 
     tasks = tasks.concat([
       {
-        title: `Install dependencies with ${dependencyManager}`,
+        title: `Install dependencies with ${packageManager}`,
         task: async (_, parentTask) => {
-          parentTask.title = `Installing dependencies with ${dependencyManager}`
+          parentTask.title = `Installing dependencies with ${packageManager}`
           function didInstallEverything() {
-            parentTask.title = `Dependencies installed with ${dependencyManager}`
+            parentTask.title = `Dependencies installed with ${packageManager}`
           }
 
           return parentTask.newListr(
             await getDeepInstallNPMTasks({
               from: templateScaffoldDir,
-              dependencyManager,
+              packageManager,
               didInstallEverything,
             }),
             {concurrent: false},
@@ -164,25 +152,22 @@ async function init(options: InitOptions) {
 
   output.info(output.content`
   ${hyphenizedName} is ready for you to build! Remember to ${output.token.genericShellCommand(`cd ${hyphenizedName}`)}
-  To preview your project, run ${output.token.packagejsonScript(dependencyManager, 'dev')}
-  To add extensions, run ${output.token.packagejsonScript(dependencyManager, 'scaffold extension')}
+  To preview your project, run ${output.token.packagejsonScript(packageManager, 'dev')}
+  To add extensions, run ${output.token.packagejsonScript(packageManager, 'scaffold extension')}
   For more details on all that you can build, see the docs: ${output.token.link(
     'shopify.dev',
     'https://shopify.dev',
   )} ✨
 
-  For help and a list of commands, enter ${output.token.packagejsonScript(dependencyManager, 'shopify app', '--help')}
+  For help and a list of commands, enter ${output.token.packagejsonScript(packageManager, 'shopify app', '--help')}
   `)
 }
 
-function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
-  if (
-    optionsDependencyManager &&
-    dependency.dependencyManager.includes(optionsDependencyManager as dependency.DependencyManager)
-  ) {
-    return optionsDependencyManager as dependency.DependencyManager
+function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+    return optionsPackageManager as PackageManager
   }
-  return dependency.dependencyManagerUsedForCreating()
+  return packageManagerUsedForCreating()
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {

@@ -1,27 +1,31 @@
 import {installAppDependencies} from './dependencies.js'
 import {App} from '../models/app/app.js'
-import {describe, expect, test, vi} from 'vitest'
-import {dependency, ui} from '@shopify/cli-kit'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {ui} from '@shopify/cli-kit'
+import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    ui: {
-      newListr: vi.fn(),
-    },
-    dependency: {
-      installNPMDependenciesRecursively: vi.fn(),
-    },
-  }
-})
+beforeEach(() => {
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      ui: {
+        newListr: vi.fn(),
+      },
+      dependency: {
+        installNPMDependenciesRecursively: vi.fn(),
+      },
+    }
+  })
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
 
-vi.mock('../models/app/app', async () => {
-  const app: any = await vi.importActual('../models/app/app')
-  return {
-    ...app,
-    updateDependencies: async (app: App) => app,
-  }
+  vi.mock('../models/app/app', async () => {
+    const app: any = await vi.importActual('../models/app/app')
+    return {
+      ...app,
+      updateDependencies: async (app: App) => app,
+    }
+  })
 })
 
 describe('installAppDependencies', () => {
@@ -33,7 +37,7 @@ describe('installAppDependencies', () => {
       configuration: {
         scopes: '',
       },
-      dependencyManager: 'yarn',
+      packageManager: 'yarn',
       directory: '/tmp/project',
       extensions: {
         ui: [],
@@ -59,8 +63,8 @@ describe('installAppDependencies', () => {
     expect(task.title).not.toBe('')
     await task.task(undefined, {title: vi.fn()})
     expect(listRun).toHaveBeenCalled()
-    expect(dependency.installNPMDependenciesRecursively).toHaveBeenCalledWith({
-      dependencyManager: 'yarn',
+    expect(installNPMDependenciesRecursively).toHaveBeenCalledWith({
+      packageManager: 'yarn',
       directory: '/tmp/project',
       deep: 3,
     })

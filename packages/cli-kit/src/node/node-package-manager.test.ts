@@ -1,37 +1,33 @@
 import {
-  dependencyManagerUsedForCreating,
+  packageManagerUsedForCreating,
   addNPMDependenciesIfNeeded,
-  install,
+  installNodeModules,
   getDependencies,
   getPackageName,
   PackageJsonNotFoundError,
   checkForNewVersion,
-  getOutputUpdateCLIReminder,
-  DependencyManager,
-  packageJSONContents,
-  getProjectType,
+  readAndParsePackageJson,
   findUpAndReadPackageJson,
   FindUpAndReadPackageJsonNotFoundError,
-} from './dependency.js'
-import {exec} from './system.js'
-import {join as pathJoin, normalize as pathNormalize} from './path.js'
-import {unstyled} from './output.js'
-import {inTemporaryDirectory, mkdir, write, write as writeFile} from './file.js'
-import {latestNpmPackageVersion} from './version.js'
+} from './node-package-manager.js'
+import {exec} from '../system.js'
+import {join as pathJoin, normalize as pathNormalize} from '../path.js'
+import {inTemporaryDirectory, mkdir, write, write as writeFile} from '../file.js'
+import {latestNpmPackageVersion} from '../version.js'
 import {describe, it, expect, vi, test} from 'vitest'
 
-vi.mock('./version')
-vi.mock('./system')
+vi.mock('../version.js')
+vi.mock('../system.js')
 const mockedExec = vi.mocked(exec)
 
-describe('dependencyManagerUsedForCreating', () => {
+describe('packageManagerUsedForCreating', () => {
   it('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
     // Given
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const env = {npm_config_user_agent: 'yarn/1.22.17'}
 
     // When
-    const got = dependencyManagerUsedForCreating(env)
+    const got = packageManagerUsedForCreating(env)
 
     // Then
     expect(got).toBe('yarn')
@@ -43,7 +39,7 @@ describe('dependencyManagerUsedForCreating', () => {
     const env = {npm_config_user_agent: 'pnpm'}
 
     // When
-    const got = dependencyManagerUsedForCreating(env)
+    const got = packageManagerUsedForCreating(env)
 
     // Then
     expect(got).toBe('pnpm')
@@ -51,7 +47,7 @@ describe('dependencyManagerUsedForCreating', () => {
 
   it('returns npm when the package manager cannot be detected', () => {
     // When
-    const got = dependencyManagerUsedForCreating({})
+    const got = packageManagerUsedForCreating({})
 
     // Then
     expect(got).toBe('npm')
@@ -61,14 +57,14 @@ describe('dependencyManagerUsedForCreating', () => {
 describe('install', () => {
   it('runs the install command', async () => {
     // Given
-    const dependencyManager = 'npm'
+    const packageManager = 'npm'
     const directory = '/path/to/project'
 
     // When
-    await install(directory, dependencyManager)
+    await installNodeModules(directory, packageManager)
 
     // Then
-    expect(mockedExec).toHaveBeenCalledWith(dependencyManager, ['install'], {
+    expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install'], {
       cwd: directory,
     })
   })
@@ -107,7 +103,7 @@ describe('packageJSONContents', () => {
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      const got = await packageJSONContents(packageJsonPath)
+      const got = await readAndParsePackageJson(packageJsonPath)
 
       // Then
       expect(got).toEqual(packageJson)
@@ -193,7 +189,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: undefined}], {
         type: 'dev',
-        dependencyManager: 'npm',
+        packageManager: 'npm',
         directory: tmpDir,
       })
 
@@ -216,7 +212,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'dev',
-        dependencyManager: 'npm',
+        packageManager: 'npm',
         directory: tmpDir,
       })
 
@@ -239,7 +235,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'prod',
-        dependencyManager: 'npm',
+        packageManager: 'npm',
         directory: tmpDir,
       })
 
@@ -262,7 +258,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'peer',
-        dependencyManager: 'npm',
+        packageManager: 'npm',
         directory: tmpDir,
       })
 
@@ -285,7 +281,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'dev',
-        dependencyManager: 'yarn',
+        packageManager: 'yarn',
         directory: tmpDir,
       })
 
@@ -308,7 +304,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'prod',
-        dependencyManager: 'yarn',
+        packageManager: 'yarn',
         directory: tmpDir,
       })
 
@@ -331,7 +327,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'peer',
-        dependencyManager: 'yarn',
+        packageManager: 'yarn',
         directory: tmpDir,
       })
 
@@ -354,7 +350,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'dev',
-        dependencyManager: 'pnpm',
+        packageManager: 'pnpm',
         directory: tmpDir,
       })
 
@@ -377,7 +373,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'prod',
-        dependencyManager: 'pnpm',
+        packageManager: 'pnpm',
         directory: tmpDir,
       })
 
@@ -400,7 +396,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       // When
       await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
         type: 'peer',
-        dependencyManager: 'pnpm',
+        packageManager: 'pnpm',
         directory: tmpDir,
       })
 
@@ -452,79 +448,6 @@ describe('checkForNewVersion', () => {
 
     // Then
     expect(result).toBe(undefined)
-  })
-})
-
-describe('getOutputUpdateCLIReminder', () => {
-  it.each([['yarn'], ['npm'], ['pnpm']])(
-    'returns upgrade reminder when using %s dependency manager',
-    (dependencyManager: string) => {
-      const isYarn = dependencyManager === 'yarn'
-
-      // When
-      const result = getOutputUpdateCLIReminder(dependencyManager as DependencyManager, '1.2.3')
-
-      // Then
-      expect(unstyled(result)).toBe(
-        `💡 Version 1.2.3 available! Run ${dependencyManager}${isYarn ? '' : ' run'} shopify${
-          isYarn ? '' : ' --'
-        } upgrade`,
-      )
-    },
-  )
-})
-
-describe('getProjectType', () => {
-  it('returns node when the directory contains a package.json', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(pathJoin(tmpDir, 'package.json'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe('node')
-    })
-  })
-
-  it('returns ruby when the directory contains a Gemfile', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(pathJoin(tmpDir, 'Gemfile'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe('ruby')
-    })
-  })
-
-  it('returns php when the directory contains a composer.json', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(pathJoin(tmpDir, 'composer.json'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe('php')
-    })
-  })
-
-  it('returns undefined when the directory does not contain a known config file', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(pathJoin(tmpDir, 'config.toml'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe(undefined)
-    })
   })
 })
 

@@ -1,4 +1,4 @@
-import {dependency} from '@shopify/cli-kit'
+import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export const configurationFileNames = {
   app: 'shopify.app.toml',
@@ -150,9 +150,7 @@ export const getFunctionExtensionPointName = (type: FunctionExtensionTypes) => {
  * @param extensionType {UIExtensionTypes} Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
-export function getUIExtensionRendererDependency(
-  extensionType: UIExtensionTypes,
-): dependency.DependencyVersion | undefined {
+export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): DependencyVersion | undefined {
   switch (extensionType) {
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}

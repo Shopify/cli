@@ -10,20 +10,12 @@ import {
   UIExtensionTypes,
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/app.js'
-import {describe, it, expect, vi, test} from 'vitest'
-import {file, output, path, dependency} from '@shopify/cli-kit'
+import {describe, it, expect, vi, test, beforeEach} from 'vitest'
+import {file, output, path} from '@shopify/cli-kit'
+import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    dependency: {
-      addNPMDependenciesIfNeeded: vi.fn(),
-      getDependencies: cliKit.dependency.getDependencies,
-      getPackageName: cliKit.dependency.getPackageName,
-      getDependencyManager: cliKit.dependency.getDependencyManager,
-    },
-  }
+beforeEach(() => {
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
 describe('initialize a extension', () => {
@@ -51,7 +43,7 @@ describe('initialize a extension', () => {
         const extensionType = 'checkout_post_purchase'
         await createFromTemplate({name: name1, extensionType, appDirectory: tmpDir})
         await createFromTemplate({name: name2, extensionType, appDirectory: tmpDir})
-        const addDependenciesCalls = vi.mocked(dependency.addNPMDependenciesIfNeeded).mock.calls
+        const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
         const loadedApp = await loadApp(tmpDir)

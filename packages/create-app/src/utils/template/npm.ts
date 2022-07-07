@@ -1,4 +1,5 @@
-import {path, dependency, ui, npm, constants} from '@shopify/cli-kit'
+import {path, ui, npm, constants} from '@shopify/cli-kit'
+import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
 
 export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local: boolean): Promise<npm.PackageJSON> {
@@ -41,11 +42,11 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
 
 export async function getDeepInstallNPMTasks({
   from,
-  dependencyManager,
+  packageManager,
   didInstallEverything,
 }: {
   from: string
-  dependencyManager: dependency.DependencyManager
+  packageManager: PackageManager
   didInstallEverything(): void
 }): Promise<ui.ListrTask[]> {
   const root = path.normalize(from)
@@ -66,7 +67,7 @@ export async function getDeepInstallNPMTasks({
           },
         })
 
-        await dependency.install(folderPath, dependencyManager, output, output)
+        await installNodeModules(folderPath, packageManager, output, output)
 
         task.title = `Installed dependencies in ${titlePath}`
 

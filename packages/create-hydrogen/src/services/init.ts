@@ -7,7 +7,6 @@ import {
   os,
   ui,
   npm,
-  dependency,
   environment,
   github,
   template,
@@ -15,6 +14,12 @@ import {
   constants,
   version,
 } from '@shopify/cli-kit'
+import {
+  installNodeModules,
+  packageManager,
+  PackageManager,
+  packageManagerUsedForCreating,
+} from '@shopify/cli-kit/node/node-package-manager'
 
 import {Writable} from 'stream'
 
@@ -22,7 +27,7 @@ interface InitOptions {
   name: string
   template: string
   directory: string
-  dependencyManager?: string
+  packageManager?: string
   shopifyCliVersion?: string
   cliHydrogenPackageVersion?: string
   hydrogenVersion?: string
@@ -41,7 +46,7 @@ async function init(options: InitOptions) {
   const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
-  const dependencyManager = inferDependencyManager(options.dependencyManager)
+  const packageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
@@ -101,7 +106,7 @@ async function init(options: InitOptions) {
                     hydrogen_version: hydrogenPackageVersion,
                     author: user,
                     // eslint-disable-next-line @typescript-eslint/naming-convention
-                    dependency_manager: options.dependencyManager,
+                    dependency_manager: options.packageManager,
                   }
                   await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
 
@@ -154,7 +159,7 @@ async function init(options: InitOptions) {
 
     tasks = tasks.concat([
       {
-        title: `Installing dependencies with ${dependencyManager}`,
+        title: `Installing dependencies with ${packageManager}`,
         task: async (_, task) => {
           const stdout = new Writable({
             write(chunk, encoding, next) {
@@ -162,7 +167,7 @@ async function init(options: InitOptions) {
               next()
             },
           })
-          await installDependencies(templateScaffoldDir, dependencyManager, stdout)
+          await installDependencies(templateScaffoldDir, packageManager, stdout)
         },
       },
       {
@@ -189,7 +194,7 @@ async function init(options: InitOptions) {
   output.info(output.content`
 ✨ ${hyphenizedName} is ready to build!
 🚀 Run ${output.token.packagejsonScript(
-    dependencyManager,
+    packageManager,
     'dev',
   )} to start your local development server and start building.
 
@@ -202,14 +207,11 @@ async function init(options: InitOptions) {
  store ID and Storefront API key.\n`)
 }
 
-function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
-  if (
-    optionsDependencyManager &&
-    dependency.dependencyManager.includes(optionsDependencyManager as dependency.DependencyManager)
-  ) {
-    return optionsDependencyManager as dependency.DependencyManager
+function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+    return optionsPackageManager as PackageManager
   }
-  return dependency.dependencyManagerUsedForCreating()
+  return packageManagerUsedForCreating()
 }
 
 export default init
@@ -263,12 +265,8 @@ async function updateCLIDependencies(
   return packageJSON
 }
 
-async function installDependencies(
-  directory: string,
-  dependencyManager: dependency.DependencyManager,
-  stdout: Writable,
-): Promise<void> {
-  await dependency.install(directory, dependencyManager, stdout)
+async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
+  await installNodeModules(directory, packageManager, stdout)
 }
 
 async function cleanup(webOutputDirectory: string) {
