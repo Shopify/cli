@@ -11,7 +11,8 @@ import {
   AbortSilent,
   shouldReport as shouldReportError,
 } from '../error.js'
-import {moduleDirectory} from '../path.js'
+import {moduleDirectory, normalize} from '../path.js'
+import StackTracey from 'stacktracey'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
 
@@ -34,10 +35,12 @@ export async function runCLI(options: RunCLIOptions) {
     settings.debug = true
   } else {
     Bugsnag.start({
+      appType: 'node',
       apiKey: bugsnagApiKey,
       logger: null,
       appVersion: await constants.versions.cliKit(),
       autoTrackSessions: false,
+      autoDetectErrors: false,
     })
   }
 
@@ -49,10 +52,10 @@ export async function runCLI(options: RunCLIOptions) {
       }
       // eslint-disable-next-line promise/no-nesting
       return errorMapper(error)
-        .then(reportError)
         .then((error: Error) => {
           return errorHandler(error)
         })
+        .then(reportError)
         .then(() => {
           process.exit(1)
         })
@@ -86,12 +89,14 @@ const reportError = async (errorToReport: Error): Promise<Error> => {
   // eslint-disable-next-line no-prototype-builtins
   if (Error.prototype.isPrototypeOf(errorToReport)) {
     mappedError = new Error(errorToReport.message)
-    if (errorToReport.stack) {
-      // For mac/linux, remove `file:///` from stacktrace
-      // For windows, remove `file:///C:/` from stacktrace
-      const regex = '\\((.*node_modules.)(@shopify.)?'
-      mappedError.stack = errorToReport.stack.replace(new RegExp(regex, 'g'), '(')
-    }
+    const mappedStacktrace = new StackTracey(errorToReport)
+      .clean()
+      .items.map((item) => {
+        const filePath = normalize(item.file).replace('file:/', '/').replace('C:/', '')
+        return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
+      })
+      .join('\n')
+    mappedError.stack = `Error: ${errorToReport.message}\n${mappedStacktrace}`
   } else if (typeof errorToReport === 'string') {
     mappedError = new Error(errorToReport)
   } else {

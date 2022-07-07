@@ -409,7 +409,7 @@ export const error = async (content: Fatal) => {
     })
   if (content instanceof Bug) {
     if (stack.items.length !== 0) {
-      outputString += `\n${padding}${colors.bold('Stack trace:')}`
+      outputString += `\n${padding}${colors.bold('Stack trace:')}\n`
       const stackLines = stack.asTable({}).split('\n')
       for (const stackLine of stackLines) {
         outputString += `${padding}${stackLine}\n`
