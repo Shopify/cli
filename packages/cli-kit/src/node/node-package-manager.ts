@@ -261,12 +261,24 @@ interface AddNPMDependenciesIfNeededOptions {
  */
 export interface DependencyVersion {
   /**
-   * Dependency name
+   * The name of the NPM dependency as it's reflected in the package.json:
+   *
+   * @example
+   *  In the example below name would be "react"
+   *  {
+   *    "react": "1.2.3"
+   *  }
    */
   name: string
 
   /**
-   * Dependency version
+   * The version of the NPM dependency as it's reflected in the package.json:
+   *
+   * @example
+   *  In the example below version would be "1.2.3"
+   *  {
+   *    "react": "1.2.3"
+   *  }
    */
   version: string | undefined
 }

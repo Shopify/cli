@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent, start, getProjectType} from './analytics.js'
+import {reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import {join as joinPath, dirname} from './path.js'
 import * as http from './http.js'
@@ -8,7 +8,7 @@ import * as ruby from './node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {cliKitStore} from './store.js'
 import constants from './constants.js'
-import {inTemporaryDirectory, write as writeFile, touch as touchFile, mkdir} from './file.js'
+import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
 import {it, expect, describe, vi, beforeEach, afterEach} from 'vitest'
 
 describe('event tracking', () => {
@@ -48,17 +48,21 @@ describe('event tracking', () => {
     vi.useRealTimers()
   })
 
-  async function inNodeProject(execute: (args: string[]) => Promise<void>): Promise<void> {
+  async function inProjectWithFile(file: string, execute: (args: string[]) => Promise<void>): Promise<void> {
     await inTemporaryDirectory(async (tmpDir) => {
-      const packageJsonPath = joinPath(tmpDir, 'web/package.json')
+      const packageJsonPath = joinPath(tmpDir, `web/${file}`)
       await mkdir(dirname(packageJsonPath))
       await touchFile(packageJsonPath)
       await execute(['--path', tmpDir])
     })
   }
 
-  it('sends the expected data to Monorail', async () => {
-    await inNodeProject(async (args) => {
+  it.each([
+    ['node', 'package.json'],
+    ['ruby', 'Gemfile'],
+    ['php', 'composer.json'],
+  ])('sends the expected data to Monorail when the project is %s', async (projectType, file) => {
+    await inProjectWithFile(file, async (args) => {
       // Given
       const command = 'app info'
       start({command, args, currentTime: currentDate.getTime() - 100})
@@ -71,7 +75,7 @@ describe('event tracking', () => {
       const expectedBody = {
         schema_id: 'app_cli3_command/1.0',
         payload: {
-          project_type: 'node',
+          project_type: projectType,
           command,
           args: args.join(' '),
           time_start: 1643709599900,
@@ -87,7 +91,6 @@ describe('event tracking', () => {
           partner_id: undefined,
         },
       }
-      expect(http.fetch).toHaveBeenCalled()
       expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
         method: 'POST',
         body: JSON.stringify(expectedBody),
@@ -97,7 +100,7 @@ describe('event tracking', () => {
   })
 
   it('sends the expected data to Monorail with cached app info', async () => {
-    await inNodeProject(async (args) => {
+    await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
       vi.mocked(cliKitStore().getAppInfo).mockReturnValueOnce({
@@ -141,7 +144,7 @@ describe('event tracking', () => {
   })
 
   it('sends the expected data to Monorail when there is an error message', async () => {
-    await inNodeProject(async (args) => {
+    await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
       start({command, args, currentTime: currentDate.getTime() - 100})
@@ -180,7 +183,7 @@ describe('event tracking', () => {
   })
 
   it('does nothing when analytics are disabled', async () => {
-    await inNodeProject(async (args) => {
+    await inProjectWithFile('package.json', async (args) => {
       // Given
       vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
       const command = 'app dev'
@@ -195,7 +198,7 @@ describe('event tracking', () => {
   })
 
   it('shows an error if the Monorail request fails', async () => {
-    await inNodeProject(async (args) => {
+    await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
       vi.mocked(http.fetch).mockResolvedValueOnce({status: 500, statusText: 'Monorail is down'} as any)
@@ -211,7 +214,7 @@ describe('event tracking', () => {
   })
 
   it('shows an error if something else fails', async () => {
-    await inNodeProject(async (args) => {
+    await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
       vi.mocked(os.platformAndArch).mockImplementationOnce(() => {
@@ -225,60 +228,6 @@ describe('event tracking', () => {
 
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
-    })
-  })
-})
-
-describe('getProjectType', () => {
-  it('returns node when the directory contains a package.json', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(joinPath(tmpDir, 'package.json'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe('node')
-    })
-  })
-
-  it('returns ruby when the directory contains a Gemfile', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(joinPath(tmpDir, 'Gemfile'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe('ruby')
-    })
-  })
-
-  it('returns php when the directory contains a composer.json', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(joinPath(tmpDir, 'composer.json'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe('php')
-    })
-  })
-
-  it('returns undefined when the directory does not contain a known config file', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(joinPath(tmpDir, 'config.toml'), '')
-
-      // When
-      const got = await getProjectType(tmpDir)
-
-      // Then
-      expect(got).toBe(undefined)
     })
   })
 })
