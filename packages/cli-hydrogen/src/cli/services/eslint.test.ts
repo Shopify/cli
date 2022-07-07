@@ -1,21 +1,25 @@
 import {addESLint} from './eslint.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
-import {describe, vi, it, expect} from 'vitest'
-import {file, dependency, vscode, path} from '@shopify/cli-kit'
+import {describe, vi, it, expect, beforeEach} from 'vitest'
+import {file, vscode, path} from '@shopify/cli-kit'
+import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    dependency: {
-      addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
-    },
-    vscode: {
-      isVSCode: vi.fn(),
-      addRecommendedExtensions: vi.fn(),
-    },
-  }
+beforeEach(async () => {
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      dependency: {
+        addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
+      },
+      vscode: {
+        isVSCode: vi.fn(),
+        addRecommendedExtensions: vi.fn(),
+      },
+    }
+  })
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
 describe('addEslint', () => {
@@ -80,7 +84,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions, install: true})
 
       // Then
-      await expect(dependency.addNPMDependenciesWithoutVersionIfNeeded).toHaveBeenCalledWith(
+      await expect(addNPMDependenciesWithoutVersionIfNeeded).toHaveBeenCalledWith(
         ['eslint', 'eslint-plugin-hydrogen', 'prettier', '@shopify/prettier-config'],
         expect.objectContaining({}),
       )
@@ -98,7 +102,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions, install: false})
 
       // Then
-      await expect(dependency.addNPMDependenciesWithoutVersionIfNeeded).not.toHaveBeenCalled()
+      await expect(addNPMDependenciesWithoutVersionIfNeeded).not.toHaveBeenCalled()
     })
   })
 
@@ -140,7 +144,7 @@ async function createMockApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
         ...mockHydrogenApp.configuration?.shopify,
       },
     },
-    dependencyManager: 'npm',
+    packageManager: 'npm',
     language: 'JavaScript',
     nodeDependencies: {
       ...mockHydrogenApp.configuration?.nodeDependencies,

@@ -3,8 +3,9 @@ import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import {describe, it, expect, beforeEach, afterEach, test} from 'vitest'
-import {dependency, file, path} from '@shopify/cli-kit'
+import {file, path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
+import {yarnLockfile, pnpmLockfile} from '@shopify/cli-kit/node/node-package-manager'
 
 const DEFAULT_APP: App = {
   name: 'App',
@@ -12,7 +13,7 @@ const DEFAULT_APP: App = {
   configuration: {
     scopes: '',
   },
-  dependencyManager: 'yarn',
+  packageManager: 'yarn',
   directory: '',
   extensions: {
     ui: [],
@@ -136,33 +137,33 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.dependencyManager).toBe('npm')
+    expect(app.packageManager).toBe('npm')
   })
 
   it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const yarnLockPath = path.join(tmpDir, dependency.genericConfigurationFileNames.yarn.lockfile)
+    const yarnLockPath = path.join(tmpDir, yarnLockfile)
     await file.write(yarnLockPath, '')
 
     // When
     const app = await load(tmpDir)
 
     // Then
-    expect(app.dependencyManager).toBe('yarn')
+    expect(app.packageManager).toBe('yarn')
   })
 
   it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const pnpmLockPath = path.join(tmpDir, dependency.genericConfigurationFileNames.pnpm.lockfile)
+    const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
     await file.write(pnpmLockPath, '')
 
     // When
     const app = await load(tmpDir)
 
     // Then
-    expect(app.dependencyManager).toBe('pnpm')
+    expect(app.packageManager).toBe('pnpm')
   })
 
   it("throws an error if the extension configuration file doesn't exist", async () => {

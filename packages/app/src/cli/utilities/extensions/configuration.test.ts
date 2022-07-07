@@ -58,7 +58,7 @@ describe('extensionConfig', () => {
       name: 'myapp',
       idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory: appRoot,
-      dependencyManager: 'yarn',
+      packageManager: 'yarn',
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
         scopes: '',

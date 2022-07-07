@@ -4,7 +4,8 @@ import {App} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {os, output, path, session, store, dependency} from '@shopify/cli-kit'
+import {os, output, path, session, store} from '@shopify/cli-kit'
+import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -88,7 +89,7 @@ class AppInfo {
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
     let postscript = output.content`💡 These will be populated when you run ${output.token.packagejsonScript(
-      this.app.dependencyManager,
+      this.app.packageManager,
       'dev',
     )}`.value
     if (this.cachedAppInfo) {
@@ -96,7 +97,7 @@ class AppInfo {
       if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
       if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
       postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
-        this.app.dependencyManager,
+        this.app.packageManager,
         'dev',
         '--reset',
       )}`.value
@@ -245,7 +246,7 @@ class AppInfo {
     const cliVersionInfo = [this.currentCliVersion(), versionUpgradeMessage].join(' ').trim()
     const lines: string[][] = [
       ['Shopify CLI', cliVersionInfo],
-      ['Package manager', this.app.dependencyManager],
+      ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
@@ -283,9 +284,9 @@ class AppInfo {
 
   async versionUpgradeMessage(): Promise<string> {
     const cliDependency = '@shopify/cli'
-    const newestVersion = await dependency.checkForNewVersion(cliDependency, this.currentCliVersion())
+    const newestVersion = await checkForNewVersion(cliDependency, this.currentCliVersion())
     if (newestVersion) {
-      return output.content`${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, newestVersion)}`.value
+      return output.getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
     }
     return ''
   }

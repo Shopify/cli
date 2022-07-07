@@ -21,6 +21,10 @@
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
     },
+    "./common/*": {
+      "node": "./dist/common/*.js",
+      "types": "./dist/common/*.d.ts"
+    },
     "./testing/*": {
       "node": "./dist/testing/*.js",
       "types": "./dist/testing/*.d.ts"
@@ -51,7 +55,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",

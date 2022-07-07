@@ -32,7 +32,7 @@ function mockOutput(mockHydrogenApp: Partial<HydrogenApp> = {}) {
         ...mockHydrogenApp?.configuration?.shopify,
       },
     },
-    dependencyManager: 'npm',
+    packageManager: 'npm',
     language: 'JavaScript',
     configurationPath: '',
     nodeDependencies: {},

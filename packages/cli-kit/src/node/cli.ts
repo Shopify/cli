@@ -1,4 +1,5 @@
 // CLI
+import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {initializeCliKitStore} from '../store.js'
 import {initiateLogging} from '../output.js'
 import {isDebug} from '../environment/local.js'
@@ -10,7 +11,6 @@ import {
   AbortSilent,
   shouldReport as shouldReportError,
 } from '../error.js'
-import {findUpAndReadPackageJson} from '../dependency.js'
 import {moduleDirectory} from '../path.js'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'

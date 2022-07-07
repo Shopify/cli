@@ -5,9 +5,10 @@ import {Identifiers} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension} from '../dev/create-extension.js'
-import {dependency, error, output, session, ui} from '@shopify/cli-kit'
+import {error, output, session, ui} from '@shopify/cli-kit'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
-const DeployError = (appName: string, packageManager: dependency.DependencyManager) => {
+const DeployError = (appName: string, packageManager: PackageManager) => {
   return new error.Abort(
     `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
     `• If you didn't intend to select this app, run ${
@@ -51,7 +52,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   )
   const localExtensions: Extension[] = [...options.app.extensions.ui, ...options.app.extensions.theme]
 
-  const GenericError = () => DeployError(options.appName, options.app.dependencyManager)
+  const GenericError = () => DeployError(options.appName, options.app.packageManager)
 
   // We need local extensions to deploy
   if (localExtensions.length === 0) {

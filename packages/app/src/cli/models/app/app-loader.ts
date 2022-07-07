@@ -9,8 +9,9 @@ import {
 } from './extensions.js'
 import {AppConfigurationSchema, App, Web, WebConfigurationSchema, extensionGraphqlId} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames} from '../../constants.js'
-import {dependency, error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
 
 export type AppLoaderMode = 'strict' | 'report'
 
@@ -63,9 +64,9 @@ export class AppLoader {
     const uiExtensions = await this.loadUIExtensions(extensionsPath)
     const themeExtensions = await this.loadThemeExtensions(extensionsPath)
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
-    const name = await dependency.getPackageName(packageJSONPath)
-    const nodeDependencies = await dependency.getDependencies(packageJSONPath)
-    const dependencyManager = await dependency.getDependencyManager(this.appDirectory)
+    const name = await getPackageName(packageJSONPath)
+    const nodeDependencies = await getDependencies(packageJSONPath)
+    const packageManager = await getPackageManager(this.appDirectory)
 
     const app: App = {
       name,
@@ -76,7 +77,7 @@ export class AppLoader {
       configurationPath,
       dotenv,
       extensions: {ui: uiExtensions, theme: themeExtensions, function: functions},
-      dependencyManager,
+      packageManager,
       nodeDependencies,
     }
     if (!this.errors.isEmpty()) app.errors = this.errors

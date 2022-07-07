@@ -11,7 +11,8 @@ import {
   versions,
 } from '../../constants.js'
 import {App} from '../../models/app/app.js'
-import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
+import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
+import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
 
@@ -77,8 +78,8 @@ async function uiExtensionInit({
         task: async (_, task) => {
           task.title = 'Installing additional dependencies...'
           const requiredDependencies = getRuntimeDependencies({extensionType})
-          await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
-            dependencyManager: app.dependencyManager,
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: app.packageManager,
             type: 'prod',
             directory: app.directory,
             stderr: new stream.Writable({
@@ -143,14 +144,14 @@ async function uiExtensionInit({
 
 export function getRuntimeDependencies({
   extensionType,
-}: Pick<UIExtensionInitOptions, 'extensionType'>): dependency.DependencyVersion[] {
+}: Pick<UIExtensionInitOptions, 'extensionType'>): DependencyVersion[] {
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
     case 'checkout_post_purchase': {
-      const dependencies: dependency.DependencyVersion[] = [{name: 'react', version: versions.react}]
+      const dependencies: DependencyVersion[] = [{name: 'react', version: versions.react}]
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)

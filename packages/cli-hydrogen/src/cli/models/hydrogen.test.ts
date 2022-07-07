@@ -6,6 +6,8 @@ import {genericConfigurationFileNames} from '../constants.js'
 import {loadConfig} from '../utilities/load-config.js'
 import {describe, vi, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
+import {pnpmLockfile, yarnLockfile} from '@shopify/cli-kit/node/node-package-manager'
+
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import type {HydrogenConfig} from '@shopify/hydrogen/config'
@@ -85,7 +87,7 @@ describe('load', () => {
       const app = await load(tmpDir)
 
       // When/Then
-      expect(app.dependencyManager).toBe('npm')
+      expect(app.packageManager).toBe('npm')
     })
   })
 
@@ -93,14 +95,14 @@ describe('load', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
-      const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile)
+      const yarnLockPath = path.join(tmpDir, yarnLockfile)
       await file.write(yarnLockPath, '')
 
       // When
       const app = await load(tmpDir)
 
       // Then
-      expect(app.dependencyManager).toBe('yarn')
+      expect(app.packageManager).toBe('yarn')
     })
   })
 
@@ -108,14 +110,14 @@ describe('load', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
-      const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile)
+      const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
       await file.write(pnpmLockPath, '')
 
       // When
       const app = await load(tmpDir)
 
       // Then
-      expect(app.dependencyManager).toBe('pnpm')
+      expect(app.packageManager).toBe('pnpm')
     })
   })
 

@@ -13,7 +13,8 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {App} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {error as kitError, output, session, store, ui, environment, dependency} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, ui, environment} from '@shopify/cli-kit'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
@@ -22,11 +23,11 @@ export const InvalidApiKeyError = (apiKey: string) => {
   )
 }
 
-export const DeployAppNotFound = (apiKey: string, dependencyManager: dependency.DependencyManager) => {
+export const DeployAppNotFound = (apiKey: string, packageManager: PackageManager) => {
   return new kitError.Abort(
     output.content`Couldn't find the app with API key ${apiKey}`,
     output.content`• If you didn't intend to select this app, run ${
-      output.content`${output.token.packagejsonScript(dependencyManager, 'deploy', '--reset')}`.value
+      output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
     }`,
   )
 }
@@ -204,7 +205,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     envIdentifiers = {app: undefined, extensions: {}}
   } else if (envIdentifiers.app) {
     partnersApp = await fetchAppFromApiKey(envIdentifiers.app, token)
-    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.dependencyManager)
+    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.packageManager)
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
@@ -347,7 +348,7 @@ function showReusedValues(org: string, app: App, store: string) {
   output.info(`Dev store:  ${store}\n`)
   output.info(
     output.content`To reset your default dev config, run ${output.token.packagejsonScript(
-      app.dependencyManager,
+      app.packageManager,
       'dev',
       '--reset',
     )}\n`,

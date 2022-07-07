@@ -105,7 +105,7 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     name: 'my-app',
     idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: '/app',
-    dependencyManager: 'yarn',
+    packageManager: 'yarn',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products'},
     webs: [],

@@ -1,8 +1,30 @@
-import {UIExtension, ThemeExtension, FunctionExtension} from './extensions.js'
+import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors, AppLoader, AppLoaderMode} from './app-loader.js'
 import {getUIExtensionRendererDependency, UIExtensionTypes, ExtensionTypes} from '../../constants.js'
-import {dependency, path, schema} from '@shopify/cli-kit'
+import {path, schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
+
+export interface IdentifiersExtensions {
+  [localIdentifier: string]: string
+}
+
+export interface Identifiers {
+  /** Application's API Key */
+  app: string
+
+  /**
+   * The extensions' unique identifiers.
+   */
+  extensions: IdentifiersExtensions
+
+  /**
+   * The extensions' numeric identifiers (expressed as a string).
+   */
+  extensionIds: IdentifiersExtensions
+}
+
+export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
@@ -34,7 +56,7 @@ export interface App {
   name: string
   idEnvironmentVariableName: string
   directory: string
-  dependencyManager: dependency.DependencyManager
+  packageManager: PackageManager
   configuration: AppConfiguration
   configurationPath: string
   nodeDependencies: {[key: string]: string}
@@ -55,7 +77,7 @@ export interface App {
  * @returns {Promise<App>} The app with the Node dependencies updated.
  */
 export async function updateDependencies(app: App): Promise<App> {
-  const nodeDependencies = await dependency.getDependencies(path.join(app.directory, 'package.json'))
+  const nodeDependencies = await getDependencies(path.join(app.directory, 'package.json'))
   return {
     ...app,
     nodeDependencies,
@@ -96,7 +118,7 @@ export async function getUIExtensionRendererVersion(
   if (!packagePath) return 'not_found'
 
   // Load the package.json and extract the version
-  const packageContent = await dependency.packageJSONContents(packagePath)
+  const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: fullName, version: packageContent.version}
 }
