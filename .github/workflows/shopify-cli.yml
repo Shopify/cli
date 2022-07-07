@@ -118,7 +118,7 @@ jobs:
       matrix:
         node: ['14', '16', '18']
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-      max-parallel: 6
+      max-parallel: 3
     steps:
       - uses: actions/checkout@v2
         with:
