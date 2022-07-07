@@ -2,6 +2,7 @@ import {Abort} from './error.js'
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {content, token, debug} from './output.js'
 import git, {TaskOptions, SimpleGitProgressEvent} from 'simple-git'
+import type {outputHandler} from 'simple-git'
 
 export const factory = git
 
@@ -22,11 +23,13 @@ export async function downloadRepository({
   repoUrl,
   destination,
   progressUpdater,
+  outputHandler,
   shallow,
 }: {
   repoUrl: string
   destination: string
   progressUpdater?: (statusString: string) => void
+  outputHandler?: outputHandler
   shallow?: boolean
 }) {
   debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
@@ -49,8 +52,10 @@ export async function downloadRepository({
     progress,
     ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
   }
+  let configuredGit = git(simpleGitOptions)
+  if (outputHandler) configuredGit = configuredGit.outputHandler(outputHandler)
   try {
-    await git(simpleGitOptions).clone(repository, destination, options)
+    await configuredGit.clone(repository, destination, options)
   } catch (err) {
     if (err instanceof Error) {
       const abortError = new Abort(err.message)

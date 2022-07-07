@@ -16,6 +16,8 @@ import {
   error,
 } from '@shopify/cli-kit'
 
+import {Writable} from 'node:stream'
+
 interface InitOptions {
   name: string
   directory: string
@@ -52,9 +54,21 @@ async function init(options: InitOptions) {
       repoUrl,
       destination: templateDownloadDir,
       shallow: true,
-      progressUpdater: (statusString: string) => {
-        const taskOutput = `    Cloning template from ${repoUrl}:\n    ${statusString}`
-        output.logWithOverwrites(taskOutput)
+      outputHandler: (_, stdout, stderr) => {
+        let preservedOutput = ''
+        const writable = new Writable({
+          write(chunk, encoding, next) {
+            let currentChunk = chunk.toString().replace(/.*\r(?!$)/g, '')
+            if (currentChunk.match(/\n$/)) {
+              preservedOutput += currentChunk
+              currentChunk = ''
+            }
+            output.logWithOverwrites(preservedOutput + currentChunk)
+            next()
+          },
+        })
+        stdout.pipe(writable)
+        stderr.pipe(writable)
       },
     })
     output.clearLogWithOverwrites()
