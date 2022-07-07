@@ -10,7 +10,8 @@ import {
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app.js'
+import {App} from '../models/app/app.js'
+import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {error as kitError, output, session, store, ui, environment, dependency} from '@shopify/cli-kit'
 

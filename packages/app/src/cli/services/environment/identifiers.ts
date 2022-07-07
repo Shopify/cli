@@ -1,6 +1,7 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
-import {App, Identifiers} from '../../models/app/app.js'
+import {App} from '../../models/app/app.js'
+import {Identifiers} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension} from '../dev/create-extension.js'

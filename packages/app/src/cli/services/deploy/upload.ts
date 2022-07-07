@@ -1,5 +1,5 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
-import {Identifiers, IdentifiersExtensions} from '../../models/app/app.js'
+import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {blocks, getFunctionExtensionPointName} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'

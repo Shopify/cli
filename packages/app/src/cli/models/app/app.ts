@@ -1,35 +1,12 @@
-import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './extensions.js'
+import {UIExtension, ThemeExtension, FunctionExtension} from './extensions.js'
 import {AppErrors, AppLoader, AppLoaderMode} from './app-loader.js'
-import {getUIExtensionRendererDependency, UIExtensionTypes, dotEnvFileNames, ExtensionTypes} from '../../constants.js'
-import {dependency, path, schema, string} from '@shopify/cli-kit'
-import {writeDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-
-export interface IdentifiersExtensions {
-  [localIdentifier: string]: string
-}
-
-export interface Identifiers {
-  /** Application's API Key */
-  app: string
-
-  /**
-   * The extensions' unique identifiers.
-   */
-  extensions: IdentifiersExtensions
-
-  /**
-   * The extensions' numeric identifiers (expressed as a string).
-   */
-  extensionIds: IdentifiersExtensions
-}
-
-export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
+import {getUIExtensionRendererDependency, UIExtensionTypes, ExtensionTypes} from '../../constants.js'
+import {dependency, path, schema} from '@shopify/cli-kit'
+import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
 })
-
-export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 
 export enum WebType {
   Frontend = 'frontend',
@@ -44,6 +21,7 @@ export const WebConfigurationSchema = schema.define.object({
   }),
 })
 
+export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
 export type WebConfiguration = schema.define.infer<typeof WebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
@@ -84,84 +62,13 @@ export async function updateDependencies(app: App): Promise<App> {
   }
 }
 
-type UpdateAppIdentifiersCommand = 'dev' | 'deploy'
-
-interface UpdateAppIdentifiersOptions {
-  app: App
-  identifiers: UuidOnlyIdentifiers
-  command: UpdateAppIdentifiersCommand
+export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
+  const loader = new AppLoader({directory, mode})
+  return loader.loaded()
 }
 
-/**
- * Given an app and a set of identifiers, it persists the identifiers in the .env files.
- * @param options {UpdateAppIdentifiersOptions} Options.
- * @returns {App} An copy of the app with the environment updated to reflect the updated identifiers.
- */
-export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
-  systemEnvironment = process.env,
-): Promise<App> {
-  let dotenvFile = app.dotenv
-  if (!dotenvFile) {
-    dotenvFile = {
-      path: path.join(app.directory, dotEnvFileNames.production),
-      variables: {},
-    }
-  }
-  const updatedVariables: {[key: string]: string} = {...(app.dotenv?.variables ?? {})}
-  if (!systemEnvironment[app.idEnvironmentVariableName]) {
-    updatedVariables[app.idEnvironmentVariableName] = identifiers.app
-  }
-  Object.keys(identifiers.extensions).forEach((identifier) => {
-    const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
-    if (!systemEnvironment[envVariable]) {
-      updatedVariables[envVariable] = identifiers.extensions[identifier]
-    }
-  })
-
-  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) && command === 'deploy'
-  dotenvFile.variables = updatedVariables
-  if (write) {
-    await writeDotEnv(dotenvFile)
-  }
-  return {
-    ...app,
-    dotenv: dotenvFile,
-  }
-}
-
-interface GetAppIdentifiersOptions {
-  app: App
-}
-
-/**
- * Given an app and a environment, it fetches the ids from the environment
- * and returns them.
- * @param options {GetAppIdentifiersOptions} Options.
- * @returns
- */
-export function getAppIdentifiers(
-  {app}: GetAppIdentifiersOptions,
-  systemEnvironment = process.env,
-): Partial<UuidOnlyIdentifiers> {
-  const envVariables = {
-    ...app.dotenv?.variables,
-    ...(systemEnvironment as {[variable: string]: string}),
-  }
-  const extensionsIdentifiers: {[key: string]: string} = {}
-  const processExtension = (extension: Extension) => {
-    if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
-      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]
-    }
-  }
-  app.extensions.ui.forEach(processExtension)
-  app.extensions.function.forEach(processExtension)
-  app.extensions.theme.forEach(processExtension)
-
-  return {
-    app: envVariables[app.idEnvironmentVariableName],
-    extensions: extensionsIdentifiers,
-  }
+export function hasExtensions(app: App): boolean {
+  return app.extensions.ui.length !== 0 || app.extensions.function.length !== 0 || app.extensions.theme.length !== 0
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
@@ -192,15 +99,6 @@ export async function getUIExtensionRendererVersion(
   const packageContent = await dependency.packageJSONContents(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: fullName, version: packageContent.version}
-}
-
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
-  const loader = new AppLoader({directory, mode})
-  return loader.loaded()
-}
-
-export function hasExtensions(app: App): boolean {
-  return app.extensions.ui.length !== 0 || app.extensions.function.length !== 0 || app.extensions.theme.length !== 0
 }
 
 /**

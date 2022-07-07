@@ -9,13 +9,8 @@ import {
 
 import {ensureDeployEnvironment} from './environment.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
-import {
-  App,
-  getUIExtensionRendererVersion,
-  hasExtensions,
-  Identifiers,
-  updateAppIdentifiers,
-} from '../models/app/app.js'
+import {App, getUIExtensionRendererVersion, hasExtensions} from '../models/app/app.js'
+import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, UIExtension} from '../models/app/extensions.js'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
