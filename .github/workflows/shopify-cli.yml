@@ -145,5 +145,5 @@ jobs:
       - name: Unit tests
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
-        if: matrix.os == 'ubuntu-latest'
+        if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
         run: npx nx run features:test --skip-nx-cache
