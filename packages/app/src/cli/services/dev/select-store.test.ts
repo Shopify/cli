@@ -85,7 +85,7 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('prompts to select a new store if cachedApiKey is invalid', async () => {
+  it('prompts to select a new store if cached store fqdn is invalid', async () => {
     // Given
     const fqdn = 'invalid-store-domain'
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)

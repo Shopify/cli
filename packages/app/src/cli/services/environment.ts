@@ -13,7 +13,7 @@ import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {error as kitError, output, session, store, ui, environment, dependency, error} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, ui, environment, error} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
