@@ -18,6 +18,7 @@ beforeEach(() => {
   vi.mock('./dev/select-store')
   vi.mock('../prompts/dev')
   vi.mock('../models/app/app')
+  vi.mock('../models/app/identifiers')
   vi.mock('./environment/identifiers')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
