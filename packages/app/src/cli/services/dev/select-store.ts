@@ -1,4 +1,4 @@
-import {fetchAllStores} from './fetch.js'
+import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
@@ -44,16 +44,17 @@ export async function selectStore(
   org: Organization,
   token: string,
   cachedStoreName?: string,
-): Promise<string> {
+): Promise<OrganizationStore> {
   if (cachedStoreName) {
+    const result = await fetchStoreByDomain(org.id, token, cachedStoreName)
     await convertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
-    return cachedStoreName
+    if (result?.store) return result.store
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
     await convertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
-    return store.shopDomain
+    return store
   }
 
   output.info(`\n${CreateStoreLink(org.id)}`)

@@ -5,15 +5,15 @@ import {
   fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
-  fetchStoresByDomain,
+  fetchStoreByDomain,
   FetchResponse,
 } from './dev/fetch.js'
-import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
+import {convertStoreToTest, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {error as kitError, output, session, store, ui, environment, dependency} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, ui, environment, dependency, error} from '@shopify/cli-kit'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
@@ -68,7 +68,6 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
-  // We retrieve the production identifiers to know if the user has selected the prod app for `dev`
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
@@ -86,24 +85,19 @@ export async function ensureDevEnvironment(
     output.info(explanation)
   }
 
-  // 1. You run the CLI passing --store (options.storeFqdn)
-  // 2. You run the CLI without passing any --store
-  // 2.1 If it's the first time, then we show you all the stores and you pick one
-  // 2.2 It's not the first time, then we take cached storeFqdn (cachedInfo?.storeFqdn) // my-store
-
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
-  const shopDomain = options.storeFqdn || cachedInfo?.storeFqdn
 
-  const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token, shopDomain)
-
-  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, organization, stores, token)
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
-    store
-      .cliKitStore()
-      .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
+    store.cliKitStore().setAppInfo({
+      appId: selectedApp.apiKey,
+      directory: options.app.directory,
+      storeFqdn: selectedStore.shopDomain,
+      orgId,
+    })
 
     // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
     const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
@@ -112,7 +106,7 @@ export async function ensureDevEnvironment(
         ...selectedApp,
         apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
       },
-      storeFqdn: selectedStore,
+      storeFqdn: selectedStore.shopDomain,
       identifiers: {
         app: selectedApp.apiKey,
         extensions,
@@ -120,6 +114,7 @@ export async function ensureDevEnvironment(
     }
   }
 
+  const {organization, apps} = await fetchOrgAndApps(orgId, token)
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
   store
     .cliKitStore()
@@ -127,23 +122,26 @@ export async function ensureDevEnvironment(
 
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
-  selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
-  store
-    .cliKitStore()
-    .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
-
-  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, options.app, selectedStore)
+  if (!selectedStore) {
+    const allStores = await fetchAllStores(orgId, token)
+    selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
-  // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
+  store
+    .cliKitStore()
+    .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore?.shopDomain})
+
+  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
+    showReusedValues(organization.businessName, options.app, selectedStore.shopDomain)
+  }
+
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
   return {
     app: {
       ...selectedApp,
       apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
     },
-    storeFqdn: selectedStore,
+    storeFqdn: selectedStore.shopDomain,
     identifiers: {
       app: selectedApp.apiKey,
       extensions,
@@ -260,7 +258,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
   return {orgId, partnersApp}
 }
 
-async function fetchOrgsAppsAndStores(orgId: string, token: string, shopDomain?: string): Promise<FetchResponse> {
+async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
   const list = ui.newListr(
     [
@@ -268,9 +266,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string, shopDomain?:
         title: 'Fetching organization data',
         task: async () => {
           const organizationAndApps = await fetchOrgAndApps(orgId, token)
-          const stores = shopDomain
-            ? await fetchStoresByDomain(orgId, token, shopDomain)
-            : await fetchAllStores(orgId, token)
+          const stores = await fetchAllStores(orgId, token)
           data = {...organizationAndApps, stores} as FetchResponse
           // We need ALL stores so we can validate the selected one.
           // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
@@ -283,6 +279,20 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string, shopDomain?:
   return data
 }
 
+const OrganizationNotFoundError = (orgId: string) => {
+  return new error.Bug(`Could not find Organization for id ${orgId}.`)
+}
+
+const StoreNotFoundError = (storeName: string, org: Organization) => {
+  return new error.Bug(
+    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
+    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
+  )
+}
+const InvalidStore = (storeName: string) => {
+  return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
+}
+
 /**
  * Any data sent via input flags takes precedence and needs to be validated.
  * If any of the inputs is invalid, we must throw an error and stop the execution.
@@ -291,12 +301,11 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string, shopDomain?:
  */
 async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
-  org: Organization,
-  stores: OrganizationStore[],
+  orgId: string,
   token: string,
-): Promise<{app?: OrganizationApp; store?: string}> {
+): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
   let selectedApp: OrganizationApp | undefined
-  let selectedStore: string | undefined
+  let selectedStore: OrganizationStore | undefined
 
   if (options.apiKey) {
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
@@ -304,8 +313,13 @@ async function fetchDevDataFromOptions(
   }
 
   if (options.storeFqdn) {
-    await convertToTestStoreIfNeeded(options.storeFqdn, stores, org, token)
-    selectedStore = options.storeFqdn
+    const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
+    if (!orgWithStore) throw OrganizationNotFoundError(orgId)
+
+    if (!orgWithStore.store) throw StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
+    if (!orgWithStore.store.transferDisabled && !orgWithStore.store.convertableToPartnerTest)
+      throw InvalidStore(orgWithStore.store.shopDomain)
+    if (!orgWithStore.store.transferDisabled) await convertStoreToTest(orgWithStore.store, orgId, token)
   }
 
   return {app: selectedApp, store: selectedStore}
