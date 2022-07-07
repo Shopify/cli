@@ -15,6 +15,7 @@ import {join as pathJoin, relativize as relativizePath} from './path.js'
 import {page} from './system.js'
 import {colors} from './node/colors.js'
 import terminalLink from 'terminal-link'
+import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -408,7 +409,7 @@ export const error = async (content: Fatal) => {
     })
   if (content instanceof Bug) {
     if (stack.items.length !== 0) {
-      outputString += `\n${padding}${colors.bold('Stack trace:')}`
+      outputString += `\n${padding}${colors.bold('Stack trace:')}\n`
       const stackLines = stack.asTable({}).split('\n')
       for (const stackLine of stackLines) {
         outputString += `${padding}${stackLine}\n`
