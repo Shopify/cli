@@ -1,6 +1,6 @@
 import {defineHydrogenApp} from "@shopify/app/hydrogen/configuration"
 
-export default defineHydrogenApp({
-    name: "Fixture",
+export default defineHydrogenApp(({environment}) => ({
+    name: ( environment === "development") ? "Fixture development": "Fixture",
     scopes: ["read_products"]
-})
+}))

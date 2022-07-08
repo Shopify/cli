@@ -1,6 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {loadHydrogenApp} from '../../hydrogen/loaders/app.js'
 import dev from '../../hydrogen/services/dev.js'
+import {UserConfigurationEnvironment} from '../../../hydrogen/configuration.js'
 import {Command, Flags} from '@oclif/core'
 import {path, string, cli} from '@shopify/cli-kit'
 
@@ -44,29 +45,23 @@ export default class Dev extends Command {
       default: false,
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    'subscription-product-url': Flags.string({
-      hidden: false,
-      description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
-      env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
-    }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'checkout-cart-url': Flags.string({
-      hidden: false,
-      description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
-      env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
-    }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'tunnel-url': Flags.string({
       hidden: false,
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
+    }),
+    env: Flags.string({
+      description: 'The environment to use.',
+      options: ['development', 'production'],
+      default: 'development',
+      env: 'SHOPIFY_FLAG_ENV',
     }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app = await loadHydrogenApp(directory)
+    const app = await loadHydrogenApp(directory, flags.env as UserConfigurationEnvironment)
     await dev({
       app,
       apiKey: flags['api-key'],
