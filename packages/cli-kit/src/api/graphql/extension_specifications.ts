@@ -5,8 +5,10 @@ export const ExtensionSpecificationsQuery = gql`
     extensionSpecifications(apiKey: $api_key) {
       name
       identifier
+      gated
       options {
         managementExperience
+        registrationLimit
       }
       features {
         argo {
@@ -26,9 +28,11 @@ export interface ExtensionSpecificationsQuerySchema {
   extensionSpecifications: {
     name: string
     identifier: string
+    gated: boolean
     options: {
       managementExperience: 'cli' | 'custom' | 'dashboard'
-    }[]
+      registrationLimit: number
+    }
     features?: {
       argo?: {
         surface: string
