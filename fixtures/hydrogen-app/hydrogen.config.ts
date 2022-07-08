@@ -1,6 +1,6 @@
-import {defineConfiguration} from "@shopify/app/hydrogen/configuration"
+import {defineHydrogenApp} from "@shopify/app/hydrogen/configuration"
 
-export default defineConfiguration({
+export default defineHydrogenApp({
     name: "Fixture",
     scopes: ["read_products"]
 })

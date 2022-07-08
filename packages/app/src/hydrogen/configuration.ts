@@ -3,7 +3,7 @@ export interface UserConfiguration {
   scopes: string[]
 }
 
-export function defineConfiguration(config: UserConfiguration) {
+export function defineHydrogenApp(config: UserConfiguration) {
   return config
 }
 
