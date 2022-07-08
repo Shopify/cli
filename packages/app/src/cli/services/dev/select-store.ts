@@ -1,4 +1,4 @@
-import {fetchAllStores} from './fetch.js'
+import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
@@ -7,13 +7,6 @@ const ConvertToDevError = (storeName: string, message: string) => {
   return new error.Bug(
     `Error converting store ${storeName} to a Test store: ${message}`,
     'This store might not be compatible with draft apps, please try a different store',
-  )
-}
-
-const StoreNotFoundError = (storeName: string, org: Organization) => {
-  return new error.Bug(
-    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
   )
 }
 
@@ -44,16 +37,19 @@ export async function selectStore(
   org: Organization,
   token: string,
   cachedStoreName?: string,
-): Promise<string> {
+): Promise<OrganizationStore> {
   if (cachedStoreName) {
-    await convertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
-    return cachedStoreName
+    const result = await fetchStoreByDomain(org.id, token, cachedStoreName)
+    if (result?.store) {
+      await convertToTestStoreIfNeeded(result.store, org, token)
+      return result.store
+    }
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
-    return store.shopDomain
+    await convertToTestStoreIfNeeded(store, org, token)
+    return store
   }
 
   output.info(`\n${CreateStoreLink(org.id)}`)
@@ -115,13 +111,10 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
  * @throws {Fatal} If the store can't be found in the organization or we fail to make it a test store
  */
 export async function convertToTestStoreIfNeeded(
-  storeDomain: string,
-  stores: OrganizationStore[],
+  store: OrganizationStore,
   org: Organization,
   token: string,
 ): Promise<void> {
-  const store = stores.find((store) => store.shopDomain === storeDomain)
-  if (!store) throw StoreNotFoundError(storeDomain, org)
   if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }

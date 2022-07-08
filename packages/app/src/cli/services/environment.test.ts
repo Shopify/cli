@@ -1,4 +1,4 @@
-import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
@@ -79,8 +79,8 @@ const STORE1: OrganizationStore = {
   link: 'link1',
   shopDomain: 'domain1',
   shopName: 'store1',
-  transferDisabled: false,
-  convertableToPartnerTest: false,
+  transferDisabled: true,
+  convertableToPartnerTest: true,
 }
 const STORE2: OrganizationStore = {
   shopId: '2',
@@ -135,6 +135,13 @@ const INPUT_WITH_DATA: DevEnvironmentOptions = {
   storeFqdn: 'domain1',
 }
 
+const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
+  app: LOCAL_APP,
+  reset: false,
+  apiKey: 'key1',
+  storeFqdn: 'invalid_store_domain',
+}
+
 const FETCH_RESPONSE = {
   organization: ORG1,
   apps: [APP1, APP2],
@@ -145,7 +152,7 @@ beforeEach(async () => {
   vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
-  vi.mocked(selectStore).mockResolvedValue(STORE1.shopDomain)
+  vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
 })
@@ -285,6 +292,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
     const got = await ensureDevEnvironment(INPUT_WITH_DATA, 'token')
@@ -317,6 +325,19 @@ describe('ensureDevEnvironment', () => {
     expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
+  })
+
+  it('throws if the store input is not valid', async () => {
+    // Given
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(undefined)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
+
+    // When
+    const got = ensureDevEnvironment(BAD_INPUT_WITH_DATA, 'token')
+
+    await expect(got).rejects.toThrow(/Could not find invalid_store_domain/)
   })
 
   it('resets cached state if reset is true', async () => {
