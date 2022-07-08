@@ -7,7 +7,7 @@ import {
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
 } from './extensions.js'
-import {AppConfigurationSchema, App, Web, WebConfigurationSchema, extensionGraphqlId} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, extensionGraphqlId, AppClass} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -67,21 +67,25 @@ export class AppLoader {
     const name = await getPackageName(packageJSONPath)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
+    const webs = await this.loadWebs()
 
-    const app: App = {
+    const appClass = new AppClass(
       name,
-      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
-      directory: this.appDirectory,
-      webs: await this.loadWebs(),
+      'SHOPIFY_API_KEY',
+      this.appDirectory,
+      packageManager,
       configuration,
       configurationPath,
-      dotenv,
-      extensions: {ui: uiExtensions, theme: themeExtensions, function: functions},
-      packageManager,
       nodeDependencies,
-    }
-    if (!this.errors.isEmpty()) app.errors = this.errors
-    return app
+      webs,
+      uiExtensions,
+      themeExtensions,
+      functions,
+      dotenv,
+      this.errors,
+    )
+
+    return appClass
   }
 
   async loadDotEnv(): Promise<DotEnvFile | undefined> {

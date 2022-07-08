@@ -9,7 +9,7 @@ import {
 
 import {ensureDeployEnvironment} from './environment.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
-import {App, getUIExtensionRendererVersion, hasExtensions} from '../models/app/app.js'
+import {App, getUIExtensionRendererVersion} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, UIExtension} from '../models/app/extensions.js'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
@@ -35,7 +35,7 @@ interface DeployOptions {
 }
 
 export const deploy = async (options: DeployOptions) => {
-  if (!hasExtensions(options.app)) {
+  if (!options.app.hasExtensions()) {
     output.newline()
     output.info(`No extensions to deploy to Shopify Partners yet.`)
     return

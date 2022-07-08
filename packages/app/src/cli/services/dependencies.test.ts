@@ -1,5 +1,5 @@
 import {installAppDependencies} from './dependencies.js'
-import {App, updateDependencies} from '../models/app/app.js'
+import {App} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
@@ -41,11 +41,11 @@ describe('installAppDependencies', () => {
       webs: [],
       nodeDependencies: {},
       configurationPath: '/tmp/project/shopify.app.toml',
+      updateDependencies: vi.fn(),
     }
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}
     vi.mocked(ui.newListr).mockReturnValue(list)
-    vi.mocked(updateDependencies).mockResolvedValueOnce(app)
 
     // When
     await installAppDependencies(app)
