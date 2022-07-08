@@ -111,24 +111,6 @@ export class AppClass implements App {
       this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
     )
   }
-
-  async getUIExtensionRendererVersion(uiExtensionType: UIExtensionTypes): Promise<RendererVersionResult> {
-    // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
-    const fullName = getUIExtensionRendererDependency(uiExtensionType)?.name.replace('-react', '')
-    if (!fullName) return undefined
-    // Split the dependency name to avoid using "/" in windows
-    const dependencyName = fullName.split('/')
-
-    // Find the package.json in the project structure
-    const realPath = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
-    const packagePath = await path.findUp(realPath, {type: 'file', cwd: app.directory})
-    if (!packagePath) return 'not_found'
-
-    // Load the package.json and extract the version
-    const packageContent = await readAndParsePackageJson(packagePath)
-    if (!packageContent.version) return 'not_found'
-    return {name: fullName, version: packageContent.version}
-  }
 }
 
 export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
