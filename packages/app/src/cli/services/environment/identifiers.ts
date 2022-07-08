@@ -81,7 +81,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     for (const pending of match.pendingConfirmation) {
       // eslint-disable-next-line no-await-in-loop
       const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
-      if (!confirmed) throw new error.AbortSilent()
+      if (!confirmed) throw new error.CancelExecution()
       validMatches[pending.extension.localIdentifier] = pending.registration.uuid
     }
   }

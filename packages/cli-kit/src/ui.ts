@@ -1,7 +1,7 @@
 import {AutoComplete} from './ui/autocomplete.js'
 import {Input} from './ui/input.js'
 import {Select} from './ui/select.js'
-import {Bug, AbortSilent} from './error.js'
+import {Bug, CancelExecution} from './error.js'
 import {remove, exists} from './file.js'
 import {info, content, token, logToFile} from './output.js'
 import {relative} from './path.js'
@@ -134,7 +134,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
     const choice = await prompt([questions])
 
     if (choice.value === 'abort') {
-      throw new AbortSilent()
+      throw new CancelExecution()
     }
 
     remove(directory)

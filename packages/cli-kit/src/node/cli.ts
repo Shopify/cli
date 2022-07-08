@@ -1,7 +1,7 @@
 // CLI
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {initializeCliKitStore} from '../store.js'
-import {initiateLogging} from '../output.js'
+import {content, info, initiateLogging, token} from '../output.js'
 import {isDebug} from '../environment/local.js'
 import constants, {bugsnagApiKey} from '../constants.js'
 import {reportEvent} from '../analytics.js'
@@ -10,6 +10,7 @@ import {
   handler as errorHandler,
   AbortSilent,
   shouldReport as shouldReportError,
+  CancelExecution,
 } from '../error.js'
 import {moduleDirectory, normalize} from '../path.js'
 import StackTracey from 'stacktracey'
@@ -46,7 +47,18 @@ export async function runCLI(options: RunCLIOptions) {
 
   run(undefined, options.moduleURL)
     .then(flush)
-    .catch((error: Error): Promise<void | Error> => {
+    .catch(async (error: Error): Promise<void | Error> => {
+      if (error instanceof CancelExecution) {
+        info(
+          `✨  ${
+            error.message && error.message !== ''
+              ? error.message
+              : `Executed using CLI ${content`${token.yellow(await constants.versions.cliKit())}`.value}`
+          }`,
+        )
+        process.exit(0)
+      }
+
       if (error instanceof AbortSilent) {
         process.exit(1)
       }

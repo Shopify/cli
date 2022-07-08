@@ -2,7 +2,7 @@ import {appFlags} from '../../flags.js'
 import {load as loadApp, App} from '../../models/app/app.js'
 import dev from '../../services/dev.js'
 import {Command, Flags} from '@oclif/core'
-import {path, string, cli, error} from '@shopify/cli-kit'
+import {path, string, cli} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -69,23 +69,17 @@ export default class Dev extends Command {
     const app: App = await loadApp(directory)
     const commandConfig = this.config
 
-    try {
-      await dev({
-        app,
-        apiKey: flags['api-key'],
-        storeFqdn: flags.store,
-        reset: flags.reset,
-        update: !flags['no-update'],
-        skipDependenciesInstallation: flags['skip-dependencies-installation'],
-        commandConfig,
-        subscriptionProductUrl: flags['subscription-product-url'],
-        checkoutCartUrl: flags['checkout-cart-url'],
-        tunnelUrl: flags['tunnel-url'],
-      })
-    } catch (err) {
-      if (!(err instanceof error.CancelExecution)) {
-        throw err
-      }
-    }
+    await dev({
+      app,
+      apiKey: flags['api-key'],
+      storeFqdn: flags.store,
+      reset: flags.reset,
+      update: !flags['no-update'],
+      skipDependenciesInstallation: flags['skip-dependencies-installation'],
+      commandConfig,
+      subscriptionProductUrl: flags['subscription-product-url'],
+      checkoutCartUrl: flags['checkout-cart-url'],
+      tunnelUrl: flags['tunnel-url'],
+    })
   }
 }
