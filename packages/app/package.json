@@ -57,7 +57,9 @@
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "^1.0",
     "@shopify/cli-kit": "^3.0.27",
+    "@shopify/shopify-api": "^4.0.0",
     "@shopify/shopify-cli-extensions": "^0.2.1",
+    "cookie-parser": "^1.4.6",
     "express": "^4.18.1",
     "vite": "^2.9.13",
     "ws": "^8.7.0"
