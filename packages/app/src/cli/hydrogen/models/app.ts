@@ -1,9 +1,9 @@
 import {Configuration} from './configuration.js'
-import {dependency} from '@shopify/cli-kit'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export interface HydrogenApp {
   directory: string
   name: string
   configuration: Configuration
-  dependencyManager: dependency.DependencyManager
+  dependencyManager: PackageManager
 }

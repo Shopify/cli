@@ -1,11 +1,18 @@
-import {selectOrCreateApp} from '../dev/select-app.js'
-import {fetchAllStores, fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, FetchResponse} from '../dev/fetch.js'
-import {selectStore, convertToTestStoreIfNeeded} from '../dev/select-store.js'
+import {selectOrCreateApp} from '../../services/dev/select-app.js'
+import {
+  fetchAllStores,
+  fetchAppFromApiKey,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  FetchResponse,
+} from '../../services/dev/fetch.js'
+import {selectStore, convertToTestStoreIfNeeded} from '../../services/dev/select-store.js'
 import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {App, UuidOnlyIdentifiers} from '../../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {HydrogenApp} from '../../hydrogen/models/app.js'
-import {error as kitError, output, store, ui, environment, dependency} from '@shopify/cli-kit'
+import {error as kitError, output, store, ui, environment} from '@shopify/cli-kit'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
@@ -14,11 +21,11 @@ export const InvalidApiKeyError = (apiKey: string) => {
   )
 }
 
-export const DeployAppNotFound = (apiKey: string, dependencyManager: dependency.DependencyManager) => {
+export const DeployAppNotFound = (apiKey: string, packageManager: PackageManager) => {
   return new kitError.Abort(
     output.content`Couldn't find the app with API key ${apiKey}`,
     output.content`• If you didn't intend to select this app, run ${
-      output.content`${output.token.packagejsonScript(dependencyManager, 'deploy', '--reset')}`.value
+      output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
     }`,
   )
 }

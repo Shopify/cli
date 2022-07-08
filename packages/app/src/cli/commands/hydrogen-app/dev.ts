@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {loadHydrogenApp} from '../../hydrogen/loaders/app.js'
-import dev from '../../services/hydrogen-app/dev.js'
+import dev from '../../hydrogen/services/dev.js'
 import {Command, Flags} from '@oclif/core'
 import {path, string, cli} from '@shopify/cli-kit'
 
@@ -76,6 +76,5 @@ export default class Dev extends Command {
       commandConfig: this.config,
       tunnelUrl: flags['tunnel-url'],
     })
-    console.log('finished')
   }
 }
