@@ -82,8 +82,9 @@ export class AppLoader {
       themeExtensions,
       functions,
       dotenv,
-      this.errors,
     )
+
+    if (!this.errors.isEmpty()) appClass.errors = this.errors
 
     return appClass
   }
