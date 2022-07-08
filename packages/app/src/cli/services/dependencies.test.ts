@@ -42,6 +42,7 @@ describe('installAppDependencies', () => {
       nodeDependencies: {},
       configurationPath: '/tmp/project/shopify.app.toml',
       updateDependencies: vi.fn(),
+      hasExtensions: vi.fn(),
     }
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}

@@ -7,8 +7,8 @@ import {
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
 } from './extensions.js'
-import {AppConfigurationSchema, Web, WebConfigurationSchema, extensionGraphqlId, AppClass} from './app.js'
-import {blocks, configurationFileNames, dotEnvFileNames} from '../../constants.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, AppClass} from './app.js'
+import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'

@@ -22,6 +22,8 @@ const LOCAL_APP: App = {
   ],
   nodeDependencies: {},
   extensions: {ui: [], theme: [], function: []},
+  updateDependencies: vi.fn(),
+  hasExtensions: vi.fn(),
 }
 
 beforeEach(() => {

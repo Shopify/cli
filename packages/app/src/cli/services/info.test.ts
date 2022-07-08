@@ -160,5 +160,7 @@ function mockApp(currentVersion = '2.2.2'): App {
     webs: [],
     nodeDependencies,
     extensions: {ui: [], function: [], theme: []},
+    updateDependencies: vi.fn(),
+    hasExtensions: vi.fn(),
   }
 }

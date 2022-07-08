@@ -23,6 +23,8 @@ const LOCAL_APP: App = {
   name: 'my-app',
   nodeDependencies: {},
   extensions: {ui: [], theme: [], function: []},
+  updateDependencies: vi.fn(),
+  hasExtensions: vi.fn(),
 }
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}

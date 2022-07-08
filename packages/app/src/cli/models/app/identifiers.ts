@@ -63,11 +63,12 @@ export async function updateAppIdentifiers(
   if (write) {
     await writeDotEnv(dotenvFile)
   }
-  return {
-    ...app,
-    dotenv: dotenvFile,
-  }
+
+  // eslint-disable-next-line require-atomic-updates
+  app.dotenv = dotenvFile
+  return app
 }
+
 interface GetAppIdentifiersOptions {
   app: App
 }

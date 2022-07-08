@@ -105,6 +105,8 @@ function mockSuccessfulCommandExecution(outputConfig: {
     webs: [],
     nodeDependencies: {},
     extensions: {ui: [], function: [], theme: []},
+    updateDependencies: vi.fn(),
+    hasExtensions: vi.fn(),
   }
 
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)

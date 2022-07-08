@@ -66,6 +66,8 @@ describe('extensionConfig', () => {
       webs: [],
       nodeDependencies: {},
       extensions: {ui: [extension], function: [], theme: []},
+      updateDependencies: vi.fn(),
+      hasExtensions: vi.fn(),
     }
 
     const options: ExtensionConfigOptions = {

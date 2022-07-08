@@ -111,6 +111,8 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     webs: [],
     nodeDependencies: {},
     extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    updateDependencies: vi.fn(),
+    hasExtensions: vi.fn(),
   }
 }
 

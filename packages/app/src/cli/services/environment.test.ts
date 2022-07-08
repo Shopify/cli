@@ -121,6 +121,8 @@ const LOCAL_APP: App = {
   ],
   nodeDependencies: {},
   extensions: {ui: [EXTENSION_A], theme: [], function: []},
+  updateDependencies: vi.fn(),
+  hasExtensions: vi.fn(),
 }
 
 const INPUT: DevEnvironmentOptions = {
