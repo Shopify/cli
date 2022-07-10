@@ -97,7 +97,7 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
         run: yarn run --cwd=packages/features test
-  pr-ubuntu: &pr-ubuntu
+  pr-ubuntu:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
@@ -124,16 +124,9 @@ jobs:
           ruby-version: 3.1.2
       - name: Set Node.js on ubuntu environments
         uses: actions/setup-node@master
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
-      # Caching is slow on Windows and Mac, so just skip it!
-      - name: Set Node.js on windows and macos environments
-        uses: actions/setup-node@master
-        if: ${{ matrix.os != 'ubuntu-latest' }}
-        with:
-          node-version: ${{ matrix.node }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
@@ -153,10 +146,44 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
         run: yarn run --cwd=packages/features test
-  pr-others:
-    <<: *pr-ubuntu
+  pr-windows-and-mac:
+    name: Node ${{ matrix.node }} in ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     needs: pr-ubuntu
+    if: ${{ github.event_name == 'pull_request' }}
+    timeout-minutes: 30
     strategy:
       matrix:
         os: ['windows-latest', 'macos-latest']
         node: ['14', '16', '18']
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Set Git configuration
+        run: |
+          git config --global user.email "development-lifecycle@shopify.com"
+          git config --global user.name "Development Lifecycle"
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v2
+      - name: Set Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1.2
+      # Caching is slow on Windows and Mac, so just skip yarn cache!
+      - name: Set Node.js on windows and macos environments
+        uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install yarn
+        run: npm install --global yarn@${{ env.YARN_VERSION }}
+      - name: Increase yarn timeout
+        run: yarn config set network-timeout 300000
+      - name: Install dependencies
+        run: yarn install --ignore-engines
+      - name: Build
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
+      - name: Unit tests
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
