@@ -84,7 +84,6 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: 18
-          cache: 'yarn'
       - name: Cache built app
         id: cache_built_app
         uses: actions/cache@v2
@@ -132,7 +131,6 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
       - name: Cache built app
         id: cache_built_app
         uses: actions/cache@v2
@@ -192,7 +190,6 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
       - name: Cache built app
         id: cache_built_app
         uses: actions/cache@v2
