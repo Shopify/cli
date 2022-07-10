@@ -172,11 +172,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.1.2
-      # Caching is slow on Windows and Mac, so just skip yarn cache!
-      - name: Set Node.js on windows and macos environments
+      - name: Set Node.js
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
+          cache: 'yarn'
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
