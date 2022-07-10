@@ -122,11 +122,18 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.1.2
-      - name: Set Node.js
+      - name: Set Node.js on ubuntu environments
         uses: actions/setup-node@master
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      # Caching is slow on Windows and Mac, so just skip it!
+      - name: Set Node.js on windows and macos environments
+        uses: actions/setup-node@master
+        if: ${{ matrix.os != 'ubuntu-latest' }}
+        with:
+          node-version: ${{ matrix.node }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
