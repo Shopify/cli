@@ -58,10 +58,56 @@ jobs:
         run: yarn install --ignore-engines
       - name: Build the fixture app
         run: yarn shopify app build --path ./fixtures/app
+  warm-cache:
+    name: Warm Cache
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout [main]
+        with:
+          fetch-depth: 0
+      - name: Set Git configuration
+        run: |
+          git config --global user.email "development-lifecycle@shopify.com"
+          git config --global user.name "Development Lifecycle"
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v2
+      - name: Set Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+      - name: Set Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: 18
+          cache: 'yarn'
+      - name: Cache built app
+        id: cache_built_app
+        uses: actions/cache@v2
+        with:
+          path: |
+            ./**/*
+            ./**/.*
+          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
+      - name: Install yarn
+        run: npm install --global yarn@${{ env.YARN_VERSION }}
+      - name: Increase yarn timeout
+        run: yarn config set network-timeout 300000
+      - name: Install dependencies
+        if: steps.cache_built_app.outputs.cache-hit != 'true'
+        run: yarn install --ignore-engines
+      - name: Build
+        if: steps.cache_built_app.outputs.cache-hit != 'true'
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name != 'pull_request' }}
+    needs: warm-cache
     timeout-minutes: 30
     strategy:
       matrix:
@@ -87,21 +133,23 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
-      - name: Cache node_modules pre-install
-        id: cache_node_modules
+      - name: Cache built app
+        id: cache_built_app
         uses: actions/cache@v2
         with:
           path: |
-            **/node_modules
-            **/node_modules/.yarn-integrity
-          key: cache-node-modules-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
+            ./**/*
+            ./**/.*
+          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
         run: yarn config set network-timeout 300000
       - name: Install dependencies
+        if: steps.cache_built_app.outputs.cache-hit != 'true'
         run: yarn install --ignore-engines
       - name: Build
+        if: steps.cache_built_app.outputs.cache-hit != 'true'
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
       - name: Lint
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint --skip-nx-cache
@@ -117,6 +165,7 @@ jobs:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
+    needs: warm-cache
     timeout-minutes: 30
     strategy:
       matrix:
@@ -144,21 +193,23 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
-      - name: Cache node_modules pre-install
-        id: cache_node_modules
+      - name: Cache built app
+        id: cache_built_app
         uses: actions/cache@v2
         with:
           path: |
-            **/node_modules
-            **/node_modules/.yarn-integrity
-          key: cache-node-modules-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
+            ./**/*
+            ./**/.*
+          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('yarn.lock') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
         run: yarn config set network-timeout 300000
       - name: Install dependencies
+        if: steps.cache_built_app.outputs.cache-hit != 'true'
         run: yarn install --ignore-engines
       - name: Build
+        if: steps.cache_built_app.outputs.cache-hit != 'true'
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
       - name: Type-check
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc --skip-nx-cache
