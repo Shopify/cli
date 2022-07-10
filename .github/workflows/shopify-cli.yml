@@ -91,7 +91,7 @@ jobs:
           path: |
             ./**/*
             ./**/.*
-          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('./**/*') }}-${{ hashFiles('./**/.*') }}
+          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('yarn.lock', 'packages/**/*') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
@@ -138,7 +138,7 @@ jobs:
           path: |
             ./**/*
             ./**/.*
-          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('./**/*') }}-${{ hashFiles('./**/.*') }}
+          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('yarn.lock', 'packages/**/*') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
@@ -197,7 +197,7 @@ jobs:
           path: |
             ./**/*
             ./**/.*
-          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('./**/*') }}-${{ hashFiles('./**/.*') }}
+          key: cache-built-app-${{ matrix.os }}-${{ hashFiles('yarn.lock', 'packages/**/*') }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
