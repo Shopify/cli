@@ -1,6 +1,6 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
@@ -21,7 +21,7 @@ const DeployError = (appName: string, packageManager: PackageManager) => {
 }
 
 export interface EnsureDeploymentIdsPresenceOptions {
-  app: App
+  app: AppInterface
   token: string
   appId: string
   appName: string

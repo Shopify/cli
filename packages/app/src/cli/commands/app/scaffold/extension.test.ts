@@ -1,7 +1,7 @@
 /* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension.js'
 import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants.js'
-import {App, load as loadApp} from '../../../models/app/app.js'
+import {AppInterface, load as loadApp} from '../../../models/app/app.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
@@ -93,7 +93,7 @@ function mockSuccessfulCommandExecution(outputConfig: {
   additionalHelp?: string
 }) {
   const appRoot = '/'
-  const app: App = {
+  const app: AppInterface = {
     name: 'myapp',
     idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: appRoot,
@@ -105,6 +105,8 @@ function mockSuccessfulCommandExecution(outputConfig: {
     webs: [],
     nodeDependencies: {},
     extensions: {ui: [], function: [], theme: []},
+    updateDependencies: vi.fn(),
+    hasExtensions: vi.fn(),
   }
 
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)

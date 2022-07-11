@@ -1,12 +1,12 @@
 import {buildThemeExtensions, buildUIExtensions, buildFunctionExtension} from './build/extension.js'
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
-import {App, Web} from '../models/app/app.js'
+import {AppInterface, Web} from '../models/app/app.js'
 import {error, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 interface BuildOptions {
-  app: App
+  app: AppInterface
   skipDependenciesInstallation: boolean
   apiKey?: string
 }
