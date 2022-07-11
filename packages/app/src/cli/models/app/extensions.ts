@@ -1,3 +1,4 @@
+import {extensionSpecifications} from './extensions-specifications.generated.js'
 import {functionExtensions, themeExtensions, uiExtensions, ExtensionTypes} from '../../constants.js'
 import {schema} from '@shopify/cli-kit'
 
@@ -82,6 +83,10 @@ export type UIExtension = Extension & {
   buildDirectory: string
   entrySourceFilePath: string
   devUUID: string
+}
+
+export function extensionLimit(type: ExtensionTypes): number {
+  return extensionSpecifications.find((ext) => ext.identifier === type)?.options.registrationLimit ?? 0
 }
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
