@@ -145,7 +145,8 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
         if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
-        run: npx nx run features:test --skip-nx-cache
+        # bundler is needed for acceptance tests
+        run: gem install bundler && npx nx run features:test --skip-nx-cache
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
   pr-windows-and-mac:
