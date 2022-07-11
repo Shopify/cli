@@ -428,7 +428,7 @@ export function stringifyMessage(message: Message): string {
   }
 }
 
-const message = (content: Message, level: LogLevel = 'info') => {
+export const message = (content: Message, level: LogLevel = 'info') => {
   const stringifiedMessage = stringifyMessage(content)
   outputWhereAppropriate(level, consoleLog, stringifiedMessage)
 }

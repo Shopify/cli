@@ -1,6 +1,9 @@
 export interface UserConfiguration {
   name: string
   scopes: string[]
+  billing?: {
+    required: boolean
+  }
 }
 
 export type UserConfigurationEnvironment = 'development' | 'production'
