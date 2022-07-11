@@ -7,7 +7,7 @@ import {
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
 } from './extensions.js'
-import {AppConfigurationSchema, Web, WebConfigurationSchema, AppClass} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -69,7 +69,7 @@ export class AppLoader {
     const packageManager = await getPackageManager(this.appDirectory)
     const webs = await this.loadWebs()
 
-    const appClass = new AppClass(
+    const appClass = new App(
       name,
       'SHOPIFY_API_KEY',
       this.appDirectory,

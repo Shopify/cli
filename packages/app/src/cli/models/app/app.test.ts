@@ -1,4 +1,4 @@
-import {load, getUIExtensionRendererVersion, App} from './app.js'
+import {load, getUIExtensionRendererVersion, AppInterface} from './app.js'
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
@@ -7,7 +7,7 @@ import {file, path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {yarnLockfile, pnpmLockfile} from '@shopify/cli-kit/node/node-package-manager'
 
-const DEFAULT_APP: App = {
+const DEFAULT_APP: AppInterface = {
   name: 'App',
   idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   configuration: {

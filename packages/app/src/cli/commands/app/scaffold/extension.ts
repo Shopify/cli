@@ -9,7 +9,7 @@ import {
   functionExtensionTemplates,
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
-import {load as loadApp, App} from '../../../models/app/app.js'
+import {load as loadApp, AppInterface} from '../../../models/app/app.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
@@ -56,7 +56,7 @@ export default class AppScaffoldExtension extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: App = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory)
 
     await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
@@ -102,10 +102,10 @@ export default class AppScaffoldExtension extends Command {
   /**
    * If the type passed as flag is not valid because it has already been scaffolded
    * and we don't allow multiple extensions of that type, throw an error
-   * @param app {App} current App
+   * @param app {AppInterface} current App
    * @param type {string} extension type
    */
-  validateExtensionTypeLimit(app: App, type: string | undefined) {
+  validateExtensionTypeLimit(app: AppInterface, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
       throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
     }
@@ -136,10 +136,10 @@ export default class AppScaffoldExtension extends Command {
    * Some extension types like `theme` and `product_subscription` are limited to one per app
    * Use this method to retrieve a list of the limited types that have already been scaffolded
    *
-   * @param app {App} current App
+   * @param app {AppInterface} current App
    * @returns {string[]} list of extensions that are limited by quantity and are already scaffolded
    */
-  limitedExtensionsAlreadyScaffolded(app: App): string[] {
+  limitedExtensionsAlreadyScaffolded(app: AppInterface): string[] {
     const themeTypes = app.extensions.theme.map((ext) => ext.configuration.type)
     const uiTypes = app.extensions.ui.map((ext) => ext.configuration.type)
 

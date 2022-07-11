@@ -1,5 +1,5 @@
 import {extensionConfig, ExtensionConfigOptions} from './configuration.js'
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {path} from '@shopify/cli-kit'
@@ -54,7 +54,7 @@ describe('extensionConfig', () => {
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
       devUUID: 'devUUID',
     }
-    const app: App = {
+    const app: AppInterface = {
       name: 'myapp',
       idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory: appRoot,

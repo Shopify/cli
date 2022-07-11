@@ -1,5 +1,5 @@
 import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {path, output, file, error} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -7,7 +7,7 @@ import {zip} from '@shopify/cli-kit/node/archiver'
 import {Writable} from 'node:stream'
 
 interface BundleOptions {
-  app: App
+  app: AppInterface
   bundlePath: string
   identifiers: Identifiers
   bundle: boolean

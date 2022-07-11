@@ -1,7 +1,7 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
-import {App} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {path, session, output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
@@ -145,7 +145,7 @@ describe('info', () => {
   })
 })
 
-function mockApp(currentVersion = '2.2.2'): App {
+function mockApp(currentVersion = '2.2.2'): AppInterface {
   const nodeDependencies: {[key: string]: string} = {}
   nodeDependencies['@shopify/cli'] = currentVersion
   return {

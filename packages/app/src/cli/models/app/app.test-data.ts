@@ -1,8 +1,8 @@
-import {App, AppClass} from './app.js'
+import {AppInterface, App} from './app.js'
 import {UIExtension} from './extensions.js'
 
-export function testApp(app: Partial<App> = {}): App {
-  return new AppClass(
+export function testApp(app: Partial<AppInterface> = {}): AppInterface {
+  return new App(
     app.name ?? 'App',
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',

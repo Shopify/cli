@@ -1,5 +1,5 @@
 import {installAppDependencies} from './dependencies.js'
-import {App} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
@@ -25,7 +25,7 @@ beforeEach(() => {
 describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
     // Given
-    const app: App = {
+    const app: AppInterface = {
       name: 'App',
       idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       configuration: {

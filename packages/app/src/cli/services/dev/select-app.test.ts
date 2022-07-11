@@ -1,11 +1,11 @@
 import {createApp, selectOrCreateApp} from './select-app.js'
-import {App, WebType} from '../../models/app/app.js'
+import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
-const LOCAL_APP: App = {
+const LOCAL_APP: AppInterface = {
   idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '',
   packageManager: 'yarn',

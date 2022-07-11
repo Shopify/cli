@@ -31,7 +31,7 @@ export interface Web {
   configuration: WebConfiguration
 }
 
-export interface App {
+export interface AppInterface {
   name: string
   idEnvironmentVariableName: string
   directory: string
@@ -51,7 +51,7 @@ export interface App {
   updateDependencies: () => Promise<void>
 }
 
-export class AppClass implements App {
+export class App implements AppInterface {
   name: string
   idEnvironmentVariableName: string
   directory: string
@@ -113,7 +113,7 @@ export class AppClass implements App {
   }
 }
 
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
+export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
   const loader = new AppLoader({directory, mode})
   return loader.loaded()
 }
@@ -124,12 +124,12 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
  * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
- * @param app {App} App object containing the extension.
+ * @param app {AppInterface} App object containing the extension.
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,
-  app: App,
+  app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const fullName = getUIExtensionRendererDependency(uiExtensionType)?.name.replace('-react', '')

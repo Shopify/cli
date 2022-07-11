@@ -243,7 +243,7 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
 }
 
 /**
- * Each extension has a different ID in graphQL.
+ * Each extension has a different ID in GraphQL.
  * Sometimes the ID is the same as the type, sometimes it's different.
  * @param type {string} The extension type
  * @returns {string} The extension GraphQL ID
