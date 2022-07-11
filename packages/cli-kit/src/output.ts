@@ -311,12 +311,12 @@ export const clearCollectedLogs = () => {
  * Info messages don't get additional formatting.
  * Note: Info messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const info = (content: Message, logFunc: Logger = consoleLog) => {
+export const info = (content: Message, logger: Logger = consoleLog) => {
   const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
-  outputWhereAppropriate('info', logFunc, message)
+  outputWhereAppropriate('info', logger, message)
 }
 
 /**
@@ -324,25 +324,12 @@ export const info = (content: Message, logFunc: Logger = consoleLog) => {
  * Success messages receive a special formatting to make them stand out in the console.
  * Note: Success messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const success = (content: Message, logFunc: Logger = consoleLog) => {
+export const success = (content: Message, logger: Logger = consoleLog) => {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
-  outputWhereAppropriate('info', logFunc, message)
-}
-
-/**
- * Outputs a started message to the user.
- * Started messages receive a special formatting to make them stand out in the console.
- * Note: Started messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
- */
-export const started = (content: Message, logFunc: Logger = consoleLog) => {
-  const message = `${colors.yellow('❯')} ${stringifyMessage(content)}`
-  if (isUnitTest()) collectLog('started', content)
-  outputWhereAppropriate('info', logFunc, message)
+  outputWhereAppropriate('info', logger, message)
 }
 
 /**
@@ -350,25 +337,12 @@ export const started = (content: Message, logFunc: Logger = consoleLog) => {
  * Completed message receive a special formatting to make them stand out in the console.
  * Note: Completed messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const completed = (content: Message, logFunc: Logger = consoleLog) => {
+export const completed = (content: Message, logger: Logger = consoleLog) => {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
-  outputWhereAppropriate('info', logFunc, message)
-}
-
-/**
- * Outputs a failed message to the user.
- * Failed messages receive a special formatting to make them stand out in the console.
- * Note: Failed messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
- */
-export const failed = (content: Message, logFunc: Logger = consoleLog) => {
-  const message = `${colors.red('✖')} ${stringifyMessage(content)}`
-  if (isUnitTest()) collectLog('failed', content)
-  outputWhereAppropriate('info', logFunc, message)
+  outputWhereAppropriate('info', logger, message)
 }
 
 /**
@@ -376,12 +350,12 @@ export const failed = (content: Message, logFunc: Logger = consoleLog) => {
  * Debug messages don't get additional formatting.
  * Note: Debug messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const debug = (content: Message, logFunc: Logger = consoleLog) => {
+export const debug = (content: Message, logger: Logger = consoleLog) => {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
-  outputWhereAppropriate('debug', logFunc, message)
+  outputWhereAppropriate('debug', logger, message)
 }
 
 /**
@@ -389,12 +363,12 @@ export const debug = (content: Message, logFunc: Logger = consoleLog) => {
  * Warning messages receive a special formatting to make them stand out in the console.
  * Note: Warning messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
- * @param logFunc {Function} The logging function to use to output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const warn = (content: Message, logFunc: Logger = consoleWarn) => {
+export const warn = (content: Message, logger: Logger = consoleWarn) => {
   if (isUnitTest()) collectLog('warn', content)
   const message = colors.yellow(stringifyMessage(content))
-  outputWhereAppropriate('warn', logFunc, message)
+  outputWhereAppropriate('warn', logger, message)
 }
 
 /**
@@ -577,9 +551,9 @@ function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-function outputWhereAppropriate(logLevel: LogLevel, logFunc: Logger, message: string): void {
+function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
-    logFunc(message)
+    logger(message)
   }
   logToFile(message, logLevel.toUpperCase())
 }

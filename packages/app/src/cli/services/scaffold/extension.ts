@@ -166,9 +166,8 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    await ui.simpleTask({
+    await ui.task({
       title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
-      success: `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`,
       task: async () => {
         await file.mkdir(templateDownloadDir)
         await git.downloadRepository({
@@ -181,6 +180,9 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
         const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
         if (await file.exists(configYamlPath)) {
           await file.remove(configYamlPath)
+        }
+        return {
+          successMessage: `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`,
         }
       },
     })

@@ -68,9 +68,8 @@ async function init(options: InitOptions) {
       : templateDownloadDir
 
     const repoUrl = `${templateInfo.http}${branch}`
-    await ui.simpleTask({
+    await ui.task({
       title: `Downloading template from ${repoUrl}`,
-      success: `Downloaded template from ${repoUrl}`,
       task: async () => {
         await git.downloadRepository({
           repoUrl,
@@ -80,6 +79,7 @@ async function init(options: InitOptions) {
         if (!(await file.exists(path.join(templatePath, 'package.json')))) {
           throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
+        return {successMessage: `Downloaded template from ${repoUrl}`}
       },
     })
 
