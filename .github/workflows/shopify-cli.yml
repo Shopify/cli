@@ -123,7 +123,7 @@ jobs:
       - name: Set Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.1.2
+          ruby-version: ${{ env.RUBY_VERSION }}
       - name: Set Node.js on ubuntu environments
         uses: actions/setup-node@master
         with:
@@ -172,10 +172,15 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-      - name: Set Ruby
+      - name: Set Ruby on MacOS
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.1.2
+          ruby-version: ${{ env.RUBY_VERSION }}
+        if: ${{ matrix.os == 'macos-latest'}}
+      - name: Install Bundler for Windows
+        # setup-ruby is slow on Windows and is unnecessary for our case
+        run: gem install bundler
+        if: ${{ matrix.os == 'windows-latest'}}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
