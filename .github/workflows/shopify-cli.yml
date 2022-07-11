@@ -35,15 +35,15 @@ jobs:
         run: |
           git config --global user.email "development-lifecycle@shopify.com"
           git config --global user.name "Development Lifecycle"
-      - name: Set Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      - name: Set Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Install dependencies
@@ -70,6 +70,8 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
+      # Leaving this step for the "main" workflow so we can be sure things work
+      # on the supported Ruby version before releasing
       - name: Set Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -120,10 +122,6 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-      - name: Set Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.1.2
       - name: Set Node.js on ubuntu environments
         uses: actions/setup-node@master
         with:
@@ -172,10 +170,6 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-      - name: Set Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.1.2
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
