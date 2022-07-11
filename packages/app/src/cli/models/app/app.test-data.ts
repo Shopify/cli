@@ -1,8 +1,18 @@
 import {AppInterface, App} from './app.js'
 import {UIExtension} from './extensions.js'
 
+/**
+ * Subclass of App used exclusively for testing.
+ * Use it to mock any method of App that has side effects
+ */
+class TestApp extends App {
+  updateDependencies(): Promise<void> {
+    return Promise.resolve()
+  }
+}
+
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
-  return new App(
+  const newApp = new TestApp(
     app.name ?? 'App',
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
@@ -17,6 +27,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.dotenv,
     app.errors,
   )
+  return newApp
 }
 
 export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {

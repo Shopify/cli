@@ -1,15 +1,16 @@
 /* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension.js'
 import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants.js'
-import {AppInterface, load as loadApp} from '../../../models/app/app.js'
+import {load as loadApp} from '../../../models/app/app-loader.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
+import {testApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker} from '@shopify/cli-kit'
 
 beforeAll(() => {
   vi.mock('../../../constants.js')
-  vi.mock('../../../models/app/app.js')
+  vi.mock('../../../models/app/app-loader.js')
   vi.mock('../../../prompts/scaffold/extension.js')
   vi.mock('../../../services/scaffold/extension.js')
 })
@@ -93,21 +94,7 @@ function mockSuccessfulCommandExecution(outputConfig: {
   additionalHelp?: string
 }) {
   const appRoot = '/'
-  const app: AppInterface = {
-    name: 'myapp',
-    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
-    directory: appRoot,
-    packageManager: 'yarn',
-    configurationPath: path.join(appRoot, 'shopify.app.toml'),
-    configuration: {
-      scopes: '',
-    },
-    webs: [],
-    nodeDependencies: {},
-    extensions: {ui: [], function: [], theme: []},
-    updateDependencies: vi.fn(),
-    hasExtensions: vi.fn(),
-  }
+  const app = testApp({directory: appRoot, configurationPath: path.join(appRoot, 'shopify.app.toml')})
 
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)
   vi.mocked(loadApp).mockResolvedValue(app)

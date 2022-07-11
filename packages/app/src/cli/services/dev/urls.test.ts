@@ -1,30 +1,7 @@
 import {updateURLs, generateURL} from './urls.js'
-import {AppInterface, WebType} from '../../models/app/app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
-
-const LOCAL_APP: AppInterface = {
-  name: 'my-app',
-  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
-  directory: '',
-  packageManager: 'yarn',
-  configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products'},
-  webs: [
-    {
-      directory: '',
-      configuration: {
-        type: WebType.Backend,
-        commands: {dev: ''},
-      },
-    },
-  ],
-  nodeDependencies: {},
-  extensions: {ui: [], theme: [], function: []},
-  updateDependencies: vi.fn(),
-  hasExtensions: vi.fn(),
-}
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {

@@ -7,7 +7,7 @@ import {
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
 } from './extensions.js'
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -40,6 +40,11 @@ export class AppErrors {
   toJSON(): output.Message[] {
     return Object.values(this.errors)
   }
+}
+
+export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
+  const loader = new AppLoader({directory, mode})
+  return loader.loaded()
 }
 
 export class AppLoader {

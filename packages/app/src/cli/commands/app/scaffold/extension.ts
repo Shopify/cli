@@ -9,7 +9,8 @@ import {
   functionExtensionTemplates,
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
-import {load as loadApp, AppInterface} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
+import {load as loadApp} from '../../../models/app/app-loader.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
@@ -57,7 +58,6 @@ export default class AppScaffoldExtension extends Command {
     const {flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
-
     await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
     const extensionFlavor = flags.template

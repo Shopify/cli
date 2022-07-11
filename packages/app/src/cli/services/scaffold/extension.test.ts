@@ -9,7 +9,7 @@ import {
   getUIExtensionRendererDependency,
   UIExtensionTypes,
 } from '../../constants.js'
-import {load as loadApp} from '../../models/app/app.js'
+import {load as loadApp} from '../../models/app/app-loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
