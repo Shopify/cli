@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.1.0
+
+### Patch Changes
+
+- Updated dependencies [740f73ac]
+- Updated dependencies [d17770e8]
+- Updated dependencies [d17770e8]
+- Updated dependencies [de8ee02d]
+- Updated dependencies [45f0f0b9]
+- 53c46773: Replaces btoa() with Buffer.from()
+  - @shopify/cli-kit@3.1.0
+
 ## 3.0.27
 
 ### Patch Changes
