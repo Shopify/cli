@@ -7,18 +7,13 @@ import {
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
 } from './extensions.js'
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
 
 export type AppLoaderMode = 'strict' | 'report'
-
-export interface AppLoaderConstructorArgs {
-  directory: string
-  mode: AppLoaderMode
-}
 
 export class AppErrors {
   private errors: {
@@ -42,7 +37,16 @@ export class AppErrors {
   }
 }
 
-export class AppLoader {
+export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
+  const loader = new AppLoader({directory, mode})
+  return loader.loaded()
+}
+
+interface AppLoaderConstructorArgs {
+  directory: string
+  mode: AppLoaderMode
+}
+class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private appDirectory = ''

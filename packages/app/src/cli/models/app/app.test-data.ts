@@ -1,8 +1,8 @@
-import {AppInterface, App} from './app.js'
+import {App, AppInterface} from './app.js'
 import {UIExtension} from './extensions.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
-  return new App(
+  const newApp = new App(
     app.name ?? 'App',
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
@@ -17,6 +17,10 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.dotenv,
     app.errors,
   )
+  if (app.updateDependencies) {
+    Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
+  }
+  return newApp
 }
 
 export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {

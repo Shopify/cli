@@ -5,6 +5,7 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 
@@ -101,19 +102,13 @@ const EXTENSION_C: FunctionExtension = {
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
-  return {
+  return testApp({
     name: 'my-app',
-    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: '/app',
-    packageManager: 'yarn',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products'},
-    webs: [],
-    nodeDependencies: {},
     extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
-    updateDependencies: vi.fn(),
-    hasExtensions: vi.fn(),
-  }
+  })
 }
 
 const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[], identifiers: any = {}) => {

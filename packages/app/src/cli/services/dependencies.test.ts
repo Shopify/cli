@@ -1,5 +1,6 @@
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface} from '../models/app/app.js'
+import {testApp} from '../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
@@ -18,32 +19,12 @@ beforeEach(() => {
     }
   })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
-
-  vi.mock('../models/app/app')
 })
 
 describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
     // Given
-    const app: AppInterface = {
-      name: 'App',
-      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
-      configuration: {
-        scopes: '',
-      },
-      packageManager: 'yarn',
-      directory: '/tmp/project',
-      extensions: {
-        ui: [],
-        function: [],
-        theme: [],
-      },
-      webs: [],
-      nodeDependencies: {},
-      configurationPath: '/tmp/project/shopify.app.toml',
-      updateDependencies: vi.fn(),
-      hasExtensions: vi.fn(),
-    }
+    const app: AppInterface = testApp({updateDependencies: () => Promise.resolve()})
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}
     vi.mocked(ui.newListr).mockReturnValue(list)

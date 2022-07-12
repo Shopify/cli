@@ -1,5 +1,5 @@
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {AppErrors, AppLoader, AppLoaderMode} from './app-loader.js'
+import {AppErrors} from './loader.js'
 import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
 import {path, schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -111,11 +111,6 @@ export class App implements AppInterface {
       this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
     )
   }
-}
-
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
-  const loader = new AppLoader({directory, mode})
-  return loader.loaded()
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
