@@ -98,7 +98,7 @@ jobs:
       - name: Acceptance tests
         # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
         run: |
-          ruby -e "p \`npx -s nx print-affected --target=test --select=projects\`.strip.empty? || exit(1)" ||
+          ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
           npx nx run features:test --skip-nx-cache
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
