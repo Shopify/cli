@@ -1,4 +1,4 @@
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {error, file, output, path} from '@shopify/cli-kit'
 import {
   addLatestNPMDependencies,
@@ -6,6 +6,7 @@ import {
   DependencyType,
   getPackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'

@@ -1,7 +1,8 @@
 import {previewInWorker, previewInNode} from '../../services/preview.js'
 import {hydrogenFlags} from '../../flags.js'
 import {path, cli} from '@shopify/cli-kit'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Preview extends Command {
   static description = 'Run a Hydrogen storefront locally in a worker environment'
