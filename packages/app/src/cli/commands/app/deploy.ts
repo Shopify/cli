@@ -2,7 +2,8 @@ import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 import {path, cli} from '@shopify/cli-kit'
 
 export default class Deploy extends Command {

@@ -14,8 +14,9 @@ import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an Extension'

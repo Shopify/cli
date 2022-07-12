@@ -1,7 +1,8 @@
 import devService from '../../services/dev.js'
 import {hydrogenFlags} from '../../flags.js'
 import {path, cli} from '@shopify/cli-kit'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Dev extends Command {
   static description = 'Run a Hydrogen storefront locally for development'
