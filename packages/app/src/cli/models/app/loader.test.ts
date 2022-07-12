@@ -1,4 +1,4 @@
-import {load} from './app-loader.js'
+import {load} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'

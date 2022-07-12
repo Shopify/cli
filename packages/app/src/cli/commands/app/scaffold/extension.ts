@@ -10,7 +10,7 @@ import {
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {load as loadApp} from '../../../models/app/app-loader.js'
+import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'

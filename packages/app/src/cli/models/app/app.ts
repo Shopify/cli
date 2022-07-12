@@ -1,5 +1,5 @@
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {AppErrors} from './app-loader.js'
+import {AppErrors} from './loader.js'
 import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
 import {path, schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
