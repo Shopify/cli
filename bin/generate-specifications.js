@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 
-const apiKey = "2290c8492efaf47c196be52ab88b67f7"
+const apiKey = "" // Add API KEY with full access
 
 const token = await session.ensureAuthenticatedPartners()
 const query = api.graphql.ExtensionSpecificationsQuery
