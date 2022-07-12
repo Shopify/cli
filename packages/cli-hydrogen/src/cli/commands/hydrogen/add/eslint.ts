@@ -1,8 +1,9 @@
 import {hydrogenFlags} from '../../../flags.js'
 import {addESLint} from '../../../services/eslint.js'
 import {load as loadApp, HydrogenApp} from '../../../models/hydrogen.js'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {cli, path} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AddESLint extends Command {
   static flags = {

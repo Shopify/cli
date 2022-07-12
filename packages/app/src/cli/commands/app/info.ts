@@ -1,8 +1,9 @@
 import {appFlags} from '../../flags.js'
 import {load as loadApp, AppInterface} from '../../models/app/app.js'
 import {Format, info} from '../../services/info.js'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AppInfo extends Command {
   static description = 'Print basic information about your app and extensions'

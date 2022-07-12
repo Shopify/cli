@@ -99,8 +99,8 @@
       "-h"
     ],
     "hooks": {
-      "prerun": "dist/hooks/prerun",
-      "postrun": "dist/hooks/postrun"
+      "prerun": "@shopify/cli-kit/node/hooks/prerun",
+      "postrun": "@shopify/cli-kit/node/hooks/postrun"
     }
   }
 }
