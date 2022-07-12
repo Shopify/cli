@@ -15,11 +15,6 @@ import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-k
 
 export type AppLoaderMode = 'strict' | 'report'
 
-export interface AppLoaderConstructorArgs {
-  directory: string
-  mode: AppLoaderMode
-}
-
 export class AppErrors {
   private errors: {
     [key: string]: output.Message
@@ -47,7 +42,11 @@ export async function load(directory: string, mode: AppLoaderMode = 'strict'): P
   return loader.loaded()
 }
 
-export class AppLoader {
+interface AppLoaderConstructorArgs {
+  directory: string
+  mode: AppLoaderMode
+}
+class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private appDirectory = ''
