@@ -7,7 +7,7 @@ import {
   isFunctionExtensionType,
   functionExtensionTemplates,
   uiExtensions,
-  UIExtensionTypes,
+  themeExtensions,
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {load as loadApp, App} from '../../../models/app/app.js'
@@ -147,15 +147,12 @@ export default class AppScaffoldExtension extends Command {
 
     const allScaffolded = [...themeTypes, ...uiTypes]
 
-    const alreadyAtLimit: UIExtensionTypes[] = []
-    uiExtensions.types.forEach((ext) => {
-      const total = allScaffolded.filter((aa) => aa === ext).length
-      if (total >= extensionLimit(ext)) alreadyAtLimit.push(ext)
-    })
+    const extensionTypes: ExtensionTypes[] = [...uiExtensions.types, ...themeExtensions.types]
 
-    // const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
-    // const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
-    return alreadyAtLimit
+    return extensionTypes.filter((ext) => {
+      const total = allScaffolded.filter((aa) => aa === ext).length
+      return total >= extensionLimit(ext)
+    })
   }
 
   formatSuccessfulRunMessage(

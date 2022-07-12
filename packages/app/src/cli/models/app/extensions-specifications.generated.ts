@@ -1,8 +1,9 @@
+// automatically generated file
 export const extensionSpecifications = [
   {
     name: 'Checkout Post Purchase',
     identifier: 'checkout_post_purchase',
-    gated: true,
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -16,7 +17,7 @@ export const extensionSpecifications = [
   {
     name: 'Checkout Extension',
     identifier: 'checkout_ui_extension',
-    gated: true,
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 5,
@@ -30,7 +31,7 @@ export const extensionSpecifications = [
   {
     name: 'Product Subscription',
     identifier: 'subscription_management',
-    gated: true,
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -56,7 +57,7 @@ export const extensionSpecifications = [
   {
     name: 'Online Store - App Theme Extension',
     identifier: 'theme_app_extension',
-    gated: true,
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
