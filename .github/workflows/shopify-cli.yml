@@ -96,7 +96,10 @@ jobs:
       - name: Unit tests
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
       - name: Acceptance tests
-        run: npx nx run features:test --skip-nx-cache
+        # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
+        run: |
+          ruby -e "p \`npx -s nx print-affected --target=test --select=projects\`.strip.empty? || exit(1)" ||
+          npx nx run features:test --skip-nx-cache
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
   pr-ubuntu:
