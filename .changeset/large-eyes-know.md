@@ -3,4 +3,4 @@
 '@shopify/cli-kit': patch
 ---
 
-[FEATURE] Add query to fetch shop by domain
+Exit without error message on deliberate user actions

@@ -1,30 +1,9 @@
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {AppErrors, AppLoader, AppLoaderMode} from './app-loader.js'
-import {getUIExtensionRendererDependency, UIExtensionTypes, ExtensionTypes} from '../../constants.js'
+import {AppErrors} from './loader.js'
+import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
 import {path, schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-
-export interface IdentifiersExtensions {
-  [localIdentifier: string]: string
-}
-
-export interface Identifiers {
-  /** Application's API Key */
-  app: string
-
-  /**
-   * The extensions' unique identifiers.
-   */
-  extensions: IdentifiersExtensions
-
-  /**
-   * The extensions' numeric identifiers (expressed as a string).
-   */
-  extensionIds: IdentifiersExtensions
-}
-
-export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
@@ -52,7 +31,7 @@ export interface Web {
   configuration: WebConfiguration
 }
 
-export interface App {
+export interface AppInterface {
   name: string
   idEnvironmentVariableName: string
   directory: string
@@ -68,29 +47,70 @@ export interface App {
     function: FunctionExtension[]
   }
   errors?: AppErrors
+  hasExtensions: () => boolean
+  updateDependencies: () => Promise<void>
 }
 
-/**
- * Reads the dependencies from the app's package.json and creates a copy
- * of the app with the list of dependencies updated.
- * @param app {App} App whose Node dependencies will be updated.
- * @returns {Promise<App>} The app with the Node dependencies updated.
- */
-export async function updateDependencies(app: App): Promise<App> {
-  const nodeDependencies = await getDependencies(path.join(app.directory, 'package.json'))
-  return {
-    ...app,
-    nodeDependencies,
+export class App implements AppInterface {
+  name: string
+  idEnvironmentVariableName: string
+  directory: string
+  packageManager: PackageManager
+  configuration: AppConfiguration
+  configurationPath: string
+  nodeDependencies: {[key: string]: string}
+  webs: Web[]
+  dotenv?: DotEnvFile
+  errors?: AppErrors
+  extensions: {
+    ui: UIExtension[]
+    theme: ThemeExtension[]
+    function: FunctionExtension[]
   }
-}
 
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<App> {
-  const loader = new AppLoader({directory, mode})
-  return loader.loaded()
-}
+  // eslint-disable-next-line max-params
+  constructor(
+    name: string,
+    idEnvironmentVariableName: string,
+    directory: string,
+    packageManager: PackageManager,
+    configuration: AppConfiguration,
+    configurationPath: string,
+    nodeDependencies: {[key: string]: string},
+    webs: Web[],
+    ui: UIExtension[],
+    theme: ThemeExtension[],
+    functions: FunctionExtension[],
+    dotenv?: DotEnvFile,
+    errors?: AppErrors,
+  ) {
+    this.name = name
+    this.idEnvironmentVariableName = idEnvironmentVariableName
+    this.directory = directory
+    this.packageManager = packageManager
+    this.configuration = configuration
+    this.configurationPath = configurationPath
+    this.nodeDependencies = nodeDependencies
+    this.webs = webs
+    this.dotenv = dotenv
+    this.extensions = {
+      ui,
+      theme,
+      function: functions,
+    }
+    this.errors = errors
+  }
 
-export function hasExtensions(app: App): boolean {
-  return app.extensions.ui.length !== 0 || app.extensions.function.length !== 0 || app.extensions.theme.length !== 0
+  async updateDependencies() {
+    const nodeDependencies = await getDependencies(path.join(this.directory, 'package.json'))
+    this.nodeDependencies = nodeDependencies
+  }
+
+  hasExtensions(): boolean {
+    return (
+      this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
+    )
+  }
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
@@ -99,12 +119,12 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
  * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
- * @param app {App} App object containing the extension.
+ * @param app {AppInterface} App object containing the extension.
  * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,
-  app: App,
+  app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const fullName = getUIExtensionRendererDependency(uiExtensionType)?.name.replace('-react', '')
@@ -121,34 +141,4 @@ export async function getUIExtensionRendererVersion(
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: fullName, version: packageContent.version}
-}
-
-/**
- * Each extension has a different ID in graphQL.
- * Sometimes the ID is the same as the type, sometimes it's different.
- * @param type {string} The extension type
- * @returns {string} The extension GraphQL ID
- */
-export const extensionGraphqlId = (type: ExtensionTypes) => {
-  switch (type) {
-    case 'product_subscription':
-      return 'SUBSCRIPTION_MANAGEMENT'
-    case 'checkout_ui_extension':
-      return 'CHECKOUT_UI_EXTENSION'
-    case 'checkout_post_purchase':
-      return 'CHECKOUT_POST_PURCHASE'
-    case 'pos_ui_extension':
-      return 'POS_UI_EXTENSION'
-    case 'theme':
-      return 'THEME_APP_EXTENSION'
-    case 'web_pixel_extension':
-      return 'WEB_PIXEL_EXTENSION'
-    case 'product_discounts':
-    case 'order_discounts':
-    case 'shipping_discounts':
-    case 'payment_methods':
-    case 'shipping_rate_presenter':
-      // As we add new extensions, this bug will force us to add a new case here.
-      return type
-  }
 }

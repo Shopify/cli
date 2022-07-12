@@ -1,18 +1,11 @@
 // CLI
 import {findUpAndReadPackageJson} from './node-package-manager.js'
+import {errorHandler} from './error-handler.js'
 import {initializeCliKitStore} from '../store.js'
 import {initiateLogging} from '../output.js'
 import {isDebug} from '../environment/local.js'
 import constants, {bugsnagApiKey} from '../constants.js'
-import {reportEvent} from '../analytics.js'
-import {
-  mapper as errorMapper,
-  handler as errorHandler,
-  AbortSilent,
-  shouldReport as shouldReportError,
-} from '../error.js'
-import {moduleDirectory, normalize} from '../path.js'
-import StackTracey from 'stacktracey'
+import {moduleDirectory} from '../path.js'
 import {run, settings, flush} from '@oclif/core'
 import Bugsnag from '@bugsnag/js'
 
@@ -44,22 +37,7 @@ export async function runCLI(options: RunCLIOptions) {
     })
   }
 
-  run(undefined, options.moduleURL)
-    .then(flush)
-    .catch((error: Error): Promise<void | Error> => {
-      if (error instanceof AbortSilent) {
-        process.exit(1)
-      }
-      // eslint-disable-next-line promise/no-nesting
-      return errorMapper(error)
-        .then((error: Error) => {
-          return errorHandler(error)
-        })
-        .then(reportError)
-        .then(() => {
-          process.exit(1)
-        })
-    })
+  run(undefined, options.moduleURL).then(flush).catch(errorHandler)
 }
 
 /**
@@ -78,35 +56,6 @@ export async function runCreateCLI(options: RunCLIOptions) {
     process.argv.splice(initIndex, 0, 'init')
   }
   await runCLI(options)
-}
-
-const reportError = async (errorToReport: Error): Promise<Error> => {
-  await reportEvent({errorMessage: errorToReport.message})
-  if (settings.debug || !shouldReportError(errorToReport)) return errorToReport
-
-  let mappedError: Error
-
-  // eslint-disable-next-line no-prototype-builtins
-  if (Error.prototype.isPrototypeOf(errorToReport)) {
-    mappedError = new Error(errorToReport.message)
-    const mappedStacktrace = new StackTracey(errorToReport)
-      .clean()
-      .items.map((item) => {
-        const filePath = normalize(item.file).replace('file:/', '/').replace('C:/', '')
-        return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
-      })
-      .join('\n')
-    mappedError.stack = `Error: ${errorToReport.message}\n${mappedStacktrace}`
-  } else if (typeof errorToReport === 'string') {
-    mappedError = new Error(errorToReport)
-  } else {
-    mappedError = new Error('Unknown error')
-  }
-
-  await new Promise((resolve, reject) => {
-    Bugsnag.notify(mappedError, undefined, resolve)
-  })
-  return mappedError
 }
 
 export default runCLI

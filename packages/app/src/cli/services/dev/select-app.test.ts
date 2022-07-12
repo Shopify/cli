@@ -1,14 +1,13 @@
 import {createApp, selectOrCreateApp} from './select-app.js'
-import {App, WebType} from '../../models/app/app.js'
+import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
-const LOCAL_APP: App = {
-  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
+const LOCAL_APP: AppInterface = testApp({
   directory: '',
-  packageManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {scopes: 'read_products'},
   webs: [
@@ -21,9 +20,7 @@ const LOCAL_APP: App = {
     },
   ],
   name: 'my-app',
-  nodeDependencies: {},
-  extensions: {ui: [], theme: [], function: []},
-}
+})
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}

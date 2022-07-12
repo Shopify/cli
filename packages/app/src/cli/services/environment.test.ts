@@ -4,7 +4,7 @@ import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment, DeployAppNotFound} from './environment.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {App, WebType} from '../models/app/app.js'
+import {WebType} from '../models/app/app.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -103,11 +103,9 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
 }
 
-const LOCAL_APP: App = {
+const LOCAL_APP = testApp({
   name: 'my-app',
-  idEnvironmentVariableName: 'SHOPIFY_API_KEY',
   directory: '/app',
-  packageManager: 'yarn',
   configurationPath: '/shopify.app.toml',
   configuration: {scopes: 'read_products'},
   webs: [
@@ -119,9 +117,8 @@ const LOCAL_APP: App = {
       },
     },
   ],
-  nodeDependencies: {},
   extensions: {ui: [EXTENSION_A], theme: [], function: []},
-}
+})
 
 const INPUT: DevEnvironmentOptions = {
   app: LOCAL_APP,

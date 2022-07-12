@@ -1,15 +1,15 @@
 import initPrompt, {templateURLMap} from '../prompts/init.js'
 import initService from '../services/init.js'
-import {Command, Flags} from '@oclif/core'
-import {path, cli, analytics, error, output} from '@shopify/cli-kit'
+import {Flags} from '@oclif/core'
+import {path, cli, error, output} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
-const InvalidGithubRepository = () => {
+export const InvalidGithubRepository = () => {
   return new error.Abort(
     'Only GitHub repository references are supported. e.g.: https://github.com/Shopify/<repository>/[subpath]#[branch]',
   )
 }
-
-const UnsupportedTemplateAlias = () => {
+export const UnsupportedTemplateAlias = () => {
   return new error.Abort(
     output.content`Only ${Object.keys(templateURLMap)
       .map((alias) => output.content`${output.token.yellow(alias)}`.value)
@@ -17,6 +17,8 @@ const UnsupportedTemplateAlias = () => {
   )
 }
 export default class Init extends Command {
+  static aliases = ['create-app']
+
   static flags = {
     ...cli.globalFlags,
     name: Flags.string({
@@ -52,7 +54,6 @@ export default class Init extends Command {
   }
 
   async run(): Promise<void> {
-    this.startEvent()
     const {flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
@@ -70,13 +71,6 @@ export default class Init extends Command {
       local: flags.local,
       directory,
     })
-    await analytics.reportEvent()
-  }
-
-  async startEvent(): Promise<void> {
-    const commandIndex = process.argv.indexOf('init')
-    const args = process.argv.slice(commandIndex + 1)
-    analytics.start({command: 'create-app', args})
   }
 
   validateTemplateValue(template: string | undefined) {

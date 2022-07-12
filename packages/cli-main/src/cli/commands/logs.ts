@@ -1,4 +1,4 @@
-import {Command} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 import {output} from '@shopify/cli-kit'
 
 export default class Logs extends Command {

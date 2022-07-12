@@ -10,6 +10,7 @@ const common = [
   '--require steps/**/*.ts',
   '--require lib/**/*.ts',
   '--format @cucumber/pretty-formatter',
+  '--parallel 3',
 ]
 
 if (isNode14) {

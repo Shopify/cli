@@ -25,6 +25,9 @@ export const UIExtensionConfigurationSchema = schema.define.object({
   extensionPoints: schema.define.array(schema.define.string()).optional(),
   capabilities: schema.define.any().optional(),
 
+  // Only for CheckoutUiExtension
+  configurationSchema: schema.define.any().optional(),
+
   // Only for WebPixel
   runtimeContext: schema.define.string().optional(),
   version: schema.define.string().optional(),

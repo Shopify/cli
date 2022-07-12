@@ -11,7 +11,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {App} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {error as kitError, output, session, store, ui, environment, error} from '@shopify/cli-kit'
@@ -51,7 +51,7 @@ const StoreNotFoundError = (storeName: string, org: Organization) => {
 }
 
 export interface DevEnvironmentOptions {
-  app: App
+  app: AppInterface
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -178,12 +178,12 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
 }
 
 export interface DeployEnvironmentOptions {
-  app: App
+  app: AppInterface
   reset: boolean
 }
 
 interface DeployEnvironmentOutput {
-  app: App
+  app: AppInterface
   token: string
   partnersOrganizationId: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
@@ -192,13 +192,13 @@ interface DeployEnvironmentOutput {
 
 /**
  * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
- * @param app {App} The local app object
+ * @param app {AppInterface} The local app object
  * @param token {string} The token to use to access the Partners API
  * @returns {Promise<OrganizationApp | undefined>}
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
  */
-async function fetchDevAppAndPrompt(app: App, token: string): Promise<OrganizationApp | undefined> {
+async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
   const devAppId = store.cliKitStore().getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
@@ -262,7 +262,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
 }
 
 export async function fetchOrganizationAndFetchOrCreateApp(
-  app: App,
+  app: AppInterface,
   token: string,
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
   const orgId = await selectOrg(token)
@@ -360,7 +360,7 @@ async function selectOrg(token: string): Promise<string> {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showReusedValues(org: string, app: App, store: string) {
+function showReusedValues(org: string, app: AppInterface, store: string) {
   output.info('\nUsing your previous dev settings:')
   output.info(`Org:        ${org}`)
   output.info(`App:        ${app.name}`)
