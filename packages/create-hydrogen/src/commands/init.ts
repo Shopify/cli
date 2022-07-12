@@ -20,6 +20,7 @@ export default class Init extends Command {
       char: 'a',
       env: 'SHOPIFY_FLAG_LANGUAGE',
       hidden: false,
+      options: ['js', 'ts'],
     }),
     path: Flags.string({
       char: 'p',
