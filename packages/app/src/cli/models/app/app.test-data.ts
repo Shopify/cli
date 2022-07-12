@@ -1,11 +1,7 @@
 import {App, AppInterface} from './app.js'
 import {UIExtension} from './extensions.js'
 
-type TestApp = Partial<AppInterface> & {
-  updateDependencies?: () => Promise<void>
-}
-
-export function testApp(app: TestApp): AppInterface {
+export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
     app.name ?? 'App',
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
@@ -22,12 +18,7 @@ export function testApp(app: TestApp): AppInterface {
     app.errors,
   )
   if (app.updateDependencies) {
-    newApp.__proto__.updateDependencies = app.updateDependencies
-  } else {
-    newApp.__proto__.updateDependencies = () => {
-      console.log('TEST')
-      return Promise.resolve()
-    }
+    Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
   }
   return newApp
 }

@@ -24,7 +24,7 @@ beforeEach(() => {
 describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {
     // Given
-    const app: AppInterface = testApp()
+    const app: AppInterface = testApp({updateDependencies: () => Promise.resolve()})
     const listRun = vi.fn().mockResolvedValue(undefined)
     const list: any = {run: listRun}
     vi.mocked(ui.newListr).mockReturnValue(list)
