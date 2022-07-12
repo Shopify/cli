@@ -66,8 +66,11 @@ export async function handler(error: Error): Promise<Error> {
   let fatal: Fatal
   if (isFatal(error)) {
     fatal = error as Fatal
+  } else if (typeof error === 'string') {
+    fatal = new Bug(error as string)
   } else {
     fatal = new Bug(error.message)
+    fatal.stack = error.stack
   }
 
   if (fatal.type === FatalErrorType.Bug) {
