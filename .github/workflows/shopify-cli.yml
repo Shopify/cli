@@ -86,20 +86,20 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Lint
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Type-check
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Unit tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
         # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
         run: |
           ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
-          npx nx run features:test --skip-nx-cache
+          npx nx run features:test
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
   pr-ubuntu:
@@ -139,21 +139,21 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Type-check
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Lint
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Unit tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
         # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
         run: |
           ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
-          npx nx run features:test --skip-nx-cache
+          npx nx run features:test
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
   pr-windows-and-mac:
@@ -199,6 +199,6 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Unit tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features --skip-nx-cache
+        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
