@@ -61,7 +61,7 @@ const reportError = async (error: Error): Promise<Error> => {
     reportableError = new Error('Unknown error')
   }
 
-  const formattedStacktrace = new StackTracey(reportableError.stack ?? '')
+  const formattedStacktrace = new StackTracey(stacktrace ?? '')
     .clean()
     .items.map((item) => {
       const filePath = normalize(item.file).replace('file:/', '/').replace('C:/', '')
