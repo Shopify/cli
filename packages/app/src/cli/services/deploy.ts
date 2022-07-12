@@ -9,7 +9,7 @@ import {
 
 import {ensureDeployEnvironment} from './environment.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
-import {App, getUIExtensionRendererVersion, hasExtensions} from '../models/app/app.js'
+import {AppInterface, getUIExtensionRendererVersion} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, UIExtension} from '../models/app/extensions.js'
 import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
@@ -28,14 +28,14 @@ const RendererNotFoundBug = (extension: string) => {
 
 interface DeployOptions {
   /** The app to be built and uploaded */
-  app: App
+  app: AppInterface
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {
-  if (!hasExtensions(options.app)) {
+  if (!options.app.hasExtensions()) {
     output.newline()
     output.info(`No extensions to deploy to Shopify Partners yet.`)
     return
@@ -117,7 +117,7 @@ async function outputCompletionMessage({
   registrations,
   validationErrors,
 }: {
-  app: App
+  app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   partnersOrganizationId: string
   identifiers: Identifiers
@@ -166,7 +166,7 @@ async function outputCompletionMessage({
   }
 }
 
-async function configFor(extension: UIExtension, app: App) {
+async function configFor(extension: UIExtension, app: AppInterface) {
   const type = extension.type as UIExtensionTypes
   switch (extension.type as UIExtensionTypes) {
     case 'checkout_post_purchase':
@@ -185,6 +185,8 @@ async function configFor(extension: UIExtension, app: App) {
         capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        configuration_schema: extension.configuration.configurationSchema,
         localization: await loadLocalesConfig(extension.directory),
       }
     }

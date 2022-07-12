@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {App, load as loadApp} from '../../models/app/app.js'
+import {AppInterface, load as loadApp} from '../../models/app/app.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {path, cli} from '@shopify/cli-kit'
@@ -22,7 +22,7 @@ export default class Deploy extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Deploy)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: App = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory)
     await deploy({app, reset: flags.reset})
   }
 }

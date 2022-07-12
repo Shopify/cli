@@ -1,5 +1,5 @@
 import {selectStore} from './select-store.js'
-import {fetchAllStores} from './fetch.js'
+import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -63,12 +63,13 @@ describe('selectStore', async () => {
   it('returns store if cachedStoreName and is valid', async () => {
     // Given
     const fqdn = STORE1.shopDomain
+    vi.mocked(fetchStoreByDomain).mockResolvedValueOnce({organization: ORG1, store: STORE1})
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
 
     // Then
-    expect(got).toEqual(STORE1.shopDomain)
+    expect(got).toEqual(STORE1)
     expect(selectStorePrompt).not.toHaveBeenCalled()
   })
 
@@ -80,20 +81,21 @@ describe('selectStore', async () => {
     const got = await selectStore([STORE1, STORE2], ORG1, 'token')
 
     // Then
-    expect(got).toEqual(STORE1.shopDomain)
+    expect(got).toEqual(STORE1)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('throws if cachedApiKey is invalid', async () => {
+  it('prompts to select a new store if cached store fqdn is invalid', async () => {
     // Given
-    const fqdn = 'invalid-store'
+    const fqdn = 'invalid-store-domain'
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+    vi.mocked(fetchStoreByDomain).mockResolvedValueOnce({organization: ORG1, store: undefined})
 
     // When
-    const got = selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
 
     // Then
-    expect(got).rejects.toThrow('Could not find invalid-store')
+    expect(got).toEqual(STORE1)
   })
 
   it('prompts user to convert store to non-transferable if selection is invalid', async () => {
@@ -105,7 +107,7 @@ describe('selectStore', async () => {
     const got = await selectStore([STORE1, STORE2], ORG1, 'token')
 
     // Then
-    expect(got).toEqual(STORE2.shopDomain)
+    expect(got).toEqual(STORE2)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 

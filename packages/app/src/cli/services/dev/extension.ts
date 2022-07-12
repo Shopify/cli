@@ -1,4 +1,4 @@
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {extensionConfig} from '../../utilities/extensions/configuration.js'
@@ -33,7 +33,7 @@ export interface ExtensionDevOptions {
   /**
    * The app that contains the extension.
    */
-  app: App
+  app: AppInterface
 
   /**
    * The app identifier

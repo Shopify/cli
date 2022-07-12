@@ -47,6 +47,7 @@ After(function () {
  * Before running the acceptance tests, we
  */
 BeforeAll({timeout: 2 * 60 * 1000}, async function () {
+  if (process.env.SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS) return
   console.log('Building CLIs before running tests...')
   await exec('yarn', ['build'], {cwd: directories.root})
 })

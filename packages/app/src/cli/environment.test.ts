@@ -2,7 +2,7 @@ import {useExtensionsCLISources} from './environment.js'
 import {describe, expect, test} from 'vitest'
 
 describe('useExtensionsCLISources', () => {
-  test('retusn true when the SHOPIFY_USE_EXTENSIONS_CLI_SOURCES is truthy', () => {
+  test('return true when the SHOPIFY_USE_EXTENSIONS_CLI_SOURCES is truthy', () => {
     // Given
     const environment = {SHOPIFY_USE_EXTENSIONS_CLI_SOURCES: '1'}
 

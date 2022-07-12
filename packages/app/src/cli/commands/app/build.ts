@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {App, load as loadApp} from '../../models/app/app.js'
+import {AppInterface, load as loadApp} from '../../models/app/app.js'
 import build from '../../services/build.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -29,7 +29,7 @@ export default class Build extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: App = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory)
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})
   }
 }

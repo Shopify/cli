@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {load as loadApp, App} from '../../models/app/app.js'
+import {load as loadApp, AppInterface} from '../../models/app/app.js'
 import dev from '../../services/dev.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -67,7 +67,7 @@ export default class Dev extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: App = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
 
     await dev({

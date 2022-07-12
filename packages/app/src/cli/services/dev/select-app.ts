@@ -1,6 +1,6 @@
 import {fetchAppFromApiKey} from './fetch.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {api, error, output} from '@shopify/cli-kit'
 
@@ -9,14 +9,14 @@ import {api, error, output} from '@shopify/cli-kit'
  * If a cachedAppId is provided, we check if it is valid and return it. If it's not valid, ignore it.
  * If there is no valid app yet, prompt the user to select one from the list or create a new one.
  * If no apps exists, we automatically prompt the user to create a new one.
- * @param app {App} Current local app information
+ * @param app {AppInterface} Current local app information
  * @param apps {OrganizationApp[]} List of remote available apps
  * @param orgId {string} Current Organization
  * @param cachedAppId {string} Cached app apikey
  * @returns {Promise<OrganizationApp>} The selected (or created) app
  */
 export async function selectOrCreateApp(
-  localApp: App,
+  localApp: AppInterface,
   apps: OrganizationApp[],
   org: Organization,
   token: string,
@@ -34,7 +34,7 @@ export async function selectOrCreateApp(
   return app
 }
 
-export async function createApp(org: Organization, app: App, token: string): Promise<OrganizationApp> {
+export async function createApp(org: Organization, app: AppInterface, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(app.name)
 
   const type = org.appsNext ? 'undecided' : await appTypePrompt()

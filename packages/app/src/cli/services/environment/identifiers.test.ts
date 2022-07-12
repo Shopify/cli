@@ -3,7 +3,7 @@ import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
@@ -100,7 +100,7 @@ const EXTENSION_C: FunctionExtension = {
   inputQueryPath: () => '/function/input.graphql',
 }
 
-const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {
+const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
   return {
     name: 'my-app',
     idEnvironmentVariableName: 'SHOPIFY_API_KEY',
@@ -111,6 +111,8 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     webs: [],
     nodeDependencies: {},
     extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    updateDependencies: vi.fn(),
+    hasExtensions: vi.fn(),
   }
 }
 

@@ -1,5 +1,5 @@
 import {Extension} from './extensions.js'
-import {App} from './app'
+import {AppInterface} from './app'
 import {dotEnvFileNames} from '../../constants.js'
 import {path, string} from '@shopify/cli-kit'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
@@ -26,20 +26,20 @@ export interface Identifiers {
 export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
 type UpdateAppIdentifiersCommand = 'dev' | 'deploy'
 interface UpdateAppIdentifiersOptions {
-  app: App
+  app: AppInterface
   identifiers: UuidOnlyIdentifiers
   command: UpdateAppIdentifiersCommand
 }
 /**
  * Given an app and a set of identifiers, it persists the identifiers in the .env files.
  * @param options {UpdateAppIdentifiersOptions} Options.
- * @returns {App} An copy of the app with the environment updated to reflect the updated identifiers.
+ * @returns {AppInterface} An copy of the app with the environment updated to reflect the updated identifiers.
  */
 
 export async function updateAppIdentifiers(
   {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
-): Promise<App> {
+): Promise<AppInterface> {
   let dotenvFile = app.dotenv
   if (!dotenvFile) {
     dotenvFile = {
@@ -63,13 +63,14 @@ export async function updateAppIdentifiers(
   if (write) {
     await writeDotEnv(dotenvFile)
   }
-  return {
-    ...app,
-    dotenv: dotenvFile,
-  }
+
+  // eslint-disable-next-line require-atomic-updates
+  app.dotenv = dotenvFile
+  return app
 }
+
 interface GetAppIdentifiersOptions {
-  app: App
+  app: AppInterface
 }
 /**
  * Given an app and a environment, it fetches the ids from the environment

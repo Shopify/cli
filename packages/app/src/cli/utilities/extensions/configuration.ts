@@ -1,5 +1,5 @@
 import {nodeExtensionsCLIPath} from './cli.js'
-import {App, getUIExtensionRendererVersion} from '../../models/app/app.js'
+import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
 import {error, path} from '@shopify/cli-kit'
@@ -11,7 +11,7 @@ const RendererNotFoundBug = (extension: string) => {
   )
 }
 export interface ExtensionConfigOptions {
-  app: App
+  app: AppInterface
   apiKey?: string
   extensions: UIExtension[]
   buildDirectory?: string

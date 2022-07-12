@@ -10,7 +10,7 @@ import {
   FunctionExtensionTypes,
   versions,
 } from '../../constants.js'
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
@@ -31,7 +31,7 @@ async function getTemplatePath(name: string): Promise<string> {
 interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
   name: string
   extensionType: TExtensionTypes
-  app: App
+  app: AppInterface
   cloneUrl?: string
   extensionFlavor?: string
 }
@@ -213,7 +213,7 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
   }
 }
 
-async function ensureExtensionDirectoryExists({name, app}: {name: string; app: App}): Promise<string> {
+async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
   const hyphenizedName = string.hyphenize(name)
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {
