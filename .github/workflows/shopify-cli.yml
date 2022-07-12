@@ -96,7 +96,10 @@ jobs:
       - name: Unit tests
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
-        run: npx nx run features:test
+        # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
+        run: |
+          ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
+          npx nx run features:test
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
   pr-ubuntu:
@@ -147,7 +150,10 @@ jobs:
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
-        run: npx nx run features:test
+        # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
+        run: |
+          ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
+          npx nx run features:test
         env:
           SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
   pr-windows-and-mac:
