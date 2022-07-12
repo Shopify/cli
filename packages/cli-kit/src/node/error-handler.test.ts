@@ -1,4 +1,4 @@
-import {globalCommandErrorHandler} from './global-error-handler'
+import {errorHandler} from './error-handler'
 import * as error from '../error'
 import * as outputMocker from '../testing/output'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -7,13 +7,13 @@ beforeEach(() => {
   vi.mock('node:process')
 })
 
-describe('globalCommandErrorHandler', () => {
+describe('errorHandler', () => {
   it('finishes the execution without exiting the proccess when cancel execution exception is raised', () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    globalCommandErrorHandler(new error.CancelExecution())
+    errorHandler(new error.CancelExecution())
 
     // Then
     expect(process.exit).toBeCalledTimes(0)
@@ -25,7 +25,7 @@ describe('globalCommandErrorHandler', () => {
     const outputMock = outputMocker.mockAndCaptureOutput()
 
     // When
-    globalCommandErrorHandler(new error.CancelExecution('Custom message'))
+    errorHandler(new error.CancelExecution('Custom message'))
 
     // Then
     expect(outputMock.info()).toMatch('✨  Custom message')
@@ -37,7 +37,7 @@ describe('globalCommandErrorHandler', () => {
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    globalCommandErrorHandler(new error.AbortSilent())
+    errorHandler(new error.AbortSilent())
 
     // Then
     expect(process.exit).toBeCalledTimes(1)

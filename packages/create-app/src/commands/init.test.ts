@@ -2,12 +2,12 @@ import Init, {InvalidGithubRepository, UnsupportedTemplateAlias} from './init.js
 import initPrompt from '../prompts/init.js'
 import initService from '../services/init.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {globalCommandErrorHandler} from '@shopify/cli-kit/node/global-error-handler'
+import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 
 beforeEach(() => {
   vi.mock('../prompts/init')
   vi.mock('../services/init')
-  vi.mock('@shopify/cli-kit/node/global-error-handler')
+  vi.mock('@shopify/cli-kit/node/error-handler')
 
   vi.mocked(initPrompt).mockResolvedValue({name: 'name', template: 'http://test.es'})
 })
@@ -41,19 +41,19 @@ describe('create app command', () => {
   })
 
   it('throw an error when using a non supported template alias name', async () => {
-    vi.mocked(globalCommandErrorHandler).mockReturnValue(undefined)
+    vi.mocked(errorHandler).mockReturnValue(undefined)
 
     // When
     await Init.run(['--template', 'java'])
 
-    expect(globalCommandErrorHandler).toHaveBeenCalledWith(UnsupportedTemplateAlias())
+    expect(errorHandler).toHaveBeenCalledWith(UnsupportedTemplateAlias())
   })
 
-  it.skip('throw an error when using a non github url repo', async () => {
+  it('throw an error when using a non github url repo', async () => {
     // When
-    const result = Init.run(['--template', 'http://nongithub.com/myrepo'])
+    await Init.run(['--template', 'http://nongithub.com/myrepo'])
 
     // Then
-    await expect(result).rejects.toThrow(InvalidGithubRepository())
+    expect(errorHandler).toHaveBeenCalledWith(InvalidGithubRepository())
   })
 })

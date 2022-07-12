@@ -1,6 +1,6 @@
 // CLI
 import {findUpAndReadPackageJson} from './node-package-manager.js'
-import {globalCommandErrorHandler} from './global-error-handler.js'
+import {errorHandler} from './error-handler.js'
 import {initializeCliKitStore} from '../store.js'
 import {initiateLogging} from '../output.js'
 import {isDebug} from '../environment/local.js'
@@ -37,7 +37,7 @@ export async function runCLI(options: RunCLIOptions) {
     })
   }
 
-  run(undefined, options.moduleURL).then(flush).catch(globalCommandErrorHandler)
+  run(undefined, options.moduleURL).then(flush).catch(errorHandler)
 }
 
 /**

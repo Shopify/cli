@@ -3,7 +3,7 @@ import {
   CancelExecution,
   mapper as errorMapper,
   shouldReport as shouldReportError,
-  handler as errorHandler,
+  handler,
 } from '../error.js'
 import {info} from '../output.js'
 import {reportEvent} from '../analytics.js'
@@ -12,7 +12,7 @@ import {settings} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag from '@bugsnag/js'
 
-export function globalCommandErrorHandler(error: Error & {exitCode?: number | undefined}) {
+export function errorHandler(error: Error & {exitCode?: number | undefined}) {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
       info(`✨  ${error.message}`)
@@ -22,7 +22,7 @@ export function globalCommandErrorHandler(error: Error & {exitCode?: number | un
   } else {
     return errorMapper(error)
       .then((error: Error) => {
-        return errorHandler(error)
+        return handler(error)
       })
       .then(reportError)
       .then(() => {
