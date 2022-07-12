@@ -1,7 +1,7 @@
 /* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension.js'
 import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants.js'
-import {load as loadApp} from '../../../models/app/app-loader.js'
+import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {testApp} from '../../../models/app/app.test-data.js'
@@ -10,7 +10,7 @@ import {path, outputMocker} from '@shopify/cli-kit'
 
 beforeAll(() => {
   vi.mock('../../../constants.js')
-  vi.mock('../../../models/app/app-loader.js')
+  vi.mock('../../../models/app/loader.js')
   vi.mock('../../../prompts/scaffold/extension.js')
   vi.mock('../../../services/scaffold/extension.js')
 })
