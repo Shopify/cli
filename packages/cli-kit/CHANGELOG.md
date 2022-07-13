@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.2.0
+
+### Patch Changes
+
+- 86b04187: Exit without error message on deliberate user actions
+
 ## 3.1.0
 
 ### Minor Changes
