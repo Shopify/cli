@@ -1,3 +1,4 @@
+import {extensionSpecifications} from './models/app/extensions-specifications.generated.js'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export const configurationFileNames = {
@@ -59,17 +60,16 @@ export function isFunctionExtensionType(extensionType: string) {
   return (functionExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
-export const publicUIExtensions = {
-  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
-} as const
-
+// THESE ARE THE TYPES OF EXTENSIONS THAT CAN BE CREATED, EVEN GATED ONES
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension'],
+  types: [
+    'product_subscription',
+    'checkout_ui_extension',
+    'checkout_post_purchase',
+    'web_pixel_extension',
+    'pos_ui_extension',
+  ],
 } as const
-
-export const activeUIExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension'].filter,
-}
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
 
@@ -96,7 +96,12 @@ export type FunctionExtensionTypes = typeof functionExtensions.types[number]
 
 export const extensions = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
-  publicTypes: [...themeExtensions.types, ...publicUIExtensions.types, ...publicFunctionExtensions.types],
+  publicTypes: [...themeExtensions.types, ...publicExtensions(), ...publicFunctionExtensions.types],
+}
+
+function publicExtensions(): UIExtensionTypes[] {
+  const types = extensionSpecifications.filter((ext) => ext.gated === false).map((ext) => ext.identifier)
+  return types as UIExtensionTypes[]
 }
 
 export type ExtensionTypes = typeof extensions.types[number]

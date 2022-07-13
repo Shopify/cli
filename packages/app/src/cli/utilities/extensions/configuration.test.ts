@@ -96,7 +96,7 @@ describe('extensionConfig', () => {
           type: 'checkout_post_purchase',
           version: '2.1.5',
           metafields: [],
-          surface: 'post_purchase',
+          surface: 'checkout',
           // eslint-disable-next-line @typescript-eslint/naming-convention
           node_executable: 'node-path',
           // eslint-disable-next-line @typescript-eslint/naming-convention
