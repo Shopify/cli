@@ -72,8 +72,8 @@ describe('createApp', () => {
     const variables = {
       org: 2,
       title: 'app-name',
-      appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
-      redir: ['http://localhost:3456'],
+      appUrl: 'https://example.com',
+      redir: ['https://example.com/api/auth'],
       type: 'custom',
     }
 
@@ -149,8 +149,8 @@ describe('selectOrCreateApp', () => {
     const variables = {
       org: 1,
       title: 'app-name',
-      appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
-      redir: ['http://localhost:3456'],
+      appUrl: 'https://example.com',
+      redir: ['https://example.com/api/auth'],
       type: 'undecided',
     }
 
