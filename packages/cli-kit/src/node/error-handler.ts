@@ -8,9 +8,26 @@ import {
 import {info} from '../output.js'
 import {reportEvent} from '../analytics.js'
 import {normalize} from '../path.js'
-import {settings} from '@oclif/core'
+import {settings, Errors} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag from '@bugsnag/js'
+
+/**
+ * Some transitive packages like @oclif/core might report
+ * errors through the process.emitWarning(error) API and ignore or map them
+ * to an user-friendly error that lacks the original context that's useful
+ * for debugging.
+ * This method subscribes to those events and report the errors that are an instance
+ * of Errors.CLIError.
+ * {@link https://github.com/oclif/core/blob/main/src/config/config.ts#L244}
+ */
+export async function subscribeToProcessEmittedErrors() {
+  process.on('warning', async (error) => {
+    if (error instanceof Errors.CLIError) {
+      await errorHandler(error)
+    }
+  })
+}
 
 export function errorHandler(error: Error & {exitCode?: number | undefined}) {
   if (error instanceof CancelExecution) {
