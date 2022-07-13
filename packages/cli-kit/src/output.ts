@@ -417,6 +417,7 @@ export const error = async (content: Fatal) => {
     }
   }
   outputString += footer
+  if (isUnitTest()) collectLog('error', outputString)
   outputWhereAppropriate('error', consoleError, outputString)
 }
 

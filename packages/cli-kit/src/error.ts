@@ -1,5 +1,4 @@
-import {Message, stringifyMessage, error as outputError} from './output.js'
-import {Errors} from '@oclif/core'
+import {Message, stringifyMessage} from './output.js'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -10,7 +9,7 @@ export {AbortSignal} from 'abort-controller'
 
 sourceMapSupport.install()
 
-enum FatalErrorType {
+export enum FatalErrorType {
   Abort,
   AbortSilent,
   Bug,
@@ -55,52 +54,4 @@ export class Bug extends Fatal {
   constructor(message: Message, tryMessage: string | null = null) {
     super(message, FatalErrorType.Bug, tryMessage)
   }
-}
-
-/**
- * A function that handles errors that blow up in the CLI.
- * @param error Error to be handled.
- * @returns A promise that resolves with the error passed.
- */
-export async function handler(error: Error): Promise<Error> {
-  let fatal: Fatal
-  if (isFatal(error)) {
-    fatal = error as Fatal
-  } else if (typeof error === 'string') {
-    fatal = new Bug(error as string)
-  } else {
-    fatal = new Bug(error.message)
-    fatal.stack = error.stack
-  }
-
-  if (fatal.type === FatalErrorType.Bug) {
-    fatal.stack = error.stack
-  }
-
-  await outputError(fatal)
-  return Promise.resolve(error)
-}
-
-export function mapper(error: Error): Promise<Error> {
-  if (error instanceof Errors.CLIError) {
-    const mappedError = new Abort(error.message)
-    mappedError.stack = error.stack
-    return Promise.resolve(mappedError)
-  } else {
-    return Promise.resolve(error)
-  }
-}
-
-export function isFatal(error: Error): boolean {
-  return Object.prototype.hasOwnProperty.call(error, 'type')
-}
-
-export function shouldReport(error: Error): boolean {
-  if (!isFatal(error)) {
-    return true
-  }
-  if ((error as Fatal).type === FatalErrorType.Bug) {
-    return true
-  }
-  return false
 }
