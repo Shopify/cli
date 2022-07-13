@@ -1,5 +1,16 @@
 # @shopify/create-app
 
+## 3.2.0
+
+### Minor Changes
+
+- 9c10736a: Stop using semantic versioning for @shopify/cli-kit and pin the version from all the dependent packages
+
+### Patch Changes
+
+- Updated dependencies [86b04187]
+  - @shopify/cli-kit@3.2.0
+
 ## 3.1.0
 
 ### Patch Changes

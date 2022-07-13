@@ -1,5 +1,16 @@
 # @shopify/theme
 
+## 0.6.0
+
+### Minor Changes
+
+- 9c10736a: Stop using semantic versioning for @shopify/cli-kit and pin the version from all the dependent packages
+
+### Patch Changes
+
+- Updated dependencies [86b04187]
+  - @shopify/cli-kit@3.2.0
+
 ## 0.5.14
 
 ### Patch Changes
