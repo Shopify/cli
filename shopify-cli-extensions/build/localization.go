@@ -130,7 +130,12 @@ func reportAndUpdateLocalizationStatus(result Result, report ResultHandler) {
 func WatchLocalization(ctx context.Context, extension core.Extension, report ResultHandler) {
 	directory := filepath.Join(".", extension.Development.RootDir, "locales")
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
-		// The extension does not have a locales directory.
+		msg := fmt.Sprintf(
+			"extension must provide a locales directory at: ./%s",
+			directory,
+		)
+		reportAndUpdateLocalizationStatus(Result{false, msg, extension}, report)
+
 		return
 	}
 
