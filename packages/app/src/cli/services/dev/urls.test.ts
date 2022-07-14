@@ -45,16 +45,16 @@ describe('updateURLs', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const expectedVariables = {
       apiKey: 'apiKey',
-      appUrl: 'http://localhost:3456',
+      appUrl: 'https://example.com',
       redir: [
-        'http://localhost:3456/auth/callback',
-        'http://localhost:3456/auth/shopify/callback',
-        'http://localhost:3456/api/auth/callback',
+        'https://example.com/auth/callback',
+        'https://example.com/auth/shopify/callback',
+        'https://example.com/api/auth/callback',
       ],
     }
 
     // When
-    await updateURLs('apiKey', 'http://localhost:3456', 'token')
+    await updateURLs('apiKey', 'https://example.com', 'token')
 
     // Then
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
@@ -65,7 +65,7 @@ describe('updateURLs', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
 
     // When
-    const got = updateURLs('apiKey', 'http://localhost:3456', 'token')
+    const got = updateURLs('apiKey', 'https://example.com', 'token')
 
     // Then
     expect(got).rejects.toThrow(new error.Abort(`Boom!`))
