@@ -65,7 +65,8 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', function (req, socket, head) {
     const target = match(rules, req)
-    proxy.ws(req, socket, head, {target})
+    if (target && req.url?.includes('/extensions')) return proxy.ws(req, socket, head, {target})
+    socket.destroy()
   })
 
   await Promise.all([
