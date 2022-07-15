@@ -60,3 +60,17 @@ extensions:
         main: 'src/index.js'
     capabilities:
       network_access: true
+  - uuid: 00000000-0000-0000-0000-000000000005
+    type: customer_accounts_ui_extension_next
+    title: Customer Accounts UI Test Extension Next
+    node_executable: packages/shopify-cli-extensions/cli.js
+    surface: customer_accounts
+    development:
+      root_dir: 'tmp/customer_accounts_ui_extension_next'
+      build_dir: 'build'
+      template: 'javascript-react'
+      renderer:
+        name: '@shopify/app'
+        version: '^1.0.0'
+      entries:
+        main: 'src/index.js'
