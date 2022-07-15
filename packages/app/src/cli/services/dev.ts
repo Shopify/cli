@@ -118,7 +118,7 @@ async function dev(options: DevOptions) {
   }
   await analytics.reportEvent()
 
-  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
+  await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {

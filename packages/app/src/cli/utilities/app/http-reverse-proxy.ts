@@ -1,7 +1,7 @@
-// eslint-disable-next-line import/extensions
-import {fastifyHttpProxy} from './fastify-http-proxy/index.js'
-import {port, output, error, fastify} from '@shopify/cli-kit'
+import {port, output, error} from '@shopify/cli-kit'
+import httpProxy from 'http-proxy'
 import {Writable} from 'stream'
+import * as http from 'http'
 
 export interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
@@ -32,30 +32,16 @@ export interface ReverseHTTPProxyTarget {
  * @returns {Promise<ReverseHTTPProxy>} A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
-  tunnelUrl: string,
   portNumber: number | undefined = undefined,
   proxyTargets: ReverseHTTPProxyTarget[],
   additionalProcesses: output.OutputProcess[],
 ): Promise<void> {
-  const server = fastify.fastify()
+  const rules: {[key: string]: string} = {}
+
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
       const targetPort = await port.getRandomPort()
-      server.register(fastifyHttpProxy, {
-        upstream: `http://localhost:${targetPort}`,
-        prefix: target.pathPrefix,
-        rewritePrefix: target.pathPrefix,
-        http2: false,
-        websocket: target.logPrefix === 'extensions',
-        replyOptions: {
-          // Update `host` header to be tunnelURL when forwarding to extensions binary.
-          // The binary uses this to build extensions URLs and they must use the tunnelURL always.
-          rewriteRequestHeaders: (_originalReq, headers) => {
-            const host = tunnelUrl.replace(/^https?:\/\//, '')
-            return {...headers, host}
-          },
-        },
-      })
+      rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
       return {
         prefix: target.logPrefix,
         action: async (stdout, stderr, signal) => {
@@ -67,14 +53,37 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
 
   const availablePort = portNumber ?? (await port.getRandomPort())
 
+  const proxy = httpProxy.createProxy()
+  const server = http.createServer(function (req, res) {
+    const target = match(rules, req)
+    if (target) return proxy.web(req, res, {target})
+
+    res.statusCode = 500
+    res.end('The request url and path did not match any of the listed rules!')
+  })
+
+  // Capture websocket requests and forward them to the proxy
+  server.on('upgrade', function (req, socket, head) {
+    const target = match(rules, req)
+    proxy.ws(req, socket, head, {target})
+  })
+
   await Promise.all([
     output.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
       abortSignal.addEventListener('abort', async () => {
         await server.close()
       })
     }),
-    server.listen({
-      port: availablePort,
-    }),
+    server.listen(availablePort),
   ])
+}
+
+function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
+  const path: string = req.url ?? '/'
+
+  for (const pathPrefix in rules) {
+    if (path.startsWith(pathPrefix)) return rules[pathPrefix]
+  }
+
+  return undefined
 }
