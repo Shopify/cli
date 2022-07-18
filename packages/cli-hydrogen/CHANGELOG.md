@@ -1,5 +1,12 @@
 # @shopify/cli-hydrogen
 
+## 3.2.1
+
+### Patch Changes
+
+- fc28c30e: Fix timeout on hydrogen dev
+  - @shopify/cli-kit@3.2.1
+
 ## 3.2.0
 
 ### Minor Changes

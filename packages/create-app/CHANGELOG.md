@@ -1,5 +1,12 @@
 # @shopify/create-app
 
+## 3.2.1
+
+### Patch Changes
+
+- ed5f9a8f: Remind to check the README after creation
+  - @shopify/cli-kit@3.2.1
+
 ## 3.2.0
 
 ### Minor Changes
