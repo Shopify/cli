@@ -1,6 +1,49 @@
 {
-  "name": "Shopify",
-  "type": "node",
-  "request": "launch",
-  "cwd": "${workspaceFolder}",
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+      {
+          "type": "node",
+          "request": "launch",
+          "name": "shopify app dev",
+          "runtimeExecutable": "yarn",
+          "runtimeArgs": [
+              "shopify",
+              "app",
+              "dev",
+              "--path=${input:appDir}"
+          ],
+          "env": {
+            "DEBUG": "\"*\"",
+            "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1"
+          },
+          "skipFiles": [
+              "<node_internals>/**"
+          ],
+      },
+    ],
+    "inputs": [
+      {
+        "id": "appDir",
+        "type": "promptString",
+        "description": "App Directory: ",
+      },
+      {
+        "id": "extensionName",
+        "type": "promptString",
+        "description": "Extension Name: ",
+      },
+      {
+        "id": "extensionType",
+        "type": "promptString",
+        "default": "checkout_ui_extension",
+      },
+      {
+        "id": "extensionTemplate",
+        "type": "promptString",
+        "default": "react",
+      }
+    ]
 }
