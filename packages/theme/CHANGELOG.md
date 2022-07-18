@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 0.6.0
 
 ### Minor Changes

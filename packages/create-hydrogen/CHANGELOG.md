@@ -1,5 +1,12 @@
 # @shopify/create-hydrogen
 
+## 3.3.0
+
+### Patch Changes
+
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 3.2.0
 
 ### Minor Changes
