@@ -51,7 +51,7 @@ async function init(options: InitOptions) {
 
     output.info(output.content`❯ Downloading template from ${repoUrl}`)
     await git.downloadRepository({
-      repoUrl,
+      repoUrl: githubRepo.urlWithAuth,
       destination: templateDownloadDir,
       shallow: true,
       outputHandler: (_, stdout, stderr) => {

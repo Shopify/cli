@@ -84,6 +84,7 @@ export function parseRepoUrl(src: string) {
 
 export interface GithubRepoReference {
   repoBaseUrl: string
+  urlWithAuth: string
   branch?: string
   filePath?: string
 }
@@ -93,9 +94,17 @@ export function parseGithubRepoReference(src: string): GithubRepoReference {
   const branch = url.hash ? url.hash.slice(1) : undefined
   const [_, user, repo, ...repoPath] = url.pathname.split('/')
   const filePath = repoPath.length > 0 ? repoPath.join('/') : undefined
+  const repoBaseUrl = `${url.origin}/${user}/${repo}`
+  let urlWithAuth: string
+  if (url.username && url.password) {
+    urlWithAuth = `${url.protocol}//${url.username}:${url.password}@${url.host}/${user}/${repo}`
+  } else {
+    urlWithAuth = repoBaseUrl
+  }
 
   return {
-    repoBaseUrl: `${url.origin}/${user}/${repo}`,
+    repoBaseUrl,
+    urlWithAuth,
     branch,
     filePath,
   }
