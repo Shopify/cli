@@ -1,16 +1,27 @@
-import {
-  AbortSilent,
-  CancelExecution,
-  mapper as errorMapper,
-  shouldReport as shouldReportError,
-  handler,
-} from '../error.js'
-import {info} from '../output.js'
+import {AbortSilent, CancelExecution, Fatal, Bug, Abort, FatalErrorType} from '../error.js'
+import {info, error as logError} from '../output.js'
 import {reportEvent} from '../analytics.js'
 import {normalize} from '../path.js'
-import {settings} from '@oclif/core'
+import {settings, Errors} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag from '@bugsnag/js'
+
+/**
+ * Some transitive packages like @oclif/core might report
+ * errors through the process.emitWarning(error) API and ignore or map them
+ * to an user-friendly error that lacks the original context that's useful
+ * for debugging.
+ * This method subscribes to those events and report the errors that are an instance
+ * of Errors.CLIError.
+ * {@link https://github.com/oclif/core/blob/main/src/config/config.ts#L244}
+ */
+export async function subscribeToProcessEmittedErrors() {
+  process.on('warning', async (error) => {
+    if (error instanceof Errors.CLIError) {
+      await errorHandler(error)
+    }
+  })
+}
 
 export function errorHandler(error: Error & {exitCode?: number | undefined}) {
   if (error instanceof CancelExecution) {
@@ -20,20 +31,18 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}) {
   } else if (error instanceof AbortSilent) {
     process.exit(1)
   } else {
-    return errorMapper(error)
-      .then((error: Error) => {
-        return handler(error)
-      })
-      .then(reportError)
+    return mapper(error)
+      .then(outputError)
+      .then(reportErrorToBugsnag)
       .then(() => {
         process.exit(1)
       })
   }
 }
 
-const reportError = async (error: Error): Promise<Error> => {
+async function reportErrorToBugsnag(error: Error): Promise<Error> {
   await reportEvent({errorMessage: error.message})
-  if (settings.debug || !shouldReportError(error)) return error
+  if (settings.debug || !shouldReport(error)) return error
 
   let reportableError: Error
   let stacktrace: string | undefined
@@ -82,4 +91,52 @@ const reportError = async (error: Error): Promise<Error> => {
     })
   }
   return reportableError
+}
+
+/**
+ * A function that handles errors that blow up in the CLI.
+ * @param error Error to be handled.
+ * @returns A promise that resolves with the error passed.
+ */
+export async function outputError(error: Error): Promise<Error> {
+  let fatal: Fatal
+  if (isFatal(error)) {
+    fatal = error as Fatal
+  } else if (typeof error === 'string') {
+    fatal = new Bug(error as string)
+  } else {
+    fatal = new Bug(error.message)
+    fatal.stack = error.stack
+  }
+
+  if (fatal.type === FatalErrorType.Bug) {
+    fatal.stack = error.stack
+  }
+
+  await logError(fatal)
+  return Promise.resolve(error)
+}
+
+export function mapper(error: Error): Promise<Error> {
+  if (error instanceof Errors.CLIError) {
+    const mappedError = new Abort(error.message)
+    mappedError.stack = error.stack
+    return Promise.resolve(mappedError)
+  } else {
+    return Promise.resolve(error)
+  }
+}
+
+export function isFatal(error: Error): boolean {
+  return Object.prototype.hasOwnProperty.call(error, 'type')
+}
+
+export function shouldReport(error: Error): boolean {
+  if (!isFatal(error)) {
+    return true
+  }
+  if ((error as Fatal).type === FatalErrorType.Bug) {
+    return true
+  }
+  return false
 }

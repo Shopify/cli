@@ -1,6 +1,8 @@
-import {errorHandler} from './error-handler'
+import {errorHandler, outputError} from './error-handler'
+import {unstyled} from '../output.js'
 import * as error from '../error'
 import * as outputMocker from '../testing/output'
+import {Bug, Abort} from '../error.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 beforeEach(() => {
@@ -42,5 +44,60 @@ describe('errorHandler', () => {
     // Then
     expect(process.exit).toBeCalledTimes(1)
     expect(process.exit).toBeCalledWith(1)
+  })
+})
+
+beforeEach(() => {
+  vi.mock('./output')
+})
+
+describe('outputError', () => {
+  it('error output uses same input error instance when the error type is abort', async () => {
+    // Given
+    const abortError = new Abort('error message', 'try message')
+    const outputMock = outputMocker.mockAndCaptureOutput()
+
+    // When
+    await outputError(abortError)
+
+    // Then
+    expect(unstyled(outputMock.error())).toMatchInlineSnapshot(`
+      "
+      ━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          error message
+
+          What to try:
+          try message
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      "
+    `)
+    outputMock.clear()
+  })
+
+  it('error output uses same input error instance when the error type is bug', async () => {
+    // Given
+    const bugError = new Bug('error message', 'try message')
+    const outputMock = outputMocker.mockAndCaptureOutput()
+
+    // When
+    await outputError(bugError)
+
+    // Then
+    expect(unstyled(outputMock.error())).not.toBe('')
+    outputMock.clear()
+  })
+
+  it('error output uses a Bug instance instance when the error type not extends from fatal', async () => {
+    // Given
+    const unknownError = new Error('Unknown')
+    const outputMock = outputMocker.mockAndCaptureOutput()
+
+    // When
+    await outputError(unknownError)
+
+    // Then
+    expect(unstyled(outputMock.error())).not.toBe('')
+    outputMock.clear()
   })
 })
