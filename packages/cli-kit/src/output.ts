@@ -584,13 +584,47 @@ export function shouldDisplayColors(): boolean {
 
 type LogType = keyof typeof constants.logStreams
 
-export async function pageLogs(logStream: string) {
+export async function pageLogs(logStream: string, {lastCommand}: {lastCommand: boolean}) {
   const logDir = constants.paths.directories.cache.path()
   const logType = camelize(logStream) as LogType
   const logFile = pathJoin(logDir, constants.logStreams[logType])
   // Ensure file exists in case they deleted it or something
   fileTouchSync(logFile)
-  await page(logFile)
+  if (lastCommand) {
+    printLastCommand(logFile)
+  } else {
+    await page(logFile)
+  }
+}
+
+function printLastCommand(logFile: string): void {
+  const contents = fileReadSync(logFile).split('\n')
+  const uuids = contents.slice().reverse().map(logfileLineUUID).filter((uuid) => uuid)
+  const firstUuid = uuids[0]
+  const secondUuid = uuids.find((uuid) => uuid !== firstUuid)
+  if (secondUuid) {
+    consoleLog(relevantLines(contents, secondUuid))
+  }
+}
+
+function relevantLines(contents: string[], relevantUuid: string): string {
+  let inRelevantLine = false
+  return contents.filter((line: string) => {
+    const uuid = logfileLineUUID(line)
+    if (uuid === relevantUuid) {
+      inRelevantLine = true
+      return true
+    } else if (!uuid) {
+      return inRelevantLine
+    } else {
+      inRelevantLine = false
+    }
+  }).join('\n')
+}
+
+function logfileLineUUID(line: string): string | null {
+  const match = line.match(/^\[\S+ ([0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}) [A-Z]+\]/)
+  return match && match[1]
 }
 
 /**

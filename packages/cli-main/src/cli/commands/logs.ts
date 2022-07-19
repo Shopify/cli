@@ -7,6 +7,12 @@ export default class Logs extends Command {
 
   static flags = {
     ...cli.globalFlags,
+    'last-command': Flags.boolean({
+      hidden: false,
+      description: 'View logs for the most recent command only',
+      default: false,
+      env: 'SHOPIFY_FLAG_LAST_COMMAND'
+    }),
     stream: Flags.string({
       hidden: false,
       description: 'Choose which logs to view',
