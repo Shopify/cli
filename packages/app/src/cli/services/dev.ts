@@ -1,12 +1,9 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generateURL, updateURLs} from './dev/urls.js'
+import {updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
-import {
-  ReverseHTTPProxyTarget,
-  runConcurrentHTTPProcessesAndPathForwardTraffic,
-} from '../utilities/app/http-reverse-proxy.js'
+import {ReverseHTTPProxyTarget} from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
@@ -61,7 +58,8 @@ async function dev(options: DevOptions) {
     url = matches[1]
   } else {
     proxyPort = await port.getRandomPort()
-    url = await generateURL(options.commandConfig.plugins, proxyPort)
+    // url = await generateURL(options.commandConfig.plugins, proxyPort)
+    url = 'http://localhost'
   }
 
   const backendPort = await port.getRandomPort()
@@ -71,8 +69,9 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   if (frontendConfig || backendConfig) {
-    if (options.update) await updateURLs(identifiers.app, url, token)
-    outputAppURL(options.update, storeFqdn, url)
+    const finalUrl = `${url}:${proxyPort}`
+    if (options.update) await updateURLs(identifiers.app, finalUrl, token)
+    outputAppURL(options.update, storeFqdn, finalUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -108,6 +107,7 @@ async function dev(options: DevOptions) {
       apiSecret: (apiSecret as string) ?? '',
       hostname: url,
       backendPort,
+      frontendPort: proxyPort,
     })
     proxyTargets.push(devFrontend)
   }
@@ -116,14 +116,27 @@ async function dev(options: DevOptions) {
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
+  if (frontendConfig) {
+    const devFrontend = devFrontendTargetProcess({
+      web: frontendConfig,
+      apiKey: identifiers.app,
+      scopes: options.app.configuration.scopes,
+      apiSecret: (apiSecret as string) ?? '',
+      hostname: url,
+      backendPort,
+      frontendPort: proxyPort,
+    })
+    additionalProcesses.push(devFrontend)
+  }
   await analytics.reportEvent()
 
-  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
+  await output.concurrent(additionalProcesses)
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {
   web: Web
   backendPort: number
+  frontendPort: number
 }
 
 function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
@@ -154,6 +167,41 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
           APP_ENV: 'development',
           // Note: These are Laravel varaibles for backwards compatibility with 2.0 templates.
           SERVER_PORT: `${port}`,
+        },
+        signal,
+      })
+    },
+  }
+}
+
+function devFrontendTargetProcess(options: DevFrontendTargetOptions): output.OutputProcess {
+  const {commands} = options.web.configuration
+  const [cmd, ...args] = commands.dev.split(' ')
+  const env = {
+    SHOPIFY_API_KEY: options.apiKey,
+    SHOPIFY_API_SECRET: options.apiSecret,
+    HOST: options.hostname,
+    SCOPES: options.scopes,
+    BACKEND_PORT: `${options.backendPort}`,
+    NODE_ENV: `development`,
+  }
+
+  return {
+    prefix: options.web.configuration.type,
+    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+      await system.exec(cmd, args, {
+        cwd: options.web.directory,
+        stdout,
+        stderr,
+        env: {
+          ...process.env,
+          ...env,
+          PORT: `${options.frontendPort}`,
+          FRONTEND_PORT: `${options.frontendPort}`,
+          APP_URL: options.hostname,
+          APP_ENV: 'development',
+          // Note: These are Laravel varaibles for backwards compatibility with 2.0 templates.
+          SERVER_PORT: `${options.frontendPort}`,
         },
         signal,
       })
