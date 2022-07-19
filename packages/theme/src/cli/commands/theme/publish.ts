@@ -1,6 +1,6 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Flags} from '@oclif/core'
-import {session, string} from '@shopify/cli-kit'
+import {cli, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import Command from '@shopify/cli-kit/node/base-command'
 
@@ -10,6 +10,7 @@ export default class Publish extends Command {
   static args = [{name: 'themeId', description: 'The ID of the theme', required: false}]
 
   static flags = {
+    ...cli.globalFlags,
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',

@@ -1,6 +1,6 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Flags} from '@oclif/core'
-import {path, session, string} from '@shopify/cli-kit'
+import {cli, path, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import Command from '@shopify/cli-kit/node/base-command'
 
@@ -9,6 +9,7 @@ export default class Push extends Command {
     'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
   static flags = {
+    ...cli.globalFlags,
     theme: Flags.string({
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',

@@ -1,5 +1,5 @@
 import {Flags} from '@oclif/core'
-import {path, ui} from '@shopify/cli-kit'
+import {cli, path, ui} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import Command from '@shopify/cli-kit/node/base-command'
 
@@ -16,6 +16,7 @@ export default class Init extends Command {
   ]
 
   static flags = {
+    ...cli.globalFlags,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'clone-url': Flags.string({
       char: 'u',
