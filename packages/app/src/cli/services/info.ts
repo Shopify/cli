@@ -1,6 +1,6 @@
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
-import {App} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
@@ -17,7 +17,7 @@ interface Configurable {
   configuration?: {type?: string}
 }
 
-export async function info(app: App, {format, webEnv}: InfoOptions): Promise<output.Message> {
+export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<output.Message> {
   if (webEnv) {
     return infoWeb(app, {format})
   } else {
@@ -25,7 +25,7 @@ export async function info(app: App, {format, webEnv}: InfoOptions): Promise<out
   }
 }
 
-export async function infoWeb(app: App, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
   const token = await session.ensureAuthenticatedPartners()
 
   const orgs = await fetchOrganizations(token)
@@ -50,7 +50,7 @@ Use these environment variables to set up your deployment pipeline for this app:
   }
 }
 
-export async function infoApp(app: App, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {
@@ -63,10 +63,10 @@ const UNKNOWN_TEXT = output.content`${output.token.italic('unknown')}`.value
 const NOT_CONFIGURED_TEXT = output.content`${output.token.italic('Not yet configured')}`.value
 
 class AppInfo {
-  private app: App
+  private app: AppInterface
   private cachedAppInfo: store.CachedAppInfo | undefined
 
-  constructor(app: App) {
+  constructor(app: AppInterface) {
     this.app = app
     this.cachedAppInfo = store.cliKitStore().getAppInfo(app.directory)
   }

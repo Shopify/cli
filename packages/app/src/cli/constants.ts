@@ -242,6 +242,36 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
   }
 }
 
+/**
+ * Each extension has a different ID in GraphQL.
+ * Sometimes the ID is the same as the type, sometimes it's different.
+ * @param type {string} The extension type
+ * @returns {string} The extension GraphQL ID
+ */
+export const extensionGraphqlId = (type: ExtensionTypes) => {
+  switch (type) {
+    case 'product_subscription':
+      return 'SUBSCRIPTION_MANAGEMENT'
+    case 'checkout_ui_extension':
+      return 'CHECKOUT_UI_EXTENSION'
+    case 'checkout_post_purchase':
+      return 'CHECKOUT_POST_PURCHASE'
+    case 'pos_ui_extension':
+      return 'POS_UI_EXTENSION'
+    case 'theme':
+      return 'THEME_APP_EXTENSION'
+    case 'web_pixel_extension':
+      return 'WEB_PIXEL_EXTENSION'
+    case 'product_discounts':
+    case 'order_discounts':
+    case 'shipping_discounts':
+    case 'payment_methods':
+    case 'shipping_rate_presenter':
+      // As we add new extensions, this bug will force us to add a new case here.
+      return type
+  }
+}
+
 function buildExtensionOutputConfig(humanKey: ExtensionTypesHumanKeys, helpURL?: string, additionalHelp?: string) {
   return {
     humanKey,

@@ -1,5 +1,41 @@
 # @shopify/app
 
+## 3.3.0
+
+### Minor Changes
+
+- f7708fcc: Replace fastify/http-proxy with node-http-proxy to support Node < 17
+
+### Patch Changes
+
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
+## 3.2.0
+
+### Minor Changes
+
+- 9c10736a: Stop using semantic versioning for @shopify/cli-kit and pin the version from all the dependent packages
+
+### Patch Changes
+
+- 86b04187: Exit without error message on deliberate user actions
+- Updated dependencies [86b04187]
+  - @shopify/cli-kit@3.2.0
+
+## 3.1.0
+
+### Patch Changes
+
+- de8ee02d: [FEATURE] Add query to fetch shop by domain
+- 45f0f0b9: Bump theme-check version
+- Updated dependencies [740f73ac]
+- Updated dependencies [d17770e8]
+- Updated dependencies [d17770e8]
+- Updated dependencies [de8ee02d]
+- Updated dependencies [45f0f0b9]
+  - @shopify/cli-kit@3.1.0
+
 ## 3.0.27
 
 ### Patch Changes

@@ -1,5 +1,30 @@
 # @shopify/cli-kit
 
+## 3.3.0
+
+### Minor Changes
+
+- f7708fcc: Replace fastify/http-proxy with node-http-proxy to support Node < 17
+
+## 3.2.0
+
+### Patch Changes
+
+- 86b04187: Exit without error message on deliberate user actions
+
+## 3.1.0
+
+### Minor Changes
+
+- d17770e8: Massage error stacktraces to be properly formatted on Bugsnag
+- d17770e8: Not report unhandled errors that go straight to the Node runtime
+
+### Patch Changes
+
+- 740f73ac: Added a retrying implementation to the method that obtains a random local port. Occasionally that third party logic failed in the middle of the execution of a command and abort the process. Running the command for a second time solved that temporary problem
+- de8ee02d: [FEATURE] Add query to fetch shop by domain
+- 45f0f0b9: Bump theme-check version
+
 ## 3.0.27
 
 ### Patch Changes

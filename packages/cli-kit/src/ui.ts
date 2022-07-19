@@ -1,7 +1,7 @@
 import {AutoComplete} from './ui/autocomplete.js'
 import {Input} from './ui/input.js'
 import {Select} from './ui/select.js'
-import {Bug, AbortSilent} from './error.js'
+import {CancelExecution, Abort} from './error.js'
 import {remove, exists} from './file.js'
 import {info, content, token, logToFile} from './output.js'
 import {relative} from './path.js'
@@ -80,7 +80,7 @@ export const prompt = async <
   debugForceInquirer = false,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
-    throw new Bug(content`
+    throw new Abort(content`
 The CLI prompted in a non-interactive terminal with the following questions:
 ${token.json(questions)}
     `)
@@ -134,7 +134,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
     const choice = await prompt([questions])
 
     if (choice.value === 'abort') {
-      throw new AbortSilent()
+      throw new CancelExecution()
     }
 
     remove(directory)

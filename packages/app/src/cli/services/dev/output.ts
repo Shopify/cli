@@ -1,4 +1,4 @@
-import {App} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {output, string} from '@shopify/cli-kit'
@@ -14,7 +14,7 @@ export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
   output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 
-export function outputExtensionsMessages(app: App, storeFqdn: string, url: string) {
+export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
   outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
   outputFunctionsMessage(app.extensions.function)
   outputThemeExtensionsMessage(app.extensions.theme)
@@ -67,7 +67,7 @@ function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
 
 function buildAppURL(storeFqdn: string, publicURL: string) {
   const hostUrl = `${storeFqdn}/admin`
-  const hostParam = btoa(hostUrl).replace(/[=]/g, '')
+  const hostParam = Buffer.from(hostUrl).toString('base64').replace(/[=]/g, '')
   return `${publicURL}?shop=${storeFqdn}&host=${hostParam}`
 }
 

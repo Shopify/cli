@@ -1,7 +1,8 @@
 import {getTheme} from '../../utilities/theme-store.js'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {path, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Share extends Command {
   static description =

@@ -7,7 +7,7 @@ import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
-import {App, AppConfiguration, Web, WebType} from '../models/app/app.js'
+import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
@@ -15,7 +15,7 @@ import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
-  app: App
+  app: AppInterface
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -118,7 +118,7 @@ async function dev(options: DevOptions) {
   }
   await analytics.reportEvent()
 
-  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
+  await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {
@@ -194,7 +194,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
 }
 
 async function devExtensionsTarget(
-  app: App,
+  app: AppInterface,
   apiKey: string,
   url: string,
   storeFqdn: string,
