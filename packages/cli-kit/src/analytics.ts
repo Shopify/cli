@@ -13,6 +13,7 @@ const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 let startTime: number | undefined
 let startCommand: string
 let startArgs: string[]
+let metadata: object
 
 interface startOptions {
   command: string
@@ -24,6 +25,10 @@ export const start = ({command, args, currentTime = new Date().getTime()}: start
   startCommand = command
   startArgs = args
   startTime = currentTime
+}
+
+export const addMetadata = (newMetadata: object) => {
+  metadata = {...metadata, ...newMetadata}
 }
 
 interface ReportEventOptions {
@@ -105,6 +110,7 @@ const buildPayload = async (errorMessage: string | undefined, currentTime: numbe
       is_employee: await environment.local.isShopify(),
       api_key: appInfo?.appId,
       partner_id: partnerIdAsInt,
+      metadata: JSON.stringify(metadata),
     },
   }
 }

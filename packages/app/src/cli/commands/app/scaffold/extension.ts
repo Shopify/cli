@@ -12,7 +12,7 @@ import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {load as loadApp, App} from '../../../models/app/app.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
-import {output, path, cli, error, environment} from '@shopify/cli-kit'
+import {output, path, cli, error, environment, analytics} from '@shopify/cli-kit'
 import {Command, Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -83,6 +83,13 @@ export default class AppScaffoldExtension extends Command {
       app.packageManager,
     )
     output.info(formattedSuccessfulMessage)
+
+    analytics.addMetadata({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      extension_type: promptAnswers.extensionType,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      extension_template: promptAnswers.extensionFlavor,
+    })
   }
 
   async validateExtensionType(type: string | undefined) {
