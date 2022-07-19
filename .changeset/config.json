@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "__comment": "//All versions must be fixed, we read cli-kit version and assume all other packages have the same one//",
-  "fixed": [["@shopify/cli", "@shopify/app", "@shopify/cli-hydrogen", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit", "@shopify/fixtures-app"]],
+  "fixed": [["@shopify/cli", "@shopify/app", "@shopify/cli-hydrogen", "@shopify/create-app", "@shopify/create-hydrogen", "@shopify/cli-kit", "@shopify/fixtures-app", "@shopify/theme"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
