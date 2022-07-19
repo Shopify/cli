@@ -5,46 +5,46 @@
     "version": "0.2.0",
     "configurations": [
       {
-          "type": "node",
-          "request": "launch",
-          "name": "shopify app dev",
-          "runtimeExecutable": "yarn",
-          "runtimeArgs": [
-              "shopify",
-              "app",
-              "dev",
-              "--path=${input:appDir}"
-          ],
-          "env": {
-            "DEBUG": "\"*\"",
-            "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1"
-          },
-          "skipFiles": [
-              "<node_internals>/**"
-          ],
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app dev",
+        "runtimeExecutable": "yarn",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "dev",
+          "--path=${input:appDir}"
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+          "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1"
+        },
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
       },
       {
-          "type": "node",
-          "request": "launch",
-          "name": "shopify app scaffold extension",
-          "runtimeExecutable": "yarn",
-          "runtimeArgs": [
-              "shopify",
-              "app",
-              "scaffold",
-              "extension",
-              "--path=${input:appDir}",
-              "--name=${input:extensionName}",
-              "--type=${input:extensionType}",
-              "--template=${input:extensionTemplate}",
-          ],
-          "env": {
-            "DEBUG": "\"*\"",
-            "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1"
-          },
-          "skipFiles": [
-              "<node_internals>/**"
-          ],
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app scaffold extension",
+        "runtimeExecutable": "yarn",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "scaffold",
+          "extension",
+          "--path=${input:appDir}",
+          "--name=${input:extensionName}",
+          "--type=${input:extensionType}",
+          "--template=${input:extensionTemplate}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+          "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1"
+        },
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
       },
     ],
     "inputs": [
@@ -76,18 +76,18 @@
           "shipping_rate_presenter"
         ],
         "default": "checkout_ui_extension",
-      },
-      {
-        "id": "extensionTemplate",
-        "type": "pickString",
-        "description": "Extension Template: ",
-        "options": [
-          "vanilla-js",
-          "react",
-          "wasm",
-          "rust"
-        ],
-        "default": "react",
-      }
-    ]
+    },
+    {
+      "id": "extensionTemplate",
+      "type": "pickString",
+      "description": "Extension Template: ",
+      "options": [
+        "vanilla-js",
+        "react",
+        "wasm",
+        "rust"
+      ],
+      "default": "react",
+    }
+  ]
 }
