@@ -1,8 +1,9 @@
-import {constants, output} from '@shopify/cli-kit'
+import constants from '../../constants.js'
+import {debug, initiateLogging} from '../../output.js'
 import {Hook} from '@oclif/core'
 
 export const hook: Hook.Init = async (options) => {
-  output.initiateLogging({filename: constants.logStreams.cli})
+  initiateLogging({filename: constants.logStreams.cli})
   const command = options.id?.replace(/:/g, ' ')
-  output.debug(`Running command ${command}`)
+  debug(`Running command ${command}`)
 }

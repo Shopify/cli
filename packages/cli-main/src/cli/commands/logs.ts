@@ -18,6 +18,6 @@ export default class Logs extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Logs)
-    await output.pageLogs(flags.stream)
+    await output.pageLogs(flags.stream, {lastCommand: flags['last-command']})
   }
 }
