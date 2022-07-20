@@ -60,13 +60,12 @@ export default class Dev extends Command {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'tunnel-url': Flags.string({
       hidden: false,
-      description:
-        'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port". Has no effect in case of using --no-tunnel',
+      description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'no-tunnel': Flags.boolean({
-      hidden: false,
+      hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
