@@ -599,30 +599,41 @@ export async function pageLogs(logStream: string, {lastCommand}: {lastCommand: b
 
 function printLastCommand(logFile: string): void {
   const contents = fileReadSync(logFile).split('\n')
-  const uuids = contents.slice().reverse().map(logfileLineUUID).filter((uuid) => uuid)
-  const firstUuid = uuids[0]
-  const secondUuid = uuids.find((uuid) => uuid !== firstUuid)
-  if (secondUuid) {
-    consoleLog(relevantLines(contents, secondUuid))
+  const uuids = contents
+    .map(logfileLineUUID)
+    .filter((uuid) => uuid)
+    .reverse()
+  // 2nd unique UUID, because the currently running command will be the 1st
+  const relevantUuid = Array.from(new Set(uuids))[1]
+  if (relevantUuid) {
+    consoleLog(relevantLines(contents, relevantUuid).join('\n'))
   }
 }
 
-function relevantLines(contents: string[], relevantUuid: string): string {
-  let inRelevantLine = false
+function relevantLines(contents: string[], relevantUuid: string): string[] {
+  // We run through the file line by line, keeping track of the most recently
+  // encountered UUID.
+  //
+  // If the current line has a UUID, it's a new logged unit and should be
+  // considered. Otherwise, the line is related to the most recent UUID.
+  let mostRecentUuid = ''
   return contents.filter((line: string) => {
-    const uuid = logfileLineUUID(line)
-    if (uuid === relevantUuid) {
-      inRelevantLine = true
-      return true
-    } else if (!uuid) {
-      return inRelevantLine
-    } else {
-      inRelevantLine = false
-    }
-  }).join('\n')
+    const currentUuid = logfileLineUUID(line) || mostRecentUuid
+    mostRecentUuid = currentUuid
+    return currentUuid === relevantUuid
+  })
 }
 
 function logfileLineUUID(line: string): string | null {
+  // Log lines look like:
+  //
+  //         timestamp                        UUID                               contents
+  // ===========================================================================================
+  // [2022-07-20T08:51:40.296Z 5288e1da-a06a-4f96-b1a6-e34fcdd7b416 DEBUG]: Running command logs
+  // ===========================================================================================
+  //
+  // There may be subsequent lines if the contents section is multi-line.
+  //
   const match = line.match(/^\[\S+ ([0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}) [A-Z]+\]/)
   return match && match[1]
 }
