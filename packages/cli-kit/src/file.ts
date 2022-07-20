@@ -98,7 +98,7 @@ export async function mkdir(path: string): Promise<void> {
 }
 
 export function mkdirSync(path: string): void {
-  debug(outputContent`Sync-reating directory at ${token.path(path)}...`)
+  debug(outputContent`Sync-creating directory at ${token.path(path)}...`)
   fs.mkdirpSync(path)
 }
 
