@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.3.2
+
+### Patch Changes
+
+- ecc4697c: Publish @shopify/theme dist directory
+  - @shopify/cli-kit@3.3.2
+
 ## 3.3.1
 
 ### Patch Changes
