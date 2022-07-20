@@ -153,7 +153,6 @@ async function dev(options: DevOptions) {
 interface DevFrontendTargetOptions extends DevWebOptions {
   web: Web
   backendPort: number
-  frontendPort?: number
 }
 
 function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
