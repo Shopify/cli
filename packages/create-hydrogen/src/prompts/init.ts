@@ -46,6 +46,42 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
+  // Given template // no language -> create-hydrogen --template <name> // default to javascript
+  // Given template // language ->  create-hydrogen --template <name> --ts //
+  // Given no template // language -> create-hydrogen --ts // ask for template
+  // Given no t // no l -> ask everything
+  // Given URL template // language -> create github/blah --ts
+
+  // Check if is our template
+  // demo-store or hello-world
+  let explicitTemplate = options.template
+  let isGithubUrl
+  if (explicitTemplate) {
+    // Get our template URLS
+    const hydrogenTemplate =
+      checkIfShopifyTemplate(explicitTemplate, 'js') || checkIfShopifyTemplate(explicitTemplate, 'ts')
+
+    isGithubUrl = Boolean(hydrogenTemplate)
+
+    if (hydrogenTemplate) {
+      const url = toHydrogenTemplateUrl(hydrogenTemplate as string)
+      explicitTemplate = url
+    }
+
+    // else it is a URL provided by the user
+    const parsedTemplate = github.parseRepoUrl(explicitTemplate)
+
+    // add magic to specific branch
+    const missingBranch = !parsedTemplate.ref
+    const looksLikeHydrogenTemplate =
+      parsedTemplate.name === 'hydrogen' &&
+      parsedTemplate.user === 'Shopify' &&
+      parsedTemplate.subDirectory.startsWith('templates/')
+
+    explicitTemplate =
+      looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
+  }
+
   if (!options.template) {
     questions.push({
       type: 'select',
@@ -59,7 +95,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
-  if (!options.language) {
+  if (!options.language && isGithubUrl) {
     questions.push({
       type: 'select',
       name: 'language',
@@ -72,23 +108,23 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
-  let name
-  let templateName
-  let language
   const promptResults = await prompt(questions)
-  if (options.name) name = options.name
-  else name = promptResults.name
+  const name = options.name ?? promptResults.name
+  const templateName = options.template ?? promptResults.templateName
+  const language = options.language ?? promptResults.language
 
-  if (options.template) templateName = options.template
-  else templateName = promptResults.templateName
+  explicitTemplate = templateName
 
-  if (options.language) language = options.language
-  else language = promptResults.language
+  // Get final template URLS
+  const hydrogenTemplate = checkIfShopifyTemplate(templateName, language)
 
-  const shopifyTemplateName = checkIfShopifyTemplate(templateName, language)
-  const parsedTemplate = github.parseRepoUrl(
-    shopifyTemplateName ? `${TEMPLATE_BASE}${shopifyTemplateName}#${BRANCH}` : templateName,
-  )
+  if (hydrogenTemplate) {
+    const url = toHydrogenTemplateUrl(hydrogenTemplate as string)
+    explicitTemplate = url
+  }
+
+  // else it is a URL provided by the user
+  const parsedTemplate = github.parseRepoUrl(explicitTemplate)
 
   const missingBranch = !parsedTemplate.ref
   const looksLikeHydrogenTemplate =
@@ -98,6 +134,10 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   const template = looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
   output.info(template)
   return {name, template, language} as Required<InitOptions>
+}
+
+function toHydrogenTemplateUrl(key: string) {
+  return `${TEMPLATE_BASE}${key}#${BRANCH}`
 }
 
 /**
