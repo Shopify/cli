@@ -1,5 +1,19 @@
 # @shopify/theme
 
+## 3.3.1
+
+### Patch Changes
+
+- 68032f84: bump @shopify/theme up to most recent version
+  - @shopify/cli-kit@3.3.1
+
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 0.6.0
 
 ### Minor Changes

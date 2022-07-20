@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.2.0",
+  "version": "3.3.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -65,7 +65,7 @@
   "dependencies": {
     "@oclif/core": "^1.0",
     "envfile": "^6.17.0",
-    "fastify": "^4.0.0-rc.4",
+    "fastify": "^4.2.1",
     "inquirer": "^8.2.4",
     "keytar": "^7.9.0",
     "open": "^8.4.0",

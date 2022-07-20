@@ -1,5 +1,19 @@
 # @shopify/cli
 
+## 3.3.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.1
+
+## 3.3.0
+
+### Patch Changes
+
+- 35018a96: updated placeholder app urls used during app creation
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 3.2.0
 
 ### Minor Changes

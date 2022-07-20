@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 3.3.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.1
+
+## 3.3.0
+
+### Minor Changes
+
+- f7708fcc: Replace fastify/http-proxy with node-http-proxy to support Node < 17
+
+### Patch Changes
+
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 3.2.0
 
 ### Minor Changes
