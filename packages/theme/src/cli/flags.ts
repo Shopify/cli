@@ -3,7 +3,7 @@ import {path} from '@shopify/cli-kit'
 
 /**
  * An object that contains the flags that
- * are shared across all the app commands.
+ * are shared across all the theme commands.
  */
 export const themeFlags = {
   path: Flags.string({
