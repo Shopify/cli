@@ -2,6 +2,7 @@ import {getBinaryPathOrDownload} from './binary.js'
 import {useExtensionsCLISources} from '../../environment.js'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
+import {env} from 'process'
 
 let building = false
 let built = false
@@ -35,18 +36,20 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
       } else {
         building = true
         stdout.write('Building extensions CLI...')
-        // TODO: Uncomment
-        // await system.exec('make', ['build'], {
-        //   ...options,
-        //   stdout: undefined,
-        //   stderr: undefined,
-        //   cwd: projectDirectory,
-        // })
+        await system.exec('make', ['build'], {
+          ...options,
+          stdout: undefined,
+          stderr: undefined,
+          cwd: projectDirectory,
+        })
         built = true
         stdout.write('Built extensions CLI successfully!')
       }
-      await system.exec('sh', [path.join(projectDirectory, 'shopify-extensions-debug')].concat(args), options)
-      // await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
+      if (env.DEBUG_GO_BINARY) {
+        await system.exec('sh', [path.join(projectDirectory, 'shopify-extensions-debug')].concat(args), options)
+      } else {
+        await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
+      }
     } catch {
       throw new error.AbortSilent()
     }
