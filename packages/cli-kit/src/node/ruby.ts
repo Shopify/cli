@@ -10,7 +10,7 @@ import {content, token} from '../output.js'
 // eslint-disable-next-line no-restricted-imports
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.16.0'
+const RubyCLIVersion = '2.20.1'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.3.0'
