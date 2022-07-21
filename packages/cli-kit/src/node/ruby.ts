@@ -32,9 +32,7 @@ export async function execCLI2(args: string[], adminSession?: AdminSession) {
   }
 
   await system.exec('bundle', ['exec', 'shopify'].concat(args), {
-    stdout: 'inherit',
-    stderr: 'inherit',
-    stdin: 'inherit',
+    stdio: 'inherit',
     cwd: shopifyCLIDirectory(),
     env,
   })

@@ -74,12 +74,12 @@ export async function devExtensions(options: ExtensionDevOptions): Promise<void>
   output.debug(output.content`Dev'ing extension with configuration:
 ${output.token.json(config)}
 `)
-  const stdin = yaml.encode(config)
+  const input = yaml.encode(config)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,
     signal: options.signal,
     stdout: options.stdout,
     stderr: options.stderr,
-    stdin,
+    input,
   })
 }

@@ -8,10 +8,11 @@ import type {Writable, Readable} from 'node:stream'
 export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
+  stdin?: Readable | 'inherit'
   stdout?: Writable | 'inherit'
   stderr?: Writable | 'inherit'
-  stdio?: Readable | 'inherit'
-  stdin?: string
+  stdio?: 'inherit'
+  input?: string
   signal?: AbortSignal
 }
 export type WritableExecOptions = Omit<ExecOptions, 'stdout'> & {stdout?: Writable}
@@ -61,7 +62,9 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
   const commandProcess = execa(command, args, {
     env,
     cwd: options?.cwd,
-    input: options?.stdin,
+    input: options?.input,
+    stdio: options?.stdio,
+    stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
   })

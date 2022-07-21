@@ -77,12 +77,12 @@ export async function buildUIExtensions(options: UiExtensionBuildOptions): Promi
   output.debug(output.content`Dev'ing extension with configuration:
 ${output.token.json(configuration)}
 `)
-  const stdin = yaml.encode(configuration)
+  const input = yaml.encode(configuration)
   await runGoExtensionsCLI(['build', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
     stderr: options.stderr,
-    stdin,
+    input,
   })
 }
 

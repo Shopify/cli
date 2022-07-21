@@ -102,7 +102,7 @@ async function uiExtensionInit({
         title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
-          const stdin = yaml.encode({
+          const input = yaml.encode({
             extensions: [
               {
                 title: name,
@@ -131,7 +131,7 @@ async function uiExtensionInit({
                 next()
               },
             }),
-            stdin,
+            input,
           })
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
