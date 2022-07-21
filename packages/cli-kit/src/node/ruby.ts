@@ -8,7 +8,6 @@ import {coerce} from '../semver.js'
 import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 // eslint-disable-next-line no-restricted-imports
-import {spawnSync} from 'child_process'
 import {Writable} from 'node:stream'
 
 const RubyCLIVersion = '2.16.0'
@@ -33,8 +32,10 @@ export async function execCLI2(args: string[], adminSession?: AdminSession) {
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
   }
 
-  spawnSync('bundle', ['exec', 'shopify'].concat(args), {
-    stdio: 'inherit',
+  await system.exec('bundle', ['exec', 'shopify'].concat(args), {
+    stdout: 'inherit',
+    stderr: 'inherit',
+    stdin: 'inherit',
     cwd: shopifyCLIDirectory(),
     env,
   })

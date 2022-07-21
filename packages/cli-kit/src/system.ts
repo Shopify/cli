@@ -9,7 +9,7 @@ export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
   stdout?: Writable | 'inherit'
-  stderr?: Writable
+  stderr?: Writable | 'inherit'
   stdio?: Readable | 'inherit'
   stdin?: string
   signal?: AbortSignal
@@ -34,7 +34,7 @@ export const captureOutput = async (command: string, args: string[], options?: E
 
 export const exec = async (command: string, args: string[], options?: ExecOptions) => {
   const commandProcess = buildExec(command, args, options)
-  if (options?.stderr) {
+  if (options?.stderr && options.stderr !== 'inherit') {
     commandProcess.stderr?.pipe(options.stderr)
   }
   if (options?.stdout && options.stdout !== 'inherit') {
@@ -63,6 +63,7 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
     cwd: options?.cwd,
     input: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
+    stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
   })
   debug(`
 Running system process:
