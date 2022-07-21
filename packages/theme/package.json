@@ -30,6 +30,9 @@
     "vitest": "^0.17.1"
   },
   "oclif": {
-    "commands": "dist/cli/commands"
+    "commands": "dist/cli/commands",
+    "hooks": {
+      "prerun": "dist/hooks/prerun"
+    }
   }
 }
