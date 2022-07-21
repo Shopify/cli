@@ -7,7 +7,6 @@ import constants from '../constants.js'
 import {coerce} from '../semver.js'
 import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
-// eslint-disable-next-line no-restricted-imports
 import {Writable} from 'node:stream'
 
 const RubyCLIVersion = '2.20.1'
