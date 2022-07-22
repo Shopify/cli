@@ -105,6 +105,7 @@ export function cleanStackFrameFilePath({
   const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
 
   if (matchingPluginPath !== undefined) {
+    // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
     return path.join(matchingPluginPath.name, path.relative(matchingPluginPath.pluginPath, fullLocation))
   }
   return currentFilePath
