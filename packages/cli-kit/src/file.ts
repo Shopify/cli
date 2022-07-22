@@ -59,6 +59,16 @@ export async function touch(path: string): Promise<void> {
   await fs.ensureFile(path)
 }
 
+export async function appendFile(path: string, content: string): Promise<void> {
+  debug(outputContent`Appending the following content to ${token.path(path)}:
+    ${content
+      .split('\n')
+      .map((line) => `  ${line}`)
+      .join('\n')}
+  `)
+  await fs.appendFile(path, content)
+}
+
 export async function touchSync(path: string): Promise<void> {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
   await fs.ensureFileSync(path)
