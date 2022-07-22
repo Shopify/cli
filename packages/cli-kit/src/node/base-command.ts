@@ -1,5 +1,4 @@
-import {errorHandler} from './error-handler.js'
-import {registerCleanBugsnagErrorsFromWithinPlugins} from '../bugsnag.js'
+import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {Command} from '@oclif/core'
 
 // eslint-disable-next-line import/no-anonymous-default-export
