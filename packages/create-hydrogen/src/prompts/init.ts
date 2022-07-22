@@ -33,7 +33,6 @@ interface InitOptions {
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<InitOptions>> => {
   const questions: ui.Question[] = []
-
   const explicitTemplate = options.template
   let isAShopifyTemplateName = false
   // If the template is passed through the CLI, it can either be a Shopify template name (hello-world OR demo-store)
