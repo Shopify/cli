@@ -92,6 +92,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   if (hydrogenTemplate) template = convertTemplateNameToUrl(hydrogenTemplate as string)
 
   // else it is a URL provided by the user
+  console.log(`template: ${template}`)
   template = parseTemplateUrl(template)
   return {name, template, language} as Required<InitOptions>
 }
@@ -104,6 +105,8 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
  * @returns The fully formed template URL if is a Shopify template, false otherwise.
  */
 const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
+  if (!templateName) return false
+
   const normalized = string.hyphenize(templateName).toLocaleLowerCase()
   const withExtension =
     normalized.endsWith('-ts') || normalized.endsWith('-js') ? normalized : `${normalized}-${language}`

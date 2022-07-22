@@ -4,8 +4,8 @@ import {describe, test, it, expect, vi} from 'vitest'
 describe('init', () => {
   it('uses default name "hydrogen-app" when name is not passed', async () => {
     const prompt = vi.fn()
-    const input = {}
-    const output = {name: 'hydrogen-app', template: 'hello-world', language: 'js'}
+    const input = {template: 'hello-world', language: 'js'}
+    const output = {name: 'hydrogen-app'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -25,13 +25,13 @@ describe('init', () => {
       ]),
     )
 
-    expect(got).toEqual(output)
+    expect(got.name).toEqual(output.name)
   })
 
   it('uses the name when passed to the prompt', async () => {
     const prompt = vi.fn()
-    const input = {name: 'snow-devil'}
-    const output = {name: 'hydrogen-app', template: 'test', language: 'js'}
+    const input = {name: 'snow-devil', template: 'hello-world', language: 'js'}
+    const output = {name: 'snow-devil'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -41,13 +41,15 @@ describe('init', () => {
 
     // Then
     expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'name'})]))
-    expect(got).toEqual(output)
+    expect(got.name).toEqual(output.name)
   })
 
   it('when template is not passed', async () => {
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
+
     const prompt = vi.fn()
-    const input = {name: 'snow-devil'}
-    const output = {name: 'snow-devil', template: 'test', language: 'js'}
+    const input = {name: 'snow-devil', language: 'js'}
+    const output = {name: 'snow-devil', template: expected, language: 'js'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -60,7 +62,7 @@ describe('init', () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: 'select',
-          name: 'template',
+          name: 'templateName',
           choices: [
             {
               name: 'Demo Store',
