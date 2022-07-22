@@ -91,11 +91,15 @@ const reportError = async (error: Error): Promise<Error> => {
  * This gives us very consistent paths for errors thrown from plugin code.
  *
  */
-export function cleanStackFrameFilePath(
-  currentFilePath: string,
-  projectRoot: string,
-  pluginLocations: {name: string; pluginPath: string}[],
-): string {
+export function cleanStackFrameFilePath({
+  currentFilePath,
+  projectRoot,
+  pluginLocations,
+}: {
+  currentFilePath: string
+  projectRoot: string
+  pluginLocations: {name: string; pluginPath: string}[]
+}): string {
   const fullLocation = path.isAbsolute(currentFilePath) ? currentFilePath : path.join(projectRoot, currentFilePath)
 
   const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
@@ -127,7 +131,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Inter
   Bugsnag.addOnError((event) => {
     event.errors.forEach((error) => {
       error.stacktrace.forEach((stackFrame) => {
-        stackFrame.file = cleanStackFrameFilePath(stackFrame.file, projectRoot, pluginLocations)
+        stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
   })

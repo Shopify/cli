@@ -58,20 +58,24 @@ describe('bugsnag stack cleaning', () => {
     ],
   ])('%s', (_, path, result) => {
     expect(
-      cleanStackFrameFilePath(path, '/my/project', [
-        {
-          name: '@plugin/name',
-          pluginPath: '/my/project/node_modules/@plugin/name',
-        },
-        {
-          name: '@plugin/global',
-          pluginPath: '/global/node_modules/@plugin/global',
-        },
-        {
-          name: '@plugin/complex-path',
-          pluginPath: '/my/project/node_modules/.something/@plugin+complex/@plugin/complex-path',
-        },
-      ]),
+      cleanStackFrameFilePath({
+        currentFilePath: path,
+        projectRoot: '/my/project',
+        pluginLocations: [
+          {
+            name: '@plugin/name',
+            pluginPath: '/my/project/node_modules/@plugin/name',
+          },
+          {
+            name: '@plugin/global',
+            pluginPath: '/global/node_modules/@plugin/global',
+          },
+          {
+            name: '@plugin/complex-path',
+            pluginPath: '/my/project/node_modules/.something/@plugin+complex/@plugin/complex-path',
+          },
+        ],
+      }),
     ).toEqual(result)
   })
 })
