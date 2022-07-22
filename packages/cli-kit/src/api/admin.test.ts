@@ -12,7 +12,13 @@ vi.mock('graphql-request', async () => {
   }
 })
 
-vi.mock('./common')
+vi.mock('./common.js', async () => {
+  const common: any = await vi.importActual('./common.js')
+  return {
+    ...common,
+    buildHeaders: vi.fn(),
+  }
+})
 
 const mockedResult = {
   publicApiVersions: [
