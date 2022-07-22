@@ -1,6 +1,6 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Flags} from '@oclif/core'
-import {path, session, string} from '@shopify/cli-kit'
+import {cli, path, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import Command from '@shopify/cli-kit/node/base-command'
 
@@ -9,6 +9,7 @@ export default class Share extends Command {
     'Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to {{command:theme push -u -t=RANDOMIZED_NAME}}'
 
   static flags = {
+    ...cli.globalFlags,
     path: Flags.string({
       description: 'The path to your theme',
       default: '.',
