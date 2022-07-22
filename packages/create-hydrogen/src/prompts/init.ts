@@ -6,22 +6,18 @@ const TEMPLATE_NAME_DATA = {
   /* eslint-disable @typescript-eslint/naming-convention */
   'demo-store': {
     name: 'Demo Store',
-    description: 'A simple store with a demo storefront',
   },
   'hello-world': {
     name: 'Hello World',
-    description: 'A simple store with a hello world storefront',
   },
 }
 
 const LANGUAGE_NAME_DATA = {
   js: {
     name: 'JavaScript',
-    description: 'This is the default language, regular old JavaScript',
   },
   ts: {
     name: 'TypeScript',
-    description: 'A typed superset of JavaScript created by Microsoft',
   },
 }
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -37,16 +33,16 @@ interface InitOptions {
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<InitOptions>> => {
   const questions: ui.Question[] = []
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
-      message: 'Name your new Hydrogen storefront',
-      default: 'hydrogen-app',
-    })
-  }
 
-  if (!options.template) {
+  const explicitTemplate = options.template
+  let isAShopifyTemplateName = false
+  // If the template is passed through the CLI, it can either be a Shopify template name (hello-world OR demo-store)
+  // or a custom URL to any template.
+  if (explicitTemplate) {
+    const hydrogenTemplate =
+      checkIfShopifyTemplateName(explicitTemplate, 'js') || checkIfShopifyTemplateName(explicitTemplate, 'ts')
+    isAShopifyTemplateName = Boolean(hydrogenTemplate)
+  } else {
     questions.push({
       type: 'select',
       name: 'templateName',
@@ -59,44 +55,45 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
-  if (!options.language) {
+  // Prompt the user for the language of the template if it is not provided AND
+  // the given template is a URL.
+  output.info(`!options.language: ${!options.language}`)
+  output.info(`!isAShopifyTemplateName: ${isAShopifyTemplateName}`)
+  if (!options.language && isAShopifyTemplateName) {
     questions.push({
       type: 'select',
       name: 'language',
       message: 'Choose a language',
       choices: Object.keys(LANGUAGE_NAME_DATA).map((value) => {
-        const {name, description} = LANGUAGE_NAME_DATA[value as keyof typeof LANGUAGE_NAME_DATA]
-        return {name: `${name} - ${description}`, value}
+        const {name} = LANGUAGE_NAME_DATA[value as keyof typeof LANGUAGE_NAME_DATA]
+        return {name, value}
       }),
       default: LANGUAGE_NAMES[0],
     })
   }
 
-  let name
-  let templateName
-  let language
+  if (!options.name) {
+    questions.push({
+      type: 'input',
+      name: 'name',
+      message: 'Name your new Hydrogen storefront',
+      default: 'hydrogen-app',
+    })
+  }
+
   const promptResults = await prompt(questions)
-  if (options.name) name = options.name
-  else name = promptResults.name
+  const name = options.name ?? promptResults.name
+  const templateName = options.template ?? promptResults.templateName
+  const language = options.language ?? promptResults.language
 
-  if (options.template) templateName = options.template
-  else templateName = promptResults.templateName
+  let template = templateName
 
-  if (options.language) language = options.language
-  else language = promptResults.language
+  // Get final template URLS
+  const hydrogenTemplate = checkIfShopifyTemplateName(templateName, language)
+  if (hydrogenTemplate) template = convertTemplateNameToUrl(hydrogenTemplate as string)
 
-  const shopifyTemplateName = checkIfShopifyTemplate(templateName, language)
-  const parsedTemplate = github.parseRepoUrl(
-    shopifyTemplateName ? `${TEMPLATE_BASE}${shopifyTemplateName}#${BRANCH}` : templateName,
-  )
-
-  const missingBranch = !parsedTemplate.ref
-  const looksLikeHydrogenTemplate =
-    parsedTemplate.name === 'hydrogen' &&
-    parsedTemplate.user === 'Shopify' &&
-    parsedTemplate.subDirectory.startsWith('templates/')
-  const template = looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
-  output.info(template)
+  // else it is a URL provided by the user
+  template = parseTemplateUrl(template)
   return {name, template, language} as Required<InitOptions>
 }
 
@@ -107,12 +104,38 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
  * @param language The language of the template, only provided if the template is a Shopify template.
  * @returns The fully formed template URL if is a Shopfiy template, false otherwise.
  */
-const checkIfShopifyTemplate = (templateName: string, language: string): string | boolean => {
+const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
   const normalized = string.hyphenize(templateName).toLocaleLowerCase()
   const withExtension =
     normalized.endsWith('-ts') || normalized.endsWith('-js') ? normalized : `${normalized}-${language}`
 
   return TEMPLATE_NAMES.includes(normalized) ? withExtension : false
+}
+
+/**
+ * Takes the name of a Shopify template (example: demo-store OR hello-world) and converts it to a URL.
+ *
+ * @param templateName The given name of a Shopify template.
+ * @returns The URL of the template.
+ */
+const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_BASE}${templateName}#${BRANCH}`
+
+/**
+ * Checks to see if the provided URL can be parsed by Github. For Shopify-specific templates, adds any
+ * missing information (missing branch for example) to the repo information in the URL.
+ *
+ * @param templateUrl The URL of the template to parse.
+ * @returns The parsed URL.
+ */
+const parseTemplateUrl = (templateUrl: string): string => {
+  const parsedTemplate = github.parseRepoUrl(templateUrl)
+  const missingBranch = !parsedTemplate.ref
+  const looksLikeHydrogenTemplate =
+    parsedTemplate.name === 'hydrogen' &&
+    parsedTemplate.user === 'Shopify' &&
+    parsedTemplate.subDirectory.startsWith('templates/')
+
+  return looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
 }
 
 export default init
