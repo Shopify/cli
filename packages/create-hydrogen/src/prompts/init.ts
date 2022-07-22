@@ -6,22 +6,18 @@ const TEMPLATE_NAME_DATA = {
   /* eslint-disable @typescript-eslint/naming-convention */
   'demo-store': {
     name: 'Demo Store',
-    description: 'A simple store with a demo storefront',
   },
   'hello-world': {
     name: 'Hello World',
-    description: 'A simple store with a hello world storefront',
   },
 }
 
 const LANGUAGE_NAME_DATA = {
   js: {
     name: 'JavaScript',
-    description: 'This is the default language, regular old JavaScript',
   },
   ts: {
     name: 'TypeScript',
-    description: 'A typed superset of JavaScript created by Microsoft',
   },
 }
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -37,52 +33,16 @@ interface InitOptions {
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<InitOptions>> => {
   const questions: ui.Question[] = []
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
-      message: 'Name your new Hydrogen storefront',
-      default: 'hydrogen-app',
-    })
-  }
 
-  // Given template // no language -> create-hydrogen --template <name> // default to javascript
-  // Given template // language ->  create-hydrogen --template <name> --ts //
-  // Given no template // language -> create-hydrogen --ts // ask for template
-  // Given no t // no l -> ask everything
-  // Given URL template // language -> create github/blah --ts
-
-  // Check if is our template
-  // demo-store or hello-world
-  let explicitTemplate = options.template
-  let isGithubUrl
+  const explicitTemplate = options.template
+  let isAShopifyTemplateName = false
+  // If the template is passed through the CLI, it can either be a Shopify template name (hello-world OR demo-store)
+  // or a custom URL to any template.
   if (explicitTemplate) {
-    // Get our template URLS
     const hydrogenTemplate =
-      checkIfShopifyTemplate(explicitTemplate, 'js') || checkIfShopifyTemplate(explicitTemplate, 'ts')
-
-    isGithubUrl = Boolean(hydrogenTemplate)
-
-    if (hydrogenTemplate) {
-      const url = toHydrogenTemplateUrl(hydrogenTemplate as string)
-      explicitTemplate = url
-    }
-
-    // else it is a URL provided by the user
-    const parsedTemplate = github.parseRepoUrl(explicitTemplate)
-
-    // add magic to specific branch
-    const missingBranch = !parsedTemplate.ref
-    const looksLikeHydrogenTemplate =
-      parsedTemplate.name === 'hydrogen' &&
-      parsedTemplate.user === 'Shopify' &&
-      parsedTemplate.subDirectory.startsWith('templates/')
-
-    explicitTemplate =
-      looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
-  }
-
-  if (!options.template) {
+      checkIfShopifyTemplateName(explicitTemplate, 'js') || checkIfShopifyTemplateName(explicitTemplate, 'ts')
+    isAShopifyTemplateName = Boolean(hydrogenTemplate)
+  } else {
     questions.push({
       type: 'select',
       name: 'templateName',
@@ -95,16 +55,29 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
-  if (!options.language && isGithubUrl) {
+  // Prompt the user for the language of the template if it is not provided AND
+  // the given template is a URL.
+  output.info(`!options.language: ${!options.language}`)
+  output.info(`!isAShopifyTemplateName: ${isAShopifyTemplateName}`)
+  if (!options.language && isAShopifyTemplateName) {
     questions.push({
       type: 'select',
       name: 'language',
       message: 'Choose a language',
       choices: Object.keys(LANGUAGE_NAME_DATA).map((value) => {
-        const {name, description} = LANGUAGE_NAME_DATA[value as keyof typeof LANGUAGE_NAME_DATA]
-        return {name: `${name} - ${description}`, value}
+        const {name} = LANGUAGE_NAME_DATA[value as keyof typeof LANGUAGE_NAME_DATA]
+        return {name, value}
       }),
       default: LANGUAGE_NAMES[0],
+    })
+  }
+
+  if (!options.name) {
+    questions.push({
+      type: 'input',
+      name: 'name',
+      message: 'Name your new Hydrogen storefront',
+      default: 'hydrogen-app',
     })
   }
 
@@ -113,31 +86,15 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   const templateName = options.template ?? promptResults.templateName
   const language = options.language ?? promptResults.language
 
-  explicitTemplate = templateName
+  let template = templateName
 
   // Get final template URLS
-  const hydrogenTemplate = checkIfShopifyTemplate(templateName, language)
-
-  if (hydrogenTemplate) {
-    const url = toHydrogenTemplateUrl(hydrogenTemplate as string)
-    explicitTemplate = url
-  }
+  const hydrogenTemplate = checkIfShopifyTemplateName(templateName, language)
+  if (hydrogenTemplate) template = convertTemplateNameToUrl(hydrogenTemplate as string)
 
   // else it is a URL provided by the user
-  const parsedTemplate = github.parseRepoUrl(explicitTemplate)
-
-  const missingBranch = !parsedTemplate.ref
-  const looksLikeHydrogenTemplate =
-    parsedTemplate.name === 'hydrogen' &&
-    parsedTemplate.user === 'Shopify' &&
-    parsedTemplate.subDirectory.startsWith('templates/')
-  const template = looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
-  output.info(template)
+  template = parseTemplateUrl(template)
   return {name, template, language} as Required<InitOptions>
-}
-
-function toHydrogenTemplateUrl(key: string) {
-  return `${TEMPLATE_BASE}${key}#${BRANCH}`
 }
 
 /**
@@ -147,12 +104,38 @@ function toHydrogenTemplateUrl(key: string) {
  * @param language The language of the template, only provided if the template is a Shopify template.
  * @returns The fully formed template URL if is a Shopfiy template, false otherwise.
  */
-const checkIfShopifyTemplate = (templateName: string, language: string): string | boolean => {
+const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
   const normalized = string.hyphenize(templateName).toLocaleLowerCase()
   const withExtension =
     normalized.endsWith('-ts') || normalized.endsWith('-js') ? normalized : `${normalized}-${language}`
 
   return TEMPLATE_NAMES.includes(normalized) ? withExtension : false
+}
+
+/**
+ * Takes the name of a Shopify template (example: demo-store OR hello-world) and converts it to a URL.
+ *
+ * @param templateName The given name of a Shopify template.
+ * @returns The URL of the template.
+ */
+const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_BASE}${templateName}#${BRANCH}`
+
+/**
+ * Checks to see if the provided URL can be parsed by Github. For Shopify-specific templates, adds any
+ * missing information (missing branch for example) to the repo information in the URL.
+ *
+ * @param templateUrl The URL of the template to parse.
+ * @returns The parsed URL.
+ */
+const parseTemplateUrl = (templateUrl: string): string => {
+  const parsedTemplate = github.parseRepoUrl(templateUrl)
+  const missingBranch = !parsedTemplate.ref
+  const looksLikeHydrogenTemplate =
+    parsedTemplate.name === 'hydrogen' &&
+    parsedTemplate.user === 'Shopify' &&
+    parsedTemplate.subDirectory.startsWith('templates/')
+
+  return looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
 }
 
 export default init
