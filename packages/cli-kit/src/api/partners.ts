@@ -2,7 +2,7 @@ import {buildHeaders, sanitizedHeadersOutput} from './common.js'
 import {ScriptServiceProxyQuery} from './graphql/index.js'
 import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {debug, stringifyMessage, content, token as outputToken} from '../output.js'
-import {ExtendableError} from '../error.js'
+import {ExtendableError, Abort} from '../error.js'
 import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
 
 export class RequestClientError extends ExtendableError {
@@ -38,7 +38,12 @@ The Partners GraphQL API responded unsuccessfully with the HTTP status ${`${erro
 
 ${outputToken.json(error.response.errors)}
       `)
-      const mappedError = new RequestClientError(errorMessage, error.response.status)
+      let mappedError: Error
+      if (error.response.status < 500) {
+        mappedError = new RequestClientError(errorMessage, error.response.status)
+      } else {
+        mappedError = new Abort(errorMessage)
+      }
       mappedError.stack = error.stack
       throw mappedError
     } else {
