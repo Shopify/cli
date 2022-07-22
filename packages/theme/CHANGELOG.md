@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.3.3
+
+### Patch Changes
+
+- e89dfa81: • Update Ruby CLI to latest
+  • Fix: Await Ruby subprocess
+  • Add path flag to init for better development flow
+  • Add verbose flag to see more output from the Node CLI
+  • Set up logging and CLI-kit store separately for the theme CLI
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
 ## 3.3.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.3.3
+
+### Patch Changes
+
+- ceacde28: Add a new flag to dev command that makes possible to access the app directly using localhost and a local port instead of going through an http tunnel.
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
 ## 3.3.2
 
 ### Patch Changes
