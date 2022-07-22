@@ -17,7 +17,7 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
+          // "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
           // "DEBUG_GO_BINARY": "1",       // Pause execution of the Go binary until the debgger is attached.
         },
         "skipFiles": [
@@ -41,7 +41,7 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
+          // "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
           // "DEBUG_GO_BINARY": "1",       // Pause execution of the Go binary until the debgger is attached.
         },
         "skipFiles": [
