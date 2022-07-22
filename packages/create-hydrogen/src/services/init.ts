@@ -149,9 +149,7 @@ async function init(options: InitOptions) {
       tasks.push({
         title: "[Shopifolks-only] Configuring the project's NPM registry",
         task: async (_, task) => {
-          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
-          const npmrcContent = `@shopify:registry=https://registry.npmjs.org`
-          await file.write(npmrcPath, npmrcContent)
+          await writeToNpmrc(templateScaffoldDir, `@shopify:registry=https://registry.npmjs.org`)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
@@ -266,7 +264,19 @@ async function updateCLIDependencies(
 }
 
 async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
+  if (packageManager === 'pnpm') {
+    writeToNpmrc(directory, 'auto-install-peers = true')
+  }
   await installNodeModules(directory, packageManager, stdout)
+}
+
+async function writeToNpmrc(directory: string, content: string) {
+  const npmrcPath = path.join(directory, '.npmrc')
+  const npmrcContent = `${content}\n`
+  if (!(await file.exists(npmrcPath))) {
+    await file.touch(npmrcPath)
+  }
+  await file.appendFile(npmrcPath, npmrcContent)
 }
 
 async function cleanup(webOutputDirectory: string) {
