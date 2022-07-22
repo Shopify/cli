@@ -65,7 +65,7 @@ async function validateRedirectionPort(port: number) {
       `Could not open browser for authorization process. Port ${
         output.content`${output.token.yellow(`${port}`)}`.value
       } already in use`,
-      `Please, localizate and finish the process that it is using the port ${
+      `Please, locate and finish the process that it is using the port ${
         output.content`${output.token.yellow(`${port}`)}`.value
       }`,
     )

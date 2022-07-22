@@ -74,7 +74,7 @@ describe('authorize', () => {
       `Could not open browser for authorization process. Port [33m${port}[39m already in use`,
     )
     await expect(auth).rejects.toContain({
-      tryMessage: `Please, localizate and finish the process that it is using the port [33m${port}[39m`,
+      tryMessage: `Please, locate and finish the process that it is using the port [33m${port}[39m`,
     })
     await expect(open).not.toBeCalled()
   })
