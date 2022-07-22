@@ -228,9 +228,10 @@ describe('init', () => {
 
     test('when "hello-world"', async () => {
       // Given
-      const input = {name: 'snow-devil', template: 'hello-world'}
+      const input = {name: 'snow-devil', language: 'js', template: 'hello-world'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -243,9 +244,10 @@ describe('init', () => {
 
     test('when "Hello World"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Hello World'}
+      const input = {name: 'snow-devil', language: 'js', template: 'Hello World'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -258,9 +260,10 @@ describe('init', () => {
 
     test('when "Hello world"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Hello world'}
+      const input = {name: 'snow-devil', language: 'js', template: 'Hello world'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -307,9 +310,10 @@ describe('init', () => {
 
     test('when "hello-world-ts"', async () => {
       // Given
-      const input = {name: 'snow-devil', template: 'hello-world-ts'}
+      const input = {name: 'snow-devil', language: 'ts', template: 'hello-world'}
       const output = {
         name: 'snow-devil',
+        language: 'ts',
         template: expected,
       }
 
@@ -322,9 +326,10 @@ describe('init', () => {
 
     test('when "Hello World ts"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Hello World ts'}
+      const input = {name: 'snow-devil', language: 'ts', template: 'Hello World'}
       const output = {
         name: 'snow-devil',
+        language: 'ts',
         template: expected,
       }
 
