@@ -6,6 +6,7 @@ import {Abort} from '../error.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import * as output from '../output.js'
 import {keypress} from '../ui.js'
+import {checkPort} from 'get-port-please'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
@@ -22,6 +23,8 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   const redirectUri = `http://${host}:${port}`
   const fqdn = await identityFqdn()
   const identityClientId = await clientId()
+
+  await validateRedirectionPort(port)
 
   let url = `http://${fqdn}/oauth/authorize`
 
@@ -53,4 +56,18 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   }
 
   return {code: result.code, codeVerifier}
+}
+
+async function validateRedirectionPort(port: number) {
+  const result = await checkPort(port)
+  if (result === false) {
+    throw new Abort(
+      `Could not open browser for authorization process. Port ${
+        output.content`${output.token.yellow(`${port}`)}`.value
+      } already in use`,
+      `Please, localizate and finish the process that it is using the port ${
+        output.content`${output.token.yellow(`${port}`)}`.value
+      }`,
+    )
+  }
 }
