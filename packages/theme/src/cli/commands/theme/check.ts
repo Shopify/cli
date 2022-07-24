@@ -81,7 +81,7 @@ Excludes checks matching any category when specified more than once`,
     const {flags} = await this.parse(Check)
     const passThroughFlags: string[] = []
     for (const [label, value] of Object.entries(flags)) {
-      if (label === 'path') {
+      if (['path', 'verbose'].includes(label)) {
         continue
       } else if (typeof value === 'boolean') {
         passThroughFlags.push(`--${label}`)
