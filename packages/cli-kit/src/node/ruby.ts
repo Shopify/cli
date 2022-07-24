@@ -15,15 +15,21 @@ const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.3.0'
 const MinRubyGemVersion = '2.5.0'
 
+interface ExecCLI2Options {
+  // Contains token and store to pass to CLI 2.0, which will be set as environment variables
+  adminSession?: AdminSession
+  // Directory in which to execute the command. Otherwise the current directory will be used.
+  directory?: string
+}
 /**
  * Execute CLI 2.0 commands.
  * Installs a version of RubyCLI as a vendor dependency in a hidden folder in the system.
  * User must have a valid ruby+bundler environment to run any command.
  *
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
- * @param adminSession {AdminSession} Contains token and store to pass to CLI 2.0, which will be set as environment variables
+ * @param options {ExecCLI2Options}
  */
-export async function execCLI2(args: string[], adminSession?: AdminSession) {
+export async function execCLI2(args: string[], {adminSession, directory}: ExecCLI2Options = {}) {
   await installCLIDependencies()
   const env = {
     ...process.env,
@@ -34,7 +40,7 @@ export async function execCLI2(args: string[], adminSession?: AdminSession) {
 
   await system.exec('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
-    cwd: process.cwd(),
+    cwd: directory || process.cwd(),
     env,
   })
 }

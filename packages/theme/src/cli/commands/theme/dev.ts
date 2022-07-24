@@ -78,6 +78,6 @@ export default class Dev extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

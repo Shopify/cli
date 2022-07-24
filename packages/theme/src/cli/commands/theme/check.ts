@@ -79,7 +79,6 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
-    if (flags.path) process.chdir(path.resolve(flags.path))
     const passThroughFlags: string[] = []
     for (const [label, value] of Object.entries(flags)) {
       if (label === 'path') {
@@ -90,6 +89,6 @@ Excludes checks matching any category when specified more than once`,
         passThroughFlags.push(`--${label}=${value}`)
       }
     }
-    await execCLI2(['theme', 'check', ...passThroughFlags])
+    await execCLI2(['theme', 'check', ...passThroughFlags], {directory: flags.path})
   }
 }
