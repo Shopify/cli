@@ -29,11 +29,12 @@ export async function execCLI2(args: string[], adminSession?: AdminSession) {
     ...process.env,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
+    BUNDLE_GEMFILE: join(shopifyCLIDirectory(), 'Gemfile'),
   }
 
   await system.exec('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
-    cwd: shopifyCLIDirectory(),
+    cwd: process.cwd(),
     env,
   })
 }
