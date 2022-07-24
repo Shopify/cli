@@ -12,8 +12,6 @@ import Bugsnag from '@bugsnag/js'
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
-  /** The logs file name */
-  logFilename: string
 }
 
 /**
@@ -23,7 +21,7 @@ interface RunCLIOptions {
  */
 export async function runCLI(options: RunCLIOptions) {
   await initializeCliKitStore()
-  initiateLogging({filename: options.logFilename})
+  initiateLogging()
   if (isDebug()) {
     settings.debug = true
   } else {

@@ -12,7 +12,6 @@ import {
   touchSync as fileTouchSync,
 } from './file.js'
 import {join as pathJoin, relativize as relativizePath} from './path.js'
-import {camelize} from './string.js'
 import {page} from './system.js'
 import {colors} from './node/colors.js'
 import terminalLink from 'terminal-link'
@@ -25,19 +24,15 @@ import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 import {WriteStream, createWriteStream} from 'node:fs'
 
+const logFileName = 'shopify.cli.log'
 let logFileStream: WriteStream
 let commandUuid: string
 
-export function initiateLogging({
-  logDir = constants.paths.directories.cache.path(),
-  filename = 'shopify.log',
-}: {
-  logDir?: string
-  filename?: string
-}) {
+export function initiateLogging(options: {logDir?: string} = {}) {
+  const logDir = options.logDir || constants.paths.directories.cache.path()
   commandUuid = generateRandomUUID()
   fileMkdirSync(logDir)
-  const logFile = pathJoin(logDir, filename)
+  const logFile = pathJoin(logDir, logFileName)
   fileTouchSync(logFile)
   truncateLogs(logFile)
   logFileStream = createWriteStream(logFile, {flags: 'a'})
@@ -582,12 +577,9 @@ export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
 }
 
-type LogType = keyof typeof constants.logStreams
-
-export async function pageLogs(logStream: string, {lastCommand}: {lastCommand: boolean}) {
+export async function pageLogs({lastCommand}: {lastCommand: boolean}) {
   const logDir = constants.paths.directories.cache.path()
-  const logType = camelize(logStream) as LogType
-  const logFile = pathJoin(logDir, constants.logStreams[logType])
+  const logFile = pathJoin(logDir, logFileName)
   // Ensure file exists in case they deleted it or something
   fileTouchSync(logFile)
   if (lastCommand) {

@@ -14,17 +14,10 @@ export default class Logs extends Command {
       default: false,
       env: 'SHOPIFY_FLAG_LAST_COMMAND',
     }),
-    stream: Flags.string({
-      hidden: false,
-      description: 'Choose which logs to view',
-      options: ['cli', 'create-app', 'create-hydrogen'],
-      default: 'cli',
-      env: 'SHOPIFY_FLAG_STREAM',
-    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Logs)
-    await output.pageLogs(flags.stream, {lastCommand: flags['last-command']})
+    await output.pageLogs({lastCommand: flags['last-command']})
   }
 }
