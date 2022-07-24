@@ -1,6 +1,7 @@
+import {themeFlags} from '../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {cli} from '@shopify/cli-kit'
+import {cli, path} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 
 export default class Check extends Command {
@@ -8,6 +9,7 @@ export default class Check extends Command {
 
   static flags = {
     ...cli.globalFlags,
+    ...themeFlags,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'auto-correct': Flags.boolean({
       char: 'a',
@@ -77,9 +79,12 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
+    if (flags.path) process.chdir(path.resolve(flags.path))
     const passThroughFlags: string[] = []
     for (const [label, value] of Object.entries(flags)) {
-      if (typeof value === 'boolean') {
+      if (label === 'path') {
+        continue
+      } else if (typeof value === 'boolean') {
         passThroughFlags.push(`--${label}`)
       } else {
         passThroughFlags.push(`--${label}=${value}`)
