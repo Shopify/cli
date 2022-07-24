@@ -1,8 +1,6 @@
 // CLI
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {errorHandler} from './error-handler.js'
-import {initializeCliKitStore} from '../store.js'
-import {initiateLogging} from '../output.js'
 import {isDebug} from '../environment/local.js'
 import constants, {bugsnagApiKey} from '../constants.js'
 import {moduleDirectory} from '../path.js'
@@ -20,8 +18,6 @@ interface RunCLIOptions {
  * @param module {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
-  await initializeCliKitStore()
-  initiateLogging()
   if (isDebug()) {
     settings.debug = true
   } else {
