@@ -35,12 +35,15 @@ export async function execCLI2(args: string[], {adminSession, directory}: ExecCL
     ...process.env,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
+    // Bundler uses this Gemfile to understand which gems are available in the
+    // environment. We use this to specify our own Gemfile for CLI2, which exists
+    // outside the user's project directory.
     BUNDLE_GEMFILE: join(shopifyCLIDirectory(), 'Gemfile'),
   }
 
   await system.exec('bundle', ['exec', 'shopify'].concat(args), {
     stdio: 'inherit',
-    cwd: directory || process.cwd(),
+    cwd: directory ?? process.cwd(),
     env,
   })
 }

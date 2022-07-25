@@ -1,10 +1,10 @@
 import {themeFlags} from '../../flags.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import ThemeCommand from '../theme-command.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 
-export default class Check extends Command {
+export default class Check extends ThemeCommand {
   static description = 'Validate the theme'
 
   static flags = {
@@ -79,16 +79,8 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
-    const passThroughFlags: string[] = []
-    for (const [label, value] of Object.entries(flags)) {
-      if (['path', 'verbose'].includes(label)) {
-        continue
-      } else if (typeof value === 'boolean') {
-        passThroughFlags.push(`--${label}`)
-      } else {
-        passThroughFlags.push(`--${label}=${value}`)
-      }
-    }
-    await execCLI2(['theme', 'check', ...passThroughFlags], {directory: flags.path})
+    await execCLI2(['theme', 'check', ...this.passThroughFlags(flags, {exclude: ['path', 'verbose']})], {
+      directory: flags.path,
+    })
   }
 }
