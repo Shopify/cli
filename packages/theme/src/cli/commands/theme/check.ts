@@ -1,7 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {cli, path} from '@shopify/cli-kit'
+import {cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 
 export default class Check extends Command {
