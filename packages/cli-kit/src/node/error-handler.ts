@@ -7,10 +7,11 @@ import {
 } from '../error.js'
 import {info} from '../output.js'
 import {reportEvent} from '../analytics.js'
-import {normalize} from '../path.js'
-import {settings} from '@oclif/core'
+import * as path from '../path.js'
+import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag from '@bugsnag/js'
+import {realpath} from 'fs/promises'
 
 export function errorHandler(error: Error & {exitCode?: number | undefined}) {
   if (error instanceof CancelExecution) {
@@ -64,7 +65,7 @@ const reportError = async (error: Error): Promise<Error> => {
   const formattedStacktrace = new StackTracey(stacktrace ?? '')
     .clean()
     .items.map((item) => {
-      const filePath = normalize(item.file).replace('file:/', '/').replace('C:/', '')
+      const filePath = path.normalize(item.file).replace('file:/', '/').replace('C:/', '')
       return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
     })
     .join('\n')
@@ -82,4 +83,54 @@ const reportError = async (error: Error): Promise<Error> => {
     })
   }
   return reportableError
+}
+
+/**
+ * If the given file path comes from within a plugin, return the relative path, plus the plugin name.
+ *
+ * This gives us very consistent paths for errors thrown from plugin code.
+ *
+ */
+export function cleanStackFrameFilePath({
+  currentFilePath,
+  projectRoot,
+  pluginLocations,
+}: {
+  currentFilePath: string
+  projectRoot: string
+  pluginLocations: {name: string; pluginPath: string}[]
+}): string {
+  const fullLocation = path.isAbsolute(currentFilePath) ? currentFilePath : path.join(projectRoot, currentFilePath)
+
+  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
+
+  if (matchingPluginPath !== undefined) {
+    // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
+    return path.join(matchingPluginPath.name, path.relative(matchingPluginPath.pluginPath, fullLocation))
+  }
+  return currentFilePath
+}
+
+/**
+ * Register a Bugsnag error listener to clean up stack traces for errors within plugin code.
+ *
+ */
+export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Interfaces.Plugin[]) {
+  // Bugsnag have their own plug-ins that use this private field
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
+  const projectRoot = path.normalize(bugsnagConfigProjectRoot)
+  const pluginLocations = await Promise.all(
+    plugins.map(async (plugin) => {
+      const followSymlinks = await realpath(plugin.root)
+      return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
+    }),
+  )
+  Bugsnag.addOnError((event) => {
+    event.errors.forEach((error) => {
+      error.stacktrace.forEach((stackFrame) => {
+        stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+      })
+    })
+  })
 }
