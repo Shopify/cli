@@ -4,6 +4,7 @@ import {
   mapper as errorMapper,
   shouldReport as shouldReportError,
   handler,
+  cleanSingleStackTracePath,
 } from '../error.js'
 import {info} from '../output.js'
 import {reportEvent} from '../analytics.js'
@@ -65,7 +66,7 @@ const reportError = async (error: Error): Promise<Error> => {
   const formattedStacktrace = new StackTracey(stacktrace ?? '')
     .clean()
     .items.map((item) => {
-      const filePath = path.normalize(item.file).replace('file:/', '/').replace('C:/', '')
+      const filePath = cleanSingleStackTracePath(item.file)
       return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
     })
     .join('\n')
