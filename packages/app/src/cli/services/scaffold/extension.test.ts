@@ -8,6 +8,7 @@ import {
   uiExtensions,
   getUIExtensionRendererDependency,
   UIExtensionTypes,
+  ExtensionTypeslKeys,
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
@@ -26,7 +27,8 @@ describe('initialize a extension', () => {
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
-        await createFromTemplate({name, extensionType, appDirectory: tmpDir})
+        const externalExtensionType = 'post_purchase_ui'
+        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
         const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]
         expect(scaffoldedExtension.configuration.name).toBe(name)
       })
@@ -41,8 +43,9 @@ describe('initialize a extension', () => {
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
         const extensionType = 'checkout_post_purchase'
-        await createFromTemplate({name: name1, extensionType, appDirectory: tmpDir})
-        await createFromTemplate({name: name2, extensionType, appDirectory: tmpDir})
+        const externalExtensionType = 'post_purchase_ui'
+        await createFromTemplate({name: name1, extensionType, externalExtensionType, appDirectory: tmpDir})
+        await createFromTemplate({name: name2, extensionType, externalExtensionType, appDirectory: tmpDir})
         const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
@@ -78,10 +81,11 @@ describe('initialize a extension', () => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
-        await createFromTemplate({name, extensionType, appDirectory: tmpDir})
-        await expect(createFromTemplate({name, extensionType, appDirectory: tmpDir})).rejects.toThrow(
-          `A directory with this name (${name}) already exists.\nChoose a new name for your extension.`,
-        )
+        const externalExtensionType = 'post_purchase_ui'
+        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
+        await expect(
+          createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir}),
+        ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
       })
     },
     30 * 1000,
@@ -121,13 +125,20 @@ describe('getRuntimeDependencies', () => {
 interface CreateFromTemplateOptions {
   name: string
   extensionType: ExtensionTypes
+  externalExtensionType: ExtensionTypeslKeys
   appDirectory: string
 }
-async function createFromTemplate({name, extensionType, appDirectory}: CreateFromTemplateOptions) {
+async function createFromTemplate({
+  name,
+  extensionType,
+  externalExtensionType,
+  appDirectory,
+}: CreateFromTemplateOptions) {
   const stdout: any = {write: vi.fn()}
   await extensionInit({
     name,
     extensionType,
+    externalExtensionType,
     app: await loadApp(appDirectory),
     cloneUrl: 'cloneurl',
   })
