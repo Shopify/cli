@@ -1,6 +1,6 @@
 describe('empty spec', () => {
   it('passes', () => {
-    // cy.visit('www.google.com')
-    cy.visit(Cypress._instanceName)
+    // cy.visit('https://checkout-web.extensions-sandbox-test.alfonso-noriega.eu.spin.dev/information')
+    cy.visit(`${(Cypress as any)._instanceName}/information`)
   })
 })

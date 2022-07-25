@@ -1,5 +1,5 @@
-// / <reference path="e2e.d.ts" />
-
+/// <reference types="cypress" />
+/// <reference path="e2e.d.ts" />
 // ***********************************************************
 // This example support/e2e.ts is processed and
 // loaded automatically before your test files.
@@ -27,8 +27,11 @@ before(() => {
     // cy.exec('spin up extensions-sandbox-app --name=extensions-sandbox-app-abc-123')
     .then(({stdout}) => {
       // Created instance extensions-sandbox-app-9g9y (extensions-sandbox-app-9g9y.david-henry.us.spin.dev)"
-      Cypress._instanceName = stdout.split('(')[1].replace(')', '')
+      ;(Cypress as any)._instanceName = stdout.split('(')[1].replace(')', '')
     })
+})
 
-  //   .log('spin up extensions-sandbox-app --name=extensions-sandbox-app-abc-12a3')
+// TODO: add an after(() => ) hook to delete the spin instance we used
+after(() => {
+  cy.exec(`spin destroy ${(Cypress as any)._instanceName}`, {failOnNonZeroExit: false})
 })
