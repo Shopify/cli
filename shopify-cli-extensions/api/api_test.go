@@ -797,6 +797,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"status": "success",
 			"resource": {"url": "cart/1234"}
 			},
+			"externalType": "checkout_ui_extension",
 			"type": "checkout_ui_extension",
 			"metafields": [{"namespace": "another-namespace", "key": "another-key"}],
 			"uuid": "%s",

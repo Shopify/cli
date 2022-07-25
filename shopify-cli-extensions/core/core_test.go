@@ -35,7 +35,7 @@ extensions:
 		t.Errorf("invalid uuid expected 123 got %s", extension.UUID)
 	}
 
-	if extension.Type != "checkout_ui" {
+	if extension.ExternalType != "checkout_ui" {
 		t.Errorf("invalid external extension type – expected checkout_ui got %s", extension.ExternalType)
 	}
 
