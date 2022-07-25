@@ -165,6 +165,36 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   }
 }
 
+export const uiExtensionTypeKeys = {
+  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui'],
+} as const
+
+export type UIExtensionTypeslKeys = typeof uiExtensionTypeKeys.types[number]
+
+export const themeExtensionTypeKeys = {
+  types: ['theme_app_extension'],
+} as const
+
+export type ThemeExtensionTypeslKeys = typeof themeExtensionTypeKeys.types[number]
+
+export const functionExtensionTypeKeys = {
+  types: [
+    'product_discount',
+    'order_discount',
+    'shipping_discount',
+    'payment_customization',
+    'delivery_option_presenter',
+  ],
+} as const
+
+export type FunctionExtensionTypeslKeys = typeof functionExtensionTypeKeys.types[number]
+
+export const extensionTypesKeys = {
+  types: [...uiExtensionTypeKeys.types, ...themeExtensionTypeKeys.types, ...functionExtensionTypeKeys.types],
+} as const
+
+export type ExtensionTypeslKeys = typeof extensionTypesKeys.types[number]
+
 export const extensionTypesHumanKeys = {
   types: [
     'web pixel',
@@ -212,33 +242,6 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('delivery option presenter')
-  }
-}
-
-export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys): ExtensionTypes {
-  switch (humanKey) {
-    case 'checkout UI':
-      return 'checkout_ui_extension'
-    case 'order discount':
-      return 'product_discounts'
-    case 'product discount':
-      return 'product_discounts'
-    case 'shipping discount':
-      return 'shipping_discounts'
-    case 'payment customization':
-      return 'payment_methods'
-    case 'post-purchase UI':
-      return 'checkout_post_purchase'
-    case 'subscription UI':
-      return 'product_subscription'
-    case 'POS UI':
-      return 'pos_ui_extension'
-    case 'delivery option presenter':
-      return 'shipping_rate_presenter'
-    case 'theme app extension':
-      return 'theme'
-    case 'web pixel':
-      return 'web_pixel_extension'
   }
 }
 
