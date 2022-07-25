@@ -141,7 +141,9 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
   }
 }
 
-export async function terminateBlockingPortProcessPrompt(port: number, description?: string): Promise<boolean> {
+export async function terminateBlockingPortProcessPrompt(port: number, stepDescription?: string): Promise<boolean> {
+  const stepDescriptionContent = stepDescription ?? 'current step'
+
   const options = [
     {name: `Yes, terminate process`, value: 'finish'},
     {name: 'No, cancel command', value: 'cancel'},
@@ -151,10 +153,8 @@ export async function terminateBlockingPortProcessPrompt(port: number, descripti
     {
       type: 'select',
       name: 'value',
-      message: `The ${
-        description ?? 'process'
-      } requires the port ${port} to be available but it is currently being used by another process.
-      Would you like us to terminate that process to proceed with the authentication? `,
+      message: `The ${stepDescriptionContent} requires the port ${port} to be available but it is currently being used by another process.
+      Would you like us to terminate that process to proceed with the ${stepDescriptionContent}? `,
       choices: options,
     },
   ])

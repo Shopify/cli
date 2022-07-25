@@ -25,7 +25,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   const fqdn = await identityFqdn()
   const identityClientId = await clientId()
 
-  await validateRedirectionPort(port)
+  await validateRedirectionPortAvailability(port)
 
   let url = `http://${fqdn}/oauth/authorize`
 
@@ -59,7 +59,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   return {code: result.code, codeVerifier}
 }
 
-async function validateRedirectionPort(port: number) {
+async function validateRedirectionPortAvailability(port: number) {
   const result = await checkPort(port)
   if (result === false) {
     const cancelProcess = await terminateBlockingPortProcessPrompt(port, 'authentication')
