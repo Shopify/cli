@@ -16,6 +16,10 @@ endif
 build: build-node-packages
 	go build -o ${executable}
 
+.PHONY: build-debug
+build-debug: build-node-packages
+	go build -gcflags=all="-N -l" -o ${executable}
+
 .PHONY: package
 package:
 ifeq ($(GOOS),)

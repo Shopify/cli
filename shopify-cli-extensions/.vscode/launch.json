@@ -1,16 +1,60 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Create extensions",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": ".",
-      "args": ["create", "testdata/extension.config.yml"]
-    }
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "shopify extension create",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": ".",
+            "args": ["create", "${inputs:extensionConfigPath}"]
+        },
+        {
+            "name": "Debug Process",
+            "type": "go",
+            "request": "attach",
+            "mode": "local",
+            "processId": 0,
+        },
+        {
+            "name": "Debug Remote",
+            "type": "go",
+            "debugAdapter": "dlv-dap",
+            "request": "attach",
+            "mode": "remote",
+            "host": "${input:remoteIpAddress}",
+            "port": "${input:remotePort}",
+        },
+        {
+            "name": "shopify extension serve",
+            "type": "go",
+            "request": "launch",
+            "mode": "exec",
+            "program": ".",
+            "args": ["serve", "${inputs:extensionConfigPath}"]
+        }
+    ],
+    "inputs": [
+      {
+        "id": "extensionConfigPath",
+        "type": "promptString",
+        "description": "Extension Config Path: ",
+        "default": "testdata/extension.config.yml",
+      },
+      {
+        "id": "remoteIpAddress",
+        "type": "promptString",
+        "description": "Remote IP Address: ",
+        "default": "127.0.0.1",
+      },
+      {
+        "id": "remotePort",
+        "type": "promptString",
+        "description": "Remote Port: ",
+        "default": "12345",
+      },
   ]
 }
