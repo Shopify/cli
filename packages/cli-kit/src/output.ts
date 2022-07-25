@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {Fatal, Bug} from './error.js'
+import {Fatal, Bug, cleanSingleStackTracePath} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
 import constants from './constants.js'
 import {PackageManager} from './node/node-package-manager.js'
@@ -395,7 +395,12 @@ export const error = async (content: Fatal) => {
     }
   }
 
-  let stack = await new StackTracey(content).withSourcesAsync()
+  let stack = new StackTracey(content)
+  stack.items.forEach((item) => {
+    item.file = cleanSingleStackTracePath(item.file)
+  })
+
+  stack = await stack.withSourcesAsync()
   stack = stack
     .filter((entry) => {
       return !entry.file.includes('@oclif/core')
