@@ -28,6 +28,6 @@ export default class Share extends Command {
     const {flags} = await this.parse(Share)
     const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(['theme', 'share', flags.path], adminSession)
+    await execCLI2(['theme', 'share', flags.path], {adminSession})
   }
 }
