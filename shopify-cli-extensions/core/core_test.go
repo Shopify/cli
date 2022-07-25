@@ -11,6 +11,7 @@ func TestLoadConfig(t *testing.T) {
 	serializedConfig := formatYAML(`---
 extensions:
 	- uuid: 123
+		external_type: checkout_ui
 		type: checkout_ui_extension
 		title: Test Extension
 		name: Alternate Name
@@ -32,6 +33,10 @@ extensions:
 
 	if extension.UUID != "123" {
 		t.Errorf("invalid uuid expected 123 got %s", extension.UUID)
+	}
+
+	if extension.Type != "checkout_ui" {
+		t.Errorf("invalid external extension type – expected checkout_ui got %s", extension.ExternalType)
 	}
 
 	if extension.Type != "checkout_ui_extension" {

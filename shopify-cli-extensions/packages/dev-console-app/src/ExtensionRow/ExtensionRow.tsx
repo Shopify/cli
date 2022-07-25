@@ -67,7 +67,7 @@ export function ExtensionRow({
         }
       </td>
       <td className={textClass}>{extension.title}</td>
-      <td className={textClass}>{extension.type}</td>
+      <td className={textClass}>{extension.externalType}</td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>
           {i18n.translate(`statuses.${status}`)}

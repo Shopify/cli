@@ -86,6 +86,10 @@ func normalizeConfig(config *Config) {
 		if config.Extensions[index].Development.Hidden == nil {
 			config.Extensions[index].Development.Hidden = NewBoolPointer(false)
 		}
+
+		if config.Extensions[index].ExternalType == "" {
+			config.Extensions[index].ExternalType = config.Extensions[index].Type
+		}
 	}
 
 }
@@ -139,6 +143,7 @@ type Extension struct {
 	Localization    *Localization    `json:"localization" yaml:"-"`
 	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
 	Type            string           `json:"type" yaml:"type,omitempty"`
+	ExternalType    string           `json:"externalType" yaml:"external_type"`
 	UUID            string           `json:"uuid" yaml:"uuid,omitempty"`
 	Version         string           `json:"version" yaml:"version,omitempty"`
 	Surface         string           `json:"surface" yaml:"surface"`
@@ -191,7 +196,7 @@ func (e Extension) UsesNext() bool {
 }
 
 func (e Extension) NormalizedType() string {
-	return strings.Replace(e.Type, "_next", "", -1)
+	return strings.Replace(e.ExternalType, "_next", "", -1)
 }
 
 func (d Development) UsesReact() bool {

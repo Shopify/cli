@@ -52,6 +52,7 @@ export interface ResourceURL {
 
 export interface ExtensionPayload {
   type: string;
+  externalType: string;
   assets: {[name: string]: ResourceURL};
   development: {
     hidden: boolean;
