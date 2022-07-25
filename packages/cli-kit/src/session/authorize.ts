@@ -2,11 +2,12 @@ import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
 import {generateRandomChallengePair, randomHex} from '../string.js'
 import {open} from '../system.js'
-import {Abort} from '../error.js'
+import {Abort, CancelExecution} from '../error.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import * as output from '../output.js'
-import {keypress} from '../ui.js'
+import {keypress, terminateBlockingPortProcessPrompt} from '../ui.js'
 import {checkPort} from 'get-port-please'
+import {killPortProcess} from 'kill-port-process'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
@@ -61,13 +62,11 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
 async function validateRedirectionPort(port: number) {
   const result = await checkPort(port)
   if (result === false) {
-    throw new Abort(
-      `Could not open browser for authorization process. Port ${
-        output.content`${output.token.yellow(`${port}`)}`.value
-      } already in use`,
-      `Please, locate and finish the process that it is using the port ${
-        output.content`${output.token.yellow(`${port}`)}`.value
-      }`,
-    )
+    const cancelProcess = await terminateBlockingPortProcessPrompt(port, 'authentication')
+    if (cancelProcess) {
+      await killPortProcess(port)
+    } else {
+      throw new CancelExecution()
+    }
   }
 }

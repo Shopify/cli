@@ -141,8 +141,29 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
   }
 }
 
+export async function terminateBlockingPortProcessPrompt(port: number, description?: string): Promise<boolean> {
+  const options = [
+    {name: `Yes, terminate process`, value: 'finish'},
+    {name: 'No, cancel command', value: 'cancel'},
+  ]
+
+  const choice = await prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: `The ${
+        description ?? 'process'
+      } requires the port ${port} to be available but it is currently being used by another process.
+      Would you like us to terminate that process to proceed with the authentication? `,
+      choices: options,
+    },
+  ])
+  return choice.value === 'finish'
+}
+
 export const keypress = async () => {
   process.stdin.setRawMode(true)
+  process.stdin.resume()
   return new Promise<void>((resolve) =>
     process.stdin.once('data', () => {
       process.stdin.setRawMode(false)
