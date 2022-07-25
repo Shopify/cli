@@ -3,16 +3,18 @@ import {
   extensions,
   ExtensionTypes,
   getExtensionOutputConfig,
-  limitedExtensions,
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
+  uiExtensions,
+  themeExtensions,
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
+import {extensionLimit} from '../../../models/app/extensions.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -66,7 +68,7 @@ export default class AppScaffoldExtension extends Command {
 
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
-      extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
+      extensionTypesAlreadyAtQuota: this.extensionsAlreadyAtLimit(app),
       name: flags.name,
       extensionFlavor,
     })
@@ -107,7 +109,7 @@ export default class AppScaffoldExtension extends Command {
    * @param type {string} extension type
    */
   validateExtensionTypeLimit(app: AppInterface, type: string | undefined) {
-    if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
+    if (type && this.extensionsAlreadyAtLimit(app).includes(type)) {
       throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
     }
   }
@@ -140,13 +142,18 @@ export default class AppScaffoldExtension extends Command {
    * @param app {AppInterface} current App
    * @returns {string[]} list of extensions that are limited by quantity and are already scaffolded
    */
-  limitedExtensionsAlreadyScaffolded(app: AppInterface): string[] {
+  extensionsAlreadyAtLimit(app: AppInterface): string[] {
     const themeTypes = app.extensions.theme.map((ext) => ext.configuration.type)
     const uiTypes = app.extensions.ui.map((ext) => ext.configuration.type)
 
-    const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
-    const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
-    return [...themeExtensions, ...uiExtensions]
+    const allScaffolded = [...themeTypes, ...uiTypes]
+
+    const extensionTypes: ExtensionTypes[] = [...uiExtensions.types, ...themeExtensions.types]
+
+    return extensionTypes.filter((ext) => {
+      const total = allScaffolded.filter((aa) => aa === ext).length
+      return total >= extensionLimit(ext)
+    })
   }
 
   formatSuccessfulRunMessage(

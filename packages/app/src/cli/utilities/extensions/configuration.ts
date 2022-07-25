@@ -2,6 +2,7 @@ import {nodeExtensionsCLIPath} from './cli.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
+import {extensionSpecifications} from '../../models/app/extensions-specifications.generated.js'
 import {error, path} from '@shopify/cli-kit'
 
 const RendererNotFoundBug = (extension: string) => {
@@ -101,17 +102,5 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
 }
 
 export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
-  switch (uiExtensionType) {
-    case 'checkout_ui_extension':
-      return 'checkout'
-    case 'checkout_post_purchase':
-      return 'post_purchase'
-    case 'pos_ui_extension':
-      return 'pos'
-    case 'product_subscription':
-      return 'admin'
-    case 'web_pixel_extension':
-      // This value is mandatory but is not yet defined for web_pixel
-      return 'unknown'
-  }
+  return extensionSpecifications.find((ext) => ext.identifier === uiExtensionType)?.features.argo?.surface ?? 'unknown'
 }
