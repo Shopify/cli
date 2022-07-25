@@ -23,7 +23,7 @@ import './commands'
 
 before(() => {
   // cy.exec('spin up extensions-sandbox-app --name=extensions-sandbox-app-some-string')
-  cy.exec('spin up extensions-sandbox-app')
+  cy.exec('spin up extensions-sandbox-app --wait', { timeout: 300000 })
     // cy.exec('spin up extensions-sandbox-app --name=extensions-sandbox-app-abc-123')
     .then(({stdout}) => {
       // Created instance extensions-sandbox-app-9g9y (extensions-sandbox-app-9g9y.david-henry.us.spin.dev)"
