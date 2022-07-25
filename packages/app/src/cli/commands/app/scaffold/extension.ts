@@ -13,7 +13,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
-import {output, path, cli, error, environment} from '@shopify/cli-kit'
+import {output, path, cli, error, environment, analytics} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -84,6 +84,13 @@ export default class AppScaffoldExtension extends Command {
       app.packageManager,
     )
     output.info(formattedSuccessfulMessage)
+
+    analytics.addMetadata({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      extension_type: promptAnswers.extensionType,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      extension_template: promptAnswers.extensionFlavor,
+    })
   }
 
   async validateExtensionType(type: string | undefined) {

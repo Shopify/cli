@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {reportEvent, start} from './analytics.js'
+import {addMetadata, reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import {join as joinPath, dirname} from './path.js'
 import * as http from './http.js'
@@ -172,6 +172,52 @@ describe('event tracking', () => {
           is_employee: false,
           api_key: undefined,
           partner_id: undefined,
+        },
+      }
+      expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
+        method: 'POST',
+        body: JSON.stringify(expectedBody),
+        headers: expectedHeaders,
+      })
+    })
+  })
+
+  it('allows to add metadata', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const command = 'app dev'
+      vi.mocked(cliKitStore().getAppInfo).mockReturnValueOnce({
+        appId: 'key1',
+        orgId: '1',
+        storeFqdn: 'domain1',
+        directory: '/cached',
+      })
+      start({command, args, currentTime: currentDate.getTime() - 100})
+      addMetadata({customMetadata: 'wadus'})
+
+      // When
+      await reportEvent()
+
+      // Then
+      const version = await constants.versions.cliKit()
+      const expectedBody = {
+        schema_id: 'app_cli3_command/1.0',
+        payload: {
+          project_type: 'node',
+          command,
+          args: args.join(' '),
+          time_start: 1643709599900,
+          time_end: 1643709600000,
+          total_time: 100,
+          success: true,
+          uname: 'darwin arm64',
+          cli_version: version,
+          ruby_version: '3.1.1',
+          node_version: process.version.replace('v', ''),
+          is_employee: false,
+          api_key: 'key1',
+          partner_id: 1,
+          metadata: `{"customMetadata":"wadus"}`,
         },
       }
       expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
