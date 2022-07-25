@@ -13,3 +13,6 @@ up:
   - node:
       version: v16.13.1
       yarn: v1.22.17
+  - homebrew:
+    - delve
+

@@ -6,7 +6,7 @@
 
 if ! command -v dlv &> /dev/null; then
     if [ 'Darwin' = $(uname) ] && [ command -v brew ]; then
-        echo "The Delve (Go) debugger is not installed. You can install 'brew install delve'."
+        echo "The Delve (Go) debugger is not installed. Please run `dev up`."
     else
         echo "The Delve (Go) debugger is not installed. Please install it first."
     fi
