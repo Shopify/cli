@@ -27,11 +27,11 @@ before(() => {
     // cy.exec('spin up extensions-sandbox-app --name=extensions-sandbox-app-abc-123')
     .then(({stdout}) => {
       // Created instance extensions-sandbox-app-9g9y (extensions-sandbox-app-9g9y.david-henry.us.spin.dev)"
-      ;(Cypress as any)._instanceName = stdout.split('(')[1].replace(')', '')
+      Cypress._instanceName = stdout.split('(')[1].replace(')', '')
     })
 })
 
 // TODO: add an after(() => ) hook to delete the spin instance we used
 after(() => {
-  cy.exec(`spin destroy ${(Cypress as any)._instanceName}`, {failOnNonZeroExit: false})
+  cy.exec(`spin destroy ${Cypress._instanceName}`, {failOnNonZeroExit: false})
 })
