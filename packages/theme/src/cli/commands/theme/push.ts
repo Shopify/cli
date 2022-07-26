@@ -35,14 +35,16 @@ export default class Push extends ThemeCommand {
       description: 'Runs the pull command without deleting local files.',
       env: 'SHOPIFY_FLAG_THEME_NODELETE',
     }),
-    only: Flags.boolean({
+    only: Flags.string({
       char: 'o',
       description: 'Download only the specified files (Multiple flags allowed).',
+      multiple: true,
       env: 'SHOPIFY_FLAG_THEME_ONLY',
     }),
-    ignore: Flags.boolean({
+    ignore: Flags.string({
       char: 'x',
       description: 'Skip downloading the specified files (Multiple flags allowed).',
+      multiple: true,
       env: 'SHOPIFY_FLAG_THEME_IGNORE',
     }),
     json: Flags.boolean({

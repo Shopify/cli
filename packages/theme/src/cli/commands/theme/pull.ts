@@ -29,13 +29,15 @@ export default class Pull extends ThemeCommand {
       description: 'Runs the pull command without deleting local files.',
       env: 'SHOPIFY_FLAG_THEME_NODELETE',
     }),
-    only: Flags.boolean({
+    only: Flags.string({
       char: 'o',
+      multiple: true,
       description: 'Download only the specified files (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_THEME_ONLY',
     }),
-    ignore: Flags.boolean({
+    ignore: Flags.string({
       char: 'x',
+      multiple: true,
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_THEME_IGNORE',
     }),
