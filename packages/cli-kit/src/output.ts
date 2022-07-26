@@ -29,6 +29,7 @@ let logFileStream: WriteStream
 let commandUuid: string
 
 export function initiateLogging(options: {logDir?: string} = {}) {
+  if (isUnitTest()) return
   const logDir = options.logDir || constants.paths.directories.cache.path()
   commandUuid = generateRandomUUID()
   fileMkdirSync(logDir)
