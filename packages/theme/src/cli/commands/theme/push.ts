@@ -112,6 +112,6 @@ export default class Push extends Command {
 
     const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

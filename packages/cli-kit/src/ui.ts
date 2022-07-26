@@ -3,7 +3,8 @@ import {Input} from './ui/input.js'
 import {Select} from './ui/select.js'
 import {CancelExecution, Abort} from './error.js'
 import {remove, exists} from './file.js'
-import {info, content, token, logToFile} from './output.js'
+import {info, completed, content, token, logUpdate, logToFile, Message, Logger, stringifyMessage} from './output.js'
+import {colors} from './node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {isTruthy} from './environment/utilities.js'
@@ -46,6 +47,39 @@ interface BaseQuestion<TName extends string> {
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
+}
+
+const started = (content: Message, logger: Logger) => {
+  const message = `${colors.yellow('❯')} ${stringifyMessage(content)}`
+  info(message, logger)
+}
+
+const failed = (content: Message, logger: Logger) => {
+  const message = `${colors.red('✖')} ${stringifyMessage(content)}`
+  info(message, logger)
+}
+
+/**
+ * Performs a task with the title kept up to date and stdout available to the
+ * task while it runs (there is no re-writing stdout while the task runs).
+ */
+export interface TaskOptions {
+  title: string
+  task: () => Promise<void | {successMessage: string}>
+}
+export const task = async ({title, task}: TaskOptions) => {
+  let success
+  started(title, logUpdate)
+  try {
+    const result = await task()
+    success = result?.successMessage || title
+  } catch (err) {
+    failed(title, logUpdate)
+    logUpdate.done()
+    throw err
+  }
+  completed(success, logUpdate)
+  logUpdate.done()
 }
 
 export type InputQuestion<TName extends string> = BaseQuestion<TName> & {
