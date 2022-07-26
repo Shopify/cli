@@ -91,7 +91,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   const hydrogenTemplate = checkIfShopifyTemplateName(templateName, language)
   if (hydrogenTemplate) template = convertTemplateNameToUrl(hydrogenTemplate as string)
 
-  // else it is a URL provided by the user
+  // Else it's a user-provided URL.
   console.log(`template: ${template}`)
   template = parseTemplateUrl(template)
   return {name, template, language} as Required<InitOptions>
