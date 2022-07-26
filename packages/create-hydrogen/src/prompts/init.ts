@@ -100,7 +100,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 /**
  * Checks if the provided name is a Shopify template, or if it's a custom URL to a user-provided template.
  *
- * @param templateName The name of the template to check.
+ * @param templateName: The name of the template to check.
  * @param language The language of the template, only provided if the template is a Shopify template.
  * @returns The fully formed template URL if is a Shopify template, false otherwise.
  */
