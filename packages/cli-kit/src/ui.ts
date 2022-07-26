@@ -130,23 +130,30 @@ ${token.json(questions)}
       const questionName = question.name
       // eslint-disable-next-line no-await-in-loop
       const answer = (await inquirer.prompt([convertQuestionForInquirer(question)]))[questionName]
+      logPromptResults(question.message, answer)
       results.push([questionName, answer])
     }
 
     return Object.fromEntries(results) as TAnswers
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mappedQuestions: any[] = questions.map(mapper)
     const value = {} as TAnswers
-    for (const question of mappedQuestions) {
+    for (const question of questions) {
       if (question.preface) {
         info(question.preface)
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mappedQuestion: any = mapper(question)
       // eslint-disable-next-line no-await-in-loop
-      value[question.name as keyof TAnswers] = await question.run()
+      const answer = await mappedQuestion.run()
+      value[question.name as keyof TAnswers] = answer
+      logPromptResults(question.message, answer)
     }
     return value
   }
+}
+
+function logPromptResults(questionName: string, answer: string) {
+  logToFile([questionName, answer].join(' '), 'INFO')
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {

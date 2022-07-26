@@ -32,7 +32,7 @@
   "oclif": {
     "commands": "dist/cli/commands",
     "hooks": {
-      "prerun": "dist/hooks/prerun"
+      "init": "@shopify/cli-kit/node/hooks/init"
     }
   }
 }
