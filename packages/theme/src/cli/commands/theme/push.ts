@@ -1,10 +1,10 @@
 import {getTheme} from '../../utilities/theme-store.js'
+import ThemeCommand from '../theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, path, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import Command from '@shopify/cli-kit/node/base-command'
 
-export default class Push extends Command {
+export default class Push extends ThemeCommand {
   static description =
     'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
@@ -78,38 +78,8 @@ export default class Push extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    const command = ['theme', 'push', flags.path]
-    if (flags.theme) {
-      command.push('-t')
-      command.push(flags.theme)
-    }
-    if (flags.development) {
-      command.push('-d')
-    }
-    if (flags.live) {
-      command.push('-l')
-    }
-    if (flags.nodelete) {
-      command.push('-n')
-    }
-    if (flags.only) {
-      command.push('-o')
-    }
-    if (flags.ignore) {
-      command.push('-x')
-    }
-    if (flags.json) {
-      command.push('-j')
-    }
-    if (flags.unpublished) {
-      command.push('-u')
-    }
-    if (flags.publish) {
-      command.push('-p')
-    }
-    if (flags['allow-live']) {
-      command.push('-a')
-    }
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose']})
+    const command = ['theme', 'push', flags.path, ...flagsToPass]
 
     const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
