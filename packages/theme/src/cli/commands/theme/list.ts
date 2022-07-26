@@ -21,6 +21,6 @@ export default class List extends Command {
     const {flags} = await this.parse(List)
     const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(['theme', 'list'], adminSession)
+    await execCLI2(['theme', 'list'], {adminSession})
   }
 }

@@ -1,6 +1,95 @@
 {
-  "name": "Shopify",
-  "type": "node",
-  "request": "launch",
-  "cwd": "${workspaceFolder}",
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app dev",
+        "runtimeExecutable": "yarn",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "dev",
+          "--path=${input:appDir}"
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+          // "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
+          // "DEBUG_GO_BINARY": "1",       // Pause execution of the Go binary until the debgger is attached.
+        },
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app scaffold extension",
+        "runtimeExecutable": "yarn",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "scaffold",
+          "extension",
+          "--path=${input:appDir}",
+          "--name=${input:extensionName}",
+          "--type=${input:extensionType}",
+          "--template=${input:extensionTemplate}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+          // "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
+          // "DEBUG_GO_BINARY": "1",       // Pause execution of the Go binary until the debgger is attached.
+        },
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
+      },
+    ],
+    "inputs": [
+      {
+        "id": "appDir",
+        "type": "promptString",
+        "description": "App Directory: ",
+      },
+      {
+        "id": "extensionName",
+        "type": "promptString",
+        "description": "Extension Name: ",
+      },
+      {
+        "id": "extensionType",
+        "type": "pickString",
+        "description": "Extension Type: ",
+        "options": [
+          "theme",
+          "product_subscription",
+          "checkout_ui_extension",
+          "checkout_post_purchase",
+          "web_pixel_extension",
+          "pos_ui_extension",
+          "product_discounts",
+          "order_discounts",
+          "shipping_discounts",
+          "payment_methods",
+          "shipping_rate_presenter"
+        ],
+        "default": "checkout_ui_extension",
+    },
+    {
+      "id": "extensionTemplate",
+      "type": "pickString",
+      "description": "Extension Template: ",
+      "options": [
+        "vanilla-js",
+        "react",
+        "wasm",
+        "rust"
+      ],
+      "default": "react",
+    }
+  ]
 }
