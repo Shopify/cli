@@ -190,6 +190,14 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         localization: await loadLocalesConfig(extension.directory),
       }
     }
+    case 'customer_accounts_ui_extension': {
+      return {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        extension_points: extension.configuration.extensionPoints,
+        name: extension.configuration.name,
+        categories: extension.configuration.categories,
+      }
+    }
     case 'web_pixel_extension': {
       return {
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -224,6 +232,7 @@ async function getExtensionPublishURL({
       case 'checkout_ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':
+      case 'customer_accounts_ui_extension':
         pathComponent = extension.type
         break
       case 'checkout_post_purchase':

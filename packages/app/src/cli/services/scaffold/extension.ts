@@ -150,6 +150,7 @@ export function getRuntimeDependencies({
     case 'checkout_ui_extension':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
+    case 'customer_accounts_ui_extension':
     case 'checkout_post_purchase': {
       const dependencies: DependencyVersion[] = [{name: 'react', version: versions.react}]
       const rendererDependency = getUIExtensionRendererDependency(extensionType)

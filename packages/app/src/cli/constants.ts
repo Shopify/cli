@@ -77,11 +77,11 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension'],
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'],
 } as const
 
 export const activeUIExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension'].filter,
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'].filter,
 }
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
@@ -160,6 +160,8 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
       return {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
     case 'pos_ui_extension':
       return {name: '@shopify/retail-ui-extensions-react', version: '^0.1.0'}
+    case 'customer_accounts_ui_extension':
+      return {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.5'}
     case 'web_pixel_extension':
       return {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
   }
@@ -172,6 +174,7 @@ export const extensionTypesHumanKeys = {
     'theme app extension',
     'checkout UI',
     'POS UI',
+    'customer accounts UI',
     'subscription UI',
     'product discount',
     'order discount',
@@ -198,6 +201,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('theme app extension')
     case 'checkout_ui_extension':
       return buildExtensionOutputConfig('checkout UI')
+    case 'customer_accounts_ui_extension':
+      return buildExtensionOutputConfig('customer accounts UI')
     case 'product_subscription':
       return buildExtensionOutputConfig('subscription UI')
     case 'pos_ui_extension':
@@ -233,6 +238,8 @@ export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys):
       return 'product_subscription'
     case 'POS UI':
       return 'pos_ui_extension'
+    case 'customer accounts UI':
+      return 'customer_accounts_ui_extension'
     case 'delivery option presenter':
       return 'shipping_rate_presenter'
     case 'theme app extension':
@@ -262,6 +269,8 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'THEME_APP_EXTENSION'
     case 'web_pixel_extension':
       return 'WEB_PIXEL_EXTENSION'
+    case 'customer_accounts_ui_extension':
+      return 'CUSTOMER_ACCOUNTS_UI_EXTENSION'
     case 'product_discounts':
     case 'order_discounts':
     case 'shipping_discounts':
