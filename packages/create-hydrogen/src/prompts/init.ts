@@ -35,7 +35,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   const questions: ui.Question[] = []
   const explicitTemplate = options.template
   let isAShopifyTemplateName = false
-  // If the template is passed through the CLI, it can either be a Shopify template name (hello-world OR demo-store)
+  // If the template is passed through the CLI, then it can either be a Shopify template name (hello-world or demo-store)
   // or a custom URL to any template.
   if (explicitTemplate) {
     const hydrogenTemplate =
