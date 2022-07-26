@@ -167,34 +167,26 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    const list = ui.newListr(
-      [
-        {
-          title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
-          task: async (_, task) => {
-            await file.mkdir(templateDownloadDir)
-            await git.downloadRepository({
-              repoUrl: url,
-              destination: templateDownloadDir,
-              shallow: true,
-              progressUpdater: (statusString: string) => {
-                const taskOutput = `Cloning template from ${url}:\n${statusString}`
-                task.output = taskOutput
-              },
-            })
-            const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
-            const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
-            if (await file.exists(configYamlPath)) {
-              await file.remove(configYamlPath)
-            }
-            task.title = `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`
-          },
-        },
-      ],
-      {rendererSilent: environment.local.isUnitTest()},
-    )
-    await list.run()
+    await ui.task({
+      title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
+      task: async () => {
+        await file.mkdir(templateDownloadDir)
+        await git.downloadRepository({
+          repoUrl: url,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+        await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+        const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
+        if (await file.exists(configYamlPath)) {
+          await file.remove(configYamlPath)
+        }
+        return {
+          successMessage: `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`,
+        }
+      },
+    })
   })
 }
 

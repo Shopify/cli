@@ -161,7 +161,7 @@ async function outputCompletionMessage({
     const lines = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
     if (lines.length > 0) {
       output.info('  Next steps in Shopify Partners:')
-      lines.forEach(output.info)
+      lines.forEach((line) => output.info(line))
     }
   }
 }
