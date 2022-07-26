@@ -1,14 +1,9 @@
 import {Message, stringifyMessage, error as outputError} from './output.js'
+import {normalize} from './path.js'
 import {Errors} from '@oclif/core'
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import sourceMapSupport from 'source-map-support'
 
 export {ExtendableError} from 'ts-error'
 export {AbortSignal} from 'abort-controller'
-
-sourceMapSupport.install()
 
 enum FatalErrorType {
   Abort,
@@ -103,4 +98,14 @@ export function shouldReport(error: Error): boolean {
     return true
   }
   return false
+}
+
+/**
+ * Stack traces usually have file:// - we strip that and also remove the Windows drive designation
+ *
+ */
+export function cleanSingleStackTracePath(filePath: string): string {
+  return normalize(filePath)
+    .replace('file:/', '/')
+    .replace(/^\/?[A-Z]:/, '')
 }

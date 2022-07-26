@@ -1,6 +1,6 @@
 import {getTheme} from '../../utilities/theme-store.js'
 import {Flags} from '@oclif/core'
-import {path, session, string} from '@shopify/cli-kit'
+import {cli, path, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import Command from '@shopify/cli-kit/node/base-command'
 
@@ -9,6 +9,7 @@ export default class Dev extends Command {
     'Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.'
 
   static flags = {
+    ...cli.globalFlags,
     poll: Flags.boolean({
       description: 'Force polling to detect file changes.',
       env: 'SHOPIFY_FLAG_THEME_POLL',
@@ -77,6 +78,6 @@ export default class Dev extends Command {
     }
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

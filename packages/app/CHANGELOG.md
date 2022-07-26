@@ -1,5 +1,36 @@
 # @shopify/app
 
+## 3.3.3
+
+### Patch Changes
+
+- ceacde28: Add a new flag to dev command that makes possible to access the app directly using localhost and a local port instead of going through an http tunnel.
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
+## 3.3.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.2
+
+## 3.3.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.1
+
+## 3.3.0
+
+### Minor Changes
+
+- f7708fcc: Replace fastify/http-proxy with node-http-proxy to support Node < 17
+
+### Patch Changes
+
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 3.2.0
 
 ### Minor Changes

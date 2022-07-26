@@ -1,5 +1,32 @@
 # @shopify/create-app
 
+## 3.3.3
+
+### Patch Changes
+
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
+## 3.3.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.2
+
+## 3.3.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.1
+
+## 3.3.0
+
+### Patch Changes
+
+- ed5f9a8f: Remind to check the README after creation
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
 ## 3.2.0
 
 ### Minor Changes

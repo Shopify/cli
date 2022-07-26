@@ -12,9 +12,11 @@ import {
   remove,
   stripUp,
   format,
+  touch,
+  appendFile,
 } from './file.js'
 import {join} from './path.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, test} from 'vitest'
 
 describe('inTemporaryDirectory', () => {
   it('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -239,5 +241,17 @@ describe('format', () => {
 
     // Then
     await expect(formattedContent).toEqual('<div>much extra space</div>\n')
+  })
+})
+
+describe('appendFile', () => {
+  test('it appends content to an existing file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = join(tmpDir, 'test-file')
+      const content = 'test-content'
+      await touch(filePath)
+      await appendFile(filePath, content)
+      await expect(read(filePath)).resolves.toContain(content)
+    })
   })
 })

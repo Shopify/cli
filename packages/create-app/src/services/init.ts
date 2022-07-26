@@ -35,23 +35,19 @@ async function init(options: InitOptions) {
     await file.mkdir(templateDownloadDir)
     let tasks: ui.ListrTasks = []
 
-    tasks = tasks.concat([
-      {
-        title: 'Download template',
-        task: async (_, task) => {
-          task.title = 'Downloading template'
-          await git.downloadRepository({
-            repoUrl,
-            destination: templateDownloadDir,
-            shallow: true,
-            progressUpdater: (statusString: string) => {
-              const taskOutput = `Cloning template from ${repoUrl}:\n${statusString}`
-              task.output = taskOutput
-            },
-          })
-          task.title = 'Template downloaded'
-        },
+    await ui.task({
+      title: `Downloading template from ${repoUrl}`,
+      task: async () => {
+        await git.downloadRepository({
+          repoUrl,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        return {successMessage: `Downloaded template from ${repoUrl}`}
       },
+    })
+
+    tasks = tasks.concat([
       {
         title: `Initialize your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
@@ -152,6 +148,7 @@ async function init(options: InitOptions) {
 
   output.info(output.content`
   ${hyphenizedName} is ready for you to build! Remember to ${output.token.genericShellCommand(`cd ${hyphenizedName}`)}
+  Check the setup instructions in your README file
   To preview your project, run ${output.token.packagejsonScript(packageManager, 'dev')}
   To add extensions, run ${output.token.packagejsonScript(packageManager, 'scaffold extension')}
   For more details on all that you can build, see the docs: ${output.token.link(

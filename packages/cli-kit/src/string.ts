@@ -40,5 +40,7 @@ export function capitalize(string: string) {
  */
 export function normalizeStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  return storeFqdn.includes('.myshopify.com') ? storeFqdn : `${storeFqdn}.myshopify.com`
+  return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
+    ? storeFqdn
+    : `${storeFqdn}.myshopify.com`
 }

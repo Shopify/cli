@@ -8,10 +8,11 @@ import type {Writable, Readable} from 'node:stream'
 export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
+  stdin?: Readable | 'inherit'
   stdout?: Writable | 'inherit'
-  stderr?: Writable
-  stdio?: Readable | 'inherit'
-  stdin?: string
+  stderr?: Writable | 'inherit'
+  stdio?: 'inherit'
+  input?: string
   signal?: AbortSignal
 }
 export type WritableExecOptions = Omit<ExecOptions, 'stdout'> & {stdout?: Writable}
@@ -34,7 +35,7 @@ export const captureOutput = async (command: string, args: string[], options?: E
 
 export const exec = async (command: string, args: string[], options?: ExecOptions) => {
   const commandProcess = buildExec(command, args, options)
-  if (options?.stderr) {
+  if (options?.stderr && options.stderr !== 'inherit') {
     commandProcess.stderr?.pipe(options.stderr)
   }
   if (options?.stdout && options.stdout !== 'inherit') {
@@ -61,8 +62,11 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
   const commandProcess = execa(command, args, {
     env,
     cwd: options?.cwd,
-    input: options?.stdin,
+    input: options?.input,
+    stdio: options?.stdio,
+    stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
+    stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
   })
   debug(`
 Running system process:

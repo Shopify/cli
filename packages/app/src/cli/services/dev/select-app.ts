@@ -41,8 +41,8 @@ export async function createApp(org: Organization, app: AppInterface, token: str
   const variables: api.graphql.CreateAppQueryVariables = {
     org: parseInt(org.id, 10),
     title: `${name}`,
-    appUrl: 'https://shopify.github.io/shopify-cli/help/start-app/',
-    redir: ['http://localhost:3456'],
+    appUrl: 'https://example.com',
+    redir: ['https://example.com/api/auth'],
     type,
   }
 

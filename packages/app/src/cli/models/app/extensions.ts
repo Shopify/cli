@@ -33,6 +33,9 @@ export const UIExtensionConfigurationSchema = schema.define.object({
   // Only for CheckoutUiExtension
   configurationSchema: schema.define.any().optional(),
 
+  // Only for CustomerAccountsUiExtension
+  categories: schema.define.array(schema.define.string()).optional(),
+
   // Only for WebPixel
   runtimeContext: schema.define.string().optional(),
   version: schema.define.string().optional(),

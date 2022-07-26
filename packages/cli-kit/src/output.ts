@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {Fatal, Bug} from './error.js'
+import {Fatal, Bug, cleanSingleStackTracePath} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
 import constants from './constants.js'
 import {PackageManager} from './node/node-package-manager.js'
@@ -22,6 +22,8 @@ import {AbortController, AbortSignal} from 'abort-controller'
 import cjs from 'color-json'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
+
+export {default as logUpdate} from 'log-update'
 
 let logFile: string
 
@@ -71,6 +73,8 @@ enum ContentTokenType {
 interface ContentMetadata {
   link?: string
 }
+
+export type Logger = (message: string) => void
 
 class ContentToken {
   type: ContentTokenType
@@ -303,26 +307,29 @@ export const clearCollectedLogs = () => {
 }
 
 /**
- * Ouputs information to the user. This is akin to "console.log"
+ * Ouputs information to the user.
  * Info messages don't get additional formatting.
  * Note: Info messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const info = (content: Message) => {
+export const info = (content: Message, logger: Logger = consoleLog) => {
+  const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
-  message(content, 'info')
+  outputWhereAppropriate('info', logger, message)
 }
 
 /**
  * Outputs a success message to the user.
- * Success message receive a special formatting to make them stand out in the console.
+ * Success messages receive a special formatting to make them stand out in the console.
  * Note: Success messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const success = (content: Message) => {
+export const success = (content: Message, logger: Logger = consoleLog) => {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
-  outputWhereAppropriate('info', consoleLog, message)
+  outputWhereAppropriate('info', logger, message)
 }
 
 /**
@@ -330,11 +337,12 @@ export const success = (content: Message) => {
  * Completed message receive a special formatting to make them stand out in the console.
  * Note: Completed messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const completed = (content: Message) => {
+export const completed = (content: Message, logger: Logger = consoleLog) => {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
-  outputWhereAppropriate('info', consoleLog, message)
+  outputWhereAppropriate('info', logger, message)
 }
 
 /**
@@ -342,10 +350,12 @@ export const completed = (content: Message) => {
  * Debug messages don't get additional formatting.
  * Note: Debug messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const debug = (content: Message) => {
+export const debug = (content: Message, logger: Logger = consoleLog) => {
   if (isUnitTest()) collectLog('debug', content)
-  message(colors.gray(stringifyMessage(content)), 'debug')
+  const message = colors.gray(stringifyMessage(content))
+  outputWhereAppropriate('debug', logger, message)
 }
 
 /**
@@ -353,10 +363,12 @@ export const debug = (content: Message) => {
  * Warning messages receive a special formatting to make them stand out in the console.
  * Note: Warning messages are sent through the standard output.
  * @param content {string} The content to be output to the user.
+ * @param logger {Function} The logging function to use to output to the user.
  */
-export const warn = (content: Message) => {
+export const warn = (content: Message, logger: Logger = consoleWarn) => {
   if (isUnitTest()) collectLog('warn', content)
-  consoleWarn(colors.yellow(stringifyMessage(content)))
+  const message = colors.yellow(stringifyMessage(content))
+  outputWhereAppropriate('warn', logger, message)
 }
 
 /**
@@ -395,7 +407,12 @@ export const error = async (content: Fatal) => {
     }
   }
 
-  let stack = await new StackTracey(content).withSourcesAsync()
+  let stack = new StackTracey(content)
+  stack.items.forEach((item) => {
+    item.file = cleanSingleStackTracePath(item.file)
+  })
+
+  stack = await stack.withSourcesAsync()
   stack = stack
     .filter((entry) => {
       return !entry.file.includes('@oclif/core')
@@ -539,9 +556,9 @@ function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-function outputWhereAppropriate(logLevel: LogLevel, logFunc: (message: string) => void, message: string): void {
+function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
-    logFunc(message)
+    logger(message)
   }
   logToFile(message, logLevel.toUpperCase())
 }
