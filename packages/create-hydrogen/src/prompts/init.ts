@@ -124,7 +124,7 @@ const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_B
 
 /**
  * Checks to see if the provided URL can be parsed by Github. For Shopify-specific templates, adds any
- * missing information (missing branch for example) to the repo information in the URL.
+ * missing information (for example, a missing branch) to the repo information in the URL.
  *
  * @param templateUrl: The URL of the template to parse.
  * @returns: The parsed URL.
