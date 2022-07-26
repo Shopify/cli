@@ -54,7 +54,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
     })
   }
 
-  // Prompt the user for the language of the template if it is not provided AND
+  // Prompt the user for the template language if it isn't provided and
   // the given template is a URL.
   output.info(`!options.language: ${!options.language}`)
   output.info(`!isAShopifyTemplateName: ${isAShopifyTemplateName}`)
