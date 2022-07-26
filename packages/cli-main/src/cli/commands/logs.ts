@@ -9,7 +9,7 @@ export default class Logs extends Command {
     ...cli.globalFlags,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'last-command': Flags.boolean({
-      hidden: false,
+      hidden: true,
       description: 'View logs for the most recent command only',
       default: false,
       env: 'SHOPIFY_FLAG_LAST_COMMAND',
