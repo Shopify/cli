@@ -127,7 +127,7 @@ const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_B
  * missing information (missing branch for example) to the repo information in the URL.
  *
  * @param templateUrl The URL of the template to parse.
- * @returns The parsed URL.
+ * @returns: The parsed URL.
  */
 const parseTemplateUrl = (templateUrl: string): string => {
   const parsedTemplate = github.parseRepoUrl(templateUrl)
