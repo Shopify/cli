@@ -1,5 +1,5 @@
 import {nodeExtensionsCLIPath} from './cli.js'
-import {convertExtensionTypeToExtensionTypeKey} from './name-mapper.js'
+import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
@@ -41,7 +41,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         title: extension.configuration.name,
         type: `${extension.configuration.type}`,
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        external_type: convertExtensionTypeToExtensionTypeKey(extension.configuration.type),
+        external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         extension_points: extension.configuration.extensionPoints || [],

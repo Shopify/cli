@@ -8,7 +8,7 @@ import {
   uiExtensions,
   getUIExtensionRendererDependency,
   UIExtensionTypes,
-  ExtensionTypeslKeys,
+  ExternalExtensionTypes,
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
@@ -125,7 +125,7 @@ describe('getRuntimeDependencies', () => {
 interface CreateFromTemplateOptions {
   name: string
   extensionType: ExtensionTypes
-  externalExtensionType: ExtensionTypeslKeys
+  externalExtensionType: ExternalExtensionTypes
   appDirectory: string
 }
 async function createFromTemplate({

@@ -165,19 +165,19 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   }
 }
 
-export const uiExtensionTypeKeys = {
+export const uiExternalExtensionTypes = {
   types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui'],
 } as const
 
-export type UIExtensionTypeslKeys = typeof uiExtensionTypeKeys.types[number]
+export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]
 
-export const themeExtensionTypeKeys = {
+export const themeExternalExtensionTypes = {
   types: ['theme_app_extension'],
 } as const
 
-export type ThemeExtensionTypeslKeys = typeof themeExtensionTypeKeys.types[number]
+export type ThemeExternalExtensionTypes = typeof themeExternalExtensionTypes.types[number]
 
-export const functionExtensionTypeKeys = {
+export const functionExternalExtensionTypes = {
   types: [
     'product_discount',
     'order_discount',
@@ -187,15 +187,19 @@ export const functionExtensionTypeKeys = {
   ],
 } as const
 
-export type FunctionExtensionTypeslKeys = typeof functionExtensionTypeKeys.types[number]
+export type FunctionExternalExtensionTypes = typeof functionExternalExtensionTypes.types[number]
 
-export const extensionTypesKeys = {
-  types: [...uiExtensionTypeKeys.types, ...themeExtensionTypeKeys.types, ...functionExtensionTypeKeys.types],
+export const externalExtensionTypes = {
+  types: [
+    ...uiExternalExtensionTypes.types,
+    ...themeExternalExtensionTypes.types,
+    ...functionExternalExtensionTypes.types,
+  ],
 } as const
 
-export type ExtensionTypeslKeys = typeof extensionTypesKeys.types[number]
+export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
 
-export const extensionTypesHumanKeys = {
+export const externalExtensionTypeNames = {
   types: [
     'web pixel',
     'post-purchase UI',
@@ -211,9 +215,9 @@ export const extensionTypesHumanKeys = {
   ],
 } as const
 
-export type ExtensionTypesHumanKeys = typeof extensionTypesHumanKeys.types[number]
+export type ExternalExtensionTypeNames = typeof externalExtensionTypeNames.types[number]
 export interface ExtensionOutputConfig {
-  humanKey: ExtensionTypesHumanKeys
+  humanKey: ExternalExtensionTypeNames
   helpURL?: string
   additionalHelp?: string
 }
@@ -275,7 +279,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
   }
 }
 
-function buildExtensionOutputConfig(humanKey: ExtensionTypesHumanKeys, helpURL?: string, additionalHelp?: string) {
+function buildExtensionOutputConfig(humanKey: ExternalExtensionTypeNames, helpURL?: string, additionalHelp?: string) {
   return {
     humanKey,
     helpURL,

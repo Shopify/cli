@@ -1,10 +1,10 @@
-import {ExtensionTypeslKeys} from '../../constants.js'
+import {ExternalExtensionTypes} from '../../constants.js'
 import {error, path} from '@shopify/cli-kit'
 import fs from 'fs'
 
 const L10N_FILE_SIZE_LIMIT = 16 * 1024
 const L10N_BUNDLE_SIZE_LIMIT = 256 * 1024
-const CHECKOUT_UI_EXTENSION_KEY: ExtensionTypeslKeys = 'checkout_ui'
+const CHECKOUT_UI_EXTENSION_KEY: ExternalExtensionTypes = 'checkout_ui'
 
 const MissingDefaultLanguageError = () => {
   return new error.Abort(

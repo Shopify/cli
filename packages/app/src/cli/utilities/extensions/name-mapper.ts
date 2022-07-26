@@ -1,10 +1,10 @@
-import {ExtensionTypes, ExtensionTypeslKeys, UIExtensionTypes, UIExtensionTypeslKeys} from '../../constants'
+import {ExtensionTypes, ExternalExtensionTypes, UIExtensionTypes, UIExternalExtensionTypes} from '../../constants'
 
-export function convertExtensionTypesToExtensionTypeKeys(extensionTypes: ExtensionTypes[]): ExtensionTypeslKeys[] {
-  return extensionTypes.map(convertExtensionTypeToExtensionTypeKey)
+export function mapExtensionTypesToExternalExtensionTypes(extensionTypes: ExtensionTypes[]): ExternalExtensionTypes[] {
+  return extensionTypes.map(mapExtensionTypeToExternalExtensionType)
 }
 
-export function convertExtensionTypeToExtensionTypeKey(extensionType: ExtensionTypes): ExtensionTypeslKeys {
+export function mapExtensionTypeToExternalExtensionType(extensionType: ExtensionTypes): ExternalExtensionTypes {
   switch (extensionType) {
     case 'checkout_post_purchase':
       return 'post_purchase_ui'
@@ -33,10 +33,10 @@ export function convertExtensionTypeToExtensionTypeKey(extensionType: ExtensionT
   }
 }
 
-export function convertUIExtensionTypeKeyToUIExtensionType(
-  extensionTypeKey: UIExtensionTypes | UIExtensionTypeslKeys,
+export function mapUIExternalExtensionTypeToUIExtensionType(
+  externalExtensionType: UIExtensionTypes | UIExternalExtensionTypes,
 ): UIExtensionTypes {
-  switch (extensionTypeKey) {
+  switch (externalExtensionType) {
     case 'post_purchase_ui':
       return 'checkout_post_purchase'
     case 'checkout_ui':
@@ -48,14 +48,14 @@ export function convertUIExtensionTypeKeyToUIExtensionType(
     case 'pos_ui':
       return 'pos_ui_extension'
     default:
-      return extensionTypeKey
+      return externalExtensionType
   }
 }
 
-export function convertExtensionTypeKeyToExtensionType(
-  extensionTypeKey: ExtensionTypeslKeys | ExtensionTypes,
+export function mapExternalExtensionTypeToExtensionType(
+  externalExtensionType: ExternalExtensionTypes | ExtensionTypes,
 ): ExtensionTypes {
-  switch (extensionTypeKey) {
+  switch (externalExtensionType) {
     case 'post_purchase_ui':
       return 'checkout_post_purchase'
     case 'checkout_ui':
@@ -79,6 +79,6 @@ export function convertExtensionTypeKeyToExtensionType(
     case 'theme_app_extension':
       return 'theme'
     default:
-      return extensionTypeKey
+      return externalExtensionType
   }
 }

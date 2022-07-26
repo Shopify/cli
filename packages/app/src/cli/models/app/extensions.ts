@@ -3,7 +3,7 @@ import {
   themeExtensions,
   uiExtensions,
   ExtensionTypes,
-  uiExtensionTypeKeys,
+  uiExternalExtensionTypes,
 } from '../../constants.js'
 import {schema} from '@shopify/cli-kit'
 
@@ -40,7 +40,7 @@ export const UIExtensionConfigurationSchema = schema.define.object({
 })
 
 export const UIExtensionConfigurationSupportedSchema = UIExtensionConfigurationSchema.extend({
-  type: schema.define.enum([...uiExtensions.types, ...uiExtensionTypeKeys.types]),
+  type: schema.define.enum([...uiExtensions.types, ...uiExternalExtensionTypes.types]),
 })
 
 export const FunctionExtensionConfigurationSchema = schema.define.object({

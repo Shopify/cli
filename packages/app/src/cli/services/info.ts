@@ -10,7 +10,7 @@ import {
   uiExtensions,
 } from '../constants.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {convertExtensionTypeToExtensionTypeKey} from '../utilities/extensions/name-mapper.js'
+import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
 import {os, output, path, session, store} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -144,7 +144,7 @@ class AppInfo {
         if (relevantExtensions[0]) {
           body += `\n\n${
             output.content`${output.token.subheading(
-              convertExtensionTypeToExtensionTypeKey(extensionType as ExtensionTypes),
+              mapExtensionTypeToExternalExtensionType(extensionType as ExtensionTypes),
             )}`.value
           }`
           relevantExtensions.forEach((extension: TExtension) => {

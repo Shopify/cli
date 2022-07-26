@@ -9,7 +9,7 @@ import {
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
-import {convertUIExtensionTypeKeyToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
+import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
@@ -215,7 +215,7 @@ class AppLoader {
       )
       const configuration = {
         ...configurationSupported,
-        type: convertUIExtensionTypeKeyToUIExtensionType(configurationSupported.type),
+        type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
       }
 
       const entrySourceFilePath = (
