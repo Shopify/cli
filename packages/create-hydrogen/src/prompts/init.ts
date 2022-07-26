@@ -117,7 +117,7 @@ const checkIfShopifyTemplateName = (templateName: string, language: string): str
 /**
  * Takes the name of a Shopify template (example: demo-store OR hello-world) and converts it to a URL.
  *
- * @param templateName The given name of a Shopify template.
+ * @param templateName: The given name of a Shopify template.
  * @returns: The URL of the template.
  */
 const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_BASE}${templateName}#${BRANCH}`
