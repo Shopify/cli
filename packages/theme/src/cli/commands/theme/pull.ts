@@ -10,6 +10,7 @@ export default class Pull extends Command {
   static flags = {
     ...cli.globalFlags,
     theme: Flags.string({
+      char: 't',
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
