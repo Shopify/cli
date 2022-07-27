@@ -23,6 +23,7 @@ import constants from './constants.js'
 import {normalizeStoreName} from './string.js'
 import * as output from './output.js'
 import {partners} from './api.js'
+import {RequestClientError} from './api/common.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -222,7 +223,7 @@ export async function hasPartnerAccount(partnersToken: string): Promise<boolean>
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    if (error instanceof partners.RequestClientError && error.statusCode === 404) {
+    if (error instanceof RequestClientError && error.statusCode === 404) {
       return false
     } else {
       return true

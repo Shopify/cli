@@ -1,50 +1,18 @@
-import {buildHeaders, sanitizedHeadersOutput} from './common.js'
+import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
 import {ScriptServiceProxyQuery} from './graphql/index.js'
 import {partners as partnersFqdn} from '../environment/fqdn.js'
-import {debug, stringifyMessage, content, token as outputToken} from '../output.js'
-import {ExtendableError} from '../error.js'
 import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
 
-export class RequestClientError extends ExtendableError {
-  statusCode: number
-  public constructor(message: string, statusCode: number) {
-    super(message)
-    this.statusCode = statusCode
-  }
-}
-
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/api/cli/graphql`
-  const headers = await buildHeaders(token)
-  debug(`
-Sending Partners GraphQL request:
-${query}
-
-With variables:
-${variables ? JSON.stringify(variables, null, 2) : ''}
-
-And headers:
-${sanitizedHeadersOutput(headers)}
-  `)
-
-  try {
+  const api = 'Partners'
+  return handlingErrors(api, async () => {
+    const fqdn = await partnersFqdn()
+    const url = `https://${fqdn}/api/cli/graphql`
+    const headers = await buildHeaders(token)
+    debugLogRequest(api, query, variables, headers)
     const response = await graphqlRequest<T>(url, query, variables, headers)
     return response
-  } catch (error) {
-    if (error instanceof ClientError) {
-      const errorMessage = stringifyMessage(content`
-The Partners GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
-
-${outputToken.json(error.response.errors)}
-      `)
-      const mappedError = new RequestClientError(errorMessage, error.response.status)
-      mappedError.stack = error.stack
-      throw mappedError
-    } else {
-      throw error
-    }
-  }
+  })
 }
 
 /**
