@@ -16,26 +16,26 @@ export default class Dev extends Command {
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'theme-editor-sync': Flags.boolean({
-      char: 'a',
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
     port: Flags.string({
-      description: 'The path to your theme',
-      char: 'p',
+      description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
     }),
     host: Flags.string({
-      description: 'The path to your theme',
-      char: 'h',
+      description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'live-reload': Flags.string({
-      description: 'The path to your theme',
+      description: `The live reload mode switches the server behavior when a file is modified:
+- hot-reload Hot reloads local changes to CSS and sections (default)
+- full-page  Always refreshes the entire page
+- off        Deactivate live reload`,
       default: 'hot-reload',
       options: ['hot-reload', 'full-page', 'off'],
-      env: 'SHOPIFY_FLAG_PATH',
+      env: 'SHOPIFY_FLAG_LIVE_RELOAD',
     }),
     path: Flags.string({
       description: 'The path to your theme',
