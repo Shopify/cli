@@ -1,3 +1,4 @@
+import {themeFlags} from '../../flags.js'
 import {getTheme} from '../../utilities/theme-store.js'
 import ThemeCommand from '../theme-command.js'
 import {Flags} from '@oclif/core'
@@ -9,6 +10,7 @@ export default class Pull extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
+    ...themeFlags,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -40,12 +42,6 @@ export default class Pull extends ThemeCommand {
       multiple: true,
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_THEME_IGNORE',
-    }),
-    path: Flags.string({
-      description: 'The path to your theme',
-      default: '.',
-      env: 'SHOPIFY_FLAG_PATH',
-      parse: (input, _) => Promise.resolve(path.resolve(input)),
     }),
     store: Flags.string({
       char: 's',
