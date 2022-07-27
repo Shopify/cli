@@ -1,63 +1,64 @@
 import * as partnersApi from './partners.js'
 import {buildHeaders} from './common.js'
 import {partners} from '../environment/fqdn.js'
-import {test, vi, expect, describe, it} from 'vitest'
-import {ClientError, request as graphqlRequest} from 'graphql-request'
+import {graphqlClient} from '../http/graphql.js'
+import {test, vi, expect, describe, beforeEach} from 'vitest'
+import {GraphQLClient, ClientError} from 'graphql-request'
 
-vi.mock('graphql-request', async () => {
-  const {gql, ClientError} = await vi.importActual('graphql-request')
-  return {
-    request: vi.fn(),
-    gql,
-    ClientError,
-  }
-})
-
+vi.mock('../http/graphql.js')
 vi.mock('./common.js', async () => {
-  const common: any = await vi.importActual('./common.js')
+  const module: any = await vi.importActual('./common.js')
   return {
-    ...common,
+    ...module,
     buildHeaders: vi.fn(),
   }
 })
-vi.mock('../environment/fqdn')
+vi.mock('../environment/fqdn.js')
 
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'
 const url = 'https://partners.shopify.com/api/cli/graphql'
 const mockedToken = 'token'
 
+let client: GraphQLClient
+beforeEach(() => {
+  client = {
+    request: vi.fn(),
+  } as any
+  vi.mocked(graphqlClient).mockResolvedValue(client)
+})
+
 describe('partners-api', () => {
   test('calls the graphql client once', async () => {
     // Given
-    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+    vi.mocked(client.request).mockResolvedValue(mockedResult)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
     await partnersApi.request('query', mockedToken, {some: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenCalledOnce()
+    expect(client.request).toHaveBeenCalledOnce()
   })
 
   test('request is called with correct parameters', async () => {
     // Given
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = {'custom-header': mockedToken}
-    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
-    vi.mocked(buildHeaders).mockResolvedValue(headers)
+    vi.mocked(client.request).mockResolvedValue(mockedResult)
+    vi.mocked(client.request).mockResolvedValue(headers)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
     await partnersApi.request('query', mockedToken, {variables: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith(url, 'query', {variables: 'variables'}, headers)
+    expect(client.request).toHaveBeenLastCalledWith('query', {variables: 'variables'})
   })
 
   test('buildHeaders is called with user token', async () => {
     // Given
-    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+    vi.mocked(client.request).mockResolvedValue(mockedResult)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
@@ -69,9 +70,9 @@ describe('partners-api', () => {
 })
 
 describe('checkIfTokenIsRevoked', () => {
-  it('returns true if error is 401', async () => {
+  test('returns true if error is 401', async () => {
     const graphQLError = new ClientError({status: 401}, {query: ''})
-    vi.mocked(graphqlRequest).mockRejectedValueOnce(graphQLError)
+    vi.mocked(client.request).mockRejectedValueOnce(graphQLError)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     const got = await partnersApi.checkIfTokenIsRevoked(mockedToken)
@@ -79,9 +80,9 @@ describe('checkIfTokenIsRevoked', () => {
     expect(got).toBe(true)
   })
 
-  it('returns false if error is not 401', async () => {
+  test('returns false if error is not 401', async () => {
     const graphQLError = new ClientError({status: 404}, {query: ''})
-    vi.mocked(graphqlRequest).mockRejectedValueOnce(graphQLError)
+    vi.mocked(client.request).mockRejectedValueOnce(graphQLError)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     const got = await partnersApi.checkIfTokenIsRevoked(mockedToken)
@@ -89,8 +90,8 @@ describe('checkIfTokenIsRevoked', () => {
     expect(got).toBe(false)
   })
 
-  it('returns false if there is no error', async () => {
-    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+  test('returns false if there is no error', async () => {
+    vi.mocked(client.request).mockResolvedValue(mockedResult)
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     const got = await partnersApi.checkIfTokenIsRevoked(mockedToken)

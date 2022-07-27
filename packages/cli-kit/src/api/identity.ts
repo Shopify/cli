@@ -1,6 +1,6 @@
 import {identity} from '../environment/fqdn.js'
 import {debug} from '../output.js'
-import {fetch} from '../http.js'
+import {shopifyFetch} from '../http.js'
 
 export async function validateIdentityToken(token: string) {
   try {
@@ -13,7 +13,7 @@ export async function validateIdentityToken(token: string) {
     }
     debug(`Sending Identity Introspection request to URL: ${instrospectionURL}`)
 
-    const response = await fetch(instrospectionURL, options)
+    const response = await shopifyFetch('shopify', instrospectionURL, options)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const json: any = await response.json()
 
@@ -27,7 +27,7 @@ export async function validateIdentityToken(token: string) {
 }
 
 async function getInstrospectionEndpoint(): Promise<string> {
-  const response = await fetch(`https://${await identity()}/.well-known/openid-configuration.json`)
+  const response = await shopifyFetch('identity', `https://${await identity()}/.well-known/openid-configuration.json`)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const json: any = await response.json()
   return json.introspection_endpoint

@@ -1,7 +1,8 @@
 import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
 import {ScriptServiceProxyQuery} from './graphql/index.js'
 import {partners as partnersFqdn} from '../environment/fqdn.js'
-import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
+import {graphqlClient} from '../http/graphql.js'
+import {Variables, ClientError, gql, RequestDocument} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
   const api = 'Partners'
@@ -10,7 +11,12 @@ export async function request<T>(query: RequestDocument, token: string, variable
     const url = `https://${fqdn}/api/cli/graphql`
     const headers = await buildHeaders(token)
     debugLogRequest(api, query, variables, headers)
-    const response = await graphqlRequest<T>(url, query, variables, headers)
+    const client = await graphqlClient({
+      headers,
+      service: 'partners',
+      url,
+    })
+    const response = await client.request<T>(query, variables)
     return response
   })
 }
@@ -30,13 +36,16 @@ export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
       }
     }
   `
-
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
   const headers = await buildHeaders(token)
-
+  const client = await graphqlClient({
+    headers,
+    url,
+    service: 'partners',
+  })
   try {
-    await graphqlRequest(url, query, {}, headers)
+    await client.request(query, {})
     return false
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
