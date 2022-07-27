@@ -6,7 +6,13 @@ import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {GraphQLClient} from 'graphql-request'
 
 vi.mock('../http/graphql.js')
-vi.mock('./common.js')
+vi.mock('./common.js', async () => {
+  const module: any = await vi.importActual('./common.js')
+  return {
+    ...module,
+    buildHeaders: vi.fn(),
+  }
+})
 
 let client: GraphQLClient
 beforeEach(() => {

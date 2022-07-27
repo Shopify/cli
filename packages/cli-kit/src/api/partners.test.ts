@@ -6,8 +6,14 @@ import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {GraphQLClient, ClientError} from 'graphql-request'
 
 vi.mock('../http/graphql.js')
-vi.mock('./common.js')
-vi.mock('../environment/fqdn')
+vi.mock('./common.js', async () => {
+  const module: any = await vi.importActual('./common.js')
+  return {
+    ...module,
+    buildHeaders: vi.fn(),
+  }
+})
+vi.mock('../environment/fqdn.js')
 
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'

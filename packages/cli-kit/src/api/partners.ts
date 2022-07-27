@@ -36,7 +36,6 @@ export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
       }
     }
   `
-
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
   const headers = await buildHeaders(token)
@@ -45,7 +44,6 @@ export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
     url,
     service: 'partners',
   })
-
   try {
     await client.request(query, {})
     return false
