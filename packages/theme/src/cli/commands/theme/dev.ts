@@ -10,19 +10,6 @@ export default class Dev extends Command {
 
   static flags = {
     ...cli.globalFlags,
-    poll: Flags.boolean({
-      description: 'Force polling to detect file changes.',
-      env: 'SHOPIFY_FLAG_THEME_POLL',
-    }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'theme-editor-sync': Flags.boolean({
-      description: 'Synchronize Theme Editor updates in the local theme files.',
-      env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
-    }),
-    port: Flags.string({
-      description: 'Local port to serve theme preview from.',
-      env: 'SHOPIFY_FLAG_PORT',
-    }),
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
@@ -42,6 +29,19 @@ export default class Dev extends Command {
       default: '.',
       env: 'SHOPIFY_FLAG_PATH',
       parse: (input, _) => Promise.resolve(path.resolve(input)),
+    }),
+    poll: Flags.boolean({
+      description: 'Force polling to detect file changes.',
+      env: 'SHOPIFY_FLAG_THEME_POLL',
+    }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'theme-editor-sync': Flags.boolean({
+      description: 'Synchronize Theme Editor updates in the local theme files.',
+      env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
+    }),
+    port: Flags.string({
+      description: 'Local port to serve theme preview from.',
+      env: 'SHOPIFY_FLAG_PORT',
     }),
     store: Flags.string({
       char: 's',
