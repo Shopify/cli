@@ -77,6 +77,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
+      - name: Install Bundler
+        run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
