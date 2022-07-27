@@ -20,6 +20,7 @@ env:
   DEBUG: 1
   YARN_VERSION: "1.22.18"
   RUBY_VERSION: "3.1.2"
+  BUNDLER_VERSION: "2.3.18"
 
 jobs:
   fixture:
@@ -39,6 +40,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
+      - name: Install Bundler for Windows
+        run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
@@ -185,7 +188,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest'}}
       - name: Install Bundler for Windows
         # setup-ruby is slow on Windows and is unnecessary for our case
-        run: gem install bundler
+        run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
         if: ${{ matrix.os == 'windows-latest'}}
       - name: Set Node.js
         uses: actions/setup-node@master
