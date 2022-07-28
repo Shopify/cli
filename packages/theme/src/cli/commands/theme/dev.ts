@@ -56,7 +56,7 @@ export default class Dev extends ThemeCommand {
     const store = getTheme(flags)
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    const storefrontToken = await session.ensureAuthenticatedStorefront(['devtools'])
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
     await execCLI2(command, {adminSession, storefrontToken})
   }
 }
