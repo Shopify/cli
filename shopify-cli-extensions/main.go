@@ -26,6 +26,11 @@ func init() {
 
 func main() {
 	cli := CLI{}
+	if len(os.Args) < 3 {
+		fmt.Println("You need to provide at least 2 arguments")
+		os.Exit(1)
+	}
+
 	cmd, args := os.Args[1], os.Args[2:]
 
 	if len(args) > 0 {
