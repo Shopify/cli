@@ -18,6 +18,8 @@ const MinRubyGemVersion = '2.5.0'
 interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
   adminSession?: AdminSession
+  // Contains token for storefront access to pass to CLI 2.0 as environment variable
+  storefrontToken?: string
   // Directory in which to execute the command. Otherwise the current directory will be used.
   directory?: string
 }
@@ -29,10 +31,11 @@ interface ExecCLI2Options {
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
  * @param options {ExecCLI2Options}
  */
-export async function execCLI2(args: string[], {adminSession, directory}: ExecCLI2Options = {}) {
+export async function execCLI2(args: string[], {adminSession, storefrontToken, directory}: ExecCLI2Options = {}) {
   await installCLIDependencies()
   const env = {
     ...process.env,
+    SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
     // Bundler uses this Gemfile to understand which gems are available in the
