@@ -27,6 +27,7 @@ const constants = {
     partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
     verbose: 'SHOPIFY_FLAG_VERBOSE',
     noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
+    firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
   },
   paths: {
     executables: {
