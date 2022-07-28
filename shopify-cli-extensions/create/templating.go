@@ -118,7 +118,7 @@ func buildTemplateHelpers(t *template.Template, extension core.Extension, shared
 			var outputFormat OutputFormat
 
 			isYamlTemplate := func(path string) (bool, bool) {
-				if (strings.HasSuffix(path, ".yml") || strings.HasSuffix(path, ".yaml")) {
+				if strings.HasSuffix(path, ".yml") || strings.HasSuffix(path, ".yaml") {
 					return true, false
 				} else if strings.HasSuffix(path, ".yml.tpl") || strings.HasSuffix(path, ".yaml.tpl") {
 					return true, true
@@ -127,14 +127,14 @@ func buildTemplateHelpers(t *template.Template, extension core.Extension, shared
 			}
 			isJsonTemplate := func(path string) (bool, bool) {
 				if strings.HasSuffix(path, ".json") {
-					return true, false			
+					return true, false
 				} else if strings.HasSuffix(path, ".json.tpl") {
-					return true, true			
+					return true, true
 				}
-				return false, false			
+				return false, false
 			}
 
-			makeFragments := func (paths ...string) []core.Fragment {
+			makeFragments := func(paths ...string) []core.Fragment {
 				fragments := make([]core.Fragment, 0, len(paths))
 				for _, path := range paths {
 					buffer := bytes.Buffer{}
@@ -159,7 +159,7 @@ func buildTemplateHelpers(t *template.Template, extension core.Extension, shared
 				return fragments
 			}
 
-			merge := func (fragments ...core.Fragment) core.Fragment {
+			merge := func(fragments ...core.Fragment) core.Fragment {
 				merged := fragments[0]
 				for _, fragment := range fragments[1:] {
 					err := mergo.Merge(&merged, &fragment, mergo.WithAppendSlice)
@@ -195,7 +195,7 @@ func buildTemplateHelpers(t *template.Template, extension core.Extension, shared
 				}
 				return deduped
 			}
-			
+
 			fragments := makeFragments(paths...)
 			merged := merge(fragments...)
 			resultFragment := deduplicate(merged)
