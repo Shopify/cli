@@ -146,10 +146,15 @@ async function installCLIDependencies() {
       {
         title: 'Installing theme dependencies',
         task: async () => {
+          const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
           await validateRubyEnv()
-          await createShopifyCLIWorkingDirectory()
-          await createShopifyCLIGemfile()
-          await bundleInstallShopifyCLI()
+          if (usingLocalCLI2) {
+            await bundleInstallLocalShopifyCLI()
+          } else {
+            await createShopifyCLIWorkingDirectory()
+            await createShopifyCLIGemfile()
+            await bundleInstallShopifyCLI()
+          }
         },
       },
     ],
@@ -247,6 +252,10 @@ async function createThemeCheckGemfile() {
   await file.write(gemPath, `source 'https://rubygems.org'\ngem 'theme-check', '${ThemeCheckVersion}'`)
 }
 
+async function bundleInstallLocalShopifyCLI() {
+  await system.exec('bundle', ['install'], {cwd: shopifyCLIDirectory()})
+}
+
 async function bundleInstallShopifyCLI() {
   await system.exec('bundle', ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {cwd: shopifyCLIDirectory()})
   await system.exec('bundle', ['install'], {cwd: shopifyCLIDirectory()})
@@ -258,7 +267,8 @@ async function bundleInstallThemeCheck() {
 }
 
 function shopifyCLIDirectory() {
-  return join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+  return process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
+    join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 }
 
 function themeCheckDirectory() {
