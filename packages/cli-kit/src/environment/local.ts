@@ -73,8 +73,8 @@ export function analyticsDisabled(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
 }
 
-export function isShopifyEmployee(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.employee])
+export function firstPartyDev(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.firstPartyDev])
 }
 
 /**

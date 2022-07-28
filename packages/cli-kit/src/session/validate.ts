@@ -4,7 +4,7 @@ import constants from '../constants.js'
 import {OAuthApplications} from '../session.js'
 import {identity, partners} from '../api.js'
 import {debug} from '../output.js'
-import {isShopifyEmployee} from '../environment/local.js'
+import {firstPartyDev} from '../environment/local.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -16,7 +16,7 @@ type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
  */
 function validateScopes(requestedScopes: string[], identity: IdentityToken) {
   const currentScopes = identity.scopes
-  if (isShopifyEmployee() !== currentScopes.includes('employee')) return false
+  if (firstPartyDev() !== currentScopes.includes('employee')) return false
   return requestedScopes.every((scope) => currentScopes.includes(scope))
 }
 
