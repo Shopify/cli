@@ -1,7 +1,8 @@
+import {themeFlags} from '../../flags.js'
 import {getTheme} from '../../utilities/theme-store.js'
 import ThemeCommand from '../theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, path, session, string} from '@shopify/cli-kit'
+import {cli, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Push extends ThemeCommand {
@@ -10,6 +11,7 @@ export default class Push extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
+    ...themeFlags,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -62,12 +64,6 @@ export default class Push extends ThemeCommand {
       char: 'p',
       description: 'Publish as the live theme after uploading.',
       env: 'SHOPIFY_FLAG_THEME_PUBLISH',
-    }),
-    path: Flags.string({
-      description: 'The path to your theme',
-      default: '.',
-      env: 'SHOPIFY_FLAG_PATH',
-      parse: (input, _) => Promise.resolve(path.resolve(input)),
     }),
     store: Flags.string({
       char: 's',
