@@ -25,9 +25,7 @@ func (e CreateProject) Run() error {
 	project, _ := fs.Sub(templates, path.Join("templates/projects", extension.Type))
 
 	engine := NewTemplateEngine(extension, FS{shared}, FS{project})
-	engine.createProject()
-
-	return nil
+	return engine.createProject()
 }
 
 func (ext CreateProject) Undo() error {

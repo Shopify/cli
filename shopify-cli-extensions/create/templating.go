@@ -41,10 +41,10 @@ type templateEngine struct {
 	*template.Template
 }
 
-func (t *templateEngine) createProject() {
+func (t *templateEngine) createProject() error {
 	actions := NewProcess()
 
-	t.project.WalkDir(func(source *SourceFileReference) error {
+	err := t.project.WalkDir(func(source *SourceFileReference) error {
 		target := source.InferTarget(t.Extension.Development.RootDir)
 
 		if source.IsDir() {
@@ -64,10 +64,16 @@ func (t *templateEngine) createProject() {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	if err := actions.Run(); err != nil {
 		actions.Undo()
+		return err
 	}
+
+	return nil
 }
 
 func (t *templateEngine) register(source *SourceFileReference) error {
