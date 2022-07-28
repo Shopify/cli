@@ -267,8 +267,10 @@ async function bundleInstallThemeCheck() {
 }
 
 function shopifyCLIDirectory() {
-  return process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
+  return (
+    process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
     join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+  )
 }
 
 function themeCheckDirectory() {
