@@ -24,6 +24,7 @@ import {normalizeStoreName} from './string.js'
 import * as output from './output.js'
 import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
+import {isShopifyEmployee} from './environment/local.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -257,6 +258,10 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
+  if (isShopifyEmployee()) {
+    debug(content`Authenticating as Shopify Employee...`)
+    scopes.push('employee')
+  }
 
   // Authorize user via browser
   debug(content`Authorizing through Identity's website...`)

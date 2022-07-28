@@ -73,6 +73,10 @@ export function analyticsDisabled(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
 }
 
+export function isShopifyEmployee(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.employee])
+}
+
 /**
  * Returns whether the environment has Git available.
  * @returns {Promise<boolean>} A promise that resolves with the value.

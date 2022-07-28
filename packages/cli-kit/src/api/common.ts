@@ -1,4 +1,4 @@
-import {isShopify} from '../environment/local.js'
+import {isShopifyEmployee} from '../environment/local.js'
 import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
 import {Abort, ExtendableError} from '../error.js'
@@ -15,7 +15,7 @@ export class RequestClientError extends ExtendableError {
 
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
   const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
-  const isEmployee = await isShopify()
+  const isEmployee = isShopifyEmployee()
 
   const headers = {
     /* eslint-disable @typescript-eslint/naming-convention */
@@ -26,7 +26,7 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
     authorization: `Bearer ${token}`,
     'X-Shopify-Access-Token': `Bearer ${token}`,
     'Content-Type': 'application/json',
-    // ...(isEmployee && {'X-Shopify-Cli-Employee': '1'}),
+    ...(isEmployee && {'X-Shopify-Cli-Employee': '1'}),
     /* eslint-enable @typescript-eslint/naming-convention */
   }
 
