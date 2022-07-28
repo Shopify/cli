@@ -1,5 +1,23 @@
 # @shopify/cli-kit
 
+## 3.4.0
+
+### Minor Changes
+
+- 0da6c7e8: • Run CLI2 commands from passed-in directory, defaulting to current working directory
+  • Fill in flags for theme check
+  • Add --path to theme check
+  • Add --verbose to theme check
+
+### Patch Changes
+
+- 08366831: Better logging:
+  • include Prompt and List input/output
+  • distinguish commands via UUID and log lines for command start/finish
+  • use a command line flag to specify log stream to view (cli, create-app, create-hydrogen)
+- feae2499: Fix support for using a private template repo when git credentials are not setup
+- 19ab3f99: Report 5xx reponses coming from the Partners' API as aborts
+
 ## 3.3.3
 
 ### Patch Changes
