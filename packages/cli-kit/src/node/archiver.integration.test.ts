@@ -30,6 +30,7 @@ describe('zip', () => {
       const archive = new StreamZip.async({file: zipPath})
       const archiveEntries = Object.keys(await archive.entries())
       expect(structure.sort()).toEqual(archiveEntries.sort())
+      await archive.close()
     })
   })
 })
