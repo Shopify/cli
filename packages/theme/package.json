@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.3.3",
+  "version": "3.4.0",
   "private": false,
   "description": "Utilities building and publishing themes",
   "type": "module",
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@oclif/core": "^1.0",
-    "@shopify/cli-kit": "3.3.3"
+    "@shopify/cli-kit": "3.4.0"
   },
   "devDependencies": {
     "vitest": "^0.17.1"
@@ -32,7 +32,7 @@
   "oclif": {
     "commands": "dist/cli/commands",
     "hooks": {
-      "prerun": "dist/hooks/prerun"
+      "init": "@shopify/cli-kit/node/hooks/init"
     }
   }
 }

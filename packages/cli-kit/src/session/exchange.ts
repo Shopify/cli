@@ -4,8 +4,8 @@ import {CodeAuthResult} from './authorize.js'
 import * as secureStore from './store.js'
 import {Abort} from '../error.js'
 import {API} from '../network/api.js'
-import {fetch} from '../http.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
+import {shopifyFetch} from '../http.js'
 
 export class InvalidGrantError extends Error {}
 
@@ -137,7 +137,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-  const res = await fetch(url.href, {method: 'POST'})
+  const res = await shopifyFetch('identity', url.href, {method: 'POST'})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
   if (!res.ok) {

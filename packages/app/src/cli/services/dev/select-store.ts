@@ -11,7 +11,10 @@ const ConvertToDevError = (storeName: string, message: string) => {
 }
 
 const InvalidStore = (storeName: string) => {
-  return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
+  return new error.Abort(
+    `The store you specified (${storeName}) is not a dev store`,
+    'Run dev --reset and select an eligible dev store.',
+  )
 }
 
 const CreateStoreLink = (orgId: string) => {
