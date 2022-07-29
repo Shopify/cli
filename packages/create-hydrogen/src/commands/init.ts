@@ -12,15 +12,16 @@ export default class Init extends Command {
       hidden: false,
     }),
     template: Flags.string({
+      description:
+        'The template to use. Can either be a Shopify template name (hello-world or demo-store) or a custom URL to any template.',
       char: 't',
       env: 'SHOPIFY_FLAG_TEMPLATE',
       hidden: false,
     }),
-    language: Flags.string({
-      char: 'a',
+    ts: Flags.boolean({
+      description: 'Set the language of the template to Typescript instead of Javascript.',
       env: 'SHOPIFY_FLAG_LANGUAGE',
       hidden: false,
-      options: ['js', 'ts'],
     }),
     path: Flags.string({
       char: 'p',
@@ -61,12 +62,11 @@ export default class Init extends Command {
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
-      language: flags.language,
+      language: flags.ts ? 'ts' : 'js',
     })
     await initService({
       name: promptAnswers.name,
       template: promptAnswers.template,
-      language: promptAnswers.language,
       dependencyManager: flags['dependency-manager'],
       shopifyCliVersion: flags['shopify-cli-version'],
       hydrogenVersion: flags['hydrogen-version'],
