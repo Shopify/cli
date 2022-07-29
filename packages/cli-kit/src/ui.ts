@@ -7,8 +7,12 @@ import {info, content, token, logToFile} from './output.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {isTruthy} from './environment/utilities.js'
+import {CustomInput} from './ui/inquirer/input.js'
+import {CustomAutocomplete} from './ui/inquirer/autocomplete.js'
+import {CustomSelect} from './ui/inquirer/select.js'
 import inquirer from 'inquirer'
 import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
+import fuzzy from 'fuzzy'
 
 export function newListr(tasks: ListrTask[], options?: object) {
   const listr = new OriginalListr(tasks, options)
@@ -39,38 +43,16 @@ export function newListr(tasks: ListrTask[], options?: object) {
 export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
-interface BaseQuestion<TName extends string> {
+export interface Question<TName extends string = string> {
   name: TName
   message: string
   preface?: string
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
+  type: 'input' | 'select' | 'autocomplete' | 'password'
+  choices?: {name: string; value: string}[]
 }
-
-export type InputQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'input'
-}
-
-export type SelectQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'select'
-  choices: string[] | {name: string; value: string}[]
-}
-
-export type AutocompleteQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'autocomplete'
-  choices: string[] | {name: string; value: string}[]
-}
-
-export type PasswordQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'password'
-}
-
-export type Question<TName extends string = string> =
-  | InputQuestion<TName>
-  | SelectQuestion<TName>
-  | AutocompleteQuestion<TName>
-  | PasswordQuestion<TName>
 
 export const prompt = async <
   TName extends string & keyof TAnswers,
@@ -86,33 +68,27 @@ ${token.json(questions)}
     `)
   }
 
-  if (debugForceInquirer || isTruthy(process.env.SHOPIFY_USE_INQUIRER)) {
-    const results = []
-    for (const question of questions) {
-      if (question.preface) {
-        info(question.preface)
-      }
-
-      const questionName = question.name
-      // eslint-disable-next-line no-await-in-loop
-      const answer = (await inquirer.prompt([convertQuestionForInquirer(question)]))[questionName]
-      results.push([questionName, answer])
-    }
-
-    return Object.fromEntries(results) as TAnswers
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mappedQuestions: any[] = questions.map(mapper)
-    const value = {} as TAnswers
-    for (const question of mappedQuestions) {
-      if (question.preface) {
-        info(question.preface)
-      }
-      // eslint-disable-next-line no-await-in-loop
-      value[question.name as keyof TAnswers] = await question.run()
-    }
-    return value
+  let mapTo: (question: Question) => unknown = mapper
+  const isEnquirer = debugForceInquirer || isTruthy(process.env.SHOPIFY_USE_INQUIRER)
+  if (isEnquirer) {
+    mapTo = inquirerMapper
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mappedQuestions: any[] = questions.map(mapTo)
+  const value = {} as TAnswers
+  for (const question of mappedQuestions) {
+    if (question.preface) {
+      info(question.preface)
+    }
+
+    value[question.name as keyof TAnswers] = isEnquirer
+      ? // eslint-disable-next-line no-await-in-loop
+        (await inquirer.prompt(question, {...question.choices}))[question.name]
+      : // eslint-disable-next-line no-await-in-loop
+        await question.run()
+  }
+  return value
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {
@@ -151,19 +127,28 @@ export const keypress = async () => {
   )
 }
 
-function convertQuestionForInquirer<
-  TName extends string & keyof TAnswers,
-  TAnswers extends {[key in TName]: string} = {[key in TName]: string},
->(question: Question<TName>): inquirer.DistinctQuestion<TAnswers> {
+function inquirerMapper(question: Question): unknown {
   switch (question.type) {
     case 'input':
     case 'password':
-      return question
-    case 'select':
-    case 'autocomplete':
+      inquirer.registerPrompt('custom-input', CustomInput)
       return {
         ...question,
-        type: 'list',
+        type: 'custom-input',
+      }
+    case 'select':
+      inquirer.registerPrompt('custom-select', CustomSelect)
+      return {
+        ...question,
+        type: 'custom-select',
+        source: filterByName,
+      }
+    case 'autocomplete':
+      inquirer.registerPrompt('autocomplete', CustomAutocomplete)
+      return {
+        ...question,
+        type: 'autocomplete',
+        source: filterByName,
       }
   }
 }
@@ -180,4 +165,18 @@ function mapper(question: Question): unknown {
     default:
       return undefined
   }
+}
+
+function filterByName(answers: {name: string; value: string}[], input = '') {
+  return new Promise((resolve) => {
+    resolve(
+      fuzzy
+        .filter(input, Object.values(answers), {
+          extract(el: {name: string; value: string}) {
+            return el.name
+          },
+        })
+        .map((el) => el.original),
+    )
+  })
 }
