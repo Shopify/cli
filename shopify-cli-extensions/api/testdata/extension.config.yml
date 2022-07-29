@@ -7,6 +7,7 @@ app:
   api_key: app_api_key
 extensions:
   - uuid: 00000000-0000-0000-0000-000000000000
+    external_type: checkout_ui
     type: checkout_ui_extension
     metafields:
       - namespace: my-namespace
@@ -21,6 +22,7 @@ extensions:
       renderer:
         name: "@shopify/checkout-ui-extensions"
   - uuid: 00000000-0000-0000-0000-000000000001
+    external_type: subscription_ui
     type: product_subscription
     development:
       root_dir: "testdata"
@@ -30,6 +32,7 @@ extensions:
       renderer:
         name: "@shopify/admin-ui-extensions"
   - uuid: 00000000-0000-0000-0000-000000000002
+    external_type: post_purchase_ui
     type: checkout_post_purchase
     metafields:
       - namespace: my-namespace

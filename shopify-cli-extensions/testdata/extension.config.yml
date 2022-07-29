@@ -23,6 +23,7 @@ extensions:
       resource:
         url: 'cart/1234'
   - uuid: 00000000-0000-0000-0000-000000000001
+    external_type: checkout_ui
     type: checkout_ui_extension_next
     title: Checkout UI Test Extension Next
     node_executable: packages/shopify-cli-extensions/cli.js
@@ -54,6 +55,7 @@ extensions:
       entries:
         main: 'src/index.tsx'
   - uuid: 00000000-0000-0000-0000-000000000003
+    external_type: subscription_ui
     type: product_subscription_next
     title: Product Subscription Test Extension Next
     node_executable: packages/shopify-cli-extensions/cli.js
@@ -85,6 +87,7 @@ extensions:
     capabilities:
       network_access: true
   - uuid: 00g add000000-0000-0000-0000-000000000005
+    external_type: post_purchase_ui
     type: checkout_post_purchase_next
     title: Post Purchase Test Extension Next
     node_executable: packages/shopify-cli-extensions/cli.js
