@@ -4,8 +4,8 @@ import {describe, test, it, expect, vi} from 'vitest'
 describe('init', () => {
   it('uses default name "hydrogen-app" when name is not passed', async () => {
     const prompt = vi.fn()
-    const input = {}
-    const output = {name: 'hydrogen-app', template: 'test'}
+    const input = {template: 'hello-world', language: 'js'}
+    const output = {name: 'hydrogen-app'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -25,13 +25,13 @@ describe('init', () => {
       ]),
     )
 
-    expect(got).toEqual(output)
+    expect(got.name).toEqual(output.name)
   })
 
   it('uses the name when passed to the prompt', async () => {
     const prompt = vi.fn()
-    const input = {name: 'snow-devil'}
-    const output = {name: 'hydrogen-app', template: 'test'}
+    const input = {name: 'snow-devil', template: 'hello-world', language: 'js'}
+    const output = {name: 'snow-devil'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -41,13 +41,15 @@ describe('init', () => {
 
     // Then
     expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'name'})]))
-    expect(got).toEqual(output)
+    expect(got.name).toEqual(output.name)
   })
 
   it('when template is not passed', async () => {
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
+
     const prompt = vi.fn()
-    const input = {name: 'snow-devil'}
-    const output = {name: 'snow-devil', template: 'test'}
+    const input = {name: 'snow-devil', language: 'js'}
+    const output = {name: 'snow-devil', template: expected, language: 'js'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(output))
@@ -60,27 +62,19 @@ describe('init', () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: 'select',
-          name: 'template',
+          name: 'templateName',
           choices: [
             {
               name: 'Demo Store',
-              value: 'demo-store-js',
-            },
-            {
-              name: 'Demo Store (TypeScript)',
-              value: 'demo-store-ts',
+              value: 'demo-store',
             },
             {
               name: 'Hello World',
-              value: 'hello-world-js',
-            },
-            {
-              name: 'Hello World (TypeScript)',
-              value: 'hello-world-ts',
+              value: 'hello-world',
             },
           ],
           message: 'Choose a template',
-          default: 'demo-store-js',
+          default: 'demo-store',
           result: expect.any(Function),
         }),
       ]),
@@ -93,9 +87,10 @@ describe('init', () => {
 
     test('when "demo-store"', async () => {
       // Given
-      const input = {name: 'snow-devil', template: 'demo-store'}
+      const input = {name: 'snow-devil', language: 'js', template: 'demo-store'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -108,9 +103,10 @@ describe('init', () => {
 
     test('when "Demo Store"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Demo Store'}
+      const input = {name: 'snow-devil', language: 'js', template: 'Demo Store'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -123,9 +119,10 @@ describe('init', () => {
 
     test('when "Demo store"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Demo store'}
+      const input = {name: 'snow-devil', language: 'js', template: 'Demo store'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -170,11 +167,12 @@ describe('init', () => {
   describe('demo-store-ts', () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#dist'
 
-    test('when "demo-store-ts"', async () => {
+    test('when "demo-store"', async () => {
       // Given
-      const input = {name: 'snow-devil', template: 'demo-store-ts'}
+      const input = {name: 'snow-devil', language: 'ts', template: 'demo-store'}
       const output = {
         name: 'snow-devil',
+        language: 'ts',
         template: expected,
       }
 
@@ -185,11 +183,12 @@ describe('init', () => {
       expect(got).toEqual(output)
     })
 
-    test('when "Demo Store ts"', async () => {
+    test('when "Demo Store"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Demo Store ts'}
+      const input = {name: 'snow-devil', language: 'ts', template: 'Demo Store'}
       const output = {
         name: 'snow-devil',
+        language: 'ts',
         template: expected,
       }
 
@@ -236,9 +235,10 @@ describe('init', () => {
 
     test('when "hello-world"', async () => {
       // Given
-      const input = {name: 'snow-devil', template: 'hello-world'}
+      const input = {name: 'snow-devil', language: 'js', template: 'hello-world'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -251,9 +251,10 @@ describe('init', () => {
 
     test('when "Hello World"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Hello World'}
+      const input = {name: 'snow-devil', language: 'js', template: 'Hello World'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -266,9 +267,10 @@ describe('init', () => {
 
     test('when "Hello world"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Hello world'}
+      const input = {name: 'snow-devil', language: 'js', template: 'Hello world'}
       const output = {
         name: 'snow-devil',
+        language: 'js',
         template: expected,
       }
 
@@ -313,11 +315,12 @@ describe('init', () => {
   describe('hello-world-ts', () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/hello-world-ts#dist'
 
-    test('when "hello-world-ts"', async () => {
+    test('when "hello-world"', async () => {
       // Given
-      const input = {name: 'snow-devil', template: 'hello-world-ts'}
+      const input = {name: 'snow-devil', language: 'ts', template: 'hello-world'}
       const output = {
         name: 'snow-devil',
+        language: 'ts',
         template: expected,
       }
 
@@ -328,11 +331,12 @@ describe('init', () => {
       expect(got).toEqual(output)
     })
 
-    test('when "Hello World ts"', async () => {
+    test('when "Hello World"', async () => {
       // given
-      const input = {name: 'snow-devil', template: 'Hello World ts'}
+      const input = {name: 'snow-devil', language: 'ts', template: 'Hello World'}
       const output = {
         name: 'snow-devil',
+        language: 'ts',
         template: expected,
       }
 
