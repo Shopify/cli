@@ -93,6 +93,8 @@ describe('extensionConfig', () => {
         {
           uuid: 'devUUID',
           title: 'My Extension Name',
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          external_type: 'post_purchase_ui',
           type: 'checkout_post_purchase',
           version: '2.1.5',
           metafields: [],
