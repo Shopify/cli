@@ -33,6 +33,7 @@ export default class Init extends Command {
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'dependency-manager': Flags.string({
+      description: 'The dependency manager to use.',
       char: 'd',
       env: 'SHOPIFY_FLAG_DEPENDENCY_MANAGER',
       hidden: false,
