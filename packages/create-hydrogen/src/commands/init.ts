@@ -7,6 +7,7 @@ export default class Init extends Command {
   static flags = {
     ...cli.globalFlags,
     name: Flags.string({
+      description: 'The name of the Hydrogen app.',
       char: 'n',
       env: 'SHOPIFY_FLAG_NAME',
       hidden: false,
@@ -24,6 +25,7 @@ export default class Init extends Command {
       hidden: false,
     }),
     path: Flags.string({
+      description: 'The path to the directory where the Hydrogen app will be created.',
       char: 'p',
       env: 'SHOPIFY_FLAG_PATH',
       parse: (input, _) => Promise.resolve(path.resolve(input)),
@@ -38,12 +40,14 @@ export default class Init extends Command {
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'shopify-cli-version': Flags.string({
+      description: 'The version of the Shopify CLI to use.',
       char: 's',
       env: 'SHOPIFY_FLAG_SHOPIFY_CLI_VERSION',
       hidden: false,
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'hydrogen-version': Flags.string({
+      description: 'The version of Hydrogen to use.',
       char: 'h',
       env: 'SHOPIFY_FLAG_HYDROGEN_VERSION',
       hidden: false,
