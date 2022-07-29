@@ -15,7 +15,7 @@ export class CustomInput extends Input {
     } else {
       prompt += `\n${color('>')} ${this.rl.line ? this.rl.line : color.dim(this.opt.default)}`
       if (error && !prompt.includes(error)) prompt += ` ${error}`
-      bottomContent = '▔'.repeat(Math.max(color.unstyle(prompt).length - 10, 30))
+      bottomContent = '▔'.repeat(Math.max(this.rl.line.length, 30))
       bottomContent = `  ${color(bottomContent)}`
     }
     this.screen.render(prompt, bottomContent)
