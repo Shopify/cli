@@ -113,6 +113,8 @@ async function uiExtensionInit({
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   root_dir: '.',
                   template: extensionFlavor,
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  install_dependencies: false,
                 },
               },
             ],
