@@ -100,7 +100,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
  *
  * @param templateName: The name of the template to check.
  * @param language: The language of the template, only provided if the template is a Shopify template
- * @returns The fully formed template URL if is a Shopify template, false otherwise.
+ * @returns: The fully-formed template URL if it's a Shopify template, false otherwise.
  */
 const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
   if (!templateName) return false
