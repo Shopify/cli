@@ -6,7 +6,7 @@ import {join as joinPath, resolve} from './path.js'
 import {version as rubyVersion} from './node/ruby.js'
 import {debug} from './output.js'
 import constants from './constants.js'
-import {CachedAppInfo, cliKitStore} from './store.js'
+import {cliKitStore} from './store.js'
 import * as metadata from './metadata.js'
 import {publishEvent} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
@@ -33,29 +33,21 @@ interface ReportEventOptions {
   errorMessage?: string
 }
 
-export const reportEvent = async (options: ReportEventOptions) => {
-  const {commandStartOptions, ...restMetadata} = metadata.getAllSensitive()
+/**
+ * Report an analytics event, sending it off to Monorail -- Shopify's internal analytics service.
+ *
+ * The payload for an event includes both generic data, and data gathered from installed plug-ins.
+ *
+ */
+export async function reportEvent(options: ReportEventOptions) {
   if (environment.local.analyticsDisabled()) return
-  if (commandStartOptions === undefined) return
 
   try {
-    const currentTime = new Date().getTime()
-    const {startArgs} = commandStartOptions
-    let directory = process.cwd()
-    const pathFlagIndex = startArgs.indexOf('--path')
-    if (pathFlagIndex >= 0) {
-      directory = resolve(startArgs[pathFlagIndex + 1])
+    const payload = await buildPayload(options)
+    if (payload === undefined) {
+      // Nothing to log
+      return
     }
-    const appInfo = cliKitStore().getAppInfo(directory)
-    const payload = await buildPayload(
-      options.config,
-      options.errorMessage,
-      currentTime,
-      commandStartOptions,
-      restMetadata,
-      appInfo,
-      directory,
-    )
     const response = await publishEvent('app_cli3_command/1.0', payload.public, payload.sensitive)
     if (response.type === 'error') {
       debug(response.message)
@@ -70,20 +62,21 @@ export const reportEvent = async (options: ReportEventOptions) => {
   }
 }
 
-const totalTime = (currentTime: number, startTime: number): number => {
-  return currentTime - startTime
-}
-
-const buildPayload = async (
-  config: Interfaces.Config,
-  errorMessage: string | undefined,
-  currentTime: number,
-  commandStartOptions: metadata.Sensitive['commandStartOptions'],
-  sensitiveMetadata: Omit<Partial<metadata.Sensitive>, 'commandStartOptions'>,
-  appInfo: CachedAppInfo | undefined,
-  directory: string,
-) => {
+const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
+  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitive()
+  if (commandStartOptions === undefined) {
+    debug('Unable to log analytics event - no information on executed command')
+    return
+  }
   const {startCommand, startArgs, startTime} = commandStartOptions
+  const currentTime = new Date().getTime()
+
+  let directory = process.cwd()
+  const pathFlagIndex = startArgs.indexOf('--path')
+  if (pathFlagIndex >= 0) {
+    directory = resolve(startArgs[pathFlagIndex + 1])
+  }
+  const appInfo = cliKitStore().getAppInfo(directory)
 
   const {platform, arch} = platformAndArch()
 
@@ -99,21 +92,25 @@ const buildPayload = async (
   const publicPluginData = await fanoutHooks(config, 'public_command_metadata', {})
   const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
 
+  const appSpecific = {
+    project_type: await getProjectType(joinPath(directory, 'web')),
+    api_key: appInfo?.appId,
+    partner_id: partnerIdAsInt,
+  }
+
   return {
     public: {
-      project_type: await getProjectType(joinPath(directory, 'web')),
       command: startCommand,
       time_start: startTime,
       time_end: currentTime,
-      total_time: totalTime(currentTime, startTime),
+      total_time: currentTime - startTime,
       success: errorMessage === undefined,
       uname: `${platform} ${arch}`,
       cli_version: await constants.versions.cliKit(),
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
-      api_key: appInfo?.appId,
-      partner_id: partnerIdAsInt,
+      ...appSpecific,
     },
     sensitive: {
       args: startArgs.join(' '),
