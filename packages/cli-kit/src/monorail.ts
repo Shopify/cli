@@ -9,34 +9,36 @@ type Optional<T> = T | null
 
 export interface Schemas {
   'app_cli3_command/1.0': {
-    partner_id?: Optional<number>
-    command: string
-    args: string
-    project_type?: Optional<string>
-    time_start: number
-    time_end: number
-    total_time: number
-    success: boolean
-    error_message?: Optional<string>
-    api_key?: Optional<string>
-    cli_version: string
-    uname: string
-    metadata?: Optional<string>
-    ruby_version: string
-    node_version: string
-    is_employee: boolean
+    sensitive: {args: string; error_message?: Optional<string>; metadata?: Optional<string>}
+    public: {
+      partner_id?: Optional<number>
+      command: string
+      project_type?: Optional<string>
+      time_start: number
+      time_end: number
+      total_time: number
+      success: boolean
+      api_key?: Optional<string>
+      cli_version: string
+      uname: string
+      ruby_version: string
+      node_version: string
+      is_employee: boolean
+    }
   }
-  [schemaId: string]: JsonMap
+  [schemaId: string]: {sensitive: JsonMap; public: JsonMap}
 }
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
 
 export async function publishEvent<TSchemaId extends keyof Schemas, TPayload extends Schemas[TSchemaId]>(
   schemaId: TSchemaId,
-  payload: TPayload,
+  publicData: TPayload['public'],
+  sensitiveData: TPayload['sensitive'],
 ): Promise<MonorailResult> {
   try {
     const currentTime = new Date().getTime()
+    const payload = {...publicData, ...sensitiveData}
     const body = JSON.stringify({schema_id: schemaId, payload})
     const headers = buildHeaders(currentTime)
 
