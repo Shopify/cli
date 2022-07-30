@@ -1,29 +1,29 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as environment from './environment.js'
-import {fetch} from './http.js'
 import {platformAndArch} from './os.js'
 import {exists as fileExists} from './file.js'
 import {join as joinPath, resolve} from './path.js'
 import {version as rubyVersion} from './node/ruby.js'
-import {debug, content, token} from './output.js'
+import {debug} from './output.js'
 import constants from './constants.js'
-import {cliKitStore} from './store.js'
+import {CachedAppInfo, cliKitStore} from './store.js'
+import * as metadata from './metadata.js'
+import {publishEvent} from './monorail.js'
 
-const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
-let startTime: number | undefined
-let startCommand: string
-let startArgs: string[]
-
-interface startOptions {
+interface StartOptions {
   command: string
   args: string[]
   currentTime?: number
 }
 
-export const start = ({command, args, currentTime = new Date().getTime()}: startOptions) => {
-  startCommand = command
-  startArgs = args
-  startTime = currentTime
+export const start = ({command, args, currentTime = new Date().getTime()}: StartOptions) => {
+  metadata.addSensitive({
+    commandStartOptions: {
+      startTime: currentTime,
+      startCommand: command,
+      startArgs: args,
+    },
+  })
 }
 
 interface ReportEventOptions {
@@ -31,20 +31,30 @@ interface ReportEventOptions {
 }
 
 export const reportEvent = async (options: ReportEventOptions = {}) => {
+  const {commandStartOptions, ...restMetadata} = metadata.getAllSensitive()
   if (environment.local.analyticsDisabled()) return
-  if (startCommand === undefined) return
+  if (commandStartOptions === undefined) return
 
   try {
     const currentTime = new Date().getTime()
-    const payload = await buildPayload(options.errorMessage, currentTime)
-    const body = JSON.stringify(payload)
-    const headers = buildHeaders(currentTime)
-
-    const response = await fetch(url, {method: 'POST', body, headers})
-    if (response.status === 200) {
-      debug(content`Analytics event sent: ${token.json(payload)}`)
-    } else {
-      debug(`Failed to report usage analytics: ${response.statusText}`)
+    const {startArgs} = commandStartOptions
+    let directory = process.cwd()
+    const pathFlagIndex = startArgs.indexOf('--path')
+    if (pathFlagIndex >= 0) {
+      directory = resolve(startArgs[pathFlagIndex + 1])
+    }
+    const appInfo = cliKitStore().getAppInfo(directory)
+    const payload = await buildPayload(
+      options.errorMessage,
+      currentTime,
+      commandStartOptions,
+      restMetadata,
+      appInfo,
+      directory,
+    )
+    const response = await publishEvent('app_cli3_command/1.0', payload.public, payload.sensitive)
+    if (response.type === 'error') {
+      debug(response.message)
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -56,26 +66,20 @@ export const reportEvent = async (options: ReportEventOptions = {}) => {
   }
 }
 
-const totalTime = (currentTime: number): number | undefined => {
-  if (startTime === undefined) return undefined
+const totalTime = (currentTime: number, startTime: number): number => {
   return currentTime - startTime
 }
 
-const buildHeaders = (currentTime: number) => {
-  return {
-    'Content-Type': 'application/json; charset=utf-8',
-    'X-Monorail-Edge-Event-Created-At-Ms': currentTime.toString(),
-    'X-Monorail-Edge-Event-Sent-At-Ms': currentTime.toString(),
-  }
-}
+const buildPayload = async (
+  errorMessage: string | undefined,
+  currentTime: number,
+  commandStartOptions: metadata.Sensitive['commandStartOptions'],
+  sensitiveMetadata: Omit<Partial<metadata.Sensitive>, 'commandStartOptions'>,
+  appInfo: CachedAppInfo | undefined,
+  directory: string,
+) => {
+  const {startCommand, startArgs, startTime} = commandStartOptions
 
-const buildPayload = async (errorMessage: string | undefined, currentTime: number) => {
-  let directory = process.cwd()
-  const pathFlagIndex = startArgs.indexOf('--path')
-  if (pathFlagIndex >= 0) {
-    directory = resolve(startArgs[pathFlagIndex + 1])
-  }
-  const appInfo = cliKitStore().getAppInfo(directory)
   const {platform, arch} = platformAndArch()
 
   const rawPartnerId = appInfo?.orgId
@@ -88,16 +92,13 @@ const buildPayload = async (errorMessage: string | undefined, currentTime: numbe
   }
 
   return {
-    schema_id: 'app_cli3_command/1.0',
-    payload: {
+    public: {
       project_type: await getProjectType(joinPath(directory, 'web')),
       command: startCommand,
-      args: startArgs.join(' '),
       time_start: startTime,
       time_end: currentTime,
-      total_time: totalTime(currentTime),
+      total_time: totalTime(currentTime, startTime),
       success: errorMessage === undefined,
-      error_message: errorMessage,
       uname: `${platform} ${arch}`,
       cli_version: await constants.versions.cliKit(),
       ruby_version: (await rubyVersion()) || '',
@@ -105,6 +106,11 @@ const buildPayload = async (errorMessage: string | undefined, currentTime: numbe
       is_employee: await environment.local.isShopify(),
       api_key: appInfo?.appId,
       partner_id: partnerIdAsInt,
+    },
+    sensitive: {
+      args: startArgs.join(' '),
+      error_message: errorMessage,
+      metadata: JSON.stringify(sensitiveMetadata),
     },
   }
 }
