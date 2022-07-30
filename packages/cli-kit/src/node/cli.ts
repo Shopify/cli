@@ -1,8 +1,6 @@
 // CLI
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {errorHandler} from './error-handler.js'
-import {initializeCliKitStore} from '../store.js'
-import {initiateLogging} from '../output.js'
 import {isDebug} from '../environment/local.js'
 import constants, {bugsnagApiKey} from '../constants.js'
 import {moduleDirectory} from '../path.js'
@@ -12,8 +10,6 @@ import Bugsnag from '@bugsnag/js'
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
-  /** The logs file name */
-  logFilename: string
 }
 
 /**
@@ -22,8 +18,6 @@ interface RunCLIOptions {
  * @param module {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
-  await initializeCliKitStore()
-  initiateLogging({filename: options.logFilename})
   if (isDebug()) {
     settings.debug = true
   } else {

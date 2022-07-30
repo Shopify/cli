@@ -33,6 +33,10 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         message = checkoutUIMessage(url, extension).value
         break
       }
+      case 'customer_accounts_ui_extension': {
+        message = customerAccountsUIMessage(url, extension).value
+        break
+      }
       case 'product_subscription': {
         message = productSubscriptionMessage(url, extension).value
         break
@@ -90,6 +94,11 @@ For more detail, see the ${devDocsLink}`
 }
 
 function checkoutUIMessage(url: string, extension: UIExtension) {
+  const publicURL = `${url}/extensions/${extension.devUUID}`
+  return output.content`Preview link: ${publicURL}`
+}
+
+function customerAccountsUIMessage(url: string, extension: UIExtension) {
   const publicURL = `${url}/extensions/${extension.devUUID}`
   return output.content`Preview link: ${publicURL}`
 }

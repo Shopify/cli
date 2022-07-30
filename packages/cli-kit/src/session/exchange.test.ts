@@ -3,7 +3,7 @@
 import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
-import {fetch} from '../http.js'
+import {shopifyFetch} from '../http.js'
 import {identity} from '../environment/fqdn.js'
 import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
@@ -46,13 +46,14 @@ describe('exchange code for identity token', () => {
   it('obtains an identity token from a authorization code', async () => {
     // Given
     const response = new Response(JSON.stringify(data))
-    vi.mocked(fetch).mockResolvedValue(response)
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
 
     // When
     const got = await exchangeCodeForAccessToken(code)
 
     // Then
-    expect(fetch).toBeCalledWith(
+    expect(shopifyFetch).toBeCalledWith(
+      'identity',
       'https://fqdn.com/oauth/token?grant_type=authorization_code&code=code&redirect_uri=http%3A%2F%2F127.0.0.1%3A3456&client_id=clientId&code_verifier=verifier',
       {method: 'POST'},
     )
@@ -66,7 +67,7 @@ describe('exchange code for identity token', () => {
       error_description: 'The grant is invalid',
     }
     const response = new Response(JSON.stringify(responseBody), {status: 500})
-    vi.mocked(fetch).mockResolvedValue(response)
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
 
     // When
     const got = exchangeCodeForAccessToken(code)
@@ -84,7 +85,7 @@ describe('exchange identity token for application tokens', () => {
     const response = new Response(JSON.stringify(data))
 
     // Need to do it 3 times because a Response can only be used once
-    vi.mocked(fetch)
+    vi.mocked(shopifyFetch)
       .mockResolvedValue(response)
       .mockResolvedValueOnce(response.clone())
       .mockResolvedValueOnce(response.clone())
@@ -118,7 +119,7 @@ describe('exchange identity token for application tokens', () => {
     const response = new Response(JSON.stringify(data))
 
     // Need to do it 3 times because a Response can only be used once
-    vi.mocked(fetch)
+    vi.mocked(shopifyFetch)
       .mockResolvedValue(response)
       .mockResolvedValueOnce(response.clone())
       .mockResolvedValueOnce(response.clone())

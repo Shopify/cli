@@ -11,5 +11,6 @@ export const themeFlags = {
     description: 'The path to your theme directory.',
     parse: (input, _) => Promise.resolve(path.resolve(input)),
     env: 'SHOPIFY_FLAG_PATH',
+    default: '.',
   }),
 }

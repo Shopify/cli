@@ -77,7 +77,7 @@ ${output.token.json(JSON.stringify(rules))}
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', function (req, socket, head) {
     const target = match(rules, req)
-    if (target && req.url?.includes('/extensions')) return proxy.ws(req, socket, head, {target})
+    if (target) return proxy.ws(req, socket, head, {target})
     socket.destroy()
   })
 
