@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import extensionInit, {getRuntimeDependencies} from './extension.js'
 import {
   blocks,

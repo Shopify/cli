@@ -1916,6 +1916,11 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.3.1.tgz#e2c6e73e0bdeb2521d00756d099218e9f5d90a04"
   integrity sha512-/zPMqDkzSZ8t3VtxOa4KPq7uzzW978M9Tvh+j7GHKuo6k6GTLxPJ4J5gE5cjfJ26pnXst0N5Hax8Sr0T2Mi9zQ==
 
+"@types/commondir@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/commondir/-/commondir-1.0.0.tgz#c1cd488eb713954b58cee1a7fc1d26ec57b48249"
+  integrity sha512-PnpBlim0nunggueM95jRl8G3lyrcE6vPSBq6J9F2GE0o7k0ErZ26vzxdQxNnJwGX7qr/Fa0UaaChgEAZ23nanA==
+
 "@types/connect@^3.4.35":
   version "3.4.35"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.35.tgz#5fcf6ae445e4021d1fc2219a4873cc73a3bb2ad1"
