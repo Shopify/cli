@@ -23,6 +23,6 @@ export default class Dev extends Command {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    await devService({directory, ...flags})
+    await devService({directory, ...flags, commandConfig: this.config})
   }
 }

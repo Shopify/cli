@@ -63,7 +63,10 @@ describe('event tracking', () => {
       start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
-      await reportEvent()
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+      } as any
+      await reportEvent({config})
 
       // Then
       const version = await constants.versions.cliKit()
@@ -104,7 +107,10 @@ describe('event tracking', () => {
       start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
-      await reportEvent()
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+      } as any
+      await reportEvent({config})
 
       // Then
       const version = await constants.versions.cliKit()
@@ -138,7 +144,10 @@ describe('event tracking', () => {
       start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
-      await reportEvent({errorMessage: 'Permission denied'})
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+      } as any
+      await reportEvent({config, errorMessage: 'Permission denied'})
 
       // Then
       const version = await constants.versions.cliKit()
@@ -160,7 +169,7 @@ describe('event tracking', () => {
       const expectedPayloadSensitive = {
         args: args.join(' '),
         error_message: 'Permission denied',
-        metadata: JSON.stringify({}),
+        metadata: expect.anything(),
       }
       expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
     })
@@ -174,7 +183,10 @@ describe('event tracking', () => {
       start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
-      await reportEvent()
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+      } as any
+      await reportEvent({config})
 
       // Then
       expect(publishEvent).not.toHaveBeenCalled()
@@ -192,7 +204,10 @@ describe('event tracking', () => {
       start({command, args})
 
       // When
-      await reportEvent()
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+      } as any
+      await reportEvent({config})
 
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')

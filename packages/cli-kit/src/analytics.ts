@@ -9,6 +9,8 @@ import constants from './constants.js'
 import {CachedAppInfo, cliKitStore} from './store.js'
 import * as metadata from './metadata.js'
 import {publishEvent} from './monorail.js'
+import {fanoutHooks} from './plugins.js'
+import {Interfaces} from '@oclif/core'
 
 interface StartOptions {
   command: string
@@ -27,10 +29,11 @@ export const start = ({command, args, currentTime = new Date().getTime()}: Start
 }
 
 interface ReportEventOptions {
+  config: Interfaces.Config
   errorMessage?: string
 }
 
-export const reportEvent = async (options: ReportEventOptions = {}) => {
+export const reportEvent = async (options: ReportEventOptions) => {
   const {commandStartOptions, ...restMetadata} = metadata.getAllSensitive()
   if (environment.local.analyticsDisabled()) return
   if (commandStartOptions === undefined) return
@@ -45,6 +48,7 @@ export const reportEvent = async (options: ReportEventOptions = {}) => {
     }
     const appInfo = cliKitStore().getAppInfo(directory)
     const payload = await buildPayload(
+      options.config,
       options.errorMessage,
       currentTime,
       commandStartOptions,
@@ -71,6 +75,7 @@ const totalTime = (currentTime: number, startTime: number): number => {
 }
 
 const buildPayload = async (
+  config: Interfaces.Config,
   errorMessage: string | undefined,
   currentTime: number,
   commandStartOptions: metadata.Sensitive['commandStartOptions'],
@@ -91,6 +96,9 @@ const buildPayload = async (
     }
   }
 
+  const publicPluginData = await fanoutHooks(config, 'public_command_metadata', {})
+  const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
+
   return {
     public: {
       project_type: await getProjectType(joinPath(directory, 'web')),
@@ -110,7 +118,11 @@ const buildPayload = async (
     sensitive: {
       args: startArgs.join(' '),
       error_message: errorMessage,
-      metadata: JSON.stringify(sensitiveMetadata),
+      metadata: JSON.stringify({
+        ...sensitiveMetadata,
+        extraPublic: publicPluginData,
+        extraSensitive: sensitivePluginData,
+      }),
     },
   }
 }

@@ -136,7 +136,7 @@ async function dev(options: DevOptions) {
     }
   }
 
-  await analytics.reportEvent()
+  await analytics.reportEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
     await output.concurrent(additionalProcesses)

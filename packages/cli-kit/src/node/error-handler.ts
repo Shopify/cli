@@ -9,12 +9,13 @@ import {
 import {info} from '../output.js'
 import {reportEvent} from '../analytics.js'
 import * as path from '../path.js'
+import * as metadata from '../metadata.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
-import Bugsnag from '@bugsnag/js'
+import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
-export function errorHandler(error: Error & {exitCode?: number | undefined}) {
+export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config) {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
       info(`✨  ${error.message}`)
@@ -26,15 +27,17 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}) {
       .then((error: Error) => {
         return handler(error)
       })
-      .then(reportError)
+      .then((mappedError) => reportError(mappedError, config))
       .then(() => {
         process.exit(1)
       })
   }
 }
 
-const reportError = async (error: Error): Promise<Error> => {
-  await reportEvent({errorMessage: error.message})
+const reportError = async (error: Error, config?: Interfaces.Config): Promise<Error> => {
+  if (config !== undefined) {
+    await reportEvent({config, errorMessage: error.message})
+  }
   if (settings.debug || !shouldReportError(error)) return error
 
   let reportableError: Error
@@ -133,5 +136,16 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Inter
         stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
+    addBugsnagMetadata(event)
+  })
+}
+
+export function addBugsnagMetadata(event: Event) {
+  const publicData = metadata.getAllPublic()
+  const bugsnagMetadata = {
+    misc: publicData,
+  }
+  Object.entries(bugsnagMetadata).forEach(([section, values]) => {
+    event.addMetadata(section, values)
   })
 }

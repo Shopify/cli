@@ -1,4 +1,4 @@
-import {errorHandler, cleanStackFrameFilePath} from './error-handler'
+import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata} from './error-handler'
 import * as error from '../error'
 import * as outputMocker from '../testing/output'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -77,5 +77,15 @@ describe('bugsnag stack cleaning', () => {
         ],
       }),
     ).toEqual(result)
+  })
+})
+
+describe('bugsnag metadata', () => {
+  it('includes public data', () => {
+    const event = {
+      addMetadata: vi.fn(),
+    }
+    addBugsnagMetadata(event as any)
+    expect(event.addMetadata).toHaveBeenCalled()
   })
 })
