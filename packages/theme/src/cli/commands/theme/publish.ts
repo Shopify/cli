@@ -14,7 +14,7 @@ export default class Publish extends ThemeCommand {
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',
-      env: 'SHOPIFY_FLAG_THEME_FORCE',
+      env: 'SHOPIFY_FLAG_FORCE',
     }),
     store: Flags.string({
       char: 's',

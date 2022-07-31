@@ -14,18 +14,18 @@ export default class Delete extends ThemeCommand {
     development: Flags.boolean({
       char: 'd',
       description: 'Delete your development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'show-all': Flags.boolean({
       char: 'a',
       description: 'Include others development themes in theme list.',
-      env: 'SHOPIFY_FLAG_THEME_SHOW_ALL',
+      env: 'SHOPIFY_FLAG_SHOW_ALL',
     }),
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',
-      env: 'SHOPIFY_FLAG_THEME_FORCE',
+      env: 'SHOPIFY_FLAG_FORCE',
     }),
     store: Flags.string({
       char: 's',
