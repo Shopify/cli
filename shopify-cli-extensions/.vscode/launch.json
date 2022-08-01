@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": ".",
-            "args": ["create", "${inputs:extensionConfigPath}"]
+            "args": ["create", "${input:extensionConfigPath}"]
         },
         {
             "name": "Debug Process",
@@ -34,7 +34,7 @@
             "request": "launch",
             "mode": "exec",
             "program": ".",
-            "args": ["serve", "${inputs:extensionConfigPath}"]
+            "args": ["serve", "${input:extensionConfigPath}"]
         }
     ],
     "inputs": [
