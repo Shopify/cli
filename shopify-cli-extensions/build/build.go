@@ -123,22 +123,16 @@ func ensureBuildDirectoryExists(ext core.Extension) {
 }
 
 func configureScript(script *exec.Cmd, extension core.Extension) error {
-	// "Next" extensions are executed from the root directory of the project,
-	// not the root directory of the extension itself. Hence paths must be
-	// prefaced by the extension's root_dir in arguments to the executable.
-	//
-	// However, this prefacing breaks the Go code, so we need to do it
-	// non-destructively.
-	if extension.UsesNext() {
-		development := extension.Development
-		development.BuildDir = extension.BuildDir()
-		entries := development.Entries
-		for handle, path := range entries {
-			entries[handle] = filepath.Join(".", extension.Development.RootDir, path)
-		}
-		development.Entries = entries
-		extension.Development = development
+
+	development := extension.Development
+	development.BuildDir = extension.BuildDir()
+	entries := development.Entries
+	for handle, path := range entries {
+		entries[handle] = filepath.Join(".", extension.Development.RootDir, path)
 	}
+	development.Entries = entries
+	extension.Development = development
+
 	data, err := yaml.Marshal(extension)
 	if err != nil {
 		return fmt.Errorf("unable to serialize extension configuration information: %w", err)

@@ -42,7 +42,7 @@ make run serve testdata/extension.config.yml
 Subsequently, you should be able to retrieve sample assets as follows:
 
 ```sh
-curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000000/assets/main.js
+curl http://localhost:8000/extensions/00000000-0000-0000-0000-000000000001/assets/main.js
 ```
 
 Going to root end point http://localhost:8000 will take you to the Dev Console app.
@@ -106,7 +106,7 @@ The YAML file is in the format of
 
 ```yml
 extensions:
-  - uuid: 00000000-0000-0000-0000-000000000000
+  - uuid: 00000000-0000-0000-0000-000000000001
     type: TYPE
     development:
       root_dir: 'api/testdata'

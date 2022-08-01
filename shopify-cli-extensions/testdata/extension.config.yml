@@ -5,23 +5,6 @@ store: test-shop.myshopify.com
 app:
   api_key: app_api_key
 extensions:
-  - uuid: 00000000-0000-0000-0000-000000000000
-    type: checkout_ui_extension
-    title: Checkout UI Test Extension
-    metafields:
-      - namespace: my-namespace
-        key: my-key
-    development:
-      root_dir: 'tmp/checkout_ui_extension'
-      build_dir: 'build'
-      template: 'typescript-react'
-      renderer:
-        name: '@shopify/checkout-ui-extensions'
-        version: '^0.14.0'
-      entries:
-        main: 'src/index.tsx'
-      resource:
-        url: 'cart/1234'
   - uuid: 00000000-0000-0000-0000-000000000001
     external_type: checkout_ui
     type: checkout_ui_extension_next
@@ -42,18 +25,6 @@ extensions:
         main: 'src/index.js'
       resource:
         url: 'cart/1234'
-  - uuid: 00000000-0000-0000-0000-000000000002
-    type: product_subscription
-    title: Product Subscription Test Extension
-    development:
-      root_dir: 'tmp/product_subscription'
-      build_dir: 'build'
-      template: 'typescript-react'
-      renderer:
-        name: '@shopify/admin-ui-extensions'
-        version: '^1.0.1'
-      entries:
-        main: 'src/index.tsx'
   - uuid: 00000000-0000-0000-0000-000000000003
     external_type: subscription_ui
     type: product_subscription_next
@@ -69,23 +40,6 @@ extensions:
         version: '^1.0.0'
       entries:
         main: 'src/index.js'
-  - uuid: 00000000-0000-0000-0000-000000000004
-    type: checkout_post_purchase
-    title: Post Purchase Test Extension
-    metafields:
-      - namespace: my-namespace
-        key: my-key
-    development:
-      root_dir: 'tmp/checkout_post_purchase'
-      build_dir: 'build'
-      template: 'typescript-react'
-      renderer:
-        name: '@shopify/post-purchase-ui-extensions'
-        version: '^0.13.2'
-      entries:
-        main: 'src/index.tsx'
-    capabilities:
-      network_access: true
   - uuid: 00g add000000-0000-0000-0000-000000000005
     external_type: post_purchase_ui
     type: checkout_post_purchase_next
@@ -106,29 +60,3 @@ extensions:
         main: 'src/index.js'
     capabilities:
       network_access: true
-  - uuid: 00000000-0000-0000-0000-000000000006
-    type: web_pixel_extension
-    title: Web Pixel Test Extension
-    development:
-      root_dir: 'tmp/web_pixel_extension'
-      build_dir: 'build'
-      template: 'javascript'
-      renderer:
-        name: '@shopify/checkout-ui-extensions'
-        version: '^0.14.0'
-      entries:
-        main: 'src/index.js'
-    capabilities:
-      network_access: false
-  - uuid: 00000000-0000-0000-0000-000000000007
-    type: pos_ui_extension
-    title: POS UI Test Extension
-    development:
-      root_dir: 'tmp/pos_ui_extension'
-      build_dir: 'build'
-      template: 'typescript-react'
-      renderer:
-        name: '@shopify/retail-ui-extensions'
-        version: '^0.1.0'
-      entries:
-        main: 'src/index.tsx'
