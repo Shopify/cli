@@ -191,10 +191,6 @@ type Development struct {
 	Template           string            `json:"-" yaml:"template,omitempty"`
 }
 
-func (e Extension) UsesNext() bool {
-	return strings.HasSuffix(e.Type, "_next")
-}
-
 func (e Extension) NormalizedType() string {
 	return strings.Replace(e.ExternalType, "_next", "", -1)
 }
