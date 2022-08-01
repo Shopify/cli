@@ -129,10 +129,9 @@ describe('getBinaryPathOrDownload', () => {
       const binariesDirectory = path.join(tmpDir, 'binaries')
       vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
       vi.mocked(os.platformAndArch).mockReturnValue({platform: 'unsupported', arch: 'arm64'})
-      const binaryLocalPath = await getBinaryLocalPath()
 
       // When/Then
-      await expect(getBinaryPathOrDownload()).rejects.toThrowError(
+      await expect(() => getBinaryPathOrDownload()).rejects.toThrowError(
         UnsupportedPlatformError({
           arch: 'arm64',
           platform: 'unsupported',
@@ -167,10 +166,9 @@ describe('getBinaryPathOrDownload', () => {
       }
       vi.mocked(http.fetch).mockResolvedValue(response)
       vi.mocked(validateMD5).mockRejectedValue(md5ValidationError)
-      const binaryLocalPath = await getBinaryLocalPath()
 
       // When
-      await expect(getBinaryPathOrDownload()).rejects.toThrowError(md5ValidationError)
+      await expect(() => getBinaryPathOrDownload()).rejects.toThrowError(md5ValidationError)
     })
   })
 
