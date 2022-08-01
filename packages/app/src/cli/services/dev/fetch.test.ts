@@ -118,7 +118,7 @@ describe('fetchApp', async () => {
     vi.mocked(api.partners.request).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = fetchOrgAndApps(ORG1.id, 'token')
+    const got = () => fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
     expect(got).rejects.toThrowError(NoOrgError())

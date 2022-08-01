@@ -319,7 +319,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load(tmpDir)).rejects.toThrowError()
+    await expect(() => load(tmpDir)).rejects.toThrowError()
   })
 
   it('loads the app when it has a function with a valid configuration', async () => {

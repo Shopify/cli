@@ -128,7 +128,7 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = selectStore([STORE1, STORE2], ORG1, 'token')
+    const got = () => selectStore([STORE1, STORE2], ORG1, 'token')
 
     // Then
     expect(got).rejects.toThrowError()

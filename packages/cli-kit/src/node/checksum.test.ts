@@ -41,7 +41,7 @@ describe('validate', () => {
       }
       vi.mocked(fetch).mockResolvedValue(response)
 
-      const got = validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})
+      const got = () => validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})
 
       // When
       await expect(got).rejects.toThrowError(InvalidChecksumError({file, expected: remoteHash, got: hash}))
