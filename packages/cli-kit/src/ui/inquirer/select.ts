@@ -18,8 +18,6 @@ export class CustomSelect extends CustomAutocomplete {
       this.selected = this.selected > 0 ? this.selected - 1 : len - 1
       this.ensureSelectedInRange()
       this.render(undefined, false)
-    } else {
-      this.render(undefined, false)
     }
   }
 }

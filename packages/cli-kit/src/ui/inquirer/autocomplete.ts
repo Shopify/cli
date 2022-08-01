@@ -25,7 +25,10 @@ export class CustomAutocomplete extends AutocompletePrompt {
         if (index > indexPosition) {
           return false
         }
-        const name = 'name'
+        if (choice.type === 'separator') {
+          return true
+        }
+        const name = choice.name
         realIndexPosition += name ? name.split('\n').length : 0
         return true
       })
