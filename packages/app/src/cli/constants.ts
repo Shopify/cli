@@ -22,7 +22,7 @@ export const environmentVariables = {
 } as const
 
 export const versions = {
-  extensionsBinary: 'v0.20.2',
+  extensionsBinary: 'v0.20.5',
   react: '^17.0.0',
 } as const
 
@@ -167,7 +167,41 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   }
 }
 
-export const extensionTypesHumanKeys = {
+export const uiExternalExtensionTypes = {
+  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_acounts_ui'],
+} as const
+
+export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]
+
+export const themeExternalExtensionTypes = {
+  types: ['theme_app_extension'],
+} as const
+
+export type ThemeExternalExtensionTypes = typeof themeExternalExtensionTypes.types[number]
+
+export const functionExternalExtensionTypes = {
+  types: [
+    'product_discount',
+    'order_discount',
+    'shipping_discount',
+    'payment_customization',
+    'delivery_option_presenter',
+  ],
+} as const
+
+export type FunctionExternalExtensionTypes = typeof functionExternalExtensionTypes.types[number]
+
+export const externalExtensionTypes = {
+  types: [
+    ...uiExternalExtensionTypes.types,
+    ...themeExternalExtensionTypes.types,
+    ...functionExternalExtensionTypes.types,
+  ],
+} as const
+
+export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
+
+export const externalExtensionTypeNames = {
   types: [
     'web pixel',
     'post-purchase UI',
@@ -181,12 +215,13 @@ export const extensionTypesHumanKeys = {
     'shipping discount',
     'payment customization',
     'delivery option presenter',
+    'customer accounts UI',
   ],
 } as const
 
-export type ExtensionTypesHumanKeys = typeof extensionTypesHumanKeys.types[number]
+export type ExternalExtensionTypeNames = typeof externalExtensionTypeNames.types[number]
 export interface ExtensionOutputConfig {
-  humanKey: ExtensionTypesHumanKeys
+  humanKey: ExternalExtensionTypeNames
   helpURL?: string
   additionalHelp?: string
 }
@@ -217,35 +252,6 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('delivery option presenter')
-  }
-}
-
-export function getExtensionTypeFromHumanKey(humanKey: ExtensionTypesHumanKeys): ExtensionTypes {
-  switch (humanKey) {
-    case 'checkout UI':
-      return 'checkout_ui_extension'
-    case 'order discount':
-      return 'product_discounts'
-    case 'product discount':
-      return 'product_discounts'
-    case 'shipping discount':
-      return 'shipping_discounts'
-    case 'payment customization':
-      return 'payment_methods'
-    case 'post-purchase UI':
-      return 'checkout_post_purchase'
-    case 'subscription UI':
-      return 'product_subscription'
-    case 'POS UI':
-      return 'pos_ui_extension'
-    case 'customer accounts UI':
-      return 'customer_accounts_ui_extension'
-    case 'delivery option presenter':
-      return 'shipping_rate_presenter'
-    case 'theme app extension':
-      return 'theme'
-    case 'web pixel':
-      return 'web_pixel_extension'
   }
 }
 
@@ -281,7 +287,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
   }
 }
 
-function buildExtensionOutputConfig(humanKey: ExtensionTypesHumanKeys, helpURL?: string, additionalHelp?: string) {
+function buildExtensionOutputConfig(humanKey: ExternalExtensionTypeNames, helpURL?: string, additionalHelp?: string) {
   return {
     humanKey,
     helpURL,

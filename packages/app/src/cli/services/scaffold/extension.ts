@@ -9,8 +9,10 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
+  ExternalExtensionTypes,
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
+import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
 import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
@@ -28,9 +30,13 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
+interface ExtensionInitOptions<
+  TExtensionTypes extends ExtensionTypes = ExtensionTypes,
+  TExternalExtensionTypes extends ExternalExtensionTypes = ExternalExtensionTypes,
+> {
   name: string
   extensionType: TExtensionTypes
+  externalExtensionType: TExternalExtensionTypes
   app: AppInterface
   cloneUrl?: string
   extensionFlavor?: string
@@ -67,6 +73,7 @@ async function themeExtensionInit({name, app, extensionType, extensionDirectory}
 async function uiExtensionInit({
   name,
   extensionType,
+  externalExtensionType,
   app,
   extensionFlavor,
   extensionDirectory,
@@ -107,6 +114,8 @@ async function uiExtensionInit({
               {
                 title: name,
                 // Use the new templates
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                external_type: mapExtensionTypeToExternalExtensionType(extensionType),
                 type: `${extensionType}_next`,
                 metafields: [],
                 development: {
