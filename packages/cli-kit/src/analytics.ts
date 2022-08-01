@@ -4,7 +4,7 @@ import {platformAndArch} from './os.js'
 import {exists as fileExists} from './file.js'
 import {join as joinPath, resolve} from './path.js'
 import {version as rubyVersion} from './node/ruby.js'
-import {debug} from './output.js'
+import {content, debug, token} from './output.js'
 import constants from './constants.js'
 import {cliKitStore} from './store.js'
 import * as metadata from './metadata.js'
@@ -40,12 +40,14 @@ interface ReportEventOptions {
  *
  */
 export async function reportEvent(options: ReportEventOptions) {
-  if (environment.local.analyticsDisabled()) return
-
   try {
     const payload = await buildPayload(options)
     if (payload === undefined) {
       // Nothing to log
+      return
+    }
+    if (environment.local.analyticsDisabled()) {
+      debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
     const response = await publishEvent('app_cli3_command/1.0', payload.public, payload.sensitive)
