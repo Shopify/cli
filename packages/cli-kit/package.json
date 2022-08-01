@@ -116,6 +116,7 @@
     "zod": "^3.17.3"
   },
   "devDependencies": {
+    "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/inquirer": "^8.2.1",
     "@types/js-yaml": "^4.0.5",

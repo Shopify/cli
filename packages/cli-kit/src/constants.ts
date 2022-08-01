@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import {join as pathJoin} from './path.js'
 import {findPackageVersionUp} from './version.js'
 import envPaths from 'env-paths'
