@@ -131,29 +131,6 @@ export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionTy
 }
 
 /**
- * Given a extension type, it returns the extension point name that's necessary
- * when interacting when the API.
- * @param type {FunctionExtensionTypes} Function extension type.
- * @returns {string} Extension point name.
- */
-export const getFunctionExtensionPointName = (type: FunctionExtensionTypes) => {
-  switch (type) {
-    case 'product_discounts':
-      return 'PRODUCT_DISCOUNTS'
-    case 'order_discounts':
-      return 'ORDER_DISCOUNTS'
-    case 'shipping_discounts':
-      return 'SHIPPING_DISCOUNTS'
-    case 'payment_methods':
-      return 'PAYMENT_METHODS'
-    case 'payment_customization':
-      return 'PAYMENT_CUSTOMIZATION'
-    case 'shipping_rate_presenter':
-      return 'SHIPPING_METHODS'
-  }
-}
-
-/**
  * Returns the runtime renderer dependency for a given UI extension type.
  * @param extensionType {UIExtensionTypes} Extension type.
  * @returns The renderer dependency that should be present in the app's package.json

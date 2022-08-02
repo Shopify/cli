@@ -108,7 +108,7 @@ describe('uploadFunctionExtensions', () => {
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
-        api.graphql.ModuleUploadUrlGenerateMutation,
+        api.graphql.UploadUrlGenerateMutation,
         token,
       )
     })
@@ -117,19 +117,16 @@ describe('uploadFunctionExtensions', () => {
   test('errors if the upload of the wasm errors', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
+      const uploadUrl = 'test://test.com/moduleId.wasm'
       const compilationJobId = 'job-id'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
@@ -145,7 +142,7 @@ describe('uploadFunctionExtensions', () => {
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
-        api.graphql.ModuleUploadUrlGenerateMutation,
+        api.graphql.UploadUrlGenerateMutation,
         token,
       )
     })
@@ -154,18 +151,15 @@ describe('uploadFunctionExtensions', () => {
   test('errors if the compilation request errors', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
+      const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
@@ -180,7 +174,7 @@ describe('uploadFunctionExtensions', () => {
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
-        api.graphql.ModuleUploadUrlGenerateMutation,
+        api.graphql.UploadUrlGenerateMutation,
         token,
       )
     })
@@ -189,18 +183,15 @@ describe('uploadFunctionExtensions', () => {
   test('errors if the compilation fails', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
+      const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
@@ -234,18 +225,15 @@ describe('uploadFunctionExtensions', () => {
   test('errors if the compilation times out', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
+      const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
@@ -283,19 +271,15 @@ describe('uploadFunctionExtensions', () => {
   test('errors if the update of the function errors', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
-      const createdUUID = 'uuid'
+      const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
@@ -313,7 +297,7 @@ describe('uploadFunctionExtensions', () => {
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
-        api.graphql.ModuleUploadUrlGenerateMutation,
+        api.graphql.UploadUrlGenerateMutation,
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
@@ -328,21 +312,16 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.AppFunctionSetMutation,
         token,
         {
-          uuid: undefined,
-          extensionPointName: 'PAYMENT_METHODS',
+          id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          force: true,
-          schemaMajorVersion: '1',
-          schemaMinorVersion: '0',
-          configurationUi: extension.configuration.configurationUi,
-          moduleUploadUrl: uploadUrl,
+          apiType: 'payment_methods',
           apiVersion: extension.configuration.apiVersion,
-          skipCompilationJob: true,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          moduleUploadUrl: uploadUrl,
         },
       )
     })
@@ -351,25 +330,21 @@ describe('uploadFunctionExtensions', () => {
   test('throws if the response from updating the app function contains errors', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
-      const createdUUID = 'uuid'
+      const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
       const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
         data: {
-          appScriptSet: {
+          functionSet: {
             userErrors: [
               {
                 field: 'field',
@@ -393,12 +368,11 @@ describe('uploadFunctionExtensions', () => {
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
-        api.graphql.ModuleUploadUrlGenerateMutation,
+        api.graphql.UploadUrlGenerateMutation,
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
-
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
@@ -408,21 +382,16 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.AppFunctionSetMutation,
         token,
         {
-          uuid: undefined,
-          extensionPointName: 'PAYMENT_METHODS',
+          id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          force: true,
-          schemaMajorVersion: '1',
-          schemaMinorVersion: '0',
-          configurationUi: extension.configuration.configurationUi,
-          moduleUploadUrl: uploadUrl,
+          apiType: 'payment_methods',
           apiVersion: extension.configuration.apiVersion,
-          skipCompilationJob: true,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          moduleUploadUrl: uploadUrl,
         },
       )
     })
@@ -431,32 +400,25 @@ describe('uploadFunctionExtensions', () => {
   test('creates and uploads the function', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uploadUrl = 'url'
-      const createdUUID = 'uuid'
+      const uploadUrl = `test://test.com/moduleId.wasm`
+      const createdID = 'ulid'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
       const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
         data: {
-          appScriptSet: {
+          functionSet: {
             userErrors: [],
-            appScript: {
-              uuid: createdUUID,
-              appKey: identifiers.app,
-              configSchema: {},
-              title: extension.configuration.name,
-              extensionPointName: 'PAYMENT_METHODS',
+            function: {
+              id: createdID,
             },
           },
         },
@@ -469,11 +431,11 @@ describe('uploadFunctionExtensions', () => {
       const got = await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
-      expect(got.extensions[extension.localIdentifier]).toEqual(createdUUID)
+      expect(got.extensions[extension.localIdentifier]).toEqual(createdID)
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
-        api.graphql.ModuleUploadUrlGenerateMutation,
+        api.graphql.UploadUrlGenerateMutation,
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
@@ -488,21 +450,16 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.AppFunctionSetMutation,
         token,
         {
-          uuid: undefined,
-          extensionPointName: 'PAYMENT_METHODS',
+          id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          force: true,
-          schemaMajorVersion: '1',
-          schemaMinorVersion: '0',
-          configurationUi: extension.configuration.configurationUi,
-          moduleUploadUrl: uploadUrl,
+          apiType: 'payment_methods',
           apiVersion: extension.configuration.apiVersion,
-          skipCompilationJob: true,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          moduleUploadUrl: uploadUrl,
         },
       )
     })
@@ -512,31 +469,24 @@ describe('uploadFunctionExtensions', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       extension.configuration.ui = undefined
 
-      const uploadUrl = 'url'
+      const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.ModuleUploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
-          moduleUploadUrlGenerate: {
-            details: {
-              headers: {},
-              humanizedMaxSize: '200',
-              url: uploadUrl,
-            },
-            userErrors: [],
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
           },
         },
       }
       const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
         data: {
-          appScriptSet: {
+          functionSet: {
             userErrors: [],
-            appScript: {
-              uuid: 'uuid',
-              appKey: identifiers.app,
-              configSchema: {},
-              title: extension.configuration.name,
-              extensionPointName: 'PAYMENT_METHODS',
+            function: {
+              id: 'uuid',
             },
           },
         },
@@ -555,18 +505,83 @@ describe('uploadFunctionExtensions', () => {
         api.graphql.AppFunctionSetMutation,
         token,
         {
-          uuid: undefined,
-          extensionPointName: 'PAYMENT_METHODS',
+          id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          force: true,
-          schemaMajorVersion: '1',
-          schemaMinorVersion: '0',
-          configurationUi: extension.configuration.configurationUi,
-          moduleUploadUrl: uploadUrl,
+          apiType: 'payment_methods',
           apiVersion: extension.configuration.apiVersion,
           appBridge: undefined,
-          skipCompilationJob: true,
+          moduleUploadUrl: uploadUrl,
+        },
+      )
+    })
+  })
+
+  test('UUID identifier detected and ULID Function ID returned', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const existingID = 'uuid-with-hyphens'
+      identifiers.extensions[extension.localIdentifier] = existingID
+      const uploadUrl = `test://test.com/moduleId.wasm`
+      const updatedID = 'ulid'
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+        data: {
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
+          },
+        },
+      }
+      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+        data: {
+          functionSet: {
+            userErrors: [],
+            function: {
+              id: updatedID,
+            },
+          },
+        },
+      }
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      mockFunctionCompilation()
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      const got = await uploadFunctionExtensions([extension], {token, identifiers})
+
+      // Then
+      expect(got.extensions[extension.localIdentifier]).toEqual(updatedID)
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        1,
+        identifiers.app,
+        api.graphql.UploadUrlGenerateMutation,
+        token,
+      )
+      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+        body: Buffer.from(''),
+        headers: {'Content-Type': 'application/wasm'},
+        method: 'PUT',
+      })
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        4,
+        identifiers.app,
+        api.graphql.AppFunctionSetMutation,
+        token,
+        {
+          id: undefined,
+          legacyUuid: existingID,
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          apiType: 'payment_methods',
+          apiVersion: extension.configuration.apiVersion,
+          appBridge: {
+            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+            createPath: (extension.configuration.ui?.paths ?? {}).create,
+          },
+          moduleUploadUrl: uploadUrl,
         },
       )
     })

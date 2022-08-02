@@ -1,5 +1,5 @@
-import {getExtensionOutputConfig, functionExtensions, getFunctionExtensionPointName} from './constants.js'
-import {describe, expect, it, test} from 'vitest'
+import {getExtensionOutputConfig} from './constants.js'
+import {describe, expect, it} from 'vitest'
 
 describe('get extension type output configuration', () => {
   it('obtain the correct configuration for extension type web_pixel_extension', () => {
@@ -133,25 +133,6 @@ describe('get extension type output configuration', () => {
     // Then
     expect(extensionOutputConfig).toEqual({
       humanKey: 'delivery option presenter',
-    })
-  })
-})
-
-describe('getFunctionExtensionPointName', () => {
-  test('it returns the right extension point mapper', () => {
-    // Given
-    const extensionPoints = {
-      PRODUCT_DISCOUNTS: ['product_discounts'],
-      ORDER_DISCOUNTS: ['order_discounts'],
-      SHIPPING_DISCOUNTS: ['shipping_discounts'],
-      PAYMENT_METHODS: ['payment_methods'],
-      PAYMENT_CUSTOMIZATION: ['payment_customization'],
-      SHIPPING_METHODS: ['shipping_rate_presenter'],
-    }
-
-    functionExtensions.types.forEach((functionExtensionType) => {
-      const extensionPoint = getFunctionExtensionPointName(functionExtensionType)
-      expect(extensionPoints[extensionPoint].includes(functionExtensionType)).toBeTruthy()
     })
   })
 })
