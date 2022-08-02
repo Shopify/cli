@@ -14,6 +14,7 @@ import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
+import {debug} from 'console'
 
 export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config) {
   if (error instanceof CancelExecution) {
@@ -136,7 +137,12 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Inter
         stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
-    addBugsnagMetadata(event)
+    try {
+      addBugsnagMetadata(event)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (metadataError) {
+      debug('There was an error adding metadata to the Bugsnag report; Ignoring and carrying on', metadataError)
+    }
   })
 }
 
