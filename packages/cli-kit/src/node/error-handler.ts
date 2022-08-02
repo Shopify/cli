@@ -6,7 +6,7 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from '../error.js'
-import {info} from '../output.js'
+import {debug, info} from '../output.js'
 import {reportEvent} from '../analytics.js'
 import * as path from '../path.js'
 import * as metadata from '../metadata.js'
@@ -14,7 +14,6 @@ import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
-import {debug} from 'console'
 
 export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config) {
   if (error instanceof CancelExecution) {
