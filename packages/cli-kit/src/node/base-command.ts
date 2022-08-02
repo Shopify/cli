@@ -1,4 +1,7 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
+import {findUp} from '../path.js'
+import {read as fileRead} from '../file.js'
+import {decode as decodeTOML} from '../toml.js'
 import {isDebug} from '../environment/local.js'
 import {Command, Interfaces} from '@oclif/core'
 
@@ -23,17 +26,31 @@ export default abstract class extends Command {
     argv?: string[],
   ): Promise<
     Omit<Interfaces.ParserOutput<TF, TA>, 'flags' | 'args'> & {
-      flags: {[name: string]: unknown}
-      args: {[name: string]: unknown}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      flags: {[name: string]: any}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      args: {[name: string]: any}
     }
   > {
     const parsed = await super.parse(options, argv)
-    const flags = {...presets(), ...parsed.flags}
+    const flags = {...(await presets(parsed.flags)), ...parsed.flags}
     return {...parsed, flags}
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function presets(): {[name: string]: any} {
-  return {verbose: true}
+async function presets(flags: {[name: string]: any}): Promise<{[name: string]: any}> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let retval: {[name: string]: any} = {}
+  if (!flags.preset) return retval
+  const presetsFile = await findUp('shopify.presets.toml', {
+    type: 'file',
+    cwd: flags.path ?? '.',
+  })
+  if (presetsFile) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const presetSettings: {[name: string]: any} = decodeTOML(await fileRead(presetsFile))
+    if (typeof presetSettings[flags.preset] === 'object') retval = {retval, ...presetSettings[flags.preset]}
+  }
+  return retval
 }
