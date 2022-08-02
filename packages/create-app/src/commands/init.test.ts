@@ -47,7 +47,8 @@ describe('create app command', () => {
     // When
     await Init.run(['--template', 'java'])
 
-    expect(errorHandler).toHaveBeenCalledWith(UnsupportedTemplateAlias(), expect.any(Config))
+    const anyConfig = expect.any(Config)
+    expect(errorHandler).toHaveBeenCalledWith(UnsupportedTemplateAlias(), anyConfig)
   })
 
   it('throw an error when using a non github url repo', async () => {
@@ -55,6 +56,7 @@ describe('create app command', () => {
     await Init.run(['--template', 'http://nongithub.com/myrepo'])
 
     // Then
-    expect(errorHandler).toHaveBeenCalledWith(InvalidGithubRepository(), expect.any(Config))
+    const anyConfig = expect.any(Config)
+    expect(errorHandler).toHaveBeenCalledWith(InvalidGithubRepository(), anyConfig)
   })
 })
