@@ -1,6 +1,6 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {isDebug} from '../environment/local.js'
-import {Command} from '@oclif/core'
+import {Command, Interfaces} from '@oclif/core'
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default abstract class extends Command {
@@ -15,5 +15,12 @@ export default abstract class extends Command {
       registerCleanBugsnagErrorsFromWithinPlugins(this.config.plugins)
     }
     return super.init()
+  }
+
+  protected override async parse<TF, TA extends {[name: string]: unknown}>(
+    options?: Interfaces.Input<TF> | undefined,
+    argv?: string[] | undefined,
+  ): Promise<Interfaces.ParserOutput<TF, TA>> {
+    return super.parse(options, argv)
   }
 }
