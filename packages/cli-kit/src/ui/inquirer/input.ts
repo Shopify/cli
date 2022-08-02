@@ -14,9 +14,11 @@ export class CustomInput extends Input {
       prompt += `${colors.dim('·')} ${color(this.answer)}`
     } else {
       prompt += `\n${color('>')} ${this.rl.line ? this.rl.line : color.dim(this.opt.default)}`
-      if (error && !prompt.includes(error)) prompt += ` ${error}`
       bottomContent = '▔'.repeat(Math.max(this.rl.line.length, 30))
       bottomContent = `  ${color(bottomContent)}`
+      if (error) {
+        bottomContent += `\n\n  ${colors.red(`! ${error}`)}`
+      }
     }
     this.screen.render(prompt, bottomContent)
   }
@@ -28,5 +30,10 @@ export class CustomInput extends Input {
   protected prefix() {
     const color = colors.magenta.bold
     return this.status === 'answered' ? color('✔') : color('?')
+  }
+
+  protected onError(data: {isValid: string; value: string}) {
+    this.rl.write('')
+    this.render(data.isValid)
   }
 }
