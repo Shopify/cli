@@ -1,7 +1,7 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
-import {blocks, getFunctionExtensionPointName} from '../../constants.js'
+import {blocks} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
@@ -160,7 +160,7 @@ export async function uploadFunctionExtensions(
 ): Promise<Identifiers> {
   let identifiers = options.identifiers
 
-  const functionUUIDs: IdentifiersExtensions = {}
+  const functionIds: IdentifiersExtensions = {}
 
   // Functions are uploaded sequentially to avoid reaching the API limit
   for (const extension of extensions) {
@@ -170,14 +170,14 @@ export async function uploadFunctionExtensions(
       token: options.token,
       identifier: identifiers.extensions[extension.localIdentifier],
     })
-    functionUUIDs[extension.localIdentifier] = remoteIdentifier
+    functionIds[extension.localIdentifier] = remoteIdentifier
   }
 
   identifiers = {
     ...identifiers,
     extensions: {
       ...identifiers.extensions,
-      ...functionUUIDs,
+      ...functionIds,
     },
   }
 
@@ -207,45 +207,37 @@ async function uploadFunctionExtension(
   await compileFunctionExtension(extension, options, url)
 
   const query = api.graphql.AppFunctionSetMutation
-  const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
-  const schemaMajorVersion = schemaVersions?.major
-  const schemaMinorVersion = schemaVersions?.minor
-
   const variables: api.graphql.AppFunctionSetVariables = {
-    uuid: options.identifier,
-    extensionPointName: getFunctionExtensionPointName(extension.configuration.type),
+    // NOTE: This is a shim to support CLI projects that currently use the UUID instead of the ULID
+    ...(options.identifier?.includes('-') ? {legacyUuid: options.identifier} : {id: options.identifier}),
     title: extension.configuration.name,
     description: extension.configuration.description,
-    force: true,
-    schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
-    schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
-    configurationUi: extension.configuration.configurationUi,
-    moduleUploadUrl: url,
+    apiType: extension.configuration.type,
     apiVersion: extension.configuration.apiVersion,
-    skipCompilationJob: true,
+    inputQuery,
     appBridge: extension.configuration.ui?.paths
       ? {
           detailsPath: extension.configuration.ui.paths.details,
           createPath: extension.configuration.ui.paths.create,
         }
       : undefined,
-    inputQuery,
+    moduleUploadUrl: url,
   }
+
   const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(
     options.apiKey,
     query,
     options.token,
     variables,
   )
-  const userErrors = res.data.appScriptSet.userErrors ?? []
+  const userErrors = res.data.functionSet.userErrors ?? []
   if (userErrors.length !== 0) {
     const errorMessage = output.content`The deployment of functions failed with the following errors:
 ${output.token.json(userErrors)}
     `
     throw new error.Abort(errorMessage)
   }
-  const uuid = res.data.appScriptSet.appScript?.uuid as string
-  return uuid
+  return res.data.functionSet.function?.id as string
 }
 
 async function compileFunctionExtension(
@@ -323,11 +315,11 @@ interface GetFunctionExtensionUploadURLOutput {
 async function getFunctionExtensionUploadURL(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const query = api.graphql.ModuleUploadUrlGenerateMutation
-  const res: api.graphql.ModuleUploadUrlGenerateMutationSchema = await api.partners.functionProxyRequest(
+  const query = api.graphql.UploadUrlGenerateMutation
+  const res: api.graphql.UploadUrlGenerateMutationSchema = await api.partners.functionProxyRequest(
     options.apiKey,
     query,
     options.token,
   )
-  return res.data.moduleUploadUrlGenerate.details
+  return res.data.uploadUrlGenerate
 }

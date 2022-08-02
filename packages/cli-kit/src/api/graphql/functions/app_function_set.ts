@@ -1,50 +1,41 @@
 import {gql} from 'graphql-request'
 
 export const AppFunctionSetMutation = gql`
-  mutation AppScriptSet(
-    $uuid: String
-    $extensionPointName: ExtensionPointName!
+  mutation FunctionSet(
+    $id: FunctionId
+    $legacyUuid: String
     $title: String!
     $description: String
-    $force: Boolean
-    $schemaMajorVersion: String
-    $schemaMinorVersion: String
-    $scriptConfigVersion: String
-    $configurationUi: Boolean!
-    $configurationDefinition: String
-    $moduleUploadUrl: String!
-    $library: LibraryInput
+    $apiType: String!
+    $apiVersion: String!
     $inputQuery: String
     $appBridge: AppBridgeInput
-    $apiVersion: String
+    $moduleUploadUrl: String!
   ) {
-    appScriptSet(
-      uuid: $uuid
-      extensionPointName: $extensionPointName
+    functionSet(
+      id: $id
+      legacyUuid: $legacyUuid
       title: $title
       description: $description
-      force: $force
-      schemaMajorVersion: $schemaMajorVersion
-      schemaMinorVersion: $schemaMinorVersion
-      scriptConfigVersion: $scriptConfigVersion
-      configurationUi: $configurationUi
-      configurationDefinition: $configurationDefinition
-      moduleUploadUrl: $moduleUploadUrl
-      library: $library
+      apiType: $apiType
+      apiVersion: $apiVersion
       inputQuery: $inputQuery
       appBridge: $appBridge
-      apiVersion: $apiVersion
+      moduleUploadUrl: $moduleUploadUrl
     ) {
       userErrors {
         field
         message
         tag
       }
-      appScript {
+      function {
+        id
         uuid
         appKey
-        configSchema
-        extensionPointName
+        configuration {
+          schema
+        }
+        apiType
         title
       }
     }
@@ -53,44 +44,30 @@ export const AppFunctionSetMutation = gql`
 
 export interface AppFunctionSetMutationSchema {
   data: {
-    appScriptSet: {
+    functionSet: {
       userErrors: {
         field: string
         message: string
         tag: string
       }[]
-      appScript?: {
-        uuid: string
-        appKey: string
-        configSchema: unknown
-        extensionPointName: string
-        title: string
+      function?: {
+        id: string
       }
     }
   }
 }
 
 export interface AppFunctionSetVariables {
-  uuid?: string
-  extensionPointName: string
+  id?: string
+  legacyUuid?: string
   title: string
   description?: string
-  force?: boolean
-  schemaMajorVersion?: string
-  schemaMinorVersion?: string
-  scriptConfigVersion?: string
-  configurationUi: boolean
-  configurationDefinition?: string
-  moduleUploadUrl: string
-  library?: {
-    language: string
-    version: string
-  }
+  apiType: string
+  apiVersion?: string
+  inputQuery?: string
   appBridge?: {
     createPath?: string
     detailsPath?: string
   }
-  inputQuery?: string
-  apiVersion?: string
-  skipCompilationJob: boolean
+  moduleUploadUrl: string
 }
