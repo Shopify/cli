@@ -71,7 +71,7 @@ describe('show', () => {
     const env = {}
 
     // When
-    await expect(show('instance', env)).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
+    await expect(() => show('instance', env)).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
   })
 })
 

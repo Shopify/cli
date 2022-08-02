@@ -226,7 +226,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(moduleCompilationStatusResponse)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
         /Function my-function compilation failed./,
       )
     })
@@ -271,7 +271,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValue(moduleCompilationStatusResponse)
 
       // When
-      const promise = uploadFunctionExtensions([extension], {token, identifiers})
+      const promise = () => uploadFunctionExtensions([extension], {token, identifiers})
 
       vi.runAllTimers()
 
@@ -305,7 +305,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
         updateAppFunctionError,
       )
 
@@ -385,7 +385,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
         /The deployment of functions failed with the following errors:/,
       )
 

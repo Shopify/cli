@@ -75,7 +75,7 @@ describe('ensurePresentOrAbort', () => {
     vi.mocked(hasGit).mockResolvedValue(false)
 
     // Then
-    await expect(ensurePresentOrAbort()).rejects.toThrowError(GitNotPresentError())
+    await expect(() => ensurePresentOrAbort()).rejects.toThrowError(GitNotPresentError())
   })
 
   test("doesn't throw an error if Git is present", async () => {

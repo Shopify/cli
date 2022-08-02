@@ -3,9 +3,6 @@ import constants from './constants.js'
 import {Abort} from './error.js'
 import Conf, {Schema} from 'conf'
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-
 const migrations = {}
 
 export interface CachedAppInfo {

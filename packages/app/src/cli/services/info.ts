@@ -2,8 +2,15 @@ import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
-import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
+import {
+  configurationFileNames,
+  ExtensionTypes,
+  functionExtensions,
+  themeExtensions,
+  uiExtensions,
+} from '../constants.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
+import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
 import {os, output, path, session, store} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -135,7 +142,11 @@ class AppInfo {
           return configurationType === extensionType
         })
         if (relevantExtensions[0]) {
-          body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
+          body += `\n\n${
+            output.content`${output.token.subheading(
+              mapExtensionTypeToExternalExtensionType(extensionType as ExtensionTypes),
+            )}`.value
+          }`
           relevantExtensions.forEach((extension: TExtension) => {
             body += `${outputFormatter(extension)}`
           })
