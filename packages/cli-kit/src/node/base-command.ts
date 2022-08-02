@@ -17,10 +17,23 @@ export default abstract class extends Command {
     return super.init()
   }
 
-  protected override async parse<TF, TA extends {[name: string]: unknown}>(
-    options?: Interfaces.Input<TF> | undefined,
-    argv?: string[] | undefined,
-  ): Promise<Interfaces.ParserOutput<TF, TA>> {
-    return super.parse(options, argv)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected async parseWithPresets<TF, TA extends {[name: string]: any}>(
+    options?: Interfaces.Input<TF>,
+    argv?: string[],
+  ): Promise<
+    Omit<Interfaces.ParserOutput<TF, TA>, 'flags' | 'args'> & {
+      flags: {[name: string]: unknown}
+      args: {[name: string]: unknown}
+    }
+  > {
+    const parsed = await super.parse(options, argv)
+    const flags = {...presets(), ...parsed.flags}
+    return {...parsed, flags}
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function presets(): {[name: string]: any} {
+  return {verbose: true}
 }
