@@ -1,13 +1,15 @@
 import {createServer, ViteDevServer} from 'vite'
 import {analytics, error as kitError} from '@shopify/cli-kit'
+import {Config} from '@oclif/core'
 
 interface DevOptions {
   directory: string
   force: boolean
   host: boolean
+  commandConfig: Config
 }
 
-async function dev({directory, force, host}: DevOptions) {
+async function dev({directory, force, host, commandConfig}: DevOptions) {
   try {
     const server = await createServer({
       root: directory,
@@ -20,7 +22,7 @@ async function dev({directory, force, host}: DevOptions) {
     await server.listen()
     server.printUrls()
     server.config.logger.info('')
-    await analytics.reportEvent()
+    await analytics.reportEvent({config: commandConfig})
     await closeEvent(server)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
