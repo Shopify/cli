@@ -140,7 +140,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Inter
       addBugsnagMetadata(event)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (metadataError) {
-      debug('There was an error adding metadata to the Bugsnag report; Ignoring and carrying on', metadataError)
+      debug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
     }
   })
 }
