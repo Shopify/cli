@@ -15,7 +15,6 @@
     "@shopify/react-i18n": "^6.1.0",
     "@shopify/ui-extensions-server-kit": "^0.3.0",
     "copy-to-clipboard": "^3.3.1",
-    "node-sass": "^6.0.1",
     "qrcode.react": "^1.0.1",
     "react": "16.14.0",
     "react-dom": "^16.9.11"
