@@ -14,7 +14,7 @@ export class CustomInput extends Input {
     if (isFinal) {
       prompt += `${colors.dim('·')} ${color(this.answer)}`
     } else {
-      prompt += `\n${color('>')} ${this.rl.line ? this.rl.line : color.dim(this.opt.default)}`∫
+      prompt += `\n${color('>')} ${this.rl.line ? this.rl.line : color.dim(this.opt.default)}`
       bottomContent = '─'.repeat(Math.max(this.rl.line.length, 30))
       bottomContent = `  ${color(bottomContent)}`
       if (error) {
