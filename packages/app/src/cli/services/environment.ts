@@ -15,7 +15,7 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {error as kitError, output, session, store, ui, environment, error} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
@@ -392,23 +392,12 @@ function showDevValues(org: string, appName: string) {
   output.info(`App:        ${appName}\n`)
 }
 
-function partnerIdAsInt(rawPartnerId: string | undefined) {
-  let partnerIdAsInt: number | undefined
-  if (rawPartnerId !== undefined) {
-    partnerIdAsInt = parseInt(rawPartnerId, 10)
-    if (isNaN(partnerIdAsInt)) {
-      partnerIdAsInt = undefined
-    }
-  }
-  return partnerIdAsInt
-}
-
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  metadata.addPublic({partner_id: partnerIdAsInt(env.app.organizationId), api_key: env.identifiers.app})
+  metadata.addPublic({partner_id: string.tryParseInt(env.app.organizationId), api_key: env.identifiers.app})
 }
 
 async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  metadata.addPublic({partner_id: partnerIdAsInt(env.partnersOrganizationId), api_key: env.identifiers.app})
+  metadata.addPublic({partner_id: string.tryParseInt(env.partnersOrganizationId), api_key: env.identifiers.app})
 }
