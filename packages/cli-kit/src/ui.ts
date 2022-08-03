@@ -201,7 +201,7 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
     {
       type: 'select',
       name: 'value',
-      message: `${stepDescriptionContent} requires a port ${port} that's unavailable because it's runnig another process${formattedProcessName}. Terminate that process? `,
+      message: `${stepDescriptionContent} requires a port ${port} that's unavailable because it's running another process${formattedProcessName}. Terminate that process? `,
       choices: options,
     },
   ])
