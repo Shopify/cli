@@ -3,7 +3,6 @@ import {ui, github, string} from '@shopify/cli-kit'
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
 const TEMPLATE_DATA = {
-  /* eslint-disable @typescript-eslint/naming-convention */
   'demo-store-js': {
     description: 'Demo Store',
   },
@@ -16,7 +15,6 @@ const TEMPLATE_DATA = {
   'hello-world-ts': {
     description: 'Hello World (TypeScript)',
   },
-  /* eslint-enable @typescript-eslint/naming-convention */
 }
 
 const TEMPLATE_NAMES = Object.keys(TEMPLATE_DATA)

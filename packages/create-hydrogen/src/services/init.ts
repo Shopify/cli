@@ -94,12 +94,9 @@ async function init(options: InitOptions) {
                 task: async (_, task) => {
                   const templateData = {
                     name: hyphenizedName,
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     shopify_cli_version: cliPackageVersion,
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     hydrogen_version: hydrogenPackageVersion,
                     author: user,
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     dependency_manager: options.packageManager,
                   }
                   await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
@@ -115,13 +112,10 @@ async function init(options: InitOptions) {
                   await npm.updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
-                      // eslint-disable-next-line @typescript-eslint/naming-convention
                       '@shopify/hydrogen': hydrogenPackageVersion,
                     },
                     devDependencies: {
-                      // eslint-disable-next-line @typescript-eslint/naming-convention
                       '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
-                      // eslint-disable-next-line @typescript-eslint/naming-convention
                       '@shopify/cli': cliVersion,
                     },
                   })
@@ -239,9 +233,7 @@ async function updateCLIDependencies(
 
   if (local) {
     const devDependencyOverrides = {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli': `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli-hydrogen': `file:${(await path.findUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
     }
 

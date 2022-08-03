@@ -41,7 +41,6 @@ describe('ESLint settings', () => {
       configuration: {
         nodeDependencies: {
           eslint: '^7.1.0',
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           'eslint-plugin-hydrogen': '^1.0.0',
         },
       },
