@@ -20,7 +20,6 @@ export class CustomInput extends Input {
       if (error) {
         bottomContent += `\n\n  ${colors.red(`! ${error}`)}`
       }
-      process.stdout.write('\u001b[47m')
     }
     this.screen.render(prompt, bottomContent)
     if (!isFinal && !this.rl.line) {
