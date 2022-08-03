@@ -1,4 +1,4 @@
-import {ui, github, string, output} from '@shopify/cli-kit'
+import {ui, github, string} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
@@ -49,7 +49,6 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 
   // Prompt the user for the template language if it isn't provided and
   // the given template is a URL.
-  output.info(options.language)
   if (!options.language && isAShopifyTemplateName) {
     questions.push({
       type: 'select',
@@ -84,7 +83,6 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 
   // Else it's a user-provided URL.
   template = parseTemplateUrl(template)
-  output.info(template)
   return {name, template, language} as Required<InitOptions>
 }
 
