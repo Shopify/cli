@@ -1,3 +1,4 @@
+import {readAndParseDotEnv} from './dot-env.js'
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {findUp, join as pathJoin} from '../path.js'
 import {exists as fileExists, read as fileRead} from '../file.js'
@@ -40,15 +41,16 @@ export default abstract class extends Command {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function presets(flags: {[name: string]: any}): Promise<{[name: string]: any}> {
-  if (!flags.preset) return {}
+  const presetName: string = flags.preset ?? (await presetNameFromDotEnv(flags.path))
+  if (!presetName) return {}
   const globalPresetsFile = pathJoin(homeDirectory(), 'shopify.presets.toml')
   const localPresetsFile = await findUp('shopify.presets.toml', {
     type: 'file',
-    cwd: flags.path ?? '.',
+    cwd: flags.path ?? process.cwd(),
   })
   return {
-    ...(await presetsFromFile(globalPresetsFile, flags.preset)),
-    ...(await presetsFromFile(localPresetsFile, flags.preset)),
+    ...(await presetsFromFile(globalPresetsFile, presetName)),
+    ...(await presetsFromFile(localPresetsFile, presetName)),
   }
 }
 
@@ -63,4 +65,14 @@ async function presetsFromFile(
     if (typeof presetSettings[presetName] === 'object') return presetSettings[presetName]
   }
   return {}
+}
+
+async function presetNameFromDotEnv(path: string | undefined): Promise<string | undefined> {
+  const dotEnvFile = await findUp('.env', {
+    type: 'file',
+    cwd: path ?? process.cwd(),
+  })
+  if (!dotEnvFile) return
+  const {variables} = await readAndParseDotEnv(dotEnvFile)
+  return variables.SHOPIFY_PRESET
 }
