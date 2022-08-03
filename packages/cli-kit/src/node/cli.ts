@@ -48,7 +48,12 @@ export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boole
 
   const correctExecutablePath = join(cliPackage.path, cliPackage.bin.shopify)
   if (correctExecutablePath === filepath) return false
-  await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {stdio: 'inherit'})
+  try {
+    await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {stdio: 'inherit'})
+    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+  } catch (processError: any) {
+    process.exit(processError.exitCode)
+  }
   return true
 }
 
