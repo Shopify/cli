@@ -1,5 +1,6 @@
 import {readAndParseDotEnv} from './dot-env.js'
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
+import {content, info, token} from '../output.js'
 import {findUp, join as pathJoin} from '../path.js'
 import {exists as fileExists, read as fileRead} from '../file.js'
 import {decode as decodeTOML} from '../toml.js'
@@ -34,24 +35,34 @@ export default abstract class extends Command {
     }
   > {
     const parsed = await super.parse(options, argv)
-    const flags = {...(await presetSettings(parsed.flags)), ...parsed.flags}
+    const [presetName, flagsFromPreset] = await presetSettings(parsed.flags)
+    const presetAddedFlags = Object.keys(flagsFromPreset).filter(
+      (key) => !Object.hasOwnProperty.call(parsed.flags, key),
+    )
+    if (presetName && presetAddedFlags.length > 0) {
+      info(content`Applying flags from preset ${token.cyan(presetName)}: ${presetAddedFlags.join(', ')}`)
+    }
+    const flags = {...flagsFromPreset, ...parsed.flags}
     return {...parsed, flags}
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function presetSettings(flags: {[name: string]: any}): Promise<{[name: string]: any}> {
+async function presetSettings(flags: {[name: string]: any}): Promise<[string | undefined, {[name: string]: any}]> {
   const presetName: string = flags.preset ?? (await presetNameFromDotEnv(flags.path))
-  if (!presetName) return {}
+  if (!presetName) return [undefined, {}]
   const globalPresetsFile = pathJoin(homeDirectory(), 'shopify.presets.toml')
   const localPresetsFile = await findUp('shopify.presets.toml', {
     type: 'file',
     cwd: flags.path ?? process.cwd(),
   })
-  return {
-    ...(await presetFromFile(globalPresetsFile, presetName)),
-    ...(await presetFromFile(localPresetsFile, presetName)),
-  }
+  return [
+    presetName,
+    {
+      ...(await presetFromFile(globalPresetsFile, presetName)),
+      ...(await presetFromFile(localPresetsFile, presetName)),
+    },
+  ]
 }
 
 async function presetFromFile(
