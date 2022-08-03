@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -123,16 +122,6 @@ func ensureBuildDirectoryExists(ext core.Extension) {
 }
 
 func configureScript(script *exec.Cmd, extension core.Extension) error {
-
-	development := extension.Development
-	development.BuildDir = extension.BuildDir()
-	entries := development.Entries
-	for handle, path := range entries {
-		entries[handle] = filepath.Join(".", extension.Development.RootDir, path)
-	}
-	development.Entries = entries
-	extension.Development = development
-
 	data, err := yaml.Marshal(extension)
 	if err != nil {
 		return fmt.Errorf("unable to serialize extension configuration information: %w", err)
