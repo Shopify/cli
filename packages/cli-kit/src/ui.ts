@@ -1,19 +1,11 @@
-import {AutoComplete} from './ui/autocomplete.js'
-import {Input} from './ui/input.js'
-import {Select} from './ui/select.js'
 import {CancelExecution, Abort} from './error.js'
 import {remove, exists} from './file.js'
 import {info, completed, content, token, logUpdate, logToFile, Message, Logger, stringifyMessage} from './output.js'
 import {colors} from './node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
-import {isTruthy} from './environment/utilities.js'
-import {CustomInput} from './ui/inquirer/input.js'
-import {CustomAutocomplete} from './ui/inquirer/autocomplete.js'
-import {CustomSelect} from './ui/inquirer/select.js'
-import inquirer from 'inquirer'
+import {getMapper as getMapperUI, run as executorUI} from './ui/executor.js'
 import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
-import fuzzy from 'fuzzy'
 
 export function newListr(tasks: ListrTask[], options?: object) {
   const listr = new OriginalListr(tasks, options)
@@ -92,7 +84,6 @@ export const prompt = async <
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},
 >(
   questions: ReadonlyArray<Question<TName>>,
-  debugForceInquirer = false,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
     throw new Abort(content`
@@ -101,29 +92,18 @@ ${token.json(questions)}
     `)
   }
 
-  let mapTo: (question: Question) => unknown = mapper
-  const isEnquirer = debugForceInquirer || isTruthy(process.env.SHOPIFY_USE_INQUIRER)
-  if (isEnquirer) {
-    mapTo = inquirerMapper
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappedQuestions: any[] = questions.map(mapTo)
+  const mappedQuestions: any[] = questions.map(getMapperUI())
   const value = {} as TAnswers
   for (const question of mappedQuestions) {
     if (question.preface) {
       info(question.preface)
     }
 
-    const answer = isEnquirer
-      ? // eslint-disable-next-line no-await-in-loop
-        (await inquirer.prompt(question, {...question.choices}))[question.name]
-      : // eslint-disable-next-line no-await-in-loop
-        await question.run()
+    // eslint-disable-next-line no-await-in-loop
+    value[question.name as TName] = await executorUI(question)
 
-    value[question.name as keyof TAnswers] = answer
-
-    logPromptResults(question.message, answer)
+    logPromptResults(question.message, value[question.name as TName])
   }
   return value
 }
@@ -166,58 +146,4 @@ export const keypress = async () => {
       resolve()
     }),
   )
-}
-
-function inquirerMapper(question: Question): unknown {
-  switch (question.type) {
-    case 'input':
-    case 'password':
-      inquirer.registerPrompt('custom-input', CustomInput)
-      return {
-        ...question,
-        type: 'custom-input',
-      }
-    case 'select':
-      inquirer.registerPrompt('custom-select', CustomSelect)
-      return {
-        ...question,
-        type: 'custom-select',
-        source: filterByName,
-      }
-    case 'autocomplete':
-      inquirer.registerPrompt('autocomplete', CustomAutocomplete)
-      return {
-        ...question,
-        type: 'autocomplete',
-        source: filterByName,
-      }
-  }
-}
-
-function mapper(question: Question): unknown {
-  switch (question.type) {
-    case 'input':
-    case 'password':
-      return new Input(question)
-    case 'select':
-      return new Select(question)
-    case 'autocomplete':
-      return new AutoComplete(question)
-    default:
-      return undefined
-  }
-}
-
-function filterByName(answers: {name: string; value: string}[], input = '') {
-  return new Promise((resolve) => {
-    resolve(
-      fuzzy
-        .filter(input, Object.values(answers), {
-          extract(el: {name: string; value: string}) {
-            return el.name
-          },
-        })
-        .map((el) => el.original),
-    )
-  })
 }
