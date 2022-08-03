@@ -1,6 +1,7 @@
 import {colors} from '../../node/colors.js'
 // eslint-disable-next-line import/extensions
 import Input from 'inquirer/lib/prompts/input.js'
+import readline from 'readline'
 
 export class CustomInput extends Input {
   protected render(error?: string): void {
@@ -13,14 +14,18 @@ export class CustomInput extends Input {
     if (isFinal) {
       prompt += `${colors.dim('·')} ${color(this.answer)}`
     } else {
-      prompt += `\n${color('>')} ${this.rl.line ? this.rl.line : color.dim(this.opt.default)}`
-      bottomContent = '▔'.repeat(Math.max(this.rl.line.length, 30))
+      prompt += `\n${color('>')} ${this.rl.line ? this.rl.line : color.dim(this.opt.default)}`∫
+      bottomContent = '─'.repeat(Math.max(this.rl.line.length, 30))
       bottomContent = `  ${color(bottomContent)}`
       if (error) {
         bottomContent += `\n\n  ${colors.red(`! ${error}`)}`
       }
+      process.stdout.write('\u001b[47m')
     }
     this.screen.render(prompt, bottomContent)
+    if (!isFinal && !this.rl.line) {
+      readline.cursorTo(process.stdout, 2)
+    }
   }
 
   protected getQuestion() {
@@ -33,7 +38,7 @@ export class CustomInput extends Input {
   }
 
   protected onError(data: {isValid: string; value: string}) {
-    this.rl.write('')
+    this.rl.write(data.value === this.opt.default ? '' : data.value)
     this.render(data.isValid)
   }
 }

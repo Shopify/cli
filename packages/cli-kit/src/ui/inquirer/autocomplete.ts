@@ -1,24 +1,37 @@
 import {colors} from '../../node/colors.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
+import inquirer from 'inquirer'
+import {Interface} from 'readline'
 
 export class CustomAutocomplete extends AutocompletePrompt {
-  protected render(error?: string, isAutocomplete = true) {
+  protected isAutocomplete: boolean
+
+  constructor(questions: inquirer.Question<inquirer.Answers>, rl: Interface, answers: inquirer.Answers) {
+    super(questions, rl, answers)
+    this.isAutocomplete = true
+  }
+
+  protected render(error?: string) {
     let content = this.getQuestion()
     let bottomContent = ''
 
     if (this.status !== 'answered') {
       content += colors.gray('… ')
+      if (!this.isAutocomplete) {
+        process.stdout.write('\u001b[?25l')
+      }
     }
 
     if (this.status === 'answered') {
       content += `${colors.dim('·')} ${colors.magenta(this.shortAnswer || this.answerName || this.answer)}`
+      process.stdout.write('\u001b[?25h')
     } else if (this.searching) {
       content += this.rl.line
       bottomContent += `  ${colors.magenta.dim('Searching...')}`
     } else if (this.nbChoices) {
       const choicesStr = listRender(this.currentChoices, this.selected)
-      content += isAutocomplete ? this.rl.line : ''
+      content += this.isAutocomplete ? this.rl.line : ''
       const indexPosition = this.selected
       let realIndexPosition = 0
       this.currentChoices.choices.every((choice, index: number) => {
