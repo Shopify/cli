@@ -40,7 +40,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
 
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<output.OutputProcess> => {
-      const targetPort = await port.getRandomPort()
+      const targetPort = portNumber ?? (await port.getRandomPort())
       rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
       return {
         prefix: target.logPrefix,
