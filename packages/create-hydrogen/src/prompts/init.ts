@@ -1,24 +1,16 @@
-import {ui, github, string} from '@shopify/cli-kit'
+import {ui, github, string, output} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
+/* eslint-disable @typescript-eslint/naming-convention */
 const TEMPLATE_NAME_DATA = {
-  /* eslint-disable @typescript-eslint/naming-convention */
-  'demo-store': {
-    name: 'Demo Store',
-  },
-  'hello-world': {
-    name: 'Hello World',
-  },
+  'demo-store': {name: 'Demo Store'},
+  'hello-world': {name: 'Hello World'},
 }
 
 const LANGUAGE_NAME_DATA = {
-  js: {
-    name: 'JavaScript',
-  },
-  ts: {
-    name: 'TypeScript',
-  },
+  js: {name: 'JavaScript'},
+  ts: {name: 'TypeScript'},
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -42,9 +34,10 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
       checkIfShopifyTemplateName(explicitTemplate, 'js') || checkIfShopifyTemplateName(explicitTemplate, 'ts')
     isAShopifyTemplateName = Boolean(hydrogenTemplate)
   } else {
+    isAShopifyTemplateName = true
     questions.push({
       type: 'select',
-      name: 'templateName',
+      name: 'template',
       message: 'Choose a template',
       choices: Object.keys(TEMPLATE_NAME_DATA).map((value) => ({
         name: TEMPLATE_NAME_DATA[value as keyof typeof TEMPLATE_NAME_DATA].name,
@@ -52,12 +45,11 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
       })),
       default: TEMPLATE_NAMES[0],
     })
-
-    isAShopifyTemplateName = true
   }
 
   // Prompt the user for the template language if it isn't provided and
   // the given template is a URL.
+  output.info(options.language)
   if (!options.language && isAShopifyTemplateName) {
     questions.push({
       type: 'select',
@@ -82,7 +74,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 
   const promptResults = await prompt(questions)
   const name = options.name ?? promptResults.name
-  const templateName = options.template ?? promptResults.templateName
+  const templateName = options.template ?? promptResults.template
   const language = options.language ?? promptResults.language
   let template = templateName
 
@@ -92,6 +84,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 
   // Else it's a user-provided URL.
   template = parseTemplateUrl(template)
+  output.info(template)
   return {name, template, language} as Required<InitOptions>
 }
 

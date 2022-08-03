@@ -62,7 +62,7 @@ describe('init', () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: 'select',
-          name: 'templateName',
+          name: 'template',
           choices: [
             {
               name: 'Demo Store',
@@ -75,7 +75,6 @@ describe('init', () => {
           ],
           message: 'Choose a template',
           default: 'demo-store',
-          result: expect.any(Function),
         }),
       ]),
     )
