@@ -43,28 +43,30 @@ export async function runCreateCLI(options: RunCLIOptions) {
 }
 
 export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boolean> {
+  const cliPackage = await localCliPackage()
+  if (!cliPackage) return false
+
+  const correctExecutablePath = join(cliPackage.path, cliPackage.bin.shopify)
+  if (correctExecutablePath === filepath) return false
+  await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {stdio: 'inherit'})
+  return true
+}
+
+interface CliPackageInfo {
+  path: string
+  bin: {shopify: string}
+}
+
+async function localCliPackage(): Promise<CliPackageInfo | undefined> {
   let npmListOutput = ''
   try {
     npmListOutput = await captureOutput('npm', ['list', '@shopify/cli', '--json', '-l'])
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
-    return false
+    return
   }
   const localShopifyCLI = JSON.parse(npmListOutput)
-  const cliPackage = localShopifyCLI.dependencies && localShopifyCLI.dependencies['@shopify/cli']
-  if (cliPackage) {
-    const correctExecutablePath = join(cliPackage.path, cliPackage.bin.shopify)
-    if (correctExecutablePath === filepath) {
-      // We're running the correct executable!
-      return false
-    } else {
-      // Hand off to the correct executable
-      await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {stdio: 'inherit'})
-      return true
-    }
-  } else {
-    return false
-  }
+  return localShopifyCLI.dependencies && localShopifyCLI.dependencies['@shopify/cli']
 }
 
 export default runCLI
