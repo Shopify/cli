@@ -1,8 +1,9 @@
-import {haiku, ui} from '@shopify/cli-kit'
+import {haiku, ui, file, path} from '@shopify/cli-kit'
 
 interface InitOptions {
   name?: string
   template?: string
+  directory: string
 }
 
 interface InitOutput {
@@ -20,7 +21,7 @@ export const templateURLMap = {
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
   const defaults = {
-    name: haiku.generate('app'),
+    name: await generateAppName(options.directory),
     template: templateURLMap.node,
   } as const
 
@@ -64,6 +65,17 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   answers.template = templateURL || answers.template || defaults.template
 
   return answers
+}
+
+async function generateAppName(directory: string): Promise<string> {
+  const appName = haiku.generate('app')
+  const isAppDirectoryTaken = await file.exists(path.join(directory, appName))
+
+  if (isAppDirectoryTaken) {
+    return generateAppName(directory)
+  } else {
+    return appName
+  }
 }
 
 export default init
