@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "3.0.25",
+  "version": "3.5.0",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "type": "module",
@@ -32,7 +32,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
@@ -46,16 +46,15 @@
     ]
   },
   "dependencies": {
-    "@bugsnag/js": "^7.16.7",
     "@oclif/core": "^1.0",
-    "@shopify/cli-kit": "^3.0.25"
+    "@shopify/cli-kit": "3.5.0"
   },
   "devDependencies": {
-    "vitest": "^0.15.1"
+    "vitest": "^0.17.1"
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",
@@ -67,6 +66,10 @@
     "commands": "./dist/commands",
     "additionalHelpFlags": [
       "-h"
-    ]
+    ],
+    "hooks": {
+      "prerun": "@shopify/cli-kit/node/hooks/prerun",
+      "postrun": "@shopify/cli-kit/node/hooks/postrun"
+    }
   }
 }

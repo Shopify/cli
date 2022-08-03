@@ -1,9 +1,18 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch'
-import {selectOrCreateApp} from './dev/select-app'
-import {App, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/app'
-import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants'
-import {selectOrganizationPrompt} from '../prompts/dev'
-import {os, output, path, session, store, dependency} from '@shopify/cli-kit'
+import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
+import {selectOrCreateApp} from './dev/select-app.js'
+import {AppInterface} from '../models/app/app.js'
+import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
+import {
+  configurationFileNames,
+  ExtensionTypes,
+  functionExtensions,
+  themeExtensions,
+  uiExtensions,
+} from '../constants.js'
+import {selectOrganizationPrompt} from '../prompts/dev.js'
+import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
+import {os, output, path, session, store} from '@shopify/cli-kit'
+import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -15,7 +24,7 @@ interface Configurable {
   configuration?: {type?: string}
 }
 
-export async function info(app: App, {format, webEnv}: InfoOptions): Promise<output.Message> {
+export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<output.Message> {
   if (webEnv) {
     return infoWeb(app, {format})
   } else {
@@ -23,7 +32,7 @@ export async function info(app: App, {format, webEnv}: InfoOptions): Promise<out
   }
 }
 
-export async function infoWeb(app: App, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
   const token = await session.ensureAuthenticatedPartners()
 
   const orgs = await fetchOrganizations(token)
@@ -48,7 +57,7 @@ Use these environment variables to set up your deployment pipeline for this app:
   }
 }
 
-export async function infoApp(app: App, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {
@@ -61,12 +70,12 @@ const UNKNOWN_TEXT = output.content`${output.token.italic('unknown')}`.value
 const NOT_CONFIGURED_TEXT = output.content`${output.token.italic('Not yet configured')}`.value
 
 class AppInfo {
-  private app: App
+  private app: AppInterface
   private cachedAppInfo: store.CachedAppInfo | undefined
 
-  constructor(app: App) {
+  constructor(app: AppInterface) {
     this.app = app
-    this.cachedAppInfo = store.getAppInfo(app.directory)
+    this.cachedAppInfo = store.cliKitStore().getAppInfo(app.directory)
   }
 
   async output(): Promise<string> {
@@ -87,7 +96,7 @@ class AppInfo {
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
     let postscript = output.content`💡 These will be populated when you run ${output.token.packagejsonScript(
-      this.app.dependencyManager,
+      this.app.packageManager,
       'dev',
     )}`.value
     if (this.cachedAppInfo) {
@@ -95,7 +104,7 @@ class AppInfo {
       if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
       if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
       postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
-        this.app.dependencyManager,
+        this.app.packageManager,
         'dev',
         '--reset',
       )}`.value
@@ -133,7 +142,11 @@ class AppInfo {
           return configurationType === extensionType
         })
         if (relevantExtensions[0]) {
-          body += `\n\n${output.content`${output.token.subheading(extensionType)}`.value}`
+          body += `\n\n${
+            output.content`${output.token.subheading(
+              mapExtensionTypeToExternalExtensionType(extensionType as ExtensionTypes),
+            )}`.value
+          }`
           relevantExtensions.forEach((extension: TExtension) => {
             body += `${outputFormatter(extension)}`
           })
@@ -244,7 +257,7 @@ class AppInfo {
     const cliVersionInfo = [this.currentCliVersion(), versionUpgradeMessage].join(' ').trim()
     const lines: string[][] = [
       ['Shopify CLI', cliVersionInfo],
-      ['Package manager', this.app.dependencyManager],
+      ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
@@ -282,9 +295,9 @@ class AppInfo {
 
   async versionUpgradeMessage(): Promise<string> {
     const cliDependency = '@shopify/cli'
-    const newestVersion = await dependency.checkForNewVersion(cliDependency, this.currentCliVersion())
+    const newestVersion = await checkForNewVersion(cliDependency, this.currentCliVersion())
     if (newestVersion) {
-      return output.content`${dependency.getOutputUpdateCLIReminder(this.app.dependencyManager, newestVersion)}`.value
+      return output.getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
     }
     return ''
   }

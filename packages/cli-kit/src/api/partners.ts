@@ -1,50 +1,24 @@
-import {buildHeaders, sanitizedHeadersOutput} from './common'
-import {ScriptServiceProxyQuery} from './graphql'
-import {partners as partnersFqdn} from '../environment/fqdn'
-import {debug, stringifyMessage, content, token as outputToken} from '../output'
-import {ExtendableError} from '../error'
-import {request as graphqlRequest, Variables, RequestDocument, ClientError, gql} from 'graphql-request'
-
-export class RequestClientError extends ExtendableError {
-  statusCode: number
-  public constructor(message: string, statusCode: number) {
-    super(message)
-    this.statusCode = statusCode
-  }
-}
+import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
+import {ScriptServiceProxyQuery} from './graphql/index.js'
+import {partners as partnersFqdn} from '../environment/fqdn.js'
+import {graphqlClient} from '../http/graphql.js'
+import {Variables, ClientError, gql, RequestDocument} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/api/cli/graphql`
-  const headers = await buildHeaders(token)
-  debug(`
-Sending Partners GraphQL request:
-${query}
-
-With variables:
-${variables ? JSON.stringify(variables, null, 2) : ''}
-
-And headers:
-${sanitizedHeadersOutput(headers)}
-  `)
-
-  try {
-    const response = await graphqlRequest<T>(url, query, variables, headers)
+  const api = 'Partners'
+  return handlingErrors(api, async () => {
+    const fqdn = await partnersFqdn()
+    const url = `https://${fqdn}/api/cli/graphql`
+    const headers = await buildHeaders(token)
+    debugLogRequest(api, query, variables, headers)
+    const client = await graphqlClient({
+      headers,
+      service: 'partners',
+      url,
+    })
+    const response = await client.request<T>(query, variables)
     return response
-  } catch (error) {
-    if (error instanceof ClientError) {
-      const errorMessage = stringifyMessage(content`
-The Partners GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
-
-${outputToken.json(error.response.errors)}
-      `)
-      const mappedError = new RequestClientError(errorMessage, error.response.status)
-      mappedError.stack = error.stack
-      throw mappedError
-    } else {
-      throw error
-    }
-  }
+  })
 }
 
 /**
@@ -62,13 +36,16 @@ export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
       }
     }
   `
-
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
   const headers = await buildHeaders(token)
-
+  const client = await graphqlClient({
+    headers,
+    url,
+    service: 'partners',
+  })
   try {
-    await graphqlRequest(url, query, {}, headers)
+    await client.request(query, {})
     return false
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

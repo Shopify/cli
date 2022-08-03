@@ -1,6 +1,5 @@
-import {clearAppInfo, getAppInfo, getSession, removeSession, setAppInfo, setSession} from './store'
+import {temporaryTestStore} from './testing/store.js'
 import {describe, expect, it} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
@@ -8,12 +7,12 @@ const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 
 
 describe('getAppInfo', () => {
   it('returns cached info if existss', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
       // When
-      const got = getAppInfo(APP1.directory, localConf)
+      const got = localConf.getAppInfo(APP1.directory)
 
       // Then
       expect(got).toEqual(APP1)
@@ -21,12 +20,12 @@ describe('getAppInfo', () => {
   })
 
   it('returns undefined if it does not exists', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
       // When
-      const got = getAppInfo('app3', localConf)
+      const got = localConf.getAppInfo('app3')
 
       // Then
       expect(got).toEqual(undefined)
@@ -36,15 +35,17 @@ describe('getAppInfo', () => {
 
 describe('setAppInfo', () => {
   it('updates cached info if exists', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
       // When
-      setAppInfo(
-        {appId: 'updated-app1', directory: '/app1', storeFqdn: 'store1-updated', orgId: 'org1-updated'},
-        localConf,
-      )
+      localConf.setAppInfo({
+        appId: 'updated-app1',
+        directory: '/app1',
+        storeFqdn: 'store1-updated',
+        orgId: 'org1-updated',
+      })
       const got = localConf.get('appInfo')
 
       // Then
@@ -53,12 +54,12 @@ describe('setAppInfo', () => {
   })
 
   it('creates new info if it does not exists', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1])
 
       // When
-      setAppInfo({appId: 'app2', directory: '/app2', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, localConf)
+      localConf.setAppInfo({appId: 'app2', directory: '/app2', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId})
       const got = localConf.get('appInfo')
 
       // Then
@@ -69,12 +70,12 @@ describe('setAppInfo', () => {
 
 describe('clearAppInfo', () => {
   it('removes cached info if exists', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
       // When
-      clearAppInfo('/app1', localConf)
+      localConf.clearAppInfo('/app1')
       const got = localConf.get('appInfo')
 
       // Then
@@ -85,12 +86,12 @@ describe('clearAppInfo', () => {
 
 describe('getSession', () => {
   it('returns the content of the SessionStore key', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
       // When
-      const got = getSession(localConf)
+      const got = localConf.getSession()
 
       // Then
       expect(got).toEqual('my-session')
@@ -100,12 +101,12 @@ describe('getSession', () => {
 
 describe('setSession', () => {
   it('saves the desired content in the SessionStore key', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
       // When
-      setSession('my-session', localConf)
+      localConf.setSession('my-session')
 
       // Then
       expect(localConf.get('sessionStore')).toEqual('my-session')
@@ -115,12 +116,12 @@ describe('setSession', () => {
 
 describe('removeSession', () => {
   it('removes the SessionStore key', () => {
-    temporary.localConf(async (localConf) => {
+    temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
       // When
-      removeSession(localConf)
+      localConf.removeSession()
 
       // Then
       expect(localConf.get('sessionStore')).toEqual('')

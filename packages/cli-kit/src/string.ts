@@ -40,5 +40,21 @@ export function capitalize(string: string) {
  */
 export function normalizeStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  return storeFqdn.includes('.myshopify.com') ? storeFqdn : `${storeFqdn}.myshopify.com`
+  return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
+    ? storeFqdn
+    : `${storeFqdn}.myshopify.com`
+}
+
+/**
+ * Try to convert a string to an int, falling back to undefined if unable to
+ */
+export function tryParseInt(maybeInt: string | undefined) {
+  let asInt: number | undefined
+  if (maybeInt !== undefined) {
+    asInt = parseInt(maybeInt, 10)
+    if (isNaN(asInt)) {
+      asInt = undefined
+    }
+  }
+  return asInt
 }

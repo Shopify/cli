@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.0.25",
+  "version": "3.5.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -20,6 +20,14 @@
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
+    },
+    "./common/*": {
+      "node": "./dist/common/*.js",
+      "types": "./dist/common/*.d.ts"
+    },
+    "./testing/*": {
+      "node": "./dist/testing/*.js",
+      "types": "./dist/testing/*.d.ts"
     }
   },
   "files": [
@@ -32,7 +40,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
@@ -47,7 +55,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",
@@ -55,22 +63,13 @@
     "win32"
   ],
   "dependencies": {
-    "@oclif/core": "^1.0",
-    "envfile": "^6.17.0",
-    "fastify": "^4.0.0-rc.4",
-    "inquirer": "^8.2.4",
-    "keytar": "^7.9.0",
-    "open": "^8.4.0",
-    "prettier": "^2.6.2",
-    "source-map-support": "^0.5.21",
-    "stacktracey": "^2.1.8",
-    "pathe": "0.2.0",
-    "abort-controller": "^3.0.0",
-    "ts-error": "^1.0.6",
-    "find-up": "^6.2.0",
-    "execa": "^6.0.0",
-    "listr2": "^4.0.5",
+    "@bugsnag/js": "^7.16.7",
     "@iarna/toml": "^2.2.5",
+    "@oclif/core": "^1.0",
+    "@types/archiver": "^5.3.1",
+    "abort-controller": "^3.0.0",
+    "ansi-colors": "^4.1.1",
+    "archiver": "^5.3.1",
     "change-case": "^4.1.2",
     "color-json": "^2.0.1",
     "commondir": "^1.0.1",
@@ -79,7 +78,11 @@
     "del": "^6.0.0",
     "enquirer": "^2.3.6",
     "env-paths": "^3.0.0",
+    "envfile": "^6.17.0",
+    "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
+    "fastify": "^4.2.1",
+    "find-up": "^6.2.0",
     "find-versions": "^5.0.0",
     "form-data": "^4.0.0",
     "fs-extra": "^10.0.0",
@@ -87,25 +90,38 @@
     "graphql": "^16.4.0",
     "graphql-request": "^4.3.0",
     "haikunator": "^2.1.2",
+    "inquirer": "^8.2.4",
     "is-interactive": "^2.0.0",
     "js-yaml": "^4.1.0",
+    "keytar": "^7.9.0",
     "latest-version": "^6.0.0",
     "liquidjs": "^9.36.0",
+    "listr2": "^4.0.5",
+    "log-update": "^4.0.0",
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
+    "open": "^8.4.0",
+    "pathe": "0.2.0",
+    "prettier": "^2.6.2",
+    "semver": "^7.3.6",
     "simple-git": "^3.5.0",
-    "tempy": "^2.0.0",
+    "source-map-support": "^0.5.21",
+    "stacktracey": "^2.1.8",
+    "strip-ansi": "^7.0.1",
+    "tempy": "^3.0.0",
     "term-size": "^3.0.1",
     "terminal-link": "^3.0.0",
+    "ts-error": "^1.0.6",
+    "unique-string": "^3.0.0",
     "zod": "^3.17.3"
   },
   "devDependencies": {
+    "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/inquirer": "^8.2.1",
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
-    "vitest": "^0.15.1",
-    "semver": "^7.3.6",
-    "ansi-colors": "^4.1.1"
+    "node-stream-zip": "^1.15.0",
+    "vitest": "^0.17.1"
   }
 }

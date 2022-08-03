@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {loadLocalesConfig} from './locales-configuration'
+import {loadLocalesConfig} from './locales-configuration.js'
 import {describe, expect, it} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 import {file, path} from '@shopify/cli-kit'
 
 describe('loadLocalesConfig', () => {
   it('Works if all locales are correct', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
@@ -26,7 +25,7 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if one locale is empty', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
@@ -38,12 +37,12 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
 
   it('Throws if one locale is too big', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
@@ -56,12 +55,12 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
 
   it('Throws if there are no defaults', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.json')
@@ -73,12 +72,12 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Missing default language in checkout_ui_extension configuration/)
+      await expect(got).rejects.toThrow(/Missing default language in checkout_ui configuration/)
     })
   })
 
   it('Throws if there are multiple defaults', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.default.json')
@@ -90,12 +89,12 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
 
   it('Throws if bundle is too big', async () => {
-    await temporary.directory(async (tmpDir: string) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.default.json')
@@ -109,7 +108,7 @@ describe('loadLocalesConfig', () => {
 
       // When
       const got = loadLocalesConfig(tmpDir)
-      await expect(got).rejects.toThrow(/Error loading checkout_ui_extension/)
+      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
 })

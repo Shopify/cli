@@ -1,6 +1,6 @@
-import {Abort} from './error'
-import {hasGit} from './environment/local'
-import {content, token, debug} from './output'
+import {Abort} from './error.js'
+import {hasGit, isTerminalInteractive} from './environment/local.js'
+import {content, token, debug} from './output.js'
 import git, {TaskOptions, SimpleGitProgressEvent} from 'simple-git'
 
 export const factory = git
@@ -45,13 +45,20 @@ export async function downloadRepository({
     if (progressUpdater) progressUpdater(updateString)
   }
 
-  await git({progress}).clone(repository, destination, options, (err) => {
-    if (err) {
+  const simpleGitOptions = {
+    progress,
+    ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
+  }
+  try {
+    await git(simpleGitOptions).clone(repository, destination, options)
+  } catch (err) {
+    if (err instanceof Error) {
       const abortError = new Abort(err.message)
       abortError.stack = err.stack
       throw abortError
     }
-  })
+    throw err
+  }
 }
 
 /**

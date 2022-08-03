@@ -1,5 +1,4 @@
-import {extensionGraphqlId} from '../../models/app/app'
-import {ExtensionTypes} from '../../constants'
+import {extensionGraphqlId, ExtensionTypes} from '../../constants.js'
 import {api, error} from '@shopify/cli-kit'
 
 export interface ExtensionRegistration {

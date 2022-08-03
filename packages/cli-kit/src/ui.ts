@@ -1,15 +1,43 @@
-import {AutoComplete} from './ui/autocomplete'
-import {Input} from './ui/input'
-import {Select} from './ui/select'
-import {Bug, AbortSilent} from './error'
-import {remove, exists} from './file'
-import {info, content, token} from './output'
-import {relative} from './path'
-import {isTerminalInteractive} from './environment/local'
-import {isTruthy} from './environment/utilities'
+import {AutoComplete} from './ui/autocomplete.js'
+import {Input} from './ui/input.js'
+import {Select} from './ui/select.js'
+import {CancelExecution, Abort} from './error.js'
+import {remove, exists} from './file.js'
+import {info, completed, content, token, logUpdate, logToFile, Message, Logger, stringifyMessage} from './output.js'
+import {colors} from './node/colors.js'
+import {relative} from './path.js'
+import {isTerminalInteractive} from './environment/local.js'
+import {isTruthy} from './environment/utilities.js'
 import inquirer from 'inquirer'
+import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
 
-export {Listr} from 'listr2'
+export function newListr(tasks: ListrTask[], options?: object) {
+  const listr = new OriginalListr(tasks, options)
+  listr.tasks.forEach((task) => {
+    const loggedSubtaskTitles: string[] = []
+    task.subscribe((event: ListrEvent) => {
+      if (event.type === 'TITLE' && typeof event.data === 'string') {
+        logToFile(event.data, 'INFO')
+      }
+    })
+    task.renderHook$.subscribe(() => {
+      if (task.hasSubtasks()) {
+        const activeSubtasks = task.subtasks.filter((subtask) => {
+          return [ListrTaskState.PENDING, ListrTaskState.COMPLETED].includes(subtask.state as ListrTaskState)
+        })
+        activeSubtasks.forEach((subtask) => {
+          if (subtask.title && !loggedSubtaskTitles.includes(subtask.title)) {
+            loggedSubtaskTitles.push(subtask.title)
+            logToFile(subtask.title, 'INFO')
+          }
+        })
+      }
+    })
+  })
+  return listr
+}
+
+export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
 interface BaseQuestion<TName extends string> {
@@ -19,6 +47,39 @@ interface BaseQuestion<TName extends string> {
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
+}
+
+const started = (content: Message, logger: Logger) => {
+  const message = `${colors.yellow('❯')} ${stringifyMessage(content)}`
+  info(message, logger)
+}
+
+const failed = (content: Message, logger: Logger) => {
+  const message = `${colors.red('✖')} ${stringifyMessage(content)}`
+  info(message, logger)
+}
+
+/**
+ * Performs a task with the title kept up to date and stdout available to the
+ * task while it runs (there is no re-writing stdout while the task runs).
+ */
+export interface TaskOptions {
+  title: string
+  task: () => Promise<void | {successMessage: string}>
+}
+export const task = async ({title, task}: TaskOptions) => {
+  let success
+  started(title, logUpdate)
+  try {
+    const result = await task()
+    success = result?.successMessage || title
+  } catch (err) {
+    failed(title, logUpdate)
+    logUpdate.done()
+    throw err
+  }
+  completed(success, logUpdate)
+  logUpdate.done()
 }
 
 export type InputQuestion<TName extends string> = BaseQuestion<TName> & {
@@ -53,7 +114,7 @@ export const prompt = async <
   debugForceInquirer = false,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
-    throw new Bug(content`
+    throw new Abort(content`
 The CLI prompted in a non-interactive terminal with the following questions:
 ${token.json(questions)}
     `)
@@ -69,23 +130,30 @@ ${token.json(questions)}
       const questionName = question.name
       // eslint-disable-next-line no-await-in-loop
       const answer = (await inquirer.prompt([convertQuestionForInquirer(question)]))[questionName]
+      logPromptResults(question.message, answer)
       results.push([questionName, answer])
     }
 
     return Object.fromEntries(results) as TAnswers
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mappedQuestions: any[] = questions.map(mapper)
     const value = {} as TAnswers
-    for (const question of mappedQuestions) {
+    for (const question of questions) {
       if (question.preface) {
         info(question.preface)
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mappedQuestion: any = mapper(question)
       // eslint-disable-next-line no-await-in-loop
-      value[question.name as keyof TAnswers] = await question.run()
+      const answer = await mappedQuestion.run()
+      value[question.name as keyof TAnswers] = answer
+      logPromptResults(question.message, answer)
     }
     return value
   }
+}
+
+function logPromptResults(questionName: string, answer: string) {
+  logToFile([questionName, answer].join(' '), 'INFO')
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {
@@ -107,7 +175,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
     const choice = await prompt([questions])
 
     if (choice.value === 'abort') {
-      throw new AbortSilent()
+      throw new CancelExecution()
     }
 
     remove(directory)

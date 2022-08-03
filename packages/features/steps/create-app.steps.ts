@@ -6,8 +6,8 @@ import {strict as assert} from 'assert'
 
 When(
   /I create an app named (.+) with (.+) as dependency manager/,
-  {timeout: 2 * 60 * 1000},
-  async function (appName: string, dependencyManager: string) {
+  {timeout: 5 * 60 * 1000},
+  async function (appName: string, packageManager: string) {
     const {stdout} = await exec(
       'node',
       [
@@ -16,8 +16,8 @@ When(
         appName,
         '--path',
         this.temporaryDirectory,
-        '--dependency-manager',
-        dependencyManager,
+        '--package-manager',
+        packageManager,
         '--local',
         '--template',
         'https://github.com/Shopify/shopify-app-template-node#richard/frontend-via-submodules-toml-updates',
@@ -32,12 +32,12 @@ When(
 Then(
   /I have an app named (.+) scaffolded from the template with (.+) as dependency manager/,
   {},
-  async function (appName: string, dependencyManager: string) {
+  async function (appName: string, packageManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {
       env: {...process.env, ...this.temporaryEnv},
     })
     const results = JSON.parse(stdout)
-    assert.equal(results.dependencyManager, dependencyManager)
+    assert.equal(results.packageManager, packageManager)
   },
 )
 

@@ -1,6 +1,6 @@
-import {exists, write, read} from './file'
-import {findUp, join} from './path'
-import {content, token, debug} from './output'
+import {exists, write, read} from './file.js'
+import {findUp, join} from './path.js'
+import {content, token, debug} from './output.js'
 
 /**
  * Check if user editor is VS Code

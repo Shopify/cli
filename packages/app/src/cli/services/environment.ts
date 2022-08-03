@@ -1,18 +1,22 @@
-import {selectOrCreateApp} from './dev/select-app'
+import {selectOrCreateApp} from './dev/select-app.js'
 import {
   fetchAllStores,
   fetchAppFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
+  fetchStoreByDomain,
   FetchResponse,
-} from './dev/fetch'
-import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store'
-import {ensureDeploymentIdsPresence} from './environment/identifiers'
-import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev'
-import {App, Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/app'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization'
-import {error as kitError, output, session, store as conf, ui, environment, dependency} from '@shopify/cli-kit'
+} from './dev/fetch.js'
+import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
+import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
+import {AppInterface} from '../models/app/app.js'
+import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import metadata from '../metadata.js'
+import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
@@ -21,11 +25,11 @@ export const InvalidApiKeyError = (apiKey: string) => {
   )
 }
 
-export const DeployAppNotFound = (apiKey: string, dependencyManager: dependency.DependencyManager) => {
+export const DeployAppNotFound = (apiKey: string, packageManager: PackageManager) => {
   return new kitError.Abort(
     output.content`Couldn't find the app with API key ${apiKey}`,
     output.content`• If you didn't intend to select this app, run ${
-      output.content`${output.token.packagejsonScript(dependencyManager, 'deploy', '--reset')}`.value
+      output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
     }`,
   )
 }
@@ -36,8 +40,19 @@ export const AppOrganizationNotFoundError = (apiKey: string, organizations: stri
   )
 }
 
+const OrganizationNotFoundError = (orgId: string) => {
+  return new error.Bug(`Could not find Organization for id ${orgId}.`)
+}
+
+const StoreNotFoundError = (storeName: string, org: Organization) => {
+  return new error.Bug(
+    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
+    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
+  )
+}
+
 export interface DevEnvironmentOptions {
-  app: App
+  app: AppInterface
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -63,17 +78,17 @@ interface DevEnvironmentOutput {
  * @param options {DevEnvironmentInput} Current dev environment options
  * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
  */
-export async function ensureDevEnvironment(options: DevEnvironmentOptions): Promise<DevEnvironmentOutput> {
-  const token = await session.ensureAuthenticatedPartners()
-
-  // We retrieve the production identifiers to know if the user has selected the prod app for `dev`
+export async function ensureDevEnvironment(
+  options: DevEnvironmentOptions,
+  token: string,
+): Promise<DevEnvironmentOutput> {
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
-    apiKey: options.apiKey ?? conf.getAppInfo(options.app.directory)?.appId,
+    apiKey: options.apiKey ?? store.cliKitStore().getAppInfo(options.app.directory)?.appId,
   })
 
   const explanation =
@@ -85,14 +100,18 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
   }
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
-  const {organization, apps, stores} = await fetchOrgsAppsAndStores(orgId, token)
 
-  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, organization, stores, token)
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
-    conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore, orgId})
+    store.cliKitStore().setAppInfo({
+      appId: selectedApp.apiKey,
+      directory: options.app.directory,
+      storeFqdn: selectedStore.shopDomain,
+      orgId,
+    })
 
     // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
     const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
@@ -101,7 +120,7 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
         ...selectedApp,
         apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
       },
-      storeFqdn: selectedStore,
+      storeFqdn: selectedStore.shopDomain,
       identifiers: {
         app: selectedApp.apiKey,
         extensions,
@@ -109,31 +128,41 @@ export async function ensureDevEnvironment(options: DevEnvironmentOptions): Prom
     }
   }
 
+  const {organization, apps} = await fetchOrgAndApps(orgId, token)
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
-  conf.setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
+  store
+    .cliKitStore()
+    .setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
 
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
-  selectedStore = selectedStore || (await selectStore(stores, organization, token, cachedInfo?.storeFqdn))
-  conf.setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore})
-
-  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, options.app, selectedStore)
+  if (!selectedStore) {
+    const allStores = await fetchAllStores(orgId, token)
+    selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
-  // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
+  store
+    .cliKitStore()
+    .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore?.shopDomain})
+
+  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
+    showReusedValues(organization.businessName, options.app, selectedStore.shopDomain)
+  }
+
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
-  return {
+  const result = {
     app: {
       ...selectedApp,
       apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
     },
-    storeFqdn: selectedStore,
+    storeFqdn: selectedStore.shopDomain,
     identifiers: {
       app: selectedApp.apiKey,
       extensions,
     },
   }
+  await logMetadataForLoadedDevEnvironment(result)
+  return result
 }
 
 async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
@@ -152,12 +181,12 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
 }
 
 export interface DeployEnvironmentOptions {
-  app: App
+  app: AppInterface
   reset: boolean
 }
 
 interface DeployEnvironmentOutput {
-  app: App
+  app: AppInterface
   token: string
   partnersOrganizationId: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
@@ -166,14 +195,14 @@ interface DeployEnvironmentOutput {
 
 /**
  * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
- * @param app {App} The local app object
+ * @param app {AppInterface} The local app object
  * @param token {string} The token to use to access the Partners API
  * @returns {Promise<OrganizationApp | undefined>}
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
  */
-async function fetchDevAppAndPrompt(app: App, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = conf.getAppInfo(app.directory)?.appId
+async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
+  const devAppId = store.cliKitStore().getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -196,7 +225,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     envIdentifiers = {app: undefined, extensions: {}}
   } else if (envIdentifiers.app) {
     partnersApp = await fetchAppFromApiKey(envIdentifiers.app, token)
-    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.dependencyManager)
+    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.packageManager)
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
@@ -221,7 +250,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     ...options,
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
-  return {
+  const result = {
     app: options.app,
     partnersApp: {
       id: partnersApp.id,
@@ -233,10 +262,13 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     identifiers,
     token,
   }
+
+  await logMetadataForLoadedDeployEnvironment(result)
+  return result
 }
 
-export async function fetchOrganizationAndFetchOrCreateApp(
-  app: App,
+async function fetchOrganizationAndFetchOrCreateApp(
+  app: AppInterface,
   token: string,
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
   const orgId = await selectOrg(token)
@@ -247,7 +279,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Fetching organization data',
@@ -274,12 +306,11 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
  */
 async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
-  org: Organization,
-  stores: OrganizationStore[],
+  orgId: string,
   token: string,
-): Promise<{app?: OrganizationApp; store?: string}> {
+): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
   let selectedApp: OrganizationApp | undefined
-  let selectedStore: string | undefined
+  let selectedStore: OrganizationStore | undefined
 
   if (options.apiKey) {
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
@@ -287,8 +318,11 @@ async function fetchDevDataFromOptions(
   }
 
   if (options.storeFqdn) {
-    await convertToTestStoreIfNeeded(options.storeFqdn, stores, org, token)
-    selectedStore = options.storeFqdn
+    const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
+    if (!orgWithStore) throw OrganizationNotFoundError(orgId)
+    if (!orgWithStore.store) throw StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
+    await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
+    selectedStore = orgWithStore.store
   }
 
   return {app: selectedApp, store: selectedStore}
@@ -296,7 +330,7 @@ async function fetchDevDataFromOptions(
 
 /**
  * Retrieve cached info from the global configuration based on the current local app
- * @param reset {boolean} Wheter to reset the cache or not
+ * @param reset {boolean} Whether to reset the cache or not
  * @param directory {string} The directory containing the app.
  * @param appId {string} Current local app id, used to retrieve the cached info
  * @returns
@@ -309,10 +343,10 @@ function getAppDevCachedInfo({
   reset: boolean
   directory: string
   apiKey?: string
-}): conf.CachedAppInfo | undefined {
+}): store.CachedAppInfo | undefined {
   if (!apiKey) return undefined
-  if (apiKey && reset) conf.clearAppInfo(directory)
-  return conf.getAppInfo(directory)
+  if (apiKey && reset) store.cliKitStore().clearAppInfo(directory)
+  return store.cliKitStore().getAppInfo(directory)
 }
 
 /**
@@ -332,14 +366,14 @@ async function selectOrg(token: string): Promise<string> {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showReusedValues(org: string, app: App, store: string) {
+function showReusedValues(org: string, app: AppInterface, store: string) {
   output.info('\nUsing your previous dev settings:')
   output.info(`Org:        ${org}`)
   output.info(`App:        ${app.name}`)
   output.info(`Dev store:  ${store}\n`)
   output.info(
     output.content`To reset your default dev config, run ${output.token.packagejsonScript(
-      app.dependencyManager,
+      app.packageManager,
       'dev',
       '--reset',
     )}\n`,
@@ -356,4 +390,14 @@ function showDevValues(org: string, appName: string) {
   output.info('\nYour configs for dev were:')
   output.info(`Org:        ${org}`)
   output.info(`App:        ${appName}\n`)
+}
+
+async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  metadata.addPublic({partner_id: string.tryParseInt(env.app.organizationId), api_key: env.identifiers.app})
+}
+
+async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  metadata.addPublic({partner_id: string.tryParseInt(env.partnersOrganizationId), api_key: env.identifiers.app})
 }

@@ -1,16 +1,19 @@
-import {load} from './hydrogen'
-import {genericConfigurationFileNames} from '../constants'
+import {load} from './hydrogen.js'
+import {genericConfigurationFileNames} from '../constants.js'
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {HydrogenConfig} from '@shopify/hydrogen/config'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import {loadConfig} from '@shopify/hydrogen/load-config'
+import {loadConfig} from '../utilities/load-config.js'
 import {describe, vi, it, expect} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
+import {pnpmLockfile, yarnLockfile} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('@shopify/hydrogen/load-config')
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore
+import type {HydrogenConfig} from '@shopify/hydrogen/config'
+/* eslint-enable @typescript-eslint/ban-ts-comment */
+
+vi.mock('../utilities/load-config.js')
 
 interface PackageJSONContents {
   name?: string
@@ -59,7 +62,7 @@ describe('load', () => {
   }
 
   it("throws an error if the directory doesn't exist", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await file.rmdir(tmpDir, {force: true})
 
@@ -69,14 +72,14 @@ describe('load', () => {
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // When/Then
       await expect(load(tmpDir)).rejects.toThrow(/Couldn't find hydrogen configuration file/)
     })
   })
 
   it('defaults to npm as package manager when the configuration is valid', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
 
@@ -84,42 +87,42 @@ describe('load', () => {
       const app = await load(tmpDir)
 
       // When/Then
-      expect(app.dependencyManager).toBe('npm')
+      expect(app.packageManager).toBe('npm')
     })
   })
 
   it('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
-      const yarnLockPath = path.join(tmpDir, genericConfigurationFileNames.yarn.lockfile)
+      const yarnLockPath = path.join(tmpDir, yarnLockfile)
       await file.write(yarnLockPath, '')
 
       // When
       const app = await load(tmpDir)
 
       // Then
-      expect(app.dependencyManager).toBe('yarn')
+      expect(app.packageManager).toBe('yarn')
     })
   })
 
   it('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
-      const pnpmLockPath = path.join(tmpDir, genericConfigurationFileNames.pnpm.lockfile)
+      const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
       await file.write(pnpmLockPath, '')
 
       // When
       const app = await load(tmpDir)
 
       // Then
-      expect(app.dependencyManager).toBe('pnpm')
+      expect(app.packageManager).toBe('pnpm')
     })
   })
 
   it('parses the hydrogen.config when it is a JSON file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       const config = {
         shopify: {
           storeDomain: 'hydrogen-preview.myshopify.com',
@@ -140,7 +143,7 @@ describe('load', () => {
   })
 
   it('parses the hydrogen.config when it is a JS file', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       const config = {
         shopify: {
           storeDomain: 'hydrogen-preview.myshopify.com',
@@ -161,7 +164,7 @@ describe('load', () => {
   })
 
   it('sets the language as javascript by default', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
 
@@ -174,7 +177,7 @@ describe('load', () => {
   })
 
   it('detects typescript projects', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(
         tmpDir,

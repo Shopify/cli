@@ -1,45 +1,47 @@
-import {getTheme} from '../../utilities/theme-store'
-import {Command, Flags} from '@oclif/core'
-import {path, ruby, session, string} from '@shopify/cli-kit'
+import {themeFlags} from '../../flags.js'
+import {getTheme} from '../../utilities/theme-store.js'
+import ThemeCommand from '../theme-command.js'
+import {Flags} from '@oclif/core'
+import {cli, path, session, string} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
-export default class Pull extends Command {
+export default class Pull extends ThemeCommand {
   static description = 'Download your remote theme files locally.'
 
   static flags = {
+    ...cli.globalFlags,
+    ...themeFlags,
     theme: Flags.string({
+      char: 't',
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
     development: Flags.boolean({
       char: 'd',
       description: 'Pull theme files from your remote development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     live: Flags.boolean({
       char: 'l',
       description: 'Pull theme files from your remote live theme.',
-      env: 'SHOPIFY_FLAG_THEME_LIVE',
+      env: 'SHOPIFY_FLAG_LIVE',
     }),
     nodelete: Flags.boolean({
       char: 'n',
       description: 'Runs the pull command without deleting local files.',
-      env: 'SHOPIFY_FLAG_THEME_NODELETE',
+      env: 'SHOPIFY_FLAG_NODELETE',
     }),
-    only: Flags.boolean({
+    only: Flags.string({
       char: 'o',
+      multiple: true,
       description: 'Download only the specified files (Multiple flags allowed).',
-      env: 'SHOPIFY_FLAG_THEME_ONLY',
+      env: 'SHOPIFY_FLAG_ONLY',
     }),
-    ignore: Flags.boolean({
+    ignore: Flags.string({
       char: 'x',
+      multiple: true,
       description: 'Skip downloading the specified files (Multiple flags allowed).',
-      env: 'SHOPIFY_FLAG_THEME_IGNORE',
-    }),
-    path: Flags.string({
-      description: 'The path to your theme',
-      default: '.',
-      env: 'SHOPIFY_FLAG_PATH',
-      parse: (input, _) => Promise.resolve(path.resolve(input)),
+      env: 'SHOPIFY_FLAG_IGNORE',
     }),
     store: Flags.string({
       char: 's',
@@ -57,29 +59,12 @@ export default class Pull extends Command {
       validPath = path.resolve(flags.path)
     }
 
-    const command = ['theme', 'pull', validPath]
-    if (flags.theme) {
-      command.push('-t')
-      command.push(flags.theme)
-    }
-    if (flags.development) {
-      command.push('-d')
-    }
-    if (flags.live) {
-      command.push('-l')
-    }
-    if (flags.nodelete) {
-      command.push('-n')
-    }
-    if (flags.only) {
-      command.push('-o')
-    }
-    if (flags.ignore) {
-      command.push('-n')
-    }
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose']})
+
+    const command = ['theme', 'pull', validPath, ...flagsToPass]
 
     const store = getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.execCLI(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

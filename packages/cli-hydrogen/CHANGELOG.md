@@ -1,5 +1,99 @@
 # @shopify/cli-hydrogen
 
+## 3.5.0
+
+### Patch Changes
+
+- dabc4bab: Refactor rejection tests to follow recommended implementation by Vitest
+- Updated dependencies [dabc4bab]
+  - @shopify/cli-kit@3.5.0
+
+## 3.4.0
+
+### Patch Changes
+
+- Updated dependencies [08366831]
+- Updated dependencies [feae2499]
+- Updated dependencies [19ab3f99]
+- Updated dependencies [0da6c7e8]
+  - @shopify/cli-kit@3.4.0
+
+## 3.3.3
+
+### Patch Changes
+
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
+## 3.3.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.2
+
+## 3.3.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.3.1
+
+## 3.3.0
+
+### Patch Changes
+
+- fc28c30e: Fix timeout on hydrogen dev
+- Updated dependencies [f7708fcc]
+  - @shopify/cli-kit@3.3.0
+
+## 3.2.0
+
+### Minor Changes
+
+- 9c10736a: Stop using semantic versioning for @shopify/cli-kit and pin the version from all the dependent packages
+
+### Patch Changes
+
+- Updated dependencies [86b04187]
+  - @shopify/cli-kit@3.2.0
+
+## 3.1.0
+
+### Patch Changes
+
+- Updated dependencies [740f73ac]
+- Updated dependencies [d17770e8]
+- Updated dependencies [d17770e8]
+- Updated dependencies [de8ee02d]
+- Updated dependencies [45f0f0b9]
+  - @shopify/cli-kit@3.1.0
+
+## 3.0.27
+
+### Patch Changes
+
+- Updated dependencies [e2e8b4db]
+  - @shopify/cli-kit@3.0.27
+
+## 3.0.26
+
+### Patch Changes
+
+- 022a4e24: Internal: build cli-kit using tsc instead of rollup+esbuild
+- c4465044: Not report Vite build errors as bugs
+- 787a29fa: Update mini-oxygen
+- 2d8e4458: Log Listr task titles to logfile
+- Updated dependencies [dbcffdbb]
+- Updated dependencies [022a4e24]
+- Updated dependencies [e81e52b1]
+- Updated dependencies [c16035f1]
+- Updated dependencies [61f595df]
+- Updated dependencies [87f7843f]
+- Updated dependencies [8ff4e3d7]
+- Updated dependencies [168bb4c6]
+- Updated dependencies [0a9dbc63]
+- Updated dependencies [2d8e4458]
+  - @shopify/cli-kit@3.0.26
+
 ## 3.0.25
 
 ### Patch Changes

@@ -1,10 +1,26 @@
-import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm'
-import {version as cliVersion} from '../../../../cli-main/package.json'
-import {version as appVersion} from '../../../../app/package.json'
-import {dependency, file, npm, path, ui} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
+import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
+import {file, npm, path, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
+
+let cliVersion: undefined | string
+let appVersion: undefined | string
+
+beforeEach(async () => {
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
+  vi.mock('@shopify/cli-kit', async () => {
+    const module: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...module,
+      constants: {
+        versions: {
+          cliKit: () => '1.2.3',
+        },
+      },
+    }
+  })
+})
 
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
@@ -12,8 +28,8 @@ describe('updateCLIDependencies', () => {
 
     await updateCLIDependencies(mockPackageJSON, false)
 
-    expect(mockPackageJSON.dependencies['@shopify/cli']).toBe(cliVersion)
-    expect(mockPackageJSON.dependencies['@shopify/app']).toBe(appVersion)
+    expect(mockPackageJSON.dependencies['@shopify/cli']).toBe('1.2.3')
+    expect(mockPackageJSON.dependencies['@shopify/app']).toBe('1.2.3')
   })
 
   it('does not update overrides or resolutions if local is false', async () => {
@@ -99,7 +115,7 @@ describe('updateCLIDependencies', () => {
 
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'web'))
       await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([
@@ -112,14 +128,10 @@ describe('getDeepInstallNPMTasks', () => {
     })
   }
 
-  const defaultArgs: {dependencyManager: dependency.DependencyManager; didInstallEverything: () => void} = {
-    dependencyManager: 'npm',
+  const defaultArgs: {packageManager: PackageManager; didInstallEverything: () => void} = {
+    packageManager: 'npm',
     didInstallEverything: () => {},
   }
-
-  beforeEach(() => {
-    vi.spyOn(dependency, 'install').mockImplementation(async () => undefined)
-  })
 
   it.each([
     ['/', 0],
@@ -143,21 +155,21 @@ describe('getDeepInstallNPMTasks', () => {
 
       await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
 
-      expect(dependency.install).toHaveBeenCalledWith(
+      expect(installNodeModules).toHaveBeenCalledWith(
         `${path.normalize(tmpDir)}/`,
-        defaultArgs.dependencyManager,
+        defaultArgs.packageManager,
         expect.any(Writable),
         expect.any(Writable),
       )
-      expect(dependency.install).toHaveBeenCalledWith(
+      expect(installNodeModules).toHaveBeenCalledWith(
         `${path.join(tmpDir, 'web')}/`,
-        defaultArgs.dependencyManager,
+        defaultArgs.packageManager,
         expect.any(Writable),
         expect.any(Writable),
       )
-      expect(dependency.install).toHaveBeenCalledWith(
+      expect(installNodeModules).toHaveBeenCalledWith(
         `${path.join(tmpDir, 'web', 'frontend')}/`,
-        defaultArgs.dependencyManager,
+        defaultArgs.packageManager,
         expect.any(Writable),
         expect.any(Writable),
       )
@@ -201,7 +213,7 @@ describe('getDeepInstallNPMTasks', () => {
 
       await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
 
-      const install = vi.mocked(dependency.install)
+      const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
         const stdout = args[2]
@@ -222,7 +234,7 @@ describe('getDeepInstallNPMTasks', () => {
 
       await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
 
-      const install = vi.mocked(dependency.install)
+      const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
         const stderr = args[3]

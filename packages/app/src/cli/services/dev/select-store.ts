@@ -1,6 +1,6 @@
-import {fetchAllStores} from './fetch'
-import {Organization, OrganizationStore} from '../../models/organization'
-import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev'
+import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
 
 const ConvertToDevError = (storeName: string, message: string) => {
@@ -10,15 +10,11 @@ const ConvertToDevError = (storeName: string, message: string) => {
   )
 }
 
-const StoreNotFoundError = (storeName: string, org: Organization) => {
-  return new error.Bug(
-    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
-  )
-}
-
 const InvalidStore = (storeName: string) => {
-  return new error.Bug(`${storeName} can't be used to test draft apps`, 'Please try with a different store.')
+  return new error.Abort(
+    `The store you specified (${storeName}) is not a dev store`,
+    'Run dev --reset and select an eligible dev store.',
+  )
 }
 
 const CreateStoreLink = (orgId: string) => {
@@ -44,16 +40,19 @@ export async function selectStore(
   org: Organization,
   token: string,
   cachedStoreName?: string,
-): Promise<string> {
+): Promise<OrganizationStore> {
   if (cachedStoreName) {
-    await convertToTestStoreIfNeeded(cachedStoreName, stores, org, token)
-    return cachedStoreName
+    const result = await fetchStoreByDomain(org.id, token, cachedStoreName)
+    if (result?.store) {
+      await convertToTestStoreIfNeeded(result.store, org, token)
+      return result.store
+    }
   }
 
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store.shopDomain, stores, org, token)
-    return store.shopDomain
+    await convertToTestStoreIfNeeded(store, org, token)
+    return store
   }
 
   output.info(`\n${CreateStoreLink(org.id)}`)
@@ -79,7 +78,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Fetching organization data',
@@ -115,13 +114,10 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
  * @throws {Fatal} If the store can't be found in the organization or we fail to make it a test store
  */
 export async function convertToTestStoreIfNeeded(
-  storeDomain: string,
-  stores: OrganizationStore[],
+  store: OrganizationStore,
   org: Organization,
   token: string,
 ): Promise<void> {
-  const store = stores.find((store) => store.shopDomain === storeDomain)
-  if (!store) throw StoreNotFoundError(storeDomain, org)
   if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }

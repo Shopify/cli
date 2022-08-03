@@ -1,5 +1,12 @@
-import {fetchAllStores, fetchOrgAndApps, fetchOrganizations, fetchAppExtensionRegistrations, NoOrgError} from './fetch'
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {
+  fetchAllStores,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  fetchStoreByDomain,
+  fetchAppExtensionRegistrations,
+  NoOrgError,
+} from './fetch.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {describe, expect, it, test, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
@@ -35,6 +42,19 @@ const FETCH_ORG_RESPONSE_VALUE = {
         businessName: ORG1.businessName,
         appsNext: ORG1.appsNext,
         apps: {nodes: [APP1, APP2]},
+        stores: {nodes: [STORE1]},
+      },
+    ],
+  },
+}
+const FETCH_STORE_RESPONSE_VALUE = {
+  organizations: {
+    nodes: [
+      {
+        id: ORG1.id,
+        businessName: ORG1.businessName,
+        appsNext: ORG1.appsNext,
+        website: ORG1.website,
         stores: {nodes: [STORE1]},
       },
     ],
@@ -98,7 +118,7 @@ describe('fetchApp', async () => {
     vi.mocked(api.partners.request).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = fetchOrgAndApps(ORG1.id, 'token')
+    const got = () => fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
     expect(got).rejects.toThrowError(NoOrgError())
@@ -117,6 +137,23 @@ describe('fetchAllStores', async () => {
     // Then
     expect(got).toEqual([STORE1])
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllStoresByOrganizationQuery, 'token', {id: ORG1.id})
+  })
+})
+
+describe('fetchStoreByDomain', async () => {
+  it('returns fetched store and organization', async () => {
+    // Given
+    vi.mocked(api.partners.request).mockResolvedValue(FETCH_STORE_RESPONSE_VALUE)
+
+    // When
+    const got = await fetchStoreByDomain(ORG1.id, 'token', 'domain1')
+
+    // Then
+    expect(got).toEqual({organization: ORG1, store: STORE1})
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {
+      id: ORG1.id,
+      shopDomain: STORE1.shopDomain,
+    })
   })
 })
 

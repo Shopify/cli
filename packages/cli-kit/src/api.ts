@@ -1,5 +1,6 @@
-import * as admin from './api/admin'
-import * as partners from './api/partners'
-import * as graphql from './api/graphql'
+import * as admin from './api/admin.js'
+import * as partners from './api/partners.js'
+import * as graphql from './api/graphql/index.js'
+import * as identity from './api/identity.js'
 
-export {admin, partners, graphql}
+export {admin, partners, graphql, identity}

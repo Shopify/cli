@@ -1,20 +1,21 @@
-import {ensureDevEnvironment} from './environment'
-import {generateURL, updateURLs} from './dev/urls'
-import {installAppDependencies} from './dependencies'
-import {devExtensions} from './dev/extension'
-import {outputAppURL, outputExtensionsMessages} from './dev/output'
+import {ensureDevEnvironment} from './environment.js'
+import {generateURL, updateURLs} from './dev/urls.js'
+import {installAppDependencies} from './dependencies.js'
+import {devExtensions} from './dev/extension.js'
+import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
-} from '../utilities/app/http-reverse-proxy'
-import {App, AppConfiguration, UIExtension, Web, WebType} from '../models/app/app'
-import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant'
-import {error, analytics, output, port, system} from '@shopify/cli-kit'
+} from '../utilities/app/http-reverse-proxy.js'
+import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
+import {UIExtension} from '../models/app/extensions.js'
+import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
+import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
-  app: App
+  app: AppInterface
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -24,6 +25,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
+  noTunnel: boolean
 }
 
 interface DevWebOptions {
@@ -42,24 +44,29 @@ async function dev(options: DevOptions) {
       app: await installAppDependencies(options.app),
     }
   }
+  const token = await session.ensureAuthenticatedPartners()
   const {
     identifiers,
     storeFqdn,
     app: {apiSecret},
-  } = await ensureDevEnvironment(options)
+  } = await ensureDevEnvironment(options, token)
 
-  let proxyPort: number
-  let url: string
-  if (options.tunnelUrl) {
+  let frontendPort: number
+  let frontendUrl: string
+
+  if (options.noTunnel === true) {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = 'http://localhost'
+  } else if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
     if (!matches) {
       throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
     }
-    proxyPort = Number(matches[2])
-    url = matches[1]
+    frontendPort = Number(matches[2])
+    frontendUrl = matches[1]
   } else {
-    proxyPort = await port.getRandomPort()
-    url = await generateURL(options.commandConfig.plugins, proxyPort)
+    frontendPort = await port.getRandomPort()
+    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
   }
 
   const backendPort = await port.getRandomPort()
@@ -68,55 +75,74 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
+  const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if (frontendConfig || backendConfig) {
-    if (options.update) await updateURLs(identifiers.app, url)
-    outputAppURL(options.update, storeFqdn, url)
+    if (options.update) await updateURLs(identifiers.app, exposedUrl, token)
+    outputAppURL(options.update, storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
   options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
-
-  outputExtensionsMessages(options.app, storeFqdn, url)
 
   const backendOptions = {
     apiKey: identifiers.app,
     backendPort,
     scopes: options.app.configuration.scopes,
     apiSecret: (apiSecret as string) ?? '',
-    hostname: url,
+    hostname: exposedUrl,
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
+  const proxyUrl = frontendUrl
+  const proxyPort = options.noTunnel === true ? await port.getRandomPort() : frontendPort
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
       identifiers.app,
-      url,
+      proxyUrl,
       storeFqdn,
       options.subscriptionProductUrl,
       options.checkoutCartUrl,
     )
     proxyTargets.push(devExt)
   }
+
+  outputExtensionsMessages(options.app, storeFqdn, options.noTunnel === true ? `${proxyUrl}:${proxyPort}` : proxyUrl)
+
+  const additionalProcesses: output.OutputProcess[] = []
+  if (backendConfig) {
+    additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
+  }
+
   if (frontendConfig) {
     const devFrontend = devFrontendTarget({
       web: frontendConfig,
       apiKey: identifiers.app,
       scopes: options.app.configuration.scopes,
       apiSecret: (apiSecret as string) ?? '',
-      hostname: url,
+      hostname: frontendUrl,
       backendPort,
     })
-    proxyTargets.push(devFrontend)
+    if (options.noTunnel) {
+      const devFrontendProccess = {
+        prefix: devFrontend.logPrefix,
+        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+          await devFrontend.action(stdout, stderr, signal, frontendPort)
+        },
+      }
+      additionalProcesses.push(devFrontendProccess)
+    } else {
+      proxyTargets.push(devFrontend)
+    }
   }
 
-  const additionalProcesses: output.OutputProcess[] = []
-  if (backendConfig) {
-    additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
-  }
-  await reportEvent()
+  await analytics.reportEvent({config: options.commandConfig})
 
-  await runConcurrentHTTPProcessesAndPathForwardTraffic(url, proxyPort, proxyTargets, additionalProcesses)
+  if (proxyTargets.length === 0) {
+    await output.concurrent(additionalProcesses)
+  } else {
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort as number, proxyTargets, additionalProcesses)
+  }
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {
@@ -192,7 +218,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
 }
 
 async function devExtensionsTarget(
-  app: App,
+  app: AppInterface,
   apiKey: string,
   url: string,
   storeFqdn: string,
@@ -232,12 +258,6 @@ async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, ch
   if (checkoutCartUrl) return checkoutCartUrl
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
-}
-
-async function reportEvent(): Promise<void> {
-  const commandIndex = process.argv.indexOf('dev')
-  const args = process.argv.slice(commandIndex + 1)
-  await analytics.reportEvent('app dev', args)
 }
 
 export default dev

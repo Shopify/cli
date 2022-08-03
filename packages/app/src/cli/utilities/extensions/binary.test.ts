@@ -4,15 +4,17 @@ import {
   validatePlatformSupport,
   UnsupportedPlatformError,
   getArtifactName,
-} from './binary'
-import {versions} from '../../constants'
+} from './binary.js'
+import {versions} from '../../constants.js'
 import {describe, it, expect, vi, test} from 'vitest'
-import {http, file, path, os, checksum, constants} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
+import {http, file, path, os, constants} from '@shopify/cli-kit'
+import {validateMD5} from '@shopify/cli-kit/node/checksum'
 import {createGzip} from 'node:zlib'
 import {createReadStream, createWriteStream} from 'node:fs'
 import {promisify} from 'node:util'
 import {pipeline} from 'node:stream'
+
+vi.mock('@shopify/cli-kit/node/checksum')
 
 vi.mock('@shopify/cli-kit', async () => {
   const module: any = await vi.importActual('@shopify/cli-kit')
@@ -20,9 +22,6 @@ vi.mock('@shopify/cli-kit', async () => {
     ...module,
     http: {
       fetch: vi.fn(),
-    },
-    checksum: {
-      validateMD5: vi.fn(),
     },
     os: {
       platformAndArch: vi.fn(),
@@ -105,7 +104,7 @@ describe('validatePlatformSupport', () => {
 
 describe('getBinaryPathOrDownload', () => {
   it('returns the binary path if the binary already exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binariesDirectory = path.join(tmpDir, 'binaries')
       vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
@@ -125,15 +124,14 @@ describe('getBinaryPathOrDownload', () => {
   })
 
   it('throws an error if the platform and architecture are not supported', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binariesDirectory = path.join(tmpDir, 'binaries')
       vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
       vi.mocked(os.platformAndArch).mockReturnValue({platform: 'unsupported', arch: 'arm64'})
-      const binaryLocalPath = await getBinaryLocalPath()
 
       // When/Then
-      await expect(getBinaryPathOrDownload()).rejects.toThrowError(
+      await expect(() => getBinaryPathOrDownload()).rejects.toThrowError(
         UnsupportedPlatformError({
           arch: 'arm64',
           platform: 'unsupported',
@@ -143,7 +141,7 @@ describe('getBinaryPathOrDownload', () => {
   })
 
   it('throws if the validation of the MD5 fails', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binaryContent = 'binary'
       const binariesDirectory = path.join(tmpDir, 'binaries')
@@ -167,16 +165,15 @@ describe('getBinaryPathOrDownload', () => {
         body: createReadStream(relaseArtifact),
       }
       vi.mocked(http.fetch).mockResolvedValue(response)
-      vi.mocked(checksum.validateMD5).mockRejectedValue(md5ValidationError)
-      const binaryLocalPath = await getBinaryLocalPath()
+      vi.mocked(validateMD5).mockRejectedValue(md5ValidationError)
 
       // When
-      await expect(getBinaryPathOrDownload()).rejects.toThrowError(md5ValidationError)
+      await expect(() => getBinaryPathOrDownload()).rejects.toThrowError(md5ValidationError)
     })
   })
 
   it('downloads, untars, and gives executable permissions', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const binaryContent = 'binary'
       const binariesDirectory = path.join(tmpDir, 'binaries')

@@ -1,31 +1,56 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as environment from './environment'
-import {fetch} from './http'
-import {platformAndArch} from './os'
-import {join, resolve} from './path'
-import {version as rubyVersion} from './ruby'
-import {getAppInfo} from './store'
-import {cliVersion} from './version'
-import {debug, content, token} from './output'
-import {getProjectType} from './dependency'
+import * as environment from './environment.js'
+import {platformAndArch} from './os.js'
+import {resolve} from './path.js'
+import {version as rubyVersion} from './node/ruby.js'
+import {content, debug, token} from './output.js'
+import constants from './constants.js'
+import * as metadata from './metadata.js'
+import {publishEvent} from './monorail.js'
+import {fanoutHooks} from './plugins.js'
+import {Interfaces} from '@oclif/core'
 
-export const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
+interface StartOptions {
+  command: string
+  args: string[]
+  currentTime?: number
+}
 
-export const reportEvent = async (command: string, args: string[]) => {
-  if (environment.local.isDebug() || environment.local.analyticsDisabled()) {
-    return
-  }
+export const start = ({command, args, currentTime = new Date().getTime()}: StartOptions) => {
+  metadata.addSensitive({
+    commandStartOptions: {
+      startTime: currentTime,
+      startCommand: command,
+      startArgs: args,
+    },
+  })
+}
+
+interface ReportEventOptions {
+  config: Interfaces.Config
+  errorMessage?: string
+}
+
+/**
+ * Report an analytics event, sending it off to Monorail -- Shopify's internal analytics service.
+ *
+ * The payload for an event includes both generic data, and data gathered from installed plug-ins.
+ *
+ */
+export async function reportEvent(options: ReportEventOptions) {
   try {
-    const currentTime = new Date().getTime()
-    const payload = await buildPayload(command, args, currentTime)
-    const body = JSON.stringify(payload)
-    const headers = buildHeaders(currentTime)
-
-    const response = await fetch(url, {method: 'POST', body, headers})
-    if (response.status === 200) {
-      debug(content`Analytics event sent: ${token.json(payload)}`)
-    } else {
-      debug(`Failed to report usage analytics: ${response.statusText}`)
+    const payload = await buildPayload(options)
+    if (payload === undefined) {
+      // Nothing to log
+      return
+    }
+    if (environment.local.analyticsDisabled()) {
+      debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
+      return
+    }
+    const response = await publishEvent('app_cli3_command/1.0', payload.public, payload.sensitive)
+    if (response.type === 'error') {
+      debug(response.message)
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -37,49 +62,59 @@ export const reportEvent = async (command: string, args: string[]) => {
   }
 }
 
-const buildHeaders = (currentTime: number) => {
-  return {
-    'Content-Type': 'application/json; charset=utf-8',
-    'X-Monorail-Edge-Event-Created-At-Ms': currentTime.toString(),
-    'X-Monorail-Edge-Event-Sent-At-Ms': currentTime.toString(),
+const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
+  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitive()
+  if (commandStartOptions === undefined) {
+    debug('Unable to log analytics event - no information on executed command')
+    return
   }
-}
+  const {startCommand, startArgs, startTime} = commandStartOptions
+  const currentTime = new Date().getTime()
 
-const buildPayload = async (command: string, args: string[] = [], currentTime: number) => {
   let directory = process.cwd()
-  const pathFlagIndex = args.indexOf('--path')
+  const pathFlagIndex = startArgs.indexOf('--path')
   if (pathFlagIndex >= 0) {
-    directory = resolve(args[pathFlagIndex + 1])
+    directory = resolve(startArgs[pathFlagIndex + 1])
   }
-  const appInfo = getAppInfo(directory)
+
   const {platform, arch} = platformAndArch()
 
-  const rawPartnerId = appInfo?.orgId
-  let partnerIdAsInt: number | undefined
-  if (rawPartnerId !== undefined) {
-    partnerIdAsInt = parseInt(rawPartnerId, 10)
-    if (isNaN(partnerIdAsInt)) {
-      partnerIdAsInt = undefined
-    }
+  const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
+  const {partner_id, project_type, api_key, ...otherShopifyAppPublic} = appPublic ?? {}
+
+  const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
+
+  const appSpecific = {
+    partner_id,
+    api_key,
+    project_type,
   }
 
   return {
-    schema_id: 'app_cli3_command/1.0',
-    payload: {
-      project_type: await getProjectType(join(directory, 'web')),
-      command,
-      args: args.join(' '),
-      time_start: currentTime,
+    public: {
+      command: startCommand,
+      time_start: startTime,
       time_end: currentTime,
-      total_time: 0,
-      success: true,
+      total_time: currentTime - startTime,
+      success: errorMessage === undefined,
       uname: `${platform} ${arch}`,
-      cli_version: cliVersion(),
+      cli_version: await constants.versions.cliKit(),
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
-      api_key: appInfo?.appId,
-      partner_id: partnerIdAsInt,
+      ...appSpecific,
+    },
+    sensitive: {
+      args: startArgs.join(' '),
+      error_message: errorMessage,
+      metadata: JSON.stringify({
+        ...sensitiveMetadata,
+        extraPublic: {
+          '@shopify/app': otherShopifyAppPublic,
+          ...otherPluginsPublic,
+        },
+        extraSensitive: sensitivePluginData,
+      }),
     },
   }
 }

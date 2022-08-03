@@ -1,5 +1,8 @@
-import {Command, Flags} from '@oclif/core'
-import {path, ruby, ui} from '@shopify/cli-kit'
+import {themeFlags} from '../../flags.js'
+import {Flags} from '@oclif/core'
+import {cli, path, ui} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends Command {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -9,11 +12,12 @@ export default class Init extends Command {
       name: 'name',
       description: 'Name of the new theme',
       required: false,
-      parse: (input: string) => Promise.resolve(path.resolve(input)),
     },
   ]
 
   static flags = {
+    ...cli.globalFlags,
+    ...themeFlags,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'clone-url': Flags.string({
       char: 'u',
@@ -24,15 +28,16 @@ export default class Init extends Command {
   }
 
   async run(): Promise<void> {
-    const {args} = await this.parse(Init)
+    const {args, flags} = await this.parse(Init)
+    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const workingPath = args.name || (await this.promptName())
-    const command = ['theme', 'init', workingPath]
-    await ruby.execCLI(command)
+    const command = ['theme', 'init', path.resolve(directory, workingPath)]
+    await execCLI2(command)
   }
 
   async promptName() {
     const question: ui.Question = {type: 'input', name: 'name', message: 'Name of the new theme'}
     const {name} = await ui.prompt([question])
-    return path.resolve(name)
+    return name
   }
 }

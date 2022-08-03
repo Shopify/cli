@@ -1,9 +1,9 @@
-import {validateFunctionExtensions} from './extensions/functions'
-import {validateUIExtensions} from './extensions/ui'
-import {validateThemeExtensions} from './extensions/theme'
-import {App} from '../models/app/app'
+import {validateFunctionExtensions} from './extensions/functions.js'
+import {validateUIExtensions} from './extensions/ui.js'
+import {validateThemeExtensions} from './extensions/theme.js'
+import {AppInterface} from '../models/app/app.js'
 
-export async function validateExtensions(app: App) {
+export async function validateExtensions(app: AppInterface) {
   await Promise.all([
     validateFunctionExtensions(app.extensions.function),
     validateUIExtensions(app.extensions.ui),

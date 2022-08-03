@@ -1,8 +1,10 @@
-import {appFlags} from '../../flags'
-import {load as loadApp, App} from '../../models/app/app'
-import dev from '../../services/dev'
-import {Command, Flags} from '@oclif/core'
-import {path, string, cli, error} from '@shopify/cli-kit'
+import {appFlags} from '../../flags.js'
+import {AppInterface} from '../../models/app/app.js'
+import dev from '../../services/dev.js'
+import {load as loadApp} from '../../models/app/loader.js'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
+import {path, string, cli} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -61,31 +63,33 @@ export default class Dev extends Command {
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
     }),
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'no-tunnel': Flags.boolean({
+      hidden: true,
+      description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
+      env: 'SHOPIFY_FLAG_NO_TUNNEL',
+      default: false,
+    }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: App = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
 
-    try {
-      await dev({
-        app,
-        apiKey: flags['api-key'],
-        storeFqdn: flags.store,
-        reset: flags.reset,
-        update: !flags['no-update'],
-        skipDependenciesInstallation: flags['skip-dependencies-installation'],
-        commandConfig,
-        subscriptionProductUrl: flags['subscription-product-url'],
-        checkoutCartUrl: flags['checkout-cart-url'],
-        tunnelUrl: flags['tunnel-url'],
-      })
-    } catch (err) {
-      if (!(err instanceof error.CancelExecution)) {
-        throw err
-      }
-    }
+    await dev({
+      app,
+      apiKey: flags['api-key'],
+      storeFqdn: flags.store,
+      reset: flags.reset,
+      update: !flags['no-update'],
+      skipDependenciesInstallation: flags['skip-dependencies-installation'],
+      commandConfig,
+      subscriptionProductUrl: flags['subscription-product-url'],
+      checkoutCartUrl: flags['checkout-cart-url'],
+      tunnelUrl: flags['tunnel-url'],
+      noTunnel: flags['no-tunnel'],
+    })
   }
 }

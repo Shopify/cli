@@ -1,7 +1,7 @@
-import {isSpin} from './spin'
-import {hasGit, isDebug, isShopify, isUnitTest} from './local'
-import {exists as fileExists} from '../file'
-import {exec} from '../system'
+import {isSpin} from './spin.js'
+import {hasGit, isDebug, isShopify, isUnitTest, analyticsDisabled} from './local.js'
+import {exists as fileExists} from '../file.js'
+import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
 
 vi.mock('../file')
@@ -91,5 +91,40 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
+  })
+})
+
+describe('analitycsDisabled', () => {
+  it('returns true when SHOPIFY_CLI_NO_ANALYTICS is truthy', () => {
+    // Given
+    const env = {SHOPIFY_CLI_NO_ANALYTICS: '1'}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true when debug mode is enbled', () => {
+    // Given
+    const env = {SHOPIFY_CONFIG: 'debug'}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns false without env variables', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(false)
   })
 })

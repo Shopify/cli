@@ -1,8 +1,9 @@
-import {info} from '../../services/info'
-import {load as loadApp, HydrogenApp} from '../../models/hydrogen'
-import {hydrogenFlags} from '../../flags'
-import {Command, Flags} from '@oclif/core'
+import {info} from '../../services/info.js'
+import {load as loadApp, HydrogenApp} from '../../models/hydrogen.js'
+import {hydrogenFlags} from '../../flags.js'
+import {Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Info extends Command {
   static description = 'Print basic information about your hydrogen app'

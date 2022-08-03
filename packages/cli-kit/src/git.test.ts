@@ -1,5 +1,5 @@
-import {initializeRepository, downloadRepository, GitNotPresentError, ensurePresentOrAbort} from './git'
-import {hasGit} from './environment/local'
+import {initializeRepository, downloadRepository, GitNotPresentError, ensurePresentOrAbort} from './git.js'
+import {hasGit} from './environment/local.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 
 const mockedClone = vi.fn(() => Promise.resolve({current: 'Mocked'}))
@@ -31,7 +31,7 @@ describe('downloadRepository()', () => {
     await downloadRepository({repoUrl, destination})
 
     // Then
-    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options, expect.any(Function))
+    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options)
   })
 
   it('calls simple-git to clone a repo with branch', async () => {
@@ -46,7 +46,7 @@ describe('downloadRepository()', () => {
     await downloadRepository({repoUrl, destination})
 
     // Then
-    expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options, expect.any(Function))
+    expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
   })
 })
 
@@ -75,7 +75,7 @@ describe('ensurePresentOrAbort', () => {
     vi.mocked(hasGit).mockResolvedValue(false)
 
     // Then
-    await expect(ensurePresentOrAbort()).rejects.toThrowError(GitNotPresentError())
+    await expect(() => ensurePresentOrAbort()).rejects.toThrowError(GitNotPresentError())
   })
 
   test("doesn't throw an error if Git is present", async () => {

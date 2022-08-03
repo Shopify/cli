@@ -1,4 +1,4 @@
-import fetch from './fetch'
+import fetch from './fetch.js'
 import {describe, test, expect, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
 import type {RequestInit, RequestInfo} from 'node-fetch'

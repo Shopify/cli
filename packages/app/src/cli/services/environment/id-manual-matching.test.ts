@@ -1,7 +1,7 @@
-import {manualMatchIds, ManualMatchResult} from './id-manual-matching'
-import {ExtensionRegistration} from '../dev/create-extension'
+import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
+import {ExtensionRegistration} from '../dev/create-extension.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {UIExtension} from 'cli/models/app/app'
 import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: ExtensionRegistration = {

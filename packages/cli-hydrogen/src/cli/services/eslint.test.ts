@@ -1,22 +1,25 @@
-import {addESLint} from './eslint'
-import {genericConfigurationFileNames} from '../constants'
-import {HydrogenApp} from '../models/hydrogen'
-import {describe, vi, it, expect} from 'vitest'
-import {file, dependency, vscode, path} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
+import {addESLint} from './eslint.js'
+import {genericConfigurationFileNames} from '../constants.js'
+import {HydrogenApp} from '../models/hydrogen.js'
+import {describe, vi, it, expect, beforeEach} from 'vitest'
+import {file, vscode, path} from '@shopify/cli-kit'
+import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    dependency: {
-      addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
-    },
-    vscode: {
-      isVSCode: vi.fn(),
-      addRecommendedExtensions: vi.fn(),
-    },
-  }
+beforeEach(async () => {
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      dependency: {
+        addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
+      },
+      vscode: {
+        isVSCode: vi.fn(),
+        addRecommendedExtensions: vi.fn(),
+      },
+    }
+  })
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
 describe('addEslint', () => {
@@ -26,7 +29,7 @@ describe('addEslint', () => {
   }
 
   it('adds a eslintrc file with recommended config if none exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -48,7 +51,7 @@ describe('addEslint', () => {
   })
 
   it('adds a eslintrc file with typescript config for typescript projects', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -71,7 +74,7 @@ describe('addEslint', () => {
   })
 
   it('adds eslint and prettier dependencies when install is true', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -81,7 +84,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions, install: true})
 
       // Then
-      await expect(dependency.addNPMDependenciesWithoutVersionIfNeeded).toHaveBeenCalledWith(
+      await expect(addNPMDependenciesWithoutVersionIfNeeded).toHaveBeenCalledWith(
         ['eslint', 'eslint-plugin-hydrogen', 'prettier', '@shopify/prettier-config'],
         expect.objectContaining({}),
       )
@@ -89,7 +92,7 @@ describe('addEslint', () => {
   })
 
   it('does not add eslint and prettier dependencies when install is false', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -99,12 +102,12 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions, install: false})
 
       // Then
-      await expect(dependency.addNPMDependenciesWithoutVersionIfNeeded).not.toHaveBeenCalled()
+      await expect(addNPMDependenciesWithoutVersionIfNeeded).not.toHaveBeenCalled()
     })
   })
 
   it('adds vscode recommendations', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(vscode.isVSCode).mockResolvedValue(true)
       const app = await createMockApp({
@@ -120,7 +123,7 @@ describe('addEslint', () => {
   })
 
   it('throws error when eslintrc already exists', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await file.write(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
       const app = await createMockApp({
@@ -128,7 +131,7 @@ describe('addEslint', () => {
       })
 
       // When/Then
-      await expect(addESLint({app, ...defaultOptions})).rejects.toThrowError('ESLint config already exists.')
+      await expect(() => addESLint({app, ...defaultOptions})).rejects.toThrowError('ESLint config already exists.')
     })
   })
 })
@@ -141,7 +144,7 @@ async function createMockApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
         ...mockHydrogenApp.configuration?.shopify,
       },
     },
-    dependencyManager: 'npm',
+    packageManager: 'npm',
     language: 'JavaScript',
     nodeDependencies: {
       ...mockHydrogenApp.configuration?.nodeDependencies,

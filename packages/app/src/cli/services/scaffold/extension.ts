@@ -1,4 +1,4 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {
   blocks,
   extensionTypeCategory,
@@ -9,9 +9,12 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
-} from '../../constants'
-import {App} from '../../models/app/app'
-import {error, file, git, path, string, template, ui, yaml, environment, dependency} from '@shopify/cli-kit'
+  ExternalExtensionTypes,
+} from '../../constants.js'
+import {AppInterface} from '../../models/app/app.js'
+import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
+import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
+import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
 
@@ -27,10 +30,14 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
+interface ExtensionInitOptions<
+  TExtensionTypes extends ExtensionTypes = ExtensionTypes,
+  TExternalExtensionTypes extends ExternalExtensionTypes = ExternalExtensionTypes,
+> {
   name: string
   extensionType: TExtensionTypes
-  app: App
+  externalExtensionType: TExternalExtensionTypes
+  app: AppInterface
   cloneUrl?: string
   extensionFlavor?: string
 }
@@ -66,19 +73,20 @@ async function themeExtensionInit({name, app, extensionType, extensionDirectory}
 async function uiExtensionInit({
   name,
   extensionType,
+  externalExtensionType,
   app,
   extensionFlavor,
   extensionDirectory,
 }: UIExtensionInitOptions) {
-  const list = new ui.Listr(
+  const list = ui.newListr(
     [
       {
         title: 'Install additional dependencies',
         task: async (_, task) => {
           task.title = 'Installing additional dependencies...'
           const requiredDependencies = getRuntimeDependencies({extensionType})
-          await dependency.addNPMDependenciesIfNeeded(requiredDependencies, {
-            dependencyManager: app.dependencyManager,
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: app.packageManager,
             type: 'prod',
             directory: app.directory,
             stderr: new stream.Writable({
@@ -101,17 +109,21 @@ async function uiExtensionInit({
         title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
-          const stdin = yaml.encode({
+          const input = yaml.encode({
             extensions: [
               {
                 title: name,
                 // Use the new templates
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                external_type: mapExtensionTypeToExternalExtensionType(extensionType),
                 type: `${extensionType}_next`,
                 metafields: [],
                 development: {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   root_dir: '.',
                   template: extensionFlavor,
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  install_dependencies: false,
                 },
               },
             ],
@@ -130,7 +142,7 @@ async function uiExtensionInit({
                 next()
               },
             }),
-            stdin,
+            input,
           })
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
@@ -143,14 +155,15 @@ async function uiExtensionInit({
 
 export function getRuntimeDependencies({
   extensionType,
-}: Pick<UIExtensionInitOptions, 'extensionType'>): dependency.DependencyVersion[] {
+}: Pick<UIExtensionInitOptions, 'extensionType'>): DependencyVersion[] {
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
+    case 'customer_accounts_ui_extension':
     case 'checkout_post_purchase': {
-      const dependencies: dependency.DependencyVersion[] = [{name: 'react', version: versions.react}]
+      const dependencies: DependencyVersion[] = [{name: 'react', version: versions.react}]
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)
@@ -165,34 +178,26 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    const list = new ui.Listr(
-      [
-        {
-          title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
-          task: async (_, task) => {
-            await file.mkdir(templateDownloadDir)
-            await git.downloadRepository({
-              repoUrl: url,
-              destination: templateDownloadDir,
-              shallow: true,
-              progressUpdater: (statusString: string) => {
-                const taskOutput = `Cloning template from ${url}:\n${statusString}`
-                task.output = taskOutput
-              },
-            })
-            const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
-            const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
-            if (await file.exists(configYamlPath)) {
-              await file.remove(configYamlPath)
-            }
-            task.title = `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`
-          },
-        },
-      ],
-      {rendererSilent: environment.local.isUnitTest()},
-    )
-    await list.run()
+    await ui.task({
+      title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
+      task: async () => {
+        await file.mkdir(templateDownloadDir)
+        await git.downloadRepository({
+          repoUrl: url,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+        await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+        const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
+        if (await file.exists(configYamlPath)) {
+          await file.remove(configYamlPath)
+        }
+        return {
+          successMessage: `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`,
+        }
+      },
+    })
   })
 }
 
@@ -212,7 +217,7 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
   }
 }
 
-async function ensureExtensionDirectoryExists({name, app}: {name: string; app: App}): Promise<string> {
+async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
   const hyphenizedName = string.hyphenize(name)
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {

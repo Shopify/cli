@@ -1,9 +1,12 @@
-import initPrompt from '../prompts/init'
-import initService from '../services/init'
-import {path, cli, analytics} from '@shopify/cli-kit'
-import {Command, Flags} from '@oclif/core'
+import initPrompt from '../prompts/init.js'
+import initService from '../services/init.js'
+import {path, cli} from '@shopify/cli-kit'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends Command {
+  static aliases = ['create-hydrogen']
+
   static flags = {
     ...cli.globalFlags,
     name: Flags.string({
@@ -32,10 +35,9 @@ export default class Init extends Command {
       hidden: false,
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    'dependency-manager': Flags.string({
-      description: 'The dependency manager to use.',
+    'package-manager': Flags.string({
       char: 'd',
-      env: 'SHOPIFY_FLAG_DEPENDENCY_MANAGER',
+      env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
       hidden: false,
       options: ['npm', 'yarn', 'pnpm'],
     }),
@@ -72,18 +74,11 @@ export default class Init extends Command {
     await initService({
       name: promptAnswers.name,
       template: promptAnswers.template,
-      dependencyManager: flags['dependency-manager'],
+      packageManager: flags['package-manager'],
       shopifyCliVersion: flags['shopify-cli-version'],
       hydrogenVersion: flags['hydrogen-version'],
       directory,
       local: flags.local,
     })
-    await this.reportEvent()
-  }
-
-  async reportEvent(): Promise<void> {
-    const commandIndex = process.argv.indexOf('init')
-    const args = process.argv.slice(commandIndex + 1)
-    await analytics.reportEvent('create-app', args)
   }
 }

@@ -1,6 +1,7 @@
-import {App, UIExtension} from '../../models/app/app'
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {extensionConfig} from '../../utilities/extensions/configuration'
+import {AppInterface} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
+import {extensionConfig} from '../../utilities/extensions/configuration.js'
 import {error, yaml, output} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
@@ -32,7 +33,7 @@ export interface ExtensionDevOptions {
   /**
    * The app that contains the extension.
    */
-  app: App
+  app: AppInterface
 
   /**
    * The app identifier
@@ -73,12 +74,12 @@ export async function devExtensions(options: ExtensionDevOptions): Promise<void>
   output.debug(output.content`Dev'ing extension with configuration:
 ${output.token.json(config)}
 `)
-  const stdin = yaml.encode(config)
+  const input = yaml.encode(config)
   await runGoExtensionsCLI(['serve', '-'], {
     cwd: options.app.directory,
     signal: options.signal,
     stdout: options.stdout,
     stderr: options.stderr,
-    stdin,
+    input,
   })
 }

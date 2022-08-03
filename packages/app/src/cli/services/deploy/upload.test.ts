@@ -1,7 +1,7 @@
-import {uploadFunctionExtensions} from './upload'
-import {FunctionExtension, Identifiers} from 'cli/models/app/app'
+import {uploadFunctionExtensions} from './upload.js'
+import {Identifiers} from '../../models/app/identifiers.js'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {temporary} from '@shopify/cli-testing'
 import {path, file, api, http} from '@shopify/cli-kit'
 
 function mockFunctionCompilation(jobId = 'job-id'): void {
@@ -95,7 +95,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('throws an error if the request to return the url errors', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
@@ -116,7 +116,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the upload of the wasm errors', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       const compilationJobId = 'job-id'
@@ -153,7 +153,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the compilation request errors', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
@@ -188,7 +188,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the compilation fails', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
@@ -226,14 +226,14 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(moduleCompilationStatusResponse)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
         /Function my-function compilation failed./,
       )
     })
   })
 
   test('errors if the compilation times out', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
@@ -271,7 +271,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValue(moduleCompilationStatusResponse)
 
       // When
-      const promise = uploadFunctionExtensions([extension], {token, identifiers})
+      const promise = () => uploadFunctionExtensions([extension], {token, identifiers})
 
       vi.runAllTimers()
 
@@ -281,7 +281,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the update of the function errors', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
@@ -305,7 +305,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
         updateAppFunctionError,
       )
 
@@ -349,7 +349,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('throws if the response from updating the app function contains errors', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
@@ -385,7 +385,7 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
         /The deployment of functions failed with the following errors:/,
       )
 
@@ -429,7 +429,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('creates and uploads the function', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'url'
       const createdUUID = 'uuid'
@@ -509,7 +509,7 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('appBridge is set to undefined when there is no configuration.ui.paths', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       extension.configuration.ui = undefined
 
       const uploadUrl = 'url'

@@ -1,19 +1,20 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension'
-import {App, Identifiers} from '../../models/app/app'
-import {path, output, temporary, file, error} from '@shopify/cli-kit'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
+import {AppInterface} from '../../models/app/app.js'
+import {Identifiers} from '../../models/app/identifiers.js'
+import {path, output, file, error} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 
 import {Writable} from 'node:stream'
 
 interface BundleOptions {
-  app: App
+  app: AppInterface
   bundlePath: string
   identifiers: Identifiers
   bundle: boolean
 }
 
 export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
-  await temporary.directory(async (tmpDir) => {
+  await file.inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = path.join(tmpDir, 'bundle')
     await file.mkdir(bundleDirectory)
     await file.touch(path.join(bundleDirectory, '.shopify'))

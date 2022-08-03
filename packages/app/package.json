@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.0.25",
+  "version": "3.5.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -17,7 +17,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "prettier -w src/** && eslint 'src/**/*.ts' --fix",
@@ -30,15 +30,9 @@
       "../../.eslintrc.cjs"
     ]
   },
-  "dependencies": {
-    "@fastify/reply-from": "^8.0.0",
-    "@oclif/core": "^1.0",
-    "@shopify/shopify-cli-extensions": "^0.2.1",
-    "@shopify/cli-kit": "^3.0.25"
-  },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",
@@ -46,11 +40,22 @@
     "win32"
   ],
   "oclif": {
-    "commands": "dist/commands"
+    "commands": "dist/cli/commands",
+    "hooks": {
+      "public_command_metadata": "./dist/cli/hooks/public_metadata",
+      "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
+    }
   },
   "devDependencies": {
-    "vitest": "^0.15.1",
-    "ws": "^8.7.0",
-    "@fastify/http-proxy": "^8.0.1"
+    "@types/http-proxy": "^1.17.9",
+    "vitest": "^0.17.1"
+  },
+  "dependencies": {
+    "@fastify/reply-from": "^8.0.0",
+    "@oclif/core": "^1.0",
+    "@shopify/shopify-cli-extensions": "^0.2.1",
+    "@shopify/cli-kit": "3.5.0",
+    "http-proxy": "^1.18.1",
+    "ws": "^8.7.0"
   }
 }

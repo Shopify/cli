@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "3.0.25",
+  "version": "3.5.0",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "bugs": {
@@ -23,7 +23,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "prettier -c src/** && eslint \"src/**/*.ts\"",
     "lint:fix": "prettier src/** -w && eslint 'src/**/*.ts' --fix",
@@ -39,25 +39,23 @@
   "dependencies": {
     "@oclif/core": "^1.0.0",
     "@shopify/hydrogen": "^0.26.0",
-    "@shopify/mini-oxygen": "^0.0.5",
+    "@shopify/mini-oxygen": "^0.1.0",
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
     "vite": "^2.9.9",
-    "@shopify/cli-kit": "^3.0.25"
-  },
-  "devDependencies": {
-    "@shopify/cli-testing": "3.0.25",
-    "@shopify/prettier-config": "^1.1.2",
-    "@types/fs-extra": "^9.0.12",
+    "@shopify/cli-kit": "3.5.0",
     "fast-glob": "^3.2.11",
     "fs-extra": "^10.0.0",
-    "typescript": "^4.6.4",
-    "vite": "^2.9.9",
-    "vitest": "^0.15.1"
+    "typescript": "^4.7.4",
+    "@shopify/prettier-config": "^1.1.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.12",
+    "vitest": "^0.17.1"
   },
   "engine-strict": true,
   "engines": {
-    "node": "^14.13.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+    "node": ">=14.13.1"
   },
   "os": [
     "darwin",
@@ -65,6 +63,6 @@
     "win32"
   ],
   "oclif": {
-    "commands": "dist/commands"
+    "commands": "dist/cli/commands"
   }
 }

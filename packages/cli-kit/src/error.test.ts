@@ -1,6 +1,6 @@
-import {Abort, Bug, handler} from './error'
-import {error} from './output'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {Abort, Bug, handler, cleanSingleStackTracePath} from './error.js'
+import {error} from './output.js'
+import {describe, expect, test, vi, beforeEach, it} from 'vitest'
 
 beforeEach(() => {
   vi.mock('./output')
@@ -42,5 +42,16 @@ describe('handler', () => {
     // Then
     expect(error).toHaveBeenCalledWith(expect.objectContaining({type: expect.any(Number)}))
     expect(unknownError).not.contains({type: expect.any(Number)})
+  })
+})
+
+describe('stack file path helpers', () => {
+  it.each([
+    ['simple file:///', 'file:///something/there.js'],
+    ['windows file://', 'file:///D:\\something\\there.js'],
+    ['unix no file', '/something/there.js'],
+    ['windows no file', 'D:\\something\\there.js'],
+  ])('%s', (_, path) => {
+    expect(cleanSingleStackTracePath(path)).toEqual('/something/there.js')
   })
 })

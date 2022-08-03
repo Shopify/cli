@@ -1,6 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import extensionInit, {getRuntimeDependencies} from './extension'
+import extensionInit, {getRuntimeDependencies} from './extension.js'
 import {
   blocks,
   configurationFileNames,
@@ -8,23 +6,15 @@ import {
   uiExtensions,
   getUIExtensionRendererDependency,
   UIExtensionTypes,
-} from '../../constants'
-import {load as loadApp} from '../../models/app/app'
-import {describe, it, expect, vi, test} from 'vitest'
-import {file, output, path, dependency} from '@shopify/cli-kit'
-import {temporary} from '@shopify/cli-testing'
+  ExternalExtensionTypes,
+} from '../../constants.js'
+import {load as loadApp} from '../../models/app/loader.js'
+import {describe, it, expect, vi, test, beforeEach} from 'vitest'
+import {file, output, path} from '@shopify/cli-kit'
+import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    dependency: {
-      addNPMDependenciesIfNeeded: vi.fn(),
-      getDependencies: cliKit.dependency.getDependencies,
-      getPackageName: cliKit.dependency.getPackageName,
-      getDependencyManager: cliKit.dependency.getDependencyManager,
-    },
-  }
+beforeEach(() => {
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
 describe('initialize a extension', () => {
@@ -35,7 +25,8 @@ describe('initialize a extension', () => {
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
-        await createFromTemplate({name, extensionType, appDirectory: tmpDir})
+        const externalExtensionType = 'post_purchase_ui'
+        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
         const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]
         expect(scaffoldedExtension.configuration.name).toBe(name)
       })
@@ -50,9 +41,10 @@ describe('initialize a extension', () => {
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
         const extensionType = 'checkout_post_purchase'
-        await createFromTemplate({name: name1, extensionType, appDirectory: tmpDir})
-        await createFromTemplate({name: name2, extensionType, appDirectory: tmpDir})
-        const addDependenciesCalls = vi.mocked(dependency.addNPMDependenciesIfNeeded).mock.calls
+        const externalExtensionType = 'post_purchase_ui'
+        await createFromTemplate({name: name1, extensionType, externalExtensionType, appDirectory: tmpDir})
+        await createFromTemplate({name: name2, extensionType, externalExtensionType, appDirectory: tmpDir})
+        const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
         const loadedApp = await loadApp(tmpDir)
@@ -87,10 +79,11 @@ describe('initialize a extension', () => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
-        await createFromTemplate({name, extensionType, appDirectory: tmpDir})
-        await expect(createFromTemplate({name, extensionType, appDirectory: tmpDir})).rejects.toThrow(
-          `A directory with this name (${name}) already exists.\nChoose a new name for your extension.`,
-        )
+        const externalExtensionType = 'post_purchase_ui'
+        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
+        await expect(
+          createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir}),
+        ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
       })
     },
     30 * 1000,
@@ -130,19 +123,26 @@ describe('getRuntimeDependencies', () => {
 interface CreateFromTemplateOptions {
   name: string
   extensionType: ExtensionTypes
+  externalExtensionType: ExternalExtensionTypes
   appDirectory: string
 }
-async function createFromTemplate({name, extensionType, appDirectory}: CreateFromTemplateOptions) {
+async function createFromTemplate({
+  name,
+  extensionType,
+  externalExtensionType,
+  appDirectory,
+}: CreateFromTemplateOptions) {
   const stdout: any = {write: vi.fn()}
   await extensionInit({
     name,
     extensionType,
+    externalExtensionType,
     app: await loadApp(appDirectory),
     cloneUrl: 'cloneurl',
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
-  await temporary.directory(async (tmpDir) => {
+  await file.inTemporaryDirectory(async (tmpDir) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
     const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 

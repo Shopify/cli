@@ -1,4 +1,4 @@
-import {HydrogenApp} from '../models/hydrogen'
+import {HydrogenApp} from '../models/hydrogen.js'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
@@ -138,7 +138,7 @@ class AppInfo {
     const {platform, arch} = os.platformAndArch()
     const lines: string[][] = [
       ...this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli']),
-      ['Package manager', this.app.dependencyManager],
+      ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node.js version', process.version],

@@ -1,17 +1,20 @@
-import {getTheme} from '../../utilities/theme-store'
-import {Command, Flags} from '@oclif/core'
-import {ruby, session, string} from '@shopify/cli-kit'
+import {getTheme} from '../../utilities/theme-store.js'
+import ThemeCommand from '../theme-command.js'
+import {Flags} from '@oclif/core'
+import {cli, session, string} from '@shopify/cli-kit'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
-export default class Publish extends Command {
+export default class Publish extends ThemeCommand {
   static description = 'Set a remote theme as the live theme.'
 
   static args = [{name: 'themeId', description: 'The ID of the theme', required: false}]
 
   static flags = {
+    ...cli.globalFlags,
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',
-      env: 'SHOPIFY_FLAG_THEME_FORCE',
+      env: 'SHOPIFY_FLAG_FORCE',
     }),
     store: Flags.string({
       char: 's',
@@ -25,16 +28,14 @@ export default class Publish extends Command {
     const {flags, args} = await this.parse(Publish)
 
     const store = getTheme(flags)
-
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'publish']
     if (args.themeId) {
       command.push(args.themeId)
     }
-    if (flags.force) {
-      command.push('-f')
-    }
+    command.push(...flagsToPass)
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await ruby.execCLI(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

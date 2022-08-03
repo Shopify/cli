@@ -1,7 +1,8 @@
-import buildService from '../../services/build'
-import {hydrogenFlags} from '../../flags'
-import {Command, Flags} from '@oclif/core'
+import buildService from '../../services/build.js'
+import {hydrogenFlags} from '../../flags.js'
+import {Flags} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
 const PLATFORM_ENTRIES = {
   node: `@shopify/hydrogen/platforms/node`,

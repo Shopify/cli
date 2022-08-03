@@ -1,4 +1,4 @@
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization'
+import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {api, error, output} from '@shopify/cli-kit'
 
 export const NoOrgError = (organizationId?: string) => {
@@ -90,4 +90,37 @@ export async function fetchAllStores(orgId: string, token: string): Promise<Orga
   const query = api.graphql.AllStoresByOrganizationQuery
   const result: api.graphql.AllStoresByOrganizationSchema = await api.partners.request(query, token, {id: orgId})
   return result.organizations.nodes[0].stores.nodes
+}
+
+interface FetchStoreByDomainOutput {
+  organization: Organization
+  store?: OrganizationStore
+}
+/**
+ * Returns the organization and the store based on passed domain
+ * If a store with that domain doesn't exist the method returns undefined
+ * @param orgId {string} Organization ID
+ * @param token {string} Token to access partners API
+ * @param shopDomain {string} shop domain fqdn
+ * @returns {Promise<FetchStoreByDomainOutput | undefined>}
+ */
+export async function fetchStoreByDomain(
+  orgId: string,
+  token: string,
+  shopDomain: string,
+): Promise<FetchStoreByDomainOutput | undefined> {
+  const query = api.graphql.FindStoreByDomainQuery
+  const result: api.graphql.FindStoreByDomainSchema = await api.partners.request(query, token, {
+    id: orgId,
+    shopDomain,
+  })
+  const org = result.organizations.nodes[0]
+  if (!org) {
+    return undefined
+  }
+
+  const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
+  const store = org.stores.nodes[0]
+
+  return {organization: parsedOrg, store}
 }

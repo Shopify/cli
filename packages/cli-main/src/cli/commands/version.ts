@@ -1,5 +1,6 @@
-import {Command} from '@oclif/core'
-import {output, dependency} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
+import {output, error} from '@shopify/cli-kit'
+import {checkForNewVersion, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class Version extends Command {
   static description = 'Shopify CLI version'
@@ -8,10 +9,11 @@ export default class Version extends Command {
     const cliDependency = '@shopify/cli'
     const currentVersion = this.getCurrentVersion()
     output.info(output.content`Current ${Version.description}: ${output.token.yellow(currentVersion)}`.value)
-    const lastVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
+    const lastVersion = await checkForNewVersion(cliDependency, currentVersion)
     if (lastVersion) {
-      output.info(dependency.getOutputUpdateCLIReminder(dependency.dependencyManagerUsedForCreating(), lastVersion))
+      output.info(output.getOutputUpdateCLIReminder(packageManagerUsedForCreating(), lastVersion))
     }
+    throw new error.CancelExecution()
   }
 
   getCurrentVersion(): string {

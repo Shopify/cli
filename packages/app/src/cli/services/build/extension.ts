@@ -1,7 +1,10 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli'
-import {App, UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/app'
-import {extensionConfig} from '../../utilities/extensions/configuration'
-import {error, ruby, system, yaml, output} from '@shopify/cli-kit'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
+import {AppInterface} from '../../models/app/app.js'
+import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
+import {extensionConfig} from '../../utilities/extensions/configuration.js'
+import {error, system, yaml, output} from '@shopify/cli-kit'
+import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
+
 import {Writable} from 'node:stream'
 
 export interface ExtensionBuildOptions {
@@ -27,7 +30,7 @@ export interface ExtensionBuildOptions {
   /**
    * The app that contains the extensions.
    */
-  app: App
+  app: AppInterface
 }
 
 export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
@@ -43,9 +46,9 @@ export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
  */
 export async function buildThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
   if (options.extensions.length === 0) return
-  options.stdout.write(`Building theme extensions...`)
+  options.stdout.write(`Running theme check on your theme app extension...`)
   const themeDirectories = options.extensions.map((extension) => extension.directory)
-  await ruby.execThemeCheckCLI({
+  await execThemeCheckCLI({
     directories: themeDirectories,
     args: ['-C', ':theme_app_extension'],
     stdout: options.stdout,
@@ -74,12 +77,12 @@ export async function buildUIExtensions(options: UiExtensionBuildOptions): Promi
   output.debug(output.content`Dev'ing extension with configuration:
 ${output.token.json(configuration)}
 `)
-  const stdin = yaml.encode(configuration)
+  const input = yaml.encode(configuration)
   await runGoExtensionsCLI(['build', '-'], {
     cwd: options.app.directory,
     stdout: options.stdout,
     stderr: options.stderr,
-    stdin,
+    input,
   })
 }
 

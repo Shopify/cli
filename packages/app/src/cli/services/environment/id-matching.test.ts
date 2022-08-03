@@ -1,7 +1,7 @@
-import {automaticMatchmaking, MatchResult} from './id-matching'
-import {ExtensionRegistration} from '../dev/create-extension'
+import {automaticMatchmaking, MatchResult} from './id-matching.js'
+import {ExtensionRegistration} from '../dev/create-extension.js'
+import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {UIExtension} from 'cli/models/app/app'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {

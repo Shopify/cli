@@ -1,10 +1,12 @@
-import {ensureDeploymentIdsPresence} from './identifiers'
-import {automaticMatchmaking} from './id-matching'
-import {manualMatchIds} from './id-manual-matching'
-import {fetchAppExtensionRegistrations} from '../dev/fetch'
-import {createExtension, ExtensionRegistration} from '../dev/create-extension'
+import {ensureDeploymentIdsPresence} from './identifiers.js'
+import {automaticMatchmaking} from './id-matching.js'
+import {manualMatchIds} from './id-manual-matching.js'
+import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
+import {AppInterface} from '../../models/app/app.js'
+import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {App, FunctionExtension, UIExtension} from 'cli/models/app/app'
 import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: ExtensionRegistration = {
@@ -99,18 +101,14 @@ const EXTENSION_C: FunctionExtension = {
   inputQueryPath: () => '/function/input.graphql',
 }
 
-const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): App => {
-  return {
+const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
+  return testApp({
     name: 'my-app',
-    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
     directory: '/app',
-    dependencyManager: 'yarn',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products'},
-    webs: [],
-    nodeDependencies: {},
     extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
-  }
+  })
 }
 
 const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[], identifiers: any = {}) => {

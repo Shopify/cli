@@ -1,6 +1,7 @@
-import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config'
-import {FunctionExtension, Identifiers, IdentifiersExtensions, ThemeExtension} from '../../models/app/app'
-import {blocks, getFunctionExtensionPointName} from '../../constants'
+import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
+import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
+import {blocks, getFunctionExtensionPointName} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
@@ -60,11 +61,21 @@ interface UploadUIExtensionsBundleOptions {
   extensions: api.graphql.ExtensionSettings[]
 }
 
+export interface UploadExtensionValidationError {
+  uuid: string
+  errors: {
+    message: string
+    field: string[]
+  }[]
+}
+
 /**
  * Uploads a bundle.
  * @param options {UploadUIExtensionsBundleOptions} The upload options
  */
-export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundleOptions) {
+export async function uploadUIExtensionsBundle(
+  options: UploadUIExtensionsBundleOptions,
+): Promise<UploadExtensionValidationError[]> {
   const deploymentUUID = id.generateRandomUUID()
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
@@ -86,10 +97,18 @@ export async function uploadUIExtensionsBundle(options: UploadUIExtensionsBundle
 
   const mutation = api.graphql.CreateDeployment
   const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
+
   if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
+
+  const validationErrors = result.deploymentCreate.deployment.deployedVersions
+    .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
+    .map((ver) => {
+      return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
+    })
+  return validationErrors
 }
 
 /**

@@ -1,5 +1,6 @@
-import {App, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/app'
-import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants'
+import {AppInterface} from '../../models/app/app.js'
+import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
+import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {output, string} from '@shopify/cli-kit'
 
 export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
@@ -13,7 +14,7 @@ export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
   output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 
-export function outputExtensionsMessages(app: App, storeFqdn: string, url: string) {
+export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
   outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
   outputFunctionsMessage(app.extensions.function)
   outputThemeExtensionsMessage(app.extensions.theme)
@@ -30,6 +31,10 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
       }
       case 'checkout_ui_extension': {
         message = checkoutUIMessage(url, extension).value
+        break
+      }
+      case 'customer_accounts_ui_extension': {
+        message = customerAccountsUIMessage(url, extension).value
         break
       }
       case 'product_subscription': {
@@ -66,7 +71,7 @@ function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
 
 function buildAppURL(storeFqdn: string, publicURL: string) {
   const hostUrl = `${storeFqdn}/admin`
-  const hostParam = btoa(hostUrl).replace(/[=]/g, '')
+  const hostParam = Buffer.from(hostUrl).toString('base64').replace(/[=]/g, '')
   return `${publicURL}?shop=${storeFqdn}&host=${hostParam}`
 }
 
@@ -89,6 +94,11 @@ For more detail, see the ${devDocsLink}`
 }
 
 function checkoutUIMessage(url: string, extension: UIExtension) {
+  const publicURL = `${url}/extensions/${extension.devUUID}`
+  return output.content`Preview link: ${publicURL}`
+}
+
+function customerAccountsUIMessage(url: string, extension: UIExtension) {
   const publicURL = `${url}/extensions/${extension.devUUID}`
   return output.content`Preview link: ${publicURL}`
 }

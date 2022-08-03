@@ -1,23 +1,22 @@
 /* eslint-disable require-atomic-updates */
-import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle'
-import {uploadThemeExtensions, uploadFunctionExtensions, uploadUIExtensionsBundle} from './deploy/upload'
-
-import {ensureDeployEnvironment} from './environment'
-import {fetchAppExtensionRegistrations} from './dev/fetch'
+import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {
-  App,
-  Extension,
-  getUIExtensionRendererVersion,
-  hasExtensions,
-  Identifiers,
-  UIExtension,
-  updateAppIdentifiers,
-} from '../models/app/app'
-import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants'
-import {loadLocalesConfig} from '../utilities/extensions/locales-configuration'
-import {validateExtensions} from '../validators/extensions'
-import {path, output, temporary, file, error, environment} from '@shopify/cli-kit'
-import {OrganizationApp} from 'cli/models/organization'
+  uploadThemeExtensions,
+  uploadFunctionExtensions,
+  uploadUIExtensionsBundle,
+  UploadExtensionValidationError,
+} from './deploy/upload.js'
+
+import {ensureDeployEnvironment} from './environment.js'
+import {fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {AppInterface, getUIExtensionRendererVersion} from '../models/app/app.js'
+import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
+import {Extension, UIExtension} from '../models/app/extensions.js'
+import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
+import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
+import {validateExtensions} from '../validators/extensions.js'
+import {OrganizationApp} from '../models/organization.js'
+import {path, output, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
 const RendererNotFoundBug = (extension: string) => {
@@ -29,14 +28,14 @@ const RendererNotFoundBug = (extension: string) => {
 
 interface DeployOptions {
   /** The app to be built and uploaded */
-  app: App
+  app: AppInterface
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {
-  if (!hasExtensions(options.app)) {
+  if (!options.app.hasExtensions()) {
     output.newline()
     output.info(`No extensions to deploy to Shopify Partners yet.`)
     return
@@ -60,7 +59,7 @@ export const deploy = async (options: DeployOptions) => {
     }),
   )
 
-  await temporary.directory(async (tmpDir) => {
+  await file.inTemporaryDirectory(async (tmpDir) => {
     try {
       const bundlePath = path.join(tmpDir, `bundle.zip`)
       await file.mkdir(path.dirname(bundlePath))
@@ -76,22 +75,28 @@ export const deploy = async (options: DeployOptions) => {
       output.info(`Pushing your code to Shopify…`)
       output.newline()
 
+      let validationErrors: UploadExtensionValidationError[] = []
       if (bundle) {
         /**
          * The bundles only support UI extensions for now so we only need bundle and upload
          * the bundle if the app has UI extensions.
          */
-        await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
+        validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
+
       await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
-      output.success('Deployed to Shopify')
+      if (validationErrors.length > 0) {
+        output.completed('Deployed to Shopify, but fixes are needed')
+      } else {
+        output.success('Deployed to Shopify')
+      }
 
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
-      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations})
+      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations, validationErrors})
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
@@ -110,17 +115,29 @@ async function outputCompletionMessage({
   partnersOrganizationId,
   identifiers,
   registrations,
+  validationErrors,
 }: {
-  app: App
+  app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   partnersOrganizationId: string
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
+  validationErrors: UploadExtensionValidationError[]
 }) {
   output.newline()
   output.info('  Summary:')
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(output.content`    · ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    const uuid = identifiers.extensions[extension.localIdentifier]
+    const validationError = validationErrors.find((error) => error.uuid === uuid)
+
+    if (validationError) {
+      const title = output.token.errorText('Validation errors found in your extension toml file')
+      output.info(output.content`       - ${title} `)
+      validationError.errors.forEach((err) => {
+        output.info(output.content`       └ ${output.token.italic(err.message)}`)
+      })
+    }
   }
   const outputDeployedAndLivedMessage = (extension: Extension) => {
     output.info(output.content`    · ${extension.localIdentifier} is live`)
@@ -144,12 +161,12 @@ async function outputCompletionMessage({
     const lines = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
     if (lines.length > 0) {
       output.info('  Next steps in Shopify Partners:')
-      lines.forEach(output.info)
+      lines.forEach((line) => output.info(line))
     }
   }
 }
 
-async function configFor(extension: UIExtension, app: App) {
+async function configFor(extension: UIExtension, app: AppInterface) {
   const type = extension.type as UIExtensionTypes
   switch (extension.type as UIExtensionTypes) {
     case 'checkout_post_purchase':
@@ -168,7 +185,17 @@ async function configFor(extension: UIExtension, app: App) {
         capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        configuration_schema: extension.configuration.configurationSchema,
         localization: await loadLocalesConfig(extension.directory),
+      }
+    }
+    case 'customer_accounts_ui_extension': {
+      return {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        extension_points: extension.configuration.extensionPoints,
+        name: extension.configuration.name,
+        categories: extension.configuration.categories,
       }
     }
     case 'web_pixel_extension': {
@@ -205,6 +232,7 @@ async function getExtensionPublishURL({
       case 'checkout_ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':
+      case 'customer_accounts_ui_extension':
         pathComponent = extension.type
         break
       case 'checkout_post_purchase':

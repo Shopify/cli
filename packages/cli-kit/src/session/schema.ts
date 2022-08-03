@@ -1,4 +1,4 @@
-import {define} from '../schema'
+import {define} from '../schema.js'
 
 const DateSchema = define.preprocess((arg) => {
   if (typeof arg === 'string' || arg instanceof Date) return new Date(arg)

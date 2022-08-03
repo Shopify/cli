@@ -1,15 +1,15 @@
-import initPrompt, {templateURLMap} from '../prompts/init'
-import initService from '../services/init'
-import {Command, Flags} from '@oclif/core'
-import {path, cli, analytics, error, output} from '@shopify/cli-kit'
+import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initService from '../services/init.js'
+import {Flags} from '@oclif/core'
+import {path, cli, error, output} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
-const InvalidGithubRepository = () => {
+export const InvalidGithubRepository = () => {
   return new error.Abort(
     'Only GitHub repository references are supported. e.g.: https://github.com/Shopify/<repository>/[subpath]#[branch]',
   )
 }
-
-const UnsupportedTemplateAlias = () => {
+export const UnsupportedTemplateAlias = () => {
   return new error.Abort(
     output.content`Only ${Object.keys(templateURLMap)
       .map((alias) => output.content`${output.token.yellow(alias)}`.value)
@@ -17,6 +17,8 @@ const UnsupportedTemplateAlias = () => {
   )
 }
 export default class Init extends Command {
+  static aliases = ['create-app']
+
   static flags = {
     ...cli.globalFlags,
     name: Flags.string({
@@ -37,9 +39,9 @@ export default class Init extends Command {
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    'dependency-manager': Flags.string({
+    'package-manager': Flags.string({
       char: 'd',
-      env: 'SHOPIFY_FLAG_DEPENDENCY_MANAGER',
+      env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
       hidden: false,
       options: ['npm', 'yarn', 'pnpm'],
     }),
@@ -64,18 +66,11 @@ export default class Init extends Command {
 
     await initService({
       name: promptAnswers.name,
-      dependencyManager: flags['dependency-manager'],
+      packageManager: flags['package-manager'],
       template: promptAnswers.template,
       local: flags.local,
       directory,
     })
-    await this.reportEvent()
-  }
-
-  async reportEvent(): Promise<void> {
-    const commandIndex = process.argv.indexOf('init')
-    const args = process.argv.slice(commandIndex + 1)
-    await analytics.reportEvent('create-app', args)
   }
 
   validateTemplateValue(template: string | undefined) {

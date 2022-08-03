@@ -1,5 +1,26 @@
-import {Environment} from '../network/service'
-import constants from '../constants'
+import {
+  partners as partnersEnvironment,
+  shopify as shopifyEnvironment,
+  identity as identityEnvironment,
+} from './service.js'
+import {Environment, Service} from '../network/service.js'
+import constants from '../constants.js'
+
+export async function environmentForService(service: Service): Promise<Environment> {
+  let environment: Environment
+  switch (service) {
+    case 'identity':
+      environment = await identityEnvironment()
+      break
+    case 'partners':
+      environment = await partnersEnvironment()
+      break
+    case 'shopify':
+      environment = await shopifyEnvironment()
+      break
+  }
+  return environment
+}
 
 /**
  * Given an environment variable that represents the environment to use for a given serve,

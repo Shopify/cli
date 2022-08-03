@@ -1,24 +1,26 @@
-import {App, UIExtension} from './app'
+import {App, AppInterface} from './app.js'
+import {UIExtension} from './extensions.js'
 
-export function testApp(app: Partial<App> = {}): App {
-  return {
-    name: app?.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
-    configuration: {
-      scopes: app?.configuration?.scopes ?? '',
-    },
-    dependencyManager: app.dependencyManager ?? 'yarn',
-    directory: app.directory ?? '/tmp/project',
-    extensions: {
-      ui: app?.extensions?.ui ?? [],
-      function: app?.extensions?.function ?? [],
-      theme: app?.extensions?.theme ?? [],
-    },
-    webs: app?.webs ?? [],
-    nodeDependencies: app?.nodeDependencies ?? {},
-    dotenv: app.dotenv,
-    configurationPath: app?.configurationPath ?? '/tmp/project/shopify.app.toml',
+export function testApp(app: Partial<AppInterface> = {}): AppInterface {
+  const newApp = new App(
+    app.name ?? 'App',
+    app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
+    app.directory ?? '/tmp/project',
+    app.packageManager ?? 'yarn',
+    app.configuration ?? {scopes: ''},
+    app.configurationPath ?? '/tmp/project/shopify.app.toml',
+    app.nodeDependencies ?? {},
+    app.webs ?? [],
+    app.extensions?.ui ?? [],
+    app.extensions?.theme ?? [],
+    app.extensions?.function ?? [],
+    app.dotenv,
+    app.errors,
+  )
+  if (app.updateDependencies) {
+    Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
   }
+  return newApp
 }
 
 export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {

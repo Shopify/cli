@@ -1,10 +1,20 @@
-import {isShopify} from '../environment/local'
-import constants from '../constants'
+import {firstPartyDev} from '../environment/local.js'
+import constants from '../constants.js'
+import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
+import {Abort, ExtendableError} from '../error.js'
+import {ClientError, RequestDocument, Variables} from 'graphql-request'
 import {randomUUID} from 'crypto'
 
+export class RequestClientError extends ExtendableError {
+  statusCode: number
+  public constructor(message: string, statusCode: number) {
+    super(message)
+    this.statusCode = statusCode
+  }
+}
+
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
-  const userAgent = `Shopify CLI; v=${constants.versions.cliKit}`
-  const isEmployee = await isShopify()
+  const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
 
   const headers = {
     /* eslint-disable @typescript-eslint/naming-convention */
@@ -15,7 +25,7 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
     authorization: `Bearer ${token}`,
     'X-Shopify-Access-Token': `Bearer ${token}`,
     'Content-Type': 'application/json',
-    // ...(isEmployee && {'X-Shopify-Cli-Employee': '1'}),
+    ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
     /* eslint-enable @typescript-eslint/naming-convention */
   }
 
@@ -23,7 +33,7 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
 }
 
 /**
- * Remvoes the sensitive data from the headers and outputs them as a string.
+ * Removes the sensitive data from the headers and outputs them as a string.
  * @param headers {{[key: string]: string}} HTTP headers.
  * @returns {string} A sanitized version of the headers as a string.
  */
@@ -40,4 +50,48 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
       return ` - ${header}: ${sanitized[header]}`
     })
     .join('\n')
+}
+
+export async function debugLogRequest<T>(
+  api: string,
+  query: RequestDocument,
+  variables?: Variables,
+  headers: {[key: string]: string} = {},
+) {
+  debug(`
+Sending ${token.raw(api)} GraphQL request:
+${query}
+
+With variables:
+${variables ? JSON.stringify(variables, null, 2) : ''}
+
+And headers:
+${sanitizedHeadersOutput(headers)}
+`)
+}
+
+export async function handlingErrors<T>(api: string, action: () => Promise<T>): Promise<T> {
+  try {
+    return await action()
+  } catch (error) {
+    if (error instanceof ClientError) {
+      const errorMessage = stringifyMessage(content`
+  The ${token.raw(
+    api,
+  )} GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
+
+  ${outputToken.json(error.response.errors)}
+      `)
+      let mappedError: Error
+      if (error.response.status < 500) {
+        mappedError = new RequestClientError(errorMessage, error.response.status)
+      } else {
+        mappedError = new Abort(errorMessage)
+      }
+      mappedError.stack = error.stack
+      throw mappedError
+    } else {
+      throw error
+    }
+  }
 }

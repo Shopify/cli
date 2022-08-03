@@ -1,4 +1,4 @@
-import {FunctionExtension} from '../../models/app/app'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {file, output, error} from '@shopify/cli-kit'
 
 const FunctionsWithMissingWasm = (extensions: {id: string; path: string}[]) => {

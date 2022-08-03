@@ -1,8 +1,8 @@
-import {ApplicationToken, Session} from './schema'
-import {store, fetch, remove, identifier} from './store'
-import {setSession as localStore, removeSession as localRemove, getSession as localFetch} from '../store'
-import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store'
-import {platformAndArch} from '../os'
+import {ApplicationToken, Session} from './schema.js'
+import {store, fetch, remove, identifier} from './store.js'
+import {cliKitStore} from '../store.js'
+import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store.js'
+import {platformAndArch} from '../os.js'
 import {describe, expect, vi, it, beforeEach} from 'vitest'
 
 const findCredentials = vi.fn()
@@ -21,6 +21,11 @@ beforeEach(() => {
       },
     }
   })
+  vi.mocked(cliKitStore).mockReturnValue({
+    setSession: vi.fn(),
+    getSession: vi.fn(),
+    removeSession: vi.fn(),
+  } as any)
 })
 
 describe('store', () => {
@@ -44,7 +49,7 @@ describe('store', () => {
     await store(session)
 
     // Then
-    expect(vi.mocked(localStore)).toHaveBeenCalledWith(JSON.stringify(session))
+    expect(cliKitStore().setSession).toHaveBeenCalled()
   })
 
   it('saves the serialized session to the local store when keytar fails to load', async () => {
@@ -56,7 +61,7 @@ describe('store', () => {
     await store(session)
 
     // Then
-    expect(vi.mocked(localStore)).toHaveBeenCalledWith(JSON.stringify(session))
+    expect(cliKitStore().setSession).toHaveBeenCalledWith(JSON.stringify(session))
   })
 })
 
@@ -103,7 +108,7 @@ describe('fetch', () => {
     await fetch()
 
     // Then
-    expect(vi.mocked(localFetch)).toHaveBeenCalled()
+    expect(cliKitStore().getSession).toHaveBeenCalled()
   })
 
   it('reads the session from the local store when keytar fails to load', async () => {
@@ -114,7 +119,7 @@ describe('fetch', () => {
     await fetch()
 
     // Then
-    expect(vi.mocked(localFetch)).toHaveBeenCalled()
+    expect(cliKitStore().getSession).toHaveBeenCalled()
   })
 })
 
@@ -135,7 +140,7 @@ describe('remove', () => {
     await remove()
 
     // Then
-    expect(vi.mocked(localRemove)).toHaveBeenCalled()
+    expect(cliKitStore().removeSession).toHaveBeenCalled()
   })
 
   it('removes the session from the secure store when keytar fails to load', async () => {
@@ -146,7 +151,7 @@ describe('remove', () => {
     await remove()
 
     // Then
-    expect(vi.mocked(localRemove)).toHaveBeenCalled()
+    expect(cliKitStore().removeSession).toHaveBeenCalled()
   })
 })
 

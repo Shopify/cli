@@ -1,5 +1,7 @@
-import {extensionConfig, ExtensionConfigOptions} from './configuration'
-import {App, UIExtension} from '../../models/app/app'
+import {extensionConfig, ExtensionConfigOptions} from './configuration.js'
+import {AppInterface} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {path} from '@shopify/cli-kit'
 
@@ -22,7 +24,9 @@ beforeEach(() => {
     }
   })
   vi.mock('../../models/app/app', async () => {
+    const appOriginal: any = await vi.importActual('../../models/app/app.js')
     return {
+      ...appOriginal,
       getUIExtensionRendererVersion: () => {
         return {name: 'renderer-name', version: '2.1.5'}
       },
@@ -53,19 +57,13 @@ describe('extensionConfig', () => {
       entrySourceFilePath: `${extensionRoot}/src/index.js`,
       devUUID: 'devUUID',
     }
-    const app: App = {
+    const app: AppInterface = testApp({
       name: 'myapp',
-      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory: appRoot,
-      dependencyManager: 'yarn',
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
-      configuration: {
-        scopes: '',
-      },
-      webs: [],
       nodeDependencies: {},
       extensions: {ui: [extension], function: [], theme: []},
-    }
+    })
 
     const options: ExtensionConfigOptions = {
       app,
@@ -80,7 +78,6 @@ describe('extensionConfig', () => {
 
     // When
     const got = await extensionConfig(options)
-    // console.log(JSON.stringify(got, null, 2))
 
     // Then
     expect(got).toEqual({
@@ -96,6 +93,8 @@ describe('extensionConfig', () => {
         {
           uuid: 'devUUID',
           title: 'My Extension Name',
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          external_type: 'post_purchase_ui',
           type: 'checkout_post_purchase',
           version: '2.1.5',
           metafields: [],

@@ -1,7 +1,7 @@
-import {content as outputContent, token, debug} from './output'
+import {content as outputContent, token, debug} from './output.js'
 import fs from 'fs-extra'
 import del from 'del'
-import tempy from 'tempy'
+import {temporaryDirectoryTask} from 'tempy'
 import {sep, join, extname} from 'pathe'
 import prettier from 'prettier'
 import type {Options} from 'prettier'
@@ -23,7 +23,7 @@ export function stripUp(path: string, strip: number) {
  * @param callback - The callback that receives the temporary directory.
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
-  return tempy.directory.task(callback)
+  return temporaryDirectoryTask(callback)
 }
 
 /**
@@ -59,6 +59,16 @@ export async function touch(path: string): Promise<void> {
   await fs.ensureFile(path)
 }
 
+export async function appendFile(path: string, content: string): Promise<void> {
+  debug(outputContent`Appending the following content to ${token.path(path)}:
+    ${content
+      .split('\n')
+      .map((line) => `  ${line}`)
+      .join('\n')}
+  `)
+  await fs.appendFile(path, content)
+}
+
 export async function touchSync(path: string): Promise<void> {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
   await fs.ensureFileSync(path)
@@ -78,13 +88,17 @@ export async function append(path: string, data: string): Promise<void> {
   await fs.appendFile(path, data)
 }
 
+export function appendSync(path: string, data: string): void {
+  fs.appendFileSync(path, data)
+}
+
 export async function mkdir(path: string): Promise<void> {
   debug(outputContent`Creating directory at ${token.path(path)}...`)
   await fs.mkdirp(path)
 }
 
 export function mkdirSync(path: string): void {
-  debug(outputContent`Sync-reating directory at ${token.path(path)}...`)
+  debug(outputContent`Sync-creating directory at ${token.path(path)}...`)
   fs.mkdirpSync(path)
 }
 

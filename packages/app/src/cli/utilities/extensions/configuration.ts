@@ -1,6 +1,8 @@
-import {nodeExtensionsCLIPath} from './cli'
-import {App, UIExtension, getUIExtensionRendererVersion} from '../../models/app/app'
-import {UIExtensionTypes} from '../../constants'
+import {nodeExtensionsCLIPath} from './cli.js'
+import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
+import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
+import {UIExtension} from '../../models/app/extensions.js'
+import {UIExtensionTypes} from '../../constants.js'
 import {error, path} from '@shopify/cli-kit'
 
 const RendererNotFoundBug = (extension: string) => {
@@ -10,7 +12,7 @@ const RendererNotFoundBug = (extension: string) => {
   )
 }
 export interface ExtensionConfigOptions {
-  app: App
+  app: AppInterface
   apiKey?: string
   extensions: UIExtension[]
   buildDirectory?: string
@@ -38,6 +40,8 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         uuid: extension.devUUID,
         title: extension.configuration.name,
         type: `${extension.configuration.type}`,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         extension_points: extension.configuration.extensionPoints || [],
@@ -91,6 +95,7 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
     case 'checkout_post_purchase':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
+    case 'customer_accounts_ui_extension':
       // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
       // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
       return {url: 'invalid_url'}
@@ -105,6 +110,8 @@ export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
       return 'checkout'
     case 'checkout_post_purchase':
       return 'post_purchase'
+    case 'customer_accounts_ui_extension':
+      return 'customer_accounts'
     case 'pos_ui_extension':
       return 'pos'
     case 'product_subscription':

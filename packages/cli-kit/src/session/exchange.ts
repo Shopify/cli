@@ -1,12 +1,18 @@
-import {ApplicationToken, IdentityToken} from './schema'
-import {applicationId, clientId as getIdentityClientId} from './identity'
-import {CodeAuthResult} from './authorize'
-import {Abort} from '../error'
-import {API} from '../network/api'
-import {fetch} from '../http'
-import {identity as identityFqdn} from '../environment/fqdn'
+import {ApplicationToken, IdentityToken} from './schema.js'
+import {applicationId, clientId as getIdentityClientId} from './identity.js'
+import {CodeAuthResult} from './authorize.js'
+import * as secureStore from './store.js'
+import {Abort} from '../error.js'
+import {API} from '../network/api.js'
+import {identity as identityFqdn} from '../environment/fqdn.js'
+import {shopifyFetch} from '../http.js'
 
 export class InvalidGrantError extends Error {}
+
+const InvalidIdentityError = new Abort(
+  '\nError validating auth session',
+  "We've cleared the current session, please try again",
+)
 
 export interface ExchangeScopes {
   admin: string[]
@@ -131,7 +137,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-  const res = await fetch(url.href, {method: 'POST'})
+  const res = await shopifyFetch('identity', url.href, {method: 'POST'})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
   if (!res.ok) {
@@ -139,6 +145,11 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
       // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
       // using a valid refresh token. When that happens, we take the user through the authentication flow.
       throw new InvalidGrantError(payload.error_description)
+    } else if (payload.error === 'invalid_request') {
+      // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
+      // This means the token is invalid. We clear the session and throw an error to let the caller know.
+      secureStore.remove()
+      throw InvalidIdentityError
     } else {
       throw new Abort(payload.error_description)
     }

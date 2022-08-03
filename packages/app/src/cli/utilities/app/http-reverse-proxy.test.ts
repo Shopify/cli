@@ -1,10 +1,30 @@
-import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy'
-import fastifyHttpProxy from './fastify-http-proxy/index.cjs'
-import {describe, expect, test, vi} from 'vitest'
+import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
+import httpProxy from 'http-proxy'
+import {beforeAll, describe, expect, test, vi} from 'vitest'
 import {port, output, fastify} from '@shopify/cli-kit'
 
-vi.mock('@shopify/cli-kit')
-vi.mock('./fastify-http-proxy/index.cjs')
+beforeAll(() => {
+  vi.mock('@shopify/cli-kit')
+  vi.mock('./fastify-http-proxy/index.cjs')
+  vi.mock('http-proxy', () => {
+    return {
+      default: {
+        createProxy: vi.fn(),
+      },
+    }
+  })
+
+  vi.mock('http', () => {
+    return {
+      createServer: () => {
+        return {
+          on: vi.fn(),
+          listen: vi.fn(),
+        }
+      },
+    }
+  })
+})
 
 describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('proxies to all the targets using the Fastify HTTP Proxy', async () => {
@@ -16,7 +36,6 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
 
     // When
     const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(
-      'tunnelUrl',
       3000,
       [
         {
@@ -33,26 +52,8 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     )
 
     // Then
-    expect(server.register).toHaveBeenCalledWith(fastifyHttpProxy, {
-      upstream: `http://localhost:3001`,
-      prefix: '/extensions',
-      rewritePrefix: '/extensions',
-      http2: false,
-      websocket: true,
-      replyOptions: {
-        rewriteRequestHeaders: expect.any(Function),
-      },
-    })
-    expect(server.register).toHaveBeenCalledWith(fastifyHttpProxy, {
-      upstream: `http://localhost:3002`,
-      prefix: undefined,
-      rewritePrefix: undefined,
-      http2: false,
-      websocket: false,
-      replyOptions: {
-        rewriteRequestHeaders: expect.any(Function),
-      },
-    })
+    expect(httpProxy.createProxy).toHaveBeenCalled()
+
     const concurrentCalls = (output.concurrent as any).calls
     expect(concurrentCalls.length).toEqual(1)
     const concurrentProcesses = concurrentCalls[0][0]
@@ -68,7 +69,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(4000)
 
     // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic('tunnelUrl', undefined, [], [])
+    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(undefined, [], [])
 
     // Then
     expect(server.close).not.toHaveBeenCalled()

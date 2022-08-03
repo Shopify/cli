@@ -1,4 +1,4 @@
-import {allDefaultScopes, apiScopes} from './scopes'
+import {allDefaultScopes, apiScopes} from './scopes.js'
 import {describe, expect, it} from 'vitest'
 
 describe('allDefaultScopes', () => {

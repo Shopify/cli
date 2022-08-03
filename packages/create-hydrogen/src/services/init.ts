@@ -1,9 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-
-import {version as hydrogenVersion} from '../../package.json'
-
-import {version as cliVersion} from '../../../cli-main/package.json'
 import {
   string,
   path,
@@ -13,12 +7,19 @@ import {
   os,
   ui,
   npm,
-  dependency,
   environment,
   github,
   template,
   git,
+  constants,
+  version,
 } from '@shopify/cli-kit'
+import {
+  installNodeModules,
+  packageManager,
+  PackageManager,
+  packageManagerUsedForCreating,
+} from '@shopify/cli-kit/node/node-package-manager'
 
 import {Writable} from 'stream'
 
@@ -26,7 +27,7 @@ interface InitOptions {
   name: string
   template: string
   directory: string
-  dependencyManager?: string
+  packageManager?: string
   shopifyCliVersion?: string
   cliHydrogenPackageVersion?: string
   hydrogenVersion?: string
@@ -40,11 +41,12 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
+  const hydrogenVersion = await version.findPackageVersionUp({fromModuleURL: import.meta.url})
   const user = (await os.username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? cliVersion
+  const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
-  const dependencyManager = inferDependencyManager(options.dependencyManager)
+  const packageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
@@ -57,7 +59,7 @@ async function init(options: InitOptions) {
     await file.mkdir(templateDownloadDir)
     await file.mkdir(templateScaffoldDir)
 
-    let tasks: ConstructorParameters<typeof ui.Listr>[0] = []
+    let tasks: ui.ListrTasks = []
 
     const templateInfo = await github.parseRepoUrl(options.template)
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
@@ -65,29 +67,23 @@ async function init(options: InitOptions) {
       ? path.join(templateDownloadDir, templateInfo.subDirectory)
       : templateDownloadDir
 
-    tasks = tasks.concat([
-      {
-        title: 'Downloading template',
-
-        task: async (_, task) => {
-          const url = `${templateInfo.http}${branch}`
-          await git.downloadRepository({
-            repoUrl: url,
-            destination: templateDownloadDir,
-            shallow: true,
-            progressUpdater: (statusString: string) => {
-              const taskOutput = `Cloning template from ${url}:\n${statusString}`
-              task.output = taskOutput
-            },
-          })
-
-          if (!(await file.exists(path.join(templatePath, 'package.json')))) {
-            throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
-          }
-          task.title = 'Template downloaded'
-        },
+    const repoUrl = `${templateInfo.http}${branch}`
+    await ui.task({
+      title: `Downloading template from ${repoUrl}`,
+      task: async () => {
+        await git.downloadRepository({
+          repoUrl,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        if (!(await file.exists(path.join(templatePath, 'package.json')))) {
+          throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
+        }
+        return {successMessage: `Downloaded template from ${repoUrl}`}
       },
+    })
 
+    tasks = tasks.concat([
       {
         title: `Initializing your app ${hyphenizedName}`,
         task: async (_, parentTask) => {
@@ -104,7 +100,7 @@ async function init(options: InitOptions) {
                     hydrogen_version: hydrogenPackageVersion,
                     author: user,
                     // eslint-disable-next-line @typescript-eslint/naming-convention
-                    dependency_manager: options.dependencyManager,
+                    dependency_manager: options.packageManager,
                   }
                   await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
 
@@ -115,7 +111,7 @@ async function init(options: InitOptions) {
                 title: 'Updating package.json',
                 task: async (_, task) => {
                   const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-
+                  const cliVersion = await constants.versions.cliKit()
                   await npm.updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
@@ -126,7 +122,7 @@ async function init(options: InitOptions) {
                       // eslint-disable-next-line @typescript-eslint/naming-convention
                       '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
                       // eslint-disable-next-line @typescript-eslint/naming-convention
-                      '@shopify/cli': cliPackageVersion,
+                      '@shopify/cli': cliVersion,
                     },
                   })
                   await updateCLIScripts(packageJSON)
@@ -147,9 +143,7 @@ async function init(options: InitOptions) {
       tasks.push({
         title: "[Shopifolks-only] Configuring the project's NPM registry",
         task: async (_, task) => {
-          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
-          const npmrcContent = `@shopify:registry=https://registry.npmjs.org`
-          await file.write(npmrcPath, npmrcContent)
+          await writeToNpmrc(templateScaffoldDir, `@shopify:registry=https://registry.npmjs.org`)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
@@ -157,7 +151,7 @@ async function init(options: InitOptions) {
 
     tasks = tasks.concat([
       {
-        title: `Installing dependencies with ${dependencyManager}`,
+        title: `Installing dependencies with ${packageManager}`,
         task: async (_, task) => {
           const stdout = new Writable({
             write(chunk, encoding, next) {
@@ -165,7 +159,7 @@ async function init(options: InitOptions) {
               next()
             },
           })
-          await installDependencies(templateScaffoldDir, dependencyManager, stdout)
+          await installDependencies(templateScaffoldDir, packageManager, stdout)
         },
       },
       {
@@ -178,7 +172,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    const list = new ui.Listr(tasks, {
+    const list = ui.newListr(tasks, {
       concurrent: false,
       rendererOptions: {collapse: false},
       rendererSilent: environment.local.isUnitTest(),
@@ -192,7 +186,7 @@ async function init(options: InitOptions) {
   output.info(output.content`
 ✨ ${hyphenizedName} is ready to build!
 🚀 Run ${output.token.packagejsonScript(
-    dependencyManager,
+    packageManager,
     'dev',
   )} to start your local development server and start building.
 
@@ -205,14 +199,11 @@ async function init(options: InitOptions) {
  store ID and Storefront API key.\n`)
 }
 
-function inferDependencyManager(optionsDependencyManager: string | undefined): dependency.DependencyManager {
-  if (
-    optionsDependencyManager &&
-    dependency.dependencyManager.includes(optionsDependencyManager as dependency.DependencyManager)
-  ) {
-    return optionsDependencyManager as dependency.DependencyManager
+function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+    return optionsPackageManager as PackageManager
   }
-  return dependency.dependencyManagerUsedForCreating()
+  return packageManagerUsedForCreating()
 }
 
 export default init
@@ -266,12 +257,20 @@ async function updateCLIDependencies(
   return packageJSON
 }
 
-async function installDependencies(
-  directory: string,
-  dependencyManager: dependency.DependencyManager,
-  stdout: Writable,
-): Promise<void> {
-  await dependency.install(directory, dependencyManager, stdout)
+async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
+  if (packageManager === 'pnpm') {
+    writeToNpmrc(directory, 'auto-install-peers = true')
+  }
+  await installNodeModules(directory, packageManager, stdout)
+}
+
+async function writeToNpmrc(directory: string, content: string) {
+  const npmrcPath = path.join(directory, '.npmrc')
+  const npmrcContent = `${content}\n`
+  if (!(await file.exists(npmrcPath))) {
+    await file.touch(npmrcPath)
+  }
+  await file.appendFile(npmrcPath, npmrcContent)
 }
 
 async function cleanup(webOutputDirectory: string) {

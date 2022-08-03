@@ -1,2 +1,7 @@
-export {default as Version} from 'semver/classes/semver'
-export {default as coerce} from 'semver/functions/coerce'
+import {createRequire} from 'module'
+
+const require = createRequire(import.meta.url)
+const {coerce, SemVer} = require('semver')
+
+export {SemVer as Version}
+export {coerce}

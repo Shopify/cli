@@ -1,5 +1,12 @@
-import {Command, Flags} from '@oclif/core'
-import {dependency, error, file, output, path} from '@shopify/cli-kit'
+import {Flags} from '@oclif/core'
+import {error, file, output, path} from '@shopify/cli-kit'
+import {
+  addLatestNPMDependencies,
+  checkForNewVersion,
+  DependencyType,
+  getPackageManager,
+} from '@shopify/cli-kit/node/node-package-manager'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'
@@ -32,7 +39,7 @@ export default class Upgrade extends Command {
     const cliDependency = '@shopify/cli'
     let currentVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[cliDependency]
     if (currentVersion.slice(0, 1).match(/[\^~]/)) currentVersion = this.config.version
-    const newestVersion = await dependency.checkForNewVersion(cliDependency, currentVersion)
+    const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
 
     if (!newestVersion) {
       output.info(
@@ -71,7 +78,7 @@ export default class Upgrade extends Command {
   }
 
   async installJsonDependencies(
-    depsEnv: dependency.DependencyType,
+    depsEnv: DependencyType,
     deps: {[key: string]: string},
     directory: string,
   ): Promise<void> {
@@ -82,8 +89,8 @@ export default class Upgrade extends Command {
     })
 
     if (packagesToUpdate.length > 0) {
-      await dependency.addLatestNPMDependencies(packagesToUpdate, {
-        dependencyManager: await dependency.getDependencyManager(directory),
+      await addLatestNPMDependencies(packagesToUpdate, {
+        packageManager: await getPackageManager(directory),
         type: depsEnv,
         directory,
         stdout: process.stdout,

@@ -1,5 +1,5 @@
-import {info} from './info'
-import {HydrogenApp} from '../models/hydrogen'
+import {info} from './info.js'
+import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, expect, it} from 'vitest'
 
 describe('Project settings', () => {
@@ -63,7 +63,7 @@ async function mockInfoWithApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
         ...mockHydrogenApp.configuration?.shopify,
       },
     },
-    dependencyManager: 'npm',
+    packageManager: 'npm',
     language: 'JavaScript',
     nodeDependencies: {
       ...mockHydrogenApp.configuration?.nodeDependencies,

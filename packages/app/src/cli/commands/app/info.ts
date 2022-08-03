@@ -1,8 +1,10 @@
-import {appFlags} from '../../flags'
-import {load as loadApp, App} from '../../models/app/app'
-import {Format, info} from '../../services/info'
-import {Command, Flags} from '@oclif/core'
+import {appFlags} from '../../flags.js'
+import {AppInterface} from '../../models/app/app.js'
+import {Format, info} from '../../services/info.js'
+import {load as loadApp} from '../../models/app/loader.js'
+import {Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AppInfo extends Command {
   static description = 'Print basic information about your app and extensions'
@@ -27,7 +29,7 @@ export default class AppInfo extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: App = await loadApp(directory, 'report')
+    const app: AppInterface = await loadApp(directory, 'report')
     output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
     if (app.errors) process.exit(2)
   }

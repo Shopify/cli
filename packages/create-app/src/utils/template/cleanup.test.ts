@@ -1,5 +1,4 @@
-import cleanup from './cleanup'
-import {temporary} from '@shopify/cli-testing'
+import cleanup from './cleanup.js'
 import {file, path} from '@shopify/cli-kit'
 import {describe, expect, it} from 'vitest'
 
@@ -30,7 +29,7 @@ describe('cleanup', () => {
   }
 
   it('cleans up template files in web directory', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 
       // When
@@ -46,7 +45,7 @@ describe('cleanup', () => {
   })
 
   it('keeps non-template files', async () => {
-    await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 
       // When
