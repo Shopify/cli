@@ -40,7 +40,11 @@
     "win32"
   ],
   "oclif": {
-    "commands": "dist/cli/commands"
+    "commands": "dist/cli/commands",
+    "hooks": {
+      "public_command_metadata": "./dist/cli/hooks/public_metadata",
+      "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
+    }
   },
   "devDependencies": {
     "@types/http-proxy": "^1.17.9",
