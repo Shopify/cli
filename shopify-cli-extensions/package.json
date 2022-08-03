@@ -15,8 +15,11 @@
     "version-bump": "lerna version --no-push --include-merged-tags"
   },
   "devDependencies": {
-    "@shopify/app": "^2.0.0",
+    "@shopify/app": "3.5.0",
     "@shopify/eslint-plugin": "^40.4.0",
+    "@shopify/checkout-ui-extensions-react":"0.17.1",
+    "@shopify/admin-ui-extensions-react":"1.0.1",
+    "@shopify/post-purchase-ui-extensions-react":"0.13.3",
     "eslint": "^7.32.0",
     "lerna": "^4.0.0"
   }

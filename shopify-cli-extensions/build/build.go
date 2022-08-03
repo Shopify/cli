@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"sync"
 	"time"
-	// "path/filepath"
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"gopkg.in/yaml.v3"
 )
@@ -88,7 +87,6 @@ func Watch(extension core.Extension, report ResultHandler) {
 
 	if err:= command.Start(); err != nil {
 		reportAndUpdateDevelopmentStatus(Result{false, err.Error(), extension}, report)
-		return
 	}
 
 	logProcessors := sync.WaitGroup{}
@@ -125,15 +123,6 @@ func ensureBuildDirectoryExists(ext core.Extension) {
 }
 
 func configureScript(script *exec.Cmd, extension core.Extension) error {
-	// development := extension.Development
-	// development.BuildDir = extension.BuildDir()
-	// entries := development.Entries
-	// for handle, path := range entries {
-	// 	entries[handle] = filepath.Join(".", extension.Development.RootDir, path)
-	// }
-	// development.Entries = entries
-	// extension.Development = development
-
 	data, err := yaml.Marshal(extension)
 	if err != nil {
 		return fmt.Errorf("unable to serialize extension configuration information: %w", err)
