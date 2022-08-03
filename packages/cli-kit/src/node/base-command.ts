@@ -34,13 +34,13 @@ export default abstract class extends Command {
     }
   > {
     const parsed = await super.parse(options, argv)
-    const flags = {...(await presets(parsed.flags)), ...parsed.flags}
+    const flags = {...(await presetSettings(parsed.flags)), ...parsed.flags}
     return {...parsed, flags}
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function presets(flags: {[name: string]: any}): Promise<{[name: string]: any}> {
+async function presetSettings(flags: {[name: string]: any}): Promise<{[name: string]: any}> {
   const presetName: string = flags.preset ?? (await presetNameFromDotEnv(flags.path))
   if (!presetName) return {}
   const globalPresetsFile = pathJoin(homeDirectory(), 'shopify.presets.toml')
@@ -49,12 +49,12 @@ async function presets(flags: {[name: string]: any}): Promise<{[name: string]: a
     cwd: flags.path ?? process.cwd(),
   })
   return {
-    ...(await presetsFromFile(globalPresetsFile, presetName)),
-    ...(await presetsFromFile(localPresetsFile, presetName)),
+    ...(await presetFromFile(globalPresetsFile, presetName)),
+    ...(await presetFromFile(localPresetsFile, presetName)),
   }
 }
 
-async function presetsFromFile(
+async function presetFromFile(
   filepath: string | undefined,
   presetName: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
