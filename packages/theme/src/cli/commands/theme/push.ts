@@ -20,34 +20,34 @@ export default class Push extends ThemeCommand {
     development: Flags.boolean({
       char: 'd',
       description: 'Pull theme files from your remote development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     live: Flags.boolean({
       char: 'l',
       description: 'Pull theme files from your remote live theme.',
-      env: 'SHOPIFY_FLAG_THEME_LIVE',
+      env: 'SHOPIFY_FLAG_LIVE',
     }),
     unpublished: Flags.boolean({
       char: 'u',
       description: 'Create a new unpublished theme and push to it.',
-      env: 'SHOPIFY_FLAG_THEME_UNPUBLISHED',
+      env: 'SHOPIFY_FLAG_UNPUBLISHED',
     }),
     nodelete: Flags.boolean({
       char: 'n',
       description: 'Runs the pull command without deleting local files.',
-      env: 'SHOPIFY_FLAG_THEME_NODELETE',
+      env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({
       char: 'o',
       description: 'Download only the specified files (Multiple flags allowed).',
       multiple: true,
-      env: 'SHOPIFY_FLAG_THEME_ONLY',
+      env: 'SHOPIFY_FLAG_ONLY',
     }),
     ignore: Flags.string({
       char: 'x',
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       multiple: true,
-      env: 'SHOPIFY_FLAG_THEME_IGNORE',
+      env: 'SHOPIFY_FLAG_IGNORE',
     }),
     json: Flags.boolean({
       char: 'j',
@@ -58,12 +58,12 @@ export default class Push extends ThemeCommand {
     'allow-live': Flags.boolean({
       char: 'a',
       description: 'Allow push to a live theme.',
-      env: 'SHOPIFY_FLAG_THEME_ALLOW_LIVE',
+      env: 'SHOPIFY_FLAG_ALLOW_LIVE',
     }),
     publish: Flags.boolean({
       char: 'p',
       description: 'Publish as the live theme after uploading.',
-      env: 'SHOPIFY_FLAG_THEME_PUBLISH',
+      env: 'SHOPIFY_FLAG_PUBLISH',
     }),
     store: Flags.string({
       char: 's',

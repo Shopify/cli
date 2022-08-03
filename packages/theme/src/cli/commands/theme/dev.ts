@@ -28,7 +28,7 @@ export default class Dev extends ThemeCommand {
     }),
     poll: Flags.boolean({
       description: 'Force polling to detect file changes.',
-      env: 'SHOPIFY_FLAG_THEME_POLL',
+      env: 'SHOPIFY_FLAG_POLL',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'theme-editor-sync': Flags.boolean({

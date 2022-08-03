@@ -131,7 +131,7 @@ describe('addEslint', () => {
       })
 
       // When/Then
-      await expect(addESLint({app, ...defaultOptions})).rejects.toThrowError('ESLint config already exists.')
+      await expect(() => addESLint({app, ...defaultOptions})).rejects.toThrowError('ESLint config already exists.')
     })
   })
 })

@@ -478,7 +478,7 @@ describe('findUpAndReadPackageJson', () => {
       await mkdir(subDirectory)
 
       // When/Then
-      await expect(findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
+      await expect(() => findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
         FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
     })

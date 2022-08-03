@@ -19,29 +19,29 @@ export default class Pull extends ThemeCommand {
     development: Flags.boolean({
       char: 'd',
       description: 'Pull theme files from your remote development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     live: Flags.boolean({
       char: 'l',
       description: 'Pull theme files from your remote live theme.',
-      env: 'SHOPIFY_FLAG_THEME_LIVE',
+      env: 'SHOPIFY_FLAG_LIVE',
     }),
     nodelete: Flags.boolean({
       char: 'n',
       description: 'Runs the pull command without deleting local files.',
-      env: 'SHOPIFY_FLAG_THEME_NODELETE',
+      env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({
       char: 'o',
       multiple: true,
       description: 'Download only the specified files (Multiple flags allowed).',
-      env: 'SHOPIFY_FLAG_THEME_ONLY',
+      env: 'SHOPIFY_FLAG_ONLY',
     }),
     ignore: Flags.string({
       char: 'x',
       multiple: true,
       description: 'Skip downloading the specified files (Multiple flags allowed).',
-      env: 'SHOPIFY_FLAG_THEME_IGNORE',
+      env: 'SHOPIFY_FLAG_IGNORE',
     }),
     store: Flags.string({
       char: 's',

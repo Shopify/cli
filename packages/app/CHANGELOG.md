@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.5.0
+
+### Minor Changes
+
+- b6c4c709: Use the same package manager consistently througout all the CLI workflows
+
+### Patch Changes
+
+- dabc4bab: Refactor rejection tests to follow recommended implementation by Vitest
+- Updated dependencies [dabc4bab]
+  - @shopify/cli-kit@3.5.0
+
 ## 3.4.0
 
 ### Patch Changes

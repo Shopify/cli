@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.5.0
+
+### Patch Changes
+
+- dabc4bab: Refactor rejection tests to follow recommended implementation by Vitest
+
 ## 3.4.0
 
 ### Minor Changes

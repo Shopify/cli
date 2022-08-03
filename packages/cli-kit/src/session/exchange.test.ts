@@ -70,7 +70,7 @@ describe('exchange code for identity token', () => {
     vi.mocked(shopifyFetch).mockResolvedValue(response)
 
     // When
-    const got = exchangeCodeForAccessToken(code)
+    const got = () => exchangeCodeForAccessToken(code)
 
     // Then
     return expect(got).rejects.toThrowError(new InvalidGrantError(responseBody.error_description))

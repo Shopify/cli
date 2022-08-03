@@ -1,6 +1,6 @@
 /* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension.js'
-import {ExtensionTypesHumanKeys, getExtensionOutputConfig} from '../../../constants.js'
+import {ExternalExtensionTypeNames, getExtensionOutputConfig} from '../../../constants.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
@@ -89,7 +89,7 @@ describe('after extension command finishes correctly', () => {
 })
 
 function mockSuccessfulCommandExecution(outputConfig: {
-  humanKey: ExtensionTypesHumanKeys
+  humanKey: ExternalExtensionTypeNames
   helpURL?: string
   additionalHelp?: string
 }) {

@@ -7,12 +7,18 @@ import {
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
+  ExternalExtensionTypes,
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
+import {
+  mapExternalExtensionTypeToExtensionType,
+  mapExtensionTypesToExternalExtensionTypes,
+  mapExtensionTypeToExternalExtensionType,
+} from '../../../utilities/extensions/name-mapper.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -28,7 +34,9 @@ export default class AppScaffoldExtension extends Command {
     type: Flags.string({
       char: 't',
       hidden: false,
-      description: `Extension type\n<options: ${extensions.publicTypes.join('|')}>`,
+      description: `Extension type\n<options: ${mapExtensionTypesToExternalExtensionTypes(extensions.publicTypes).join(
+        '|',
+      )}>`,
       env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
     }),
     name: Flags.string({
@@ -59,6 +67,9 @@ export default class AppScaffoldExtension extends Command {
     const {flags} = await this.parse(AppScaffoldExtension)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
+
+    flags.type = mapExternalExtensionTypeToExtensionType(flags.type as ExternalExtensionTypes)
+
     await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
     const extensionFlavor = flags.template
@@ -74,6 +85,7 @@ export default class AppScaffoldExtension extends Command {
     const extensionDirectory = await scaffoldExtensionService({
       ...promptAnswers,
       extensionType: promptAnswers.extensionType,
+      externalExtensionType: flags.type as ExternalExtensionTypes,
       app,
       cloneUrl: flags['clone-url'],
     })
@@ -94,8 +106,9 @@ export default class AppScaffoldExtension extends Command {
     const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
     if (!(supportedExtensions as string[]).includes(type)) {
       throw new error.Abort(
-        `Invalid extension type ${type}`,
-        `The following extension types are supported: ${supportedExtensions.join(', ')}`,
+        `The following extension types are supported: ${mapExtensionTypesToExternalExtensionTypes(
+          supportedExtensions,
+        ).join(', ')}`,
       )
     }
   }
@@ -108,7 +121,12 @@ export default class AppScaffoldExtension extends Command {
    */
   validateExtensionTypeLimit(app: AppInterface, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
-      throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
+      throw new error.Abort(
+        'Invalid extension type',
+        `You can only scaffold one extension of type ${mapExtensionTypeToExternalExtensionType(
+          type as ExtensionTypes,
+        )} per app`,
+      )
     }
   }
 

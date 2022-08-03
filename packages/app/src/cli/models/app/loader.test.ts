@@ -195,6 +195,33 @@ scopes = "read_products"
     expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
   })
 
+  it('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my_extension"
+      type = "post_purchase_ui"
+
+      [build]
+      command = "make build"
+      path = "dist/index.wasm"
+      `
+    await writeBlockConfig({
+      blockType: 'ui',
+      blockConfiguration,
+      name: 'my-extension',
+    })
+    await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
+  })
+
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -319,7 +346,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load(tmpDir)).rejects.toThrowError()
+    await expect(() => load(tmpDir)).rejects.toThrowError()
   })
 
   it('loads the app when it has a function with a valid configuration', async () => {

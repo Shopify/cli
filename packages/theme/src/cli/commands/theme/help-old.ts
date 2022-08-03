@@ -17,8 +17,9 @@ export default class HelpOld extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(HelpOld)
-    const cli2Args: string[] = ['help', 'theme']
+    const cli2Args: string[] = ['theme']
     if (flags.command) cli2Args.push(flags.command)
+    cli2Args.push('-h')
     await execCLI2(cli2Args)
   }
 }
