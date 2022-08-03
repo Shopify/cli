@@ -32,10 +32,18 @@
             "name": "shopify extension serve",
             "type": "go",
             "request": "launch",
-            "mode": "exec",
+            "mode": "auto",
             "program": ".",
             "args": ["serve", "${input:extensionConfigPath}"]
-        }
+        },
+        {
+          "name": "shopify extension build",
+          "type": "go",
+          "request": "launch",
+          "mode": "auto",
+          "program": ".",
+          "args": ["build", "${input:extensionConfigPath}"]
+      }
     ],
     "inputs": [
       {

@@ -81,15 +81,6 @@ build-node-packages:
 .PHONY: bootstrap
 bootstrap: tmp build
 	./shopify-extensions create testdata/extension.config.yml
-	cd tmp/checkout_ui_extension; yarn install
-	cd tmp/checkout_ui_extension; rm -r node_modules/@shopify/shopify-cli-extensions
-	cd tmp/checkout_ui_extension; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
-	cd tmp/product_subscription; yarn install
-	cd tmp/product_subscription; rm -r node_modules/@shopify/shopify-cli-extensions
-	cd tmp/product_subscription; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
-	cd tmp/checkout_post_purchase; yarn install
-	cd tmp/checkout_post_purchase; rm -r node_modules/@shopify/shopify-cli-extensions
-	cd tmp/checkout_post_purchase; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
 
 .PHONY: integration-test
 integration-test: tmp build
