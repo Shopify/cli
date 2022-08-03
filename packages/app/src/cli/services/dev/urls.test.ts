@@ -1,4 +1,4 @@
-import {updateURLs, generateURL} from './urls.js'
+import {updateURLs, generateURL, getURLs} from './urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
@@ -69,5 +69,21 @@ describe('updateURLs', () => {
 
     // Then
     expect(got).rejects.toThrow(new error.Abort(`Boom!`))
+  })
+})
+
+describe('getURLs', () => {
+  it('sends a request to get the URLs', async () => {
+    // Given
+    vi.mocked(api.partners.request).mockResolvedValueOnce({
+      app: {applicationUrl: 'https://example.com', redirectUrlWhitelist: []},
+    })
+    const expectedVariables = {apiKey: 'apiKey'}
+
+    // When
+    await getURLs('apiKey', 'token')
+
+    // Then
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.GetURLsQuery, 'token', expectedVariables)
   })
 })

@@ -1,5 +1,5 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generateURL, updateURLs} from './dev/urls.js'
+import {generateURL, getURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
@@ -77,6 +77,8 @@ async function dev(options: DevOptions) {
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if (frontendConfig || backendConfig) {
+    const {appUrl} = await getURLs(identifiers.app, token)
+    output.info(`Your app's URL currently is: ${appUrl}`)
     if (options.update) await updateURLs(identifiers.app, exposedUrl, token)
     outputAppURL(options.update, storeFqdn, exposedUrl)
   }

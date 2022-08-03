@@ -23,3 +23,10 @@ export async function updateURLs(apiKey: string, url: string, token: string): Pr
     throw new error.Abort(errors)
   }
 }
+
+export async function getURLs(apiKey: string, token: string): Promise<{appUrl: string; redir: string[]}> {
+  const variables: api.graphql.GetURLsQueryVariables = {apiKey}
+  const query = api.graphql.GetURLsQuery
+  const result: api.graphql.GetURLsQuerySchema = await api.partners.request(query, token, variables)
+  return {appUrl: result.app.applicationUrl, redir: result.app.redirectUrlWhitelist}
+}
