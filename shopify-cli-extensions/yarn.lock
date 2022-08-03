@@ -1813,7 +1813,7 @@
   dependencies:
     "@remote-ui/rpc" "^1.3.2"
 
-"@remote-ui/core@^2.1.12", "@remote-ui/core@^2.1.14", "@remote-ui/core@^2.1.3":
+"@remote-ui/core@^2.1.12", "@remote-ui/core@^2.1.14", "@remote-ui/core@^2.1.3", "@remote-ui/core@^2.1.6":
   version "2.1.14"
   resolved "https://registry.yarnpkg.com/@remote-ui/core/-/core-2.1.14.tgz#01ccf3a609f558cd0bf730a22b998f982a5a1496"
   integrity sha512-EW1wRtiv0on1MY+KokxrReZTCkCdYkvE6RTl48EyHw5PUq+jsvXIJ4UoUAgRsRIsrAsALn5Ng9hmbXvxuUX9xg==
@@ -1860,7 +1860,7 @@
     "@shopify/admin-ui-extensions" "^1.0.1"
     "@types/react" ">=17.0.0 <18.0.0"
 
-"@shopify/admin-ui-extensions@^1.0.1":
+"@shopify/admin-ui-extensions@1.0.1", "@shopify/admin-ui-extensions@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@shopify/admin-ui-extensions/-/admin-ui-extensions-1.0.1.tgz#fff57b5f554e82e28b7a426541ef5ca1094e41ae"
   integrity sha512-L7hZdshRUb7/CvCCP8oRqzc1jeuNz6Q2ZJXEBJ46UR2fBc2o9I1ouUkFtviyZgfOLZkcbbfvedPm4EofckrFGg==
@@ -2096,6 +2096,13 @@
     jest-matcher-utils "^26.6.2"
     react-reconciler "^0.26.2"
 
+"@shopify/retail-ui-extensions@0.10.0":
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/@shopify/retail-ui-extensions/-/retail-ui-extensions-0.10.0.tgz#a43193d6fc9fb92a5f33fd0b711327bd44ca6de7"
+  integrity sha512-473t82QILBr1cpmYeMolRQmptxnpNNUVOYdyZUVSEQ2J5tjX/jqEaTi0JArArYS8GF0Dqm5x2K1SIK/khTGB7Q==
+  dependencies:
+    "@remote-ui/core" "^2.1.6"
+
 "@shopify/ui-extensions@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@shopify/ui-extensions/-/ui-extensions-1.0.1.tgz#37e002ec1a95e4f9f83873178b9045f14bdb93c0"
@@ -2105,6 +2112,11 @@
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/@shopify/useful-types/-/useful-types-3.0.4.tgz#6b1f0908f60487550542c75acebea1a4f4eff968"
   integrity sha512-uHVbNANIdYgWSF+vgL+H7j3ufyNzAbkHIgL0iYPb/C2OreHC1YaQWeMjjPQobzCb5MxultSPgvAbgWuytm3gCA==
+
+"@shopify/web-pixels-extension@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@shopify/web-pixels-extension/-/web-pixels-extension-0.1.4.tgz#0e1af76a1d2db9c59bb07320b7844984450c8057"
+  integrity sha512-r1RKI4BsyYKuNtNoAlBZoQaMgOAra5WpzkQ1EQnuUKV9df9LFBQu30oZumt9iAUzMYeX8v80uvUoYvZYH2DcDg==
 
 "@sindresorhus/is@^4.0.0":
   version "4.6.0"

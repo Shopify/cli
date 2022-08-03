@@ -20,6 +20,9 @@
     "@shopify/checkout-ui-extensions-react":"0.17.1",
     "@shopify/admin-ui-extensions-react":"1.0.1",
     "@shopify/post-purchase-ui-extensions-react":"0.13.3",
+    "@shopify/admin-ui-extensions":"1.0.1",
+    "@shopify/web-pixels-extension":"0.1.4",
+    "@shopify/retail-ui-extensions":"0.10.0",
     "eslint": "^7.32.0",
     "lerna": "^4.0.0"
   }

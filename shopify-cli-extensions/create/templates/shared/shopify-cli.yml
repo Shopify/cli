@@ -1,4 +1,0 @@
----
-EXTENSION_TYPE: {{ .Type | upcase }}
-organization_id: 0
-project_type: :extension
