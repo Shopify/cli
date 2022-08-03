@@ -9,8 +9,10 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
+  ExternalExtensionTypes,
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
+import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
 import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
@@ -28,9 +30,13 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
+interface ExtensionInitOptions<
+  TExtensionTypes extends ExtensionTypes = ExtensionTypes,
+  TExternalExtensionTypes extends ExternalExtensionTypes = ExternalExtensionTypes,
+> {
   name: string
   extensionType: TExtensionTypes
+  externalExtensionType: TExternalExtensionTypes
   app: AppInterface
   cloneUrl?: string
   extensionFlavor?: string
@@ -67,6 +73,7 @@ async function themeExtensionInit({name, app, extensionType, extensionDirectory}
 async function uiExtensionInit({
   name,
   extensionType,
+  externalExtensionType,
   app,
   extensionFlavor,
   extensionDirectory,
@@ -102,17 +109,21 @@ async function uiExtensionInit({
         title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
-          const stdin = yaml.encode({
+          const input = yaml.encode({
             extensions: [
               {
                 title: name,
                 // Use the new templates
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                external_type: mapExtensionTypeToExternalExtensionType(extensionType),
                 type: `${extensionType}_next`,
                 metafields: [],
                 development: {
                   // eslint-disable-next-line @typescript-eslint/naming-convention
                   root_dir: '.',
                   template: extensionFlavor,
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  install_dependencies: false,
                 },
               },
             ],
@@ -131,7 +142,7 @@ async function uiExtensionInit({
                 next()
               },
             }),
-            stdin,
+            input,
           })
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
@@ -150,6 +161,7 @@ export function getRuntimeDependencies({
     case 'checkout_ui_extension':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
+    case 'customer_accounts_ui_extension':
     case 'checkout_post_purchase': {
       const dependencies: DependencyVersion[] = [{name: 'react', version: versions.react}]
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
@@ -166,34 +178,26 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    const list = ui.newListr(
-      [
-        {
-          title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
-          task: async (_, task) => {
-            await file.mkdir(templateDownloadDir)
-            await git.downloadRepository({
-              repoUrl: url,
-              destination: templateDownloadDir,
-              shallow: true,
-              progressUpdater: (statusString: string) => {
-                const taskOutput = `Cloning template from ${url}:\n${statusString}`
-                task.output = taskOutput
-              },
-            })
-            const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
-            const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
-            if (await file.exists(configYamlPath)) {
-              await file.remove(configYamlPath)
-            }
-            task.title = `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`
-          },
-        },
-      ],
-      {rendererSilent: environment.local.isUnitTest()},
-    )
-    await list.run()
+    await ui.task({
+      title: `Scaffolding ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
+      task: async () => {
+        await file.mkdir(templateDownloadDir)
+        await git.downloadRepository({
+          repoUrl: url,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+        await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+        const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
+        if (await file.exists(configYamlPath)) {
+          await file.remove(configYamlPath)
+        }
+        return {
+          successMessage: `${getExtensionOutputConfig(options.extensionType).humanKey} extension scaffolded`,
+        }
+      },
+    })
   })
 }
 

@@ -1,22 +1,28 @@
 import {getTheme} from '../../utilities/theme-store.js'
+import ThemeCommand from '../theme-command.js'
 import {Flags} from '@oclif/core'
-import {session, string} from '@shopify/cli-kit'
+import {cli, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import Command from '@shopify/cli-kit/node/base-command'
 
-export default class Open extends Command {
+export default class Open extends ThemeCommand {
   static description = 'Opens the preview of your remote theme.'
 
   static flags = {
+    ...cli.globalFlags,
     development: Flags.boolean({
       char: 'd',
       description: 'Delete your development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
+    }),
+    editor: Flags.boolean({
+      char: 'e',
+      description: 'Open the theme editor for the specified theme in the browser.',
+      env: 'SHOPIFY_FLAG_EDITOR',
     }),
     live: Flags.boolean({
       char: 'l',
       description: 'Pull theme files from your remote live theme.',
-      env: 'SHOPIFY_FLAG_THEME_LIVE',
+      env: 'SHOPIFY_FLAG_LIVE',
     }),
     theme: Flags.string({
       char: 't',
@@ -33,21 +39,11 @@ export default class Open extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Open)
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose']})
+    const command = ['theme', 'open', ...flagsToPass]
+
     const store = getTheme(flags)
-
-    const command = ['theme', 'open']
-    if (flags.theme) {
-      command.push('-t')
-      command.push(flags.theme)
-    }
-    if (flags.development) {
-      command.push('-d')
-    }
-    if (flags.live) {
-      command.push('-l')
-    }
-
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

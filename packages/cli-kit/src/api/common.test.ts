@@ -1,5 +1,5 @@
 import {buildHeaders, sanitizedHeadersOutput} from './common.js'
-import {isShopify} from '../environment/local.js'
+import {firstPartyDev} from '../environment/local.js'
 import constants from '../constants.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {randomUUID} from 'crypto'
@@ -9,7 +9,7 @@ beforeEach(() => {
   vi.mock('../environment/local', async () => {
     return {
       isVerbose: vi.fn(),
-      isShopify: vi.fn(),
+      firstPartyDev: vi.fn(),
       isUnitTest: vi.fn(() => true),
     }
   })
@@ -17,10 +17,10 @@ beforeEach(() => {
 })
 
 describe('common API methods', () => {
-  test('headers are built correctly when user is employee', async () => {
+  test('headers are built correctly when firstPartyDev yields true', async () => {
     // Given
     vi.mocked(randomUUID).mockReturnValue('random-uuid')
-    vi.mocked(isShopify).mockResolvedValue(true)
+    vi.mocked(firstPartyDev).mockReturnValue(true)
     // When
     const headers = await buildHeaders('my-token')
 
@@ -34,6 +34,7 @@ describe('common API methods', () => {
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
+      'X-Shopify-Cli-Employee': '1',
       /* eslint-enable @typescript-eslint/naming-convention */
     })
   })
@@ -41,7 +42,7 @@ describe('common API methods', () => {
   test('when user is not employee, do not include header', async () => {
     // Given
     vi.mocked(randomUUID).mockReturnValue('random-uuid')
-    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(firstPartyDev).mockReturnValue(false)
     // When
     const headers = await buildHeaders('my-token')
 

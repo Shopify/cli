@@ -2,13 +2,14 @@ import {
   UIExtension,
   ThemeExtension,
   FunctionExtension,
-  UIExtensionConfigurationSchema,
   FunctionExtensionConfigurationSchema,
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
+  UIExtensionConfigurationSupportedSchema,
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
+import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
@@ -129,7 +130,7 @@ class AppLoader {
   }
 
   async loadWebs(): Promise<Web[]> {
-    const webTomlPaths = await path.glob(path.join(this.appDirectory, `web/**/${configurationFileNames.web}`))
+    const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
@@ -208,7 +209,15 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(UIExtensionConfigurationSchema, configurationPath)
+      const configurationSupported = await this.parseConfigurationFile(
+        UIExtensionConfigurationSupportedSchema,
+        configurationPath,
+      )
+      const configuration = {
+        ...configurationSupported,
+        type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
+      }
+
       const entrySourceFilePath = (
         await Promise.all(
           ['index']

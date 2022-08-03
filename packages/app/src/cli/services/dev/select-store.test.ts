@@ -119,7 +119,7 @@ describe('selectStore', async () => {
     const got = selectStore([STORE1, STORE2, STORE3], ORG1, 'token')
 
     // Then
-    expect(got).rejects.toThrow("domain3 can't be used to test draft apps")
+    expect(got).rejects.toThrow('The store you specified (domain3) is not a dev store')
   })
 
   it('prompts user to create & reload if prompt returns undefined, throws if reload is false', async () => {
@@ -128,7 +128,7 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = selectStore([STORE1, STORE2], ORG1, 'token')
+    const got = () => selectStore([STORE1, STORE2], ORG1, 'token')
 
     // Then
     expect(got).rejects.toThrowError()

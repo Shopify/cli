@@ -1,5 +1,38 @@
 # @shopify/app
 
+## 3.5.0
+
+### Minor Changes
+
+- b6c4c709: Use the same package manager consistently througout all the CLI workflows
+
+### Patch Changes
+
+- dabc4bab: Refactor rejection tests to follow recommended implementation by Vitest
+- Updated dependencies [dabc4bab]
+  - @shopify/cli-kit@3.5.0
+
+## 3.4.0
+
+### Patch Changes
+
+- a696df0c: Update some copies
+- 3cf308d4: Loosen the convention of the web component having to be under the /web directory
+- 690cfb75: Allow websocket connections to support vite HMR
+- Updated dependencies [08366831]
+- Updated dependencies [feae2499]
+- Updated dependencies [19ab3f99]
+- Updated dependencies [0da6c7e8]
+  - @shopify/cli-kit@3.4.0
+
+## 3.3.3
+
+### Patch Changes
+
+- ceacde28: Add a new flag to dev command that makes possible to access the app directly using localhost and a local port instead of going through an http tunnel.
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
 ## 3.3.2
 
 ### Patch Changes

@@ -60,7 +60,7 @@ describe('authorize', () => {
     })
 
     // When
-    const auth = authorize(['scope1', 'scope2'], 'state')
+    const auth = () => authorize(['scope1', 'scope2'], 'state')
 
     // Then
     await expect(auth).rejects.toThrowError(MismatchStateError)

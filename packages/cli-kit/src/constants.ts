@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import {join as pathJoin} from './path.js'
 import {findPackageVersionUp} from './version.js'
 import envPaths from 'env-paths'
@@ -27,6 +25,7 @@ const constants = {
     partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
     verbose: 'SHOPIFY_FLAG_VERBOSE',
     noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
+    firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
   },
   paths: {
     executables: {

@@ -1,30 +1,31 @@
 import {getTheme} from '../../utilities/theme-store.js'
+import ThemeCommand from '../theme-command.js'
 import {Flags} from '@oclif/core'
-import {session, string} from '@shopify/cli-kit'
+import {cli, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import Command from '@shopify/cli-kit/node/base-command'
 
-export default class Delete extends Command {
+export default class Delete extends ThemeCommand {
   static description = "Delete remote themes from the connected store. This command can't be undone"
 
   static args = [{name: 'themeId', description: 'The ID of the theme to delete', required: false}]
 
   static flags = {
+    ...cli.globalFlags,
     development: Flags.boolean({
       char: 'd',
       description: 'Delete your development theme.',
-      env: 'SHOPIFY_FLAG_THEME_DEVELOPMENT',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'show-all': Flags.boolean({
       char: 'a',
       description: 'Include others development themes in theme list.',
-      env: 'SHOPIFY_FLAG_THEME_SHOW_ALL',
+      env: 'SHOPIFY_FLAG_SHOW_ALL',
     }),
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',
-      env: 'SHOPIFY_FLAG_THEME_FORCE',
+      env: 'SHOPIFY_FLAG_FORCE',
     }),
     store: Flags.string({
       char: 's',
@@ -43,17 +44,10 @@ export default class Delete extends Command {
     if (args.themeId) {
       command.push(args.themeId)
     }
-    if (flags.development) {
-      command.push('-d')
-    }
-    if (flags.force) {
-      command.push('-f')
-    }
-    if (flags['show-all']) {
-      command.push('-a')
-    }
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose']})
+    command.push(...flagsToPass)
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
-    await execCLI2(command, adminSession)
+    await execCLI2(command, {adminSession})
   }
 }

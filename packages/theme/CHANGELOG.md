@@ -1,5 +1,44 @@
 # @shopify/theme
 
+## 3.5.0
+
+### Patch Changes
+
+- Updated dependencies [dabc4bab]
+  - @shopify/cli-kit@3.5.0
+
+## 3.4.0
+
+### Minor Changes
+
+- 1ee62000: • Show subcommand help in theme help-old (development convenience feature)
+  • Add missing -t shortcut for theme id or name in theme pull/push
+  • Handle multiple --only or --ignore flags correctly in theme pull/push
+- 0da6c7e8: • Run CLI2 commands from passed-in directory, defaulting to current working directory
+  • Fill in flags for theme check
+  • Add --path to theme check
+  • Add --verbose to theme check
+
+### Patch Changes
+
+- Updated dependencies [08366831]
+- Updated dependencies [feae2499]
+- Updated dependencies [19ab3f99]
+- Updated dependencies [0da6c7e8]
+  - @shopify/cli-kit@3.4.0
+
+## 3.3.3
+
+### Patch Changes
+
+- e89dfa81: • Update Ruby CLI to latest
+  • Fix: Await Ruby subprocess
+  • Add path flag to init for better development flow
+  • Add verbose flag to see more output from the Node CLI
+  • Set up logging and CLI-kit store separately for the theme CLI
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
 ## 3.3.2
 
 ### Patch Changes

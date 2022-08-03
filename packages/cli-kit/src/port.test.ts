@@ -33,6 +33,6 @@ describe('getRandomPort', () => {
     }
 
     // When/Then
-    await expect(getRandomPort()).rejects.toThrowError(new Abort(errorMessage))
+    await expect(() => getRandomPort()).rejects.toThrowError(new Abort(errorMessage))
   })
 })

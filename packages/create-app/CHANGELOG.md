@@ -1,5 +1,34 @@
 # @shopify/create-app
 
+## 3.5.0
+
+### Patch Changes
+
+- Updated dependencies [dabc4bab]
+  - @shopify/cli-kit@3.5.0
+
+## 3.4.0
+
+### Patch Changes
+
+- 08366831: Better logging:
+  • include Prompt and List input/output
+  • distinguish commands via UUID and log lines for command start/finish
+  • use a command line flag to specify log stream to view (cli, create-app, create-hydrogen)
+- feae2499: Fix support for using a private template repo when git credentials are not setup
+- Updated dependencies [08366831]
+- Updated dependencies [feae2499]
+- Updated dependencies [19ab3f99]
+- Updated dependencies [0da6c7e8]
+  - @shopify/cli-kit@3.4.0
+
+## 3.3.3
+
+### Patch Changes
+
+- Updated dependencies [e89dfa81]
+  - @shopify/cli-kit@3.3.3
+
 ## 3.3.2
 
 ### Patch Changes

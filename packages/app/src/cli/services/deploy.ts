@@ -161,7 +161,7 @@ async function outputCompletionMessage({
     const lines = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
     if (lines.length > 0) {
       output.info('  Next steps in Shopify Partners:')
-      lines.forEach(output.info)
+      lines.forEach((line) => output.info(line))
     }
   }
 }
@@ -188,6 +188,14 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         configuration_schema: extension.configuration.configurationSchema,
         localization: await loadLocalesConfig(extension.directory),
+      }
+    }
+    case 'customer_accounts_ui_extension': {
+      return {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        extension_points: extension.configuration.extensionPoints,
+        name: extension.configuration.name,
+        categories: extension.configuration.categories,
       }
     }
     case 'web_pixel_extension': {
@@ -224,6 +232,7 @@ async function getExtensionPublishURL({
       case 'checkout_ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':
+      case 'customer_accounts_ui_extension':
         pathComponent = extension.type
         break
       case 'checkout_post_purchase':
