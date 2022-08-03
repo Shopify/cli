@@ -52,48 +52,6 @@ describe('event tracking', () => {
     })
   }
 
-  it.each([
-    ['node', 'package.json'],
-    ['ruby', 'Gemfile'],
-    ['php', 'composer.json'],
-  ])('sends the expected data to Monorail when the project is %s', async (projectType, file) => {
-    await inProjectWithFile(file, async (args) => {
-      // Given
-      const command = 'app info'
-      start({command, args, currentTime: currentDate.getTime() - 100})
-
-      // When
-      const config = {
-        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-      } as any
-      await reportEvent({config})
-
-      // Then
-      const version = await constants.versions.cliKit()
-      const expectedPayloadPublic = {
-        project_type: projectType,
-        command,
-        time_start: 1643709599900,
-        time_end: 1643709600000,
-        total_time: 100,
-        success: true,
-        uname: 'darwin arm64',
-        cli_version: version,
-        ruby_version: '3.1.1',
-        node_version: process.version.replace('v', ''),
-        is_employee: false,
-        api_key: undefined,
-        partner_id: undefined,
-      }
-      const expectedPayloadSensitive = {
-        args: args.join(' '),
-        metadata: expect.anything(),
-      }
-
-      expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
-    })
-  })
-
   it('sends the expected data to Monorail with cached app info', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
@@ -115,7 +73,6 @@ describe('event tracking', () => {
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        project_type: 'node',
         command,
         time_start: 1643709599900,
         time_end: 1643709600000,
@@ -126,8 +83,6 @@ describe('event tracking', () => {
         ruby_version: '3.1.1',
         node_version: process.version.replace('v', ''),
         is_employee: false,
-        api_key: 'key1',
-        partner_id: 1,
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
@@ -152,7 +107,6 @@ describe('event tracking', () => {
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        project_type: 'node',
         command,
         time_start: 1643709599900,
         time_end: 1643709600000,
@@ -163,8 +117,6 @@ describe('event tracking', () => {
         ruby_version: '3.1.1',
         node_version: process.version.replace('v', ''),
         is_employee: false,
-        api_key: undefined,
-        partner_id: undefined,
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),

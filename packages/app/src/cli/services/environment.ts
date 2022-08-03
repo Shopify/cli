@@ -14,7 +14,8 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {error as kitError, output, session, store, ui, environment, error} from '@shopify/cli-kit'
+import metadata from '../metadata.js'
+import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
@@ -149,7 +150,7 @@ export async function ensureDevEnvironment(
   }
 
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
-  return {
+  const result = {
     app: {
       ...selectedApp,
       apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
@@ -160,6 +161,8 @@ export async function ensureDevEnvironment(
       extensions,
     },
   }
+  await logMetadataForLoadedDevEnvironment(result)
+  return result
 }
 
 async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
@@ -247,7 +250,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     ...options,
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
-  return {
+  const result = {
     app: options.app,
     partnersApp: {
       id: partnersApp.id,
@@ -259,9 +262,12 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     identifiers,
     token,
   }
+
+  await logMetadataForLoadedDeployEnvironment(result)
+  return result
 }
 
-export async function fetchOrganizationAndFetchOrCreateApp(
+async function fetchOrganizationAndFetchOrCreateApp(
   app: AppInterface,
   token: string,
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
@@ -384,4 +390,14 @@ function showDevValues(org: string, appName: string) {
   output.info('\nYour configs for dev were:')
   output.info(`Org:        ${org}`)
   output.info(`App:        ${appName}\n`)
+}
+
+async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  metadata.addPublic({partner_id: string.tryParseInt(env.app.organizationId), api_key: env.identifiers.app})
+}
+
+async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  metadata.addPublic({partner_id: string.tryParseInt(env.partnersOrganizationId), api_key: env.identifiers.app})
 }
