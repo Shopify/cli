@@ -6,7 +6,7 @@ import {Abort, CancelExecution} from '../error.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import * as output from '../output.js'
 import {keypress, terminateBlockingPortProcessPrompt} from '../ui.js'
-import {checkPort} from 'get-port-please'
+import {checkPort as isPortAvailable} from 'get-port-please'
 import {killPortProcess} from 'kill-port-process'
 
 export const MismatchStateError = new Abort(
@@ -60,13 +60,13 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
 }
 
 async function validateRedirectionPortAvailability(port: number) {
-  const result = await checkPort(port)
-  if (result === false) {
-    const cancelProcess = await terminateBlockingPortProcessPrompt(port, 'authentication')
-    if (cancelProcess) {
-      await killPortProcess(port)
-    } else {
-      throw new CancelExecution()
-    }
+  if (await isPortAvailable(port)) {
+    return
+  }
+
+  if (await terminateBlockingPortProcessPrompt(port, 'Authentication')) {
+    await killPortProcess(port)
+  } else {
+    throw new CancelExecution()
   }
 }
