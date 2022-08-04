@@ -1,4 +1,4 @@
-import Haikunator from 'haikunator'
+import {file, path} from './index'
 
 export const SAFE_ADJECTIVES = [
   'commercial',
@@ -54,15 +54,24 @@ export const SAFE_NOUNS = [
   'sale',
 ]
 
-const haikunator = new Haikunator({
-  adjectives: SAFE_ADJECTIVES,
-  nouns: SAFE_NOUNS,
-  defaults: {
-    tokenLength: 0,
-  },
-})
+export async function generate({
+  suffix,
+  directory,
+  randomPick = (array: string[]) => array[Math.floor(Math.random() * array.length)],
+}: {
+  suffix: string
+  directory: string
+  randomPick: (array: string[]) => string
+}): Promise<string> {
+  const adjective = randomPick(SAFE_ADJECTIVES)
+  const noun = randomPick(SAFE_NOUNS)
+  const generated = [adjective, noun, suffix].join('-')
+  const isAppDirectoryTaken = await file.exists(path.join(directory, generated))
 
-export function generate(suffix: string): string {
-  const generated = haikunator.haikunate()
-  return [generated, suffix].join('-')
+  if (isAppDirectoryTaken) {
+    // eslint-disable-next-line no-return-await
+    return await generate({suffix, directory, randomPick})
+  } else {
+    return generated
+  }
 }
