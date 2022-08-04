@@ -10,6 +10,10 @@ interface PreviewOptionsWorker extends PreviewOptions {
   envPath: string
 }
 
+interface EnvConfig {
+  env: {[key: string]: string}
+}
+
 export async function previewInNode({directory, port}: PreviewOptions) {
   const buildOutputPath = await path.resolve(directory, 'dist/node')
 
@@ -58,8 +62,8 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     }
   }
 
-  function parseEnvPath(envPath: string): {env: {[key: string]: string}} {
-    const envConfig: {env: {[key: string]: string}} = {
+  function parseEnvPath(envPath: string): EnvConfig {
+    const envConfig: EnvConfig = {
       env: {},
     }
 
