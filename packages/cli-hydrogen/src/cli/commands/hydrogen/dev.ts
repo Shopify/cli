@@ -20,6 +20,7 @@ export default class Dev extends Command {
     open: Flags.boolean({
       description: 'automatically open the app in the browser',
       env: 'SHOPIFY_FLAG_DEV_OPEN',
+      default: false,
     }),
   }
 
