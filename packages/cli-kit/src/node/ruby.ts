@@ -51,6 +51,7 @@ export async function execCLI2(args: string[], {adminSession, storefrontToken, d
       env,
     })
   } catch (error) {
+    // CLI2 will show it's own errors, we don't need to show an additional CLI3 error
     throw new AbortSilent()
   }
 }

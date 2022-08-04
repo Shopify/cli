@@ -7,7 +7,8 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 export default class Delete extends ThemeCommand {
   static description = "Delete remote themes from the connected store. This command can't be undone"
 
-  static args = [{name: 'themeId', description: 'The ID of the theme to delete', required: false}]
+  // Accept any number of args without naming them
+  static strict = false
 
   static flags = {
     ...cli.globalFlags,
@@ -36,14 +37,17 @@ export default class Delete extends ThemeCommand {
   }
 
   async run(): Promise<void> {
-    const {flags, args} = await this.parse(Delete)
+    const {flags, argv} = await this.parse(Delete)
 
     const store = getTheme(flags)
 
     const command = ['theme', 'delete']
-    if (args.themeId) {
-      command.push(args.themeId)
+
+    // Pass all args without validation
+    if (argv.length > 0) {
+      command.push(...argv)
     }
+
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose']})
     command.push(...flagsToPass)
 
