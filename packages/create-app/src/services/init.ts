@@ -164,7 +164,8 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
   if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
     return optionsPackageManager as PackageManager
   }
-  return packageManagerUsedForCreating()
+  const usedPackageManager = packageManagerUsedForCreating()
+  return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {

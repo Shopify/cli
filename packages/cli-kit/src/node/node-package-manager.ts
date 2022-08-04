@@ -57,14 +57,15 @@ export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
  * @param env {Object} The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function packageManagerUsedForCreating(env = process.env): PackageManager {
+export function packageManagerUsedForCreating(env = process.env): PackageManager | 'unknown' {
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
     return 'pnpm'
-  } else {
+  } else if (env.npm_config_user_agent?.includes('npm')) {
     return 'npm'
   }
+  return 'unknown'
 }
 
 /**
