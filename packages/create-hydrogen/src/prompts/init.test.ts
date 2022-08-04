@@ -132,7 +132,7 @@ describe('init', () => {
     expect(got).toEqual(output)
   })
 
-  it.only('when template URL is passed', async () => {
+  it('when template URL is passed', async () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#dist'
 
     const input = {name: 'snow-devil', template: expected}
