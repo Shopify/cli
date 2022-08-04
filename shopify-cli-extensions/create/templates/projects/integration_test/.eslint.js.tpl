@@ -1,1 +1,0 @@
-{{- template "shared/eslint.js" . -}}

@@ -139,7 +139,7 @@ type Extension struct {
 	Assets          map[string]Asset `json:"assets" yaml:"-"`
 	Capabilities    Capabilities     `json:"capabilities" yaml:"capabilities,omitempty"`
 	Development     Development      `json:"development" yaml:"development,omitempty"`
-	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty"`
+	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty" toml:"extension_points,omitempty"`
 	Localization    *Localization    `json:"localization" yaml:"-"`
 	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
 	Type            string           `json:"type" yaml:"type,omitempty"`

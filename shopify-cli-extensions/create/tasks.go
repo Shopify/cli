@@ -14,7 +14,7 @@ import (
 	"github.com/Shopify/shopify-cli-extensions/core"
 )
 
-//go:embed templates/* templates/projects/**/.*
+//go:embed templates/* templates/projects/**/*
 var templates embed.FS
 
 type CreateProject core.Extension

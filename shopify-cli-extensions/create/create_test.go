@@ -1,14 +1,13 @@
 package create
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"gopkg.in/yaml.v3"
 )
 
 type dummyRunner struct{}
@@ -28,6 +27,7 @@ func TestMergeTemplatesYAML(t *testing.T) {
 	rootDir := "tmp/TestMergeTemplatesYML"
 	extension := core.Extension{
 		Type: "integration_test",
+		Title: "Integration Test",
 		Development: core.Development{
 			Template: "typescript-react",
 			RootDir:  rootDir,
@@ -41,14 +41,14 @@ func TestMergeTemplatesYAML(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	file, err := os.ReadFile(fmt.Sprintf("%s/extension.config.yml", rootDir))
+	file, err := os.ReadFile(fmt.Sprintf("%s/shopify.ui.extension.toml", rootDir))
 
 	if err != nil {
 		t.Error(err)
 	}
 
 	config := core.Extension{}
-	err = yaml.Unmarshal(file, &config)
+	err = toml.Unmarshal(file, &config)
 
 	if err != nil {
 		t.Error(err)
@@ -79,133 +79,6 @@ func TestMergeTemplatesYAML(t *testing.T) {
 	}
 	if config.Development.Develop.Env["CUSTOM_VAR"] != "foo" {
 		t.Errorf("expect develop environment config to be set to \"foo\" but received %v", config.Development.Develop.Env["CUSTOM_VAR"])
-	}
-
-	t.Cleanup(func() {
-		os.RemoveAll(rootDir)
-	})
-}
-
-func TestMergeTemplatesJSON(t *testing.T) {
-	Command = makeDummyRunner
-	LookPath = func(file string) (string, error) {
-		return file, nil
-	}
-	rootDir := "tmp/TestMergeTemplatesJSON"
-	extension := core.Extension{
-		Type: "integration_test",
-		Development: core.Development{
-			Template: "typescript-react",
-			RootDir:  rootDir,
-			Renderer: core.Renderer{Name: "@shopify/admin-ui-extension", Version: "latest"},
-		},
-	}
-
-	err := NewExtensionProject(extension)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	file, err := os.ReadFile(fmt.Sprintf("%s/package.json", rootDir))
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	var config packageJSON
-	err = json.Unmarshal(file, &config)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	if config.Name != extension.Type {
-		t.Errorf("expect \"name\" to match extension type but received %v", config.Name)
-	}
-
-	if config.License != "MIT" {
-		t.Errorf("expect \"licence\" to match template but received %v", config.License)
-	}
-
-	if config.Dependencies["react"] != "^17.0.0" {
-		t.Errorf("expect \"react\" dependency to match template config but received %v", config.Dependencies["react"])
-	}
-
-	if config.Dependencies["@apollo/client"] != "^3.4.8" {
-		t.Errorf("expect \"@apollo/client\" dependency to match template config but received %v", config.Dependencies["@apollo/client"])
-	}
-
-	t.Log(config.Dependencies)
-	if config.Dependencies["@shopify/admin-ui-extension-react"] != "latest" {
-		t.Errorf("expect \"@shopify/admin-ui-extension-react\" dependency to match template config but received %v", config.Dependencies["@shopify/admin-ui-extension-react"])
-	}
-
-	if config.Dependencies["graphql"] != "^15.5.1" {
-		t.Errorf("expect \"graphql\" dependency to match template config but received %v", config.Dependencies["graphql"])
-	}
-
-	if config.Dependencies["graphql-tag"] != "^2.12.4" {
-		t.Errorf("expect \"graphql-tag\" dependency to match template config but received %v", config.Dependencies["graphql-tag"])
-	}
-
-	if config.DevDependencies["@shopify/shopify-cli-extensions"] != "latest" {
-		t.Errorf("expect \"@shopify/shopify-cli-extensions\" dependency to match template config but received %v", config.Dependencies["@shopify/shopify-cli-extensions"])
-	}
-
-	if config.DevDependencies["typescript"] != "^4.1.0" {
-		t.Errorf("expect \"typescript\" dependency to match template config but received %v", config.Dependencies["typescript"])
-	}
-
-	t.Cleanup(func() {
-		os.RemoveAll(rootDir)
-	})
-}
-
-func TestShopifyCliYAML(t *testing.T) {
-	Command = makeDummyRunner
-	LookPath = func(file string) (string, error) {
-		return file, nil
-	}
-	rootDir := "tmp/TestShopifyCliYAML"
-	extension := core.Extension{
-		Type: "integration_test",
-		Development: core.Development{
-			Template: "typescript-react",
-			RootDir:  rootDir,
-			Renderer: core.Renderer{Name: "@shopify/checkout_ui_extension"},
-		},
-	}
-
-	err := NewExtensionProject(extension)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	file, err := os.ReadFile(fmt.Sprintf("%s/.shopify-cli.yml", rootDir))
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	config := shopifyCLIYML{}
-	err = yaml.Unmarshal(file, &config)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if config.ExtensionType != "INTEGRATION_TEST" {
-		t.Errorf("expect \"ExtensionType\" to match extension type but received %v", config.ExtensionType)
-	}
-
-	if config.OrganizationId != "0" {
-		t.Errorf("expect \"OrganizationId\" to match template but received %v", config.OrganizationId)
-	}
-
-	if config.ProjectType != ":extension" {
-		t.Errorf("expect \"OrganizationId\" to match template but received %v", config.ProjectType)
 	}
 
 	t.Cleanup(func() {
