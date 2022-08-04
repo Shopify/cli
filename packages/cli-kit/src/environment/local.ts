@@ -73,6 +73,11 @@ export function analyticsDisabled(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
 }
 
+/** Returns true if reporting analytics should always happen, regardless of DEBUG mode etc. */
+export function alwaysLogAnalytics(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.alwaysLogAnalytics])
+}
+
 export function firstPartyDev(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.firstPartyDev])
 }

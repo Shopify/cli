@@ -44,7 +44,7 @@ export async function reportEvent(options: ReportEventOptions) {
       // Nothing to log
       return
     }
-    if (environment.local.analyticsDisabled()) {
+    if (!environment.local.alwaysLogAnalytics() && environment.local.analyticsDisabled()) {
       debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
