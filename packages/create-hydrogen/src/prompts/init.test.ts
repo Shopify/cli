@@ -81,6 +81,70 @@ describe('init', () => {
     expect(got).toEqual(output)
   })
 
+  it('when language is not passed', async () => {
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
+
+    const prompt = vi.fn()
+    const input = {name: 'snow-devil', template: 'demo-store'}
+    const output = {name: 'snow-devil', template: expected, language: 'js'}
+
+    // Given
+    prompt.mockResolvedValue(Promise.resolve(output))
+
+    // When
+    const got = await init(input, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'select',
+          name: 'language',
+          choices: [
+            {
+              name: 'JavaScript',
+              value: 'js',
+            },
+            {
+              name: 'TypeScript',
+              value: 'ts',
+            },
+          ],
+          message: 'Choose a language',
+          default: 'js',
+        }),
+      ]),
+    )
+    expect(got).toEqual(output)
+  })
+
+  it('when language is set to ts', async () => {
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#dist'
+
+    const prompt = vi.fn()
+    const input = {name: 'snow-devil', template: 'demo-store', language: 'ts'}
+    const output = {name: 'snow-devil', template: expected, language: 'ts'}
+
+    // When
+    const got = await init(input, prompt)
+
+    // Then
+    expect(got).toEqual(output)
+  })
+
+  it.only('when template URL is passed', async () => {
+    const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#dist'
+
+    const input = {name: 'snow-devil', template: expected}
+    const output = {name: 'snow-devil', template: expected}
+
+    // When
+    const got = await init(input)
+
+    // Then
+    expect(got).toEqual(output)
+  })
+
   describe('demo-store-js', () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
 
