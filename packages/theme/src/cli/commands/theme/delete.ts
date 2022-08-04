@@ -43,7 +43,6 @@ export default class Delete extends ThemeCommand {
 
     const command = ['theme', 'delete']
 
-    // Pass all args without validation
     if (argv.length > 0) {
       command.push(...argv)
     }
