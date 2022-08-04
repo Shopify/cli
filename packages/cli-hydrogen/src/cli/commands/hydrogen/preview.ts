@@ -16,6 +16,12 @@ export default class Preview extends Command {
       default: '3000',
       env: 'SHOPIFY_FLAG_PORT',
     }),
+    env: Flags.string({
+      char: 'e',
+      description: 'the file path to your .env',
+      default: '',
+      env: 'SHOPIFY_FLAG_ENV_PATH',
+    }),
     target: Flags.string({
       char: 't',
       description: 'the target environment (worker or node)',
@@ -29,9 +35,10 @@ export default class Preview extends Command {
     const {flags} = await this.parse(Preview)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const port = parseInt(flags.port, 10)
+    const envPath = flags.env
 
     if (flags.target === 'worker') {
-      await previewInWorker({directory, port})
+      await previewInWorker({directory, port, envPath})
     } else if (flags.target === 'node') {
       await previewInNode({directory, port})
     }

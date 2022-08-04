@@ -33,6 +33,7 @@ describe('hydrogen preview', () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         const port = 5000
+        const envPath = ''
         const expectedConfig = {
           port,
           workerFile: 'dist/worker/index.js',
@@ -48,7 +49,45 @@ describe('hydrogen preview', () => {
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
-        await previewInWorker({directory: tmpDir, port})
+        await previewInWorker({directory: tmpDir, port, envPath})
+
+        // Then
+        expect(file.write).toHaveBeenCalledWith(
+          path.join(tmpDir, `mini-oxygen.config.json`),
+          JSON.stringify(expectedConfig, null, 2),
+        )
+      })
+    })
+
+    it('writes a local mini oxygen config file with env bindings from a .env file', async () => {
+      await file.inTemporaryDirectory(async (tmpDir) => {
+        const tmpEnv = `${tmpDir}/.env`
+
+        // create a .env file in tmpDir
+        file.writeSync(tmpEnv, `FOO="BAR"\nBAZ="BAX"`)
+
+        // Given
+        const port = 5000
+        const expectedConfig = {
+          port,
+          workerFile: 'dist/worker/index.js',
+          assetsDir: 'dist/client',
+          buildCommand: 'yarn build',
+          modules: true,
+          watch: true,
+          buildWatchPaths: ['./src'],
+          autoReload: true,
+          env: {
+            FOO: 'BAR',
+            BAZ: 'BAX',
+          },
+        }
+        const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
+        file.write(pathToExecutable, '// some executable file')
+        vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
+
+        // When
+        await previewInWorker({directory: tmpDir, port, envPath: tmpEnv})
 
         // Then
         expect(file.write).toHaveBeenCalledWith(
@@ -66,7 +105,7 @@ describe('hydrogen preview', () => {
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
-        await previewInWorker({directory: tmpDir, port: 4000})
+        await previewInWorker({directory: tmpDir, port: 4000, envPath: ''})
 
         // Then
         expect(system.exec).toHaveBeenCalledWith(
@@ -83,7 +122,7 @@ describe('hydrogen preview', () => {
 
       await file.inTemporaryDirectory(async (tmpDir) => {
         // When
-        const run = previewInWorker({directory: tmpDir, port: 4000})
+        const run = previewInWorker({directory: tmpDir, port: 4000, envPath: ''})
 
         // Then
         await expect(run).rejects.toThrow(/Could not locate the executable file to run Oxygen locally./)

@@ -6,6 +6,10 @@ interface PreviewOptions {
   port: number
 }
 
+interface PreviewOptionsWorker extends PreviewOptions {
+  envPath: string
+}
+
 export async function previewInNode({directory, port}: PreviewOptions) {
   const buildOutputPath = await path.resolve(directory, 'dist/node')
 
@@ -33,7 +37,7 @@ export async function previewInNode({directory, port}: PreviewOptions) {
   })
 }
 
-export async function previewInWorker({directory, port}: PreviewOptions) {
+export async function previewInWorker({directory, port, envPath}: PreviewOptionsWorker) {
   const config = {
     port,
     workerFile: 'dist/worker/index.js',
@@ -43,6 +47,7 @@ export async function previewInWorker({directory, port}: PreviewOptions) {
     watch: true,
     buildWatchPaths: ['./src'],
     autoReload: true,
+    ...(envPath && parseEnvPath(envPath)),
   }
 
   await file.write(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
@@ -51,6 +56,25 @@ export async function previewInWorker({directory, port}: PreviewOptions) {
     if (options.exit) {
       file.remove(path.resolve(directory, 'mini-oxygen.config.json'))
     }
+  }
+
+  function parseEnvPath(envPath: string): {env: {[key: string]: string}} {
+    const envConfig: {env: {[key: string]: string}} = {
+      env: {},
+    }
+
+    if (envPath) {
+      const variables = file.readSync(envPath)
+
+      variables.split('\n').forEach((entry) => {
+        const keyValue = entry.split('=')
+        const value = keyValue[1].replace(/['"]+/g, '')
+        const key = keyValue[0]
+        envConfig.env[key] = value
+      })
+    }
+
+    return envConfig
   }
 
   process.on('SIGINT', cleanUp.bind(null, {exit: true}))
