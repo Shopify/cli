@@ -7,5 +7,5 @@ group :test do
   gem 'json'
   gem 'minitest'
   gem 'pry-byebug'
-  gem 'yaml'
+  gem 'toml'
 end

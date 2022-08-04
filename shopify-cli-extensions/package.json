@@ -23,6 +23,9 @@
     "@shopify/admin-ui-extensions":"1.0.1",
     "@shopify/web-pixels-extension":"0.1.4",
     "@shopify/retail-ui-extensions":"0.10.0",
+    "graphql": "^15.5.1",
+    "graphql-tag": "^2.12.4",
+    "@apollo/client": "^3.4.8",
     "eslint": "^7.32.0",
     "lerna": "^4.0.0"
   }

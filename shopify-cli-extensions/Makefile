@@ -86,11 +86,9 @@ bootstrap: tmp build
 integration-test: tmp build
 	./shopify-extensions create testdata/extension.config.integration.yml
 	cd tmp/integration_test; yarn install
-	cd tmp/integration_test; rm -r node_modules/@shopify/shopify-cli-extensions
-	cd tmp/integration_test; cp -r ../../packages/shopify-cli-extensions node_modules/@shopify/shopify-cli-extensions
-	cd tmp/integration_test; cat extension.config.yml | \
-		ruby ../../support/merge_config.rb | \
-		../../shopify-extensions build -
+	cat tmp/integration_test/shopify.ui.extension.toml | \
+		ruby support/merge_config.rb | \
+		./shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
 	test -f tmp/integration_test/locales/en.default.json
 	for testfile in `find testdata/test -type f -name '*_test.rb'`; do ruby "$$testfile"; done

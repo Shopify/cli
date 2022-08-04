@@ -1,20 +1,26 @@
-public_url: https://example.ngrok.io
-store: example.myshopify.io
+---
 extensions:
-  - uuid: 00000000-0000-0000-0000-000000000000
-    type: integration_test
-    development:
-      root_dir: tmp/integration_test
-      build_dir: build
-      template: typescript-react
-      renderer:
-        name: "@shopify/checkout-ui-extensions"
-        version: ~> 0.14.0
-      entries:
-        main: src/index.tsx
-      build:
-        env:
-          CUSTOM_VAR: foo
-      develop:
-        env:
-          CUSTOM_VAR: bar
+- type: integration_test
+  name: Integration Test
+  title: Integration Test
+  node_executable: "../../packages/shopify-cli-extensions/cli.js"
+  extension_points:
+  - Playground
+  metafields:
+  - namespace: my-namespace
+    key: my-key
+  development:
+    template: 'javascript-react'
+    build_dir: build
+    root_dir: tmp/integration_test
+    entries:
+      main: src/index.jsx
+    renderer:
+      name: "@shopify/checkout-ui-extensions"
+      version: 0.17.1
+    build:
+      env:
+        CUSTOM_VAR: bar
+    develop:
+      env:
+        CUSTOM_VAR: foo
