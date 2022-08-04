@@ -1,6 +1,5 @@
 import init from './init.js'
 import {describe, it, expect, vi} from 'vitest'
-import {haiku} from '@shopify/cli-kit'
 
 describe('init', () => {
   it('when name is not passed', async () => {
@@ -24,9 +23,7 @@ describe('init', () => {
         name: 'name',
         preface: '\nWelcome. Let’s get started by naming your app. You can change it later.',
         message: "Your app's name?",
-        default: expect.stringMatching(
-          new RegExp(`^${haiku.SAFE_ADJECTIVES.join('|')}-${haiku.SAFE_NOUNS.join('|')}-app$`),
-        ),
+        default: expect.stringMatching(/^\w+-\w+-app$/),
         validate: expect.any(Function),
       },
     ])

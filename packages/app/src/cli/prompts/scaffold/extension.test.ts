@@ -1,7 +1,7 @@
 import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionFlavorQuestion} from './extension.js'
 import {extensions, getExtensionOutputConfig} from '../../constants.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {environment, haiku} from '@shopify/cli-kit'
+import {environment} from '@shopify/cli-kit'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -30,9 +30,7 @@ describe('extension prompt', async () => {
     type: 'input',
     name: 'name',
     message: "Your extension's working name?",
-    default: expect.stringMatching(
-      new RegExp(`^${haiku.SAFE_ADJECTIVES.join('|')}-${haiku.SAFE_NOUNS.join('|')}-ext$`),
-    ),
+    default: expect.stringMatching(/^\w+-\w+-ext$/),
   }
 
   it('when name is not passed', async () => {

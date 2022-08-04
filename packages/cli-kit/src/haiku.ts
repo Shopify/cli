@@ -1,4 +1,6 @@
-import {file, path} from './index'
+import {randomPick} from './array.js'
+import {exists} from './file.js'
+import {join} from './path.js'
 
 export const SAFE_ADJECTIVES = [
   'commercial',
@@ -54,23 +56,17 @@ export const SAFE_NOUNS = [
   'sale',
 ]
 
-export async function generate({
-  suffix,
-  directory,
-  randomPick = (array: string[]) => array[Math.floor(Math.random() * array.length)],
-}: {
-  suffix: string
-  directory: string
-  randomPick: (array: string[]) => string
-}): Promise<string> {
-  const adjective = randomPick(SAFE_ADJECTIVES)
-  const noun = randomPick(SAFE_NOUNS)
-  const generated = [adjective, noun, suffix].join('-')
-  const isAppDirectoryTaken = await file.exists(path.join(directory, generated))
+function generateRandomName() {
+  return `${randomPick(SAFE_ADJECTIVES)}-${randomPick(SAFE_NOUNS)}`
+}
+
+export async function generate({suffix, directory}: {suffix: string; directory: string}): Promise<string> {
+  const generated = `${generateRandomName()}-${suffix}`
+  const isAppDirectoryTaken = await exists(join(directory, generated))
 
   if (isAppDirectoryTaken) {
     // eslint-disable-next-line no-return-await
-    return await generate({suffix, directory, randomPick})
+    return await generate({suffix, directory})
   } else {
     return generated
   }

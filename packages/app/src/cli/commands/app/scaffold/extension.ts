@@ -80,7 +80,7 @@ export default class AppScaffoldExtension extends Command {
       extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
       extensionFlavor,
-      directory: `${directory}/extensions`,
+      directory: path.join(directory, 'extensions'),
     })
 
     const extensionDirectory = await scaffoldExtensionService({
