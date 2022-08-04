@@ -4,6 +4,7 @@ import {Select} from './enquirer/select.js'
 import {CustomInput} from './inquirer/input.js'
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
+import {CustomPassword} from './inquirer/password.js'
 import {isTruthy} from '../environment/utilities.js'
 import {Question} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
@@ -32,11 +33,16 @@ export async function run<
 function inquirerMapper(question: Question): unknown {
   switch (question.type) {
     case 'input':
-    case 'password':
       inquirer.registerPrompt('custom-input', CustomInput)
       return {
         ...question,
         type: 'custom-input',
+      }
+    case 'password':
+      inquirer.registerPrompt('custom-password', CustomPassword)
+      return {
+        ...question,
+        type: 'custom-password',
       }
     case 'select':
       inquirer.registerPrompt('custom-select', CustomSelect)
