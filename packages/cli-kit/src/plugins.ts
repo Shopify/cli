@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import {join, pathToFileURL} from './path.js'
 import {debug, content} from './output.js'
 import {JsonMap} from './json.js'
@@ -40,13 +39,15 @@ export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEven
   return Object.fromEntries(res.successes.map(({result, plugin}) => [plugin.name, result])) as any
 }
 
+type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'project_type' | 'api_key' | 'partner_id'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
+
 interface HookReturnsPerPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
-      '@shopify/app': Partial<
-        PickByPrefix<MonorailEventPublic, 'app_', 'project_type' | 'api_key' | 'partner_id'> & JsonMap
-      >
+      '@shopify/app': Partial<AppSpecificMonorailFields & JsonMap>
       [pluginName: string]: JsonMap
     }
   }

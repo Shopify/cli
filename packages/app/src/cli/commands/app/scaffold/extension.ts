@@ -8,6 +8,8 @@ import {
   isFunctionExtensionType,
   functionExtensionTemplates,
   ExternalExtensionTypes,
+  extensionTypeCategory,
+  extensionTypeIsGated,
 } from '../../../constants.js'
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
@@ -19,6 +21,7 @@ import {
   mapExtensionTypesToExternalExtensionTypes,
   mapExtensionTypeToExternalExtensionType,
 } from '../../../utilities/extensions/name-mapper.js'
+import metadata from '../../../metadata.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -64,6 +67,13 @@ export default class AppScaffoldExtension extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppScaffoldExtension)
+
+    metadata.addPublic({
+      cmd_scaffold_required_auth: false,
+      cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
+      cmd_scaffold_type_owner: '@shopify/app',
+    })
+
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
 
@@ -71,19 +81,28 @@ export default class AppScaffoldExtension extends Command {
 
     await this.validateExtensionType(flags.type)
     this.validateExtensionTypeLimit(app, flags.type)
-    const extensionFlavor = flags.template
-    this.validateExtensionFlavor(flags.type, extensionFlavor)
+    this.validateExtensionFlavor(flags.type, flags.template)
 
     const promptAnswers = await scaffoldExtensionPrompt({
       extensionType: flags.type,
       extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
-      extensionFlavor,
+      extensionFlavor: flags.template,
+    })
+
+    const {extensionType, extensionFlavor} = promptAnswers
+    metadata.addPublic({
+      cmd_scaffold_template_flavor: extensionFlavor,
+      cmd_scaffold_type: extensionType,
+      cmd_scaffold_type_family: extensionTypeCategory(extensionType),
+      cmd_scaffold_type_gated: extensionTypeIsGated(extensionType),
+      cmd_scaffold_used_prompts_for_type: extensionType !== flags.type,
     })
 
     const extensionDirectory = await scaffoldExtensionService({
       ...promptAnswers,
-      extensionType: promptAnswers.extensionType,
+      extensionFlavor,
+      extensionType,
       externalExtensionType: flags.type as ExternalExtensionTypes,
       app,
       cloneUrl: flags['clone-url'],

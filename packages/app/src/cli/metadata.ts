@@ -1,10 +1,15 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import {metadata as metadataLib} from '@shopify/cli-kit'
+import {metadata as metadataLib, monorail} from '@shopify/cli-kit'
+import type {PickByPrefix} from '@shopify/cli-kit/typing/pick-by-prefix'
 
-const metadata = metadataLib.createRuntimeMetadataContainer<{
-  project_type: string
-  partner_id: number
-  api_key: string
-}>()
+type CmdFieldsFromMonorail = PickByPrefix<monorail.MonorailEventPublic, 'cmd_extensions_'> &
+  PickByPrefix<monorail.MonorailEventPublic, 'cmd_scaffold_'>
+
+const metadata = metadataLib.createRuntimeMetadataContainer<
+  {
+    project_type: string
+    partner_id: number
+    api_key: string
+  } & CmdFieldsFromMonorail
+>()
 
 export default metadata

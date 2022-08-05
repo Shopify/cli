@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import {fetch} from './http.js'
 import {debug, content, token} from './output.js'
 import {JsonMap} from './json.js'
+import {DeepRequired} from './typing/deep-required.js'
 
 const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -36,13 +36,27 @@ export interface Schemas {
       cmd_all_plugin?: Optional<string>
       cmd_all_topic?: Optional<string>
       cmd_all_verbose?: Optional<boolean>
+
+      // Any extension related command
+      cmd_extensions_binary_from_source?: Optional<boolean>
+
+      // Scaffolding related commands
+      cmd_scaffold_required_auth?: Optional<boolean>
+      cmd_scaffold_template_custom?: Optional<boolean>
+      cmd_scaffold_template_flavor?: Optional<string>
+      cmd_scaffold_type?: Optional<string>
+      cmd_scaffold_type_family?: Optional<string>
+      cmd_scaffold_type_gated?: Optional<boolean>
+      cmd_scaffold_type_owner?: Optional<string>
+      cmd_scaffold_used_prompts_for_type?: Optional<boolean>
     }
   }
   [schemaId: string]: {sensitive: JsonMap; public: JsonMap}
 }
 
 // In reality, we're normally most interested in just this from Schemas, so export it for ease of use.
-export type MonorailEventPublic = Schemas[typeof MONORAIL_COMMAND_TOPIC]['public']
+// The monorail schema itself has lots of optional values as it must be backwards-compatible. For our schema we want mandatory values instead.
+export type MonorailEventPublic = DeepRequired<Schemas[typeof MONORAIL_COMMAND_TOPIC]['public']>
 export type MonorailEventSensitive = Schemas[typeof MONORAIL_COMMAND_TOPIC]['sensitive']
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
