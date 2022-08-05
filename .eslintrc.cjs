@@ -67,7 +67,7 @@ module.exports = {
         },
       },
       {
-        selector: 'objectLiteralProperty',
+        selector: ['objectLiteralProperty', 'typeProperty'],
         format: null,
       },
     ],
