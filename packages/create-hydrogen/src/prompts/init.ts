@@ -2,7 +2,7 @@ import {ui, github, string, output} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
-/* eslint-disable @typescript-eslint/naming-convention */
+
 const TEMPLATE_NAME_DATA = {
   'demo-store': {name: 'Demo Store'},
   'hello-world': {name: 'Hello World'},
@@ -12,7 +12,6 @@ const LANGUAGE_NAME_DATA = {
   js: {name: 'JavaScript'},
   ts: {name: 'TypeScript'},
 }
-/* eslint-enable @typescript-eslint/naming-convention */
 
 const TEMPLATE_NAMES = Object.keys(TEMPLATE_NAME_DATA)
 const LANGUAGE_NAMES = Object.keys(LANGUAGE_NAME_DATA)
