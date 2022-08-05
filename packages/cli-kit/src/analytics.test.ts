@@ -27,6 +27,8 @@ describe('event tracking', () => {
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
     vi.mocked(environment.local.isDebug).mockReturnValue(false)
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
+    vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
+    vi.mocked(environment.local.webIDEPlatform).mockReturnValue(undefined)
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
@@ -67,6 +69,7 @@ describe('event tracking', () => {
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config})
 
@@ -103,6 +106,7 @@ describe('event tracking', () => {
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config, errorMessage: 'Permission denied'})
 
@@ -141,6 +145,7 @@ describe('event tracking', () => {
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config})
 
@@ -162,6 +167,7 @@ describe('event tracking', () => {
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config})
 

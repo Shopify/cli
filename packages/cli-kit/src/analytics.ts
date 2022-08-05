@@ -119,8 +119,6 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
 }
 
 function getEnvironmentData(config: Interfaces.Config) {
-  const {platform, arch} = platformAndArch()
-
   const ciPlatform = environment.local.ciPlatform()
 
   const pluginNames = config.plugins
