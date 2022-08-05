@@ -82,10 +82,10 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
     directory = resolve(startArgs[pathFlagIndex + 1])
   }
 
-  const {platform, arch} = platformAndArch()
-
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
   const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
+
+  const {platform, arch, ...environmentData} = getEnvironmentData(config)
 
   return {
     public: {
@@ -99,6 +99,7 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
+      ...environmentData,
       ...appPublic,
       ...metadata.getAllPublic(),
     },
@@ -114,5 +115,27 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
         extraSensitive: sensitivePluginData,
       }),
     },
+  }
+}
+
+function getEnvironmentData(config: Interfaces.Config) {
+  const {platform, arch} = platformAndArch()
+
+  const ciPlatform = environment.local.ciPlatform()
+
+  const pluginNames = config.plugins
+    .map((plugin) => plugin.name)
+    .sort()
+    .filter((plugin) => !plugin.startsWith('@oclif/'))
+  const shopifyPlugins = pluginNames.filter((plugin) => plugin.startsWith('@shopify/'))
+
+  return {
+    ...platformAndArch(),
+    env_ci: ciPlatform.isCI,
+    env_ci_platform: ciPlatform.name,
+    env_plugin_installed_any_custom: pluginNames.length !== shopifyPlugins.length,
+    env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
+    env_shell: config.shell,
+    env_web_ide: environment.local.webIDEPlatform(),
   }
 }

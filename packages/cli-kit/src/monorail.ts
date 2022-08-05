@@ -72,6 +72,14 @@ export interface Schemas {
       app_web_custom_layout?: Optional<boolean>
       app_web_frontend_any?: Optional<boolean>
       app_web_frontend_count?: Optional<number>
+
+      // Environment
+      env_ci?: Optional<boolean>
+      env_ci_platform?: Optional<string>
+      env_plugin_installed_any_custom?: Optional<boolean>
+      env_plugin_installed_shopify?: Optional<string>
+      env_shell?: Optional<string>
+      env_web_ide?: Optional<string>
     }
   }
   [schemaId: string]: {sensitive: JsonMap; public: JsonMap}
