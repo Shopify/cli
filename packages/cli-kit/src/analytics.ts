@@ -27,8 +27,8 @@ export const start = ({command, args, currentTime = new Date().getTime(), comman
     },
   })
   metadata.addPublic({
-    cmd_launcher: packageManagerUsedForCreating(),
-    cmd_plugin: commandClass?.plugin?.name,
+    cmd_all_launcher: packageManagerUsedForCreating(),
+    cmd_all_plugin: commandClass?.plugin?.name,
   })
 }
 

@@ -32,8 +32,8 @@ export default abstract class extends Command {
 
 export function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
   addPublic({
-    cmd_verbose: flags.verbose,
-    cmd_path_override: flags.path !== undefined,
-    cmd_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),
+    cmd_all_verbose: flags.verbose,
+    cmd_all_path_override: flags.path !== undefined,
+    cmd_all_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),
   })
 }

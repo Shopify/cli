@@ -62,8 +62,8 @@ type DeepRequired<T> = {
 // The monorail schema itself has lots of optional values as it must be backwards-compatible. For our schema we want mandatory values instead.
 type PublicMonorailSchema = DeepRequired<MonorailEventPublic>
 
-// We want to track anything that ends up getting sent to monorail as `cmd_*`
-type CmdFieldsFromMonorail = PickByPrefix<PublicMonorailSchema, 'cmd_'>
+// We want to track anything that ends up getting sent to monorail as `cmd_all_*`
+type CmdFieldsFromMonorail = PickByPrefix<PublicMonorailSchema, 'cmd_all_'>
 
 const coreData = createRuntimeMetadataContainer<
   CmdFieldsFromMonorail,

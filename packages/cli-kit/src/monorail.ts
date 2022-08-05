@@ -27,13 +27,15 @@ export interface Schemas {
       ruby_version: string
       node_version: string
       is_employee: boolean
-      cmd_alias_used?: Optional<string>
-      cmd_launcher?: Optional<string>
-      cmd_path_override?: Optional<boolean>
-      cmd_path_override_hash?: Optional<string>
-      cmd_plugin?: Optional<string>
-      cmd_topic?: Optional<string>
-      cmd_verbose?: Optional<boolean>
+
+      // Any and all commands
+      cmd_all_alias_used?: Optional<string>
+      cmd_all_launcher?: Optional<string>
+      cmd_all_path_override?: Optional<boolean>
+      cmd_all_path_override_hash?: Optional<string>
+      cmd_all_plugin?: Optional<string>
+      cmd_all_topic?: Optional<string>
+      cmd_all_verbose?: Optional<boolean>
     }
   }
   [schemaId: string]: {sensitive: JsonMap; public: JsonMap}
