@@ -47,7 +47,7 @@ interface HookReturnsPerPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
-      '@shopify/app': Partial<AppSpecificMonorailFields & JsonMap>
+      '@shopify/app': Partial<AppSpecificMonorailFields>
       [pluginName: string]: JsonMap
     }
   }

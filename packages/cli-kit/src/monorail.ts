@@ -49,6 +49,29 @@ export interface Schemas {
       cmd_scaffold_type_gated?: Optional<boolean>
       cmd_scaffold_type_owner?: Optional<string>
       cmd_scaffold_used_prompts_for_type?: Optional<boolean>
+
+      // App setup
+      app_extensions_any?: Optional<boolean>
+      app_extensions_breakdown?: Optional<string>
+      app_extensions_count?: Optional<number>
+      app_extensions_custom_layout?: Optional<boolean>
+      app_extensions_function_any?: Optional<boolean>
+      app_extensions_function_count?: Optional<number>
+      app_extensions_function_custom_layout?: Optional<boolean>
+      app_extensions_theme_any?: Optional<boolean>
+      app_extensions_theme_count?: Optional<number>
+      app_extensions_theme_custom_layout?: Optional<boolean>
+      app_extensions_ui_any?: Optional<boolean>
+      app_extensions_ui_count?: Optional<number>
+      app_extensions_ui_custom_layout?: Optional<boolean>
+      app_name_hash?: Optional<string>
+      app_path_hash?: Optional<string>
+      app_scopes?: Optional<string>
+      app_web_backend_any?: Optional<boolean>
+      app_web_backend_count?: Optional<number>
+      app_web_custom_layout?: Optional<boolean>
+      app_web_frontend_any?: Optional<boolean>
+      app_web_frontend_count?: Optional<number>
     }
   }
   [schemaId: string]: {sensitive: JsonMap; public: JsonMap}

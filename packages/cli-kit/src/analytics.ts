@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import * as environment from './environment.js'
 import {platformAndArch} from './os.js'
 import {resolve} from './path.js'
@@ -86,22 +85,6 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
   const {platform, arch} = platformAndArch()
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
-  const {
-    partner_id,
-    project_type,
-    api_key,
-    cmd_extensions_binary_from_source,
-    cmd_scaffold_required_auth,
-    cmd_scaffold_template_custom,
-    cmd_scaffold_template_flavor,
-    cmd_scaffold_type,
-    cmd_scaffold_type_family,
-    cmd_scaffold_type_gated,
-    cmd_scaffold_type_owner,
-    cmd_scaffold_used_prompts_for_type,
-    ...otherShopifyAppPublic
-  } = appPublic ?? {}
-
   const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
 
   return {
@@ -116,18 +99,7 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
-      partner_id,
-      api_key,
-      project_type,
-      cmd_extensions_binary_from_source,
-      cmd_scaffold_required_auth,
-      cmd_scaffold_template_custom,
-      cmd_scaffold_template_flavor,
-      cmd_scaffold_type,
-      cmd_scaffold_type_family,
-      cmd_scaffold_type_gated,
-      cmd_scaffold_type_owner,
-      cmd_scaffold_used_prompts_for_type,
+      ...appPublic,
       ...metadata.getAllPublic(),
     },
     sensitive: {
@@ -136,7 +108,7 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       metadata: JSON.stringify({
         ...sensitiveMetadata,
         extraPublic: {
-          '@shopify/app': otherShopifyAppPublic,
+          // '@shopify/app': otherShopifyAppPublic,
           ...otherPluginsPublic,
         },
         extraSensitive: sensitivePluginData,
