@@ -7,13 +7,14 @@ import * as ruby from './node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {cliKitStore} from './store.js'
 import constants from './constants.js'
-import {publishEvent} from './monorail.js'
+import {MONORAIL_COMMAND_TOPIC, publishEvent} from './monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
-import {it, expect, describe, vi, beforeEach, afterEach} from 'vitest'
+import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
-  const schema = 'app_cli3_command/1.0'
+  const schema = MONORAIL_COMMAND_TOPIC
+  let publishEventMock: MockedFunction<typeof publishEvent>
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
@@ -29,7 +30,7 @@ describe('event tracking', () => {
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
-    vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
+    publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
 
     vi.mocked(cliKitStore).mockReturnValue({
       setSession: vi.fn(),
@@ -88,7 +89,9 @@ describe('event tracking', () => {
         args: args.join(' '),
         metadata: expect.anything(),
       }
-      expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -123,7 +126,9 @@ describe('event tracking', () => {
         error_message: 'Permission denied',
         metadata: expect.anything(),
       }
-      expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 

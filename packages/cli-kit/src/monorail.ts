@@ -7,8 +7,11 @@ const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
 type Optional<T> = T | null
 
+// This is the topic name of the main event we log to Monorail, the command tracker
+export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.0' as const
+
 export interface Schemas {
-  'app_cli3_command/1.0': {
+  [MONORAIL_COMMAND_TOPIC]: {
     sensitive: {args: string; error_message?: Optional<string>; metadata?: Optional<string>}
     public: {
       partner_id?: Optional<number>
@@ -24,10 +27,21 @@ export interface Schemas {
       ruby_version: string
       node_version: string
       is_employee: boolean
+      cmd_alias_used?: Optional<string>
+      cmd_launcher?: Optional<string>
+      cmd_path_override?: Optional<boolean>
+      cmd_path_override_hash?: Optional<string>
+      cmd_plugin?: Optional<string>
+      cmd_topic?: Optional<string>
+      cmd_verbose?: Optional<boolean>
     }
   }
   [schemaId: string]: {sensitive: JsonMap; public: JsonMap}
 }
+
+// In reality, we're normally most interested in just this from Schemas, so export it for ease of use.
+export type MonorailEventPublic = Schemas[typeof MONORAIL_COMMAND_TOPIC]['public']
+export type MonorailEventSensitive = Schemas[typeof MONORAIL_COMMAND_TOPIC]['sensitive']
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
 

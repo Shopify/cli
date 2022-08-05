@@ -1,4 +1,6 @@
 import {AnyJson} from './json.js'
+import {MonorailEventPublic} from './monorail.js'
+import {PickByPrefix} from './typing/pick-by-prefix.js'
 
 export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
   /** Add some public metadata -- this should not contain any PII */
@@ -44,8 +46,27 @@ export function createRuntimeMetadataContainer<
   }
 }
 
+/**
+ * Converts a mapping type to be non-optional
+ *
+ * ```
+ * type T = DeepRequired<{optionalKey?: string, nullableValue: string | null, undefinableValue: string | undefined}>
+ * T = {optionalKey: string, nullableValue: string, undefinableValue: string}
+ * ```
+ *
+ */
+type DeepRequired<T> = {
+  [TKey in keyof Required<T>]: NonNullable<Required<T>[TKey]>
+}
+
+// The monorail schema itself has lots of optional values as it must be backwards-compatible. For our schema we want mandatory values instead.
+type PublicMonorailSchema = DeepRequired<MonorailEventPublic>
+
+// We want to track anything that ends up getting sent to monorail as `cmd_*`
+type CmdFieldsFromMonorail = PickByPrefix<PublicMonorailSchema, 'cmd_'>
+
 const coreData = createRuntimeMetadataContainer<
-  {placeholder: string},
+  CmdFieldsFromMonorail,
   {
     commandStartOptions: {
       startTime: number

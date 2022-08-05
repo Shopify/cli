@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {join, pathToFileURL} from './path.js'
 import {debug, content} from './output.js'
-import {Schemas} from './monorail.js'
+import {JsonMap} from './json.js'
+import {PickByPrefix} from './typing/pick-by-prefix.js'
+import {MonorailEventPublic} from './monorail.js'
 import {Interfaces} from '@oclif/core'
 
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
@@ -43,16 +45,14 @@ interface HookReturnsPerPlugin {
     options: {[key: string]: never}
     pluginReturns: {
       '@shopify/app': Partial<
-        Pick<Schemas['app_cli3_command/1.0']['public'], 'project_type' | 'api_key' | 'partner_id'> & {
-          [key: string]: unknown
-        }
+        PickByPrefix<MonorailEventPublic, 'app_', 'project_type' | 'api_key' | 'partner_id'> & JsonMap
       >
-      [pluginName: string]: {[key: string]: unknown}
+      [pluginName: string]: JsonMap
     }
   }
   [hookName: string]: {
     options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: {[key: string]: unknown}}
+    pluginReturns: {[key: string]: JsonMap}
   }
 }
 

@@ -6,23 +6,29 @@ import {version as rubyVersion} from './node/ruby.js'
 import {content, debug, token} from './output.js'
 import constants from './constants.js'
 import * as metadata from './metadata.js'
-import {publishEvent} from './monorail.js'
+import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
+import {packageManagerUsedForCreating} from './node/node-package-manager.js'
 import {Interfaces} from '@oclif/core'
 
 interface StartOptions {
   command: string
   args: string[]
   currentTime?: number
+  commandClass?: Interfaces.Command.Class
 }
 
-export const start = ({command, args, currentTime = new Date().getTime()}: StartOptions) => {
+export const start = ({command, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
   metadata.addSensitive({
     commandStartOptions: {
       startTime: currentTime,
       startCommand: command,
       startArgs: args,
     },
+  })
+  metadata.addPublic({
+    cmd_launcher: packageManagerUsedForCreating(),
+    cmd_plugin: commandClass?.plugin?.name,
   })
 }
 
@@ -48,7 +54,7 @@ export async function reportEvent(options: ReportEventOptions) {
       debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
-    const response = await publishEvent('app_cli3_command/1.0', payload.public, payload.sensitive)
+    const response = await publishEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
     if (response.type === 'error') {
       debug(response.message)
     }
@@ -103,6 +109,7 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
       ...appSpecific,
+      ...metadata.getAllPublic(),
     },
     sensitive: {
       args: startArgs.join(' '),
