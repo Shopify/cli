@@ -24,6 +24,10 @@ function sha256(str: string) {
   return crypto.createHash('sha256').update(str).digest()
 }
 
+export function hashString(str: string): string {
+  return crypto.createHash('sha1').update(str).digest('hex')
+}
+
 /**
  * Given a string, it returns it with the first letter capitalized.
  * @param string {string} String whose first letter will be caplitalized.
