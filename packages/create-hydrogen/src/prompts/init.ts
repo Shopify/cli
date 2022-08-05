@@ -1,4 +1,4 @@
-import {ui, github, string} from '@shopify/cli-kit'
+import {ui, github, string, output} from '@shopify/cli-kit'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
@@ -30,6 +30,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   // If the template is passed through the CLI, then it can either be a Shopify template name (hello-world or demo-store)
   // or a custom URL to any template.
   if (explicitTemplate) {
+    warnIfDeprecatedTemplateNameFormat(explicitTemplate)
     const hydrogenTemplate =
       checkIfShopifyTemplateName(explicitTemplate, 'js') || checkIfShopifyTemplateName(explicitTemplate, 'ts')
     isAShopifyTemplateName = Boolean(hydrogenTemplate)
@@ -91,16 +92,36 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
  *
  * @param templateName: The name of the template to check.
  * @param language: The language of the template, only provided if the template is a Shopify template
- * @returns: The fully-formed template URL if it's a Shopify template, false otherwise.
+ * @returns: The fully-formed template name (with the language suffixed) if it's a Shopify template, false otherwise.
  */
 const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
   if (!templateName) return false
 
   const normalized = string.hyphenize(templateName).toLocaleLowerCase()
-  const withExtension =
-    normalized.endsWith('-ts') || normalized.endsWith('-js') ? normalized : `${normalized}-${language}`
-
+  const endsWithLang = normalized.endsWith('-ts') || normalized.endsWith('-js')
+  const withExtension = endsWithLang ? normalized : `${normalized}-${language}`
   return TEMPLATE_NAMES.includes(normalized) ? withExtension : false
+}
+
+/**
+ * Lets the user know if they're trying to use a template in the old naming format.
+ *
+ * @param templateName: The name of the template to check.
+ * @returns: True if the template name is in the old format, false otherwise.
+ */
+const warnIfDeprecatedTemplateNameFormat = (templateName: string): void => {
+  const normalized = string.hyphenize(templateName).toLocaleLowerCase()
+  const endsWithLang = normalized.endsWith('-ts') || normalized.endsWith('-js')
+  if (endsWithLang) {
+    const template = normalized.slice(0, -3)
+    const lang = normalized.slice(-2)
+    const ts = lang === 'ts'
+    output.warn(
+      `The ${normalized} template has been deprecated. Use --template ${template} ${
+        ts ? `--${lang} ` : ''
+      }to install the ${ts ? 'TypeScript' : 'JavaScript'} template.`,
+    )
+  }
 }
 
 /**
