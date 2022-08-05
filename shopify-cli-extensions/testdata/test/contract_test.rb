@@ -2,7 +2,7 @@
 
 require 'minitest/autorun'
 require 'json'
-require 'toml'
+require 'toml-rb'
 
 module ContractTest
   class TestMergeConfig < Minitest::Test
@@ -10,7 +10,7 @@ module ContractTest
     def test_shopify_ui_extension_toml_contents
       assert File.exist?('tmp/integration_test/shopify.ui.extension.toml')
 
-      extension_config_toml = TOML.load_file('tmp/integration_test/shopify.ui.extension.toml')
+      extension_config_toml = TomlRB.load_file('tmp/integration_test/shopify.ui.extension.toml')
       type = extension_config_toml['type']
       name = extension_config_toml['name']
       extension_points = extension_config_toml['extension_points']

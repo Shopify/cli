@@ -19,7 +19,7 @@ func makeDummyRunner(path, executable string, args ...string) Runner {
 	return dummyRunner{}
 }
 
-func TestMergeTemplatesYAML(t *testing.T) {
+func TestMergeTemplatesTOML(t *testing.T) {
 	Command = makeDummyRunner
 	LookPath = func(file string) (string, error) {
 		return file, nil
@@ -223,18 +223,4 @@ func TestCreateLocaleFiles(t *testing.T) {
 	t.Cleanup(func() {
 		os.RemoveAll(rootDir)
 	})
-}
-
-type packageJSON struct {
-	Name            string            `json:"name"`
-	DevDependencies map[string]string `json:"devDependencies"`
-	Dependencies    map[string]string `json:"dependencies"`
-	License         string            `json:"license"`
-	Scripts         map[string]string `json:"scripts"`
-}
-
-type shopifyCLIYML struct {
-	ProjectType    string `yaml:"project_type"`
-	OrganizationId string `yaml:"organization_id"`
-	ExtensionType  string `yaml:"EXTENSION_TYPE"`
 }

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+
 	"github.com/Shopify/shopify-cli-extensions/core"
 	"gopkg.in/yaml.v3"
 )
@@ -85,7 +86,7 @@ func Watch(extension core.Extension, report ResultHandler) {
 	}
 	ensureBuildDirectoryExists(extension)
 
-	if err:= command.Start(); err != nil {
+	if err := command.Start(); err != nil {
 		reportAndUpdateDevelopmentStatus(Result{false, err.Error(), extension}, report)
 	}
 

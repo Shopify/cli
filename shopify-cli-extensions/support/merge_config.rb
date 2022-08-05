@@ -1,7 +1,7 @@
 require 'yaml'
-require 'toml'
+require 'toml-rb'
 
-config = TOML.load(STDIN.read).tap do |config|
+config = TomlRB.parse(STDIN.read).tap do |config|
   config['type'] = 'integration_test'
   config['node_executable'] = '../../packages/shopify-cli-extensions/cli.js'
   config['development'] ||= {}

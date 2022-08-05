@@ -87,11 +87,11 @@ integration-test: tmp build
 	./shopify-extensions create testdata/extension.config.integration.yml
 	cd tmp/integration_test; yarn install
 	cat tmp/integration_test/shopify.ui.extension.toml | \
-		ruby support/merge_config.rb | \
+		bundle exec ruby support/merge_config.rb | \
 		./shopify-extensions build -
 	test -f tmp/integration_test/build/main.js
 	test -f tmp/integration_test/locales/en.default.json
-	for testfile in `find testdata/test -type f -name '*_test.rb'`; do ruby "$$testfile"; done
+	for testfile in `find testdata/test -type f -name '*_test.rb'`; do bundle exec ruby "$$testfile"; done
 
 .PHONY: update-version
 update-version:
