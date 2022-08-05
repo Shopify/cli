@@ -146,7 +146,7 @@ export async function ensureDevEnvironment(
     .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore?.shopDomain})
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, options.app, selectedStore.shopDomain)
+    showReusedValues(organization.businessName, selectedApp.title, selectedStore.shopDomain, options.app.packageManager)
   }
 
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
@@ -366,14 +366,14 @@ async function selectOrg(token: string): Promise<string> {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showReusedValues(org: string, app: AppInterface, store: string) {
+function showReusedValues(org: string, appName: string, store: string, packageManager: PackageManager): void {
   output.info('\nUsing your previous dev settings:')
   output.info(`Org:        ${org}`)
-  output.info(`App:        ${app.name}`)
+  output.info(`App:        ${appName}`)
   output.info(`Dev store:  ${store}\n`)
   output.info(
     output.content`To reset your default dev config, run ${output.token.packagejsonScript(
-      app.packageManager,
+      packageManager,
       'dev',
       '--reset',
     )}\n`,
