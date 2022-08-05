@@ -5,8 +5,8 @@
   "scripts": {
     "clean": "cd .",
     "build": "cd .",
-    "lint": "prettier -c **/*.ts && eslint **/*.ts",
-    "lint:fix": "prettier -w **/*.ts && eslint **/*.ts --fix",
+    "lint": "eslint **/*.ts",
+    "lint:fix": "eslint **/*.ts --fix",
     "test": "cucumber-js -p default",
     "tsc": "tsc --noEmit"
   },

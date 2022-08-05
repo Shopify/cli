@@ -45,7 +45,6 @@ export default class AppScaffoldExtension extends Command {
       description: 'name of your Extension',
       env: 'SHOPIFY_FLAG_NAME',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'clone-url': Flags.string({
       hidden: true,
       char: 'u',

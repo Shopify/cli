@@ -38,7 +38,6 @@ export default class Init extends Command {
        - Any GitHub repo with optional branch and subpath eg: https://github.com/Shopify/<repository>/[subpath]#[branch]`,
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'package-manager': Flags.string({
       char: 'd',
       env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',

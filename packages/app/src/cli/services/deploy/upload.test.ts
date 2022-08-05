@@ -81,7 +81,6 @@ describe('uploadFunctionExtensions', () => {
       inputQueryPath: () => '/function/input.graphql',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'my-function',
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       metadata: {schemaVersions: {payment_methods: {major: 1, minor: 0}}},
       type: 'payment_methods',
       graphQLType: 'payment_methods',
@@ -318,7 +317,7 @@ describe('uploadFunctionExtensions', () => {
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
@@ -398,7 +397,7 @@ describe('uploadFunctionExtensions', () => {
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
@@ -478,7 +477,7 @@ describe('uploadFunctionExtensions', () => {
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })

@@ -43,7 +43,6 @@ describe('partners-api', () => {
 
   test('request is called with correct parameters', async () => {
     // Given
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = {'custom-header': mockedToken}
     vi.mocked(client.request).mockResolvedValue(mockedResult)
     vi.mocked(client.request).mockResolvedValue(headers)

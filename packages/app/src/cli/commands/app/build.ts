@@ -12,14 +12,12 @@ export default class Build extends Command {
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
       description: 'Skips the installation of dependencies.',
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'api-key': Flags.string({
       hidden: false,
       description: "Application's API key that will be exposed at build time.",

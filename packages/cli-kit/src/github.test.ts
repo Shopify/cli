@@ -147,17 +147,13 @@ describe('parseGithubRepoReference', () => {
 function createMockRelease(size = 1, mocks: Partial<GithubRelease> = {}): GithubRelease[] {
   return Array.from({length: size}, (_, index) => ({
     id: index,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     tag_name: 'v1.0.0',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     tarball_url: '',
     assets: [],
     body: '',
     draft: false,
     prerelease: false,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     created_at: '',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     published_at: '',
     url: '',
     name: '',

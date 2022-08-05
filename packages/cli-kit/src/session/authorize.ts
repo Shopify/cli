@@ -31,7 +31,6 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
 
   const {codeVerifier, codeChallenge} = generateRandomChallengePair()
 
-  /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
     client_id: identityClientId,
     scope: scopes.join(' '),
@@ -41,7 +40,6 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
     code_challenge_method: 'S256',
     code_challenge: codeChallenge,
   }
-  /* eslint-enable @typescript-eslint/naming-convention */
 
   output.info('\nTo run this command, log in to Shopify Partners.')
   output.info('👉 Press any key to open the login page on your browser')

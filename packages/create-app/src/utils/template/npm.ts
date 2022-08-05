@@ -20,11 +20,8 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
     packageJSON.dependencies['@shopify/app'] = appPath
 
     const dependencyOverrides = {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli': cliPath,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/app': appPath,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli-kit': cliKitPath,
     }
 
