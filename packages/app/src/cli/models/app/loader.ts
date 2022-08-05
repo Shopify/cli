@@ -77,7 +77,7 @@ class AppLoader {
       extensionsPath,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
-    const name = await getPackageName(packageJSONPath)
+    const name = (await getPackageName(packageJSONPath)) ?? path.basename(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()

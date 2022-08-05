@@ -154,7 +154,7 @@ export async function installNodeModules(
  * @param packageJsonPath {string} Path to the package.json file
  * @returns A promise that resolves with the name.
  */
-export async function getPackageName(packageJsonPath: string): Promise<string> {
+export async function getPackageName(packageJsonPath: string): Promise<string | undefined> {
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return packageJsonContent.name
 }
@@ -198,14 +198,9 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
  */
 interface PackageJson {
   /**
-   * The absolute path to the package.json
-   */
-  path: string
-
-  /**
    * The name attribute of the package.json
    */
-  name: string
+  name?: string
 
   /**
    * The version attribute of the package.json
