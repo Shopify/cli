@@ -17,7 +17,6 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
   const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
 
   const headers = {
-    /* eslint-disable @typescript-eslint/naming-convention */
     'User-Agent': userAgent,
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
@@ -26,7 +25,6 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
     'X-Shopify-Access-Token': `Bearer ${token}`,
     'Content-Type': 'application/json',
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
-    /* eslint-enable @typescript-eslint/naming-convention */
   }
 
   return headers

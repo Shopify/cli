@@ -34,21 +34,18 @@ export default class Init extends Command {
       parse: (input, _) => Promise.resolve(path.resolve(input)),
       hidden: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'package-manager': Flags.string({
       char: 'd',
       env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
       hidden: false,
       options: ['npm', 'yarn', 'pnpm'],
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'shopify-cli-version': Flags.string({
       description: 'The version of the Shopify CLI to use.',
       char: 's',
       env: 'SHOPIFY_FLAG_SHOPIFY_CLI_VERSION',
       hidden: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'hydrogen-version': Flags.string({
       description: 'The version of Hydrogen to use.',
       char: 'h',

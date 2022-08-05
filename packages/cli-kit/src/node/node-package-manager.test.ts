@@ -23,7 +23,6 @@ const mockedExec = vi.mocked(exec)
 describe('packageManagerUsedForCreating', () => {
   it('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
     // Given
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const env = {npm_config_user_agent: 'yarn/1.22.17'}
 
     // When
@@ -35,7 +34,6 @@ describe('packageManagerUsedForCreating', () => {
 
   it('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
     // Given
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const env = {npm_config_user_agent: 'pnpm'}
 
     // When

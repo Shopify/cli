@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import {loadLocalesConfig} from './locales-configuration.js'
 import {describe, expect, it} from 'vitest'
 import {file, path} from '@shopify/cli-kit'

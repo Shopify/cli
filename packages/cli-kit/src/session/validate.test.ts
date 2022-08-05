@@ -31,7 +31,6 @@ const validApplications = {
     expiresAt: futureDate,
     scopes: ['scope'],
   },
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   'storefront-renderer': {
     accessToken: 'access_token',
     expiresAt: futureDate,
@@ -50,7 +49,6 @@ const expiredApplications = {
     expiresAt: pastDate,
     scopes: ['scope'],
   },
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   'storefront-renderer': {
     accessToken: 'access_token',
     expiresAt: pastDate,

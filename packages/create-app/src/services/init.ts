@@ -58,9 +58,7 @@ async function init(options: InitOptions) {
               task: async (_, task) => {
                 task.title = 'Parsing liquid'
                 await template.recursiveDirectoryCopy(templatePathDir, templateScaffoldDir, {
-                  // eslint-disable-next-line @typescript-eslint/naming-convention
                   dependency_manager: packageManager,
-                  // eslint-disable-next-line @typescript-eslint/naming-convention
                   app_name: options.name,
                 })
 
