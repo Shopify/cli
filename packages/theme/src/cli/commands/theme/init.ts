@@ -18,7 +18,6 @@ export default class Init extends Command {
   static flags = {
     ...cli.globalFlags,
     ...themeFlags,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'clone-url': Flags.string({
       char: 'u',
       description:

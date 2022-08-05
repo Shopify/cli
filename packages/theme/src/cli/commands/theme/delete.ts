@@ -16,7 +16,6 @@ export default class Delete extends ThemeCommand {
       description: 'Delete your development theme.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'show-all': Flags.boolean({
       char: 'a',
       description: 'Include others development themes in theme list.',
