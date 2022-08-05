@@ -30,13 +30,13 @@ describe('extension prompt', async () => {
     type: 'input',
     name: 'name',
     message: "Your extension's working name?",
-    default: expect.stringMatching(/^\w+-\w+-ext-\d+$/),
+    default: expect.stringMatching(/^\w+-\w+-ext$/),
   }
 
   it('when name is not passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'ext'}
-    const options = {extensionTypesAlreadyAtQuota: []}
+    const options = {extensionTypesAlreadyAtQuota: [], directory: '/'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -52,7 +52,7 @@ describe('extension prompt', async () => {
   it('when name is passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'my-special-extension'}
-    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: []}
+    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: [], directory: '/'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -68,7 +68,7 @@ describe('extension prompt', async () => {
   it('when extensionTypesAlreadyAtQuota is not empty', async () => {
     const prompt = vi.fn()
     const answers = {name: 'my-special-extension'}
-    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: ['theme']}
+    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: ['theme'], directory: '/'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -95,6 +95,7 @@ describe('extension prompt', async () => {
       name: 'my-special-extension',
       extensionTypesAlreadyAtQuota: [],
       extensionType: 'checkout_post_purchase',
+      directory: '/',
     }
 
     // Given
@@ -116,6 +117,7 @@ describe('extension prompt', async () => {
       name: 'my-special-extension',
       extensionTypesAlreadyAtQuota: [],
       extensionType: 'theme',
+      directory: '/',
     }
 
     // Given
@@ -137,6 +139,7 @@ describe('extension prompt', async () => {
       name: 'my-product-discount',
       extensionTypesAlreadyAtQuota: [],
       extensionType: 'product_discounts',
+      directory: '/',
     }
 
     // Given

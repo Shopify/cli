@@ -19,7 +19,7 @@ export function stripUp(path: string, strip: number) {
 }
 
 /**
- * Creates a temporary directory and ties its lifecycle ot the lifecycle of the callback.
+ * Creates a temporary directory and ties its lifecycle to the lifecycle of the callback.
  * @param callback - The callback that receives the temporary directory.
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {

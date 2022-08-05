@@ -2118,11 +2118,6 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.5.tgz#5f19d2b85a98e9558036f6a3cacc8819420f05cf"
   integrity sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==
 
-"@types/random-seed@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@types/random-seed/-/random-seed-0.3.3.tgz#7741f7b0a4513198a9396ce4ad25832f799a6727"
-  integrity sha512-kHsCbIRHNXJo6EN5W8EA5b4i1hdT6jaZke5crBPLUcLqaLdZ0QBq8QVMbafHzhjFF83Cl9qlee2dChD18d/kPg==
-
 "@types/react-reconciler@^0.26.0":
   version "0.26.7"
   resolved "https://registry.yarnpkg.com/@types/react-reconciler/-/react-reconciler-0.26.7.tgz#0c4643f30821ae057e401b0d9037e03e8e9b2a36"
@@ -5759,15 +5754,6 @@ graphql@^16.3.0, graphql@^16.4.0:
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.5.0.tgz#41b5c1182eaac7f3d47164fb247f61e4dfb69c85"
   integrity sha512-qbHgh8Ix+j/qY+a/ZcJnFQ+j8ezakqPiHwPiZhV/3PgGlgf96QMBB5/f2rkiC9sgLoy/xvT6TSiaf2nTHJh5iA==
 
-haikunator@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/haikunator/-/haikunator-2.1.2.tgz#4e9c8105c22f05e4e28b54a7f74736e24af95a27"
-  integrity sha512-8xTQw2yomVQWG1mLJKD7RrwXN8PkgRYKDShOBhtlu2MqOTboc4O5dVYhPgLigcKMAtwJ0GZty5N44EbLGZN3FA==
-  dependencies:
-    "@types/random-seed" "^0.3.3"
-    lodash.defaults "^4.2.0"
-    random-seed "^0.3.0"
-
 hard-rejection@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/hard-rejection/-/hard-rejection-2.1.0.tgz#1c6eda5c1685c63942766d79bb40ae773cecd883"
@@ -6892,11 +6878,6 @@ json-stable-stringify-without-jsonify@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz#9db7b59496ad3f3cfef30a75142d2d930ad72651"
   integrity sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==
-
-json-stringify-safe@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz#1296a2d58fd45f19a0f6ce01d65701e2c735b6eb"
-  integrity sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==
 
 json5@^1.0.1:
   version "1.0.1"
@@ -8520,13 +8501,6 @@ quick-lru@^5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
-
-random-seed@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/random-seed/-/random-seed-0.3.0.tgz#d945f2e1f38f49e8d58913431b8bf6bb937556cd"
-  integrity sha512-y13xtn3kcTlLub3HKWXxJNeC2qK4mB59evwZ5EkeRlolx+Bp2ztF7LbcZmyCnOqlHQrLnfuNbi1sVmm9lPDlDA==
-  dependencies:
-    json-stringify-safe "^5.0.1"
 
 range-parser@~1.2.1:
   version "1.2.1"

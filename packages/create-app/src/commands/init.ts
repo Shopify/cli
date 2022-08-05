@@ -61,6 +61,7 @@ export default class Init extends Command {
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
+      directory,
     })
 
     await initService({
