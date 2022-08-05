@@ -66,7 +66,7 @@ describe('authorize', () => {
     await expect(auth).rejects.toThrowError(MismatchStateError)
   })
 
-  it('throws cancel execution exception if the port used for listing for the authorization response is already in use and the user do not want to terminate the process', async () => {
+  it('throws cancel execution exception if the port used for listening for the authorization response is already in use and the user do not want to terminate the process', async () => {
     // Given
     vi.mocked(checkPort).mockResolvedValue(false)
     vi.mocked(terminateBlockingPortProcessPrompt).mockResolvedValue(false)
@@ -85,7 +85,6 @@ describe('authorize', () => {
       codeChallenge: 'challenge',
       codeVerifier: 'verifier',
     }
-    vi.mocked(checkPort).mockResolvedValue(port)
     vi.mocked(randomHex).mockReturnValue('hex')
     vi.mocked(generateRandomChallengePair).mockReturnValue(challenge)
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'state'})
