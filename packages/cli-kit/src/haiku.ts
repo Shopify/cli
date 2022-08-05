@@ -65,8 +65,7 @@ export async function generate({suffix, directory}: {suffix: string; directory: 
   const isAppDirectoryTaken = await exists(join(directory, generated))
 
   if (isAppDirectoryTaken) {
-    // eslint-disable-next-line no-return-await
-    return await generate({suffix, directory})
+    return generate({suffix, directory})
   } else {
     return generated
   }
