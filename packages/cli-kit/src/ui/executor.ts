@@ -49,14 +49,14 @@ function inquirerMapper(question: Question): unknown {
       return {
         ...question,
         type: 'custom-select',
-        source: filterByName,
+        source: getAutompleteFilterType(),
       }
     case 'autocomplete':
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
       return {
         ...question,
         type: 'autocomplete',
-        source: filterByName,
+        source: getAutompleteFilterType(),
       }
   }
 }
@@ -75,7 +75,7 @@ function enquirerMapper(question: Question): unknown {
   }
 }
 
-function filterByName(answers: {name: string; value: string}[], input = '') {
+function fuzzyFilter(answers: {name: string; value: string}[], input = '') {
   return new Promise((resolve) => {
     resolve(
       fuzzy
@@ -89,6 +89,16 @@ function filterByName(answers: {name: string; value: string}[], input = '') {
   })
 }
 
+function containsFilter(answers: {name: string; value: string}[], input = '') {
+  return new Promise((resolve) => {
+    resolve(Object.values(answers).filter((answer) => answer.name.includes(input)))
+  })
+}
+
 function isEnquirer(): boolean {
   return isTruthy(process.env.SHOPIFY_USE_ENQUIRER)
+}
+
+function getAutompleteFilterType() {
+  return process.env.SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
 }

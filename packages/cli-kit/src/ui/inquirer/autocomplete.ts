@@ -30,7 +30,7 @@ export class CustomAutocomplete extends AutocompletePrompt {
       content += this.rl.line
       bottomContent += `  ${colors.magenta.dim('Searching...')}`
     } else if (this.nbChoices) {
-      const choicesStr = listRender(this.currentChoices, this.selected)
+      const choicesStr = listRender(this.currentChoices, this.selected, this.isAutocomplete ? this.rl.line : undefined)
       content += this.isAutocomplete ? this.rl.line : ''
       const indexPosition = this.selected
       let realIndexPosition = 0
@@ -70,7 +70,7 @@ export class CustomAutocomplete extends AutocompletePrompt {
   }
 }
 
-function listRender(choices: DistinctChoice, pointer: number): string {
+function listRender(choices: DistinctChoice, pointer: number, searchToken?: string): string {
   let output = ''
   let separatorOffset = 0
 
@@ -93,6 +93,15 @@ function listRender(choices: DistinctChoice, pointer: number): string {
     let line = (isSelected ? '> ' : '  ') + choice.name
 
     if (isSelected) {
+      line = colors.magenta(line)
+    }
+
+    if (searchToken) {
+      line = line
+        .split(searchToken)
+        .map((token) => (isSelected ? colors.magenta(token) : token))
+        .join(colors.magenta.dim(searchToken))
+    } else if (isSelected) {
       line = colors.magenta(line)
     }
 
