@@ -43,10 +43,15 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_STORE',
       parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
     }),
+    theme: Flags.string({
+      char: 't',
+      description: 'Theme ID or name of the remote theme.',
+      env: 'SHOPIFY_FLAG_THEME_ID',
+    }),
   }
 
   async run(): Promise<void> {
-    const {flags, args} = await this.parse(Dev)
+    const {flags} = await this.parse(Dev)
 
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
