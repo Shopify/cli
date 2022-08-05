@@ -10,6 +10,7 @@ import {isTerminalInteractive} from './environment/local.js'
 import {isTruthy} from './environment/utilities.js'
 import inquirer from 'inquirer'
 import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
+import findProcess from 'find-process'
 
 export function newListr(tasks: ListrTask[], options?: object) {
   const listr = new OriginalListr(tasks, options)
@@ -182,8 +183,34 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
   }
 }
 
+export async function terminateBlockingPortProcessPrompt(port: number, stepDescription?: string): Promise<boolean> {
+  const stepDescriptionContent = stepDescription ?? 'current step'
+
+  const processInfo = await findProcess('port', port)
+  const formattedProcessName =
+    processInfo && processInfo.length > 0 && processInfo[0].name
+      ? ` ${content`${token.italic(`(${processInfo[0].name})`)}`.value}`
+      : ''
+
+  const options = [
+    {name: 'Yes, terminate process in order to log in now', value: 'finish'},
+    {name: `No, cancel command and try later`, value: 'cancel'},
+  ]
+
+  const choice = await prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: `${stepDescriptionContent} requires a port ${port} that's unavailable because it's running another process${formattedProcessName}. Terminate that process? `,
+      choices: options,
+    },
+  ])
+  return choice.value === 'finish'
+}
+
 export const keypress = async () => {
   process.stdin.setRawMode(true)
+  process.stdin.resume()
   return new Promise<void>((resolve) =>
     process.stdin.once('data', () => {
       process.stdin.setRawMode(false)
