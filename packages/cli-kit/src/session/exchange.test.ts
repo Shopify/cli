@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'

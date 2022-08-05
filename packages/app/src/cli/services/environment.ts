@@ -393,11 +393,9 @@ function showDevValues(org: string, appName: string) {
 }
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   metadata.addPublic({partner_id: string.tryParseInt(env.app.organizationId), api_key: env.identifiers.app})
 }
 
 async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   metadata.addPublic({partner_id: string.tryParseInt(env.partnersOrganizationId), api_key: env.identifiers.app})
 }

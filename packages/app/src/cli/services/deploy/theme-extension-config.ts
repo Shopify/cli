@@ -20,6 +20,5 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
       files[relativePath] = Buffer.from(fileContents, encoding).toString('base64')
     }),
   )
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   return {theme_extension: {files}}
 }

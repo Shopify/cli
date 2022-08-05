@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import * as http from './http.js'
 import {publishEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'

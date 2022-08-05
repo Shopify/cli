@@ -23,7 +23,6 @@ describe('downloadRepository()', () => {
     // Given
     const repoUrl = 'http://repoUrl'
     const destination = 'destination'
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null}
     vi.mocked(hasGit).mockResolvedValue(true)
 
@@ -38,7 +37,6 @@ describe('downloadRepository()', () => {
     // Given
     const repoUrl = 'http://repoUrl#my-branch'
     const destination = 'destination'
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const options: any = {'--recurse-submodules': null, '--branch': 'my-branch'}
     vi.mocked(hasGit).mockResolvedValue(true)
 

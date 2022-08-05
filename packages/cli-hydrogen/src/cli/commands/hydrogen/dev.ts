@@ -17,6 +17,11 @@ export default class Dev extends Command {
       description: 'listen on all addresses, including LAN and public addresses.',
       env: 'SHOPIFY_FLAG_DEV_HOST',
     }),
+    open: Flags.boolean({
+      description: 'automatically open the app in the browser',
+      env: 'SHOPIFY_FLAG_DEV_OPEN',
+      default: false,
+    }),
   }
 
   async run(): Promise<void> {

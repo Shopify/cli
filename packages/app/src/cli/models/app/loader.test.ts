@@ -512,7 +512,6 @@ scopes = "read_products"
 
     await load(tmpDir)
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     expect(metadata.getAllPublic()).toMatchObject({project_type: 'node'})
   })
 })
