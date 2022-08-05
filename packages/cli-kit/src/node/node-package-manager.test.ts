@@ -45,7 +45,6 @@ describe('packageManagerUsedForCreating', () => {
 
   it('returns npm if the npm_config_user_agent variable contains npm', () => {
     // Given
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const env = {npm_config_user_agent: 'npm'}
 
     // When
