@@ -88,6 +88,7 @@ export default class AppScaffoldExtension extends Command {
       extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
       extensionFlavor: flags.template,
+      directory: path.join(directory, 'extensions'),
     })
 
     const {extensionType, extensionFlavor} = promptAnswers
