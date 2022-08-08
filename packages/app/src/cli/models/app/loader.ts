@@ -328,6 +328,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | un
     return
   } else if (backendWebs.length === 0) {
     output.debug('Unable to decide project type as no web backend')
+    return
   }
   const {directory} = backendWebs[0]
 
