@@ -43,6 +43,8 @@ export async function runCreateCLI(options: RunCLIOptions) {
 }
 
 export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boolean> {
+  if (process.env.npm_config_user_agent) return false
+
   const cliPackage = await localCliPackage()
   if (!cliPackage) return false
 
