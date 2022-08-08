@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.6.0
+
+### Minor Changes
+
+- 1d438b3c: Support for new internal extension type identifiers
+
+### Patch Changes
+
+- d9351df4: Use a custom list of safe nouns and adjectives to generate default names for apps and extensions
+- 858e3faf: Human facing internal extension type ids
+- ffd33ec1: Fix logs when reusing dev values
+- Updated dependencies [073e514c]
+- Updated dependencies [d9351df4]
+  - @shopify/cli-kit@3.6.0
+
 ## 3.5.0
 
 ### Minor Changes

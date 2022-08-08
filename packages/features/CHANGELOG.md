@@ -1,5 +1,15 @@
 # @shopify/features
 
+## 0.4.0
+
+### Minor Changes
+
+- 1d438b3c: Support for new internal extension type identifiers
+
+### Patch Changes
+
+- 858e3faf: Human facing internal extension type ids
+
 ## 0.3.3
 
 ### Patch Changes
