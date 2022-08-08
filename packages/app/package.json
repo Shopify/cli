@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -54,7 +54,7 @@
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "^1.0",
     "@shopify/shopify-cli-extensions": "^0.2.1",
-    "@shopify/cli-kit": "3.6.0",
+    "@shopify/cli-kit": "3.7.0",
     "http-proxy": "^1.18.1",
     "ws": "^8.7.0"
   }

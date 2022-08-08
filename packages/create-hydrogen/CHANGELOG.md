@@ -1,5 +1,15 @@
 # @shopify/create-hydrogen
 
+## 3.7.0
+
+### Minor Changes
+
+- ff382971: Separate create-hydrogen template question into template and language questions.
+
+### Patch Changes
+
+- @shopify/cli-kit@3.7.0
+
 ## 3.6.0
 
 ### Patch Changes

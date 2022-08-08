@@ -1,5 +1,12 @@
 # app
 
+## 3.7.0
+
+### Patch Changes
+
+- @shopify/cli@3.7.0
+- @shopify/app@3.7.0
+
 ## 3.6.0
 
 ### Patch Changes
