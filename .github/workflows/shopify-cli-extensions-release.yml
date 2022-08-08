@@ -32,9 +32,13 @@ jobs:
       - name: Setup ruby
         uses: actions/setup-ruby@v1
       - name: Build node packages
-        run: make build-node-packages
+        run: |
+          cd packages/extensions/shopify-cli-extensions
+          make build-node-packages
       - name: Build and package executable
-        run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} make package
+        run: |
+          cd packages/extensions/shopify-cli-extensions
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} make package
       - name: Release
         if: ${{ github.event_name == 'release' }}
         run: |

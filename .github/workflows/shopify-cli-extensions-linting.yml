@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v1
         name: Setup node.js and yarn
         with:
-          node-version: 16.13.1
+          node-version: 18.0.0
 
       - name: Get yarn cache directory
         id: yarn-cache-get-dir
