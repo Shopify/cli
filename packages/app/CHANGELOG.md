@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 3.6.1
+
+### Patch Changes
+
+- c33a6dcf: Bug-fix for running embedded apps without a backend
+  - @shopify/cli-kit@3.6.1
+
 ## 3.6.0
 
 ### Minor Changes
