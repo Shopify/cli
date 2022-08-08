@@ -14,6 +14,7 @@ export interface OrganizationApp {
     secret: string
   }[]
   appType?: string
+  newApp?: boolean | undefined
 }
 
 export interface OrganizationStore {

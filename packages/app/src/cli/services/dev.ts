@@ -2,7 +2,7 @@ import {ensureDevEnvironment} from './environment.js'
 import {generateURL, shouldUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages, outputUpdatedURL} from './dev/output.js'
+import {outputAppURL, outputExtensionsMessages, outputUpdatedURL, outputUpdatedURLFirstTime} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -78,9 +78,14 @@ async function dev(options: DevOptions) {
       identifiers.app,
       options.app.directory,
       token,
+      app.newApp,
     )
     if (shouldUpdate) await updateURLs(identifiers.app, exposedUrl, token)
-    outputUpdatedURL(shouldUpdate, app.organizationId, app.id)
+    if (app.newApp) {
+      outputUpdatedURLFirstTime(exposedUrl, app.organizationId, app.id)
+    } else {
+      outputUpdatedURL(shouldUpdate, app.organizationId, app.id)
+    }
     outputAppURL(storeFqdn, exposedUrl)
   }
 

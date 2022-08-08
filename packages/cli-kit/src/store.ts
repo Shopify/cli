@@ -12,6 +12,7 @@ export interface CachedAppInfo {
   orgId?: string
   storeFqdn?: string
   updateURLs?: boolean
+  newApp?: boolean
 }
 
 interface ConfSchema {
@@ -75,6 +76,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
     storeFqdn?: string
     orgId?: string
     updateURLs?: boolean
+    newApp?: boolean
   }): void {
     debug(content`Storing app information for directory ${token.path(options.directory)}:${token.json(options)}`)
     const apps = this.get('appInfo') ?? []
@@ -90,6 +92,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
         storeFqdn: options.storeFqdn ?? app.storeFqdn,
         orgId: options.orgId ?? app.orgId,
         updateURLs: options.updateURLs,
+        newApp: options.newApp,
       }
     }
     this.set('appInfo', apps)

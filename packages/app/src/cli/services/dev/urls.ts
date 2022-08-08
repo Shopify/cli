@@ -37,7 +37,9 @@ export async function shouldUpdateURLs(
   apiKey: string,
   directory: string,
   token: string,
+  newApp: boolean | undefined,
 ): Promise<boolean> {
+  if (newApp) return true
   let shouldUpdate: boolean = cachedUpdateURLs === true
   if (cachedUpdateURLs === undefined) {
     const {appURL} = await getURLs(apiKey, token)

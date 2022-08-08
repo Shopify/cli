@@ -7,12 +7,18 @@ export function outputUpdatedURL(updated: boolean, organizationId: string, appId
   if (updated) {
     output.completed('URL updated')
   } else {
-    const partnersURL = output.token.link(
-      `Shopify Partners dashboard`,
-      `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+    output.info(
+      output.content`To update your app's URL manually, add redirect URLs in the ${partnersURL(organizationId, appId)}`,
     )
-    output.info(output.content`To update your app's URL manually, add redirect URLs in the ${partnersURL}`)
   }
+}
+
+export function outputUpdatedURLFirstTime(url: string, organizationId: string, appId: string) {
+  const message =
+    `For your convenience, we've given your app a default URL: ${url}.\n\n` +
+    `You can update your app's URL anytime in the ${partnersURL(organizationId, appId)}. ` +
+    `But once your app is live, updating its URL will disrupt merchant access.`
+  output.info(message)
 }
 
 export function outputAppURL(storeFqdn: string, url: string) {
@@ -118,4 +124,11 @@ function productSubscriptionMessage(url: string, extension: UIExtension) {
 
 function getHumanKey(type: ExtensionTypes) {
   return string.capitalize(getExtensionOutputConfig(type).humanKey)
+}
+
+function partnersURL(organizationId: string, appId: string): string {
+  return output.content`${output.token.link(
+    `Shopify Partners dashboard`,
+    `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+  )}`.value
 }

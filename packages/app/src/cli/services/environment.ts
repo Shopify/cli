@@ -131,9 +131,13 @@ export async function ensureDevEnvironment(
 
   const {organization, apps} = await fetchOrgAndApps(orgId, token)
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
-  store
-    .cliKitStore()
-    .setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
+  store.cliKitStore().setAppInfo({
+    appId: selectedApp.apiKey,
+    title: selectedApp.title,
+    directory: options.app.directory,
+    orgId,
+    newApp: selectedApp.newApp,
+  })
 
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
@@ -142,9 +146,12 @@ export async function ensureDevEnvironment(
     selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
-  store
-    .cliKitStore()
-    .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore?.shopDomain})
+  store.cliKitStore().setAppInfo({
+    appId: selectedApp.apiKey,
+    directory: options.app.directory,
+    storeFqdn: selectedStore?.shopDomain,
+    newApp: selectedApp.newApp,
+  })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
     showReusedValues(organization.businessName, options.app, selectedStore.shopDomain)
