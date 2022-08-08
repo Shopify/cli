@@ -3,14 +3,22 @@ import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/e
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {output, string} from '@shopify/cli-kit'
 
-export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
+export function outputUpdatedURL(updated: boolean, organizationId: string, appId: string) {
+  if (updated) {
+    output.completed('URL updated')
+  } else {
+    const partnersURL = output.token.link(
+      `Shopify Partners dashboard`,
+      `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+    )
+    output.info(output.content`To update your app's URL manually, add redirect URLs in the ${partnersURL}`)
+  }
+}
+
+export function outputAppURL(storeFqdn: string, url: string) {
   const appURL = buildAppURL(storeFqdn, url)
   const heading = output.token.heading('App URL')
-  let message = `Once everything's built, your app's shareable link will be:\n${appURL}`
-  if (updated) {
-    message += `\nNote that your app's URL in Shopify Partners will be updated.`
-  }
-
+  const message = `Once everything's built, your app's shareable link will be:\n${appURL}`
   output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 

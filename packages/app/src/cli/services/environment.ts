@@ -61,6 +61,7 @@ interface DevEnvironmentOutput {
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   storeFqdn: string
   identifiers: UuidOnlyIdentifiers
+  updateURLs: boolean | undefined
 }
 
 /**
@@ -124,6 +125,7 @@ export async function ensureDevEnvironment(
         app: selectedApp.apiKey,
         extensions,
       },
+      updateURLs: cachedInfo?.updateURLs,
     }
   }
 
@@ -159,6 +161,7 @@ export async function ensureDevEnvironment(
       app: selectedApp.apiKey,
       extensions,
     },
+    updateURLs: cachedInfo?.updateURLs,
   }
 }
 

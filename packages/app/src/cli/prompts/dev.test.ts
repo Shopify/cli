@@ -6,6 +6,7 @@ import {
   selectAppPrompt,
   selectOrganizationPrompt,
   selectStorePrompt,
+  updateURLsPrompt,
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
@@ -256,6 +257,32 @@ describe('createAsNewAppPrompt', () => {
         choices: [
           {name: 'Yes, create it as a new app', value: 'yes'},
           {name: 'No, connect it to an existing app', value: 'cancel'},
+        ],
+      },
+    ])
+  })
+})
+
+describe('updateURLsPrompt', () => {
+  it('asks about the URL update and shows 4 different options', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+
+    // When
+    const got = await updateURLsPrompt()
+
+    // Then
+    expect(got).toEqual('always')
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+        choices: [
+          {name: 'Always by default', value: 'always'},
+          {name: 'Yes, this time', value: 'yes'},
+          {name: 'No, not now', value: 'no'},
+          {name: `Never, don't ask again`, value: 'never'},
         ],
       },
     ])

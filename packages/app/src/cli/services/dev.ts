@@ -1,8 +1,8 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generateURL, getURLs, updateURLs} from './dev/urls.js'
+import {generateURL, shouldUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
+import {outputAppURL, outputExtensionsMessages, outputUpdatedURL} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -45,11 +45,7 @@ async function dev(options: DevOptions) {
     }
   }
   const token = await session.ensureAuthenticatedPartners()
-  const {
-    identifiers,
-    storeFqdn,
-    app: {apiSecret},
-  } = await ensureDevEnvironment(options, token)
+  const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
 
   let frontendPort: number
   let frontendUrl: string
@@ -76,11 +72,16 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
-  if (frontendConfig || backendConfig) {
-    const {appUrl} = await getURLs(identifiers.app, token)
-    output.info(`Your app's URL currently is: ${appUrl}`)
-    if (options.update) await updateURLs(identifiers.app, exposedUrl, token)
-    outputAppURL(options.update, storeFqdn, exposedUrl)
+  if ((frontendConfig || backendConfig) && options.update) {
+    const shouldUpdate: boolean = await shouldUpdateURLs(
+      cachedUpdateURLs,
+      identifiers.app,
+      options.app.directory,
+      token,
+    )
+    if (shouldUpdate) await updateURLs(identifiers.app, exposedUrl, token)
+    outputUpdatedURL(shouldUpdate, app.organizationId, app.id)
+    outputAppURL(storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -90,7 +91,7 @@ async function dev(options: DevOptions) {
     apiKey: identifiers.app,
     backendPort,
     scopes: options.app.configuration.scopes,
-    apiSecret: (apiSecret as string) ?? '',
+    apiSecret: (app.apiSecret as string) ?? '',
     hostname: exposedUrl,
   }
 
@@ -121,7 +122,7 @@ async function dev(options: DevOptions) {
       web: frontendConfig,
       apiKey: identifiers.app,
       scopes: options.app.configuration.scopes,
-      apiSecret: (apiSecret as string) ?? '',
+      apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
     })

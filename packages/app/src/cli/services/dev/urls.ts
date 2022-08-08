@@ -1,4 +1,5 @@
-import {api, error, output, plugins} from '@shopify/cli-kit'
+import {updateURLsPrompt} from '../../prompts/dev.js'
+import {api, error, output, plugins, store} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
@@ -24,9 +25,39 @@ export async function updateURLs(apiKey: string, url: string, token: string): Pr
   }
 }
 
-export async function getURLs(apiKey: string, token: string): Promise<{appUrl: string; redir: string[]}> {
+export async function getURLs(apiKey: string, token: string): Promise<{appURL: string; redir: string[]}> {
   const variables: api.graphql.GetURLsQueryVariables = {apiKey}
   const query = api.graphql.GetURLsQuery
   const result: api.graphql.GetURLsQuerySchema = await api.partners.request(query, token, variables)
-  return {appUrl: result.app.applicationUrl, redir: result.app.redirectUrlWhitelist}
+  return {appURL: result.app.applicationUrl, redir: result.app.redirectUrlWhitelist}
+}
+
+export async function shouldUpdateURLs(
+  cachedUpdateURLs: boolean | undefined,
+  apiKey: string,
+  directory: string,
+  token: string,
+): Promise<boolean> {
+  let shouldUpdate: boolean = cachedUpdateURLs === true
+  if (cachedUpdateURLs === undefined) {
+    const {appURL} = await getURLs(apiKey, token)
+    output.info(`Your app's URL currently is: ${appURL}`)
+    const response = await updateURLsPrompt()
+    let newUpdateURLs: boolean | undefined
+    /* eslint-disable no-fallthrough */
+    switch (response) {
+      case 'always':
+        newUpdateURLs = true
+      case 'yes':
+        shouldUpdate = true
+        break
+      case 'never':
+        newUpdateURLs = false
+      case 'no':
+        shouldUpdate = false
+    }
+    /* eslint-enable no-fallthrough */
+    store.cliKitStore().setAppInfo({appId: apiKey, directory, updateURLs: newUpdateURLs})
+  }
+  return shouldUpdate
 }

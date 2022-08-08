@@ -11,6 +11,7 @@ export interface CachedAppInfo {
   title?: string
   orgId?: string
   storeFqdn?: string
+  updateURLs?: boolean
 }
 
 interface ConfSchema {
@@ -67,10 +68,15 @@ export class CLIKitStore extends Conf<ConfSchema> {
     return apps.find((app: CachedAppInfo) => app.directory === directory)
   }
 
-  setAppInfo(options: {directory: string; appId: string; title?: string; storeFqdn?: string; orgId?: string}): void {
-    debug(content`Storing app information for directory ${token.path(options.directory)}:
-${token.json(options)}
-`)
+  setAppInfo(options: {
+    directory: string
+    appId: string
+    title?: string
+    storeFqdn?: string
+    orgId?: string
+    updateURLs?: boolean
+  }): void {
+    debug(content`Storing app information for directory ${token.path(options.directory)}:${token.json(options)}`)
     const apps = this.get('appInfo') ?? []
     const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
     if (index === -1) {
@@ -83,6 +89,7 @@ ${token.json(options)}
         title: options.title ?? app.title,
         storeFqdn: options.storeFqdn ?? app.storeFqdn,
         orgId: options.orgId ?? app.orgId,
+        updateURLs: options.updateURLs,
       }
     }
     this.set('appInfo', apps)
