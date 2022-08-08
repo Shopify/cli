@@ -328,6 +328,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | un
     return
   } else if (backendWebs.length === 0) {
     output.debug('Unable to decide project type as no web backend')
+    return
   }
   const {directory} = backendWebs[0]
 
@@ -346,6 +347,11 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | un
 }
 
 async function logMetadataForLoadedApp(app: App) {
-  const projectType = await getProjectType(app.webs)
-  metadata.addPublic({project_type: projectType})
+  try {
+    const projectType = await getProjectType(app.webs)
+    metadata.addPublic({project_type: projectType})
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    output.debug(`Unable to logMetadataForLoadedApp ${error}`)
+  }
 }
