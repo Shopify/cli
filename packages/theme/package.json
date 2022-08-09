@@ -38,6 +38,10 @@
   "devDependencies": {
     "vitest": "^0.17.1"
   },
+  "engine-strict": true,
+  "engines": {
+    "node": ">=14.13.1"
+  },
   "os": [
     "darwin",
     "linux",
