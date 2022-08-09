@@ -1,10 +1,10 @@
 import {OverloadParameters} from './typing/overloaded-parameters.js'
 import commondir from 'commondir'
-import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute} from 'pathe'
+import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute, parse} from 'pathe'
 import {findUp as internalFindUp, Match as FindUpMatch} from 'find-up'
 import {fileURLToPath} from 'url'
 
-export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolute}
+export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolute, parse}
 
 export {default as glob} from 'fast-glob'
 export {pathToFileURL} from 'node:url'
