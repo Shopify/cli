@@ -2,7 +2,7 @@
   "name": "@shopify/theme",
   "version": "3.6.1",
   "private": false,
-  "description": "Utilities building and publishing themes",
+  "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
