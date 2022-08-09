@@ -155,7 +155,7 @@ function createExtensions(
     .andThen((registrations) => {
       const result: {[localIdentifier: string]: ExtensionRegistration} = {}
       registrations.reduce((result, registration) => {
-        result[registration.localIdentifier as string as keyof typeof result] = registration.registration
+        result[registration.localIdentifier] = registration.registration
         return result
       })
       return ok(result)
