@@ -38,6 +38,11 @@
   "devDependencies": {
     "vitest": "^0.17.1"
   },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
   "oclif": {
     "commands": "dist/cli/commands",
     "hooks": {
