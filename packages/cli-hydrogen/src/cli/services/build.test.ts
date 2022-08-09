@@ -1,4 +1,4 @@
-import build from './build.js'
+import {build} from './build.js'
 import {describe, it, expect, vi} from 'vitest'
 import {build as viteBuild} from 'vite'
 import {file} from '@shopify/cli-kit'
