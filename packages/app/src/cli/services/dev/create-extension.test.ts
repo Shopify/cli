@@ -1,6 +1,7 @@
 import {createExtension} from './create-extension.js'
 import {api} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {okAsync} from 'neverthrow'
 
 const EXTENSION = {
   id: '1',
@@ -37,9 +38,11 @@ beforeEach(() => {
 describe('createApp', () => {
   it('sends request to create extension and returns it', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({
-      extensionCreate: {extensionRegistration: EXTENSION, userErrors: null},
-    })
+    vi.mocked(api.partners.request).mockReturnValueOnce(
+      okAsync({
+        extensionCreate: {extensionRegistration: EXTENSION, userErrors: null},
+      }),
+    )
 
     const variables = {
       apiKey: '123',

@@ -2,6 +2,7 @@ import {updateURLs, generateURL} from './urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
+import {okAsync} from 'neverthrow'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -42,7 +43,7 @@ describe('generateURL', () => {
 describe('updateURLs', () => {
   it('sends a request to update the URLs', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: []}})
+    vi.mocked(api.partners.request).mockReturnValueOnce(okAsync({appUpdate: {userErrors: []}}))
     const expectedVariables = {
       apiKey: 'apiKey',
       appUrl: 'https://example.com',
@@ -62,7 +63,7 @@ describe('updateURLs', () => {
 
   it('throws an error if requests has a user error', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
+    vi.mocked(api.partners.request).mockReturnValueOnce(okAsync({appUpdate: {userErrors: [{message: 'Boom!'}]}}))
 
     // When
     const got = updateURLs('apiKey', 'https://example.com', 'token')

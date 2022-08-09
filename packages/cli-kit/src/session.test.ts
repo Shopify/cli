@@ -23,6 +23,7 @@ import {partners} from './api.js'
 import {identity} from './environment/fqdn.js'
 import {authorize} from './session/authorize.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
+import {okAsync} from 'neverthrow'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -108,7 +109,7 @@ beforeAll(() => {
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.mocked(identity).mockResolvedValue(fqdn)
   vi.mocked(authorize).mockResolvedValue(code)
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)
@@ -118,7 +119,7 @@ beforeEach(() => {
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue(partnersToken)
   // eslint-disable-next-line no-warning-comments
   // TODO: Add tests for ensureUserHasPartnerAccount
-  vi.mocked(partners.request).mockResolvedValue(undefined)
+  vi.mocked(partners.request).mockResolvedValue(await okAsync(undefined))
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {

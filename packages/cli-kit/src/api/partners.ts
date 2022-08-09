@@ -3,8 +3,9 @@ import {ScriptServiceProxyQuery} from './graphql/index.js'
 import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
 import {Variables, ClientError, gql, RequestDocument} from 'graphql-request'
+import {ResultAsync} from 'neverthrow'
 
-export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
+export function request<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, unknown> {
   const api = 'Partners'
   return handlingErrors(api, async () => {
     const fqdn = await partnersFqdn()
@@ -83,7 +84,10 @@ export async function functionProxyRequest<T>(
     variables: JSON.stringify(variables) || '{}',
   }
   const proxyQuery = ScriptServiceProxyQuery
-  const res: ProxyResponse = await request(proxyQuery, token, proxyVariables)
-  const json = JSON.parse(res.scriptServiceProxy)
-  return json as T
+  return request<ProxyResponse>(proxyQuery, token, proxyVariables).match(
+    (response) => JSON.parse(response.scriptServiceProxy) as T,
+    (err) => {
+      throw err
+    },
+  )
 }

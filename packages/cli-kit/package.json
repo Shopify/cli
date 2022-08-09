@@ -100,6 +100,7 @@
     "listr2": "^4.0.5",
     "log-update": "^4.0.0",
     "md5-file": "^5.0.0",
+    "neverthrow": "^5.0.0",
     "node-fetch": "^3.2.4",
     "open": "^8.4.0",
     "pathe": "0.2.0",

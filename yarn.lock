@@ -7572,6 +7572,11 @@ negotiator@0.6.3:
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.3.tgz#58e323a72fedc0d6f9cd4d31fe49f51479590ccd"
   integrity sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==
 
+neverthrow@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/neverthrow/-/neverthrow-5.0.0.tgz#b2f10c71b4da93cf310e02418d8d19ffc4b64ef2"
+  integrity sha512-JQAB+oyPwbqBRwRZCcH5Yi4ejb24Ul1vIQwwtWTveIZADQTmIpcnh9uQttW45wPnt8sVBxOuh73hCAMmUhXBiQ==
+
 next-tick@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.1.0.tgz#1836ee30ad56d67ef281b22bd199f709449b35eb"

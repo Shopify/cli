@@ -3,6 +3,7 @@ import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
 import {Abort, ExtendableError} from '../error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
+import {fromPromise, ResultAsync} from 'neverthrow'
 import {randomUUID} from 'crypto'
 
 export class RequestClientError extends ExtendableError {
@@ -68,10 +69,8 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-export async function handlingErrors<T>(api: string, action: () => Promise<T>): Promise<T> {
-  try {
-    return await action()
-  } catch (error) {
+export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, unknown> {
+  return fromPromise(action(), (error) => {
     if (error instanceof ClientError) {
       const errorMessage = stringifyMessage(content`
   The ${token.raw(
@@ -80,16 +79,13 @@ export async function handlingErrors<T>(api: string, action: () => Promise<T>): 
 
   ${outputToken.json(error.response.errors)}
       `)
-      let mappedError: Error
       if (error.response.status < 500) {
-        mappedError = new RequestClientError(errorMessage, error.response.status)
+        return new RequestClientError(errorMessage, error.response.status)
       } else {
-        mappedError = new Abort(errorMessage)
+        return new Abort(errorMessage)
       }
-      mappedError.stack = error.stack
-      throw mappedError
     } else {
-      throw error
+      return error
     }
-  }
+  })
 }

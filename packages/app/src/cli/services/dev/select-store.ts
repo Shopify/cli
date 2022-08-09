@@ -137,10 +137,16 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
       shopId: store.shopId,
     },
   }
-  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
-  if (!result.convertDevToTestStore.convertedToTestStore) {
-    const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
-    throw ConvertToDevError(store.shopDomain, errors)
-  }
-  output.success(`Converted ${store.shopDomain} to a Test store`)
+  api.partners.request<api.graphql.ConvertDevToTestStoreSchema>(query, token, variables).match(
+    (result) => {
+      if (!result.convertDevToTestStore.convertedToTestStore) {
+        const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
+        throw ConvertToDevError(store.shopDomain, errors)
+      }
+      output.success(`Converted ${store.shopDomain} to a Test store`)
+    },
+    (error) => {
+      throw error
+    },
+  )
 }

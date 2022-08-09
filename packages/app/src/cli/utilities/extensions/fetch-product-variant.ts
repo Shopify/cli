@@ -1,5 +1,6 @@
 import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {api, error, session} from '@shopify/cli-kit'
+import {ResultAsync} from 'neverthrow'
 
 const NoProductsError = (storeFqdn: string) => {
   return new error.Abort(
@@ -16,13 +17,24 @@ You can add a new product here: https://${storeFqdn}/admin/products/new`,
  * @param store {string} Store FQDN
  * @returns {Promise<string>} variantID if exists
  */
-export async function fetchProductVariant(store: string) {
-  const adminSession = await session.ensureAuthenticatedAdmin(store)
-  const query = api.graphql.FindProductVariantQuery
-  const result: api.graphql.FindProductVariantSchema = await api.admin.request(query, adminSession)
+export function fetchProductVariant(store: string): ResultAsync<string, unknown> {
+  return ResultAsync.fromPromise(session.ensureAuthenticatedAdmin(store), (err) => err)
+    .andThen((adminSession) => {
+      const query = api.graphql.FindProductVariantQuery
+      return api.admin.request<api.graphql.FindProductVariantSchema>(query, adminSession)
+    })
+    .map((result) => mapFetchProductVariantResult(result, store))
+}
+
+async function mapFetchProductVariantResult(
+  result: api.graphql.FindProductVariantSchema,
+  store: string,
+): Promise<string> {
   const products = result.products.edges
-  if (products.length === 0) throw NoProductsError(store)
-  const variantURL = result.products.edges[0].node.variants.edges[0].node.id
+  if (products.length === 0) {
+    throw NoProductsError(store)
+  }
+  const variantURL = products[0].node.variants.edges[0].node.id
   const variantId = variantURL.split('/').pop()
-  return variantId
+  return variantId ?? ''
 }

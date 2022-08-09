@@ -4,6 +4,7 @@ import {debug, content, token as outputToken} from '../output.js'
 import {Bug, Abort} from '../error.js'
 import {graphqlClient} from '../http/graphql.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
+import {ResultAsync} from 'neverthrow'
 
 const UnauthorizedAccessError = (store: string) => {
   const adminLink = outputToken.link(`URL`, `https://${store}/admin`)
@@ -20,7 +21,11 @@ const UnknownError = () => {
   return new Bug(`Unknown error connecting to your store`)
 }
 
-export async function request<T>(query: RequestDocument, session: AdminSession, variables?: Variables): Promise<T> {
+export function request<T>(
+  query: RequestDocument,
+  session: AdminSession,
+  variables?: Variables,
+): ResultAsync<T, unknown> {
   const api = 'Admin'
   return handlingErrors(api, async () => {
     const version = await fetchApiVersion(session)

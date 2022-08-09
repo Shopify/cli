@@ -38,11 +38,17 @@ export async function uploadThemeExtensions(
         registrationId: themeId,
       }
       const mutation = api.graphql.ExtensionUpdateDraftMutation
-      const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
-      if (result.extensionUpdateDraft?.userErrors?.length > 0) {
-        const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-        throw new error.Abort(errors)
-      }
+      api.partners.request<api.graphql.ExtensionUpdateSchema>(mutation, token, themeExtensionInput).match(
+        (result) => {
+          if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+            const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+            throw new error.Abort(errors)
+          }
+        },
+        (error) => {
+          throw error
+        },
+      )
     }),
   )
 }
@@ -96,19 +102,24 @@ export async function uploadUIExtensionsBundle(
   }
 
   const mutation = api.graphql.CreateDeployment
-  const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
+  return api.partners.request<api.graphql.CreateDeploymentSchema>(mutation, options.token, variables).match(
+    (result) => {
+      if (result.deploymentCreate?.userErrors?.length > 0) {
+        const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
+        throw new error.Abort(errors)
+      }
 
-  if (result.deploymentCreate?.userErrors?.length > 0) {
-    const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
-  }
-
-  const validationErrors = result.deploymentCreate.deployment.deployedVersions
-    .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
-    .map((ver) => {
-      return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
-    })
-  return validationErrors
+      const validationErrors = result.deploymentCreate.deployment.deployedVersions
+        .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
+        .map((ver) => {
+          return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
+        })
+      return validationErrors
+    },
+    (error) => {
+      throw error
+    },
+  )
 }
 
 /**
@@ -126,13 +137,19 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
     bundleFormat: 1,
   }
 
-  const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.request(mutation, token, variables)
-  if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
-    const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
-  }
+  return api.partners.request<api.graphql.GenerateSignedUploadUrlSchema>(mutation, token, variables).match(
+    (result) => {
+      if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
+        const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
+        throw new error.Abort(errors)
+      }
 
-  return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
+      return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
+    },
+    (error) => {
+      throw error
+    },
+  )
 }
 
 interface UploadFunctionExtensionsOptions {
