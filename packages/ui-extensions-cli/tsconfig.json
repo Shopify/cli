@@ -3,18 +3,19 @@
     "target": "es2015",
     "module": "commonjs",
     "skipLibCheck": true,
-    "rootDir": "./src",
     "composite": true,
-    "outDir": "./",
     "declaration": true,
     "strict": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "baseUrl": "./",
     "paths": {
       "*": ["@types/*"]
-    }
+    },
+    "baseUrl": "./",
+    "rootDir": "./src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "include": ["./src"],
   "exclude": ["node_modules"]

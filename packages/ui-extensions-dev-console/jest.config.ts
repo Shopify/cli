@@ -20,7 +20,7 @@ const config: Config.InitialOptions = {
     '^@/(.*)': '<rootDir>/src/$1',
     '^@shopify/ui-extensions-server-kit/testing$': '<rootDir>/../ui-extensions-server-kit/src/testing',
     '^@shopify/ui-extensions-server-kit': '<rootDir>/../ui-extensions-server-kit/src',
-    '^@shopify/ui-extensions-test-utils': '<rootDir>/../shopify-cli-extensions-test-utils/src',
+    '^@shopify/ui-extensions-test-utils': '<rootDir>/../ui-extensions-test-utils/src',
   },
 
   moduleDirectories: ['node_modules', 'src'],

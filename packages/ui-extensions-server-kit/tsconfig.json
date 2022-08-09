@@ -17,12 +17,13 @@
     "isolatedModules": true,
     "noEmit": false,
     "jsx": "react",
+    "paths": {
+      "@shopify/ui-extensions-test-utils": ["../../ui-extensions-test-utils/src"],
+    },
     "outDir": "dist",
     "baseUrl": "src",
     "rootDir": "src",
-    "paths": {
-      "@shopify/ui-extensions-test-utils": ["../../ui-extensions-test-utils/src"],
-    }
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*", "src/testing/**/*"],
   "references": [{"path": "../ui-extensions-test-utils"}]

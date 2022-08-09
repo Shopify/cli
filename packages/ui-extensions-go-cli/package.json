@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "lerna run build",
+    "build": "make build",
     "clean": "lerna run clean",
     "deploy": "lerna publish from-package --yes",
     "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe",
@@ -15,19 +15,6 @@
     "version-bump": "lerna version --no-push --include-merged-tags"
   },
   "devDependencies": {
-    "@shopify/app": "3.5.0",
-    "@shopify/eslint-plugin": "^40.4.0",
-    "@shopify/checkout-ui-extensions-react":"0.17.1",
-    "@shopify/admin-ui-extensions-react":"1.0.1",
-    "@shopify/post-purchase-ui-extensions-react":"0.13.3",
-    "@shopify/admin-ui-extensions":"1.0.1",
-    "@shopify/web-pixels-extension":"0.1.4",
-    "@shopify/retail-ui-extensions":"0.10.0",
-    "@shopify/customer-account-ui-extensions-react": "^0.0.8",
-    "graphql": "^15.5.1",
-    "graphql-tag": "^2.12.4",
-    "@apollo/client": "^3.4.8",
-    "eslint": "^7.32.0",
-    "lerna": "^4.0.0"
+    "@shopify/shopify-cli-extensions": "0.2.3"
   }
 }

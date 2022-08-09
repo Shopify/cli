@@ -4,8 +4,12 @@
   "version": "0.2.3",
   "description": "A command line tool to build UI extensions",
   "license": "MIT",
+  "files": [
+    "bin",
+    "dist"
+  ],
   "bin": {
-    "shopify-cli-extensions": "./cli.js"
+    "shopify-cli-extensions": "./bin/cli.js"
   },
   "main": "./cli.js",
   "scripts": {

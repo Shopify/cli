@@ -36,8 +36,5 @@
     "vite": "^2.4.4",
     "vite-jest": "^0.0.3",
     "vite-tsconfig-paths": "^3.3.14"
-  },
-  "resolutions": {
-    "@types/react": "16.14.0"
   }
 }

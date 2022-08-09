@@ -13,7 +13,7 @@ else
 endif
 
 .PHONY: build
-build: build-node-packages
+build:
 	go build -o ${executable}
 
 .PHONY: build-debug
@@ -74,8 +74,7 @@ run:
 .PHONY: build-node-packages
 build-node-packages:
 	yarn install
-	yarn build
-	chmod +x packages/shopify-cli-extensions/cli.js
+	yarn --cwd ../ui-extensions-cli build
 	ln -sf ../../packages/shopify-cli-extensions/cli.js node_modules/.bin/shopify-cli-extensions
 
 .PHONY: bootstrap
