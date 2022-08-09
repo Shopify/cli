@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.6.2
+
+### Patch Changes
+
+- 59d56a40: Only show errors from CLI 2 once
+
 ## 3.6.1
 
 ## 3.6.0
