@@ -9,7 +9,7 @@
   },
   "main": "./cli.js",
   "scripts": {
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc",
     "check": "prettier --check \"*.(ts|json)\"",
     "format": "prettier --write \"*.(ts|json)\"",
     "clean": "git clean --exclude node_modules -xdf ./; rm -rf ./build"
