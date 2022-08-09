@@ -393,9 +393,15 @@ function showDevValues(org: string, appName: string) {
 }
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
-  metadata.addPublic({partner_id: string.tryParseInt(env.app.organizationId), api_key: env.identifiers.app})
+  await metadata.addPublic(() => ({
+    partner_id: string.tryParseInt(env.app.organizationId),
+    api_key: env.identifiers.app,
+  }))
 }
 
 async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
-  metadata.addPublic({partner_id: string.tryParseInt(env.partnersOrganizationId), api_key: env.identifiers.app})
+  await metadata.addPublic(() => ({
+    partner_id: string.tryParseInt(env.partnersOrganizationId),
+    api_key: env.identifiers.app,
+  }))
 }

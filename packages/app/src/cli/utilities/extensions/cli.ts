@@ -21,7 +21,7 @@ const NodeExtensionsCLINotFoundError = () => {
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
   if (useExtensionsCLISources()) {
-    metadata.addPublic({cmd_extensions_binary_from_source: true})
+    await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
     const projectDirectory = path.join(
       environment.local.homeDirectory(),
       'src/github.com/shopify/shopify-cli-extensions',
@@ -55,7 +55,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
       throw new error.AbortSilent()
     }
   } else {
-    metadata.addPublic({cmd_extensions_binary_from_source: false})
+    await metadata.addPublic(() => ({cmd_extensions_binary_from_source: false}))
     const binaryPath = await getBinaryPathOrDownload()
     await system.exec(binaryPath, [...args], options)
   }

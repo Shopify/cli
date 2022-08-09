@@ -68,11 +68,11 @@ export default class AppScaffoldExtension extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppScaffoldExtension)
 
-    metadata.addPublic({
+    await metadata.addPublic(() => ({
       cmd_scaffold_required_auth: false,
       cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
       cmd_scaffold_type_owner: '@shopify/app',
-    })
+    }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
@@ -92,13 +92,13 @@ export default class AppScaffoldExtension extends Command {
     })
 
     const {extensionType, extensionFlavor} = promptAnswers
-    metadata.addPublic({
+    await metadata.addPublic(() => ({
       cmd_scaffold_template_flavor: extensionFlavor,
       cmd_scaffold_type: extensionType,
       cmd_scaffold_type_family: extensionTypeCategory(extensionType),
       cmd_scaffold_type_gated: extensionTypeIsGated(extensionType),
       cmd_scaffold_used_prompts_for_type: extensionType !== flags.type,
-    })
+    }))
 
     const extensionDirectory = await scaffoldExtensionService({
       ...promptAnswers,

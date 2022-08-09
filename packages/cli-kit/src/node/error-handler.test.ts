@@ -1,10 +1,25 @@
-import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata} from './error-handler'
+import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler'
 import * as error from '../error'
 import * as outputMocker from '../testing/output'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+const onNotify = vi.fn()
 beforeEach(() => {
   vi.mock('node:process')
+  vi.mock('@bugsnag/js', () => {
+    return {
+      default: {
+        notify: (reportedError: any, args: any, callback: any) => {
+          onNotify(reportedError)
+          callback(null)
+        },
+      },
+    }
+  })
+})
+
+afterEach(() => {
+  vi.resetAllMocks()
 })
 
 describe('errorHandler', () => {
@@ -87,5 +102,35 @@ describe('bugsnag metadata', () => {
     }
     addBugsnagMetadata(event as any)
     expect(event.addMetadata).toHaveBeenCalled()
+  })
+})
+
+describe('send to Bugsnag', () => {
+  it('processes Error instances', async () => {
+    const toThrow = new Error('In test')
+    const res = await sendErrorToBugsnag(toThrow)
+    expect(res.reported).toEqual(true)
+    expect(res.error.stack).toMatch(/^Error: In test/)
+    expect(res.error.stack).not.toEqual(toThrow.stack)
+    expect(onNotify).toHaveBeenCalledWith(res.error)
+  })
+
+  it('processes string instances', async () => {
+    const res = await sendErrorToBugsnag('In test' as any)
+    expect(res.reported).toEqual(true)
+    expect(res.error.stack).toMatch(/^Error: In test/)
+    expect(onNotify).toHaveBeenCalledWith(res.error)
+  })
+
+  it('ignores fatals', async () => {
+    const res = await sendErrorToBugsnag(new error.Abort('In test'))
+    expect(res.reported).toEqual(false)
+    expect(onNotify).not.toHaveBeenCalled()
+  })
+
+  it.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {
+    const res = await sendErrorToBugsnag(throwable as any)
+    expect(res.reported).toEqual(false)
+    expect(onNotify).not.toHaveBeenCalled()
   })
 })

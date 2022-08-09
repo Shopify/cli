@@ -17,18 +17,19 @@ interface StartOptions {
   commandClass?: Interfaces.Command.Class
 }
 
-export const start = ({command, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
-  metadata.addSensitive({
+export const start = async ({command, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
+  await metadata.addSensitive(() => ({
     commandStartOptions: {
       startTime: currentTime,
       startCommand: command,
       startArgs: args,
     },
-  })
-  metadata.addPublic({
+  }))
+
+  await metadata.addPublic(() => ({
     cmd_all_launcher: packageManagerUsedForCreating(),
     cmd_all_plugin: commandClass?.plugin?.name,
-  })
+  }))
 }
 
 interface ReportEventOptions {

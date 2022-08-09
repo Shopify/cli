@@ -340,13 +340,17 @@ class AppLoader {
   }
 }
 
-async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | undefined> {
+async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
   const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
+  const frontendWebs = webs.filter((web) => web.configuration.type === WebType.Frontend)
   if (backendWebs.length > 1) {
     output.debug('Unable to decide project type as multiple web backends')
     return
+  } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
+    return 'frontend'
   } else if (backendWebs.length === 0) {
     output.debug('Unable to decide project type as no web backend')
+    return
   }
   const {directory} = backendWebs[0]
 
@@ -373,57 +377,59 @@ async function logMetadataForLoadedApp(
     usedCustomLayoutForThemeExtensions: boolean
   },
 ) {
-  const projectType = await getProjectType(app.webs)
+  await metadata.addPublic(async () => {
+    const projectType = await getProjectType(app.webs)
 
-  const extensionFunctionCount = app.extensions.function.length
-  const extensionUICount = app.extensions.ui.length
-  const extensionThemeCount = app.extensions.theme.length
+    const extensionFunctionCount = app.extensions.function.length
+    const extensionUICount = app.extensions.ui.length
+    const extensionThemeCount = app.extensions.theme.length
 
-  const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
+    const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
 
-  const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
-  const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
+    const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
-  const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
-  const extensionsBreakdownMapping: {[key: string]: number} = {}
-  for (const extension of allExtensions) {
-    if (extensionsBreakdownMapping[extension.type] === undefined) {
-      extensionsBreakdownMapping[extension.type] = 1
-    } else {
-      extensionsBreakdownMapping[extension.type]++
+    const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
+    const extensionsBreakdownMapping: {[key: string]: number} = {}
+    for (const extension of allExtensions) {
+      if (extensionsBreakdownMapping[extension.type] === undefined) {
+        extensionsBreakdownMapping[extension.type] = 1
+      } else {
+        extensionsBreakdownMapping[extension.type]++
+      }
     }
-  }
 
-  metadata.addPublic({
-    project_type: projectType,
-    app_extensions_any: extensionTotalCount > 0,
-    app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
-    app_extensions_count: extensionTotalCount,
-    app_extensions_custom_layout:
-      loadingStrategy.usedCustomLayoutForFunctionExtensions ||
-      loadingStrategy.usedCustomLayoutForThemeExtensions ||
-      loadingStrategy.usedCustomLayoutForUIExtensions,
-    app_extensions_function_any: extensionFunctionCount > 0,
-    app_extensions_function_count: extensionFunctionCount,
-    app_extensions_function_custom_layout: loadingStrategy.usedCustomLayoutForFunctionExtensions,
-    app_extensions_theme_any: extensionThemeCount > 0,
-    app_extensions_theme_count: extensionThemeCount,
-    app_extensions_theme_custom_layout: loadingStrategy.usedCustomLayoutForThemeExtensions,
-    app_extensions_ui_any: extensionUICount > 0,
-    app_extensions_ui_count: extensionUICount,
-    app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
-    app_name_hash: string.hashString(app.name),
-    app_path_hash: string.hashString(app.directory),
-    app_scopes: JSON.stringify(
-      app.configuration.scopes
-        .split(',')
-        .map((scope) => scope.trim())
-        .sort(),
-    ),
-    app_web_backend_any: webBackendCount > 0,
-    app_web_backend_count: webBackendCount,
-    app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
-    app_web_frontend_any: webFrontendCount > 0,
-    app_web_frontend_count: webFrontendCount,
+    return {
+      project_type: projectType,
+      app_extensions_any: extensionTotalCount > 0,
+      app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
+      app_extensions_count: extensionTotalCount,
+      app_extensions_custom_layout:
+        loadingStrategy.usedCustomLayoutForFunctionExtensions ||
+        loadingStrategy.usedCustomLayoutForThemeExtensions ||
+        loadingStrategy.usedCustomLayoutForUIExtensions,
+      app_extensions_function_any: extensionFunctionCount > 0,
+      app_extensions_function_count: extensionFunctionCount,
+      app_extensions_function_custom_layout: loadingStrategy.usedCustomLayoutForFunctionExtensions,
+      app_extensions_theme_any: extensionThemeCount > 0,
+      app_extensions_theme_count: extensionThemeCount,
+      app_extensions_theme_custom_layout: loadingStrategy.usedCustomLayoutForThemeExtensions,
+      app_extensions_ui_any: extensionUICount > 0,
+      app_extensions_ui_count: extensionUICount,
+      app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
+      app_name_hash: string.hashString(app.name),
+      app_path_hash: string.hashString(app.directory),
+      app_scopes: JSON.stringify(
+        app.configuration.scopes
+          .split(',')
+          .map((scope) => scope.trim())
+          .sort(),
+      ),
+      app_web_backend_any: webBackendCount > 0,
+      app_web_backend_count: webBackendCount,
+      app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
+      app_web_frontend_any: webFrontendCount > 0,
+      app_web_frontend_count: webFrontendCount,
+    }
   })
 }

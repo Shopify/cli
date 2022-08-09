@@ -64,7 +64,7 @@ describe('event tracking', () => {
         storeFqdn: 'domain1',
         directory: '/cached',
       })
-      start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -101,7 +101,7 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
-      start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -140,7 +140,7 @@ describe('event tracking', () => {
       // Given
       vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
       const command = 'app dev'
-      start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -162,7 +162,7 @@ describe('event tracking', () => {
         throw new Error('Boom!')
       })
       const outputMock = mockAndCaptureOutput()
-      start({command, args})
+      await start({command, args})
 
       // When
       const config = {

@@ -8,5 +8,5 @@ export const hook: Hook.Prerun = async (options) => {
   const command = cmd.replace(/:/g, ' ')
   const args = options.argv
   debug(`Running command ${command}`)
-  start({command, args, commandClass: options.Command})
+  await start({command, args, commandClass: options.Command})
 }

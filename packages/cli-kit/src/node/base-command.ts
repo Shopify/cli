@@ -25,15 +25,15 @@ export default abstract class extends Command {
     argv?: string[] | undefined,
   ): Promise<Interfaces.ParserOutput<TFlags, TArgs>> {
     const result = await super.parse<TFlags, TArgs>(options, argv)
-    addFromParsedFlags(result.flags)
+    await addFromParsedFlags(result.flags)
     return result
   }
 }
 
-export function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
-  addPublic({
+export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
+  await addPublic(() => ({
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,
     cmd_all_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),
-  })
+  }))
 }
