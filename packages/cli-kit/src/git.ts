@@ -12,6 +12,10 @@ export const GitNotPresentError = () => {
   )
 }
 
+export const OutsideGitDirectoryError = () => {
+  return new Abort('Must be inside a Git directory to continue')
+}
+
 export async function initializeRepository(directory: string) {
   debug(content`Initializing git repository at ${token.path(directory)}...`)
   await ensurePresentOrAbort()
@@ -57,6 +61,16 @@ export async function downloadRepository({
       throw abortError
     }
     throw err
+  }
+}
+
+/**
+ * If command run from outside a .git directory tree
+ * it throws an abort error.
+ */
+export async function ensureInsideGitDirectory() {
+  if (!(await git().checkIsRepo())) {
+    throw OutsideGitDirectoryError()
   }
 }
 
