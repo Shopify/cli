@@ -1,5 +1,5 @@
 import WS from 'jest-websocket-mock';
-import {renderHook, withProviders} from '@shopify/shopify-cli-extensions-test-utils';
+import {renderHook, withProviders} from '@shopify/ui-extensions-test-utils';
 
 import {mockApp, mockExtension} from '../testing';
 import {useExtensionServerContext} from '../hooks';

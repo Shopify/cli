@@ -2,7 +2,7 @@ import React from 'react';
 import {Checkbox} from '@shopify/polaris';
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit';
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing';
-import {render, withProviders} from '@shopify/shopify-cli-extensions-test-utils';
+import {render, withProviders} from '@shopify/ui-extensions-test-utils';
 import {DefaultProviders} from 'tests/DefaultProviders';
 import {mockI18n} from 'tests/mock-i18n';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import QRCode from 'qrcode.react';
 import {mockApp, mockExtension} from '@shopify/ui-extensions-server-kit/testing';
-import {render, withProviders} from '@shopify/shopify-cli-extensions-test-utils';
+import {render, withProviders} from '@shopify/ui-extensions-test-utils';
 import {ToastProvider} from '@/hooks/useToast';
 import {mockI18n} from 'tests/mock-i18n';
 import {DefaultProviders} from 'tests/DefaultProviders';

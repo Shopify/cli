@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@shopify/shopify-cli-extensions-test-utils",
+  "name": "@shopify/ui-extensions-test-utils",
   "version": "0.2.0",
   "main": "dist/index",
   "types": "dist/index",

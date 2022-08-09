@@ -1,4 +1,4 @@
-import type {Config} from '@jest/types';
+import type {Config} from '@jest/types'
 
 const config: Config.InitialOptions = {
   preset: 'ts-jest',
@@ -17,8 +17,7 @@ const config: Config.InitialOptions = {
 
   moduleNameMapper: {
     'tests/(.*)': '<rootDir>/tests/$1',
-    '^@shopify/shopify-cli-extensions-test-utils':
-      '<rootDir>/../shopify-cli-extensions-test-utils/src',
+    '^@shopify/ui-extensions-test-utils': '<rootDir>/../shopify-cli-extensions-test-utils/src',
   },
 
   moduleDirectories: ['node_modules', 'src'],
@@ -26,6 +25,6 @@ const config: Config.InitialOptions = {
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
   },
-};
+}
 
-export default config;
+export default config

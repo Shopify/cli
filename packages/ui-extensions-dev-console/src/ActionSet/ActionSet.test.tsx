@@ -1,7 +1,7 @@
 import React from 'react';
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing';
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit';
-import {render, withProviders} from '@shopify/shopify-cli-extensions-test-utils';
+import {render, withProviders} from '@shopify/ui-extensions-test-utils';
 import {mockI18n} from 'tests/mock-i18n';
 import {DefaultProviders} from 'tests/DefaultProviders';
 

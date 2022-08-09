@@ -6,9 +6,9 @@
       "@/*": ["src/*"],
       "@shopify/ui-extensions-server-kit/testing": ["../ui-extensions-server-kit/src/testing"],
       "@shopify/ui-extensions-server-kit": ["../ui-extensions-server-kit/src"],
-      "@shopify/shopify-cli-extensions-test-utils": ["../shopify-cli-extensions-test-utils/src"]
+      "@shopify/ui-extensions-test-utils": ["../ui-extensions-test-utils/src"]
     }
   },
   "include": ["src/**/*", "tests/**/*", "src/**/*.json"],
-  "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../shopify-cli-extensions-test-utils"}]
+  "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../ui-extensions-test-utils"}]
 }
