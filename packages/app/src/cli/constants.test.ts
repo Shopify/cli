@@ -145,6 +145,7 @@ describe('getFunctionExtensionPointName', () => {
       ORDER_DISCOUNTS: ['order_discounts'],
       SHIPPING_DISCOUNTS: ['shipping_discounts'],
       PAYMENT_METHODS: ['payment_methods'],
+      PAYMENT_CUSTOMIZATION: ['payment_customization'],
       SHIPPING_METHODS: ['shipping_rate_presenter'],
     }
 

@@ -1,5 +1,21 @@
 # @shopify/create-app
 
+## 3.6.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.6.1
+
+## 3.6.0
+
+### Patch Changes
+
+- 6f6dc914: Fix script execution for Windows dev enviroments
+- d9351df4: Use a custom list of safe nouns and adjectives to generate default names for apps and extensions
+- Updated dependencies [073e514c]
+- Updated dependencies [d9351df4]
+  - @shopify/cli-kit@3.6.0
+
 ## 3.5.0
 
 ### Patch Changes

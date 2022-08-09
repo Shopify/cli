@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["jest"],
+    "allowJs": false,
+    "skipLibCheck": false,
+    "esModuleInterop": true,
+    "declaration": true,
+    "composite": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "jsx": "react",
+    "outDir": "dist",
+    "baseUrl": "src",
+    "rootDir": "src",
+    "paths": {
+      "@shopify/shopify-cli-extensions-test-utils": ["../../shopify-cli-extensions-test-utils/src"],
+    }
+  },
+  "include": ["src/**/*", "src/testing/**/*"],
+  "references": [{"path": "../shopify-cli-extensions-test-utils"}]
+}

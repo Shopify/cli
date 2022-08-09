@@ -1,5 +1,25 @@
 # app
 
+## 3.6.1
+
+### Patch Changes
+
+- Updated dependencies [c33a6dcf]
+  - @shopify/app@3.6.1
+  - @shopify/cli@3.6.1
+
+## 3.6.0
+
+### Patch Changes
+
+- Updated dependencies [6f6dc914]
+- Updated dependencies [1d438b3c]
+- Updated dependencies [d9351df4]
+- Updated dependencies [858e3faf]
+- Updated dependencies [ffd33ec1]
+  - @shopify/cli@3.6.0
+  - @shopify/app@3.6.0
+
 ## 3.5.0
 
 ### Patch Changes

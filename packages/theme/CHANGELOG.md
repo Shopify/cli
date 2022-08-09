@@ -1,5 +1,27 @@
 # @shopify/theme
 
+## 3.6.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.6.1
+
+## 3.6.0
+
+### Minor Changes
+
+- 08c6526f: - Clean up theme share
+  - Clean up theme package
+  - Clean up theme publish
+  - Clean up theme delete
+  - Clean up theme open
+
+### Patch Changes
+
+- Updated dependencies [073e514c]
+- Updated dependencies [d9351df4]
+  - @shopify/cli-kit@3.6.0
+
 ## 3.5.0
 
 ### Patch Changes

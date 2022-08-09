@@ -1,16 +1,25 @@
 {
   "name": "@shopify/theme",
-  "version": "3.5.0",
+  "version": "3.6.1",
   "private": false,
   "description": "Utilities building and publishing themes",
+  "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
   "type": "module",
+  "license": "MIT",
   "files": [
     "/dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "clean": "shx rm -rf dist",
     "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build",
+    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
@@ -24,7 +33,7 @@
   },
   "dependencies": {
     "@oclif/core": "^1.0",
-    "@shopify/cli-kit": "3.5.0"
+    "@shopify/cli-kit": "3.6.1"
   },
   "devDependencies": {
     "vitest": "^0.17.1"

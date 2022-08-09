@@ -1,0 +1,16 @@
+.Theme {
+  /* colors */
+  --dc-background: #38393a;
+  --dc-background-hover: #4e4f51;
+  --dc-dark: #202123;
+
+  --dc-text: #ffffff;
+  --dc-subdued: #a7aaad;
+  --dc-active: #36a3ff;
+
+  /* font */
+  --dc-font: "SF Mono", monospace;
+
+  /* border */
+  --dc-border-radius: 10px;
+}
