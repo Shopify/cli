@@ -1,0 +1,22 @@
+{
+  "title": "Developer Console",
+  "close": "Close Developer Console",
+  "extensionList": {
+    "title": "Local overrides",
+    "name": "Name",
+    "type": "Type",
+    "status": "Status",
+    "refresh": "Refresh",
+    "delete": "Delete"
+  },
+  "bulkActions": {
+    "show": "Show",
+    "hide": "Hide",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all"
+  },
+  "errors": {
+    "noExtensions": "No extensions found",
+    "noExtensionsForSurface": "No extensions found for the surface: {surface}"
+  }
+}

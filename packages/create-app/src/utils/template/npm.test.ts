@@ -124,7 +124,7 @@ describe('getDeepInstallNPMTasks', () => {
         file.write(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
       ])
 
-      callback(tmpDir)
+      return callback(tmpDir)
     })
   }
 

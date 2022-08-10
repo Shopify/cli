@@ -29,7 +29,6 @@ export interface ExchangeScopes {
  */
 export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
-  /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
     grant_type: 'authorization_code',
     code: codeData.code,
@@ -37,7 +36,6 @@ export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Prom
     client_id: clientId,
     code_verifier: codeData.codeVerifier,
   }
-  /* eslint-enable @typescript-eslint/naming-convention */
 
   return tokenRequest(params).then(buildIdentityToken)
 }
@@ -79,14 +77,12 @@ export async function exchangeAccessForApplicationTokens(
  */
 export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
-  /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
     grant_type: 'refresh_token',
     access_token: currentToken.accessToken,
     refresh_token: currentToken.refreshToken,
     client_id: clientId,
   }
-  /* eslint-enable @typescript-eslint/naming-convention */
   return tokenRequest(params).then(buildIdentityToken)
 }
 
@@ -111,7 +107,6 @@ async function requestAppToken(
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
 
-  /* eslint-disable @typescript-eslint/naming-convention */
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
     requested_token_type: 'urn:ietf:params:oauth:token-type:access_token',
@@ -122,7 +117,6 @@ async function requestAppToken(
     subject_token: token,
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
-  /* eslint-enable @typescript-eslint/naming-convention */
 
   let identifier = appId
   if (api === 'admin' && store) {
@@ -148,7 +142,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
     } else if (payload.error === 'invalid_request') {
       // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
       // This means the token is invalid. We clear the session and throw an error to let the caller know.
-      secureStore.remove()
+      await secureStore.remove()
       throw InvalidIdentityError
     } else {
       throw new Abort(payload.error_description)

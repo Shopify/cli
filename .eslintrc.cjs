@@ -32,6 +32,47 @@ module.exports = {
       },
     ],
     '@typescript-eslint/switch-exhaustiveness-check': 'error',
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        selector: 'default',
+        format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+        leadingUnderscore: 'allow',
+        trailingUnderscore: 'allow',
+      },
+      {
+        selector: 'default',
+        filter: {
+          match: true,
+          // Allow double underscores and React UNSAFE_ (for lifecycle hooks that are to be deprecated)
+          regex: '^(__|UNSAFE_).+$',
+        },
+        format: null,
+      },
+      {
+        selector: 'typeLike',
+        format: ['PascalCase'],
+      },
+      {
+        selector: 'typeParameter',
+        format: ['PascalCase'],
+        prefix: ['T'],
+      },
+      {
+        selector: 'interface',
+        format: ['PascalCase'],
+        custom: {
+          regex: '^I[A-Z]',
+          match: false,
+        },
+      },
+      {
+        selector: 'objectLiteralProperty',
+        format: null,
+      },
+    ],
+    '@typescript-eslint/no-misused-promises': 'error',
+    '@typescript-eslint/no-floating-promises': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',

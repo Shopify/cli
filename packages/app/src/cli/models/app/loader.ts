@@ -7,9 +7,10 @@ import {
   ThemeExtensionConfigurationSchema,
   UIExtensionConfigurationSupportedSchema,
 } from './extensions.js'
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
+import metadata from '../../metadata.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
@@ -90,6 +91,8 @@ class AppLoader {
     )
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
+
+    await logMetadataForLoadedApp(appClass)
 
     return appClass
   }
@@ -315,5 +318,40 @@ class AppLoader {
       this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
+  }
+}
+
+async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | undefined> {
+  const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
+  if (backendWebs.length > 1) {
+    output.debug('Unable to decide project type as multiple web backends')
+    return
+  } else if (backendWebs.length === 0) {
+    output.debug('Unable to decide project type as no web backend')
+    return
+  }
+  const {directory} = backendWebs[0]
+
+  const nodeConfigFile = path.join(directory, 'package.json')
+  const rubyConfigFile = path.join(directory, 'Gemfile')
+  const phpConfigFile = path.join(directory, 'composer.json')
+
+  if (await file.exists(nodeConfigFile)) {
+    return 'node'
+  } else if (await file.exists(rubyConfigFile)) {
+    return 'ruby'
+  } else if (await file.exists(phpConfigFile)) {
+    return 'php'
+  }
+  return undefined
+}
+
+async function logMetadataForLoadedApp(app: App) {
+  try {
+    const projectType = await getProjectType(app.webs)
+    metadata.addPublic({project_type: projectType})
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    output.debug(`Unable to logMetadataForLoadedApp ${error}`)
   }
 }

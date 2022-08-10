@@ -1,5 +1,6 @@
 import {load} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
+import metadata from '../../metadata.js'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {yarnLockfile, pnpmLockfile} from '@shopify/cli-kit/node/node-package-manager'
@@ -36,6 +37,8 @@ scopes = "read_products"
     await file.write(packageJsonPath, JSON.stringify({name: 'my_app', dependencies: {}, devDependencies: {}}))
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
+
+    return {webDirectory, appConfigurationPath}
   }
 
   const blockPath = (name: string) => {
@@ -147,7 +150,7 @@ scopes = "read_products"
 
   it("throws an error if the extension configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'ui', name: 'my-extension'})
+    await makeBlockDir({blockType: 'ui', name: 'my-extension'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
@@ -328,7 +331,7 @@ scopes = "read_products"
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'function', name: 'my-functions'})
+    await makeBlockDir({blockType: 'function', name: 'my-functions'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
@@ -501,6 +504,15 @@ scopes = "read_products"
 
     // Then
     expect(app.extensions.function[0].buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
+  })
+
+  it(`updates metadata after loading`, async () => {
+    const {webDirectory} = await writeConfig(appConfiguration)
+    await file.write(path.join(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await load(tmpDir)
+
+    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node'})
   })
 })
 

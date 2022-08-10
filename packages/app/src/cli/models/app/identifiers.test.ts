@@ -24,7 +24,6 @@ describe('updateAppIdentifiers', () => {
         identifiers: {
           app: 'FOO',
           extensions: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             my_extension: 'BAR',
           },
         },
@@ -60,7 +59,6 @@ describe('updateAppIdentifiers', () => {
           identifiers: {
             app: 'FOO',
             extensions: {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
               my_extension: 'BAR',
             },
           },

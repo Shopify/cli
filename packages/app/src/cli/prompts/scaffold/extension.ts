@@ -17,6 +17,7 @@ interface ScaffoldExtensionOptions {
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
   extensionFlavor?: string
+  directory: string
 }
 
 interface ScaffoldExtensionOutput {
@@ -75,7 +76,7 @@ const scaffoldExtensionPrompt = async (
       type: 'input',
       name: 'name',
       message: "Your extension's working name?",
-      default: haiku.generate('ext'),
+      default: await haiku.generate({suffix: 'ext', directory: options.directory}),
     })
   }
   let promptOutput: ScaffoldExtensionOutput = await prompt(questions)

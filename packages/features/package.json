@@ -1,12 +1,12 @@
 {
   "name": "@shopify/features",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "clean": "cd .",
     "build": "cd .",
-    "lint": "prettier -c **/*.ts && eslint **/*.ts",
-    "lint:fix": "prettier -w **/*.ts && eslint **/*.ts --fix",
+    "lint": "eslint **/*.ts",
+    "lint:fix": "eslint **/*.ts --fix",
     "test": "cucumber-js -p default",
     "tsc": "tsc --noEmit"
   },

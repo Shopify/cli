@@ -17,7 +17,6 @@ export default class AppInfo extends Command {
       description: 'format output as JSON',
       env: 'SHOPIFY_FLAG_JSON',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'web-env': Flags.boolean({
       hidden: false,
       description: 'Outputs environment variables necessary for running and deploying web/.',

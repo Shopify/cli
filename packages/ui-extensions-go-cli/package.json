@@ -1,0 +1,20 @@
+{
+  "name": "shopify-cli-extensions",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "make build",
+    "clean": "lerna run clean",
+    "deploy": "lerna publish from-package --yes",
+    "start": "cd packages/dev-console-app; yarn start",
+    "test": "lerna run test",
+    "version-bump": "lerna version --no-push --include-merged-tags"
+  },
+  "devDependencies": {
+    "@shopify/shopify-cli-extensions": "0.2.3"
+  }
+}
+

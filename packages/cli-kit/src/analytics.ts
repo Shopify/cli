@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as environment from './environment.js'
 import {platformAndArch} from './os.js'
-import {exists as fileExists} from './file.js'
-import {join as joinPath, resolve} from './path.js'
+import {resolve} from './path.js'
 import {version as rubyVersion} from './node/ruby.js'
 import {content, debug, token} from './output.js'
 import constants from './constants.js'
-import {cliKitStore} from './store.js'
 import * as metadata from './metadata.js'
 import {publishEvent} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
@@ -78,26 +76,18 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
   if (pathFlagIndex >= 0) {
     directory = resolve(startArgs[pathFlagIndex + 1])
   }
-  const appInfo = cliKitStore().getAppInfo(directory)
 
   const {platform, arch} = platformAndArch()
 
-  const rawPartnerId = appInfo?.orgId
-  let partnerIdAsInt: number | undefined
-  if (rawPartnerId !== undefined) {
-    partnerIdAsInt = parseInt(rawPartnerId, 10)
-    if (isNaN(partnerIdAsInt)) {
-      partnerIdAsInt = undefined
-    }
-  }
+  const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
+  const {partner_id, project_type, api_key, ...otherShopifyAppPublic} = appPublic ?? {}
 
-  const publicPluginData = await fanoutHooks(config, 'public_command_metadata', {})
   const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
 
   const appSpecific = {
-    project_type: await getProjectType(joinPath(directory, 'web')),
-    api_key: appInfo?.appId,
-    partner_id: partnerIdAsInt,
+    partner_id,
+    api_key,
+    project_type,
   }
 
   return {
@@ -119,26 +109,12 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       error_message: errorMessage,
       metadata: JSON.stringify({
         ...sensitiveMetadata,
-        extraPublic: publicPluginData,
+        extraPublic: {
+          '@shopify/app': otherShopifyAppPublic,
+          ...otherPluginsPublic,
+        },
         extraSensitive: sensitivePluginData,
       }),
     },
   }
-}
-
-export type ProjectType = 'node' | 'php' | 'ruby' | undefined
-
-export async function getProjectType(directory: string): Promise<ProjectType> {
-  const nodeConfigFile = joinPath(directory, 'package.json')
-  const rubyConfigFile = joinPath(directory, 'Gemfile')
-  const phpConfigFile = joinPath(directory, 'composer.json')
-
-  if (await fileExists(nodeConfigFile)) {
-    return 'node'
-  } else if (await fileExists(rubyConfigFile)) {
-    return 'ruby'
-  } else if (await fileExists(phpConfigFile)) {
-    return 'php'
-  }
-  return undefined
 }

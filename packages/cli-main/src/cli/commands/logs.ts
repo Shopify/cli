@@ -7,7 +7,6 @@ export default class Logs extends Command {
 
   static flags = {
     ...cli.globalFlags,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'last-command': Flags.boolean({
       hidden: true,
       description: 'View logs for the most recent command only',

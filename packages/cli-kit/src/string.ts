@@ -44,3 +44,17 @@ export function normalizeStoreName(store: string) {
     ? storeFqdn
     : `${storeFqdn}.myshopify.com`
 }
+
+/**
+ * Try to convert a string to an int, falling back to undefined if unable to
+ */
+export function tryParseInt(maybeInt: string | undefined) {
+  let asInt: number | undefined
+  if (maybeInt !== undefined) {
+    asInt = parseInt(maybeInt, 10)
+    if (isNaN(asInt)) {
+      asInt = undefined
+    }
+  }
+  return asInt
+}

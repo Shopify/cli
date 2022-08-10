@@ -1,0 +1,147 @@
+.OuterContainer {
+  height: 100vh;
+  background: var(--dc-background);
+  overflow: hidden;
+}
+
+.Hidden {
+  visibility: hidden;
+}
+
+.DevTool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  color: var(--dc-text);
+  font-family: var(--dc-font);
+  
+  overflow: hidden;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+
+  
+  h1 {
+    font-weight: 700;
+  }
+
+  main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  svg {
+    width: 2rem;
+  }
+}
+
+.Header {
+  border-bottom: 1px solid var(--dc-dark);
+  display: flex;
+  justify-content: space-between;
+  padding: 1.5rem 2rem 1rem;
+
+  svg {
+    fill: var(--dc-text);
+  }
+
+  .HeaderLeft {
+    display: flex;
+    height: auto;
+  }
+
+  .Cancel {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+.SideBar {
+  background: var(--dc-dark);
+  width: 24rem;
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  svg {
+    fill: var(--dc-text);
+  }
+}
+
+.MenuItem {
+  position: relative;
+  margin: 0.5rem 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--dc-border-radius);
+  display: flex;
+  align-items: center;
+
+  &:focus,
+  &:hover {
+    background: var(--dc-background);
+    color: var(--dc-active);
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -1rem;
+      width: 3px;
+      height: 3rem;
+      background: var(--dc-active);
+      border-radius: 4px;
+      margin-right: 1rem;
+    }
+
+    svg {
+      fill: var(--dc-active);
+    }
+  }
+}
+
+.ExtensionList {
+  width: 100%;
+  overflow: auto;
+  flex: 1;
+
+  table {
+    text-align: left;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  hr {
+    color: var(--dc-subdued);
+  }
+
+  tr {
+    line-height: 3rem;
+    border-bottom: 1px solid var(--dc-dark);
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 1rem;
+    background: var(--dc-background);
+  }
+
+  svg {
+    fill: var(--dc-subdued);
+  }
+}
+
+.UIExtensionsDevToolOverrides {
+  overflow: hidden;
+}
+
+.Empty {
+  width: 100%;
+  text-align: center;
+  padding: 1.5rem;
+}

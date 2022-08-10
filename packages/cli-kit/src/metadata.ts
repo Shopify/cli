@@ -1,6 +1,6 @@
 import {AnyJson} from './json.js'
 
-interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
+export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
   /** Add some public metadata -- this should not contain any PII */
   addPublic: (data: Partial<TPublic>) => void
   /** Add some potentially sensitive metadata -- this may include PII, but unnecessary data should never be tracked (this is a good fit for command args for instance) */
