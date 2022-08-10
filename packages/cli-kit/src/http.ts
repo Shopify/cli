@@ -3,6 +3,7 @@ import {environmentForService} from './environment/service.js'
 import https from 'https'
 
 export {default as fetch} from './http/fetch.js'
+export {graphqlClient} from './http/graphql.js'
 export {shopifyFetch} from './http/fetch.js'
 export {default as formData} from './http/formdata.js'
 
