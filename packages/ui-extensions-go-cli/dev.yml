@@ -11,7 +11,7 @@ up:
       version: 1.17.6
       modules: true
   - node:
-      version: v18.0.0
+      version: v16.13.1
       yarn: v1.22.18
   - homebrew:
     - delve
