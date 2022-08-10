@@ -179,7 +179,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
       throw new CancelExecution()
     }
 
-    remove(directory)
+    await remove(directory)
   }
 }
 

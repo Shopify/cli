@@ -45,16 +45,16 @@ export class RedirectListener {
       const requestUrl = request.url
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await getFavicon()
-        reply.header('Content-Type', 'image/svg+xml').send(faviconFile)
+        await reply.header('Content-Type', 'image/svg+xml').send(faviconFile)
         return {}
       } else if (requestUrl === '/style.css') {
         const stylesheetFile = await getStylesheet()
-        reply.header('Content-Type', 'text/css').send(stylesheetFile)
+        await reply.header('Content-Type', 'text/css').send(stylesheetFile)
         return {}
       }
 
-      const respond = (contents: string, error?: Error, state?: string, code?: string) => {
-        reply.header('Content-Type', 'text/html').send(contents)
+      const respond = async (contents: string, error?: Error, state?: string, code?: string) => {
+        await reply.header('Content-Type', 'text/html').send(contents)
         callback(error, state, code)
         return {}
       }
@@ -124,6 +124,7 @@ export async function listenRedirect(host: string, port: number, url: string): P
     const callback: RedirectCallback = (error, code, state) => {
       clearTimeout(timeout)
       setTimeout(() => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         redirectListener.stop()
         if (error) reject(error)
         else resolve({code: code as string, state: state as string})
