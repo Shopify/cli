@@ -1,1 +1,1 @@
-export * from './QRCodeModal';
+export * from './QRCodeModal'

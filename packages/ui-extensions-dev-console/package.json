@@ -5,6 +5,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json --noEmit && vite build",
     "clean": "git clean --exclude node_modules -xdf ./",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
     "serve": "vite preview",
     "start": "vite",
     "test": "jest"
