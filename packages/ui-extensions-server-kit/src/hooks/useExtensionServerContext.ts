@@ -1,5 +1,4 @@
-import {useContext} from 'react';
+import {extensionServerContext} from '../context'
+import {useContext} from 'react'
 
-import {extensionServerContext} from '../context';
-
-export const useExtensionServerContext = () => useContext(extensionServerContext);
+export const useExtensionServerContext = () => useContext(extensionServerContext)

@@ -1,4 +1,4 @@
-import {App} from '../types';
+import {App} from '../types'
 
 export function mockApp(): App {
   return {
@@ -9,5 +9,5 @@ export function mockApp(): App {
     icon: {
       transformedSrc: 'www.transformed-src.com',
     },
-  };
+  }
 }

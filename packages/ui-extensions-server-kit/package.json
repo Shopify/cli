@@ -25,6 +25,8 @@
     "build:code": "vite build --config vite.config.ts",
     "build:types": "tsc --emitDeclarationOnly",
     "clean": "git clean --exclude node_modules -xdf ./",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "jest"
   },
   "peerDependencies": {

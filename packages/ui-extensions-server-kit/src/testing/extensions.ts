@@ -1,18 +1,18 @@
-import {ExtensionPayload, Status} from '../types';
+import {ExtensionPayload, Status} from '../types'
 
 type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
+  [P in keyof T]?: DeepPartial<T[P]>
+}
 
-let id = 0;
+let id = 0
 
 function pad(num: number) {
-  return `00000000000${num}`.slice(-12);
+  return `00000000000${num}`.slice(-12)
 }
 
 export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): ExtensionPayload {
-  const uuid = `00000000-0000-0000-0000-${pad(id++)}`;
-  const lastUpdated = Date.now();
+  const uuid = `00000000-0000-0000-0000-${pad(id++)}`
+  const lastUpdated = Date.now()
   return {
     title: 'My extension',
     surface: 'admin',
@@ -27,8 +27,8 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         url: `https://secure-link.com/extensions/${uuid}/assets/main.js?lastUpdated=${lastUpdated}`,
         lastUpdated,
       },
-      ...((obj.assets || {}) as any),
-    } as any,
+      ...((obj.assets || {}) as unknown),
+    } as unknown,
     development: {
       hidden: false,
       status: Status.Success,
@@ -42,11 +42,11 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         name: 'render name',
         version: '1.0.0',
       },
-      ...((obj.development || {}) as any),
+      ...((obj.development || {}) as unknown),
     },
-  };
+  }
 }
 
 export function mockExtensions(): ExtensionPayload[] {
-  return [mockExtension()];
+  return [mockExtension()]
 }

@@ -1,2 +1,2 @@
-export * from './ExtensionServerClient';
-export * from './types';
+export * from './ExtensionServerClient'
+export * from './types'

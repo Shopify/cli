@@ -1,41 +1,38 @@
-import {set, replaceUpdated, resourceURLtoString} from '../../utilities';
-import type {ExtensionServerActions} from '../actions';
-import type {ExtensionPayload} from '../../types';
+import {set, replaceUpdated, resourceURLtoString} from '../../utilities'
+import type {ExtensionServerActions} from '../actions'
+import type {ExtensionPayload} from '../../types'
 
-import type {ExtensionServerState} from './types';
+import type {ExtensionServerState} from './types'
 
-export function extensionServerReducer(
-  state: ExtensionServerState,
-  action: ExtensionServerActions,
-) {
+export function extensionServerReducer(state: ExtensionServerState, action: ExtensionServerActions) {
   switch (action.type) {
     case 'connected': {
       const extensions = (action.payload.extensions ?? []).map((extension) => {
         Object.keys(extension.assets).forEach(
           (asset) => (extension.assets[asset].url = resourceURLtoString(extension.assets[asset])),
-        );
-        return extension;
-      });
+        )
+        return extension
+      })
       return {
         ...state,
         store: action.payload.store,
         app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
         extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
-      } as ExtensionServerState;
+      } as ExtensionServerState
     }
 
     case 'update': {
       const extensions = (action.payload.extensions ?? []).map((extension) => {
         Object.keys(extension.assets).forEach(
           (asset) => (extension.assets[asset].url = resourceURLtoString(extension.assets[asset])),
-        );
-        return extension;
-      });
+        )
+        return extension
+      })
       return {
         ...state,
         app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
         extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
-      } as ExtensionServerState;
+      } as ExtensionServerState
     }
 
     case 'refresh': {
@@ -43,19 +40,19 @@ export function extensionServerReducer(
         ...state,
         extensions: state.extensions.map((extension) => {
           if (action.payload.some(({uuid}) => extension.uuid === uuid)) {
-            const assets: ExtensionPayload['assets'] = {};
+            const assets: ExtensionPayload['assets'] = {}
             Object.keys(extension.assets).forEach((asset) => {
-              const resourceURL = {...extension.assets[asset]};
-              resourceURL.lastUpdated = Date.now();
-              resourceURL.url = resourceURLtoString(resourceURL);
+              const resourceURL = {...extension.assets[asset]}
+              resourceURL.lastUpdated = Date.now()
+              resourceURL.url = resourceURLtoString(resourceURL)
 
-              assets[asset] = resourceURL;
-            });
-            return set(extension, (ext) => ext.assets, assets);
+              assets[asset] = resourceURL
+            })
+            return set(extension, (ext) => ext.assets, assets)
           }
-          return extension;
+          return extension
         }),
-      };
+      }
     }
 
     case 'focus': {
@@ -63,13 +60,13 @@ export function extensionServerReducer(
         ...state,
         extensions: state.extensions.map((extension) => {
           if (action.payload.some(({uuid}) => extension.uuid === uuid)) {
-            return set(extension, (ext) => ext.development.focused, true);
+            return set(extension, (ext) => ext.development.focused, true)
           } else if (extension.development.focused) {
-            return set(extension, (ext) => ext.development.focused, false);
+            return set(extension, (ext) => ext.development.focused, false)
           }
-          return extension;
+          return extension
         }),
-      };
+      }
     }
 
     case 'unfocus': {
@@ -77,14 +74,14 @@ export function extensionServerReducer(
         ...state,
         extensions: state.extensions.map((extension) => {
           if (extension.development.focused) {
-            return set(extension, (ext) => ext.development.focused, false);
+            return set(extension, (ext) => ext.development.focused, false)
           }
-          return extension;
+          return extension
         }),
-      };
+      }
     }
 
     default:
-      return state;
+      return state
   }
 }

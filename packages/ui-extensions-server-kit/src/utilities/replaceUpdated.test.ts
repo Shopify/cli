@@ -1,5 +1,5 @@
 /* eslint-disable id-length */
-import {replaceUpdated} from './replaceUpdated';
+import {replaceUpdated} from './replaceUpdated'
 
 describe('replaceUpdated', () => {
   it('replaces updated items in place, and appends new items', () => {
@@ -8,12 +8,12 @@ describe('replaceUpdated', () => {
       {id: 2, a: 'b'},
       {id: 3, a: 'c'},
       {id: 4, a: 'd'},
-    ];
+    ]
 
     const updates = [
       {id: 2, a: 'updated'},
       {id: 5, a: 'e'},
-    ];
+    ]
 
     expect(replaceUpdated(arr, updates, ({id}) => id)).toStrictEqual([
       {id: 1, a: 'a'},
@@ -21,6 +21,6 @@ describe('replaceUpdated', () => {
       {id: 3, a: 'c'},
       {id: 4, a: 'd'},
       {id: 5, a: 'e'},
-    ]);
-  });
-});
+    ])
+  })
+})

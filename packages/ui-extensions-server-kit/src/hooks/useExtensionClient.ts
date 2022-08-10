@@ -1,6 +1,6 @@
-import {useExtensionServerContext} from './useExtensionServerContext';
+import {useExtensionServerContext} from './useExtensionServerContext'
 
 export function useExtensionClient() {
-  const {client} = useExtensionServerContext();
-  return client;
+  const {client} = useExtensionServerContext()
+  return client
 }
