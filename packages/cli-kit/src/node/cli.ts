@@ -31,9 +31,7 @@ export async function runCLI(options: RunCLIOptions) {
     })
   }
 
-  run(undefined, options.moduleURL)
-    .then((_) => flush())
-    .catch(errorHandler)
+  run(undefined, options.moduleURL).then(flush).catch(errorHandler)
 }
 
 /**
