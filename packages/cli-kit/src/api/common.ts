@@ -1,18 +1,10 @@
 import {firstPartyDev} from '../environment/local.js'
 import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
-import {Abort, ExtendableError} from '../error.js'
+import {Abort, apiError, ManagedError} from '../error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
 import {fromPromise, ResultAsync} from 'neverthrow'
 import {randomUUID} from 'crypto'
-
-export class RequestClientError extends ExtendableError {
-  statusCode: number
-  public constructor(message: string, statusCode: number) {
-    super(message)
-    this.statusCode = statusCode
-  }
-}
 
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
   const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
@@ -69,7 +61,7 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, unknown> {
+export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, ManagedError> {
   return fromPromise(action(), (error) => {
     if (error instanceof ClientError) {
       const errorMessage = stringifyMessage(content`
@@ -80,12 +72,12 @@ export function handlingErrors<T>(api: string, action: () => Promise<T>): Result
   ${outputToken.json(error.response.errors)}
       `)
       if (error.response.status < 500) {
-        return new RequestClientError(errorMessage, error.response.status)
+        return apiError(error, error.response.status)
       } else {
-        return new Abort(errorMessage)
+        throw new Abort(errorMessage)
       }
     } else {
-      return error
+      throw error
     }
   })
 }

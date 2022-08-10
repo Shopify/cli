@@ -7,7 +7,6 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension} from '../dev/create-extension.js'
 import {error, output, session, ui} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {ResultAsync, ok, fromPromise} from 'neverthrow'
 
 const DeployError = (appName: string, packageManager: PackageManager) => {
   return new error.Abort(
@@ -116,50 +115,17 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   }
 }
 
-/* async function createExtensions(extensions: Extension[], appId: string) {
+async function createExtensions(extensions: Extension[], appId: string) {
   // PENDING: Function extensions can't be created before being deployed we'll need to handle that differently
   const token = await session.ensureAuthenticatedPartners()
   const result: {[localIdentifier: string]: ExtensionRegistration} = {}
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
-    const registration = await createExtension(appId, extension.type, extension.localIdentifier, token).match(
-      (result) => result,
-      (error) => {
-        throw error
-      },
-    )
+    const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
     output.completed(`Created extension ${extension.localIdentifier}.`)
     result[extension.localIdentifier] = registration
   }
   return result
-}*/
-
-function createExtensions(
-  extensions: Extension[],
-  appId: string,
-): ResultAsync<{[localIdentifier: string]: ExtensionRegistration}, unknown> {
-  // PENDING: Function extensions can't be created before being deployed we'll need to handle that differently
-  return fromPromise(session.ensureAuthenticatedPartners(), (error) => {
-    throw error
-  })
-    .andThen((token) => {
-      return ResultAsync.combine(
-        extensions.map((extension) => {
-          return createExtension(appId, extension.type, extension.localIdentifier, token).map((registration) => {
-            output.completed(`Created extension ${extension.localIdentifier}.`)
-            return {localIdentifier: extension.localIdentifier, registration}
-          })
-        }),
-      )
-    })
-    .andThen((registrations) => {
-      const result: {[localIdentifier: string]: ExtensionRegistration} = {}
-      registrations.reduce((result, registration) => {
-        result[registration.localIdentifier] = registration.registration
-        return result
-      })
-      return ok(result)
-    })
 }
 
 async function matchConfirmationPrompt(extension: Extension, registration: ExtensionRegistration) {

@@ -17,24 +17,26 @@ You can add a new product here: https://${storeFqdn}/admin/products/new`,
  * @param store {string} Store FQDN
  * @returns {Promise<string>} variantID if exists
  */
-export function fetchProductVariant(store: string): ResultAsync<string, unknown> {
+export function fetchProductVariant(store: string) {
   return ResultAsync.fromPromise(session.ensureAuthenticatedAdmin(store), (err) => err)
     .andThen((adminSession) => {
       const query = api.graphql.FindProductVariantQuery
       return api.admin.request<api.graphql.FindProductVariantSchema>(query, adminSession)
     })
-    .map((result) => mapFetchProductVariantResult(result, store))
+    .match(
+      (result) => mapFetchProductVariantResult(result, store),
+      (error) => {
+        throw error
+      },
+    )
 }
 
-async function mapFetchProductVariantResult(
-  result: api.graphql.FindProductVariantSchema,
-  store: string,
-): Promise<string> {
+function mapFetchProductVariantResult(result: api.graphql.FindProductVariantSchema, store: string) {
   const products = result.products.edges
   if (products.length === 0) {
     throw NoProductsError(store)
   }
   const variantURL = products[0].node.variants.edges[0].node.id
   const variantId = variantURL.split('/').pop()
-  return variantId ?? ''
+  return variantId
 }

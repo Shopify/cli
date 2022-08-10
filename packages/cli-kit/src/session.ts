@@ -1,5 +1,5 @@
 import {applicationId} from './session/identity.js'
-import {Abort, Bug} from './error.js'
+import {Abort, Bug, ManagedError} from './error.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {identity as identityFqdn} from './environment/fqdn.js'
@@ -22,10 +22,8 @@ import * as secureStore from './session/store.js'
 import constants from './constants.js'
 import {normalizeStoreName} from './string.js'
 import * as output from './output.js'
-import {partners} from './api.js'
-import {RequestClientError} from './api/common.js'
 import {firstPartyDev} from './environment/local.js'
-import {gql} from 'graphql-request'
+import {checkOrganization} from './api/partners.js'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
 const MissingPartnerTokenError = new Bug('No partners token found after ensuring authenticated')
@@ -208,28 +206,14 @@ ${token.json(applications)}
 }
 
 export async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
-  try {
-    await partners.request(
-      gql`
-        {
-          organizations(first: 1) {
-            nodes {
-              id
-            }
-          }
-        }
-      `,
-      partnersToken,
-    )
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    if (error instanceof RequestClientError && error.statusCode === 404) {
-      return false
-    } else {
-      return true
-    }
+  return checkOrganization(partnersToken, checkPartnerAccountNotFoundError)
+}
+
+function checkPartnerAccountNotFoundError(error: ManagedError) {
+  if (error.type === 'ApiError') {
+    return error.status === 404
   }
+  return false
 }
 
 /**

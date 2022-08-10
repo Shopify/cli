@@ -1,6 +1,7 @@
 import {Message, stringifyMessage, error as outputError} from './output.js'
 import {normalize} from './path.js'
 import {Errors} from '@oclif/core'
+import ExtendableError from 'ts-error'
 
 export {ExtendableError} from 'ts-error'
 export {AbortSignal} from 'abort-controller'
@@ -109,3 +110,17 @@ export function cleanSingleStackTracePath(filePath: string): string {
     .replace('file:/', '/')
     .replace(/^\/?[A-Z]:/, '')
 }
+
+export type ManagedError = ExtendableError & ({type: 'ApiError'; status: number} | {type: 'Other'; context?: string})
+
+const populateBaseError = (error: Error): ExtendableError => ({
+  stack: error.stack,
+  name: error.name,
+  message: error.message,
+})
+
+export const apiError = (error: Error, status: number): ManagedError => ({
+  type: 'ApiError',
+  status,
+  ...populateBaseError(error),
+})

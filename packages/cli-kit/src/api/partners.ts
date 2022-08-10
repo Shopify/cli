@@ -1,11 +1,13 @@
 import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
 import {ScriptServiceProxyQuery} from './graphql/index.js'
+import {CheckOrganizationQuerySchema, CheckOrganizationsQuery} from './graphql/check_org.js'
 import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
-import {Variables, ClientError, gql, RequestDocument} from 'graphql-request'
+import {ManagedError} from '../error.js'
+import {Variables, RequestDocument} from 'graphql-request'
 import {ResultAsync} from 'neverthrow'
 
-export function request<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, unknown> {
+export function request<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, ManagedError> {
   const api = 'Partners'
   return handlingErrors(api, async () => {
     const fqdn = await partnersFqdn()
@@ -22,39 +24,27 @@ export function request<T>(query: RequestDocument, token: string, variables?: Va
   })
 }
 
+export async function checkOrganization(
+  token: string,
+  errorHandler: (error: ManagedError) => boolean,
+): Promise<boolean> {
+  return request<CheckOrganizationQuerySchema>(CheckOrganizationsQuery, token).match(() => true, errorHandler)
+}
+
 /**
  * Check if the given token is revoked and no longer valid to interact with the Partners API.
  * @param token {string} - The token to check
  * @returns {Promise<boolean>} - True if the token is revoked, false otherwise
  */
 export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
-  const query = gql`
-    {
-      organizations(first: 1) {
-        nodes {
-          id
-        }
-      }
-    }
-  `
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/api/cli/graphql`
-  const headers = await buildHeaders(token)
-  const client = await graphqlClient({
-    headers,
-    url,
-    service: 'partners',
-  })
-  try {
-    await client.request(query, {})
-    return false
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    if (error instanceof ClientError) {
-      return error.response.status === 401
-    }
-    return false
+  return checkOrganization(token, checkTokenErrorHandler)
+}
+
+function checkTokenErrorHandler(error: ManagedError): boolean {
+  if (error.type === 'ApiError') {
+    return error.status === 401
   }
+  return false
 }
 
 interface ProxyResponse {

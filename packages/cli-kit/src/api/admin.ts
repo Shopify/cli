@@ -1,7 +1,7 @@
 import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
 import {AdminSession} from '../session.js'
 import {debug, content, token as outputToken} from '../output.js'
-import {Bug, Abort} from '../error.js'
+import {Bug, Abort, ManagedError} from '../error.js'
 import {graphqlClient} from '../http/graphql.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
 import {ResultAsync} from 'neverthrow'
@@ -25,7 +25,7 @@ export function request<T>(
   query: RequestDocument,
   session: AdminSession,
   variables?: Variables,
-): ResultAsync<T, unknown> {
+): ResultAsync<T, ManagedError> {
   const api = 'Admin'
   return handlingErrors(api, async () => {
     const version = await fetchApiVersion(session)
