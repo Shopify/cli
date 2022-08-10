@@ -127,7 +127,7 @@ func (fs *FS) ReadTemplateFile(filePath string) ([]byte, error) {
 }
 
 func (fs *FS) normalizePath(filePath string) string {
-	if strings.HasPrefix(filePath, fs.root + "/") {
+	if strings.HasPrefix(filePath, fs.root+"/") {
 		return filePath
 	}
 	return filepath.Join(fs.root, filePath)

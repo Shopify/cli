@@ -1,19 +1,17 @@
-#!/usr/bin/env node
+import {build} from './build'
 
-import {build} from './build';
-
-run();
+run()
 
 async function run() {
-  const command = process.argv.slice(2)[0];
+  const command = process.argv.slice(2)[0]
   switch (command) {
     case 'build': {
-      build({mode: 'production'});
-      break;
+      build({mode: 'production'})
+      break
     }
     case 'develop': {
-      build({mode: 'development'});
-      break;
+      build({mode: 'development'})
+      break
     }
   }
 }

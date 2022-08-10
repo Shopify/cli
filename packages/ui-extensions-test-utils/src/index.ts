@@ -1,3 +1,3 @@
-export * from './render';
-export * from './renderHook';
-export * from './withProviders';
+export * from './render'
+export * from './renderHook'
+export * from './withProviders'

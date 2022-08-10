@@ -1,1 +1,1 @@
-export * from './DevConsole';
+export * from './DevConsole'
