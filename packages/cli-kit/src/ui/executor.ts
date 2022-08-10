@@ -6,10 +6,6 @@ import {Question} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
 
-export function getMapper(): (question: Question) => unknown {
-  return inquirerMapper
-}
-
 export async function run<
   TName extends string & keyof TAnswers,
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},
@@ -20,7 +16,7 @@ export async function run<
   ]
 }
 
-function inquirerMapper(question: Question): unknown {
+export function mapper(question: Question): unknown {
   switch (question.type) {
     case 'input':
       inquirer.registerPrompt('custom-input', CustomInput)

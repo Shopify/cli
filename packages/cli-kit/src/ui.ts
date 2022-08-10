@@ -4,7 +4,7 @@ import {info, completed, content, token, logUpdate, logToFile, Message, Logger, 
 import {colors} from './node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
-import {getMapper as getMapperUI, run as executorUI} from './ui/executor.js'
+import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
 import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
 
 export function newListr(tasks: ListrTask[], options?: object) {
@@ -93,7 +93,7 @@ ${token.json(questions)}
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappedQuestions: any[] = questions.map(getMapperUI())
+  const mappedQuestions: any[] = questions.map(mapperUI)
   const value = {} as TAnswers
   for (const question of mappedQuestions) {
     if (question.preface) {
