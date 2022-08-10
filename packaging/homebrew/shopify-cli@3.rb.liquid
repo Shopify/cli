@@ -1,0 +1,32 @@
+# frozen_string_literal: true
+
+require "formula"
+require "language/node"
+
+class ShopifyCliAT3 < Formula
+  desc "A CLI tool to build for the Shopify platform"
+  homepage "https://github.com/shopify/cli#readme"
+  url "{{ cliTarball }}"
+  sha256 "{{ cliSha }}"
+  license "MIT"
+
+  resource "cli-theme-commands" do
+    url "{{ themeTarball}}"
+    sha256 "{{ themeSha }}"
+  end
+
+  livecheck do
+    url :stable
+  end
+
+  depends_on "node"
+
+  def install
+    system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+    bin.install_symlink Dir["#{libexec}/bin/*"]
+
+    resource("cli-theme-commands").stage {
+      system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+    }
+  end
+end

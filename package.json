@@ -2,6 +2,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "package": "bin/package.js",
     "prerelease": "bin/prerelease.js",
     "update-bugsnag": "bin/update-bugsnag.js",
     "graph": "nx graph",
