@@ -1,5 +1,4 @@
 import {git, error, path, output, api, http} from '@shopify/cli-kit'
-// eslint-disable-next-line import/no-extraneous-dependencies
 import {gql} from 'graphql-request'
 
 interface DeployConfig {
@@ -28,8 +27,8 @@ export async function deployToOxygen(_config: DeployConfig) {
 }
 
 const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
-  git.ensurePresentOrAbort()
-  git.ensureInsideGitDirectory()
+  await git.ensurePresentOrAbort()
+  await git.ensureInsideGitDirectory()
   const simpleGit = git.factory()
 
   const getLatestCommit = async () => {
