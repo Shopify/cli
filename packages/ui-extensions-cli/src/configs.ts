@@ -12,6 +12,7 @@ export interface Configs {
 
 export interface ConfigFile {
   development: Development
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   extension_points?: string[]
 }
 
@@ -53,7 +54,9 @@ export function getConfigs() {
       throw new Error('Invalid configuration')
     }
     return jsonConfigs(configs)
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Failed with error: ${error}`)
     process.exit(1)
   }
