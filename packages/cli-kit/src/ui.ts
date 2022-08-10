@@ -1,14 +1,10 @@
-import {AutoComplete} from './ui/autocomplete.js'
-import {Input} from './ui/input.js'
-import {Select} from './ui/select.js'
 import {CancelExecution, Abort} from './error.js'
 import {remove, exists} from './file.js'
 import {info, completed, content, token, logUpdate, logToFile, Message, Logger, stringifyMessage} from './output.js'
 import {colors} from './node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
-import {isTruthy} from './environment/utilities.js'
-import inquirer from 'inquirer'
+import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
 import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
 import findProcess from 'find-process'
 
@@ -41,13 +37,15 @@ export function newListr(tasks: ListrTask[], options?: object) {
 export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
-interface BaseQuestion<TName extends string> {
+export interface Question<TName extends string = string> {
   name: TName
   message: string
   preface?: string
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
+  type: 'input' | 'select' | 'autocomplete' | 'password'
+  choices?: {name: string; value: string}[]
 }
 
 const started = (content: Message, logger: Logger) => {
@@ -82,37 +80,11 @@ export const task = async ({title, task}: TaskOptions) => {
   completed(success, logUpdate)
   logUpdate.done()
 }
-
-export type InputQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'input'
-}
-
-export type SelectQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'select'
-  choices: string[] | {name: string; value: string}[]
-}
-
-export type AutocompleteQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'autocomplete'
-  choices: string[] | {name: string; value: string}[]
-}
-
-export type PasswordQuestion<TName extends string> = BaseQuestion<TName> & {
-  type: 'password'
-}
-
-export type Question<TName extends string = string> =
-  | InputQuestion<TName>
-  | SelectQuestion<TName>
-  | AutocompleteQuestion<TName>
-  | PasswordQuestion<TName>
-
 export const prompt = async <
   TName extends string & keyof TAnswers,
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},
 >(
   questions: ReadonlyArray<Question<TName>>,
-  debugForceInquirer = false,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
     throw new Abort(content`
@@ -121,36 +93,20 @@ ${token.json(questions)}
     `)
   }
 
-  if (debugForceInquirer || isTruthy(process.env.SHOPIFY_USE_INQUIRER)) {
-    const results = []
-    for (const question of questions) {
-      if (question.preface) {
-        info(question.preface)
-      }
-
-      const questionName = question.name
-      // eslint-disable-next-line no-await-in-loop
-      const answer = (await inquirer.prompt([convertQuestionForInquirer(question)]))[questionName]
-      logPromptResults(question.message, answer)
-      results.push([questionName, answer])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mappedQuestions: any[] = questions.map(mapperUI)
+  const value = {} as TAnswers
+  for (const question of mappedQuestions) {
+    if (question.preface) {
+      info(question.preface)
     }
 
-    return Object.fromEntries(results) as TAnswers
-  } else {
-    const value = {} as TAnswers
-    for (const question of questions) {
-      if (question.preface) {
-        info(question.preface)
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mappedQuestion: any = mapper(question)
-      // eslint-disable-next-line no-await-in-loop
-      const answer = await mappedQuestion.run()
-      value[question.name as keyof TAnswers] = answer
-      logPromptResults(question.message, answer)
-    }
-    return value
+    // eslint-disable-next-line no-await-in-loop
+    value[question.name as TName] = await executorUI(question)
+
+    logPromptResults(question.message, value[question.name as TName])
   }
+  return value
 }
 
 function logPromptResults(questionName: string, answer: string) {
@@ -217,35 +173,4 @@ export const keypress = async () => {
       resolve()
     }),
   )
-}
-
-function convertQuestionForInquirer<
-  TName extends string & keyof TAnswers,
-  TAnswers extends {[key in TName]: string} = {[key in TName]: string},
->(question: Question<TName>): inquirer.DistinctQuestion<TAnswers> {
-  switch (question.type) {
-    case 'input':
-    case 'password':
-      return question
-    case 'select':
-    case 'autocomplete':
-      return {
-        ...question,
-        type: 'list',
-      }
-  }
-}
-
-function mapper(question: Question): unknown {
-  switch (question.type) {
-    case 'input':
-    case 'password':
-      return new Input(question)
-    case 'select':
-      return new Select(question)
-    case 'autocomplete':
-      return new AutoComplete(question)
-    default:
-      return undefined
-  }
 }
