@@ -1,10 +1,20 @@
 import {firstPartyDev} from '../environment/local.js'
 import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
-import {Abort, apiError, ManagedError} from '../error.js'
+import {Abort, ApiError} from '../error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
 import {fromPromise, ResultAsync} from 'neverthrow'
 import {randomUUID} from 'crypto'
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function unwrapOrThrow<T, E>(result: ResultAsync<T, E>): Promise<T> {
+  return result.match(
+    (result) => result,
+    (error) => {
+      throw error
+    },
+  )
+}
 
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
   const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
@@ -61,7 +71,7 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, ManagedError> {
+export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, unknown> {
   return fromPromise(action(), (error) => {
     if (error instanceof ClientError) {
       const errorMessage = stringifyMessage(content`
@@ -72,12 +82,12 @@ export function handlingErrors<T>(api: string, action: () => Promise<T>): Result
   ${outputToken.json(error.response.errors)}
       `)
       if (error.response.status < 500) {
-        return apiError(error, error.response.status)
+        return new ApiError(error.message, error.response.status)
       } else {
-        throw new Abort(errorMessage)
+        return new Abort(errorMessage)
       }
     } else {
-      throw error
+      return error
     }
   })
 }

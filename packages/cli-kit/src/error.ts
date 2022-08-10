@@ -111,16 +111,10 @@ export function cleanSingleStackTracePath(filePath: string): string {
     .replace(/^\/?[A-Z]:/, '')
 }
 
-export type ManagedError = ExtendableError & ({type: 'ApiError'; status: number} | {type: 'Other'; context?: string})
-
-const populateBaseError = (error: Error): ExtendableError => ({
-  stack: error.stack,
-  name: error.name,
-  message: error.message,
-})
-
-export const apiError = (error: Error, status: number): ManagedError => ({
-  type: 'ApiError',
-  status,
-  ...populateBaseError(error),
-})
+export class ApiError extends ExtendableError {
+  statusCode: number
+  public constructor(message: string, statusCode: number) {
+    super(message)
+    this.statusCode = statusCode
+  }
+}
