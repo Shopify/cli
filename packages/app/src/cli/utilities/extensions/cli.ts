@@ -23,7 +23,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
 
     stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
     try {
-      if (process.env.DEBUG_GO_BINARY) {
+      if (environment.local.isDebugGoBinary()) {
         await system.exec('sh', [path.join(extensionsGoCliDirectory, 'shopify-extensions-debug')].concat(args), options)
       } else {
         await system.exec(path.join(extensionsGoCliDirectory, 'shopify-extensions'), args, options)

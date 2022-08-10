@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "make build",
+    "build": "make build && make build-debug",
     "clean": "lerna run clean",
     "deploy": "lerna publish from-package --yes",
     "start": "cd packages/dev-console-app; yarn start",
