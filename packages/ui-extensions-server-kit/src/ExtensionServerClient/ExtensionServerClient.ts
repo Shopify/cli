@@ -14,7 +14,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   protected EVENT_THAT_WILL_MUTATE_THE_SERVER = ['update']
 
-  protected listeners: {[key: string]: Set<unknown>} = {}
+  protected listeners: {[key: string]: Set<any>} = {}
 
   protected connected = false
 
@@ -84,7 +84,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   protected initializeApiClient() {
     let url = ''
     if (this.options.connection.url) {
-      // eslint-disable-next-line node/no-unsupported-features/node-builtins
       const socketUrl = new URL(this.options.connection.url)
       socketUrl.protocol = socketUrl.protocol === 'ws:' ? 'http:' : 'https:'
       url = socketUrl.origin
@@ -116,12 +115,11 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         }
 
         const filteredExtensions = data.extensions?.filter(
-          (extension: unknown) => !this.options.surface || extension.surface === this.options.surface,
+          (extension: any) => !this.options.surface || extension.surface === this.options.surface,
         )
         this.listeners[event]?.forEach((listener) => {
           listener({...data, extensions: filteredExtensions})
         })
-        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
         console.error(
           `[ExtensionServer] Something went wrong while parsing a server message:`,

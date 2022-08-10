@@ -3,7 +3,7 @@
  */
 export function set<TObject, TValue>(obj: TObject, pathFn: (o: TObject) => TValue, value: TValue) {
   const path: string[] = []
-  const proxy: unknown = new Proxy(
+  const proxy: any = new Proxy(
     {},
     {
       get: (_, prop: string) => {
@@ -15,7 +15,7 @@ export function set<TObject, TValue>(obj: TObject, pathFn: (o: TObject) => TValu
   pathFn(proxy)
 
   const newObj: TObject = {...obj}
-  let current: unknown = newObj
+  let current: any = newObj
   const lastKey = path.pop()!
 
   for (const key of path) {

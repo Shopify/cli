@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {ExtensionPayload, Status} from '../types'
 
 type DeepPartial<T> = {
@@ -27,8 +28,8 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         url: `https://secure-link.com/extensions/${uuid}/assets/main.js?lastUpdated=${lastUpdated}`,
         lastUpdated,
       },
-      ...((obj.assets || {}) as unknown),
-    } as unknown,
+      ...((obj.assets || {}) as any),
+    } as any,
     development: {
       hidden: false,
       status: Status.Success,
@@ -42,7 +43,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         name: 'render name',
         version: '1.0.0',
       },
-      ...((obj.development || {}) as unknown),
+      ...((obj.development || {}) as any),
     },
   }
 }

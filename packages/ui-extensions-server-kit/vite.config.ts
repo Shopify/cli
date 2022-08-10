@@ -1,14 +1,13 @@
-import path from 'path';
-
-import {defineConfig} from 'vite';
-import reactRefresh from '@vitejs/plugin-react-refresh';
-
-import {createEntryFiles} from './scripts/createEntryFiles';
+import {createEntryFiles} from './scripts/createEntryFiles'
+import {defineConfig} from 'vite'
+import reactRefresh from '@vitejs/plugin-react-refresh'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  root: path.join(__dirname, 'src'),
   build: {
-    outDir: './dist',
+    outDir: path.join(__dirname, 'dist'),
     lib: {
       name: 'UIExtensionsServerKit',
       entry: path.join(process.cwd(), 'src/index.ts'),
@@ -28,9 +27,7 @@ export default defineConfig({
         preserveModules: true,
         assetFileNames: `[name].[ext]`,
         entryFileNames: ({facadeModuleId}) => {
-          return facadeModuleId.endsWith('testing/index.ts')
-            ? 'index.[format].js'
-            : '[name].[format].js';
+          return facadeModuleId.endsWith('testing/index.ts') ? 'index.[format].js' : '[name].[format].js'
         },
       },
     },
@@ -45,4 +42,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+})

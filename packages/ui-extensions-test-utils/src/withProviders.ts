@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 
-export type ProviderComponent<TProps = unknown> = React.ComponentType<React.PropsWithChildren<TProps>>
+export type ProviderComponent<TProps = any> = React.ComponentType<React.PropsWithChildren<TProps>>
 
-export type Tail<T extends unknown[]> = T extends [head: unknown, ...tail: infer TRest] ? TRest : never
+export type Tail<T extends any[]> = T extends [head: any, ...tail: infer TRest] ? TRest : never
 
 export type PropUnion<
-  TProviders extends unknown[],
-  TProps extends {[k: string]: unknown} = Empty,
-> = TProviders[0] extends React.ComponentType<unknown>
+  TProviders extends any[],
+  TProps extends {[k: string]: any} = Empty,
+> = TProviders[0] extends React.ComponentType<any>
   ? React.ComponentPropsWithoutRef<TProviders[0]> & PropUnion<Tail<TProviders>>
   : TProps
 

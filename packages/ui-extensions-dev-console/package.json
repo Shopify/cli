@@ -21,6 +21,14 @@
     "react": "16.14.0",
     "react-dom": "^16.9.11"
   },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
+  },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
     "@shopify/ui-extensions-test-utils": "^0.2.0",

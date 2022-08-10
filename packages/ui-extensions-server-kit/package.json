@@ -21,7 +21,7 @@
     }
   },
   "scripts": {
-    "build": "rm -f tsconfig.tsbuildinfo && yarn build:code && yarn build:types",
+    "build": "yarn build:code && yarn build:types",
     "build:code": "vite build --config vite.config.ts",
     "build:types": "tsc --emitDeclarationOnly",
     "clean": "git clean --exclude node_modules -xdf ./",
@@ -31,6 +31,14 @@
   },
   "peerDependencies": {
     "react": "16.14.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",

@@ -12,7 +12,6 @@ export interface Configs {
 
 export interface ConfigFile {
   development: Development
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   extension_points?: string[]
 }
 
@@ -28,7 +27,7 @@ interface RequiredConfigs {
 }
 
 interface Indexable {
-  [key: string]: unknown
+  [key: string]: any
 }
 
 const REQUIRED_CONFIGS: RequiredConfigs = {
@@ -54,9 +53,7 @@ export function getConfigs() {
       throw new Error('Invalid configuration')
     }
     return jsonConfigs(configs)
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.log(`Failed with error: ${error}`)
     process.exit(1)
   }
@@ -66,11 +63,7 @@ function toCamelCase(str: string) {
   return str.replace(/_./g, (substr: string) => substr.toUpperCase()[1])
 }
 
-function isValidConfigs(
-  configs: unknown,
-  requiredConfigs: RequiredConfigs,
-  paths: string[] = [],
-): configs is ConfigFile {
+function isValidConfigs(configs: any, requiredConfigs: RequiredConfigs, paths: string[] = []): configs is ConfigFile {
   Object.keys(requiredConfigs).forEach((key) => {
     const isRequired = requiredConfigs[key] !== false
     const value = configs[key]

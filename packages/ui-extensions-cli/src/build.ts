@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {getConfigs} from './configs'
 import {build as esBuild, BuildFailure, BuildResult, formatMessages} from 'esbuild'
 
@@ -66,10 +65,9 @@ function getPlugins() {
 
 function graphqlAvailable() {
   try {
-    // eslint-disable-next-line @babel/no-unused-expressions
+    // eslint-disable-next-line babel/no-unused-expressions
     require.resolve('graphql') && require.resolve('graphql-tag')
     return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
