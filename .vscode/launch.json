@@ -116,7 +116,9 @@
       "description": "Extension Template: ",
       "options": [
         "vanilla-js",
-        "react",
+        "vanilla-js-react",
+        "typescript",
+        "typescript-react",
         "wasm",
         "rust"
       ],
