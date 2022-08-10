@@ -69,7 +69,14 @@ describe('event tracking', () => {
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-        plugins: [],
+        plugins: [
+          {
+            name: '@shopify/built-in',
+          },
+          {
+            name: 'a-custom-plugin',
+          },
+        ],
       } as any
       await reportEvent({config})
 
@@ -86,6 +93,8 @@ describe('event tracking', () => {
         ruby_version: '3.1.1',
         node_version: process.version.replace('v', ''),
         is_employee: false,
+        env_plugin_installed_any_custom: true,
+        env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
