@@ -71,6 +71,7 @@ module.exports = {
         format: null,
       },
     ],
+    '@typescript-eslint/no-misused-promises': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',

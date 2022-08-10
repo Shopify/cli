@@ -121,7 +121,7 @@ export async function listenRedirect(host: string, port: number, url: string): P
       info(content`${message}${token.link('Log in to Shopify Partners', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
 
-    const callback: RedirectCallback = async (error, code, state) => {
+    const callback: RedirectCallback = (error, code, state) => {
       clearTimeout(timeout)
       setTimeout(() => {
         redirectListener.stop()
