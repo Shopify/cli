@@ -1,27 +1,27 @@
-import {build as esBuild, BuildFailure, BuildResult, formatMessages} from 'esbuild';
-
-import {getConfigs} from './configs';
+/* eslint-disable no-console */
+import {getConfigs} from './configs'
+import {build as esBuild, BuildFailure, BuildResult, formatMessages} from 'esbuild'
 
 export interface Options {
-  mode: 'development' | 'production';
+  mode: 'development' | 'production'
 }
 
 export function build({mode}: Options) {
-  const isDevelopment = mode === 'development';
-  const configs = getConfigs();
+  const isDevelopment = mode === 'development'
+  const configs = getConfigs()
   const {
     development: {entries, build = {}, develop = {}, buildDir},
-  } = configs;
-  const {env = {}} = isDevelopment ? develop : build;
+  } = configs
+  const {env = {}} = isDevelopment ? develop : build
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,
       [`process.env.${key}`]: JSON.stringify(env[key]),
     }),
     {'process.env.NODE_ENV': JSON.stringify(mode)},
-  );
+  )
 
-  let built = false;
+  let built = false
 
   esBuild({
     bundle: true,
@@ -42,56 +42,57 @@ export function build({mode}: Options) {
   })
     .then((result) => {
       if (built) {
-        return;
+        return
       }
-      built = true;
-      logResult(result);
+      built = true
+      logResult(result)
     })
     .catch((_e) => {
-      console.error('Error building extension: ', _e);
-      process.exit(1);
-    });
+      console.error('Error building extension: ', _e)
+      process.exit(1)
+    })
 }
 
 function getPlugins() {
-  const plugins = [];
+  const plugins = []
 
   if (graphqlAvailable()) {
-    const {default: graphqlLoader} = require('@luckycatfactory/esbuild-graphql-loader');
-    plugins.push(graphqlLoader());
+    const {default: graphqlLoader} = require('@luckycatfactory/esbuild-graphql-loader')
+    plugins.push(graphqlLoader())
   }
 
-  return plugins;
+  return plugins
 }
 
 function graphqlAvailable() {
   try {
-    // eslint-disable-next-line babel/no-unused-expressions
-    require.resolve('graphql') && require.resolve('graphql-tag');
-    return true;
+    // eslint-disable-next-line @babel/no-unused-expressions
+    require.resolve('graphql') && require.resolve('graphql-tag')
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    return false;
+    return false
   }
 }
 
 async function onRebuild(failure: BuildFailure | null, _result: BuildResult | null) {
   if (failure) {
-    console.error(failure.message);
+    console.error(failure.message)
   }
-  logResult(failure);
+  logResult(failure)
 }
 
 async function logResult(result: BuildResult | null) {
   if (result?.errors.length || result?.warnings.length) {
-    logErrors(result);
-    return;
+    logErrors(result)
+    return
   }
-  console.log(`Build succeeded`);
+  console.log(`Build succeeded`)
 }
 
 async function logErrors(result: BuildResult) {
-  const errors = await formatMessages(result.errors, {kind: 'error'});
-  const warnings = await formatMessages(result.warnings, {kind: 'warning'});
-  if (errors.length > 0) console.error(errors.join('\n'));
-  if (warnings.length > 0) console.error(errors.join('\n'));
+  const errors = await formatMessages(result.errors, {kind: 'error'})
+  const warnings = await formatMessages(result.warnings, {kind: 'warning'})
+  if (errors.length > 0) console.error(errors.join('\n'))
+  if (warnings.length > 0) console.error(errors.join('\n'))
 }
