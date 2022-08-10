@@ -26,7 +26,7 @@ func TestMergeTemplatesTOML(t *testing.T) {
 	}
 	rootDir := "tmp/TestMergeTemplatesYML"
 	extension := core.Extension{
-		Type: "integration_test",
+		Type:  "integration_test",
 		Title: "Integration Test",
 		Development: core.Development{
 			Template: "typescript-react",
