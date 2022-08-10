@@ -7,37 +7,12 @@
       "options": {
         "cacheableOperations": [
           "build",
-          "package",
-          "prepare"
+          "test",
+          "lint",
+          "tsc"
         ]
       }
     }
-  },
-  "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "projects": "dependencies"
-      }
-    ],
-    "test": [
-      {
-        "target": "build",
-        "projects": "dependencies"
-      }
-    ],
-    "prepare": [
-      {
-        "target": "prepare",
-        "projects": "dependencies"
-      }
-    ],
-    "package": [
-      {
-        "target": "package",
-        "projects": "dependencies"
-      }
-    ]
   },
   "affected": {
     "defaultBase": "main"
