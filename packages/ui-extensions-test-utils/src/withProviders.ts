@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 
 export type ProviderComponent<TProps = any> = React.ComponentType<React.PropsWithChildren<TProps>>
