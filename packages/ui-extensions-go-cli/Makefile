@@ -18,7 +18,7 @@ build:
 
 .PHONY: build-debug
 build-debug:
-	go build -gcflags=all="-N -l" -o ${executable}-debug
+	go build -gcflags=all="-N -l" -o ${executable}
 
 .PHONY: package
 package:
@@ -41,11 +41,6 @@ endif
 	md5sum ${executable} > ${canonical_name}.md5
 	gzip ${executable} && mv ${executable}.gz ${canonical_name}.gz
 
-.PHONY: js-test
-js-test:
-	yarn install
-	yarn test
-
 .PHONY: go-test
 go-test:
 	# Create mock app folder to get go test running
@@ -53,9 +48,6 @@ go-test:
 	mkdir api/dev-console
 	touch api/dev-console/index.html
 	go test ./...
-
-.PHONY: test
-test: js-test go-test
 
 ifeq (serve-dev,$(firstword $(MAKECMDGOALS)))
   SHOPIFILE := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -70,12 +62,6 @@ serve-dev:
 .PHONY: run
 run:
 	go run . $(RUN_ARGS)
-
-.PHONY: build-node-packages
-build-node-packages:
-	yarn install
-	yarn --cwd ../ui-extensions-cli build
-	ln -sf ../../packages/shopify-cli-extensions/cli.js node_modules/.bin/shopify-cli-extensions
 
 .PHONY: bootstrap
 bootstrap: tmp build
