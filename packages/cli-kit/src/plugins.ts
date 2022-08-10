@@ -34,11 +34,26 @@ export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEven
   timeout?: number,
 ): Promise<Partial<TPluginMap[typeof event]['pluginReturns']>> {
   const res = await config.runHook(event, options, timeout)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return Object.fromEntries(res.successes.map(({result, plugin}) => [plugin.name, result])) as any
 }
 
+export type TunnelHook = `tunnel_start_${string}`
+
 interface HookReturnsPerPlugin {
+  [key: TunnelHook]: {
+    options: {port: number}
+    pluginReturns: {
+      [pluginName: string]: {url: string; error: string}
+    }
+  }
+  tunnel_provider: {
+    options: {[key: string]: unknown}
+    pluginReturns: {
+      [pluginName: string]: {hookName: TunnelHook; name: string}
+    }
+  }
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {

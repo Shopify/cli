@@ -57,11 +57,10 @@ export default class Dev extends Command {
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
     }),
-    'no-tunnel': Flags.boolean({
+    tunnel: Flags.string({
       hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
-      default: false,
     }),
   }
 
@@ -82,7 +81,8 @@ export default class Dev extends Command {
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
-      noTunnel: flags['no-tunnel'],
+      noTunnel: false,
+      tunnel: flags.tunnel,
     })
   }
 }

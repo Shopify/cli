@@ -26,6 +26,7 @@ export interface DevOptions {
   checkoutCartUrl?: string
   tunnelUrl?: string
   noTunnel: boolean
+  tunnel?: string
 }
 
 interface DevWebOptions {
@@ -54,19 +55,33 @@ async function dev(options: DevOptions) {
   let frontendPort: number
   let frontendUrl: string
 
+  // if (options.tunnel) {
+  //   const matches = options.tunnel.match(/(https:\/\/[^:]+):([0-9]+)/)
+  //   if (matches) {
+  //     frontendPort = Number(matches[2])
+  //     frontendUrl = matches[1]
+  //   } else {
+  //     frontendPort = await port.getRandomPort()
+  //     frontendUrl = await generateURL(options.commandConfig, frontendPort, options.tunnel)
+  //   }
+  // } else {
+  //   frontendPort = await port.getRandomPort()
+  //   frontendUrl = 'http://localhost'
+  // }
+
   if (options.noTunnel === true) {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
-  } else if (options.tunnelUrl) {
-    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    }
-    frontendPort = Number(matches[2])
-    frontendUrl = matches[1]
+    // } else if (options.tunnel) {
+    //   const matches = options.tunnel.match(/(https:\/\/[^:]+):([0-9]+)/)
+    //   if (!matches) {
+    //     throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    //   }
+    //   frontendPort = Number(matches[2])
+    //   frontendUrl = matches[1]
   } else {
     frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
+    frontendUrl = await generateURL(options.commandConfig, frontendPort, options.tunnel)
   }
 
   const backendPort = await port.getRandomPort()
