@@ -110,7 +110,6 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       metadata: JSON.stringify({
         ...sensitiveMetadata,
         extraPublic: {
-          // '@shopify/app': otherShopifyAppPublic,
           ...otherPluginsPublic,
         },
         extraSensitive: sensitivePluginData,

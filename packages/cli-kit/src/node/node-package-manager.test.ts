@@ -54,7 +54,7 @@ describe('packageManagerUsedForCreating', () => {
     expect(got).toBe('npm')
   })
 
-  it('returns npm when the package manager cannot be detected', () => {
+  it('returns unknown when the package manager cannot be detected', () => {
     // When
     const got = packageManagerUsedForCreating({})
 
