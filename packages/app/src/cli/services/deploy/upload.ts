@@ -220,6 +220,17 @@ async function uploadFunctionExtension(
     schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
     schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
     configurationUi: extension.configuration.configurationUi,
+    scriptConfigVersion: '1',
+    configurationDefinition: JSON.stringify({
+      type: 'single',
+      schema: [
+        {
+          key: 'status',
+          type: 'single_line_text_field',
+          name: 'Status',
+        },
+      ],
+    }),
     moduleUploadUrl: url,
     apiVersion: extension.configuration.apiVersion,
     skipCompilationJob: true,
