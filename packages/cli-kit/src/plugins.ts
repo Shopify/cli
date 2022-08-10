@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import {join, pathToFileURL} from './path.js'
 import {debug, content} from './output.js'
 import {Schemas} from './monorail.js'
-import {Interfaces} from '@oclif/core'
+import {Interfaces, Config} from '@oclif/core'
 
-const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
-
-interface TunnelPlugin {
-  start: (options: TunnelStartOptions) => Promise<string>
+export type TunnelHook = `tunnel_start_${string}`
+export interface TunnelPlugin {
+  hookName: TunnelHook
+  name: string
 }
 
-interface TunnelStartOptions {
-  port: number
-}
-
-export async function lookupTunnelPlugin(plugins: Interfaces.Plugin[]): Promise<TunnelPlugin | undefined> {
+export async function lookupTunnelPlugins(config: Config): Promise<TunnelPlugin[]> {
   debug(content`Looking up the Ngrok tunnel plugin...`)
-  const tunnelPlugin = plugins.find((plugin) => TUNNEL_PLUGINS.includes(plugin.name))
-  if (!tunnelPlugin) return undefined
-  const tunnelPath = pathToFileURL(join(tunnelPlugin.root, 'dist/tunnel.js')).toString()
-  return import(tunnelPath).catch(() => undefined)
+  const hookResult = await fanoutHooks(config, 'tunnel_provider', {})
+  const tunnelPlugins = Object.values(hookResult).flatMap((plugin) => (plugin ? [plugin] : []))
+  return tunnelPlugins
+}
+
+export async function startTunnel(config: Config, hook: TunnelHook, port: number): Promise<string | undefined> {
+  const tunnels = await fanoutHooks(config, hook, {port})
+  const url = tunnels[Object.keys(tunnels)[0]]?.url
+  return url
 }
 
 /**
@@ -38,8 +38,6 @@ export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEven
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return Object.fromEntries(res.successes.map(({result, plugin}) => [plugin.name, result])) as any
 }
-
-export type TunnelHook = `tunnel_start_${string}`
 
 interface HookReturnsPerPlugin {
   [key: TunnelHook]: {

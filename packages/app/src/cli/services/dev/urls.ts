@@ -1,32 +1,20 @@
-import {api, error, output, plugins, ui} from '@shopify/cli-kit'
+import {api, error, output, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
-import {TunnelHook} from '@shopify/cli-kit/src/plugins.js'
+import {lookupTunnelPlugins, startTunnel, TunnelPlugin} from '@shopify/cli-kit/src/plugins.js'
 
 export async function generateURL(config: Config, frontendPort: number, tunnelFlag?: string): Promise<string> {
   // List of plugins that support tunneling
-  const hookResult = await plugins.fanoutHooks(config, 'tunnel_provider', {})
-  const tunnelPlugins = Object.values(hookResult).flatMap((plugin) => (plugin ? [plugin] : []))
-
+  const tunnelPlugins = await lookupTunnelPlugins(config)
   if (tunnelPlugins.length === 0) throw new error.Bug('No tunnel plugins detected')
 
-  let selectedHook = tunnelPlugins[0].hookName
-  if (tunnelFlag) {
-    const hookFromFlag = tunnelPlugins.find((plugin) => plugin.name === tunnelFlag)?.hookName
-    if (!hookFromFlag) throw new error.Abort(`Tunnel plugin "${tunnelFlag}" not found`)
-    selectedHook = hookFromFlag
-  } else if (tunnelPlugins.length > 1) {
-    selectedHook = await promptTunnelOptions(tunnelPlugins)
-  }
+  // Select a plugin from the list, either via flag or prompt
+  const selectedPlugin = await selectTunnelPlugin(tunnelPlugins, tunnelFlag)
 
-  const pluginName = tunnelPlugins.find((plugin) => plugin.hookName === selectedHook)?.name
-
-  // Generated tunnel URLs, should only be one but hooks will always return an map
-  const tunnelURLs = await plugins.fanoutHooks(config, selectedHook, {port: frontendPort})
-
-  const tunnelURL = tunnelURLs[Object.keys(tunnelURLs)[0]]?.url
+  // Start the tunnel from the selected plugin
+  const tunnelURL = await startTunnel(config, selectedPlugin.hookName, frontendPort)
 
   // Should we show this error or let the plugins handle the output and fail silently here?
-  if (!tunnelURL) throw new error.Bug(`Error obtaining tunnel URL from plugin: ${pluginName}`)
+  if (!tunnelURL) throw new error.Bug(`Error obtaining tunnel URL from plugin: ${selectedPlugin.name}`)
 
   output.success('The tunnel is running and you can now view your app')
   return tunnelURL
@@ -47,8 +35,20 @@ export async function updateURLs(apiKey: string, url: string, token: string): Pr
   }
 }
 
-async function promptTunnelOptions(options: {hookName: TunnelHook; name: string}[]): Promise<TunnelHook> {
-  const hookList = options.map((option) => ({name: option.name, value: option.hookName}))
+async function selectTunnelPlugin(plugins: TunnelPlugin[], tunnelFlag?: string): Promise<TunnelPlugin> {
+  if (tunnelFlag) {
+    const plugin = plugins.find((plugin) => plugin.name === tunnelFlag)
+    if (!plugin) throw new error.Abort(`Tunnel plugin "${tunnelFlag}" not found`)
+    return plugin
+  } else if (plugins.length === 1) {
+    return plugins[0]
+  } else {
+    return promptTunnelOptions(plugins)
+  }
+}
+
+async function promptTunnelOptions(plugins: TunnelPlugin[]): Promise<TunnelPlugin> {
+  const hookList = plugins.map((plugin) => ({name: plugin.name, value: plugin.hookName}))
   const choice = await ui.prompt([
     {
       type: 'select',
@@ -57,5 +57,5 @@ async function promptTunnelOptions(options: {hookName: TunnelHook; name: string}
       choices: hookList,
     },
   ])
-  return choice.value as TunnelHook
+  return plugins.find((plugin) => plugin.hookName === choice.value)!
 }
