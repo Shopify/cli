@@ -10,7 +10,6 @@ export async function generateURL(config: Config, frontendPort: number, tunnelFl
   if (tunnelPlugins.length === 0) throw new error.Bug('No tunnel plugins detected')
 
   let selectedHook = tunnelPlugins[0].hookName
-
   if (tunnelFlag) {
     const hookFromFlag = tunnelPlugins.find((plugin) => plugin.name === tunnelFlag)?.hookName
     if (!hookFromFlag) throw new error.Abort(`Tunnel plugin "${tunnelFlag}" not found`)
@@ -20,12 +19,6 @@ export async function generateURL(config: Config, frontendPort: number, tunnelFl
   }
 
   const pluginName = tunnelPlugins.find((plugin) => plugin.hookName === selectedHook)?.name
-
-  // const selectedPlugin = Object.keys(tunnelPlugins)[0]
-  // const tunnelProvider = tunnelPlugins[selectedPlugin]
-
-  // Hook of the selected tunnel plugin that will generate a URL
-  // const hookName = tunnelProvider.hookName
 
   // Generated tunnel URLs, should only be one but hooks will always return an map
   const tunnelURLs = await plugins.fanoutHooks(config, selectedHook, {port: frontendPort})
