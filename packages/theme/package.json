@@ -2,7 +2,7 @@
   "name": "@shopify/theme",
   "version": "3.6.2",
   "private": false,
-  "description": "Utilities building and publishing themes",
+  "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
@@ -38,6 +38,15 @@
   "devDependencies": {
     "vitest": "^0.17.1"
   },
+  "engine-strict": true,
+  "engines": {
+    "node": ">=14.13.1"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
   "oclif": {
     "commands": "dist/cli/commands",
     "hooks": {
