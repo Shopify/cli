@@ -26,7 +26,8 @@ describe('initialize a extension', () => {
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
-        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
         const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]
         expect(scaffoldedExtension.configuration.name).toBe(name)
       })
@@ -42,8 +43,21 @@ describe('initialize a extension', () => {
         const name2 = 'my-ext-2'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
-        await createFromTemplate({name: name1, extensionType, externalExtensionType, appDirectory: tmpDir})
-        await createFromTemplate({name: name2, extensionType, externalExtensionType, appDirectory: tmpDir})
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({
+          name: name1,
+          extensionType,
+          externalExtensionType,
+          extensionFlavor,
+          appDirectory: tmpDir,
+        })
+        await createFromTemplate({
+          name: name2,
+          extensionType,
+          externalExtensionType,
+          extensionFlavor,
+          appDirectory: tmpDir,
+        })
         const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
@@ -80,10 +94,52 @@ describe('initialize a extension', () => {
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
-        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
         await expect(
-          createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir}),
+          createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir}),
         ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
+      })
+    },
+    30 * 1000,
+  )
+
+  it(
+    'generates files for the corresponding extension flavor',
+    async () => {
+      const extensionType = 'checkout_post_purchase'
+      const externalExtensionType = 'post_purchase_ui'
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-1'
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.js')
+        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+      })
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-2'
+        const extensionFlavor = 'vanilla-js-react'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.jsx')
+        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+      })
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-3'
+        const extensionFlavor = 'typescript-react'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.tsx')
+        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+      })
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-4'
+        const extensionFlavor = 'typescript'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.ts')
+        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
       })
     },
     30 * 1000,
@@ -125,12 +181,14 @@ interface CreateFromTemplateOptions {
   extensionType: ExtensionTypes
   externalExtensionType: ExternalExtensionTypes
   appDirectory: string
+  extensionFlavor: string
 }
 async function createFromTemplate({
   name,
   extensionType,
   externalExtensionType,
   appDirectory,
+  extensionFlavor,
 }: CreateFromTemplateOptions) {
   await extensionInit({
     name,
@@ -138,6 +196,7 @@ async function createFromTemplate({
     externalExtensionType,
     app: await loadApp(appDirectory),
     cloneUrl: 'cloneurl',
+    extensionFlavor,
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {

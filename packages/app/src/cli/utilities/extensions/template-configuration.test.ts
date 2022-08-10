@@ -20,7 +20,10 @@ describe('get ui extension template types', () => {
       const result = getUIExtensionTemplates(extension)
 
       // Then
-      expect(result).toEqual([{name: 'vanilla JavaScript', value: 'vanilla-js'}])
+      expect(result).toEqual([
+        {name: 'Typescript', value: 'typescript'},
+        {name: 'Vanilla JavaScript', value: 'vanilla-js'},
+      ])
     },
   )
 })
@@ -28,21 +31,21 @@ describe('get ui extension template types', () => {
 describe('is valid ui extension template', () => {
   it('is invalid when no ui extension type', () => {
     // When
-    const result = isValidUIExtensionTemplate('product_discounts', 'react')
+    const result = isValidUIExtensionTemplate('product_discounts', 'vanilla-js-react')
 
     // Then
     expect(result).toEqual(false)
   })
   it('is invalid when template not supported', () => {
     // When
-    const result = isValidUIExtensionTemplate('web_pixel_extension', 'react')
+    const result = isValidUIExtensionTemplate('web_pixel_extension', 'vanilla-js-react')
 
     // Then
     expect(result).toEqual(false)
   })
   it('is invalid when template is supported', () => {
     // When
-    const result = isValidUIExtensionTemplate('checkout_ui_extension', 'react')
+    const result = isValidUIExtensionTemplate('checkout_ui_extension', 'vanilla-js-react')
 
     // Then
     expect(result).toEqual(true)
