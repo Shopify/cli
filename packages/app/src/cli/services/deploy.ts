@@ -183,7 +183,7 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
-        configuration_schema: extension.configuration.configurationSchema,
+        settings: extension.configuration.settings,
         localization: await loadLocalesConfig(extension.directory),
       }
     }
