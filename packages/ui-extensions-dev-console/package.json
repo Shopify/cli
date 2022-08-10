@@ -3,7 +3,7 @@
   "name": "@shopify/ui-extensions-dev-console-app",
   "version": "0.3.1",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && vite build",
+    "build": "tsc --project tsconfig.build.json --noEmit && vite build",
     "clean": "git clean --exclude node_modules -xdf ./",
     "serve": "vite preview",
     "start": "vite",

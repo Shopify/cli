@@ -14,7 +14,8 @@
     "isolatedModules": true,
     "jsx": "react",
     "baseUrl": ".",
-    "rootDir": ".."
+    "rootDir": "..",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../shopify-cli-extensions-test-utils"}]
 }

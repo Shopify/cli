@@ -9,7 +9,6 @@
       "@shopify/ui-extensions-test-utils": ["../ui-extensions-test-utils/src"]
     },
     "outDir": "dist",
-    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*", "tests/**/*", "src/**/*.json"],
   "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../ui-extensions-test-utils"}]

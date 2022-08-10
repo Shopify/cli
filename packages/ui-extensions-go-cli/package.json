@@ -9,7 +9,6 @@
     "build": "make build",
     "clean": "lerna run clean",
     "deploy": "lerna publish from-package --yes",
-    "lint": "eslint ./packages --ext .ts,.tsx --max-warnings 0 --format codeframe",
     "start": "cd packages/dev-console-app; yarn start",
     "test": "lerna run test",
     "version-bump": "lerna version --no-push --include-merged-tags"
