@@ -65,7 +65,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.16.7",
     "@iarna/toml": "^2.2.5",
-    "@oclif/core": "^1.0",
+    "@oclif/core": "1.9.2",
     "@types/archiver": "^5.3.1",
     "abort-controller": "^3.0.0",
     "ansi-colors": "^4.1.1",
