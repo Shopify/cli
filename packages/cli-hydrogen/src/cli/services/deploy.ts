@@ -1,4 +1,6 @@
-import {git, error, path} from '@shopify/cli-kit'
+import {git, error, path, output, api, http} from '@shopify/cli-kit'
+// eslint-disable-next-line import/no-extraneous-dependencies
+import {gql} from 'graphql-request'
 
 interface DeployConfig {
   deploymentToken: string
@@ -14,8 +16,15 @@ type ReqDeployConfig = Required<DeployConfig>
 
 export async function deployToOxygen(_config: DeployConfig) {
   const config = await getGitData(_config)
+  // eslint-disable-next-line no-console
+  console.log('Deployment Config: ', config)
 
-  console.log('Config:\n', config)
+  const {deploymentID, assetBaseURL, error} = await createDeploymentStep(config)
+
+  output.info(`Deployment ID: ${deploymentID}`)
+  output.info(`Base Asset URL: ${assetBaseURL}`)
+  output.info(`Error Message: ${error?.debugInfo}`)
+  output.success('Deployment created!')
 }
 
 const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
@@ -49,47 +58,78 @@ const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
   }
 
   const [latestCommit, repository] = await Promise.all([getLatestCommit(), getRepository()])
+  const currentBranch = await simpleGit.revparse(['--abbrev-ref', 'HEAD'])
 
+  // this is the current branch, not the commit ref so may need parse the latestCommit.ref
   return {
     deploymentToken: config.deploymentToken,
     dmsAddress: config.dmsAddress,
     commitMessage: config.commitMessage ?? latestCommit.message,
     commitAuthor: config.commitAuthor ?? latestCommit.author_name,
     commitSha: latestCommit.hash,
-    commitRef: latestCommit.refs,
+    commitRef: `refs/heads/${currentBranch}`,
+    // commitRef: latestCommit.ref,
     timestamp: latestCommit.date,
-    repository,
+    repository: repository.charAt(0) === '/' ? repository.substring(1) : repository,
   }
 }
 
-/**
-  const projectDirectory = path.join(environment.local.homeDirectory(), 'src/github.com/shopify/oxygenctl')
-  const executablePath = path.join(projectDirectory, 'bin', 'oxygenctl')
+const createDeploymentStep = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
+  output.info('✨ Creating a deployment... ')
 
-  const dmsAddress = '4761-2604-4080-1361-8370-85e6-7e97-9896-5afd.ngrok.io'
-  const workerDir = '/Users/ben/src/github.com/Shopify/hydrogen/examples/api-routes/dist/worker'
-  const assetsDir = '/Users/ben/src/github.com/Shopify/hydrogen/examples/api-routes/dist/client'
+  const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
+  const headers = await api.common.buildHeaders(config.deploymentToken)
+  // need to create a seperate service for "dms" related calls instead of piggybacking on "shopify"
+  const client = await http.graphqlClient({
+    headers,
+    service: 'shopify',
+    url,
+  })
 
-  output.info('Deploying to Oxygen...')
-
-  await system.exec(
-    executablePath,
-    ['deploy', `--dms-address=${dmsAddress}`, `--worker-dir=${workerDir}`, `--assets-dir=${assetsDir}`],
-    {
-      stdout: process.stdout,
-      stderr: process.stderr,
-      env: {
-        ...process.env,
-        OXYGEN_BUILD_COMMAND: ':',
-        OXYGEN_COMMIT_MESSAGE: 'My beautiful commit message, first line',
-        OXYGEN_COMMIT_TIMESTAMP: '2019-05-15T15:20:41Z',
-        OXYGEN_DEPLOYMENT_TOKEN: 'DEPLOYMENT_TOKEN',
-        OXYGEN_WORKFLOW_ID: '123456778888888888888',
-        GITHUB_REPOSITORY: 'tempor1s/hydrogen',
-        GITHUB_REF: 'refs/heads/main',
-        GITHUB_SHA: 'ee99c6785db49b0c9512c57b4ff73bf354d5087a',
-        GITHUB_ACTOR: 'tempor1s',
-      },
+  // need to make workflowID optional on DMS so we dont need to generate a random one
+  const variables = {
+    input: {
+      repository: config.repository,
+      branch: config.commitRef,
+      commitHash: config.commitSha,
+      commitAuthor: config.commitAuthor,
+      commitMessage: config.commitMessage,
+      commitTimestamp: config.timestamp,
+      workflowID: `${Math.floor(Math.random() * 100000)}`,
     },
-  )
- */
+  }
+
+  // need to handle errors
+  const response: CreateDeploymentQuerySchema = await client.request(CreateDeploymentQuery, variables)
+  return response.createDeployment
+}
+
+const CreateDeploymentQuery = gql`
+  mutation createDeployment($input: CreateDeploymentInput!) {
+    createDeployment(input: $input) {
+      deploymentID
+      assetBaseURL
+      error {
+        code
+        unrecoverable
+        debugInfo
+      }
+    }
+  }
+`
+
+interface CreateDeploymentQuerySchema {
+  createDeployment: CreateDeploymentResponse
+}
+
+interface CreateDeploymentResponse {
+  deploymentID: string
+  assetBaseURL: string
+  error: CreateDeploymentError
+}
+
+interface CreateDeploymentError {
+  code: string
+  unrecoverable: boolean
+  debugInfo: string
+}
