@@ -3,7 +3,7 @@ Feature: Extension creation
 Scenario: I scaffold theme, ui, and function extensions
   Given I have a working directory
   And I create an app named MyExtendedApp with yarn as dependency manager
-  When I create an extension named TestPurchaseExtension of type post_purchase_ui and flavor vanilla-js-react
+  When I create an extension named TestPurchaseExtension of type post_purchase_ui and flavor react
   Then I have a ui extension named TestPurchaseExtension of type checkout_post_purchase
   When I create an extension named TestThemeExtension of type theme_app_extension
   Then I have a theme extension named TestThemeExtension of type theme

@@ -31,21 +31,21 @@ describe('get ui extension template types', () => {
 describe('is valid ui extension template', () => {
   it('is invalid when no ui extension type', () => {
     // When
-    const result = isValidUIExtensionTemplate('product_discounts', 'vanilla-js-react')
+    const result = isValidUIExtensionTemplate('product_discounts', 'react')
 
     // Then
     expect(result).toEqual(false)
   })
   it('is invalid when template not supported', () => {
     // When
-    const result = isValidUIExtensionTemplate('web_pixel_extension', 'vanilla-js-react')
+    const result = isValidUIExtensionTemplate('web_pixel_extension', 'react')
 
     // Then
     expect(result).toEqual(false)
   })
   it('is invalid when template is supported', () => {
     // When
-    const result = isValidUIExtensionTemplate('checkout_ui_extension', 'vanilla-js-react')
+    const result = isValidUIExtensionTemplate('checkout_ui_extension', 'react')
 
     // Then
     expect(result).toEqual(true)

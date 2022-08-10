@@ -120,7 +120,7 @@ describe('initialize a extension', () => {
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-2'
-        const extensionFlavor = 'vanilla-js-react'
+        const extensionFlavor = 'react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
         const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.jsx')
         expect(file.exists(extensionIndexFile)).resolves.toBe(true)

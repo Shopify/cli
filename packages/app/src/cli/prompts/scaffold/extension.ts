@@ -39,7 +39,7 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
     name: 'extensionFlavor',
     message: 'Choose a starting template for your extension',
     choices,
-    default: 'vanilla-js-react',
+    default: 'react',
   }
 }
 

@@ -58,7 +58,7 @@ export default class AppScaffoldExtension extends Command {
     template: Flags.string({
       hidden: false,
       description: 'Choose a starting template for your extension, where applicable',
-      options: ['vanilla-js', 'vanilla-js-react', 'typescript', 'typescript-react', 'wasm', 'rust'],
+      options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
   }

@@ -90,7 +90,7 @@ describe('extension prompt', async () => {
 
   it('when scaffolding a UI extension type prompts for language/framework preference', async () => {
     const prompt = vi.fn()
-    const answers = {extensionFlavor: 'vanilla-js-react'}
+    const answers = {extensionFlavor: 'react'}
     const options = {
       name: 'my-special-extension',
       extensionTypesAlreadyAtQuota: [],
