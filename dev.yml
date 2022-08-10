@@ -12,7 +12,7 @@ up:
   - ruby:
       version: 3.1.2
   - bundler:
-      gemfile: packages/ui-extensions-go-cli/Gemfile
+      gemfile: ./Gemfile
   - homebrew:
     - jq
     - delve

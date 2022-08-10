@@ -18,7 +18,7 @@ GEM
     yaml (0.2.0)
 
 PLATFORMS
-  ruby
+  arm64-darwin-21
 
 DEPENDENCIES
   json
@@ -28,4 +28,4 @@ DEPENDENCIES
   yaml
 
 BUNDLED WITH
-   2.3.7
+   2.3.11
