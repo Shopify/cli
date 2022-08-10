@@ -68,6 +68,6 @@ describe('updateURLs', () => {
     const got = updateURLs('apiKey', 'https://example.com', 'token')
 
     // Then
-    expect(got).rejects.toThrow(new error.Abort(`Boom!`))
+    await expect(got).rejects.toThrow(new error.Abort(`Boom!`))
   })
 })

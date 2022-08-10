@@ -96,7 +96,14 @@ export const deploy = async (options: DeployOptions) => {
 
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
-      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations, validationErrors})
+      await outputCompletionMessage({
+        app,
+        partnersApp,
+        partnersOrganizationId,
+        identifiers,
+        registrations,
+        validationErrors,
+      })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
