@@ -50,27 +50,33 @@ const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
     if (remoteUrl.value) {
       const urlObj = new URL(remoteUrl.value)
       const parsedPath = path.parse(urlObj.pathname)
-      return `${parsedPath.dir}/${parsedPath.name}`
+      const repository = `${parsedPath.dir}/${parsedPath.name}`
+      return repository.charAt(0) === '/' ? repository.substring(1) : repository
     }
 
     const projectPath = await simpleGit.revparse('--show-toplevel')
     return path.basename(projectPath)
   }
 
-  const [latestCommit, repository] = await Promise.all([getLatestCommit(), getRepository()])
-  const currentBranch = await simpleGit.revparse(['--abbrev-ref', 'HEAD'])
+  const getHeadRef = async () => {
+    const ref = await simpleGit.raw('symbolic-ref', '-q', 'HEAD')
 
-  // this is the current branch, not the commit ref so may need parse the latestCommit.ref
+    if (!ref) throw new error.Abort('HEAD is detached, make sure to be on a branch.')
+
+    return ref.trim()
+  }
+
+  const [latestCommit, repository, commitRef] = await Promise.all([getLatestCommit(), getRepository(), getHeadRef()])
+
   return {
     deploymentToken: config.deploymentToken,
     dmsAddress: config.dmsAddress,
     commitMessage: config.commitMessage ?? latestCommit.message,
     commitAuthor: config.commitAuthor ?? latestCommit.author_name,
     commitSha: latestCommit.hash,
-    commitRef: `refs/heads/${currentBranch}`,
-    // commitRef: latestCommit.ref,
+    commitRef,
     timestamp: latestCommit.date,
-    repository: repository.charAt(0) === '/' ? repository.substring(1) : repository,
+    repository,
   }
 }
 
