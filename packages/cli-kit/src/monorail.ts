@@ -45,7 +45,7 @@ export interface Schemas {
       cmd_scaffold_template_custom?: Optional<boolean>
       cmd_scaffold_template_flavor?: Optional<string>
       cmd_scaffold_type?: Optional<string>
-      cmd_scaffold_type_family?: Optional<string>
+      cmd_scaffold_type_category?: Optional<string>
       cmd_scaffold_type_gated?: Optional<boolean>
       cmd_scaffold_type_owner?: Optional<string>
       cmd_scaffold_used_prompts_for_type?: Optional<boolean>

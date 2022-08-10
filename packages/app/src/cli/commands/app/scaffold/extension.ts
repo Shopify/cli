@@ -95,7 +95,7 @@ export default class AppScaffoldExtension extends Command {
     await metadata.addPublic(() => ({
       cmd_scaffold_template_flavor: extensionFlavor,
       cmd_scaffold_type: extensionType,
-      cmd_scaffold_type_family: extensionTypeCategory(extensionType),
+      cmd_scaffold_type_category: extensionTypeCategory(extensionType),
       cmd_scaffold_type_gated: extensionTypeIsGated(extensionType),
       cmd_scaffold_used_prompts_for_type: extensionType !== flags.type,
     }))
