@@ -58,13 +58,13 @@ async function dev(options: DevOptions) {
   if (options.noTunnel === true) {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
-    // } else if (options.tunnel) {
-    //   const matches = options.tunnel.match(/(https:\/\/[^:]+):([0-9]+)/)
-    //   if (!matches) {
-    //     throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    //   }
-    //   frontendPort = Number(matches[2])
-    //   frontendUrl = matches[1]
+  } else if (options.tunnelUrl) {
+    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
+    if (!matches) {
+      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    }
+    frontendPort = Number(matches[2])
+    frontendUrl = matches[1]
   } else {
     frontendPort = await port.getRandomPort()
     frontendUrl = await generateURL(options.commandConfig, frontendPort, options.tunnel)
