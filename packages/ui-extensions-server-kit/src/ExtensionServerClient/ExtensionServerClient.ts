@@ -84,6 +84,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   protected initializeApiClient() {
     let url = ''
     if (this.options.connection.url) {
+      // eslint-disable-next-line node/no-unsupported-features/node-builtins
       const socketUrl = new URL(this.options.connection.url)
       socketUrl.protocol = socketUrl.protocol === 'ws:' ? 'http:' : 'https:'
       url = socketUrl.origin
@@ -120,6 +121,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         this.listeners[event]?.forEach((listener) => {
           listener({...data, extensions: filteredExtensions})
         })
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
         console.error(
           `[ExtensionServer] Something went wrong while parsing a server message:`,

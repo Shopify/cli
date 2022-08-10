@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {ExtensionPayload, Status} from '../types'
 
 type DeepPartial<T> = {
