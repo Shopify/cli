@@ -210,18 +210,12 @@ async function uploadFunctionExtension(
   const schemaVersions = Object.values(extension.metadata.schemaVersions).shift()
   const schemaMajorVersion = schemaVersions?.major
   const schemaMinorVersion = schemaVersions?.minor
-
-  const variables: api.graphql.AppFunctionSetVariables = {
-    uuid: options.identifier,
-    extensionPointName: getFunctionExtensionPointName(extension.configuration.type),
-    title: extension.configuration.name,
-    description: extension.configuration.description,
-    force: true,
-    schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
-    schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
-    configurationUi: extension.configuration.configurationUi,
-    scriptConfigVersion: '1',
-    configurationDefinition: JSON.stringify({
+  const extensionPointName = getFunctionExtensionPointName(extension.configuration.type)
+  let scriptConfigVersion
+  let configurationDefinition
+  if (extensionPointName === 'PAYMENT_METHODS') {
+    scriptConfigVersion = '1'
+    configurationDefinition = JSON.stringify({
       type: 'single',
       schema: [
         {
@@ -230,7 +224,20 @@ async function uploadFunctionExtension(
           name: 'Status',
         },
       ],
-    }),
+    })
+  }
+
+  const variables: api.graphql.AppFunctionSetVariables = {
+    uuid: options.identifier,
+    extensionPointName,
+    title: extension.configuration.name,
+    description: extension.configuration.description,
+    force: true,
+    schemaMajorVersion: schemaMajorVersion === undefined ? '' : `${schemaMajorVersion}`,
+    schemaMinorVersion: schemaMinorVersion === undefined ? '' : `${schemaMinorVersion}`,
+    configurationUi: extension.configuration.configurationUi,
+    scriptConfigVersion,
+    configurationDefinition,
     moduleUploadUrl: url,
     apiVersion: extension.configuration.apiVersion,
     skipCompilationJob: true,
