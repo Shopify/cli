@@ -5,7 +5,7 @@ import {blocks, getFunctionExtensionPointName} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import {unwrapOrThrow} from '@shopify/cli-kit/src/api/common.js'
-import {err, ok, ResultAsync} from 'neverthrow'
+import {errAsync, okAsync, ResultAsync} from 'neverthrow'
 import fs from 'fs'
 
 interface DeployThemeExtensionOptions {
@@ -152,10 +152,10 @@ function mapGenerateSignedUploadUrlSchema(
 ): ResultAsync<string, Error> {
   if (schema.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = schema.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
-    return err(new error.Abort(errors))
+    return errAsync(new error.Abort(errors))
   }
 
-  return ok(schema.deploymentGenerateSignedUploadUrl.signedUploadUrl)
+  return okAsync(schema.deploymentGenerateSignedUploadUrl.signedUploadUrl)
 }
 
 interface UploadFunctionExtensionsOptions {
