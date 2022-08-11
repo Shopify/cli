@@ -5,10 +5,16 @@ import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic} from './monorail.js'
 import {Interfaces} from '@oclif/core'
 
+export type TunnelHook = `tunnel_start_${string}`
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
 
 interface TunnelPlugin {
   start: (options: TunnelStartOptions) => Promise<string>
+}
+
+export interface TunnelProvider {
+  provider: string
+  hook: TunnelHook
 }
 
 interface TunnelStartOptions {
@@ -44,6 +50,18 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 
 interface HookReturnsPerPlugin {
+  [key: TunnelHook]: {
+    options: {port: number}
+    pluginReturns: {
+      [pluginName: string]: {url: string; error: string}
+    }
+  }
+  tunnel_provider: {
+    options: {[key: string]: never}
+    pluginReturns: {
+      [pluginName: string]: Required<TunnelProvider>
+    }
+  }
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
@@ -70,4 +88,4 @@ export type FanoutHookFunction<
 > = (
   this: Interfaces.Hook.Context,
   options: TPluginMap[TEvent]['options'] & {config: Interfaces.Config},
-) => Promise<Partial<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>>
+) => Promise<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>
