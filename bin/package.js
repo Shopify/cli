@@ -21,4 +21,4 @@ await template.recursiveDirectoryCopy(
 );
 
 await copyHomebrew(distDir)
-await packageDebian(distDir)
+await packageDebian(distDir, cliVersion)
