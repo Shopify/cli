@@ -53,7 +53,7 @@ describe('runtime metadata', () => {
     vi.mocked(errorHandler.sendErrorToBugsnag).mockReset()
 
     // Bubbles a thrown error
-    expect(
+    await expect(
       container.addPublic(() => {
         throw new Error()
       }, 'bubble'),
