@@ -82,9 +82,12 @@ async function localCliPackage(): Promise<CliPackageInfo | undefined> {
     return
   }
   const localShopifyCLI = JSON.parse(npmListOutput)
-  const dependenciesList =
-    localShopifyCLI.dependencies ?? localShopifyCLI.devDependencies ?? localShopifyCLI.peerDependencies
-  return dependenciesList && dependenciesList['@shopify/cli']
+  const dependenciesList = {
+    ...localShopifyCLI.peerDependencies,
+    ...localShopifyCLI.devDependencies,
+    ...localShopifyCLI.dependencies,
+  }
+  return dependenciesList['@shopify/cli']
 }
 
 export default runCLI
