@@ -7,6 +7,8 @@ import {Flags} from '@oclif/core'
 export default class Deploy extends Command {
   static description = 'Deploy your Hydrogen app to Oxygen'
 
+  // note: we may want to check for the environment variable OXYGEN_DEPLOYMENT_TOKEN as a fallback when
+  // we are in a workflow
   static flags = {
     ...cli.globalFlags,
     ...hydrogenFlags,
