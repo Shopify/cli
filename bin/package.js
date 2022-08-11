@@ -20,5 +20,7 @@ await template.recursiveDirectoryCopy(
   },
 );
 
-await copyHomebrew(distDir)
-await packageDebian(distDir, cliVersion)
+await Promise.all([
+  copyHomebrew(distDir),
+  packageDebian(distDir, cliVersion)
+])
