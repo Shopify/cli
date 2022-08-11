@@ -17,7 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEBUG: 1
+  DEBUG: "1"
+  SHOPIFY_CONFIG: debug
   YARN_VERSION: "1.22.18"
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
