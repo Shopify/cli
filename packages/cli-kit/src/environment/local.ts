@@ -1,4 +1,4 @@
-import {isTruthy} from './utilities.js'
+import {isTruthy, isSet} from './utilities.js'
 import {isSpin} from './spin.js'
 import constants from '../constants.js'
 import {exists as fileExists} from '../file.js'
@@ -73,6 +73,11 @@ export function analyticsDisabled(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
 }
 
+/** Returns true if reporting analytics should always happen, regardless of DEBUG mode etc. */
+export function alwaysLogAnalytics(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.alwaysLogAnalytics])
+}
+
 export function firstPartyDev(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.firstPartyDev])
 }
@@ -89,4 +94,38 @@ export async function hasGit(): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/**
+ * Gets info on the CI platform the CLI is running on, if applicable
+ */
+export function ciPlatform(env = process.env): {isCI: true; name: string} | {isCI: false; name?: undefined} {
+  if (isTruthy(env.CI)) {
+    let name = 'unknown'
+    if (isTruthy(env.CIRCLECI)) {
+      name = 'circleci'
+    } else if (isSet(env.GITHUB_ACTION)) {
+      name = 'github'
+    } else if (isTruthy(env.GITLAB_CI)) {
+      name = 'gitlab'
+    }
+
+    return {
+      isCI: true,
+      name,
+    }
+  }
+  return {
+    isCI: false,
+  }
+}
+
+/**
+ * Gets info on the Web IDE platform the CLI is running on, if applicable
+ */
+export function webIDEPlatform(env = process.env) {
+  if (isTruthy(env.CODESPACES)) {
+    return 'codespaces'
+  }
+  return undefined
 }

@@ -84,7 +84,7 @@ class HydrogenAppLoader {
     }
 
     const app: HydrogenApp = {
-      name,
+      name: name ?? path.basename(this.directory),
       directory: this.directory,
       configuration,
       packageManager,
