@@ -1,15 +1,10 @@
 {
-  "name": "shopify-cli-extensions",
-  "version": "0.0.0",
+  "name": "@shopify/ui-extensions-go-cli",
+  "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "type": "module",
   "scripts": {
-    "build": "make build && make build-debug",
-    "clean": "lerna run clean",
-    "deploy": "lerna publish from-package --yes",
-    "start": "cd packages/dev-console-app; yarn start",
+    "build": "yarn --cwd ../.. run nx run ui-extensions-go-cli:build",
     "test": "yarn test:unit && yarn test:integration",
     "test:unit": "make go-test",
     "test:integration": "make integration-test",

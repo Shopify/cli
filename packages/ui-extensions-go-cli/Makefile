@@ -4,22 +4,6 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
   $(eval $(RUN_ARGS):;@:)
 endif
 
-ifeq ($(GOOS),windows)
-	executable := shopify-extensions.exe
-	canonical_name := shopify-extensions-$(GOOS)-$(GOARCH).exe
-else
-	executable := shopify-extensions
-	canonical_name := shopify-extensions-$(GOOS)-$(GOARCH)
-endif
-
-.PHONY: build
-build:
-	go build -o ${executable}
-
-.PHONY: build-debug
-build-debug:
-	go build -gcflags=all="-N -l" -o ${executable}
-
 .PHONY: package
 package:
 ifeq ($(GOOS),)

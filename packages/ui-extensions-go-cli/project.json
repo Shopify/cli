@@ -4,5 +4,14 @@
     "sourceRoot": "packages/ui-extensions-go-cli/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-cli"],
-    "tags": ["scope:feature", "scope:ui-extensions"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "make build"
+        }
+      }
+    }
 }
