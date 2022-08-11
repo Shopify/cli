@@ -53,7 +53,7 @@ interface HookReturnsPerPlugin {
   [key: TunnelHook]: {
     options: {port: number}
     pluginReturns: {
-      [pluginName: string]: {url: string; error: string}
+      [pluginName: string]: {url: string}
     }
   }
   tunnel_provider: {
