@@ -65,21 +65,21 @@ export async function downloadRepository({
 }
 
 /**
- * If command run from outside a .git directory tree
- * it throws an abort error.
- */
-export async function ensureInsideGitDirectory() {
-  if (!(await git().checkIsRepo())) {
-    throw OutsideGitDirectoryError()
-  }
-}
-
-/**
  * If "git" is not present in the environment it throws
  * an abort error.
  */
 export async function ensurePresentOrAbort() {
   if (!(await hasGit())) {
     throw GitNotPresentError()
+  }
+}
+
+/**
+ * If command run from outside a .git directory tree
+ * it throws an abort error.
+ */
+export async function ensureInsideGitDirectory() {
+  if (!(await git().checkIsRepo())) {
+    throw OutsideGitDirectoryError()
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.8.0",
+  "version": "3.7.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -128,11 +128,10 @@
   "devDependencies": {
     "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
-    "@types/diff": "^5.0.2",
     "@types/inquirer": "^8.2.1",
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.22.1"
+    "vitest": "^0.21.1"
   }
 }
