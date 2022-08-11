@@ -252,7 +252,7 @@ async function updateCLIDependencies(
 
 async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
   if (packageManager === 'pnpm') {
-    writeToNpmrc(directory, 'auto-install-peers = true')
+    await writeToNpmrc(directory, 'auto-install-peers = true')
   }
   await installNodeModules(directory, packageManager, stdout)
 }

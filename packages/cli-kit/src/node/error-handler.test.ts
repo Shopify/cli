@@ -23,36 +23,36 @@ afterEach(() => {
 })
 
 describe('errorHandler', () => {
-  it('finishes the execution without exiting the proccess when cancel execution exception is raised', () => {
+  it('finishes the execution without exiting the proccess when cancel execution exception is raised', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    errorHandler(new error.CancelExecution())
+    await errorHandler(new error.CancelExecution())
 
     // Then
     expect(process.exit).toBeCalledTimes(0)
   })
 
-  it('finishes the execution without exiting the proccess and display a custom message when cancel execution exception is raised with a message', () => {
+  it('finishes the execution without exiting the proccess and display a custom message when cancel execution exception is raised with a message', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
     const outputMock = outputMocker.mockAndCaptureOutput()
 
     // When
-    errorHandler(new error.CancelExecution('Custom message'))
+    await errorHandler(new error.CancelExecution('Custom message'))
 
     // Then
     expect(outputMock.info()).toMatch('✨  Custom message')
     expect(process.exit).toBeCalledTimes(0)
   })
 
-  it('finishes the execution gracefully and exits the proccess when abort silent exception', () => {
+  it('finishes the execution gracefully and exits the proccess when abort silent exception', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    errorHandler(new error.AbortSilent())
+    await errorHandler(new error.AbortSilent())
 
     // Then
     expect(process.exit).toBeCalledTimes(1)

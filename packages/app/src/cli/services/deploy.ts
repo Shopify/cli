@@ -96,7 +96,14 @@ export const deploy = async (options: DeployOptions) => {
 
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
-      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations, validationErrors})
+      await outputCompletionMessage({
+        app,
+        partnersApp,
+        partnersOrganizationId,
+        identifiers,
+        registrations,
+        validationErrors,
+      })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
@@ -183,7 +190,7 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
-        configuration_schema: extension.configuration.configurationSchema,
+        settings: extension.configuration.settings,
         localization: await loadLocalesConfig(extension.directory),
       }
     }
