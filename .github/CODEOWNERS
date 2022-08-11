@@ -2,3 +2,5 @@
 
 packages/cli-hydrogen/ @shopify/hydrogen
 packages/create-hydrogen/ @shopify/hydrogen
+
+packages/theme/ @shopify/theme-developer-tools
