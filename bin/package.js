@@ -2,6 +2,7 @@
 
 import {constants, file, output, path, template} from '@shopify/cli-kit';
 import {homebrewVariables, copyHomebrew} from '../packaging/lib/homebrew.js';
+import {packageDebian} from '../packaging/lib/debian.js';
 
 output.initiateLogging();
 
@@ -14,8 +15,10 @@ await template.recursiveDirectoryCopy(
   path.join(packagingDir, 'src'),
   distDir,
   {
+    cliVersion,
     ...(await homebrewVariables(cliVersion)),
   },
 );
 
-await copyHomebrew(packagingDir)
+await copyHomebrew(distDir)
+await packageDebian(distDir)

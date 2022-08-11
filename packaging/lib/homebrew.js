@@ -32,7 +32,7 @@ export async function copyHomebrew(packagingDir) {
   const homebrewFormulaDest = path.normalize(
     await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'homebrew-shopify']),
   )
-  const homebrewFormulas = await path.glob(path.join(packagingDir, 'dist/homebrew/*'))
+  const homebrewFormulas = await path.glob(path.join(packagingDir, 'homebrew/*'))
   await Promise.all(
     homebrewFormulas.map(async (sourceFile) => {
       await file.copy(sourceFile, path.join(homebrewFormulaDest, path.basename(sourceFile)))
