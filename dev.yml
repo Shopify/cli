@@ -13,7 +13,7 @@ up:
     - delve
 
 env:
-  SHOPIFY_CONFIG: debug
+  SHOPIFY_ENV: development
   SHOPIFY_PARTNERS_API_ENV: production
   SHOPIFY_ADMIN_API_ENV: production
   SHOPIFY_STOREFRONT_RENDERER_API_ENV: production
