@@ -17,6 +17,7 @@ const constants = {
     partnersEnv: 'SHOPIFY_PARTNERS_ENV',
     shopifyEnv: 'SHOPIFY_SHOPIFY_ENV',
     identityEnv: 'SHOPIFY_IDENTITY_ENV',
+    dmsEnv: 'SHOPIFY_DMS_ENV',
     spin: 'SPIN',
     spinInstance: 'SPIN_INSTANCE',
     spinWorkspace: 'SPIN_WORKSPACE',

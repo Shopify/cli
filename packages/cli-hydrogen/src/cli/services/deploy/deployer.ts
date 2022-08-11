@@ -1,4 +1,4 @@
-import {ReqDeployConfig, DMSError} from './types.js'
+import {ReqDeployConfig, DMSError, UploadDeploymentResponse} from './types.js'
 import {
   CreateDeploymentResponse,
   CreateDeploymentQuerySchema,
@@ -6,16 +6,17 @@ import {
 } from './graphql/create_deployment.js'
 import buildService from '../build.js'
 import {output, api, http} from '@shopify/cli-kit'
+import {zip} from '@shopify/cli-kit/node/archiver'
+import {createReadStream} from 'node:fs'
 
 export const createDeploymentStep = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   output.info('✨ Creating a deployment... ')
 
   const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
   const headers = await api.common.buildHeaders(config.deploymentToken)
-  // need to create a seperate service for "dms" related calls instead of piggybacking on "shopify"
   const client = await http.graphqlClient({
     headers,
-    service: 'shopify',
+    service: 'dms',
     url,
   })
 
@@ -56,4 +57,47 @@ export const runBuildCommandStep = async (config: ReqDeployConfig, assetBaseURL:
   await buildService({...options, directory: config.path, targets, assetBaseURL})
 
   return null
+}
+
+export const uploadDeploymentStep = async (config: ReqDeployConfig, deploymentID: string): Promise<string> => {
+  output.info('🚀 Uploading deployment files... ')
+
+  const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
+  let headers = await api.common.buildHeaders(config.deploymentToken)
+
+  // note: may need validation for invalid deploymentID? oxygenctl does it
+  // note: we may want to remove the zip that we create in in this step
+  const distPath = `${config.path}/dist`
+  const distZipPath = `${distPath}/dist.zip`
+  await zip(distPath, distZipPath)
+
+  const formData = http.formData()
+  formData.append('operations', buildOperationsString(deploymentID))
+  formData.append('map', JSON.stringify({'0': ['variables.file']}))
+  formData.append('0', createReadStream(distZipPath), {filename: 'upload_dist'})
+
+  delete headers['Content-Type']
+  headers = {
+    ...headers,
+    ...formData.getHeaders(),
+  }
+
+  const response = await http.shopifyFetch('dms', url, {
+    method: 'POST',
+    body: formData,
+    headers,
+  })
+
+  // note: handle error
+  // note: type this better
+  const responseData = (await response.json()) as UploadDeploymentResponse
+  return responseData.data.uploadDeployment.deployment.previewURL
+}
+
+const buildOperationsString = (deploymentID: string): string => {
+  return JSON.stringify({
+    query:
+      'mutation uploadDeployment($file: Upload!, $deploymentID: ID!) {uploadDeployment(file: $file, deploymentID: $deploymentID) {deployment {previewURL}}}',
+    variables: {deploymentID, file: null},
+  })
 }

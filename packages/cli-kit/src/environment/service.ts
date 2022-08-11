@@ -2,6 +2,7 @@ import {
   partners as partnersEnvironment,
   shopify as shopifyEnvironment,
   identity as identityEnvironment,
+  dms as dmsEnvironment,
 } from './service.js'
 import {Environment, Service} from '../network/service.js'
 import constants from '../constants.js'
@@ -17,6 +18,9 @@ export async function environmentForService(service: Service): Promise<Environme
       break
     case 'shopify':
       environment = await shopifyEnvironment()
+      break
+    case 'dms':
+      environment = await dmsEnvironment()
       break
   }
   return environment
@@ -60,4 +64,12 @@ export function shopify(env = process.env): Environment {
  */
 export function identity(env = process.env): Environment {
   return service(env[constants.environmentVariables.identityEnv])
+}
+
+/**
+ * Returns the environment to be used for the interactions with dms.
+ * @param env The environment variables from the environment of the current process.
+ */
+export function dms(env = process.env): Environment {
+  return service(env[constants.environmentVariables.dmsEnv])
 }
