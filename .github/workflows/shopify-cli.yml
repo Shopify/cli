@@ -45,6 +45,8 @@ jobs:
           bundler-cache: true
       - name: Install Bundler
         run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
+      - name: Install Bundler dependencies
+        run: bundle install
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
@@ -87,6 +89,8 @@ jobs:
           bundler-cache: true
       - name: Install Bundler
         run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
+      - name: Install Bundler dependencies
+        run: bundle install
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
@@ -147,6 +151,8 @@ jobs:
           bundler-cache: true
       - name: Install Bundler
         run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
+      - name: Install Bundler dependencies
+        run: bundle install
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
@@ -212,6 +218,8 @@ jobs:
         # setup-ruby is slow on Windows and is unnecessary for our case
         run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
         if: ${{ matrix.os == 'windows-latest'}}
+      - name: Install Bundler dependencies
+        run: bundle install
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
