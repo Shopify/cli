@@ -67,8 +67,7 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip('refreshes extension url', async () => {
+  it('refreshes extension url', async () => {
     const extension = mockExtension()
     const previousState: ExtensionServerState = {
       store: 'test-store.com',

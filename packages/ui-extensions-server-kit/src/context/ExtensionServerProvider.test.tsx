@@ -137,8 +137,7 @@ describe('ExtensionServerProvider tests', () => {
       });
     });
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('persists refresh data to the state', async () => {
+    it('persists refresh data to the state', async () => {
       const app = mockApp();
       const extension = mockExtension();
       const data = {app, store: 'test-store.com', extensions: [extension]};
