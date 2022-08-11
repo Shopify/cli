@@ -1,3 +1,4 @@
+import buildService from './build.js'
 import {git, error, path, output, api, http} from '@shopify/cli-kit'
 import {gql} from 'graphql-request'
 
@@ -10,11 +11,12 @@ interface DeployConfig {
   commitRef?: string
   timestamp?: string
   repository?: string
+  path?: string
 }
 type ReqDeployConfig = Required<DeployConfig>
 
 export async function deployToOxygen(_config: DeployConfig) {
-  const config = await getGitData(_config)
+  const config = await getDeployConfig(_config)
   // eslint-disable-next-line no-console
   console.log('Deployment Config: ', config)
 
@@ -23,10 +25,13 @@ export async function deployToOxygen(_config: DeployConfig) {
   output.info(`Deployment ID: ${deploymentID}`)
   output.info(`Base Asset URL: ${assetBaseURL}`)
   output.info(`Error Message: ${error?.debugInfo}`)
+
+  await runBuildCommandStep(config, assetBaseURL)
+
   output.success('Deployment created!')
 }
 
-const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
+const getDeployConfig = async (config: DeployConfig): Promise<ReqDeployConfig> => {
   await git.ensurePresentOrAbort()
   await git.ensureInsideGitDirectory()
   const simpleGit = git.factory()
@@ -67,6 +72,8 @@ const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
 
   const [latestCommit, repository, commitRef] = await Promise.all([getLatestCommit(), getRepository(), getHeadRef()])
 
+  const directory = config.path ? path.resolve(config.path) : process.cwd()
+
   return {
     deploymentToken: config.deploymentToken,
     dmsAddress: config.dmsAddress,
@@ -76,6 +83,7 @@ const getGitData = async (config: DeployConfig): Promise<ReqDeployConfig> => {
     commitRef,
     timestamp: latestCommit.date,
     repository,
+    path: directory,
   }
 }
 
@@ -109,6 +117,28 @@ const createDeploymentStep = async (config: ReqDeployConfig): Promise<CreateDepl
   return response.createDeployment
 }
 
+const runBuildCommandStep = async (config: ReqDeployConfig, assetBaseURL: string): Promise<DMSError | null> => {
+  output.info('✨ Building the applicaton... ')
+
+  // need to measure duration of build
+  // make a temp build directory?
+  const targets = {
+    client: true,
+    worker: '@shopify/hydrogen/platforms/worker',
+    node: false,
+  }
+  const options = {
+    client: true,
+    target: 'worker',
+  }
+
+  // make sure that env is being set for asset_url rewriting
+  process.env.OXYGEN_ASSET_URL = assetBaseURL
+  await buildService({...options, directory: config.path, targets})
+
+  return null
+}
+
 const CreateDeploymentQuery = gql`
   mutation createDeployment($input: CreateDeploymentInput!) {
     createDeployment(input: $input) {
@@ -130,10 +160,10 @@ interface CreateDeploymentQuerySchema {
 interface CreateDeploymentResponse {
   deploymentID: string
   assetBaseURL: string
-  error: CreateDeploymentError
+  error: DMSError
 }
 
-interface CreateDeploymentError {
+interface DMSError {
   code: string
   unrecoverable: boolean
   debugInfo: string
