@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace ExtensionServer {
     /**
@@ -36,7 +35,7 @@ declare global {
         /**
          * The absolute URL of the WebSocket.
          */
-        url?: string;
+        url?: string
 
         /**
          * This defines if we should automatically attempt to connect when the
@@ -44,19 +43,19 @@ declare global {
          *
          * @default true
          */
-        automaticConnect?: boolean;
+        automaticConnect?: boolean
 
         /**
          * The sub-protocol selected by the server.
          *
          * @default []
          */
-        protocols?: string | string[];
-      };
+        protocols?: string | string[]
+      }
       /**
        * If provided the extension server will only return extensions that matches the specified surface
        */
-      surface?: Surface;
+      surface?: Surface
     }
 
     /**
@@ -67,17 +66,17 @@ declare global {
       /**
        * Connection options
        */
-      options: Options;
+      options: Options
 
       /**
        * Reconnecting WebSocket Client
        */
-      connection: WebSocket;
+      connection: WebSocket
 
       /**
        * API Client
        */
-      api: API.Client;
+      api: API.Client
 
       /**
        * Function to add an event listener to messages coming from
@@ -86,27 +85,24 @@ declare global {
       on<TEvent extends keyof ExtensionServer.InboundEvents>(
         event: TEvent,
         cb: EventListener<TEvent>,
-      ): EventUnsubscriber;
+      ): EventUnsubscriber
 
       /**
        * Function to emit an event that will persist changes to the extension server.
        */
-      persist<TEvent extends keyof OutboundPersistEvents>(
-        event: TEvent,
-        payload: OutboundPersistEvents[TEvent],
-      ): void;
+      persist<TEvent extends keyof OutboundPersistEvents>(event: TEvent, payload: OutboundPersistEvents[TEvent]): void
 
       /**
        * Function to emit an event to the extension server.
        */
-      emit<TEvent extends keyof DispatchEvents>(...args: EmitArgs<TEvent>): void;
+      emit<TEvent extends keyof DispatchEvents>(...args: EmitArgs<TEvent>): void
 
       /**
        * Function that opens a connection with the extensions server.
        *
        * @param options ExtensionServer.Options
        */
-      connect(options?: Options): () => void;
+      connect(options?: Options): () => void
     }
 
     /**
@@ -115,86 +111,86 @@ declare global {
      *
      * @example const client = new ExtensionServer({ url: 'wss://localhost:1234' });
      */
-    type StaticClient = Static<ExtensionServer.Client, [option?: ExtensionServer.Options]>;
+    type StaticClient = Static<ExtensionServer.Client, [option?: ExtensionServer.Options]>
 
     // API responses
     namespace API {
       interface Client {
-        url: string;
-        extensions(): Promise<ExtensionsResponse>;
-        extensionById(id: string): Promise<ExtensionResponse>;
+        url: string
+        extensions(): Promise<ExtensionsResponse>
+        extensionById(id: string): Promise<ExtensionResponse>
       }
 
       interface BaseResponse {
-        app: App;
-        root: ResourceURL;
-        socket: ResourceURL;
-        devConsole: ResourceURL;
-        store: string;
-        version: string;
+        app: App
+        root: ResourceURL
+        socket: ResourceURL
+        devConsole: ResourceURL
+        store: string
+        version: string
       }
 
       interface ExtensionsResponse extends BaseResponse {
-        extensions: Extension[];
+        extensions: Extension[]
       }
 
       interface ExtensionResponse extends BaseResponse {
-        extension: Extension;
+        extension: Extension
       }
 
       interface App {
-        apiKey: string;
-        [key: string]: string;
+        apiKey: string
+        [key: string]: string
       }
 
       interface Extension {
-        assets: Assets;
-        development: Development;
-        extensionPoints: string[] | null;
-        surface: Surface;
-        name?: string;
-        title?: string;
-        type: string;
-        metafields: Metafield[] | null;
-        uuid: string;
-        version: string;
+        assets: Assets
+        development: Development
+        extensionPoints: string[] | null
+        surface: Surface
+        name?: string
+        title?: string
+        type: string
+        metafields: Metafield[] | null
+        uuid: string
+        version: string
       }
 
       interface Assets {
-        [name: string]: Asset;
+        [name: string]: Asset
       }
 
       interface Asset {
-        name: string;
-        url: string;
-        lastUpdated: number;
-        rawSearchParams?: string;
+        name: string
+        url: string
+        lastUpdated: number
+        rawSearchParams?: string
       }
 
       interface Development {
-        root: ResourceURL;
-        resource: ResourceURL;
-        renderer?: Renderer;
-        hidden: boolean;
-        buildDir?: string;
-        rootDir?: string;
-        template?: string;
-        entries?: {[key: string]: string};
-        status: string;
+        root: ResourceURL
+        resource: ResourceURL
+        renderer?: Renderer
+        hidden: boolean
+        buildDir?: string
+        rootDir?: string
+        template?: string
+        entries?: {[key: string]: string}
+        status: string
       }
 
       interface ResourceURL {
-        url: string;
+        url: string
       }
 
       interface Renderer {
-        name: string;
-        version: string;
+        name: string
+        version: string
       }
 
       interface Metafield {
-        namespace: string;
-        key: string;
+        namespace: string
+        key: string
       }
     }
 
@@ -208,34 +204,33 @@ declare global {
     type EmitArgs<TEvent extends keyof ExtensionServer.DispatchEvents> =
       ExtensionServer.DispatchEvents[TEvent] extends void
         ? [event: TEvent]
-        : [event: TEvent, payload: ExtensionServer.DispatchEvents[TEvent]];
+        : [event: TEvent, payload: ExtensionServer.DispatchEvents[TEvent]]
 
     /**
      * This is a helper interface that allows us to define the static methods of a given
      * class. This is useful to define static methods, static properties
      * and constructor variables.
      */
-    interface Static<T = unknown, TArgs extends unknown[] = any[]> {
-      prototype: T;
-      new (...args: TArgs): T;
+    interface Static<T = unknown, TArgs extends unknown[] = unknown[]> {
+      prototype: T
+      new (...args: TArgs): T
     }
 
     /**
      * This helper creates a partial interface with exception to the defined key values.
      */
-    type PartialExcept<TOject, TKey extends keyof TOject> = Partial<Omit<TOject, TKey>> &
-      Pick<TOject, TKey>;
+    type PartialExcept<TOject, TKey extends keyof TOject> = Partial<Omit<TOject, TKey>> & Pick<TOject, TKey>
 
     type EventListener<TEvent extends keyof ExtensionServer.InboundEvents> = (
       payload: ExtensionServer.InboundEvents[TEvent],
-    ) => void;
+    ) => void
 
-    type EventUnsubscriber = () => void;
+    type EventUnsubscriber = () => void
   }
 }
 
-export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'pos'] as const;
+export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'pos'] as const
 
-export type Surface = typeof AVAILABLE_SURFACES[number];
+export type Surface = typeof AVAILABLE_SURFACES[number]
 
-export {};
+export {}

@@ -1,18 +1,18 @@
-import {ExtensionPayload, Status} from '../types';
+import {ExtensionPayload, Status} from '../types'
 
 type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
+  [P in keyof T]?: DeepPartial<T[P]>
+}
 
-let id = 0;
+let id = 0
 
 function pad(num: number) {
-  return `00000000000${num}`.slice(-12);
+  return `00000000000${num}`.slice(-12)
 }
 
 export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): ExtensionPayload {
-  const uuid = `00000000-0000-0000-0000-${pad(id++)}`;
-  const lastUpdated = Date.now();
+  const uuid = `00000000-0000-0000-0000-${pad(id++)}`
+  const lastUpdated = Date.now()
   return {
     title: 'My extension',
     surface: 'admin',
@@ -44,9 +44,9 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
       },
       ...((obj.development || {}) as any),
     },
-  };
+  }
 }
 
 export function mockExtensions(): ExtensionPayload[] {
-  return [mockExtension()];
+  return [mockExtension()]
 }

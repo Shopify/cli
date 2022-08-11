@@ -1,31 +1,26 @@
 export interface ConnectedAction {
-  type: 'connected';
-  payload: ExtensionServer.InboundEvents['connected'];
+  type: 'connected'
+  payload: ExtensionServer.InboundEvents['connected']
 }
 
 export interface UpdateAction {
-  type: 'update';
-  payload: ExtensionServer.InboundEvents['update'];
+  type: 'update'
+  payload: ExtensionServer.InboundEvents['update']
 }
 
 export interface RefreshAction {
-  type: 'refresh';
-  payload: ExtensionServer.InboundEvents['refresh'];
+  type: 'refresh'
+  payload: ExtensionServer.InboundEvents['refresh']
 }
 
 export interface FocusAction {
-  type: 'focus';
-  payload: ExtensionServer.InboundEvents['focus'];
+  type: 'focus'
+  payload: ExtensionServer.InboundEvents['focus']
 }
 
 export interface UnfocusAction {
-  type: 'unfocus';
-  payload: ExtensionServer.InboundEvents['unfocus'];
+  type: 'unfocus'
+  payload: ExtensionServer.InboundEvents['unfocus']
 }
 
-export type ExtensionServerActions =
-  | ConnectedAction
-  | UpdateAction
-  | RefreshAction
-  | FocusAction
-  | UnfocusAction;
+export type ExtensionServerActions = ConnectedAction | UpdateAction | RefreshAction | FocusAction | UnfocusAction

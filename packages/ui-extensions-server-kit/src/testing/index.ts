@@ -1,3 +1,3 @@
-export * from './MockExtensionServerProvider';
-export * from './app';
-export * from './extensions';
+export * from './MockExtensionServerProvider'
+export * from './app'
+export * from './extensions'

@@ -5,6 +5,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json --noEmit && vite build",
     "clean": "git clean --exclude node_modules -xdf ./",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
     "serve": "vite preview",
     "start": "vite",
     "test": "jest"
@@ -18,6 +20,14 @@
     "qrcode.react": "^1.0.1",
     "react": "16.14.0",
     "react-dom": "^16.9.11"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",

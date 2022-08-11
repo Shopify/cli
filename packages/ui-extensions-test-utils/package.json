@@ -6,10 +6,20 @@
   "types": "dist/index",
   "scripts": {
     "build": "tsc",
-    "clean": "git clean --exclude node_modules -xdf ./"
+    "clean": "git clean --exclude node_modules -xdf ./",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint 'src/**/*.ts' --fix"
   },
   "peerDependencies": {
     "react": "16.14.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",

@@ -1,1 +1,1 @@
-export * from './ExtensionRow';
+export * from './ExtensionRow'

@@ -11,7 +11,9 @@
     "deploy": "lerna publish from-package --yes",
     "start": "cd packages/dev-console-app; yarn start",
     "test": "lerna run test",
-    "version-bump": "lerna version --no-push --include-merged-tags"
+    "version-bump": "lerna version --no-push --include-merged-tags",
+    "lint": "gofmt -s .",
+    "lint:fix": "gofmt -w -s ."
   },
   "devDependencies": {
     "@shopify/shopify-cli-extensions": "0.2.3"

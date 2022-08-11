@@ -69,9 +69,9 @@ export async function appendFile(path: string, content: string): Promise<void> {
   await fs.appendFile(path, content)
 }
 
-export async function touchSync(path: string): Promise<void> {
+export function touchSync(path: string) {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
-  await fs.ensureFileSync(path)
+  fs.ensureFileSync(path)
 }
 
 export async function write(path: string, data: string): Promise<void> {
@@ -105,6 +105,11 @@ export function mkdirSync(path: string): void {
 export async function remove(path: string): Promise<void> {
   debug(outputContent`Removing file at ${token.path(path)}...`)
   await fs.remove(path)
+}
+
+export function removeSync(path: string) {
+  debug(outputContent`Sync-removing file at ${token.path(path)}...`)
+  fs.removeSync(path)
 }
 
 export async function rmdir(path: string, {force}: {force?: boolean} = {}): Promise<void> {
