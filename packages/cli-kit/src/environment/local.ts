@@ -25,10 +25,10 @@ export function homeDirectory(): string {
 /**
  * Returns true if the CLI is running in debug mode.
  * @param env The environment variables from the environment of the current process.
- * @returns true if SHOPIFY_CONFIG is debug
+ * @returns true if SHOPIFY_ENV is development
  */
-export function isDebug(env = process.env): boolean {
-  return env[constants.environmentVariables.shopifyConfig] === 'debug'
+export function isDevelopment(env = process.env): boolean {
+  return env[constants.environmentVariables.shopifyEnv] === 'development'
 }
 
 /**
@@ -70,7 +70,7 @@ export function isUnitTest(env = process.env): boolean {
  * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
+  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDevelopment(env)
 }
 
 /** Returns true if reporting analytics should always happen, regardless of DEBUG mode etc. */

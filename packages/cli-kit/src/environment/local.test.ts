@@ -1,5 +1,5 @@
 import {isSpin} from './spin.js'
-import {hasGit, isDebug, isShopify, isUnitTest, analyticsDisabled} from './local.js'
+import {hasGit, isDevelopment, isShopify, isUnitTest, analyticsDisabled} from './local.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
@@ -23,13 +23,13 @@ describe('isUnitTest', () => {
   })
 })
 
-describe('isDebug', () => {
-  it('returns true when SHOPIFY_CONFIG is debug', () => {
+describe('isDevelopment', () => {
+  it('returns true when SHOPIFY_ENV is debug', () => {
     // Given
-    const env = {SHOPIFY_CONFIG: 'debug'}
+    const env = {SHOPIFY_ENV: 'debug'}
 
     // When
-    const got = isDebug(env)
+    const got = isDevelopment(env)
 
     // Then
     expect(got).toBe(true)
@@ -106,9 +106,9 @@ describe('analitycsDisabled', () => {
     expect(got).toBe(true)
   })
 
-  it('returns true when debug mode is enbled', () => {
+  it('returns true when in development', () => {
     // Given
-    const env = {SHOPIFY_CONFIG: 'debug'}
+    const env = {SHOPIFY_ENV: 'development'}
 
     // When
     const got = analyticsDisabled(env)
