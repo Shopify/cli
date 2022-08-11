@@ -26,7 +26,7 @@ describe('isUnitTest', () => {
 describe('isDevelopment', () => {
   it('returns true when SHOPIFY_ENV is debug', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'debug'}
+    const env = {SHOPIFY_ENV: 'development'}
 
     // When
     const got = isDevelopment(env)
