@@ -50,8 +50,8 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 
 interface HookReturnsPerPlugin {
-  [key: TunnelHook]: {
-    options: {port: number}
+  tunnel_start: {
+    options: {port: number; provider: string}
     pluginReturns: {
       [pluginName: string]: {url: string}
     }
@@ -90,4 +90,12 @@ export type FanoutHookFunction<
   options: TPluginMap[TEvent]['options'] & {config: Interfaces.Config},
 ) => Promise<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>
 
-export const defineProvider = (input: {name: string}) => input
+export const tunnel = {
+  defineProvider: (input: {name: string}) => () => input,
+  startTunnel: (options: {provider: string; action: (port: number) => Promise<string | undefined>}) => {
+    return (inputs: {port: number; provider: string}) => {
+      if (inputs.provider !== options.provider) return undefined
+      return options.action(inputs.port)
+    }
+  },
+}
