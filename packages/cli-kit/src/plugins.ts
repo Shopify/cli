@@ -59,7 +59,7 @@ interface HookReturnsPerPlugin {
   tunnel_provider: {
     options: {[key: string]: never}
     pluginReturns: {
-      [pluginName: string]: Required<TunnelProvider>
+      [pluginName: string]: {name: string}
     }
   }
   public_command_metadata: {
@@ -89,3 +89,5 @@ export type FanoutHookFunction<
   this: Interfaces.Hook.Context,
   options: TPluginMap[TEvent]['options'] & {config: Interfaces.Config},
 ) => Promise<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>
+
+export const defineProvider = (input: {name: string}) => input
