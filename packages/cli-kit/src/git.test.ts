@@ -1,21 +1,29 @@
-import {initializeRepository, downloadRepository, GitNotPresentError, ensurePresentOrAbort} from './git.js'
+import {
+  initializeRepository,
+  downloadRepository,
+  GitNotPresentError,
+  OutsideGitDirectoryError,
+  ensurePresentOrAbort,
+  ensureInsideGitDirectory,
+} from './git.js'
 import {hasGit} from './environment/local.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
+import git from 'simple-git'
 
-const mockedClone = vi.fn(() => Promise.resolve({current: 'Mocked'}))
-
-const mockedInit = vi.fn(() => Promise.resolve())
+const mockedClone = vi.fn(async () => ({current: 'Mocked'}))
+const mockedInit = vi.fn(async () => {})
+const mockedCheckIsRepo = vi.fn(async () => false)
 
 beforeEach(() => {
-  vi.mock('simple-git', async () => {
-    return {
-      default: () => ({
-        clone: mockedClone,
-        init: mockedInit,
-      }),
-    }
-  })
   vi.mock('./environment/local')
+  vi.mocked(hasGit).mockResolvedValue(true)
+
+  vi.mock('simple-git')
+  vi.mocked<any>(git).mockReturnValue({
+    clone: mockedClone,
+    init: mockedInit,
+    checkIsRepo: mockedCheckIsRepo,
+  })
 })
 
 describe('downloadRepository()', () => {
@@ -24,7 +32,6 @@ describe('downloadRepository()', () => {
     const repoUrl = 'http://repoUrl'
     const destination = 'destination'
     const options: any = {'--recurse-submodules': null}
-    vi.mocked(hasGit).mockResolvedValue(true)
 
     // When
     await downloadRepository({repoUrl, destination})
@@ -38,7 +45,6 @@ describe('downloadRepository()', () => {
     const repoUrl = 'http://repoUrl#my-branch'
     const destination = 'destination'
     const options: any = {'--recurse-submodules': null, '--branch': 'my-branch'}
-    vi.mocked(hasGit).mockResolvedValue(true)
 
     // When
     await downloadRepository({repoUrl, destination})
@@ -50,11 +56,6 @@ describe('downloadRepository()', () => {
 
 describe('initializeRepository()', () => {
   it('calls simple-git to init a repo in the given directory', async () => {
-    const simpleGit = await import('simple-git')
-    vi.mocked(hasGit).mockResolvedValue(true)
-
-    vi.spyOn(simpleGit, 'default')
-
     // Given
     const directory = '/tmp/git-repo'
 
@@ -62,7 +63,7 @@ describe('initializeRepository()', () => {
     await initializeRepository(directory)
 
     // Then
-    expect(simpleGit.default).toHaveBeenCalledWith('/tmp/git-repo')
+    expect(git).toHaveBeenCalledWith('/tmp/git-repo')
     expect(mockedInit).toHaveBeenCalledOnce()
   })
 })
@@ -73,7 +74,7 @@ describe('ensurePresentOrAbort', () => {
     vi.mocked(hasGit).mockResolvedValue(false)
 
     // Then
-    await expect(() => ensurePresentOrAbort()).rejects.toThrowError(GitNotPresentError())
+    await expect(ensurePresentOrAbort()).rejects.toThrowError(GitNotPresentError())
   })
 
   test("doesn't throw an error if Git is present", async () => {
@@ -82,5 +83,23 @@ describe('ensurePresentOrAbort', () => {
 
     // Then
     await expect(ensurePresentOrAbort()).resolves.toBeUndefined()
+  })
+})
+
+describe('ensureInsideGitDirectory', () => {
+  test('throws an error if not inside a git directory', async () => {
+    // Given
+    mockedCheckIsRepo.mockResolvedValue(false)
+
+    // Then
+    await expect(ensureInsideGitDirectory()).rejects.toThrowError(OutsideGitDirectoryError())
+  })
+
+  test("doesn't throw an error if inside a git directory", async () => {
+    // Given
+    mockedCheckIsRepo.mockResolvedValue(true)
+
+    // Then
+    await expect(ensureInsideGitDirectory()).resolves.toBeUndefined()
   })
 })

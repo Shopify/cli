@@ -124,6 +124,6 @@
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.17.1"
+    "vitest": "^0.21.1"
   }
 }
