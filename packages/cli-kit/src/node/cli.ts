@@ -43,6 +43,8 @@ export async function runCreateCLI(options: RunCLIOptions) {
 }
 
 export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boolean> {
+  // Temporary flag while we test out this feature and ensure it won't break anything!
+  if (!process.env.SHOPIFY_ENABLE_CLI_REDIRECT) return false
   if (process.env.SHOPIFY_SKIP_CLI_REDIRECT) return false
   if (process.env.npm_config_user_agent) return false
 
