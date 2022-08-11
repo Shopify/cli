@@ -137,7 +137,7 @@ describe('ExtensionServerProvider tests', () => {
       });
     });
 
-    it('persists refresh data to the state', async () => {
+    it.skip('persists refresh data to the state', async () => {
       const app = mockApp();
       const extension = mockExtension();
       const data = {app, store: 'test-store.com', extensions: [extension]};
