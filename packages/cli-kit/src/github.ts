@@ -14,17 +14,13 @@ class GitHubClientError extends Error {
 export interface GithubRelease {
   id: number
   url: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   tag_name: string
   name: string
   body: string
   draft: boolean
   prerelease: boolean
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   created_at: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   published_at: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   tarball_url: string
 }
 

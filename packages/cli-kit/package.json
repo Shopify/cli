@@ -28,6 +28,10 @@
     "./testing/*": {
       "node": "./dist/testing/*.js",
       "types": "./dist/testing/*.d.ts"
+    },
+    "./typing/*": {
+      "node": "./dist/typing/*.js",
+      "types": "./dist/typing/*.d.ts"
     }
   },
   "files": [

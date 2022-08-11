@@ -1,4 +1,5 @@
 import {getBinaryPathOrDownload} from './binary.js'
+import metadata from '../../metadata.js'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 
@@ -16,6 +17,7 @@ const NodeExtensionsCLINotFoundError = () => {
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
   if (environment.local.isDebug()) {
+    await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
     const extensionsGoCliDirectory = (await path.findUp('packages/ui-extensions-go-cli/', {
       type: 'directory',
       cwd: path.moduleDirectory(import.meta.url),
@@ -32,6 +34,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
       throw new error.AbortSilent()
     }
   } else {
+    await metadata.addPublic(() => ({cmd_extensions_binary_from_source: false}))
     const binaryPath = await getBinaryPathOrDownload()
     await system.exec(binaryPath, [...args], options)
   }

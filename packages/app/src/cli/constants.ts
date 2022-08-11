@@ -113,6 +113,8 @@ export const extensions = {
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
+type PublicExtensionTypes = typeof extensions.publicTypes[number]
+type GatedExtensionTypes = Exclude<ExtensionTypes, PublicExtensionTypes>
 
 export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 'function' | 'ui' {
   if (extensionType === 'theme') {
@@ -122,6 +124,10 @@ export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 
     return 'function'
   }
   return 'ui'
+}
+
+export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionType is GatedExtensionTypes {
+  return !extensions.publicTypes.includes(extensionType as PublicExtensionTypes)
 }
 
 /**

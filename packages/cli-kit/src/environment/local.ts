@@ -1,4 +1,4 @@
-import {isTruthy} from './utilities.js'
+import {isTruthy, isSet} from './utilities.js'
 import {isSpin} from './spin.js'
 import constants from '../constants.js'
 import {exists as fileExists} from '../file.js'
@@ -25,10 +25,10 @@ export function homeDirectory(): string {
 /**
  * Returns true if the CLI is running in debug mode.
  * @param env The environment variables from the environment of the current process.
- * @returns true if SHOPIFY_CONFIG is debug
+ * @returns true if SHOPIFY_ENV is development
  */
-export function isDebug(env = process.env): boolean {
-  return env[constants.environmentVariables.shopifyConfig] === 'debug'
+export function isDevelopment(env = process.env): boolean {
+  return env[constants.environmentVariables.env] === 'development'
 }
 
 /**
@@ -70,7 +70,12 @@ export function isUnitTest(env = process.env): boolean {
  * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDebug(env)
+  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDevelopment(env)
+}
+
+/** Returns true if reporting analytics should always happen, regardless of DEBUG mode etc. */
+export function alwaysLogAnalytics(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.alwaysLogAnalytics])
 }
 
 export function firstPartyDev(env = process.env): boolean {
@@ -93,4 +98,38 @@ export async function hasGit(): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/**
+ * Gets info on the CI platform the CLI is running on, if applicable
+ */
+export function ciPlatform(env = process.env): {isCI: true; name: string} | {isCI: false; name?: undefined} {
+  if (isTruthy(env.CI)) {
+    let name = 'unknown'
+    if (isTruthy(env.CIRCLECI)) {
+      name = 'circleci'
+    } else if (isSet(env.GITHUB_ACTION)) {
+      name = 'github'
+    } else if (isTruthy(env.GITLAB_CI)) {
+      name = 'gitlab'
+    }
+
+    return {
+      isCI: true,
+      name,
+    }
+  }
+  return {
+    isCI: false,
+  }
+}
+
+/**
+ * Gets info on the Web IDE platform the CLI is running on, if applicable
+ */
+export function webIDEPlatform(env = process.env) {
+  if (isTruthy(env.CODESPACES)) {
+    return 'codespaces'
+  }
+  return undefined
 }
