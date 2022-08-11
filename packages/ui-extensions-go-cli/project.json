@@ -4,5 +4,5 @@
     "sourceRoot": "packages/ui-extensions-go-cli/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-cli"],
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature", "scope:ui-extensions"]
 }

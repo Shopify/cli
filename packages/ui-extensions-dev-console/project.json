@@ -4,5 +4,5 @@
     "sourceRoot": "packages/ui-extensions-dev-console/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-server-kit","ui-extensions-test-utils"],
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature", "scope:ui-extensions"]
 }
