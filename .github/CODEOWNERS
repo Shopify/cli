@@ -1,0 +1,4 @@
+*       @shopify/cli-foundations
+
+packages/cli-hydrogen/ @shopify/hydrogen
+packages/create-hydrogen/ @shopify/hydrogen
