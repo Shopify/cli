@@ -28,7 +28,7 @@ export function homeDirectory(): string {
  * @returns true if SHOPIFY_ENV is development
  */
 export function isDevelopment(env = process.env): boolean {
-  return env[constants.environmentVariables.shopifyEnv] === 'development'
+  return env[constants.environmentVariables.env] === 'development'
 }
 
 /**
