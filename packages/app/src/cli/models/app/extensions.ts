@@ -31,7 +31,7 @@ export const UIExtensionConfigurationSchema = schema.define.object({
   capabilities: schema.define.any().optional(),
 
   // Only for CheckoutUiExtension
-  configurationSchema: schema.define.any().optional(),
+  settings: schema.define.any().optional(),
 
   // Only for CustomerAccountsUiExtension
   categories: schema.define.array(schema.define.string()).optional(),

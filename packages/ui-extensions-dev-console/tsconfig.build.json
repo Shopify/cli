@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["src/*"],
+      "@shopify/ui-extensions-server-kit": ["../ui-extensions-server-kit/src"],
+      "@shopify/ui-extensions-test-utils": ["../ui-extensions-test-utils/src"],
+    }
+  },
+  "exclude": ["tests/**/*", "src/**/*.test.tsx", "src/**/*.test.ts"],
+  "include": ["src/**/*", "src/**/*.json"],
+  "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../ui-extensions-test-utils"}]
+}

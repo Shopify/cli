@@ -1,0 +1,8 @@
+{
+    "name": "ui-extensions-cli",
+    "root": "packages/ui-extensions-cli",
+    "sourceRoot": "packages/ui-extensions-cli/src",
+    "projectType": "library",
+    "implicitDependencies": ["ui-extensions-dev-console"],
+    "tags": ["scope:feature"]
+}

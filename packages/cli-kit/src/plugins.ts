@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import {debug, content} from './output.js'
-import {Schemas} from './monorail.js'
-import {Interfaces, Config} from '@oclif/core'
+import {JsonMap} from './json.js'
+import {PickByPrefix} from './typing/pick-by-prefix.js'
+import {MonorailEventPublic} from './monorail.js'
+import {Config, Interfaces} from '@oclif/core'
 
 export type TunnelHook = `tunnel_start_${string}`
 export interface TunnelPlugin {
@@ -39,6 +40,10 @@ export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEven
   return Object.fromEntries(res.successes.map(({result, plugin}) => [plugin.name, result])) as any
 }
 
+type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'project_type' | 'api_key' | 'partner_id'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
+
 interface HookReturnsPerPlugin {
   [key: TunnelHook]: {
     options: {port: number}
@@ -55,17 +60,13 @@ interface HookReturnsPerPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
-      '@shopify/app': Partial<
-        Pick<Schemas['app_cli3_command/1.0']['public'], 'project_type' | 'api_key' | 'partner_id'> & {
-          [key: string]: unknown
-        }
-      >
-      [pluginName: string]: {[key: string]: unknown}
+      '@shopify/app': Partial<AppSpecificMonorailFields>
+      [pluginName: string]: JsonMap
     }
   }
   [hookName: string]: {
     options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: {[key: string]: unknown}}
+    pluginReturns: {[key: string]: JsonMap}
   }
 }
 

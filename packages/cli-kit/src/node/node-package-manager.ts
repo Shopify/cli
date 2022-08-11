@@ -57,14 +57,15 @@ export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
  * @param env {Object} The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function packageManagerUsedForCreating(env = process.env): PackageManager {
+export function packageManagerUsedForCreating(env = process.env): PackageManager | 'unknown' {
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
     return 'pnpm'
-  } else {
+  } else if (env.npm_config_user_agent?.includes('npm')) {
     return 'npm'
   }
+  return 'unknown'
 }
 
 /**
@@ -153,7 +154,7 @@ export async function installNodeModules(
  * @param packageJsonPath {string} Path to the package.json file
  * @returns A promise that resolves with the name.
  */
-export async function getPackageName(packageJsonPath: string): Promise<string> {
+export async function getPackageName(packageJsonPath: string): Promise<string | undefined> {
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return packageJsonContent.name
 }
@@ -197,14 +198,9 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
  */
 interface PackageJson {
   /**
-   * The absolute path to the package.json
-   */
-  path: string
-
-  /**
    * The name attribute of the package.json
    */
-  name: string
+  name?: string
 
   /**
    * The version attribute of the package.json

@@ -1,5 +1,6 @@
 import {getBinaryPathOrDownload} from './binary.js'
 import {useExtensionsCLISources} from '../../environment.js'
+import metadata from '../../metadata.js'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 
@@ -20,6 +21,7 @@ const NodeExtensionsCLINotFoundError = () => {
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
   if (useExtensionsCLISources()) {
+    await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
     const projectDirectory = path.join(
       environment.local.homeDirectory(),
       'src/github.com/shopify/shopify-cli-extensions',
@@ -53,6 +55,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
       throw new error.AbortSilent()
     }
   } else {
+    await metadata.addPublic(() => ({cmd_extensions_binary_from_source: false}))
     const binaryPath = await getBinaryPathOrDownload()
     await system.exec(binaryPath, [...args], options)
   }

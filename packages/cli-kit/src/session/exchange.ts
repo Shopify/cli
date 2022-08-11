@@ -142,7 +142,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
     } else if (payload.error === 'invalid_request') {
       // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
       // This means the token is invalid. We clear the session and throw an error to let the caller know.
-      secureStore.remove()
+      await secureStore.remove()
       throw InvalidIdentityError
     } else {
       throw new Abort(payload.error_description)
@@ -152,11 +152,8 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
 }
 
 function buildIdentityToken(result: {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   access_token: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   refresh_token: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   expires_in: number
   scope: string
 }): IdentityToken {
@@ -168,7 +165,6 @@ function buildIdentityToken(result: {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 function buildApplicationToken(result: {access_token: string; expires_in: number; scope: string}): ApplicationToken {
   return {
     accessToken: result.access_token,

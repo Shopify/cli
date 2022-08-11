@@ -2,7 +2,6 @@ import {ThemeExtension} from '../../models/app/extensions.js'
 import {file, path} from '@shopify/cli-kit'
 
 export interface ThemeExtensionConfig {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   theme_extension: {
     files: {[key: string]: string}
   }

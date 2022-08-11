@@ -197,7 +197,8 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
   if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
     return optionsPackageManager as PackageManager
   }
-  return packageManagerUsedForCreating()
+  const usedPackageManager = packageManagerUsedForCreating()
+  return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
 }
 
 export default init
@@ -251,7 +252,7 @@ async function updateCLIDependencies(
 
 async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
   if (packageManager === 'pnpm') {
-    writeToNpmrc(directory, 'auto-install-peers = true')
+    await writeToNpmrc(directory, 'auto-install-peers = true')
   }
   await installNodeModules(directory, packageManager, stdout)
 }

@@ -86,11 +86,16 @@ export function mapper(error: Error): Promise<Error> {
   }
 }
 
-export function isFatal(error: Error): boolean {
-  return Object.prototype.hasOwnProperty.call(error, 'type')
+export function isFatal(error: unknown): boolean {
+  try {
+    return Object.prototype.hasOwnProperty.call(error, 'type')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
-export function shouldReport(error: Error): boolean {
+export function shouldReport(error: unknown): boolean {
   if (!isFatal(error)) {
     return true
   }

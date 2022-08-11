@@ -275,6 +275,7 @@ describe('uploadFunctionExtensions', () => {
       vi.runAllTimers()
 
       // Then
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       expect(promise).rejects.toThrowError(/Function my-function compilation timed out./)
     })
   })

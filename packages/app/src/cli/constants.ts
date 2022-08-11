@@ -60,7 +60,7 @@ export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
 export const functionExtensions = {
-  types: [...publicFunctionExtensions.types, 'payment_methods', 'shipping_rate_presenter'],
+  types: [...publicFunctionExtensions.types, 'payment_methods', 'shipping_rate_presenter', 'payment_customization'],
 } as const
 
 export const functionExtensionTemplates = [
@@ -113,6 +113,8 @@ export const extensions = {
 }
 
 export type ExtensionTypes = typeof extensions.types[number]
+type PublicExtensionTypes = typeof extensions.publicTypes[number]
+type GatedExtensionTypes = Exclude<ExtensionTypes, PublicExtensionTypes>
 
 export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 'function' | 'ui' {
   if (extensionType === 'theme') {
@@ -122,6 +124,10 @@ export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 
     return 'function'
   }
   return 'ui'
+}
+
+export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionType is GatedExtensionTypes {
+  return !extensions.publicTypes.includes(extensionType as PublicExtensionTypes)
 }
 
 /**
@@ -140,6 +146,8 @@ export const getFunctionExtensionPointName = (type: FunctionExtensionTypes) => {
       return 'SHIPPING_DISCOUNTS'
     case 'payment_methods':
       return 'PAYMENT_METHODS'
+    case 'payment_customization':
+      return 'PAYMENT_CUSTOMIZATION'
     case 'shipping_rate_presenter':
       return 'SHIPPING_METHODS'
   }
@@ -250,6 +258,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('shipping discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'payment_methods':
       return buildExtensionOutputConfig('payment customization')
+    case 'payment_customization':
+      return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('delivery option presenter')
   }
@@ -281,6 +291,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'order_discounts':
     case 'shipping_discounts':
     case 'payment_methods':
+    case 'payment_customization':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.
       return type

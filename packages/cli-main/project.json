@@ -2,6 +2,6 @@
     "root": "packages/cli-main",
     "sourceRoot": "packages/cli-main/src",
     "projectType": "library",
-    "implicitDependencies": ["app", "theme", "cli-hydrogen"],
+    "implicitDependencies": ["app", "theme", "cli-hydrogen", "ui-extensions-go-cli"],
     "tags": ["scope:cli"]
 }
