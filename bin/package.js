@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {constants, http, output, path, system, template} from '@shopify/cli-kit';
+import {constants, file, http, output, path, system, template} from '@shopify/cli-kit';
 import {createHash} from 'node:crypto';
 
 output.initiateLogging();
@@ -34,9 +34,11 @@ const [
   tarballAndShaForPackage('@shopify/theme')
 ]);
 
+const packagingDir = path.join(path.dirname(import.meta.url), '../packaging').replace(/^file:/, '')
+
 await template.recursiveDirectoryCopy(
-  path.join(path.dirname(import.meta.url), '../packaging/homebrew').replace(/^file:/, ''),
-  path.normalize(await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'homebrew-shopify'])),
+  path.join(packagingDir, 'src'),
+  path.join(packagingDir, 'dist'),
   {
     cliTarball,
     cliSha,
@@ -44,3 +46,8 @@ await template.recursiveDirectoryCopy(
     themeSha,
   },
 );
+
+const homebrewFormulaDest = path.normalize(await system.captureOutput('/opt/dev/bin/dev', ['project-path', 'homebrew-shopify']))
+(await path.glob(path.join(packagingDir, 'dist/homebrew/*'))).forEach(async (sourceFile) => {
+  await file.copy(sourceFile, path.join(homebrewFormulaDest, path.basename(sourceFile)));
+})
