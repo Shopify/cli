@@ -83,6 +83,10 @@ func normalizeConfig(config *Config) {
 			config.Extensions[index].Capabilities.NetworkAccess = NewBoolPointer(false)
 		}
 
+		if config.Extensions[index].Capabilities.BlockProgress == nil {
+			config.Extensions[index].Capabilities.BlockProgress = NewBoolPointer(false)
+		}
+
 		if config.Extensions[index].Development.Hidden == nil {
 			config.Extensions[index].Development.Hidden = NewBoolPointer(false)
 		}
@@ -133,6 +137,7 @@ type Localization struct {
 
 type Capabilities struct {
 	NetworkAccess *bool `json:"networkAccess" yaml:"network_access"`
+	BlockProgress *bool `json:"blockProgress" yaml:"block_progress"`
 }
 
 type Extension struct {

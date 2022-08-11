@@ -17,6 +17,7 @@ extensions:
 		name: Alternate Name
 		capabilities:
 			network_access: true
+			block_progress: true
 `)
 
 	config, err := core.LoadConfig(strings.NewReader(serializedConfig))
@@ -53,6 +54,10 @@ extensions:
 
 	if *extension.Capabilities.NetworkAccess != true {
 		t.Errorf("invalid value for Capabilities - expected network_access got %t", *extension.Capabilities.NetworkAccess)
+	}
+
+	if *extension.Capabilities.BlockProgress != true {
+		t.Errorf("invalid value for Capabilities - expected block_progress got %t", *extension.Capabilities.BlockProgress)
 	}
 }
 
