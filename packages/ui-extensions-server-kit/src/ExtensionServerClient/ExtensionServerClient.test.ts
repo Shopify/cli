@@ -272,7 +272,7 @@ describe('ExtensionServerClient', () => {
 
       client.persist('update', {extensions: [{uuid: '123'}]})
 
-      expect(socket).toReceiveMessage(data)
+      await expect(socket).toReceiveMessage(data)
 
       socket.close()
     })
