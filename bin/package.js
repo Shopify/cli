@@ -26,8 +26,13 @@ async function tarballAndShaForPackage(pkg) {
   return [tarball, sha];
 }
 
-const [cliTarball, cliSha] = await tarballAndShaForPackage('@shopify/cli');
-const [themeTarball, themeSha] = await tarballAndShaForPackage('@shopify/theme');
+const [
+  [cliTarball, cliSha],
+  [themeTarball, themeSha]
+] = await Promise.all([
+  tarballAndShaForPackage('@shopify/cli'),
+  tarballAndShaForPackage('@shopify/theme')
+]);
 
 await template.recursiveDirectoryCopy(
   path.join(path.dirname(import.meta.url), '../packaging/homebrew').replace(/^file:/, ''),
