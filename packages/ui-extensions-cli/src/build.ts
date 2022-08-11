@@ -6,7 +6,7 @@ export interface Options {
   mode: 'development' | 'production'
 }
 
-export function build({mode}: Options) {
+export async function build({mode}: Options) {
   const isDevelopment = mode === 'development'
   const configs = getConfigs()
   const {
@@ -23,6 +23,10 @@ export function build({mode}: Options) {
 
   let built = false
 
+  if (isDevelopment) {
+    await onRebuild()
+  }
+
   esBuild({
     bundle: true,
     define,
@@ -38,14 +42,14 @@ export function build({mode}: Options) {
     plugins: getPlugins(),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-    watch: isDevelopment ? {onRebuild} : false,
+    watch: isDevelopment,
   })
     .then((result) => {
       if (built) {
         return
       }
       built = true
-      logResult(result)
+      return logResult(result)
     })
     .catch((_e) => {
       console.error('Error building extension: ', _e)
@@ -75,16 +79,16 @@ function graphqlAvailable() {
   }
 }
 
-async function onRebuild(failure: BuildFailure | null, _result: BuildResult | null) {
+async function onRebuild(failure: BuildFailure | undefined = undefined, _result: BuildResult | undefined = undefined) {
   if (failure) {
     console.error(failure.message)
   }
-  logResult(failure)
+  await logResult(failure)
 }
 
-async function logResult(result: BuildResult | null) {
+async function logResult(result: BuildResult | undefined) {
   if (result?.errors.length || result?.warnings.length) {
-    logErrors(result)
+    await logErrors(result)
     return
   }
   console.log(`Build succeeded`)
