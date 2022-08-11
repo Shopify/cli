@@ -31,6 +31,8 @@ const constants = {
     codespaces: 'CODESPACES',
     codespaceName: 'CODESPACE_NAME',
     gitpod: 'GITPOD_WORKSPACE_URL',
+    enableCliRedirect: 'SHOPIFY_ENABLE_CLI_REDIRECT',
+    skipCliRedirect: 'SHOPIFY_SKIP_CLI_REDIRECT',
   },
   paths: {
     executables: {

@@ -3,6 +3,7 @@ import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {errorHandler} from './error-handler.js'
 import {isDevelopment} from '../environment/local.js'
 import {isTruthy} from '../environment/utilities.js'
+import constants from '../constants.js'
 import {join, moduleDirectory} from '../path.js'
 import {captureOutput, exec} from '../system.js'
 import {run, settings, flush} from '@oclif/core'
@@ -45,8 +46,8 @@ export async function runCreateCLI(options: RunCLIOptions) {
 
 export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boolean> {
   // Temporary flag while we test out this feature and ensure it won't break anything!
-  if (!isTruthy(process.env.SHOPIFY_ENABLE_CLI_REDIRECT)) return false
-  if (isTruthy(process.env.SHOPIFY_SKIP_CLI_REDIRECT)) return false
+  if (!isTruthy(process.env[constants.environmentVariables.enableCliRedirect])) return false
+  if (isTruthy(process.env[constants.environmentVariables.skipCliRedirect])) return false
   if (process.env.npm_config_user_agent) return false
 
   const cliPackage = await localCliPackage()
@@ -55,9 +56,10 @@ export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boole
   const correctExecutablePath = join(cliPackage.path, cliPackage.bin.shopify)
   if (correctExecutablePath === filepath) return false
   try {
+    const env = {}
     await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {
       stdio: 'inherit',
-      env: {SHOPIFY_SKIP_CLI_REDIRECT: '1'},
+      env: {[constants.environmentVariables.skipCliRedirect]: '1'},
     })
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (processError: any) {
