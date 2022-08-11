@@ -1,17 +1,16 @@
-import {api, error, output, ui} from '@shopify/cli-kit'
+import {api, error, output, ui, plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
-import {lookupTunnelPlugins, startTunnel, TunnelPlugin} from '@shopify/cli-kit/src/plugins.js'
 
 export async function generateURL(config: Config, frontendPort: number, tunnelFlag?: string): Promise<string> {
   // List of plugins that support tunneling
-  const tunnelPlugins = await lookupTunnelPlugins(config)
+  const tunnelPlugins = await plugins.lookupTunnelPlugins(config)
   if (tunnelPlugins.length === 0) throw new error.Bug('No tunnel plugins detected')
 
   // Select a plugin from the list, either via flag or prompt
   const selectedPlugin = await selectTunnelPlugin(tunnelPlugins, tunnelFlag)
 
   // Start the tunnel from the selected plugin
-  const tunnelURL = await startTunnel(config, selectedPlugin.hookName, frontendPort)
+  const tunnelURL = await plugins.startTunnel(config, selectedPlugin.hookName, frontendPort)
 
   // Should we show this error or let the plugins handle the output and fail silently here?
   if (!tunnelURL) throw new error.Bug(`Error obtaining tunnel URL from plugin: ${selectedPlugin.name}`)
@@ -35,7 +34,7 @@ export async function updateURLs(apiKey: string, url: string, token: string): Pr
   }
 }
 
-async function selectTunnelPlugin(plugins: TunnelPlugin[], tunnelFlag?: string): Promise<TunnelPlugin> {
+async function selectTunnelPlugin(plugins: plugins.TunnelPlugin[], tunnelFlag?: string): Promise<plugins.TunnelPlugin> {
   if (tunnelFlag) {
     const plugin = plugins.find((plugin) => plugin.name === tunnelFlag)
     if (!plugin) throw new error.Abort(`Tunnel plugin "${tunnelFlag}" not found`)
@@ -47,7 +46,7 @@ async function selectTunnelPlugin(plugins: TunnelPlugin[], tunnelFlag?: string):
   }
 }
 
-async function promptTunnelOptions(plugins: TunnelPlugin[]): Promise<TunnelPlugin> {
+async function promptTunnelOptions(plugins: plugins.TunnelPlugin[]): Promise<plugins.TunnelPlugin> {
   const hookList = plugins.map((plugin) => ({name: plugin.name, value: plugin.hookName}))
   const choice = await ui.prompt([
     {
