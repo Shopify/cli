@@ -16,7 +16,7 @@ const NodeExtensionsCLINotFoundError = () => {
  */
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
-  if (environment.local.isDebug()) {
+  if (environment.local.isDevelopment()) {
     await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
     const extensionsGoCliDirectory = (await path.findUp('packages/ui-extensions-go-cli/', {
       type: 'directory',
@@ -48,7 +48,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
  */
 export async function nodeExtensionsCLIPath(): Promise<string> {
   const cwd = path.dirname(fileURLToPath(import.meta.url))
-  if (environment.local.isDebug()) {
+  if (environment.local.isDevelopment()) {
     return (await path.findUp('packages/ui-extensions-cli/bin/cli.js', {
       type: 'file',
       cwd,
