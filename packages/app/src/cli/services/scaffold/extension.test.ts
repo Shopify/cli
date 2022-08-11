@@ -21,13 +21,13 @@ beforeEach(() => {
       ...cliKit,
       environment: {
         local: {
-          isDebug: vi.fn(),
+          isDevelopment: vi.fn(),
           isUnitTest: vi.fn(),
         },
       },
     }
   })
-  vi.mocked(environment.local.isDebug).mockReturnValue(false)
+  vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
   vi.mocked(environment.local.isUnitTest).mockReturnValue(true)
 })
 

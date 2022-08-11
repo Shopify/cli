@@ -15,7 +15,7 @@ vi.mock('@shopify/cli-kit', async () => {
     environment: {
       local: {
         homeDirectory: vi.fn(),
-        isDebug: vi.fn(),
+        isDevelopment: vi.fn(),
         isDebugGoBinary: vi.fn(),
       },
     },
@@ -30,7 +30,7 @@ describe('runGoExtensionsCLI', () => {
   test('runs the CLI through local sources without debug when running it locally', async () => {
     // Given
     const extensionsGoCliDirectory = '/path/to/go/directory'
-    vi.mocked(environment.local.isDebug).mockReturnValue(true)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(true)
     vi.mocked(environment.local.isDebugGoBinary).mockReturnValue(false)
     vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliDirectory)
 
@@ -52,7 +52,7 @@ describe('runGoExtensionsCLI', () => {
   test('runs the CLI through local sources with debug when running it locally', async () => {
     // Given
     const extensionsGoCliDirectory = '/path/to/go/directory'
-    vi.mocked(environment.local.isDebug).mockReturnValue(true)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(true)
     vi.mocked(environment.local.isDebugGoBinary).mockReturnValue(true)
     vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliDirectory)
 
@@ -75,7 +75,7 @@ describe('runGoExtensionsCLI', () => {
     // Given
     const binaryPath = '/path/to/binary'
     vi.mocked(getBinaryPathOrDownload).mockResolvedValue(binaryPath)
-    vi.mocked(environment.local.isDebug).mockReturnValue(false)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
 
     // When
     const got = await runGoExtensionsCLI(['build'])
@@ -89,7 +89,7 @@ describe('nodeExtensionsCLIPath', () => {
   test('returns the path when running it locally', async () => {
     // Given
     const extensionsGoCliExecutable = '/path/to/go/executable'
-    vi.mocked(environment.local.isDebug).mockReturnValue(false)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
     vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliExecutable)
 
     // When
@@ -99,10 +99,10 @@ describe('nodeExtensionsCLIPath', () => {
     expect(got).not.toBeUndefined()
   })
 
-  test('returns the path when running not running it locally', async () => {
+  test('returns the path when not running it locally', async () => {
     // Given
     const extensionsGoCliDirectory = '/path/to/go/directory'
-    vi.mocked(environment.local.isDebug).mockReturnValue(true)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(true)
     vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliDirectory)
 
     // When
