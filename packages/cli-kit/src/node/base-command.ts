@@ -1,5 +1,5 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {isDebug} from '../environment/local.js'
+import {isDevelopment} from '../environment/local.js'
 import {addPublic} from '../metadata.js'
 import {hashString} from '../string.js'
 import {Command, Interfaces} from '@oclif/core'
@@ -12,7 +12,7 @@ export default abstract class extends Command {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async init(): Promise<any> {
-    if (!isDebug()) {
+    if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config.plugins)
     }
