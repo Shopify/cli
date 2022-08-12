@@ -61,7 +61,7 @@ Then(
       case 'typescript':
         fileExtension = 'ts'
         break
-      case 'javascript':
+      case 'vanilla-js':
         fileExtension = 'js'
         break
       default:
