@@ -1,6 +1,7 @@
-import {updateURLs} from './urls.js'
+import {updateURLs, generateURL} from './urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
+import {Plugin} from '@oclif/core/lib/interfaces'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -16,27 +17,27 @@ beforeEach(() => {
         },
         graphql: cliKit.api.graphql,
       },
-      // plugins: {
-      //   getListOfTunnelPlugins: async () => {
-      //     return {start: async () => 'https://fake-url.ngrok.io'}
-      //   },
-      // },
+      plugins: {
+        lookupTunnelPlugin: async () => {
+          return {start: async () => 'https://fake-url.ngrok.io'}
+        },
+      },
     }
   })
 })
 
-// describe('generateURL', () => {
-//   it('returns a tunnel URL by default', async () => {
-//     // Given
-//     const pluginList: Plugin[] = []
-//     // When
+describe('generateURL', () => {
+  it('returns a tunnel URL by default', async () => {
+    // Given
+    const pluginList: Plugin[] = []
+    // When
 
-//     const got = await generateURL(pluginList, 3456)
+    const got = await generateURL(pluginList, 3456)
 
-//     // Then
-//     expect(got).toEqual('https://fake-url.ngrok.io')
-//   })
-// })
+    // Then
+    expect(got).toEqual('https://fake-url.ngrok.io')
+  })
+})
 
 describe('updateURLs', () => {
   it('sends a request to update the URLs', async () => {
