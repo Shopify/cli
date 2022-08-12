@@ -7,10 +7,9 @@ interface DevOptions {
   directory: string
   targets: {[key in Target]: boolean | string}
   base?: string
-  assetBaseURL?: string
 }
 
-async function build({directory, targets, base, assetBaseURL}: DevOptions) {
+async function build({directory, targets, base}: DevOptions) {
   const commonConfig = {base, root: directory}
 
   const tasks: ui.ListrTask[] = Object.entries(targets)
@@ -22,10 +21,6 @@ async function build({directory, targets, base, assetBaseURL}: DevOptions) {
           if (key === 'worker') {
             process.env.WORKER = 'true'
           }
-          if (assetBaseURL) {
-            process.env.HYDROGEN_ASSET_BASE_URL = assetBaseURL
-          }
-
           try {
             await viteBuild({
               ...commonConfig,
