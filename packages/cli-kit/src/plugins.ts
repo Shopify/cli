@@ -3,6 +3,7 @@ import {debug, content} from './output.js'
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic} from './monorail.js'
+import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
 import {Interfaces} from '@oclif/core'
 
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
@@ -43,7 +44,7 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
   PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 
-interface HookReturnsPerPlugin {
+interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
@@ -57,7 +58,7 @@ interface HookReturnsPerPlugin {
   }
 }
 
-type PluginReturnsForHook<
+export type PluginReturnsForHook<
   TEvent extends keyof TPluginMap,
   TPluginName extends keyof TPluginMap[TEvent]['pluginReturns'],
   TPluginMap extends HookReturnsPerPlugin = HookReturnsPerPlugin,
@@ -70,4 +71,4 @@ export type FanoutHookFunction<
 > = (
   this: Interfaces.Hook.Context,
   options: TPluginMap[TEvent]['options'] & {config: Interfaces.Config},
-) => Promise<Partial<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>>
+) => Promise<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>
