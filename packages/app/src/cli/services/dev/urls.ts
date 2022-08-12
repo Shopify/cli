@@ -1,12 +1,16 @@
 import {api, error, output, plugins} from '@shopify/cli-kit'
-import {Plugin} from '@oclif/core/lib/interfaces'
+import {Config} from '@oclif/core'
 
-export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
-  const tunnelPlugin = await plugins.lookupTunnelPlugin(pluginList)
-  if (!tunnelPlugin) throw new error.Bug('The tunnel could not be found')
-  const url = await tunnelPlugin?.start({port: frontendPort})
+export async function generateURL(config: Config, frontendPort: number): Promise<string> {
+  // For the moment we assume to always have ngrok, this will change in a future PR
+  // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
+  const result = await plugins.runTunnelPlugin(config, frontendPort, 'ngrok')
+
+  if (result.error === 'multiple-urls') throw new error.Bug('Mulitple tunnel plugins for ngrok found')
+  if (result.error === 'no-urls' || !result.url) throw new error.Bug('Ngrok failed to start the tunnel')
+
   output.success('The tunnel is running and you can now view your app')
-  return url
+  return result.url
 }
 
 export async function updateURLs(apiKey: string, url: string, token: string): Promise<void> {

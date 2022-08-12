@@ -66,7 +66,7 @@ async function dev(options: DevOptions) {
     frontendUrl = matches[1]
   } else {
     frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
+    frontendUrl = await generateURL(options.commandConfig, frontendPort)
   }
 
   const backendPort = await port.getRandomPort()
