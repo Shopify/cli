@@ -3,7 +3,7 @@ import {debug, content} from './output.js'
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic} from './monorail.js'
-import {Interfaces, Config} from '@oclif/core'
+import {Interfaces} from '@oclif/core'
 
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
 
