@@ -4,34 +4,17 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
   $(eval $(RUN_ARGS):;@:)
 endif
 
-.PHONY: package
-package:
-ifeq ($(GOOS),)
-	@echo Requires GOOS to be set >&2
-	exit 1
+ifeq ($(GOOS),windows)
+	executable := shopify-extensions.exe
+	canonical_name := shopify-extensions-$(GOOS)-$(GOARCH).exe
+else
+	executable := shopify-extensions
+	canonical_name := shopify-extensions-$(GOOS)-$(GOARCH)
 endif
 
-ifeq ($(GOARCH),)
-	@echo Requires GOARCH to be set >&2
-	exit 1
-endif
-	@echo Run code generation
-	go generate
-
-	@echo Build executable
-	go build -o ${executable}
-
-	@echo Package executable
-	md5sum ${executable} > ${canonical_name}.md5
-	gzip ${executable} && mv ${executable}.gz ${canonical_name}.gz
-
-.PHONY: go-test
-go-test:
-	# Create mock app folder to get go test running
-	rm -rf api/dev-console
-	mkdir api/dev-console
-	touch api/dev-console/index.html
-	go test ./...
+.PHONY: build-debug
+build-debug:
+	go build -gcflags=all="-N -l" -o ${executable}
 
 ifeq (serve-dev,$(firstword $(MAKECMDGOALS)))
   SHOPIFILE := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -50,17 +33,6 @@ run:
 .PHONY: bootstrap
 bootstrap: tmp build
 	./shopify-extensions create testdata/extension.config.yml
-
-.PHONY: integration-test
-integration-test: tmp build
-	./shopify-extensions create testdata/extension.config.integration.yml
-	cd tmp/integration_test; yarn install
-	cat tmp/integration_test/shopify.ui.extension.toml | \
-		bundle exec ruby support/merge_config.rb | \
-		./shopify-extensions build -
-	test -f tmp/integration_test/build/main.js
-	test -f tmp/integration_test/locales/en.default.json
-	for testfile in `find testdata/test -type f -name '*_test.rb'`; do bundle exec ruby "$$testfile"; done
 
 .PHONY: update-version
 update-version:

@@ -3,11 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "yarn --cwd ../.. run nx run ui-extensions-go-cli:build",
-    "test": "yarn test:unit && yarn test:integration",
-    "test:unit": "make go-test",
-    "test:integration": "make integration-test",
+    "build": "node bin/build.js",
+    "clean": "lerna run clean",
+    "deploy": "lerna publish from-package --yes",
+    "start": "cd packages/dev-console-app; yarn start",
+    "test": "node bin/test.js",
+    "package": "node bin/package.js",
     "version-bump": "lerna version --no-push --include-merged-tags",
     "lint": "gofmt -s .",
     "lint:fix": "gofmt -w -s ."
