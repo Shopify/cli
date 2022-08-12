@@ -17,7 +17,7 @@ extensions:
       main: src/index.jsx
     renderer:
       name: "@shopify/checkout-ui-extensions"
-      version: 0.17.1
+      version: 0.18.0
     build:
       env:
         CUSTOM_VAR: bar
