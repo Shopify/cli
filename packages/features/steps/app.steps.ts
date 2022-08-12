@@ -39,7 +39,41 @@ When(
 )
 
 Then(
-  /I have a (.+) extension named (.+) of type (.+)/,
+  /I have a (.+) extension named (.+) of type ([^\s]+) and flavor (.+)$/,
+  {},
+  async function (category: string, appName: string, extensionType: string, flavor: string) {
+    const appInfo = await this.appInfo()
+    const extension = appInfo.extensions[category].find((extension: {configuration: ExtensionConfiguration}) => {
+      return extension.configuration.name === appName
+    })
+    if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
+    assert.equal(extension.configuration.type, extensionType)
+
+    let fileExtension
+
+    switch (flavor) {
+      case 'react':
+        fileExtension = 'jsx'
+        break
+      case 'typescript-react':
+        fileExtension = 'tsx'
+        break
+      case 'typescript':
+        fileExtension = 'ts'
+        break
+      case 'javascript':
+        fileExtension = 'js'
+        break
+      default:
+        fileExtension = 'js'
+    }
+
+    assert.equal(extension.entrySourceFilePath.split('/').pop(), `index.${fileExtension}`)
+  },
+)
+
+Then(
+  /I have a (.+) extension named (.+) of type ([^\s]+)$/,
   {},
   async function (category: string, appName: string, extensionType: string) {
     const appInfo = await this.appInfo()
@@ -52,7 +86,7 @@ Then(
 )
 
 Then(
-  /I do not have a (.+) extension named (.+) of type (.+)/,
+  /I do not have a (.+) extension named (.+) of type ([^\s]+)/,
   {},
   async function (category: string, appName: string, extensionType: string) {
     const appInfo = await this.appInfo()

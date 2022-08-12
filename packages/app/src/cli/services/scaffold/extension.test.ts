@@ -9,11 +9,13 @@ import {
   ExternalExtensionTypes,
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
+  vi.mock('../../utilities/extensions/cli.js')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
@@ -22,6 +24,7 @@ describe('initialize a extension', () => {
     'successfully scaffolds the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
+        vi.mocked(runGoExtensionsCLI).mockRestore()
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
@@ -39,6 +42,7 @@ describe('initialize a extension', () => {
     'successfully scaffolds the extension when another extension exists',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
+        vi.mocked(runGoExtensionsCLI).mockRestore()
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
         const extensionType = 'checkout_post_purchase'
@@ -91,6 +95,7 @@ describe('initialize a extension', () => {
     'errors when trying to re-scaffold an existing extension',
     async () => {
       await withTemporaryApp(async (tmpDir: string) => {
+        vi.mocked(runGoExtensionsCLI).mockRestore()
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
@@ -114,32 +119,36 @@ describe('initialize a extension', () => {
         const name = 'my-ext-1'
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.js')
-        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[0][1] as any).toMatchObject({
+          input: expect.stringContaining(`template: vanilla-js`),
+        })
       })
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-2'
         const extensionFlavor = 'react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.jsx')
-        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[1][1] as any).toMatchObject({
+          input: expect.stringContaining(`template: react`),
+        })
       })
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-3'
         const extensionFlavor = 'typescript-react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.tsx')
-        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[2][1] as any).toMatchObject({
+          input: expect.stringContaining(`template: typescript-react`),
+        })
       })
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-4'
         const extensionFlavor = 'typescript'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        const extensionIndexFile = path.join(tmpDir, 'extensions', name, 'src', 'index.ts')
-        expect(file.exists(extensionIndexFile)).resolves.toBe(true)
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[3][1] as any).toMatchObject({
+          input: expect.stringContaining(`template: typescript`),
+        })
       })
     },
     30 * 1000,
@@ -148,6 +157,8 @@ describe('initialize a extension', () => {
 
 describe('getRuntimeDependencies', () => {
   test('includes React for UI extensions', () => {
+    vi.mocked(runGoExtensionsCLI).mockRestore()
+
     // Given
     // Web Pixel extensions don't need React as a runtime dependency.
     const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
@@ -162,6 +173,8 @@ describe('getRuntimeDependencies', () => {
   })
 
   test('includes the renderer package for UI extensions', () => {
+    vi.mocked(runGoExtensionsCLI).mockRestore()
+
     // Given
     const extensions: UIExtensionTypes[] = [...uiExtensions.types]
 

@@ -88,9 +88,9 @@ export type UIExtensionTypes = typeof uiExtensions.types[number]
 
 export const uiExtensionTemplates = [
   {name: 'TypeScript', value: 'typescript'},
-  {name: 'Vanilla JavaScript', value: 'vanilla-js'},
-  {name: 'JavaScript React', value: 'react'},
+  {name: 'JavaScript', value: 'vanilla-js'},
   {name: 'TypeScript React', value: 'typescript-react'},
+  {name: 'JavaScript React', value: 'react'},
 ]
 
 export function isUiExtensionType(extensionType: string) {
