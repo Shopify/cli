@@ -27,6 +27,7 @@ const constants = {
     noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
     alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
     firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
+    debugGoBinary: 'SHOPIFY_DEBUG_GO_BINARY',
   },
   paths: {
     executables: {

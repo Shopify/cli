@@ -17,8 +17,8 @@ build:
 	go build -o ${executable}
 
 .PHONY: build-debug
-build-debug: build-node-packages
-	go build -gcflags=all="-N -l" -o ${executable}
+build-debug:
+	go build -gcflags=all="-N -l" -o ${executable}-debug
 
 .PHONY: package
 package:

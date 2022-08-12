@@ -10,11 +10,25 @@ import {
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path} from '@shopify/cli-kit'
+import {file, output, path, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      environment: {
+        local: {
+          isDevelopment: vi.fn(),
+          isUnitTest: vi.fn(),
+        },
+      },
+    }
+  })
+  vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
+  vi.mocked(environment.local.isUnitTest).mockReturnValue(true)
 })
 
 describe('initialize a extension', () => {

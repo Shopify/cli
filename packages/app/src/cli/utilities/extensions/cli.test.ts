@@ -1,6 +1,5 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from './cli.js'
 import {getBinaryPathOrDownload} from './binary.js'
-import {useExtensionsCLISources} from '../../environment.js'
 import {describe, test, expect, vi} from 'vitest'
 import {system, environment, path} from '@shopify/cli-kit'
 
@@ -16,38 +15,67 @@ vi.mock('@shopify/cli-kit', async () => {
     environment: {
       local: {
         homeDirectory: vi.fn(),
+        isDevelopment: vi.fn(),
+        isDebugGoBinary: vi.fn(),
       },
+    },
+    path: {
+      ...cliKit.path,
+      findUp: vi.fn(),
     },
   }
 })
 
 describe('runGoExtensionsCLI', () => {
-  test('runs the CLI through Make when using the local sources', async () => {
+  test('runs the CLI through local sources without debug when running it locally', async () => {
     // Given
-    const projectDirectory = '/home/src/github.com/shopify/shopify-cli-extensions'
-    vi.mocked(useExtensionsCLISources).mockReturnValue(true)
-    vi.mocked(environment.local.homeDirectory).mockReturnValue('/home')
+    const extensionsGoCliDirectory = '/path/to/go/directory'
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(true)
+    vi.mocked(environment.local.isDebugGoBinary).mockReturnValue(false)
+    vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliDirectory)
 
     // When
     const stdout: any = {write: vi.fn()}
-    const got = await runGoExtensionsCLI(['build'], {stdout})
+    await runGoExtensionsCLI(['build'], {stdout})
 
     // Then
-    expect(system.exec).toHaveBeenNthCalledWith(1, 'make', ['build'], {
-      stdout: undefined,
-      stderr: undefined,
-      cwd: projectDirectory,
-    })
-    expect(system.exec).toHaveBeenNthCalledWith(2, path.join(projectDirectory, 'shopify-extensions'), ['build'], {
-      stdout,
-    })
+    expect(system.exec).toHaveBeenNthCalledWith(
+      1,
+      path.join(extensionsGoCliDirectory, 'shopify-extensions'),
+      ['build'],
+      {
+        stdout,
+      },
+    )
   })
 
-  test('runs the CLI through the downloaded binary when not using the local sources', async () => {
+  test('runs the CLI through local sources with debug when running it locally', async () => {
+    // Given
+    const extensionsGoCliDirectory = '/path/to/go/directory'
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(true)
+    vi.mocked(environment.local.isDebugGoBinary).mockReturnValue(true)
+    vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliDirectory)
+
+    // When
+    const stdout: any = {write: vi.fn()}
+    await runGoExtensionsCLI(['build'], {stdout})
+
+    // Then
+    expect(system.exec).toHaveBeenNthCalledWith(
+      1,
+      'sh',
+      [path.join(extensionsGoCliDirectory, 'shopify-extensions-debug'), 'build'],
+      {
+        stdout,
+      },
+    )
+  })
+
+  test('runs the CLI through the downloaded binary when not running it locally', async () => {
     // Given
     const binaryPath = '/path/to/binary'
-    vi.mocked(useExtensionsCLISources).mockReturnValue(false)
     vi.mocked(getBinaryPathOrDownload).mockResolvedValue(binaryPath)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
 
     // When
     const got = await runGoExtensionsCLI(['build'])
@@ -58,7 +86,25 @@ describe('runGoExtensionsCLI', () => {
 })
 
 describe('nodeExtensionsCLIPath', () => {
-  test('returns the path', async () => {
+  test('returns the path when running it locally', async () => {
+    // Given
+    const extensionsGoCliExecutable = '/path/to/go/executable'
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
+    vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliExecutable)
+
+    // When
+    const got = await nodeExtensionsCLIPath()
+
+    // Then
+    expect(got).not.toBeUndefined()
+  })
+
+  test('returns the path when not running it locally', async () => {
+    // Given
+    const extensionsGoCliDirectory = '/path/to/go/directory'
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(true)
+    vi.mocked(path.findUp).mockResolvedValue(extensionsGoCliDirectory)
+
     // When
     const got = await nodeExtensionsCLIPath()
 

@@ -82,6 +82,10 @@ export function firstPartyDev(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.firstPartyDev])
 }
 
+export function isDebugGoBinary(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.debugGoBinary])
+}
+
 /**
  * Returns whether the environment has Git available.
  * @returns {Promise<boolean>} A promise that resolves with the value.

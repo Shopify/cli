@@ -1,11 +1,7 @@
 import {getBinaryPathOrDownload} from './binary.js'
-import {useExtensionsCLISources} from '../../environment.js'
 import metadata from '../../metadata.js'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
-
-let building = false
-let built = false
 
 const NodeExtensionsCLINotFoundError = () => {
   return new error.Bug(`Couldn't find the shopify-cli-extensions Node binary`)
@@ -20,36 +16,19 @@ const NodeExtensionsCLINotFoundError = () => {
  */
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
-  if (useExtensionsCLISources()) {
+  if (environment.local.isDevelopment()) {
     await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
-    const projectDirectory = path.join(
-      environment.local.homeDirectory(),
-      'src/github.com/shopify/shopify-cli-extensions',
-    )
-    stdout.write(`Using extensions CLI from ${projectDirectory}`)
+    const extensionsGoCliDirectory = (await path.findUp('packages/ui-extensions-go-cli/', {
+      type: 'directory',
+      cwd: path.moduleDirectory(import.meta.url),
+    })) as string
+
+    stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
     try {
-      if (building) {
-        // eslint-disable-next-line no-unmodified-loop-condition
-        while (!built) {
-          // eslint-disable-next-line no-await-in-loop
-          await system.sleep(1)
-        }
+      if (environment.local.isDebugGoBinary()) {
+        await system.exec('sh', [path.join(extensionsGoCliDirectory, 'shopify-extensions-debug')].concat(args), options)
       } else {
-        building = true
-        stdout.write('Building extensions CLI...')
-        await system.exec('make', ['build'], {
-          ...options,
-          stdout: undefined,
-          stderr: undefined,
-          cwd: projectDirectory,
-        })
-        built = true
-        stdout.write('Built extensions CLI successfully!')
-      }
-      if (process.env.DEBUG_GO_BINARY) {
-        await system.exec('sh', [path.join(projectDirectory, 'shopify-extensions-debug')].concat(args), options)
-      } else {
-        await system.exec(path.join(projectDirectory, 'shopify-extensions'), args, options)
+        await system.exec(path.join(extensionsGoCliDirectory, 'shopify-extensions'), args, options)
       }
     } catch {
       throw new error.AbortSilent()
@@ -69,9 +48,16 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
  */
 export async function nodeExtensionsCLIPath(): Promise<string> {
   const cwd = path.dirname(fileURLToPath(import.meta.url))
-  const executablePath = await path.findUp('node_modules/.bin/shopify-cli-extensions', {type: 'file', cwd})
-  if (!executablePath) {
-    throw NodeExtensionsCLINotFoundError()
+  if (environment.local.isDevelopment()) {
+    return (await path.findUp('packages/ui-extensions-cli/bin/cli.js', {
+      type: 'file',
+      cwd,
+    })) as string
+  } else {
+    const executablePath = await path.findUp('node_modules/.bin/shopify-cli-extensions', {type: 'file', cwd})
+    if (!executablePath) {
+      throw NodeExtensionsCLINotFoundError()
+    }
+    return executablePath
   }
-  return executablePath
 }
