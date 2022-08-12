@@ -22,6 +22,7 @@
         "@shopify/cli-kit/node/*": ["../packages/cli-kit/src/node/*.ts"],
         "@shopify/cli-kit/common/*": ["../packages/cli-kit/src/common/*.ts"],
         "@shopify/cli-kit/typing/*": ["../packages/cli-kit/src/typing/*.ts"],
+        "@shopify/cli-kit/plugins/*": ["../packages/cli-kit/src/plugins/*.ts"],
       }
     },
     "exclude": ["**/dist/**"]

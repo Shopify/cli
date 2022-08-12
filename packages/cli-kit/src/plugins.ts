@@ -3,6 +3,7 @@ import {debug, content} from './output.js'
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic} from './monorail.js'
+import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
 import {Interfaces} from '@oclif/core'
 
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
@@ -57,7 +58,7 @@ interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   }
 }
 
-type PluginReturnsForHook<
+export type PluginReturnsForHook<
   TEvent extends keyof TPluginMap,
   TPluginName extends keyof TPluginMap[TEvent]['pluginReturns'],
   TPluginMap extends HookReturnsPerPlugin = HookReturnsPerPlugin,
@@ -71,38 +72,3 @@ export type FanoutHookFunction<
   this: Interfaces.Hook.Context,
   options: TPluginMap[TEvent]['options'] & {config: Interfaces.Config},
 ) => Promise<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>
-
-/**
- * Tunnel Plugins types
- */
-interface HookReturnPerTunnelPlugin {
-  tunnel_start: {
-    options: {port: number; provider: string}
-    pluginReturns: {
-      [pluginName: string]: {url: string | undefined}
-    }
-  }
-  tunnel_provider: {
-    options: {[key: string]: never}
-    pluginReturns: {
-      [pluginName: string]: {name: string}
-    }
-  }
-}
-
-export type TunnelProviderFunction = FanoutHookFunction<'tunnel_provider', ''>
-export type TunnelStartFunction = FanoutHookFunction<'tunnel_start', ''>
-export type TunnelStartReturn = PluginReturnsForHook<'tunnel_start', ''>
-export type TunnelStartAction = (port: number) => Promise<TunnelStartReturn>
-
-export const tunnel = {
-  defineProvider: (input: {name: string}): TunnelProviderFunction => {
-    return async () => input
-  },
-  startTunnel: (options: {provider: string; action: TunnelStartAction}): TunnelStartFunction => {
-    return async (inputs: {provider: string; port: number}): Promise<TunnelStartReturn> => {
-      if (inputs.provider !== options.provider) return {url: undefined}
-      return options.action(inputs.port)
-    }
-  },
-}

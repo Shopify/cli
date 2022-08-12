@@ -21,6 +21,10 @@
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
     },
+    "./plugins/*": {
+      "node": "./dist/plugins/*.js",
+      "types": "./dist/plugins/*.d.ts"
+    },
     "./common/*": {
       "node": "./dist/common/*.js",
       "types": "./dist/common/*.d.ts"
