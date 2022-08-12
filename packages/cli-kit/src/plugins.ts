@@ -3,18 +3,12 @@ import {debug, content} from './output.js'
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic} from './monorail.js'
-import {Interfaces} from '@oclif/core'
+import {Interfaces, Config} from '@oclif/core'
 
-export type TunnelHook = `tunnel_start_${string}`
 const TUNNEL_PLUGINS = ['@shopify/plugin-ngrok']
 
 interface TunnelPlugin {
   start: (options: TunnelStartOptions) => Promise<string>
-}
-
-export interface TunnelProvider {
-  provider: string
-  hook: TunnelHook
 }
 
 interface TunnelStartOptions {
@@ -49,19 +43,7 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
   PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 
-interface HookReturnsPerPlugin {
-  tunnel_start: {
-    options: {port: number; provider: string}
-    pluginReturns: {
-      [pluginName: string]: {url: string}
-    }
-  }
-  tunnel_provider: {
-    options: {[key: string]: never}
-    pluginReturns: {
-      [pluginName: string]: {name: string}
-    }
-  }
+interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
@@ -90,11 +72,36 @@ export type FanoutHookFunction<
   options: TPluginMap[TEvent]['options'] & {config: Interfaces.Config},
 ) => Promise<PluginReturnsForHook<TEvent, TPluginName, TPluginMap>>
 
+/**
+ * Tunnel Plugins types
+ */
+interface HookReturnPerTunnelPlugin {
+  tunnel_start: {
+    options: {port: number; provider: string}
+    pluginReturns: {
+      [pluginName: string]: {url: string | undefined}
+    }
+  }
+  tunnel_provider: {
+    options: {[key: string]: never}
+    pluginReturns: {
+      [pluginName: string]: {name: string}
+    }
+  }
+}
+
+export type TunnelProviderFunction = FanoutHookFunction<'tunnel_provider', ''>
+export type TunnelStartFunction = FanoutHookFunction<'tunnel_start', ''>
+export type TunnelStartReturn = PluginReturnsForHook<'tunnel_start', ''>
+export type TunnelStartAction = (port: number) => Promise<TunnelStartReturn>
+
 export const tunnel = {
-  defineProvider: (input: {name: string}) => () => input,
-  startTunnel: (options: {provider: string; action: (port: number) => Promise<string | undefined>}) => {
-    return (inputs: {port: number; provider: string}) => {
-      if (inputs.provider !== options.provider) return undefined
+  defineProvider: (input: {name: string}): TunnelProviderFunction => {
+    return async () => input
+  },
+  startTunnel: (options: {provider: string; action: TunnelStartAction}): TunnelStartFunction => {
+    return async (inputs: {provider: string; port: number}): Promise<TunnelStartReturn> => {
+      if (inputs.provider !== options.provider) return {url: undefined}
       return options.action(inputs.port)
     }
   },
