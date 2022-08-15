@@ -11,7 +11,7 @@ if (platform() === "win32") {
    *
    * https://github.com/Shopify/shopify-cli-extensions/blob/main/.github/workflows/testing.yml#L11
    */
-  return;
+  process.exit(0);
 }
 
 import {createRequire} from 'module'
