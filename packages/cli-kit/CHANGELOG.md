@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.7.1
+
+### Minor Changes
+
+- 18717ad5: Rename the environment variable SHOPIFY_CONFIG to SHOPIFY_ENV because it's more representative of its usage
+- 29f46e8f: Make inquirer default for inputs
+- bba213f9: Shopify Functions identifiers have been changed to ULIDs. Existing projects will be updated during the next deploy.
+
 ## 3.6.2
 
 ### Patch Changes

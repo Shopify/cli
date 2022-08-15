@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-go-cli",
-  "version": "3.6.2",
+  "version": "3.7.1",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -18,7 +18,6 @@
     "lint:fix": "gofmt -w -s ."
   },
   "devDependencies": {
-    "@shopify/shopify-cli-extensions": "3.6.2"
+    "@shopify/shopify-cli-extensions": "3.7.1"
   }
 }
-
