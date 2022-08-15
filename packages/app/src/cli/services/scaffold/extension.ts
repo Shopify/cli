@@ -115,7 +115,7 @@ async function uiExtensionInit({
                 title: name,
                 // Use the new templates
                 external_type: mapExtensionTypeToExternalExtensionType(extensionType),
-                type: `${extensionType}_next`,
+                type: extensionType,
                 metafields: [],
                 development: {
                   root_dir: '.',

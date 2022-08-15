@@ -7,22 +7,23 @@
     "build": "cd .",
     "lint": "eslint **/*.ts",
     "lint:fix": "eslint **/*.ts --fix",
-    "test": "cucumber-js -p default",
+    "test": "yarn --cwd ../.. nx run features:test",
+    "test:acceptance": "cucumber-js -p default -c ./cucumber.js",
     "tsc": "tsc --noEmit"
   },
   "devDependencies": {
+    "fs-extra": "^10.0.0",
     "@types/cucumber": "^7.0.0",
     "@cucumber/cucumber": "^8.2.2",
     "cucumber-junit-formatter": "^0.2.2",
-    "@cucumber/pretty-formatter": "1.0.0-alpha.2",
+    "@cucumber/pretty-formatter": "1.0.0",
     "cucumber-pretty": "^6.0.1",
     "pathe": "0.2.0",
     "ansi-colors": "^4.1.1",
     "execa": "^5.1.1",
     "tempy": "^1.0.1",
     "@types/rimraf": "^3.0.2",
-    "rimraf": "^3.0.2",
-    "fs-extra": "^10.0.0"
+    "rimraf": "^3.0.2"
   },
   "engines": {
     "node": ">=14.13.1"

@@ -71,12 +71,12 @@
     "graphql": "^15.5.1",
     "graphql-tag": "^2.12.4",
     "@apollo/client": "^3.4.8",
-    "lerna": "^4.0.0"
+    "fs-extra": "^10.0.0"
   },
   "workspaces": {
     "packages": [
       "packages/*",
-      "fixtures/*"
+      "fixtures/**/*"
     ]
   },
   "prettier": {

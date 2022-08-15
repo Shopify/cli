@@ -1,7 +1,7 @@
 {
   "name": "@shopify/shopify-cli-extensions",
   "author": "Shopify <app-extensions@shopify.com>",
-  "version": "0.2.3",
+  "version": "3.6.2",
   "description": "A command line tool to build UI extensions",
   "license": "MIT",
   "files": [
@@ -16,7 +16,7 @@
     "build": "tsc",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "clean": "git clean --exclude node_modules -xdf ./; rm -rf ./build"
+    "clean": "rimraf dist/"
   },
   "publishConfig": {
     "access": "public",

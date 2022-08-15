@@ -3,7 +3,7 @@ require 'toml-rb'
 
 config = TomlRB.parse(STDIN.read).tap do |config|
   config['type'] = 'integration_test'
-  config['node_executable'] = '../../packages/shopify-cli-extensions/cli.js'
+  config['node_executable'] = File.expand_path("../../ui-extensions-cli/bin/cli.js", __dir__)
   config['development'] ||= {}
   config['development']['build_dir'] = 'build'
   config['development']['root_dir'] = 'tmp/integration_test'

@@ -8,7 +8,7 @@ import {pipeline} from 'node:stream'
 import {promisify} from 'node:util'
 
 const SUPPORTED_SYSTEMS = ['darwin amd64', 'darwin arm64', 'linux 386', 'linux amd64', 'windows 386', 'windows amd64']
-const RELEASE_DOWNLOADS_URL = 'https://github.com/Shopify/shopify-cli-extensions/releases/download'
+const RELEASE_DOWNLOADS_URL = 'https://github.com/Shopify/cli/releases/download'
 
 export const UnsupportedPlatformError = ({platform, arch}: {platform: string; arch: string}) => {
   return new error.Abort(
