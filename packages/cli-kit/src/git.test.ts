@@ -1,10 +1,16 @@
 import {
   initializeRepository,
   downloadRepository,
+  getRemoteRepository,
+  getLatestCommit,
+  getHeadSymbolicRef,
   GitNotPresentError,
   OutsideGitDirectoryError,
   ensurePresentOrAbort,
   ensureInsideGitDirectory,
+  MalformedRemoteUrlError,
+  NoCommitError,
+  DetachedHeadError,
 } from './git.js'
 import {hasGit} from './environment/local.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
@@ -13,6 +19,9 @@ import git from 'simple-git'
 const mockedClone = vi.fn(async () => ({current: 'Mocked'}))
 const mockedInit = vi.fn(async () => {})
 const mockedCheckIsRepo = vi.fn(async () => false)
+const mockedGetConfig = vi.fn(async () => ({}))
+const mockedGetLog = vi.fn(async () => ({}))
+const mockedRaw = vi.fn(async () => '')
 
 beforeEach(() => {
   vi.mock('./environment/local')
@@ -23,6 +32,9 @@ beforeEach(() => {
     clone: mockedClone,
     init: mockedInit,
     checkIsRepo: mockedCheckIsRepo,
+    getConfig: mockedGetConfig,
+    log: mockedGetLog,
+    raw: mockedRaw,
   })
 })
 
@@ -65,6 +77,56 @@ describe('initializeRepository()', () => {
     // Then
     expect(git).toHaveBeenCalledWith('/tmp/git-repo')
     expect(mockedInit).toHaveBeenCalledOnce()
+  })
+})
+
+describe('getRemoteRepository', () => {
+  it('gets remote.origing.url from git config & parses it', async () => {
+    const testRemoteUrl = 'https://test.com/my/unit/test.git'
+
+    mockedGetConfig.mockResolvedValue({value: testRemoteUrl})
+
+    await expect(getRemoteRepository()).resolves.toBe('my/unit/test')
+  })
+
+  it('throws if remote URL is malformed', async () => {
+    const testRemoteUrl = 'not.a.url'
+
+    mockedGetConfig.mockResolvedValue({value: testRemoteUrl})
+
+    await expect(getRemoteRepository()).rejects.toThrowError(MalformedRemoteUrlError())
+  })
+})
+
+describe('getLatestCommit', () => {
+  it('gets the latest commit through git log', async () => {
+    const latestCommit = {key: 'value'}
+
+    mockedGetLog.mockResolvedValue({latest: latestCommit, all: [latestCommit], total: 1})
+
+    await expect(getLatestCommit()).resolves.toBe(latestCommit)
+  })
+  it('throws if no latest commit is found', async () => {
+    mockedGetLog.mockResolvedValue({latest: null, all: [], total: 0})
+
+    await expect(getLatestCommit()).rejects.toThrowError(NoCommitError())
+  })
+})
+
+describe('getHeadSymbolicRef', () => {
+  it('gets git HEAD symbolic reference', async () => {
+    const testRef = 'refs/heads/my-test-branch'
+
+    mockedRaw.mockResolvedValue(testRef)
+
+    await expect(getHeadSymbolicRef()).resolves.toBe(testRef)
+  })
+  it('throws if HEAD is detached', async () => {
+    const testRef = ''
+
+    mockedRaw.mockResolvedValue(testRef)
+
+    await expect(getHeadSymbolicRef()).rejects.toThrowError(DetachedHeadError())
   })
 })
 
