@@ -61,7 +61,7 @@ describe('uploadFunctionExtensions', () => {
       directory: '/function',
       configuration: {
         name: 'function',
-        type: 'payment_methods',
+        type: 'order_discounts',
         description: 'my function',
         build: {
           command: 'make build',
@@ -81,9 +81,9 @@ describe('uploadFunctionExtensions', () => {
       inputQueryPath: () => '/function/input.graphql',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'my-function',
-      metadata: {schemaVersions: {payment_methods: {major: 1, minor: 0}}},
-      type: 'payment_methods',
-      graphQLType: 'payment_methods',
+      metadata: {schemaVersions: {order_discounts: {major: 1, minor: 0}}},
+      type: 'order_discounts',
+      graphQLType: 'order_discounts',
     }
     token = 'token'
     identifiers = {
@@ -315,7 +315,7 @@ describe('uploadFunctionExtensions', () => {
           id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          apiType: 'payment_methods',
+          apiType: 'order_discounts',
           apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -385,7 +385,7 @@ describe('uploadFunctionExtensions', () => {
           id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          apiType: 'payment_methods',
+          apiType: 'order_discounts',
           apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -453,7 +453,7 @@ describe('uploadFunctionExtensions', () => {
           id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          apiType: 'payment_methods',
+          apiType: 'order_discounts',
           apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
@@ -508,7 +508,7 @@ describe('uploadFunctionExtensions', () => {
           id: undefined,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          apiType: 'payment_methods',
+          apiType: 'order_discounts',
           apiVersion: extension.configuration.apiVersion,
           appBridge: undefined,
           moduleUploadUrl: uploadUrl,
@@ -575,7 +575,7 @@ describe('uploadFunctionExtensions', () => {
           legacyUuid: existingID,
           title: extension.configuration.name,
           description: extension.configuration.description,
-          apiType: 'payment_methods',
+          apiType: 'order_discounts',
           apiVersion: extension.configuration.apiVersion,
           appBridge: {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,

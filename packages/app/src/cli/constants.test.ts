@@ -110,9 +110,9 @@ describe('get extension type output configuration', () => {
     })
   })
 
-  it('obtain the correct configuration for extension type payment_methods', () => {
+  it('obtain the correct configuration for extension type payment_customization', () => {
     // Given
-    const extensionType = 'payment_methods'
+    const extensionType = 'payment_customization'
 
     // When
     const extensionOutputConfig = getExtensionOutputConfig(extensionType)
