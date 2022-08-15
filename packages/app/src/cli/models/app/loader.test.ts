@@ -358,7 +358,7 @@ scopes = "read_products"
 
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -386,7 +386,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     let blockConfiguration = `
       name = "my-function-1"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -438,7 +438,7 @@ scopes = "read_products"
 
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -460,7 +460,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -486,7 +486,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
