@@ -13,7 +13,7 @@ config = TomlRB.parse(STDIN.read).tap do |config|
   }
   config['development']['renderer'] ||= {
     'name' => '@shopify/checkout-ui-extensions',
-    'version' => '0.17.1'
+    'version' => '0.18.0'
   }
 end
 
