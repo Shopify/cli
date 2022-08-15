@@ -11,8 +11,9 @@
   "bin": {
     "shopify-cli-extensions": "./bin/cli.js"
   },
-  "main": "./cli.js",
+  "main": "./dist/cli.js",
   "scripts": {
+    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "build": "tsc",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
