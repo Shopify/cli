@@ -12,7 +12,6 @@ export interface Configs {
 
 export interface ConfigFile {
   development: Development
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   extension_points?: string[]
 }
 
