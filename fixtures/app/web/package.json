@@ -1,6 +1,7 @@
 {
   "name": "shopify-app-template-node",
   "private": true,
+  "version": "0.1.0",
   "scripts": {
     "build": "vite build frontend --outDir ../dist --emptyOutDir",
     "debug": "node --inspect-brk backend/index.js",

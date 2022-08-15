@@ -1,6 +1,7 @@
 {
   "name": "starter-react-frontend-app",
   "private": true,
+  "version": "0.1.0",
   "license": "MIT",
   "scripts": {
     "build": "vite build",
