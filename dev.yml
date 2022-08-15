@@ -11,8 +11,6 @@ up:
       modules: true
   - ruby:
       version: 3.1.2
-  - bundler:
-      gemfile: ./Gemfile
   - homebrew:
     - jq
     - delve
