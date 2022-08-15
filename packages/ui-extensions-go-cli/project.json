@@ -12,6 +12,13 @@
         "options": {
           "script": "test:nx"
         }
+      },
+      "package": {
+        "executor": "nx:run-script",
+        "dependsOn": ["^build"],
+        "options": {
+          "script": "package:nx"
+        }
       }
     }
 }
