@@ -16,7 +16,7 @@
     "build": "tsc",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "clean": "git clean --exclude node_modules -xdf ./; rm -rf ./build"
+    "clean": "rimraf dist/"
   },
   "publishConfig": {
     "access": "public",

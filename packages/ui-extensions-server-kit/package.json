@@ -24,7 +24,7 @@
     "build": "yarn build:code && yarn build:types",
     "build:code": "vite build --config vite.config.ts",
     "build:types": "tsc --emitDeclarationOnly",
-    "clean": "git clean --exclude node_modules -xdf ./",
+    "clean": "rimraf dist/",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "jest"

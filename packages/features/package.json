@@ -7,7 +7,8 @@
     "build": "cd .",
     "lint": "eslint **/*.ts",
     "lint:fix": "eslint **/*.ts --fix",
-    "test": "cucumber-js -p default",
+    "test": "yarn --cwd ../.. nx run features:test",
+    "test:acceptance": "cucumber-js -p default -c ./cucumber.js",
     "tsc": "tsc --noEmit"
   },
   "devDependencies": {
@@ -15,7 +16,7 @@
     "@types/cucumber": "^7.0.0",
     "@cucumber/cucumber": "^8.2.2",
     "cucumber-junit-formatter": "^0.2.2",
-    "@cucumber/pretty-formatter": "1.0.0-alpha.2",
+    "@cucumber/pretty-formatter": "1.0.0",
     "cucumber-pretty": "^6.0.1",
     "pathe": "0.2.0",
     "ansi-colors": "^4.1.1",
