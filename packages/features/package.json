@@ -11,6 +11,7 @@
     "tsc": "tsc --noEmit"
   },
   "devDependencies": {
+    "fs-extra": "^10.0.0",
     "@types/cucumber": "^7.0.0",
     "@cucumber/cucumber": "^8.2.2",
     "cucumber-junit-formatter": "^0.2.2",
