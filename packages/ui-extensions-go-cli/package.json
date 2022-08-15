@@ -1,6 +1,7 @@
 {
   "name": "@shopify/ui-extensions-go-cli",
   "version": "3.7.1",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "workspaces": [

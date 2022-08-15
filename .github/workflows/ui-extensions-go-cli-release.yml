@@ -7,8 +7,13 @@ on:
 env:
   GO_VERSION: "1.17"
   YARN_VERSION: "1.22.18"
+  UI_EXTENSIONS_GO_CLI_DIR: packages/ui-extensions-go-cli
 
 jobs:
+  defaults:
+    run:
+      working-directory: "$env.UI_EXTENSIONS_GO_CLI_DIR"
+
   releases-matrix:
     name: ${{ github.event_name == 'release' && 'Release' || 'Test packaging of' }} shopify-extensions
     runs-on: ubuntu-latest
