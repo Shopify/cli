@@ -7,7 +7,6 @@ export async function validateIdentityToken(token: string) {
     const instrospectionURL = await getInstrospectionEndpoint()
     const options = {
       method: 'POST',
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
       body: JSON.stringify({token}),
     }

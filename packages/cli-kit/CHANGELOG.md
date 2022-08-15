@@ -1,5 +1,20 @@
 # @shopify/cli-kit
 
+## 3.6.2
+
+### Patch Changes
+
+- 59d56a40: Only show errors from CLI 2 once
+
+## 3.6.1
+
+## 3.6.0
+
+### Patch Changes
+
+- 073e514c: Validation that port used for receiving autentication token from browser is not already in use
+- d9351df4: Use a custom list of safe nouns and adjectives to generate default names for apps and extensions
+
 ## 3.5.0
 
 ### Patch Changes

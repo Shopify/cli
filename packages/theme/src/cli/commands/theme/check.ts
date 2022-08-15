@@ -10,7 +10,6 @@ export default class Check extends ThemeCommand {
   static flags = {
     ...cli.globalFlags,
     ...themeFlags,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'auto-correct': Flags.boolean({
       char: 'a',
       required: false,
@@ -31,7 +30,6 @@ Runs checks matching all categories when specified more than once`,
 Use :theme_app_extension to use default checks for theme app extensions`,
       env: 'SHOPIFY_FLAG_CONFIG',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'exclude-category': Flags.string({
       char: 'x',
       required: false,
@@ -39,7 +37,6 @@ Use :theme_app_extension to use default checks for theme app extensions`,
 Excludes checks matching any category when specified more than once`,
       env: 'SHOPIFY_FLAG_EXCLUDE_CATEGORY',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'fail-level': Flags.string({
       required: false,
       description: 'Minimum severity for exit with error code',

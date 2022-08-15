@@ -48,7 +48,6 @@ describe('extensionConfig', () => {
         name: 'My Extension Name',
         metafields: [],
         type: 'checkout_post_purchase',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         capabilities: {network_access: true},
       },
       type: 'checkout_post_purchase',
@@ -81,34 +80,32 @@ describe('extensionConfig', () => {
 
     // Then
     expect(got).toEqual({
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       public_url: 'url',
       port: 8000,
       store: 'storeFqdn',
       app: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         api_key: 'apiKey',
       },
       extensions: [
         {
           uuid: 'devUUID',
           title: 'My Extension Name',
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+
           external_type: 'post_purchase_ui',
           type: 'checkout_post_purchase',
           version: '2.1.5',
           metafields: [],
           surface: 'post_purchase',
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+
           node_executable: 'node-path',
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+
           extension_points: [],
           development: {
             build: {env: {}},
             develop: {env: {}},
-            // eslint-disable-next-line @typescript-eslint/naming-convention
+
             root_dir: 'extensions/my extension',
-            // eslint-disable-next-line @typescript-eslint/naming-convention
+
             build_dir: 'build',
             entries: {
               main: 'src/index.js',
@@ -119,7 +116,7 @@ describe('extensionConfig', () => {
               version: '2.1.5',
             },
           },
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+
           capabilities: {network_access: true},
         },
       ],

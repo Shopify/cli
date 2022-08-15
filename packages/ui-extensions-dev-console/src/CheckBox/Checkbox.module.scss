@@ -1,0 +1,8 @@
+.ConsoleCheckboxWrapper {
+  padding-left: 1rem;
+
+  /* stylelint-disable  selector-no-qualifying-type */
+  span[class^='Polaris-Checkbox__Backdrop'] {
+    background-color: transparent;
+  }
+}

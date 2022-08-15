@@ -1,5 +1,30 @@
 # @shopify/cli-hydrogen
 
+## 3.6.2
+
+### Patch Changes
+
+- Updated dependencies [59d56a40]
+  - @shopify/cli-kit@3.6.2
+
+## 3.6.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.6.1
+
+## 3.6.0
+
+### Minor Changes
+
+- b6773ce8: New `open` flag for the `hydrogen dev` command. When `--open` is passed to this command, the app will automatically open in a browser window. The default value is false.
+
+### Patch Changes
+
+- Updated dependencies [073e514c]
+- Updated dependencies [d9351df4]
+  - @shopify/cli-kit@3.6.0
+
 ## 3.5.0
 
 ### Patch Changes

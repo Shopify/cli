@@ -15,9 +15,9 @@ describe('Init', function () {
     // Given
     const directory = '/path/to/output'
     const name = 'snow-devil'
-    const template = 'demo-store-js'
-
-    initPromptMock.mockReturnValue(Promise.resolve({name, template}))
+    const template = 'demo-store'
+    const language = 'js'
+    initPromptMock.mockReturnValue(Promise.resolve({name, template, language}))
 
     // When
     await Init.run(['--name', name, '--path', directory, '--template', template])

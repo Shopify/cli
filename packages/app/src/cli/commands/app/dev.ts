@@ -12,7 +12,6 @@ export default class Dev extends Command {
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'api-key': Flags.string({
       hidden: false,
       description: 'The API key of your app.',
@@ -31,39 +30,33 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
       description: 'Skips the installation of dependencies.',
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'no-update': Flags.boolean({
       hidden: false,
       description: 'Skips the dashboard URL update step.',
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'subscription-product-url': Flags.string({
       hidden: false,
       description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
       env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'checkout-cart-url': Flags.string({
       hidden: false,
       description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'tunnel-url': Flags.string({
       hidden: false,
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'no-tunnel': Flags.boolean({
       hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',

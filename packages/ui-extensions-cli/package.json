@@ -1,0 +1,45 @@
+{
+  "name": "@shopify/shopify-cli-extensions",
+  "author": "Shopify <app-extensions@shopify.com>",
+  "version": "0.2.3",
+  "description": "A command line tool to build UI extensions",
+  "license": "MIT",
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "bin": {
+    "shopify-cli-extensions": "./bin/cli.js"
+  },
+  "main": "./cli.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
+    "clean": "git clean --exclude node_modules -xdf ./; rm -rf ./build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org/"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.3",
+    "@types/node": "^16.7.1",
+    "prettier": "^2.3.2",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.6.4"
+  },
+  "dependencies": {
+    "@luckycatfactory/esbuild-graphql-loader": "^3.6.0",
+    "esbuild": "^0.12.22",
+    "js-yaml": "^4.1.0"
+  }
+}

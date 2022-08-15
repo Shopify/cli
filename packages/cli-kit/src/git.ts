@@ -32,7 +32,6 @@ export async function downloadRepository({
   debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
   await ensurePresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   const options: TaskOptions = {'--recurse-submodules': null}
   if (branch) {
     options['--branch'] = branch

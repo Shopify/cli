@@ -16,7 +16,6 @@ export default class Dev extends ThemeCommand {
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'live-reload': Flags.string({
       description: `The live reload mode switches the server behavior when a file is modified:
 - hot-reload Hot reloads local changes to CSS and sections (default)
@@ -30,7 +29,6 @@ export default class Dev extends ThemeCommand {
       description: 'Force polling to detect file changes.',
       env: 'SHOPIFY_FLAG_POLL',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'theme-editor-sync': Flags.boolean({
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
@@ -45,10 +43,15 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_STORE',
       parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
     }),
+    theme: Flags.string({
+      char: 't',
+      description: 'Theme ID or name of the remote theme.',
+      env: 'SHOPIFY_FLAG_THEME_ID',
+    }),
   }
 
   async run(): Promise<void> {
-    const {flags, args} = await this.parse(Dev)
+    const {flags} = await this.parse(Dev)
 
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]

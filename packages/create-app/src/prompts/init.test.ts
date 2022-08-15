@@ -8,7 +8,7 @@ describe('init', () => {
       name: 'app',
       template: 'https://github.com/Shopify/shopify-app-template-node#add-shopify-home-toml',
     }
-    const options = {template: 'template'}
+    const options = {template: 'template', directory: '/'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -23,7 +23,7 @@ describe('init', () => {
         name: 'name',
         preface: '\nWelcome. Let’s get started by naming your app. You can change it later.',
         message: "Your app's name?",
-        default: expect.stringMatching(/^\w+-\w+-app-\d+$/),
+        default: expect.stringMatching(/^\w+-\w+-app$/),
         validate: expect.any(Function),
       },
     ])
@@ -36,7 +36,7 @@ describe('init', () => {
       name: 'app',
       template: 'https://github.com/Shopify/shopify-app-template-node#add-shopify-home-toml',
     }
-    const options = {name: 'app', template: 'template'}
+    const options = {name: 'app', template: 'template', directory: '/'}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))

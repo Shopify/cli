@@ -17,6 +17,7 @@ interface ScaffoldExtensionOptions {
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
   extensionFlavor?: string
+  directory: string
 }
 
 interface ScaffoldExtensionOutput {
@@ -75,7 +76,7 @@ const scaffoldExtensionPrompt = async (
       type: 'input',
       name: 'name',
       message: "Your extension's working name?",
-      default: haiku.generate('ext'),
+      default: await haiku.generate({suffix: 'ext', directory: options.directory}),
     })
   }
   let promptOutput: ScaffoldExtensionOutput = await prompt(questions)
@@ -127,9 +128,8 @@ const extensiontypeCategoryPosition = (extensionType: string): number => {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-function includes<T extends U, U>(coll: ReadonlyArray<T>, el: U): el is T {
-  return coll.includes(el as T)
+function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
+  return coll.includes(el as TNarrow)
 }
 
 export default scaffoldExtensionPrompt

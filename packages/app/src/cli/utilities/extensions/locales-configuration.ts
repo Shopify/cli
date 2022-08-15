@@ -57,7 +57,6 @@ export async function loadLocalesConfig(extensionPath: string) {
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     default_locale: defaultLanguageCode[0],
     translations: getAllLocales(localesPaths),
   }

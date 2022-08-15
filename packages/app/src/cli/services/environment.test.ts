@@ -194,10 +194,8 @@ describe('ensureDevEnvironment', () => {
     })
 
     expect(metadata.getAllPublic()).toMatchObject({
-      /* eslint-disable @typescript-eslint/naming-convention */
       api_key: APP1.apiKey,
       partner_id: 1,
-      /* eslint-enable @typescript-eslint/naming-convention */
     })
   })
 
@@ -382,7 +380,6 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     expect(metadata.getAllPublic()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 

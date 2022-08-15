@@ -96,7 +96,14 @@ export const deploy = async (options: DeployOptions) => {
 
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
-      outputCompletionMessage({app, partnersApp, partnersOrganizationId, identifiers, registrations, validationErrors})
+      await outputCompletionMessage({
+        app,
+        partnersApp,
+        partnersOrganizationId,
+        identifiers,
+        registrations,
+        validationErrors,
+      })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
@@ -175,24 +182,20 @@ async function configFor(extension: UIExtension, app: AppInterface) {
     case 'product_subscription': {
       const result = await getUIExtensionRendererVersion(type, app)
       if (result === 'not_found') throw RendererNotFoundBug(type)
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       return {renderer_version: result?.version}
     }
     case 'checkout_ui_extension': {
       return {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         extension_points: extension.configuration.extensionPoints,
         capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        configuration_schema: extension.configuration.configurationSchema,
+        settings: extension.configuration.settings,
         localization: await loadLocalesConfig(extension.directory),
       }
     }
     case 'customer_accounts_ui_extension': {
       return {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         extension_points: extension.configuration.extensionPoints,
         name: extension.configuration.name,
         categories: extension.configuration.categories,
@@ -200,9 +203,8 @@ async function configFor(extension: UIExtension, app: AppInterface) {
     }
     case 'web_pixel_extension': {
       return {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         runtime_context: extension.configuration.runtimeContext,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         runtime_configuration_definition: extension.configuration.configuration,
       }
     }

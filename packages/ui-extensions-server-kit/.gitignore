@@ -1,0 +1,5 @@
+*.d.ts
+!typings.d.ts
+/index.*
+/testing.*
+dist

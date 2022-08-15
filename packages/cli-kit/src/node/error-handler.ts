@@ -36,9 +36,20 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
 
 const reportError = async (error: Error, config?: Interfaces.Config): Promise<Error> => {
   if (config !== undefined) {
+    // Log an analytics event when there's an error
     await reportEvent({config, errorMessage: error.message})
   }
-  if (settings.debug || !shouldReportError(error)) return error
+  const {error: reportedError} = await sendErrorToBugsnag(error)
+  return reportedError
+}
+
+/**
+ * Sends an error to Bugsnag. This is configured automatically for uncaught errors from CLI commands, but can also be used to manually record an error.
+ *
+ * @returns the reported error (this may have been tweaked for better reporting), and a bool to indicate if the error was actually submitted or not
+ */
+export async function sendErrorToBugsnag(error: Error): Promise<{error: Error; reported: boolean}> {
+  if (settings.debug || !shouldReportError(error)) return {error, reported: false}
 
   let reportableError: Error
   let stacktrace: string | undefined
@@ -86,7 +97,7 @@ const reportError = async (error: Error, config?: Interfaces.Config): Promise<Er
       })
     })
   }
-  return reportableError
+  return {error: reportableError, reported: report}
 }
 
 /**

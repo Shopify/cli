@@ -1,0 +1,7 @@
+{
+    "name": "ui-extensions-test-utils",
+    "root": "packages/ui-extensions-test-utils",
+    "sourceRoot": "packages/ui-extensions-test-utils/src",
+    "projectType": "library",
+    "tags": ["scope:feature"]
+}

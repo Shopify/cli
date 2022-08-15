@@ -58,7 +58,7 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
 
   function cleanUp(options: {exit: boolean}) {
     if (options.exit) {
-      file.remove(path.resolve(directory, 'mini-oxygen.config.json'))
+      file.removeSync(path.resolve(directory, 'mini-oxygen.config.json'))
     }
   }
 

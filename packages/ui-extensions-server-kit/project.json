@@ -1,0 +1,8 @@
+{
+    "name": "ui-extensions-server-kit",
+    "root": "packages/ui-extensions-server-kit",
+    "sourceRoot": "packages/ui-extensions-server-kit/src",
+    "projectType": "library",
+    "implicitDependencies": ["ui-extensions-test-utils"],
+    "tags": ["scope:feature"]
+}

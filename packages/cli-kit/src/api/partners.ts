@@ -78,7 +78,6 @@ export async function functionProxyRequest<T>(
   variables?: unknown,
 ): Promise<T> {
   const proxyVariables = {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     api_key: apiKey,
     query,
     variables: JSON.stringify(variables) || '{}',

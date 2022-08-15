@@ -150,7 +150,7 @@ scopes = "read_products"
 
   it("throws an error if the extension configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'ui', name: 'my-extension'})
+    await makeBlockDir({blockType: 'ui', name: 'my-extension'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
@@ -331,7 +331,7 @@ scopes = "read_products"
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // Given
-    makeBlockDir({blockType: 'function', name: 'my-functions'})
+    await makeBlockDir({blockType: 'function', name: 'my-functions'})
 
     // When
     await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
@@ -512,7 +512,6 @@ scopes = "read_products"
 
     await load(tmpDir)
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     expect(metadata.getAllPublic()).toMatchObject({project_type: 'node'})
   })
 })
