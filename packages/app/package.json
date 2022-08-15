@@ -21,7 +21,8 @@
     "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest run",
+    "test": "yarn --cwd ../.. nx run app:test",
+    "test:nx": "vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc --noEmit"
   },

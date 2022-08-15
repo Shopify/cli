@@ -4,5 +4,14 @@
     "sourceRoot": "packages/app/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-go-cli"],
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature"],
+    "targets": {
+      "test": {
+        "executor": "nx:run-script",
+        "dependsOn": ["^build"],
+        "options": {
+          "script": "test:nx"
+        }
+      }
+    }
 }
