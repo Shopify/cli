@@ -1,0 +1,44 @@
+# Generated from shopify-cli-1.0.1.gem by gem2rpm -*- rpm-spec -*-
+%define pkgname shopify-cli
+%define version {{ cliVersion }}
+%define release 1
+%define _rpmdir ./build
+%define _target_os linux
+
+Summary: Shopify CLI helps you build Shopify apps faster.
+Name: %{pkgname}
+
+Version: %{version}
+Release: %{release}
+License: Distributable
+URL: https://shopify.github.io/shopify-cli
+# Make sure the spec template is included in the SRPM
+Source0: %{pkgname}.spec.in
+Requires: nodejs >= 14.13.1, ruby >= 3.0, ruby-devel, git >= 2.13, make, python39, gcc
+BuildArch: noarch
+Provides: node(Shopify-cli) = %{version}
+
+%description
+Shopify CLI helps you build Shopify apps faster. It quickly scaffolds Node.js
+and Ruby on Rails embedded apps. It also automates many common tasks in the
+development process and lets you quickly add popular features, such as billing
+and webhooks.
+
+
+%prep
+%setup -T -c
+
+%build
+
+%pre
+gem install bundler
+npm install -g @shopify/cli@{{ cliVersion }} @shopify/theme@{{ cliVersion }}
+
+%preun
+npm uninstall -g @shopify/cli@{{ cliVersion }} @shopify/theme@{{ cliVersion }}
+
+%clean
+
+%files
+
+%changelog
