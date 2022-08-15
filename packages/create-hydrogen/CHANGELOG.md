@@ -1,5 +1,18 @@
 # @shopify/create-hydrogen
 
+## 3.7.0
+
+### Minor Changes
+
+- 18717ad5: Rename the environment variable SHOPIFY_CONFIG to SHOPIFY_ENV because it's more representative of its usage
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [29f46e8f]
+- Updated dependencies [bba213f9]
+  - @shopify/cli-kit@3.7.0
+
 ## 3.6.2
 
 ### Patch Changes

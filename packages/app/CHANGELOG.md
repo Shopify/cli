@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.7.0
+
+### Minor Changes
+
+- bba213f9: Shopify Functions identifiers have been changed to ULIDs. Existing projects will be updated during the next deploy.
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [29f46e8f]
+- Updated dependencies [bba213f9]
+  - @shopify/cli-kit@3.7.0
+  - @shopify/shopify-cli-extensions@3.7.0
+
 ## 3.6.2
 
 ### Patch Changes
