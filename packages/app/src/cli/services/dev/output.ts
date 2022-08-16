@@ -5,7 +5,7 @@ import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../
 import {OrganizationApp} from '../../models/organization.js'
 import {output, string} from '@shopify/cli-kit'
 
-export function outputUpdatedURL(
+export function outputUpdateURLsResult(
   updated: boolean,
   urls: PartnersURLs,
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
