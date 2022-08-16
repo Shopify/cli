@@ -44,7 +44,7 @@ describe('writePackageJSON()', () => {
 describe('updateAppData()', () => {
   it('updates the name', async () => {
     const packageJSON = {} as {name: string}
-    updateAppData(packageJSON, 'mock name')
+    await updateAppData(packageJSON, 'mock name')
 
     expect(packageJSON.name).toBe('mock name')
   })

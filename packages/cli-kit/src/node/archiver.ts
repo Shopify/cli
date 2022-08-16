@@ -30,6 +30,7 @@ export async function zip(inputDirectory: string, outputZipPath: string): Promis
       archive.file(filePath, {name: fileRelativePath})
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     archive.finalize()
   })
 }

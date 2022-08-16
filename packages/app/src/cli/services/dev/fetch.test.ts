@@ -95,7 +95,7 @@ describe('fetchOrganizations', async () => {
     const got = fetchOrganizations('token')
 
     // Then
-    expect(got).rejects.toThrow(NoOrgError())
+    await expect(got).rejects.toThrow(NoOrgError())
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
   })
 })
@@ -121,7 +121,7 @@ describe('fetchApp', async () => {
     const got = () => fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
-    expect(got).rejects.toThrowError(NoOrgError())
+    await expect(got).rejects.toThrowError(NoOrgError())
     expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })

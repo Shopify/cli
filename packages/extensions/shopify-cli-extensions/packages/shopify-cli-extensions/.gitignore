@@ -1,5 +1,0 @@
-*.js
-!.eslintrc.js
-*.d.ts
-node_modules
-package-lock.json

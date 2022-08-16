@@ -67,10 +67,12 @@ module.exports = {
         },
       },
       {
-        selector: 'objectLiteralProperty',
+        selector: ['objectLiteralProperty', 'typeProperty'],
         format: null,
       },
     ],
+    '@typescript-eslint/no-misused-promises': 'error',
+    '@typescript-eslint/no-floating-promises': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',
