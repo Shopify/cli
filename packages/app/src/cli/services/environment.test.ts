@@ -9,6 +9,7 @@ import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp} from '../models/app/app.test-data.js'
+import metadata from '../metadata.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 
@@ -190,6 +191,11 @@ describe('ensureDevEnvironment', () => {
         extensions: {},
       },
       command: 'dev',
+    })
+
+    expect(metadata.getAllPublic()).toMatchObject({
+      api_key: APP1.apiKey,
+      partner_id: 1,
     })
   })
 
@@ -373,6 +379,8 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+
+    expect(metadata.getAllPublic()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 
   test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {

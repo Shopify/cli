@@ -3,18 +3,19 @@ import {analytics, error as kitError} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 
 interface DevOptions {
+  commandConfig: Config
   directory: string
   force: boolean
   host: boolean
-  commandConfig: Config
+  open: boolean
 }
 
-async function dev({directory, force, host, commandConfig}: DevOptions) {
+async function dev({commandConfig, directory, force, host, open}: DevOptions) {
   try {
     const server = await createServer({
       root: directory,
       server: {
-        open: true,
+        open,
         force,
         host,
       },

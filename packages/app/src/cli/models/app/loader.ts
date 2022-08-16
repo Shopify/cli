@@ -6,10 +6,12 @@ import {
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
   UIExtensionConfigurationSupportedSchema,
+  Extension,
 } from './extensions.js'
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
+import metadata from '../../metadata.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
@@ -65,14 +67,20 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
     const dotenv = await this.loadDotEnv()
-    const functions = await this.loadFunctions(extensionsPath)
-    const uiExtensions = await this.loadUIExtensions(extensionsPath)
-    const themeExtensions = await this.loadThemeExtensions(extensionsPath)
+    const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
+      extensionsPath,
+    )
+    const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
+      extensionsPath,
+    )
+    const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
+      extensionsPath,
+    )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
-    const name = await getPackageName(packageJSONPath)
+    const name = (await getPackageName(packageJSONPath)) ?? path.basename(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
-    const webs = await this.loadWebs()
+    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()
 
     const appClass = new App(
       name,
@@ -90,6 +98,13 @@ class AppLoader {
     )
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
+
+    await logMetadataForLoadedApp(appClass, {
+      usedCustomLayoutForWeb,
+      usedCustomLayoutForUIExtensions,
+      usedCustomLayoutForFunctionExtensions,
+      usedCustomLayoutForThemeExtensions,
+    })
 
     return appClass
   }
@@ -129,12 +144,17 @@ class AppLoader {
     return configurationPath
   }
 
-  async loadWebs(): Promise<Web[]> {
+  async loadWebs(): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
-    return webs
+    const webTomlsInStandardLocation = await path.glob(
+      path.join(this.appDirectory, `web/**/${configurationFileNames.web}`),
+    )
+    const usedCustomLayout = webTomlsInStandardLocation.length !== webTomlPaths.length
+
+    return {webs, usedCustomLayout}
   }
 
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
@@ -203,7 +223,7 @@ class AppLoader {
     return parseResult.data
   }
 
-  async loadUIExtensions(extensionsPath: string): Promise<UIExtension[]> {
+  async loadUIExtensions(extensionsPath: string): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
     const configPaths = await path.glob(extensionConfigPaths)
 
@@ -251,10 +271,10 @@ class AppLoader {
         devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
-    return Promise.all(extensions)
+    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: false}
   }
 
-  async loadFunctions(extensionsPath: string): Promise<FunctionExtension[]> {
+  async loadFunctions(extensionsPath: string): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
     const functionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.function}`)
     const configPaths = await path.glob(functionConfigPaths)
 
@@ -285,10 +305,12 @@ class AppLoader {
         },
       }
     })
-    return Promise.all(functions)
+    return {functions: await Promise.all(functions), usedCustomLayout: false}
   }
 
-  async loadThemeExtensions(extensionsPath: string): Promise<ThemeExtension[]> {
+  async loadThemeExtensions(
+    extensionsPath: string,
+  ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
     const themeConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.theme}`)
     const configPaths = await path.glob(themeConfigPaths)
 
@@ -305,7 +327,7 @@ class AppLoader {
         localIdentifier: path.basename(directory),
       }
     })
-    return Promise.all(themeExtensions)
+    return {themeExtensions: await Promise.all(themeExtensions), usedCustomLayout: false}
   }
 
   abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
@@ -316,4 +338,98 @@ class AppLoader {
       return fallback
     }
   }
+}
+
+async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
+  const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
+  const frontendWebs = webs.filter((web) => web.configuration.type === WebType.Frontend)
+  if (backendWebs.length > 1) {
+    output.debug('Unable to decide project type as multiple web backends')
+    return
+  } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
+    return 'frontend'
+  } else if (backendWebs.length === 0) {
+    output.debug('Unable to decide project type as no web backend')
+    return
+  }
+  const {directory} = backendWebs[0]
+
+  const nodeConfigFile = path.join(directory, 'package.json')
+  const rubyConfigFile = path.join(directory, 'Gemfile')
+  const phpConfigFile = path.join(directory, 'composer.json')
+
+  if (await file.exists(nodeConfigFile)) {
+    return 'node'
+  } else if (await file.exists(rubyConfigFile)) {
+    return 'ruby'
+  } else if (await file.exists(phpConfigFile)) {
+    return 'php'
+  }
+  return undefined
+}
+
+async function logMetadataForLoadedApp(
+  app: App,
+  loadingStrategy: {
+    usedCustomLayoutForWeb: boolean
+    usedCustomLayoutForUIExtensions: boolean
+    usedCustomLayoutForFunctionExtensions: boolean
+    usedCustomLayoutForThemeExtensions: boolean
+  },
+) {
+  await metadata.addPublic(async () => {
+    const projectType = await getProjectType(app.webs)
+
+    const extensionFunctionCount = app.extensions.function.length
+    const extensionUICount = app.extensions.ui.length
+    const extensionThemeCount = app.extensions.theme.length
+
+    const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
+
+    const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
+
+    const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
+    const extensionsBreakdownMapping: {[key: string]: number} = {}
+    for (const extension of allExtensions) {
+      if (extensionsBreakdownMapping[extension.type] === undefined) {
+        extensionsBreakdownMapping[extension.type] = 1
+      } else {
+        extensionsBreakdownMapping[extension.type]++
+      }
+    }
+
+    return {
+      project_type: projectType,
+      app_extensions_any: extensionTotalCount > 0,
+      app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
+      app_extensions_count: extensionTotalCount,
+      app_extensions_custom_layout:
+        loadingStrategy.usedCustomLayoutForFunctionExtensions ||
+        loadingStrategy.usedCustomLayoutForThemeExtensions ||
+        loadingStrategy.usedCustomLayoutForUIExtensions,
+      app_extensions_function_any: extensionFunctionCount > 0,
+      app_extensions_function_count: extensionFunctionCount,
+      app_extensions_function_custom_layout: loadingStrategy.usedCustomLayoutForFunctionExtensions,
+      app_extensions_theme_any: extensionThemeCount > 0,
+      app_extensions_theme_count: extensionThemeCount,
+      app_extensions_theme_custom_layout: loadingStrategy.usedCustomLayoutForThemeExtensions,
+      app_extensions_ui_any: extensionUICount > 0,
+      app_extensions_ui_count: extensionUICount,
+      app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
+      app_name_hash: string.hashString(app.name),
+      app_path_hash: string.hashString(app.directory),
+      app_scopes: JSON.stringify(
+        app.configuration.scopes
+          .split(',')
+          .map((scope) => scope.trim())
+          .sort(),
+      ),
+      app_web_backend_any: webBackendCount > 0,
+      app_web_backend_count: webBackendCount,
+      app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
+      app_web_frontend_any: webFrontendCount > 0,
+      app_web_frontend_count: webFrontendCount,
+    }
+  })
 }

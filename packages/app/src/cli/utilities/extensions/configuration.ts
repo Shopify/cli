@@ -40,19 +40,14 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         uuid: extension.devUUID,
         title: extension.configuration.name,
         type: `${extension.configuration.type}`,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         extension_points: extension.configuration.extensionPoints || [],
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         node_executable: await nodeExtensionsCLIPath(),
         surface: getUIExtensionSurface(extension.configuration.type),
         version: renderer?.version,
         development: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           root_dir: path.relative(options.app.directory, extension.directory),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           build_dir: options.buildDirectory
             ? path.relative(extension.directory, options.buildDirectory)
             : path.relative(extension.directory, extension.buildDirectory),
@@ -76,12 +71,10 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   )
 
   return {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     public_url: options.url,
     port: options.port,
     store: options.storeFqdn,
     app: {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       api_key: options.apiKey,
     },
     extensions: extensionsConfig,

@@ -13,6 +13,7 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
     const cliPath = `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`
     const appPath = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
     const cliKitPath = `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`
+    const extensionsCliPath = `file:${(await path.findUp('packages/ui-extensions-cli', {type: 'directory'})) as string}`
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
@@ -20,12 +21,10 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
     packageJSON.dependencies['@shopify/app'] = appPath
 
     const dependencyOverrides = {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli': cliPath,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/app': appPath,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       '@shopify/cli-kit': cliKitPath,
+      '@shopify/shopify-cli-extensions': extensionsCliPath,
     }
 
     packageJSON.overrides = packageJSON.overrides

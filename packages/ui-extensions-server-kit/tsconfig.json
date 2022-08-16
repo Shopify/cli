@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["jest"],
+    "allowJs": false,
+    "skipLibCheck": false,
+    "esModuleInterop": true,
+    "declaration": true,
+    "composite": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "jsx": "react",
+    "paths": {
+      "@shopify/ui-extensions-test-utils": ["../../ui-extensions-test-utils/src"],
+    },
+    "outDir": "dist",
+    "baseUrl": "src",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+  },
+  "include": ["src/**/*", "src/testing/**/*"],
+  "references": [{"path": "../ui-extensions-test-utils"}]
+}

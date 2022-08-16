@@ -54,7 +54,6 @@ export default class Push extends ThemeCommand {
       description: 'Output JSON instead of a UI.',
       env: 'SHOPIFY_FLAG_JSON',
     }),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'allow-live': Flags.boolean({
       char: 'a',
       description: 'Allow push to a live theme.',

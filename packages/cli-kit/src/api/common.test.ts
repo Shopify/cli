@@ -27,7 +27,6 @@ describe('common API methods', () => {
     // Then
     const version = await constants.versions.cliKit()
     expect(headers).toEqual({
-      /* eslint-disable @typescript-eslint/naming-convention */
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
@@ -35,7 +34,6 @@ describe('common API methods', () => {
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
       'X-Shopify-Cli-Employee': '1',
-      /* eslint-enable @typescript-eslint/naming-convention */
     })
   })
 
@@ -49,20 +47,17 @@ describe('common API methods', () => {
     // Then
     const version = await constants.versions.cliKit()
     expect(headers).toEqual({
-      /* eslint-disable @typescript-eslint/naming-convention */
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
-      /* eslint-enable @typescript-eslint/naming-convention */
     })
   })
 
   test('sanitizedHeadersOutput removes the headers that include the token', () => {
     // Given
-    /* eslint-disable @typescript-eslint/naming-convention */
     const headers = {
       'User-Agent': 'useragent',
       'X-Request-Id': 'uuid',
@@ -71,7 +66,6 @@ describe('common API methods', () => {
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'token',
     }
-    /* eslint-enable @typescript-eslint/naming-convention */
 
     // When
     const got = sanitizedHeadersOutput(headers)

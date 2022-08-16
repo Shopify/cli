@@ -24,6 +24,10 @@ function sha256(str: string) {
   return crypto.createHash('sha256').update(str).digest()
 }
 
+export function hashString(str: string): string {
+  return crypto.createHash('sha1').update(str).digest('hex')
+}
+
 /**
  * Given a string, it returns it with the first letter capitalized.
  * @param string {string} String whose first letter will be caplitalized.
@@ -43,4 +47,18 @@ export function normalizeStoreName(store: string) {
   return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
     ? storeFqdn
     : `${storeFqdn}.myshopify.com`
+}
+
+/**
+ * Try to convert a string to an int, falling back to undefined if unable to
+ */
+export function tryParseInt(maybeInt: string | undefined) {
+  let asInt: number | undefined
+  if (maybeInt !== undefined) {
+    asInt = parseInt(maybeInt, 10)
+    if (isNaN(asInt)) {
+      asInt = undefined
+    }
+  }
+  return asInt
 }

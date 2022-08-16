@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import {reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import {join as joinPath, dirname} from './path.js'
@@ -7,13 +6,14 @@ import * as ruby from './node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {cliKitStore} from './store.js'
 import constants from './constants.js'
-import {publishEvent} from './monorail.js'
+import {MONORAIL_COMMAND_TOPIC, publishEvent} from './monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
-import {it, expect, describe, vi, beforeEach, afterEach} from 'vitest'
+import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
-  const schema = 'app_cli3_command/1.0'
+  const schema = MONORAIL_COMMAND_TOPIC
+  let publishEventMock: MockedFunction<typeof publishEvent>
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
@@ -25,11 +25,13 @@ describe('event tracking', () => {
     vi.mock('./version.js')
     vi.mock('./monorail.js')
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
-    vi.mocked(environment.local.isDebug).mockReturnValue(false)
+    vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
+    vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
+    vi.mocked(environment.local.webIDEPlatform).mockReturnValue(undefined)
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
-    vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
+    publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
 
     vi.mocked(cliKitStore).mockReturnValue({
       setSession: vi.fn(),
@@ -52,48 +54,6 @@ describe('event tracking', () => {
     })
   }
 
-  it.each([
-    ['node', 'package.json'],
-    ['ruby', 'Gemfile'],
-    ['php', 'composer.json'],
-  ])('sends the expected data to Monorail when the project is %s', async (projectType, file) => {
-    await inProjectWithFile(file, async (args) => {
-      // Given
-      const command = 'app info'
-      start({command, args, currentTime: currentDate.getTime() - 100})
-
-      // When
-      const config = {
-        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-      } as any
-      await reportEvent({config})
-
-      // Then
-      const version = await constants.versions.cliKit()
-      const expectedPayloadPublic = {
-        project_type: projectType,
-        command,
-        time_start: 1643709599900,
-        time_end: 1643709600000,
-        total_time: 100,
-        success: true,
-        uname: 'darwin arm64',
-        cli_version: version,
-        ruby_version: '3.1.1',
-        node_version: process.version.replace('v', ''),
-        is_employee: false,
-        api_key: undefined,
-        partner_id: undefined,
-      }
-      const expectedPayloadSensitive = {
-        args: args.join(' '),
-        metadata: expect.anything(),
-      }
-
-      expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
-    })
-  })
-
   it('sends the expected data to Monorail with cached app info', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
@@ -104,18 +64,25 @@ describe('event tracking', () => {
         storeFqdn: 'domain1',
         directory: '/cached',
       })
-      start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [
+          {
+            name: '@shopify/built-in',
+          },
+          {
+            name: 'a-custom-plugin',
+          },
+        ],
       } as any
       await reportEvent({config})
 
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        project_type: 'node',
         command,
         time_start: 1643709599900,
         time_end: 1643709600000,
@@ -126,14 +93,16 @@ describe('event tracking', () => {
         ruby_version: '3.1.1',
         node_version: process.version.replace('v', ''),
         is_employee: false,
-        api_key: 'key1',
-        partner_id: 1,
+        env_plugin_installed_any_custom: true,
+        env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
         metadata: expect.anything(),
       }
-      expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -141,18 +110,18 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
-      start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config, errorMessage: 'Permission denied'})
 
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        project_type: 'node',
         command,
         time_start: 1643709599900,
         time_end: 1643709600000,
@@ -163,15 +132,15 @@ describe('event tracking', () => {
         ruby_version: '3.1.1',
         node_version: process.version.replace('v', ''),
         is_employee: false,
-        api_key: undefined,
-        partner_id: undefined,
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
         error_message: 'Permission denied',
         metadata: expect.anything(),
       }
-      expect(publishEvent).toHaveBeenCalledWith(schema, expectedPayloadPublic, expectedPayloadSensitive)
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -180,11 +149,12 @@ describe('event tracking', () => {
       // Given
       vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
       const command = 'app dev'
-      start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({command, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config})
 
@@ -201,11 +171,12 @@ describe('event tracking', () => {
         throw new Error('Boom!')
       })
       const outputMock = mockAndCaptureOutput()
-      start({command, args})
+      await start({command, args})
 
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
       } as any
       await reportEvent({config})
 

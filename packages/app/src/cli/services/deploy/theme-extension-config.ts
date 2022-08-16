@@ -2,7 +2,6 @@ import {ThemeExtension} from '../../models/app/extensions.js'
 import {file, path} from '@shopify/cli-kit'
 
 export interface ThemeExtensionConfig {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   theme_extension: {
     files: {[key: string]: string}
   }
@@ -20,6 +19,5 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
       files[relativePath] = Buffer.from(fileContents, encoding).toString('base64')
     }),
   )
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   return {theme_extension: {files}}
 }

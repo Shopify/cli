@@ -1,5 +1,42 @@
 # @shopify/create-app
 
+## 3.7.1
+
+### Minor Changes
+
+- 18717ad5: Rename the environment variable SHOPIFY_CONFIG to SHOPIFY_ENV because it's more representative of its usage
+- 29f46e8f: Make inquirer default for inputs
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [29f46e8f]
+- Updated dependencies [bba213f9]
+  - @shopify/cli-kit@3.7.1
+
+## 3.6.2
+
+### Patch Changes
+
+- Updated dependencies [59d56a40]
+  - @shopify/cli-kit@3.6.2
+
+## 3.6.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.6.1
+
+## 3.6.0
+
+### Patch Changes
+
+- 6f6dc914: Fix script execution for Windows dev enviroments
+- d9351df4: Use a custom list of safe nouns and adjectives to generate default names for apps and extensions
+- Updated dependencies [073e514c]
+- Updated dependencies [d9351df4]
+  - @shopify/cli-kit@3.6.0
+
 ## 3.5.0
 
 ### Patch Changes

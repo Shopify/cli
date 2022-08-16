@@ -1,0 +1,3 @@
+*.d.ts
+!typings.d.ts
+dist
