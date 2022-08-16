@@ -4,15 +4,12 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "build": "yarn --cwd ../.. nx run ui-extensions-go-cli:build",
+    "build": "yarn clean && yarn --cwd ../.. nx run ui-extensions-go-cli:build",
     "build:nx": "node bin/build.js",
-    "clean": "cd .",
+    "clean": "rimraf api/dev-console/",
     "start": "cd packages/dev-console-app; yarn start",
-    "test": "yarn --cwd ../.. nx run ui-extensions-go-cli:test",
+    "test": "yarn clean && yarn --cwd ../.. nx run ui-extensions-go-cli:test",
     "test:nx": "go test ./...",
     "package": "yarn --cwd ../.. nx run ui-extensions-go-cli:package",
     "package:nx": "node bin/package.js",
