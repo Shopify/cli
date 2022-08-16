@@ -1,6 +1,12 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
+import {AppInterface} from '../../models/app/app.js'
 import {api, error, output, plugins, store} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
+
+export interface PartnersURLs {
+  applicationUrl: string
+  redirectUrlWhitelist: string[]
+}
 
 export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
   const tunnelPlugin = await plugins.lookupTunnelPlugin(pluginList)
@@ -10,13 +16,19 @@ export async function generateURL(pluginList: Plugin[], frontendPort: number): P
   return url
 }
 
-export async function updateURLs(apiKey: string, url: string, token: string): Promise<void> {
-  const variables: api.graphql.UpdateURLsQueryVariables = {
-    apiKey,
-    appUrl: url,
-    redir: [`${url}/auth/callback`, `${url}/auth/shopify/callback`, `${url}/api/auth/callback`],
+export function generatePartnersURLs(baseURL: string): PartnersURLs {
+  return {
+    applicationUrl: baseURL,
+    redirectUrlWhitelist: [
+      `${baseURL}/auth/callback`,
+      `${baseURL}/auth/shopify/callback`,
+      `${baseURL}/api/auth/callback`,
+    ],
   }
+}
 
+export async function updateURLs(urls: PartnersURLs, apiKey: string, token: string): Promise<void> {
+  const variables: api.graphql.UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = api.graphql.UpdateURLsQuery
   const result: api.graphql.UpdateURLsQuerySchema = await api.partners.request(query, token, variables)
   if (result.appUpdate.userErrors.length > 0) {
@@ -25,25 +37,26 @@ export async function updateURLs(apiKey: string, url: string, token: string): Pr
   }
 }
 
-export async function getURLs(apiKey: string, token: string): Promise<{appURL: string; redir: string[]}> {
+export async function getURLs(apiKey: string, token: string): Promise<PartnersURLs> {
   const variables: api.graphql.GetURLsQueryVariables = {apiKey}
   const query = api.graphql.GetURLsQuery
   const result: api.graphql.GetURLsQuerySchema = await api.partners.request(query, token, variables)
-  return {appURL: result.app.applicationUrl, redir: result.app.redirectUrlWhitelist}
+  return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
 }
 
 export async function shouldUpdateURLs(
   cachedUpdateURLs: boolean | undefined,
-  apiKey: string,
-  directory: string,
-  token: string,
   newApp: boolean | undefined,
+  currentURLs: PartnersURLs,
+  app: AppInterface,
 ): Promise<boolean> {
   if (newApp) return true
   let shouldUpdate: boolean = cachedUpdateURLs === true
   if (cachedUpdateURLs === undefined) {
-    const {appURL} = await getURLs(apiKey, token)
-    output.info(`Your app's URL currently is: ${appURL}`)
+    output.info(`\nYour app's URL currently is:\n  ${currentURLs.applicationUrl}`)
+    output.info(`\nYour app's redirect URLs currently are:`)
+    currentURLs.redirectUrlWhitelist.forEach((url) => output.info(`  ${url}`))
+    output.newline()
     const response = await updateURLsPrompt()
     let newUpdateURLs: boolean | undefined
     /* eslint-disable no-fallthrough */
@@ -58,8 +71,17 @@ export async function shouldUpdateURLs(
       case 'no':
         shouldUpdate = false
     }
+    if (newUpdateURLs !== undefined) {
+      output.info(
+        output.content`You won't be asked again. To reset this setting, run ${output.token.packagejsonScript(
+          app.packageManager,
+          'dev',
+          '--reset',
+        )}\n`,
+      )
+    }
     /* eslint-enable no-fallthrough */
-    store.cliKitStore().setAppInfo({appId: apiKey, directory, updateURLs: newUpdateURLs})
+    store.cliKitStore().setAppInfo({directory: app.directory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
 }

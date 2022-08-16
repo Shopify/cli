@@ -1,8 +1,8 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generateURL, shouldUpdateURLs, updateURLs} from './dev/urls.js'
+import {generatePartnersURLs, generateURL, getURLs, shouldUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages, outputUpdatedURL, outputUpdatedURLFirstTime} from './dev/output.js'
+import {outputAppURL, outputExtensionsMessages, outputUpdatedURL} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -46,6 +46,7 @@ async function dev(options: DevOptions) {
   }
   const token = await session.ensureAuthenticatedPartners()
   const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
+  const apiKey = identifiers.app
 
   let frontendPort: number
   let frontendUrl: string
@@ -73,19 +74,11 @@ async function dev(options: DevOptions) {
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if ((frontendConfig || backendConfig) && options.update) {
-    const shouldUpdate: boolean = await shouldUpdateURLs(
-      cachedUpdateURLs,
-      identifiers.app,
-      options.app.directory,
-      token,
-      app.newApp,
-    )
-    if (shouldUpdate) await updateURLs(identifiers.app, exposedUrl, token)
-    if (app.newApp) {
-      outputUpdatedURLFirstTime(exposedUrl, app.organizationId, app.id)
-    } else {
-      outputUpdatedURL(shouldUpdate, app.organizationId, app.id)
-    }
+    const currentURLs = await getURLs(apiKey, token)
+    const newURLs = generatePartnersURLs(exposedUrl)
+    const shouldUpdate: boolean = await shouldUpdateURLs(cachedUpdateURLs, app.newApp, currentURLs, options.app)
+    if (shouldUpdate) await updateURLs(newURLs, apiKey, token)
+    outputUpdatedURL(shouldUpdate, newURLs, app)
     outputAppURL(storeFqdn, exposedUrl)
   }
 
@@ -93,7 +86,7 @@ async function dev(options: DevOptions) {
   options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
-    apiKey: identifiers.app,
+    apiKey,
     backendPort,
     scopes: options.app.configuration.scopes,
     apiSecret: (app.apiSecret as string) ?? '',
@@ -106,7 +99,7 @@ async function dev(options: DevOptions) {
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
-      identifiers.app,
+      apiKey,
       proxyUrl,
       storeFqdn,
       options.subscriptionProductUrl,
@@ -125,7 +118,7 @@ async function dev(options: DevOptions) {
   if (frontendConfig) {
     const devFrontend = devFrontendTarget({
       web: frontendConfig,
-      apiKey: identifiers.app,
+      apiKey,
       scopes: options.app.configuration.scopes,
       apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,

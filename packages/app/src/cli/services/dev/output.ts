@@ -1,22 +1,32 @@
+import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {output, string} from '@shopify/cli-kit'
 
-export function outputUpdatedURL(updated: boolean, organizationId: string, appId: string) {
-  if (updated) {
+export function outputUpdatedURL(
+  updated: boolean,
+  urls: PartnersURLs,
+  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
+) {
+  const dashboardURL = partnersURL(app.organizationId, app.id)
+  if (app.newApp) {
+    outputUpdatedURLFirstTime(urls.applicationUrl, dashboardURL)
+  } else if (updated) {
     output.completed('URL updated')
   } else {
     output.info(
-      output.content`To update your app's URL manually, add redirect URLs in the ${partnersURL(organizationId, appId)}`,
+      output.content`\nTo make URL updates manually, you can add the following URLs as redirects in your ${dashboardURL}:`,
     )
+    urls.redirectUrlWhitelist.forEach((url) => output.info(`  ${url}`))
   }
 }
 
-export function outputUpdatedURLFirstTime(url: string, organizationId: string, appId: string) {
+export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
   const message =
-    `For your convenience, we've given your app a default URL: ${url}.\n\n` +
-    `You can update your app's URL anytime in the ${partnersURL(organizationId, appId)}. ` +
+    `\nFor your convenience, we've given your app a default URL: ${url}.\n\n` +
+    `You can update your app's URL anytime in the ${dashboardURL}. ` +
     `But once your app is live, updating its URL will disrupt merchant access.`
   output.info(message)
 }

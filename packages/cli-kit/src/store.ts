@@ -7,7 +7,7 @@ const migrations = {}
 
 export interface CachedAppInfo {
   directory: string
-  appId: string
+  appId?: string
   title?: string
   orgId?: string
   storeFqdn?: string
@@ -71,7 +71,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
 
   setAppInfo(options: {
     directory: string
-    appId: string
+    appId?: string
     title?: string
     storeFqdn?: string
     orgId?: string
@@ -86,8 +86,8 @@ export class CLIKitStore extends Conf<ConfSchema> {
     } else {
       const app: CachedAppInfo = apps[index]
       apps[index] = {
-        appId: options.appId,
         directory: options.directory,
+        appId: options.appId ?? app.appId,
         title: options.title ?? app.title,
         storeFqdn: options.storeFqdn ?? app.storeFqdn,
         orgId: options.orgId ?? app.orgId,
