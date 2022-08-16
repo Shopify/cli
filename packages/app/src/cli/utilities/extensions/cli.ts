@@ -17,7 +17,6 @@ const NodeExtensionsCLINotFoundError = () => {
  */
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
   const stdout = options.stdout || {write: () => {}}
-  const isWindows = platform() === 'win32'
   if (environment.local.isDevelopment()) {
     await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
     const extensionsGoCliDirectory = (await path.findUp('packages/ui-extensions-go-cli/', {
@@ -27,14 +26,11 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
 
     stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
     try {
-      const extension = isWindows ? '.exe' : ''
       if (environment.local.isDebugGoBinary()) {
-        await system.exec(
-          'sh',
-          [path.join(extensionsGoCliDirectory, `shopify-extensions-debug${extension}`)].concat(args),
-          options,
-        )
+        await system.exec('sh', [path.join(extensionsGoCliDirectory, `shopify-extensions-debug`)].concat(args), options)
       } else {
+        const isWindows = platform() === 'win32'
+        const extension = isWindows ? '.exe' : ''
         await system.exec(path.join(extensionsGoCliDirectory, `shopify-extensions${extension}`), args, options)
       }
     } catch {
