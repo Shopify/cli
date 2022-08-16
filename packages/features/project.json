@@ -10,7 +10,7 @@
       "executor": "nx:run-script",
       "dependsOn": ["^build"],
       "options": {
-        "script": "test:acceptance"
+        "script": "test:nx"
       }
     }
   }
