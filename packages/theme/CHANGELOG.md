@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.7.1
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [29f46e8f]
+- Updated dependencies [bba213f9]
+  - @shopify/cli-kit@3.7.1
+
+## 3.6.2
+
+### Patch Changes
+
+- 59d56a40: Add multiple IDs to theme delete
+- Updated dependencies [59d56a40]
+  - @shopify/cli-kit@3.6.2
+
 ## 3.6.1
 
 ### Patch Changes

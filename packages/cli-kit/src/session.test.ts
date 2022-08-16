@@ -274,7 +274,7 @@ describe('ensureAuthenticatedStorefront', () => {
     const got = ensureAuthenticatedStorefront()
 
     // Then
-    expect(got).rejects.toThrow(`No storefront token`)
+    await expect(got).rejects.toThrow(`No storefront token`)
   })
 })
 
@@ -300,7 +300,7 @@ describe('ensureAuthenticatedAdmin', () => {
     const got = ensureAuthenticatedAdmin('mystore')
 
     // Then
-    expect(got).rejects.toThrow(`No admin token`)
+    await expect(got).rejects.toThrow(`No admin token`)
   })
 })
 
@@ -326,7 +326,7 @@ describe('ensureAuthenticatedPartners', () => {
     const got = ensureAuthenticatedPartners()
 
     // Then
-    expect(got).rejects.toThrow(`No partners token`)
+    await expect(got).rejects.toThrow(`No partners token`)
   })
 
   it('returns custom partners token if envvar is defined', async () => {

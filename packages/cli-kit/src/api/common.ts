@@ -50,7 +50,7 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
     .join('\n')
 }
 
-export async function debugLogRequest<T>(
+export function debugLogRequest<T>(
   api: string,
   query: RequestDocument,
   variables?: Variables,

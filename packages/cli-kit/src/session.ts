@@ -244,7 +244,7 @@ export async function ensureUserHasPartnerAccount(partnersToken: string) {
     output.info(`\nA Shopify Partners organization is needed to proceed.`)
     output.info(`👉 Press any key to create one`)
     await keypress()
-    open(`https://partners.shopify.com/signup`)
+    await open(`https://partners.shopify.com/signup`)
     output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
     output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
