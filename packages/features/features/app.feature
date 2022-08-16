@@ -10,10 +10,6 @@ Scenario: I scaffold theme, ui, and function extensions
   Then The extension named TestThemeExtension contains the theme extension directories
   Then I create an extension named TestThemeExtension2 of type theme
   Then I do not have a theme extension named TestThemeExtension2 of type theme
-  # FIXME:
-  #   The payment_method template got removed and the payment_customization one
-  #   has breaking changes that need to be sorted out.
-  #   https://github.com/Shopify/function-examples/pull/100
-  # When I create an extension named TestPaymentMethod of type payment_customization and flavor wasm
-  # Then I have a function extension named TestPaymentMethod of type payment_methods
+  When I create an extension named TestPaymentCustomization of type payment_customization and flavor wasm
+  Then I have a function extension named TestPaymentCustomization of type payment_customization
   Then I can build the app
