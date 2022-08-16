@@ -9,7 +9,7 @@
     "clean": "rimraf api/dev-console/",
     "start": "cd packages/dev-console-app; yarn start",
     "test": "yarn clean && yarn --cwd ../.. nx run ui-extensions-go-cli:test",
-    "test:nx": "go test ./...",
+    "test:nx": "node bin/test.js",
     "package": "yarn --cwd ../.. nx run ui-extensions-go-cli:package",
     "package:nx": "node bin/package.js",
     "lint": "gofmt -s .",
