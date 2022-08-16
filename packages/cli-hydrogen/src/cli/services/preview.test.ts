@@ -44,7 +44,7 @@ describe('hydrogen preview', () => {
           autoReload: true,
         }
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        file.write(pathToExecutable, '// some executable file')
+        await file.write(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
@@ -62,7 +62,7 @@ describe('hydrogen preview', () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        file.write(pathToExecutable, '// some executable file')
+        await file.write(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When

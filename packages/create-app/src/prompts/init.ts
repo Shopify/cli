@@ -46,10 +46,16 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
   }
 
   if (!options.template && Object.keys(templateURLMap).length > 1) {
+    const templateList = Object.keys(templateURLMap).map((key) => {
+      return {
+        name: key,
+        value: key,
+      }
+    })
     questions.push({
       type: 'select',
       name: 'template',
-      choices: Object.keys(templateURLMap),
+      choices: templateList,
       message: 'Which template would you like to use?',
       default: defaults.template,
     })

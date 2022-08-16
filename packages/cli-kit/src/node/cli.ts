@@ -1,7 +1,7 @@
 // CLI
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {errorHandler} from './error-handler.js'
-import {isDebug} from '../environment/local.js'
+import {isDevelopment} from '../environment/local.js'
 import constants, {bugsnagApiKey} from '../constants.js'
 import {moduleDirectory} from '../path.js'
 import {run, settings, flush} from '@oclif/core'
@@ -18,7 +18,7 @@ interface RunCLIOptions {
  * @param module {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
-  if (isDebug()) {
+  if (isDevelopment()) {
     settings.debug = true
   } else {
     Bugsnag.start({

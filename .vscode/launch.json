@@ -74,7 +74,7 @@
           "product_discounts",
           "order_discounts",
           "shipping_discounts",
-          "payment_methods",
+          "payment_customization",
           "shipping_rate_presenter"
         ],
         "default": "checkout_ui_extension",

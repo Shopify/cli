@@ -11,7 +11,8 @@ export default class Version extends Command {
     output.info(output.content`Current ${Version.description}: ${output.token.yellow(currentVersion)}`.value)
     const lastVersion = await checkForNewVersion(cliDependency, currentVersion)
     if (lastVersion) {
-      output.info(output.getOutputUpdateCLIReminder(packageManagerUsedForCreating(), lastVersion))
+      const packageManager = packageManagerUsedForCreating()
+      output.info(output.getOutputUpdateCLIReminder(packageManager === 'unknown' ? 'npm' : packageManager, lastVersion))
     }
     throw new error.CancelExecution()
   }

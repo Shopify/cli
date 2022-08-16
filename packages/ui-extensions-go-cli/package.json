@@ -1,0 +1,23 @@
+{
+  "name": "@shopify/ui-extensions-go-cli",
+  "version": "3.7.1",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "node bin/build.js",
+    "clean": "cd .",
+    "start": "cd packages/dev-console-app; yarn start",
+    "test": "yarn --cwd ../.. nx run ui-extensions-go-cli:test",
+    "test:nx": "node bin/test.js",
+    "package": "yarn --cwd ../.. nx run ui-extensions-go-cli:package",
+    "package:nx": "node bin/package.js",
+    "lint": "gofmt -s .",
+    "lint:fix": "gofmt -w -s ."
+  },
+  "devDependencies": {
+    "@shopify/shopify-cli-extensions": "3.7.1"
+  }
+}

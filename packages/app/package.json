@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.6.1",
+  "version": "3.7.1",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -16,12 +16,13 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
+    "clean": "rimraf dist/",
+    "build": "tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest run",
+    "test": "yarn --cwd ../.. nx run app:test",
+    "test:nx": "vitest run",
     "test:watch": "vitest watch",
     "tsc": "tsc --noEmit"
   },
@@ -52,9 +53,9 @@
   },
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",
-    "@oclif/core": "^1.0",
-    "@shopify/shopify-cli-extensions": "^0.2.1",
-    "@shopify/cli-kit": "3.6.1",
+    "@oclif/core": "1.9.2",
+    "@shopify/shopify-cli-extensions": "3.7.1",
+    "@shopify/cli-kit": "3.7.1",
     "http-proxy": "^1.18.1",
     "ws": "^8.7.0"
   }

@@ -90,7 +90,7 @@ describe('createApp', () => {
     const got = createApp(ORG2, LOCAL_APP, 'token')
 
     // Then
-    expect(got).rejects.toThrow(`some-error`)
+    await expect(got).rejects.toThrow(`some-error`)
   })
 })
 

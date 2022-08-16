@@ -6,6 +6,9 @@ up:
       version: v18.0.0
       packages:
         - ./
+  - go:
+      version: 1.17.6
+      modules: true
   - ruby:
       version: 3.1.2
   - homebrew:
@@ -13,7 +16,7 @@ up:
     - delve
 
 env:
-  SHOPIFY_CONFIG: debug
+  SHOPIFY_ENV: development
   SHOPIFY_PARTNERS_API_ENV: production
   SHOPIFY_ADMIN_API_ENV: production
   SHOPIFY_STOREFRONT_RENDERER_API_ENV: production
