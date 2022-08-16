@@ -1,7 +1,8 @@
 import {runGoExtensionsCLI, nodeExtensionsCLIPath} from './cli.js'
 import {getBinaryPathOrDownload} from './binary.js'
-import {describe, test, expect, vi} from 'vitest'
+import {describe, test, expect, vi, beforeAll} from 'vitest'
 import {system, environment, path} from '@shopify/cli-kit'
+import {platform} from 'node:os'
 
 vi.mock('../../environment')
 vi.mock('./binary')
@@ -26,6 +27,12 @@ vi.mock('@shopify/cli-kit', async () => {
   }
 })
 
+let extensionsBinaryExtension: string | undefined
+
+beforeAll(() => {
+  extensionsBinaryExtension = platform() === 'win32' ? '.exe' : ''
+})
+
 describe('runGoExtensionsCLI', () => {
   test('runs the CLI through local sources without debug when running it locally', async () => {
     // Given
@@ -41,7 +48,7 @@ describe('runGoExtensionsCLI', () => {
     // Then
     expect(system.exec).toHaveBeenNthCalledWith(
       1,
-      path.join(extensionsGoCliDirectory, 'shopify-extensions'),
+      path.join(extensionsGoCliDirectory, `shopify-extensions${extensionsBinaryExtension}`),
       ['build'],
       {
         stdout,
@@ -64,7 +71,7 @@ describe('runGoExtensionsCLI', () => {
     expect(system.exec).toHaveBeenNthCalledWith(
       1,
       'sh',
-      [path.join(extensionsGoCliDirectory, 'shopify-extensions-debug'), 'build'],
+      [path.join(extensionsGoCliDirectory, `shopify-extensions-debug${extensionsBinaryExtension}`), 'build'],
       {
         stdout,
       },

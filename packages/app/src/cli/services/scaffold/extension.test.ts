@@ -12,9 +12,6 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
-import {platform} from 'node:os'
-
-const isWindows = platform() === 'win32'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -24,11 +21,6 @@ describe('initialize a extension', () => {
   it(
     'successfully scaffolds the extension when no other extensions exist',
     async () => {
-      // eslint-disable-next-line no-warning-comments
-      // FIXME
-      if (isWindows) {
-        return
-      }
       await withTemporaryApp(async (tmpDir) => {
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
@@ -45,11 +37,6 @@ describe('initialize a extension', () => {
   it(
     'successfully scaffolds the extension when another extension exists',
     async () => {
-      // eslint-disable-next-line no-warning-comments
-      // FIXME
-      if (isWindows) {
-        return
-      }
       await withTemporaryApp(async (tmpDir) => {
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
@@ -89,11 +76,6 @@ describe('initialize a extension', () => {
   it(
     'errors when trying to re-scaffold an existing extension',
     async () => {
-      // eslint-disable-next-line no-warning-comments
-      // FIXME
-      if (isWindows) {
-        return
-      }
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
