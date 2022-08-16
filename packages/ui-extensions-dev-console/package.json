@@ -3,7 +3,8 @@
   "name": "@shopify/ui-extensions-dev-console-app",
   "version": "3.7.1",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json --noEmit && vite build",
+    "build": "yarn --cwd ../.. nx run ui-extensions-dev-console:build",
+    "build:nx": "tsc --project tsconfig.build.json --noEmit && vite build",
     "clean": "rimraf dist/",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
