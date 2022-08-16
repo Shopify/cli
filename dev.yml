@@ -64,10 +64,10 @@ commands:
         run: yarn --cwd fixtures/app shopify
       build:
         desc: Build the fixture project
-        run: yarn --cwd fixtures/app build
+        run: yarn --cwd fixtures/app build --skip-dependencies-installation
       dev:
         desc: Dev the fixture project
-        run: yarn --cwd fixtures/app dev
+        run: yarn --cwd fixtures/app dev --skip-dependencies-installation
       test:
         desc: Test the fixture project
         run: yarn --cwd fixtures/app test
