@@ -132,24 +132,45 @@ describe('shouldUpdateURLs', () => {
   })
 
   it('returns true if the app is new', async () => {
+    // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+      newApp: true,
+    }
+
     // When
-    const got = await shouldUpdateURLs(undefined, true, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
   })
 
   it('returns true if the cached value is true (always)', async () => {
+    // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+      cachedUpdateURLs: true,
+    }
+
     // When
-    const got = await shouldUpdateURLs(true, false, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
   })
 
   it('returns false if the cached value is false (never)', async () => {
+    // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+      cachedUpdateURLs: false,
+    }
+
     // When
-    const got = await shouldUpdateURLs(false, false, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(false)
@@ -157,10 +178,14 @@ describe('shouldUpdateURLs', () => {
 
   it('returns true when the user selects always', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
     // When
-    const got = await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
@@ -168,10 +193,14 @@ describe('shouldUpdateURLs', () => {
 
   it('returns true when the user selects yes', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
 
     // When
-    const got = await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
@@ -179,10 +208,14 @@ describe('shouldUpdateURLs', () => {
 
   it('returns false when the user selects never', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'never'})
 
     // When
-    const got = await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(false)
@@ -190,10 +223,14 @@ describe('shouldUpdateURLs', () => {
 
   it('returns false when the user selects no', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
 
     // When
-    const got = await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    const got = await shouldUpdateURLs(options)
 
     // Then
     expect(got).toEqual(false)
@@ -201,10 +238,14 @@ describe('shouldUpdateURLs', () => {
 
   it('saves the response for the next time', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
     // When
-    await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    await shouldUpdateURLs(options)
 
     // Then
     expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
@@ -215,11 +256,15 @@ describe('shouldUpdateURLs', () => {
 
   it('shows the current URLs', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     const outputMock = outputMocker.mockAndCaptureOutput()
     vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
 
     // When
-    await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    await shouldUpdateURLs(options)
 
     // Then
     expect(outputMock.output()).toMatch(/example.com\/home/)
@@ -228,11 +273,15 @@ describe('shouldUpdateURLs', () => {
 
   it('shows a reminder when choosing always/never', async () => {
     // Given
+    const options = {
+      currentURLs,
+      app: LOCAL_APP,
+    }
     const outputMock = outputMocker.mockAndCaptureOutput()
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
     // When
-    await shouldUpdateURLs(undefined, false, currentURLs, LOCAL_APP)
+    await shouldUpdateURLs(options)
 
     // Then
     expect(outputMock.output()).toMatch(/You won't be asked again/)

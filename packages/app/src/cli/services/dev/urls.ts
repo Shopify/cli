@@ -44,18 +44,20 @@ export async function getURLs(apiKey: string, token: string): Promise<PartnersUR
   return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
 }
 
-export async function shouldUpdateURLs(
-  cachedUpdateURLs: boolean | undefined,
-  newApp: boolean | undefined,
-  currentURLs: PartnersURLs,
-  app: AppInterface,
-): Promise<boolean> {
-  if (newApp) return true
-  let shouldUpdate: boolean = cachedUpdateURLs === true
-  if (cachedUpdateURLs === undefined) {
-    output.info(`\nYour app's URL currently is:\n  ${currentURLs.applicationUrl}`)
+export interface ShouldUpdateURLsOptions {
+  currentURLs: PartnersURLs
+  app: AppInterface
+  cachedUpdateURLs?: boolean
+  newApp?: boolean
+}
+
+export async function shouldUpdateURLs(options: ShouldUpdateURLsOptions): Promise<boolean> {
+  if (options.newApp) return true
+  let shouldUpdate: boolean = options.cachedUpdateURLs === true
+  if (options.cachedUpdateURLs === undefined) {
+    output.info(`\nYour app's URL currently is:\n  ${options.currentURLs.applicationUrl}`)
     output.info(`\nYour app's redirect URLs currently are:`)
-    currentURLs.redirectUrlWhitelist.forEach((url) => output.info(`  ${url}`))
+    options.currentURLs.redirectUrlWhitelist.forEach((url) => output.info(`  ${url}`))
     output.newline()
     const response = await updateURLsPrompt()
     let newUpdateURLs: boolean | undefined
@@ -74,14 +76,14 @@ export async function shouldUpdateURLs(
     if (newUpdateURLs !== undefined) {
       output.info(
         output.content`You won't be asked again. To reset this setting, run ${output.token.packagejsonScript(
-          app.packageManager,
+          options.app.packageManager,
           'dev',
           '--reset',
         )}\n`,
       )
     }
     /* eslint-enable no-fallthrough */
-    store.cliKitStore().setAppInfo({directory: app.directory, updateURLs: newUpdateURLs})
+    store.cliKitStore().setAppInfo({directory: options.app.directory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
 }

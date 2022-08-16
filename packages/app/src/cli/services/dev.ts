@@ -76,7 +76,12 @@ async function dev(options: DevOptions) {
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
-    const shouldUpdate: boolean = await shouldUpdateURLs(cachedUpdateURLs, app.newApp, currentURLs, options.app)
+    const shouldUpdate: boolean = await shouldUpdateURLs({
+      currentURLs,
+      app: options.app,
+      cachedUpdateURLs,
+      newApp: app.newApp,
+    })
     if (shouldUpdate) await updateURLs(newURLs, apiKey, token)
     outputUpdateURLsResult(shouldUpdate, newURLs, app)
     outputAppURL(storeFqdn, exposedUrl)
