@@ -8,11 +8,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "node bin/build.js",
+    "build": "yarn --cwd ../.. nx run ui-extensions-go-cli:build",
+    "build:nx": "node bin/build.js",
     "clean": "cd .",
     "start": "cd packages/dev-console-app; yarn start",
     "test": "yarn --cwd ../.. nx run ui-extensions-go-cli:test",
-    "test:nx": "node bin/test.js",
+    "test:nx": "go test ./...",
     "package": "yarn --cwd ../.. nx run ui-extensions-go-cli:package",
     "package:nx": "node bin/package.js",
     "lint": "gofmt -s .",
