@@ -16,8 +16,6 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'order_discount'
     case 'shipping_discounts':
       return 'shipping_discount'
-    case 'payment_methods':
-      return 'payment_customization'
     case 'shipping_rate_presenter':
       return 'delivery_option_presenter'
     case 'product_subscription':
@@ -70,8 +68,6 @@ export function mapExternalExtensionTypeToExtensionType(
       return 'order_discounts'
     case 'shipping_discount':
       return 'shipping_discounts'
-    case 'payment_customization':
-      return 'payment_methods'
     case 'delivery_option_presenter':
       return 'shipping_rate_presenter'
     case 'subscription_ui':

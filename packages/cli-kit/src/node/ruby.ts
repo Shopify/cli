@@ -1,7 +1,7 @@
 import * as file from '../file.js'
 import * as ui from '../ui.js'
 import * as system from '../system.js'
-import {Abort} from '../error.js'
+import {Abort, AbortSilent} from '../error.js'
 import {glob, join} from '../path.js'
 import constants from '../constants.js'
 import {coerce} from '../semver.js'
@@ -44,11 +44,16 @@ export async function execCLI2(args: string[], {adminSession, storefrontToken, d
     BUNDLE_GEMFILE: join(shopifyCLIDirectory(), 'Gemfile'),
   }
 
-  await system.exec('bundle', ['exec', 'shopify'].concat(args), {
-    stdio: 'inherit',
-    cwd: directory ?? process.cwd(),
-    env,
-  })
+  try {
+    await system.exec('bundle', ['exec', 'shopify'].concat(args), {
+      stdio: 'inherit',
+      cwd: directory ?? process.cwd(),
+      env,
+    })
+  } catch (error) {
+    // CLI2 will show it's own errors, we don't need to show an additional CLI3 error
+    throw new AbortSilent()
+  }
 }
 
 interface ExecThemeCheckCLIOptions {

@@ -46,7 +46,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   await keypress()
 
   url = `${url}?${new URLSearchParams(params).toString()}`
-  open(url)
+  await open(url)
 
   const result = await listenRedirect(host, port, url)
 

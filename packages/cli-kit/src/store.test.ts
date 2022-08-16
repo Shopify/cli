@@ -6,8 +6,8 @@ const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/ap
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
 
 describe('getAppInfo', () => {
-  it('returns cached info if existss', () => {
-    temporaryTestStore(async (localConf) => {
+  it('returns cached info if existss', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
@@ -19,8 +19,8 @@ describe('getAppInfo', () => {
     })
   })
 
-  it('returns undefined if it does not exists', () => {
-    temporaryTestStore(async (localConf) => {
+  it('returns undefined if it does not exists', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
@@ -34,8 +34,8 @@ describe('getAppInfo', () => {
 })
 
 describe('setAppInfo', () => {
-  it('updates cached info if exists', () => {
-    temporaryTestStore(async (localConf) => {
+  it('updates cached info if exists', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
@@ -53,8 +53,8 @@ describe('setAppInfo', () => {
     })
   })
 
-  it('creates new info if it does not exists', () => {
-    temporaryTestStore(async (localConf) => {
+  it('creates new info if it does not exists', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1])
 
@@ -69,8 +69,8 @@ describe('setAppInfo', () => {
 })
 
 describe('clearAppInfo', () => {
-  it('removes cached info if exists', () => {
-    temporaryTestStore(async (localConf) => {
+  it('removes cached info if exists', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('appInfo', [APP1, APP2])
 
@@ -85,8 +85,8 @@ describe('clearAppInfo', () => {
 })
 
 describe('getSession', () => {
-  it('returns the content of the SessionStore key', () => {
-    temporaryTestStore(async (localConf) => {
+  it('returns the content of the SessionStore key', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
@@ -100,8 +100,8 @@ describe('getSession', () => {
 })
 
 describe('setSession', () => {
-  it('saves the desired content in the SessionStore key', () => {
-    temporaryTestStore(async (localConf) => {
+  it('saves the desired content in the SessionStore key', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 
@@ -115,8 +115,8 @@ describe('setSession', () => {
 })
 
 describe('removeSession', () => {
-  it('removes the SessionStore key', () => {
-    temporaryTestStore(async (localConf) => {
+  it('removes the SessionStore key', async () => {
+    await temporaryTestStore(async (localConf) => {
       // Given
       localConf.set('sessionStore', 'my-session')
 

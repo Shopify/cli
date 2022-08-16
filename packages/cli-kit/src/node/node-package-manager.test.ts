@@ -43,12 +43,23 @@ describe('packageManagerUsedForCreating', () => {
     expect(got).toBe('pnpm')
   })
 
-  it('returns npm when the package manager cannot be detected', () => {
+  it('returns npm if the npm_config_user_agent variable contains npm', () => {
+    // Given
+    const env = {npm_config_user_agent: 'npm'}
+
+    // When
+    const got = packageManagerUsedForCreating(env)
+
+    // Then
+    expect(got).toBe('npm')
+  })
+
+  it('returns unknown when the package manager cannot be detected', () => {
     // When
     const got = packageManagerUsedForCreating({})
 
     // Then
-    expect(got).toBe('npm')
+    expect(got).toBe('unknown')
   })
 })
 
