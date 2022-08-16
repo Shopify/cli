@@ -1,6 +1,7 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
   "version": "3.7.1",
+  "private": true,
   "main": "index.js",
   "module": "index.mjs",
   "types": "index.d.ts",
