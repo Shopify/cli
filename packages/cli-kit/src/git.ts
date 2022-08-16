@@ -1,4 +1,4 @@
-import {path} from '.'
+import {parse} from './path.js'
 import {Abort} from './error.js'
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {content, token, debug} from './output.js'
@@ -92,7 +92,7 @@ export async function getRemoteRepository() {
   if (remoteUrl.value) {
     try {
       const urlObj = new URL(remoteUrl.value)
-      const parsedPath = path.parse(urlObj.pathname)
+      const parsedPath = parse(urlObj.pathname)
       const repository = `${parsedPath.dir}/${parsedPath.name}`
       return repository.charAt(0) === '/' ? repository.substring(1) : repository
     } catch {
