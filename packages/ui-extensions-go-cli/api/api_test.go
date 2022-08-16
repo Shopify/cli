@@ -426,12 +426,14 @@ func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
 }
 
 func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
-	// FIXME;
-	return
-
 	api := New(config)
 	server := httptest.NewServer(api)
 	first_connection, err := createWebsocket(server)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	second_connection, err := createWebsocket(server)
 
 	if err != nil {
@@ -472,12 +474,14 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 }
 
 func TestWebsocketConnectionClientClose(t *testing.T) {
-	// FIXME
-	return
-
 	api := New(config)
 	server := httptest.NewServer(api)
 	first_connection, err := createWebsocket(server)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	second_connection, err := createWebsocket(server)
 
 	if err != nil {
