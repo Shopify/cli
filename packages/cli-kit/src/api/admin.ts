@@ -3,8 +3,8 @@ import {AdminSession} from '../session.js'
 import {debug, content, token as outputToken} from '../output.js'
 import {Bug, Abort} from '../error.js'
 import {graphqlClient} from '../http/graphql.js'
+import {ResultAsync} from '../typing/result/result-async.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
-import {ResultAsync} from 'neverthrow'
 
 const UnauthorizedAccessError = (store: string) => {
   const adminLink = outputToken.link(`URL`, `https://${store}/admin`)

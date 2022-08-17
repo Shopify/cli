@@ -1,7 +1,7 @@
 import {createExtension} from './create-extension.js'
 import {api} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {okAsync} from 'neverthrow'
+import {okAsync} from '@shopify/cli-kit/src/typing/result/result-async.js'
 
 const EXTENSION = {
   id: '1',

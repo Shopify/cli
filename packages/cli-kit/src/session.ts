@@ -1,5 +1,5 @@
 import {applicationId} from './session/identity.js'
-import {Abort, Bug, ManagedError} from './error.js'
+import {Abort, ApiError, Bug} from './error.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {identity as identityFqdn} from './environment/fqdn.js'
@@ -209,9 +209,9 @@ export async function hasPartnerAccount(partnersToken: string): Promise<boolean>
   return checkOrganization(partnersToken, checkPartnerAccountNotFoundError)
 }
 
-function checkPartnerAccountNotFoundError(error: ManagedError) {
-  if (error.type === 'ApiError') {
-    return error.status === 404
+function checkPartnerAccountNotFoundError(error: Error): boolean {
+  if (error instanceof ApiError) {
+    return (error as ApiError).statusCode === 404
   }
   return false
 }

@@ -2,7 +2,7 @@ import {updateURLs, generateURL} from './urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
-import {okAsync} from 'neverthrow'
+import {okAsync} from '@shopify/cli-kit/src/typing/result/result-async.js'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {

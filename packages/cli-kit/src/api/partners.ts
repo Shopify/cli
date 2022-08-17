@@ -4,10 +4,10 @@ import {CheckOrganizationQuerySchema, CheckOrganizationsQuery} from './graphql/c
 import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
 import {ApiError} from '../error.js'
+import {ResultAsync} from '../typing/result/result-async.js'
 import {Variables, RequestDocument} from 'graphql-request'
-import {ResultAsync} from 'neverthrow'
 
-export function request<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, unknown> {
+export function request<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, Error> {
   const api = 'Partners'
   return handlingErrors(api, async () => {
     const fqdn = await partnersFqdn()
@@ -24,8 +24,8 @@ export function request<T>(query: RequestDocument, token: string, variables?: Va
   })
 }
 
-export async function checkOrganization(token: string, errorHandler: (error: unknown) => boolean): Promise<boolean> {
-  return request<CheckOrganizationQuerySchema>(CheckOrganizationsQuery, token).match(true, errorHandler)
+export async function checkOrganization(token: string, errorHandler: (error: Error) => boolean): Promise<boolean> {
+  return request<CheckOrganizationQuerySchema>(CheckOrganizationsQuery, token).match(() => true, errorHandler)
 }
 
 /**
@@ -37,7 +37,7 @@ export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
   return checkOrganization(token, checkTokenErrorHandler)
 }
 
-function checkTokenErrorHandler(error: unknown): boolean {
+function checkTokenErrorHandler(error: Error): boolean {
   if (error instanceof ApiError) {
     return (error as ApiError).statusCode === 401
   }

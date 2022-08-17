@@ -1,6 +1,6 @@
 import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {api, error, session} from '@shopify/cli-kit'
-import {ResultAsync} from 'neverthrow'
+import {ResultAsync} from '@shopify/cli-kit/src/typing/result/result-async.js'
 import {unwrapOrThrow} from '@shopify/cli-kit/src/api/common.js'
 
 const NoProductsError = (storeFqdn: string) => {

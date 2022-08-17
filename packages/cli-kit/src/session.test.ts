@@ -22,8 +22,8 @@ import {partners} from './api.js'
 
 import {identity} from './environment/fqdn.js'
 import {authorize} from './session/authorize.js'
+import {okAsync} from './typing/result/result-async.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
-import {okAsync} from 'neverthrow'
 
 const futureDate = new Date(2022, 1, 1, 11)
 

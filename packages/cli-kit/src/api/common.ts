@@ -2,8 +2,8 @@ import {firstPartyDev} from '../environment/local.js'
 import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
 import {Abort, ApiError} from '../error.js'
+import {fromPromise, ResultAsync} from '../typing/result/result-async.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
-import {fromPromise, ResultAsync} from 'neverthrow'
 import {randomUUID} from 'crypto'
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -71,7 +71,7 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, unknown> {
+export function handlingErrors<T>(api: string, action: () => Promise<T>): ResultAsync<T, Error> {
   return fromPromise(action(), (error) => {
     if (error instanceof ClientError) {
       const errorMessage = stringifyMessage(content`
@@ -86,8 +86,10 @@ export function handlingErrors<T>(api: string, action: () => Promise<T>): Result
       } else {
         return new Abort(errorMessage)
       }
+    } else if (typeof error === 'string' && (error as string).trim().length !== 0) {
+      return new Error(error)
     } else {
-      return error
+      return new Error('Unknown error')
     }
   })
 }

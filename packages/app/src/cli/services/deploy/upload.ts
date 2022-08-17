@@ -5,7 +5,7 @@ import {blocks, getFunctionExtensionPointName} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import {unwrapOrThrow} from '@shopify/cli-kit/src/api/common.js'
-import {errAsync, okAsync, ResultAsync} from 'neverthrow'
+import {errAsync, okAsync, ResultAsync} from '@shopify/cli-kit/src/typing/result/result-async.js'
 import fs from 'fs'
 
 interface DeployThemeExtensionOptions {
