@@ -1,25 +1,7 @@
 import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs} from './urls.js'
-import {AppInterface, WebType} from '../../models/app/app.js'
-import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error, outputMocker, store, ui} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
-
-const LOCAL_APP: AppInterface = testApp({
-  directory: '',
-  configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products'},
-  webs: [
-    {
-      directory: '',
-      configuration: {
-        type: WebType.Backend,
-        commands: {dev: ''},
-      },
-    },
-  ],
-  name: 'my-app',
-})
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -135,7 +117,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
       newApp: true,
     }
 
@@ -150,7 +132,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
       cachedUpdateURLs: true,
     }
 
@@ -165,7 +147,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
       cachedUpdateURLs: false,
     }
 
@@ -180,7 +162,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
     }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
@@ -195,7 +177,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
     }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
 
@@ -210,7 +192,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
     }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'never'})
 
@@ -225,7 +207,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
     }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
 
@@ -240,7 +222,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
     }
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
@@ -249,7 +231,7 @@ describe('shouldOrPromptUpdateURLs', () => {
 
     // Then
     expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
-      directory: LOCAL_APP.directory,
+      directory: '/path',
       updateURLs: true,
     })
   })
@@ -258,7 +240,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Given
     const options = {
       currentURLs,
-      app: LOCAL_APP,
+      appDirectory: '/path',
     }
     const outputMock = outputMocker.mockAndCaptureOutput()
     vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
@@ -269,21 +251,5 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(outputMock.output()).toMatch(/example.com\/home/)
     expect(outputMock.output()).toMatch(/example.com\/auth\/callback/)
-  })
-
-  it('shows a reminder when choosing always/never', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      app: LOCAL_APP,
-    }
-    const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
-
-    // When
-    await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(outputMock.output()).toMatch(/You won't be asked again/)
   })
 })

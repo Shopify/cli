@@ -115,7 +115,7 @@ class AppInfo {
       ['App', appName],
       ['Dev store', storeDescription],
       ['API key', apiKey],
-      ['Automatic URL updates', updateURLs],
+      ['Update URLs', updateURLs],
     ]
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }

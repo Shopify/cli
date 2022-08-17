@@ -66,7 +66,7 @@ describe('info', () => {
     expect(output.unstyled(result)).toMatch(/App\s*My App/)
     expect(output.unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
     expect(output.unstyled(result)).toMatch(/API key\s*123/)
-    expect(output.unstyled(result)).toMatch(/Automatic URL updates\s*Always/)
+    expect(output.unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 
   it('returns empty configs for dev when not present', async () => {
@@ -80,7 +80,7 @@ describe('info', () => {
     expect(output.unstyled(result)).toMatch(/App\s*Not yet configured/)
     expect(output.unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
     expect(output.unstyled(result)).toMatch(/API key\s*Not yet configured/)
-    expect(output.unstyled(result)).toMatch(/Automatic URL updates\s*Not yet configured/)
+    expect(output.unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
   })
 
   it('returns update shopify cli reminder when last version lower or equals to current version', async () => {

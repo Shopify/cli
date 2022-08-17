@@ -1,5 +1,4 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppInterface} from '../../models/app/app.js'
 import {api, error, output, plugins, store} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
@@ -46,7 +45,7 @@ export async function getURLs(apiKey: string, token: string): Promise<PartnersUR
 
 export interface ShouldOrPromptUpdateURLsOptions {
   currentURLs: PartnersURLs
-  app: AppInterface
+  appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
 }
@@ -73,17 +72,8 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       case 'no':
         shouldUpdate = false
     }
-    if (newUpdateURLs !== undefined) {
-      output.info(
-        output.content`You won't be asked again. To reset this setting, run ${output.token.packagejsonScript(
-          options.app.packageManager,
-          'dev',
-          '--reset',
-        )}\n`,
-      )
-    }
     /* eslint-enable no-fallthrough */
-    store.cliKitStore().setAppInfo({directory: options.app.directory, updateURLs: newUpdateURLs})
+    store.cliKitStore().setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
 }

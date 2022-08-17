@@ -78,7 +78,7 @@ async function dev(options: DevOptions) {
     const newURLs = generatePartnersURLs(exposedUrl)
     const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
       currentURLs,
-      app: options.app,
+      appDirectory: options.app.directory,
       cachedUpdateURLs,
       newApp: app.newApp,
     })
