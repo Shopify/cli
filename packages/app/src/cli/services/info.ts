@@ -34,12 +34,13 @@ export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Pr
 
 export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
   const token = await session.ensureAuthenticatedPartners()
+  const cachedInfo = store.cliKitStore().getAppInfo(app.directory)
 
   const orgs = await fetchOrganizations(token)
-  const org = await selectOrganizationPrompt(orgs)
-  const {organization, apps} = await fetchOrgAndApps(org.id, token)
+  const orgId = cachedInfo?.orgId ?? (await selectOrganizationPrompt(orgs)).id
+  const {organization, apps} = await fetchOrgAndApps(orgId, token)
 
-  const selectedApp = await selectOrCreateApp(app, apps, organization, token)
+  const selectedApp = await selectOrCreateApp(app, apps, organization, token, cachedInfo?.appId)
 
   if (format === 'json') {
     return output.content`${output.token.json({

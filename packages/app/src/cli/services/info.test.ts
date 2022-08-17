@@ -1,5 +1,5 @@
 import {info} from './info.js'
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
@@ -20,14 +20,17 @@ beforeEach(async () => {
         ensureAuthenticatedPartners: vi.fn(),
       },
       store: {
-        cliKitStore: () => ({
-          getAppInfo: (): store.CachedAppInfo | undefined => undefined,
-        }),
+        cliKitStore: vi.fn(),
       },
     }
   })
+  vi.mocked(store.cliKitStore).mockReturnValue({
+    getAppInfo: vi.fn(),
+  } as any)
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
+
+const CACHED: store.CachedAppInfo = {appId: 'cached-app-key', orgId: '123', storeFqdn: 'domain1', directory: '/cached'}
 
 describe('info', () => {
   it('returns update shopify cli reminder when last version is greater than current version', async () => {
@@ -56,8 +59,9 @@ describe('info', () => {
     expect(output.unstyled(result)).not.toMatch('CLI reminder')
   })
 
-  it('returns the web environment as a text when webEnv is true', async () => {
+  it('returns the web environment as a text when webEnv is true, with cached state', async () => {
     // Given
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(CACHED)
     const app = mockApp()
     const token = 'token'
     const organization = {
@@ -67,15 +71,59 @@ describe('info', () => {
       website: '',
       apps: {nodes: []},
     }
-    const apiKey = 'api-key'
-    const apiSecret = 'api-secret'
     const organizationApp = {
       id: '123',
       title: 'Test app',
       appType: 'custom',
-      apiSecretKeys: [{secret: apiSecret}],
+      apiSecretKeys: [{secret: 'api-secret'}],
       organizationId: '1',
-      apiKey,
+      apiKey: 'cached-api-key',
+    }
+    vi.mocked(selectOrCreateApp).mockRestore()
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(organizationApp)
+    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
+    vi.mocked(fetchOrgAndApps).mockResolvedValue({
+      organization,
+      stores: [],
+      apps: [organizationApp],
+    })
+    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+
+    // When
+    const result = await info(app, {format: 'text', webEnv: true})
+
+    // Then
+    expect(selectOrganizationPrompt).not.toBeCalled()
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [organizationApp], organization, 'token', CACHED.appId)
+    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      "
+      Use these environment variables to set up your deployment pipeline for this app:
+        · SHOPIFY_API_KEY: cached-api-key
+        · SHOPIFY_API_SECRET: api-secret
+        · SCOPES: my-scope
+          "
+    `)
+  })
+
+  it('returns the web environment as a text when webEnv is true, without cached state', async () => {
+    // Given
+    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(undefined)
+    const app = mockApp()
+    const token = 'token'
+    const organization = {
+      id: '123',
+      appsNext: false,
+      businessName: 'test',
+      website: '',
+      apps: {nodes: []},
+    }
+    const organizationApp = {
+      id: '123',
+      title: 'Test app',
+      appType: 'custom',
+      apiSecretKeys: [{secret: 'api-secret'}],
+      organizationId: '1',
+      apiKey: 'api-key',
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
