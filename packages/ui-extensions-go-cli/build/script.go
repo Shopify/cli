@@ -11,7 +11,7 @@ var (
 )
 
 func nodeExecutableScript(dir, nodeExecutable string, script string, args ...string) *exec.Cmd {
-	cmd := Command(nodeExecutable, append([]string{script}, args...)...)
+	cmd := Command("node", append([]string{nodeExecutable, script}, args...)...)
 	cmd.Dir = dir
 	return cmd
 }
