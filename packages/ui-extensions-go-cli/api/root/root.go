@@ -76,8 +76,8 @@ func (root *RootHandler) getTunnelError(templateData *extensionHtmlTemplateData)
 }
 
 func (root *RootHandler) getTunnelErrorContent(templateData *extensionHtmlTemplateData) (*bytes.Buffer, error) {
-	specificTemplatePath := filepath.Join(templateData.Type, "tunnel-error.html.tpl")
-	globalTemplatePath := filepath.Join("tunnel-error.html.tpl")
+	specificTemplatePath := path.Join(templateData.Type, "tunnel-error.html.tpl")
+	globalTemplatePath := path.Join("tunnel-error.html.tpl")
 
 	if !root.FileExists(specificTemplatePath) {
 		return root.MergeTemplateData(templateData, globalTemplatePath)
@@ -86,7 +86,7 @@ func (root *RootHandler) getTunnelErrorContent(templateData *extensionHtmlTempla
 }
 
 func (root *RootHandler) getIndexContent(templateData *extensionHtmlTemplateData) (*bytes.Buffer, error) {
-	specificTemplatePath := filepath.Join(templateData.Type, "index.html.tpl")
+	specificTemplatePath := path.Join(templateData.Type, "index.html.tpl")
 	return root.MergeTemplateData(templateData, specificTemplatePath)
 }
 
