@@ -30,17 +30,12 @@ export async function createExtension(
     config: JSON.stringify({}),
     context: null,
   }
-  return api.partners.request<api.graphql.ExtensionCreateSchema>(query, token, variables).match(
-    (result) => {
-      if (result.extensionCreate.userErrors?.length > 0) {
-        const errors = result.extensionCreate.userErrors.map((error) => error.message).join(', ')
-        throw new error.Abort(errors)
-      }
+  const result: api.graphql.ExtensionCreateSchema = await api.partners.request(query, token, variables)
 
-      return result.extensionCreate.extensionRegistration
-    },
-    (error) => {
-      throw error
-    },
-  )
+  if (result.extensionCreate.userErrors?.length > 0) {
+    const errors = result.extensionCreate.userErrors.map((error) => error.message).join(', ')
+    throw new error.Abort(errors)
+  }
+
+  return result.extensionCreate.extensionRegistration
 }

@@ -40,16 +40,10 @@ export async function fetchAppExtensionRegistrations({
   apiKey: string
 }): Promise<api.graphql.AllAppExtensionRegistrationsQuerySchema> {
   const query = api.graphql.AllAppExtensionRegistrationsQuery
-  return api.partners
-    .request<api.graphql.AllAppExtensionRegistrationsQuerySchema>(query, token, {
-      apiKey,
-    })
-    .match(
-      (result) => result,
-      (err) => {
-        throw err
-      },
-    )
+  const result: api.graphql.AllAppExtensionRegistrationsQuerySchema = await api.partners.request(query, token, {
+    apiKey,
+  })
+  return result
 }
 
 /**
@@ -60,16 +54,10 @@ export async function fetchAppExtensionRegistrations({
  */
 export async function fetchOrganizations(token: string) {
   const query = api.graphql.AllOrganizationsQuery
-  return api.partners.request<api.graphql.AllOrganizationsQuerySchema>(query, token).match(
-    (result) => {
-      const organizations = result.organizations.nodes
-      if (organizations.length === 0) throw NoOrgError()
-      return organizations
-    },
-    (error) => {
-      throw error
-    },
-  )
+  const result: api.graphql.AllOrganizationsQuerySchema = await api.partners.request(query, token)
+  const organizations = result.organizations.nodes
+  if (organizations.length === 0) throw NoOrgError()
+  return organizations
 }
 
 /**
@@ -80,46 +68,28 @@ export async function fetchOrganizations(token: string) {
  */
 export async function fetchOrgAndApps(orgId: string, token: string): Promise<FetchResponse> {
   const query = api.graphql.FindOrganizationQuery
-  return api.partners.request<api.graphql.FindOrganizationQuerySchema>(query, token, {id: orgId}).match(
-    (result) => {
-      const org = result.organizations.nodes[0]
-      if (!org) throw NoOrgError(orgId)
-      const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
-      return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
-    },
-    (error) => {
-      throw error
-    },
-  )
+  const result: api.graphql.FindOrganizationQuerySchema = await api.partners.request(query, token, {id: orgId})
+  const org = result.organizations.nodes[0]
+  if (!org) throw NoOrgError(orgId)
+  const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
+  return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
 }
 
 export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
-  return api.partners.request<api.graphql.FindAppQuerySchema>(api.graphql.FindAppQuery, token, {apiKey}).match(
-    (result) => result.app,
-    (error) => {
-      throw error
-    },
-  )
+  const res: api.graphql.FindAppQuerySchema = await api.partners.request(api.graphql.FindAppQuery, token, {apiKey})
+  return res.app
 }
 
 export async function fetchOrgFromId(id: string, token: string): Promise<Organization | undefined> {
   const query = api.graphql.FindOrganizationBasicQuery
-  return api.partners.request<api.graphql.FindOrganizationBasicQuerySchema>(query, token, {id}).match(
-    (result) => result.organizations.nodes[0],
-    (error) => {
-      throw error
-    },
-  )
+  const res: api.graphql.FindOrganizationBasicQuerySchema = await api.partners.request(query, token, {id})
+  return res.organizations.nodes[0]
 }
 
 export async function fetchAllStores(orgId: string, token: string): Promise<OrganizationStore[]> {
   const query = api.graphql.AllStoresByOrganizationQuery
-  return api.partners.request<api.graphql.AllStoresByOrganizationSchema>(query, token, {id: orgId}).match(
-    (result) => result.organizations.nodes[0].stores.nodes,
-    (error) => {
-      throw error
-    },
-  )
+  const result: api.graphql.AllStoresByOrganizationSchema = await api.partners.request(query, token, {id: orgId})
+  return result.organizations.nodes[0].stores.nodes
 }
 
 interface FetchStoreByDomainOutput {
@@ -140,25 +110,17 @@ export async function fetchStoreByDomain(
   shopDomain: string,
 ): Promise<FetchStoreByDomainOutput | undefined> {
   const query = api.graphql.FindStoreByDomainQuery
-  return api.partners
-    .request<api.graphql.FindStoreByDomainSchema>(query, token, {
-      id: orgId,
-      shopDomain,
-    })
-    .match(
-      (result) => {
-        const org = result.organizations.nodes[0]
-        if (!org) {
-          return undefined
-        }
+  const result: api.graphql.FindStoreByDomainSchema = await api.partners.request(query, token, {
+    id: orgId,
+    shopDomain,
+  })
+  const org = result.organizations.nodes[0]
+  if (!org) {
+    return undefined
+  }
 
-        const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
-        const store = org.stores.nodes[0]
+  const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
+  const store = org.stores.nodes[0]
 
-        return {organization: parsedOrg, store}
-      },
-      (error) => {
-        throw error
-      },
-    )
+  return {organization: parsedOrg, store}
 }

@@ -17,15 +17,9 @@ export async function updateURLs(apiKey: string, url: string, token: string): Pr
   }
 
   const query = api.graphql.UpdateURLsQuery
-  return api.partners.request<api.graphql.UpdateURLsQuerySchema>(query, token, variables).match(
-    (result) => {
-      if (result.appUpdate.userErrors.length > 0) {
-        const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
-        throw new error.Abort(errors)
-      }
-    },
-    (error) => {
-      throw error
-    },
-  )
+  const result: api.graphql.UpdateURLsQuerySchema = await api.partners.request(query, token, variables)
+  if (result.appUpdate.userErrors.length > 0) {
+    const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
+    throw new error.Abort(errors)
+  }
 }

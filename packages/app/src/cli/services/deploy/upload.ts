@@ -3,9 +3,6 @@ import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.j
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {blocks, getFunctionExtensionPointName} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
-
-import {unwrapOrThrow} from '@shopify/cli-kit/src/api/common.js'
-import {errAsync, okAsync, ResultAsync} from '@shopify/cli-kit/src/typing/result/result-async.js'
 import fs from 'fs'
 
 interface DeployThemeExtensionOptions {
@@ -40,22 +37,14 @@ export async function uploadThemeExtensions(
         registrationId: themeId,
       }
       const mutation = api.graphql.ExtensionUpdateDraftMutation
-      unwrapOrThrow(
-        api.partners
-          .request<api.graphql.ExtensionUpdateSchema>(mutation, token, themeExtensionInput)
-          .map(mapExtensionUpdateSchema),
-      )
+      const result: api.graphql.ExtensionUpdateSchema = await api.partners.request(mutation, token, themeExtensionInput)
+      if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+        const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+        throw new error.Abort(errors)
+      }
     }),
   )
 }
-
-function mapExtensionUpdateSchema(schema: api.graphql.ExtensionUpdateSchema) {
-  if (schema.extensionUpdateDraft?.userErrors?.length > 0) {
-    const errors = schema.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
-  }
-}
-
 interface UploadUIExtensionsBundleOptions {
   /** The application API key */
   apiKey: string
@@ -105,20 +94,14 @@ export async function uploadUIExtensionsBundle(
   }
 
   const mutation = api.graphql.CreateDeployment
-  return unwrapOrThrow(
-    api.partners
-      .request<api.graphql.CreateDeploymentSchema>(mutation, options.token, variables)
-      .map(mapCreateDeploymentSchema),
-  )
-}
+  const result: api.graphql.CreateDeploymentSchema = await api.partners.request(mutation, options.token, variables)
 
-function mapCreateDeploymentSchema(schema: api.graphql.CreateDeploymentSchema) {
-  if (schema.deploymentCreate?.userErrors?.length > 0) {
-    const errors = schema.deploymentCreate.userErrors.map((error) => error.message).join(', ')
+  if (result.deploymentCreate?.userErrors?.length > 0) {
+    const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
   }
 
-  const validationErrors = schema.deploymentCreate.deployment.deployedVersions
+  const validationErrors = result.deploymentCreate.deployment.deployedVersions
     .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
     .map((ver) => {
       return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
@@ -141,21 +124,13 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
     bundleFormat: 1,
   }
 
-  return unwrapOrThrow(
-    api.partners
-      .request<api.graphql.GenerateSignedUploadUrlSchema>(mutation, token, variables)
-      .andThen(mapGenerateSignedUploadUrlSchema),
-  )
-}
-function mapGenerateSignedUploadUrlSchema(
-  schema: api.graphql.GenerateSignedUploadUrlSchema,
-): ResultAsync<string, Error> {
-  if (schema.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
-    const errors = schema.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
-    return errAsync(new error.Abort(errors))
+  const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.request(mutation, token, variables)
+  if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
+    const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
+    throw new error.Abort(errors)
   }
 
-  return okAsync(schema.deploymentGenerateSignedUploadUrl.signedUploadUrl)
+  return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
 }
 
 interface UploadFunctionExtensionsOptions {

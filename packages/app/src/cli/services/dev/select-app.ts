@@ -47,20 +47,14 @@ export async function createApp(org: Organization, app: AppInterface, token: str
   }
 
   const query = api.graphql.CreateAppQuery
-  return api.partners.request<api.graphql.CreateAppQuerySchema>(query, token, variables).match(
-    (result) => {
-      if (result.appCreate.userErrors.length > 0) {
-        const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
-        throw new error.Abort(errors)
-      }
+  const result: api.graphql.CreateAppQuerySchema = await api.partners.request(query, token, variables)
+  if (result.appCreate.userErrors.length > 0) {
+    const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
+    throw new error.Abort(errors)
+  }
 
-      output.success(`${result.appCreate.app.title} has been created on your Partners account`)
-      const createdApp = result.appCreate.app
-      createdApp.organizationId = org.id
-      return createdApp
-    },
-    (error) => {
-      throw error
-    },
-  )
+  output.success(`${result.appCreate.app.title} has been created on your Partners account`)
+  const createdApp = result.appCreate.app
+  createdApp.organizationId = org.id
+  return createdApp
 }
