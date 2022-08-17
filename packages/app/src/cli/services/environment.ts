@@ -89,14 +89,12 @@ export async function ensureDevEnvironment(
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
-    apiKey: options.apiKey ?? store.cliKitStore().getAppInfo(options.app.directory)?.appId,
   })
 
-  const explanation =
-    `\nLooks like this is the first time you're running dev for this project.\n` +
-    'Configure your preferences by answering a few questions.\n'
-
   if (cachedInfo === undefined && !options.reset) {
+    const explanation =
+      `\nLooks like this is the first time you're running dev for this project.\n` +
+      'Configure your preferences by answering a few questions.\n'
     output.info(explanation)
   }
 
@@ -137,7 +135,6 @@ export async function ensureDevEnvironment(
     title: selectedApp.title,
     directory: options.app.directory,
     orgId,
-    newApp: selectedApp.newApp,
   })
 
   // eslint-disable-next-line no-param-reassign
@@ -151,7 +148,6 @@ export async function ensureDevEnvironment(
     appId: selectedApp.apiKey,
     directory: options.app.directory,
     storeFqdn: selectedStore?.shopDomain,
-    newApp: selectedApp.newApp,
   })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
@@ -342,20 +338,10 @@ async function fetchDevDataFromOptions(
  * Retrieve cached info from the global configuration based on the current local app
  * @param reset {boolean} Whether to reset the cache or not
  * @param directory {string} The directory containing the app.
- * @param appId {string} Current local app id, used to retrieve the cached info
  * @returns
  */
-function getAppDevCachedInfo({
-  reset,
-  directory,
-  apiKey,
-}: {
-  reset: boolean
-  directory: string
-  apiKey?: string
-}): store.CachedAppInfo | undefined {
-  if (!apiKey) return undefined
-  if (apiKey && reset) store.cliKitStore().clearAppInfo(directory)
+function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
+  if (reset) store.cliKitStore().clearAppInfo(directory)
   return store.cliKitStore().getAppInfo(directory)
 }
 
