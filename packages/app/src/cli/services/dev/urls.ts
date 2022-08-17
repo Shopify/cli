@@ -44,14 +44,14 @@ export async function getURLs(apiKey: string, token: string): Promise<PartnersUR
   return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
 }
 
-export interface ShouldUpdateURLsOptions {
+export interface ShouldOrPromptUpdateURLsOptions {
   currentURLs: PartnersURLs
   app: AppInterface
   cachedUpdateURLs?: boolean
   newApp?: boolean
 }
 
-export async function shouldUpdateURLs(options: ShouldUpdateURLsOptions): Promise<boolean> {
+export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
   if (options.newApp) return true
   let shouldUpdate: boolean = options.cachedUpdateURLs === true
   if (options.cachedUpdateURLs === undefined) {

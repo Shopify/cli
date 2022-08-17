@@ -1,5 +1,5 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generatePartnersURLs, generateURL, getURLs, shouldUpdateURLs, updateURLs} from './dev/urls.js'
+import {generatePartnersURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
@@ -76,7 +76,7 @@ async function dev(options: DevOptions) {
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
-    const shouldUpdate: boolean = await shouldUpdateURLs({
+    const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
       currentURLs,
       app: options.app,
       cachedUpdateURLs,

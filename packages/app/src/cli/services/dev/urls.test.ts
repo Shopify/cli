@@ -1,4 +1,4 @@
-import {updateURLs, generateURL, getURLs, shouldUpdateURLs} from './urls.js'
+import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs} from './urls.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -119,7 +119,7 @@ describe('getURLs', () => {
   })
 })
 
-describe('shouldUpdateURLs', () => {
+describe('shouldOrPromptUpdateURLs', () => {
   const currentURLs = {
     applicationUrl: 'https://example.com/home',
     redirectUrlWhitelist: ['https://example.com/auth/callback'],
@@ -140,7 +140,7 @@ describe('shouldUpdateURLs', () => {
     }
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
@@ -155,7 +155,7 @@ describe('shouldUpdateURLs', () => {
     }
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
@@ -170,7 +170,7 @@ describe('shouldUpdateURLs', () => {
     }
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(false)
@@ -185,7 +185,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
@@ -200,7 +200,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
@@ -215,7 +215,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'never'})
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(false)
@@ -230,7 +230,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
 
     // When
-    const got = await shouldUpdateURLs(options)
+    const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(false)
@@ -245,7 +245,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
     // When
-    await shouldUpdateURLs(options)
+    await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
@@ -264,7 +264,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
 
     // When
-    await shouldUpdateURLs(options)
+    await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(outputMock.output()).toMatch(/example.com\/home/)
@@ -281,7 +281,7 @@ describe('shouldUpdateURLs', () => {
     vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
 
     // When
-    await shouldUpdateURLs(options)
+    await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(outputMock.output()).toMatch(/You won't be asked again/)
