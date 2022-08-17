@@ -37,7 +37,7 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   return {
     type: 'select',
     name: 'extensionFlavor',
-    message: 'Choose a starting template for your extension',
+    message: 'What would you like to work in?',
     choices,
     default: 'react',
   }

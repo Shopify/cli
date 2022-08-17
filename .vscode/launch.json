@@ -117,6 +117,8 @@
       "options": [
         "vanilla-js",
         "react",
+        "typescript",
+        "typescript-react",
         "wasm",
         "rust"
       ],
