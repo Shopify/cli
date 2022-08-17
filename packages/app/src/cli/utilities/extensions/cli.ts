@@ -27,7 +27,7 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
     stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
     try {
       if (environment.local.isDebugGoBinary()) {
-        await system.exec('sh', [path.join(extensionsGoCliDirectory, `shopify-extensions-debug`)].concat(args), options)
+        await system.exec('sh', [path.join(extensionsGoCliDirectory, 'init-debug-session')].concat(args), options)
       } else {
         const isWindows = platform() === 'win32'
         const extension = isWindows ? '.exe' : ''

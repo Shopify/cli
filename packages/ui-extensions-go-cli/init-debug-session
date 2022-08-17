@@ -28,4 +28,4 @@ while getopts h:p: TIMED 2>/dev/null; do
 done
 
 # NOTE: The $@ is used to pass all the arguments to the script
-dlv exec $HOME/src/github.com/shopify/shopify-cli-extensions/shopify-extensions --headless --listen="$HOST:$PORT" --api-version=2 -- $@
+dlv exec $HOME/src/github.com/shopify/cli/packages/ui-extensions-go-cli/shopify-extensions-debug --headless --listen="$HOST:$PORT" --api-version=2 -- $@

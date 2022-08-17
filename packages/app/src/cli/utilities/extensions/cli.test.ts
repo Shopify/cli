@@ -71,7 +71,7 @@ describe('runGoExtensionsCLI', () => {
     expect(system.exec).toHaveBeenNthCalledWith(
       1,
       'sh',
-      [path.join(extensionsGoCliDirectory, `shopify-extensions-debug`), 'build'],
+      [path.join(extensionsGoCliDirectory, 'init-debug-session'), 'build'],
       {
         stdout,
       },
