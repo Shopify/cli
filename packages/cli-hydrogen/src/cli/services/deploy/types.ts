@@ -16,3 +16,13 @@ export interface DMSError {
   unrecoverable: boolean
   debugInfo: string
 }
+
+export interface UploadDeploymentResponse {
+  data: {
+    uploadDeployment: {
+      deployment: {
+        previewURL: string
+      }
+    }
+  }
+}
