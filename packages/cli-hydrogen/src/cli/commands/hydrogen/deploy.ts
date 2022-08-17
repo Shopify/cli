@@ -1,11 +1,12 @@
 import {hydrogenFlags} from '../../flags.js'
 import {deployToOxygen} from '../../services/deploy.js'
-import {cli} from '@shopify/cli-kit'
+import {output, cli, environment} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 
 export default class Deploy extends Command {
   static description = 'Deploy your Hydrogen app to Oxygen'
+  static hidden = true
 
   // note: we may want to check for the environment variable OXYGEN_DEPLOYMENT_TOKEN as a fallback when
   // we are in a workflow
@@ -36,8 +37,13 @@ export default class Deploy extends Command {
   }
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(Deploy)
+    const isShopify = await environment.local.isShopify()
+    if (!isShopify) {
+      output.warn('Command coming soon...')
+      return
+    }
 
+    const {flags} = await this.parse(Deploy)
     await deployToOxygen(flags)
   }
 }
