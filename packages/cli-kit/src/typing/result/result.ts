@@ -148,6 +148,10 @@ interface IResult<T, E> {
   unwrapOr<A>(v: A): T | A
 
   /**
+   * Unwrap the `Ok` value, or throw an exception if there is an `Err`
+   */
+  unwrapOrThrow(): T
+  /**
    *
    * Given 2 functions (one for the `Ok` variant and one for the `Err` variant)
    * execute the function that matches the `Result` variant.
@@ -229,6 +233,10 @@ export class Ok<T, E> implements IResult<T, E> {
     return this.value
   }
 
+  unwrapOrThrow(): T {
+    return this.value
+  }
+
   match<A>(ok: (t: T) => A, _err: (e: E) => A): A {
     return ok(this.value)
   }
@@ -287,6 +295,16 @@ export class Err<T, E> implements IResult<T, E> {
 
   unwrapOr<A>(v: A): T | A {
     return v
+  }
+
+  unwrapOrThrow(): T {
+    if (this.error instanceof Error) {
+      throw this.error
+    } else if (typeof this.error === 'string' && (this.error as string).trim().length !== 0) {
+      throw new Error(this.error)
+    } else {
+      throw new Error('Unknown error')
+    }
   }
 
   match<A>(_ok: (t: T) => A, err: (e: E) => A): A {

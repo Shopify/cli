@@ -120,6 +120,10 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
     return this._promise.then((res) => res.unwrapOr(t))
   }
 
+  unwrapOrThrow(): Promise<T> {
+    return this._promise.then((res) => res.unwrapOrThrow())
+  }
+
   // Makes ResultAsync implement PromiseLike<Result>
   then<A, B>(
     successCallback?: (res: Result<T, E>) => A | PromiseLike<A>,

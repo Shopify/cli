@@ -6,16 +6,6 @@ import {fromPromise, ResultAsync} from '../typing/result/result-async.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
 import {randomUUID} from 'crypto'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function unwrapOrThrow<T, E>(result: ResultAsync<T, E>): Promise<T> {
-  return result.match(
-    (result) => result,
-    (error) => {
-      throw error
-    },
-  )
-}
-
 export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
   const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
 

@@ -284,6 +284,19 @@ describe('ResultAsync', () => {
     })
   })
 
+  describe('unwrapOrThrow', () => {
+    it('returns a promise to the result value on an Ok', async () => {
+      const unwrapped = await okAsync(12).unwrapOrThrow()
+      await expect(unwrapped).toBe(12)
+    })
+
+    it('throws an exception on an Error', async () => {
+      await expect(errAsync<number, Error>(new Error('Error message')).unwrapOrThrow()).rejects.toThrowError(
+        'Error message',
+      )
+    })
+  })
+
   describe('fromSafePromise', () => {
     it('Creates a ResultAsync from a Promise', async () => {
       const res = ResultAsync.fromSafePromise(Promise.resolve(12))

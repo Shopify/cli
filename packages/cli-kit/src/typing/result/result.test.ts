@@ -103,6 +103,11 @@ describe('Result.Ok', () => {
     expect(okVal.unwrapOr(1)).toEqual(12)
   })
 
+  it('unwrapOrThrow and return the Ok value', () => {
+    const okVal = ok(12)
+    expect(okVal.unwrapOrThrow()).toEqual(12)
+  })
+
   it('Maps to a ResultAsync', async () => {
     const okVal = ok(12)
 
@@ -216,6 +221,13 @@ describe('Result.Err', () => {
   it('unwrapOr and return the default value', () => {
     const okVal = err<number, string>('Oh nooo')
     expect(okVal.unwrapOr(1)).toEqual(1)
+  })
+
+  it('unwrapOrThrow and throw an exception', () => {
+    const okVal = err<number, string>('Oh nooo')
+    expect(() => {
+      okVal.unwrapOrThrow()
+    }).toThrowError('Oh nooo')
   })
 
   it('Skips over andThen', () => {

@@ -7,7 +7,11 @@ import {ApiError} from '../error.js'
 import {ResultAsync} from '../typing/result/result-async.js'
 import {Variables, RequestDocument} from 'graphql-request'
 
-export function request<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, Error> {
+export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
+  return requestManaged<T>(query, token, variables).unwrapOrThrow()
+}
+
+export function requestManaged<T>(query: RequestDocument, token: string, variables?: Variables): ResultAsync<T, Error> {
   const api = 'Partners'
   return handlingErrors(api, async () => {
     const fqdn = await partnersFqdn()
@@ -24,8 +28,15 @@ export function request<T>(query: RequestDocument, token: string, variables?: Va
   })
 }
 
-export async function checkOrganization(token: string, errorHandler: (error: Error) => boolean): Promise<boolean> {
-  return request<CheckOrganizationQuerySchema>(CheckOrganizationsQuery, token).match(() => true, errorHandler)
+export async function checkOrganization(
+  token: string,
+  errorHandler: (error: Error) => boolean,
+  returnValueIfExists = true,
+): Promise<boolean> {
+  return requestManaged<CheckOrganizationQuerySchema>(CheckOrganizationsQuery, token).match(
+    () => returnValueIfExists,
+    errorHandler,
+  )
 }
 
 /**
@@ -34,7 +45,7 @@ export async function checkOrganization(token: string, errorHandler: (error: Err
  * @returns {Promise<boolean>} - True if the token is revoked, false otherwise
  */
 export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
-  return checkOrganization(token, checkTokenErrorHandler)
+  return checkOrganization(token, checkTokenErrorHandler, false)
 }
 
 function checkTokenErrorHandler(error: Error): boolean {
