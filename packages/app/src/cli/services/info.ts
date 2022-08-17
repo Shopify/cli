@@ -95,6 +95,7 @@ class AppInfo {
     let appName = NOT_CONFIGURED_TEXT
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
+    let updateURLs = NOT_CONFIGURED_TEXT
     let postscript = output.content`💡 These will be populated when you run ${output.token.packagejsonScript(
       this.app.packageManager,
       'dev',
@@ -103,6 +104,7 @@ class AppInfo {
       if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
       if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
       if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
+      if (this.cachedAppInfo.updateURLs !== undefined) updateURLs = this.cachedAppInfo.updateURLs ? 'Always' : 'Never'
       postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
         this.app.packageManager,
         'dev',
@@ -113,6 +115,7 @@ class AppInfo {
       ['App', appName],
       ['Dev store', storeDescription],
       ['API key', apiKey],
+      ['Automatic URL updates', updateURLs],
     ]
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
