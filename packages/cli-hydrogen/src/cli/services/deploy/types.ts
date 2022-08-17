@@ -6,7 +6,6 @@ export interface DeployConfig {
   commitSha?: string
   commitRef?: string
   timestamp?: string
-  repository?: string
   path?: string
 }
 export type ReqDeployConfig = Required<DeployConfig>

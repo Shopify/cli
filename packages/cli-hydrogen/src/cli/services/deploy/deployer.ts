@@ -13,23 +13,21 @@ export const createDeploymentStep = async (config: ReqDeployConfig): Promise<Cre
   output.info('✨ Creating a deployment... ')
 
   const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
-  const headers = await api.common.buildHeaders(config.deploymentToken)
+  const headers = await api.buildHeaders(config.deploymentToken)
+  // need to create a seperate service for "dms" related calls instead of piggybacking on "shopify"
   const client = await http.graphqlClient({
     headers,
     service: 'dms',
     url,
   })
 
-  // need to make workflowID optional on DMS so we dont need to generate a random one
   const variables = {
     input: {
-      repository: config.repository,
       branch: config.commitRef,
       commitHash: config.commitSha,
       commitAuthor: config.commitAuthor,
       commitMessage: config.commitMessage,
       commitTimestamp: config.timestamp,
-      workflowID: `${Math.floor(Math.random() * 100000)}`,
     },
   }
 
@@ -63,7 +61,7 @@ export const uploadDeploymentStep = async (config: ReqDeployConfig, deploymentID
   output.info('🚀 Uploading deployment files... ')
 
   const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
-  let headers = await api.common.buildHeaders(config.deploymentToken)
+  let headers = await api.buildHeaders(config.deploymentToken)
 
   // note: may need validation for invalid deploymentID? oxygenctl does it
   // note: we may want to remove the zip that we create in in this step

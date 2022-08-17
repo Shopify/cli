@@ -48,24 +48,3 @@ export function relativize(path: string): string {
 export function moduleDirectory(moduleURL: string | URL): string {
   return dirname(fileURLToPath(moduleURL))
 }
-
-/**
- * Will temporarely change the current working directory for the duration of the callback.
- * @param directory {string} The directory to be temporarely switch to.
- * @param callback {Function} The async callback function to be executed in the directory.
- * @returns {T} The result of the callback function.
- */
-export async function temporarelyChangeCWD<T>(directory: string, callback: () => Promise<T>): Promise<T> {
-  const initialDir = process.cwd()
-  process.chdir(directory)
-
-  return callback()
-    .then((result) => {
-      process.chdir(initialDir)
-      return result
-    })
-    .catch((error) => {
-      process.chdir(initialDir)
-      throw error
-    })
-}
