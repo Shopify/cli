@@ -28,7 +28,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         lastUpdated,
       },
       ...((obj.assets || {}) as any),
-    } as any,
+    },
     development: {
       hidden: false,
       status: Status.Success,

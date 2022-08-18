@@ -147,7 +147,7 @@ async function dev(options: DevOptions) {
   if (proxyTargets.length === 0) {
     await output.concurrent(additionalProcesses)
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort as number, proxyTargets, additionalProcesses)
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
 }
 
