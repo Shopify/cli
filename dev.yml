@@ -75,7 +75,7 @@ commands:
         desc: Scaffold in the fixture project
         run: yarn --cwd fixtures/app scaffold
       web-env:
-        desc: Scaffold in the fixture project
+        desc: Show and/or update the env file in the fixture project
         run: yarn --cwd fixtures/app web-env
   spin:
     desc: 'Run commands in spin context'
