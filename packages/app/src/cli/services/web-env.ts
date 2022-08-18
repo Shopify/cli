@@ -55,7 +55,7 @@ export async function outputEnv(app: AppInterface): Promise<output.Message> {
   ${output.token.green('SHOPIFY_API_KEY')}=${selectedApp.apiKey}
   ${output.token.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0].secret}
   ${output.token.green('SCOPES')}=${app.configuration.scopes}
-      `
+`
 }
 
 function patchEnvFile(envFileContent: string | null, updatedValues: {[key: string]: string}): string {
