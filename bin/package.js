@@ -32,7 +32,7 @@ program
     console.log(`We'll populate the Homebrew formula with the following content:`)
     console.log(homebrewVariables)
 
-    await recursiveDirectoryCopy(path.join(packagingDirectory), outputDirectory, homebrewVariables)
+    await recursiveDirectoryCopy(path.join(packagingDirectory, "src"), outputDirectory, homebrewVariables)
   })
 program.parse()
 
@@ -77,29 +77,29 @@ async function recursiveDirectoryCopy(from, to, data) {
   }
   await mkdir(to)
 
-  return;
   const sortedTemplateFiles = templateFiles
     .map((path) => path.split('/'))
     .sort((lhs, rhs) => (lhs.length < rhs.length ? 1 : -1))
     .map((components) => components.join('/'))
-  await Promise.all(
-    sortedTemplateFiles.map(async (templateItemPath) => {
-      const outputPath = await engine.render(engine.parse(path.join(to, path.relative(from, templateItemPath))), data)
-      const isDirectory = (await lstat(templateItemPath)).isDirectory()
-      if (isDirectory) {
-        if (!await pathExists(outputPath)) {
-          await mkdir(outputPath)
-        }
-      } else if (templateItemPath.endsWith('.liquid')) {
-        await mkdir(path.dirname(outputPath))
-        const content = await readFile(templateItemPath)
-        const contentOutput = await engine.render(engine.parse(content), data)
-        const outputPathWithoutLiquid = outputPath.replace('.liquid', '')
-        await copy(templateItemPath, outputPathWithoutLiquid)
-        await outputFile(outputPathWithoutLiquid, contentOutput)
-      } else {
-        await copy(templateItemPath, outputPath)
+
+  for (const templateItemPath of sortedTemplateFiles) {
+    const outputPath = await engine.render(engine.parse(path.join(to, path.relative(from, templateItemPath))), data)
+    const isDirectory = (await lstat(templateItemPath)).isDirectory()
+    if (isDirectory) {
+      if (!await pathExists(templateItemPath)) {
+        await mkdir(outputPath)
       }
-    }),
-  )
+    } else if (templateItemPath.endsWith('.liquid')) {
+      if (!await pathExists(path.dirname(outputPath))) {
+        await mkdir(path.dirname(outputPath))
+      }
+      const content = await readFile(templateItemPath)
+      const contentOutput = await engine.render(engine.parse(content), data)
+      const outputPathWithoutLiquid = outputPath.replace('.liquid', '')
+      await copy(templateItemPath, outputPathWithoutLiquid)
+      await outputFile(outputPathWithoutLiquid, contentOutput)
+    } else {
+      await copy(templateItemPath, outputPath)
+    }
+  }
 }
