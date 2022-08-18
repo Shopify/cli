@@ -21,6 +21,7 @@ const rootDirectory = dirname(binDirectory)
 const os = process.env.GOOS
 const arch = process.env.GOARCH
 const goPath = process.env.PATHGO
+const output = process.env.OUTPUT
 if (!os) {
     console.error('Requires GOOS to be set')
     process.exit(1)
@@ -33,25 +34,21 @@ if (!arch) {
 
 const executableName = (os === "windows") ? "shopify-extensions.exe" : "shopify-extensions"
 const canonicalName = (os === "windows") ? `shopify-extensions-${os}-${arch}.exe` : `shopify-extensions-${os}-${arch}`
-let goExecutable = "go"
-if (goPath) {
-  goExecutable = join(goPath, goExecutable)
-}
-
+const goExecutable = goPath ? join(goPath, "go") : "go"
+const outputDirectory = output ?? "./"
 
 console.log('Run code generation')
 await execa(goExecutable, ["generate"], {cwd: rootDirectory, stdio: 'inherit'})
 
 console.log('Build executable')
-await execa(goExecutable, ["build", "-o", executableName], {cwd: rootDirectory, stdio: 'inherit'})
+await execa(goExecutable, ["build", "-o", join(outputDirectory, executableName)], {cwd: rootDirectory, stdio: 'inherit'})
 
-const executablePath = join(rootDirectory, executableName)
+const executablePath = join(outputDirectory, executableName)
 
-const md5FilePath = join(rootDirectory,`${canonicalName}.md5`)
-console.log(md5FileSync(executablePath))
+const md5FilePath = join(outputDirectory,`${canonicalName}.md5`)
 writeToFile(md5FileSync(executablePath), md5FilePath)
 
-const canonicalPath = join(rootDirectory, canonicalName)
+const canonicalPath = join(outputDirectory, canonicalName)
 gzipFile(executablePath, canonicalPath)
 
 function md5FileSync (path) {
