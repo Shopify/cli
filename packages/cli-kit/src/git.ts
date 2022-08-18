@@ -1,4 +1,3 @@
-import {parse} from './path.js'
 import {Abort} from './error.js'
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {content, token, debug} from './output.js'
@@ -15,13 +14,6 @@ export const GitNotPresentError = () => {
 
 export const OutsideGitDirectoryError = () => {
   return new Abort('Must be inside a Git directory to continue')
-}
-
-export const MalformedRemoteUrlError = () => {
-  return new Abort(
-    'Git remote origin URL is malformed.',
-    content`Run ${token.genericShellCommand('git remote -v')} to validate URL.`,
-  )
 }
 
 export const NoCommitError = () => {
@@ -86,24 +78,9 @@ export async function downloadRepository({
   }
 }
 
-export async function getRemoteRepository() {
-  const remoteUrl = await git().getConfig('remote.origin.url', 'local')
-
-  if (remoteUrl.value) {
-    try {
-      const urlObj = new URL(remoteUrl.value)
-      const parsedPath = parse(urlObj.pathname)
-      const repository = `${parsedPath.dir}/${parsedPath.name}`
-      return repository.charAt(0) === '/' ? repository.substring(1) : repository
-    } catch {
-      throw MalformedRemoteUrlError()
-    }
-  }
-}
-
-export async function getLatestCommit() {
+export async function getLatestCommit(directory?: string) {
   try {
-    const logs = await git().log({
+    const logs = await git({baseDir: directory}).log({
       maxCount: 1,
     })
     if (!logs.latest) throw NoCommitError()
@@ -113,9 +90,20 @@ export async function getLatestCommit() {
   }
 }
 
-export async function getHeadSymbolicRef() {
+export async function commitAll(message: string, options?: {directory?: string; author?: string}) {
+  const simpleGit = git({baseDir: options?.directory})
+  const status = await simpleGit.status()
+  await simpleGit.add(status.files.map((file) => file.path))
+
+  const commitOptions = options?.author ? {'--author': options.author} : undefined
+  const result = await simpleGit.commit(message, commitOptions)
+
+  return result.commit
+}
+
+export async function getHeadSymbolicRef(directory?: string) {
   try {
-    const ref = await git().raw('symbolic-ref', '-q', 'HEAD')
+    const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
     if (!ref) throw DetachedHeadError()
     return ref.trim()
   } catch {
@@ -137,11 +125,8 @@ export async function ensurePresentOrAbort() {
  * If command run from outside a .git directory tree
  * it throws an abort error.
  */
-export async function ensureInsideGitDirectory(workingDirectory?: string) {
-  const cwd = process.cwd()
-  if (workingDirectory && cwd !== workingDirectory) process.chdir(workingDirectory)
-
-  if (!(await git().checkIsRepo())) {
+export async function ensureInsideGitDirectory(directory?: string) {
+  if (!(await git({baseDir: directory}).checkIsRepo())) {
     throw OutsideGitDirectoryError()
   }
 }
