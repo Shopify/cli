@@ -8,7 +8,7 @@ extensions:
   metafields:
   - namespace: my-namespace
     key: my-key
-  node_executable: ../../packages/shopify-cli-extensions/cli.js
+  node_executable: ../../ui-extensions-cli/bin/cli.js
   development:
     template: 'javascript-react'
     build_dir: build

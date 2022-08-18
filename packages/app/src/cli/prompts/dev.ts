@@ -140,3 +140,22 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
   ])
   return choice.value === 'yes'
 }
+
+export async function updateURLsPrompt(): Promise<string> {
+  const options = [
+    {name: 'Always by default', value: 'always'},
+    {name: 'Yes, this time', value: 'yes'},
+    {name: 'No, not now', value: 'no'},
+    {name: `Never, don't ask again`, value: 'never'},
+  ]
+
+  const choice = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+      choices: options,
+    },
+  ])
+  return choice.value
+}

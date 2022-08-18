@@ -7,10 +7,10 @@
   resolved "https://registry.yarnpkg.com/@luckycatfactory/esbuild-graphql-loader/-/esbuild-graphql-loader-3.7.0.tgz#0c84eb8f18f704e00463200001c0c9b520a41c34"
   integrity sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==
 
-"@shopify/shopify-cli-extensions@0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-0.2.3.tgz#4a979f86f0ab6b3ab43fd6c99d4bdbf16f7bc104"
-  integrity sha512-1EsoVN4TgEwLTbgi1KJ8DU+ryhjGDY8CzAC+1iVlxSS7o/t3G+Ejsg98JRkGV8c9TrqNiAnEZeyBnc4zhyAGpQ==
+"@shopify/shopify-cli-extensions@3.7.1":
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-3.7.1.tgz#6e9114ee57e51a2a2d82af1f4fb90891354eb161"
+  integrity sha512-vb/5WUvoRirIkMuSNfG41Ey8aTs5yxbbsL5rUtLBl6qdwbSp9WulVyJAe7Kbn+7szti3vABF+4J1jedNZk9wqA==
   dependencies:
     "@luckycatfactory/esbuild-graphql-loader" "^3.6.0"
     esbuild "^0.12.22"

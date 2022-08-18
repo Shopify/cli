@@ -1,16 +1,40 @@
+import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {output, string} from '@shopify/cli-kit'
 
-export function outputAppURL(updated: boolean, storeFqdn: string, url: string) {
+export function outputUpdateURLsResult(
+  updated: boolean,
+  urls: PartnersURLs,
+  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
+) {
+  const dashboardURL = partnersURL(app.organizationId, app.id)
+  if (app.newApp) {
+    outputUpdatedURLFirstTime(urls.applicationUrl, dashboardURL)
+  } else if (updated) {
+    output.completed('URL updated')
+  } else {
+    output.info(
+      output.content`\nTo make URL updates manually, you can add the following URLs as redirects in your ${dashboardURL}:`,
+    )
+    urls.redirectUrlWhitelist.forEach((url) => output.info(`  ${url}`))
+  }
+}
+
+export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
+  const message =
+    `\nFor your convenience, we've given your app a default URL: ${url}.\n\n` +
+    `You can update your app's URL anytime in the ${dashboardURL}. ` +
+    `But once your app is live, updating its URL will disrupt merchant access.`
+  output.info(message)
+}
+
+export function outputAppURL(storeFqdn: string, url: string) {
   const appURL = buildAppURL(storeFqdn, url)
   const heading = output.token.heading('App URL')
-  let message = `Once everything's built, your app's shareable link will be:\n${appURL}`
-  if (updated) {
-    message += `\nNote that your app's URL in Shopify Partners will be updated.`
-  }
-
+  const message = `Once everything's built, your app's shareable link will be:\n${appURL}`
   output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 
@@ -110,4 +134,11 @@ function productSubscriptionMessage(url: string, extension: UIExtension) {
 
 function getHumanKey(type: ExtensionTypes) {
   return string.capitalize(getExtensionOutputConfig(type).humanKey)
+}
+
+function partnersURL(organizationId: string, appId: string): string {
+  return output.content`${output.token.link(
+    `Shopify Partners dashboard`,
+    `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+  )}`.value
 }

@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import {directories} from '../lib/constants'
-import {exec} from '../lib/system'
 import {writeFile} from '../lib/fs'
-import {Given, After, BeforeAll, setDefaultTimeout} from '@cucumber/cucumber'
+import {Given, After, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
 import rimraf from 'rimraf'
 import path from 'pathe'
@@ -41,13 +39,4 @@ After(function () {
   if (this.temporaryDirectory) {
     rimraf.sync(this.temporaryDirectory, {force: true})
   }
-})
-
-/**
- * Before running the acceptance tests, we
- */
-BeforeAll({timeout: 2 * 60 * 1000}, async function () {
-  if (process.env.SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS) return
-  console.log('Building CLIs before running tests...')
-  await exec('yarn', ['build'], {cwd: directories.root})
 })

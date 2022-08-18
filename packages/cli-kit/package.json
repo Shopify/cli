@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.6.2",
+  "version": "3.7.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -47,8 +47,8 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
+    "clean": "rimraf dist/",
+    "build": "tsc -b ./tsconfig.build.json",
     "prepack": "cross-env NODE_ENV=production yarn run build",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",

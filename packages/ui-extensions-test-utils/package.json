@@ -1,12 +1,12 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-test-utils",
-  "version": "0.2.0",
+  "version": "3.7.1",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
+    "clean": "rimraf dist/",
     "build": "tsc",
-    "clean": "git clean --exclude node_modules -xdf ./",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix"
   },

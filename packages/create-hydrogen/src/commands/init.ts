@@ -23,7 +23,7 @@ export default class Init extends Command {
       hidden: false,
     }),
     ts: Flags.boolean({
-      description: 'Set the language of the template to Typescript instead of Javascript.',
+      description: 'Set the language of the template to TypeScript instead of JavaScript.',
       env: 'SHOPIFY_FLAG_LANGUAGE',
       hidden: false,
     }),
