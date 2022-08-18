@@ -22,7 +22,6 @@ export const environmentVariables = {
 } as const
 
 export const versions = {
-  extensionsBinary: '3.7.1',
   react: '^17.0.0',
 } as const
 

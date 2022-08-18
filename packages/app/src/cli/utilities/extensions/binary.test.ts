@@ -5,7 +5,6 @@ import {
   UnsupportedPlatformError,
   getArtifactName,
 } from './binary.js'
-import {versions} from '../../constants.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import {http, file, path, os, constants} from '@shopify/cli-kit'
 import {validateMD5} from '@shopify/cli-kit/node/checksum'
@@ -54,7 +53,8 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    expect(got).toEqual(path.join(binariesDirectory, `extensions/${versions.extensionsBinary}-windows-arm64.exe`))
+    const cliVersion = await constants.versions.cliKit()
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-darwin-arm64`))
   })
 
   it('returns the right path when not windows', async () => {
@@ -70,7 +70,8 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    expect(got).toEqual(path.join(binariesDirectory, `extensions/${versions.extensionsBinary}-darwin-arm64`))
+    const cliVersion = await constants.versions.cliKit()
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-darwin-arm64`))
   })
 })
 
