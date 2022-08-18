@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
+<<<<<<< HEAD
     "types": ["node"],
+=======
+>>>>>>> 65121e80 (Break the dependency with @shopify/cli-kit)
     "allowJs": false,
     "skipLibCheck": false,
     "esModuleInterop": true,
