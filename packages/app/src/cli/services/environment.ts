@@ -62,6 +62,7 @@ interface DevEnvironmentOutput {
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   storeFqdn: string
   identifiers: UuidOnlyIdentifiers
+  updateURLs: boolean | undefined
 }
 
 /**
@@ -88,14 +89,12 @@ export async function ensureDevEnvironment(
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
-    apiKey: options.apiKey ?? store.cliKitStore().getAppInfo(options.app.directory)?.appId,
   })
 
-  const explanation =
-    `\nLooks like this is the first time you're running dev for this project.\n` +
-    'Configure your preferences by answering a few questions.\n'
-
   if (cachedInfo === undefined && !options.reset) {
+    const explanation =
+      `\nLooks like this is the first time you're running dev for this project.\n` +
+      'Configure your preferences by answering a few questions.\n'
     output.info(explanation)
   }
 
@@ -125,14 +124,18 @@ export async function ensureDevEnvironment(
         app: selectedApp.apiKey,
         extensions,
       },
+      updateURLs: cachedInfo?.updateURLs,
     }
   }
 
   const {organization, apps} = await fetchOrgAndApps(orgId, token)
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
-  store
-    .cliKitStore()
-    .setAppInfo({appId: selectedApp.apiKey, title: selectedApp.title, directory: options.app.directory, orgId})
+  store.cliKitStore().setAppInfo({
+    appId: selectedApp.apiKey,
+    title: selectedApp.title,
+    directory: options.app.directory,
+    orgId,
+  })
 
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
@@ -141,12 +144,14 @@ export async function ensureDevEnvironment(
     selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
-  store
-    .cliKitStore()
-    .setAppInfo({appId: selectedApp.apiKey, directory: options.app.directory, storeFqdn: selectedStore?.shopDomain})
+  store.cliKitStore().setAppInfo({
+    appId: selectedApp.apiKey,
+    directory: options.app.directory,
+    storeFqdn: selectedStore?.shopDomain,
+  })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, selectedApp.title, selectedStore.shopDomain, options.app.packageManager)
+    showReusedValues(organization.businessName, cachedInfo, options.app.packageManager)
   }
 
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
@@ -160,6 +165,7 @@ export async function ensureDevEnvironment(
       app: selectedApp.apiKey,
       extensions,
     },
+    updateURLs: cachedInfo?.updateURLs,
   }
   await logMetadataForLoadedDevEnvironment(result)
   return result
@@ -332,20 +338,10 @@ async function fetchDevDataFromOptions(
  * Retrieve cached info from the global configuration based on the current local app
  * @param reset {boolean} Whether to reset the cache or not
  * @param directory {string} The directory containing the app.
- * @param appId {string} Current local app id, used to retrieve the cached info
  * @returns
  */
-function getAppDevCachedInfo({
-  reset,
-  directory,
-  apiKey,
-}: {
-  reset: boolean
-  directory: string
-  apiKey?: string
-}): store.CachedAppInfo | undefined {
-  if (!apiKey) return undefined
-  if (apiKey && reset) store.cliKitStore().clearAppInfo(directory)
+function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
+  if (reset) store.cliKitStore().clearAppInfo(directory)
   return store.cliKitStore().getAppInfo(directory)
 }
 
@@ -366,11 +362,15 @@ async function selectOrg(token: string): Promise<string> {
  * @param app {string} App name
  * @param store {string} Store domain
  */
-function showReusedValues(org: string, appName: string, store: string, packageManager: PackageManager): void {
+function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager): void {
+  let updateURLs = 'Not yet configured'
+  if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
+
   output.info('\nUsing your previous dev settings:')
-  output.info(`Org:        ${org}`)
-  output.info(`App:        ${appName}`)
-  output.info(`Dev store:  ${store}\n`)
+  output.info(`- Org:          ${org}`)
+  output.info(`- App:          ${cachedAppInfo.title}`)
+  output.info(`- Dev store:    ${cachedAppInfo.storeFqdn}`)
+  output.info(`- Update URLs:  ${updateURLs}\n`)
   output.info(
     output.content`To reset your default dev config, run ${output.token.packagejsonScript(
       packageManager,

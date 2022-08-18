@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const UpdateURLsQuery = gql`
-  mutation appUpdate($apiKey: String!, $appUrl: Url!, $redir: [Url]!) {
-    appUpdate(input: {apiKey: $apiKey, applicationUrl: $appUrl, redirectUrlWhitelist: $redir}) {
+  mutation appUpdate($apiKey: String!, $applicationUrl: Url!, $redirectUrlWhitelist: [Url]!) {
+    appUpdate(input: {apiKey: $apiKey, applicationUrl: $applicationUrl, redirectUrlWhitelist: $redirectUrlWhitelist}) {
       userErrors {
         message
         field
@@ -13,8 +13,8 @@ export const UpdateURLsQuery = gql`
 
 export interface UpdateURLsQueryVariables {
   apiKey: string
-  appUrl: string
-  redir: string[]
+  applicationUrl: string
+  redirectUrlWhitelist: string[]
 }
 
 export interface UpdateURLsQuerySchema {

@@ -28,9 +28,11 @@ export async function selectOrCreateApp(
   }
 
   let createNewApp = apps.length === 0
-  if (!createNewApp) createNewApp = await createAsNewAppPrompt()
+  if (!createNewApp) {
+    output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
+    createNewApp = await createAsNewAppPrompt()
+  }
   const app = createNewApp ? await createApp(org, localApp, token) : await selectAppPrompt(apps)
-
   return app
 }
 
@@ -54,7 +56,8 @@ export async function createApp(org: Organization, app: AppInterface, token: str
   }
 
   output.success(`${result.appCreate.app.title} has been created on your Partners account`)
-  const createdApp = result.appCreate.app
+  const createdApp: OrganizationApp = result.appCreate.app
   createdApp.organizationId = org.id
+  createdApp.newApp = true
   return createdApp
 }
