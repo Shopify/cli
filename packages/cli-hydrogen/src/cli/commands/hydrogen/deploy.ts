@@ -34,6 +34,11 @@ export default class Deploy extends Command {
       env: 'SHOPIFY_HYDROGEN_FLAG_DMS_ADDRESS',
       default: 'https://oxygen-dms.shopifycloud.com',
     }),
+    healthCheck: Flags.boolean({
+      env: 'SHOPIFY_HYDROGEN_FLAG_HEALTH_CHECK',
+      default: true,
+      description: 'Require a health check before the deployment succeeds.',
+    }),
   }
 
   public async run(): Promise<void> {
