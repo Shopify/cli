@@ -1,6 +1,7 @@
 export interface DeployConfig {
   deploymentToken: string
   dmsAddress: string
+  healthCheck: boolean
   commitMessage?: string
   commitAuthor?: string
   commitSha?: string

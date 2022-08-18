@@ -1,6 +1,6 @@
 import {DeployConfig} from './deploy/types.js'
 import {getDeployConfig} from './deploy/config.js'
-import {createDeploymentStep, runBuildCommandStep, uploadDeploymentStep} from './deploy/deployer.js'
+import {createDeploymentStep, runBuildCommandStep, uploadDeploymentStep, healthCheck} from './deploy/deployer.js'
 import {output} from '@shopify/cli-kit'
 
 export async function deployToOxygen(_config: DeployConfig) {
@@ -16,9 +16,12 @@ export async function deployToOxygen(_config: DeployConfig) {
 
   // note: need to handle this error
   const buildResponse = await runBuildCommandStep(config, assetBaseURL)
-  const deployResponse = await uploadDeploymentStep(config, deploymentID)
+  const previewURL = await uploadDeploymentStep(config, deploymentID)
 
-  output.success('Deployed and healthy!')
-  output.info(`• Preview URL: ${deployResponse}`)
-  // note: should try output URL after the "success" message for scripting purposes like oxygenctl does right now
+  output.info(`Preview URL: ${previewURL}`)
+
+  await healthCheck(previewURL)
+
+  // For scripting purposes, last line is preview URL.
+  output.info(previewURL)
 }

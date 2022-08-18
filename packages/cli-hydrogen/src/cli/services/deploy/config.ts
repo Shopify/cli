@@ -15,6 +15,7 @@ export const getDeployConfig = async (config: DeployConfig): Promise<ReqDeployCo
   return {
     deploymentToken: config.deploymentToken,
     dmsAddress: config.dmsAddress,
+    healthCheck: config.healthCheck,
     commitMessage: config.commitMessage ?? latestCommit.message,
     commitAuthor: config.commitAuthor ?? latestCommit.author_name,
     commitSha: latestCommit.hash,
