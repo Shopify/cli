@@ -20,6 +20,7 @@ const rootDirectory = dirname(binDirectory)
 
 const os = process.env.GOOS
 const arch = process.env.GOARCH
+const goPath = process.env.PATHGO
 if (!os) {
     console.error('Requires GOOS to be set')
     process.exit(1)
@@ -32,12 +33,17 @@ if (!arch) {
 
 const executableName = (os === "windows") ? "shopify-extensions.exe" : "shopify-extensions"
 const canonicalName = (os === "windows") ? `shopify-extensions-${os}-${arch}.exe` : `shopify-extensions-${os}-${arch}`
+let goExecutable = "go"
+if (goPath) {
+  goExecutable = join(goPath, goExecutable)
+}
+
 
 console.log('Run code generation')
-await execa("go", ["generate"], {cwd: rootDirectory, stdio: 'inherit'})
+await execa(goExecutable, ["generate"], {cwd: rootDirectory, stdio: 'inherit'})
 
 console.log('Build executable')
-await execa("go", ["build", "-o", executableName], {cwd: rootDirectory, stdio: 'inherit'})
+await execa(goExecutable, ["build", "-o", executableName], {cwd: rootDirectory, stdio: 'inherit'})
 
 const executablePath = join(rootDirectory, executableName)
 
