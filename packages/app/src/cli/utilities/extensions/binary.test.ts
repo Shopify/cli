@@ -35,6 +35,9 @@ vi.mock('@shopify/cli-kit', async () => {
           },
         },
       },
+      versions: {
+        cliKit: vi.fn(),
+      },
     },
   }
 })
@@ -43,7 +46,9 @@ describe('getBinaryLocalPath', () => {
   it('returns the right path when windows', async () => {
     // Given
     const binariesDirectory = '/binaries'
+    const cliVersion = '1.0.0'
     vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
+    vi.mocked(constants.versions.cliKit).mockResolvedValue(cliVersion)
     vi.mocked(os.platformAndArch).mockReturnValue({
       platform: 'windows',
       arch: 'arm64',
@@ -53,14 +58,15 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    const cliVersion = await constants.versions.cliKit()
-    expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-darwin-arm64`))
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-windows-arm64.exe`))
   })
 
   it('returns the right path when not windows', async () => {
     // Given
     const binariesDirectory = '/binaries'
+    const cliVersion = '1.0.0'
     vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
+    vi.mocked(constants.versions.cliKit).mockResolvedValue(cliVersion)
     vi.mocked(os.platformAndArch).mockReturnValue({
       platform: 'darwin',
       arch: 'arm64',
@@ -70,7 +76,6 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    const cliVersion = await constants.versions.cliKit()
     expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-darwin-arm64`))
   })
 })
