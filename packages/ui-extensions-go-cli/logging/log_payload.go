@@ -1,24 +1,25 @@
 package logging
 
-import (
-  "regexp"
-)
+import "regexp"
+
 type ErrorPayload struct {
-  Message string
-  StackTrace string
-  RecoveryStep string
+	Message      string
+	StackTrace   string
+	RecoveryStep string
 }
 
 type InfoPayload struct {
-  Message string
+	Message string
 }
-var errorPayload = regexp.MustCompile(`\.error$`)
-func (t EntryType)CreatePayload(message string) interface{} {
-  switch  {
-  case errorPayload.MatchString(t.String()):
-    return ErrorPayload{Message: message}
 
-  default:
-    return InfoPayload{Message: message}
-  }
+var errorPayload = regexp.MustCompile(`\.error$`)
+
+func (t EntryType) CreatePayload(message string) interface{} {
+	switch {
+	case errorPayload.MatchString(t.String()):
+		return ErrorPayload{Message: message}
+
+	default:
+		return InfoPayload{Message: message}
+	}
 }

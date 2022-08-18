@@ -29,8 +29,8 @@ const (
 	Api_error     EntryType = "api.error"
 	Api_completed EntryType = "api.completed"
 	// General
-	General_error EntryType = "general.error"
-	General_info  EntryType = "general.progress"
+	General_error        EntryType = "general.error"
+	General_info         EntryType = "general.progress"
 	General_config_error EntryType = "general.config.error"
 )
 
