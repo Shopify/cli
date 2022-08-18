@@ -93,9 +93,11 @@ async function recursiveDirectoryCopy(from, to, data) {
       if (!await pathExists(path.dirname(outputPath))) {
         await mkdir(path.dirname(outputPath))
       }
-      const content = await readFile(templateItemPath)
+      const content = (await readFile(templateItemPath)).toString()
       const contentOutput = await engine.render(engine.parse(content), data)
+
       const outputPathWithoutLiquid = outputPath.replace('.liquid', '')
+
       await copy(templateItemPath, outputPathWithoutLiquid)
       await outputFile(outputPathWithoutLiquid, contentOutput)
     } else {
