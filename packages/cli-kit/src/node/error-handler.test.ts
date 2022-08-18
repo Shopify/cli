@@ -110,15 +110,19 @@ describe('send to Bugsnag', () => {
     const toThrow = new Error('In test')
     const res = await sendErrorToBugsnag(toThrow)
     expect(res.reported).toEqual(true)
-    expect(res.error.stack).toMatch(/^Error: In test/)
-    expect(res.error.stack).not.toEqual(toThrow.stack)
+
+    const {error} = res as any
+
+    expect(error.stack).toMatch(/^Error: In test/)
+    expect(error.stack).not.toEqual(toThrow.stack)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
   it('processes string instances', async () => {
     const res = await sendErrorToBugsnag('In test' as any)
     expect(res.reported).toEqual(true)
-    expect(res.error.stack).toMatch(/^Error: In test/)
+    const {error} = res as any
+    expect(error.stack).toMatch(/^Error: In test/)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 

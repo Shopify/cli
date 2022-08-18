@@ -57,26 +57,30 @@ export class Bug extends Fatal {
  * @param error Error to be handled.
  * @returns A promise that resolves with the error passed.
  */
-export async function handler(error: Error): Promise<Error> {
+export async function handler(error: unknown): Promise<unknown> {
   let fatal: Fatal
   if (isFatal(error)) {
-    fatal = error as Fatal
+    fatal = error
   } else if (typeof error === 'string') {
     fatal = new Bug(error as string)
-  } else {
+  } else if (error instanceof Error) {
     fatal = new Bug(error.message)
     fatal.stack = error.stack
-  }
-
-  if (fatal.type === FatalErrorType.Bug) {
-    fatal.stack = error.stack
+  } else {
+    // errors can come in all shapes and sizes...
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maybeError = error as any
+    fatal = new Bug(maybeError?.message ?? 'Unknown error')
+    if (maybeError?.stack) {
+      fatal.stack = maybeError?.stack
+    }
   }
 
   await outputError(fatal)
   return Promise.resolve(error)
 }
 
-export function mapper(error: Error): Promise<Error> {
+export function mapper(error: unknown): Promise<unknown> {
   if (error instanceof Errors.CLIError) {
     const mappedError = new Abort(error.message)
     mappedError.stack = error.stack
@@ -86,7 +90,7 @@ export function mapper(error: Error): Promise<Error> {
   }
 }
 
-export function isFatal(error: unknown): boolean {
+export function isFatal(error: unknown): error is Fatal {
   try {
     return Object.prototype.hasOwnProperty.call(error, 'type')
     // eslint-disable-next-line no-catch-all/no-catch-all
