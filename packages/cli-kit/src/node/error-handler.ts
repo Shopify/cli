@@ -24,7 +24,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
     process.exit(1)
   } else {
     return errorMapper(error)
-      .then((error: Error) => {
+      .then((error) => {
         return handler(error)
       })
       .then((mappedError) => reportError(mappedError, config))
@@ -34,13 +34,12 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
   }
 }
 
-const reportError = async (error: Error, config?: Interfaces.Config): Promise<Error> => {
+const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   if (config !== undefined) {
     // Log an analytics event when there's an error
-    await reportEvent({config, errorMessage: error.message})
+    await reportEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
   }
-  const {error: reportedError} = await sendErrorToBugsnag(error)
-  return reportedError
+  await sendErrorToBugsnag(error)
 }
 
 /**
@@ -48,15 +47,16 @@ const reportError = async (error: Error, config?: Interfaces.Config): Promise<Er
  *
  * @returns the reported error (this may have been tweaked for better reporting), and a bool to indicate if the error was actually submitted or not
  */
-export async function sendErrorToBugsnag(error: Error): Promise<{error: Error; reported: boolean}> {
-  if (settings.debug || !shouldReportError(error)) return {error, reported: false}
+export async function sendErrorToBugsnag(
+  error: unknown,
+): Promise<{reported: false; error: unknown} | {error: Error; reported: true}> {
+  if (settings.debug || !shouldReportError(error)) return {reported: false, error}
 
   let reportableError: Error
   let stacktrace: string | undefined
   let report = false
 
-  // eslint-disable-next-line no-prototype-builtins
-  if (Error.prototype.isPrototypeOf(error)) {
+  if (error instanceof Error) {
     report = true
     reportableError = new Error(error.message)
     stacktrace = error.stack
