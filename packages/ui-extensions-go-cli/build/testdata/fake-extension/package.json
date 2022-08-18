@@ -5,6 +5,6 @@
   "license": "MIT",
   "scripts": {
     "build": "touch build/main.js",
-    "develop": "../scripts/develop.sh"
+    "develop": "bash ../scripts/develop.sh"
   }
 }

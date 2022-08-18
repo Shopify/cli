@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -130,7 +131,7 @@ func (fs *FS) normalizePath(filePath string) string {
 	if strings.HasPrefix(filePath, fs.root+"/") {
 		return filePath
 	}
-	return filepath.Join(fs.root, filePath)
+	return path.Join(fs.root, filePath)
 }
 
 type Operation struct {
