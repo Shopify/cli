@@ -1,8 +1,14 @@
-import {fetchAppFromApiKey} from './fetch.js'
-import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './fetch.js'
+import {
+  appNamePrompt,
+  appTypePrompt,
+  createAsNewAppPrompt,
+  selectAppPrompt,
+  selectOrganizationPrompt,
+} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
-import {api, error, output} from '@shopify/cli-kit'
+import {api, error, output, session} from '@shopify/cli-kit'
 
 /**
  * Select an app from env, list or create a new one:
@@ -34,6 +40,15 @@ export async function selectOrCreateApp(
   }
   const app = createNewApp ? await createApp(org, localApp, token) : await selectAppPrompt(apps)
   return app
+}
+
+export async function selectApp(): Promise<OrganizationApp> {
+  const token = await session.ensureAuthenticatedPartners()
+  const orgs = await fetchOrganizations(token)
+  const org = await selectOrganizationPrompt(orgs)
+  const {apps} = await fetchOrgAndApps(org.id, token)
+  const selectedApp = await selectAppPrompt(apps)
+  return selectedApp
 }
 
 export async function createApp(org: Organization, app: AppInterface, token: string): Promise<OrganizationApp> {

@@ -1,5 +1,6 @@
+import {selectApp} from './dev/select-app.js'
 import {AppInterface} from '../models/app/app.js'
-import {output} from '@shopify/cli-kit'
+import {output, file} from '@shopify/cli-kit'
 
 export type Format = 'json' | 'text'
 interface WebEnvOptions {
@@ -19,30 +20,82 @@ export async function updateEnvFile(
   app: AppInterface,
   {envFile}: Pick<WebEnvOptions, 'envFile'>,
 ): Promise<output.Message> {
-  //   const token = await session.ensureAuthenticatedPartners()
+  let envFileContent = null
 
-  //   const orgs = await fetchOrganizations(token)
-  //   const org = await selectOrganizationPrompt(orgs)
-  //   const {organization, apps} = await fetchOrgAndApps(org.id, token)
+  if (await file.exists(envFile)) {
+    envFileContent = await file.read(envFile)
 
-  //   const selectedApp = await selectOrCreateApp(app, apps, organization, token)
+    output.info(`Current ${envFile} is:
+${envFileContent}
+`)
+  } else {
+    output.info(`No environment file found. Creating ${envFile}`)
+  }
 
-  //   if (format === 'json') {
-  //     return output.content`${output.token.json({
-  //       SHOPIFY_API_KEY: selectedApp.apiKey,
-  //       SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
-  //       SCOPES: app.configuration.scopes,
-  //     })}`
-  //   } else {
-  //     return output.content`
-  // Use these environment variables to set up your deployment pipeline for this app:
-  //   · ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
-  //   · ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
-  //   · ${output.token.green('SCOPES')}: ${app.configuration.scopes}
-  //     `
-  return output.content`Updating env file`
+  const selectedApp = await selectApp()
+
+  const updatedValues = {
+    SHOPIFY_API_KEY: selectedApp.apiKey,
+    SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
+    SCOPES: app.configuration.scopes,
+  }
+
+  const newEnvFileContent = patchEnvFile(envFileContent, updatedValues)
+  await file.write(envFile, newEnvFileContent)
+
+  return output.content`Updated ${envFile} to be:
+${newEnvFileContent}
+`
 }
 
 export async function outputEnv(app: AppInterface): Promise<output.Message> {
-  return output.content`Showing env`
+  const selectedApp = await selectApp()
+
+  return output.content`
+  ${output.token.green('SHOPIFY_API_KEY')}=${selectedApp.apiKey}
+  ${output.token.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0].secret}
+  ${output.token.green('SCOPES')}=${app.configuration.scopes}
+      `
+}
+
+function patchEnvFile(envFileContent: string | null, updatedValues: {[key: string]: string}): string {
+  const outputLines: string[] = []
+  const lines = envFileContent === null ? [] : envFileContent.split('\n')
+
+  const alreadyPresentKeys: string[] = []
+
+  const toLine = (key: string, value: string) => `${key}=${String(value)}`
+
+  for (const line of lines) {
+    const match = line.match(/^([^=:#]+?)[=:](.*)/)
+    if (match) {
+      const key = match[1].trim()
+      const value = match[2].trim()
+
+      const newValue = updatedValues[key]
+
+      if (newValue === undefined) {
+        outputLines.push(line)
+      } else {
+        alreadyPresentKeys.push(key)
+
+        if (value === newValue) {
+          outputLines.push(line)
+        } else {
+          const newLine = toLine(key, newValue)
+          outputLines.push(newLine)
+        }
+      }
+    } else {
+      outputLines.push(line)
+    }
+  }
+
+  for (const [patchKey, updatedValue] of Object.entries(updatedValues)) {
+    if (!alreadyPresentKeys.includes(patchKey)) {
+      outputLines.push(toLine(patchKey, updatedValue))
+    }
+  }
+
+  return outputLines.join('\n')
 }

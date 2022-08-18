@@ -29,7 +29,7 @@ export default class WebEnv extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(WebEnv)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const envFile = path.resolve(flags['env-file'])
+    const envFile = path.resolve(directory, flags['env-file'])
     const app: AppInterface = await loadApp(directory, 'report')
     output.info(await webEnv(app, {update: flags.update, envFile}))
     if (app.errors) process.exit(2)
