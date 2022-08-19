@@ -3,11 +3,13 @@ import {file, npm, path, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
+import {platform} from 'node:os'
 
 let cliVersion: undefined | string
 let appVersion: undefined | string
 
 beforeEach(async () => {
+  vi.mock('node:os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')
@@ -151,28 +153,33 @@ describe('getDeepInstallNPMTasks', () => {
 
   it('each task.task installs dependencies', async () => {
     await mockAppFolder(async (tmpDir) => {
+      vi.mocked(platform).mockReturnValue('darwin')
+
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
 
       await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
 
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.normalize(tmpDir)}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'web')}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'web', 'frontend')}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
+      expect(installNodeModules).toHaveBeenCalledWith({
+        directory: `${path.normalize(tmpDir)}/`,
+        packageManager: defaultArgs.packageManager,
+        stdout: expect.any(Writable),
+        stderr: expect.any(Writable),
+        args: [],
+      })
+      expect(installNodeModules).toHaveBeenCalledWith({
+        directory: `${path.join(tmpDir, 'web')}/`,
+        packageManager: defaultArgs.packageManager,
+        stdout: expect.any(Writable),
+        stderr: expect.any(Writable),
+        args: [],
+      })
+      expect(installNodeModules).toHaveBeenCalledWith({
+        directory: `${path.join(tmpDir, 'web', 'frontend')}/`,
+        packageManager: defaultArgs.packageManager,
+        stdout: expect.any(Writable),
+        stderr: expect.any(Writable),
+        args: [],
+      })
     })
   })
 
