@@ -62,7 +62,7 @@ export async function handler(error: unknown): Promise<unknown> {
   if (isFatal(error)) {
     fatal = error
   } else if (typeof error === 'string') {
-    fatal = new Bug(error as string)
+    fatal = new Bug(error)
   } else if (error instanceof Error) {
     fatal = new Bug(error.message)
     fatal.stack = error.stack
@@ -103,7 +103,7 @@ export function shouldReport(error: unknown): boolean {
   if (!isFatal(error)) {
     return true
   }
-  if ((error as Fatal).type === FatalErrorType.Bug) {
+  if (error.type === FatalErrorType.Bug) {
     return true
   }
   return false

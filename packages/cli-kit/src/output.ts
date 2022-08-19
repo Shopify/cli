@@ -182,7 +182,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
     if (typeof token === 'string') {
       output += token
     } else {
-      const enumToken = token as ContentToken
+      const enumToken = token
       switch (enumToken.type) {
         case ContentTokenType.Raw:
           output += enumToken.value

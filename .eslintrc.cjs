@@ -73,6 +73,7 @@ module.exports = {
     ],
     '@typescript-eslint/no-misused-promises': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-unnecessary-type-assertion': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',

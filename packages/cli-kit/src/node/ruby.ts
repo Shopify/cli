@@ -191,7 +191,7 @@ async function validateRuby() {
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Ruby version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `Ruby version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system: ${
         content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
       }`,
@@ -206,7 +206,7 @@ async function validateRubyGems() {
   const isValid = version?.compare(MinRubyGemVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `RubyGems version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `RubyGems version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of RubyGems, run ${
         content`${token.genericShellCommand('gem update --system')}`.value
       }`,
@@ -231,7 +231,7 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Bundler version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `Bundler version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
         content`${token.genericShellCommand('gem install bundler')}`.value
       }`,

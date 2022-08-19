@@ -48,7 +48,7 @@ function mockOutput(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     ...mocker,
     output() {
       const output = mocker.output()
-      const trimmedOuput = (output as string).replace(/\s+/g, ' ').trim()
+      const trimmedOuput = output.replace(/\s+/g, ' ').trim()
 
       return trimmedOuput
     },

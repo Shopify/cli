@@ -68,7 +68,7 @@ export async function sendErrorToBugsnag(
      * Because at this point we have neither the error message nor a stack trace reporting them
      * to Bugsnag is pointless and adds noise.
      */
-  } else if (typeof error === 'string' && (error as string).trim().length !== 0) {
+  } else if (typeof error === 'string' && error.trim().length !== 0) {
     report = true
     reportableError = new Error(error)
     stacktrace = reportableError.stack
