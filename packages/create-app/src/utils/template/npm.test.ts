@@ -151,37 +151,41 @@ describe('getDeepInstallNPMTasks', () => {
     })
   })
 
-  it('each task.task installs dependencies', async () => {
-    await mockAppFolder(async (tmpDir) => {
-      vi.mocked(platform).mockReturnValue('darwin')
+  it.each([['darwin'], ['win32']])(
+    'each task.task installs dependencies when the os is %s',
+    async (operativeSystem) => {
+      await mockAppFolder(async (tmpDir) => {
+        const expectedArgs = operativeSystem === 'win32' ? ['--network-concurrency', '1'] : []
+        vi.mocked(platform).mockReturnValue(operativeSystem as NodeJS.Platform)
 
-      const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
+        const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
-      await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
+        await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
 
-      expect(installNodeModules).toHaveBeenCalledWith({
-        directory: `${path.normalize(tmpDir)}/`,
-        packageManager: defaultArgs.packageManager,
-        stdout: expect.any(Writable),
-        stderr: expect.any(Writable),
-        args: [],
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.normalize(tmpDir)}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.join(tmpDir, 'web')}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.join(tmpDir, 'web', 'frontend')}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
       })
-      expect(installNodeModules).toHaveBeenCalledWith({
-        directory: `${path.join(tmpDir, 'web')}/`,
-        packageManager: defaultArgs.packageManager,
-        stdout: expect.any(Writable),
-        stderr: expect.any(Writable),
-        args: [],
-      })
-      expect(installNodeModules).toHaveBeenCalledWith({
-        directory: `${path.join(tmpDir, 'web', 'frontend')}/`,
-        packageManager: defaultArgs.packageManager,
-        stdout: expect.any(Writable),
-        stderr: expect.any(Writable),
-        args: [],
-      })
-    })
-  })
+    },
+  )
 
   it('each task updates its title once dependencies are installed', async () => {
     await mockAppFolder(async (tmpDir) => {
