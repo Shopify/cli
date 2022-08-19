@@ -235,7 +235,8 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           output += colors.green(stringifyMessage(enumToken.value))
           break
         case ContentTokenType.LinesDiff:
-          ;(enumToken.value as unknown as Change[]).forEach((part) => {
+          // prettier-ignore
+          (enumToken.value as unknown as Change[]).forEach((part) => {
             if (part.added) {
               part.value
                 .split(/\n/)
