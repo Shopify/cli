@@ -15,7 +15,6 @@ func NewExtensionProject(extension core.Extension) error {
 	setup := NewProcess(
 		MakeDir(extension.Development.RootDir),
 		CreateProject(extension),
-		InstallDependencies(extension.Development.RootDir),
 	)
 
 	return setup.Run()
