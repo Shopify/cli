@@ -23,7 +23,7 @@ export async function updateEnvFile(app: AppInterface, envFile: WebEnvOptions['e
 
   const updatedValues = {
     SHOPIFY_API_KEY: selectedApp.apiKey,
-    SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
+    SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
     SCOPES: app.configuration.scopes,
   }
 
@@ -39,11 +39,11 @@ export async function updateEnvFile(app: AppInterface, envFile: WebEnvOptions['e
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
       return output.content`Updated ${output.token.path(envFile)} to be:
 
-  ${updatedEnvFileContent}
+${updatedEnvFileContent}
 
-  Here's what changed:
+Here's what changed:
 
-  ${output.token.linesDiff(diff)}
+${output.token.linesDiff(diff)}
   `
     }
   } else {
@@ -53,8 +53,8 @@ export async function updateEnvFile(app: AppInterface, envFile: WebEnvOptions['e
 
     return output.content`Created ${output.token.path(envFile)}:
 
-  ${newEnvFileContent}
-    `
+${newEnvFileContent}
+`
   }
 }
 
@@ -64,7 +64,7 @@ export async function outputEnv(app: AppInterface, format: Format): Promise<outp
   if (format === 'json') {
     return output.content`${output.token.json({
       SHOPIFY_API_KEY: selectedApp.apiKey,
-      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
+      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
       SCOPES: app.configuration.scopes,
     })}`
   } else {
