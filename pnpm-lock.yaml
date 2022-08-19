@@ -172,25 +172,25 @@ importers:
       graphql: ^16.3.0
       graphql-request: ^4.2.0
       prettier: ^2.6.0
-      react: ^17.0.0
-      react-dom: ^17.0.0
+      react: 16.14.0
+      react-dom: 16.14.0
       react-query: ^3.34.19
       react-router-dom: ^6.3.0
       vite: ^2.8.6
     dependencies:
       '@shopify/app-bridge': registry.npmjs.org/@shopify/app-bridge/2.1.0
-      '@shopify/app-bridge-react': registry.npmjs.org/@shopify/app-bridge-react/2.1.0_react@17.0.2
+      '@shopify/app-bridge-react': registry.npmjs.org/@shopify/app-bridge-react/2.1.0_react@16.14.0
       '@shopify/app-bridge-utils': registry.npmjs.org/@shopify/app-bridge-utils/2.1.0
-      '@shopify/polaris': registry.npmjs.org/@shopify/polaris/9.23.1_sfoxds7t5ydpegc3knd667wn6m
+      '@shopify/polaris': registry.npmjs.org/@shopify/polaris/9.23.1_wcqkhtmu7mswc6yz4uyexck3ty
       '@vitejs/plugin-react': 1.2.0
       cross-env: 7.0.3
       express: 4.18.1
       graphql: 16.6.0
       graphql-request: 4.3.0_graphql@16.6.0
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-      react-query: 3.39.2_sfoxds7t5ydpegc3knd667wn6m
-      react-router-dom: 6.3.0_sfoxds7t5ydpegc3knd667wn6m
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      react-query: 3.39.2_wcqkhtmu7mswc6yz4uyexck3ty
+      react-router-dom: 6.3.0_wcqkhtmu7mswc6yz4uyexck3ty
       vite: 2.9.15
     devDependencies:
       prettier: 2.7.1
@@ -219,7 +219,7 @@ importers:
   packages/cli-hydrogen:
     specifiers:
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': workspace:*
+      '@shopify/cli-kit': 3.7.1
       '@shopify/hydrogen': ^0.26.0
       '@shopify/prettier-config': ^1.1.2
       '@types/prettier': ^2.6.3
@@ -479,13 +479,12 @@ importers:
       '@types/jest': ^27.1.0
       '@types/qrcode.react': ^1.0.2
       '@types/react': 16.14.0
-      '@types/react-dom': ^16.9.11
       '@vitejs/plugin-react-refresh': ^1.3.1
       copy-to-clipboard: ^3.3.1
       jest: ^27.1.0
       qrcode.react: ^1.0.1
-      react: ^16.9.11
-      react-dom: ^16.9.11
+      react: ^16.9.0
+      react-dom: ^16.9.0
       sass: ^1.42.1
       ts-jest: ^27.0.5
       typescript: ^4.7.4
@@ -508,7 +507,6 @@ importers:
       '@types/jest': 27.5.2
       '@types/qrcode.react': 1.0.2
       '@types/react': 16.14.0
-      '@types/react-dom': 16.9.16
       '@vitejs/plugin-react-refresh': 1.3.6
       jest: 27.5.1
       sass: 1.54.4
@@ -527,36 +525,34 @@ importers:
   packages/ui-extensions-server-kit:
     specifiers:
       '@jest/types': ^27.1.0
-      '@shopify/react-testing': ^3.0.0
+      '@shopify/react-testing': ^2.0.0
       '@shopify/ui-extensions-test-utils': workspace:*
       '@types/jest': ^27.1.0
       '@types/react': 16.14.0
-      '@types/react-dom': ^16.9.11
       '@vitejs/plugin-react-refresh': ^1.3.1
       jest: ^27.1.0
       jest-fetch-mock: ^3.0.3
       jest-websocket-mock: ^2.2.1
       mock-socket: ^9.0.5
-      react: ^17.0.0
-      react-dom: ^17.0.0
+      react: 16.14.0
+      react-dom: 16.14.0
       ts-jest: ^27.0.5
       typescript: ^4.7.4
       vite: ^2.9.9
       vite-tsconfig-paths: ^3.3.14
     devDependencies:
       '@jest/types': 27.5.1
-      '@shopify/react-testing': registry.npmjs.org/@shopify/react-testing/3.3.10_sfoxds7t5ydpegc3knd667wn6m
+      '@shopify/react-testing': registry.npmjs.org/@shopify/react-testing/2.3.5_wcqkhtmu7mswc6yz4uyexck3ty
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
       '@types/jest': 27.5.2
       '@types/react': 16.14.0
-      '@types/react-dom': 16.9.16
       '@vitejs/plugin-react-refresh': 1.3.6
       jest: 27.5.1
       jest-fetch-mock: 3.0.3
       jest-websocket-mock: 2.4.0
       mock-socket: 9.1.5
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
       ts-jest: 27.1.5_mqaoisgizytgigbr3gbjwvnjie
       typescript: 4.7.4
       vite: 2.9.15
@@ -565,26 +561,24 @@ importers:
   packages/ui-extensions-test-utils:
     specifiers:
       '@jest/types': ^27.1.0
-      '@shopify/react-testing': ^3.0.0
+      '@shopify/react-testing': ^2.0.0
       '@types/react': 16.14.0
-      '@types/react-dom': ^16.9.11
       jest: ^27.1.0
       jest-websocket-mock: ^2.2.1
       mock-socket: ^9.0.5
-      react: ^17.0.0
-      react-dom: ^17.0.0
+      react: 16.14.0
+      react-dom: 16.14.0
       ts-jest: ^27.0.5
       typescript: ^4.7.4
     devDependencies:
       '@jest/types': 27.5.1
-      '@shopify/react-testing': registry.npmjs.org/@shopify/react-testing/3.3.10_sfoxds7t5ydpegc3knd667wn6m
+      '@shopify/react-testing': registry.npmjs.org/@shopify/react-testing/2.3.5_wcqkhtmu7mswc6yz4uyexck3ty
       '@types/react': 16.14.0
-      '@types/react-dom': 16.9.16
       jest: 27.5.1
       jest-websocket-mock: 2.4.0
       mock-socket: 9.1.5
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
       ts-jest: 27.1.5_g4n3hsjlbmz4ag5o32ytojordu
       typescript: 4.7.4
 
@@ -2740,6 +2734,7 @@ packages:
     resolution: {integrity: sha512-Oqc0RY4fggGA3ltEgyPLc3IV9T73IGoWjkONbsyJ3ZBn+UPPCYpU2ec0i3cEbJuEdZtkqcCF2l1zf2pBdgUGSg==}
     dependencies:
       '@types/react': 16.14.0
+    dev: false
 
   /@types/react-dom/18.0.6:
     resolution: {integrity: sha512-/5OFZgfIPSwy+YuIBP/FgJnQnsxhZhjjrnxudMddeblOouIodEQ75X14Rr4wGSG/bknL+Omy9iWlLo1u/9GzAA==}
@@ -10406,16 +10401,6 @@ packages:
       react: 16.14.0
       scheduler: 0.19.1
 
-  /react-dom/17.0.2_react@17.0.2:
-    resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
-    peerDependencies:
-      react: 17.0.2
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 17.0.2
-      scheduler: 0.20.2
-
   /react-dom/18.2.0_react@18.2.0:
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -10465,7 +10450,7 @@ packages:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
     dev: true
 
-  /react-query/3.39.2_sfoxds7t5ydpegc3knd667wn6m:
+  /react-query/3.39.2_wcqkhtmu7mswc6yz4uyexck3ty:
     resolution: {integrity: sha512-F6hYDKyNgDQfQOuR1Rsp3VRzJnWHx6aRnnIZHMNGGgbL3SBgpZTDg8MQwmxOgpCAoqZJA+JSNCydF1xGJqKOCA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -10480,8 +10465,8 @@ packages:
       '@babel/runtime': 7.18.9
       broadcast-channel: 3.7.0
       match-sorter: 6.3.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
     dev: false
 
   /react-reconciler/0.20.4_react@16.14.0:
@@ -10507,6 +10492,7 @@ packages:
       object-assign: 4.1.1
       react: 17.0.2
       scheduler: 0.20.2
+    dev: false
 
   /react-refresh/0.10.0:
     resolution: {integrity: sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==}
@@ -10523,39 +10509,25 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: false
 
-  /react-router-dom/6.3.0_sfoxds7t5ydpegc3knd667wn6m:
+  /react-router-dom/6.3.0_wcqkhtmu7mswc6yz4uyexck3ty:
     resolution: {integrity: sha512-uaJj7LKytRxZNQV8+RbzJWnJ8K2nPsOOEuX7aQstlMZKQT0164C+X2w6bnkqU3sjtLvpd5ojrezAyfZ1+0sStw==}
     peerDependencies:
       react: '>=16.8'
       react-dom: '>=16.8'
     dependencies:
       history: 5.3.0
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-      react-router: 6.3.0_react@17.0.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      react-router: 6.3.0_react@16.14.0
     dev: false
 
-  /react-router/6.3.0_react@17.0.2:
+  /react-router/6.3.0_react@16.14.0:
     resolution: {integrity: sha512-7Wh1DzVQ+tlFjkeo+ujvjSqSJmkt1+8JO+T5xklPlgrh70y7ogx75ODRW0ThWhY7S+6yEDks8TYrtQe/aoboBQ==}
     peerDependencies:
       react: '>=16.8'
     dependencies:
       history: 5.3.0
-      react: 17.0.2
-    dev: false
-
-  /react-transition-group/4.4.5_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
-    peerDependencies:
-      react: '>=16.6.0'
-      react-dom: '>=16.6.0'
-    dependencies:
-      '@babel/runtime': 7.18.9
-      dom-helpers: 5.2.1
-      loose-envify: 1.4.0
-      prop-types: 15.8.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 16.14.0
     dev: false
 
   /react-transition-group/4.4.5_wcqkhtmu7mswc6yz4uyexck3ty:
@@ -10586,6 +10558,7 @@ packages:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
+    dev: false
 
   /react/18.2.0:
     resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
@@ -11009,6 +10982,7 @@ packages:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
+    dev: false
 
   /scheduler/0.23.0:
     resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
@@ -13121,7 +13095,7 @@ packages:
       '@shopify/ui-extensions': registry.npmjs.org/@shopify/ui-extensions/1.0.1
     dev: false
 
-  registry.npmjs.org/@shopify/app-bridge-react/2.1.0_react@17.0.2:
+  registry.npmjs.org/@shopify/app-bridge-react/2.1.0_react@16.14.0:
     resolution: {integrity: sha512-KL+8ib6BdcEw3EzrXvoQgB22o11uKir7MTi9EgsmjvT0qRAywuVBDXgsKbmjyqr6DrnU5FQX5Lty0sA55NzTRA==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/app-bridge-react/-/app-bridge-react-2.1.0.tgz}
     id: registry.npmjs.org/@shopify/app-bridge-react/2.1.0
     name: '@shopify/app-bridge-react'
@@ -13130,7 +13104,7 @@ packages:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0
     dependencies:
       '@shopify/app-bridge': registry.npmjs.org/@shopify/app-bridge/2.1.0
-      react: 17.0.2
+      react: 16.14.0
     dev: false
 
   registry.npmjs.org/@shopify/app-bridge-utils/2.1.0:
@@ -13462,7 +13436,7 @@ packages:
       - supports-color
     dev: false
 
-  registry.npmjs.org/@shopify/polaris/9.23.1_sfoxds7t5ydpegc3knd667wn6m:
+  registry.npmjs.org/@shopify/polaris/9.23.1_wcqkhtmu7mswc6yz4uyexck3ty:
     resolution: {integrity: sha512-YA0anp0L/i8V9lS2uk8sTtnhM37tWLJbA8MxqBMzMHyszebt6WEojU0GnL7hC3gSdScKZ7JT6wd26OeGHqm8Hg==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/polaris/-/polaris-9.23.1.tgz}
     id: registry.npmjs.org/@shopify/polaris/9.23.1
     name: '@shopify/polaris'
@@ -13476,10 +13450,10 @@ packages:
       '@types/react': 18.0.17
       '@types/react-dom': 18.0.6
       '@types/react-transition-group': 4.4.5
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
       react-fast-compare: 3.2.0
-      react-transition-group: 4.4.5_sfoxds7t5ydpegc3knd667wn6m
+      react-transition-group: 4.4.5_wcqkhtmu7mswc6yz4uyexck3ty
     dev: false
 
   registry.npmjs.org/@shopify/post-purchase-ui-extensions-react/0.13.3_react@17.0.2:
@@ -13586,23 +13560,6 @@ packages:
       react-reconciler: 0.20.4_react@16.14.0
     dev: true
 
-  registry.npmjs.org/@shopify/react-testing/3.3.10_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-l1juWNqe4rRrP5bcOB6riJEd1Bb0BgfnGVKb9GB+o8QtTv1ti3YxGdyU+D/qpIuXBG5h5SNR2wgECdD4kpqVeg==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/react-testing/-/react-testing-3.3.10.tgz}
-    id: registry.npmjs.org/@shopify/react-testing/3.3.10
-    name: '@shopify/react-testing'
-    version: 3.3.10
-    engines: {node: '>=12.14.0'}
-    peerDependencies:
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
-    dependencies:
-      '@shopify/useful-types': registry.npmjs.org/@shopify/useful-types/4.0.3
-      jest-matcher-utils: 26.6.2
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-      react-reconciler: 0.26.2_react@17.0.2
-    dev: true
-
   registry.npmjs.org/@shopify/shopify-api/3.1.3:
     resolution: {integrity: sha512-ju3ynMjY5WOur9SaZ8kY66pSOwK8j6puLDMhXPaiKuXuJwNYjqaTNUxdU9hT58sz2wWUPlAQB+WQ/J7ozWW7Lg==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/shopify-api/-/shopify-api-3.1.3.tgz}
     name: '@shopify/shopify-api'
@@ -13652,6 +13609,7 @@ packages:
     name: '@shopify/useful-types'
     version: 4.0.3
     engines: {node: '>=12.14.0'}
+    dev: false
 
   registry.npmjs.org/@shopify/web-pixels-extension/0.1.5:
     resolution: {integrity: sha512-XTO7x1KyXHgdw6fZ2cVOzylhEybKzrtb/yxds2ePO5oop3U3042PLj82IVyaINMnObnC37c2tp62AYTtZj+/pA==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/web-pixels-extension/-/web-pixels-extension-0.1.5.tgz}
