@@ -1,6 +1,5 @@
 import * as environment from './environment.js'
 import {platformAndArch} from './os.js'
-import {resolve} from './path.js'
 import {version as rubyVersion} from './node/ruby.js'
 import {content, debug, token} from './output.js'
 import constants from './constants.js'
@@ -77,16 +76,10 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
   const {startCommand, startArgs, startTime} = commandStartOptions
   const currentTime = new Date().getTime()
 
-  let directory = process.cwd()
-  const pathFlagIndex = startArgs.indexOf('--path')
-  if (pathFlagIndex >= 0) {
-    directory = resolve(startArgs[pathFlagIndex + 1])
-  }
-
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
   const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
 
-  const {platform, arch, ...environmentData} = getEnvironmentData(config)
+  const environmentData = getEnvironmentData(config)
 
   return {
     public: {
@@ -95,7 +88,6 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       time_end: currentTime,
       total_time: currentTime - startTime,
       success: errorMessage === undefined,
-      uname: `${platform} ${arch}`,
       cli_version: await constants.versions.cliKit(),
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
@@ -118,7 +110,7 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
   }
 }
 
-function getEnvironmentData(config: Interfaces.Config) {
+export function getEnvironmentData(config: Interfaces.Config) {
   const ciPlatform = environment.local.ciPlatform()
 
   const pluginNames = config.plugins
@@ -127,8 +119,10 @@ function getEnvironmentData(config: Interfaces.Config) {
     .filter((plugin) => !plugin.startsWith('@oclif/'))
   const shopifyPlugins = pluginNames.filter((plugin) => plugin.startsWith('@shopify/'))
 
+  const {platform, arch} = platformAndArch()
+
   return {
-    ...platformAndArch(),
+    uname: `${platform} ${arch}`,
     env_ci: ciPlatform.isCI,
     env_ci_platform: ciPlatform.name,
     env_plugin_installed_any_custom: pluginNames.length !== shopifyPlugins.length,

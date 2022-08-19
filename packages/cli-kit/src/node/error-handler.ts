@@ -7,9 +7,10 @@ import {
   cleanSingleStackTracePath,
 } from '../error.js'
 import {debug, info} from '../output.js'
-import {reportEvent} from '../analytics.js'
+import {getEnvironmentData, reportEvent} from '../analytics.js'
 import * as path from '../path.js'
 import * as metadata from '../metadata.js'
+import {fanoutHooks} from '../plugins.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
@@ -130,25 +131,25 @@ export function cleanStackFrameFilePath({
  * Register a Bugsnag error listener to clean up stack traces for errors within plugin code.
  *
  */
-export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Interfaces.Plugin[]) {
+export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config) {
   // Bugsnag have their own plug-ins that use this private field
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
   const projectRoot = path.normalize(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
-    plugins.map(async (plugin) => {
+    config.plugins.map(async (plugin) => {
       const followSymlinks = await realpath(plugin.root)
       return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
     }),
   )
-  Bugsnag.addOnError((event) => {
+  Bugsnag.addOnError(async (event) => {
     event.errors.forEach((error) => {
       error.stacktrace.forEach((stackFrame) => {
         stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
     try {
-      addBugsnagMetadata(event)
+      await addBugsnagMetadata(event, config)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (metadataError) {
       debug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
@@ -156,10 +157,49 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Inter
   })
 }
 
-export function addBugsnagMetadata(event: Event) {
+export async function addBugsnagMetadata(event: Event, config: Interfaces.Config) {
   const publicData = metadata.getAllPublic()
+  const {commandStartOptions} = metadata.getAllSensitive()
+  const {startCommand} = commandStartOptions ?? {}
+
+  const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
+
+  const environment = getEnvironmentData(config)
+
+  const allMetadata = {
+    command: startCommand,
+    ...appPublic,
+    ...publicData,
+    ...environment,
+    pluginData: otherPluginsPublic,
+  }
+
+  const appData = {} as {[key: string]: unknown}
+  const commandData = {} as {[key: string]: unknown}
+  const environmentData = {} as {[key: string]: unknown}
+  const miscData = {} as {[key: string]: unknown}
+  const appKeys = ['api_key', 'partner_id', 'project_type']
+  const commandKeys = ['command']
+  const environmentKeys = ['cli_version', 'node_version', 'ruby_version', 'uname']
+
+  Object.entries(allMetadata).forEach(([key, value]) => {
+    if (key.startsWith('app_') || appKeys.includes(key)) {
+      appData[key] = value
+    } else if (key.startsWith('cmd_') || commandKeys.includes(key)) {
+      commandData[key] = value
+    } else if (key.startsWith('env_') || environmentKeys) {
+      environmentData[key] = value
+    } else {
+      miscData[key] = value
+    }
+  })
+
+  // app, command, environment, misc
   const bugsnagMetadata = {
-    misc: publicData,
+    'Shopify App': appData,
+    Command: commandData,
+    Environment: environmentData,
+    Misc: miscData,
   }
   Object.entries(bugsnagMetadata).forEach(([section, values]) => {
     event.addMetadata(section, values)
