@@ -254,7 +254,7 @@ async function installDependencies(directory: string, packageManager: PackageMan
   if (packageManager === 'pnpm') {
     await writeToNpmrc(directory, 'auto-install-peers = true')
   }
-  await installNodeModules(directory, packageManager, stdout)
+  await installNodeModules({directory, packageManager, stdout, args: []})
 }
 
 async function writeToNpmrc(directory: string, content: string) {

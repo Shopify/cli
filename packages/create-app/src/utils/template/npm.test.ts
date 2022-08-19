@@ -3,11 +3,13 @@ import {file, npm, path, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
+import {platform} from 'node:os'
 
 let cliVersion: undefined | string
 let appVersion: undefined | string
 
 beforeEach(async () => {
+  vi.mock('node:os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')
@@ -149,32 +151,41 @@ describe('getDeepInstallNPMTasks', () => {
     })
   })
 
-  it('each task.task installs dependencies', async () => {
-    await mockAppFolder(async (tmpDir) => {
-      const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
+  it.each([['darwin'], ['win32']])(
+    'each task.task installs dependencies when the os is %s',
+    async (operativeSystem) => {
+      await mockAppFolder(async (tmpDir) => {
+        const expectedArgs = operativeSystem === 'win32' ? ['--network-concurrency', '1'] : []
+        vi.mocked(platform).mockReturnValue(operativeSystem as NodeJS.Platform)
 
-      await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
+        const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.normalize(tmpDir)}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'web')}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'web', 'frontend')}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-    })
-  })
+        await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
+
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.normalize(tmpDir)}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.join(tmpDir, 'web')}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.join(tmpDir, 'web', 'frontend')}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+      })
+    },
+  )
 
   it('each task updates its title once dependencies are installed', async () => {
     await mockAppFolder(async (tmpDir) => {
@@ -216,7 +227,7 @@ describe('getDeepInstallNPMTasks', () => {
       const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
-        const stdout = args[2]
+        const stdout = args[0].stdout
 
         stdout!.write(`stdout ${i}`)
       })
@@ -237,7 +248,7 @@ describe('getDeepInstallNPMTasks', () => {
       const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
-        const stderr = args[3]
+        const stderr = args[0].stderr
 
         stderr!.write(`stderr ${i}`)
       })
