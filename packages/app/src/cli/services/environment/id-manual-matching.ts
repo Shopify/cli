@@ -46,7 +46,7 @@ export async function selectRegistrationPrompt(
   registrations: ExtensionRegistration[],
 ): Promise<ExtensionRegistration> {
   const registrationList = registrations.map((reg) => ({
-    name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners) `,
+    name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners)`,
     value: reg.uuid,
   }))
   registrationList.push({name: 'Create new extension', value: 'create'})

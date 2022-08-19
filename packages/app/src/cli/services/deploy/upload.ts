@@ -3,6 +3,7 @@ import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.j
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {blocks, getFunctionExtensionPointName} from '../../constants.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
+
 import fs from 'fs'
 
 interface DeployThemeExtensionOptions {
@@ -45,6 +46,7 @@ export async function uploadThemeExtensions(
     }),
   )
 }
+
 interface UploadUIExtensionsBundleOptions {
   /** The application API key */
   apiKey: string
