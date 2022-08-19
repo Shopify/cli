@@ -4,7 +4,7 @@ import {CheckOrganizationQuerySchema, CheckOrganizationsQuery} from './graphql/c
 import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
 import {ApiError} from '../error.js'
-import {ResultAsync} from '../typing/result/result-async.js'
+import {ResultAsync} from '../common/typing/result/result-async.js'
 import {Variables, RequestDocument} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
@@ -82,10 +82,7 @@ export async function functionProxyRequest<T>(
     variables: JSON.stringify(variables) || '{}',
   }
   const proxyQuery = ScriptServiceProxyQuery
-  return request<ProxyResponse>(proxyQuery, token, proxyVariables).match(
-    (response) => JSON.parse(response.scriptServiceProxy) as T,
-    (err) => {
-      throw err
-    },
-  )
+  const res: ProxyResponse = await request(proxyQuery, token, proxyVariables)
+  const json = JSON.parse(res.scriptServiceProxy)
+  return json as T
 }

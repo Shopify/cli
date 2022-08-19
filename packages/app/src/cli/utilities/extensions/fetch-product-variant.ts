@@ -1,6 +1,6 @@
 import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {api, error, session} from '@shopify/cli-kit'
-import {ResultAsync} from '@shopify/cli-kit/src/typing/result/result-async.js'
+import {errAsync, okAsync, ResultAsync} from '@shopify/cli-kit/common/typing/result/result-async'
 
 const NoProductsError = (storeFqdn: string) => {
   return new error.Abort(
@@ -23,16 +23,16 @@ export async function fetchProductVariant(store: string) {
       const query = api.graphql.FindProductVariantQuery
       return api.admin.request<api.graphql.FindProductVariantSchema>(query, adminSession)
     })
-    .map((result) => mapFetchProductVariantResult(result, store))
+    .andThen((result) => mapFetchProductVariantResult(result, store))
     .unwrapOrThrow()
 }
 
 function mapFetchProductVariantResult(result: api.graphql.FindProductVariantSchema, store: string) {
   const products = result.products.edges
   if (products.length === 0) {
-    return NoProductsError(store)
+    return errAsync(NoProductsError(store))
   }
   const variantURL = products[0].node.variants.edges[0].node.id
   const variantId = variantURL.split('/').pop()
-  return variantId
+  return okAsync(variantId)
 }

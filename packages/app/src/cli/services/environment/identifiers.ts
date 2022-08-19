@@ -69,11 +69,10 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     throw GenericError()
   }
 
-  const match = await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers)
+  const match = (await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers))
+    .mapErr(GenericError)
+    .unwrapOrThrow()
 
-  if (match.result === 'invalid-environment') {
-    throw GenericError()
-  }
   let validMatches = match.identifiers ?? {}
   const validMatchesById: {[key: string]: string} = {}
 
@@ -89,8 +88,9 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   const extensionsToCreate = match.toCreate ?? []
 
   if (match.toManualMatch.local.length > 0) {
-    const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
-    if (matchResult.result === 'pending-remote') throw GenericError()
+    const matchResult = (await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote))
+      .mapErr(GenericError)
+      .unwrapOrThrow()
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
   }

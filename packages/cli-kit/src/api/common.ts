@@ -2,7 +2,7 @@ import {firstPartyDev} from '../environment/local.js'
 import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
 import {Abort, ApiError} from '../error.js'
-import {fromPromise, ResultAsync} from '../typing/result/result-async.js'
+import {fromPromise, ResultAsync} from '../common/typing/result/result-async.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
 import {randomUUID} from 'crypto'
 

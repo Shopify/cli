@@ -3,7 +3,7 @@ import {AdminSession} from '../session.js'
 import {debug, content, token as outputToken} from '../output.js'
 import {Bug, Abort} from '../error.js'
 import {graphqlClient} from '../http/graphql.js'
-import {ResultAsync} from '../typing/result/result-async.js'
+import {ResultAsync} from '../common/typing/result/result-async.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
 
 const UnauthorizedAccessError = (store: string) => {
