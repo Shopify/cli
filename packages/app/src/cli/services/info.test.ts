@@ -1,6 +1,6 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectOrCreateApp} from './dev/select-app.js'
+import {selectApp} from './app/select-app.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp} from '../models/app/app.test-data.js'
@@ -10,7 +10,7 @@ import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(async () => {
   vi.mock('./dev/fetch.js')
-  vi.mock('./dev/select-app.js')
+  vi.mock('./app/select-app.js')
   vi.mock('../prompts/dev.js')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -123,7 +123,7 @@ describe('info', () => {
       stores: [],
       apps: [organizationApp],
     })
-    vi.mocked(selectOrCreateApp).mockResolvedValue(organizationApp)
+    vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
@@ -131,12 +131,11 @@ describe('info', () => {
 
     // Then
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    "
+        SHOPIFY_API_KEY=api-key
+        SHOPIFY_API_SECRET=api-secret
+        SCOPES=my-scope
       "
-      Use these environment variables to set up your deployment pipeline for this app:
-        · SHOPIFY_API_KEY: api-key
-        · SHOPIFY_API_SECRET: api-secret
-        · SCOPES: my-scope
-          "
     `)
   })
 
@@ -168,7 +167,7 @@ describe('info', () => {
       stores: [],
       apps: [organizationApp],
     })
-    vi.mocked(selectOrCreateApp).mockResolvedValue(organizationApp)
+    vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When

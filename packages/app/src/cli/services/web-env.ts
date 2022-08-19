@@ -19,21 +19,6 @@ export async function webEnv(app: AppInterface, {update, envFile}: WebEnvOptions
 }
 
 export async function updateEnvFile(app: AppInterface, envFile: WebEnvOptions['envFile']): Promise<output.Message> {
-  let envFileContent = null
-
-  if (await file.exists(envFile)) {
-    envFileContent = await file.read(envFile)
-
-    output.info(
-      output.content`Current ${output.token.path(envFile)} is:
-
-${envFileContent}
-`,
-    )
-  } else {
-    output.info(output.content`No environment file found. Creating ${output.token.path(envFile)}`)
-  }
-
   const selectedApp = await selectApp()
 
   const updatedValues = {
@@ -42,21 +27,34 @@ ${envFileContent}
     SCOPES: app.configuration.scopes,
   }
 
-  const newEnvFileContent = patchEnvFile(envFileContent, updatedValues)
+  if (await file.exists(envFile)) {
+    const envFileContent = await file.read(envFile)
+    const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
 
-  if (newEnvFileContent === envFileContent) {
-    return output.content`No changes to ${output.token.path(envFile)}`
+    if (updatedEnvFileContent === envFileContent) {
+      return output.content`No changes to ${output.token.path(envFile)}`
+    } else {
+      await file.write(envFile, updatedEnvFileContent)
+
+      const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
+      return output.content`Updated ${output.token.path(envFile)} to be:
+
+  ${updatedEnvFileContent}
+
+  Here's what changed:
+
+  ${output.token.linesDiff(diff)}
+  `
+    }
   } else {
+    const newEnvFileContent = patchEnvFile(null, updatedValues)
+
     await file.write(envFile, newEnvFileContent)
 
-    const diff = diffLines(envFileContent ?? '', newEnvFileContent, {newlineIsToken: true})
-    return output.content`Updated ${output.token.path(envFile)} to be:
+    return output.content`Created ${output.token.path(envFile)}:
 
-${newEnvFileContent}
-
-Here's what changed:
-${output.token.linesDiff(diff)}
-`
+  ${newEnvFileContent}
+    `
   }
 }
 

@@ -237,9 +237,19 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
         case ContentTokenType.LinesDiff:
           ;(enumToken.value as unknown as Change[]).forEach((part) => {
             if (part.added) {
-              output += colors.green(`+ ${part.value}`)
+              part.value
+                .split(/\n/)
+                .filter((line) => line !== '')
+                .forEach((line) => {
+                  output += colors.green(`+ ${line}\n`)
+                })
             } else if (part.removed) {
-              output += colors.magenta(`- ${part.value}\n`)
+              part.value
+                .split(/\n/)
+                .filter((line) => line !== '')
+                .forEach((line) => {
+                  output += colors.magenta(`- ${line}\n`)
+                })
             } else {
               output += part.value
             }
