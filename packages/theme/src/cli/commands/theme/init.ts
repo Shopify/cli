@@ -17,7 +17,7 @@ export default class Init extends Command {
 
   static flags = {
     ...cli.globalFlags,
-    ...themeFlags,
+    path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
       description:

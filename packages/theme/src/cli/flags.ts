@@ -1,5 +1,5 @@
 import {Flags} from '@oclif/core'
-import {path} from '@shopify/cli-kit'
+import {path, string} from '@shopify/cli-kit'
 
 /**
  * An object that contains the flags that
@@ -12,5 +12,16 @@ export const themeFlags = {
     parse: (input, _) => Promise.resolve(path.resolve(input)),
     env: 'SHOPIFY_FLAG_PATH',
     default: '.',
+  }),
+  password: Flags.string({
+    hidden: false,
+    description: 'Password generated from the Theme Access app.',
+    env: 'SHOPIFY_CLI_THEME_TOKEN',
+  }),
+  store: Flags.string({
+    char: 's',
+    description: 'Store URL.',
+    env: 'SHOPIFY_FLAG_STORE',
+    parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
   }),
 }

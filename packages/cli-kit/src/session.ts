@@ -135,7 +135,7 @@ ${token.json(scopes)}
  * Ensure that we have a valid Admin session for the given store.
  * @param store {string} Store fqdn to request auth for
  * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<string>} The access token for the Admin API
+ * @returns {Promise<AdminSession>} The access token and store for the Admin API
  */
 export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
   debug(content`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${token.raw(
@@ -148,6 +148,25 @@ ${token.json(scopes)}
     throw MissingAdminTokenError
   }
   return tokens.admin
+}
+
+/**
+ * Ensure that we have a valid session to access the Theme API.
+ * If SHOPIFY_CLI_THEME_TOKEN exists, that token will be used against Theme Access API.
+ * Otherwise, it will ensure that the user is authenticated with the Admin API.
+ * @param scopes {string[]} Optional array of extra scopes to authenticate with.
+ * @returns {Promise<AdminSession>} The access token and store
+ */
+export async function ensureAuthenticatedThemes(
+  store: string,
+  password: string | undefined,
+  scopes: string[] = [],
+): Promise<AdminSession> {
+  debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
+${token.json(scopes)}
+`)
+  if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
+  return ensureAuthenticatedAdmin(store, scopes)
 }
 
 /**
