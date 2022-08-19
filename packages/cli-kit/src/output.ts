@@ -21,6 +21,7 @@ import cjs from 'color-json'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 import {WriteStream, createWriteStream} from 'node:fs'
+import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
 
@@ -67,6 +68,7 @@ enum ContentTokenType {
   Cyan,
   Magenta,
   Green,
+  LinesDiff,
 }
 
 interface ContentMetadata {
@@ -140,6 +142,10 @@ export const token = {
   },
   failIcon: () => {
     return new ContentToken('✖', {}, ContentTokenType.ErrorText)
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  linesDiff: (value: any) => {
+    return new ContentToken(value, {}, ContentTokenType.LinesDiff)
   },
 }
 
@@ -227,6 +233,17 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
           break
         case ContentTokenType.Green:
           output += colors.green(stringifyMessage(enumToken.value))
+          break
+        case ContentTokenType.LinesDiff:
+          ;(enumToken.value as unknown as Change[]).forEach((part) => {
+            if (part.added) {
+              output += colors.green(`+ ${part.value}`)
+            } else if (part.removed) {
+              output += colors.magenta(`- ${part.value}\n`)
+            } else {
+              output += part.value
+            }
+          })
           break
       }
     }

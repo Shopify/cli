@@ -1,4 +1,4 @@
-import {selectApp} from './app/select-app.js'
+import {outputEnv} from './web-env.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {
@@ -31,22 +31,7 @@ export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Pr
 }
 
 export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
-  const selectedApp = await selectApp()
-
-  if (format === 'json') {
-    return output.content`${output.token.json({
-      SHOPIFY_API_KEY: selectedApp.apiKey,
-      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
-      SCOPES: app.configuration.scopes,
-    })}`
-  } else {
-    return output.content`
-Use these environment variables to set up your deployment pipeline for this app:
-  · ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
-  · ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
-  · ${output.token.green('SCOPES')}: ${app.configuration.scopes}
-    `
-  }
+  return outputEnv(app, format)
 }
 
 export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {

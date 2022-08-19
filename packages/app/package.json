@@ -48,15 +48,17 @@
     }
   },
   "devDependencies": {
+    "@types/diff": "^5.0.2",
     "@types/http-proxy": "^1.17.9",
     "vitest": "^0.17.1"
   },
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "1.9.2",
-    "@shopify/shopify-cli-extensions": "3.7.1",
     "@shopify/cli-kit": "3.7.1",
+    "@shopify/shopify-cli-extensions": "3.7.1",
     "http-proxy": "^1.18.1",
+    "diff": "^5.1.0",
     "ws": "^8.7.0"
   }
 }
