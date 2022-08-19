@@ -1,4 +1,4 @@
-import {selectApp} from './dev/select-app.js'
+import {selectApp} from './app/select-app.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {
