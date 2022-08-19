@@ -75,7 +75,7 @@ export async function getDeepInstallNPMTasks({
          * Failing scenario: https://github.com/Shopify/cli/runs/7913938724
          * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
          */
-        let args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
+        const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
         await installNodeModules({directory: folderPath, packageManager, stdout: output, stderr: output, args})
 
         task.title = `Installed dependencies in ${titlePath}`
