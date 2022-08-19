@@ -50,15 +50,15 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-      - uses: pnpm/action-setup@v2.2.2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: true
       - name: Build the fixture app
         run: pnpm shopify app build --path ./fixtures/app
   main:
@@ -92,15 +92,15 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-      - uses: pnpm/action-setup@v2.2.2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: true
       - name: Build
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Lint
@@ -150,15 +150,15 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Set Node.js on ubuntu environments
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-      - uses: pnpm/action-setup@v2.2.2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: true
       - name: Build
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Type-check
@@ -213,15 +213,15 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-      - uses: pnpm/action-setup@v2.2.2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: true
       - name: Build
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Unit tests
