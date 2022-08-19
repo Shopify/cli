@@ -73,11 +73,11 @@ describe('install', () => {
     await installNodeModules({
       directory,
       packageManager,
-      args: [],
+      args: ['arg1'],
     })
 
     // Then
-    expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install'], {
+    expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install', 'arg1'], {
       cwd: directory,
     })
   })
