@@ -68,27 +68,16 @@ function patchEnvFile(envFileContent: string | null, updatedValues: {[key: strin
 
   for (const line of lines) {
     const match = line.match(/^([^=:#]+?)[=:](.*)/)
+    let lineToWrite = line
     if (match) {
       const key = match[1].trim()
-      const value = match[2].trim()
-
       const newValue = updatedValues[key]
-
-      if (newValue === undefined) {
-        outputLines.push(line)
-      } else {
+      if (newValue) {
         alreadyPresentKeys.push(key)
-
-        if (value === newValue) {
-          outputLines.push(line)
-        } else {
-          const newLine = toLine(key, newValue)
-          outputLines.push(newLine)
-        }
+        lineToWrite = toLine(key, newValue)
       }
-    } else {
-      outputLines.push(line)
     }
+    outputLines.push(lineToWrite)
   }
 
   for (const [patchKey, updatedValue] of Object.entries(updatedValues)) {
