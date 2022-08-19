@@ -1,7 +1,6 @@
 lockfileVersion: 5.4
 
 overrides:
-  '@types/react': 16.14.0
   '@oclif/core': 1.9.2
 
 importers:
@@ -43,12 +42,14 @@ importers:
       execa: ^5.1.1
       fast-glob: ^3.2.11
       fs-extra: ^10.0.0
-      graphql: ^16.6.0
+      graphql: ^15.0.0
       nx: ^14.0.5
       patch-package: ^6.4.7
       pathe: 0.2.0
       postinstall-postinstall: ^2.1.0
       prettier: ^2.6.1
+      react: ^16.9.11
+      react-dom: ^16.9.11
       rimraf: ^3.0.2
       shx: ^0.3.3
       tmp: ^0.2.1
@@ -57,7 +58,7 @@ importers:
       typescript: ^4.7.4
       vite: ^2.9.9
     devDependencies:
-      '@apollo/client': 3.6.9_graphql@16.6.0
+      '@apollo/client': 3.6.9_5d33slzn54cnsyp4ta7twtp2ca
       '@babel/core': 7.18.10
       '@bugsnag/source-maps': 2.3.1
       '@changesets/cli': 2.24.3
@@ -65,7 +66,7 @@ importers:
       '@nrwl/js': 14.5.7_esq26qu5etlxgww45wkmykkdqi
       '@nrwl/tao': 14.5.7
       '@nrwl/workspace': 14.5.7_a7rbsm6fwq3xvqwmp5oyrbgm6a
-      '@shopify/eslint-plugin': 41.3.1_rlpap56wczaecoey756z5wu6fy
+      '@shopify/eslint-plugin': 41.3.1_k6cqtomkxqbqvx776rhko5xlcu
       '@shopify/typescript-configs': 5.1.0
       '@types/fs-extra': 9.0.13
       '@types/node': 14.18.24
@@ -92,12 +93,14 @@ importers:
       execa: 5.1.1
       fast-glob: 3.2.11
       fs-extra: 10.1.0
-      graphql: 16.6.0
+      graphql: 15.8.0
       nx: 14.5.7
       patch-package: 6.4.7
       pathe: 0.2.0
       postinstall-postinstall: 2.1.0
       prettier: 2.7.1
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
       rimraf: 3.0.2
       shx: 0.3.4
       tmp: 0.2.1
@@ -114,15 +117,15 @@ importers:
       '@shopify/cli': 3.7.1
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
       '@shopify/web-pixels-extension': ^0.1.1
-      react: ^18.1.0
+      react: ^17.0.0
     dependencies:
-      '@shopify/admin-ui-extensions-react': 1.0.1_react@18.2.0
+      '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
-      '@shopify/checkout-ui-extensions-react': 0.18.1_react@18.2.0
+      '@shopify/checkout-ui-extensions-react': 0.18.1_react@17.0.2
       '@shopify/cli': link:../../packages/cli-main
-      '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@18.2.0
+      '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
       '@shopify/web-pixels-extension': 0.1.5
-      react: 18.2.0
+      react: 17.0.2
 
   fixtures/app/web:
     specifiers:
@@ -163,8 +166,8 @@ importers:
       graphql: ^16.3.0
       graphql-request: ^4.2.0
       prettier: ^2.6.0
-      react: ^17.0.2
-      react-dom: ^17.0.2
+      react: ^17.0.0
+      react-dom: ^17.0.0
       react-query: ^3.34.19
       react-router-dom: ^6.3.0
       vite: ^2.8.6
@@ -218,15 +221,15 @@ importers:
       fast-glob: ^3.2.11
       fs-extra: ^10.0.0
       prettier: ^2.6.1
-      react: ^17.0.0
-      react-dom: ^17.0.0
+      react: ^18.0.0
+      react-dom: ^18.0.0
       typescript: ^4.7.4
       vite: ^2.9.9
       vitest: ^0.17.1
     dependencies:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
-      '@shopify/hydrogen': 0.26.1_yqxtczh2s3fudathwynm2mz4mi
+      '@shopify/hydrogen': 0.26.1_qe5jfsncnerz6ytrdv5ku7pr7e
       '@shopify/mini-oxygen': 0.1.0
       '@shopify/prettier-config': 1.1.2
       '@types/prettier': 2.7.0
@@ -236,8 +239,8 @@ importers:
       typescript: 4.7.4
       vite: 2.9.9
     devDependencies:
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
       vitest: 0.17.1
 
   packages/cli-kit:
@@ -468,7 +471,7 @@ importers:
       '@shopify/polaris': ^6.6.0
       '@shopify/polaris-icons': ^4.6.2
       '@shopify/react-i18n': ^6.1.0
-      '@shopify/react-testing': ^3.0.0
+      '@shopify/react-testing': ^2.0.0
       '@shopify/ui-extensions-server-kit': 3.7.1
       '@shopify/ui-extensions-test-utils': 3.7.1
       '@types/jest': ^27.1.0
@@ -498,7 +501,7 @@ importers:
       react-dom: 16.14.0_react@16.14.0
     devDependencies:
       '@jest/types': 27.5.1
-      '@shopify/react-testing': 3.3.10_wcqkhtmu7mswc6yz4uyexck3ty
+      '@shopify/react-testing': registry.npmjs.org/@shopify/react-testing/2.3.5_wcqkhtmu7mswc6yz4uyexck3ty
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
       '@types/jest': 27.5.2
       '@types/qrcode.react': 1.0.2
@@ -592,7 +595,7 @@ packages:
       '@jridgewell/gen-mapping': 0.1.1
       '@jridgewell/trace-mapping': 0.3.15
 
-  /@apollo/client/3.6.9_graphql@16.6.0:
+  /@apollo/client/3.6.9_5d33slzn54cnsyp4ta7twtp2ca:
     resolution: {integrity: sha512-Y1yu8qa2YeaCUBVuw08x8NHenFi0sw2I3KCu7Kw9mDSu86HmmtHJkCAifKVrN2iPgDTW/BbP3EpSV8/EQCcxZA==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
@@ -607,15 +610,16 @@ packages:
       subscriptions-transport-ws:
         optional: true
     dependencies:
-      '@graphql-typed-document-node/core': 3.1.1_graphql@16.6.0
+      '@graphql-typed-document-node/core': 3.1.1_graphql@15.8.0
       '@wry/context': 0.6.1
       '@wry/equality': 0.5.3
       '@wry/trie': 0.3.2
-      graphql: 16.6.0
-      graphql-tag: 2.12.6_graphql@16.6.0
+      graphql: 15.8.0
+      graphql-tag: 2.12.6_graphql@15.8.0
       hoist-non-react-statics: 3.3.2
       optimism: 0.16.1
       prop-types: 15.8.1
+      react: 16.14.0
       symbol-observable: 4.0.0
       ts-invariant: 0.10.3
       tslib: 2.4.0
@@ -1490,74 +1494,74 @@ packages:
     dev: false
     optional: true
 
-  /@graphql-tools/batch-execute/7.1.2_graphql@16.6.0:
+  /@graphql-tools/batch-execute/7.1.2_graphql@15.8.0:
     resolution: {integrity: sha512-IuR2SB2MnC2ztA/XeTMTfWcA0Wy7ZH5u+nDkDNLAdX+AaSyDnsQS35sCmHqG0VOGTl7rzoyBWLCKGwSJplgtwg==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
       dataloader: 2.0.0
-      graphql: 16.6.0
+      graphql: 15.8.0
       tslib: 2.2.0
       value-or-promise: 1.0.6
     dev: true
 
-  /@graphql-tools/delegate/7.1.5_graphql@16.6.0:
+  /@graphql-tools/delegate/7.1.5_graphql@15.8.0:
     resolution: {integrity: sha512-bQu+hDd37e+FZ0CQGEEczmRSfQRnnXeUxI/0miDV+NV/zCbEdIJj5tYFNrKT03W6wgdqx8U06d8L23LxvGri/g==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
       '@ardatan/aggregate-error': 0.0.6
-      '@graphql-tools/batch-execute': 7.1.2_graphql@16.6.0
-      '@graphql-tools/schema': 7.1.5_graphql@16.6.0
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
+      '@graphql-tools/batch-execute': 7.1.2_graphql@15.8.0
+      '@graphql-tools/schema': 7.1.5_graphql@15.8.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
       dataloader: 2.0.0
-      graphql: 16.6.0
+      graphql: 15.8.0
       tslib: 2.2.0
       value-or-promise: 1.0.6
     dev: true
 
-  /@graphql-tools/graphql-file-loader/6.2.7_graphql@16.6.0:
+  /@graphql-tools/graphql-file-loader/6.2.7_graphql@15.8.0:
     resolution: {integrity: sha512-5k2SNz0W87tDcymhEMZMkd6/vs6QawDyjQXWtqkuLTBF3vxjxPD1I4dwHoxgWPIjjANhXybvulD7E+St/7s9TQ==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/import': 6.7.3_graphql@16.6.0
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
-      graphql: 16.6.0
+      '@graphql-tools/import': 6.7.3_graphql@15.8.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      graphql: 15.8.0
       tslib: 2.1.0
     dev: true
 
-  /@graphql-tools/import/6.7.3_graphql@16.6.0:
+  /@graphql-tools/import/6.7.3_graphql@15.8.0:
     resolution: {integrity: sha512-7D/nDfwAj1TEkF+vAxm+hxgYNQW3h1kDz8JnYmvvY1Yv7OxZQQHDNd4tVg3BYVtW2kjsz3nzip46Z8ZQ9L7gHg==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
-      '@graphql-tools/utils': 8.10.0_graphql@16.6.0
-      graphql: 16.6.0
+      '@graphql-tools/utils': 8.10.0_graphql@15.8.0
+      graphql: 15.8.0
       resolve-from: 5.0.0
       tslib: 2.4.0
     dev: true
 
-  /@graphql-tools/json-file-loader/6.2.6_graphql@16.6.0:
+  /@graphql-tools/json-file-loader/6.2.6_graphql@15.8.0:
     resolution: {integrity: sha512-CnfwBSY5926zyb6fkDBHnlTblHnHI4hoBALFYXnrg0Ev4yWU8B04DZl/pBRUc459VNgO2x8/mxGIZj2hPJG1EA==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
-      graphql: 16.6.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      graphql: 15.8.0
       tslib: 2.0.3
     dev: true
 
-  /@graphql-tools/load/6.2.8_graphql@16.6.0:
+  /@graphql-tools/load/6.2.8_graphql@15.8.0:
     resolution: {integrity: sha512-JpbyXOXd8fJXdBh2ta0Q4w8ia6uK5FHzrTNmcvYBvflFuWly2LDTk2abbSl81zKkzswQMEd2UIYghXELRg8eTA==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/merge': 6.2.14_graphql@16.6.0
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
+      '@graphql-tools/merge': 6.2.14_graphql@15.8.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
       globby: 11.0.3
-      graphql: 16.6.0
+      graphql: 15.8.0
       import-from: 3.0.0
       is-glob: 4.0.1
       p-limit: 3.1.0
@@ -1566,49 +1570,49 @@ packages:
       valid-url: 1.0.9
     dev: true
 
-  /@graphql-tools/merge/6.2.14_graphql@16.6.0:
+  /@graphql-tools/merge/6.2.14_graphql@15.8.0:
     resolution: {integrity: sha512-RWT4Td0ROJai2eR66NHejgf8UwnXJqZxXgDWDI+7hua5vNA2OW8Mf9K1Wav1ZkjWnuRp4ztNtkZGie5ISw55ow==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/schema': 7.1.5_graphql@16.6.0
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
-      graphql: 16.6.0
+      '@graphql-tools/schema': 7.1.5_graphql@15.8.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      graphql: 15.8.0
       tslib: 2.2.0
     dev: true
 
-  /@graphql-tools/schema/7.1.5_graphql@16.6.0:
+  /@graphql-tools/schema/7.1.5_graphql@15.8.0:
     resolution: {integrity: sha512-uyn3HSNSckf4mvQSq0Q07CPaVZMNFCYEVxroApOaw802m9DcZPgf9XVPy/gda5GWj9AhbijfRYVTZQgHnJ4CXA==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
-      graphql: 16.6.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      graphql: 15.8.0
       tslib: 2.2.0
       value-or-promise: 1.0.6
     dev: true
 
-  /@graphql-tools/url-loader/6.10.1_hbo4my5fxh4tx6fhc3o452mmke:
+  /@graphql-tools/url-loader/6.10.1_7h5nh4pjh3eqbmzp5ap62hjl5a:
     resolution: {integrity: sha512-DSDrbhQIv7fheQ60pfDpGD256ixUQIR6Hhf9Z5bRjVkXOCvO5XrkwoWLiU7iHL81GB1r0Ba31bf+sl+D4nyyfw==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/delegate': 7.1.5_graphql@16.6.0
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
-      '@graphql-tools/wrap': 7.0.8_graphql@16.6.0
+      '@graphql-tools/delegate': 7.1.5_graphql@15.8.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      '@graphql-tools/wrap': 7.0.8_graphql@15.8.0
       '@microsoft/fetch-event-source': 2.0.1
       '@types/websocket': 1.0.2
       abort-controller: 3.0.0
       cross-fetch: 3.1.4
       extract-files: 9.0.0
       form-data: 4.0.0
-      graphql: 16.6.0
-      graphql-ws: 4.9.0_graphql@16.6.0
+      graphql: 15.8.0
+      graphql-ws: 4.9.0_graphql@15.8.0
       is-promise: 4.0.0
       isomorphic-ws: 4.0.1_ws@7.4.5
       lodash: 4.17.21
       meros: 1.1.4_@types+node@14.18.24
-      subscriptions-transport-ws: 0.9.19_graphql@16.6.0
+      subscriptions-transport-ws: 0.9.19_graphql@15.8.0
       sync-fetch: 0.3.0
       tslib: 2.2.0
       valid-url: 1.0.9
@@ -1620,45 +1624,45 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@graphql-tools/utils/7.10.0_graphql@16.6.0:
+  /@graphql-tools/utils/7.10.0_graphql@15.8.0:
     resolution: {integrity: sha512-d334r6bo9mxdSqZW6zWboEnnOOFRrAPVQJ7LkU8/6grglrbcu6WhwCLzHb90E94JI3TD3ricC3YGbUqIi9Xg0w==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
       '@ardatan/aggregate-error': 0.0.6
       camel-case: 4.1.2
-      graphql: 16.6.0
+      graphql: 15.8.0
       tslib: 2.2.0
     dev: true
 
-  /@graphql-tools/utils/8.10.0_graphql@16.6.0:
+  /@graphql-tools/utils/8.10.0_graphql@15.8.0:
     resolution: {integrity: sha512-yI+V373FdXQbYfqdarehn9vRWDZZYuvyQ/xwiv5ez2BbobHrqsexF7qs56plLRaQ8ESYpVAjMQvJWe9s23O0Jg==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
-      graphql: 16.6.0
+      graphql: 15.8.0
       tslib: 2.4.0
     dev: true
 
-  /@graphql-tools/wrap/7.0.8_graphql@16.6.0:
+  /@graphql-tools/wrap/7.0.8_graphql@15.8.0:
     resolution: {integrity: sha512-1NDUymworsOlb53Qfh7fonDi2STvqCtbeE68ntKY9K/Ju/be2ZNxrFSbrBHwnxWcN9PjISNnLcAyJ1L5tCUyhg==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
     dependencies:
-      '@graphql-tools/delegate': 7.1.5_graphql@16.6.0
-      '@graphql-tools/schema': 7.1.5_graphql@16.6.0
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
-      graphql: 16.6.0
+      '@graphql-tools/delegate': 7.1.5_graphql@15.8.0
+      '@graphql-tools/schema': 7.1.5_graphql@15.8.0
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      graphql: 15.8.0
       tslib: 2.2.0
       value-or-promise: 1.0.6
     dev: true
 
-  /@graphql-typed-document-node/core/3.1.1_graphql@16.6.0:
+  /@graphql-typed-document-node/core/3.1.1_graphql@15.8.0:
     resolution: {integrity: sha512-NQ17ii0rK1b34VZonlmT2QMJFI70m0TRwbknO/ihlbatXyaktDhN/98vBiUU6kNBPljqGqyIrl2T4nY2RpFANg==}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
-      graphql: 16.6.0
+      graphql: 15.8.0
     dev: true
 
   /@humanwhocodes/config-array/0.10.4:
@@ -2462,15 +2466,15 @@ packages:
       '@remote-ui/types': 1.1.2
     dev: false
 
-  /@remote-ui/react/4.5.7_react@18.2.0:
+  /@remote-ui/react/4.5.7_react@17.0.2:
     resolution: {integrity: sha512-immiTS6pWpr3of0d9JwAW/M5uuNoqM4IyK4hU6/l/N0hy517fuWfir8rXj/TdqGYAq4uyC7NBZf8Kv+njfxRKQ==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.12
       '@remote-ui/core': 2.1.15
       '@remote-ui/rpc': 1.3.3
-      '@types/react': 16.14.0
+      '@types/react': 17.0.48
       '@types/react-reconciler': 0.26.7
-      react-reconciler: 0.26.2_react@18.2.0
+      react-reconciler: 0.26.2_react@17.0.2
     transitivePeerDependencies:
       - react
     dev: false
@@ -2490,15 +2494,15 @@ packages:
       estree-walker: 2.0.2
       picomatch: 2.3.1
 
-  /@shopify/admin-ui-extensions-react/1.0.1_react@18.2.0:
+  /@shopify/admin-ui-extensions-react/1.0.1_react@17.0.2:
     resolution: {integrity: sha512-UiwGs9QNzoA2bgxNoC0M3U1NkcLzPp77MP7No0GxdHU4DklrYeiOJNFSNG/BbQNUeh9ou1l/xZ+LINN3gpqTtg==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
-      '@remote-ui/react': 4.5.7_react@18.2.0
+      '@remote-ui/react': 4.5.7_react@17.0.2
       '@shopify/admin-ui-extensions': 1.0.1
-      '@types/react': 16.14.0
-      react: 18.2.0
+      '@types/react': 17.0.48
+      react: 17.0.2
     dev: false
 
   /@shopify/admin-ui-extensions/1.0.1:
@@ -2529,16 +2533,16 @@ packages:
       base64url: 3.0.1
     dev: false
 
-  /@shopify/checkout-ui-extensions-react/0.18.1_react@18.2.0:
+  /@shopify/checkout-ui-extensions-react/0.18.1_react@17.0.2:
     resolution: {integrity: sha512-VY0OOeePNMqnyj1M3bp5Mt94FAyfpQ4NwA8GP/AgOCbVhB7+bVH4OZou8Y+HMFTS28CqoWz69wJiXYi8Wa/czg==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/async-subscription': 2.1.12
-      '@remote-ui/react': 4.5.7_react@18.2.0
+      '@remote-ui/react': 4.5.7_react@17.0.2
       '@shopify/checkout-ui-extensions': 0.18.1
-      '@types/react': 16.14.0
-      react: 18.2.0
+      '@types/react': 17.0.48
+      react: 17.0.2
     dev: false
 
   /@shopify/checkout-ui-extensions/0.18.1:
@@ -2562,7 +2566,7 @@ packages:
       '@shopify/function-enhancers': 2.0.8
     dev: false
 
-  /@shopify/eslint-plugin/41.3.1_rlpap56wczaecoey756z5wu6fy:
+  /@shopify/eslint-plugin/41.3.1_k6cqtomkxqbqvx776rhko5xlcu:
     resolution: {integrity: sha512-d30Ox8AW1H324rs/eFSx1GFt71vcAu4srSXWPVxkbOqTIhHTjaMBpJXFDTvtjTsLPw9YwJSta8jJnkL+lHkIPA==}
     peerDependencies:
       eslint: ^8.3.0
@@ -2578,7 +2582,7 @@ packages:
       eslint-config-prettier: 8.5.0_eslint@8.22.0
       eslint-module-utils: 2.7.4_3bh5nkk7utn7e74vrwtv6rxmt4
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.22.0
-      eslint-plugin-graphql: 4.0.0_xwxkxmecvmhigr3qbv3ce57vka
+      eslint-plugin-graphql: 4.0.0_hobysjr4z3oq7sdil2oeydbhgi
       eslint-plugin-import: 2.26.0_3bh5nkk7utn7e74vrwtv6rxmt4
       eslint-plugin-jest: 25.7.0_3djdzv3mdpxjg3ifoj7icaglfy
       eslint-plugin-jest-formatting: 3.1.0_eslint@8.22.0
@@ -2613,7 +2617,7 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
-  /@shopify/hydrogen/0.26.1_yqxtczh2s3fudathwynm2mz4mi:
+  /@shopify/hydrogen/0.26.1_qe5jfsncnerz6ytrdv5ku7pr7e:
     resolution: {integrity: sha512-eC26PCKZxKjGjLDCvsath5uXnGmqd/XcgtNzOBRZBO+/WPoYHFw7/fnTi5cqpTgkFWFSTTtxe00XBm4h4dcVbw==}
     engines: {node: '>=14'}
     peerDependencies:
@@ -2642,10 +2646,10 @@ packages:
       magic-string: 0.26.2
       node-fetch: 2.6.7
       path-to-regexp: 6.2.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-      react-error-boundary: 3.1.4_react@17.0.2
-      react-helmet-async: 1.3.0_sfoxds7t5ydpegc3knd667wn6m
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      react-error-boundary: 3.1.4_react@18.2.0
+      react-helmet-async: 1.3.0_biqbaboplfbrettd7655fr4n2y
       serve-static: 1.15.0
       set-cookie-parser: 2.5.1
       undici: 5.9.1
@@ -2779,15 +2783,15 @@ packages:
       react-transition-group: 4.4.5_sfoxds7t5ydpegc3knd667wn6m
     dev: false
 
-  /@shopify/post-purchase-ui-extensions-react/0.13.3_react@18.2.0:
+  /@shopify/post-purchase-ui-extensions-react/0.13.3_react@17.0.2:
     resolution: {integrity: sha512-TJfFADnBmQ48gKIiirj+Eq670HoCdBaEIKeiSyBd9SXYOxMOZ0K/wdPBpaqAhaRb8r/GYSkXxwtQg/KAeDWWFA==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
-      '@remote-ui/react': 4.5.7_react@18.2.0
+      '@remote-ui/react': 4.5.7_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
-      '@types/react': 16.14.0
-      react: 18.2.0
+      '@types/react': 17.0.48
+      react: 17.0.2
     dev: false
 
   /@shopify/post-purchase-ui-extensions/0.13.3:
@@ -2863,20 +2867,6 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-reconciler: 0.26.2_react@17.0.2
-    dev: true
-
-  /@shopify/react-testing/3.3.10_wcqkhtmu7mswc6yz4uyexck3ty:
-    resolution: {integrity: sha512-l1juWNqe4rRrP5bcOB6riJEd1Bb0BgfnGVKb9GB+o8QtTv1ti3YxGdyU+D/qpIuXBG5h5SNR2wgECdD4kpqVeg==}
-    engines: {node: '>=12.14.0'}
-    peerDependencies:
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
-    dependencies:
-      '@shopify/useful-types': 4.0.3
-      jest-matcher-utils: 26.6.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
-      react-reconciler: 0.26.2_react@16.14.0
     dev: true
 
   /@shopify/shopify-api/3.1.3:
@@ -3249,7 +3239,7 @@ packages:
   /@types/react-reconciler/0.26.7:
     resolution: {integrity: sha512-mBDYl8x+oyPX/VBb3E638N0B7xG+SPk/EAMcVPeexqus/5aTpTphQi0curhhshOqRrc9t6OPoJfEUkbymse/lQ==}
     dependencies:
-      '@types/react': 16.14.0
+      '@types/react': 17.0.48
     dev: false
 
   /@types/react-transition-group/4.4.5:
@@ -3264,6 +3254,14 @@ packages:
       '@types/prop-types': 15.7.5
       csstype: 3.1.0
 
+  /@types/react/17.0.48:
+    resolution: {integrity: sha512-zJ6IYlJ8cYYxiJfUaZOQee4lh99mFihBoqkOSEGV+dFi9leROW6+PgstzQ+w3gWTnUfskALtQPGHK6dYmPj+2A==}
+    dependencies:
+      '@types/prop-types': 15.7.5
+      '@types/scheduler': 0.16.2
+      csstype: 3.1.0
+    dev: false
+
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
@@ -3276,6 +3274,10 @@ packages:
       '@types/glob': 7.2.0
       '@types/node': 17.0.45
     dev: true
+
+  /@types/scheduler/0.16.2:
+    resolution: {integrity: sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==}
+    dev: false
 
   /@types/semver/6.2.3:
     resolution: {integrity: sha512-KQf+QAMWKMrtBMsB8/24w53tEsxllMj6TuA80TT/5igJalLI/zm0L3oXRbIAl4Ohfc85gyHX/jhMwsVkmhLU4A==}
@@ -6058,15 +6060,15 @@ packages:
       ignore: 5.2.0
     dev: true
 
-  /eslint-plugin-graphql/4.0.0_xwxkxmecvmhigr3qbv3ce57vka:
+  /eslint-plugin-graphql/4.0.0_hobysjr4z3oq7sdil2oeydbhgi:
     resolution: {integrity: sha512-d5tQm24YkVvCEk29ZR5ScsgXqAGCjKlMS8lx3mS7FS/EKsWbkvXQImpvic03EpMIvNTBW5e+2xnHzXB/VHNZJw==}
     engines: {node: '>=10.0'}
     peerDependencies:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0
     dependencies:
       '@babel/runtime': 7.18.9
-      graphql: 16.6.0
-      graphql-config: 3.4.1_xwxkxmecvmhigr3qbv3ce57vka
+      graphql: 15.8.0
+      graphql-config: 3.4.1_hobysjr4z3oq7sdil2oeydbhgi
       lodash.flatten: 4.4.0
       lodash.without: 4.4.0
     transitivePeerDependencies:
@@ -7407,22 +7409,22 @@ packages:
     resolution: {integrity: sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==}
     dev: true
 
-  /graphql-config/3.4.1_xwxkxmecvmhigr3qbv3ce57vka:
+  /graphql-config/3.4.1_hobysjr4z3oq7sdil2oeydbhgi:
     resolution: {integrity: sha512-g9WyK4JZl1Ko++FSyE5Ir2g66njfxGzrDDhBOwnkoWf/t3TnnZG6BBkWP+pkqVJ5pqMJGPKHNrbew8jRxStjhw==}
     engines: {node: '>= 10.0.0'}
     peerDependencies:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0
     dependencies:
       '@endemolshinegroup/cosmiconfig-typescript-loader': 3.0.2_npw75yzoqzawofmv6l6gwbzmr4
-      '@graphql-tools/graphql-file-loader': 6.2.7_graphql@16.6.0
-      '@graphql-tools/json-file-loader': 6.2.6_graphql@16.6.0
-      '@graphql-tools/load': 6.2.8_graphql@16.6.0
-      '@graphql-tools/merge': 6.2.14_graphql@16.6.0
-      '@graphql-tools/url-loader': 6.10.1_hbo4my5fxh4tx6fhc3o452mmke
-      '@graphql-tools/utils': 7.10.0_graphql@16.6.0
+      '@graphql-tools/graphql-file-loader': 6.2.7_graphql@15.8.0
+      '@graphql-tools/json-file-loader': 6.2.6_graphql@15.8.0
+      '@graphql-tools/load': 6.2.8_graphql@15.8.0
+      '@graphql-tools/merge': 6.2.14_graphql@15.8.0
+      '@graphql-tools/url-loader': 6.10.1_7h5nh4pjh3eqbmzp5ap62hjl5a
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
       cosmiconfig: 7.0.0
       cosmiconfig-toml-loader: 1.0.0
-      graphql: 16.6.0
+      graphql: 15.8.0
       minimatch: 3.0.4
       string-env-interpolation: 1.0.1
     transitivePeerDependencies:
@@ -7463,14 +7465,15 @@ packages:
     dependencies:
       graphql: 16.6.0
       tslib: 2.4.0
+    dev: false
 
-  /graphql-ws/4.9.0_graphql@16.6.0:
+  /graphql-ws/4.9.0_graphql@15.8.0:
     resolution: {integrity: sha512-sHkK9+lUm20/BGawNEWNtVAeJzhZeBg21VmvmLoT5NdGVeZWv5PdIhkcayQIAgjSyyQ17WMKmbDijIPG2On+Ag==}
     engines: {node: '>=10'}
     peerDependencies:
       graphql: '>=0.11 <=15'
     dependencies:
-      graphql: 16.6.0
+      graphql: 15.8.0
     dev: true
 
   /graphql/15.8.0:
@@ -7480,6 +7483,7 @@ packages:
   /graphql/16.6.0:
     resolution: {integrity: sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+    dev: false
 
   /hard-rejection/2.1.0:
     resolution: {integrity: sha512-VIZB+ibDhx7ObhAe7OVtoEbuP4h/MuOTHJ+J8h/eBXotJYl0fBgR72xDFCKgIh22OJZIOVNxBMWuhAr10r8HdA==}
@@ -11006,21 +11010,30 @@ packages:
       react: 17.0.2
       scheduler: 0.20.2
 
-  /react-error-boundary/3.1.4_react@17.0.2:
+  /react-dom/18.2.0_react@18.2.0:
+    resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
+    peerDependencies:
+      react: ^18.2.0
+    dependencies:
+      loose-envify: 1.4.0
+      react: 18.2.0
+      scheduler: 0.23.0
+
+  /react-error-boundary/3.1.4_react@18.2.0:
     resolution: {integrity: sha512-uM9uPzZJTF6wRQORmSrvOIgt4lJ9MC1sNgEOj2XGsDTRE4kmpWxg7ENK9EWNKJRMAOY9z0MuF4yIfl6gp4sotA==}
     engines: {node: '>=10', npm: '>=6'}
     peerDependencies:
       react: '>=16.13.1'
     dependencies:
       '@babel/runtime': 7.18.9
-      react: 17.0.2
+      react: 18.2.0
     dev: false
 
   /react-fast-compare/3.2.0:
     resolution: {integrity: sha512-rtGImPZ0YyLrscKI9xTpV8psd6I8VAtjKCzQDlzyDvqJA8XOW78TXYQwNRNd8g8JZnDu8q9Fu/1v4HPAVwVdHA==}
     dev: false
 
-  /react-helmet-async/1.3.0_sfoxds7t5ydpegc3knd667wn6m:
+  /react-helmet-async/1.3.0_biqbaboplfbrettd7655fr4n2y:
     resolution: {integrity: sha512-9jZ57/dAn9t3q6hneQS0wukqC2ENOBgMNVEhb/ZG9ZSxUetzVIw4iAmEU38IaVg3QGYauQPhSeUTuIUtFglWpg==}
     peerDependencies:
       react: ^16.6.0 || ^17.0.0 || ^18.0.0
@@ -11029,8 +11042,8 @@ packages:
       '@babel/runtime': 7.18.9
       invariant: 2.2.4
       prop-types: 15.8.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
       react-fast-compare: 3.2.0
       shallowequal: 1.1.0
     dev: false
@@ -11065,16 +11078,17 @@ packages:
       react-dom: 17.0.2_react@17.0.2
     dev: false
 
-  /react-reconciler/0.26.2_react@16.14.0:
-    resolution: {integrity: sha512-nK6kgY28HwrMNwDnMui3dvm3rCFjZrcGiuwLc5COUipBK5hWHLOxMJhSnSomirqWwjPBJKV1QcbkI0VJr7Gl1Q==}
+  /react-reconciler/0.20.4_react@16.14.0:
+    resolution: {integrity: sha512-kxERc4H32zV2lXMg/iMiwQHOtyqf15qojvkcZ5Ja2CPkjVohHw9k70pdDBwrnQhLVetUJBSYyqU3yqrlVTOajA==}
     engines: {node: '>=0.10.0'}
     peerDependencies:
-      react: ^17.0.2
+      react: ^16.0.0
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
+      prop-types: 15.8.1
       react: 16.14.0
-      scheduler: 0.20.2
+      scheduler: 0.13.6
     dev: true
 
   /react-reconciler/0.26.2_react@17.0.2:
@@ -11087,19 +11101,6 @@ packages:
       object-assign: 4.1.1
       react: 17.0.2
       scheduler: 0.20.2
-    dev: true
-
-  /react-reconciler/0.26.2_react@18.2.0:
-    resolution: {integrity: sha512-nK6kgY28HwrMNwDnMui3dvm3rCFjZrcGiuwLc5COUipBK5hWHLOxMJhSnSomirqWwjPBJKV1QcbkI0VJr7Gl1Q==}
-    engines: {node: '>=0.10.0'}
-    peerDependencies:
-      react: ^17.0.2
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 18.2.0
-      scheduler: 0.20.2
-    dev: false
 
   /react-refresh/0.10.0:
     resolution: {integrity: sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==}
@@ -11185,7 +11186,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: false
 
   /read-pkg-up/7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
@@ -11601,6 +11601,13 @@ packages:
       xmlchars: 2.2.0
     dev: true
 
+  /scheduler/0.13.6:
+    resolution: {integrity: sha512-IWnObHt413ucAYKsD9J1QShUKkbKLQQHdxRyw73sw4FN26iWr3DY/H34xGPe4nmL1DwXyWmSWmMrA9TfQbE/XQ==}
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+    dev: true
+
   /scheduler/0.19.1:
     resolution: {integrity: sha512-n/zwRWRYSUj0/3g/otKDRPMh6qv2SYMWNq85IEa8iZyAv8od9zDYpGSnpBEjNgcMNq6Scbu5KfIPxNF72R/2EA==}
     dependencies:
@@ -11612,6 +11619,11 @@ packages:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
+
+  /scheduler/0.23.0:
+    resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
+    dependencies:
+      loose-envify: 1.4.0
 
   /secure-json-parse/2.5.0:
     resolution: {integrity: sha512-ZQruFgZnIWH+WyO9t5rWt4ZEGqCKPwhiw+YbzTwpmT9elgLrLcfuyUiSnwwjUiVy9r4VM3urtbNF1xmEh9IL2w==}
@@ -12266,7 +12278,7 @@ packages:
       escape-string-regexp: 1.0.5
     dev: false
 
-  /subscriptions-transport-ws/0.9.19_graphql@16.6.0:
+  /subscriptions-transport-ws/0.9.19_graphql@15.8.0:
     resolution: {integrity: sha512-dxdemxFFB0ppCLg10FTtRqH/31FNRL1y1BQv8209MK5I4CwALb7iihQg+7p65lFcIl8MHatINWBLOqpgU4Kyyw==}
     deprecated: The `subscriptions-transport-ws` package is no longer maintained. We recommend you use `graphql-ws` instead. For help migrating Apollo software to `graphql-ws`, see https://www.apollographql.com/docs/apollo-server/data/subscriptions/#switching-from-subscriptions-transport-ws    For general help using `graphql-ws`, see https://github.com/enisdenjo/graphql-ws/blob/master/README.md
     peerDependencies:
@@ -12274,7 +12286,7 @@ packages:
     dependencies:
       backo2: 1.0.2
       eventemitter3: 3.1.2
-      graphql: 16.6.0
+      graphql: 15.8.0
       iterall: 1.3.0
       symbol-observable: 1.2.0
       ws: 7.5.9
@@ -13798,3 +13810,25 @@ packages:
       - enquirer
       - supports-color
     dev: false
+
+  registry.npmjs.org/@shopify/react-testing/2.3.5_wcqkhtmu7mswc6yz4uyexck3ty:
+    resolution: {integrity: sha512-Icp/4UFFOuTnlvZwmBNlmI+3GMrItduoJ6EQn8GXH1GzQxa+OoETyCiqMQtzSfvshGZv0RKPf68O51Id8ypTuQ==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/react-testing/-/react-testing-2.3.5.tgz}
+    id: registry.npmjs.org/@shopify/react-testing/2.3.5
+    name: '@shopify/react-testing'
+    version: 2.3.5
+    peerDependencies:
+      react: '>=16.8.0 <17.0.0'
+      react-dom: '>=16.8.0 <17.0.0'
+    dependencies:
+      '@shopify/useful-types': registry.npmjs.org/@shopify/useful-types/2.4.2
+      jest-matcher-utils: 26.6.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      react-reconciler: 0.20.4_react@16.14.0
+    dev: true
+
+  registry.npmjs.org/@shopify/useful-types/2.4.2:
+    resolution: {integrity: sha512-wTcq2QF3BwdOY7KnClwYE+8JRGgDdjR62DxopLub6bWpESjQAaMYyqC2ppV0PUjGKakmKC6YIDyhw0ZX6uzN7w==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/useful-types/-/useful-types-2.4.2.tgz}
+    name: '@shopify/useful-types'
+    version: 2.4.2
+    dev: true

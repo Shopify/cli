@@ -58,7 +58,7 @@
     "execa": "^5.1.1",
     "fast-glob": "^3.2.11",
     "fs-extra": "^10.0.0",
-    "graphql": "^16.6.0",
+    "graphql": "^15.0.0",
     "nx": "^14.0.5",
     "patch-package": "^6.4.7",
     "pathe": "0.2.0",
@@ -88,7 +88,6 @@
   },
   "version": "0.0.0",
   "resolutions": {
-    "@types/react": "16.14.0",
     "@oclif/core": "1.9.2"
   }
 }

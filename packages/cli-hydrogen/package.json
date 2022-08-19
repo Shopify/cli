@@ -51,8 +51,8 @@
   },
   "devDependencies": {
     "vitest": "^0.17.1",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "engine-strict": true,
   "engines": {
