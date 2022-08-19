@@ -8,7 +8,7 @@
         "type": "node",
         "request": "launch",
         "name": "shopify app dev",
-        "runtimeExecutable": "yarn",
+        "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "shopify",
           "app",
@@ -27,7 +27,7 @@
         "type": "node",
         "request": "launch",
         "name": "shopify app scaffold extension",
-        "runtimeExecutable": "yarn",
+        "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "shopify",
           "app",

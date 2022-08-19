@@ -13,7 +13,7 @@
   },
   "main": "./dist/cli.js",
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm run build && cp ../../README.md README.md",
     "build": "tsc",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
@@ -31,16 +31,14 @@
       "@typescript-eslint/no-explicit-any": "off"
     }
   },
-  "devDependencies": {
-    "@types/js-yaml": "^4.0.3",
-    "@types/node": "^16.7.1",
-    "prettier": "^2.3.2",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.6.4"
-  },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "^3.6.0",
     "esbuild": "^0.12.22",
     "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.3",
+    "graphql": "^15.5.1",
+    "graphql-tag": "^2.12.4"
   }
 }

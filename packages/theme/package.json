@@ -19,7 +19,7 @@
   "scripts": {
     "clean": "rimraf dist/",
     "build": "tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm run build && cp ../../README.md README.md",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "vitest run",

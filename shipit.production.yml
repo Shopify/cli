@@ -3,10 +3,11 @@ ci:
 
 dependencies:
   override:
-    - yarn install
+    - npm install -g pnpm
+    - pnpm install
 
 deploy:
   override:
-    - yarn run changeset publish
+    - pnpm run changeset publish
   post:
-    - yarn run update-bugsnag
+    - pnpm run update-bugsnag

@@ -24,7 +24,7 @@
   "scripts": {
     "clean": "rimraf dist/",
     "build": "tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm run build && cp ../../README.md README.md",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
@@ -50,8 +50,9 @@
     "@shopify/prettier-config": "^1.1.2"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.12",
-    "vitest": "^0.17.1"
+    "vitest": "^0.17.1",
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0"
   },
   "engine-strict": true,
   "engines": {

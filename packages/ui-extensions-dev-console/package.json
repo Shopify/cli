@@ -3,7 +3,7 @@
   "name": "@shopify/ui-extensions-dev-console-app",
   "version": "3.7.1",
   "scripts": {
-    "build": "yarn clean && yarn --cwd ../.. nx run ui-extensions-dev-console:build",
+    "build": "pnpm clean && pnpm --dir ../.. exec nx run ui-extensions-dev-console:build",
     "build:nx": "tsc --project tsconfig.build.json --noEmit && vite build",
     "clean": "rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
     "lint": "eslint \"src/**/*.ts\"",
@@ -19,7 +19,7 @@
     "@shopify/ui-extensions-server-kit": "3.7.1",
     "copy-to-clipboard": "^3.3.1",
     "qrcode.react": "^1.0.1",
-    "react": "16.14.0",
+    "react": "^16.9.11",
     "react-dom": "^16.9.11"
   },
   "eslintConfig": {
@@ -33,19 +33,18 @@
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
     "@shopify/ui-extensions-test-utils": "3.7.1",
-    "@types/jest": "^26.0.15",
-    "@types/node": "^12.0.0",
     "@types/qrcode.react": "^1.0.2",
     "@types/react": "16.14.0",
     "@types/react-dom": "^16.9.11",
     "@vitejs/plugin-react-refresh": "^1.3.1",
-    "jest": "^27.1.0",
     "sass": "^1.42.1",
     "ts-jest": "^27.0.5",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.6.4",
-    "vite": "^2.4.4",
     "vite-jest": "^0.0.3",
-    "vite-tsconfig-paths": "^3.3.14"
+    "vite-tsconfig-paths": "^3.3.14",
+    "jest": "^27.1.0",
+    "@jest/types": "^27.1.0",
+    "@types/jest": "^27.1.0",
+    "typescript": "^4.7.4",
+    "vite": "^2.9.9"
   }
 }

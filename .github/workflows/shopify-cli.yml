@@ -20,7 +20,7 @@ env:
   DEBUG: "1"
   SHOPIFY_ENV: development
   SHOPIFY_CONFIG: debug
-  YARN_VERSION: "1.22.18"
+  PNPM_VERSION: "7.9.3"
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
   GO_VERSION: "1.17"
@@ -54,13 +54,13 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
-      - name: Install yarn
-        run: npm install --global yarn@${{ env.YARN_VERSION }}
-      - name: Install dependencies
-        run: yarn install --ignore-engines
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Build the fixture app
-        run: yarn shopify app build --path ./fixtures/app
+        run: pnpm shopify app build --path ./fixtures/app
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -96,13 +96,11 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
-      - name: Install yarn
-        run: npm install --global yarn@${{ env.YARN_VERSION }}
-      - name: Increase yarn timeout
-        run: yarn config set network-timeout 300000
-      - name: Install dependencies
-        run: yarn install --ignore-engines
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Build
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Lint
@@ -156,13 +154,11 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
-      - name: Install yarn
-        run: npm install --global yarn@${{ env.YARN_VERSION }}
-      - name: Increase yarn timeout
-        run: yarn config set network-timeout 300000
-      - name: Install dependencies
-        run: yarn install --ignore-engines
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Build
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Type-check
@@ -221,13 +217,11 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
-      - name: Install yarn
-        run: npm install --global yarn@${{ env.YARN_VERSION }}
-      - name: Increase yarn timeout
-        run: yarn config set network-timeout 300000
-      - name: Install dependencies
-        run: yarn install --ignore-engines
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: true
       - name: Build
         run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Unit tests

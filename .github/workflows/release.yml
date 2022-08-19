@@ -25,9 +25,9 @@ jobs:
         uses: actions/setup-node@master
         with:
           node-version: '16'
-          cache: 'yarn'
+          cache: 'pnpm'
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install
       - name: Create Release Pull Request
         uses: changesets/action@v1
         env:

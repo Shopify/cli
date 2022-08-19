@@ -17,9 +17,6 @@ if (isNode14) {
   common.push(`--tags ~@skip_node_14`)
 }
 
-if (isCI) {
-  common.push('--format node_modules/cucumber-junit-formatter:/tmp/artifacts/acceptance.junit')
-}
 if (featureToRun) {
   common.push(featureToRun)
 } else {

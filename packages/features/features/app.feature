@@ -2,7 +2,7 @@ Feature: Extension creation
 
 Background:
   Given I have a working directory
-  And I create an app named MyExtendedApp with yarn as dependency manager
+  And I create an app named MyExtendedApp with pnpm as dependency manager
 
 Scenario: I scaffold theme, ui, and function extensions
 

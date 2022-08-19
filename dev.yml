@@ -2,10 +2,7 @@ name: shopify-cli-next
 
 up:
   - node:
-      yarn: 1.22.18
       version: v18.0.0
-      packages:
-        - ./
   - go:
       version: 1.17.6
       modules: true
@@ -14,6 +11,12 @@ up:
   - homebrew:
     - jq
     - delve
+    - pnpm:
+        version: 7.9.3
+  - custom:
+      name: "Install npm dependencies"
+      met?: pnpm install
+      meet: "true"
 
 env:
   SHOPIFY_ENV: development
@@ -28,52 +31,52 @@ open:
 commands:
   graph:
     desc: 'Shows the graph of the project'
-    run: yarn nx graph
+    run: pnpm nx graph
   shopify:
     desc: 'Runs the Shopify CLI'
-    run: yarn shopify
+    run: pnpm shopify
   create-app:
     desc: 'Runs the create-app CLI'
-    run: yarn create-app
+    run: pnpm create-app
   create-hydrogen:
     desc: 'Runs the create-hydrogen CLI'
-    run: yarn create-hydrogen
+    run: pnpm create-hydrogen
   clean:
     desc: 'Clean the packages'
-    run: yarn run clean
+    run: pnpm run clean
   test:
     desc: 'Runs the tests'
-    run: yarn run test:affected
+    run: pnpm run test:affected
   build:
     desc: 'Build the project'
-    run: yarn run build:affected
+    run: pnpm run build:affected
   lint:
     desc: 'Lint the project'
-    run: yarn run lint:affected
+    run: pnpm run lint:affected
   lint:fix:
     desc: 'Fix the lint issues in the project'
-    run: yarn run lint:fix:affected
+    run: pnpm run lint:fix:affected
   tsc:
     desc: 'Type-check the project'
-    run: yarn run tsc:affected
+    run: pnpm run tsc:affected
   fixture:
     desc: 'Commands to interact with the fixture project'
     subcommands:
       shopify:
         desc: Runs Shopify with the fixture project
-        run: yarn --cwd fixtures/app shopify
+        run: pnpm --cwd fixtures/app shopify
       build:
         desc: Build the fixture project
-        run: yarn --cwd fixtures/app build
+        run: pnpm --cwd fixtures/app build
       dev:
         desc: Dev the fixture project
-        run: yarn --cwd fixtures/app dev
+        run: pnpm --cwd fixtures/app dev
       test:
         desc: Test the fixture project
-        run: yarn --cwd fixtures/app test
+        run: pnpm --cwd fixtures/app test
       scaffold:
         desc: Scaffold in the fixture project
-        run: yarn --cwd fixtures/app scaffold
+        run: pnpm --cwd fixtures/app scaffold
   spin:
     desc: 'Run commands in spin context'
     run: bin/spin
