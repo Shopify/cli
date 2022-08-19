@@ -26,11 +26,14 @@ beforeEach(async () => {
     }
   })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
+  vi.restoreAllMocks()
 })
 
 describe('web-env', () => {
   it('only outputs the new environment when update is false', async () => {
     // Given
+    vi.spyOn(file, 'write')
+
     const app = mockApp()
     const token = 'token'
     const organization = {
@@ -64,6 +67,7 @@ describe('web-env', () => {
     const result = await webEnv(app, {update: false, envFile: '.env'})
 
     // Then
+    expect(file.write).not.toHaveBeenCalled()
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
     "
         SHOPIFY_API_KEY=api-key
@@ -76,6 +80,8 @@ describe('web-env', () => {
   it('creates a new environment file when update is true and there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
+      vi.spyOn(file, 'write')
+
       const app = mockApp()
       const token = 'token'
       const organization = {
@@ -104,11 +110,16 @@ describe('web-env', () => {
       vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
 
       // When
-      const result = await webEnv(app, {update: true, envFile: path.resolve(tmpDir, '.env')})
+      const filePath = path.resolve(tmpDir, '.env')
+      const result = await webEnv(app, {update: true, envFile: filePath})
 
       // Then
+      expect(file.write).toHaveBeenCalledWith(
+        filePath,
+        'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
+      )
       expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
-      "Created ${path.resolve(tmpDir, '.env')}:
+      "Created ${filePath}:
 
         SHOPIFY_API_KEY=api-key
       SHOPIFY_API_SECRET=api-secret
@@ -152,10 +163,16 @@ describe('web-env', () => {
 
       await file.write(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
 
+      vi.spyOn(file, 'write')
+
       // When
       const result = await webEnv(app, {update: true, envFile: filePath})
 
       // Then
+      expect(file.write).toHaveBeenCalledWith(
+        filePath,
+        'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
+      )
       expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
       "Updated ${filePath} to be:
 
@@ -209,10 +226,12 @@ describe('web-env', () => {
 
       await file.write(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
 
+      vi.spyOn(file, 'write')
       // When
       const result = await webEnv(app, {update: true, envFile: filePath})
 
       // Then
+      expect(file.write).not.toHaveBeenCalled()
       expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
       "No changes to ${filePath}"
       `)
