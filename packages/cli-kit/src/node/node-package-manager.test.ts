@@ -70,7 +70,11 @@ describe('install', () => {
     const directory = '/path/to/project'
 
     // When
-    await installNodeModules(directory, packageManager)
+    await installNodeModules({
+      directory,
+      packageManager,
+      args: [],
+    })
 
     // Then
     expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install'], {
