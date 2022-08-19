@@ -54,8 +54,8 @@
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "1.9.2",
-    "@shopify/shopify-cli-extensions": "3.7.1",
-    "@shopify/cli-kit": "3.7.1",
+    "@shopify/shopify-cli-extensions": "workspace:*",
+    "@shopify/cli-kit": "workspace:*",
     "http-proxy": "^1.18.1",
     "ws": "^8.7.0"
   }

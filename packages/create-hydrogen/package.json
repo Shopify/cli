@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.7.1",
+    "@shopify/cli-kit": "workspace:*",
     "download": "8.0.0"
   },
   "devDependencies": {

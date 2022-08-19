@@ -21,8 +21,6 @@ vi.mock('@shopify/cli-kit', async () => {
   }
 })
 
-vi.mock('@shopify/mini-oxygen')
-
 describe('hydrogen preview', () => {
   afterEach(() => {
     vi.restoreAllMocks()

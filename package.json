@@ -23,6 +23,11 @@
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache"
   },
   "devDependencies": {
+    "@shopify/cli": "workspace:*",
+    "@shopify/app": "workspace:*",
+    "@shopify/theme": "workspace:*",
+    "@shopify/cli-hydrogen": "workspace:*",
+    "@shopify/cli-kit": "workspace:*",
     "@apollo/client": "^3.4.8",
     "@babel/core": "^7.18.10",
     "@bugsnag/source-maps": "^2.3.0",

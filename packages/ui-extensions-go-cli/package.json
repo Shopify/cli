@@ -15,6 +15,6 @@
     "lint:fix": "gofmt -w -s ."
   },
   "devDependencies": {
-    "@shopify/shopify-cli-extensions": "3.7.1"
+    "@shopify/shopify-cli-extensions": "workspace:*"
   }
 }

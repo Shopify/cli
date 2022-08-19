@@ -39,11 +39,10 @@
   "dependencies": {
     "@oclif/core": "1.9.2",
     "@shopify/hydrogen": "^0.26.0",
-    "@shopify/mini-oxygen": "^0.1.0",
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
     "vite": "^2.9.9",
-    "@shopify/cli-kit": "3.7.1",
+    "@shopify/cli-kit": "workspace:*",
     "fast-glob": "^3.2.11",
     "fs-extra": "^10.0.0",
     "typescript": "^4.7.4",
