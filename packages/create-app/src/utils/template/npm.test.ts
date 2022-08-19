@@ -216,7 +216,7 @@ describe('getDeepInstallNPMTasks', () => {
       const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
-        const stdout = args[2]
+        const stdout = args[0].stdout
 
         stdout!.write(`stdout ${i}`)
       })
@@ -237,7 +237,7 @@ describe('getDeepInstallNPMTasks', () => {
       const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
-        const stderr = args[3]
+        const stderr = args[0].stderr
 
         stderr!.write(`stderr ${i}`)
       })
