@@ -9,16 +9,6 @@ export default class Build extends Command {
   static flags = {
     ...cli.globalFlags,
     ...hydrogenFlags,
-    country: Flags.string({
-      description: 'The default country code.',
-      env: 'SHOPIFY_FLAG_COUNTRY_CODE',
-      default: 'US',
-    }),
-    lang: Flags.string({
-      description: 'The default language code.',
-      env: 'SHOPIFY_FLAG_LANG_CODE',
-      default: 'EN',
-    }),
     domain: Flags.string({
       description: 'The Shopify storefront domain.',
       env: 'SHOPIFY_FLAG_DOMAIN',

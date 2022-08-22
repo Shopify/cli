@@ -1,9 +1,14 @@
 import {ui, file} from '@shopify/cli-kit'
 
+const configFileTemplate = `
+import {defineConfig} from '@shopify/hydrogen/config';
+
+export default defineConfig({
+  shopify: CONFIG,
+});`
+
 interface InitOptions {
   directory: string
-  country: string
-  lang: string
   domain: string
   token: string
   apiVersion: string
@@ -11,22 +16,6 @@ interface InitOptions {
 
 export async function init(options: InitOptions, prompt = ui.prompt): Promise<void> {
   const questions: ui.Question[] = []
-  if (!options.country)
-    questions.push({
-      type: 'input',
-      name: 'country',
-      message: 'The default country code for your store.',
-      default: 'US',
-    })
-
-  if (!options.lang)
-    questions.push({
-      type: 'input',
-      name: 'lang',
-      message: 'The default language code for your store.',
-      default: 'EN',
-    })
-
   if (!options.domain)
     questions.push({
       type: 'input',
@@ -43,20 +32,12 @@ export async function init(options: InitOptions, prompt = ui.prompt): Promise<vo
       default: '3b580e70970c4528da70c98e097c2fa0',
     })
 
-  if (!options.apiVersion)
-    questions.push({
-      type: 'input',
-      name: 'apiVersion',
-      message: 'The Shopify storefront API version.',
-      default: '2022-07',
-    })
-
   const promptResults = await prompt(questions)
-  const country = options.country || promptResults.country
-  const lang = options.lang || promptResults.lang
-  const domain = options.domain || promptResults.domain
-  const token = options.token || promptResults.token
-  const apiVersion = options.apiVersion || promptResults.apiVersion
+  const config = {
+    domain: options.domain || promptResults.domain,
+    token: options.token || promptResults.token,
+    apiVersion: options.apiVersion || promptResults.apiVersion,
+  }
 
-  await file.write('hydrogen.config.js', JSON.stringify(options, null, 2))
+  await file.write('hydrogen.config.js', configFileTemplate.replace('CONFIG', JSON.stringify(config, null, 2)))
 }
