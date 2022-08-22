@@ -209,6 +209,8 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
       return `discounts/${lang}/shipping-discounts/default`
     case 'payment_customization':
       return `checkout/${lang}/payment-customization/default`
+    case 'function_prototype':
+      throw new Error('function_prototype is not a valid extension type')
     case 'shipping_rate_presenter':
       return `checkout/${lang}/shipping-rate-presenter/default`
   }

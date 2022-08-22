@@ -60,7 +60,7 @@ export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
 export const functionExtensions = {
-  types: [...publicFunctionExtensions.types, 'shipping_rate_presenter', 'payment_customization'],
+  types: [...publicFunctionExtensions.types, 'shipping_rate_presenter', 'payment_customization', 'function_prototype'],
 } as const
 
 export const functionExtensionTemplates = [
@@ -172,6 +172,7 @@ export const functionExternalExtensionTypes = {
     'order_discount',
     'shipping_discount',
     'payment_customization',
+    'function_prototype',
     'delivery_option_presenter',
   ],
 } as const
@@ -200,6 +201,7 @@ export const externalExtensionTypeNames = {
     'product discount',
     'order discount',
     'shipping discount',
+    'function prototype',
     'payment customization',
     'delivery option presenter',
     'customer accounts UI',
@@ -237,6 +239,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('shipping discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'payment_customization':
       return buildExtensionOutputConfig('payment customization')
+    case 'function_prototype':
+      return buildExtensionOutputConfig('function prototype')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('delivery option presenter')
   }
@@ -268,6 +272,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'order_discounts':
     case 'shipping_discounts':
     case 'payment_customization':
+    case 'function_prototype':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.
       return type
