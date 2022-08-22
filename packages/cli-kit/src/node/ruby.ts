@@ -9,7 +9,7 @@ import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.20.1'
+const RubyCLIVersion = '2.23.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.3.0'
