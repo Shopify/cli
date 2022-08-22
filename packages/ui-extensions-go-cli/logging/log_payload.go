@@ -26,7 +26,7 @@ type InfoPayload struct {
 
 func (t LogStatus) CreatePayload(message string) interface{} {
 	// TODO is the payload status specific?
-  switch t {
+	switch t {
 	case Failed:
 		return FilePayload{Message: message}
 	default:
