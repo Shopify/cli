@@ -33,8 +33,9 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 
 export function outputAppURL(storeFqdn: string, url: string) {
   const appURL = buildAppURL(storeFqdn, url)
-  const heading = output.token.heading('App URL')
-  const message = `Once everything's built, your app's shareable link will be:\n${appURL}`
+  const heading = output.token.heading('App URL (shareable link)')
+  const notes = '\n - this URL will be accessible once everything builds'
+  const message = `\n  ${appURL}\n${notes}`
   output.info(output.content`\n\n${heading}\n${message}\n`)
 }
 
