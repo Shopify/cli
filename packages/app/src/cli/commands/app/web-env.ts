@@ -9,6 +9,8 @@ import Command from '@shopify/cli-kit/node/base-command'
 export default class WebEnv extends Command {
   static description = 'Print basic information about your app and extensions'
 
+  static hidden = true
+
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
