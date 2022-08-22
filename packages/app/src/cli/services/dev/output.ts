@@ -87,7 +87,7 @@ function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   const heading = output.token.heading(`${extensions[0].configuration.name} (${getHumanKey(extensions[0].type)})`)
   const link = output.token.link(
     'dev doc instructions',
-    'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-4-test-your-changes',
+    'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
   )
   const message = output.content`Follow the ${link} by deploying your work as a draft`.value
   output.info(output.content`${heading}\n${message}\n`)
