@@ -54,10 +54,6 @@ async function packageVersion(version, directory) {
                 OUTPUT: directory
             }
         })
-    .catch((error) => {
-        console.log(`Error generating version os: ${version.os} arch: ${version.arch}`)
-        process.exit(1)
-    })
 
 }
 
@@ -67,9 +63,6 @@ async function createRelease() {
         ...baseReleaseParams,
         tag_name: cliVersion,
         name: cliVersion,
-    }).catch((error) => {
-        console.error(`Error creating release ${cliVersion}. ${error.message}`)
-        process.exit(1)
     })
 }
 
@@ -85,9 +78,6 @@ function updloadReleaseAssetVersion(version, release, directory) {
             release_id: release.data.id,
             name: versionFileName,
             data: rawData,
-        }).catch((error) => {
-            console.error(`Error uploading ${baseVersionFileName}.${suffix}`)
-            process.exit(1)
         })
     })
 }
