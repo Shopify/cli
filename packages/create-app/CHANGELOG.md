@@ -1,5 +1,20 @@
 # @shopify/create-app
 
+## 3.8.0
+
+### Minor Changes
+
+- e88a2e07: Fix the creation of apps using pnpm
+- 9b56a8a1: Limit the concurrency installing dependencies with Yarn on Windows to prevent race conditions from happening
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+
 ## 3.7.1
 
 ### Minor Changes
