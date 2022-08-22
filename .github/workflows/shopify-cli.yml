@@ -70,7 +70,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14', '16', '18']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -132,7 +132,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['14', '16', '18']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         with:
@@ -197,7 +197,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest', 'macos-latest']
-        node: ['14', '16', '18']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         with:
