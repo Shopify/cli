@@ -60,7 +60,12 @@ export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
 export const functionExtensions = {
-  types: [...publicFunctionExtensions.types, 'shipping_rate_presenter', 'payment_customization'],
+  types: [
+    ...publicFunctionExtensions.types,
+    'shipping_rate_presenter',
+    'payment_customization',
+    'order_routing_ranker',
+  ],
 } as const
 
 export const functionExtensionTemplates = [
@@ -171,6 +176,7 @@ export const functionExternalExtensionTypes = {
     'shipping_discount',
     'payment_customization',
     'delivery_option_presenter',
+    'order_routing_ranker',
   ],
 } as const
 
@@ -201,6 +207,7 @@ export const externalExtensionTypeNames = {
     'payment customization',
     'delivery option presenter',
     'customer accounts UI',
+    'order routing ranker',
   ],
 } as const
 
@@ -237,6 +244,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('delivery option presenter')
+    case 'order_routing_ranker':
+      return buildExtensionOutputConfig('order routing ranker')
   }
 }
 
@@ -267,6 +276,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'shipping_discounts':
     case 'payment_customization':
     case 'shipping_rate_presenter':
+    case 'order_routing_ranker':
       // As we add new extensions, this bug will force us to add a new case here.
       return type
   }

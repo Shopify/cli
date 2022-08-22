@@ -75,7 +75,8 @@
           "order_discounts",
           "shipping_discounts",
           "payment_customization",
-          "shipping_rate_presenter"
+          "shipping_rate_presenter",
+          "order_routing_ranker",
         ],
         "default": "checkout_ui_extension",
     },

@@ -135,4 +135,17 @@ describe('get extension type output configuration', () => {
       humanKey: 'delivery option presenter',
     })
   })
+
+  it('obtains the correct configuration for extension type order_routing_ranker', () => {
+    // Given
+    const extensionType = 'order_routing_ranker'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
+      humanKey: 'order routing ranker',
+    })
+  })
 })
