@@ -1,9 +1,9 @@
 import {Message, stringifyMessage, error as outputError} from './output.js'
 import {normalize} from './path.js'
 import {Errors} from '@oclif/core'
-import ExtendableError from 'ts-error'
 
-export {ExtendableError} from 'ts-error'
+import {ExtendableError} from 'ts-error'
+
 export {AbortSignal} from 'abort-controller'
 
 enum FatalErrorType {
