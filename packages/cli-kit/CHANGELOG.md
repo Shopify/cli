@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.8.0
+
+### Minor Changes
+
+- db4e6089: Releasing extensions binary in an automatic way
+- 79df925d: Add GraphQL endpoint to get Partners URLs
+
+### Patch Changes
+
+- 79df925d: Add new fields to app cache: updateURLs and newApp
+- 03bd5f28: Added `web-env` command to show and generate .env files without erasing existing ones
+
 ## 3.7.1
 
 ### Minor Changes

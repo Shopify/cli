@@ -1,5 +1,19 @@
 # @shopify/cli
 
+## 3.8.0
+
+### Minor Changes
+
+- 36db5aa3: Add the option to choose typescript templates for ui extensions
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+
 ## 3.7.1
 
 ### Minor Changes

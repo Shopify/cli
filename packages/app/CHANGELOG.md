@@ -1,5 +1,24 @@
 # @shopify/app
 
+## 3.8.0
+
+### Minor Changes
+
+- 391f02a1: Fix using the wrong package manager when installing dependencies in dev
+- db4e6089: Releasing extensions binary in an automatic way
+- 79df925d: New update URL flow
+- 8a03b1cc: Fix a bug that caused pnpm not to work with Shopify app projects.
+- 03bd5f28: Added `web-env` command to show and generate .env files without erasing existing ones
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+  - @shopify/shopify-cli-extensions@3.8.0
+
 ## 3.7.1
 
 ### Minor Changes
