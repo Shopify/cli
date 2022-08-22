@@ -11,13 +11,25 @@ import {
   writeSync as fileWriteSync,
   touchSync as fileTouchSync,
 } from './file.js'
-import {join as pathJoin, relativize as relativizePath} from './path.js'
+import {join as pathJoin} from './path.js'
 import {page} from './system.js'
 import {colors} from './node/colors.js'
-import terminalLink from 'terminal-link'
+import {
+  ColorContentToken,
+  CommandContentToken,
+  ContentToken,
+  ErrorContentToken,
+  HeadingContentToken,
+  ItalicContentToken,
+  JsonContentToken,
+  LinesDiffContentToken,
+  LinkContentToken,
+  PathContentToken,
+  RawContentToken,
+  SubHeadingContentToken,
+} from './content-tokens.js'
 import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
-import cjs from 'color-json'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 import {WriteStream, createWriteStream} from 'node:fs'
@@ -64,122 +76,6 @@ export class TokenizedString {
 }
 
 export type Message = string | TokenizedString
-
-abstract class ContentToken<T> {
-  value: T
-
-  constructor(value: T) {
-    this.value = value
-  }
-
-  abstract output(): string | string[]
-}
-
-class RawContentToken extends ContentToken<string> {
-  output(): string {
-    return this.value
-  }
-}
-
-class LinkContentToken extends ContentToken<Message> {
-  link: string
-
-  constructor(value: Message, link: string) {
-    super(value)
-    this.link = link
-  }
-
-  output() {
-    return terminalLink(colors.green(stringifyMessage(this.value)), this.link ?? '')
-  }
-}
-
-class CommandContentToken extends ContentToken<Message> {
-  output(): string {
-    return colors.bold(colors.yellow(stringifyMessage(this.value)))
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-class JsonContentToken extends ContentToken<any> {
-  output(): string {
-    try {
-      return cjs(stringifyMessage(this.value) ?? {})
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_) {
-      return JSON.stringify(stringifyMessage(this.value) ?? {}, null, 2)
-    }
-  }
-}
-
-class LinesDiffContentToken extends ContentToken<Change[]> {
-  output(): string[] {
-    return this.value
-      .map((part) => {
-        if (part.added) {
-          return part.value
-            .split(/\n/)
-            .filter((line) => line !== '')
-            .map((line) => {
-              return colors.green(`+ ${line}\n`) as string
-            })
-        } else if (part.removed) {
-          return part.value
-            .split(/\n/)
-            .filter((line) => line !== '')
-            .map((line) => {
-              return colors.magenta(`- ${line}\n`) as string
-            })
-        } else {
-          return part.value
-        }
-      })
-      .flat()
-  }
-}
-
-class ColorContentToken extends ContentToken<Message> {
-  color: (text: string) => string
-
-  constructor(value: Message, color: (text: string) => string) {
-    super(value)
-    this.color = color
-  }
-
-  output(): string {
-    return this.color(stringifyMessage(this.value))
-  }
-}
-
-class ErrorContentToken extends ContentToken<Message> {
-  output(): string {
-    return colors.bold.redBright(stringifyMessage(this.value))
-  }
-}
-
-class PathContentToken extends ContentToken<Message> {
-  output(): string {
-    return relativizePath(stringifyMessage(this.value))
-  }
-}
-
-class HeadingContentToken extends ContentToken<Message> {
-  output(): string {
-    return colors.bold.underline(stringifyMessage(this.value))
-  }
-}
-
-class SubHeadingContentToken extends ContentToken<Message> {
-  output(): string {
-    return colors.underline(stringifyMessage(this.value))
-  }
-}
-
-class ItalicContentToken extends ContentToken<Message> {
-  output(): string {
-    return colors.italic(stringifyMessage(this.value))
-  }
-}
 
 export const token = {
   raw: (value: string) => {
