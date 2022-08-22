@@ -54,98 +54,185 @@ function truncateLogs(logFile: string): void {
   } catch {}
 }
 
-enum ContentTokenType {
-  Raw,
-  Command,
-  Json,
-  Path,
-  Link,
-  Heading,
-  SubHeading,
-  Italic,
-  ErrorText,
-  Yellow,
-  Cyan,
-  Magenta,
-  Green,
-  LinesDiff,
-}
-
-interface ContentMetadata {
-  link?: string
-}
-
 export type Logger = (message: string) => void
 
-class ContentToken {
-  type: ContentTokenType
-  value: Message
-  metadata: ContentMetadata
-
-  constructor(value: Message, metadata: ContentMetadata = {}, type: ContentTokenType) {
-    this.type = type
+export class TokenizedString {
+  value: string
+  constructor(value: string) {
     this.value = value
-    this.metadata = metadata
+  }
+}
+
+export type Message = string | TokenizedString
+
+abstract class ContentToken<T> {
+  value: T
+
+  constructor(value: T) {
+    this.value = value
+  }
+
+  abstract output(): string | string[]
+}
+
+class RawContentToken extends ContentToken<string> {
+  output(): string {
+    return this.value
+  }
+}
+
+class LinkContentToken extends ContentToken<Message> {
+  link: string
+
+  constructor(value: Message, link: string) {
+    super(value)
+    this.link = link
+  }
+
+  output() {
+    return terminalLink(colors.green(stringifyMessage(this.value)), this.link ?? '')
+  }
+}
+
+class CommandContentToken extends ContentToken<Message> {
+  output(): string {
+    return colors.bold(colors.yellow(stringifyMessage(this.value)))
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+class JsonContentToken extends ContentToken<any> {
+  output(): string {
+    try {
+      return cjs(stringifyMessage(this.value) ?? {})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (_) {
+      return JSON.stringify(stringifyMessage(this.value) ?? {}, null, 2)
+    }
+  }
+}
+
+class LinesDiffContentToken extends ContentToken<Change[]> {
+  output(): string[] {
+    return this.value
+      .map((part) => {
+        if (part.added) {
+          return part.value
+            .split(/\n/)
+            .filter((line) => line !== '')
+            .map((line) => {
+              return colors.green(`+ ${line}\n`) as string
+            })
+        } else if (part.removed) {
+          return part.value
+            .split(/\n/)
+            .filter((line) => line !== '')
+            .map((line) => {
+              return colors.magenta(`- ${line}\n`) as string
+            })
+        } else {
+          return part.value
+        }
+      })
+      .flat()
+  }
+}
+
+class ColorContentToken extends ContentToken<Message> {
+  color: (text: string) => string
+
+  constructor(value: Message, color: (text: string) => string) {
+    super(value)
+    this.color = color
+  }
+
+  output(): string {
+    return this.color(stringifyMessage(this.value))
+  }
+}
+
+class ErrorContentToken extends ContentToken<Message> {
+  output(): string {
+    return colors.bold.redBright(stringifyMessage(this.value))
+  }
+}
+
+class PathContentToken extends ContentToken<Message> {
+  output(): string {
+    return relativizePath(stringifyMessage(this.value))
+  }
+}
+
+class HeadingContentToken extends ContentToken<Message> {
+  output(): string {
+    return colors.bold.underline(stringifyMessage(this.value))
+  }
+}
+
+class SubHeadingContentToken extends ContentToken<Message> {
+  output(): string {
+    return colors.underline(stringifyMessage(this.value))
+  }
+}
+
+class ItalicContentToken extends ContentToken<Message> {
+  output(): string {
+    return colors.italic(stringifyMessage(this.value))
   }
 }
 
 export const token = {
-  raw: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Raw)
+  raw: (value: string) => {
+    return new RawContentToken(value)
   },
   genericShellCommand: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Command)
+    return new CommandContentToken(value)
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: (value: any) => {
-    return new ContentToken(value, {}, ContentTokenType.Json)
+    return new JsonContentToken(value)
   },
   path: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Path)
+    return new PathContentToken(value)
   },
   link: (value: Message, link: string) => {
-    return new ContentToken(value, {link}, ContentTokenType.Link)
+    return new LinkContentToken(value, link)
   },
   heading: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Heading)
+    return new HeadingContentToken(value)
   },
   subheading: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.SubHeading)
+    return new SubHeadingContentToken(value)
   },
   italic: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Italic)
+    return new ItalicContentToken(value)
   },
   errorText: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.ErrorText)
+    return new ErrorContentToken(value)
   },
   cyan: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Cyan)
+    return new ColorContentToken(value, colors.cyan)
   },
   yellow: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Yellow)
+    return new ColorContentToken(value, colors.yellow)
   },
   magenta: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Magenta)
+    return new ColorContentToken(value, colors.magenta)
   },
   green: (value: Message) => {
-    return new ContentToken(value, {}, ContentTokenType.Green)
+    return new ColorContentToken(value, colors.green)
   },
   packagejsonScript: (packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]) => {
-    return new ContentToken(
-      formatPackageManagerCommand(packageManager, scriptName, scriptArgs),
-      {},
-      ContentTokenType.Command,
-    )
+    return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, scriptArgs))
   },
   successIcon: () => {
-    return new ContentToken('✔', {}, ContentTokenType.Green)
+    return new ColorContentToken('✔', colors.green)
   },
   failIcon: () => {
-    return new ContentToken('✖', {}, ContentTokenType.ErrorText)
+    return new ErrorContentToken('✖')
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  linesDiff: (value: any) => {
-    return new ContentToken(value, {}, ContentTokenType.LinesDiff)
+  linesDiff: (value: Change[]) => {
+    return new LinesDiffContentToken(value)
   },
 }
 
@@ -167,16 +254,7 @@ function formatPackageManagerCommand(packageManager: PackageManager, scriptName:
   }
 }
 
-export class TokenizedString {
-  value: string
-  constructor(value: string) {
-    this.value = value
-  }
-}
-
-export type Message = string | TokenizedString
-
-export function content(strings: TemplateStringsArray, ...keys: (ContentToken | string)[]): TokenizedString {
+export function content(strings: TemplateStringsArray, ...keys: (ContentToken<unknown> | string)[]): TokenizedString {
   let output = ``
   strings.forEach((string, i) => {
     output += string
@@ -188,74 +266,14 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken | 
     if (typeof token === 'string') {
       output += token
     } else {
-      const enumToken = token
-      switch (enumToken.type) {
-        case ContentTokenType.Raw:
-          output += enumToken.value
-          break
-        case ContentTokenType.Command:
-          output += colors.bold(colors.yellow(stringifyMessage(enumToken.value)))
-          break
-        case ContentTokenType.Path:
-          output += relativizePath(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.Json:
-          try {
-            output += cjs(stringifyMessage(enumToken.value) ?? {})
-            // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch (_) {
-            output += JSON.stringify(stringifyMessage(enumToken.value) ?? {}, null, 2)
-          }
-          break
-        case ContentTokenType.Link:
-          output += terminalLink(colors.green(stringifyMessage(enumToken.value)), enumToken.metadata.link ?? '')
-          break
-        case ContentTokenType.Heading:
-          output += colors.bold.underline(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.SubHeading:
-          output += colors.underline(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.Italic:
-          output += colors.italic(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.ErrorText:
-          output += colors.bold.redBright(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.Yellow:
-          output += colors.yellow(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.Cyan:
-          output += colors.cyan(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.Magenta:
-          output += colors.magenta(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.Green:
-          output += colors.green(stringifyMessage(enumToken.value))
-          break
-        case ContentTokenType.LinesDiff:
-          // prettier-ignore
-          (enumToken.value as unknown as Change[]).forEach((part) => {
-            if (part.added) {
-              part.value
-                .split(/\n/)
-                .filter((line) => line !== '')
-                .forEach((line) => {
-                  output += colors.green(`+ ${line}\n`)
-                })
-            } else if (part.removed) {
-              part.value
-                .split(/\n/)
-                .filter((line) => line !== '')
-                .forEach((line) => {
-                  output += colors.magenta(`- ${line}\n`)
-                })
-            } else {
-              output += part.value
-            }
-          })
-          break
+      const enumTokenOutput = token.output()
+
+      if (Array.isArray(enumTokenOutput)) {
+        enumTokenOutput.forEach((line: string) => {
+          output += line
+        })
+      } else {
+        output += enumTokenOutput
       }
     }
   })
