@@ -9,6 +9,9 @@ class ShopifyCliAT3 < Formula
   url "{{ cliTarball }}"
   sha256 "{{ cliSha }}"
   license "MIT"
+  depends_on "node"
+  depends_on "ruby"
+  depends_on "git"
 
   resource "cli-theme-commands" do
     url "{{ themeTarball}}"
@@ -19,9 +22,17 @@ class ShopifyCliAT3 < Formula
     url :stable
   end
 
-  depends_on "node"
-
   def install
+    existing_cli_path = `which shopify`
+    unless existing_cli_path.empty? || existing_cli_path.include?("homebrew")
+      opoo <<~WARNING
+      We've detected an installation of the Shopify CLI at #{existing_cli_path} that's not managed by Homebrew.
+
+      Please ensure that the Homebrew line in your shell configuration is at the bottom so that Homebrew-managed
+      tools take precedence.
+      WARNING
+    end
+
     system "npm", "install", *Language::Node.std_npm_install_args(libexec)
     bin.install_symlink Dir["#{libexec}/bin/*"]
 
