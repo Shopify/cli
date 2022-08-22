@@ -1,5 +1,4 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectOrCreateApp} from './dev/select-app.js'
+import {outputEnv} from './web-env.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {
@@ -9,9 +8,8 @@ import {
   themeExtensions,
   uiExtensions,
 } from '../constants.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
-import {os, output, path, session, store} from '@shopify/cli-kit'
+import {os, output, path, store} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
@@ -33,28 +31,7 @@ export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Pr
 }
 
 export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
-  const token = await session.ensureAuthenticatedPartners()
-
-  const orgs = await fetchOrganizations(token)
-  const org = await selectOrganizationPrompt(orgs)
-  const {organization, apps} = await fetchOrgAndApps(org.id, token)
-
-  const selectedApp = await selectOrCreateApp(app, apps, organization, token)
-
-  if (format === 'json') {
-    return output.content`${output.token.json({
-      SHOPIFY_API_KEY: selectedApp.apiKey,
-      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
-      SCOPES: app.configuration.scopes,
-    })}`
-  } else {
-    return output.content`
-Use these environment variables to set up your deployment pipeline for this app:
-  · ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
-  · ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
-  · ${output.token.green('SCOPES')}: ${app.configuration.scopes}
-    `
-  }
+  return outputEnv(app, format)
 }
 
 export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {

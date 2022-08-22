@@ -10,7 +10,8 @@
     "dev": "../shopify app dev",
     "push": "../shopify app push",
     "scaffold": "../shopify app scaffold",
-    "deploy": "../shopify app deploy"
+    "deploy": "../shopify app deploy",
+    "web-env": "../shopify app web-env"
   },
   "dependencies": {
     "@shopify/admin-ui-extensions-react": "^1.0.1",
