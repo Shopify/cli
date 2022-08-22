@@ -27,13 +27,13 @@ func init() {
 }
 
 func main() {
-  baseLogEntryBuilder := logging.NewLogEntryBuilder()
+	baseLogEntryBuilder := logging.NewLogEntryBuilder()
 	cli := CLI{}
 
-  validationLogBuilder := baseLogEntryBuilder.AddContext(logging.Config).AddContext(logging.Validate)
-  validationLogBuilder.Build(logging.Started,"", "Starting input validation").WriteErrorLog(os.Stdout)
+	validationLogBuilder := baseLogEntryBuilder.AddContext(logging.Config).AddContext(logging.Validate)
+	validationLogBuilder.Build(logging.Started, "", "Starting input validation").WriteErrorLog(os.Stdout)
 	if len(os.Args) < 3 {
-    validationLogBuilder.Build(logging.Started,"", "Invalid CLI input: You need to provide at least 2 arguments").WriteErrorLog(os.Stdout)
+		validationLogBuilder.Build(logging.Started, "", "Invalid CLI input: You need to provide at least 2 arguments").WriteErrorLog(os.Stdout)
 		os.Exit(1)
 	}
 
@@ -42,24 +42,24 @@ func main() {
 	if len(args) > 0 {
 		config, err := loadConfigFrom(args[0])
 		if err != nil {
-      validationLogBuilder.Build(logging.Failed,"", err.Error()).WriteErrorLog(os.Stdout)
+			validationLogBuilder.Build(logging.Failed, "", err.Error()).WriteErrorLog(os.Stdout)
 			panic(err)
 		}
 		cli.config = config
 		args = args[1:]
 	}
-  validationLogBuilder.Build(logging.Completed,"", "Succesfully loaded configuration").WriteLog(os.Stdout)
+	validationLogBuilder.Build(logging.Completed, "", "Succesfully loaded configuration").WriteLog(os.Stdout)
 
-  switch cmd {
-    case "build":
-      cli.build(args...)
-    case "create":
-      cli.create(args...)
-    case "serve":
-      cli.serve(args...)
-    case "version":
-      baseLogEntryBuilder.Build(logging.Completed, "", version).WriteLog(os.Stdout)
-    }
+	switch cmd {
+	case "build":
+		cli.build(args...)
+	case "create":
+		cli.create(args...)
+	case "serve":
+		cli.serve(args...)
+	case "version":
+		baseLogEntryBuilder.Build(logging.Completed, "", version).WriteLog(os.Stdout)
+	}
 }
 
 type CLI struct {
@@ -67,7 +67,7 @@ type CLI struct {
 }
 
 func (cli *CLI) build(args ...string) {
-  logBuilder := logging.NewLogEntryBuilder().AddContext(logging.Build)
+	logBuilder := logging.NewLogEntryBuilder().AddContext(logging.Build)
 	builds := len(cli.config.Extensions)
 	results := make(chan build.Result)
 
@@ -81,12 +81,12 @@ func (cli *CLI) build(args ...string) {
 	for i := 0; i < builds; i++ {
 		result := <-results
 		if !result.Success {
-      logBuilder.Build(logging.Completed, result.Extension.UUID, result.Message).WriteErrorLog(os.Stdout)
+			logBuilder.Build(logging.Completed, result.Extension.UUID, result.Message).WriteErrorLog(os.Stdout)
 			// fmt.Fprintln(os.Stderr, result)
 			failedBuilds += 1
 		} else {
 			completedLog := logBuilder.Build(logging.Completed, result.Extension.UUID, result.Message)
-      completedLog.WriteLog(os.Stdout)
+			completedLog.WriteLog(os.Stdout)
 			// fmt.Println(result)
 		}
 	}
@@ -99,7 +99,7 @@ func (cli *CLI) build(args ...string) {
 }
 
 func (cli *CLI) create(args ...string) {
-  logBuilder := logging.NewLogEntryBuilder().AddContext(logging.Create)
+	logBuilder := logging.NewLogEntryBuilder().AddContext(logging.Create)
 	for _, extension := range cli.config.Extensions {
 		logBuilder.Build(logging.Started, extension.UUID, "Extension create command started").WriteLog(os.Stdout)
 		err := create.NewExtensionProject(extension)
@@ -108,23 +108,23 @@ func (cli *CLI) create(args ...string) {
 			errorLog.WriteErrorLog(os.Stdout)
 			panic(fmt.Errorf("failed to create a new extension: %w", err))
 		}
-    logBuilder.Build(logging.Completed, extension.UUID, "Extension create command completed").WriteLog(os.Stdout)
+		logBuilder.Build(logging.Completed, extension.UUID, "Extension create command completed").WriteLog(os.Stdout)
 	}
 }
 
 func (cli *CLI) serve(args ...string) {
-  logBuilder := logging.NewLogEntryBuilder().AddContext(logging.Serve)
+	logBuilder := logging.NewLogEntryBuilder().AddContext(logging.Serve)
 
 	api := api.New(cli.config)
 
 	for _, extension := range cli.config.Extensions {
 		go build.Watch(extension, func(result build.Result) {
-      logWatchBuilder := logBuilder.AddContext(logging.Build).AddContext(logging.Watch)
+			logWatchBuilder := logBuilder.AddContext(logging.Build).AddContext(logging.Watch)
 			if result.Success {
 				logWatchBuilder.Build(logging.Completed, result.Extension.UUID, result.Message).WriteLog(os.Stdout)
 				//fmt.Println(result)
 			} else {
-        logWatchBuilder.Build(logging.Progress, result.Extension.UUID, result.Message).WriteLog(os.Stdout)
+				logWatchBuilder.Build(logging.Progress, result.Extension.UUID, result.Message).WriteLog(os.Stdout)
 				//fmt.Fprintln(os.Stderr, result)
 			}
 
@@ -132,7 +132,7 @@ func (cli *CLI) serve(args ...string) {
 		})
 
 		go build.WatchLocalization(ctx, extension, func(result build.Result) {
-      logWatchLocalizationBuilder := logBuilder.AddContext(logging.Build).AddContext(logging.WatchLocalization)
+			logWatchLocalizationBuilder := logBuilder.AddContext(logging.Build).AddContext(logging.WatchLocalization)
 			if result.Success {
 				logCompleted := logWatchLocalizationBuilder.Build(logging.Completed, result.Extension.UUID, result.Message)
 				logCompleted.WriteLog(os.Stdout)
@@ -152,9 +152,9 @@ func (cli *CLI) serve(args ...string) {
 		server.Shutdown(ctx)
 	})
 
-  logBuilder.Build(logging.Started, "", fmt.Sprintf("Shopify CLI Extensions Server is now available at %s\n", api.GetDevConsoleUrl())).WriteLog(os.Stdout)
+	logBuilder.Build(logging.Started, "", fmt.Sprintf("Shopify CLI Extensions Server is now available at %s\n", api.GetDevConsoleUrl())).WriteLog(os.Stdout)
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-    logBuilder.Build(logging.Failed, "", err.Error()).WriteErrorLog(os.Stdout)
+		logBuilder.Build(logging.Failed, "", err.Error()).WriteErrorLog(os.Stdout)
 		panic(err)
 	}
 }
