@@ -6,6 +6,7 @@ export async function cliVersion(): Promise<string> {
     (await path.findUp('@shopify/cli/package.json', {
       cwd: path.dirname(fileURLToPath(import.meta.url)),
       type: 'file',
+      allowSymlinks: true,
     })) ??
     (await path.findUp('packages/cli-main/package.json', {
       cwd: path.dirname(fileURLToPath(import.meta.url)),

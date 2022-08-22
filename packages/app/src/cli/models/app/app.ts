@@ -1,7 +1,7 @@
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
-import {path, schema} from '@shopify/cli-kit'
+import {path, schema, file} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -127,15 +127,43 @@ export async function getUIExtensionRendererVersion(
   app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
-  const fullName = getUIExtensionRendererDependency(uiExtensionType)?.name.replace('-react', '')
-  if (!fullName) return undefined
-  // Split the dependency name to avoid using "/" in windows
-  const dependencyName = fullName.split('/')
+  const rendererDependency = getUIExtensionRendererDependency(uiExtensionType)
+  if (!rendererDependency) return undefined
 
-  // Find the package.json in the project structure
-  const realPath = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
-  const packagePath = await path.findUp(realPath, {type: 'file', cwd: app.directory})
+  const fullName = rendererDependency.name
+  let cwd = app.directory
+  const isReact = fullName.includes('-react')
+
+  /**
+   * PNPM creates a symlink to a global cache where dependencies are hoisted. Therefore
+   * we need to first look up the *-react package and use that as a working directory from
+   * where to look up the non-react package.
+   */
+  if (isReact) {
+    const dependencyName = fullName.split('/')
+    const pattern = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
+    const reactPackageJsonPath = await path.findUp(pattern, {
+      type: 'file',
+      cwd: app.directory,
+      allowSymlinks: true,
+    })
+    if (!reactPackageJsonPath) {
+      return 'not_found'
+    }
+    cwd = await file.realpath(path.dirname(reactPackageJsonPath))
+  }
+
+  // Split the dependency name to avoid using "/" in windows
+  const dependencyName = fullName.replace('-react', '').split('/')
+  const pattern = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
+
+  let packagePath = await path.findUp(pattern, {
+    cwd,
+    type: 'file',
+    allowSymlinks: true,
+  })
   if (!packagePath) return 'not_found'
+  packagePath = await file.realpath(packagePath)
 
   // Load the package.json and extract the version
   const packageContent = await readAndParsePackageJson(packagePath)

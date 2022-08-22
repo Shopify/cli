@@ -71,7 +71,7 @@ export const OxygenPreviewExecutableNotFound = new error.Bug(
 
 async function oxygenPreviewExecutable(): Promise<string> {
   const cwd = path.dirname(fileURLToPath(import.meta.url))
-  const executablePath = await path.findUp('node_modules/.bin/oxygen-preview', {type: 'file', cwd})
+  const executablePath = await path.findUp('node_modules/.bin/oxygen-preview', {type: 'file', cwd, allowSymlinks: true})
   if (!executablePath) {
     throw OxygenPreviewExecutableNotFound
   }
