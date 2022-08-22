@@ -4,6 +4,7 @@ import {
   CreateDeploymentQuerySchema,
   CreateDeploymentQuery,
 } from './graphql/create_deployment.js'
+import {retryOnError, WebPageNotAvailable} from './error.js'
 import buildService from '../build.js'
 import {output, api, http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -90,6 +91,31 @@ export const uploadDeploymentStep = async (config: ReqDeployConfig, deploymentID
   // note: type this better
   const responseData = (await response.json()) as UploadDeploymentResponse
   return responseData.data.uploadDeployment.deployment.previewURL
+}
+
+export const healthCheck = async (url: string) => {
+  output.info('📡 Checking deployment... ')
+  const pingUrl = `${url}/__health`
+  const backoff = [5, 10, 15, 30, 60]
+
+  try {
+    await retryOnError(
+      () => ping(pingUrl),
+      backoff.length,
+      (iteration) => backoff[iteration],
+    )
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    output.info("🤕 The deployment was uploaded but can't be reached yet.")
+    return
+  }
+
+  output.success('✅ Deployed and healthy!')
+}
+
+export const ping = async (pingUrl: string) => {
+  const result = await http.fetch(pingUrl, {method: 'GET'})
+  if (result.status !== 200) throw WebPageNotAvailable()
 }
 
 const buildOperationsString = (deploymentID: string): string => {
