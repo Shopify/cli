@@ -330,25 +330,35 @@ describe('automaticMatchmaking: case 14 a bit of everything', () => {
     })
     expect(got).toEqual(expected)
   })
+})
 
-  describe('automaticMatchmaking: case 15 automatic matches with different names', () => {
-    it('suceeds returning matches pending confirmation', async () => {
-      // When
-      const registrationNewA = {...REGISTRATION_A, title: 'A_NEW'}
-      const registrationNewB = {...REGISTRATION_B, title: 'B_NEW'}
-      const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [registrationNewA, registrationNewB], {})
+describe('automaticMatchmaking: case 15 automatic matches with different names', () => {
+  it('suceeds returning matches pending confirmation', async () => {
+    // When
+    const registrationNewA = {...REGISTRATION_A, title: 'A_NEW'}
+    const registrationNewB = {...REGISTRATION_B, title: 'B_NEW'}
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [registrationNewA, registrationNewB], {})
 
-      // Then
-      const expected = ok({
-        identifiers: {},
-        pendingConfirmation: [
-          {extension: EXTENSION_A, registration: registrationNewA},
-          {extension: EXTENSION_B, registration: registrationNewB},
-        ],
-        toCreate: [],
-        toManualMatch: {local: [], remote: []},
-      })
-      expect(got).toEqual(expected)
+    // Then
+    const expected = ok({
+      identifiers: {},
+      pendingConfirmation: [
+        {extension: EXTENSION_A, registration: registrationNewA},
+        {extension: EXTENSION_B, registration: registrationNewB},
+      ],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
     })
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: case 16 more remote than local extensions', () => {
+  it('throw error, invalid local environment', async () => {
+    // When
+    const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A, REGISTRATION_B], {})
+
+    // Then
+    expect(got).toEqual(err(new Error('invalid-environment')))
   })
 })

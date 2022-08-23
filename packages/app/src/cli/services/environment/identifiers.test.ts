@@ -137,21 +137,6 @@ beforeEach(() => {
   vi.mock('./id-manual-matching')
 })
 
-describe('ensureDeploymentIdsPresence: more remote than local extensions', () => {
-  it('throw an invalid environment error', async () => {
-    // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
-      app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]},
-    })
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([EXTENSION_A], []))
-
-    // Then
-    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
-  })
-})
-
 describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
   it('throw an invalid environment error', async () => {
     // Given
