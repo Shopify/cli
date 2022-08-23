@@ -72,7 +72,7 @@ async function init(options: InitOptions) {
                 const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
 
                 await npm.updateAppData(packageJSON, hyphenizedName)
-                await updateCLIDependencies(packageJSON, options.local)
+                await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
 
                 await npm.writePackageJSON(templateScaffoldDir, packageJSON)
 
