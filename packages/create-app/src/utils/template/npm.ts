@@ -29,7 +29,9 @@ export async function updateCLIDependencies({
     })) as string
     const cliPath = `file:${path.relative(directory, cliAbsolutePath)}`
 
-    const appPath = `file:${(await path.findUp('packages/app', {type: 'directory', cwd: moduleDirectory})) as string}`
+    // App path
+    const appAbsolutePath = (await path.findUp('packages/app', {type: 'directory', cwd: moduleDirectory})) as string
+    const appPath = `file:${path.relative(directory, appAbsolutePath)}`
 
     // CLI Kit path
     const cliKitAbsolutePath = (await path.findUp('packages/cli-kit', {
