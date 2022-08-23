@@ -70,7 +70,7 @@ export async function outputEnv(app: AppInterface, format: Format): Promise<outp
   } else {
     return output.content`
     ${output.token.green('SHOPIFY_API_KEY')}=${selectedApp.apiKey}
-    ${output.token.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0].secret}
+    ${output.token.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0]?.secret ?? ''}
     ${output.token.green('SCOPES')}=${app.configuration.scopes}
   `
   }

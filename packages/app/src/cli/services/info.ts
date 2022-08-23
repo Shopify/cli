@@ -214,7 +214,7 @@ class AppInfo {
       [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
+    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath)!)
     return `\n${this.linesToColumns(details)}\n${error}`
   }
 
@@ -247,15 +247,15 @@ class AppInfo {
 
   linesToColumns(lines: string[][]): string {
     const widths: number[] = []
-    for (let i = 0; i < lines[0].length; i++) {
-      const columnRows = lines.map((line) => line[i])
+    for (let i = 0; i < (lines[0]?.length ?? 0); i++) {
+      const columnRows = lines.map((line) => line[i]!)
       widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
     }
     const paddedLines = lines
       .map((line) => {
         return line
           .map((col, index) => {
-            return `${col}${' '.repeat(widths[index] - output.unstyled(col).length)}`
+            return `${col}${' '.repeat(widths[index]! - output.unstyled(col).length)}`
           })
           .join('   ')
           .trimEnd()
@@ -270,7 +270,7 @@ class AppInfo {
   }
 
   currentCliVersion(): string {
-    return this.app.nodeDependencies['@shopify/cli']
+    return this.app.nodeDependencies['@shopify/cli']!
   }
 
   async versionUpgradeMessage(): Promise<string> {

@@ -66,10 +66,10 @@ export function parseRepoUrl(src: string) {
 
   const site = match[1] || match[2] || match[3] || 'github.com'
   const normalizedSite = site === 'github' ? 'github.com' : site
-  const user = match[4]
-  const name = match[5].replace(/\.git$/, '')
-  const subDirectory = match[6]?.slice(1)
-  const ref = match[7]
+  const user = match[4]!
+  const name = match[5]!.replace(/\.git$/, '')
+  const subDirectory = match[6]?.slice(1)!
+  const ref = match[7]!
   const branch = ref ? `#${ref}` : ''
   const ssh = `git@${normalizedSite}:${user}/${name}`
   const http = `https://${normalizedSite}/${user}/${name}`

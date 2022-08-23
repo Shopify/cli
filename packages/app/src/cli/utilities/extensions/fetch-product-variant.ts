@@ -22,7 +22,7 @@ export async function fetchProductVariant(store: string) {
   const result: api.graphql.FindProductVariantSchema = await api.admin.request(query, adminSession)
   const products = result.products.edges
   if (products.length === 0) throw NoProductsError(store)
-  const variantURL = result.products.edges[0].node.variants.edges[0].node.id
+  const variantURL = result.products.edges[0]!.node.variants.edges[0]!.node.id
   const variantId = variantURL.split('/').pop()
   return variantId
 }

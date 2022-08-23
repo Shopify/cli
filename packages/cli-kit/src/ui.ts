@@ -144,7 +144,7 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
 
   const processInfo = await findProcess('port', port)
   const formattedProcessName =
-    processInfo && processInfo.length > 0 && processInfo[0].name
+    processInfo && processInfo.length > 0 && processInfo[0]?.name
       ? ` ${content`${token.italic(`(${processInfo[0].name})`)}`.value}`
       : ''
 

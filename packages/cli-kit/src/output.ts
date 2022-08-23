@@ -157,7 +157,7 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken<un
     if (i >= keys.length) {
       return
     }
-    const token = keys[i]
+    const token = keys[i]!
 
     if (typeof token === 'string') {
       output += token
@@ -362,7 +362,7 @@ export const error = async (content: Fatal) => {
       item.calleeShort = colors.yellow(item.calleeShort)
       /** We make the paths relative to the packages/ directory */
       const fileShortComponents = item.fileShort.split('packages/')
-      item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1] : fileShortComponents[0]
+      item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1]! : fileShortComponents[0]!
       return item
     })
   if (content instanceof Bug) {
@@ -424,7 +424,7 @@ export async function concurrent(
 
   function linePrefix(prefix: string, index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    const color = concurrentColors[colorIndex]
+    const color = concurrentColors[colorIndex]!
     return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
   }
 
@@ -585,7 +585,7 @@ function logfileLineUUID(line: string): string | null {
   // There may be subsequent lines if the contents section is multi-line.
   //
   const match = line.match(/^\[\S+ ([0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}) [A-Z]+\]/)
-  return match && match[1]
+  return match && match[1]!
 }
 
 /**
