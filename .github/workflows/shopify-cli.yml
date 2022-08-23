@@ -117,7 +117,8 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
       - name: Unit tests
         run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
-      - name: yarn nx run features:test
+      - name: Acceptance tests
+        run: yarn nx run features:test
   pr-ubuntu:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -175,7 +176,7 @@ jobs:
       - name: Unit tests
         run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
-        if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
+        if: ${{ matrix.node == '18' }}
         run: yarn nx run features:test
   pr-windows-and-mac:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
