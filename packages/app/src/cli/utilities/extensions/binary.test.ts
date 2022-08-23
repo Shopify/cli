@@ -5,7 +5,6 @@ import {
   UnsupportedPlatformError,
   getArtifactName,
 } from './binary.js'
-import {versions} from '../../constants.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import {http, file, path, os, constants} from '@shopify/cli-kit'
 import {validateMD5} from '@shopify/cli-kit/node/checksum'
@@ -36,6 +35,9 @@ vi.mock('@shopify/cli-kit', async () => {
           },
         },
       },
+      versions: {
+        cliKit: vi.fn(),
+      },
     },
   }
 })
@@ -44,7 +46,9 @@ describe('getBinaryLocalPath', () => {
   it('returns the right path when windows', async () => {
     // Given
     const binariesDirectory = '/binaries'
+    const cliVersion = '1.0.0'
     vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
+    vi.mocked(constants.versions.cliKit).mockResolvedValue(cliVersion)
     vi.mocked(os.platformAndArch).mockReturnValue({
       platform: 'windows',
       arch: 'arm64',
@@ -54,13 +58,15 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    expect(got).toEqual(path.join(binariesDirectory, `extensions/${versions.extensionsBinary}-windows-arm64.exe`))
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-windows-arm64.exe`))
   })
 
   it('returns the right path when not windows', async () => {
     // Given
     const binariesDirectory = '/binaries'
+    const cliVersion = '1.0.0'
     vi.mocked(constants.paths.directories.cache.vendor.binaries).mockReturnValue(binariesDirectory)
+    vi.mocked(constants.versions.cliKit).mockResolvedValue(cliVersion)
     vi.mocked(os.platformAndArch).mockReturnValue({
       platform: 'darwin',
       arch: 'arm64',
@@ -70,7 +76,7 @@ describe('getBinaryLocalPath', () => {
     const got = await getBinaryLocalPath()
 
     // Then
-    expect(got).toEqual(path.join(binariesDirectory, `extensions/${versions.extensionsBinary}-darwin-arm64`))
+    expect(got).toEqual(path.join(binariesDirectory, `extensions/${cliVersion}-darwin-arm64`))
   })
 })
 

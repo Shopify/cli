@@ -1,11 +1,10 @@
-Feature: Extension creation
+Feature: Apps
 
 Background:
   Given I have a working directory
-  And I create an app named MyExtendedApp with yarn as dependency manager
 
 Scenario: I scaffold theme, ui, and function extensions
-
+  And I create an app named MyExtendedApp with yarn as dependency manager
   When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
   Then I have a ui extension named TestPurchaseExtensionReact of type checkout_post_purchase and flavor react
   When I create an extension named TestThemeExtension of type theme_app_extension
@@ -18,6 +17,7 @@ Scenario: I scaffold theme, ui, and function extensions
   Then I can build the app
 
 Scenario: I scaffold ui extensions with different templates
+  And I create an app named MyExtendedApp with yarn as dependency manager
   When I create an extension named TestPurchaseExtensionJavaScript of type checkout_ui and flavor vanilla-js
   Then I have a ui extension named TestPurchaseExtensionJavaScript of type checkout_ui_extension and flavor vanilla-js
   When I create an extension named TestPurchaseExtensionReact of type checkout_ui and flavor react
@@ -26,3 +26,8 @@ Scenario: I scaffold ui extensions with different templates
   Then I have a ui extension named TestPurchaseExtensionTypeScript of type checkout_ui_extension and flavor typescript
   When I create an extension named TestPurchaseExtensionTypeScriptReact of type checkout_ui and flavor typescript-react
   Then I have a ui extension named TestPurchaseExtensionTypeScriptReact of type checkout_ui_extension and flavor typescript-react
+
+Scenario: I create an app with a extension using pnpm
+  And I create an app named MyExtendedApp with pnpm as dependency manager
+  When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
+  Then I can build the app

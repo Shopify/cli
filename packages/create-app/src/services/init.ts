@@ -76,6 +76,12 @@ async function init(options: InitOptions) {
 
                 await npm.writePackageJSON(templateScaffoldDir, packageJSON)
 
+                // Ensure that the installation of dependencies doesn't fail when using
+                // pnpm due to missing peerDependencies.
+                if (packageManager === 'pnpm') {
+                  await file.append(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
+                }
+
                 task.title = 'Updated package.json'
                 parentTask.title = 'App initialized'
               },

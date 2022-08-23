@@ -9,6 +9,7 @@ import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 import {Writable} from 'node:stream'
 
+
 const RubyCLIVersion = '2.24.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
@@ -38,6 +39,7 @@ export async function execCLI2(args: string[], {adminSession, storefrontToken, d
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_SHOP: adminSession?.storeFqdn,
+    SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.

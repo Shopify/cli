@@ -57,7 +57,11 @@ export async function nodeExtensionsCLIPath(): Promise<string> {
       cwd,
     })) as string
   } else {
-    const executablePath = await path.findUp('node_modules/.bin/shopify-cli-extensions', {type: 'file', cwd})
+    const executablePath = await path.findUp('node_modules/.bin/shopify-cli-extensions', {
+      type: 'file',
+      cwd,
+      allowSymlinks: true,
+    })
     if (!executablePath) {
       throw NodeExtensionsCLINotFoundError()
     }

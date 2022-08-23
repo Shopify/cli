@@ -1,6 +1,7 @@
 import {path, ui, npm, constants} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
+import {platform} from 'node:os'
 
 export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local: boolean): Promise<npm.PackageJSON> {
   const cliKitVersion = await constants.versions.cliKit()
@@ -65,8 +66,17 @@ export async function getDeepInstallNPMTasks({
             next()
           },
         })
-
-        await installNodeModules(folderPath, packageManager, output, output)
+        /**
+         * Installation of dependencies using Yarn on Windows might lead
+         * to "EPERM: operation not permitted, unlink" errors when Yarn tries
+         * to access the cache. By limiting the network concurrency we mitigate the
+         * error:
+         *
+         * Failing scenario: https://github.com/Shopify/cli/runs/7913938724
+         * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
+         */
+        const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
+        await installNodeModules({directory: folderPath, packageManager, stdout: output, stderr: output, args})
 
         task.title = `Installed dependencies in ${titlePath}`
 

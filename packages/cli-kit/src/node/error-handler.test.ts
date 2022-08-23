@@ -96,11 +96,15 @@ describe('bugsnag stack cleaning', () => {
 })
 
 describe('bugsnag metadata', () => {
-  it('includes public data', () => {
+  it('includes public data', async () => {
     const event = {
       addMetadata: vi.fn(),
     }
-    addBugsnagMetadata(event as any)
+    const mockConfig = {
+      runHook: () => Promise.resolve({successes: []}),
+      plugins: [],
+    }
+    await addBugsnagMetadata(event as any, mockConfig as any)
     expect(event.addMetadata).toHaveBeenCalled()
   })
 })

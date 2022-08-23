@@ -23,6 +23,7 @@ env:
   YARN_VERSION: "1.22.18"
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
+  PNPM_VERSION: "7.9.3"
   GO_VERSION: "1.17"
 
 jobs:
@@ -69,7 +70,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14', '16', '18']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -92,6 +93,9 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version:  ${{ env.PNPM_VERSION }}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
@@ -128,7 +132,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['14', '16', '18']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         with:
@@ -152,6 +156,9 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version:  ${{ env.PNPM_VERSION }}
       - name: Set Node.js on ubuntu environments
         uses: actions/setup-node@master
         with:
@@ -190,7 +197,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest', 'macos-latest']
-        node: ['14', '16', '18']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         with:

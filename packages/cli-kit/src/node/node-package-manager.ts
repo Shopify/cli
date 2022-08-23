@@ -120,7 +120,14 @@ export async function installNPMDependenciesRecursively(options: InstallNPMDepen
     await Promise.all(
       packageJsons.map(async (packageJsonPath) => {
         const directory = dirname(packageJsonPath)
-        await installNodeModules(directory, options.packageManager, undefined, undefined, abortController.signal)
+        await installNodeModules({
+          directory,
+          packageManager: options.packageManager,
+          stdout: undefined,
+          stderr: undefined,
+          signal: abortController.signal,
+          args: [],
+        })
       }),
     )
   } catch (error) {
@@ -129,24 +136,28 @@ export async function installNPMDependenciesRecursively(options: InstallNPMDepen
   }
 }
 
-/**
- * Installs the dependencies in the given directory.
- * @param directory {string} The directory that contains the package.json
- * @param packageManager {PackageManager} The package manager to use to install the dependencies.
- * @param stdout {Writable} Standard output stream.
- * @param stderr {Writable} Standard error stream.
- * @param signal {AbortSignal} Abort signal.
- * @returns stderr {Writable} Standard error stream.
- */
-export async function installNodeModules(
-  directory: string,
-  packageManager: PackageManager,
-  stdout?: Writable,
-  stderr?: Writable,
-  signal?: AbortSignal,
-) {
-  const options: ExecOptions = {cwd: directory, stdin: undefined, stdout, stderr, signal}
-  await exec(packageManager, ['install'], options)
+interface InstallNodeModulesOptions {
+  directory: string
+  args: string[]
+  packageManager: PackageManager
+  stdout?: Writable
+  stderr?: Writable
+  signal?: AbortSignal
+}
+
+export async function installNodeModules(options: InstallNodeModulesOptions) {
+  const execOptions: ExecOptions = {
+    cwd: options.directory,
+    stdin: undefined,
+    stdout: options.stdout,
+    stderr: options.stderr,
+    signal: options.signal,
+  }
+  let args = ['install']
+  if (options.args) {
+    args = args.concat(options.args)
+  }
+  await exec(options.packageManager, args, execOptions)
 }
 
 /**

@@ -1,5 +1,19 @@
 # app
 
+## 3.8.0
+
+### Patch Changes
+
+- 03bd5f28: Added `web-env` command to show and generate .env files without erasing existing ones
+- Updated dependencies [391f02a1]
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [36db5aa3]
+- Updated dependencies [8a03b1cc]
+- Updated dependencies [03bd5f28]
+  - @shopify/app@3.8.0
+  - @shopify/cli@3.8.0
+
 ## 3.7.1
 
 ### Patch Changes
