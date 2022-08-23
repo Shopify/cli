@@ -38,7 +38,7 @@ export const createDeploymentStep = async (config: ReqDeployConfig): Promise<Cre
 }
 
 export const runBuildCommandStep = async (config: ReqDeployConfig, assetBaseURL: string): Promise<DMSError | null> => {
-  output.info('✨ Building the applicaton... ')
+  output.info('🛠 Building the applicaton... ')
 
   // need to measure duration of build
   // make a temp build directory?
