@@ -1,6 +1,7 @@
 import {Abort} from './error.js'
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {content, token, debug} from './output.js'
+import {appendSync} from './file.js'
 import git, {TaskOptions, SimpleGitProgressEvent} from 'simple-git'
 
 export const factory = git
@@ -30,10 +31,41 @@ export const DetachedHeadError = () => {
   )
 }
 
+export const NothingToCommitError = () => {
+  return new Abort('Nothing to commit')
+}
+
 export async function initializeRepository(directory: string) {
   debug(content`Initializing git repository at ${token.path(directory)}...`)
   await ensurePresentOrAbort()
   await git(directory).init()
+}
+
+export enum GitIgnoreTemplate {
+  Hydrogen = 'hydrogen',
+}
+export function createGitIgnore(directory: string, template: GitIgnoreTemplate) {
+  debug(content`Creating .gitignore at ${token.path(directory)}...`)
+  const filePath = `${directory}/.gitignore`
+  const templates = {
+    [GitIgnoreTemplate.Hydrogen]: {
+      system: ['.DS_Store'],
+      logs: ['logs', '*.log', 'npm-debug.log*', 'yarn-debug.log*', 'yarn-error.log*'],
+      testing: ['/coverage', '*.lcov'],
+      dependencies: ['/node_modules', '.npm', '.yarn-integrity', '/.pnp', '.pnp.js'],
+      typescript: ['*.tsbuildinfo'],
+      environment: ['.env', '.env.test', '.env.local'],
+      production: ['/dist'],
+    },
+  }
+
+  let fileContent = ''
+  for (const [section, lines] of Object.entries(templates[template])) {
+    fileContent += `# ${section}\n`
+    fileContent += `${lines.join(' \n')}\n\n`
+  }
+
+  appendSync(filePath, fileContent)
 }
 
 export async function downloadRepository({
@@ -93,6 +125,9 @@ export async function getLatestCommit(directory?: string) {
 export async function commitAll(message: string, options?: {directory?: string; author?: string}) {
   const simpleGit = git({baseDir: options?.directory})
   const status = await simpleGit.status()
+
+  if (!status.files.length) throw NothingToCommitError()
+
   await simpleGit.add(status.files.map((file) => file.path))
 
   const commitOptions = options?.author ? {'--author': options.author} : undefined
