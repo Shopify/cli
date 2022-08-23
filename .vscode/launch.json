@@ -18,7 +18,7 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_DEBUG_GO_BINARY": "1",       // Switch to 1 to pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
           "<node_internals>/**",
@@ -39,7 +39,7 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_DEBUG_GO_BINARY": "1",       // Switch to 1 to pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
           "<node_internals>/**",
@@ -62,7 +62,7 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_DEBUG_GO_BINARY": "1",       // Switch to 1 to pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
           "<node_internals>/**"

@@ -24,8 +24,8 @@
         {
             "id": "remotePort",
             "type": "promptString",
-            "description": "Port: ",  // From init-debug-session shell script
-            "default": "54321",
+            "description": "Port: ",
+            "default": "54321",       // Default value from: <cli_root>/packages/ui-extensions-go-cli/init-debug-session
         },
     ],
 }
