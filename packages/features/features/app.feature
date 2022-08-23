@@ -27,7 +27,10 @@ Scenario: I scaffold ui extensions with different templates
   When I create an extension named TestPurchaseExtensionTypeScriptReact of type checkout_ui and flavor typescript-react
   Then I have a ui extension named TestPurchaseExtensionTypeScriptReact of type checkout_ui_extension and flavor typescript-react
 
-Scenario: I create an app with a extension using pnpm
-  And I create an app named MyExtendedApp with pnpm as dependency manager
-  When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
-  Then I can build the app
+# Overrides with relative paths cause `pnpm install` to fail:
+# Issue: https://github.com/pnpm/pnpm/issues/4514
+#
+# Scenario: I create an app with a extension using pnpm
+#   And I create an app named MyExtendedApp with pnpm as dependency manager
+#   When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
+#   Then I can build the app

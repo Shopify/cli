@@ -3,7 +3,7 @@ import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-pac
 import {Writable} from 'stream'
 import {platform} from 'node:os'
 
-type UpdateCLIDependenciesOptions = {
+interface UpdateCLIDependenciesOptions {
   directory: string
   packageJSON: npm.PackageJSON
   local: boolean
