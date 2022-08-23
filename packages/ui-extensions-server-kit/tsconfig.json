@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2016",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["jest", "vitest/globals", "vi-fetch/matchers"],
+    "types": ["vitest/globals", "vi-fetch/matchers"],
     "allowJs": false,
     "skipLibCheck": false,
     "esModuleInterop": true,
