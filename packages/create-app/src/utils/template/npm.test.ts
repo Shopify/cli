@@ -5,9 +5,6 @@ import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-pac
 import {Writable} from 'stream'
 import {platform} from 'node:os'
 
-let cliVersion: undefined | string
-let appVersion: undefined | string
-
 beforeEach(async () => {
   vi.mock('node:os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -28,7 +25,7 @@ describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
     const mockPackageJSON = {} as npm.PackageJSON
 
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory: '/'})
 
     expect(mockPackageJSON.dependencies['@shopify/cli']).toBe('1.2.3')
     expect(mockPackageJSON.dependencies['@shopify/app']).toBe('1.2.3')
@@ -37,7 +34,7 @@ describe('updateCLIDependencies', () => {
   it('does not update overrides or resolutions if local is false', async () => {
     const mockPackageJSON = {overrides: {}, resolutions: {}} as npm.PackageJSON
 
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory: '/'})
 
     expect(mockPackageJSON.overrides['@shopify/cli']).toBeUndefined()
     expect(mockPackageJSON.overrides['@shopify/app']).toBeUndefined()
@@ -52,10 +49,10 @@ describe('updateCLIDependencies', () => {
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
 
-      await updateCLIDependencies(mockPackageJSON, true)
+      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory: '/'})
 
       const dependencyOveride = mockPackageJSON.overrides[dependency]
-      const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
+      const dependencyPath = path.join('/', dependencyOveride.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
@@ -67,10 +64,10 @@ describe('updateCLIDependencies', () => {
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
 
-      await updateCLIDependencies(mockPackageJSON, true)
+      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory: '/'})
 
       const dependencyResolution = mockPackageJSON.resolutions[dependency]
-      const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
+      const dependencyPath = path.join('/', dependencyResolution.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
@@ -80,10 +77,10 @@ describe('updateCLIDependencies', () => {
   it.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
     const mockPackageJSON = {} as npm.PackageJSON
 
-    await updateCLIDependencies(mockPackageJSON, true)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory: '/'})
 
     const dependencyResolution = mockPackageJSON.dependencies[dependency]
-    const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
+    const dependencyPath = path.join('/', dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
     expect(dependencyJSON.name).toBe(dependency)
@@ -107,7 +104,7 @@ describe('updateCLIDependencies', () => {
         mock: 'value',
       },
     }
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory: '/'})
 
     expect(mockPackageJSON.dependencies.mock).toBe('value')
     expect(mockPackageJSON.overrides.mock).toBe('value')

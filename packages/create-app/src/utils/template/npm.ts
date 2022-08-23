@@ -57,8 +57,6 @@ export async function updateCLIDependencies({
       '@shopify/shopify-cli-extensions': extensionsCliPath,
     }
 
-    console.log(`YOLO: ${JSON.stringify(dependencyOverrides)}`)
-
     packageJSON.overrides = packageJSON.overrides
       ? {...packageJSON.overrides, ...dependencyOverrides}
       : dependencyOverrides
