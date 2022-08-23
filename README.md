@@ -50,6 +50,10 @@ If you encounter issues using the CLI or have feedback you'd like to share with 
 - [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.
 - [CLI Documentation](https://shopify.dev/apps/tools/cli) - To view our complete API documentation
 
+## Contribute 👩🏽‍💻
+
+If you'd like to contribute to the project, check out the [contributors docs](/docs) and the [steps to get started](/docs/get-started).
+
 <p>&nbsp;</p>
 
 ## References
