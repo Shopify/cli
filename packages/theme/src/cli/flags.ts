@@ -20,7 +20,9 @@ export const themeFlags = {
   }),
   store: Flags.string({
     char: 's',
-    description: 'Store URL.',
+    description:
+      'Store URL. It can be the store prefix (johns-apparel)' +
+      ' or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).',
     env: 'SHOPIFY_FLAG_STORE',
     parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
   }),
