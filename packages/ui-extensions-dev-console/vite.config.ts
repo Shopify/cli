@@ -14,6 +14,17 @@ export default defineConfig({
       // vite.config.ts, tsconfig.json, and jest.config.ts all need to define their own aliases
       '@': path.resolve(__dirname, './src'),
       '@shopify/ui-extensions-server-kit': path.resolve(__dirname, '../ui-extensions-server-kit/src'),
+      tests: path.resolve(__dirname, './tests'),
+      '@shopify/ui-extensions-test-utils': path.resolve(__dirname, '../ui-extensions-test-utils/src'),
+      '@shopify/ui-extensions-server-kit/testing': path.resolve(__dirname, '../ui-extensions-server-kit/src/testing'),
+    },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: [path.resolve(__dirname, './tests/setup.ts')],
+    deps: {
+      inline: ['@shopify/react-testing'],
     },
   },
 })

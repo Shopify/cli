@@ -10,13 +10,15 @@
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "serve": "vite preview",
     "start": "vite",
-    "test": "jest"
+    "test": "jest",
+    "test:vitest": "vitest"
   },
   "dependencies": {
     "@shopify/polaris": "^6.6.0",
     "@shopify/polaris-icons": "^4.6.2",
     "@shopify/react-i18n": "^6.1.0",
     "@shopify/ui-extensions-server-kit": "3.8.0",
+    "@vitejs/plugin-react": "^2.0.1",
     "copy-to-clipboard": "^3.3.1",
     "qrcode.react": "^1.0.1",
     "react": "16.14.0",
@@ -46,6 +48,7 @@
     "typescript": "^4.6.4",
     "vite": "^2.4.4",
     "vite-jest": "^0.0.3",
-    "vite-tsconfig-paths": "^3.3.14"
+    "vite-tsconfig-paths": "^3.3.14",
+    "vitest": "^0.22.1"
   }
 }

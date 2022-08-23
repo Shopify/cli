@@ -9,7 +9,7 @@ import {DefaultProviders} from 'tests/DefaultProviders';
 import en from './translations/en.json';
 import {QRCodeModal} from './QRCodeModal';
 
-jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
 const i18n = mockI18n(en);
 
@@ -19,7 +19,7 @@ describe('QRCodeModal', () => {
     const store = 'example.com';
     const extension = mockExtension();
     const container = render(
-      <QRCodeModal onClose={jest.fn()} open />,
+      <QRCodeModal onClose={vi.fn()} open />,
       withProviders(DefaultProviders, ToastProvider),
       {state: {app, store, extensions: [extension]}},
     );
@@ -32,7 +32,7 @@ describe('QRCodeModal', () => {
     const store = 'example.com';
     const extension = mockExtension();
     const container = render(
-      <QRCodeModal extension={extension} onClose={jest.fn()} open />,
+      <QRCodeModal extension={extension} onClose={vi.fn()} open />,
       withProviders(DefaultProviders, ToastProvider),
       {state: {app, store, extensions: [extension]}},
     );
@@ -51,7 +51,7 @@ describe('QRCodeModal', () => {
     );
 
     const container = render(
-      <QRCodeModal extension={extension} onClose={jest.fn()} open />,
+      <QRCodeModal extension={extension} onClose={vi.fn()} open />,
       withProviders(DefaultProviders, ToastProvider),
       {state: {store, extensions: [extension]}},
     );
@@ -66,7 +66,7 @@ describe('QRCodeModal', () => {
     const store = 'example.com';
     const extension = mockExtension({surface: 'pos'});
     const container = render(
-      <QRCodeModal extension={extension} onClose={jest.fn()} open />,
+      <QRCodeModal extension={extension} onClose={vi.fn()} open />,
       withProviders(DefaultProviders, ToastProvider),
       {state: {app, store, extensions: [extension]}},
     );
