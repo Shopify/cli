@@ -14,7 +14,7 @@
       },
       "build": {
         "executor": "nx:run-commands",
-        "dependsOn": ["clean"],
+        "dependsOn": ["clean", "^build"],
         "options": {
           "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
           "cwd": "packages/cli-main"
