@@ -10,15 +10,7 @@ Modularization also encourages clearly defined boundaries that leads to a better
 ## Modules (packages)
 
 It's important to understand the responsibility of each of the packages to ensure new code is placed in the right package,
-and that you can find the component you are looking for more easily. The image below shows an overview of the stack:
-
-<div style="textAlign: 'center'">
-  <img
-    src="assets/assets-stack.png"
-    alt="Example banner"
-    width="500"
-  />
-</div>
+and that you can find the component you are looking for more easily.
 
 <br/>
 
