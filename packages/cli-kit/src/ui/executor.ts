@@ -2,7 +2,7 @@ import {CustomInput} from './inquirer/input.js'
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
 import {CustomPassword} from './inquirer/password.js'
-import {Question} from '../ui.js'
+import {Question, QuestionChoiceType} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
 
@@ -72,8 +72,8 @@ function getAutompleteFilterType() {
   return process.env.SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
 }
 
-export function groupAndMapChoices(choices: {name: string; value: string; group?: {name?: string; order: number}}[]) {
-  const initialGroups: {name?: string; order: number; choices: {name: string; value: string}[]}[] = []
+export function groupAndMapChoices(choices: QuestionChoiceType[]) {
+  const initialGroups: {name?: string; order: number; choices: {name: string; value: string; order?: number}[]}[] = []
 
   // Switched from choices with group information to groups with a list of choices
   const groups = choices.reduce((finalChoices, choice) => {
@@ -97,7 +97,7 @@ export function groupAndMapChoices(choices: {name: string; value: string; group?
       finalChoices.push({type: 'separator', line: ''})
       finalChoices.push({type: 'separator', line: group.name})
     }
-    finalChoices.push(...group.choices.sort((c1, c2) => c1.name.localeCompare(c2.name)))
+    finalChoices.push(...group.choices)
     return finalChoices
   })
 }

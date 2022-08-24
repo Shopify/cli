@@ -61,23 +61,25 @@ const scaffoldExtensionPrompt = async (
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: relevantExtensionTypes.map((type) => {
-        const choiceWithoutGroup = {
-          name: getExtensionOutputConfig(type).humanKey,
-          value: type,
-        }
-        const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
-        if (group) {
-          return {
-            ...choiceWithoutGroup,
-            group: {
-              name: group.name,
-              order: extensionTypesGroups.indexOf(group),
-            },
+      choices: relevantExtensionTypes
+        .map((type) => {
+          const choiceWithoutGroup = {
+            name: getExtensionOutputConfig(type).humanKey,
+            value: type,
           }
-        }
-        return choiceWithoutGroup
-      }),
+          const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
+          if (group) {
+            return {
+              ...choiceWithoutGroup,
+              group: {
+                name: group.name,
+                order: extensionTypesGroups.indexOf(group),
+              },
+            }
+          }
+          return choiceWithoutGroup
+        })
+        .sort((c1, c2) => c1.name.localeCompare(c2.name)),
     })
   }
   if (!options.name) {
