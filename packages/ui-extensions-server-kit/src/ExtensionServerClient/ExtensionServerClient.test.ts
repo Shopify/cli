@@ -39,6 +39,7 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
+    // eslint-disable-next-line jest/max-nested-describe
     describe('API client', () => {
       it('is initialized with the given URL', () => {
         const url = 'ws://initial.socket.com'

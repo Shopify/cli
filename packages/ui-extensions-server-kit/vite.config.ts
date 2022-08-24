@@ -40,6 +40,11 @@ export default defineConfig({
       inline: ['@shopify/react-testing'],
     },
   },
+  resolve: {
+    alias: {
+      '@shopify/ui-extensions-test-utils': path.resolve(__dirname, '../ui-extensions-test-utils/src'),
+    },
+  },
   plugins: [
     reactRefresh(),
     createEntryFiles({
