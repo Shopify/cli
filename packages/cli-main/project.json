@@ -3,5 +3,50 @@
     "sourceRoot": "packages/cli-main/src",
     "projectType": "library",
     "implicitDependencies": ["app", "theme", "cli-hydrogen"],
-    "tags": ["scope:cli"]
+    "tags": ["scope:cli"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run rimraf dist/",
+          "cwd": "packages/cli-main"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["clean"],
+        "options": {
+          "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
+          "cwd": "packages/cli-main"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint \"src/**/*.ts\"",
+          "cwd": "packages/cli-main"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/cli-main"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "./node_modules/.bin/vitest run",
+          "cwd": "packages/cli-main"
+        }
+      },
+      "tsc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc --noEmit",
+          "cwd": "packages/cli-main"
+        }
+      }
+    }
 }

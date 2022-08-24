@@ -22,7 +22,7 @@
     }
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md"
   },
   "eslintConfig": {
     "extends": [
