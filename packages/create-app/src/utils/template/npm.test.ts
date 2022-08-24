@@ -55,7 +55,7 @@ describe('updateCLIDependencies', () => {
       await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
       const dependencyOveride = mockPackageJSON.overrides[dependency]
-      const dependencyPath = path.join(directory, dependencyOveride.replace('file:', ''), 'package.json')
+      const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
@@ -71,7 +71,7 @@ describe('updateCLIDependencies', () => {
       await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
       const dependencyResolution = mockPackageJSON.resolutions[dependency]
-      const dependencyPath = path.join(directory, dependencyResolution.replace('file:', ''), 'package.json')
+      const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
@@ -85,7 +85,7 @@ describe('updateCLIDependencies', () => {
     await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
     const dependencyResolution = mockPackageJSON.dependencies[dependency]
-    const dependencyPath = path.join(directory, dependencyResolution.replace('file:', ''), 'package.json')
+    const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
     expect(dependencyJSON.name).toBe(dependency)
