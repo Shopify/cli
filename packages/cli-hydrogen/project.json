@@ -3,5 +3,50 @@
     "sourceRoot": "packages/cli-hydrogen/src",
     "projectType": "library",
     "implicitDependencies": [],
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run rimraf dist/",
+          "cwd": "packages/cli-hydrogen"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["clean"],
+        "options": {
+          "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
+          "cwd": "packages/cli-hydrogen"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint \"src/**/*.ts\"",
+          "cwd": "packages/cli-hydrogen"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/cli-hydrogen"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "./node_modules/.bin/vitest run",
+          "cwd": "packages/cli-hydrogen"
+        }
+      },
+      "tsc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc --noEmit",
+          "cwd": "packages/cli-hydrogen"
+        }
+      }
+    }
 }
