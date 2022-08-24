@@ -1,5 +1,5 @@
 import {build as viteBuild} from 'vite'
-import {ui, environment, error as kitError} from '@shopify/cli-kit'
+import {ui, environment, error as kitError, file, path, output} from '@shopify/cli-kit'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -32,6 +32,26 @@ async function build({directory, targets, base}: DevOptions) {
             })
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
+            const hasTailwindConfig =
+              (await file.read(path.join(directory, 'tailwind.config.js'))) ||
+              (await file.read(path.join(directory, 'tailwind.config.ts')))
+
+            if (
+              // eslint-disable-next-line no-restricted-syntax
+              error.message === "Cannot read properties of undefined (reading 'config')" &&
+              directory !== process.cwd() &&
+              hasTailwindConfig
+            ) {
+              const tailwindError = new kitError.Abort(
+                output.content`Running ${output.token.genericShellCommand(
+                  'shopify hydrogen build',
+                )} using a ${output.token.genericShellCommand(
+                  `--path`,
+                )} flag is not supported for projects using Tailwind.css.`,
+              )
+              throw tailwindError
+            }
+
             const abortError = new kitError.Abort(error.message)
             abortError.stack = error.stack
             throw abortError
