@@ -2,6 +2,8 @@ import {Fatal} from '../error.js'
 
 export type Result<T, TError = Error> = {ok: true; value: T} | {ok: false; error: TError}
 
+export type ResultAsync<T, TError = Error> = Promise<Result<T, TError>>
+
 export const ok = <T, TError = Error>(value: T): Result<T, TError> => {
   return {ok: true, value}
 }
