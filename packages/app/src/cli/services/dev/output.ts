@@ -32,10 +32,11 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 }
 
 export function outputAppURL(storeFqdn: string, url: string) {
+  const heading = output.token.heading('Shareable app URL')
   const appURL = buildAppURL(storeFqdn, url)
-  const heading = output.token.heading('App URL')
-  const message = `Once everything's built, your app's shareable link will be:\n${appURL}`
-  output.info(output.content`\n\n${heading}\n${message}\n`)
+  const formattedAppURL = output.token.link(appURL, appURL)
+  const notes = '' // one note per line, start notes with \n
+  output.info(output.content`\n\n${heading}\n\n  ${formattedAppURL}\n${notes}`)
 }
 
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
