@@ -54,7 +54,7 @@ export async function updateAppIdentifiers(
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
-      updatedVariables[envVariable] = identifiers.extensions[identifier]
+      updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
 
@@ -90,7 +90,7 @@ export function getAppIdentifiers(
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
-      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]
+      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
   }
   app.extensions.ui.forEach(processExtension)

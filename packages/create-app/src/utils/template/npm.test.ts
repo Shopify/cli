@@ -54,7 +54,7 @@ describe('updateCLIDependencies', () => {
 
       await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-      const dependencyOveride = mockPackageJSON.overrides[dependency]
+      const dependencyOveride = mockPackageJSON.overrides[dependency]!
       const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -70,7 +70,7 @@ describe('updateCLIDependencies', () => {
 
       await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-      const dependencyResolution = mockPackageJSON.resolutions[dependency]
+      const dependencyResolution = mockPackageJSON.resolutions[dependency]!
       const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -84,7 +84,7 @@ describe('updateCLIDependencies', () => {
 
     await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-    const dependencyResolution = mockPackageJSON.dependencies[dependency]
+    const dependencyResolution = mockPackageJSON.dependencies[dependency]!
     const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -195,7 +195,7 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{title: ''}, {title: ''}, {title: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       expect(taskStates).toContainEqual({title: `Installed dependencies in /`})
       expect(taskStates).toContainEqual({title: `Installed dependencies in /web/`})
@@ -209,12 +209,12 @@ describe('getDeepInstallNPMTasks', () => {
       const taskState = {output: ''} as ui.ListrTaskWrapper<any, any>
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir, didInstallEverything})
 
-      await tasks[0].task(null, taskState)
-      await tasks[1].task(null, taskState)
+      await tasks[0]!.task(null, taskState)
+      await tasks[1]!.task(null, taskState)
 
       expect(didInstallEverything).not.toHaveBeenCalled()
 
-      await tasks[2].task(null, taskState)
+      await tasks[2]!.task(null, taskState)
 
       expect(didInstallEverything).toHaveBeenCalled()
     })
@@ -225,7 +225,7 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{output: ''}, {output: ''}, {output: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       const install = vi.mocked(installNodeModules)
 
@@ -246,7 +246,7 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{output: ''}, {output: ''}, {output: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       const install = vi.mocked(installNodeModules)
 

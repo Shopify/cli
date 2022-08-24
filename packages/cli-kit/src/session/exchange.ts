@@ -95,7 +95,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
 export async function exchangeCustomPartnerToken(token: string): Promise<ApplicationToken> {
   const appId = applicationId('partners')
   const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
-  return newToken[appId]
+  return newToken[appId]!
 }
 
 async function requestAppToken(

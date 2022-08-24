@@ -82,7 +82,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
     if (index === -1) {
       apps.push(options)
     } else {
-      const app: CachedAppInfo = apps[index]
+      const app: CachedAppInfo = apps[index]!
       apps[index] = {
         directory: options.directory,
         appId: options.appId ?? app.appId,

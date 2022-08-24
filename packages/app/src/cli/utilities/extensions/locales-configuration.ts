@@ -70,7 +70,7 @@ function findDefaultLocale(filePaths: string[]) {
 function getAllLocales(localesPath: string[]) {
   const all: {[key: string]: string} = {}
   for (const localePath of localesPath) {
-    const localeCode = path.basename(localePath).split('.')[0]
+    const localeCode = path.basename(localePath).split('.')[0]!
     const locale = fs.readFileSync(localePath, 'base64')
     all[localeCode] = locale
   }

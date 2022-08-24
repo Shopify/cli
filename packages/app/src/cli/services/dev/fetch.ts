@@ -89,7 +89,7 @@ export async function fetchOrgFromId(id: string, token: string): Promise<Organiz
 export async function fetchAllStores(orgId: string, token: string): Promise<OrganizationStore[]> {
   const query = api.graphql.AllStoresByOrganizationQuery
   const result: api.graphql.AllStoresByOrganizationSchema = await api.partners.request(query, token, {id: orgId})
-  return result.organizations.nodes[0].stores.nodes
+  return result.organizations.nodes[0]!.stores.nodes
 }
 
 interface FetchStoreByDomainOutput {

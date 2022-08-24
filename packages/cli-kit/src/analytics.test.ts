@@ -101,8 +101,8 @@ describe('event tracking', () => {
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -139,8 +139,8 @@ describe('event tracking', () => {
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
