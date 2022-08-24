@@ -76,6 +76,7 @@
       "@shopify/app",
       "@shopify/theme",
       "@shopify/cli-hydrogen",
+      "@shopify/cli-polaris",
       "@oclif/plugin-help",
       "@shopify/plugin-ngrok"
     ],
@@ -90,6 +91,9 @@
       },
       "app": {
         "description": "Build Shopify apps"
+      },
+      "polaris": {
+        "description": "Polaris toolkit for Shopify apps"
       },
       "auth": {
         "description": "Auth operations"

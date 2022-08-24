@@ -1,0 +1,62 @@
+{
+    "root": "packages/cli-polaris",
+    "sourceRoot": "packages/cli-polaris/src",
+    "projectType": "library",
+    "implicitDependencies": [],
+    "tags": ["scope:feature"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn rimraf dist/",
+          "cwd": "packages/polaris"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "outputs": ["dist"],
+        "inputs": ["{projectRoot}/src"],
+        "options": {
+          "command": "yarn tsc -b ./tsconfig.build.json",
+          "cwd": "packages/polaris"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\"",
+          "cwd": "packages/polaris"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/polaris"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest run",
+          "cwd": "packages/polaris"
+        }
+      },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/polaris"
+        }
+      },
+      "type-check": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn tsc --noEmit",
+          "cwd": "packages/polaris"
+        }
+      }
+    }
+}

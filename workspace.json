@@ -5,6 +5,7 @@
     "cli-kit": "packages/cli-kit",
     "app": "packages/app",
     "cli-hydrogen": "packages/cli-hydrogen",
+    "cli-polaris": "packages/cli-polaris",
     "theme": "packages/theme",
     "features": "packages/features",
     "create-app": "packages/create-app",
