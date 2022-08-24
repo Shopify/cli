@@ -162,23 +162,25 @@ const buildChoices = async (): Promise<
     value: string
   }[]
 > => {
-  return extensions.types.map((type) => {
-    const choiceWithoutGroup = {
-      name: getExtensionOutputConfig(type).humanKey,
-      value: type,
-    }
-    const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
-    if (group) {
-      return {
-        ...choiceWithoutGroup,
-        group: {
-          name: group.name,
-          order: extensionTypesGroups.indexOf(group),
-        },
+  return extensions.types
+    .map((type) => {
+      const choiceWithoutGroup = {
+        name: getExtensionOutputConfig(type).humanKey,
+        value: type,
       }
-    }
-    return choiceWithoutGroup
-  })
+      const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
+      if (group) {
+        return {
+          ...choiceWithoutGroup,
+          group: {
+            name: group.name,
+            order: extensionTypesGroups.indexOf(group),
+          },
+        }
+      }
+      return choiceWithoutGroup
+    })
+    .sort((c1, c2) => c1.name.localeCompare(c2.name))
 }
 
 function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
