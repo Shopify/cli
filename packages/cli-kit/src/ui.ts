@@ -45,7 +45,7 @@ export interface Question<TName extends string = string> {
   default?: string
   result?: (value: string) => string | boolean
   type: 'input' | 'select' | 'autocomplete' | 'password'
-  choices?: {name: string; value: string}[]
+  choices?: {name: string; value: string; group?: {name: string; order: number}}[]
 }
 
 const started = (content: Message, logger: Logger) => {

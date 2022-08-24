@@ -1,5 +1,5 @@
-import scaffoldExtensionPrompt, {extensionTypeChoiceSorterByGroupAndName, extensionFlavorQuestion} from './extension.js'
-import {extensions, getExtensionOutputConfig} from '../../constants.js'
+import scaffoldExtensionPrompt, {extensionFlavorQuestion} from './extension.js'
+import {extensions, extensionTypesGroups, getExtensionOutputConfig} from '../../constants.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
 
@@ -82,7 +82,7 @@ describe('extension prompt', async () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: (await buildChoices()).filter((choice) => choice.name !== 'theme app extension'),
+        choices: (await buildChoices()).filter((choice) => choice.name !== 'Theme app extension'),
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -162,10 +162,25 @@ const buildChoices = async (): Promise<
     value: string
   }[]
 > => {
-  return extensions.types
-    .map((type) => ({
+  return extensions.types.map((type) => {
+    const choiceWithoutGroup = {
       name: getExtensionOutputConfig(type).humanKey,
       value: type,
-    }))
-    .sort(extensionTypeChoiceSorterByGroupAndName)
+    }
+    const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
+    if (group) {
+      return {
+        ...choiceWithoutGroup,
+        group: {
+          name: group.name,
+          order: extensionTypesGroups.indexOf(group),
+        },
+      }
+    }
+    return choiceWithoutGroup
+  })
+}
+
+function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
+  return coll.includes(el as TNarrow)
 }

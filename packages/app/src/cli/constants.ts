@@ -187,18 +187,29 @@ export const externalExtensionTypes = {
 
 export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
 
+// The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
+export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[] = [
+  {name: 'Online store', extensions: ['theme']},
+  {
+    name: 'Discounts and checkout',
+    extensions: ['product_discounts', 'order_discounts', 'shipping_discounts', 'checkout_ui_extension'],
+  },
+  {name: 'Analytics', extensions: ['web_pixel_extension']},
+  {name: 'Merchant admin', extensions: ['product_subscription']},
+]
+
 export const externalExtensionTypeNames = {
   types: [
-    'web pixel',
+    'Web pixel',
     'post-purchase UI',
-    'theme app extension',
-    'checkout UI',
+    'Theme app extension',
+    'Checkout UI',
     'POS UI',
     'customer accounts UI',
-    'subscription UI',
-    'product discount',
-    'order discount',
-    'shipping discount',
+    'Subscription UI',
+    'Function - Product discount',
+    'Function - Order discount',
+    'Function - Shipping discount',
     'payment customization',
     'delivery option presenter',
     'customer accounts UI',
@@ -215,25 +226,31 @@ export interface ExtensionOutputConfig {
 export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
   switch (extensionType) {
     case 'web_pixel_extension':
-      return buildExtensionOutputConfig('web pixel')
+      return buildExtensionOutputConfig('Web pixel')
     case 'checkout_post_purchase':
       return buildExtensionOutputConfig('post-purchase UI', 'https://shopify.dev/apps/checkout/post-purchase')
     case 'theme':
-      return buildExtensionOutputConfig('theme app extension')
+      return buildExtensionOutputConfig('Theme app extension')
     case 'checkout_ui_extension':
-      return buildExtensionOutputConfig('checkout UI')
+      return buildExtensionOutputConfig('Checkout UI')
     case 'customer_accounts_ui_extension':
       return buildExtensionOutputConfig('customer accounts UI')
     case 'product_subscription':
-      return buildExtensionOutputConfig('subscription UI')
+      return buildExtensionOutputConfig('Subscription UI')
     case 'pos_ui_extension':
       return buildExtensionOutputConfig('POS UI')
     case 'product_discounts':
-      return buildExtensionOutputConfig('product discount', 'https://shopify.dev/apps/subscriptions/discounts')
+      return buildExtensionOutputConfig(
+        'Function - Product discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+      )
     case 'order_discounts':
-      return buildExtensionOutputConfig('order discount', 'https://shopify.dev/apps/subscriptions/discounts')
+      return buildExtensionOutputConfig('Function - Order discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'shipping_discounts':
-      return buildExtensionOutputConfig('shipping discount', 'https://shopify.dev/apps/subscriptions/discounts')
+      return buildExtensionOutputConfig(
+        'Function - Shipping discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+      )
     case 'payment_customization':
       return buildExtensionOutputConfig('payment customization')
     case 'shipping_rate_presenter':

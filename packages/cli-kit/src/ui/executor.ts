@@ -36,6 +36,7 @@ export function mapper(question: Question): unknown {
         ...question,
         type: 'custom-select',
         source: getAutompleteFilterType(),
+        choices: question.choices ? groupAndMapChoices(question.choices) : undefined,
       }
     case 'autocomplete':
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
@@ -63,10 +64,43 @@ function fuzzyFilter(answers: {name: string; value: string}[], input = '') {
 
 function containsFilter(answers: {name: string; value: string}[], input = '') {
   return new Promise((resolve) => {
-    resolve(Object.values(answers).filter((answer) => answer.name.includes(input)))
+    resolve(Object.values(answers).filter((answer) => !answer.name || answer.name.includes(input)))
   })
 }
 
 function getAutompleteFilterType() {
   return process.env.SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
+}
+
+export function groupAndMapChoices(choices: {name: string; value: string; group?: {name?: string; order: number}}[]) {
+  const initialGroups: {name?: string; order: number; choices: {name: string; value: string}[]}[] = []
+
+  // Switched from choices with group information to groups with a list of choices
+  const groups = choices.reduce((finalChoices, choice) => {
+    const currentGroup = choice.group ?? {name: 'Other', order: Number.MAX_SAFE_INTEGER}
+    const existingGroup = finalChoices.find((group) => group.name === currentGroup.name)
+    if (existingGroup) {
+      existingGroup.choices.push(choice)
+    } else {
+      finalChoices.push({...currentGroup, choices: [choice]})
+    }
+    return finalChoices
+  }, initialGroups)
+
+  const sortedGroups = groups.sort((g1, g2) => g1.order - g2.order)
+  let grouped = true
+  if (sortedGroups.length === 1 && sortedGroups[0].order === Number.MAX_SAFE_INTEGER) {
+    grouped = false
+  }
+
+  // Mapped the group with a list of extensions to a list of inquirer choices including group separators
+  return sortedGroups.flatMap((group) => {
+    const finalChoices: ({type: string; line: string} | {name: string; value: string})[] = []
+    if (grouped && group.name) {
+      finalChoices.push({type: 'separator', line: ''})
+      finalChoices.push({type: 'separator', line: group.name})
+    }
+    finalChoices.push(...group.choices.sort((c1, c2) => c1.name.localeCompare(c2.name)))
+    return finalChoices
+  })
 }
