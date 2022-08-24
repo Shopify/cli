@@ -14,7 +14,7 @@ let fileExtension = ""
 if (process.env.GOOS === "windows" || platform() === "win32") {
   fileExtension = ".exe"
 } else {
-  await execa("go", ["build","-gcflags='all=-N -l'" ,"-o", "shopify-extensions-debug"], {cwd: rootDirectory, stdio: 'inherit'}).catch((_) => {
+  await execa("go", ["build","-gcflags=all=-N -l" ,"-o", "shopify-extensions-debug"], {cwd: rootDirectory, stdio: 'inherit'}).catch((_) => {
     process.exit(1)
   })
 
