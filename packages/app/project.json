@@ -6,11 +6,48 @@
     "implicitDependencies": ["ui-extensions-go-cli"],
     "tags": ["scope:feature"],
     "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run rimraf dist/",
+          "cwd": "packages/app"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["clean"],
+        "options": {
+          "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
+          "cwd": "packages/app"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint \"src/**/*.ts\"",
+          "cwd": "packages/app"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/app"
+        }
+      },
       "test": {
-        "executor": "nx:run-script",
+        "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "script": "test:nx"
+          "command": "./node_modules/.bin/vitest run",
+          "cwd": "packages/app"
+        }
+      },
+      "tsc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc --noEmit",
+          "cwd": "packages/app"
         }
       }
     }
