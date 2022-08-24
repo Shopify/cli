@@ -69,7 +69,7 @@
     "graphql-tag": "^2.12.4",
     "liquidjs": "^9.36.0",
     "node-fetch": "^3.2.4",
-    "nx": "^14.0.5",
+    "nx": "^14.5.10",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "patch-package": "^6.4.7",
     "pathe": "0.2.0",
