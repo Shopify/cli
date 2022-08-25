@@ -137,7 +137,7 @@ function getHumanKey(type: ExtensionTypes) {
 
 function partnersURL(organizationId: string, appId: string): string {
   return output.content`${output.token.link(
-    `Shopify Partners dashboard`,
+    `Partners Dashboard`,
     `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }
