@@ -8,13 +8,12 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn run rimraf dist/",
+          "command": "../../node_modules/.bin/rimraf dist/",
           "cwd": "packages/cli-hydrogen"
         }
       },
       "build": {
         "executor": "nx:run-commands",
-        "dependsOn": ["clean"],
         "options": {
           "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
           "cwd": "packages/cli-hydrogen"
@@ -23,14 +22,14 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn run eslint \"src/**/*.ts\"",
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
           "cwd": "packages/cli-hydrogen"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
           "cwd": "packages/cli-hydrogen"
         }
       },

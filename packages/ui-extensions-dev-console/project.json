@@ -6,12 +6,48 @@
     "implicitDependencies": ["ui-extensions-server-kit","ui-extensions-test-utils"],
     "tags": ["scope:feature", "scope:ui-extensions"],
     "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
       "build": {
         "outputs": ["../ui-extensions-go-cli/api/dev-console"],
-        "executor": "nx:run-script",
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc --project tsconfig.build.json --noEmit && node_modules/.bin/vite build",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "start": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node_modules/.bin/vite start",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "script": "build:nx"
+          "command": "node_modules/.bin/vitest run",
+          "cwd": "packages/ui-extensions-dev-console"
         }
       }
     }

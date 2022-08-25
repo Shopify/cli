@@ -3,5 +3,35 @@
     "root": "packages/ui-extensions-test-utils",
     "sourceRoot": "packages/ui-extensions-test-utils/src",
     "projectType": "library",
-    "tags": ["scope:feature", "scope:ui-extensions"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/rimraf dist/",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\" --fix",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      }
+    }
 }

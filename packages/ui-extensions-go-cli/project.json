@@ -6,25 +6,48 @@
     "implicitDependencies": ["ui-extensions-cli"],
     "tags": ["scope:feature", "scope:ui-extensions"],
     "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/rimraf api/dev-console/",
+          "cwd": "packages/ui-extensions-go-cli"
+        }
+      },
       "build": {
-        "executor": "nx:run-script",
+        "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "script": "build:nx"
+          "command": "node bin/build.js",
+          "cwd": "packages/ui-extensions-go-cli"
         }
       },
       "test": {
-        "executor": "nx:run-script",
-        "dependsOn": ["^build"],
+        "executor": "nx:run-commands",
         "options": {
-          "script": "test:nx"
+          "command": "node bin/test.js",
+          "cwd": "packages/ui-extensions-go-cli"
         }
       },
       "package": {
-        "executor": "nx:run-script",
+        "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "script": "package:nx"
+          "command": "node bin/package.js",
+          "cwd": "packages/ui-extensions-go-cli"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "gofmt -s .",
+          "cwd": "packages/ui-extensions-go-cli"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "gofmt -w -s .",
+          "cwd": "packages/ui-extensions-go-cli"
         }
       }
     }

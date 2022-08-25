@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn run rimraf dist/",
+          "command": "../../node_modules/.bin/rimraf dist/",
           "cwd": "packages/cli-main"
         }
       },
@@ -22,14 +22,14 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn run eslint \"src/**/*.ts\"",
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
           "cwd": "packages/cli-main"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
           "cwd": "packages/cli-main"
         }
       },

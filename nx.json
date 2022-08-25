@@ -19,7 +19,7 @@
       "dependsOn": ["^clean"]
     },
     "build": {
-      "dependsOn": ["clean", "^build"]
+      "dependsOn": ["^build"]
     },
     "lint": {
       "dependsOn": ["build"]

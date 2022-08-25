@@ -3,10 +3,10 @@
   "version": "0.4.0",
   "private": true,
   "scripts": {
-    "lint": "yarn nx lint",
-    "lint:fix": "yarn nx lint:fix",
-    "test": "yarn nx test",
-    "tsc": "yarn nx tsc"
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx test",
+    "tsc": "nx tsc"
   },
   "devDependencies": {
     "fs-extra": "^10.0.0",

@@ -3,14 +3,13 @@
   "name": "@shopify/ui-extensions-dev-console-app",
   "version": "3.8.0",
   "scripts": {
-    "build": "yarn clean && yarn --cwd ../.. nx run ui-extensions-dev-console:build",
-    "build:nx": "tsc --project tsconfig.build.json --noEmit && vite build",
-    "clean": "rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
     "serve": "vite preview",
-    "start": "vite",
-    "test": "vitest"
+    "start": "nx start",
+    "test": "nx test"
   },
   "dependencies": {
     "@shopify/polaris": "^6.6.0",

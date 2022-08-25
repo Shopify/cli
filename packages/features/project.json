@@ -17,14 +17,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn run eslint \"**/*.ts\"",
+        "command": "../../node_modules/.bin/eslint \"**/*.ts\"",
         "cwd": "packages/features"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn run eslint '**/*.ts' --fix",
+        "command": "../../node_modules/.bin/eslint '**/*.ts' --fix",
         "cwd": "packages/features"
       }
     },

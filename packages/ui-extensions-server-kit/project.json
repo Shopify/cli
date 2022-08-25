@@ -4,5 +4,59 @@
     "sourceRoot": "packages/ui-extensions-server-kit/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-test-utils"],
-    "tags": ["scope:feature", "scope:ui-extensions"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/rimraf dist/",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "build:code": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node_modules/.bin/vite build --config vite.config.ts",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "build:types": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "../../node_modules/.bin/tsc --emitDeclarationOnly",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["build:code", "build:types"],
+        "options": {
+          "command": "cd .",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "node_modules/.bin/vitest run",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      }
+    }
 }

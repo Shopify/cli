@@ -4,5 +4,35 @@
     "sourceRoot": "packages/ui-extensions-cli/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-dev-console"],
-    "tags": ["scope:feature", "scope:ui-extensions"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/rimraf dist/",
+          "cwd": "packages/ui-extensions-cli"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-cli"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/ui-extensions-cli"
+        }
+      },
+      "tsc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc",
+          "cwd": "packages/ui-extensions-cli"
+        }
+      }
+    }
 }

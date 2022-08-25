@@ -123,7 +123,7 @@ jobs:
         run: yarn nx run features:test
 
   pr-platform-agnostic:
-    name: Building, linting, and type-checking with Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
