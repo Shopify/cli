@@ -96,7 +96,6 @@ describe('extensionServerReducer()', () => {
     expect(timestamp1).not.toStrictEqual(timestamp2)
   })
 
-  // eslint-disable-next-line jest/max-nested-describe
   describe('focus', () => {
     it('focuses only one extension', () => {
       const extension1 = mockExtension()
