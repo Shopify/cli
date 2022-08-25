@@ -8,9 +8,10 @@ interface DevOptions {
   targets: {[key in Target]: boolean | string}
   base?: string
   assetBaseURL?: string
+  returnTasks?: boolean
 }
 
-async function build({directory, targets, base, assetBaseURL}: DevOptions) {
+async function build({directory, targets, base, assetBaseURL, returnTasks}: DevOptions) {
   const commonConfig = {base, root: directory}
 
   const tasks: ui.ListrTask[] = Object.entries(targets)
@@ -46,6 +47,8 @@ async function build({directory, targets, base, assetBaseURL}: DevOptions) {
         },
       }
     })
+
+  if (returnTasks) return tasks
 
   const list = ui.newListr(tasks, {rendererSilent: environment.local.isUnitTest()})
 

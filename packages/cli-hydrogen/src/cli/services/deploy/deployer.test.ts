@@ -1,29 +1,107 @@
-import {healthCheck, ping} from './deployer.js'
-import {retryOnError} from './error.js'
+import {createDeployment, healthCheck, uploadDeployment} from './deployer.js'
+import {ReqDeployConfig} from './types.js'
 import {beforeEach, describe, it, expect, vi} from 'vitest'
-import {http, output} from '@shopify/cli-kit'
+import {http, api} from '@shopify/cli-kit'
+import {zip} from '@shopify/cli-kit/node/archiver'
+import {createReadStream} from 'node:fs'
+
+const defaultConfig: ReqDeployConfig = {
+  deploymentToken: '123',
+  dmsAddress: 'unit.test',
+  healthCheck: false,
+  path: '/unit/test',
+  commitMessage: 'commitMessage',
+  commitAuthor: 'commitAuthor',
+  commitSha: 'commitSha',
+  timestamp: 'timestamp',
+  commitRef: 'commitRef',
+}
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
-  vi.mock('./error.js', async () => {
-    const module: any = await vi.importActual('./error.js')
-    return {
-      ...module,
-      retryOnError: vi.fn(),
-    }
+  vi.mock('@shopify/cli-kit/node/archiver')
+  vi.mock('node:fs')
+})
+
+describe('createDeploymentStep()', () => {
+  it('makes https request', async () => {
+    const headers = {value: 'key'}
+    const mockedRequest = vi.fn().mockResolvedValue({createDeployment: 'mock'})
+    const mockedGraphqlClient = vi.fn().mockResolvedValue({request: mockedRequest})
+    vi.mocked(api.buildHeaders).mockResolvedValue(headers)
+    vi.mocked<any>(http.graphqlClient).mockImplementation(mockedGraphqlClient)
+
+    await createDeployment(defaultConfig)
+
+    expect(mockedGraphqlClient).toHaveBeenCalledOnce()
+    expect(mockedGraphqlClient).toHaveBeenCalledWith({
+      headers,
+      service: 'dms',
+      url: `https://${defaultConfig.dmsAddress}/api/graphql/deploy/v1`,
+    })
+    expect(mockedRequest).toHaveBeenCalledOnce()
+    expect(mockedRequest.mock.calls[0]?.[1]).toStrictEqual({
+      input: {
+        branch: 'commitRef',
+        commitAuthor: 'commitAuthor',
+        commitHash: 'commitSha',
+        commitMessage: 'commitMessage',
+        commitTimestamp: 'timestamp',
+      },
+    })
   })
 })
 
-describe('ping()', () => {
+describe('uploadDeploymentStep()', async () => {
+  it('makes https request', async () => {
+    const deploymentId = '123'
+    vi.mocked(createReadStream)
+    const mockedZip = vi.fn()
+    vi.mocked(zip).mockImplementation(mockedZip)
+    const mockedFormDataAppend = vi.fn()
+    const formData = {append: mockedFormDataAppend, getHeaders: vi.fn()}
+    vi.mocked<any>(http.formData).mockReturnValue(formData)
+    const headers = {value: 'key', 'Content-Type': 'key'}
+    vi.mocked(api.buildHeaders).mockResolvedValue(headers)
+    const dmsResponse = {
+      data: {
+        uploadDeployment: {
+          deployment: {
+            previewURL: 'asd',
+          },
+        },
+      },
+    }
+    const mockedShopifyFetch = vi.fn().mockResolvedValue({json: vi.fn().mockResolvedValue(dmsResponse)})
+    vi.mocked<any>(http.shopifyFetch).mockImplementation(mockedShopifyFetch)
+
+    await uploadDeployment(defaultConfig, deploymentId)
+
+    expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
+    expect(mockedZip).toHaveBeenCalledWith(`${defaultConfig.path}/dist`, `${defaultConfig.path}/dist/dist.zip`)
+    expect(headers).toStrictEqual({value: 'key'})
+    expect(mockedShopifyFetch).toHaveBeenCalledWith(
+      'dms',
+      `https://${defaultConfig.dmsAddress}/api/graphql/deploy/v1`,
+      {
+        method: 'POST',
+        body: formData,
+        headers,
+      },
+    )
+  })
+})
+
+describe('healthCheck()', () => {
   it('succeeds on https status 200', async () => {
     const pingUrl = 'https://unit.test'
     const fetch = vi.fn().mockResolvedValueOnce({status: 200})
     vi.mocked(http.fetch).mockImplementation(fetch)
 
-    const result = await ping(pingUrl)
+    const result = await healthCheck(pingUrl)
 
     expect(result).toBeUndefined()
-    expect(fetch).toHaveBeenCalledWith(pingUrl, {method: 'GET'})
+    expect(fetch).toHaveBeenCalledWith(`${pingUrl}/__health`, {method: 'GET'})
   })
 
   it('throws on any other https status', async () => {
@@ -31,36 +109,7 @@ describe('ping()', () => {
     const fetch = vi.fn().mockResolvedValueOnce({status: 404})
     vi.mocked(http.fetch).mockImplementation(fetch)
 
-    await expect(ping(pingUrl)).rejects.toThrowError()
-    expect(fetch).toHaveBeenCalledWith(pingUrl, {method: 'GET'})
-  })
-})
-
-describe('healthCheck()', () => {
-  it("calls retryOnError, succeeds if doesn't throw", async () => {
-    const mockedRetryOnError = vi.fn().mockResolvedValue(true)
-    vi.mocked(retryOnError).mockImplementation(mockedRetryOnError)
-    const mockedOutput = vi.fn()
-    vi.mocked(output.success).mockImplementation(mockedOutput)
-
-    const result = await healthCheck('')
-
-    expect(result).toBeUndefined()
-    expect(mockedRetryOnError).toHaveBeenCalledOnce()
-    expect(mockedOutput).toHaveBeenCalledOnce()
-  })
-  it('calls retryOnError, fails if error thrown', async () => {
-    const mockedRetryOnError = vi.fn().mockImplementation(async () => {
-      throw new Error()
-    })
-    vi.mocked(retryOnError).mockImplementation(mockedRetryOnError)
-    const mockedOutput = vi.fn()
-    vi.mocked(output.success).mockImplementation(mockedOutput)
-
-    const result = await healthCheck('')
-
-    expect(result).toBeUndefined()
-    expect(mockedRetryOnError).toHaveBeenCalledOnce()
-    expect(mockedOutput).not.toHaveBeenCalled()
+    await expect(healthCheck(pingUrl)).rejects.toThrowError()
+    expect(fetch).toHaveBeenCalledWith(`${pingUrl}/__health`, {method: 'GET'})
   })
 })

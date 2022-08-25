@@ -1,25 +1,20 @@
-import {ReqDeployConfig, DMSError, UploadDeploymentResponse} from './types.js'
+import {ReqDeployConfig, UploadDeploymentResponse} from './types.js'
 import {
   CreateDeploymentResponse,
   CreateDeploymentQuerySchema,
   CreateDeploymentQuery,
 } from './graphql/create_deployment.js'
-import {retryOnError, WebPageNotAvailable} from './error.js'
-import buildService from '../build.js'
-import {output, api, http} from '@shopify/cli-kit'
+import {WebPageNotAvailable} from './error.js'
+import {api, http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {createReadStream} from 'node:fs'
 
-export const createDeploymentStep = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
-  output.info('✨ Creating a deployment... ')
-
-  const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
+export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const headers = await api.buildHeaders(config.deploymentToken)
-  // need to create a seperate service for "dms" related calls instead of piggybacking on "shopify"
   const client = await http.graphqlClient({
     headers,
     service: 'dms',
-    url,
+    url: getDmsAddress(config.dmsAddress),
   })
 
   const variables = {
@@ -32,36 +27,11 @@ export const createDeploymentStep = async (config: ReqDeployConfig): Promise<Cre
     },
   }
 
-  // need to handle errors
   const response: CreateDeploymentQuerySchema = await client.request(CreateDeploymentQuery, variables)
   return response.createDeployment
 }
 
-export const runBuildCommandStep = async (config: ReqDeployConfig, assetBaseURL: string): Promise<DMSError | null> => {
-  output.info('🛠 Building the applicaton... ')
-
-  // need to measure duration of build
-  // make a temp build directory?
-  const targets = {
-    client: true,
-    worker: '@shopify/hydrogen/platforms/worker',
-    node: false,
-  }
-  const options = {
-    client: true,
-    target: 'worker',
-  }
-
-  // note: need to make sure this is being set correctly
-  await buildService({...options, directory: config.path, targets, assetBaseURL})
-
-  return null
-}
-
-export const uploadDeploymentStep = async (config: ReqDeployConfig, deploymentID: string): Promise<string> => {
-  output.info('🚀 Uploading deployment files... ')
-
-  const url = `https://${config.dmsAddress}/api/graphql/deploy/v1`
+export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: string): Promise<string> => {
   let headers = await api.buildHeaders(config.deploymentToken)
 
   // note: may need validation for invalid deploymentID? oxygenctl does it
@@ -81,40 +51,19 @@ export const uploadDeploymentStep = async (config: ReqDeployConfig, deploymentID
     ...formData.getHeaders(),
   }
 
-  const response = await http.shopifyFetch('dms', url, {
+  const response = await http.shopifyFetch('dms', getDmsAddress(config.dmsAddress), {
     method: 'POST',
     body: formData,
     headers,
   })
 
-  // note: handle error
-  // note: type this better
   const responseData = (await response.json()) as UploadDeploymentResponse
   return responseData.data.uploadDeployment.deployment.previewURL
 }
 
-export const healthCheck = async (url: string) => {
-  output.info('📡 Checking deployment... ')
-  const pingUrl = `${url}/__health`
-  const backoff = [5, 10, 15, 30, 60]
-
-  try {
-    await retryOnError(
-      () => ping(pingUrl),
-      backoff.length,
-      (iteration) => backoff[iteration],
-    )
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    output.info("🤕 The deployment was uploaded but can't be reached yet.")
-    return
-  }
-
-  output.success('✅ Deployed and healthy!')
-}
-
-export const ping = async (pingUrl: string) => {
-  const result = await http.fetch(pingUrl, {method: 'GET'})
+export const healthCheck = async (pingUrl: string) => {
+  const url = `${pingUrl}/__health`
+  const result = await http.fetch(url, {method: 'GET'})
   if (result.status !== 200) throw WebPageNotAvailable()
 }
 
@@ -124,4 +73,8 @@ const buildOperationsString = (deploymentID: string): string => {
       'mutation uploadDeployment($file: Upload!, $deploymentID: ID!) {uploadDeployment(file: $file, deploymentID: $deploymentID) {deployment {previewURL}}}',
     variables: {deploymentID, file: null},
   })
+}
+
+const getDmsAddress = (dmsHost: string): string => {
+  return `https://${dmsHost}/api/graphql/deploy/v1`
 }

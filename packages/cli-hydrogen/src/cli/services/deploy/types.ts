@@ -2,12 +2,12 @@ export interface DeployConfig {
   deploymentToken: string
   dmsAddress: string
   healthCheck: boolean
+  path: string
   commitMessage?: string
   commitAuthor?: string
   commitSha?: string
   commitRef?: string
   timestamp?: string
-  path?: string
 }
 export type ReqDeployConfig = Required<DeployConfig>
 
