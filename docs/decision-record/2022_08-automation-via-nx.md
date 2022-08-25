@@ -11,4 +11,4 @@
 }
 ```
 
-This implicitness is undesirable for Nx because some of its capabilities rely on the graph information being very explicit. Because of it, we decided to move away from Nx's default mode to codify actions explicitly in projects' `project.json` files. Developers will run tasks using `yarn nx` as opposed to `yarn run` and Nx will ensure dependent tasks are executed in the right order and only if needed based on the file changes.
+This implicitness is undesirable for Nx because some of its capabilities rely on the graph information being very explicit. Because of it, we decided to move away from Nx's default mode to codify actions explicitly in projects' `project.json` files.
