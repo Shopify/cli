@@ -9,7 +9,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/rimraf api/dev-console/",
+          "command": "yarn rimraf api/dev-console/",
           "cwd": "packages/ui-extensions-go-cli"
         }
       },

@@ -9,28 +9,28 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/rimraf dist/",
+          "command": "yarn rimraf dist/",
           "cwd": "packages/ui-extensions-cli"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "command": "yarn eslint \"src/**/*.ts\"",
           "cwd": "packages/ui-extensions-cli"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "command": "yarn eslint 'src/**/*.ts' --fix",
           "cwd": "packages/ui-extensions-cli"
         }
       },
       "tsc": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/tsc",
+          "command": "yarn tsc",
           "cwd": "packages/ui-extensions-cli"
         }
       }

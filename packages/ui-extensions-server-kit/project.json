@@ -9,14 +9,14 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/rimraf dist/",
+          "command": "yarn rimraf dist/",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
       "build:code": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "node_modules/.bin/vite build --config vite.config.ts",
+          "command": "yarn vite build --config vite.config.ts",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
@@ -24,7 +24,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "../../node_modules/.bin/tsc --emitDeclarationOnly",
+          "command": "yarn tsc --emitDeclarationOnly",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
@@ -39,14 +39,14 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "command": "yarn eslint \"src/**/*.ts\"",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "command": "yarn eslint 'src/**/*.ts' --fix",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
@@ -54,7 +54,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "node_modules/.bin/vitest run",
+          "command": "yarn vitest run",
           "cwd": "packages/ui-extensions-server-kit"
         }
       }

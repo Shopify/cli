@@ -9,7 +9,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
+          "command": "yarn rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
@@ -17,28 +17,28 @@
         "outputs": ["../ui-extensions-go-cli/api/dev-console"],
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/tsc --project tsconfig.build.json --noEmit && node_modules/.bin/vite build",
+          "command": "yarn tsc --project tsconfig.build.json --noEmit && node_modules/.bin/vite build",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "command": "yarn eslint \"src/**/*.ts\"",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "command": "yarn eslint 'src/**/*.ts' --fix",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "start": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "node_modules/.bin/vite start",
+          "command": "yarn vite start",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
@@ -46,7 +46,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "node_modules/.bin/vitest run",
+          "command": "yarn vitest run",
           "cwd": "packages/ui-extensions-dev-console"
         }
       }

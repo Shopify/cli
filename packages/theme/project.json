@@ -8,28 +8,28 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/rimraf dist/",
+          "command": "yarn rimraf dist/",
           "cwd": "packages/theme"
         }
       },
       "build": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
+          "command": "yarn tsc -b ./tsconfig.build.json",
           "cwd": "packages/theme"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint \"src/**/*.ts\"",
+          "command": "yarn eslint \"src/**/*.ts\"",
           "cwd": "packages/theme"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/eslint 'src/**/*.ts' --fix",
+          "command": "yarn eslint 'src/**/*.ts' --fix",
           "cwd": "packages/theme"
         }
       },
@@ -37,14 +37,14 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "node_modules/.bin/vitest run",
+          "command": "yarn vitest run",
           "cwd": "packages/theme"
         }
       },
       "tsc": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "../../node_modules/.bin/tsc --noEmit",
+          "command": "yarn tsc --noEmit",
           "cwd": "packages/theme"
         }
       }
