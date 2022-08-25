@@ -3,5 +3,51 @@
     "root": "packages/theme",
     "sourceRoot": "packages/theme/src",
     "projectType": "library",
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run rimraf dist/",
+          "cwd": "packages/theme"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["clean"],
+        "options": {
+          "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
+          "cwd": "packages/theme"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint \"src/**/*.ts\"",
+          "cwd": "packages/theme"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/theme"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "node_modules/.bin/vitest run",
+          "cwd": "packages/theme"
+        }
+      },
+      "tsc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc --noEmit",
+          "cwd": "packages/theme"
+        }
+      }
+    }
 }
