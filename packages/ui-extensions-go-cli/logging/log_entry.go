@@ -4,84 +4,66 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-)
-
-type LogType string
-
-const (
-	Serve             LogType = "serve"
-	Api               LogType = "api"
-	Server            LogType = "server"
-	Build             LogType = "build"
-	Watch             LogType = "watch"
-	WatchLocalization LogType = "watchLocalization"
-	Create            LogType = "create"
-	Config            LogType = "config"
-	Validate          LogType = "validate"
-)
-
-type LogStatus string
-
-const (
-	Started   LogStatus = "start"
-	Progress  LogStatus = "progress"
-	Failed    LogStatus = "fail"
-	Completed LogStatus = "complete"
-)
-
-type LogLevel string
-
-const (
-	Info  LogLevel = "info"
-	Error LogLevel = "error"
+	"strings"
 )
 
 type LogEntry struct {
-	Context     string
-	Status      LogStatus
-	Level       LogLevel
-	ExtensionId string
-	Payload     interface{}
+	WorkflowStep string      `json:"workflowStep,omitempty"`
+	Status       LogStatus   `json:"status,omitempty"`
+	Level        LogLevel    `json:"level,omitempty"`
+	ExtensionID  string      `json:"extensionId,omitempty"`
+	Payload      interface{} `json:"payload,omitempty"`
 }
 
-func (l LogEntry) to_json() string {
+type LogEntryBuilder struct {
+	WorkflowStep string
+	Status       LogStatus
+}
+
+func Builder() LogEntryBuilder {
+	return LogEntryBuilder{WorkflowStep: ""}
+}
+
+func (l *LogEntry) WriteLog(outputStream *os.File) {
+	l.Level = Info
+	log.SetOutput(outputStream)
+	log.Println("#START_LOG_ENTRY#")
+	log.Println(l.toJson())
+	log.Println("#END_LOG_ENTRY#")
+}
+
+func (l *LogEntry) WriteErrorLog(outputStream *os.File) {
+	l.Level = Error
+	log.SetOutput(outputStream)
+	log.Println("#START_LOG_ENTRY#")
+	log.Println(l.toJson())
+	log.Println("#END_LOG_ENTRY#")
+}
+
+func (b *LogEntryBuilder) Build(extensionId string, message string) *LogEntry {
+	return &LogEntry{WorkflowStep: b.WorkflowStep, Status: b.Status, ExtensionID: extensionId, Payload: b.Status.CreatePayload(message)}
+}
+
+func (l *LogEntry) toJson() string {
 	json_log, err := json.Marshal(l)
 	if err != nil {
 		panic(err)
 	}
 	return string(json_log)
 }
-func (l LogEntry) WriteLog(outputStream *os.File) {
-	l.Level = Info
-	log.SetOutput(outputStream)
-	log.Println("#START_LOG_ENTRY#")
-	log.Println(l.to_json())
-	log.Println("#END_LOG_ENTRY#")
-}
 
-func (l LogEntry) WriteErrorLog(outputStream *os.File) {
-	l.Level = Error
-	log.SetOutput(outputStream)
-	log.Println("#START_LOG_ENTRY#")
-	log.Println(l.to_json())
-	log.Println("#END_LOG_ENTRY#")
-}
-
-type LogEntryBuilder struct {
-	Context string
-}
-
-func NewLogEntryBuilder() LogEntryBuilder {
-	return LogEntryBuilder{Context: ""}
-}
-
-func (b LogEntryBuilder) AddContext(context LogType) LogEntryBuilder {
-	if b.Context != "" {
-		return LogEntryBuilder{Context: b.Context + "." + string(context)}
+// LogEntryBuilder public methods
+func (b LogEntryBuilder) AddWorkflowSteps(steps ...WorkflowStep) LogEntryBuilder {
+	for _, step := range steps {
+		if b.WorkflowStep != "" {
+			b.WorkflowStep = strings.Join([]string{b.WorkflowStep, string(step)}, ".")
+		} else {
+			b.WorkflowStep = string(step)
+		}
 	}
-	return LogEntryBuilder{Context: string(context)}
+	return b
 }
 
-func (b LogEntryBuilder) Build(status LogStatus, extensionId string, message string) LogEntry {
-	return LogEntry{Context: b.Context, Status: status, ExtensionId: extensionId, Payload: status.CreatePayload(message)}
+func (b *LogEntryBuilder) SetStatus(status LogStatus) {
+	b.Status = status
 }
