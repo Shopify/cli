@@ -170,7 +170,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: ${{ matrix.target }}
-        run: yarn nx ${{ github.event.inputs.nxLevel || '--all --skip-nx-cache' }} --target=${{ matrix.target }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -221,7 +221,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Unit tests
-        run: yarn nx ${{ github.event.inputs.nxLevel || '--all --skip-nx-cache' }} --target=test --exclude=features
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
