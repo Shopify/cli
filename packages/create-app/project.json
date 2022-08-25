@@ -3,5 +3,50 @@
     "root": "packages/create-app",
     "sourceRoot": "packages/create-app/src",
     "projectType": "library",
-    "tags": ["scope:create-cli"]
+    "tags": ["scope:create-cli"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run rimraf dist/",
+          "cwd": "packages/create-app"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["clean", "^build"],
+        "options": {
+          "command": "../../node_modules/.bin/tsc -b ./tsconfig.build.json",
+          "cwd": "packages/create-app"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint \"src/**/*.ts\"",
+          "cwd": "packages/create-app"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn run eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/create-app"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "./node_modules/.bin/vitest run",
+          "cwd": "packages/create-app"
+        }
+      },
+      "tsc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "../../node_modules/.bin/tsc --noEmit",
+          "cwd": "packages/create-app"
+        }
+      }
+    }
 }
