@@ -16,7 +16,8 @@ Scenario: I scaffold theme, ui, and function extensions
   Then I do not have a theme extension named TestThemeExtension2 of type theme
   When I create an extension named TestOrderDiscounts of type order_discounts and flavor wasm
   Then I have a function extension named TestOrderDiscounts of type order_discounts
-  Then I can build the app
+  Then I build the app
+  Then The UI extensions are built
 
 Scenario: I scaffold ui extensions with different templates
   And I create an app named MyExtendedApp with npm as package manager
@@ -35,4 +36,4 @@ Scenario: I scaffold ui extensions with different templates
 # Scenario: I create an app with a extension using pnpm
 #   And I create an app named MyExtendedApp with pnpm as package manager
 #   When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
-#   Then I can build the app
+#   Then I build the app and its extensions
