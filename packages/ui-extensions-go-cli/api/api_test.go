@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"github.com/Shopify/shopify-cli-extensions/logging"
 	"github.com/gorilla/websocket"
 	"github.com/iancoleman/strcase"
 )
@@ -48,7 +49,7 @@ func init() {
 }
 
 func TestInitializeWithProvidedConfigOptions(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 
 	if api.ApiRoot != apiRoot {
 		t.Errorf("Expected api root to be %s but got %v", apiRoot, api.ApiRoot)
@@ -92,7 +93,7 @@ func TestInitializeWithProvidedConfigOptions(t *testing.T) {
 }
 
 func TestGetExtensions(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 
 	response := extensionsResponse{}
 
@@ -161,7 +162,7 @@ func TestGetExtensions(t *testing.T) {
 }
 
 func TestGetSingleExtension(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	response := singleExtensionResponse{}
 
 	getSingleExtensionJSONResponse(api, t, api.Extensions[0].UUID, &response)
@@ -234,7 +235,7 @@ func TestGetSingleExtension(t *testing.T) {
 }
 
 func TestServeAssets(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	mainAssetUrl := fmt.Sprintf("%s/%s/assets/main.js", api.ApiRoot, api.Extensions[0].UUID)
 	response := getHTMLRequest(api, t, mainAssetUrl)
 
@@ -255,7 +256,7 @@ func TestServeAssets(t *testing.T) {
 }
 
 func TestCheckoutTunnelError(t *testing.T) {
-	api := New(noPublicUrlConfig)
+	api := New(noPublicUrlConfig, &logging.LogEntryBuilder{})
 	uuid := api.Extensions[0].UUID
 	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
@@ -269,7 +270,7 @@ func TestCheckoutTunnelError(t *testing.T) {
 }
 
 func TestAdminTunnelError(t *testing.T) {
-	api := New(noPublicUrlConfig)
+	api := New(noPublicUrlConfig, &logging.LogEntryBuilder{})
 	uuid := api.Extensions[1].UUID
 	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
@@ -283,7 +284,7 @@ func TestAdminTunnelError(t *testing.T) {
 }
 
 func TestPostPurchaseTunnelError(t *testing.T) {
-	api := New(noPublicUrlConfig)
+	api := New(noPublicUrlConfig, &logging.LogEntryBuilder{})
 	uuid := api.Extensions[2].UUID
 	response := getSingleExtensionHTMLResponse(api, t, api.Extensions[2].UUID)
 
@@ -297,7 +298,7 @@ func TestPostPurchaseTunnelError(t *testing.T) {
 }
 
 func TestCheckoutRedirect(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	rec := getSingleExtensionHTMLRequest(api, t, api.Extensions[0].UUID)
 
 	if rec.Code != http.StatusTemporaryRedirect {
@@ -314,7 +315,7 @@ func TestCheckoutRedirect(t *testing.T) {
 }
 
 func TestAdminRedirect(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	uuid := api.Extensions[1].UUID
 	rec := getSingleExtensionHTMLRequest(api, t, uuid)
 
@@ -332,7 +333,7 @@ func TestAdminRedirect(t *testing.T) {
 }
 
 func TestPostPurchaseIndex(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	uuid := api.Extensions[2].UUID
 	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
@@ -357,7 +358,7 @@ func TestPostPurchaseIndex(t *testing.T) {
 }
 
 func TestWebsocketNotify(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 
 	firstConnection, err := createWebsocket(server)
@@ -392,7 +393,7 @@ func TestWebsocketNotify(t *testing.T) {
 }
 
 func TestWebsocketNotifyBuildStatusWithLastUpdatedValue(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 
 	ws, err := createWebsocket(server)
@@ -429,7 +430,7 @@ func TestWebsocketConnectionStartAndShutdown(t *testing.T) {
 	// FIXME;
 	return
 
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 	first_connection, err := createWebsocket(server)
 	second_connection, err := createWebsocket(server)
@@ -475,7 +476,7 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 	// FIXME
 	return
 
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 	first_connection, err := createWebsocket(server)
 	second_connection, err := createWebsocket(server)
@@ -513,7 +514,7 @@ func TestWebsocketConnectionClientClose(t *testing.T) {
 }
 
 func TestWebsocketClientUpdateAppEvent(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 
 	ws, err := createWebsocket(server)
@@ -558,7 +559,7 @@ func TestWebsocketClientUpdateAppEvent(t *testing.T) {
 }
 
 func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 
 	ws, err := createWebsocket(server)
@@ -638,7 +639,7 @@ func TestWebsocketClientUpdateMatchingExtensionsEvent(t *testing.T) {
 }
 
 func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	updateExtension := api.Extensions[0]
 
 	*updateExtension.Development.Hidden = true
@@ -693,7 +694,7 @@ func TestWebsocketClientUpdateBooleanValue(t *testing.T) {
 }
 
 func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
-	api := New(config)
+	api := New(config, &logging.LogEntryBuilder{})
 	server := httptest.NewServer(api)
 
 	dispatchExtensionUUID := api.Extensions[0].UUID

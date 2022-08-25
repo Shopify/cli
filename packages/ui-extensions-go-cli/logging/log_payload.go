@@ -1,34 +1,20 @@
 package logging
 
 type ErrorPayload struct {
-	Message      string
-	StackTrace   string
-	RecoveryStep string
-}
-
-type FilePayload struct {
-	Message  string
-	FilePath string
-}
-type CompletedPayload struct {
-	Message   string
-	Success   bool
-	Timestamp int64
-}
-type StartedPayload struct {
-	Message   string
-	Timestamp int64
+	Message      string `json:"message,omitempty"`
+	StackTrace   string `json:"stackTrace,omitempty"`
+	RecoveryStep string `json:"recoveryStep,omitempty"`
 }
 
 type InfoPayload struct {
-	Message string
+	Message string `json:"message,omitempty"`
 }
 
 func (t LogStatus) CreatePayload(message string) interface{} {
 	// TODO is the payload status specific?
 	switch t {
-	case Failed:
-		return FilePayload{Message: message}
+	case Failure:
+		return ErrorPayload{Message: message}
 	default:
 		return InfoPayload{Message: message}
 	}

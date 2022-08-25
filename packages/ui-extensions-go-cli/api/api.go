@@ -10,9 +10,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -23,6 +23,7 @@ import (
 
 	"github.com/Shopify/shopify-cli-extensions/api/root"
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"github.com/Shopify/shopify-cli-extensions/logging"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/iancoleman/strcase"
@@ -32,9 +33,10 @@ import (
 //go:embed dev-console/*
 var devConsole embed.FS
 
-func New(config *core.Config) *ExtensionsApi {
+func New(config *core.Config, logBuilder *logging.LogEntryBuilder) *ExtensionsApi {
 	mux := mux.NewRouter()
-	api := configureExtensionsApi(config, mux)
+	apiLogBuilder := logBuilder.AddWorkflowSteps(logging.Api)
+	api := configureExtensionsApi(config, mux, &apiLogBuilder)
 
 	return api
 }
@@ -49,7 +51,8 @@ func (api *ExtensionsApi) notifyClients(createNotification func() (message notif
 	api.connections.Range(func(connection, clientHandlers interface{}) bool {
 		notification, err := createNotification()
 		if err != nil {
-			log.Printf("failed to construct notification with error: %v", err)
+			api.LogEntryBuilder.SetStatus(logging.Failure)
+			api.LogEntryBuilder.Build("", fmt.Sprintf("failed to construct notification with error: %v", err)).WriteErrorLog(os.Stdout)
 			return false
 		}
 		clientHandlers.(client).notify(notification)
@@ -127,14 +130,15 @@ func getJSONRawMessage(data interface{}) (result json.RawMessage, err error) {
 	return
 }
 
-func interfaceToMap(data interface{}) (result map[string]interface{}, err error) {
+func interfaceToMap(data interface{}, logBuilder logging.LogEntryBuilder) (result map[string]interface{}, err error) {
+	logBuilder.SetStatus(logging.Failure)
 	converted, err := json.Marshal(data)
 	if err != nil {
-		log.Printf("error converting to JSON %v", err)
+		logBuilder.Build("", fmt.Sprintf("error converting to JSON %v", err)).WriteErrorLog(os.Stdout)
 		return
 	}
 	if err = json.Unmarshal(converted, &result); err != nil {
-		log.Printf("error converting to map %v", err)
+		logBuilder.Build("", fmt.Sprintf("error converting to map %v", err)).WriteErrorLog(os.Stdout)
 		return
 	}
 	return
@@ -144,13 +148,15 @@ func (api *ExtensionsApi) getMergedAppMap(additionalInfo map[string]interface{},
 	app = formatData(api.App, strcase.ToLowerCamel)
 	if additionalInfo["apiKey"] == app["apiKey"] {
 		if err := mergo.MapWithOverwrite(&app, additionalInfo); err != nil {
-			log.Printf("error merging app info, %v", err)
+			api.LogEntryBuilder.SetStatus(logging.Failure)
+			api.LogEntryBuilder.Build("", fmt.Sprintf("error merging app info, %v", err)).WriteErrorLog(os.Stdout)
 			return
 		}
 
 		if overwrite {
 			if err := mergo.MapWithOverwrite(&api.App, formatData(app, strcase.ToSnake)); err != nil {
-				log.Printf("error merging app info, %v", err)
+				api.LogEntryBuilder.SetStatus(logging.Failure)
+				api.LogEntryBuilder.Build("", fmt.Sprintf("error merging app info, %v", err)).WriteErrorLog(os.Stdout)
 				return
 			}
 		}
@@ -169,13 +175,14 @@ func (api *ExtensionsApi) getMergedExtensionsMap(extensions []map[string]interfa
 	for _, extension := range api.Extensions {
 		if target, found := targetExtensions[extension.UUID]; found {
 			extensionWithUrls := setExtensionUrls(extension, api.ApiRootUrl)
-			extensionData, err := interfaceToMap(extensionWithUrls)
+			extensionData, err := interfaceToMap(extensionWithUrls, api.LogEntryBuilder)
 			if err != nil {
 				continue
 			}
 			err = mergo.MapWithOverwrite(&extensionData, &target)
 			if err != nil {
-				log.Printf("failed to merge update data %v", err)
+				api.LogEntryBuilder.SetStatus(logging.Failure)
+				api.LogEntryBuilder.Build("", fmt.Sprintf("failed to merge update data %v", err)).WriteErrorLog(os.Stdout)
 				continue
 			}
 			results = append(results, extensionData)
@@ -197,7 +204,8 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 		if found {
 			castedData := updateData.(core.Extension)
 			if err := mergeWithOverwrite(&castedData, &extensions); err != nil {
-				log.Printf("failed to merge update data %v", err)
+				api.LogEntryBuilder.SetStatus(logging.Failure)
+				api.LogEntryBuilder.Build("", fmt.Sprintf("failed to merge update data %v", err)).WriteErrorLog(os.Stdout)
 			}
 		} else {
 			api.updates.Store(extension.UUID, extension)
@@ -211,7 +219,8 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 			castedData := updateData.(core.Extension)
 			err := mergeWithOverwrite(&api.Extensions[index], &castedData)
 			if err != nil {
-				log.Printf("failed to merge update data %v", err)
+				api.LogEntryBuilder.SetStatus(logging.Failure)
+				api.LogEntryBuilder.Build("", fmt.Sprintf("failed to merge update data %v", err)).WriteErrorLog(os.Stdout)
 			}
 			updatedExtensions = append(updatedExtensions, api.Extensions[index])
 		}
@@ -223,7 +232,7 @@ func (api *ExtensionsApi) Notify(extensions []core.Extension) {
 	api.sendUpdateEvent(updatedExtensions)
 }
 
-func configureExtensionsApi(config *core.Config, router *mux.Router) *ExtensionsApi {
+func configureExtensionsApi(config *core.Config, router *mux.Router, logBuilder *logging.LogEntryBuilder) *ExtensionsApi {
 	service := core.NewExtensionService(config)
 	api := &ExtensionsApi{
 		service,
@@ -231,6 +240,7 @@ func configureExtensionsApi(config *core.Config, router *mux.Router) *Extensions
 		root.New(service),
 		sync.Map{},
 		sync.Map{},
+		*logBuilder,
 	}
 
 	devConsoleServerPath := api.getDevConsoleServerPath()
@@ -330,8 +340,8 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 				if errors.Is(err, syscall.EPIPE) {
 					return
 				}
-
-				log.Printf("error writing JSON message: %v", err)
+				api.LogEntryBuilder.SetStatus(logging.Failure)
+				api.LogEntryBuilder.Build("", fmt.Sprintf("error writing JSON message: %v", err)).WriteErrorLog(os.Stdout)
 				break
 			}
 		}
@@ -432,7 +442,8 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 
 		err = json.Unmarshal(message, &jsonMessage)
 		if err != nil {
-			log.Printf("failed to read client JSON message %v", err)
+			api.LogEntryBuilder.SetStatus(logging.Failure)
+			api.LogEntryBuilder.Build("", fmt.Sprintf("failed to read client JSON message %v", err)).WriteErrorLog(os.Stdout)
 		}
 
 		switch jsonMessage.Event {
@@ -578,6 +589,7 @@ type ExtensionsApi struct {
 	*root.RootHandler
 	connections sync.Map
 	updates     sync.Map
+	logging.LogEntryBuilder
 }
 
 type notification struct {
