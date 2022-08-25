@@ -24,7 +24,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'post-purchase UI',
+      humanKey: 'Post-purchase UI',
       helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
     })
   })
@@ -119,7 +119,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'payment customization',
+      humanKey: 'Payment customization',
     })
   })
 
@@ -132,7 +132,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'delivery option presenter',
+      humanKey: 'Delivery option presenter',
     })
   })
 })
