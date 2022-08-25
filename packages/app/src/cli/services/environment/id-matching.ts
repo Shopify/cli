@@ -15,8 +15,10 @@ export async function automaticMatchmaking(
   remoteRegistrations: ExtensionRegistration[],
   identifiers: {[localIdentifier: string]: string},
 ): ResultAsync<MatchResult> {
+  const invalidEnvironmentError = err('invalid-environment')
+
   if (remoteRegistrations.length > localExtensions.length) {
-    return err()
+    return invalidEnvironmentError
   }
 
   const validIdentifiers = identifiers
@@ -63,13 +65,13 @@ export async function automaticMatchmaking(
   // The user must solve the issue in their environment or deploy to a different app
   const impossible = newRemotePending.filter((reg) => !newLocalPending.map((ext) => ext.graphQLType).includes(reg.type))
   if (impossible.length > 0 || newRemotePending.length > newLocalPending.length) {
-    return err()
+    return invalidEnvironmentError
   }
 
   // If there are more remote pending than local in total, then we can't automatically match
   // The user must solve the issue in their environment or deploy to a different app
   if (newRemotePending.length > newLocalPending.length) {
-    return err()
+    return invalidEnvironmentError
   }
 
   const extensionsToCreate: Extension[] = []

@@ -192,7 +192,7 @@ describe('automaticMatchmaking: case 6 remote extensions have types not present 
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [REGISTRATION_C, REGISTRATION_D], {})
 
     // Then
-    expect(got).toEqual(err(new Error('Unknown error')))
+    expect(got).toEqual(err(new Error('invalid-environment')))
   })
 })
 
@@ -202,7 +202,7 @@ describe('automaticMatchmaking: case 7 some extensions match, but other are miss
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [REGISTRATION_A, REGISTRATION_C], {})
 
     // Then
-    expect(got).toEqual(err(new Error('Unknown error')))
+    expect(got).toEqual(err(new Error('invalid-environment')))
   })
 })
 
@@ -248,7 +248,7 @@ describe('automaticMatchmaking: case 10 there are more remote than local extensi
     const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A, REGISTRATION_A_2], {})
 
     // Then
-    expect(got).toEqual(err(new Error('Unknown error')))
+    expect(got).toEqual(err(new Error('invalid-environment')))
   })
 })
 
@@ -359,6 +359,6 @@ describe('automaticMatchmaking: case 16 more remote than local extensions', () =
     const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A, REGISTRATION_B], {})
 
     // Then
-    expect(got).toEqual(err(new Error('Unknown error')))
+    expect(got).toEqual(err(new Error('invalid-environment')))
   })
 })
