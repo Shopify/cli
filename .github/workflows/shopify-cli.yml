@@ -113,9 +113,6 @@ jobs:
       - name: Lint
         run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-      - name: Type-check
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=tsc
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
         run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
       - name: Acceptance tests
@@ -131,7 +128,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ["18.7.0"]
-        target: ["build", "lint", "tsc"]
+        target: ["build", "lint"]
     steps:
       - uses: actions/checkout@v2
         with:

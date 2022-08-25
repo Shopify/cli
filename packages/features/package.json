@@ -8,8 +8,7 @@
     "lint": "eslint **/*.ts",
     "lint:fix": "eslint **/*.ts --fix",
     "test": "yarn --cwd ../.. nx run features:test",
-    "test:acceptance": "cucumber-js -p default -c ./cucumber.js",
-    "tsc": "tsc --noEmit"
+    "test:acceptance": "cucumber-js -p default -c ./cucumber.js"
   },
   "devDependencies": {
     "fs-extra": "^10.0.0",

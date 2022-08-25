@@ -23,8 +23,7 @@
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "yarn --cwd ../.. nx run app:test",
     "test:nx": "vitest run",
-    "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "test:watch": "vitest watch"
   },
   "eslintConfig": {
     "extends": [

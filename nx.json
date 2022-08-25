@@ -8,8 +8,7 @@
         "cacheableOperations": [
           "build",
           "test",
-          "lint",
-          "tsc"
+          "lint"
         ]
       }
     }
@@ -18,8 +17,5 @@
     "defaultBase": "main"
   },
   "targetDefaults": {
-    "tsc": {
-      "dependsOn": ["^tsc"]
-    }
   }
 }

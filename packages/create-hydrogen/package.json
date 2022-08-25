@@ -38,8 +38,7 @@
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "test": "vitest run",
-    "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "test:watch": "vitest watch"
   },
   "eslintConfig": {
     "extends": [
