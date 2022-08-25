@@ -28,7 +28,7 @@
         "cwd": "packages/features"
       }
     },
-    "tsc": {
+    "type-check": {
       "executor": "nx:run-commands",
       "options": {
         "command": "yarn tsc --noEmit",

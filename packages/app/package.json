@@ -22,7 +22,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx test",
-    "tsc": "nx tsc"
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [

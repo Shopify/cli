@@ -114,7 +114,7 @@ jobs:
         run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=type-check
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
         run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
@@ -131,7 +131,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ["18.7.0"]
-        target: ['build', 'tsc', 'lint']
+        target: ['build', 'type-check', 'lint']
     steps:
       - uses: actions/checkout@v2
         with:

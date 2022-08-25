@@ -42,7 +42,7 @@
           "cwd": "packages/app"
         }
       },
-      "tsc": {
+      "type-check": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn tsc --noEmit",

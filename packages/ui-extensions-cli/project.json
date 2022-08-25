@@ -27,7 +27,7 @@
           "cwd": "packages/ui-extensions-cli"
         }
       },
-      "tsc": {
+      "type-check": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn tsc",

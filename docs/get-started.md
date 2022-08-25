@@ -49,7 +49,7 @@ Besides the scripts for building and running the CLIs, there are others that mig
 - `yarn test`: Runs the tests of all the packages.
 - `yarn lint`: Runs ESLint and Prettier checks for all the packages.
 - `yarn lint:fix`: Runs ESLint and Prettier checks for all the packages and fixes the fixable issues.
-- `yarn tsc`: Type-checks all the packagesusing the Typescript `tsc` tool.
+- `yarn type-check`: Type-checks all the packagesusing the Typescript `tsc` tool.
 - `yarn clean`: Removes the `dist` directory from all the packages.
 
 All the packages in the repository contain the above scripts so they can be executed too for an individual package.
