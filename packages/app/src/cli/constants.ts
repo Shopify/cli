@@ -201,7 +201,6 @@ export const externalExtensionTypeNames = {
     'shipping discount',
     'payment customization',
     'delivery option presenter',
-    'customer accounts UI',
   ],
 } as const
 
