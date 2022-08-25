@@ -144,13 +144,6 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-      - name: Set Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
-          bundler-cache: true
-      - name: Install Bundler
-        run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
