@@ -16,5 +16,10 @@
   },
   "affected": {
     "defaultBase": "main"
+  },
+  "targetDefaults": {
+    "tsc": {
+      "dependsOn": ["^tsc"]
+    }
   }
 }
