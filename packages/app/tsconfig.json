@@ -6,6 +6,7 @@
     "outDir": "dist",
     "allowJs": true,
     "rootDir": "src",
+    "incremental": true,
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "references": [

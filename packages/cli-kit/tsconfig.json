@@ -5,6 +5,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "incremental": true,
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "references": []

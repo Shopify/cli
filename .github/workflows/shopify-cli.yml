@@ -108,16 +108,16 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all' }} --target=build
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Lint
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all' }} --target=lint
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all' }} --target=tsc
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=tsc
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all' }} --target=test --exclude=features
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
@@ -170,7 +170,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: ${{ matrix.target }}
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all' }} --target=${{ matrix.target }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
