@@ -1,5 +1,3 @@
-import {Fatal} from '../error.js'
-
 export type Result<T, TError = Error> = {ok: true; value: T} | {ok: false; error: TError}
 
 export type ResultAsync<T, TError = Error> = Promise<Result<T, TError>>
@@ -24,7 +22,7 @@ export const err = <T = never>(error?: unknown): Result<T, Error> => {
   return {ok: false, error: errorToUse}
 }
 
-export const valueOrThrow = <T, TError = Error>(result: Result<T, TError>, error?: Fatal): T => {
+export const valueOrThrow = <T, TError = Error>(result: Result<T, TError>, error?: Error): T => {
   if (!result.ok) {
     if (error) {
       throw error
