@@ -6,15 +6,29 @@
       "runner": "@nrwl/workspace/tasks-runners/default",
       "options": {
         "cacheableOperations": [
-          "build",
-          "test",
-          "lint",
-          "tsc"
+          "build"
         ]
       }
     }
   },
   "affected": {
     "defaultBase": "main"
+  },
+  "targetDefaults": {
+    "clean": {
+      "dependsOn": ["^clean"]
+    },
+    "build": {
+      "dependsOn": ["clean", "^build"]
+    },
+    "lint": {
+      "dependsOn": ["build"]
+    },
+    "lint:fix": {
+      "dependsOn": ["build"]
+    },
+    "tsc": {
+      "dependsOn": ["^tsc"]
+    }
   }
 }
