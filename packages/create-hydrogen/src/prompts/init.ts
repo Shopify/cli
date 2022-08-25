@@ -72,9 +72,9 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   }
 
   const promptResults = await prompt(questions)
-  const name = options.name ?? promptResults.name
-  const templateName = options.template ?? promptResults.template
-  const language = options.language ?? promptResults.language
+  const name = options.name ?? promptResults.name!
+  const templateName = options.template ?? promptResults.template!
+  const language = options.language ?? promptResults.language!
   let template = templateName
 
   // Get final template URLS
@@ -144,7 +144,7 @@ const parseTemplateUrl = (templateUrl: string): string => {
   const looksLikeHydrogenTemplate =
     parsedTemplate.name === 'hydrogen' &&
     parsedTemplate.user === 'Shopify' &&
-    parsedTemplate.subDirectory.startsWith('templates/')
+    parsedTemplate.subDirectory?.startsWith('templates/')
 
   return looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
 }

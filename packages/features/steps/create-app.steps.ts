@@ -5,7 +5,7 @@ import path from 'pathe'
 import {strict as assert} from 'assert'
 
 When(
-  /I create an app named (.+) with (.+) as dependency manager/,
+  /I create an app named (.+) with (.+) as package manager/,
   {timeout: 5 * 60 * 1000},
   async function (appName: string, packageManager: string) {
     const {stdout} = await exec(
@@ -30,7 +30,7 @@ When(
 )
 
 Then(
-  /I have an app named (.+) scaffolded from the template with (.+) as dependency manager/,
+  /I have an app named (.+) scaffolded from the template with (.+) as package manager/,
   {},
   async function (appName: string, packageManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {

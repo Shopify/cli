@@ -34,7 +34,7 @@ describe('DevConsole', () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
-    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
+    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined);
 
     const container = render(<DevConsole />, withProviders(DefaultProviders), {
       client,
@@ -124,7 +124,7 @@ describe('DevConsole', () => {
     const focusExtension = mockExtension();
     const prevFocusedExtension = mockExtension();
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
-    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
+    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined);
 
     const container = render(<DevConsole />, withProviders(DefaultProviders), {
       client,
@@ -149,7 +149,7 @@ describe('DevConsole', () => {
     const extension1 = mockExtension({focused: true} as any);
     const extension2 = mockExtension({focused: true} as any);
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
-    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
+    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined);
 
     const container = render(<DevConsole />, withProviders(DefaultProviders), {
       client,
@@ -173,7 +173,7 @@ describe('DevConsole', () => {
     const selectedExtension = mockExtension();
     selectedExtension.development.hidden = true;
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
-    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
+    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined);
 
     const container = render(<DevConsole />, withProviders(DefaultProviders), {
       client,
@@ -204,7 +204,7 @@ describe('DevConsole', () => {
     const selectedExtension = mockExtension();
     const unselectedExtension = mockExtension();
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}});
-    const sendSpy = jest.spyOn(client.connection, 'send').mockImplementation();
+    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined);;
 
     const container = render(<DevConsole />, withProviders(DefaultProviders), {
       client,

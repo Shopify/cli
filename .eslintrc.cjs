@@ -108,7 +108,7 @@ module.exports = {
     'jest/max-nested-describe': [
       'error',
       {
-        max: 1,
+        max: 2,
       },
     ],
     'jest/no-disabled-tests': 'error',

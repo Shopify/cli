@@ -30,7 +30,7 @@ export async function uploadThemeExtensions(
   await Promise.all(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
-      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]
+      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
       const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
         apiKey,
         config: JSON.stringify(themeExtensionConfig),

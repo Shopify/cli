@@ -34,7 +34,7 @@ describe('installAppDependencies', () => {
 
     // Then
     expect(vi.mocked(ui.newListr).mock.calls.length).toEqual(1)
-    const tasks = vi.mocked(ui.newListr).mock.calls[0][0] as any
+    const tasks = vi.mocked(ui.newListr).mock.calls[0]![0] as any
     expect(tasks.length).toEqual(1)
     const task = tasks[0]
     expect(task.title).not.toBe('')

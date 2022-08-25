@@ -12,7 +12,7 @@ extension_points = [
 # namespace = "my-namespace"
 # key = "my-key-2"
 
-# Read more on extension settings at https://shopify.dev/api/checkout-extensions/checkout/settings
+# Read more on extension settings at https://shopify.dev/api/checkout-extensions/checkout/configuration
 # [[settings.fields]]
 # key = "heading"
 # name = "Heading"

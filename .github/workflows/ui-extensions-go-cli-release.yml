@@ -6,7 +6,7 @@ on:
 
 env:
   GO_VERSION: "1.17"
-  YARN_VERSION: "1.22.18"
+  YARN_VERSION: "1.22.19"
 
 jobs:
   releases-matrix:

@@ -57,20 +57,23 @@ export async function writeDotEnv(file: DotEnvFile) {
  * @param envFileContent {string | null} .env file contents.
  * @param updatedValues {[key: string]: string}} object containing new env variables values.
  */
-export function patchEnvFile(envFileContent: string | null, updatedValues: {[key: string]: string}): string {
+export function patchEnvFile(
+  envFileContent: string | null,
+  updatedValues: {[key: string]: string | undefined},
+): string {
   const outputLines: string[] = []
   const lines = envFileContent === null ? [] : envFileContent.split('\n')
 
   const alreadyPresentKeys: string[] = []
 
-  const toLine = (key: string, value: string) => `${key}=${value}`
+  const toLine = (key: string, value?: string) => `${key}=${value}`
 
   for (const line of lines) {
     const match = line.match(/^([^=:#]+?)[=:](.*)/)
     let lineToWrite = line
 
     if (match) {
-      const key = match[1].trim()
+      const key = match[1]!.trim()
       const newValue = updatedValues[key]
       if (newValue) {
         alreadyPresentKeys.push(key)

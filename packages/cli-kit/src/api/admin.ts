@@ -58,7 +58,7 @@ ${query}
     .filter((item) => item.supported)
     .map((item) => item.handle)
     .sort()
-    .reverse()[0]
+    .reverse()[0]!
 }
 
 function adminUrl(store: string, version: string | undefined): string {

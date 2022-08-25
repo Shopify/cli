@@ -3,7 +3,7 @@ import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-pac
 import {Writable} from 'stream'
 import {platform} from 'node:os'
 
-type UpdateCLIDependenciesOptions = {
+interface UpdateCLIDependenciesOptions {
   directory: string
   packageJSON: npm.PackageJSON
   local: boolean
@@ -12,7 +12,6 @@ type UpdateCLIDependenciesOptions = {
 export async function updateCLIDependencies({
   packageJSON,
   local,
-  directory,
 }: UpdateCLIDependenciesOptions): Promise<npm.PackageJSON> {
   const cliKitVersion = await constants.versions.cliKit()
   const moduleDirectory = path.moduleDirectory(import.meta.url)
@@ -27,25 +26,25 @@ export async function updateCLIDependencies({
       type: 'directory',
       cwd: moduleDirectory,
     })) as string
-    const cliPath = `file:${path.relative(directory, cliAbsolutePath)}`
+    const cliPath = `file:${cliAbsolutePath}`
 
     // App path
     const appAbsolutePath = (await path.findUp('packages/app', {type: 'directory', cwd: moduleDirectory})) as string
-    const appPath = `file:${path.relative(directory, appAbsolutePath)}`
+    const appPath = `file:${appAbsolutePath}`
 
     // CLI Kit path
     const cliKitAbsolutePath = (await path.findUp('packages/cli-kit', {
       type: 'directory',
       cwd: moduleDirectory,
     })) as string
-    const cliKitPath = `file:${path.relative(directory, cliKitAbsolutePath)}`
+    const cliKitPath = `file:${cliKitAbsolutePath}`
 
     // UI Extensions CLI path
     const extensionsCliAbsolutePath = (await path.findUp('packages/ui-extensions-cli', {
       type: 'directory',
       cwd: moduleDirectory,
     })) as string
-    const extensionsCliPath = `file:${path.relative(directory, extensionsCliAbsolutePath)}`
+    const extensionsCliPath = `file:${extensionsCliAbsolutePath}`
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath

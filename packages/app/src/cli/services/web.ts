@@ -20,6 +20,6 @@ export default async function web(
   }
 
   const [cmd, ...args] = script.split(' ')
-  await system.exec(cmd, args, {cwd: web.directory, stdout, stderr, signal, env})
+  await system.exec(cmd!, args, {cwd: web.directory, stdout, stderr, signal, env})
   stdout.write('Web successfully built.')
 }

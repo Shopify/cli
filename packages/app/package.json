@@ -50,7 +50,7 @@
   "devDependencies": {
     "@types/diff": "^5.0.2",
     "@types/http-proxy": "^1.17.9",
-    "vitest": "^0.17.1"
+    "vitest": "^0.22.1"
   },
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",

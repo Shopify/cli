@@ -44,21 +44,21 @@ export async function validateSession(
 
   if (applications.partnersApi) {
     const appId = applicationId('partners')
-    const token = session.applications[appId]
+    const token = session.applications[appId]!
     tokensAreRevoked = tokensAreRevoked || (await isPartnersTokenRevoked(token))
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
   if (applications.storefrontRendererApi) {
     const appId = applicationId('storefront-renderer')
-    const token = session.applications[appId]
+    const token = session.applications[appId]!
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
-    const token = session.applications[realAppId]
+    const token = session.applications[realAppId]!
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 

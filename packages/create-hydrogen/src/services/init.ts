@@ -225,11 +225,11 @@ async function updateCLIDependencies(
   packageJSON.dependencies = packageJSON.dependencies || {}
 
   Object.keys(devDependencies).forEach((key) => {
-    packageJSON.devDependencies[key] = devDependencies[key] || packageJSON.devDependencies[key]
+    packageJSON.devDependencies[key] = devDependencies[key] || packageJSON.devDependencies[key]!
   })
 
   Object.keys(dependencies).forEach((key) => {
-    packageJSON.dependencies[key] = dependencies[key] || packageJSON.dependencies[key]
+    packageJSON.dependencies[key] = dependencies[key] || packageJSON.dependencies[key]!
   })
 
   if (local) {

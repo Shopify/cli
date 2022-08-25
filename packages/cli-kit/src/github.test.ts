@@ -20,7 +20,7 @@ describe('getLatestRelease', () => {
 
     // Then
     expect(vi.mocked(fetch)).toHaveBeenCalledWith(`https://api.github.com/repos/${user}/${repo}/releases`)
-    await expect(latest).toMatchObject(allReleases[0])
+    await expect(latest).toMatchObject(allReleases[0]!)
   })
 
   it('calls the filter function', async () => {

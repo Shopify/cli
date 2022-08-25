@@ -21,7 +21,7 @@ export async function validateMD5({file, md5FileURL}: {file: string; md5FileURL:
   const md5Digest = await md5File(file)
   const md5Response = await fetch(md5FileURL)
   const md5Contents = await md5Response.text()
-  const canonicalMD5 = md5Contents.split(' ')[0]
+  const canonicalMD5 = md5Contents.split(' ')[0]!
   if (!(canonicalMD5 === md5Digest)) {
     throw InvalidChecksumError({
       file,
