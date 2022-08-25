@@ -17,7 +17,7 @@
         "outputs": ["../ui-extensions-go-cli/api/dev-console"],
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn tsc --project tsconfig.build.json --noEmit && node_modules/.bin/vite build",
+          "command": "yarn tsc --project tsconfig.build.json --noEmit && yarn vite build",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
