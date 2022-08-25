@@ -37,7 +37,7 @@
       "test": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "./node_modules/.bin/vitest run",
+          "command": "node_modules/.bin/vitest run",
           "cwd": "packages/cli-kit"
         }
       },

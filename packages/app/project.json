@@ -39,7 +39,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "./node_modules/.bin/vitest run",
+          "command": "node_modules/.bin/vitest run",
           "cwd": "packages/app"
         }
       },
