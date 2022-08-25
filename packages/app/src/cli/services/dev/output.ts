@@ -35,6 +35,7 @@ export function outputAppURL(storeFqdn: string, url: string) {
   const heading = output.token.heading('Shareable app URL')
   const appURL = buildAppURL(storeFqdn, url)
   const formattedAppURL = output.token.link(appURL, appURL)
+  // eslint-disable-next-line line-comment-position
   const notes = '' // one note per line, start notes with \n
   output.info(output.content`\n\n${heading}\n\n  ${formattedAppURL}\n${notes}`)
 }
