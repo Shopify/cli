@@ -34,7 +34,12 @@ class ShopifyCliAT3 < Formula
     end
 
     system "npm", "install", *Language::Node.std_npm_install_args(libexec)
-    bin.install_symlink Dir["#{libexec}/bin/*"]
+
+    executable_path = "#{libexec}/bin/shopify"
+    executable_3_path = "#{libexec}/bin/shopify3"
+    File.symlink executable_path, executable_3_path
+
+    bin.install_symlink executable_3_path
 
     resource("cli-theme-commands").stage {
       system "npm", "install", *Language::Node.std_npm_install_args(libexec)

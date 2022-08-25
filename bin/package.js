@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+process.removeAllListeners('warning');
 
 // ES Modules
 import {findUp} from "find-up"
@@ -14,6 +15,8 @@ import {Liquid} from 'liquidjs'
 const require = createRequire(import.meta.url)
 const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-extra')
 const {program} = require('commander')
+const {Octokit} = require('@octokit/core')
+const { createPullRequest } = require("octokit-plugin-create-pull-request");
 const colors = require('ansi-colors')
 
 const packagingDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../packaging")
@@ -22,6 +25,7 @@ const defaultOutputDirectory = path.join(packagingDirectory, "dist")
 program
   .description('Packages the CLI for distribution through package managers')
   .requiredOption('-o, --output <string>', 'the directory where the distribution artifacts will be exported into', defaultOutputDirectory)
+  .requiredOption('-p, --open-pr', 'when passed it opens a PR in the https://github.com/shopify/homebrew-shopify repository', true)
   .action(async (options) => {
     // Constants
     const version = await versionToRelease()
@@ -32,8 +36,41 @@ program
     console.log(`We'll populate the Homebrew formula with the following content:`)
     console.log(homebrewVariables)
 
+    // Create formulas
     await recursiveDirectoryCopy(path.join(packagingDirectory, "src"), outputDirectory, homebrewVariables)
+
+    if (options.openPr) {
+      console.log(`Opening a PR in shopify/homebrew-shopify to update the formula ${version}`)
+
+      const OctokitWithPlugin = Octokit.plugin(createPullRequest)
+      const octokit = new OctokitWithPlugin({
+        auth: process.env.GITHUB_TOKEN,
+      });
+      const content = (await readFile(path.join(outputDirectory, `shopify-cli@3.rb`))).toString()
+
+      const response = await octokit
+        .createPullRequest({
+          owner: "shopify",
+          repo: "homebrew-shopify",
+          title: `Shopify CLI ${version}`,
+          body: `We are updating the formula to point to the recently released version of the Shopify CLI [${version}](https://www.npmjs.com/package/@shopify/cli/v/${version})`,
+          head: `shopify-cli-${version}`,
+          base: "master",
+          update: true,
+          forceFork: false,
+          changes: [
+            {
+              files: {
+                "shopify-cli@3.rb": content,
+              },
+              commit: `Update Shopify CLI 3 formula to install the version ${version}`,
+            },
+          ],
+        })
+      console.log(`${colors.green(colors.bold("PR opened:"))} ${response.url}`)
+    }
   })
+
 program.parse()
 
 async function versionToRelease() {
@@ -69,6 +106,8 @@ async function getSha256ForTarball(url) {
 }
 
 async function recursiveDirectoryCopy(from, to, data) {
+  console.log(`Generating the formula into ${to}`)
+
   const engine = new Liquid()
   const templateFiles = await glob(path.join(from, '**/*'), {dot: true})
 
@@ -104,4 +143,5 @@ async function recursiveDirectoryCopy(from, to, data) {
       await copy(templateItemPath, outputPath)
     }
   }
+  console.log(`The formula has been generated in ${to}`)
 }

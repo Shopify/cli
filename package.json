@@ -24,9 +24,6 @@
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache"
   },
   "devDependencies": {
-    "liquidjs": "^9.36.0",
-    "node-fetch": "^3.2.4",
-    "ansi-colors": "^4.1.1",
     "@apollo/client": "^3.4.8",
     "@bugsnag/source-maps": "^2.3.0",
     "@changesets/cli": "^2.22.0",
@@ -34,6 +31,8 @@
     "@nrwl/js": "^14.0.5",
     "@nrwl/tao": "^14.0.1",
     "@nrwl/workspace": "^14.0.1",
+    "@octokit/core": "^4.0.5",
+    "@octokit/rest": "^19.0.4",
     "@shopify/admin-ui-extensions": "1.0.1",
     "@shopify/admin-ui-extensions-react": "1.0.1",
     "@shopify/checkout-ui-extensions-react": "0.18.0",
@@ -48,6 +47,7 @@
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/eslint-plugin": "^5.27.0",
     "@typescript-eslint/parser": "^5.27.0",
+    "ansi-colors": "^4.1.1",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
@@ -67,19 +67,21 @@
     "fs-extra": "^10.0.0",
     "graphql": "^15.5.1",
     "graphql-tag": "^2.12.4",
+    "liquidjs": "^9.36.0",
+    "node-fetch": "^3.2.4",
     "nx": "^14.0.5",
+    "octokit-plugin-create-pull-request": "^3.12.2",
     "patch-package": "^6.4.7",
     "pathe": "0.2.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.6.1",
     "rimraf": "^3.0.2",
     "shx": "^0.3.3",
+    "tempy": "^3.0.0",
     "tmp": "^0.2.1",
     "ts-node": "^10.7.0",
     "tslib": "^2.3.1",
-    "typescript": "^4.7.4",
-    "@octokit/rest": "^19.0.4",
-    "tempy": "^3.0.0"
+    "typescript": "^4.7.4"
   },
   "workspaces": {
     "packages": [
