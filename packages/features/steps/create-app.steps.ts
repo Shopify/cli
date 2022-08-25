@@ -49,11 +49,13 @@ Then(
   },
 )
 
-Then(/I build the app and its extensions/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
+Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   await exec('node', [executables.cli, 'app', 'build', '--path', this.appDirectory], {
     env: {...process.env, ...this.temporaryEnv},
   })
+})
 
+Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   const appInfo = await this.appInfo()
   const extensionsMissingBuildFile = appInfo.extensions.ui.filter((extension: ExtensionConfiguration) => {
     const buildFilePath = path.join(extension.buildDirectory, 'main.js')
