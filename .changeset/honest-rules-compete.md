@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Changed how we refer to the Partners Dashboard
+Be more consistent in how we refer to the Partners Dashboard
