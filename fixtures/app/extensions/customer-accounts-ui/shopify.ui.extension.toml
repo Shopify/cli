@@ -1,0 +1,9 @@
+type = "customer_acounts_ui"
+name = "amortizable-growth-ext"
+
+
+extension_points = [
+  'CustomerAccount::FullPage::RenderWithin',
+]
+
+categories = []
