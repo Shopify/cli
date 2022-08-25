@@ -23,6 +23,7 @@
       },
       "test": {
         "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
         "options": {
           "command": "node bin/test.js",
           "cwd": "packages/ui-extensions-go-cli"
