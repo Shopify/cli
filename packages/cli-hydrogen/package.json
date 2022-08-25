@@ -22,7 +22,13 @@
     }
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "yarn nx build",
+    "clean": "yarn nx clean",
+    "lint": "yarn nx lint",
+    "lint:fix": "yarn nx lint:fix",
+    "test": "yarn nx test",
+    "tsc": "yarn nx tsc"
   },
   "eslintConfig": {
     "extends": [

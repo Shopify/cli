@@ -28,7 +28,7 @@
       "dependsOn": ["build"]
     },
     "tsc": {
-      "dependsOn": ["^tsc"]
+      "dependsOn": ["^build"]
     }
   }
 }
