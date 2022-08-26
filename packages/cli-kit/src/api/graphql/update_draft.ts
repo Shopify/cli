@@ -74,7 +74,7 @@ export interface ExtensionVersion {
   lastUserInteractionAt: string
 
   // """
-  // The URL to view the app extension version in the partners dashboard
+  // The URL to view the app extension version in the Partners Dashboard
   // """
   // location: Url
   location: string
