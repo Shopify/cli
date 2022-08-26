@@ -2,7 +2,7 @@
     "root": "packages/cli-main",
     "sourceRoot": "packages/cli-main/src",
     "projectType": "library",
-    "implicitDependencies": ["app", "theme", "cli-hydrogen", "cli-polaris"],
+    "implicitDependencies": ["app", "theme", "cli-hydrogen"],
     "tags": ["scope:cli"],
     "targets": {
       "clean": {
