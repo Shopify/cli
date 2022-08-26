@@ -20,4 +20,4 @@ The steps are:
        * The release is not created: Retry again from _step 3_
        * Some of the binaries are not correctly uploaded to the release: The release should be deleted manually from Github and then retry again from _step 3_
     2. Publishing of the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). In case an error is produced the extension binary release should be deleted manually from Github and retry again from _step 3_
-
+5. Once the deployment completes, [find the PR](https://github.com/Shopify/homebrew-shopify/pulls) in the homebrew-shopify repository and merge the changes in the formula.
