@@ -21,16 +21,14 @@ Fixes #0000 <!-- link to issue if one exists -->
   Before / after screenshots appreciated for UI changes.
 -->
 
-### Measuring impact
-
-How do we know this change was effective? Please choose one:
-
-- [ ] n/a - this doesn't need measurement, e.g. a linting rule or a bug-fix
-- [ ] Existing analytics will cater for this addition
-- [ ] PR includes analytics changes to measure impact
-
 ### How to test your changes?
 
 <!--
   Please, provide steps for the reviewer to test your changes locally.
 -->
+
+### Checklist
+
+- [ ] I've considered possible cross-platform impacts (Mac, Linux, Windows)
+- [ ] I've considered possible analytics changes to measure impact
+- [ ] I've considered possible [documentation](https://shopify.dev/apps/tools/cli) changes
