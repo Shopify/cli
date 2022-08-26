@@ -1,6 +1,5 @@
 type = "customer_acounts_ui"
-name = "amortizable-growth-ext"
-
+name = "customer-accounts-ui"
 
 extension_points = [
   'CustomerAccount::FullPage::RenderWithin',
