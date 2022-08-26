@@ -32,8 +32,7 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.8.0",
-    "@shopify/polaris-migrator": "^0.0.0"
+    "@shopify/cli-kit": "3.8.0"
   },
   "devDependencies": {
     "vitest": "^0.22.1",
