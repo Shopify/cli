@@ -21,7 +21,7 @@ import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
     output.content`Invalid API key: ${apiKey}`,
-    output.content`You can find the API key in the app settings in the Partner Dashboard.`,
+    output.content`You can find the API key in the app settings in the Partners Dashboard.`,
   )
 }
 

@@ -34,9 +34,7 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 export function outputAppURL(storeFqdn: string, url: string) {
   const heading = output.token.heading('Shareable app URL')
   const appURL = buildAppURL(storeFqdn, url)
-  const formattedAppURL = output.token.link(appURL, appURL)
-  const notes = '' // one note per line, start notes with \n
-  output.info(output.content`\n\n${heading}\n\n  ${formattedAppURL}\n${notes}`)
+  output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
 }
 
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
@@ -139,7 +137,7 @@ function getHumanKey(type: ExtensionTypes) {
 
 function partnersURL(organizationId: string, appId: string): string {
   return output.content`${output.token.link(
-    `Shopify Partners dashboard`,
+    `Partners Dashboard`,
     `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

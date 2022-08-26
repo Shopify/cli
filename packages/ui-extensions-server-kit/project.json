@@ -4,5 +4,69 @@
     "sourceRoot": "packages/ui-extensions-server-kit/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-test-utils"],
-    "tags": ["scope:feature", "scope:ui-extensions"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn rimraf dist/",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "build:code": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn vite build --config vite.config.ts",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "build:types": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn tsc --emitDeclarationOnly",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["build:code", "build:types"],
+        "outputs": ["dist"],
+        "inputs": ["{projectRoot}/src", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
+        "options": {
+          "command": "cd .",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest run",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/ui-extensions-server-kit"
+        }
+      }
+    }
 }

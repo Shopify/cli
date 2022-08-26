@@ -3,5 +3,60 @@
     "root": "packages/theme",
     "sourceRoot": "packages/theme/src",
     "projectType": "library",
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn rimraf dist/",
+          "cwd": "packages/theme"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "outputs": ["dist"],
+        "inputs": ["{projectRoot}/src"],
+        "options": {
+          "command": "yarn tsc -b ./tsconfig.build.json",
+          "cwd": "packages/theme"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\"",
+          "cwd": "packages/theme"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/theme"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest run",
+          "cwd": "packages/theme"
+        }
+      },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/theme"
+        }
+      },
+      "type-check": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn tsc --noEmit",
+          "cwd": "packages/theme"
+        }
+      }
+    }
 }

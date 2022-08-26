@@ -3,13 +3,10 @@
   "version": "0.4.0",
   "private": true,
   "scripts": {
-    "clean": "cd .",
-    "build": "cd .",
-    "lint": "eslint **/*.ts",
-    "lint:fix": "eslint **/*.ts --fix",
-    "test": "yarn --cwd ../.. nx run features:test",
-    "test:acceptance": "cucumber-js -p default -c ./cucumber.js",
-    "tsc": "tsc --noEmit"
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx test",
+    "type-check": "nx type-check"
   },
   "devDependencies": {
     "fs-extra": "^10.0.0",

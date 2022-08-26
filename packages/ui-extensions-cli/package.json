@@ -13,11 +13,11 @@
   },
   "main": "./dist/cli.js",
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
-    "build": "tsc",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "clean": "rimraf dist/"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix"
   },
   "publishConfig": {
     "access": "public",
@@ -33,7 +33,6 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.3",
-    "@types/node": "^16.7.1",
     "prettier": "^2.3.2",
     "ts-node": "^10.2.1",
     "typescript": "^4.6.4"

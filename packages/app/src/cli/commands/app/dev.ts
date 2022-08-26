@@ -38,7 +38,7 @@ export default class Dev extends Command {
     }),
     'no-update': Flags.boolean({
       hidden: false,
-      description: 'Skips the dashboard URL update step.',
+      description: 'Skips the Partners Dashboard URL update step.',
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),

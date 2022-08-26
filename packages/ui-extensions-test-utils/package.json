@@ -5,10 +5,10 @@
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
-    "clean": "rimraf dist/",
-    "build": "tsc",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix"
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix"
   },
   "peerDependencies": {
     "react": "16.14.0"
@@ -23,7 +23,6 @@
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@types/node": "^12.0.0",
     "@types/react": "16.14.0",
     "@types/react-dom": "^16.9.11",
     "mock-socket": "^9.0.5",
