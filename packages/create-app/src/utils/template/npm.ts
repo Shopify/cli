@@ -3,18 +3,48 @@ import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-pac
 import {Writable} from 'stream'
 import {platform} from 'node:os'
 
-export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local: boolean): Promise<npm.PackageJSON> {
+interface UpdateCLIDependenciesOptions {
+  directory: string
+  packageJSON: npm.PackageJSON
+  local: boolean
+}
+
+export async function updateCLIDependencies({
+  packageJSON,
+  local,
+}: UpdateCLIDependenciesOptions): Promise<npm.PackageJSON> {
   const cliKitVersion = await constants.versions.cliKit()
+  const moduleDirectory = path.moduleDirectory(import.meta.url)
 
   packageJSON.dependencies = packageJSON.dependencies || {}
   packageJSON.dependencies['@shopify/cli'] = cliKitVersion
   packageJSON.dependencies['@shopify/app'] = cliKitVersion
 
   if (local) {
-    const cliPath = `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`
-    const appPath = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
-    const cliKitPath = `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`
-    const extensionsCliPath = `file:${(await path.findUp('packages/ui-extensions-cli', {type: 'directory'})) as string}`
+    // CLI path
+    const cliAbsolutePath = (await path.findUp('packages/cli-main', {
+      type: 'directory',
+      cwd: moduleDirectory,
+    })) as string
+    const cliPath = `file:${cliAbsolutePath}`
+
+    // App path
+    const appAbsolutePath = (await path.findUp('packages/app', {type: 'directory', cwd: moduleDirectory})) as string
+    const appPath = `file:${appAbsolutePath}`
+
+    // CLI Kit path
+    const cliKitAbsolutePath = (await path.findUp('packages/cli-kit', {
+      type: 'directory',
+      cwd: moduleDirectory,
+    })) as string
+    const cliKitPath = `file:${cliKitAbsolutePath}`
+
+    // UI Extensions CLI path
+    const extensionsCliAbsolutePath = (await path.findUp('packages/ui-extensions-cli', {
+      type: 'directory',
+      cwd: moduleDirectory,
+    })) as string
+    const extensionsCliPath = `file:${extensionsCliAbsolutePath}`
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath

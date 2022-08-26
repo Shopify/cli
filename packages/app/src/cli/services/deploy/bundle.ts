@@ -40,7 +40,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
            * to prevent artifacts from past builds from leaking into deploy builds.
            */
           const extensions = options.app.extensions.ui.map((extension) => {
-            const extensionId = options.identifiers.extensions[extension.localIdentifier]
+            const extensionId = options.identifiers.extensions[extension.localIdentifier]!
             const buildDirectory = path.join(bundleDirectory, extensionId)
             return {...extension, buildDirectory}
           })

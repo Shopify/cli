@@ -117,7 +117,7 @@ export async function ensureDevEnvironment(
     return {
       app: {
         ...selectedApp,
-        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
       },
       storeFqdn: selectedStore.shopDomain,
       identifiers: {
@@ -158,7 +158,7 @@ export async function ensureDevEnvironment(
   const result = {
     app: {
       ...selectedApp,
-      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
     },
     storeFqdn: selectedStore.shopDomain,
     identifiers: {

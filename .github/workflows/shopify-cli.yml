@@ -20,10 +20,10 @@ env:
   DEBUG: "1"
   SHOPIFY_ENV: development
   SHOPIFY_CONFIG: debug
-  YARN_VERSION: "1.22.18"
+  YARN_VERSION: "1.22.19"
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
-  PNPM_VERSION: "7.9.3"
+  PNPM_VERSION: "7.9.4"
   GO_VERSION: "1.17"
 
 jobs:
@@ -108,31 +108,29 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Lint
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
-        # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
-        run: |
-          ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
-          npx nx run features:test
-        env:
-          SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
-  pr-ubuntu:
-    name: Node ${{ matrix.node }} in ${{ matrix.os }}
+        if: ${{ matrix.node == '18.7.0' }}
+        run: yarn nx run features:test
+
+  pr-platform-agnostic:
+    name: Building, linting, and type-checking with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        node: ["18.7.0"]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -171,32 +169,21 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Type-check
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
       - name: Lint
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '14' }}
-      - name: Unit tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
-      - name: Acceptance tests
-        if: ${{ matrix.os == 'ubuntu-latest' && (matrix.node == '14' || matrix.node == '18') }}
-        # If nx says there are no changes, consider the step completed. Otherwise run acceptance tests.
-        run: |
-          ruby -e "%x(npx nx print-affected --target=test --select=projects).strip.empty? || exit(1)" ||
-          npx nx run features:test
-        env:
-          SKIP_BUILD_BEFORE_ACCEPTANCE_TESTS: 1
-  pr-windows-and-mac:
-    name: Node ${{ matrix.node }} in ${{ matrix.os }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
+
+  pr-platform-dependent:
+    name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: pr-ubuntu
+    needs: pr-platform-agnostic
     if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['windows-latest', 'macos-latest']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
@@ -215,15 +202,16 @@ jobs:
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
-        if: ${{ matrix.os == 'macos-latest'}}
       - name: Install Bundler for Windows
         # setup-ruby is slow on Windows and is unnecessary for our case
         run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
-        if: ${{ matrix.os == 'windows-latest'}}
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version:  ${{ env.PNPM_VERSION }}
       - name: Set Node.js
         uses: actions/setup-node@master
         with:
@@ -235,7 +223,8 @@ jobs:
         run: yarn config set network-timeout 300000
       - name: Install dependencies
         run: yarn install --ignore-engines
-      - name: Build
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
       - name: Unit tests
-        run: npx nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
+      - name: Acceptance tests
+        if: ${{ matrix.node == '18.7.0' }}
+        run: yarn nx run features:test

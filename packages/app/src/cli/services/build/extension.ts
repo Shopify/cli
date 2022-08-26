@@ -114,7 +114,7 @@ export async function buildFunctionExtension(
   }
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
-  await system.exec(buildCommandComponents[0], buildCommandComponents.slice(1), {
+  await system.exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,
     cwd: extension.directory,

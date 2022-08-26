@@ -31,7 +31,7 @@ describe('initialize a extension', () => {
         const externalExtensionType = 'post_purchase_ui'
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]
+        const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]!
         expect(scaffoldedExtension.configuration.name).toBe(name)
       })
     },
@@ -68,10 +68,10 @@ describe('initialize a extension', () => {
         const loadedApp = await loadApp(tmpDir)
         const scaffoldedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
           lhs.directory < rhs.directory ? -1 : 1,
-        )[1]
+        )[1]!
         expect(scaffoldedExtension2.configuration.name).toBe(name2)
 
-        const firstDependenciesCallArgs = addDependenciesCalls[0]
+        const firstDependenciesCallArgs = addDependenciesCalls[0]!
         expect(firstDependenciesCallArgs[0]).toEqual([
           {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
@@ -79,7 +79,7 @@ describe('initialize a extension', () => {
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
         expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
 
-        const secondDependencyCallArgs = addDependenciesCalls[1]
+        const secondDependencyCallArgs = addDependenciesCalls[1]!
         expect(firstDependenciesCallArgs[0]).toEqual([
           {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
@@ -119,7 +119,7 @@ describe('initialize a extension', () => {
         const name = 'my-ext-1'
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[0][1] as any).toMatchObject({
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[0]![1] as any).toMatchObject({
           input: expect.stringContaining(`template: vanilla-js`),
         })
       })
@@ -128,7 +128,7 @@ describe('initialize a extension', () => {
         const name = 'my-ext-2'
         const extensionFlavor = 'react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[1][1] as any).toMatchObject({
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[1]![1] as any).toMatchObject({
           input: expect.stringContaining(`template: react`),
         })
       })
@@ -137,7 +137,7 @@ describe('initialize a extension', () => {
         const name = 'my-ext-3'
         const extensionFlavor = 'typescript-react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[2][1] as any).toMatchObject({
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[2]![1] as any).toMatchObject({
           input: expect.stringContaining(`template: typescript-react`),
         })
       })
@@ -146,7 +146,7 @@ describe('initialize a extension', () => {
         const name = 'my-ext-4'
         const extensionFlavor = 'typescript'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[3][1] as any).toMatchObject({
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[3]![1] as any).toMatchObject({
           input: expect.stringContaining(`template: typescript`),
         })
       })

@@ -150,14 +150,14 @@ class AppInfo {
   linesToColumns(lines: string[][]): string {
     const widths: number[] = []
     for (let i = 0; lines[0] && i < lines[0].length; i++) {
-      const columnRows = lines.map((line) => line[i])
+      const columnRows = lines.map((line) => line[i]!)
       widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
     }
     const paddedLines = lines
       .map((line) => {
         return line
           .map((col, index) => {
-            return `${col}${' '.repeat(widths[index] - output.unstyled(col).length)}`
+            return `${col}${' '.repeat(widths[index]! - output.unstyled(col).length)}`
           })
           .join('   ')
           .trimEnd()

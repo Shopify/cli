@@ -49,7 +49,7 @@ export async function downloadRepository({
     ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
   }
   try {
-    await git(simpleGitOptions).clone(repository, destination, options)
+    await git(simpleGitOptions).clone(repository!, destination, options)
   } catch (err) {
     if (err instanceof Error) {
       const abortError = new Abort(err.message)

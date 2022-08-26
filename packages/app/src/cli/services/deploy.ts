@@ -52,7 +52,7 @@ export const deploy = async (options: DeployOptions) => {
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {
       return {
-        uuid: identifiers.extensions[extension.localIdentifier],
+        uuid: identifiers.extensions[extension.localIdentifier]!,
         config: JSON.stringify(await configFor(extension, app)),
         context: '',
       }

@@ -55,7 +55,7 @@
     "download": "8.0.0"
   },
   "devDependencies": {
-    "vitest": "^0.17.1",
+    "vitest": "^0.22.1",
     "@types/download": "8.0.0"
   },
   "engine-strict": true,
