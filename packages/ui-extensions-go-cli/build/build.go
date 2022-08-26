@@ -33,7 +33,7 @@ func Build(extension core.Extension, report ResultHandler) {
 
 	output, err := command.CombinedOutput()
 	if err != nil {
-		report(Result{false, err.Error(), extension})
+		report(Result{false, string(output), extension})
 		return
 	}
 
