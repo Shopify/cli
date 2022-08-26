@@ -1,15 +1,15 @@
 {
-    "root": "packages/cli-main",
-    "sourceRoot": "packages/cli-main/src",
+    "root": "packages/cli-polaris",
+    "sourceRoot": "packages/cli-polaris/src",
     "projectType": "library",
-    "implicitDependencies": ["app", "theme", "cli-hydrogen", "cli-polaris"],
-    "tags": ["scope:cli"],
+    "implicitDependencies": [],
+    "tags": ["scope:feature"],
     "targets": {
       "clean": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn rimraf dist/",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       },
       "build": {
@@ -18,28 +18,29 @@
         "inputs": ["{projectRoot}/src"],
         "options": {
           "command": "yarn tsc -b ./tsconfig.build.json",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn eslint \"src/**/*.ts\"",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn eslint 'src/**/*.ts' --fix",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       },
       "test": {
         "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
         "options": {
           "command": "yarn vitest run",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       },
       "test:watch": {
@@ -47,14 +48,14 @@
         "dependsOn": ["^build"],
         "options": {
           "command": "yarn vitest watch",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn tsc --noEmit",
-          "cwd": "packages/cli-main"
+          "cwd": "packages/cli-polaris"
         }
       }
     }

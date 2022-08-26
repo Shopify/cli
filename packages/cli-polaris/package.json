@@ -1,0 +1,53 @@
+{
+  "name": "@shopify/cli-polaris",
+  "version": "3.8.0",
+  "private": false,
+  "description": "Commands for managing Polaris in Shopify apps",
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "homepage": "https://github.com/shopify/cli#readme",
+  "type": "module",
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "dependencies": {
+    "@oclif/core": "1.9.2",
+    "@shopify/cli-kit": "3.8.0"
+  },
+  "devDependencies": {
+    "vitest": "^0.22.1",
+    "vite": "^2.9.9"
+  },
+  "engine-strict": true,
+  "engines": {
+    "node": ">=14.13.1"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "oclif": {
+    "commands": "dist/cli/commands"
+  }
+}
