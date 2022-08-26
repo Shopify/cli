@@ -1,4 +1,4 @@
-import {err, mapError, ok, valueOrThrow} from './result.js'
+import {err, ok} from './result.js'
 import {describe, expect, it} from 'vitest'
 
 describe('ok', () => {
@@ -7,75 +7,46 @@ describe('ok', () => {
     const result = ok(123)
 
     // Then
-    expect(result.ok).toEqual(true)
-    if (result.ok) {
-      expect(result.value).toEqual(123)
-    }
+    expect(result.isOk()).toEqual(true)
+    expect(result.valueOrThrow()).toEqual(123)
   })
 })
 
 describe('err', () => {
-  it('create err without error', () => {
-    // When
-    const result = err()
-
-    // Then
-    expect(result.ok).toEqual(false)
-    if (!result.ok) {
-      expect(result.error).toEqual(new Error('Unknown error'))
-    }
-  })
-
-  it('create err with string', () => {
-    // When
-    const result = err('Custom error string')
-
-    // Then
-    expect(result.ok).toEqual(false)
-    if (!result.ok) {
-      expect(result.error).toEqual(new Error('Custom error string'))
-    }
-  })
-
   it('create err with en Error', () => {
     // When
     const result = err(new Error('Custom error object'))
 
     // Then
-    expect(result.ok).toEqual(false)
-    if (!result.ok) {
-      expect(result.error).toEqual(new Error('Custom error object'))
-    }
+    expect(result.isErr()).toEqual(true)
+    expect(() => result.valueOrThrow()).toThrow(new Error('Custom error object'))
   })
 })
 
 describe('valueOrThrow', () => {
   it('when ok result should return value', () => {
     // When
-    const result = valueOrThrow(ok(123))
+    const result = ok(123).valueOrThrow()
 
     // Then
     expect(result).toEqual(123)
   })
 
-  it('when err result and no alternative error to throw should throw err result', () => {
+  it('when err result should throw err result', () => {
     // When
-    const result = () => valueOrThrow(err('custom error'))
+    const result = err(new Error('custom error'))
 
     // Then
-    expect(result).toThrow(new Error('custom error'))
+    expect(() => result.valueOrThrow()).toThrow(new Error('custom error'))
   })
 })
 
 describe('map', () => {
   it('when ok result should return value', () => {
     // When
-    const result = mapError(err('Original error'), () => new Error('Mapped error'))
+    const result = err(new Error('Original error')).mapError(() => new Error('Mapped error'))
 
     // Then
-    expect(result.ok).toEqual(false)
-    if (!result.ok) {
-      expect(result.error).toEqual(new Error('Mapped error'))
-    }
+    expect(() => result.valueOrThrow()).toThrow('Mapped error')
   })
 })

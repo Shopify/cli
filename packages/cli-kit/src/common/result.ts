@@ -1,42 +1,46 @@
-export type Result<T, TError = Error> = {ok: true; value: T} | {ok: false; error: TError}
+/* eslint-disable node/handle-callback-err */
+export type Result<T, TError> = Ok<T, TError> | Err<T, TError>
 
-export type ResultAsync<T, TError = Error> = Promise<Result<T, TError>>
+export const ok = <T, TError = never>(value: T): Ok<T, TError> => new Ok(value)
 
-export const ok = <T, TError = Error>(value: T): Result<T, TError> => {
-  return {ok: true, value}
-}
+export const err = <T = never, TError = unknown>(err: TError): Err<T, TError> => new Err(err)
 
-const UnknownError = new Error('Unknown error')
+export class Ok<T, TError> {
+  constructor(readonly value: T) {}
 
-export const err = <T = never>(error?: unknown): Result<T, Error> => {
-  let errorToUse: Error
-  if (!error) {
-    errorToUse = UnknownError
-  } else if (error instanceof Error) {
-    errorToUse = error
-  } else if (typeof error === 'string') {
-    errorToUse = new Error(error)
-  } else {
-    errorToUse = UnknownError
-  }
-  return {ok: false, error: errorToUse}
-}
-
-export const valueOrThrow = <T, TError = Error>(result: Result<T, TError>): T => {
-  if (!result.ok) {
-    throw result.error
+  isOk() {
+    return true
   }
 
-  return result.value
-}
-
-export const mapError = <T, TError, TMappedError>(
-  result: Result<T, TError>,
-  mapper: (error: TError) => TMappedError,
-): Result<T, Error> => {
-  if (!result.ok) {
-    return err(mapper(result.error))
+  isErr() {
+    return false
   }
 
-  return result
+  valueOrThrow(): T {
+    return this.value
+  }
+
+  mapError<TMappedError>(mapper: (error: TError) => TMappedError): Result<T, TError> {
+    return ok(this.value)
+  }
+}
+
+export class Err<T, TError> {
+  constructor(readonly error: TError) {}
+
+  isOk() {
+    return false
+  }
+
+  isErr() {
+    return true
+  }
+
+  valueOrThrow(): T {
+    throw this.error
+  }
+
+  mapError<TMappedError>(mapper: (error: TError) => TMappedError): Result<T, TMappedError> {
+    return err(mapper(this.error))
+  }
 }
