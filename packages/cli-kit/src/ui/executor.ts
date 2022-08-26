@@ -88,7 +88,7 @@ export function groupAndMapChoices(choices: QuestionChoiceType[]) {
   }, initialGroups)
 
   const sortedGroups = groups.sort((g1, g2) => g1.order - g2.order)
-  const grouped = sortedGroups.length > 1 || sortedGroups[0].order !== Number.MAX_SAFE_INTEGER
+  const grouped = sortedGroups.length > 1 || sortedGroups[0]!.order !== Number.MAX_SAFE_INTEGER
 
   // Mapped the group with a list of extensions to a list of inquirer choices including group separators
   return sortedGroups.flatMap((group) => {
