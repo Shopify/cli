@@ -15,10 +15,10 @@ describe('extensionServerReducer()', () => {
   it('connects to server', () => {
     const app = mockApp()
     const extension = mockExtension()
-    const action1 = createConnectedAction({app, extensions: [extension], store: 'test-store.com'})
-    const firstState = extensionServerReducer(INITIAL_STATE, action1)
+    const action = createConnectedAction({app, extensions: [extension], store: 'test-store.com'})
+    const state = extensionServerReducer(INITIAL_STATE, action)
 
-    expect(firstState).toStrictEqual({
+    expect(state).toStrictEqual({
       app,
       extensions: [extension],
       store: 'test-store.com',
@@ -29,21 +29,22 @@ describe('extensionServerReducer()', () => {
     const app = mockApp()
     const extension = mockExtension()
     const action1 = createConnectedAction({app, extensions: [extension], store: 'test-store.com'})
-    const firstState = extensionServerReducer(INITIAL_STATE, action1)
+    const initialState = extensionServerReducer(INITIAL_STATE, action1)
 
-    expect(firstState).toStrictEqual({
+    expect(initialState).toStrictEqual({
       app,
       extensions: [extension],
       store: 'test-store.com',
     })
 
-    const currentExtension = firstState.extensions[0]
+    const currentExtension = initialState.extensions[0]
     const newExtension = {...currentExtension, uuid: 'new-uuid'}
-    const action2 = createConnectedAction({app, extensions: [newExtension], store: 'test-store.com'})
-    const secondState = extensionServerReducer(firstState, action2)
+    const newApp = {...app, id: 'new-id'}
+    const action2 = createConnectedAction({app: newApp, extensions: [newExtension], store: 'test-store.com'})
+    const secondState = extensionServerReducer(initialState, action2)
 
     expect(secondState).toStrictEqual({
-      app,
+      app: newApp,
       extensions: [newExtension],
       store: 'test-store.com',
     })

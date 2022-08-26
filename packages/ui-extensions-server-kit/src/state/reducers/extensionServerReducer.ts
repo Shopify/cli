@@ -13,10 +13,16 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
         )
         return extension
       })
+
+      let stateApp = {...(state.app ?? {})}
+      let actionPayloadApp = {...(action.payload.app ?? {})}
+      console.log({stateApp})
+      console.log({actionPayloadApp})
+
       return {
         ...state,
         store: action.payload.store,
-        app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
+        app: action.payload.app,
         extensions,
       } as ExtensionServerState
     }
