@@ -2,6 +2,8 @@ import {colors} from '../../node/colors.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
 import inquirer from 'inquirer'
+// eslint-disable-next-line import/extensions
+import Paginator from 'inquirer/lib/utils/paginator.js'
 import {Interface} from 'readline'
 
 export class CustomAutocomplete extends AutocompletePrompt {
@@ -10,6 +12,9 @@ export class CustomAutocomplete extends AutocompletePrompt {
   constructor(questions: inquirer.Question<inquirer.Answers>, rl: Interface, answers: inquirer.Answers) {
     super(questions, rl, answers)
     this.isAutocomplete = true
+    this.paginator = new Paginator(this.screen, {
+      isInfinite: false,
+    })
   }
 
   protected render(error?: string) {
@@ -45,7 +50,7 @@ export class CustomAutocomplete extends AutocompletePrompt {
         realIndexPosition += name ? name.split('\n').length : 0
         return true
       })
-      bottomContent += this.paginator.paginate(choicesStr, realIndexPosition, 10)
+      bottomContent += this.paginator.paginate(choicesStr, realIndexPosition, this.isAutocomplete ? 10 : 500)
     } else {
       content += this.rl.line
       bottomContent += `  ${colors.magenta('No matching choices')}`
@@ -77,7 +82,11 @@ function listRender(choices: DistinctChoice, pointer: number, searchToken?: stri
   choices.forEach((choice, i: number) => {
     if (choice.type === 'separator') {
       separatorOffset++
-      output += `  ${choice}\n`
+      if (choice.line.includes('──────────────')) {
+        output += `\n`
+      } else {
+        output += `  ${colors.dim.underline(choice)}\n`
+      }
       return
     }
 

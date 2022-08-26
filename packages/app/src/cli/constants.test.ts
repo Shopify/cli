@@ -11,7 +11,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'web pixel',
+      humanKey: 'Web pixel',
     })
   })
 
@@ -24,7 +24,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'post-purchase UI',
+      humanKey: 'Post-purchase UI',
       helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
     })
   })
@@ -38,7 +38,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'theme app extension',
+      humanKey: 'Theme app extension',
     })
   })
 
@@ -51,7 +51,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'checkout UI',
+      humanKey: 'Checkout UI',
     })
   })
 
@@ -64,7 +64,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'subscription UI',
+      humanKey: 'Subscription UI',
     })
   })
 
@@ -77,7 +77,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'product discount',
+      humanKey: 'Function - Product discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
     })
   })
@@ -91,7 +91,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'order discount',
+      humanKey: 'Function - Order discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
     })
   })
@@ -105,7 +105,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'shipping discount',
+      humanKey: 'Function - Shipping discount',
       helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
     })
   })
@@ -119,7 +119,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'payment customization',
+      humanKey: 'Payment customization',
     })
   })
 
@@ -132,7 +132,7 @@ describe('get extension type output configuration', () => {
 
     // Then
     expect(extensionOutputConfig).toEqual({
-      humanKey: 'delivery option presenter',
+      humanKey: 'Delivery option presenter',
     })
   })
 })

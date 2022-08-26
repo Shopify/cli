@@ -23,21 +23,21 @@ describe('after extension command finishes correctly', () => {
   it('displays a confirmation message with only the human-facing name', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'checkout UI',
+      humanKey: 'Checkout UI',
     })
 
     // When
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot('"\n  To find your extension, remember to cd extensions/name\n"')
   })
 
   it('displays a confirmation message with human-facing name and help url', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'checkout UI',
+      humanKey: 'Checkout UI',
       helpURL: 'http://help.com',
     })
 
@@ -46,7 +46,7 @@ describe('after extension command finishes correctly', () => {
 
     // Then
 
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
       `"\n  To find your extension, remember to cd extensions/name\n  For more details, see the docs (​http://help.com​) ✨\n"`,
     )
@@ -55,7 +55,7 @@ describe('after extension command finishes correctly', () => {
   it('displays a confirmation message with human-facing name and additional help', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'checkout UI',
+      humanKey: 'Checkout UI',
       additionalHelp: 'Additional help',
     })
 
@@ -63,7 +63,7 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
       `"\n  To find your extension, remember to cd extensions/name\n  Additional help\n"`,
     )
@@ -72,7 +72,7 @@ describe('after extension command finishes correctly', () => {
   it('displays a confirmation message with human-facing name , help url and additional help', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'checkout UI',
+      humanKey: 'Checkout UI',
       helpURL: 'http://help.com',
       additionalHelp: 'Additional help',
     })
@@ -81,7 +81,7 @@ describe('after extension command finishes correctly', () => {
     await AppScaffoldExtension.run()
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your checkout UI extension was added to your project!"')
+    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
       `"\n  To find your extension, remember to cd extensions/name\n  Additional help\n  For more details, see the docs (​http://help.com​) ✨\n"`,
     )
