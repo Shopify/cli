@@ -13,6 +13,8 @@
     $background-hover: #4e4f51;
     cursor: pointer;
 
+    // The complexity in this hover state is necessary to achieve the desired design of having spacing between the row's borders and having rounded corners.
+    // For more details view the "Why is this so complex and what was tried to get to this solution?" section in https://github.com/Shopify/cli/pull/378
     td {
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0rem' width='calc(100%)' height='calc(100% - 0.4rem)' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
 
