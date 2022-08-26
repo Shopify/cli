@@ -25,7 +25,7 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  it('replaces existing extensions when connecting twice', () => {
+  it('replaces existing app and extensions when connecting twice', () => {
     const app = mockApp()
     const extension = mockExtension()
     const action1 = createConnectedAction({app, extensions: [extension], store: 'test-store.com'})
