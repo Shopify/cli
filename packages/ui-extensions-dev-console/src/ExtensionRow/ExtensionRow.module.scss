@@ -12,7 +12,18 @@
   &:hover {
     $background-hover: #4e4f51;
     cursor: pointer;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% - 0.6rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
+
+    td {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0rem' width='calc(100%)' height='calc(100% - 0.4rem)' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
+
+      &:first-child {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='0.3rem' width='calc(100% + 5rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
+      }
+
+      &:last-child {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='-0.5rem' width='calc(100% + 0.25rem)' height='calc(100% - 0.4rem)' rx='5' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>");
+      }
+    }
 
     .ActionSet {
       opacity: 1;
@@ -27,7 +38,7 @@
 .ActionSet {
   vertical-align: middle;
   opacity: 0;
-} 
+}
 
 .ForceVisible.ActionSet,
 .ForceVisible .ActionSet {
