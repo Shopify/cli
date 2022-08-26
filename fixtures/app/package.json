@@ -9,7 +9,7 @@
     "build": "../shopify app build",
     "dev": "../shopify app dev",
     "push": "../shopify app push",
-    "scaffold": "../shopify app scaffold",
+    "generate": "../shopify app generate",
     "deploy": "../shopify app deploy",
     "web-env": "../shopify app web-env"
   },

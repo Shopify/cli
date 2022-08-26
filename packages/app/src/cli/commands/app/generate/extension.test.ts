@@ -2,7 +2,7 @@
 import AppScaffoldExtension from './extension.js'
 import {ExternalExtensionTypeNames, getExtensionOutputConfig} from '../../../constants.js'
 import {load as loadApp} from '../../../models/app/loader.js'
-import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
+import scaffoldExtensionPrompt from '../../../prompts/generate/extension.js'
 import scaffoldExtensionService from '../../../services/scaffold/extension.js'
 import {testApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'

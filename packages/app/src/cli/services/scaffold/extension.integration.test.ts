@@ -19,7 +19,7 @@ beforeEach(() => {
 
 describe('initialize a extension', () => {
   it(
-    'successfully scaffolds the extension when no other extensions exist',
+    'successfully generates the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         vi.spyOn(output, 'info').mockImplementation(() => {})
@@ -27,15 +27,15 @@ describe('initialize a extension', () => {
         const extensionType = 'checkout_post_purchase'
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
-        const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]!
-        expect(scaffoldedExtension.configuration.name).toBe(name)
+        const generatedExtension = (await loadApp(tmpDir)).extensions.ui[0]!
+        expect(generatedExtension.configuration.name).toBe(name)
       })
     },
     30 * 1000,
   )
 
   it(
-    'successfully scaffolds the extension when another extension exists',
+    'successfully generates the extension when another extension exists',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         const name1 = 'my-ext-1'
@@ -59,10 +59,10 @@ describe('initialize a extension', () => {
         expect(addDependenciesCalls.length).toEqual(2)
 
         const loadedApp = await loadApp(tmpDir)
-        const scaffoldedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
+        const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
           lhs.directory < rhs.directory ? -1 : 1,
         )[1]!
-        expect(scaffoldedExtension2.configuration.name).toBe(name2)
+        expect(generatedExtension2.configuration.name).toBe(name2)
 
         const firstDependenciesCallArgs = addDependenciesCalls[0]!
         expect(firstDependenciesCallArgs[0]).toEqual([
@@ -85,7 +85,7 @@ describe('initialize a extension', () => {
   )
 
   it(
-    'errors when trying to re-scaffold an existing extension',
+    'errors when trying to re-generate an existing extension',
     async () => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-1'

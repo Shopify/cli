@@ -70,9 +70,9 @@ commands:
       test:
         desc: Test the fixture project
         run: yarn --cwd fixtures/app test
-      scaffold:
-        desc: Scaffold in the fixture project
-        run: yarn --cwd fixtures/app scaffold
+      generate:
+        desc: Generate in the fixture project
+        run: yarn --cwd fixtures/app generate
       web-env:
         desc: Show and/or update the env file in the fixture project
         run: yarn --cwd fixtures/app web-env

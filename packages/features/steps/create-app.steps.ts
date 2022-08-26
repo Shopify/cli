@@ -38,7 +38,7 @@ When(
 )
 
 Then(
-  /I have an app named (.+) scaffolded from the template with (.+) as package manager/,
+  /I have an app named (.+) generated from the template with (.+) as package manager/,
   {},
   async function (appName: string, packageManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {

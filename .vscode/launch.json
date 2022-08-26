@@ -48,12 +48,12 @@
       {
         "type": "node",
         "request": "launch",
-        "name": "shopify app scaffold extension",
+        "name": "shopify app generate extension",
         "runtimeExecutable": "yarn",
         "runtimeArgs": [
           "shopify",
           "app",
-          "scaffold",
+          "generate",
           "extension",
           "--path=${input:appDir}",
           "--name=${input:extensionName}",
