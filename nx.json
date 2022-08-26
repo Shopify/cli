@@ -6,7 +6,9 @@
       "runner": "@nrwl/workspace/tasks-runners/default",
       "options": {
         "cacheableOperations": [
-        ]
+          "build"
+        ],
+        "runtimeCacheInputs": ["node -v", "yarn tsc --version", "go version"]
       }
     }
   },

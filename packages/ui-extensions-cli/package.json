@@ -15,7 +15,7 @@
   "scripts": {
     "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
     "clean": "nx clean",
-    "build": "nx type-check",
+    "build": "nx build",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix"
   },

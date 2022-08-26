@@ -27,8 +27,10 @@
           "cwd": "packages/ui-extensions-cli"
         }
       },
-      "type-check": {
+      "build": {
         "executor": "nx:run-commands",
+        "outputs": ["dist"],
+        "inputs": ["{projectRoot}/src"],
         "options": {
           "command": "yarn tsc",
           "cwd": "packages/ui-extensions-cli"
