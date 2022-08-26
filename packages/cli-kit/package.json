@@ -53,6 +53,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx test",
+    "test:watch": "nx test:watch",
     "type-check": "nx type-check"
   },
   "eslintConfig": {

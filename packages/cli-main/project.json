@@ -40,6 +40,14 @@
           "cwd": "packages/cli-main"
         }
       },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/cli-main"
+        }
+      },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {

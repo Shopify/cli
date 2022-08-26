@@ -26,7 +26,8 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "nx test"
+    "test": "nx test",
+    "test:watch": "nx test:watch"
   },
   "peerDependencies": {
     "react": "16.14.0"

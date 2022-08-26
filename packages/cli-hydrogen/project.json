@@ -40,6 +40,14 @@
           "cwd": "packages/cli-hydrogen"
         }
       },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/cli-hydrogen"
+        }
+      },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {

@@ -9,7 +9,8 @@
     "lint:fix": "nx lint:fix",
     "serve": "vite preview",
     "start": "nx start",
-    "test": "nx test"
+    "test": "nx test",
+    "test:watch": "nx test:watch"
   },
   "dependencies": {
     "@shopify/polaris": "^6.6.0",

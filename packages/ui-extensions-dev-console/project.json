@@ -49,6 +49,14 @@
           "command": "yarn vitest run",
           "cwd": "packages/ui-extensions-dev-console"
         }
+      },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
       }
     }
 }
