@@ -38,4 +38,4 @@ How do we know this change was effective? Please choose one:
 ### Checklist
 
 - [ ] I've considered possible cross-platform impacts (Mac, Linux, Windows)
-- [ ] I've considered possible [documentation](https://shopify.dev/apps/tools/cli) changes
+- [ ] I've considered possible [documentation](https://shopify.dev) changes
