@@ -1,7 +1,7 @@
 import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 import {cli} from '@shopify/cli-kit'
-import {run as runMigrator} from '@shopify/polaris-migrator'
+// import {run as runMigrator} from '@shopify/polaris-migrator'
 
 export default class Migrate extends Command {
   static description = 'Runs a Polaris migration on the current project'
@@ -39,6 +39,6 @@ export default class Migrate extends Command {
   async run() {
     const {args, flags} = await this.parse(Migrate)
     const {migration, path} = args
-    await runMigrator(migration, path, flags)
+    // await runMigrator(migration, path, flags)
   }
 }

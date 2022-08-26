@@ -112,7 +112,6 @@
     "node-fetch": "^3.2.4",
     "open": "^8.4.0",
     "pathe": "0.2.0",
-    "prettier": "^2.6.2",
     "semver": "^7.3.6",
     "simple-git": "^3.5.0",
     "source-map-support": "^0.5.21",
