@@ -22,16 +22,21 @@ export const err = <T = never>(error?: unknown): Result<T, Error> => {
   return {ok: false, error: errorToUse}
 }
 
-export const valueOrThrow = <T, TError = Error>(result: Result<T, TError>, error?: Error): T => {
+export const valueOrThrow = <T, TError = Error>(result: Result<T, TError>): T => {
   if (!result.ok) {
-    if (error) {
-      throw error
-    } else if (result.error) {
-      throw result.error
-    } else {
-      throw UnknownError
-    }
+    throw result.error
   }
 
   return result.value
+}
+
+export const mapError = <T, TError, TMappedError>(
+  result: Result<T, TError>,
+  mapper: (error: TError) => TMappedError,
+): Result<T, Error> => {
+  if (!result.ok) {
+    return err(mapper(result.error))
+  }
+
+  return result
 }

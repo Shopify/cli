@@ -1,4 +1,4 @@
-import {err, ok, valueOrThrow} from './result.js'
+import {err, mapError, ok, valueOrThrow} from './result.js'
 import {describe, expect, it} from 'vitest'
 
 describe('ok', () => {
@@ -65,12 +65,17 @@ describe('valueOrThrow', () => {
     // Then
     expect(result).toThrow(new Error('custom error'))
   })
+})
 
-  it('when err result and an alternative error is used should throw alternative error', () => {
+describe('map', () => {
+  it('when ok result should return value', () => {
     // When
-    const result = () => valueOrThrow(err('custom error'), new Error('alternative error'))
+    const result = mapError(err('Original error'), () => new Error('Mapped error'))
 
     // Then
-    expect(result).toThrow(new Error('alternative error'))
+    expect(result.ok).toEqual(false)
+    if (!result.ok) {
+      expect(result.error).toEqual(new Error('Mapped error'))
+    }
   })
 })
