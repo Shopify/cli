@@ -1,7 +1,7 @@
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
-import {err, ok, ResultAsync} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -14,8 +14,8 @@ export async function automaticMatchmaking(
   localExtensions: Extension[],
   remoteRegistrations: ExtensionRegistration[],
   identifiers: {[localIdentifier: string]: string},
-): ResultAsync<MatchResult> {
-  const invalidEnvironmentError = err('invalid-environment')
+): Promise<Result<MatchResult, Error>> {
+  const invalidEnvironmentError = err(new Error('invalid-environment'))
 
   if (remoteRegistrations.length > localExtensions.length) {
     return invalidEnvironmentError

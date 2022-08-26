@@ -7,7 +7,7 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension} from '../dev/create-extension.js'
 import {error, output, session, ui} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {mapError, valueOrThrow} from '@shopify/cli-kit/common/result'
+import {} from '@shopify/cli-kit/common/result'
 
 const DeployError = (appName: string, packageManager: PackageManager) => {
   return new error.Abort(
@@ -65,9 +65,9 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     }
   }
 
-  const match = valueOrThrow(
-    mapError(await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers), () => GenericError()),
-  )
+  const match = (await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers))
+    .mapError(() => GenericError())
+    .valueOrThrow()
 
   let validMatches = match.identifiers ?? {}
   const validMatchesById: {[key: string]: string} = {}
