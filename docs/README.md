@@ -18,10 +18,11 @@ our biggest decisions.
 * [FAQ](./faq.md)
 
 ## Decision Record
-* [January 2022 - TypeScript rewrite](./decision-record/2022_01-TypeScript-rewrite.md)
-* [January 2022 - Unified dependency graph](./decision-record/2022_01-unified-dependency-graph.md)
-* [February 2022 - ESM, Rollup, and Vitest](./decision-record/2022_02-ESM,-Rollup,-and-Vitest.md)
-* [February 2022 - Incremental builds with Nx](./decision-record/2022_02-Incremental-builds-with-Nx.md)
-* [March 2022 - Configuration source of truth](./decision-record/2022_03-Configuration-source-of-truth.md)
-* [March 2022 - Lazy downloading a fixed version of the extension binary](./decision-record/2022_03-Lazy-downloading-a-fixed-version-of-the-extension-binary.md)
+* [August 2022 - Automating via Nx](./decision-record/2022_08-automation-via-nx.md)
 * [May 2022 - IDs' persistence](./decision-record/2022_05-IDs'-persistence.md)
+* [March 2022 - Lazy downloading a fixed version of the extension binary](./decision-record/2022_03-Lazy-downloading-a-fixed-version-of-the-extension-binary.md)
+* [March 2022 - Configuration source of truth](./decision-record/2022_03-Configuration-source-of-truth.md)
+* [February 2022 - Incremental builds with Nx](./decision-record/2022_02-Incremental-builds-with-Nx.md)
+* [February 2022 - ESM, Rollup, and Vitest](./decision-record/2022_02-ESM,-Rollup,-and-Vitest.md)
+* [January 2022 - Unified dependency graph](./decision-record/2022_01-unified-dependency-graph.md)
+* [January 2022 - TypeScript rewrite](./decision-record/2022_01-TypeScript-rewrite.md)

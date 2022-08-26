@@ -55,9 +55,9 @@ commands:
   lint:fix:
     desc: 'Fix the lint issues in the project'
     run: yarn run lint:fix:affected
-  tsc:
+  type-check:
     desc: 'Type-check the project'
-    run: yarn run tsc:affected
+    run: yarn run type-check:affected
   fixture:
     desc: 'Commands to interact with the fixture project'
     subcommands:

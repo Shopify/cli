@@ -22,13 +22,12 @@
     }
   },
   "scripts": {
-    "build": "yarn build:code && yarn build:types",
-    "build:code": "vite build --config vite.config.ts",
-    "build:types": "tsc --emitDeclarationOnly",
-    "clean": "rimraf dist/",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest"
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
   },
   "peerDependencies": {
     "react": "16.14.0"

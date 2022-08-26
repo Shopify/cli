@@ -3,5 +3,37 @@
     "root": "packages/ui-extensions-test-utils",
     "sourceRoot": "packages/ui-extensions-test-utils/src",
     "projectType": "library",
-    "tags": ["scope:feature", "scope:ui-extensions"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn rimraf dist/",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "outputs": ["dist"],
+        "inputs": ["{projectRoot}/src"],
+        "options": {
+          "command": "yarn tsc",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\" --fix",
+          "cwd": "packages/ui-extensions-test-utils"
+        }
+      }
+    }
 }

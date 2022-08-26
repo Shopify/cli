@@ -114,7 +114,7 @@ jobs:
         run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=type-check
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
         run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
@@ -123,7 +123,7 @@ jobs:
         run: yarn nx run features:test
 
   pr-platform-agnostic:
-    name: Building, linting, and type-checking with Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
@@ -131,6 +131,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ["18.7.0"]
+        target: ['build', 'type-check', 'lint']
     steps:
       - uses: actions/checkout@v2
         with:
@@ -143,13 +144,6 @@ jobs:
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-      - name: Set Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
-          bundler-cache: true
-      - name: Install Bundler
-        run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
@@ -168,12 +162,8 @@ jobs:
         run: yarn config set network-timeout 300000
       - name: Install dependencies
         run: yarn install --ignore-engines
-      - name: Build
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
-      - name: Type-check
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=tsc
-      - name: Lint
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
+      - name: ${{ matrix.target }}
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -224,7 +214,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Unit tests
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
+        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
