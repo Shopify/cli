@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-go-cli
 
+## 3.9.0
+
+### Minor Changes
+
+- b97f2228: Fixed missing detailed error console output on extension build failure
+
 ## 3.8.0
 
 ### Minor Changes

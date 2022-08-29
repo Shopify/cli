@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.9.0
+
+### Minor Changes
+
+- c7137a3b: Grouping extension types in scaffold select type prompt
+
+### Patch Changes
+
+- 3b94965e: Be more consistent in how we refer to the Partners Dashboard
+- 4a987a07: Displayed app URL more clearly in console output
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+  - @shopify/shopify-cli-extensions@3.9.0
+
 ## 3.8.0
 
 ### Minor Changes
