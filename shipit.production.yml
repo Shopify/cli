@@ -11,7 +11,7 @@ dependencies:
 deploy:
   override:
     - PATHGO=/tmp/go/bin bin/release.js
-    - npm_config_loglevel=verbose yarn run changeset publish
+    - PATH=$PATH:/tmp/go/bin npm_config_loglevel=verbose yarn run changeset publish
     - ./bin/package.js
   post:
     - yarn run update-bugsnag
