@@ -5,9 +5,8 @@ import {
   CreateDeploymentQuery,
 } from './graphql/create_deployment.js'
 import {WebPageNotAvailable} from './error.js'
-import {api, http} from '@shopify/cli-kit'
+import {api, http, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
-import {createReadStream} from 'node:fs'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const headers = await api.buildHeaders(config.deploymentToken)
@@ -43,7 +42,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
   const formData = http.formData()
   formData.append('operations', buildOperationsString(deploymentID))
   formData.append('map', JSON.stringify({'0': ['variables.file']}))
-  formData.append('0', createReadStream(distZipPath), {filename: 'upload_dist'})
+  formData.append('0', file.createReadStream(distZipPath), {filename: 'upload_dist'})
 
   delete headers['Content-Type']
   headers = {

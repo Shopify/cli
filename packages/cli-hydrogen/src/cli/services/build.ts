@@ -8,51 +8,48 @@ interface DevOptions {
   targets: {[key in Target]: boolean | string}
   base?: string
   assetBaseURL?: string
-  returnTasks?: boolean
 }
 
-async function build({directory, targets, base, assetBaseURL, returnTasks}: DevOptions) {
+export function buildTaskList({directory, targets, base, assetBaseURL}: DevOptions): ui.ListrTask[] {
   const commonConfig = {base, root: directory}
 
-  const tasks: ui.ListrTask[] = Object.entries(targets)
+  return Object.entries(targets)
     .filter(([_, value]) => value)
-    .map(([key, value]) => {
-      return {
-        title: `Building ${key} code`,
-        task: async (_, task) => {
-          if (key === 'worker') {
-            process.env.WORKER = 'true'
-          }
-          if (assetBaseURL) {
-            process.env.HYDROGEN_ASSET_BASE_URL = assetBaseURL
-          }
+    .map(([key, value]) => ({
+      title: `Building ${key} code`,
+      task: async (_, task) => {
+        if (key === 'worker') {
+          process.env.WORKER = 'true'
+        }
+        if (assetBaseURL) {
+          process.env.HYDROGEN_ASSET_BASE_URL = assetBaseURL
+        }
 
-          try {
-            await viteBuild({
-              ...commonConfig,
-              build: {
-                outDir: `dist/${key}`,
-                ssr: typeof value === 'string' ? value : undefined,
-                manifest: key === 'client',
-              },
-            })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } catch (error: any) {
-            const abortError = new kitError.Abort(error.message)
-            abortError.stack = error.stack
-            throw abortError
-          }
+        try {
+          await viteBuild({
+            ...commonConfig,
+            build: {
+              outDir: `dist/${key}`,
+              ssr: typeof value === 'string' ? value : undefined,
+              manifest: key === 'client',
+            },
+          })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+          const abortError = new kitError.Abort(error.message)
+          abortError.stack = error.stack
+          throw abortError
+        }
 
-          task.title = `Built ${key} code`
-        },
-      }
-    })
+        task.title = `Built ${key} code`
+      },
+    }))
+}
 
-  if (returnTasks) return tasks
+export async function build(options: DevOptions) {
+  const tasks = await buildTaskList(options)
 
   const list = ui.newListr(tasks, {rendererSilent: environment.local.isUnitTest()})
 
   await list.run()
 }
-
-export default build

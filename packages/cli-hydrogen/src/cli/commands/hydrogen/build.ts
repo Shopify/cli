@@ -1,4 +1,4 @@
-import buildService from '../../services/build.js'
+import {build} from '../../services/build.js'
 import {hydrogenFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {path, cli} from '@shopify/cli-kit'
@@ -49,6 +49,6 @@ export default class Build extends Command {
       node: flags.target === 'node' ? entry : false,
     }
 
-    await buildService({...flags, directory, targets})
+    await build({...flags, directory, targets})
   }
 }

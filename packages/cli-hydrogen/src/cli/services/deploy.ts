@@ -1,6 +1,6 @@
 import {DeployConfig, ReqDeployConfig} from './deploy/types.js'
-import {createDeployment, healthCheck, uploadDeployment} from './deploy/deployer.js'
-import buildService from './build.js'
+import {createDeployment, healthCheck, uploadDeployment} from './deploy/upload.js'
+import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
 import {environment, system, ui} from '@shopify/cli-kit'
 
@@ -40,7 +40,7 @@ export async function deployToOxygen(_config: DeployConfig) {
     {
       title: '🛠 Building project',
       task: async (ctx, task) => {
-        const subTasks = await buildService({
+        const subTasks = buildTaskList({
           directory: ctx.config.path,
           targets: {
             client: true,
@@ -48,17 +48,21 @@ export async function deployToOxygen(_config: DeployConfig) {
             node: false,
           },
           assetBaseURL: ctx.assetBaseURL,
-          returnTasks: true,
         })
-        task.newListr(subTasks!)
-        task.title = '🛠 Project built'
+
+        return task.newListr(subTasks)
       },
     },
     {
       title: '🚀 Uploading deployment files',
       task: async (ctx, task) => {
         ctx.previewURL = await uploadDeployment(ctx.config, ctx.deploymentID)
+        task.output = `Preview URL: ${ctx.previewURL}`
         task.title = '🚀 Files uploaded'
+      },
+      options: {
+        bottomBar: Infinity,
+        persistentOutput: true,
       },
       retry: 2,
     },

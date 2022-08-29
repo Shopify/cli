@@ -1,5 +1,5 @@
-import {createDeployment, healthCheck, uploadDeployment} from './deployer.js'
 import {ReqDeployConfig} from './types.js'
+import {createDeployment, healthCheck, uploadDeployment} from './upload.js'
 import {beforeEach, describe, it, expect, vi} from 'vitest'
 import {http, api} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -24,14 +24,21 @@ beforeEach(() => {
 })
 
 describe('createDeploymentStep()', () => {
-  it('makes https request', async () => {
+  it('calls DMS with proper variables and headers', async () => {
     const headers = {value: 'key'}
     const mockedRequest = vi.fn().mockResolvedValue({createDeployment: 'mock'})
     const mockedGraphqlClient = vi.fn().mockResolvedValue({request: mockedRequest})
     vi.mocked(api.buildHeaders).mockResolvedValue(headers)
-    vi.mocked<any>(http.graphqlClient).mockImplementation(mockedGraphqlClient)
+    vi.mocked(http.graphqlClient).mockImplementation(mockedGraphqlClient)
 
-    await createDeployment(defaultConfig)
+    await createDeployment({
+      ...defaultConfig,
+      commitRef: 'ref/branch',
+      commitAuthor: 'Unit Test',
+      commitSha: 'abcd1234',
+      commitMessage: 'message',
+      timestamp: '1999-01-01',
+    })
 
     expect(mockedGraphqlClient).toHaveBeenCalledOnce()
     expect(mockedGraphqlClient).toHaveBeenCalledWith({
@@ -42,18 +49,18 @@ describe('createDeploymentStep()', () => {
     expect(mockedRequest).toHaveBeenCalledOnce()
     expect(mockedRequest.mock.calls[0]?.[1]).toStrictEqual({
       input: {
-        branch: 'commitRef',
-        commitAuthor: 'commitAuthor',
-        commitHash: 'commitSha',
-        commitMessage: 'commitMessage',
-        commitTimestamp: 'timestamp',
+        branch: 'ref/branch',
+        commitAuthor: 'Unit Test',
+        commitHash: 'abcd1234',
+        commitMessage: 'message',
+        commitTimestamp: '1999-01-01',
       },
     })
   })
 })
 
 describe('uploadDeploymentStep()', async () => {
-  it('makes https request', async () => {
+  it('calls DMS with proper formData and headers', async () => {
     const deploymentId = '123'
     vi.mocked(createReadStream)
     const mockedZip = vi.fn()
@@ -63,11 +70,12 @@ describe('uploadDeploymentStep()', async () => {
     vi.mocked<any>(http.formData).mockReturnValue(formData)
     const headers = {value: 'key', 'Content-Type': 'key'}
     vi.mocked(api.buildHeaders).mockResolvedValue(headers)
+    const previewURL = 'https://preview.url'
     const dmsResponse = {
       data: {
         uploadDeployment: {
           deployment: {
-            previewURL: 'asd',
+            previewURL,
           },
         },
       },
@@ -75,20 +83,20 @@ describe('uploadDeploymentStep()', async () => {
     const mockedShopifyFetch = vi.fn().mockResolvedValue({json: vi.fn().mockResolvedValue(dmsResponse)})
     vi.mocked<any>(http.shopifyFetch).mockImplementation(mockedShopifyFetch)
 
-    await uploadDeployment(defaultConfig, deploymentId)
-
-    expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
-    expect(mockedZip).toHaveBeenCalledWith(`${defaultConfig.path}/dist`, `${defaultConfig.path}/dist/dist.zip`)
-    expect(headers).toStrictEqual({value: 'key'})
-    expect(mockedShopifyFetch).toHaveBeenCalledWith(
-      'dms',
-      `https://${defaultConfig.dmsAddress}/api/graphql/deploy/v1`,
-      {
-        method: 'POST',
-        body: formData,
-        headers,
-      },
+    const result = await uploadDeployment(
+      {...defaultConfig, path: '/unit/test', dmsAddress: 'dms.address'},
+      deploymentId,
     )
+
+    expect(result).toBe(previewURL)
+    expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
+    expect(mockedZip).toHaveBeenCalledWith('/unit/test/dist', '/unit/test/dist/dist.zip')
+    expect(headers).toStrictEqual({value: 'key'})
+    expect(mockedShopifyFetch).toHaveBeenCalledWith('dms', `https://dms.address/api/graphql/deploy/v1`, {
+      method: 'POST',
+      body: formData,
+      headers,
+    })
   })
 })
 

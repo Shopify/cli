@@ -1,6 +1,6 @@
 import {deployToOxygen} from './deploy.js'
-import {createDeployment, healthCheck, uploadDeployment} from './deploy/deployer.js'
-import buildService from './build.js'
+import {createDeployment, healthCheck, uploadDeployment} from './deploy/upload.js'
+import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
 import {DeployConfig, ReqDeployConfig} from './deploy/types.js'
 import {describe, beforeEach, it, vi, expect} from 'vitest'
@@ -24,7 +24,7 @@ const reqDeployConfig: ReqDeployConfig = {
 const mockedValidateProject = vi.fn()
 const mockedFillDeployConfig = vi.fn()
 const mockedCreateDeployment = vi.fn()
-const mockedBuildervice = vi.fn()
+const mockedBuildTaskList = vi.fn()
 const mockedUploadDeployment = vi.fn()
 const mockedHealthCheck = vi.fn()
 
@@ -32,19 +32,19 @@ beforeEach(() => {
   vi.mock('./deploy/config.js')
   vi.mocked(validateProject).mockImplementation(mockedValidateProject)
   vi.mocked(fillDeployConfig).mockImplementation(mockedFillDeployConfig)
-  vi.mock('./deploy/deployer.js')
+  vi.mock('./deployupload')
   vi.mocked(createDeployment).mockImplementation(mockedCreateDeployment)
   vi.mocked(uploadDeployment).mockImplementation(mockedUploadDeployment)
   vi.mocked(healthCheck).mockImplementation(mockedHealthCheck)
   vi.mock('./build.js')
-  vi.mocked(buildService).mockImplementation(mockedBuildervice)
+  vi.mocked(buildTaskList).mockImplementation(mockedBuildTaskList)
 })
 
 describe('deployToOxygen()', () => {
   it('sequentially calls each step', async () => {
     mockedFillDeployConfig.mockResolvedValue(reqDeployConfig)
     mockedCreateDeployment.mockResolvedValue({deploymentID: 'deploymentID', assetBaseURL: 'assetBaseURL'})
-    mockedBuildervice.mockResolvedValue([])
+    mockedBuildTaskList.mockReturnValue([])
     mockedUploadDeployment.mockResolvedValue('previewURL')
 
     await deployToOxygen(deployConfig)
@@ -58,8 +58,8 @@ describe('deployToOxygen()', () => {
     expect(mockedCreateDeployment).toHaveBeenCalledOnce()
     expect(mockedCreateDeployment).toHaveBeenCalledWith(reqDeployConfig)
 
-    expect(mockedBuildervice).toHaveBeenCalledOnce()
-    expect(mockedBuildervice).toHaveBeenCalledWith({
+    expect(mockedBuildTaskList).toHaveBeenCalledOnce()
+    expect(mockedBuildTaskList).toHaveBeenCalledWith({
       directory: deployConfig.path,
       targets: {
         client: true,
@@ -67,7 +67,6 @@ describe('deployToOxygen()', () => {
         node: false,
       },
       assetBaseURL: 'assetBaseURL',
-      returnTasks: true,
     })
 
     expect(mockedUploadDeployment).toHaveBeenCalledOnce()
@@ -82,7 +81,7 @@ describe('deployToOxygen()', () => {
     mockedCreateDeployment
       .mockRejectedValueOnce(new Error())
       .mockResolvedValue({deploymentID: 'deploymentID', assetBaseURL: 'assetBaseURL'})
-    mockedBuildervice.mockResolvedValue([])
+    mockedBuildTaskList.mockReturnValue([])
     mockedUploadDeployment.mockRejectedValueOnce(new Error()).mockResolvedValue('previewURL')
     mockedHealthCheck.mockRejectedValueOnce(new Error()).mockRejectedValueOnce(new Error())
 
@@ -93,13 +92,15 @@ describe('deployToOxygen()', () => {
     expect(mockedHealthCheck).toHaveBeenCalledTimes(3)
   })
 
-  it('skips healthCheck', async () => {
-    mockedFillDeployConfig.mockResolvedValue({...reqDeployConfig, healthCheck: false})
-    mockedCreateDeployment.mockResolvedValue({deploymentID: 'deploymentID', assetBaseURL: 'assetBaseURL'})
-    mockedBuildervice.mockResolvedValue([])
+  describe('when the deploy config has healthCheck set to false', () => {
+    it('skips healthCheck', async () => {
+      mockedFillDeployConfig.mockResolvedValue({...reqDeployConfig, healthCheck: false})
+      mockedCreateDeployment.mockResolvedValue({deploymentID: 'deploymentID', assetBaseURL: 'assetBaseURL'})
+      mockedBuildTaskList.mockReturnValue([])
 
-    await deployToOxygen(deployConfig)
+      await deployToOxygen(deployConfig)
 
-    expect(mockedHealthCheck).not.toHaveBeenCalled()
+      expect(mockedHealthCheck).not.toHaveBeenCalled()
+    })
   })
 })
