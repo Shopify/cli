@@ -21,6 +21,12 @@ Fixes #0000 <!-- link to issue if one exists -->
   Before / after screenshots appreciated for UI changes.
 -->
 
+### How to test your changes?
+
+<!--
+  Please, provide steps for the reviewer to test your changes locally.
+-->
+
 ### Measuring impact
 
 How do we know this change was effective? Please choose one:
@@ -29,8 +35,7 @@ How do we know this change was effective? Please choose one:
 - [ ] Existing analytics will cater for this addition
 - [ ] PR includes analytics changes to measure impact
 
-### How to test your changes?
+### Checklist
 
-<!--
-  Please, provide steps for the reviewer to test your changes locally.
--->
+- [ ] I've considered possible cross-platform impacts (Mac, Linux, Windows)
+- [ ] I've considered possible [documentation](https://shopify.dev) changes
