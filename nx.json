@@ -8,7 +8,7 @@
         "cacheableOperations": [
           "build"
         ],
-        "runtimeCacheInputs": ["node -v", "yarn tsc --version", "go version"]
+        "runtimeCacheInputs": ["node -v", "yarn tsc --version"]
       }
     }
   },
