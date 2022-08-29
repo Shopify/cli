@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.9.0
+
+### Minor Changes
+
+- c7137a3b: Grouping extension types in scaffold select type prompt
+
 ## 3.8.0
 
 ### Minor Changes
