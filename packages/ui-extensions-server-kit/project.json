@@ -32,7 +32,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["build:code", "build:types"],
         "outputs": ["dist"],
-        "inputs": ["{projectRoot}/src", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
+        "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
         "options": {
           "command": "cd .",
           "cwd": "packages/ui-extensions-server-kit"

@@ -15,7 +15,7 @@
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["dist"],
-      "inputs": ["{projectRoot}/src"],
+      "inputs": ["{projectRoot}/src/**/*"],
       "options": {
         "command": "yarn tsc -b ./tsconfig.build.json",
         "cwd": "packages/create-hydrogen"
