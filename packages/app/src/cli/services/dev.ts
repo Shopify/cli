@@ -12,6 +12,7 @@ import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -48,23 +49,7 @@ async function dev(options: DevOptions) {
   const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
 
-  let frontendPort: number
-  let frontendUrl: string
-
-  if (options.tunnel === false) {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = 'http://localhost'
-  } else if (options.tunnelUrl) {
-    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    }
-    frontendPort = Number(matches[2])
-    frontendUrl = matches[1]!
-  } else {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
-  }
+  const {frontendUrl, frontendPort} = await generateFrontendURL(options)
 
   const backendPort = await port.getRandomPort()
 
@@ -121,24 +106,19 @@ async function dev(options: DevOptions) {
   }
 
   if (frontendConfig) {
-    const devFrontend = devFrontendTarget({
+    const frontendOptions: DevFrontendTargetOptions = {
       web: frontendConfig,
       apiKey,
       scopes: options.app.configuration.scopes,
       apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
-    })
+    }
+
     if (options.tunnel) {
-      proxyTargets.push(devFrontend)
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     } else {
-      const devFrontendProccess = {
-        prefix: devFrontend.logPrefix,
-        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-          await devFrontend.action(stdout, stderr, signal, frontendPort)
-        },
-      }
-      additionalProcesses.push(devFrontendProccess)
+      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
     }
   }
 
@@ -151,12 +131,44 @@ async function dev(options: DevOptions) {
   }
 }
 
+async function generateFrontendURL(options: DevOptions): Promise<{frontendUrl: string; frontendPort: number}> {
+  let frontendPort: number
+  let frontendUrl: string
+
+  if (options.tunnel === false) {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = 'http://localhost'
+  } else if (options.tunnelUrl) {
+    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
+    if (!matches) {
+      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    }
+    frontendPort = Number(matches[2])
+    frontendUrl = matches[1]!
+  } else {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
+  }
+
+  return {frontendUrl, frontendPort}
+}
+
 interface DevFrontendTargetOptions extends DevWebOptions {
   web: Web
   backendPort: number
 }
 
-function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
+  const devFrontend = devFrontendProxyTarget(options)
+  return {
+    prefix: devFrontend.logPrefix,
+    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+      await devFrontend.action(stdout, stderr, signal, port)
+    },
+  }
+}
+
+function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
