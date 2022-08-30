@@ -16,7 +16,7 @@
       "build": {
         "executor": "nx:run-commands",
         "outputs": ["dist"],
-        "inputs": ["{projectRoot}/src/**/*"],
+        "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
         "options": {
           "command": "yarn tsc -b ./tsconfig.build.json",
           "cwd": "packages/app"
