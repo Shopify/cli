@@ -59,7 +59,7 @@ export default class Dev extends Command {
     }),
     tunnel: Flags.boolean({
       hidden: false,
-      description: 'Use ngrok to create a tunnel.',
+      description: 'Use ngrok to create a tunnel. Will be enabled automatically if you have extensions',
       env: 'SHOPIFY_FLAG_TUNNEL',
       default: false,
       allowNo: true,

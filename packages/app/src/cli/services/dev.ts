@@ -130,6 +130,8 @@ async function dev(options: DevOptions) {
       backendPort,
     })
     if (options.tunnel) {
+      proxyTargets.push(devFrontend)
+    } else {
       const devFrontendProccess = {
         prefix: devFrontend.logPrefix,
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
@@ -137,8 +139,6 @@ async function dev(options: DevOptions) {
         },
       }
       additionalProcesses.push(devFrontendProccess)
-    } else {
-      proxyTargets.push(devFrontend)
     }
   }
 
