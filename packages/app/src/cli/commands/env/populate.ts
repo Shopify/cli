@@ -1,7 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {webEnv} from '../../services/web-env.js'
+import {populateEnv} from '../../services/env/populate.js'
 import {Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -14,10 +14,10 @@ export default class WebEnv extends Command {
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
-    update: Flags.boolean({
+    'no-update': Flags.boolean({
       hidden: false,
-      description: 'Wether to update the environment file with Shopify environment variables',
-      env: 'SHOPIFY_FLAG_UPDATE_ENV',
+      description: 'Wether to update the environment file',
+      env: 'SHOPIFY_FLAG_NO_UPDATE_ENV',
       default: false,
     }),
     'env-file': Flags.string({
@@ -33,7 +33,7 @@ export default class WebEnv extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const envFile = path.resolve(directory, flags['env-file'])
     const app: AppInterface = await loadApp(directory, 'report')
-    output.info(await webEnv(app, {update: flags.update, envFile}))
+    output.info(await populateEnv(app, {noUpdate: flags['no-update'], envFile}))
     if (app.errors) process.exit(2)
   }
 }

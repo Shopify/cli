@@ -1,16 +1,16 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectApp} from './app/select-app.js'
-import {webEnv} from './web-env.js'
-import {AppInterface} from '../models/app/app.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {populateEnv} from './populate.js'
+import {fetchOrgAndApps, fetchOrganizations} from '../dev/fetch.js'
+import {selectApp} from '../app/select-app.js'
+import {AppInterface} from '../../models/app/app.js'
+import {selectOrganizationPrompt} from '../../prompts/dev.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {path, session, output, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 
 beforeEach(async () => {
-  vi.mock('./dev/fetch.js')
-  vi.mock('./app/select-app.js')
-  vi.mock('../prompts/dev.js')
+  vi.mock('../dev/fetch.js')
+  vi.mock('../app/select-app.js')
+  vi.mock('../../prompts/dev.js')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -24,8 +24,8 @@ beforeEach(async () => {
   vi.restoreAllMocks()
 })
 
-describe('web-env', () => {
-  it('only outputs the new environment when update is false', async () => {
+describe('env populate', () => {
+  it('only outputs the new environment when no-update is true', async () => {
     // Given
     vi.spyOn(file, 'write')
 
@@ -59,7 +59,7 @@ describe('web-env', () => {
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
-    const result = await webEnv(app, {update: false, envFile: '.env'})
+    const result = await populateEnv(app, {noUpdate: true, envFile: '.env'})
 
     // Then
     expect(file.write).not.toHaveBeenCalled()
@@ -72,7 +72,7 @@ describe('web-env', () => {
     `)
   })
 
-  it('creates a new environment file when update is true and there is no .env', async () => {
+  it('creates a new environment file when no-update is false and there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'write')
@@ -106,7 +106,7 @@ describe('web-env', () => {
 
       // When
       const filePath = path.resolve(tmpDir, '.env')
-      const result = await webEnv(app, {update: true, envFile: filePath})
+      const result = await populateEnv(app, {noUpdate: false, envFile: filePath})
 
       // Then
       expect(file.write).toHaveBeenCalledWith(
@@ -124,7 +124,7 @@ describe('web-env', () => {
     })
   })
 
-  it('updates an existing environment file and shows the diff when update is true', async () => {
+  it('updates an existing environment file and shows the diff when no-update is false', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const app = mockApp()
@@ -161,7 +161,7 @@ describe('web-env', () => {
       vi.spyOn(file, 'write')
 
       // When
-      const result = await webEnv(app, {update: true, envFile: filePath})
+      const result = await populateEnv(app, {noUpdate: false, envFile: filePath})
 
       // Then
       expect(file.write).toHaveBeenCalledWith(
@@ -187,7 +187,7 @@ describe('web-env', () => {
     })
   })
 
-  it('shows no changes if there is an already up to date env file when update is true', async () => {
+  it('shows no changes if there is an already up to date env file when no-update is false', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const app = mockApp()
@@ -223,7 +223,7 @@ describe('web-env', () => {
 
       vi.spyOn(file, 'write')
       // When
-      const result = await webEnv(app, {update: true, envFile: filePath})
+      const result = await populateEnv(app, {noUpdate: false, envFile: filePath})
 
       // Then
       expect(file.write).not.toHaveBeenCalled()

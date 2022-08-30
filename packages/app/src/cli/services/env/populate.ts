@@ -1,24 +1,27 @@
-import {selectApp} from './app/select-app.js'
-import {AppInterface} from '../models/app/app.js'
+import {selectApp} from '../app/select-app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {output, file} from '@shopify/cli-kit'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 
 type Format = 'json' | 'text'
-interface WebEnvOptions {
-  update: boolean
+interface PopulateEnvOptions {
+  noUpdate: boolean
   envFile: string
 }
 
-export async function webEnv(app: AppInterface, {update, envFile}: WebEnvOptions): Promise<output.Message> {
-  if (update) {
-    return updateEnvFile(app, envFile)
-  } else {
+export async function populateEnv(app: AppInterface, {noUpdate, envFile}: PopulateEnvOptions): Promise<output.Message> {
+  if (noUpdate) {
     return outputEnv(app, 'text')
+  } else {
+    return updateEnvFile(app, envFile)
   }
 }
 
-export async function updateEnvFile(app: AppInterface, envFile: WebEnvOptions['envFile']): Promise<output.Message> {
+export async function updateEnvFile(
+  app: AppInterface,
+  envFile: PopulateEnvOptions['envFile'],
+): Promise<output.Message> {
   const selectedApp = await selectApp()
 
   const updatedValues = {
