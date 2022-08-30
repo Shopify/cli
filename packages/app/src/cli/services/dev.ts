@@ -25,7 +25,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  noTunnel: boolean
+  tunnel: boolean
 }
 
 interface DevWebOptions {
@@ -51,7 +51,7 @@ async function dev(options: DevOptions) {
   let frontendPort: number
   let frontendUrl: string
 
-  if (options.noTunnel === true) {
+  if (options.tunnel === false) {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
   } else if (options.tunnelUrl) {
@@ -72,7 +72,7 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
-  const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  const exposedUrl = options.tunnel === false ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
@@ -100,7 +100,7 @@ async function dev(options: DevOptions) {
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyUrl = frontendUrl
-  const proxyPort = options.noTunnel === true ? await port.getRandomPort() : frontendPort
+  const proxyPort = options.tunnel === false ? await port.getRandomPort() : frontendPort
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
@@ -113,7 +113,7 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(options.app, storeFqdn, options.noTunnel === true ? `${proxyUrl}:${proxyPort}` : proxyUrl)
+  outputExtensionsMessages(options.app, storeFqdn, options.tunnel === false ? `${proxyUrl}:${proxyPort}` : proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
   if (backendConfig) {
@@ -129,7 +129,7 @@ async function dev(options: DevOptions) {
       hostname: frontendUrl,
       backendPort,
     })
-    if (options.noTunnel) {
+    if (options.tunnel) {
       const devFrontendProccess = {
         prefix: devFrontend.logPrefix,
         action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
@@ -171,7 +171,7 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
   return {
     logPrefix: options.web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await system.exec(cmd!, args, {
+      await system.exec(cmd ?? '', args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -209,7 +209,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   return {
     prefix: web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-      await system.exec(cmd!, args, {
+      await system.exec(cmd ?? '', args, {
         cwd: web.directory,
         stdout,
         stderr,
