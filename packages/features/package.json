@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "nx test",
+    "test": "nx run features:test",
     "type-check": "nx type-check"
   },
   "devDependencies": {
