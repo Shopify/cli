@@ -1,8 +1,9 @@
 import {getBinaryPathOrDownload} from './binary.js'
 import metadata from '../../metadata.js'
-import {environment, error, path, system} from '@shopify/cli-kit'
+import {environment, error, path, system, output as outputKit} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
 import {platform} from 'node:os'
+import {Writable} from 'stream'
 
 const NodeExtensionsCLINotFoundError = () => {
   return new error.Bug(`Couldn't find the shopify-cli-extensions Node binary`)
@@ -16,7 +17,7 @@ const NodeExtensionsCLINotFoundError = () => {
  * @param options {system.ExecOptions} Options to configure the process execution.
  */
 export async function runGoExtensionsCLI(args: string[], options: system.WritableExecOptions = {}) {
-  const stdout = options.stdout || {write: () => {}}
+  const stdout: Writable = options.stdout || new Writable({write: () => {}})
   if (environment.local.isDevelopment()) {
     await metadata.addPublic(() => ({cmd_extensions_binary_from_source: true}))
     const extensionsGoCliDirectory = (await path.findUp('packages/ui-extensions-go-cli/', {
@@ -25,6 +26,11 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
     })) as string
 
     stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
+
+    // eslint-disable-next-line no-warning-comments
+    // TODO: how to solve thiseslint problem
+    // eslint-disable-next-line require-atomic-updates
+    options.stdout = parseGoLogs(stdout)
     try {
       if (environment.local.isDebugGoBinary()) {
         await system.exec('sh', [path.join(extensionsGoCliDirectory, 'init-debug-session')].concat(args), options)
@@ -41,6 +47,28 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
     const binaryPath = await getBinaryPathOrDownload()
     await system.exec(binaryPath, [...args], options)
   }
+}
+
+export function parseGoLogs(output: Writable): Writable {
+  const stdout = new Writable({
+    write(chunk, _encoding, next) {
+      const lines = outputKit.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+      for (const line of lines) {
+        try {
+          const log = JSON.parse(line)
+          output.write(log.payload.message)
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            output.write(line)
+          } else {
+            throw err
+          }
+        }
+      }
+      next()
+    },
+  })
+  return stdout
 }
 
 /**

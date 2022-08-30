@@ -1,8 +1,10 @@
-import {runGoExtensionsCLI, nodeExtensionsCLIPath} from './cli.js'
+import {runGoExtensionsCLI, nodeExtensionsCLIPath, parseGoLogs} from './cli.js'
 import {getBinaryPathOrDownload} from './binary.js'
 import {describe, test, expect, vi, beforeAll} from 'vitest'
 import {system, environment, path} from '@shopify/cli-kit'
 import {platform} from 'node:os'
+import {Writable} from 'stream'
+import {stdout} from 'node:process'
 
 vi.mock('../../environment')
 vi.mock('./binary.js')
@@ -119,3 +121,41 @@ describe('nodeExtensionsCLIPath', () => {
     expect(got).not.toBeUndefined()
   })
 })
+
+describe('goLogsParser', () => {
+  test('parses correctly the json logs', async () => {
+    // Given
+    const validJsonLog =
+      '{"extensionId":"test_id","workflowStep":"serve.build","payload":{"message":"test message"}, "status":"succeed", "level":"info"}'
+    const parsedStream: Writable = parseGoLogs(stdout)
+
+    // When
+    parsedStream.write(validJsonLog)
+    const result = await streamToString(parsedStream)
+    // eslint-disable-next-line no-console
+    console.log('## Succeed ##')
+    expect(result).toBe('test message')
+  })
+  // test('fails to parse the json logs and keeps the log as it is', async () => {
+  //   // Given
+  //   const inValidJsonLog = 'This is just a simple log'
+  //   const parsedStream: Writable = parseGoLogs(stdout)
+  //   const result = streamToString(parsedStream).then((result) => {
+  //     expect(result).toBe(inValidJsonLog)
+  //   })
+  //   // When
+  //   parsedStream.write(inValidJsonLog)
+  // })
+})
+
+function streamToString(stream: Writable) {
+  const chunks: any[] = []
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => {
+      chunks.push(Buffer.from(chunk))
+      stream.end()
+    })
+    stream.on('error', (err) => reject(err))
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+  })
+}
