@@ -4,7 +4,6 @@ import {output, file} from '@shopify/cli-kit'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 
-type Format = 'json' | 'text'
 interface PopulateEnvOptions {
   envFile: string
 }

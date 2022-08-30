@@ -74,7 +74,7 @@ commands:
         desc: Generate in the fixture project
         run: yarn --cwd fixtures/app generate
       env:
-        desc: Set the environment of the fixture project
+        desc: Show and/or update the env file in the fixture project
         run: yarn --cwd fixtures/app env
   spin:
     desc: 'Run commands in spin context'
