@@ -25,54 +25,7 @@ beforeEach(async () => {
 })
 
 describe('env populate', () => {
-  it('only outputs the new environment when no-update is true', async () => {
-    // Given
-    vi.spyOn(file, 'write')
-
-    const app = mockApp()
-    const token = 'token'
-    const organization = {
-      id: '123',
-      appsNext: false,
-      businessName: 'test',
-      website: '',
-      apps: {nodes: []},
-    }
-    const apiKey = 'api-key'
-    const apiSecret = 'api-secret'
-    const organizationApp = {
-      id: '123',
-      title: 'Test app',
-      appType: 'custom',
-      apiSecretKeys: [{secret: apiSecret}],
-      organizationId: '1',
-      apiKey,
-    }
-    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({
-      organization,
-      stores: [],
-      apps: [organizationApp],
-    })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
-
-    // When
-    const result = await populateEnv(app, {noUpdate: true, envFile: '.env'})
-
-    // Then
-    expect(file.write).not.toHaveBeenCalled()
-    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
-    "
-        SHOPIFY_API_KEY=api-key
-        SHOPIFY_API_SECRET=api-secret
-        SCOPES=my-scope
-      "
-    `)
-  })
-
-  it('creates a new environment file when no-update is false and there is no .env', async () => {
+  it('creates a new environment file when there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'write')
@@ -124,7 +77,7 @@ describe('env populate', () => {
     })
   })
 
-  it('updates an existing environment file and shows the diff when no-update is false', async () => {
+  it('updates an existing environment file and shows the diff', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const app = mockApp()
@@ -187,7 +140,7 @@ describe('env populate', () => {
     })
   })
 
-  it('shows no changes if there is an already up to date env file when no-update is false', async () => {
+  it('shows no changes if there is an already up to date env file', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const app = mockApp()

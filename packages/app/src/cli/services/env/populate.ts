@@ -6,16 +6,11 @@ import {diffLines} from 'diff'
 
 type Format = 'json' | 'text'
 interface PopulateEnvOptions {
-  noUpdate: boolean
   envFile: string
 }
 
-export async function populateEnv(app: AppInterface, {noUpdate, envFile}: PopulateEnvOptions): Promise<output.Message> {
-  if (noUpdate) {
-    return outputEnv(app, 'text')
-  } else {
-    return updateEnvFile(app, envFile)
-  }
+export async function populateEnv(app: AppInterface, {envFile}: PopulateEnvOptions): Promise<output.Message> {
+  return updateEnvFile(app, envFile)
 }
 
 export async function updateEnvFile(
@@ -58,23 +53,5 @@ ${output.token.linesDiff(diff)}
 
 ${newEnvFileContent}
 `
-  }
-}
-
-export async function outputEnv(app: AppInterface, format: Format): Promise<output.Message> {
-  const selectedApp = await selectApp()
-
-  if (format === 'json') {
-    return output.content`${output.token.json({
-      SHOPIFY_API_KEY: selectedApp.apiKey,
-      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
-      SCOPES: app.configuration.scopes,
-    })}`
-  } else {
-    return output.content`
-    ${output.token.green('SHOPIFY_API_KEY')}=${selectedApp.apiKey}
-    ${output.token.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0]?.secret ?? ''}
-    ${output.token.green('SCOPES')}=${app.configuration.scopes}
-  `
   }
 }
