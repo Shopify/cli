@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import {getTheme} from '../../utilities/theme-store.js'
-import ThemeCommand from '../theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
