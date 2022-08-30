@@ -42,7 +42,7 @@
     "@shopify/mini-oxygen": "^0.1.0",
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
-    "vite": "^2.9.9",
+    "vite": "^2.9.13",
     "@shopify/cli-kit": "3.9.0",
     "fast-glob": "^3.2.11",
     "fs-extra": "^10.0.0",
