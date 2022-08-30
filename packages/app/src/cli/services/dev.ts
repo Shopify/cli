@@ -183,7 +183,7 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
   return {
     logPrefix: options.web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await system.exec(cmd ?? '', args, {
+      await system.exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -221,7 +221,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   return {
     prefix: web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-      await system.exec(cmd ?? '', args, {
+      await system.exec(cmd!, args, {
         cwd: web.directory,
         stdout,
         stderr,
