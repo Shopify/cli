@@ -46,7 +46,7 @@ export async function execCLI2(args: string[], {adminSession, storefrontToken, d
   }
 
   try {
-    await system.exec(bundleBinary(), ['exec', 'shopify'].concat(args), {
+    await system.exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
       stdio: 'inherit',
       cwd: directory ?? process.cwd(),
       env,
@@ -100,7 +100,7 @@ export async function execThemeCheckCLI({
         }
       },
     })
-    await system.exec(bundleBinary(), ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
+    await system.exec(bundleExecutable(), ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
       stdout,
       stderr: customStderr,
       cwd: themeCheckDirectory(),
@@ -178,7 +178,7 @@ async function validateRubyEnv() {
 async function validateRuby() {
   let version
   try {
-    const stdout = await system.captureOutput(rubyBinary(), ['-v'])
+    const stdout = await system.captureOutput(rubyExecutable(), ['-v'])
     version = coerce(stdout)
   } catch {
     throw new Abort(
@@ -201,7 +201,7 @@ async function validateRuby() {
 }
 
 async function validateRubyGems() {
-  const stdout = await system.captureOutput(`${rubyBinDir()}gem`, ['-v'])
+  const stdout = await system.captureOutput(gemExecutable(), ['-v'])
   const version = coerce(stdout)
 
   const isValid = version?.compare(MinRubyGemVersion)
@@ -209,7 +209,7 @@ async function validateRubyGems() {
     throw new Abort(
       `RubyGems version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of RubyGems, run ${
-        content`${token.genericShellCommand(`${rubyBinDir()}gem update --system`)}`.value
+        content`${token.genericShellCommand(`${gemExecutable()} update --system`)}`.value
       }`,
     )
   }
@@ -218,13 +218,13 @@ async function validateRubyGems() {
 async function validateBundler() {
   let version
   try {
-    const stdout = await system.captureOutput(bundleBinary(), ['-v'])
+    const stdout = await system.captureOutput(bundleExecutable(), ['-v'])
     version = coerce(stdout)
   } catch {
     throw new Abort(
       'Bundler not found',
       `To install the latest version of Bundler, run ${
-        content`${token.genericShellCommand(`${rubyBinDir()}gem install bundler`)}`.value
+        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }
@@ -234,7 +234,7 @@ async function validateBundler() {
     throw new Abort(
       `Bundler version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
-        content`${token.genericShellCommand(`${rubyBinDir()}gem install bundler`)}`.value
+        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }
@@ -259,21 +259,21 @@ async function createThemeCheckGemfile() {
 }
 
 async function bundleInstallLocalShopifyCLI() {
-  await system.exec(bundleBinary(), ['install'], {cwd: shopifyCLIDirectory()})
+  await system.exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
 }
 
 async function bundleInstallShopifyCLI() {
-  await system.exec(bundleBinary(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
+  await system.exec(bundleExecutable(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
     cwd: shopifyCLIDirectory(),
   })
-  await system.exec(bundleBinary(), ['install'], {cwd: shopifyCLIDirectory()})
+  await system.exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
 }
 
 async function bundleInstallThemeCheck() {
-  await system.exec(bundleBinary(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
+  await system.exec(bundleExecutable(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
     cwd: themeCheckDirectory(),
   })
-  await system.exec(bundleBinary(), ['install'], {cwd: themeCheckDirectory()})
+  await system.exec(bundleExecutable(), ['install'], {cwd: themeCheckDirectory()})
 }
 
 function shopifyCLIDirectory() {
@@ -290,19 +290,26 @@ function themeCheckDirectory() {
 export async function version(): Promise<string | undefined> {
   const parseOutput = (version: string) => version.match(/ruby (\d+\.\d+\.\d+)/)?.[1]
   return system
-    .captureOutput(rubyBinary(), ['-v'])
+    .captureOutput(rubyExecutable(), ['-v'])
     .then(parseOutput)
     .catch(() => undefined)
 }
 
-function rubyBinDir(): string {
-  return process.env.SHOPIFY_RUBY_BINDIR || ''
+function getRubyBinDir(): string | undefined {
+  return process.env.SHOPIFY_RUBY_BINDIR
 }
 
-function rubyBinary(): string {
-  return `${rubyBinDir()}ruby`
+function rubyExecutable(): string {
+  const rubyBinDir = getRubyBinDir()
+  return rubyBinDir ? join(rubyBinDir, 'ruby') : 'ruby'
 }
 
-function bundleBinary(): string {
-  return `${rubyBinDir()}bundle`
+function bundleExecutable(): string {
+  const rubyBinDir = getRubyBinDir()
+  return rubyBinDir ? join(rubyBinDir, 'bundle') : 'bundle'
+}
+
+function gemExecutable(): string {
+  const rubyBinDir = getRubyBinDir()
+  return rubyBinDir ? join(rubyBinDir, 'gem') : 'gem'
 }
