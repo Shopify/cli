@@ -20,7 +20,7 @@
     "@shopify/cli": "3.9.2",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.3",
     "@shopify/web-pixels-extension": "^0.1.1",
-    "react": "^18.1.0"
+    "react": "^17.0.2"
   },
   "author": "isaac"
 }
