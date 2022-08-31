@@ -6,6 +6,10 @@ import {Command, Interfaces} from '@oclif/core'
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default abstract class extends Command {
+  public static analyticsNameOverride(): string | undefined {
+    return undefined
+  }
+
   async catch(error: Error & {exitCode?: number | undefined}) {
     await errorHandler(error, this.config)
   }
