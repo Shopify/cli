@@ -54,6 +54,9 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   }
 
   if (needsTunnel && !options.cachedTunnelPlugin) {
+    output.info(
+      "\nSome parts of your app can only be previewed with a tunnel to your dev store. We'll run your tunnel with ngrok.\n",
+    )
     const useTunnel = await tunnelConfigurationPrompt()
     if (useTunnel === 'cancel') throw new error.CancelExecution()
     if (useTunnel === 'always') {

@@ -32,7 +32,7 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 }
 
 export function outputAppURL(storeFqdn: string, url: string) {
-  const heading = output.token.heading('Shareable app URL')
+  const heading = output.token.heading('App URL')
   const appURL = buildAppURL(storeFqdn, url)
   output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
 }

@@ -171,7 +171,7 @@ export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'c
     {
       type: 'select',
       name: 'value',
-      message: "We'll run your tunnel with ngrok. How would you like your tunnel to work in the future?",
+      message: 'How would you like your tunnel to work in the future?',
       choices: options,
     },
   ])
