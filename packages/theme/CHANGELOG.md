@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.9.2
+
+### Patch Changes
+
+- 1e524fae: Fix syntax of the Homebrew formula
+  - @shopify/cli-kit@3.9.2
+
 ## 3.9.1
 
 ### Patch Changes
