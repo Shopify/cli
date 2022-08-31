@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.9.1
+
+### Patch Changes
+
+- 869532f9: Remove the theme-command under the theme namespace
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+
 ## 3.9.0
 
 ### Patch Changes
