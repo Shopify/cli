@@ -28,6 +28,8 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'theme_app_extension'
     case 'customer_accounts_ui_extension':
       return 'customer_acounts_ui'
+    case 'metafield_custom_validation':
+      return 'metafield_custom_validaion'
     default:
       return extensionType
   }
@@ -80,6 +82,8 @@ export function mapExternalExtensionTypeToExtensionType(
       return 'theme'
     case 'customer_acounts_ui':
       return 'customer_accounts_ui_extension'
+    case 'metafield_custom_validaion':
+      return 'metafield_custom_validation'
     default:
       return externalExtensionType
   }

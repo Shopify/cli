@@ -211,6 +211,8 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
       return `checkout/${lang}/payment-customization/default`
     case 'shipping_rate_presenter':
       return `checkout/${lang}/shipping-rate-presenter/default`
+    case 'metafield_custom_validation':
+      return ''
   }
 }
 
