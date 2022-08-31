@@ -273,7 +273,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242})
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingTunnel: true})
   })
 
   it('returns tunnelUrl when there is a tunnelUrl ignoring all other true values', async () => {
@@ -290,7 +290,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242})
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingTunnel: true})
   })
 
   it('generates a tunnel url when tunnel is true and there is no tunnelUrl and there are no extensions', async () => {
@@ -306,7 +306,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042})
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingTunnel: true})
   })
 
   it('generates a tunnel url when tunnel is false and there is no tunnelUrl and there are extensions', async () => {
@@ -322,7 +322,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042})
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingTunnel: true})
   })
 
   it('returns localhost if tunnel is false and there is no tunnelUrl nor extensions', async () => {
@@ -338,7 +338,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042})
+    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingTunnel: false})
   })
 
   it('returns localhost if noTunnel is true even if there are extensions', async () => {
@@ -354,7 +354,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042})
+    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingTunnel: false})
   })
 
   it('raises error if tunnelUrl does not include port', async () => {
