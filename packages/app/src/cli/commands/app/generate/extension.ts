@@ -14,7 +14,7 @@ import {
 import generateExtensionPrompt from '../../../prompts/generate/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
-import scaffoldExtensionService, {ExtensionFlavor} from '../../../services/scaffold/extension.js'
+import generateExtensionService, {ExtensionFlavor} from '../../../services/generate/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {
   mapExternalExtensionTypeToExtensionType,
@@ -100,7 +100,7 @@ export default class AppScaffoldExtension extends Command {
       cmd_scaffold_used_prompts_for_type: extensionType !== flags.type,
     }))
 
-    const extensionDirectory = await scaffoldExtensionService({
+    const extensionDirectory = await generateExtensionService({
       ...promptAnswers,
       extensionFlavor: extensionFlavor as ExtensionFlavor,
       extensionType,
