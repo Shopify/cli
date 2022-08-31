@@ -27,7 +27,7 @@ export interface FrontendURLResult {
  * The tunnel creation logic depends on 5 variables:
  * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
  * - If noTunnel is true, that takes second preference and localhost is used
- * - A Tunnel is created then if any of these are conditions are met:
+ * - A Tunnel is created then if any of these conditions are met:
  *   - Tunnel flag is true
  *   - The app has UI extensions
  *   - In a previous run, the user selected to always use a tunnel (cachedTunnelPlugin)
