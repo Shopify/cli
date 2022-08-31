@@ -304,7 +304,7 @@ describe('tunnelConfigurationPrompt', () => {
       {
         type: 'select',
         name: 'value',
-        message: `We'll run your tunnel with ngrok. How would you like your tunnel to work in the future?`,
+        message: 'How would you like your tunnel to work in the future?',
         choices: [
           {name: 'Always use it by default', value: 'always'},
           {name: 'Use it now and ask me next time', value: 'yes'},
