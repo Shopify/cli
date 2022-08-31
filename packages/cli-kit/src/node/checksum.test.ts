@@ -15,14 +15,14 @@ describe('validate', () => {
       const file = pathJoin(tmpDir, 'file.txt')
       await fileWrite(file, content)
       const response: any = {
-        text: () => {
-          return Promise.resolve(hash)
+        text: async () => {
+          return hash
         },
       }
       vi.mocked(fetch).mockResolvedValue(response)
 
       // When
-      await expect(validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})).resolves
+      await expect(validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})).resolves.toBeUndefined()
     })
   })
 
@@ -35,13 +35,13 @@ describe('validate', () => {
       const file = pathJoin(tmpDir, 'file.txt')
       await fileWrite(file, content)
       const response: any = {
-        text: () => {
-          return Promise.resolve(remoteHash)
+        text: async () => {
+          return remoteHash
         },
       }
       vi.mocked(fetch).mockResolvedValue(response)
 
-      const got = () => validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})
+      const got = async () => validateMD5({file, md5FileURL: 'https://test.shopify.com/md5-file'})
 
       // When
       await expect(got).rejects.toThrowError(InvalidChecksumError({file, expected: remoteHash, got: hash}))
