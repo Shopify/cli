@@ -27,7 +27,7 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when RubyGems version requirement is not met', async () => {
-    const rubyVersion = '2.4.0'
+    const rubyVersion = '2.7.5'
     const rubyGemsVersion = '2.3.0'
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyVersion)
@@ -39,7 +39,7 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when Bundler is not installed', async () => {
-    const rubyVersion = '2.4.0'
+    const rubyVersion = '2.7.5'
     const rubyGemsVersion = '2.6.0'
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyVersion)
@@ -50,7 +50,7 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when Bundler version requirement is not met', async () => {
-    const rubyVersion = '2.4.0'
+    const rubyVersion = '2.7.5'
     const rubyGemsVersion = '2.5.0'
     const bundlerVersion = '2.2.0'
     vi.mocked(file.exists).mockResolvedValue(true)
@@ -64,7 +64,7 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when creating CLI working directory', async () => {
-    const rubyVersion = '2.4.0'
+    const rubyVersion = '2.7.5'
     const rubyGemsVersion = '2.5.0'
     const bundlerVersion = '2.4.0'
     vi.mocked(file.exists).mockResolvedValue(true)
