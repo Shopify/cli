@@ -39,9 +39,9 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let frontendPort: number
   let frontendUrl: string
   let usingTunnel = true
+  const hasExtensions = options.app.hasUIExtensions()
 
-  const needsTunnel =
-    (options.app.hasUIExtensions() || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
+  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
@@ -54,9 +54,12 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   }
 
   if (needsTunnel && !options.cachedTunnelPlugin) {
-    output.info(
-      "\nSome parts of your app can only be previewed with a tunnel to your dev store. We'll run your tunnel with ngrok.\n",
-    )
+    let message = "We'll run your tunnel with ngrok."
+    const extensionsWarning = 'Some parts of your app can only be previewed with a tunnel to your dev store.'
+    if (hasExtensions) message = `${extensionsWarning} ${message}`
+
+    output.info(`\n${message}\n`)
+
     const useTunnel = await tunnelConfigurationPrompt()
     if (useTunnel === 'cancel') throw new error.CancelExecution()
     if (useTunnel === 'always') {
