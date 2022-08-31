@@ -56,14 +56,21 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
+      exclusive: ['no-tunnel', 'tunnel'],
+    }),
+    'no-tunnel': Flags.boolean({
+      hidden: false,
+      description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
+      env: 'SHOPIFY_FLAG_NO_TUNNEL',
+      default: false,
+      exclusive: ['tunnel-url', 'tunnel'],
     }),
     tunnel: Flags.boolean({
       hidden: false,
-      description: 'Use ngrok to create a tunnel. Will be enabled automatically if you have extensions',
+      description: 'Use ngrok to create a tunnel to your service entry point',
       env: 'SHOPIFY_FLAG_TUNNEL',
       default: false,
-      allowNo: true,
-      exclusive: ['tunnel-url'],
+      exclusive: ['tunnel-url', 'no-tunnel'],
     }),
   }
 
@@ -72,7 +79,6 @@ export default class Dev extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
-    const hasUIExtensions = app.hasUIExtensions()
 
     await dev({
       app,
@@ -85,7 +91,8 @@ export default class Dev extends Command {
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
-      tunnel: flags.tunnel || hasUIExtensions,
+      tunnel: flags.tunnel,
+      noTunnel: flags['no-tunnel'],
     })
   }
 }

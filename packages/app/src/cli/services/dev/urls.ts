@@ -1,10 +1,55 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {api, error, output, plugins, store} from '@shopify/cli-kit'
+import {AppInterface} from '../../models/app/app.js'
+import {api, error, output, plugins, port, store} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
 
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
+}
+
+export interface FrontendURLOptions {
+  app: AppInterface
+  tunnel: boolean
+  noTunnel: boolean
+  tunnelUrl?: string
+  commandConfig: {plugins: Plugin[]}
+}
+
+export interface FrontendURLResult {
+  frontendUrl: string
+  frontendPort: number
+}
+
+/**
+ * The tunnel creation logic depends on 4 variables:
+ * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
+ * - If noTunnel is true, that takes second preference and localhost is used
+ * - If tunnel is true OR app.hasUIExtensions() is true, that takes third preference and a tunnel is created
+ * - Otherwise, no tunnel is created and localhost is used.
+ */
+export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
+  let frontendPort: number
+  let frontendUrl: string
+
+  const needsTunnel = (options.app.hasUIExtensions() || options.tunnel) && !options.noTunnel
+
+  if (options.tunnelUrl) {
+    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
+    if (!matches) {
+      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    }
+    frontendPort = Number(matches[2])
+    frontendUrl = matches[1]!
+  } else if (needsTunnel) {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
+  } else {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = 'http://localhost'
+  }
+
+  return {frontendUrl, frontendPort}
 }
 
 export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {

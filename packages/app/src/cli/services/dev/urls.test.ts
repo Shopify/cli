@@ -1,4 +1,5 @@
-import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs} from './urls.js'
+import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, generateFrontendURL} from './urls.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, error, outputMocker, store, ui} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
@@ -27,6 +28,9 @@ beforeEach(() => {
       },
       store: {
         cliKitStore: vi.fn(),
+      },
+      port: {
+        getRandomPort: async () => 3042,
       },
     }
   })
@@ -251,5 +255,122 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(outputMock.output()).toMatch(/example.com\/home/)
     expect(outputMock.output()).toMatch(/example.com\/auth\/callback/)
+  })
+})
+
+describe('generateFrontendURL', () => {
+  it('returns tunnelUrl when there is a tunnelUrl ignoring all other false values', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242})
+  })
+
+  it('returns tunnelUrl when there is a tunnelUrl ignoring all other true values', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: true,
+      noTunnel: true,
+      tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242})
+  })
+
+  it('generates a tunnel url when tunnel is true and there is no tunnelUrl and there are no extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: true,
+      noTunnel: false,
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042})
+  })
+
+  it('generates a tunnel url when tunnel is false and there is no tunnelUrl and there are extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042})
+  })
+
+  it('returns localhost if tunnel is false and there is no tunnelUrl nor extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042})
+  })
+
+  it('returns localhost if noTunnel is true even if there are extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: false,
+      noTunnel: true,
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042})
+  })
+
+  it('raises error if tunnelUrl does not include port', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      tunnelUrl: 'https://my-tunnel-provider.io',
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = generateFrontendURL(options)
+
+    // Then
+    await expect(got).rejects.toThrow(/Invalid tunnel URL/)
   })
 })

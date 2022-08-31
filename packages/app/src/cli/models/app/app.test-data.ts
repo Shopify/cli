@@ -20,6 +20,9 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
   }
+  if (app.hasUIExtensions) {
+    Object.getPrototypeOf(newApp).hasUIExtensions = app.hasUIExtensions
+  }
   return newApp
 }
 

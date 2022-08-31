@@ -1,5 +1,5 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generatePartnersURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
@@ -27,6 +27,7 @@ export interface DevOptions {
   checkoutCartUrl?: string
   tunnelUrl?: string
   tunnel: boolean
+  noTunnel: boolean
 }
 
 interface DevWebOptions {
@@ -129,28 +130,6 @@ async function dev(options: DevOptions) {
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
-}
-
-async function generateFrontendURL(options: DevOptions): Promise<{frontendUrl: string; frontendPort: number}> {
-  let frontendPort: number
-  let frontendUrl: string
-
-  if (options.tunnel === false) {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = 'http://localhost'
-  } else if (options.tunnelUrl) {
-    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    }
-    frontendPort = Number(matches[2])
-    frontendUrl = matches[1]!
-  } else {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
-  }
-
-  return {frontendUrl, frontendPort}
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {
