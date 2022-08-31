@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "nx clean",
     "build": "nx build",
-    "test": "nx test",
+    "test": "nx run ui-extensions-go-cli:test",
     "package": "nx package",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix"

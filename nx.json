@@ -8,7 +8,9 @@
         "cacheableOperations": [
           "build"
         ],
-        "runtimeCacheInputs": ["node -v", "yarn tsc --version"]
+        "runtimeCacheInputs": [
+          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js"
+        ]
       }
     }
   },

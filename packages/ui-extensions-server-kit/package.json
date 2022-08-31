@@ -26,7 +26,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "nx test",
+    "test": "nx run ui-extensions-server-kit:test",
     "test:watch": "nx test:watch"
   },
   "peerDependencies": {

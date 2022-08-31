@@ -9,7 +9,7 @@
     "lint:fix": "nx lint:fix",
     "serve": "vite preview",
     "start": "nx start",
-    "test": "nx test",
+    "test": "nx run ui-extensions-dev-console:test",
     "test:watch": "nx test:watch"
   },
   "dependencies": {

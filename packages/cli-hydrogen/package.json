@@ -27,7 +27,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "nx test",
+    "test": "nx run cli-hydrogen:test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check"
   },
