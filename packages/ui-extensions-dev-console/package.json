@@ -20,8 +20,8 @@
     "@vitejs/plugin-react": "^2.0.1",
     "copy-to-clipboard": "^3.3.1",
     "qrcode.react": "^1.0.1",
-    "react": "16.14.0",
-    "react-dom": "^16.9.11"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
   "eslintConfig": {
     "extends": [

@@ -11,7 +11,7 @@
     "lint:fix": "nx lint:fix"
   },
   "peerDependencies": {
-    "react": "16.14.0"
+    "react": "^17.0.2"
   },
   "eslintConfig": {
     "extends": [
