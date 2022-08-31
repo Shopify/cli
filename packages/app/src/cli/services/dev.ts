@@ -47,10 +47,19 @@ async function dev(options: DevOptions) {
     }
   }
   const token = await session.ensureAuthenticatedPartners()
-  const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
+  const {
+    identifiers,
+    storeFqdn,
+    app,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
 
-  const {frontendUrl, frontendPort, usingTunnel} = await generateFrontendURL(options)
+  const {frontendUrl, frontendPort, usingTunnel} = await generateFrontendURL({
+    ...options,
+    cachedTunnelPlugin: tunnelPlugin,
+  })
 
   const backendPort = await port.getRandomPort()
 

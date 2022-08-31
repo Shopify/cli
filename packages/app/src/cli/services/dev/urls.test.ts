@@ -34,6 +34,10 @@ beforeEach(() => {
       },
     }
   })
+
+  vi.mocked(store.cliKitStore).mockReturnValue({
+    setAppInfo: vi.fn(),
+  } as any)
 })
 
 describe('generateURL', () => {
@@ -110,12 +114,6 @@ describe('shouldOrPromptUpdateURLs', () => {
     applicationUrl: 'https://example.com/home',
     redirectUrlWhitelist: ['https://example.com/auth/callback'],
   }
-
-  beforeEach(() => {
-    vi.mocked(store.cliKitStore).mockReturnValue({
-      setAppInfo: vi.fn(),
-    } as any)
-  })
 
   it('returns true if the app is new', async () => {
     // Given
@@ -259,6 +257,10 @@ describe('shouldOrPromptUpdateURLs', () => {
 })
 
 describe('generateFrontendURL', () => {
+  beforeEach(() => {
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
+  })
+
   it('returns tunnelUrl when there is a tunnelUrl ignoring all other false values', async () => {
     // Given
     const options = {
@@ -372,5 +374,40 @@ describe('generateFrontendURL', () => {
 
     // Then
     await expect(got).rejects.toThrow(/Invalid tunnel URL/)
+  })
+
+  it('cancels execution if you select not to continue in the plugin prompt', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'cancel'})
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: true,
+      noTunnel: false,
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = generateFrontendURL(options)
+
+    // Then
+    await expect(got).rejects.toThrow()
+  })
+
+  it('Stores the tunnel plugin in your presets if you select always', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    const options = {
+      app: testApp({hasUIExtensions: () => true, directory: '/app-path'}),
+      tunnel: true,
+      noTunnel: false,
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingTunnel: true})
+    expect(store.cliKitStore().setAppInfo).toBeCalledWith({directory: '/app-path', tunnelPlugin: 'ngrok'})
   })
 })
