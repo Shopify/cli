@@ -28,6 +28,5 @@ export default class EnvPopulate extends Command {
     const envFile = path.resolve(directory, flags['env-file'])
     const app: AppInterface = await loadApp(directory, 'report')
     output.info(await populateEnv(app, {envFile}))
-    if (app.errors) process.exit(2)
   }
 }

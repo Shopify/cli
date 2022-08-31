@@ -21,6 +21,5 @@ export default class EnvShow extends Command {
     const envFile = path.resolve(directory)
     const app: AppInterface = await loadApp(directory, 'report')
     output.info(await showEnv(app))
-    if (app.errors) process.exit(2)
   }
 }
