@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.9.1
+
+### Patch Changes
+
+- 08c42c45: Use the Ruby bin directory from environment variable when provided (to fix homebrew issues)
+
 ## 3.9.0
 
 ### Minor Changes

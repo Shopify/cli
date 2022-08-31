@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.9.1
+
+### Patch Changes
+
+- b777c41e: Fixed bug when running CLI on Windows machine. The node executable path is now pointing directly to a node file instead of relying in the node generated files.
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+  - @shopify/shopify-cli-extensions@3.9.1
+
 ## 3.9.0
 
 ### Minor Changes
