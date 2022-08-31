@@ -40,7 +40,7 @@ class ShopifyCliAT3 < Formula
     executable_content = <<~SCRIPT
       #!/usr/bin/env node
 
-      process.env.SHOPIFY_RUBY_BINDIR = Formula["ruby"].opt_bin
+      process.env.SHOPIFY_RUBY_BINDIR = "#{Formula["ruby"].opt_bin}"
 
       import("./shopify");
     SCRIPT
