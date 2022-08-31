@@ -19,6 +19,7 @@ export interface FrontendURLOptions {
 export interface FrontendURLResult {
   frontendUrl: string
   frontendPort: number
+  usingTunnel: boolean
 }
 
 /**
@@ -31,6 +32,7 @@ export interface FrontendURLResult {
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
   let frontendPort: number
   let frontendUrl: string
+  let usingTunnel = true
 
   const needsTunnel = (options.app.hasUIExtensions() || options.tunnel) && !options.noTunnel
 
@@ -47,9 +49,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   } else {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
+    usingTunnel = false
   }
 
-  return {frontendUrl, frontendPort}
+  return {frontendUrl, frontendPort, usingTunnel}
 }
 
 export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {

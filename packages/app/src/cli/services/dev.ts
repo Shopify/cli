@@ -50,7 +50,7 @@ async function dev(options: DevOptions) {
   const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
 
-  const {frontendUrl, frontendPort} = await generateFrontendURL(options)
+  const {frontendUrl, frontendPort, usingTunnel} = await generateFrontendURL(options)
 
   const backendPort = await port.getRandomPort()
 
@@ -58,7 +58,7 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
-  const exposedUrl = options.tunnel === false ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  const exposedUrl = usingTunnel ? frontendUrl : `${frontendUrl}:${frontendPort}`
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
@@ -85,8 +85,8 @@ async function dev(options: DevOptions) {
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyUrl = frontendUrl
-  const proxyPort = options.tunnel === false ? await port.getRandomPort() : frontendPort
+  const proxyPort = usingTunnel ? frontendPort : await port.getRandomPort()
+  const proxyUrl = usingTunnel ? frontendUrl : `${frontendUrl}:${proxyPort}`
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
@@ -99,7 +99,7 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(options.app, storeFqdn, options.tunnel === false ? `${proxyUrl}:${proxyPort}` : proxyUrl)
+  outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
   if (backendConfig) {
@@ -116,7 +116,7 @@ async function dev(options: DevOptions) {
       backendPort,
     }
 
-    if (options.tunnel) {
+    if (usingTunnel) {
       proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     } else {
       additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
