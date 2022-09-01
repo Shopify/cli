@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
 import {getConfigs} from './configs'
-import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
+import {BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
+import {InlineConfig, build as viteBuild} from 'vite'
+import {promises} from 'node:fs'
+import {join} from 'node:path'
 
 export interface Options {
   mode: 'development' | 'production'
@@ -12,45 +15,48 @@ export async function build({mode}: Options) {
   const {
     development: {entries, build = {}, develop = {}, buildDir},
   } = configs
-  const {env = {}} = isDevelopment ? develop : build
-  const define = Object.keys(env || {}).reduce(
-    (acc, key) => ({
-      ...acc,
-      [`process.env.${key}`]: JSON.stringify(env[key]),
-    }),
-    {'process.env.NODE_ENV': JSON.stringify(mode)},
-  )
 
-  let built = false
-
-  esBuild({
-    bundle: true,
-    define,
-    entryPoints: entries,
-    loader: {
-      '.esnext': 'ts',
-      '.js': 'jsx',
+  const viteConfiguration: InlineConfig = {
+    root: process.cwd(),
+    // logLevel: isDevelopment ? 'silent' : 'info',
+    build: {
+      minify: !isDevelopment,
+      outDir: buildDir,
+      target: 'es6',
     },
-    logLevel: isDevelopment ? 'silent' : 'info',
-    legalComments: 'none',
-    minify: !isDevelopment,
-    outdir: buildDir,
-    plugins: getPlugins(),
-    target: 'es6',
-    resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-    watch: isDevelopment ? {onRebuild} : false,
-  })
-    .then((result) => {
-      if (built) {
-        return
-      }
-      built = true
-      return logResult(result)
-    })
-    .catch((_e) => {
-      console.error('Error building extension: ', _e)
-      process.exit(1)
-    })
+    esbuild: {
+      legalComments: 'none',
+    },
+    resolve: {
+      extensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
+    },
+  }
+  try {
+    if (isDevelopment) {
+      // TODO
+    } else {
+      Object.entries(entries).map(async (entry) => {
+        await promises.rmdir(join(process.cwd(), buildDir), {recursive: true})
+        await viteBuild({
+          ...viteConfiguration,
+          build: {
+            ...viteConfiguration.build,
+            lib: {
+              name: 'ui-extension',
+              formats: ['es'],
+              fileName: (_) => `${entry[0]}.js`,
+              entry: entry[1],
+            },
+          },
+        })
+      })
+      logResult(null)
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (_error) {
+    console.error('Error building extension: ', _error)
+    process.exit(1)
+  }
 }
 
 function getPlugins() {
