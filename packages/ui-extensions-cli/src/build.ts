@@ -52,6 +52,13 @@ export async function build({mode}: Options) {
     },
   }
 
+  function onRebuild(failure: BuildFailure | null, _result: BuildResult | null) {
+    if (failure) {
+      console.error(failure.message)
+    }
+    logResult(failure)
+  }
+
   try {
     if (isDevelopment) {
       await buildExtensions(entries, buildDir, viteConfiguration)
