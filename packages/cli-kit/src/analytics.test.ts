@@ -103,7 +103,6 @@ describe('event tracking', () => {
         env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
         env_device_id: 'hashed-macaddress',
         env_cloud: 'spin',
-        env_package_manager_workspaces: false,
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
