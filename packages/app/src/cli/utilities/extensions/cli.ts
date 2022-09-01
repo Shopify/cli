@@ -5,6 +5,18 @@ import {fileURLToPath} from 'url'
 import {platform} from 'node:os'
 import {Writable} from 'stream'
 
+interface LogPayload {
+  message: string
+}
+interface GoLog {
+  status: 'inProgress' | 'success' | 'failure'
+  level: 'info' | 'error'
+  extensionId: string
+  extensionName: string
+  workflowStep: string
+  payload: LogPayload
+}
+
 const NodeExtensionsCLINotFoundError = () => {
   return new error.Bug(`Couldn't find the shopify-cli-extensions Node binary`)
 }
@@ -27,10 +39,8 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
 
     stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: how to solve thiseslint problem
     // eslint-disable-next-line require-atomic-updates
-    options.stdout = parseGoLogs(stdout)
+    options.stdout = goLogWritable(stdout)
     try {
       if (environment.local.isDebugGoBinary()) {
         await system.exec('sh', [path.join(extensionsGoCliDirectory, 'init-debug-session')].concat(args), options)
@@ -47,28 +57,6 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
     const binaryPath = await getBinaryPathOrDownload()
     await system.exec(binaryPath, [...args], options)
   }
-}
-
-export function parseGoLogs(output: Writable): Writable {
-  const stdout = new Writable({
-    write(chunk, _encoding, next) {
-      const lines = outputKit.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-      for (const line of lines) {
-        try {
-          const log = JSON.parse(line)
-          output.write(log.payload.message)
-        } catch (err) {
-          if (err instanceof SyntaxError) {
-            output.write(line)
-          } else {
-            throw err
-          }
-        }
-      }
-      next()
-    },
-  })
-  return stdout
 }
 
 /**
@@ -95,4 +83,57 @@ export async function nodeExtensionsCLIPath(): Promise<string> {
     }
     return executablePath
   }
+}
+
+/**
+ * This method provides a Writable wraper which parses the incoming chunks as GoLog from Json and writes them back to
+ * the Writable given as parameter. If PArsing to Json fails it wirtes the chunk as it is and thows an error.
+ * @param output {Writable} A Writable which will be wrapped and in which the parsed chanks will be written.
+ * @returns {Writable} A Writable wrapping the parameter.
+ */
+export function goLogWritable(output: Writable): Writable {
+  return new Writable({
+    write(chunk, _encoding, next) {
+      const lines = outputKit.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/###LOG_END###/)
+      for (const line of lines) {
+        if (line) {
+          try {
+            const log = JSON.parse(line) as GoLog
+            output.write(parseGoLogMessage(log))
+          } catch (err) {
+            output.write(line)
+            throw err
+          }
+        }
+      }
+      next()
+    },
+  })
+}
+
+function parseGoLogMessage(log: GoLog): string {
+  if (!log.level || !log.status || !log.payload.message) {
+    throw new Error(`Invalid log: ${log}`)
+  }
+  if (log.extensionName) {
+    return `${log.extensionName} ${styleWorkflowStep(log.workflowStep)} ${log.status}: ${styleContent(
+      log.payload.message,
+      log.status,
+    )}`
+  }
+  return `\x1b[94m[${log.workflowStep}]\x1b[0m ${log.status}: ${styleContent(log.payload.message, log.status)}`
+}
+
+function styleContent(content: string, status: 'success' | 'failure' | 'inProgress'): string {
+  switch (status) {
+    case 'success':
+      return `\x1b[32m${content}\x1b[0m`
+    case 'failure':
+      return `\x1b[31m${content}\x1b[0m`
+    default:
+      return content
+  }
+}
+function styleWorkflowStep(steps: string): string {
+  return `\x1b[94m[${steps}]\x1b[0m`
 }

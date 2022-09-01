@@ -22,7 +22,7 @@ func processLogs(reader io.Reader, handlers logProcessingHandlers) {
 		scanner := bufio.NewScanner(reader)
 		scanner.Split(bufio.ScanLines)
 		for scanner.Scan() {
-			fragments <- fmt.Sprintf("%s\n", scanner.Text())
+			fragments <- fmt.Sprintf("%s", scanner.Text())
 		}
 		done <- struct{}{}
 	}()

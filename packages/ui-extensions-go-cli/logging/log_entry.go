@@ -8,16 +8,19 @@ import (
 )
 
 type LogEntry struct {
-	WorkflowStep string      `json:"workflowStep,omitempty"`
-	Status       LogStatus   `json:"status,omitempty"`
-	Level        LogLevel    `json:"level,omitempty"`
-	ExtensionID  string      `json:"extensionId,omitempty"`
-	Payload      interface{} `json:"payload,omitempty"`
+	WorkflowStep  string      `json:"workflowStep,omitempty"`
+	Status        LogStatus   `json:"status,omitempty"`
+	Level         LogLevel    `json:"level,omitempty"`
+	ExtensionID   string      `json:"extensionId,omitempty"`
+	ExtensionName string      `json:"extensionName,omitempty"`
+	Payload       interface{} `json:"payload,omitempty"`
 }
 
 type LogEntryBuilder struct {
-	WorkflowStep string
-	Status       LogStatus
+	WorkflowStep  string
+	Status        LogStatus
+	ExtensionID   string
+	ExtensionName string
 }
 
 func Builder() LogEntryBuilder {
@@ -27,21 +30,17 @@ func Builder() LogEntryBuilder {
 func (l *LogEntry) WriteLog(outputStream *os.File) {
 	l.Level = Info
 	log.SetOutput(outputStream)
-	log.Println("#START_LOG_ENTRY#")
-	log.Println(l.toJson())
-	log.Println("#END_LOG_ENTRY#")
+	log.Print(l.toJson() + "###LOG_END###")
 }
 
 func (l *LogEntry) WriteErrorLog(outputStream *os.File) {
 	l.Level = Error
 	log.SetOutput(outputStream)
-	log.Println("#START_LOG_ENTRY#")
-	log.Println(l.toJson())
-	log.Println("#END_LOG_ENTRY#")
+	log.Print(l.toJson() + "###LOG_END###")
 }
 
-func (b *LogEntryBuilder) Build(extensionId string, message string) *LogEntry {
-	return &LogEntry{WorkflowStep: b.WorkflowStep, Status: b.Status, ExtensionID: extensionId, Payload: b.Status.CreatePayload(message)}
+func (b *LogEntryBuilder) Build(message string) *LogEntry {
+	return &LogEntry{WorkflowStep: b.WorkflowStep, Status: b.Status, ExtensionName: b.ExtensionName, ExtensionID: b.ExtensionID, Payload: b.Status.CreatePayload(message)}
 }
 
 func (l *LogEntry) toJson() string {
@@ -66,4 +65,12 @@ func (b LogEntryBuilder) AddWorkflowSteps(steps ...WorkflowStep) LogEntryBuilder
 
 func (b *LogEntryBuilder) SetStatus(status LogStatus) {
 	b.Status = status
+}
+
+func (b *LogEntryBuilder) SetExtensionName(name string) {
+	b.ExtensionName = name
+}
+
+func (b *LogEntryBuilder) SetExtensionId(id string) {
+	b.ExtensionID = id
 }

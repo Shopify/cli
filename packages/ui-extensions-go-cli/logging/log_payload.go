@@ -1,5 +1,9 @@
 package logging
 
+import (
+	"encoding/json"
+)
+
 type ErrorPayload struct {
 	Message      string `json:"message,omitempty"`
 	StackTrace   string `json:"stackTrace,omitempty"`
@@ -12,10 +16,12 @@ type InfoPayload struct {
 
 func (t LogStatus) CreatePayload(message string) interface{} {
 	// TODO is the payload status specific?
+
+  encodedMessage, _ := json.Marshal(message)
 	switch t {
 	case Failure:
-		return ErrorPayload{Message: message}
+		return ErrorPayload{Message: string(encodedMessage[1:len(encodedMessage)-1])}
 	default:
-		return InfoPayload{Message: message}
+		return InfoPayload{Message: string(encodedMessage[1:len(encodedMessage)-1])}
 	}
 }

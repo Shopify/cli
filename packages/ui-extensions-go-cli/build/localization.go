@@ -89,10 +89,10 @@ func getLocalization(extension *core.Extension) (*core.Localization, error) {
 	} else {
 
 		if len(defaultLocalesFound) == 0 {
-			log.Println("could not determine a default locale, please ensure you have a {locale}.default.json file")
+			log.Print("could not determine a default locale, please ensure you have a {locale}.default.json file")
 		} else {
 			if len(defaultLocalesFound) > 1 {
-				log.Println("multiple default locales found, please ensure you only have a single {locale}.default.json file")
+				log.Print("multiple default locales found, please ensure you only have a single {locale}.default.json file")
 			}
 			defaultLocale = defaultLocalesFound[0]
 		}
@@ -108,7 +108,6 @@ func setLocalization(extension *core.Extension) error {
 	localization, err := getLocalization(extension)
 
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	extension.Localization = localization
@@ -165,7 +164,7 @@ func WatchLocalization(ctx context.Context, extension core.Extension, report Res
 					if err != nil {
 						reportAndUpdateLocalizationStatus(Result{
 							false,
-							fmt.Sprintf("could not resolve localization, error: %s\n", err.Error()),
+							fmt.Sprintf("could not resolve localization, error: %s", err.Error()),
 							extension,
 						}, report)
 					}
@@ -175,13 +174,17 @@ func WatchLocalization(ctx context.Context, extension core.Extension, report Res
 				if !ok {
 					return
 				}
-				log.Println("error:", err)
+				log.Print("error:", err)
 			}
 		}
 	}()
 
 	err = watcher.Add(directory)
-	log.Println("Watcher added for:", directory)
+  reportAndUpdateLocalizationStatus(Result{
+    true,
+    fmt.Sprintf("Watcher added for %s", directory),
+    extension,
+    }, report)
 	if err != nil {
 		log.Fatal(err)
 	}

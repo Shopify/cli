@@ -164,7 +164,7 @@ func buildTemplateHelpers(t *template.Template, extension core.Extension, shared
 				for _, fragment := range fragments[1:] {
 					err := mergo.Merge(&merged, &fragment, mergo.WithAppendSlice)
 					if err != nil {
-						fmt.Println(err)
+						fmt.Print(err)
 					}
 				}
 				return merged

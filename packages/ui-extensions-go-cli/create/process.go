@@ -21,7 +21,7 @@ func (p *Process) Run() (err error) {
 		if err = task.Run(); err != nil {
 			p.status[taskId] = "fail"
 			if undoErr := p.Undo(); undoErr != nil {
-				log.Printf("Failed to undo with error: %v\n", undoErr)
+				log.Printf("Failed to undo with error: %v", undoErr)
 			}
 			return
 		}

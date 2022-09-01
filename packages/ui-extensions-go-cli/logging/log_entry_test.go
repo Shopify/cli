@@ -13,7 +13,9 @@ func TestParseToJson(t *testing.T) {
 	LogBuilderBase := logBuilder.AddWorkflowSteps("Base", "Extended")
 	logBuilderBaseExtendend := LogBuilderBase.AddWorkflowSteps("Extra")
 	logBuilderBaseExtendend.SetStatus(InProgress)
-	logEntry := logBuilderBaseExtendend.Build("ext_id", "test_message")
+  logBuilderBaseExtendend.SetExtensionId("ext_id")
+  logBuilderBaseExtendend.SetExtensionName("ext name")
+	logEntry := logBuilderBaseExtendend.Build("test_message")
 
 	jsonString := logEntry.toJson()
 
@@ -26,6 +28,10 @@ func TestParseToJson(t *testing.T) {
 
 	if parsedLogEntry.ExtensionID != logEntry.ExtensionID {
 		t.Error("Json mapping failed: extension ID is not equal")
+	}
+
+  if parsedLogEntry.ExtensionName != logEntry.ExtensionName {
+		t.Error("Json mapping failed: extension Name is not equal")
 	}
 
 	if parsedLogEntry.Status != logEntry.Status {

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {getConfigs} from './configs'
-import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
+import {build as esBuild, BuildFailure, BuildResult} from 'esbuild'
 
 export interface Options {
   mode: 'development' | 'production'
@@ -91,8 +91,8 @@ function logResult(result: BuildResult | null) {
 }
 
 function logErrors(result: BuildResult) {
-  const errors = formatMessagesSync(result.errors, {kind: 'error'})
-  const warnings = formatMessagesSync(result.warnings, {kind: 'warning'})
+  const errors = result.errors.map((err) => err.detail)
+  const warnings = result.warnings.map((err) => err.detail)
   if (errors.length > 0) console.error(errors.join('\n'))
   if (warnings.length > 0) console.error(errors.join('\n'))
 }
