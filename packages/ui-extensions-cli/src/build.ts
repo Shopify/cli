@@ -51,9 +51,10 @@ export async function build({mode}: Options) {
       extensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
     },
   }
+
   try {
     if (isDevelopment) {
-      console.error('xxx')
+      await buildExtensions(entries, buildDir, viteConfiguration)
       const server = await createViteServer({
         ...viteConfiguration,
         plugins: [
@@ -67,21 +68,7 @@ export async function build({mode}: Options) {
         ],
       })
     } else {
-      Object.entries(entries).map(async (entry) => {
-        await promises.rmdir(join(process.cwd(), buildDir), {recursive: true})
-        await viteBuild({
-          ...viteConfiguration,
-          build: {
-            ...viteConfiguration.build,
-            lib: {
-              name: 'ui-extension',
-              formats: ['es'],
-              fileName: (_) => `${entry[0]}.js`,
-              entry: entry[1],
-            },
-          },
-        })
-      })
+      await buildExtensions(entries, buildDir, viteConfiguration)
       logResult(null)
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -89,6 +76,30 @@ export async function build({mode}: Options) {
     console.error('Error building extension: ', _error)
     process.exit(1)
   }
+}
+
+async function buildExtensions(entries: {[key: string]: string}, buildDir: string, viteConfiguration: InlineConfig) {
+  await Promise.all(
+    Object.entries(entries).map(async (entry) => {
+      await buildExtension(buildDir, viteConfiguration, entry)
+    }),
+  )
+}
+
+async function buildExtension(buildDir: string, viteConfiguration: InlineConfig, entry: [string, string]) {
+  await promises.rm(join(process.cwd(), buildDir), {recursive: true})
+  await viteBuild({
+    ...viteConfiguration,
+    build: {
+      ...viteConfiguration.build,
+      lib: {
+        name: 'ui-extension',
+        formats: ['es'],
+        fileName: (_) => `${entry[0]}.js`,
+        entry: entry[1],
+      },
+    },
+  })
 }
 
 function getPlugins() {
