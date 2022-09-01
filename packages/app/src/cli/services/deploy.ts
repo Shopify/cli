@@ -30,6 +30,9 @@ interface DeployOptions {
   /** The app to be built and uploaded */
   app: AppInterface
 
+  /** API key of the app in Partners admin */
+  apiKey?: string
+
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 }
