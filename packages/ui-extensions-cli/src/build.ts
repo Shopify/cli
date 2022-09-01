@@ -53,8 +53,18 @@ export async function build({mode}: Options) {
   }
   try {
     if (isDevelopment) {
-      await createViteServer({
+      console.error('xxx')
+      const server = await createViteServer({
         ...viteConfiguration,
+        plugins: [
+          ...(viteConfiguration.plugins ?? []),
+          {
+            name: 'ui-extensions',
+            watchChange: (id, change) => {
+              console.error(id)
+            },
+          },
+        ],
       })
     } else {
       Object.entries(entries).map(async (entry) => {
