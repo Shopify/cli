@@ -1,13 +1,18 @@
 /* eslint-disable no-console */
 import {getConfigs} from './configs'
+
 import {BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
-import {InlineConfig, build as viteBuild} from 'vite'
+import {InlineConfig, build as viteBuild, createServer as createViteServer} from 'vite'
+import graphqlPlugin from 'vite-plugin-graphql'
 import {promises} from 'node:fs'
+// eslint-disable-next-line no-restricted-imports
 import {join} from 'node:path'
 
 export interface Options {
   mode: 'development' | 'production'
 }
+
+// https://github.com/Shopify/cli/blob/main/packages/ui-extensions-cli/src/build.ts
 
 export async function build({mode}: Options) {
   const isDevelopment = mode === 'development'
@@ -16,9 +21,24 @@ export async function build({mode}: Options) {
     development: {entries, build = {}, develop = {}, buildDir},
   } = configs
 
+  const {env = {}} = isDevelopment ? develop : build
+  const define = Object.keys(env || {}).reduce(
+    (acc, key) => ({
+      ...acc,
+      [`process.env.${key}`]: JSON.stringify(env[key]),
+    }),
+    {'process.env.NODE_ENV': JSON.stringify(mode)},
+  )
+
+  /**
+   * 1. How to write changes to disk when modules change?
+   * 2. How to make the output bundle compatible with web workers
+   */
   const viteConfiguration: InlineConfig = {
     root: process.cwd(),
-    // logLevel: isDevelopment ? 'silent' : 'info',
+    logLevel: isDevelopment ? 'silent' : 'info',
+    define,
+    plugins: [graphqlPlugin as any],
     build: {
       minify: !isDevelopment,
       outDir: buildDir,
@@ -33,7 +53,9 @@ export async function build({mode}: Options) {
   }
   try {
     if (isDevelopment) {
-      // TODO
+      await createViteServer({
+        ...viteConfiguration,
+      })
     } else {
       Object.entries(entries).map(async (entry) => {
         await promises.rmdir(join(process.cwd(), buildDir), {recursive: true})

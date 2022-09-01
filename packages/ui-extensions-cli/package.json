@@ -35,10 +35,14 @@
     "@types/js-yaml": "^4.0.3",
     "ts-node": "^10.2.1"
   },
+  "engines": {
+    "node": ">=14.13.1"
+  },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "^3.6.0",
     "esbuild": "^0.12.22",
     "js-yaml": "^4.1.0",
-    "vite": "^3.0.9"
+    "vite": "^3.0.9",
+    "vite-plugin-graphql": "^0.1.0"
   }
 }
