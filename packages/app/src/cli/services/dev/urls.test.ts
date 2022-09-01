@@ -325,6 +325,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingTunnel: true})
+    expect(ui.prompt).toBeCalled()
   })
 
   it('returns localhost if tunnel is false and there is no tunnelUrl nor extensions', async () => {
@@ -341,6 +342,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingTunnel: false})
+    expect(ui.prompt).not.toBeCalled()
   })
 
   it('returns localhost if noTunnel is true even if there are extensions', async () => {
@@ -357,6 +359,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingTunnel: false})
+    expect(ui.prompt).not.toBeCalled()
   })
 
   it('raises error if tunnelUrl does not include port', async () => {
@@ -409,5 +412,24 @@ describe('generateFrontendURL', () => {
     // Then
     expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingTunnel: true})
     expect(store.cliKitStore().setAppInfo).toBeCalledWith({directory: '/app-path', tunnelPlugin: 'ngrok'})
+  })
+
+  it('Reuses tunnel option if cached even if tunnel is false and there are no extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false, directory: '/app-path'}),
+      tunnel: false,
+      noTunnel: false,
+      cachedTunnelPlugin: 'ngrok',
+      commandConfig: {plugins: []},
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingTunnel: true})
+    expect(store.cliKitStore().setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
   })
 })
