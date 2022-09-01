@@ -16,7 +16,8 @@
     "@shopify/ui-extensions-go-cli",
     "@shopify/ui-extensions-dev-console-app",
     "@shopify/ui-extensions-server-kit",
-    "@shopify/ui-extensions-test-utils"
+    "@shopify/ui-extensions-test-utils",
+    "@shopify/plugin-ngrok"
   ]],
   "access": "public",
   "baseBranch": "main",
