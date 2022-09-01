@@ -128,7 +128,7 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       total_time: currentTime - startTime,
       success: errorMessage === undefined,
       cli_version: await constants.versions.cliKit(),
-      ruby_version: (await rubyVersion()) || '',
+      ruby_version: (await rubyVersion()) ?? '',
       node_version: process.version.replace('v', ''),
       is_employee: await environment.local.isShopify(),
       ...environmentData,

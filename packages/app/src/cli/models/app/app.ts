@@ -42,6 +42,7 @@ export interface AppInterface {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
+  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   extensions: {
     ui: UIExtension[]
@@ -63,6 +64,7 @@ export class App implements AppInterface {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
+  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
   extensions: {
@@ -84,6 +86,7 @@ export class App implements AppInterface {
     ui: UIExtension[],
     theme: ThemeExtension[],
     functions: FunctionExtension[],
+    usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -102,6 +105,7 @@ export class App implements AppInterface {
       function: functions,
     }
     this.errors = errors
+    this.usesWorkspaces = usesWorkspaces
   }
 
   async updateDependencies() {

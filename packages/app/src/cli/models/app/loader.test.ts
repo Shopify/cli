@@ -3,7 +3,7 @@ import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
-import {yarnLockfile, pnpmLockfile} from '@shopify/cli-kit/node/node-package-manager'
+import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -22,7 +22,7 @@ scopes = "read_products"
     }
   })
 
-  const writeConfig = async (appConfiguration: string) => {
+  const writeConfig = async (appConfiguration: string, packageJson?: PackageJson) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
     const packageJsonPath = path.join(tmpDir, 'package.json')
     const webDirectory = path.join(tmpDir, blocks.web.directoryName)
@@ -34,7 +34,10 @@ scopes = "read_products"
     dev = "dev"
     `
     await file.write(appConfigurationPath, appConfiguration)
-    await file.write(packageJsonPath, JSON.stringify({name: 'my_app', dependencies: {}, devDependencies: {}}))
+    await file.write(
+      packageJsonPath,
+      JSON.stringify(packageJson ?? {name: 'my_app', dependencies: {}, devDependencies: {}}),
+    )
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
 
@@ -131,7 +134,7 @@ scopes = "read_products"
     expect(app.name).toBe('my_app')
   })
 
-  it('defaults to npm as package manager when the configuration is valid', async () => {
+  it('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -142,7 +145,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('npm')
   })
 
-  it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
+  it('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
     const yarnLockPath = path.join(tmpDir, yarnLockfile)
@@ -155,7 +158,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('yarn')
   })
 
-  it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
+  it('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
     const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
@@ -166,6 +169,46 @@ scopes = "read_products"
 
     // Then
     expect(app.packageManager).toBe('pnpm')
+  })
+
+  it("identifies if the app doesn't use workspaces", async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.usesWorkspaces).toBe(false)
+  })
+
+  it('identifies if the app uses yarn or npm workspaces', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.usesWorkspaces).toBe(true)
+  })
+
+  it('identifies if the app uses pnpm workspaces', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const pnpmWorkspaceFilePath = path.join(tmpDir, pnpmWorkspaceFile)
+    await file.write(pnpmWorkspaceFilePath, '')
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.usesWorkspaces).toBe(true)
   })
 
   it("throws an error if the extension configuration file doesn't exist", async () => {
@@ -562,6 +605,20 @@ scopes = "read_products"
 
     await load(tmpDir)
 
-    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node'})
+    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
+  })
+
+  it(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
+    const {webDirectory} = await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await file.write(path.join(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await load(tmpDir)
+
+    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
   })
 })
