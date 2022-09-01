@@ -1,6 +1,6 @@
+import {authenticate} from '../../tunnel.js'
 import {output} from '@shopify/cli-kit'
 import {Command} from '@oclif/core'
-import {authenticate} from '../../tunnel.js'
 
 export default class NgrokAuth extends Command {
   static description =
