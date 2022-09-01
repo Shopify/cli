@@ -124,8 +124,8 @@ func TestWatchLocalization(t *testing.T) {
 	// wait while all goroutines will end their job
 	wg.Wait()
 
-	if len(results) != 1 {
-		t.Errorf("expected 1 result but got %d\n", len(results))
+	if len(results) != 2 {
+		t.Errorf("expected 2 result but got %d\n", len(results))
 	}
 
 	if !results[0].Success {

@@ -87,8 +87,8 @@ export async function nodeExtensionsCLIPath(): Promise<string> {
 
 /**
  * This method provides a Writable wraper which parses the incoming chunks as GoLog from Json and writes them back to
- * the Writable given as parameter. If PArsing to Json fails it wirtes the chunk as it is and thows an error.
- * @param output {Writable} A Writable which will be wrapped and in which the parsed chanks will be written.
+ * the Writable given as parameter. If Parsing to Json fails it wirtes the chunk as it is and thows an error.
+ * @param output {Writable} A Writable which will be wrapped and in which the parsed chunks will be written.
  * @returns {Writable} A Writable wrapping the parameter.
  */
 export function goLogWritable(output: Writable): Writable {
@@ -100,9 +100,9 @@ export function goLogWritable(output: Writable): Writable {
           try {
             const log = JSON.parse(line) as GoLog
             output.write(parseGoLogMessage(log))
+            // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (err) {
             output.write(line)
-            throw err
           }
         }
       }
