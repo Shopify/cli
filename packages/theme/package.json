@@ -50,7 +50,7 @@
   "oclif": {
     "commands": "dist/cli/commands",
     "hooks": {
-      "init": "@shopify/cli-kit/node/hooks/init"
+      "init": "@shopify/theme/node_modules/@shopify/cli-kit/dist/node/hooks/init.js"
     }
   }
 }
