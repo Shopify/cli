@@ -1,5 +1,5 @@
-import {error, os, output, ui} from '@shopify/cli-kit'
 import {TUNNEL_PROVIDER} from './provider.js'
+import {error, os, output, ui} from '@shopify/cli-kit'
 import {startTunnel} from '@shopify/cli-kit/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 
@@ -17,8 +17,9 @@ export async function hookStart(port: number): Promise<{url: string | undefined}
   try {
     const url = await start({port})
     return {url}
-  } catch (error: any) {
-    output.error(error)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    await output.error(error as error.Abort)
     return {url: undefined}
   }
 }
@@ -30,21 +31,19 @@ export async function start(options: {port: number}): Promise<string> {
     await authenticate(token)
   }
 
-  const url = await ngrok.connect({proto: 'http', addr: options.port}).catch((e: Error) => {
-    throw NgrokError(e.message)
+  const url = await ngrok.connect({proto: 'http', addr: options.port}).catch((err: Error) => {
+    throw NgrokError(err.message)
   })
   return url
 }
 
 export async function authenticate(token: string): Promise<void> {
-  if (!token) {
-    token = await tokenPrompt(false)
-  }
-  await ngrok.authtoken(token)
+  const validToken = token ?? (await tokenPrompt(false))
+  await ngrok.authtoken(validToken)
   await ngrok.upgradeConfig()
 }
 
-async function tokenPrompt(showExplanation: boolean = true): Promise<string> {
+async function tokenPrompt(showExplanation = true): Promise<string> {
   const explanation = showExplanation
     ? '\nTo make your local code accessible to your dev store, you need to use a ' +
       'Shopify-trusted tunneling service called ngrok. '
@@ -60,7 +59,7 @@ async function tokenPrompt(showExplanation: boolean = true): Promise<string> {
       message: 'Enter your ngrok token.',
       validate: (value) => {
         if (value.length === 0) {
-          return 'Token cannot be empty'
+          return "Token can't be empty"
         }
         return true
       },
@@ -73,7 +72,7 @@ async function tokenPrompt(showExplanation: boolean = true): Promise<string> {
 function buildTryMessage(nrokErrorMessage: string): string | undefined {
   if (/err_ngrok_108/.test(nrokErrorMessage)) {
     const {platform} = os.platformAndArch()
-    let tryMessage = 'Kill all the ngrok processes with '
+    const tryMessage = 'Kill all the ngrok processes with '
     if (platform === 'windows') {
       return tryMessage.concat(output.content`${output.token.genericShellCommand('taskkill /f /im ngrok.exe')}`.value)
     } else {
