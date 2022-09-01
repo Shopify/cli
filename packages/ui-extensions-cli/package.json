@@ -38,6 +38,7 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "^3.6.0",
     "esbuild": "^0.12.22",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "vite": "^3.0.9"
   }
 }
