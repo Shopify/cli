@@ -38,8 +38,11 @@ interface ExtensionInitOptions<
   externalExtensionType: TExternalExtensionTypes
   app: AppInterface
   cloneUrl?: string
-  extensionFlavor?: string
+  extensionFlavor?: ExtensionFlavor
 }
+
+type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
+
 interface ExtensionDirectory {
   extensionDirectory: string
 }
@@ -109,33 +112,30 @@ async function uiExtensionInit({
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
 
-          const templateDirectory = (await path.findUp(
+          const templateDirectory = await path.findUp(
             `templates/ui-extensions/projects/${mapExtensionTypeToExternalExtensionType(extensionType)}`,
             {
               type: 'directory',
               cwd: path.moduleDirectory(import.meta.url),
             },
-          )) as string
+          )
+
+          if (!templateDirectory) {
+            throw new error.Bug(
+              `Couldn't find the template for the ${getExtensionOutputConfig(extensionType).humanKey} extension`,
+            )
+          }
 
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
             flavor: extensionFlavor,
             type: extensionType,
             name,
           })
-          const fileExtensionsMapper: {[flavor: string]: string} = {
-            'vanilla-js': 'js',
-            react: 'jsx',
-            typescript: 'ts',
-            'typescript-react': 'tsx',
-          }
-          const fileExtension = fileExtensionsMapper[extensionFlavor ?? '']
 
-          if (fileExtension) {
-            await file.move(
-              path.join(extensionDirectory, 'src/index.js'),
-              path.join(extensionDirectory, `src/index.${fileExtension}`),
-            )
+          if (extensionFlavor) {
+            await changeIndexFileExtension(extensionDirectory, extensionFlavor)
           }
+
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
       },
@@ -162,6 +162,24 @@ export function getRuntimeDependencies({
       }
       return dependencies
     }
+  }
+}
+
+async function changeIndexFileExtension(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
+  const fileExtensionsMapper = {
+    'vanilla-js': 'js',
+    react: 'jsx',
+    typescript: 'ts',
+    'typescript-react': 'tsx',
+  }
+
+  const fileExtension = fileExtensionsMapper[extensionFlavor]
+
+  if (fileExtension) {
+    await file.move(
+      path.join(extensionDirectory, 'src/index.js'),
+      path.join(extensionDirectory, `src/index.${fileExtension}`),
+    )
   }
 }
 
