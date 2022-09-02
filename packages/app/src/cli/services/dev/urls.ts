@@ -1,4 +1,4 @@
-import {updateURLsPrompt} from '../../prompts/dev.js'
+import {tunnelConfigurationPrompt, updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {api, error, output, plugins, port, store} from '@shopify/cli-kit'
 import {Plugin} from '@oclif/core/lib/interfaces'
@@ -13,6 +13,7 @@ export interface FrontendURLOptions {
   tunnel: boolean
   noTunnel: boolean
   tunnelUrl?: string
+  cachedTunnelPlugin?: string
   commandConfig: {plugins: Plugin[]}
 }
 
@@ -23,18 +24,24 @@ export interface FrontendURLResult {
 }
 
 /**
- * The tunnel creation logic depends on 4 variables:
+ * The tunnel creation logic depends on 5 variables:
  * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
  * - If noTunnel is true, that takes second preference and localhost is used
- * - If tunnel is true OR app.hasUIExtensions() is true, that takes third preference and a tunnel is created
- * - Otherwise, no tunnel is created and localhost is used.
+ * - A Tunnel is created then if any of these conditions are met:
+ *   - Tunnel flag is true
+ *   - The app has UI extensions
+ *   - In a previous run, the user selected to always use a tunnel (cachedTunnelPlugin)
+ * - Otherwise, localhost is used
+ *
+ * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
  */
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
   let frontendPort: number
   let frontendUrl: string
   let usingTunnel = true
+  const hasExtensions = options.app.hasUIExtensions()
 
-  const needsTunnel = (options.app.hasUIExtensions() || options.tunnel) && !options.noTunnel
+  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
@@ -43,7 +50,24 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     }
     frontendPort = Number(matches[2])
     frontendUrl = matches[1]!
-  } else if (needsTunnel) {
+    return {frontendUrl, frontendPort, usingTunnel}
+  }
+
+  if (needsTunnel && !options.cachedTunnelPlugin) {
+    let message = "We'll run your tunnel with ngrok."
+    const extensionsWarning = 'Some parts of your app can only be previewed with a tunnel to your dev store.'
+    if (hasExtensions) message = `${extensionsWarning} ${message}`
+
+    output.info(`\n${message}\n`)
+
+    const useTunnel = await tunnelConfigurationPrompt()
+    if (useTunnel === 'cancel') throw new error.CancelExecution()
+    if (useTunnel === 'always') {
+      store.cliKitStore().setAppInfo({directory: options.app.directory, tunnelPlugin: 'ngrok'})
+    }
+  }
+
+  if (needsTunnel) {
     frontendPort = await port.getRandomPort()
     frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
   } else {
