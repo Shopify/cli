@@ -1,4 +1,4 @@
-{% if flavor == "react" %}
+{%- if flavor == "react" -%}
 import React from 'react';
 import {
   useExtensionApi,
@@ -15,7 +15,7 @@ function App() {
   return <Banner>{translate('welcome', {extensionPoint})}</Banner>;
 }
 
-{% else %}
+{%- else -%}
 import { extend, Banner } from "@shopify/checkout-ui-extensions";
 
 extend("Checkout::Dynamic::Render", (root, { extensionPoint, i18n }) => {
@@ -28,4 +28,4 @@ extend("Checkout::Dynamic::Render", (root, { extensionPoint, i18n }) => {
   );
   root.mount();
 });
-{% endif %}
+{%- endif -%}

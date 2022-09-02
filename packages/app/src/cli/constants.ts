@@ -154,7 +154,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
 }
 
 export const uiExternalExtensionTypes = {
-  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_acounts_ui'],
+  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui'],
 } as const
 
 export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]

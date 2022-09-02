@@ -108,6 +108,7 @@ async function uiExtensionInit({
         title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
+
           const templateDirectory = (await path.findUp(
             `templates/ui-extensions/projects/${mapExtensionTypeToExternalExtensionType(extensionType)}`,
             {
@@ -135,39 +136,6 @@ async function uiExtensionInit({
               path.join(extensionDirectory, `src/index.${fileExtension}`),
             )
           }
-
-          // const input = yaml.encode({
-          //   extensions: [
-          //     {
-          //       title: name,
-          //       // Use the new templates
-          //       external_type: mapExtensionTypeToExternalExtensionType(extensionType),
-          //       type: extensionType,
-          //       metafields: [],
-          //       development: {
-          //         root_dir: '.',
-          //         template: extensionFlavor,
-          //         install_dependencies: false,
-          //       },
-          //     },
-          //   ],
-          // })
-          // await runGoExtensionsCLI(['create', '-'], {
-          //   cwd: extensionDirectory,
-          //   stderr: new stream.Writable({
-          //     write(chunk, encoding, next) {
-          //       task.output = chunk.toString()
-          //       next()
-          //     },
-          //   }),
-          //   stdout: new stream.Writable({
-          //     write(chunk, encoding, next) {
-          //       task.output = chunk.toString()
-          //       next()
-          //     },
-          //   }),
-          //   input,
-          // })
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
       },
