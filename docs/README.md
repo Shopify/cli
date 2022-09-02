@@ -15,7 +15,12 @@ our biggest decisions.
 * [Release process](./release.md)
 * [Testing strategy](./testing-strategy.md)
 * [Troubleshooting](./troubleshooting.md)
+* [Plugins](./plugins.md)
 * [FAQ](./faq.md)
+
+## Plugins
+* [Ngrok tunnel](./plugins/ngrok.md)
+
 
 ## Decision Record
 * [August 2022 - Automating via Nx](./decision-record/2022_08-automation-via-nx.md)
