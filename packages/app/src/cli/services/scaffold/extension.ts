@@ -8,7 +8,6 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
-  ExternalExtensionTypes,
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
@@ -29,19 +28,15 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<
-  TExtensionTypes extends ExtensionTypes = ExtensionTypes,
-  TExternalExtensionTypes extends ExternalExtensionTypes = ExternalExtensionTypes,
-> {
+interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
   name: string
   extensionType: TExtensionTypes
-  externalExtensionType: TExternalExtensionTypes
   app: AppInterface
   cloneUrl?: string
   extensionFlavor?: ExtensionFlavor
 }
 
-type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
+export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
 
 interface ExtensionDirectory {
   extensionDirectory: string
@@ -75,7 +70,6 @@ async function themeExtensionInit({name, app, extensionType, extensionDirectory}
 async function uiExtensionInit({
   name,
   extensionType,
-  externalExtensionType,
   app,
   extensionFlavor,
   extensionDirectory,
@@ -121,9 +115,7 @@ async function uiExtensionInit({
           )
 
           if (!templateDirectory) {
-            throw new error.Bug(
-              `Couldn't find the template for the ${getExtensionOutputConfig(extensionType).humanKey} extension`,
-            )
+            throw new error.Bug(`Couldn't find the template for ${extensionType}`)
           }
 
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
