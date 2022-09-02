@@ -1,4 +1,3 @@
-import {lookupTunnelPlugin} from './plugins.js'
 import {mkdir, mkTmpDir, rmdir, write} from './file.js'
 import {join} from './path.js'
 import {describe, expect, it} from 'vitest'

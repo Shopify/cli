@@ -56,19 +56,26 @@ export type FanoutHookFunction<
 
 /**
  * Execute the 'tunnel_provider' hook, and return the list of available tunnel providers.
+ * Fail if there are multiple plugins for the same provider
+ *
+ * @param config oclif config used to execute hooks
+ * @returns list of available tunnel plugins
  */
 export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: string[]; error?: string}> {
   const hooks = await fanoutHooks(config, 'tunnel_provider', {})
   const names = filterUndefined(Object.values(hooks).map((key) => key?.name))
-  if (containsDuplicates(names)) {
-    return {plugins: names, error: 'multiple-plugins-for-provider'}
-  }
+  if (containsDuplicates(names)) return {plugins: names, error: 'multiple-plugins-for-provider'}
   return {plugins: names}
 }
 
 /**
  * Execute the 'tunnel_start' hook for the given provider.
- * Fail if there aren't plugins for that provider or if there are more than one.
+ * Fails if there aren't plugins for that provider or if there are more than one.
+ *
+ * @param config oclif config used to execute hooks
+ * @param port port where the tunnel will be started
+ * @param provider selected provider, must be unique
+ * @returns tunnel URL from the selected provider
  */
 export async function runTunnelPlugin(
   config: Config,

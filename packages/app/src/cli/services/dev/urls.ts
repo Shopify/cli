@@ -12,7 +12,7 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
   const result = await plugins.runTunnelPlugin(config, frontendPort, 'ngrok')
 
-  if (result.error === 'multiple-urls') throw new error.Bug('Mulitple tunnel plugins for ngrok found')
+  if (result.error === 'multiple-urls') throw new error.Bug('Multiple tunnel plugins for ngrok found')
   if (result.error === 'no-urls' || !result.url) throw new error.Bug('Ngrok failed to start the tunnel')
   output.success('The tunnel is running and you can now view your app')
   return result.url
