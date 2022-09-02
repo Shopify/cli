@@ -18,7 +18,6 @@ import {
   getDependencies,
   getPackageManager,
   getPackageName,
-  pnpmWorkspaceFile,
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
@@ -89,8 +88,7 @@ class AppLoader {
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()
-    const pnpmWorkspacesPath = path.join(this.appDirectory, pnpmWorkspaceFile)
-    const usesWorkspaces = await appUsesWorkspaces(packageJSONPath, pnpmWorkspacesPath)
+    const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
     const appClass = new App(
       name,

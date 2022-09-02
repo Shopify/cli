@@ -193,8 +193,10 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
  * @returns A promise that resolves with true if the app uses workspaces, false otherwise.
  */
 
-export async function usesWorkspaces(packageJsonPath: string, pnpmWorkspacePath: string): Promise<boolean> {
+export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
+  const packageJsonPath = pathJoin(appDirectory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  const pnpmWorkspacePath = pathJoin(appDirectory, pnpmWorkspaceFile)
   return Boolean(packageJsonContent.workspaces) || fileExists(pnpmWorkspacePath)
 }
 /**
