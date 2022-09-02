@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.6.2",
+  "version": "3.9.2",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -16,14 +16,14 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "clean": "shx rm -rf dist",
-    "build": "rimraf dist/ && tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx run app:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [
@@ -47,15 +47,17 @@
     }
   },
   "devDependencies": {
+    "@types/diff": "^5.0.2",
     "@types/http-proxy": "^1.17.9",
-    "vitest": "^0.17.1"
+    "vitest": "^0.22.1"
   },
   "dependencies": {
     "@fastify/reply-from": "^8.0.0",
     "@oclif/core": "1.9.2",
-    "@shopify/shopify-cli-extensions": "^0.2.1",
-    "@shopify/cli-kit": "3.6.2",
+    "@shopify/cli-kit": "3.9.2",
+    "@shopify/shopify-cli-extensions": "3.9.2",
     "http-proxy": "^1.18.1",
+    "diff": "^5.1.0",
     "ws": "^8.7.0"
   }
 }

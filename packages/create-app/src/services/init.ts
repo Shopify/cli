@@ -72,9 +72,15 @@ async function init(options: InitOptions) {
                 const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
 
                 await npm.updateAppData(packageJSON, hyphenizedName)
-                await updateCLIDependencies(packageJSON, options.local)
+                await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
 
                 await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+
+                // Ensure that the installation of dependencies doesn't fail when using
+                // pnpm due to missing peerDependencies.
+                if (packageManager === 'pnpm') {
+                  await file.append(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
+                }
 
                 task.title = 'Updated package.json'
                 parentTask.title = 'App initialized'

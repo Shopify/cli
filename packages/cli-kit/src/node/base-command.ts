@@ -14,7 +14,7 @@ export default abstract class extends Command {
   protected async init(): Promise<any> {
     if (!isDevelopment()) {
       // This function runs just prior to `run`
-      await registerCleanBugsnagErrorsFromWithinPlugins(this.config.plugins)
+      await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
     return super.init()
   }

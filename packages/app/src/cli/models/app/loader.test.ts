@@ -193,9 +193,9 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
-    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
+    expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
   })
 
   it('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
@@ -220,9 +220,9 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
-    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
+    expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -244,8 +244,8 @@ scopes = "read_products"
 
     // Then
     expect(app.name).toBe('my_app')
-    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
-    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   it('loads the app with several extensions that have valid configurations', async () => {
@@ -282,10 +282,10 @@ scopes = "read_products"
     const extensions = app.extensions.ui.sort((extA, extB) =>
       extA.configuration.name < extB.configuration.name ? -1 : 1,
     )
-    expect(extensions[0].configuration.name).toBe('my_extension_1')
-    expect(extensions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
-    expect(extensions[1].configuration.name).toBe('my_extension_2')
-    expect(extensions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
+    expect(extensions[0]!.configuration.name).toBe('my_extension_1')
+    expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
+    expect(extensions[1]!.configuration.name).toBe('my_extension_2')
+    expect(extensions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
   it('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
@@ -358,7 +358,7 @@ scopes = "read_products"
 
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -376,9 +376,9 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].configuration.name).toBe('my-function')
-    expect(app.extensions.function[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
-    expect(app.extensions.function[0].localIdentifier).toBe('my-function')
+    expect(app.extensions.function[0]!.configuration.name).toBe('my-function')
+    expect(app.extensions.function[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
+    expect(app.extensions.function[0]!.localIdentifier).toBe('my-function')
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -386,7 +386,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     let blockConfiguration = `
       name = "my-function-1"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -424,12 +424,12 @@ scopes = "read_products"
     const functions = app.extensions.function.sort((extA, extB) =>
       extA.configuration.name < extB.configuration.name ? -1 : 1,
     )
-    expect(functions[0].configuration.name).toBe('my-function-1')
-    expect(functions[1].configuration.name).toBe('my-function-2')
-    expect(functions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
-    expect(functions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
-    expect(functions[0].localIdentifier).toBe('my-function-1')
-    expect(functions[1].localIdentifier).toBe('my-function-2')
+    expect(functions[0]!.configuration.name).toBe('my-function-1')
+    expect(functions[1]!.configuration.name).toBe('my-function-2')
+    expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
+    expect(functions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
+    expect(functions[0]!.localIdentifier).toBe('my-function-1')
+    expect(functions[1]!.localIdentifier).toBe('my-function-2')
   })
 
   it(`throws an error when the function's metadata.json file is missing`, async () => {
@@ -438,7 +438,7 @@ scopes = "read_products"
 
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -460,7 +460,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -478,7 +478,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   it(`defaults the function wasm path if not configured`, async () => {
@@ -486,7 +486,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my-function"
-      type = "payment_methods"
+      type = "order_discounts"
       apiVersion = "2022-07"
 
       [build]
@@ -503,7 +503,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
+    expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
   })
 
   it(`updates metadata after loading`, async () => {

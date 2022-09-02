@@ -45,7 +45,13 @@ export interface Question<TName extends string = string> {
   default?: string
   result?: (value: string) => string | boolean
   type: 'input' | 'select' | 'autocomplete' | 'password'
-  choices?: {name: string; value: string}[]
+  choices?: QuestionChoiceType[]
+}
+
+export interface QuestionChoiceType {
+  name: string
+  value: string
+  group?: {name: string; order: number}
 }
 
 const started = (content: Message, logger: Logger) => {
@@ -144,7 +150,7 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
 
   const processInfo = await findProcess('port', port)
   const formattedProcessName =
-    processInfo && processInfo.length > 0 && processInfo[0].name
+    processInfo && processInfo.length > 0 && processInfo[0]?.name
       ? ` ${content`${token.italic(`(${processInfo[0].name})`)}`.value}`
       : ''
 

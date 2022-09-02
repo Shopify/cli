@@ -163,7 +163,7 @@ export async function ensureAuthenticated(applications: OAuthApplications, env =
   }
 
   const currentSession = (await secureStore.fetch()) || {}
-  const fqdnSession = currentSession[fqdn]
+  const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 
   debug(content`Validating existing session against the scopes:

@@ -36,7 +36,7 @@ class AppErrors {
     this.errors[path] = message
   }
 
-  getError(path: string): string {
+  getError(path: string) {
     return this.errors[path]
   }
 

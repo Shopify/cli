@@ -7,21 +7,42 @@
       {
         "type": "node",
         "request": "launch",
+        "name": "shopify app build",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "build",
+          "--path=${input:appDir}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
+        },
+        "skipFiles": [
+          "<node_internals>/**",
+        ],
+      },
+      {
+        "type": "node",
+        "request": "launch",
         "name": "shopify app dev",
-        "runtimeExecutable": "yarn",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "shopify",
           "app",
           "dev",
-          "--path=${input:appDir}"
+          "--no-update",
+          "--path=${input:appDir}",
         ],
         "env": {
           "DEBUG": "\"*\"",
-          // "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
-          // "DEBUG_GO_BINARY": "1",       // Pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
-          "<node_internals>/**"
+          "<node_internals>/**",
         ],
       },
       {
@@ -41,8 +62,7 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          // "SHOPIFY_USE_EXTENSIONS_CLI_SOURCES": "1",
-          // "DEBUG_GO_BINARY": "1",       // Pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
           "<node_internals>/**"
@@ -54,6 +74,7 @@
         "id": "appDir",
         "type": "promptString",
         "description": "App Directory: ",
+        "default": ".",
       },
       {
         "id": "extensionName",
@@ -74,8 +95,8 @@
           "product_discounts",
           "order_discounts",
           "shipping_discounts",
-          "payment_methods",
-          "shipping_rate_presenter"
+          "payment_customization",
+          "shipping_rate_presenter",
         ],
         "default": "checkout_ui_extension",
     },
@@ -86,10 +107,12 @@
       "options": [
         "vanilla-js",
         "react",
+        "typescript",
+        "typescript-react",
         "wasm",
-        "rust"
+        "rust",
       ],
       "default": "react",
-    }
-  ]
+    },
+  ],
 }

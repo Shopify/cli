@@ -9,26 +9,14 @@ import {
   ExternalExtensionTypes,
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path, environment} from '@shopify/cli-kit'
+import {file, output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
+  vi.mock('../../utilities/extensions/cli.js')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      environment: {
-        local: {
-          isDevelopment: vi.fn(),
-          isUnitTest: vi.fn(),
-        },
-      },
-    }
-  })
-  vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
-  vi.mocked(environment.local.isUnitTest).mockReturnValue(true)
 })
 
 describe('initialize a extension', () => {
@@ -36,12 +24,14 @@ describe('initialize a extension', () => {
     'successfully scaffolds the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
+        vi.mocked(runGoExtensionsCLI).mockRestore()
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
-        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
-        const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        const scaffoldedExtension = (await loadApp(tmpDir)).extensions.ui[0]!
         expect(scaffoldedExtension.configuration.name).toBe(name)
       })
     },
@@ -52,22 +42,36 @@ describe('initialize a extension', () => {
     'successfully scaffolds the extension when another extension exists',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
+        vi.mocked(runGoExtensionsCLI).mockRestore()
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
-        await createFromTemplate({name: name1, extensionType, externalExtensionType, appDirectory: tmpDir})
-        await createFromTemplate({name: name2, extensionType, externalExtensionType, appDirectory: tmpDir})
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({
+          name: name1,
+          extensionType,
+          externalExtensionType,
+          extensionFlavor,
+          appDirectory: tmpDir,
+        })
+        await createFromTemplate({
+          name: name2,
+          extensionType,
+          externalExtensionType,
+          extensionFlavor,
+          appDirectory: tmpDir,
+        })
         const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
         const loadedApp = await loadApp(tmpDir)
         const scaffoldedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
           lhs.directory < rhs.directory ? -1 : 1,
-        )[1]
+        )[1]!
         expect(scaffoldedExtension2.configuration.name).toBe(name2)
 
-        const firstDependenciesCallArgs = addDependenciesCalls[0]
+        const firstDependenciesCallArgs = addDependenciesCalls[0]!
         expect(firstDependenciesCallArgs[0]).toEqual([
           {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
@@ -75,7 +79,7 @@ describe('initialize a extension', () => {
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
         expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
 
-        const secondDependencyCallArgs = addDependenciesCalls[1]
+        const secondDependencyCallArgs = addDependenciesCalls[1]!
         expect(firstDependenciesCallArgs[0]).toEqual([
           {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
@@ -91,13 +95,60 @@ describe('initialize a extension', () => {
     'errors when trying to re-scaffold an existing extension',
     async () => {
       await withTemporaryApp(async (tmpDir: string) => {
+        vi.mocked(runGoExtensionsCLI).mockRestore()
         const name = 'my-ext-1'
         const extensionType = 'checkout_post_purchase'
         const externalExtensionType = 'post_purchase_ui'
-        await createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir})
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
         await expect(
-          createFromTemplate({name, extensionType, externalExtensionType, appDirectory: tmpDir}),
+          createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir}),
         ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
+      })
+    },
+    30 * 1000,
+  )
+
+  it(
+    'generates files for the corresponding extension flavor',
+    async () => {
+      const extensionType = 'checkout_post_purchase'
+      const externalExtensionType = 'post_purchase_ui'
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-1'
+        const extensionFlavor = 'vanilla-js'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[0]![1] as any).toMatchObject({
+          input: expect.stringContaining(`template: vanilla-js`),
+        })
+      })
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-2'
+        const extensionFlavor = 'react'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[1]![1] as any).toMatchObject({
+          input: expect.stringContaining(`template: react`),
+        })
+      })
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-3'
+        const extensionFlavor = 'typescript-react'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[2]![1] as any).toMatchObject({
+          input: expect.stringContaining(`template: typescript-react`),
+        })
+      })
+
+      await withTemporaryApp(async (tmpDir: string) => {
+        const name = 'my-ext-4'
+        const extensionFlavor = 'typescript'
+        await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
+        expect(vi.mocked(runGoExtensionsCLI).mock.calls[3]![1] as any).toMatchObject({
+          input: expect.stringContaining(`template: typescript`),
+        })
       })
     },
     30 * 1000,
@@ -106,6 +157,8 @@ describe('initialize a extension', () => {
 
 describe('getRuntimeDependencies', () => {
   test('includes React for UI extensions', () => {
+    vi.mocked(runGoExtensionsCLI).mockRestore()
+
     // Given
     // Web Pixel extensions don't need React as a runtime dependency.
     const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
@@ -120,6 +173,8 @@ describe('getRuntimeDependencies', () => {
   })
 
   test('includes the renderer package for UI extensions', () => {
+    vi.mocked(runGoExtensionsCLI).mockRestore()
+
     // Given
     const extensions: UIExtensionTypes[] = [...uiExtensions.types]
 
@@ -139,20 +194,22 @@ interface CreateFromTemplateOptions {
   extensionType: ExtensionTypes
   externalExtensionType: ExternalExtensionTypes
   appDirectory: string
+  extensionFlavor: string
 }
 async function createFromTemplate({
   name,
   extensionType,
   externalExtensionType,
   appDirectory,
+  extensionFlavor,
 }: CreateFromTemplateOptions) {
-  const stdout: any = {write: vi.fn()}
   await extensionInit({
     name,
     extensionType,
     externalExtensionType,
     app: await loadApp(appDirectory),
     cloneUrl: 'cloneurl',
+    extensionFlavor,
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {

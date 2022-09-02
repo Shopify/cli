@@ -20,7 +20,10 @@ describe('get ui extension template types', () => {
       const result = getUIExtensionTemplates(extension)
 
       // Then
-      expect(result).toEqual([{name: 'vanilla JavaScript', value: 'vanilla-js'}])
+      expect(result).toEqual([
+        {name: 'TypeScript', value: 'typescript'},
+        {name: 'JavaScript', value: 'vanilla-js'},
+      ])
     },
   )
 })

@@ -4,5 +4,60 @@
     "sourceRoot": "packages/ui-extensions-dev-console/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-server-kit","ui-extensions-test-utils"],
-    "tags": ["scope:feature"]
+    "tags": ["scope:feature", "scope:ui-extensions"],
+    "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "build": {
+        "outputs": ["../ui-extensions-go-cli/api/dev-console"],
+        "executor": "nx:run-commands",
+        "inputs": ["{projectRoot}/src/**/*"],
+        "options": {
+          "command": "yarn tsc --project tsconfig.build.json --noEmit && yarn vite build",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\"",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "start": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn vite start",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest run",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      }
+    }
 }

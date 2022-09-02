@@ -87,12 +87,12 @@ export async function automaticMatchmaking(
     if (possibleMatches.length === 0) {
       // There are no remote extensions with the same type. We need to create a new extension
       extensionsToCreate.push(extension)
-    } else if (possibleMatches[0].title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
+    } else if (possibleMatches[0]!.title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
       // There is a unique remote extension with the same type AND name. We can automatically match them.
-      validIdentifiers[extension.localIdentifier] = possibleMatches[0].uuid
+      validIdentifiers[extension.localIdentifier] = possibleMatches[0]!.uuid
     } else {
       // There is a unique remote extension with the same type, but different name. We can match them but need to confirm
-      pendingConfirmation.push({extension, registration: possibleMatches[0]})
+      pendingConfirmation.push({extension, registration: possibleMatches[0]!})
     }
   })
 

@@ -9,10 +9,10 @@ import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.20.1'
+const RubyCLIVersion = '2.23.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
-const MinRubyVersion = '2.3.0'
+const MinRubyVersion = '2.7.5'
 const MinRubyGemVersion = '2.5.0'
 
 interface ExecCLI2Options {
@@ -38,6 +38,7 @@ export async function execCLI2(args: string[], {adminSession, storefrontToken, d
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
+    SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
@@ -45,7 +46,7 @@ export async function execCLI2(args: string[], {adminSession, storefrontToken, d
   }
 
   try {
-    await system.exec('bundle', ['exec', 'shopify'].concat(args), {
+    await system.exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
       stdio: 'inherit',
       cwd: directory ?? process.cwd(),
       env,
@@ -99,7 +100,7 @@ export async function execThemeCheckCLI({
         }
       },
     })
-    await system.exec('bundle', ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
+    await system.exec(bundleExecutable(), ['exec', 'theme-check'].concat([directory, ...(args || [])]), {
       stdout,
       stderr: customStderr,
       cwd: themeCheckDirectory(),
@@ -177,13 +178,13 @@ async function validateRubyEnv() {
 async function validateRuby() {
   let version
   try {
-    const stdout = await system.captureOutput('ruby', ['-v'])
+    const stdout = await system.captureOutput(rubyExecutable(), ['-v'])
     version = coerce(stdout)
   } catch {
     throw new Abort(
       'Ruby environment not found',
-      `Make sure you have Ruby installed on your system: ${
-        content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      `Make sure you have Ruby installed on your system. ${
+        content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
       }`,
     )
   }
@@ -191,24 +192,24 @@ async function validateRuby() {
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Ruby version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
-      `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system: ${
-        content`${token.link('', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      `Ruby version ${content`${token.yellow(version.raw)}`.value} is not supported`,
+      `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system. ${
+        content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
       }`,
     )
   }
 }
 
 async function validateRubyGems() {
-  const stdout = await system.captureOutput('gem', ['-v'])
+  const stdout = await system.captureOutput(gemExecutable(), ['-v'])
   const version = coerce(stdout)
 
   const isValid = version?.compare(MinRubyGemVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `RubyGems version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `RubyGems version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of RubyGems, run ${
-        content`${token.genericShellCommand('gem update --system')}`.value
+        content`${token.genericShellCommand(`${gemExecutable()} update --system`)}`.value
       }`,
     )
   }
@@ -217,13 +218,13 @@ async function validateRubyGems() {
 async function validateBundler() {
   let version
   try {
-    const stdout = await system.captureOutput('bundler', ['-v'])
+    const stdout = await system.captureOutput(bundleExecutable(), ['-v'])
     version = coerce(stdout)
   } catch {
     throw new Abort(
       'Bundler not found',
       `To install the latest version of Bundler, run ${
-        content`${token.genericShellCommand('gem install bundler')}`.value
+        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }
@@ -231,9 +232,9 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new Abort(
-      `Bundler version ${content`${token.yellow(version!.raw)}`.value} is not supported`,
+      `Bundler version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
-        content`${token.genericShellCommand('gem install bundler')}`.value
+        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }
@@ -258,17 +259,21 @@ async function createThemeCheckGemfile() {
 }
 
 async function bundleInstallLocalShopifyCLI() {
-  await system.exec('bundle', ['install'], {cwd: shopifyCLIDirectory()})
+  await system.exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
 }
 
 async function bundleInstallShopifyCLI() {
-  await system.exec('bundle', ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {cwd: shopifyCLIDirectory()})
-  await system.exec('bundle', ['install'], {cwd: shopifyCLIDirectory()})
+  await system.exec(bundleExecutable(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
+    cwd: shopifyCLIDirectory(),
+  })
+  await system.exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
 }
 
 async function bundleInstallThemeCheck() {
-  await system.exec('bundle', ['config', 'set', '--local', 'path', themeCheckDirectory()], {cwd: themeCheckDirectory()})
-  await system.exec('bundle', ['install'], {cwd: themeCheckDirectory()})
+  await system.exec(bundleExecutable(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
+    cwd: themeCheckDirectory(),
+  })
+  await system.exec(bundleExecutable(), ['install'], {cwd: themeCheckDirectory()})
 }
 
 function shopifyCLIDirectory() {
@@ -285,7 +290,26 @@ function themeCheckDirectory() {
 export async function version(): Promise<string | undefined> {
   const parseOutput = (version: string) => version.match(/ruby (\d+\.\d+\.\d+)/)?.[1]
   return system
-    .captureOutput('ruby', ['-v'])
+    .captureOutput(rubyExecutable(), ['-v'])
     .then(parseOutput)
     .catch(() => undefined)
+}
+
+function getRubyBinDir(): string | undefined {
+  return process.env.SHOPIFY_RUBY_BINDIR
+}
+
+function rubyExecutable(): string {
+  const rubyBinDir = getRubyBinDir()
+  return rubyBinDir ? join(rubyBinDir, 'ruby') : 'ruby'
+}
+
+function bundleExecutable(): string {
+  const rubyBinDir = getRubyBinDir()
+  return rubyBinDir ? join(rubyBinDir, 'bundle') : 'bundle'
+}
+
+function gemExecutable(): string {
+  const rubyBinDir = getRubyBinDir()
+  return rubyBinDir ? join(rubyBinDir, 'gem') : 'gem'
 }

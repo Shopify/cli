@@ -1,5 +1,4 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectOrCreateApp} from './dev/select-app.js'
+import {outputEnv} from './web-env.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {
@@ -9,9 +8,8 @@ import {
   themeExtensions,
   uiExtensions,
 } from '../constants.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
-import {os, output, path, session, store} from '@shopify/cli-kit'
+import {os, output, path, store} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
@@ -33,28 +31,7 @@ export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Pr
 }
 
 export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
-  const token = await session.ensureAuthenticatedPartners()
-
-  const orgs = await fetchOrganizations(token)
-  const org = await selectOrganizationPrompt(orgs)
-  const {organization, apps} = await fetchOrgAndApps(org.id, token)
-
-  const selectedApp = await selectOrCreateApp(app, apps, organization, token)
-
-  if (format === 'json') {
-    return output.content`${output.token.json({
-      SHOPIFY_API_KEY: selectedApp.apiKey,
-      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
-      SCOPES: app.configuration.scopes,
-    })}`
-  } else {
-    return output.content`
-Use these environment variables to set up your deployment pipeline for this app:
-  · ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
-  · ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
-  · ${output.token.green('SCOPES')}: ${app.configuration.scopes}
-    `
-  }
+  return outputEnv(app, format)
 }
 
 export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
@@ -95,6 +72,7 @@ class AppInfo {
     let appName = NOT_CONFIGURED_TEXT
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
+    let updateURLs = NOT_CONFIGURED_TEXT
     let postscript = output.content`💡 These will be populated when you run ${output.token.packagejsonScript(
       this.app.packageManager,
       'dev',
@@ -103,6 +81,7 @@ class AppInfo {
       if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
       if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
       if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
+      if (this.cachedAppInfo.updateURLs !== undefined) updateURLs = this.cachedAppInfo.updateURLs ? 'Always' : 'Never'
       postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
         this.app.packageManager,
         'dev',
@@ -113,6 +92,7 @@ class AppInfo {
       ['App', appName],
       ['Dev store', storeDescription],
       ['API key', apiKey],
+      ['Update URLs', updateURLs],
     ]
     return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
   }
@@ -234,7 +214,7 @@ class AppInfo {
       [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
+    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath)!)
     return `\n${this.linesToColumns(details)}\n${error}`
   }
 
@@ -267,15 +247,15 @@ class AppInfo {
 
   linesToColumns(lines: string[][]): string {
     const widths: number[] = []
-    for (let i = 0; i < lines[0].length; i++) {
-      const columnRows = lines.map((line) => line[i])
+    for (let i = 0; lines[0] && i < lines[0].length; i++) {
+      const columnRows = lines.map((line) => line[i]!)
       widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
     }
     const paddedLines = lines
       .map((line) => {
         return line
           .map((col, index) => {
-            return `${col}${' '.repeat(widths[index] - output.unstyled(col).length)}`
+            return `${col}${' '.repeat(widths[index]! - output.unstyled(col).length)}`
           })
           .join('   ')
           .trimEnd()
@@ -290,7 +270,7 @@ class AppInfo {
   }
 
   currentCliVersion(): string {
-    return this.app.nodeDependencies['@shopify/cli']
+    return this.app.nodeDependencies['@shopify/cli']!
   }
 
   async versionUpgradeMessage(): Promise<string> {

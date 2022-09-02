@@ -1,4 +1,3 @@
-import {versions} from '../../constants.js'
 import {http, file, path, os, error, constants} from '@shopify/cli-kit'
 import {validateMD5} from '@shopify/cli-kit/node/checksum'
 
@@ -8,7 +7,7 @@ import {pipeline} from 'node:stream'
 import {promisify} from 'node:util'
 
 const SUPPORTED_SYSTEMS = ['darwin amd64', 'darwin arm64', 'linux 386', 'linux amd64', 'windows 386', 'windows amd64']
-const RELEASE_DOWNLOADS_URL = 'https://github.com/Shopify/shopify-cli-extensions/releases/download'
+const RELEASE_DOWNLOADS_URL = 'https://github.com/Shopify/cli/releases/download'
 
 export const UnsupportedPlatformError = ({platform, arch}: {platform: string; arch: string}) => {
   return new error.Abort(
@@ -44,7 +43,7 @@ export function getArtifactName(options: {platform: string; arch: string}) {
 }
 
 async function download({into, artifact}: {into: string; artifact: string}): Promise<string> {
-  const assetDownloadUrl = getReleaseArtifactURL({
+  const assetDownloadUrl = await getReleaseArtifactURL({
     name: artifact,
     extension: 'gz',
   })
@@ -53,7 +52,7 @@ async function download({into, artifact}: {into: string; artifact: string}): Pro
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await promisify(pipeline)(response.body as any, zlib.createGunzip(), createWriteStream(outputBinary))
 
-  const md5DownloadUrl = getReleaseArtifactURL({
+  const md5DownloadUrl = await getReleaseArtifactURL({
     name: artifact,
     extension: 'md5',
   })
@@ -61,8 +60,9 @@ async function download({into, artifact}: {into: string; artifact: string}): Pro
   return outputBinary
 }
 
-export function getReleaseArtifactURL({name, extension}: {name: string; extension: string}) {
-  return `${RELEASE_DOWNLOADS_URL}/${versions.extensionsBinary}/${name}.${extension}`
+export async function getReleaseArtifactURL({name, extension}: {name: string; extension: string}) {
+  const cliVersion = await constants.versions.cliKit()
+  return `${RELEASE_DOWNLOADS_URL}/${cliVersion}/${name}.${extension}`
 }
 
 export function validatePlatformSupport({platform, arch}: {platform: string; arch: string}) {
@@ -88,7 +88,8 @@ export async function getBinaryLocalPath(): Promise<string> {
   const {platform, arch} = os.platformAndArch()
   const binariesDirectory = constants.paths.directories.cache.vendor.binaries()
   const extensionsDirectory = path.join(binariesDirectory, 'extensions')
-  let binaryName = `${versions.extensionsBinary}-${platform}-${arch}`
+  const cliVersion = await constants.versions.cliKit()
+  let binaryName = `${cliVersion}-${platform}-${arch}`
   if (platform === 'windows') {
     binaryName += '.exe'
   }

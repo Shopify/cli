@@ -1,5 +1,53 @@
 # app
 
+## 3.9.2
+
+### Patch Changes
+
+- @shopify/cli@3.9.2
+- @shopify/app@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- Updated dependencies [b777c41e]
+  - @shopify/app@3.9.1
+  - @shopify/cli@3.9.1
+
+## 3.9.0
+
+### Patch Changes
+
+- Updated dependencies [3b94965e]
+- Updated dependencies [c7137a3b]
+- Updated dependencies [4a987a07]
+  - @shopify/app@3.9.0
+  - @shopify/cli@3.9.0
+
+## 3.8.0
+
+### Patch Changes
+
+- 03bd5f28: Added `web-env` command to show and generate .env files without erasing existing ones
+- Updated dependencies [391f02a1]
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [36db5aa3]
+- Updated dependencies [8a03b1cc]
+- Updated dependencies [03bd5f28]
+  - @shopify/app@3.8.0
+  - @shopify/cli@3.8.0
+
+## 3.7.1
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [bba213f9]
+  - @shopify/cli@3.7.1
+  - @shopify/app@3.7.1
+
 ## 3.6.2
 
 ### Patch Changes

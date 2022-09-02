@@ -7,9 +7,10 @@ import {
   cleanSingleStackTracePath,
 } from '../error.js'
 import {debug, info} from '../output.js'
-import {reportEvent} from '../analytics.js'
+import {getEnvironmentData, reportEvent} from '../analytics.js'
 import * as path from '../path.js'
 import * as metadata from '../metadata.js'
+import {fanoutHooks} from '../plugins.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
@@ -24,7 +25,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
     process.exit(1)
   } else {
     return errorMapper(error)
-      .then((error: Error) => {
+      .then((error) => {
         return handler(error)
       })
       .then((mappedError) => reportError(mappedError, config))
@@ -34,13 +35,12 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
   }
 }
 
-const reportError = async (error: Error, config?: Interfaces.Config): Promise<Error> => {
+const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   if (config !== undefined) {
     // Log an analytics event when there's an error
-    await reportEvent({config, errorMessage: error.message})
+    await reportEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
   }
-  const {error: reportedError} = await sendErrorToBugsnag(error)
-  return reportedError
+  await sendErrorToBugsnag(error)
 }
 
 /**
@@ -48,15 +48,16 @@ const reportError = async (error: Error, config?: Interfaces.Config): Promise<Er
  *
  * @returns the reported error (this may have been tweaked for better reporting), and a bool to indicate if the error was actually submitted or not
  */
-export async function sendErrorToBugsnag(error: Error): Promise<{error: Error; reported: boolean}> {
-  if (settings.debug || !shouldReportError(error)) return {error, reported: false}
+export async function sendErrorToBugsnag(
+  error: unknown,
+): Promise<{reported: false; error: unknown} | {error: Error; reported: true}> {
+  if (settings.debug || !shouldReportError(error)) return {reported: false, error}
 
   let reportableError: Error
   let stacktrace: string | undefined
   let report = false
 
-  // eslint-disable-next-line no-prototype-builtins
-  if (Error.prototype.isPrototypeOf(error)) {
+  if (error instanceof Error) {
     report = true
     reportableError = new Error(error.message)
     stacktrace = error.stack
@@ -68,7 +69,7 @@ export async function sendErrorToBugsnag(error: Error): Promise<{error: Error; r
      * Because at this point we have neither the error message nor a stack trace reporting them
      * to Bugsnag is pointless and adds noise.
      */
-  } else if (typeof error === 'string' && (error as string).trim().length !== 0) {
+  } else if (typeof error === 'string' && error.trim().length !== 0) {
     report = true
     reportableError = new Error(error)
     stacktrace = reportableError.stack
@@ -130,25 +131,25 @@ export function cleanStackFrameFilePath({
  * Register a Bugsnag error listener to clean up stack traces for errors within plugin code.
  *
  */
-export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Interfaces.Plugin[]) {
+export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config) {
   // Bugsnag have their own plug-ins that use this private field
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
   const projectRoot = path.normalize(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
-    plugins.map(async (plugin) => {
+    config.plugins.map(async (plugin) => {
       const followSymlinks = await realpath(plugin.root)
       return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
     }),
   )
-  Bugsnag.addOnError((event) => {
+  Bugsnag.addOnError(async (event) => {
     event.errors.forEach((error) => {
       error.stacktrace.forEach((stackFrame) => {
         stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
     try {
-      addBugsnagMetadata(event)
+      await addBugsnagMetadata(event, config)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (metadataError) {
       debug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
@@ -156,10 +157,49 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(plugins: Inter
   })
 }
 
-export function addBugsnagMetadata(event: Event) {
+export async function addBugsnagMetadata(event: Event, config: Interfaces.Config) {
   const publicData = metadata.getAllPublic()
+  const {commandStartOptions} = metadata.getAllSensitive()
+  const {startCommand} = commandStartOptions ?? {}
+
+  const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
+
+  const environment = getEnvironmentData(config)
+
+  const allMetadata = {
+    command: startCommand,
+    ...appPublic,
+    ...publicData,
+    ...environment,
+    pluginData: otherPluginsPublic,
+  }
+
+  const appData = {} as {[key: string]: unknown}
+  const commandData = {} as {[key: string]: unknown}
+  const environmentData = {} as {[key: string]: unknown}
+  const miscData = {} as {[key: string]: unknown}
+  const appKeys = ['api_key', 'partner_id', 'project_type']
+  const commandKeys = ['command']
+  const environmentKeys = ['cli_version', 'node_version', 'ruby_version', 'uname']
+
+  Object.entries(allMetadata).forEach(([key, value]) => {
+    if (key.startsWith('app_') || appKeys.includes(key)) {
+      appData[key] = value
+    } else if (key.startsWith('cmd_') || commandKeys.includes(key)) {
+      commandData[key] = value
+    } else if (key.startsWith('env_') || environmentKeys) {
+      environmentData[key] = value
+    } else {
+      miscData[key] = value
+    }
+  })
+
+  // app, command, environment, misc
   const bugsnagMetadata = {
-    misc: publicData,
+    'Shopify App': appData,
+    Command: commandData,
+    Environment: environmentData,
+    Misc: miscData,
   }
   Object.entries(bugsnagMetadata).forEach(([section, values]) => {
     event.addMetadata(section, values)

@@ -1,13 +1,11 @@
 import {
   extensions,
   ExtensionTypes,
-  functionExtensions,
   getExtensionOutputConfig,
-  themeExtensions,
-  uiExtensions,
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
+  extensionTypesGroups,
 } from '../../constants.js'
 import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
 import {haiku, ui, environment} from '@shopify/cli-kit'
@@ -37,7 +35,7 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   return {
     type: 'select',
     name: 'extensionFlavor',
-    message: 'Choose a starting template for your extension',
+    message: 'What would you like to work in?',
     choices,
     default: 'react',
   }
@@ -64,11 +62,24 @@ const scaffoldExtensionPrompt = async (
       name: 'extensionType',
       message: 'Type of extension?',
       choices: relevantExtensionTypes
-        .map((type) => ({
-          name: getExtensionOutputConfig(type).humanKey,
-          value: type,
-        }))
-        .sort(extensionTypeChoiceSorterByGroupAndName),
+        .map((type) => {
+          const choiceWithoutGroup = {
+            name: getExtensionOutputConfig(type).humanKey,
+            value: type,
+          }
+          const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
+          if (group) {
+            return {
+              ...choiceWithoutGroup,
+              group: {
+                name: group.name,
+                order: extensionTypesGroups.indexOf(group),
+              },
+            }
+          }
+          return choiceWithoutGroup
+        })
+        .sort((c1, c2) => c1.name.localeCompare(c2.name)),
     })
   }
   if (!options.name) {
@@ -93,39 +104,6 @@ const scaffoldExtensionPrompt = async (
     }
   }
   return {...options, ...promptOutput}
-}
-
-/**
- * Sorting method for prompt choices that sort alphabetically extensions showing first the UI ones
- * and latest the function ones
- */
-export const extensionTypeChoiceSorterByGroupAndName = (
-  c1: {name: string; value: string},
-  c2: {name: string; value: string},
-) => {
-  const c1ExtensiontyCategoryPosition = extensiontypeCategoryPosition(c1.value)
-  const c2ExtensiontyCategoryPosition = extensiontypeCategoryPosition(c2.value)
-
-  if (c1ExtensiontyCategoryPosition === c2ExtensiontyCategoryPosition) {
-    return c1.name.localeCompare(c2.name)
-  } else {
-    return c1ExtensiontyCategoryPosition < c2ExtensiontyCategoryPosition ? -1 : 1
-  }
-}
-
-/**
- * It maps an extension category to a numeric value.
- * @param extensionType {string} The extension type which will be resolved to its category.
- * @returns The numeric value of the extension category.
- */
-const extensiontypeCategoryPosition = (extensionType: string): number => {
-  if (includes(uiExtensions.types, extensionType) || includes(themeExtensions.types, extensionType)) {
-    return 0
-  } else if (includes(functionExtensions.types, extensionType)) {
-    return 1
-  } else {
-    return Number.MAX_VALUE
-  }
 }
 
 function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {

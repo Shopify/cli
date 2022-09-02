@@ -225,11 +225,11 @@ async function updateCLIDependencies(
   packageJSON.dependencies = packageJSON.dependencies || {}
 
   Object.keys(devDependencies).forEach((key) => {
-    packageJSON.devDependencies[key] = devDependencies[key] || packageJSON.devDependencies[key]
+    packageJSON.devDependencies[key] = devDependencies[key] || packageJSON.devDependencies[key]!
   })
 
   Object.keys(dependencies).forEach((key) => {
-    packageJSON.dependencies[key] = dependencies[key] || packageJSON.dependencies[key]
+    packageJSON.dependencies[key] = dependencies[key] || packageJSON.dependencies[key]!
   })
 
   if (local) {
@@ -254,7 +254,7 @@ async function installDependencies(directory: string, packageManager: PackageMan
   if (packageManager === 'pnpm') {
     await writeToNpmrc(directory, 'auto-install-peers = true')
   }
-  await installNodeModules(directory, packageManager, stdout)
+  await installNodeModules({directory, packageManager, stdout, args: []})
 }
 
 async function writeToNpmrc(directory: string, content: string) {

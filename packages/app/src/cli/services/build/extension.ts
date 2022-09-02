@@ -46,7 +46,7 @@ export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
  */
 export async function buildThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
   if (options.extensions.length === 0) return
-  options.stdout.write(`Running theme check on your theme app extension...`)
+  options.stdout.write(`Running theme check on your Theme app extension...`)
   const themeDirectories = options.extensions.map((extension) => extension.directory)
   await execThemeCheckCLI({
     directories: themeDirectories,
@@ -114,7 +114,7 @@ export async function buildFunctionExtension(
   }
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
-  await system.exec(buildCommandComponents[0], buildCommandComponents.slice(1), {
+  await system.exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,
     cwd: extension.directory,

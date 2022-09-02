@@ -1,9 +1,9 @@
 import {isUiExtensionType, uiExtensionTemplates} from '../../constants.js'
 
 export function getUIExtensionTemplates(extensionType: string): {name: string; value: string}[] {
-  const filteredFlavors: string[] = []
+  let filteredFlavors: string[] = []
   if (extensionType === 'web_pixel_extension') {
-    filteredFlavors.push('react')
+    filteredFlavors = [...filteredFlavors, 'react', 'typescript-react']
   }
   return uiExtensionTemplates.filter((template) => !filteredFlavors.includes(template.value))
 }

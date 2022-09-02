@@ -3,11 +3,10 @@ import {file, npm, path, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
-
-let cliVersion: undefined | string
-let appVersion: undefined | string
+import {platform} from 'node:os'
 
 beforeEach(async () => {
+  vi.mock('node:os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')
@@ -25,8 +24,9 @@ beforeEach(async () => {
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
     const mockPackageJSON = {} as npm.PackageJSON
+    const directory = path.moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.dependencies['@shopify/cli']).toBe('1.2.3')
     expect(mockPackageJSON.dependencies['@shopify/app']).toBe('1.2.3')
@@ -34,8 +34,9 @@ describe('updateCLIDependencies', () => {
 
   it('does not update overrides or resolutions if local is false', async () => {
     const mockPackageJSON = {overrides: {}, resolutions: {}} as npm.PackageJSON
+    const directory = path.moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.overrides['@shopify/cli']).toBeUndefined()
     expect(mockPackageJSON.overrides['@shopify/app']).toBeUndefined()
@@ -49,10 +50,11 @@ describe('updateCLIDependencies', () => {
     'updates overrides for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
+      const directory = path.moduleDirectory(import.meta.url)
 
-      await updateCLIDependencies(mockPackageJSON, true)
+      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-      const dependencyOveride = mockPackageJSON.overrides[dependency]
+      const dependencyOveride = mockPackageJSON.overrides[dependency]!
       const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -64,10 +66,11 @@ describe('updateCLIDependencies', () => {
     'updates resolutions for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
+      const directory = path.moduleDirectory(import.meta.url)
 
-      await updateCLIDependencies(mockPackageJSON, true)
+      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-      const dependencyResolution = mockPackageJSON.resolutions[dependency]
+      const dependencyResolution = mockPackageJSON.resolutions[dependency]!
       const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -77,10 +80,11 @@ describe('updateCLIDependencies', () => {
 
   it.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
     const mockPackageJSON = {} as npm.PackageJSON
+    const directory = path.moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies(mockPackageJSON, true)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-    const dependencyResolution = mockPackageJSON.dependencies[dependency]
+    const dependencyResolution = mockPackageJSON.dependencies[dependency]!
     const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -105,7 +109,8 @@ describe('updateCLIDependencies', () => {
         mock: 'value',
       },
     }
-    await updateCLIDependencies(mockPackageJSON, false)
+    const directory = path.moduleDirectory(import.meta.url)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.dependencies.mock).toBe('value')
     expect(mockPackageJSON.overrides.mock).toBe('value')
@@ -149,39 +154,48 @@ describe('getDeepInstallNPMTasks', () => {
     })
   })
 
-  it('each task.task installs dependencies', async () => {
-    await mockAppFolder(async (tmpDir) => {
-      const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
+  it.each([['darwin'], ['win32']])(
+    'each task.task installs dependencies when the os is %s',
+    async (operativeSystem) => {
+      await mockAppFolder(async (tmpDir) => {
+        const expectedArgs = operativeSystem === 'win32' ? ['--network-concurrency', '1'] : []
+        vi.mocked(platform).mockReturnValue(operativeSystem as NodeJS.Platform)
 
-      await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
+        const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.normalize(tmpDir)}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'web')}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-      expect(installNodeModules).toHaveBeenCalledWith(
-        `${path.join(tmpDir, 'web', 'frontend')}/`,
-        defaultArgs.packageManager,
-        expect.any(Writable),
-        expect.any(Writable),
-      )
-    })
-  })
+        await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
+
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.normalize(tmpDir)}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.join(tmpDir, 'web')}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+        expect(installNodeModules).toHaveBeenCalledWith({
+          directory: `${path.join(tmpDir, 'web', 'frontend')}/`,
+          packageManager: 'yarn',
+          stdout: expect.any(Writable),
+          stderr: expect.any(Writable),
+          args: expectedArgs,
+        })
+      })
+    },
+  )
 
   it('each task updates its title once dependencies are installed', async () => {
     await mockAppFolder(async (tmpDir) => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{title: ''}, {title: ''}, {title: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       expect(taskStates).toContainEqual({title: `Installed dependencies in /`})
       expect(taskStates).toContainEqual({title: `Installed dependencies in /web/`})
@@ -195,12 +209,12 @@ describe('getDeepInstallNPMTasks', () => {
       const taskState = {output: ''} as ui.ListrTaskWrapper<any, any>
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir, didInstallEverything})
 
-      await tasks[0].task(null, taskState)
-      await tasks[1].task(null, taskState)
+      await tasks[0]!.task(null, taskState)
+      await tasks[1]!.task(null, taskState)
 
       expect(didInstallEverything).not.toHaveBeenCalled()
 
-      await tasks[2].task(null, taskState)
+      await tasks[2]!.task(null, taskState)
 
       expect(didInstallEverything).toHaveBeenCalled()
     })
@@ -211,12 +225,12 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{output: ''}, {output: ''}, {output: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
-        const stdout = args[2]
+        const stdout = args[0].stdout
 
         stdout!.write(`stdout ${i}`)
       })
@@ -232,12 +246,12 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{output: ''}, {output: ''}, {output: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       const install = vi.mocked(installNodeModules)
 
       install.mock.calls.forEach((args, i) => {
-        const stderr = args[3]
+        const stderr = args[0].stderr
 
         stderr!.write(`stderr ${i}`)
       })

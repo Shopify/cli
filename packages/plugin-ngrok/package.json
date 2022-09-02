@@ -1,0 +1,69 @@
+{
+  "name": "@shopify/plugin-ngrok",
+  "version": "0.2.9",
+  "description": "Enables the creation of ngrok tunnels from `shopify app dev`, allowing previews from any device",
+  "keywords": [
+    "shopify",
+    "shopify-cli",
+    "shopify-partners"
+  ],
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
+  "author": "Shopify",
+  "scripts": {
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx run plugin-ngrok:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
+  },
+  "dependencies": {
+    "@oclif/core": "1.9.2",
+    "@shopify/cli-kit": "3.9.2",
+    "@shopify/ngrok": "^4.3.2"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "devDependencies": {
+    "vitest": "^0.22.1"
+  },
+  "engine-strict": true,
+  "engines": {
+    "node": ">=14.13.1"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "oclif": {
+    "commands": "dist/commands",
+    "hooks": {
+      "tunnel_start": "dist/tunnel",
+      "tunnel_provider": "dist/provider"
+    },
+    "topics": {
+      "ngrok": {
+        "description": "Manage ngrok tunnels"
+      }
+    }
+  }
+}

@@ -145,3 +145,5 @@ fixtures/app/extensions/*/build
 
 .DS_Store
 .build
+
+packaging/dist

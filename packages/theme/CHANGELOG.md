@@ -1,5 +1,46 @@
 # @shopify/theme
 
+## 3.9.2
+
+### Patch Changes
+
+- 1e524fae: Fix syntax of the Homebrew formula
+  - @shopify/cli-kit@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- 869532f9: Remove the theme-command under the theme namespace
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+
+## 3.9.0
+
+### Patch Changes
+
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+
+## 3.8.0
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+
+## 3.7.1
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [29f46e8f]
+- Updated dependencies [bba213f9]
+  - @shopify/cli-kit@3.7.1
+
 ## 3.6.2
 
 ### Patch Changes

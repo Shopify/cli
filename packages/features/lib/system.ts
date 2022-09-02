@@ -25,12 +25,7 @@ export function exec(command: string, args: string[] = [], options?: ExecOptions
     ...options,
     stdout: undefined,
     stderr: undefined,
-    /**
-     * Passing SHOPIFY_ENV as production is a temporary configuration
-     * until we adjust the acceptance tests to use the extensions' packages
-     * from the repository.
-     */
-    env: {...process.env, ...(options?.env ?? {}), SHOPIFY_RUN_AS_USER: '0', SHOPIFY_ENV: 'production'},
+    env: {...process.env, ...(options?.env ?? {}), SHOPIFY_RUN_AS_USER: '0'},
   }
   const shortCommand = command.split('/').slice(-1).pop() || ''
   const commandProcess = execa(command, args, _options)

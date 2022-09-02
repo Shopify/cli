@@ -115,7 +115,7 @@ async function uiExtensionInit({
                 title: name,
                 // Use the new templates
                 external_type: mapExtensionTypeToExternalExtensionType(extensionType),
-                type: `${extensionType}_next`,
+                type: extensionType,
                 metafields: [],
                 development: {
                   root_dir: '.',
@@ -207,8 +207,6 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
       return `discounts/${lang}/order-discounts/default`
     case 'shipping_discounts':
       return `discounts/${lang}/shipping-discounts/default`
-    case 'payment_methods':
-      return `checkout/${lang}/payment-methods/default`
     case 'payment_customization':
       return `checkout/${lang}/payment-customization/default`
     case 'shipping_rate_presenter':

@@ -8,7 +8,7 @@ extensions:
   metafields:
   - namespace: my-namespace
     key: my-key
-  node_executable: ../../packages/shopify-cli-extensions/cli.js
+  node_executable: ../../ui-extensions-cli/bin/cli.js
   development:
     template: 'javascript-react'
     build_dir: build
@@ -17,7 +17,7 @@ extensions:
       main: src/index.jsx
     renderer:
       name: "@shopify/checkout-ui-extensions"
-      version: 0.17.1
+      version: 0.18.0
     build:
       env:
         CUSTOM_VAR: bar

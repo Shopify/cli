@@ -22,7 +22,6 @@ export const environmentVariables = {
 } as const
 
 export const versions = {
-  extensionsBinary: 'v0.20.6',
   react: '^17.0.0',
 } as const
 
@@ -60,7 +59,7 @@ export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
 export const functionExtensions = {
-  types: [...publicFunctionExtensions.types, 'payment_methods', 'shipping_rate_presenter', 'payment_customization'],
+  types: [...publicFunctionExtensions.types, 'shipping_rate_presenter', 'payment_customization'],
 } as const
 
 export const functionExtensionTemplates = [
@@ -87,8 +86,10 @@ export const activeUIExtensions = {
 export type UIExtensionTypes = typeof uiExtensions.types[number]
 
 export const uiExtensionTemplates = [
-  {name: 'React', value: 'react'},
-  {name: 'vanilla JavaScript', value: 'vanilla-js'},
+  {name: 'TypeScript', value: 'typescript'},
+  {name: 'JavaScript', value: 'vanilla-js'},
+  {name: 'TypeScript React', value: 'typescript-react'},
+  {name: 'JavaScript React', value: 'react'},
 ]
 
 export function isUiExtensionType(extensionType: string) {
@@ -140,7 +141,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
-      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.17.0'}
+      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.18.0'}
     case 'checkout_post_purchase':
       return {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
     case 'pos_ui_extension':
@@ -186,21 +187,46 @@ export const externalExtensionTypes = {
 
 export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
 
+// The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
+export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[] = [
+  {name: 'Online store', extensions: ['theme']},
+  {
+    name: 'Discounts and checkout',
+    extensions: [
+      'product_discounts',
+      'order_discounts',
+      'shipping_discounts',
+      'checkout_ui_extension',
+      'checkout_post_purchase',
+    ],
+  },
+  {name: 'Analytics', extensions: ['web_pixel_extension']},
+  {name: 'Merchant admin', extensions: ['product_subscription']},
+  {
+    name: 'Shopify private',
+    extensions: [
+      'customer_accounts_ui_extension',
+      'payment_customization',
+      'pos_ui_extension',
+      'shipping_rate_presenter',
+    ],
+  },
+]
+
 export const externalExtensionTypeNames = {
   types: [
-    'web pixel',
-    'post-purchase UI',
-    'theme app extension',
-    'checkout UI',
+    'Web pixel',
+    'Post-purchase UI',
+    'Theme app extension',
+    'Checkout UI',
     'POS UI',
-    'customer accounts UI',
-    'subscription UI',
-    'product discount',
-    'order discount',
-    'shipping discount',
-    'payment customization',
-    'delivery option presenter',
-    'customer accounts UI',
+    'Customer accounts UI',
+    'Subscription UI',
+    'Function - Product discount',
+    'Function - Order discount',
+    'Function - Shipping discount',
+    'Payment customization',
+    'Delivery option presenter',
   ],
 } as const
 
@@ -214,31 +240,35 @@ export interface ExtensionOutputConfig {
 export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
   switch (extensionType) {
     case 'web_pixel_extension':
-      return buildExtensionOutputConfig('web pixel')
+      return buildExtensionOutputConfig('Web pixel')
     case 'checkout_post_purchase':
-      return buildExtensionOutputConfig('post-purchase UI', 'https://shopify.dev/apps/checkout/post-purchase')
+      return buildExtensionOutputConfig('Post-purchase UI', 'https://shopify.dev/apps/checkout/post-purchase')
     case 'theme':
-      return buildExtensionOutputConfig('theme app extension')
+      return buildExtensionOutputConfig('Theme app extension')
     case 'checkout_ui_extension':
-      return buildExtensionOutputConfig('checkout UI')
+      return buildExtensionOutputConfig('Checkout UI')
     case 'customer_accounts_ui_extension':
-      return buildExtensionOutputConfig('customer accounts UI')
+      return buildExtensionOutputConfig('Customer accounts UI')
     case 'product_subscription':
-      return buildExtensionOutputConfig('subscription UI')
+      return buildExtensionOutputConfig('Subscription UI')
     case 'pos_ui_extension':
       return buildExtensionOutputConfig('POS UI')
     case 'product_discounts':
-      return buildExtensionOutputConfig('product discount', 'https://shopify.dev/apps/subscriptions/discounts')
+      return buildExtensionOutputConfig(
+        'Function - Product discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+      )
     case 'order_discounts':
-      return buildExtensionOutputConfig('order discount', 'https://shopify.dev/apps/subscriptions/discounts')
+      return buildExtensionOutputConfig('Function - Order discount', 'https://shopify.dev/apps/subscriptions/discounts')
     case 'shipping_discounts':
-      return buildExtensionOutputConfig('shipping discount', 'https://shopify.dev/apps/subscriptions/discounts')
-    case 'payment_methods':
-      return buildExtensionOutputConfig('payment customization')
+      return buildExtensionOutputConfig(
+        'Function - Shipping discount',
+        'https://shopify.dev/apps/subscriptions/discounts',
+      )
     case 'payment_customization':
-      return buildExtensionOutputConfig('payment customization')
+      return buildExtensionOutputConfig('Payment customization')
     case 'shipping_rate_presenter':
-      return buildExtensionOutputConfig('delivery option presenter')
+      return buildExtensionOutputConfig('Delivery option presenter')
   }
 }
 
@@ -267,7 +297,6 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'product_discounts':
     case 'order_discounts':
     case 'shipping_discounts':
-    case 'payment_methods':
     case 'payment_customization':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.

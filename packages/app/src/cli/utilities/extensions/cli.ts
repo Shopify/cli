@@ -2,6 +2,7 @@ import {getBinaryPathOrDownload} from './binary.js'
 import metadata from '../../metadata.js'
 import {environment, error, path, system} from '@shopify/cli-kit'
 import {fileURLToPath} from 'url'
+import {platform} from 'node:os'
 
 const NodeExtensionsCLINotFoundError = () => {
   return new error.Bug(`Couldn't find the shopify-cli-extensions Node binary`)
@@ -26,9 +27,11 @@ export async function runGoExtensionsCLI(args: string[], options: system.Writabl
     stdout.write(`Using extensions CLI from ${extensionsGoCliDirectory}`)
     try {
       if (environment.local.isDebugGoBinary()) {
-        await system.exec('sh', [path.join(extensionsGoCliDirectory, 'shopify-extensions-debug')].concat(args), options)
+        await system.exec('sh', [path.join(extensionsGoCliDirectory, 'init-debug-session')].concat(args), options)
       } else {
-        await system.exec(path.join(extensionsGoCliDirectory, 'shopify-extensions'), args, options)
+        const isWindows = platform() === 'win32'
+        const extension = isWindows ? '.exe' : ''
+        await system.exec(path.join(extensionsGoCliDirectory, `shopify-extensions${extension}`), args, options)
       }
     } catch {
       throw new error.AbortSilent()
@@ -54,7 +57,11 @@ export async function nodeExtensionsCLIPath(): Promise<string> {
       cwd,
     })) as string
   } else {
-    const executablePath = await path.findUp('node_modules/.bin/shopify-cli-extensions', {type: 'file', cwd})
+    const executablePath = await path.findUp('node_modules/@shopify/shopify-cli-extensions/dist/cli.js', {
+      type: 'file',
+      cwd,
+      allowSymlinks: true,
+    })
     if (!executablePath) {
       throw NodeExtensionsCLINotFoundError()
     }

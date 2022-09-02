@@ -1,5 +1,54 @@
 # @shopify/create-app
 
+## 3.9.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+
+## 3.9.0
+
+### Patch Changes
+
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+
+## 3.8.0
+
+### Minor Changes
+
+- e88a2e07: Fix the creation of apps using pnpm
+- 9b56a8a1: Limit the concurrency installing dependencies with Yarn on Windows to prevent race conditions from happening
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+
+## 3.7.1
+
+### Minor Changes
+
+- 18717ad5: Rename the environment variable SHOPIFY_CONFIG to SHOPIFY_ENV because it's more representative of its usage
+- 29f46e8f: Make inquirer default for inputs
+
+### Patch Changes
+
+- Updated dependencies [18717ad5]
+- Updated dependencies [29f46e8f]
+- Updated dependencies [bba213f9]
+  - @shopify/cli-kit@3.7.1
+
 ## 3.6.2
 
 ### Patch Changes

@@ -1,8 +1,8 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generateURL, updateURLs} from './dev/urls.js'
+import {generatePartnersURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages} from './dev/output.js'
+import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -45,11 +45,8 @@ async function dev(options: DevOptions) {
     }
   }
   const token = await session.ensureAuthenticatedPartners()
-  const {
-    identifiers,
-    storeFqdn,
-    app: {apiSecret},
-  } = await ensureDevEnvironment(options, token)
+  const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
+  const apiKey = identifiers.app
 
   let frontendPort: number
   let frontendUrl: string
@@ -63,7 +60,7 @@ async function dev(options: DevOptions) {
       throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
     }
     frontendPort = Number(matches[2])
-    frontendUrl = matches[1]
+    frontendUrl = matches[1]!
   } else {
     frontendPort = await port.getRandomPort()
     frontendUrl = await generateURL(options.commandConfig, frontendPort)
@@ -76,19 +73,28 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
-  if (frontendConfig || backendConfig) {
-    if (options.update) await updateURLs(identifiers.app, exposedUrl, token)
-    outputAppURL(options.update, storeFqdn, exposedUrl)
+  if ((frontendConfig || backendConfig) && options.update) {
+    const currentURLs = await getURLs(apiKey, token)
+    const newURLs = generatePartnersURLs(exposedUrl)
+    const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
+      currentURLs,
+      appDirectory: options.app.directory,
+      cachedUpdateURLs,
+      newApp: app.newApp,
+    })
+    if (shouldUpdate) await updateURLs(newURLs, apiKey, token)
+    outputUpdateURLsResult(shouldUpdate, newURLs, app)
+    outputAppURL(storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
   options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
-    apiKey: identifiers.app,
+    apiKey,
     backendPort,
     scopes: options.app.configuration.scopes,
-    apiSecret: (apiSecret as string) ?? '',
+    apiSecret: (app.apiSecret as string) ?? '',
     hostname: exposedUrl,
   }
 
@@ -98,7 +104,7 @@ async function dev(options: DevOptions) {
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
-      identifiers.app,
+      apiKey,
       proxyUrl,
       storeFqdn,
       options.subscriptionProductUrl,
@@ -117,9 +123,9 @@ async function dev(options: DevOptions) {
   if (frontendConfig) {
     const devFrontend = devFrontendTarget({
       web: frontendConfig,
-      apiKey: identifiers.app,
+      apiKey,
       scopes: options.app.configuration.scopes,
-      apiSecret: (apiSecret as string) ?? '',
+      apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
     })
@@ -141,7 +147,7 @@ async function dev(options: DevOptions) {
   if (proxyTargets.length === 0) {
     await output.concurrent(additionalProcesses)
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort as number, proxyTargets, additionalProcesses)
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
 }
 
@@ -165,7 +171,7 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
   return {
     logPrefix: options.web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await system.exec(cmd, args, {
+      await system.exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -203,7 +209,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   return {
     prefix: web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-      await system.exec(cmd, args, {
+      await system.exec(cmd!, args, {
         cwd: web.directory,
         stdout,
         stderr,
