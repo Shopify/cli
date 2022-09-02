@@ -15,6 +15,7 @@ our biggest decisions.
 * [Release process](./release.md)
 * [Testing strategy](./testing-strategy.md)
 * [Troubleshooting](./troubleshooting.md)
+* [Plugins](./plugins.md)
 * [FAQ](./faq.md)
 
 ## Plugins
