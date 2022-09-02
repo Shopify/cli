@@ -1,4 +1,3 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {
   blocks,
   extensionTypeCategory,
@@ -13,7 +12,7 @@ import {
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
-import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
+import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
@@ -109,38 +108,66 @@ async function uiExtensionInit({
         title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
-          const input = yaml.encode({
-            extensions: [
-              {
-                title: name,
-                // Use the new templates
-                external_type: mapExtensionTypeToExternalExtensionType(extensionType),
-                type: extensionType,
-                metafields: [],
-                development: {
-                  root_dir: '.',
-                  template: extensionFlavor,
-                  install_dependencies: false,
-                },
-              },
-            ],
+          const templateDirectory = (await path.findUp(
+            `templates/ui-extensions/projects/${mapExtensionTypeToExternalExtensionType(extensionType)}`,
+            {
+              type: 'directory',
+              cwd: path.moduleDirectory(import.meta.url),
+            },
+          )) as string
+
+          await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+            flavor: extensionFlavor,
+            type: extensionType,
+            name,
           })
-          await runGoExtensionsCLI(['create', '-'], {
-            cwd: extensionDirectory,
-            stderr: new stream.Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            }),
-            stdout: new stream.Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            }),
-            input,
-          })
+          const fileExtensionsMapper: {[flavor: string]: string} = {
+            'vanilla-js': 'js',
+            react: 'jsx',
+            typescript: 'ts',
+            'typescript-react': 'tsx',
+          }
+          const fileExtension = fileExtensionsMapper[extensionFlavor ?? '']
+
+          if (fileExtension) {
+            await file.move(
+              path.join(extensionDirectory, 'src/index.js'),
+              path.join(extensionDirectory, `src/index.${fileExtension}`),
+            )
+          }
+
+          // const input = yaml.encode({
+          //   extensions: [
+          //     {
+          //       title: name,
+          //       // Use the new templates
+          //       external_type: mapExtensionTypeToExternalExtensionType(extensionType),
+          //       type: extensionType,
+          //       metafields: [],
+          //       development: {
+          //         root_dir: '.',
+          //         template: extensionFlavor,
+          //         install_dependencies: false,
+          //       },
+          //     },
+          //   ],
+          // })
+          // await runGoExtensionsCLI(['create', '-'], {
+          //   cwd: extensionDirectory,
+          //   stderr: new stream.Writable({
+          //     write(chunk, encoding, next) {
+          //       task.output = chunk.toString()
+          //       next()
+          //     },
+          //   }),
+          //   stdout: new stream.Writable({
+          //     write(chunk, encoding, next) {
+          //       task.output = chunk.toString()
+          //       next()
+          //     },
+          //   }),
+          //   input,
+          // })
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
       },
