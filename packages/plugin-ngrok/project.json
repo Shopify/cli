@@ -3,7 +3,7 @@
     "root": "packages/plugin-ngrok",
     "sourceRoot": "packages/plugin-ngrok/src",
     "projectType": "library",
-    "tags": ["scope:feature"],
+    "tags": ["scope:plugin"],
     "targets": {
       "clean": {
         "executor": "nx:run-commands",
