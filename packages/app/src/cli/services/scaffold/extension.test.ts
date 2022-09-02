@@ -11,7 +11,7 @@ import {
 import {load as loadApp} from '../../models/app/loader.js'
 import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path} from '@shopify/cli-kit'
+import {file, output, path, file} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
@@ -118,37 +118,38 @@ describe('initialize a extension', () => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-1'
         const extensionFlavor = 'vanilla-js'
+
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[0]![1] as any).toMatchObject({
-          input: expect.stringContaining(`template: vanilla-js`),
-        })
+
+        const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', 'index.js'))
+        expect(srcIndexFile).toBeDefined()
       })
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-2'
         const extensionFlavor = 'react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[1]![1] as any).toMatchObject({
-          input: expect.stringContaining(`template: react`),
-        })
+
+        const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', 'index.jsx'))
+        expect(srcIndexFile).toBeDefined()
       })
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-3'
         const extensionFlavor = 'typescript-react'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[2]![1] as any).toMatchObject({
-          input: expect.stringContaining(`template: typescript-react`),
-        })
+
+        const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', 'index.tsx'))
+        expect(srcIndexFile).toBeDefined()
       })
 
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-4'
         const extensionFlavor = 'typescript'
         await createFromTemplate({name, extensionType, externalExtensionType, extensionFlavor, appDirectory: tmpDir})
-        expect(vi.mocked(runGoExtensionsCLI).mock.calls[3]![1] as any).toMatchObject({
-          input: expect.stringContaining(`template: typescript`),
-        })
+
+        const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', 'index.ts'))
+        expect(srcIndexFile).toBeDefined()
       })
     },
     30 * 1000,
@@ -232,7 +233,6 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     await file.mkdir(path.dirname(webConfigurationPath))
     await file.write(webConfigurationPath, webConfiguration)
     await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
-    // eslint-disable-next-line node/callback-return
     await callback(tmpDir)
   })
 }

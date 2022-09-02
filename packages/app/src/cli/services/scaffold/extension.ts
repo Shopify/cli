@@ -177,7 +177,7 @@ async function changeIndexFileExtension(extensionDirectory: string, extensionFla
 
   if (fileExtension) {
     await file.move(
-      path.join(extensionDirectory, 'src/index.js'),
+      path.join(extensionDirectory, 'src/index'),
       path.join(extensionDirectory, `src/index.${fileExtension}`),
     )
   }
