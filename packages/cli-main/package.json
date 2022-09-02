@@ -77,7 +77,8 @@
       "@shopify/theme",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
-      "@shopify/plugin-ngrok"
+      "@shopify/plugin-ngrok",
+      "@oclif/plugin-plugins"
     ],
     "scope": "shopify",
     "topicSeparator": " ",
