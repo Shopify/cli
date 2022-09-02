@@ -83,7 +83,7 @@ jobs:
           git config --global user.email "development-lifecycle@shopify.com"
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v2.2.5
       - name: Set Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -145,7 +145,7 @@ jobs:
           git config --global user.email "development-lifecycle@shopify.com"
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v2.2.5
       - name: Setup build toolchain
         uses: actions/setup-go@v2
         with:
@@ -188,7 +188,7 @@ jobs:
           git config --global user.email "development-lifecycle@shopify.com"
           git config --global user.name "Development Lifecycle"
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v2.2.5
       - name: Set Ruby on MacOS
         uses: ruby/setup-ruby@v1
         with:
