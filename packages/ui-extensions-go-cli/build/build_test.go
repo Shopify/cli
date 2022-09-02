@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"github.com/Shopify/shopify-cli-extensions/logging"
 )
 
 var config *core.Config
@@ -116,7 +117,7 @@ func TestWatchLocalization(t *testing.T) {
 		defer wg.Done()
 		WatchLocalization(ctx, extension, func(result Result) {
 			results = append(results, result)
-		})
+		}, logging.Builder().AddWorkflowSteps("test"))
 	}()
 
 	// done
@@ -124,8 +125,8 @@ func TestWatchLocalization(t *testing.T) {
 	// wait while all goroutines will end their job
 	wg.Wait()
 
-	if len(results) != 2 {
-		t.Errorf("expected 2 result but got %d\n", len(results))
+	if len(results) != 1 {
+		t.Errorf("expected 1 result but got %d\n", len(results))
 	}
 
 	if !results[0].Success {

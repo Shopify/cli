@@ -1,6 +1,8 @@
 import {getBinaryPathOrDownload} from './binary.js'
 import metadata from '../../metadata.js'
-import {environment, error, path, system, output as outputKit} from '@shopify/cli-kit'
+import {environment, error, path, system, output} from '@shopify/cli-kit'
+import {ContentToken} from '@shopify/cli-kit/src/content-tokens.js'
+import {Message} from '@shopify/cli-kit/src/output.js'
 import {fileURLToPath} from 'url'
 import {platform} from 'node:os'
 import {Writable} from 'stream'
@@ -87,22 +89,22 @@ export async function nodeExtensionsCLIPath(): Promise<string> {
 
 /**
  * This method provides a Writable wraper which parses the incoming chunks as GoLog from Json and writes them back to
- * the Writable given as parameter. If Parsing to Json fails it wirtes the chunk as it is and thows an error.
+ * the Writable given as parameter. If Parsing to Json fails it writes the chunk as it is.
  * @param output {Writable} A Writable which will be wrapped and in which the parsed chunks will be written.
  * @returns {Writable} A Writable wrapping the parameter.
  */
-export function goLogWritable(output: Writable): Writable {
+export function goLogWritable(outputWritable: Writable): Writable {
   return new Writable({
     write(chunk, _encoding, next) {
-      const lines = outputKit.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/###LOG_END###/)
-      for (const line of lines) {
-        if (line) {
+      const rawLogs = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/###LOG_END###/)
+      for (const rawLog of rawLogs) {
+        if (rawLog) {
           try {
-            const log = JSON.parse(line) as GoLog
-            output.write(parseGoLogMessage(log))
+            const log = JSON.parse(rawLog) as GoLog
+            outputWritable.write(parseGoLogMessage(log))
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (err) {
-            output.write(line)
+            outputWritable.write(rawLog)
           }
         }
       }
@@ -115,25 +117,27 @@ function parseGoLogMessage(log: GoLog): string {
   if (!log.level || !log.status || !log.payload.message) {
     throw new Error(`Invalid log: ${log}`)
   }
+
   if (log.extensionName) {
-    return `${log.extensionName} ${styleWorkflowStep(log.workflowStep)} ${log.status}: ${styleContent(
+    return output.content`${log.extensionName} ${styleWorkflowStep(log.workflowStep)}: ${styleContent(
       log.payload.message,
       log.status,
-    )}`
+    )}`.value
   }
-  return `\x1b[94m[${log.workflowStep}]\x1b[0m ${log.status}: ${styleContent(log.payload.message, log.status)}`
+  return output.content`${styleWorkflowStep(log.workflowStep)}: ${styleContent(log.payload.message, log.status)}`.value
 }
 
-function styleContent(content: string, status: 'success' | 'failure' | 'inProgress'): string {
+function styleContent(content: string, status: 'success' | 'failure' | 'inProgress'): ContentToken<Message> {
   switch (status) {
     case 'success':
-      return `\x1b[32m${content}\x1b[0m`
+      return output.token.green(content)
     case 'failure':
-      return `\x1b[31m${content}\x1b[0m`
+      return output.token.errorText(content)
     default:
-      return content
+      return output.token.raw(content)
   }
 }
-function styleWorkflowStep(steps: string): string {
-  return `\x1b[94m[${steps}]\x1b[0m`
+
+function styleWorkflowStep(steps: string): ContentToken<Message> {
+  return output.token.magenta(`[${steps}]`)
 }

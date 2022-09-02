@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Shopify/shopify-cli-extensions/core"
+	"github.com/Shopify/shopify-cli-extensions/logging"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -126,7 +127,11 @@ func reportAndUpdateLocalizationStatus(result Result, report ResultHandler) {
 	report(result)
 }
 
-func WatchLocalization(ctx context.Context, extension core.Extension, report ResultHandler) {
+func WatchLocalization(ctx context.Context, extension core.Extension, report ResultHandler, logBuilder logging.LogEntryBuilder) {
+	logWatchLocalizationBuilder := logBuilder.AddWorkflowSteps(logging.Build, logging.Watch, logging.Localization)
+	logWatchLocalizationBuilder.SetExtensionId(extension.UUID)
+	logWatchLocalizationBuilder.SetExtensionName(extension.Title)
+
 	directory := filepath.Join(".", extension.Development.RootDir, "locales")
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 		// The extension does not have a locales directory.
@@ -180,13 +185,13 @@ func WatchLocalization(ctx context.Context, extension core.Extension, report Res
 	}()
 
 	err = watcher.Add(directory)
-  reportAndUpdateLocalizationStatus(Result{
-    true,
-    fmt.Sprintf("Watcher added for %s", directory),
-    extension,
-    }, report)
+	logWatchLocalizationBuilder.SetStatus(logging.InProgress)
+	logWatchLocalizationBuilder.Build(fmt.Sprintf("Watcher added for %s", directory)).WriteLog(os.Stdout)
+
 	if err != nil {
-		log.Fatal(err)
+		logWatchLocalizationBuilder.SetStatus(logging.Failure)
+		logWatchLocalizationBuilder.Build(fmt.Sprintf("Error adding watcher to %s: %s", directory, err.Error())).WriteLog(os.Stdout)
+		os.Exit(1)
 	}
 	<-ctx.Done()
 }

@@ -130,15 +130,14 @@ func getJSONRawMessage(data interface{}) (result json.RawMessage, err error) {
 	return
 }
 
-func interfaceToMap(data interface{}, logBuilder logging.LogEntryBuilder) (result map[string]interface{}, err error) {
-	logBuilder.SetStatus(logging.Failure)
+func interfaceToMap(data interface{}) (result map[string]interface{}, err error) {
 	converted, err := json.Marshal(data)
 	if err != nil {
-		logBuilder.Build(fmt.Sprintf("error converting to JSON %v", err)).WriteErrorLog(os.Stdout)
+    err = errors.New(fmt.Sprintf("error converting to JSON %v", err))
 		return
 	}
 	if err = json.Unmarshal(converted, &result); err != nil {
-		logBuilder.Build(fmt.Sprintf("error converting to map %v", err)).WriteErrorLog(os.Stdout)
+		err = errors.New(fmt.Sprintf("error converting to map %v", err))
 		return
 	}
 	return
@@ -175,8 +174,10 @@ func (api *ExtensionsApi) getMergedExtensionsMap(extensions []map[string]interfa
 	for _, extension := range api.Extensions {
 		if target, found := targetExtensions[extension.UUID]; found {
 			extensionWithUrls := setExtensionUrls(extension, api.ApiRootUrl)
-			extensionData, err := interfaceToMap(extensionWithUrls, api.LogEntryBuilder)
+			extensionData, err := interfaceToMap(extensionWithUrls)
 			if err != nil {
+        api.LogEntryBuilder.SetStatus(logging.Failure)
+        api.LogEntryBuilder.Build(err.Error()).WriteErrorLog(os.Stdout)
 				continue
 			}
 			err = mergo.MapWithOverwrite(&extensionData, &target)

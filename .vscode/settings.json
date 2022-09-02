@@ -36,6 +36,7 @@
   },
   "eslint.workingDirectories": [{ "pattern": "packages/*" }],
   "vitest.enable": true,
+  "testing.automaticallyOpenPeekView": "never",
   "javascript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifierEnding": "js",
 }
