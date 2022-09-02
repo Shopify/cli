@@ -17,6 +17,10 @@ our biggest decisions.
 * [Troubleshooting](./troubleshooting.md)
 * [FAQ](./faq.md)
 
+## Plugins
+* [Ngrok tunnel](./plugins/ngrok.md)
+
+
 ## Decision Record
 * [August 2022 - Automating via Nx](./decision-record/2022_08-automation-via-nx.md)
 * [May 2022 - IDs' persistence](./decision-record/2022_05-IDs'-persistence.md)
