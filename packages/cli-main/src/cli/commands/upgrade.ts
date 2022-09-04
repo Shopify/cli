@@ -8,8 +8,11 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import Command from '@shopify/cli-kit/node/base-command'
 
+const CLI_DEPENDENCY = '@shopify/cli'
+
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'
+
 
   static flags = {
     path: Flags.string({
@@ -32,22 +35,9 @@ export default class Upgrade extends Command {
   }
 
   async upgradeGlobal(): Promise<void> {
-    const cliDependency = '@shopify/cli'
     const currentVersion = this.config.version
-    const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
-
-    if (!newestVersion) {
-      output.info(
-        output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`,
-      )
-      return
-    }
-
-    output.info(
-      output.content`Upgrading CLI from ${output.token.yellow(currentVersion)} to ${output.token.yellow(
-        newestVersion,
-      )}...`,
-    )
+    const newestVersion = await this.newerVersion(currentVersion)
+    if (!newestVersion) return
 
     const currentGlobalPackages = JSON.parse(await system.captureOutput('npm', ['list', '-g', '--json']))
     const currentShopifyPackages = Object.keys(currentGlobalPackages.dependencies || {})
@@ -70,28 +60,32 @@ export default class Upgrade extends Command {
     const packageJsonDependencies: {[key: string]: string} = packageJson.dependencies || {}
     const packageJsonDevDependencies: {[key: string]: string} = packageJson.devDependencies || {}
 
-    const cliDependency = '@shopify/cli'
-    let currentVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[cliDependency]!
+    let currentVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[CLI_DEPENDENCY]!
     if (currentVersion.slice(0, 1).match(/[\^~]/)) currentVersion = this.config.version
-    const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
 
-    if (!newestVersion) {
-      output.info(
-        output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`,
-      )
-      return
-    }
-
-    output.info(
-      output.content`Upgrading CLI from ${output.token.yellow(currentVersion)} to ${output.token.yellow(
-        newestVersion,
-      )}...`,
-    )
+    const newestVersion = await this.newerVersion(currentVersion)
+    if (!newestVersion) return
 
     await this.installJsonDependencies('prod', packageJsonDependencies, projectDir)
     await this.installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
 
     output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
+  }
+
+  async newerVersion(currentVersion: string): Promise<string | undefined> {
+    const newestVersion = await checkForNewVersion(CLI_DEPENDENCY, currentVersion)
+    if (newestVersion) {
+      output.info(
+        output.content`Upgrading CLI from ${output.token.yellow(currentVersion)} to ${output.token.yellow(
+          newestVersion,
+        )}...`,
+      )
+    } else {
+      output.info(
+        output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`,
+      )
+    }
+    return newestVersion
   }
 
   async getProjectDir(directory: string) {
