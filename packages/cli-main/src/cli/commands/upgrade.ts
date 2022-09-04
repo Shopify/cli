@@ -1,5 +1,5 @@
 import {Flags} from '@oclif/core'
-import {error, file, output, path} from '@shopify/cli-kit'
+import {error, file, output, path, system} from '@shopify/cli-kit'
 import {
   addLatestNPMDependencies,
   checkForNewVersion,
@@ -24,6 +24,40 @@ export default class Upgrade extends Command {
     const {flags} = await this.parse(Upgrade)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
+    if (process.env.npm_config_user_agent) {
+      await this.upgradeInProject(directory)
+    } else {
+      await this.upgradeGlobal()
+    }
+  }
+
+  async upgradeGlobal(): Promise<void> {
+    const cliDependency = '@shopify/cli'
+    const currentVersion = this.config.version
+    const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
+
+    if (!newestVersion) {
+      output.info(
+        output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`,
+      )
+      return
+    }
+
+    output.info(
+      output.content`Upgrading CLI from ${output.token.yellow(currentVersion)} to ${output.token.yellow(
+        newestVersion,
+      )}...`,
+    )
+
+    const currentGlobalPackages = JSON.parse(await system.captureOutput('npm', ['list', '-g', '--json']))
+    const currentShopifyPackages = Object.keys(currentGlobalPackages.dependencies || {})
+      .filter((key) => key.match(/^@shopify/))
+    await system.exec('npm', ['install', '-g', ...currentShopifyPackages])
+
+    output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
+  }
+
+  async upgradeInProject(directory: string): Promise<void> {
     const projectDir = await this.getProjectDir(directory)
     if (!projectDir) {
       throw new error.Abort(
