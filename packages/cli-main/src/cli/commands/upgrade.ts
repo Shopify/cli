@@ -39,10 +39,22 @@ export default class Upgrade extends Command {
     const newestVersion = await this.newerVersion(currentVersion)
     if (!newestVersion) return
 
-    const currentGlobalPackages = JSON.parse(await system.captureOutput('npm', ['list', '-g', '--json']))
-    const currentShopifyPackages = Object.keys(currentGlobalPackages.dependencies || {})
-      .filter((key) => key.match(/^@shopify/))
-    await system.exec('npm', ['install', '-g', ...currentShopifyPackages])
+    let cliInstalledViaBrew: boolean | undefined
+    try {
+      cliInstalledViaBrew =
+        boolean(JSON.parse(await system.captureOutput('brew', ['info', 'shopify/shopify/shopify-cli@3', '--json']))?.installed?.[0])
+    } catch {}
+
+    // Reinstall via Homebrew if originally installed via Homebrew, otherwise
+    // just use npm install -g
+    if (cliInstalledViaBrew) {
+      await system.exec('brew', ['upgrade', 'shopify/shopify-cli@3'])
+    } else {
+      const currentGlobalPackages = JSON.parse(await system.captureOutput('npm', ['list', '-g', '--json']))
+      const currentShopifyPackages = Object.keys(currentGlobalPackages.dependencies || {})
+        .filter((key) => key.match(/^@shopify/))
+      await system.exec('npm', ['install', '-g', ...currentShopifyPackages])
+    }
 
     output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
   }
