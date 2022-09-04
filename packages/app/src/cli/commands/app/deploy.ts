@@ -12,6 +12,11 @@ export default class Deploy extends Command {
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
+    'api-key': Flags.string({
+      hidden: false,
+      description: 'The API key of your app.',
+      env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
     reset: Flags.boolean({
       hidden: false,
       description: 'Reset all your settings.',
@@ -24,6 +29,6 @@ export default class Deploy extends Command {
     const {args, flags} = await this.parse(Deploy)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
-    await deploy({app, reset: flags.reset})
+    await deploy({app, apiKey: flags['api-key'], reset: flags.reset})
   }
 }
