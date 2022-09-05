@@ -8,11 +8,7 @@ export const err = <T = never, TError = unknown>(err: TError): Err<T, TError> =>
 export class Ok<T, TError> {
   constructor(readonly value: T) {}
 
-  isOk() {
-    return true
-  }
-
-  isErr() {
+  isErr(): this is Err<T, TError> {
     return false
   }
 
@@ -28,11 +24,7 @@ export class Ok<T, TError> {
 export class Err<T, TError> {
   constructor(readonly error: TError) {}
 
-  isOk() {
-    return false
-  }
-
-  isErr() {
+  isErr(): this is Err<T, TError> {
     return true
   }
 

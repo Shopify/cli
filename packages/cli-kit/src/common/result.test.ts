@@ -1,5 +1,6 @@
 import {err, ok} from './result.js'
 import {describe, expect, it} from 'vitest'
+import {fail} from 'node:assert'
 
 describe('ok', () => {
   it('create ok with value', () => {
@@ -7,8 +8,11 @@ describe('ok', () => {
     const result = ok(123)
 
     // Then
-    expect(result.isOk()).toEqual(true)
-    expect(result.valueOrThrow()).toEqual(123)
+    if (result.isErr()) {
+      fail('Should return an Ok result')
+    } else {
+      expect(result.value).toEqual(123)
+    }
   })
 })
 
@@ -18,8 +22,11 @@ describe('err', () => {
     const result = err(new Error('Custom error object'))
 
     // Then
-    expect(result.isErr()).toEqual(true)
-    expect(() => result.valueOrThrow()).toThrow(new Error('Custom error object'))
+    if (result.isErr()) {
+      expect(result.error).toEqual(new Error('Custom error object'))
+    } else {
+      fail('Should return an Error result')
+    }
   })
 })
 
