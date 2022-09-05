@@ -1,7 +1,7 @@
 import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs} from './urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, error, outputMocker, store, ui} from '@shopify/cli-kit'
-import {Plugin} from '@oclif/core/lib/interfaces'
+import {api, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
+import {Config} from '@oclif/core'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -18,9 +18,8 @@ beforeEach(() => {
         graphql: cliKit.api.graphql,
       },
       plugins: {
-        lookupTunnelPlugin: async () => {
-          return {start: async () => 'https://fake-url.ngrok.io'}
-        },
+        lookupTunnelPlugin: vi.fn(),
+        runTunnelPlugin: vi.fn(),
       },
       ui: {
         prompt: vi.fn(),
@@ -35,13 +34,38 @@ beforeEach(() => {
 describe('generateURL', () => {
   it('returns a tunnel URL by default', async () => {
     // Given
-    const pluginList: Plugin[] = []
+    const config = new Config({root: ''})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
 
     // When
-    const got = await generateURL(pluginList, 3456)
+    const got = await generateURL(config, 3456)
 
     // Then
     expect(got).toEqual('https://fake-url.ngrok.io')
+  })
+
+  it('throws error if there are multiple urls', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({error: 'multiple-urls'})
+
+    // When
+    const got = generateURL(config, 3456)
+
+    // Then
+    await expect(got).rejects.toThrow(/Multiple tunnel plugins for ngrok found/)
+  })
+
+  it('throws error if there are no tunnel urls', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({error: 'no-urls'})
+
+    // When
+    const got = generateURL(config, 3456)
+
+    // Then
+    await expect(got).rejects.toThrow(/Ngrok failed to start the tunnel/)
   })
 })
 
