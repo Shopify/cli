@@ -59,7 +59,7 @@ export default class Pull extends ThemeCommand {
       validPath = path.resolve(flags.path)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'store']})
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 

@@ -2,10 +2,8 @@
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {errorHandler} from './error-handler.js'
 import {isDevelopment} from '../environment/local.js'
-import constants, {bugsnagApiKey} from '../constants.js'
 import {moduleDirectory} from '../path.js'
 import {run, settings, flush} from '@oclif/core'
-import Bugsnag from '@bugsnag/js'
 
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
@@ -20,15 +18,6 @@ interface RunCLIOptions {
 export async function runCLI(options: RunCLIOptions) {
   if (isDevelopment()) {
     settings.debug = true
-  } else {
-    Bugsnag.start({
-      appType: 'node',
-      apiKey: bugsnagApiKey,
-      logger: null,
-      appVersion: await constants.versions.cliKit(),
-      autoTrackSessions: false,
-      autoDetectErrors: false,
-    })
   }
 
   run(undefined, options.moduleURL).then(flush).catch(errorHandler)

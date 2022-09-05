@@ -13,7 +13,6 @@ const RubyCLIVersion = '2.23.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
-const MinRubyGemVersion = '2.5.0'
 
 interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
@@ -171,7 +170,6 @@ async function installCLIDependencies() {
 
 async function validateRubyEnv() {
   await validateRuby()
-  await validateRubyGems()
   await validateBundler()
 }
 
@@ -195,21 +193,6 @@ async function validateRuby() {
       `Ruby version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system. ${
         content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
-      }`,
-    )
-  }
-}
-
-async function validateRubyGems() {
-  const stdout = await system.captureOutput(gemExecutable(), ['-v'])
-  const version = coerce(stdout)
-
-  const isValid = version?.compare(MinRubyGemVersion)
-  if (isValid === -1 || isValid === undefined) {
-    throw new Abort(
-      `RubyGems version ${content`${token.yellow(version.raw)}`.value} is not supported`,
-      `To update to the latest version of RubyGems, run ${
-        content`${token.genericShellCommand(`${gemExecutable()} update --system`)}`.value
       }`,
     )
   }
