@@ -1,5 +1,16 @@
 # @shopify/plugin-ngrok
 
+## 3.10.0
+
+### Minor Changes
+
+- fcbcfcfa: Add ngrok plugin to the CLI repo
+
+### Patch Changes
+
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+
 ## 0.2.9
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.10.0
+
+### Minor Changes
+
+- 16627bb4: Add --api-key flag for app deploy
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+  - @shopify/shopify-cli-extensions@3.10.0
+
 ## 3.9.2
 
 ### Patch Changes
