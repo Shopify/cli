@@ -594,9 +594,23 @@ function logfileLineUUID(line: string): string | null {
  * @param version {string} The version to update to
  * @returns {te}
  */
-export function getOutputUpdateCLIReminder(packageManager: PackageManager, version: string): string {
+export function getOutputUpdateCLIReminder(packageManager: PackageManager | undefined, version: string): string {
+  const versionMessage = `💡 Version ${version} available!`
+  if (!packageManager) return versionMessage
+
   const updateCommand = token.packagejsonScript(packageManager, 'shopify', 'upgrade')
-  return content`💡 Version ${version} available! Run ${updateCommand}`.value
+  return content`${versionMessage} Run ${updateCommand}`.value
+}
+
+/**
+ * Parse title and body to be a single formatted string
+ * @param title {string} The title of the message. Will be formatted as a heading.
+ * @param body {string} The body of the message. Will respect the original formatting.
+ * @returns {string} The formatted message.
+ */
+export function section(title: string, body: string): string {
+  const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
+  return content`${token.heading(formattedTitle)}\n${body}`.value
 }
 
 /* eslint-enable no-console */

@@ -9,7 +9,7 @@ import {
   uiExtensions,
 } from '../constants.js'
 import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
-import {os, output, path, store} from '@shopify/cli-kit'
+import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
@@ -63,7 +63,7 @@ class AppInfo {
       this.accessScopesSection(),
       await this.systemInfoSection(),
     ]
-    return sections.map((sectionContents: [string, string]) => this.section(...sectionContents)).join('\n\n')
+    return sections.map((sectionContents: [string, string]) => output.section(...sectionContents)).join('\n\n')
   }
 
   devConfigsSection(): [string, string] {
@@ -94,7 +94,7 @@ class AppInfo {
       ['API key', apiKey],
       ['Update URLs', updateURLs],
     ]
-    return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
+    return [title, `${string.linesToColumns(lines)}\n\n${postscript}`]
   }
 
   projectSettingsSection(): [string, string] {
@@ -103,7 +103,7 @@ class AppInfo {
       ['Name', this.app.name],
       ['Root location', this.app.directory],
     ]
-    return [title, this.linesToColumns(lines)]
+    return [title, string.linesToColumns(lines)]
   }
 
   appComponentsSection(): [string, string] {
@@ -173,7 +173,7 @@ class AppInfo {
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
     if (errorContent.trim() === '') errorContent = ''
 
-    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}${errorContent}`
+    return `${subtitle}\n${string.linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
   uiExtensionSubSection(extension: UIExtension): string {
@@ -186,7 +186,7 @@ class AppInfo {
       details.push(['     metafields', `${config.metafields.length}`])
     }
 
-    return `\n${this.linesToColumns(details)}`
+    return `\n${string.linesToColumns(details)}`
   }
 
   functionExtensionSubSection(extension: FunctionExtension): string {
@@ -196,7 +196,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `\n${this.linesToColumns(details)}`
+    return `\n${string.linesToColumns(details)}`
   }
 
   themeExtensionSubSection(extension: ThemeExtension): string {
@@ -206,7 +206,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `\n${this.linesToColumns(details)}`
+    return `\n${string.linesToColumns(details)}`
   }
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
@@ -215,7 +215,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
     const error = this.formattedError(this.app.errors!.getError(extension.configurationPath)!)
-    return `\n${this.linesToColumns(details)}\n${error}`
+    return `\n${string.linesToColumns(details)}\n${error}`
   }
 
   formattedError(str: output.Message): string {
@@ -227,7 +227,7 @@ class AppInfo {
   accessScopesSection(): [string, string] {
     const title = 'Access Scopes in Root TOML File'
     const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
-    return [title, this.linesToColumns(lines)]
+    return [title, string.linesToColumns(lines)]
   }
 
   async systemInfoSection(): Promise<[string, string]> {
@@ -242,31 +242,7 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    return [title, `${this.linesToColumns(lines)}`]
-  }
-
-  linesToColumns(lines: string[][]): string {
-    const widths: number[] = []
-    for (let i = 0; lines[0] && i < lines[0].length; i++) {
-      const columnRows = lines.map((line) => line[i]!)
-      widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
-    }
-    const paddedLines = lines
-      .map((line) => {
-        return line
-          .map((col, index) => {
-            return `${col}${' '.repeat(widths[index]! - output.unstyled(col).length)}`
-          })
-          .join('   ')
-          .trimEnd()
-      })
-      .join('\n')
-    return paddedLines
-  }
-
-  section(title: string, body: string): string {
-    const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
-    return output.content`${output.token.heading(formattedTitle)}\n${body}`.value
+    return [title, `${string.linesToColumns(lines)}`]
   }
 
   currentCliVersion(): string {
