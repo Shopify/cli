@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.10.0
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+
 ## 3.9.2
 
 ## 3.9.1
