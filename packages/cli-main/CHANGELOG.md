@@ -1,5 +1,14 @@
 # @shopify/cli
 
+## 3.10.0
+
+### Patch Changes
+
+- Updated dependencies [fcbcfcfa]
+- Updated dependencies [4c8853f1]
+  - @shopify/plugin-ngrok@3.10.0
+  - @shopify/cli-kit@3.10.0
+
 ## 3.9.2
 
 ### Patch Changes

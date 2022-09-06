@@ -13,6 +13,7 @@ beforeEach(() => {
           onNotify(reportedError)
           callback(null)
         },
+        isStarted: () => true,
       },
     }
   })

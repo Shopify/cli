@@ -188,6 +188,7 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
 
 export interface DeployEnvironmentOptions {
   app: AppInterface
+  apiKey?: string
   reset: boolean
 }
 
@@ -230,8 +231,9 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
   } else if (envIdentifiers.app) {
-    partnersApp = await fetchAppFromApiKey(envIdentifiers.app, token)
-    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.packageManager)
+    const apiKey = options.apiKey ?? envIdentifiers.app
+    partnersApp = await fetchAppFromApiKey(apiKey, token)
+    if (!partnersApp) throw DeployAppNotFound(apiKey, options.app.packageManager)
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }

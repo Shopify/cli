@@ -1,52 +1,101 @@
-import {lookupTunnelPlugin} from './plugins.js'
-import {mkdir, mkTmpDir, rmdir, write} from './file.js'
-import {join} from './path.js'
-import {describe, expect, it} from 'vitest'
-import {Plugin} from '@oclif/core/lib/interfaces'
+import {getListOfTunnelPlugins, runTunnelPlugin} from './plugins.js'
+import {describe, expect, it, vi} from 'vitest'
+import {Config} from '@oclif/core'
 
-describe('lookupTunnelPlugin', () => {
-  it('returns undefined when there are no tunnel plugins ', async () => {
+describe('getListOfTunnelPlugins', () => {
+  it('returns empty list when there are no tunnel plugins ', async () => {
     // Given
-    const otherPluginMock = {name: '@shopify/cli-plugin-other'} as Plugin
-    const plugins: Plugin[] = [otherPluginMock]
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
 
     // When
-    const got = await lookupTunnelPlugin(plugins)
+    const got = await getListOfTunnelPlugins(config)
 
     // Then
-    expect(got).toBeUndefined()
+    expect(got).toEqual({plugins: []})
   })
 
-  it('returns undefined if the tunnel module fails be imported', async () => {
+  it('returns error when there are duplicated providers ', async () => {
     // Given
-    const ngrokPluginMock = {name: '@shopify/plugin-ngrok', root: 'wrongPath'} as Plugin
-    const plugins: Plugin[] = [ngrokPluginMock]
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [
+        {result: {name: 'ngrok'}, plugin: {name: 'plugin-ngrok'}},
+        {result: {name: 'ngrok'}, plugin: {name: 'another-ngrok'}},
+      ],
+
+      errors: [],
+    } as any)
 
     // When
-    const got = await lookupTunnelPlugin(plugins)
+    const got = await getListOfTunnelPlugins(config)
 
     // Then
-    expect(got).toBeUndefined()
+    expect(got).toEqual({plugins: ['ngrok', 'ngrok'], error: 'multiple-plugins-for-provider'})
   })
 
-  it('returns the tunnel module when the ngrok plugin is present', async () => {
+  it('returns list of tunnel providers', async () => {
     // Given
-    // Using mkTmpDir instead of temporaryDirectory because the folder needs to be inside the project to be imported
-    const tmpDir = await mkTmpDir()
-    const distDir = join(tmpDir, 'dist')
-    await mkdir(distDir)
-    const tunnelFile = join(distDir, 'tunnel.js')
-    await write(tunnelFile, 'export async function start(options) { return Promise.resolve(options.port.toString()) }')
-
-    const root = join(process.cwd(), tmpDir)
-    const ngrokPluginMock = {name: '@shopify/plugin-ngrok', root} as Plugin
-    const plugins: Plugin[] = [ngrokPluginMock]
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [
+        {result: {name: 'ngrok'}, plugin: {name: 'plugin-ngrok'}},
+        {result: {name: 'cloudflare'}, plugin: {name: 'plugin-cloudflare'}},
+      ],
+      errors: [],
+    } as any)
 
     // When
-    const got = await lookupTunnelPlugin(plugins)
+    const got = await getListOfTunnelPlugins(config)
 
     // Then
-    await expect(got?.start({port: 3000})).resolves.toBe('3000')
-    await rmdir(tmpDir)
+    expect(got).toEqual({plugins: ['ngrok', 'cloudflare']})
+  })
+})
+
+describe('runTunnelPlugin', () => {
+  it('returns tunnel url when there is 1 tunnel and returns a valid url', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [{result: {url: 'tunnel_url'}, plugin: {name: 'plugin-ngrok'}}],
+      errors: [],
+    } as any)
+
+    // When
+    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+
+    // Then
+    expect(got).toEqual({url: 'tunnel_url'})
+  })
+
+  it('returns error if multiple plugins responded to the hook', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [
+        {result: {url: 'tunnel_url'}, plugin: {name: 'plugin-ngrok'}},
+        {result: {url: 'tunnel_url_2'}, plugin: {name: 'plugin-ngrok-2'}},
+      ],
+      errors: [],
+    } as any)
+
+    // When
+    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+
+    // Then
+    expect(got).toEqual({error: 'multiple-urls'})
+  })
+
+  it('returns error if no plugin responds with a url', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
+
+    // When
+    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+
+    // Then
+    expect(got).toEqual({error: 'no-urls'})
   })
 })

@@ -1,6 +1,4 @@
 import {content, token, debug} from './output.js'
-import constants from './constants.js'
-import {Abort} from './error.js'
 import Conf, {Schema} from 'conf'
 
 const migrations = {}
@@ -44,21 +42,13 @@ let _instance: CLIKitStore | undefined
 
 export function cliKitStore() {
   if (!_instance) {
-    throw new Abort("The CLIKitStore instance hasn't been initialized")
-  }
-  return _instance
-}
-
-export async function initializeCliKitStore() {
-  if (!_instance) {
-    // eslint-disable-next-line require-atomic-updates
     _instance = new CLIKitStore({
       schema,
       migrations,
       projectName: 'shopify-cli-kit',
-      projectVersion: await constants.versions.cliKit(),
     })
   }
+  return _instance
 }
 
 export class CLIKitStore extends Conf<ConfSchema> {

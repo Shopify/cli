@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.10.0
+
+### Patch Changes
+
+- 30a048da: Fix pull command with --store flag
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+
 ## 3.9.2
 
 ### Patch Changes
