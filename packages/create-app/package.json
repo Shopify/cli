@@ -71,5 +71,12 @@
       "prerun": "@shopify/cli-kit/node/hooks/prerun",
       "postrun": "@shopify/cli-kit/node/hooks/postrun"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/create-app"
+  },
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues/new/choose"
   }
 }

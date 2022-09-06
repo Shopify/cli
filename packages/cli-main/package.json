@@ -104,5 +104,9 @@
       "init": "@shopify/cli-kit/node/hooks/init",
       "postrun": "@shopify/cli-kit/node/hooks/postrun"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/cli-main"
   }
 }
