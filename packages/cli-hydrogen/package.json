@@ -64,5 +64,9 @@
   ],
   "oclif": {
     "commands": "dist/cli/commands"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/cli-hydrogen"
   }
 }
