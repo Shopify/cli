@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-test-utils",
-  "version": "3.10.0",
+  "version": "3.9.2",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
@@ -27,12 +27,5 @@
     "@types/react-dom": "^16.9.11",
     "mock-socket": "^9.0.5",
     "ts-node": "^10.2.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/ui-extensions-test-utils"
-  },
-  "bugs": {
-    "url": "https://github.com/Shopify/cli/issues/new/choose"
   }
 }
