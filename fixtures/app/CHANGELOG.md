@@ -1,5 +1,12 @@
 # app
 
+## 3.10.1
+
+### Patch Changes
+
+- @shopify/cli@3.10.1
+- @shopify/app@3.10.1
+
 ## 3.10.0
 
 ### Patch Changes

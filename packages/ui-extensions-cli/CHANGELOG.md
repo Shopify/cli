@@ -1,5 +1,7 @@
 # @shopify/shopify-cli-extensions
 
+## 3.10.1
+
 ## 3.10.0
 
 ## 3.9.2

@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.10.1
+
+### Patch Changes
+
+- 630153fc: Fix initialization of themes not working due to invalid arguments being passed
+  - @shopify/cli-kit@3.10.1
+
 ## 3.10.0
 
 ### Patch Changes
