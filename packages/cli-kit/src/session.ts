@@ -25,6 +25,8 @@ import * as output from './output.js'
 import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
 import {firstPartyDev} from './environment/local.js'
+import {isSpin} from './environment/spin.js'
+import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -263,13 +265,30 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     scopes.push('employee')
   }
 
-  // Authorize user via browser
-  debug(content`Authorizing through Identity's website...`)
-  const code = await authorize(scopes)
+  let identityToken: IdentityToken
+  // eslint-disable-next-line no-constant-condition
+  if (isSpin() || 1) {
+    // Request a device code and generate a polling service
+    const deviceAuth = await requestDeviceAuthorization()
 
-  // Exchange code for identity token
-  debug(content`Authorization code received. Exchanging it for a CLI token...`)
-  const identityToken = await exchangeCodeForAccessToken(code)
+    if (!deviceAuth.deviceCode || !deviceAuth.verificationUriComplete) {
+      throw new Error('Invalid device code response')
+    }
+
+    output.info('\nTo run this command, log in to Shopify Partners.')
+    output.info('👉 Open this URL in your browser: ' + deviceAuth.verificationUriComplete)
+
+    // Poll for the identity token
+    identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
+  } else {
+    // Authorize user via browser
+    debug(content`Authorizing through Identity's website...`)
+    const code = await authorize(scopes)
+
+    // Exchange code for identity token
+    debug(content`Authorization code received. Exchanging it for a CLI token...`)
+    identityToken = await exchangeCodeForAccessToken(code)
+  }
 
   // Exchange identity token for application tokens
   debug(content`CLI token received. Exchanging it for application tokens...`)
@@ -356,4 +375,38 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 export function logout() {
   return secureStore.remove()
+}
+
+export interface DeviceTokenResponse {
+  accessToken: string
+  expiresIn: number
+  refreshToken: string
+  idToken: string
+  tokenType: string
+}
+
+export type IdentityDeviceError =
+  | 'authorization_pending'
+  | 'access_denied'
+  | 'expired_token'
+  | 'slow_down'
+  | 'unknown_failure'
+
+export class TokenExchangeError extends Error {
+  isAuthError: boolean
+  supportErrorCode: string | null
+  // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+  errorResponse: Record<string | number | symbol, string>
+
+  constructor(
+    isAuthError: boolean,
+    errorResponse: {[key: string | number | symbol]: string},
+    requestId: string | null = null,
+  ) {
+    super(errorResponse.error_description ?? `Unknown error while token exchange: ${JSON.stringify(errorResponse)}`)
+    this.errorResponse = errorResponse
+    this.isAuthError = isAuthError
+    this.supportErrorCode = requestId
+    Object.setPrototypeOf(this, TokenExchangeError.prototype)
+  }
 }
