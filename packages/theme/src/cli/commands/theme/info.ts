@@ -1,5 +1,4 @@
 import ThemeCommand from '../../utilities/theme-command.js'
-import {themeFlags} from '../../flags.js'
 import {getTheme} from '../../utilities/theme-store.js'
 import {cli, os, output, string} from '@shopify/cli-kit'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
@@ -10,7 +9,6 @@ export default class ThemeInfo extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
-    ...themeFlags,
   }
 
   public async run(): Promise<void> {
@@ -29,11 +27,9 @@ export default class ThemeInfo extends ThemeCommand {
   async systemInfoSection(): Promise<[string, string]> {
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
-    const versionUpgradeMessage = await this.versionUpgradeMessage()
-    const cliVersionInfo = [this.config.version, versionUpgradeMessage].join(' ').trim()
     const ruby = (await rubyVersion()) || 'Not installed'
     const lines: string[][] = [
-      ['Shopify CLI', cliVersionInfo],
+      ['Shopify CLI', await this.cliVersionInfo()],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
@@ -42,10 +38,11 @@ export default class ThemeInfo extends ThemeCommand {
     return [title, `${string.linesToColumns(lines)}`]
   }
 
-  async versionUpgradeMessage(): Promise<string> {
+  async cliVersionInfo(): Promise<string> {
     const dependency = '@shopify/cli'
     const newestVersion = await checkForNewVersion(dependency, this.config.version)
-    if (newestVersion) return output.getOutputUpdateCLIReminder(undefined, newestVersion)
-    return ''
+    if (!newestVersion) return this.config.version
+    const upgradeMessage = output.getOutputUpdateCLIReminder(undefined, newestVersion)
+    return [this.config.version, upgradeMessage].join(' ').trim()
   }
 }
