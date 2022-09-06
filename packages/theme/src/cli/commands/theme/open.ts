@@ -42,7 +42,7 @@ export default class Open extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose']})
     const command = ['theme', 'open', ...flagsToPass]
 
-    const store = getTheme(flags)
+    const store = await getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await execCLI2(command, {adminSession})
   }

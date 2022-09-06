@@ -27,7 +27,7 @@ export default class Publish extends ThemeCommand {
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Publish)
 
-    const store = getTheme(flags)
+    const store = await getTheme(flags)
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'publish']
     if (args.themeId) {

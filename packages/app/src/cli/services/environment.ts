@@ -86,7 +86,7 @@ export async function ensureDevEnvironment(
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
-  const cachedInfo = getAppDevCachedInfo({
+  const cachedInfo = await getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
   })
@@ -105,7 +105,7 @@ export async function ensureDevEnvironment(
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
-    store.cliKitStore().setAppInfo({
+    await store.setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.app.directory,
       storeFqdn: selectedStore.shopDomain,
@@ -130,7 +130,7 @@ export async function ensureDevEnvironment(
 
   const {organization, apps} = await fetchOrgAndApps(orgId, token)
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
-  store.cliKitStore().setAppInfo({
+  await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.app.directory,
@@ -144,7 +144,7 @@ export async function ensureDevEnvironment(
     selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
-  store.cliKitStore().setAppInfo({
+  await store.setAppInfo({
     appId: selectedApp.apiKey,
     directory: options.app.directory,
     storeFqdn: selectedStore?.shopDomain,
@@ -209,7 +209,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = store.cliKitStore().getAppInfo(app.directory)?.appId
+  const devAppId = (await store.getAppInfo(app.directory))?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -342,9 +342,15 @@ async function fetchDevDataFromOptions(
  * @param directory {string} The directory containing the app.
  * @returns
  */
-function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
-  if (reset) store.cliKitStore().clearAppInfo(directory)
-  return store.cliKitStore().getAppInfo(directory)
+async function getAppDevCachedInfo({
+  reset,
+  directory,
+}: {
+  reset: boolean
+  directory: string
+}): Promise<store.CachedAppInfo | undefined> {
+  if (reset) await store.clearAppInfo(directory)
+  return store.getAppInfo(directory)
 }
 
 /**

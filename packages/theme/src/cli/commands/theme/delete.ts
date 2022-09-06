@@ -38,7 +38,7 @@ export default class Delete extends ThemeCommand {
   async run(): Promise<void> {
     const {flags, argv} = await this.parse(Delete)
 
-    const store = getTheme(flags)
+    const store = await getTheme(flags)
 
     const command = ['theme', 'delete']
 

@@ -52,12 +52,11 @@ class AppInfo {
 
   constructor(app: AppInterface) {
     this.app = app
-    this.cachedAppInfo = store.cliKitStore().getAppInfo(app.directory)
   }
 
   async output(): Promise<string> {
     const sections: [string, string][] = [
-      this.devConfigsSection(),
+      await this.devConfigsSection(),
       this.projectSettingsSection(),
       this.appComponentsSection(),
       this.accessScopesSection(),
@@ -66,7 +65,7 @@ class AppInfo {
     return sections.map((sectionContents: [string, string]) => this.section(...sectionContents)).join('\n\n')
   }
 
-  devConfigsSection(): [string, string] {
+  async devConfigsSection(): Promise<[string, string]> {
     const title = 'Configs for Dev'
 
     let appName = NOT_CONFIGURED_TEXT
@@ -77,11 +76,12 @@ class AppInfo {
       this.app.packageManager,
       'dev',
     )}`.value
-    if (this.cachedAppInfo) {
-      if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
-      if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
-      if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
-      if (this.cachedAppInfo.updateURLs !== undefined) updateURLs = this.cachedAppInfo.updateURLs ? 'Always' : 'Never'
+    const cachedAppInfo = await store.getAppInfo(this.app.directory)
+    if (cachedAppInfo) {
+      if (cachedAppInfo.title) appName = cachedAppInfo.title
+      if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
+      if (cachedAppInfo.appId) apiKey = cachedAppInfo.appId
+      if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
       postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
         this.app.packageManager,
         'dev',

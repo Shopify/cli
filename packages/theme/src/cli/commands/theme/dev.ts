@@ -56,7 +56,7 @@ export default class Dev extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
-    const store = getTheme(flags)
+    const store = await getTheme(flags)
 
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     const storefrontToken = await session.ensureAuthenticatedStorefront()

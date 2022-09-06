@@ -19,7 +19,7 @@ export default class List extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const store = getTheme(flags)
+    const store = await getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await execCLI2(['theme', 'list'], {adminSession})
   }

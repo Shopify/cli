@@ -63,7 +63,7 @@ export default class Pull extends ThemeCommand {
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 
-    const store = getTheme(flags)
+    const store = await getTheme(flags)
     const adminSession = await session.ensureAuthenticatedAdmin(store)
     await execCLI2(command, {adminSession})
   }
