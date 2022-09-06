@@ -194,6 +194,6 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     await file.mkdir(path.dirname(webConfigurationPath))
     await file.write(webConfigurationPath, webConfiguration)
     await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
-    await callback(tmpDir)
+    return callback(tmpDir)
   })
 }
