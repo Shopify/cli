@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- 630153fc: Fix initialization of themes on Windows due to invalid arguments being passed
 - 30a048da: Fix pull command with --store flag
 - Updated dependencies [4c8853f1]
   - @shopify/cli-kit@3.10.0
