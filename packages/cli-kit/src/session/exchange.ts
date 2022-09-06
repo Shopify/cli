@@ -6,7 +6,6 @@ import {Abort} from '../error.js'
 import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
-import {IdentityDeviceError} from '../session.js'
 
 export class InvalidGrantError extends Error {}
 
@@ -98,6 +97,13 @@ export async function exchangeCustomPartnerToken(token: string): Promise<Applica
   const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
   return newToken[appId]!
 }
+
+export type IdentityDeviceError =
+  | 'authorization_pending'
+  | 'access_denied'
+  | 'expired_token'
+  | 'slow_down'
+  | 'unknown_failure'
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.

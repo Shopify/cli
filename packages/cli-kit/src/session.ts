@@ -266,19 +266,14 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   }
 
   let identityToken: IdentityToken
-  // eslint-disable-next-line no-constant-condition
-  if (isSpin() || 1) {
-    // Request a device code and generate a polling service
-    const deviceAuth = await requestDeviceAuthorization()
-
-    if (!deviceAuth.deviceCode || !deviceAuth.verificationUriComplete) {
-      throw new Error('Invalid device code response')
-    }
-
-    output.info('\nTo run this command, log in to Shopify Partners.')
-    output.info('👉 Open this URL in your browser: ' + deviceAuth.verificationUriComplete)
+  if (isSpin()) {
+    // Request a device code to authorize without a browser redirect.
+    debug(content`Requesting device authorization code...`)
+    const deviceAuth = await requestDeviceAuthorization(scopes)
+    if (!deviceAuth.deviceCode || !deviceAuth.verificationUriComplete) throw new Error('Invalid device code response')
 
     // Poll for the identity token
+    debug(content`Starting polling for the identity token...`)
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   } else {
     // Authorize user via browser
@@ -384,13 +379,6 @@ export interface DeviceTokenResponse {
   idToken: string
   tokenType: string
 }
-
-export type IdentityDeviceError =
-  | 'authorization_pending'
-  | 'access_denied'
-  | 'expired_token'
-  | 'slow_down'
-  | 'unknown_failure'
 
 export class TokenExchangeError extends Error {
   isAuthError: boolean

@@ -1,35 +1,22 @@
 import {clientId} from './identity.js'
-import {allDefaultScopes} from './scopes.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
+import {content, debug, info, token} from '../output.js'
 
 export async function pollForDeviceAuthorization(code: string, interval = 5): Promise<IdentityToken> {
   let cumulativeErrorTimer = 0
-
-  let currentTimerId: undefined | ReturnType<typeof setTimeout>
   let currentIntervalInSeconds = interval
-  let isPollingTerminated = false
-
-  const stopPolling = () => {
-    if (currentTimerId) {
-      isPollingTerminated = true
-      clearTimeout(currentTimerId)
-      currentTimerId = undefined
-    }
-  }
 
   return new Promise<IdentityToken>((resolve, reject) => {
     const onPoll = async () => {
-      console.log('POLLING...')
-
       const result = await exchangeDeviceCodeForAccessToken(code)
-
       if (result.token) return resolve(result.token)
+      const error = result.error ?? 'unknown_failure'
 
-      console.log(result.error)
-      switch (result.error) {
+      debug(content`Polling for device authorization... status: ${error}`)
+      switch (error) {
         case 'authorization_pending':
           cumulativeErrorTimer = 0
           return startPolling()
@@ -38,8 +25,6 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
           currentIntervalInSeconds += 5
           return startPolling()
         case 'access_denied':
-          cumulativeErrorTimer = 0
-          return reject(result)
         case 'expired_token':
           cumulativeErrorTimer = 0
           return reject(result)
@@ -54,10 +39,8 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
     }
 
     const startPolling = () => {
-      if (!isPollingTerminated) {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        currentTimerId = setTimeout(onPoll, currentIntervalInSeconds * 1000)
-      }
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(onPoll, currentIntervalInSeconds * 1000)
     }
 
     startPolling()
@@ -73,13 +56,12 @@ export interface DeviceAuthorizationResponse {
   interval?: number
 }
 
-export async function requestDeviceAuthorization(): Promise<DeviceAuthorizationResponse> {
+export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
   const identityClientId = await clientId()
 
   const queryParams = {
     client_id: identityClientId,
-    scope: allDefaultScopes().join('%20'),
-    // this.config.scopes.join('%20'),
+    scope: scopes.join(' '),
   }
   const fqdn = await identityFqdn()
   const url = `https://${fqdn}/oauth/device_authorization`
@@ -96,6 +78,12 @@ export async function requestDeviceAuthorization(): Promise<DeviceAuthorizationR
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jsonResult: any = await response.json()
+
+  debug(content`Received device authorization code: ${token.json(jsonResult)}`)
+
+  info('\nTo run this command, log in to Shopify Partners.')
+  info(content`User verification code: ${jsonResult.user_code}`)
+  info(content`👉 Open ${token.link('this Link', jsonResult.verification_uri_complete)} to start the auth process`)
 
   return {
     deviceCode: jsonResult.device_code,
