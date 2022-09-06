@@ -23,6 +23,9 @@ export async function updateCLIDependencies({
   if (local) {
     const cliPath = await packagePath('cli-main')
     const appPath = await packagePath('app')
+    const cliKitPath = await packagePath('cli-kit')
+    const uiExtensionsCliPath = await packagePath('ui-extensions-cli')
+    const pluginNgrokPath = await packagePath('plugin-ngrok')
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
@@ -32,9 +35,9 @@ export async function updateCLIDependencies({
     const dependencyOverrides = {
       '@shopify/cli': cliPath,
       '@shopify/app': appPath,
-      '@shopify/cli-kit': await packagePath('cli-kit'),
-      '@shopify/shopify-cli-extensions': await packagePath('ui-extensions-cli'),
-      '@shopify/plugin-ngrok': await packagePath('plugin-ngrok'),
+      '@shopify/cli-kit': cliKitPath,
+      '@shopify/shopify-cli-extensions': uiExtensionsCliPath,
+      '@shopify/plugin-ngrok': pluginNgrokPath,
     }
 
     packageJSON.overrides = packageJSON.overrides
