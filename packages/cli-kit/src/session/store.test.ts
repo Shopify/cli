@@ -1,6 +1,6 @@
 import {ApplicationToken, Session} from './schema.js'
 import {store, fetch, remove, identifier} from './store.js'
-import {cliKitStore} from '../store.js'
+import {getSession, removeSession, setSession} from '../store.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store.js'
 import {platformAndArch} from '../os.js'
 import {describe, expect, vi, it, beforeEach} from 'vitest'
@@ -21,11 +21,6 @@ beforeEach(() => {
       },
     }
   })
-  vi.mocked(cliKitStore).mockReturnValue({
-    setSession: vi.fn(),
-    getSession: vi.fn(),
-    removeSession: vi.fn(),
-  } as any)
 })
 
 describe('store', () => {
@@ -49,7 +44,7 @@ describe('store', () => {
     await store(session)
 
     // Then
-    expect(cliKitStore().setSession).toHaveBeenCalled()
+    expect(setSession).toHaveBeenCalled()
   })
 
   it('saves the serialized session to the local store when keytar fails to load', async () => {
@@ -61,7 +56,7 @@ describe('store', () => {
     await store(session)
 
     // Then
-    expect(cliKitStore().setSession).toHaveBeenCalledWith(JSON.stringify(session))
+    expect(setSession).toHaveBeenCalledWith(JSON.stringify(session))
   })
 })
 
@@ -108,7 +103,7 @@ describe('fetch', () => {
     await fetch()
 
     // Then
-    expect(cliKitStore().getSession).toHaveBeenCalled()
+    expect(getSession).toHaveBeenCalled()
   })
 
   it('reads the session from the local store when keytar fails to load', async () => {
@@ -119,7 +114,7 @@ describe('fetch', () => {
     await fetch()
 
     // Then
-    expect(cliKitStore().getSession).toHaveBeenCalled()
+    expect(getSession).toHaveBeenCalled()
   })
 })
 
@@ -140,7 +135,7 @@ describe('remove', () => {
     await remove()
 
     // Then
-    expect(cliKitStore().removeSession).toHaveBeenCalled()
+    expect(removeSession).toHaveBeenCalled()
   })
 
   it('removes the session from the secure store when keytar fails to load', async () => {
@@ -151,7 +146,7 @@ describe('remove', () => {
     await remove()
 
     // Then
-    expect(cliKitStore().removeSession).toHaveBeenCalled()
+    expect(removeSession).toHaveBeenCalled()
   })
 })
 

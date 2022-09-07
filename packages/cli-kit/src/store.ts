@@ -1,4 +1,5 @@
 import {content, token, debug} from './output.js'
+import constants from './constants.js'
 import Conf, {Schema} from 'conf'
 
 const migrations = {}
@@ -40,15 +41,64 @@ const schema = {
 
 let _instance: CLIKitStore | undefined
 
-export function cliKitStore() {
+export async function cliKitStore() {
   if (!_instance) {
+    // eslint-disable-next-line require-atomic-updates
     _instance = new CLIKitStore({
       schema,
       migrations,
       projectName: 'shopify-cli-kit',
+      projectVersion: await constants.versions.cliKit(),
     })
   }
   return _instance
+}
+
+export async function getAppInfo(directory: string): Promise<CachedAppInfo | undefined> {
+  const store = await cliKitStore()
+  return store.getAppInfo(directory)
+}
+
+export async function setAppInfo(options: {
+  directory: string
+  appId?: string
+  title?: string
+  storeFqdn?: string
+  orgId?: string
+  updateURLs?: boolean
+}): Promise<void> {
+  const store = await cliKitStore()
+  store.setAppInfo(options)
+}
+
+export async function clearAppInfo(directory: string): Promise<void> {
+  const store = await cliKitStore()
+  store.clearAppInfo(directory)
+}
+
+export async function getThemeStore(): Promise<string | undefined> {
+  const store = await cliKitStore()
+  return store.getThemeStore()
+}
+
+export async function setThemeStore(themeStore: string): Promise<void> {
+  const store = await cliKitStore()
+  store.setThemeStore(themeStore)
+}
+
+export async function getSession(): Promise<string | undefined> {
+  const store = await cliKitStore()
+  return store.getSession()
+}
+
+export async function setSession(session: string): Promise<void> {
+  const store = await cliKitStore()
+  store.setSession(session)
+}
+
+export async function removeSession(): Promise<void> {
+  const store = await cliKitStore()
+  store.removeSession()
 }
 
 export class CLIKitStore extends Conf<ConfSchema> {
@@ -95,14 +145,14 @@ export class CLIKitStore extends Conf<ConfSchema> {
     this.set('appInfo', apps)
   }
 
-  getTheme(): string | undefined {
+  getThemeStore(): string | undefined {
     debug(content`Getting theme store...`)
     return this.get('themeStore')
   }
 
-  setTheme(store: string): void {
+  setThemeStore(themeStore: string): void {
     debug(content`Setting theme store...`)
-    this.set('themeStore', store)
+    this.set('themeStore', themeStore)
   }
 
   getSession(): string | undefined {
@@ -110,9 +160,9 @@ export class CLIKitStore extends Conf<ConfSchema> {
     return this.get('sessionStore')
   }
 
-  setSession(store: string): void {
+  setSession(session: string): void {
     debug(content`Setting session store...`)
-    this.set('sessionStore', store)
+    this.set('sessionStore', session)
   }
 
   removeSession(): void {
