@@ -76,14 +76,14 @@ export async function clearAppInfo(directory: string): Promise<void> {
   store.clearAppInfo(directory)
 }
 
-export async function getTheme(): Promise<string | undefined> {
+export async function getThemeStore(): Promise<string | undefined> {
   const store = await cliKitStore()
-  return store.getTheme()
+  return store.getThemeStore()
 }
 
-export async function setTheme(theme: string): Promise<void> {
+export async function setThemeStore(themeStore: string): Promise<void> {
   const store = await cliKitStore()
-  store.setTheme(theme)
+  store.setThemeStore(themeStore)
 }
 
 export async function getSession(): Promise<string | undefined> {
@@ -145,14 +145,14 @@ export class CLIKitStore extends Conf<ConfSchema> {
     this.set('appInfo', apps)
   }
 
-  getTheme(): string | undefined {
+  getThemeStore(): string | undefined {
     debug(content`Getting theme store...`)
     return this.get('themeStore')
   }
 
-  setTheme(theme: string): void {
+  setThemeStore(themeStore: string): void {
     debug(content`Setting theme store...`)
-    this.set('themeStore', theme)
+    this.set('themeStore', themeStore)
   }
 
   getSession(): string | undefined {
