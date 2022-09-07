@@ -1,3 +1,4 @@
+import {environment} from './index.js'
 import {applicationId} from './session/identity.js'
 import {Abort, Bug} from './error.js'
 import {validateSession} from './session/validate.js'
@@ -266,7 +267,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   }
 
   let identityToken: IdentityToken
-  if (isSpin()) {
+  if (isSpin() || environment.local.useDeviceAuth()) {
     // Request a device code to authorize without a browser redirect.
     debug(content`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
@@ -370,31 +371,4 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 export function logout() {
   return secureStore.remove()
-}
-
-export interface DeviceTokenResponse {
-  accessToken: string
-  expiresIn: number
-  refreshToken: string
-  idToken: string
-  tokenType: string
-}
-
-export class TokenExchangeError extends Error {
-  isAuthError: boolean
-  supportErrorCode: string | null
-  // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
-  errorResponse: Record<string | number | symbol, string>
-
-  constructor(
-    isAuthError: boolean,
-    errorResponse: {[key: string | number | symbol]: string},
-    requestId: string | null = null,
-  ) {
-    super(errorResponse.error_description ?? `Unknown error while token exchange: ${JSON.stringify(errorResponse)}`)
-    this.errorResponse = errorResponse
-    this.isAuthError = isAuthError
-    this.supportErrorCode = requestId
-    Object.setPrototypeOf(this, TokenExchangeError.prototype)
-  }
 }

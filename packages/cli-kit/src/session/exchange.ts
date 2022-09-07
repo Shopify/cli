@@ -163,7 +163,7 @@ async function requestAppToken(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function tokenRequest(params: {[key: string]: string}, throws = true): Promise<any> {
+async function tokenRequest(params: {[key: string]: string}, throws = true): Promise<any> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
@@ -188,7 +188,7 @@ export async function tokenRequest(params: {[key: string]: string}, throws = tru
   return payload
 }
 
-export function buildIdentityToken(result: {
+function buildIdentityToken(result: {
   access_token: string
   refresh_token: string
   expires_in: number

@@ -86,6 +86,10 @@ export function isDebugGoBinary(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.debugGoBinary])
 }
 
+export function useDeviceAuth(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.deviceAuth])
+}
+
 /**
  * Returns whether the environment has Git available.
  * @returns {Promise<boolean>} A promise that resolves with the value.

@@ -27,6 +27,7 @@ let cachedSpinFQDN: string
  * When ran in a Spin environment, it returns the fqdn of the instance.
  * @returns {string} fqdn of the Spin environment.
  */
+
 export async function fqdn(env = process.env): Promise<string> {
   if (cachedSpinFQDN) return cachedSpinFQDN
 
