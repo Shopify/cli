@@ -25,6 +25,16 @@ export interface UploadDeploymentResponse {
       deployment: {
         previewURL: string
       }
+      error: OxygenError
     }
+  }
+}
+
+export interface GraphQLError {
+  message: string
+  extensions?: Map<string, unknown>
+  locations: {
+    line: number
+    column: number
   }
 }
