@@ -28,11 +28,10 @@ export async function environmentForService(service: Service): Promise<Environme
  * @param value The environment variable value.
  * @returns {Environment} representing the environment to use.
  */
-function service(value: undefined | string, env = process.env): Environment {
-  const user = env[constants.environmentVariables.user]
+function service(value: undefined | string): Environment {
   if (value === 'local') {
     return Environment.Local
-  } else if (value === 'spin' || user === 'spin') {
+  } else if (value === 'spin') {
     return Environment.Spin
   } else {
     return Environment.Production
