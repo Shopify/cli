@@ -49,7 +49,7 @@ export async function build({mode}: Options) {
     })
     .catch((_e) => {
       console.error('Error building extension: ', _e)
-      process.exit(1)
+      if (!isDevelopment) process.exit(1)
     })
 }
 
