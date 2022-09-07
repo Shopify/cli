@@ -124,14 +124,8 @@ export async function exchangeDeviceCodeForAccessToken(
 
   const tokenResult = await tokenRequest(params, false)
 
-  const errorCode = tokenResult.error
-  if (errorCode && ['authorization_pending', 'access_denied', 'expired_token', 'slow_down'].includes(errorCode)) {
-    return {error: errorCode}
-  }
-
-  const identityToken = buildIdentityToken(tokenResult)
-
-  return {token: identityToken}
+  if (tokenResult.error) return {error: tokenResult.error}
+  return {token: buildIdentityToken(tokenResult)}
 }
 
 async function requestAppToken(

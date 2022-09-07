@@ -5,48 +5,6 @@ import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
 import {content, debug, info, token} from '../output.js'
 
-export async function pollForDeviceAuthorization(code: string, interval = 5): Promise<IdentityToken> {
-  let cumulativeErrorTimer = 0
-  let currentIntervalInSeconds = interval
-
-  return new Promise<IdentityToken>((resolve, reject) => {
-    const onPoll = async () => {
-      const result = await exchangeDeviceCodeForAccessToken(code)
-      if (result.token) return resolve(result.token)
-      const error = result.error ?? 'unknown_failure'
-
-      debug(content`Polling for device authorization... status: ${error}`)
-      switch (error) {
-        case 'authorization_pending':
-          cumulativeErrorTimer = 0
-          return startPolling()
-        case 'slow_down':
-          cumulativeErrorTimer = 0
-          currentIntervalInSeconds += 5
-          return startPolling()
-        case 'access_denied':
-        case 'expired_token':
-          cumulativeErrorTimer = 0
-          return reject(result)
-        default:
-          if (cumulativeErrorTimer >= 120) {
-            return reject(result)
-          } else {
-            cumulativeErrorTimer += currentIntervalInSeconds
-            return startPolling()
-          }
-      }
-    }
-
-    const startPolling = () => {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      setTimeout(onPoll, currentIntervalInSeconds * 1000)
-    }
-
-    startPolling()
-  })
-}
-
 export interface DeviceAuthorizationResponse {
   deviceCode: string
   userCode: string
@@ -56,23 +14,25 @@ export interface DeviceAuthorizationResponse {
   interval?: number
 }
 
+/**
+ * Initiate a device authorization flow.
+ * This will return a DeviceAuthorizationResponse containing the URL where user
+ * should go to authorize the device without the need of a callback to the CLI.
+ *
+ * Also returns a `deviceCode` used for polling the token endpoint in the next step.
+ *
+ * @param scopes The scopes to request
+ * @returns {Promise<DeviceAuthorizationResponse>} An object with the device authorization response.
+ */
 export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
-  const identityClientId = await clientId()
-
-  const queryParams = {
-    client_id: identityClientId,
-    scope: scopes.join(' '),
-  }
   const fqdn = await identityFqdn()
+  const identityClientId = await clientId()
+  const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
   const url = `https://${fqdn}/oauth/device_authorization`
 
   const response = await shopifyFetch('identity', url, {
     method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-type': 'application/x-www-form-urlencoded',
-      'Accept-Encoding': 'gzip',
-    },
+    headers: {'Content-type': 'application/x-www-form-urlencoded'},
     body: convertRequestToParams(queryParams),
   })
 
@@ -93,6 +53,49 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     verificationUriComplete: jsonResult.verification_uri_complete,
     interval: jsonResult.interval,
   }
+}
+
+/**
+ * Poll the Oauth token endpoint with the device code obtained from a DeviceAuthorizationResponse.
+ * The endpoint will return `authorization_pending` until the user completes the auth flow in the browser.
+ * Once the user completes the auth flow, the endpoint will return the identity token.
+ *
+ * Timeout for the polling is defined by the server and is around 600 seconds.
+ *
+ * @param code The device code obtained after starting a device identity flow
+ * @param interval The interval to poll the token endpoint
+ * @returns {Promise<IdentityToken>} The identity token
+ */
+export async function pollForDeviceAuthorization(code: string, interval = 5): Promise<IdentityToken> {
+  let currentIntervalInSeconds = interval
+
+  return new Promise<IdentityToken>((resolve, reject) => {
+    const onPoll = async () => {
+      const result = await exchangeDeviceCodeForAccessToken(code)
+      if (result.token) return resolve(result.token)
+      const error = result.error ?? 'unknown_failure'
+
+      debug(content`Polling for device authorization... status: ${error}`)
+      switch (error) {
+        case 'authorization_pending':
+          return startPolling()
+        case 'slow_down':
+          currentIntervalInSeconds += 5
+          return startPolling()
+        case 'access_denied':
+        case 'expired_token':
+        case 'unknown_failure':
+          return reject(result)
+      }
+    }
+
+    const startPolling = () => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(onPoll, currentIntervalInSeconds * 1000)
+    }
+
+    startPolling()
+  })
 }
 
 function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {
