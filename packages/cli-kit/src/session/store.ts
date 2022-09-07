@@ -2,8 +2,8 @@ import {SessionSchema} from './schema.js'
 import constants from '../constants.js'
 import {platformAndArch} from '../os.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store.js'
-import {cliKitStore} from '../store.js'
 import {content, debug} from '../output.js'
+import {getSession, removeSession, setSession} from '../store.js'
 import type {Session} from './schema.js'
 
 /**
@@ -21,7 +21,7 @@ export async function store(session: Session) {
   if (await secureStoreAvailable()) {
     await secureStore(identifier, jsonSession)
   } else {
-    await cliKitStore().setSession(jsonSession)
+    await setSession(jsonSession)
   }
 }
 
@@ -38,7 +38,7 @@ export async function fetch(): Promise<Session | undefined> {
   if (await secureStoreAvailable()) {
     content = await secureFetch(identifier)
   } else {
-    content = cliKitStore().getSession()
+    content = await getSession()
   }
 
   if (!content) {
@@ -61,7 +61,7 @@ export async function remove() {
   if (await secureStoreAvailable()) {
     await secureRemove(identifier)
   } else {
-    cliKitStore().removeSession()
+    await removeSession()
   }
 }
 

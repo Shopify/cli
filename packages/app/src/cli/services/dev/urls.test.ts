@@ -25,7 +25,7 @@ beforeEach(() => {
         prompt: vi.fn(),
       },
       store: {
-        cliKitStore: vi.fn(),
+        setAppInfo: vi.fn(),
       },
     }
   })
@@ -130,12 +130,6 @@ describe('shouldOrPromptUpdateURLs', () => {
     applicationUrl: 'https://example.com/home',
     redirectUrlWhitelist: ['https://example.com/auth/callback'],
   }
-
-  beforeEach(() => {
-    vi.mocked(store.cliKitStore).mockReturnValue({
-      setAppInfo: vi.fn(),
-    } as any)
-  })
 
   it('returns true if the app is new', async () => {
     // Given
@@ -254,7 +248,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     await shouldOrPromptUpdateURLs(options)
 
     // Then
-    expect(store.cliKitStore().setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
       directory: '/path',
       updateURLs: true,
     })
