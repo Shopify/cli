@@ -1,5 +1,4 @@
-import {getTheme} from '../utilities/theme-store.js'
-import {os, output, string} from '@shopify/cli-kit'
+import {os, output, string, store as conf} from '@shopify/cli-kit'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -11,7 +10,7 @@ export async function themeInfo(config: {cliVersion: string}): Promise<output.Me
 
 async function themeConfigSection(): Promise<[string, string]> {
   const title = 'Theme Configuration'
-  const store = getTheme({store: undefined})
+  const store = (await conf.getThemeStore()) || 'Not configured'
   const lines: string[][] = [['Store', store]]
   return [title, `${string.linesToColumns(lines)}`]
 }
