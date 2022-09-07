@@ -2,7 +2,7 @@ import {Abort} from './error.js'
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {content, token, debug} from './output.js'
 import {appendSync} from './file.js'
-import git, {TaskOptions, SimpleGitProgressEvent} from 'simple-git'
+import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine} from 'simple-git'
 
 export const factory = git
 
@@ -13,8 +13,8 @@ export const GitNotPresentError = () => {
   )
 }
 
-export const OutsideGitDirectoryError = () => {
-  return new Abort('Must be inside a Git directory to continue')
+export const OutsideGitDirectoryError = (directory: string) => {
+  return new Abort(`${token.path(directory)} is not a Git directory`)
 }
 
 export const NoCommitError = () => {
@@ -27,12 +27,11 @@ export const NoCommitError = () => {
 export const DetachedHeadError = () => {
   return new Abort(
     "Git HEAD can't be detached to run command",
-    content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD`,
+    content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
+      'documentation',
+      'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
+    )} for more details`,
   )
-}
-
-export const NothingToCommitError = () => {
-  return new Abort('Nothing to commit')
 }
 
 export async function initializeRepository(directory: string) {
@@ -41,28 +40,17 @@ export async function initializeRepository(directory: string) {
   await git(directory).init()
 }
 
-export enum GitIgnoreTemplate {
-  Hydrogen = 'hydrogen',
+export interface GitIgnoreTemplate {
+  [section: string]: string[]
 }
-export function createGitIgnore(directory: string, template: GitIgnoreTemplate) {
+export function createGitIgnore(directory: string, template: GitIgnoreTemplate): void {
   debug(content`Creating .gitignore at ${token.path(directory)}...`)
   const filePath = `${directory}/.gitignore`
-  const templates = {
-    [GitIgnoreTemplate.Hydrogen]: {
-      system: ['.DS_Store'],
-      logs: ['logs', '*.log', 'npm-debug.log*', 'yarn-debug.log*', 'yarn-error.log*'],
-      testing: ['/coverage', '*.lcov'],
-      dependencies: ['/node_modules', '.npm', '.yarn-integrity', '/.pnp', '.pnp.js'],
-      typescript: ['*.tsbuildinfo'],
-      environment: ['.env', '.env.test', '.env.local'],
-      production: ['/dist'],
-    },
-  }
 
   let fileContent = ''
-  for (const [section, lines] of Object.entries(templates[template])) {
+  for (const [section, lines] of Object.entries(template)) {
     fileContent += `# ${section}\n`
-    fileContent += `${lines.join(' \n')}\n\n`
+    fileContent += `${lines.join('\n')}\n\n`
   }
 
   appendSync(filePath, fileContent)
@@ -110,25 +98,21 @@ export async function downloadRepository({
   }
 }
 
-export async function getLatestCommit(directory?: string) {
-  try {
-    const logs = await git({baseDir: directory}).log({
-      maxCount: 1,
-    })
-    if (!logs.latest) throw NoCommitError()
-    return logs.latest
-  } catch {
-    throw NoCommitError()
-  }
+export async function getLatestCommit(directory?: string): Promise<DefaultLogFields & ListLogLine> {
+  const logs = await git({baseDir: directory}).log({
+    maxCount: 1,
+  })
+  if (!logs.latest) throw NoCommitError()
+  return logs.latest
 }
 
-export async function commitAll(message: string, options?: {directory?: string; author?: string}) {
+export async function addAll(directory?: string): Promise<void> {
+  const simpleGit = git({baseDir: directory})
+  await simpleGit.raw('add', '--all')
+}
+
+export async function commit(message: string, options?: {directory?: string; author?: string}): Promise<string> {
   const simpleGit = git({baseDir: options?.directory})
-  const status = await simpleGit.status()
-
-  if (!status.files.length) throw NothingToCommitError()
-
-  await simpleGit.add(status.files.map((file) => file.path))
 
   const commitOptions = options?.author ? {'--author': options.author} : undefined
   const result = await simpleGit.commit(message, commitOptions)
@@ -136,14 +120,10 @@ export async function commitAll(message: string, options?: {directory?: string; 
   return result.commit
 }
 
-export async function getHeadSymbolicRef(directory?: string) {
-  try {
-    const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
-    if (!ref) throw DetachedHeadError()
-    return ref.trim()
-  } catch {
-    throw DetachedHeadError()
-  }
+export async function getHeadSymbolicRef(directory?: string): Promise<string> {
+  const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
+  if (!ref) throw DetachedHeadError()
+  return ref.trim()
 }
 
 /**
@@ -162,6 +142,6 @@ export async function ensurePresentOrAbort() {
  */
 export async function ensureInsideGitDirectory(directory?: string) {
   if (!(await git({baseDir: directory}).checkIsRepo())) {
-    throw OutsideGitDirectoryError()
+    throw OutsideGitDirectoryError(directory || process.cwd())
   }
 }

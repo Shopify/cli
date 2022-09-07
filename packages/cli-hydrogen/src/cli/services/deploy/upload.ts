@@ -4,6 +4,7 @@ import {
   CreateDeploymentQuerySchema,
   CreateDeploymentQuery,
 } from './graphql/create_deployment.js'
+import {UploadDeploymentQuery} from './graphql/upload_deployment.js'
 import {WebPageNotAvailable} from './error.js'
 import {api, http, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -67,8 +68,7 @@ export const healthCheck = async (pingUrl: string) => {
 
 const buildOperationsString = (deploymentID: string): string => {
   return JSON.stringify({
-    query:
-      'mutation uploadDeployment($file: Upload!, $deploymentID: ID!) {uploadDeployment(file: $file, deploymentID: $deploymentID) {deployment {previewURL}}}',
+    query: UploadDeploymentQuery,
     variables: {deploymentID, file: null},
   })
 }

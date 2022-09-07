@@ -116,7 +116,7 @@ describe('healthCheck()', () => {
     const fetch = vi.fn().mockResolvedValueOnce({status: 404})
     vi.mocked(http.fetch).mockImplementation(fetch)
 
-    await expect(healthCheck(pingUrl)).rejects.toThrowError()
+    await expect(() => healthCheck(pingUrl)).rejects.toThrowError()
     expect(fetch).toHaveBeenCalledWith(`${pingUrl}/__health`, {method: 'GET'})
   })
 })

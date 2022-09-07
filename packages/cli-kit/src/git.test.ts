@@ -9,10 +9,8 @@ const mockedInit = vi.fn(async () => {})
 const mockedCheckIsRepo = vi.fn(async () => false)
 const mockedGetConfig = vi.fn(async () => ({}))
 const mockedGetLog = vi.fn(async () => ({}))
-const mockedRaw = vi.fn(async () => '')
-const mockedStatus = vi.fn(async () => ({}))
-const mockedAdd = vi.fn(async () => {})
 const mockedCommit = vi.fn(async () => ({}))
+const mockedRaw = vi.fn(async () => '')
 
 beforeEach(() => {
   vi.mock('./environment/local')
@@ -27,10 +25,8 @@ beforeEach(() => {
     checkIsRepo: mockedCheckIsRepo,
     getConfig: mockedGetConfig,
     log: mockedGetLog,
-    raw: mockedRaw,
-    status: mockedStatus,
-    add: mockedAdd,
     commit: mockedCommit,
+    raw: mockedRaw,
   })
 })
 
@@ -81,13 +77,15 @@ describe('createGitIgnore()', () => {
     const mockedAppendSync = vi.fn()
     vi.mocked(appendSync).mockImplementation(mockedAppendSync)
     const directory = '/unit/test'
+    const template = {
+      section: ['first', 'second'],
+    }
 
-    git.createGitIgnore(directory, git.GitIgnoreTemplate.Hydrogen)
+    git.createGitIgnore(directory, template)
 
     expect(mockedAppendSync).toHaveBeenCalledOnce()
     expect(mockedAppendSync.mock.lastCall?.[0]).toBe(`${directory}/.gitignore`)
-    expect(mockedAppendSync.mock.lastCall?.[1]).toContain('node_modules')
-    expect(mockedAppendSync.mock.lastCall?.[1]).toContain('/dist')
+    expect(mockedAppendSync.mock.lastCall?.[1]).toBe('# section\nfirst\nsecond\n\n')
   })
 })
 
@@ -102,7 +100,7 @@ describe('getLatestCommit()', () => {
   it('throws if no latest commit is found', async () => {
     mockedGetLog.mockResolvedValue({latest: null, all: [], total: 0})
 
-    await expect(git.getLatestCommit()).rejects.toThrowError(git.NoCommitError())
+    await expect(() => git.getLatestCommit()).rejects.toThrowError(git.NoCommitError())
   })
   it('passes the directory option to simple git', async () => {
     // Given
@@ -118,33 +116,35 @@ describe('getLatestCommit()', () => {
   })
 })
 
-describe('commitAll()', () => {
-  it('throws if no files to commit', async () => {
-    mockedStatus.mockResolvedValue({files: []})
+describe('addAll()', () => {
+  it('builds valid raw command', async () => {
+    const directory = '/test/directory'
 
-    await expect(git.commitAll('')).rejects.toThrowError(git.NothingToCommitError())
+    await git.addAll(directory)
+
+    expect(mockedRaw).toHaveBeenCalledOnce()
+    expect(mockedRaw).toHaveBeenCalledWith('add', '--all')
+    expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
   })
-  it('tracks all files and commit', async () => {
-    mockedStatus.mockResolvedValue({files: [{path: '/some/path'}]})
+})
+
+describe('commit()', () => {
+  it('calls simple-git commit method', async () => {
     mockedCommit.mockResolvedValue({commit: 'sha'})
     const commitMsg = 'my msg'
 
-    const commitSha = await git.commitAll(commitMsg)
+    const commitSha = await git.commit(commitMsg)
 
-    expect(mockedStatus).toHaveBeenCalledTimes(1)
-    expect(mockedAdd).toHaveBeenCalledTimes(1)
-    expect(mockedAdd).toHaveBeenCalledWith(['/some/path'])
-    expect(mockedCommit).toHaveBeenCalledTimes(1)
+    expect(mockedCommit).toHaveBeenCalledOnce()
     expect(mockedCommit).toHaveBeenCalledWith(commitMsg, undefined)
     expect(commitSha).toBe('sha')
   })
   it('passes options to relevant function', async () => {
     const author = 'Vincent Lynch <vincent.lynch@shopify.com>'
     const directory = '/some/path'
-    mockedStatus.mockResolvedValue({files: [{path: '/some/path'}]})
     mockedCommit.mockResolvedValue({commit: 'sha'})
 
-    await git.commitAll('msg', {author, directory})
+    await git.commit('msg', {author, directory})
 
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
     expect(mockedCommit).toHaveBeenCalledWith('msg', {'--author': author})
@@ -154,27 +154,21 @@ describe('commitAll()', () => {
 describe('getHeadSymbolicRef()', () => {
   it('gets git HEAD symbolic reference', async () => {
     const testRef = 'refs/heads/my-test-branch'
-
     mockedRaw.mockResolvedValue(testRef)
 
     await expect(git.getHeadSymbolicRef()).resolves.toBe(testRef)
   })
   it('throws if HEAD is detached', async () => {
-    const testRef = ''
+    mockedRaw.mockResolvedValue('')
 
-    mockedRaw.mockResolvedValue(testRef)
-
-    await expect(git.getHeadSymbolicRef()).rejects.toThrowError(git.DetachedHeadError())
+    await expect(() => git.getHeadSymbolicRef()).rejects.toThrowError(git.DetachedHeadError())
   })
   it('passes the directory option to simple git', async () => {
-    // Given
     const directory = '/test/directory'
     mockedRaw.mockResolvedValue('ref/unit')
 
-    // When
     await git.getHeadSymbolicRef(directory)
 
-    // Then
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
   })
 })
@@ -185,7 +179,7 @@ describe('ensurePresentOrAbort()', () => {
     vi.mocked(hasGit).mockResolvedValue(false)
 
     // Then
-    await expect(git.ensurePresentOrAbort()).rejects.toThrowError(git.GitNotPresentError())
+    await expect(() => git.ensurePresentOrAbort()).rejects.toThrowError(git.GitNotPresentError())
   })
 
   it("doesn't throw an error if Git is present", async () => {
@@ -203,7 +197,7 @@ describe('ensureInsideGitDirectory()', () => {
     mockedCheckIsRepo.mockResolvedValue(false)
 
     // Then
-    await expect(git.ensureInsideGitDirectory()).rejects.toThrowError(git.OutsideGitDirectoryError())
+    await expect(() => git.ensureInsideGitDirectory()).rejects.toThrowError(git.OutsideGitDirectoryError(process.cwd()))
   })
 
   it("doesn't throw an error if inside a git directory", async () => {

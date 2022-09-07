@@ -72,7 +72,8 @@ export async function deployToOxygen(_config: DeployConfig) {
         const retryCount = task.isRetrying()?.count
 
         if (retryCount === backoffPolicy.length) {
-          task.title = "🤕 The deployment was uploaded but can't be reached yet."
+          task.title =
+            "The deployment uploaded but hasn't become reachable within 2 minutes. Check the preview URL to see if deployment succeeded. If it didn't, then try again later."
           return
         }
         if (retryCount && !isUnitTest) await system.sleep(backoffPolicy[retryCount - 1]!)

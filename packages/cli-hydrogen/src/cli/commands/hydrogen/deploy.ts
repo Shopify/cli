@@ -5,27 +5,24 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 
 export default class Deploy extends Command {
-  static description = 'Deploy your Hydrogen app to Oxygen'
+  static description = 'Deploy your Hydrogen app to Oxygen hosting'
   static hidden = true
 
   static flags = {
     ...cli.globalFlags,
     ...hydrogenFlags,
     deploymentToken: Flags.string({
-      char: 'd',
       required: true,
       env: 'SHOPIFY_HYDROGEN_FLAG_DEPLOYMENT_TOKEN',
-      description: 'The deployment token allowing you to deploy to Oxygen.',
+      description: 'Specify your Oxygen deployment token.',
     }),
     commitMessage: Flags.string({
-      char: 'm',
       env: 'SHOPIFY_HYDROGEN_FLAG_COMMIT_MESSAGE',
-      description: 'Overwrite the default Git commit message.',
+      description: 'Override the default Git commit message.',
     }),
     commitAuthor: Flags.string({
-      char: 'a',
       env: 'SHOPIFY_HYDROGEN_FLAG_COMMIT_AUTHOR',
-      description: 'Overwrite the default Git commit author.',
+      description: 'Override the default Git commit author.',
     }),
     healthCheck: Flags.boolean({
       env: 'SHOPIFY_HYDROGEN_FLAG_HEALTH_CHECK',
@@ -47,7 +44,8 @@ export default class Deploy extends Command {
     }
 
     const {flags} = await this.parse(Deploy)
+    const dir = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    await deployToOxygen({...flags, path: flags.path ? path.resolve(flags.path) : process.cwd()})
+    await deployToOxygen({...flags, path: dir})
   }
 }
