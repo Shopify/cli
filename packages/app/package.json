@@ -59,5 +59,9 @@
     "http-proxy": "^1.18.1",
     "diff": "^5.1.0",
     "ws": "^8.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/app"
   }
 }
