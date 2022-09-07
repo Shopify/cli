@@ -67,7 +67,7 @@ program
             },
           ],
         })
-      console.log(`${colors.green(colors.bold("PR opened:"))} ${response.url}`)
+      console.log(`${colors.green(colors.bold("PR opened:"))} ${response.data.html_url}`)
     }
   })
 
