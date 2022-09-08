@@ -87,7 +87,7 @@ export function isDebugGoBinary(env = process.env): boolean {
 }
 
 export function useDeviceAuth(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment()
+  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
 }
 
 export function isCloudEnvironment(env = process.env): boolean {
