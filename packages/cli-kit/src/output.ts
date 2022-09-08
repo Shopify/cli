@@ -8,7 +8,6 @@ import {
   mkdirSync as fileMkdirSync,
   readSync as fileReadSync,
   sizeSync as fileSizeSync,
-  writeSync as fileWriteSync,
   touchSync as fileTouchSync,
 } from './file.js'
 import {join as pathJoin} from './path.js'
@@ -31,39 +30,82 @@ import {
 import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
-import {Writable} from 'node:stream'
-import {WriteStream, createWriteStream} from 'node:fs'
+import {Transform, TransformCallback, TransformOptions, Writable} from 'node:stream'
+import {pipeline} from 'node:stream/promises'
+import {WriteStream, createWriteStream, createReadStream, unlinkSync} from 'node:fs'
+import {EOL} from 'node:os'
 import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
 
 const logFileName = 'shopify.cli.log'
+const maxLogFileSize = 5 * 1024 * 1024
+const sizePerLogLine = 50
 let logFileStream: WriteStream
 let commandUuid: string
+let logFilePath: string
+let truncating = false
+
+class LinesTruncatorTransformer extends Transform {
+  linesToRetain: string[] = []
+
+  constructor(readonly numLinesToRetain: number = 10, opts?: TransformOptions) {
+    super(opts)
+  }
+
+  _transform(chunk: string, encoding: BufferEncoding, callback: TransformCallback): void {
+    this.linesToRetain = this.linesToRetain.concat(chunk.toString().split(/(\r\n|\r|\n)/g))
+    if (this.linesToRetain.length > this.numLinesToRetain) {
+      this.linesToRetain = this.linesToRetain.splice(this.linesToRetain.length - this.numLinesToRetain)
+    }
+    callback()
+  }
+
+  _flush(callback: TransformCallback): void {
+    this.push(this.linesToRetain.join(EOL))
+    callback()
+  }
+}
 
 export function initiateLogging(options: {logDir?: string} = {}) {
   if (isUnitTest()) return
-  const logDir = options.logDir || constants.paths.directories.cache.path()
   commandUuid = generateRandomUUID()
-  fileMkdirSync(logDir)
-  const logFile = pathJoin(logDir, logFileName)
-  fileTouchSync(logFile)
-  truncateLogs(logFile)
-  logFileStream = createWriteStream(logFile, {flags: 'a'})
+  logFilePath = getLogFilePath(options)
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  truncateLogs(logFilePath)
+  logFileStream = createWriteStream(logFilePath, {flags: 'a'})
 }
 
-// Shaves off the first 10,000 log lines (circa 1MB) if logs are over 5MB long.
-// Rescues in case the file hasn't been created yet.
-function truncateLogs(logFile: string): void {
-  try {
-    if (fileSizeSync(logFile) > 5 * 1024 * 1024) {
-      const contents = fileReadSync(logFile)
-      const splitContents = contents.split('\n')
-      const newContents = splitContents.slice(10000, splitContents.length).join('\n')
-      fileWriteSync(logFile, newContents)
-    }
-    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
-  } catch {}
+function getLogFilePath(options: {logDir?: string} = {}) {
+  if (!logFilePath) {
+    const logDir = options.logDir || constants.paths.directories.cache.path()
+    fileMkdirSync(logDir)
+    logFilePath = pathJoin(logDir, logFileName)
+    fileTouchSync(logFilePath)
+  }
+
+  return logFilePath
+}
+
+// Shaves off older log lines if logs are over maxLogFileSize long.
+async function truncateLogs(logFile: string) {
+  if (truncating) {
+    return
+  }
+  const tmpLogFile = logFile.concat('.tmp')
+  if (fileSizeSync(logFile) > maxLogFileSize) {
+    truncating = true
+    const truncateLines = new LinesTruncatorTransformer(calculateNumLinesToRetain())
+    await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile)).then(async () => {
+      await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
+      unlinkSync(tmpLogFile)
+      truncating = false
+    })
+  }
+}
+
+function calculateNumLinesToRetain(): number {
+  return Math.floor(maxLogFileSize / sizePerLogLine)
 }
 
 export type Logger = (message: string) => void
