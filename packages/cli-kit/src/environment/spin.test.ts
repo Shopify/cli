@@ -1,15 +1,21 @@
 import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin.js'
+import {getCachedSpinFqdn} from './utilities.js'
 import {captureOutput} from '../system.js'
-import {describe, test, expect, vi, it} from 'vitest'
+import {describe, test, expect, vi, it, beforeAll} from 'vitest'
 
 vi.mock('../system')
+
 const mockedCaptureOutput = vi.mocked(captureOutput)
 
 describe('fqdn', () => {
+  beforeAll(() => {
+    vi.mock('./utilities')
+  })
   it('shows the latest when SPIN_INSTANCE is not present', async () => {
     // Given
     const env = {}
     const showResponse = {fqdn: 'fqdn'}
+    vi.mocked(getCachedSpinFqdn).mockReturnValue(undefined)
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
 
     // When
@@ -19,10 +25,12 @@ describe('fqdn', () => {
     expect(got).toEqual('fqdn')
     expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'], {env})
   })
+
   it("doesn't show the latest when SPIN_INSTANCE is present", async () => {
     // Given
     const env = {SPIN_INSTANCE: 'instance'}
     const showResponse = {fqdn: 'fqdn'}
+    vi.mocked(getCachedSpinFqdn).mockReturnValue(undefined)
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
 
     // When
