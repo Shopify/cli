@@ -87,7 +87,7 @@ export function isDebugGoBinary(env = process.env): boolean {
 }
 
 export function useDeviceAuth(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.deviceAuth])
+  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isSpin()
 }
 
 /**

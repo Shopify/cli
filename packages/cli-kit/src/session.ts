@@ -26,7 +26,6 @@ import * as output from './output.js'
 import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
 import {firstPartyDev} from './environment/local.js'
-import {isSpin} from './environment/spin.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {gql} from 'graphql-request'
 
@@ -267,7 +266,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   }
 
   let identityToken: IdentityToken
-  if (isSpin() || environment.local.useDeviceAuth()) {
+  if (environment.local.useDeviceAuth()) {
     // Request a device code to authorize without a browser redirect.
     debug(content`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
