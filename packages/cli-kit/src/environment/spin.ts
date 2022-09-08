@@ -1,4 +1,5 @@
-import {getCachedSpinFqdn, isTruthy, setCachedSpinFqdn} from './utilities.js'
+import {isTruthy} from './utilities.js'
+import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import constants from '../constants.js'
 import {captureOutput} from '../system.js'
 import {Abort} from '../error.js'
