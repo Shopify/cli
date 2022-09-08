@@ -19,7 +19,8 @@ export default class Preview extends Command {
     env: Flags.string({
       char: 'e',
       description: 'the file path to your .env',
-      default: '',
+      default: undefined,
+      parse: (input, _) => Promise.resolve(path.resolve(input)),
       env: 'SHOPIFY_FLAG_ENV_PATH',
     }),
     target: Flags.string({

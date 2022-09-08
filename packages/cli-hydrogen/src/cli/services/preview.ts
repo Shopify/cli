@@ -1,4 +1,5 @@
 import {path, error, system, file, output} from '@shopify/cli-kit'
+import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -7,11 +8,11 @@ interface PreviewOptions {
 }
 
 interface PreviewOptionsWorker extends PreviewOptions {
-  envPath: string
+  envPath: string | undefined
 }
 
 interface EnvConfig {
-  env: {[key: string]: string}
+  env: DotEnvFile['variables']
 }
 
 export async function previewInNode({directory, port}: PreviewOptions) {
@@ -51,7 +52,7 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     watch: true,
     buildWatchPaths: ['./src'],
     autoReload: true,
-    ...(envPath && parseEnvPath(envPath)),
+    ...(envPath && (await parseEnvPath(envPath))),
   }
 
   await file.write(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
@@ -62,23 +63,11 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     }
   }
 
-  function parseEnvPath(envPath: string): EnvConfig {
-    const envConfig: EnvConfig = {
-      env: {},
+  async function parseEnvPath(envPath: string): Promise<EnvConfig> {
+    const {variables} = await readAndParseDotEnv(envPath)
+    return {
+      env: variables,
     }
-
-    if (envPath) {
-      const variables = file.readSync(envPath)
-
-      variables.split('\n').forEach((entry) => {
-        const keyValue = entry.split('=')
-        const value = keyValue[1].replace(/['"]+/g, '')
-        const key = keyValue[0]
-        envConfig.env[key] = value
-      })
-    }
-
-    return envConfig
   }
 
   process.on('SIGINT', cleanUp.bind(null, {exit: true}))

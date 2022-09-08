@@ -33,7 +33,7 @@ describe('hydrogen preview', () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         const port = 5000
-        const envPath = ''
+        const envPath = undefined
         const expectedConfig = {
           port,
           workerFile: 'dist/worker/index.js',
@@ -61,10 +61,9 @@ describe('hydrogen preview', () => {
 
     it('writes a local mini oxygen config file with env bindings from a .env file', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
-        const tmpEnv = `${tmpDir}/.env`
-
+        const tmpEnv = path.join(tmpDir, '.env')
         // create a .env file in tmpDir
-        file.writeSync(tmpEnv, `FOO="BAR"\nBAZ="BAX"`)
+        file.writeSync(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
 
         // Given
         const port = 5000
@@ -80,10 +79,12 @@ describe('hydrogen preview', () => {
           env: {
             FOO: 'BAR',
             BAZ: 'BAX',
+            API_KEY: 'SUPER_SECRET',
+            PORT: '8000',
           },
         }
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        file.write(pathToExecutable, '// some executable file')
+        await file.write(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
@@ -97,6 +98,19 @@ describe('hydrogen preview', () => {
       })
     })
 
+    it('shows an error when the .env path is incorrect', async () => {
+      // Given
+      vi.mocked(path.findUp).mockResolvedValue(undefined)
+
+      await file.inTemporaryDirectory(async (tmpDir) => {
+        // When
+        const run = previewInWorker({directory: tmpDir, port: 4000, envPath: '/foo/bar/.env'})
+
+        // Then
+        await expect(run).rejects.toThrow('The environment file at /foo/bar/.env does not exist.')
+      })
+    })
+
     it('runs the mini-oxygen executable from the app directory', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -105,7 +119,7 @@ describe('hydrogen preview', () => {
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
-        await previewInWorker({directory: tmpDir, port: 4000, envPath: ''})
+        await previewInWorker({directory: tmpDir, port: 4000, envPath: undefined})
 
         // Then
         expect(system.exec).toHaveBeenCalledWith(
@@ -122,7 +136,7 @@ describe('hydrogen preview', () => {
 
       await file.inTemporaryDirectory(async (tmpDir) => {
         // When
-        const run = previewInWorker({directory: tmpDir, port: 4000, envPath: ''})
+        const run = previewInWorker({directory: tmpDir, port: 4000, envPath: undefined})
 
         // Then
         await expect(run).rejects.toThrow(/Could not locate the executable file to run Oxygen locally./)
