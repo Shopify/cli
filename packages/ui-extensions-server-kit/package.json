@@ -1,7 +1,7 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
   "version": "3.10.1",
-  "private": true,
+  "private": false,
   "main": "index.js",
   "module": "index.mjs",
   "types": "index.d.ts",
@@ -22,6 +22,7 @@
     }
   },
   "scripts": {
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
