@@ -1,5 +1,15 @@
 # @shopify/theme
 
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+- Updated dependencies [f04ec835]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+
 ## 3.10.0
 
 ### Patch Changes
