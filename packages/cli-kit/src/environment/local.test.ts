@@ -1,5 +1,5 @@
 import {isSpin} from './spin.js'
-import {hasGit, isDevelopment, isShopify, isUnitTest, analyticsDisabled} from './local.js'
+import {hasGit, isDevelopment, isShopify, isUnitTest, analyticsDisabled, useDeviceAuth} from './local.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
@@ -123,6 +123,63 @@ describe('analitycsDisabled', () => {
 
     // When
     const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(false)
+  })
+})
+
+describe('useDeviceAuth', () => {
+  it('returns true when SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
+    // Given
+    const env = {SHOPIFY_CLI_DEVICE_AUTH: '1'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true when SPIN is truthy', () => {
+    // Given
+    const env = {SPIN: '1'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true when CODESPACES is truthy', () => {
+    // Given
+    const env = {CODESPACES: '1'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true when GITPOD_WORKSPACE_ID is truthy', () => {
+    // Given
+    const env = {GITPOD_WORKSPACE_ID: '1'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns false otherwise', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = useDeviceAuth(env)
 
     // Then
     expect(got).toBe(false)
