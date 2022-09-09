@@ -1,4 +1,3 @@
-import {environment} from './index.js'
 import {applicationId} from './session/identity.js'
 import {Abort, Bug} from './error.js'
 import {validateSession} from './session/validate.js'
@@ -25,7 +24,7 @@ import {normalizeStoreName} from './string.js'
 import * as output from './output.js'
 import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
-import {firstPartyDev} from './environment/local.js'
+import {firstPartyDev, useDeviceAuth} from './environment/local.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {gql} from 'graphql-request'
 
@@ -266,7 +265,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   }
 
   let identityToken: IdentityToken
-  if (environment.local.useDeviceAuth()) {
+  if (useDeviceAuth()) {
     // Request a device code to authorize without a browser redirect.
     debug(content`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
