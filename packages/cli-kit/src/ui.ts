@@ -1,10 +1,11 @@
 import {CancelExecution, Abort} from './error.js'
 import {remove, exists} from './file.js'
-import {info, completed, content, token, logUpdate, logToFile, Message, Logger, stringifyMessage} from './output.js'
+import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage} from './output.js'
 import {colors} from './node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
+import {logToFile} from './log.js'
 import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
 import findProcess from 'find-process'
 

@@ -1,17 +1,7 @@
 /* eslint-disable no-console */
 import {Fatal, Bug, cleanSingleStackTracePath} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
-import constants from './constants.js'
 import {PackageManager} from './node/node-package-manager.js'
-import {generateRandomUUID} from './id.js'
-import {
-  mkdirSync as fileMkdirSync,
-  readSync as fileReadSync,
-  sizeSync as fileSizeSync,
-  touchSync as fileTouchSync,
-} from './file.js'
-import {join as pathJoin} from './path.js'
-import {page} from './system.js'
 import {colors} from './node/colors.js'
 import {
   ColorContentToken,
@@ -27,86 +17,14 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from './content-tokens.js'
+import {logToFile} from './log.js'
 import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
-import {Transform, TransformCallback, TransformOptions, Writable} from 'node:stream'
-import {pipeline} from 'node:stream/promises'
-import {WriteStream, createWriteStream, createReadStream, unlinkSync} from 'node:fs'
-import {EOL} from 'node:os'
+import {Writable} from 'node:stream'
 import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
-
-const logFileName = 'shopify.cli.log'
-const maxLogFileSize = 5 * 1024 * 1024
-const sizePerLogLine = 50
-let logFileStream: WriteStream
-let commandUuid: string
-let logFilePath: string
-let truncating = false
-
-class LinesTruncatorTransformer extends Transform {
-  linesToRetain: string[] = []
-
-  constructor(readonly numLinesToRetain: number = 10, opts?: TransformOptions) {
-    super(opts)
-  }
-
-  _transform(chunk: string, encoding: BufferEncoding, callback: TransformCallback): void {
-    this.linesToRetain = this.linesToRetain.concat(chunk.toString().split(/(\r\n|\r|\n)/g))
-    if (this.linesToRetain.length > this.numLinesToRetain) {
-      this.linesToRetain = this.linesToRetain.splice(this.linesToRetain.length - this.numLinesToRetain)
-    }
-    callback()
-  }
-
-  _flush(callback: TransformCallback): void {
-    this.push(this.linesToRetain.join(EOL))
-    callback()
-  }
-}
-
-export function initiateLogging(options: {logDir?: string} = {}) {
-  if (isUnitTest()) return
-  commandUuid = generateRandomUUID()
-  logFilePath = getLogFilePath(options)
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  truncateLogs(logFilePath)
-  logFileStream = createWriteStream(logFilePath, {flags: 'a'})
-}
-
-function getLogFilePath(options: {logDir?: string} = {}) {
-  if (!logFilePath) {
-    const logDir = options.logDir || constants.paths.directories.cache.path()
-    fileMkdirSync(logDir)
-    logFilePath = pathJoin(logDir, logFileName)
-    fileTouchSync(logFilePath)
-  }
-
-  return logFilePath
-}
-
-// Shaves off older log lines if logs are over maxLogFileSize long.
-async function truncateLogs(logFile: string) {
-  if (truncating) {
-    return
-  }
-  const tmpLogFile = logFile.concat('.tmp')
-  if (fileSizeSync(logFile) > maxLogFileSize) {
-    truncating = true
-    const truncateLines = new LinesTruncatorTransformer(calculateNumLinesToRetain())
-    await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile)).then(async () => {
-      await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
-      unlinkSync(tmpLogFile)
-      truncating = false
-    })
-  }
-}
-
-function calculateNumLinesToRetain(): number {
-  return Math.floor(maxLogFileSize / sizePerLogLine)
-}
 
 export type Logger = (message: string) => void
 
@@ -527,7 +445,7 @@ function stripAnsiEraseCursorEscapeCharacters(value: string): string {
   return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
 }
 
-function consoleLog(message: string): void {
+export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
 
@@ -546,21 +464,6 @@ function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: str
   logToFile(message, logLevel.toUpperCase())
 }
 
-export function logFileExists(): boolean {
-  return Boolean(logFileStream)
-}
-
-// DO NOT USE THIS FUNCTION DIRECTLY under normal circumstances.
-// It is exported purely for use in cases where output is already being logged
-// to the terminal but is not reflected in the logfile, e.g. Listr output.
-export function logToFile(message: string, logLevel: string): void {
-  // If file logging hasn't been initiated, skip it
-  if (!logFileExists()) return
-  const timestamp = new Date().toISOString()
-  const logContents = `[${timestamp} ${commandUuid} ${logLevel}]: ${message}\n`
-  logFileStream.write(logContents)
-}
-
 function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
     return message
@@ -575,59 +478,6 @@ export function unstyled(message: string): string {
 
 export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
-}
-
-export async function pageLogs({lastCommand}: {lastCommand: boolean}) {
-  const logDir = constants.paths.directories.cache.path()
-  const logFile = pathJoin(logDir, logFileName)
-  // Ensure file exists in case they deleted it or something
-  fileTouchSync(logFile)
-  if (lastCommand) {
-    printLastCommand(logFile)
-  } else {
-    await page(logFile)
-  }
-}
-
-function printLastCommand(logFile: string): void {
-  const contents = fileReadSync(logFile).split('\n')
-  const uuids = contents
-    .map(logfileLineUUID)
-    .filter((uuid) => uuid)
-    .reverse()
-  // 2nd unique UUID, because the currently running command will be the 1st
-  const relevantUuid = Array.from(new Set(uuids))[1]
-  if (relevantUuid) {
-    consoleLog(relevantLines(contents, relevantUuid).join('\n'))
-  }
-}
-
-function relevantLines(contents: string[], relevantUuid: string): string[] {
-  // We run through the file line by line, keeping track of the most recently
-  // encountered UUID.
-  //
-  // If the current line has a UUID, it's a new logged unit and should be
-  // considered. Otherwise, the line is related to the most recent UUID.
-  let mostRecentUuid = ''
-  return contents.filter((line: string) => {
-    const currentUuid = logfileLineUUID(line) || mostRecentUuid
-    mostRecentUuid = currentUuid
-    return currentUuid === relevantUuid
-  })
-}
-
-function logfileLineUUID(line: string): string | null {
-  // Log lines look like:
-  //
-  //         timestamp                        UUID                               contents
-  // ===========================================================================================
-  // [2022-07-20T08:51:40.296Z 5288e1da-a06a-4f96-b1a6-e34fcdd7b416 DEBUG]: Running command logs
-  // ===========================================================================================
-  //
-  // There may be subsequent lines if the contents section is multi-line.
-  //
-  const match = line.match(/^\[\S+ ([0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}) [A-Z]+\]/)
-  return match && match[1]!
 }
 
 /**
