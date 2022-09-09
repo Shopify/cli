@@ -1,3 +1,4 @@
+import {unstyled} from './output.js'
 import crypto from 'crypto'
 
 export {camelCase as camelize} from 'change-case'
@@ -61,4 +62,27 @@ export function tryParseInt(maybeInt: string | undefined) {
     }
   }
   return asInt
+}
+
+/**
+ * Given a series of rows inside an array, where each row is an array of strings (representing columns)
+ * Parse it into a single string with the columns aligned
+ */
+export function linesToColumns(lines: string[][]): string {
+  const widths: number[] = []
+  for (let i = 0; lines[0] && i < lines[0].length; i++) {
+    const columnRows = lines.map((line) => line[i]!)
+    widths.push(Math.max(...columnRows.map((row) => unstyled(row).length)))
+  }
+  const paddedLines = lines
+    .map((line) => {
+      return line
+        .map((col, index) => {
+          return `${col}${' '.repeat(widths[index]! - unstyled(col).length)}`
+        })
+        .join('   ')
+        .trimEnd()
+    })
+    .join('\n')
+  return paddedLines
 }

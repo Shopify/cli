@@ -1,5 +1,5 @@
-import {getTheme} from '../../utilities/theme-store.js'
-import ThemeCommand from '../theme-command.js'
+import {getThemeStore} from '../../utilities/theme-store.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, session, string} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -27,7 +27,7 @@ export default class Publish extends ThemeCommand {
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Publish)
 
-    const store = getTheme(flags)
+    const store = await getThemeStore(flags)
     const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'publish']
     if (args.themeId) {

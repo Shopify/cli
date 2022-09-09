@@ -3,7 +3,7 @@
   "javascript.validate.enable": false,
   "css.validate": false,
   "scss.validate": false,
-  "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {
     ".dev": true,
     ".history/**": true,
@@ -34,7 +34,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
-  "eslint.workingDirectories": [{ "pattern": "packages/*/package.json" }],
+  "eslint.workingDirectories": [{ "pattern": "packages/*" }],
   "vitest.enable": true,
   "testing.automaticallyOpenPeekView": "never",
   "javascript.preferences.importModuleSpecifierEnding": "js",

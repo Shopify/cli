@@ -50,3 +50,45 @@ export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
 export async function writeDotEnv(file: DotEnvFile) {
   await writeFile(file.path, stringify(file.variables))
 }
+
+/**
+ * Given an .env file content, generates a new one with new values
+ * without removing already existing lines.
+ * @param envFileContent {string | null} .env file contents.
+ * @param updatedValues {[key: string]: string}} object containing new env variables values.
+ */
+export function patchEnvFile(
+  envFileContent: string | null,
+  updatedValues: {[key: string]: string | undefined},
+): string {
+  const outputLines: string[] = []
+  const lines = envFileContent === null ? [] : envFileContent.split('\n')
+
+  const alreadyPresentKeys: string[] = []
+
+  const toLine = (key: string, value?: string) => `${key}=${value}`
+
+  for (const line of lines) {
+    const match = line.match(/^([^=:#]+?)[=:](.*)/)
+    let lineToWrite = line
+
+    if (match) {
+      const key = match[1]!.trim()
+      const newValue = updatedValues[key]
+      if (newValue) {
+        alreadyPresentKeys.push(key)
+        lineToWrite = toLine(key, newValue)
+      }
+    }
+
+    outputLines.push(lineToWrite)
+  }
+
+  for (const [patchKey, updatedValue] of Object.entries(updatedValues)) {
+    if (!alreadyPresentKeys.includes(patchKey)) {
+      outputLines.push(toLine(patchKey, updatedValue))
+    }
+  }
+
+  return outputLines.join('\n')
+}

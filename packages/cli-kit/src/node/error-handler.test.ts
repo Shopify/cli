@@ -13,6 +13,7 @@ beforeEach(() => {
           onNotify(reportedError)
           callback(null)
         },
+        isStarted: () => true,
       },
     }
   })
@@ -96,11 +97,15 @@ describe('bugsnag stack cleaning', () => {
 })
 
 describe('bugsnag metadata', () => {
-  it('includes public data', () => {
+  it('includes public data', async () => {
     const event = {
       addMetadata: vi.fn(),
     }
-    addBugsnagMetadata(event as any)
+    const mockConfig = {
+      runHook: () => Promise.resolve({successes: []}),
+      plugins: [],
+    }
+    await addBugsnagMetadata(event as any, mockConfig as any)
     expect(event.addMetadata).toHaveBeenCalled()
   })
 })
@@ -110,15 +115,19 @@ describe('send to Bugsnag', () => {
     const toThrow = new Error('In test')
     const res = await sendErrorToBugsnag(toThrow)
     expect(res.reported).toEqual(true)
-    expect(res.error.stack).toMatch(/^Error: In test/)
-    expect(res.error.stack).not.toEqual(toThrow.stack)
+
+    const {error} = res as any
+
+    expect(error.stack).toMatch(/^Error: In test/)
+    expect(error.stack).not.toEqual(toThrow.stack)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
   it('processes string instances', async () => {
     const res = await sendErrorToBugsnag('In test' as any)
     expect(res.reported).toEqual(true)
-    expect(res.error.stack).toMatch(/^Error: In test/)
+    const {error} = res as any
+    expect(error.stack).toMatch(/^Error: In test/)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 

@@ -7,10 +7,32 @@
   "tags": ["scope:e2e"],
   "targets": {
     "test": {
-      "executor": "nx:run-script",
+      "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "script": "test:acceptance"
+        "command": "yarn cucumber-js -p default -c cucumber.js",
+        "cwd": "packages/features"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn eslint \"**/*.ts\"",
+        "cwd": "packages/features"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn eslint '**/*.ts' --fix",
+        "cwd": "packages/features"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn tsc --noEmit",
+        "cwd": "packages/features"
       }
     }
   }

@@ -1,7 +1,7 @@
+const {platform} = require('os')
+
 const isCI = process.env.NODE_ENV === 'ci'
 const featureToRun = process.env.FEATURE
-const nodeVersion = process.version.match(/^v(\d+\.\d+)/)[1]
-const isNode14 = nodeVersion.startsWith('14')
 
 const common = [
   '--publish-quiet',
@@ -13,8 +13,8 @@ const common = [
   '--parallel 3',
 ]
 
-if (isNode14) {
-  common.push(`--tags ~@skip_node_14`)
+if (platform() === 'win32') {
+  common.push(`--tags "not @skip_windows"`)
 }
 
 if (isCI) {

@@ -1,26 +1,24 @@
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
+import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
-export type MatchResult =
-  | {
-      result: 'ok'
-      identifiers: IdentifiersExtensions
-      pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
-      toCreate: Extension[]
-      toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
-    }
-  | {
-      result: 'invalid-environment'
-    }
+export interface MatchResult {
+  identifiers: IdentifiersExtensions
+  pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
+  toCreate: Extension[]
+  toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
+}
 
 export async function automaticMatchmaking(
   localExtensions: Extension[],
   remoteRegistrations: ExtensionRegistration[],
   identifiers: {[localIdentifier: string]: string},
-): Promise<MatchResult> {
+): Promise<Result<MatchResult, Error>> {
+  const invalidEnvironmentError = err(new Error('invalid-environment'))
+
   if (remoteRegistrations.length > localExtensions.length) {
-    return {result: 'invalid-environment'}
+    return invalidEnvironmentError
   }
 
   const validIdentifiers = identifiers
@@ -67,13 +65,13 @@ export async function automaticMatchmaking(
   // The user must solve the issue in their environment or deploy to a different app
   const impossible = newRemotePending.filter((reg) => !newLocalPending.map((ext) => ext.graphQLType).includes(reg.type))
   if (impossible.length > 0 || newRemotePending.length > newLocalPending.length) {
-    return {result: 'invalid-environment'}
+    return invalidEnvironmentError
   }
 
   // If there are more remote pending than local in total, then we can't automatically match
   // The user must solve the issue in their environment or deploy to a different app
   if (newRemotePending.length > newLocalPending.length) {
-    return {result: 'invalid-environment'}
+    return invalidEnvironmentError
   }
 
   const extensionsToCreate: Extension[] = []
@@ -87,21 +85,20 @@ export async function automaticMatchmaking(
     if (possibleMatches.length === 0) {
       // There are no remote extensions with the same type. We need to create a new extension
       extensionsToCreate.push(extension)
-    } else if (possibleMatches[0].title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
+    } else if (possibleMatches[0]!.title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
       // There is a unique remote extension with the same type AND name. We can automatically match them.
-      validIdentifiers[extension.localIdentifier] = possibleMatches[0].uuid
+      validIdentifiers[extension.localIdentifier] = possibleMatches[0]!.uuid
     } else {
       // There is a unique remote extension with the same type, but different name. We can match them but need to confirm
-      pendingConfirmation.push({extension, registration: possibleMatches[0]})
+      pendingConfirmation.push({extension, registration: possibleMatches[0]!})
     }
   })
 
   // At this point, all extensions are matched either automatically, manually or are new
-  return {
-    result: 'ok',
+  return ok({
     identifiers: validIdentifiers,
     pendingConfirmation,
     toCreate: extensionsToCreate,
     toManualMatch: {local: localNeedsManualMatch, remote: remoteNeedsManualMatch},
-  }
+  })
 }

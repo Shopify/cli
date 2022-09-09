@@ -5,7 +5,7 @@ import {system, environment, path} from '@shopify/cli-kit'
 import {platform} from 'node:os'
 
 vi.mock('../../environment')
-vi.mock('./binary')
+vi.mock('./binary.js')
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
   return {

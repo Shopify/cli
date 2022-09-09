@@ -30,6 +30,9 @@ interface DeployOptions {
   /** The app to be built and uploaded */
   app: AppInterface
 
+  /** API key of the app in Partners admin */
+  apiKey?: string
+
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 }
@@ -52,7 +55,7 @@ export const deploy = async (options: DeployOptions) => {
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {
       return {
-        uuid: identifiers.extensions[extension.localIdentifier],
+        uuid: identifiers.extensions[extension.localIdentifier]!,
         config: JSON.stringify(await configFor(extension, app)),
         context: '',
       }

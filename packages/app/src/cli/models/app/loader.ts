@@ -27,7 +27,7 @@ export class AppErrors {
     this.errors[path] = message
   }
 
-  getError(path: string): output.Message {
+  getError(path: string) {
     return this.errors[path]
   }
 
@@ -352,7 +352,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     output.debug('Unable to decide project type as no web backend')
     return
   }
-  const {directory} = backendWebs[0]
+  const {directory} = backendWebs[0]!
 
   const nodeConfigFile = path.join(directory, 'package.json')
   const rubyConfigFile = path.join(directory, 'Gemfile')

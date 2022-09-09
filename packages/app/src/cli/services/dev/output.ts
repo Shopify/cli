@@ -32,10 +32,9 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 }
 
 export function outputAppURL(storeFqdn: string, url: string) {
+  const heading = output.token.heading('Shareable app URL')
   const appURL = buildAppURL(storeFqdn, url)
-  const heading = output.token.heading('App URL')
-  const message = `Once everything's built, your app's shareable link will be:\n${appURL}`
-  output.info(output.content`\n\n${heading}\n${message}\n`)
+  output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
 }
 
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
@@ -84,10 +83,10 @@ One testing option is to use a separate app dedicated to staging.`
 
 function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
-  const heading = output.token.heading(`${extensions[0].configuration.name} (${getHumanKey(extensions[0].type)})`)
+  const heading = output.token.heading(`${extensions[0]!.configuration.name} (${getHumanKey(extensions[0]!.type)})`)
   const link = output.token.link(
     'dev doc instructions',
-    'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-4-test-your-changes',
+    'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
   )
   const message = output.content`Follow the ${link} by deploying your work as a draft`.value
   output.info(output.content`${heading}\n${message}\n`)
@@ -138,7 +137,7 @@ function getHumanKey(type: ExtensionTypes) {
 
 function partnersURL(organizationId: string, appId: string): string {
   return output.content`${output.token.link(
-    `Shopify Partners dashboard`,
+    `Partners Dashboard`,
     `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

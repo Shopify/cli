@@ -1,18 +1,13 @@
-/* eslint-disable jest/max-nested-describe */
 import {ExtensionServerClient} from './ExtensionServerClient'
 import {mockApp} from '../testing'
 import WS from 'jest-websocket-mock'
-import fetchMock from 'jest-fetch-mock'
+import {mockGet} from 'vi-fetch'
 
 const defaultOptions = {
   connection: {url: 'ws://example-host.com:8000/extensions/'},
 }
 
 describe('ExtensionServerClient', () => {
-  beforeEach(() => {
-    fetchMock.enableMocks()
-  })
-
   function setup(options: ExtensionServer.Options = defaultOptions) {
     if (!options.connection.url) {
       throw new Error('Please set a URL')
@@ -44,6 +39,7 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
+    // eslint-disable-next-line jest/max-nested-describe
     describe('API client', () => {
       it('is initialized with the given URL', () => {
         const url = 'ws://initial.socket.com'
@@ -67,7 +63,7 @@ describe('ExtensionServerClient', () => {
           {uuid: '456', surface: 'checkout'},
         ]
 
-        fetchMock.mockResponse(JSON.stringify({extensions}))
+        mockGet('http://example-host.com:8000').willResolve({extensions})
 
         const {socket, client} = setup({...defaultOptions, surface: 'admin'})
         await expect(client.api.extensions()).resolves.toStrictEqual({
@@ -83,7 +79,7 @@ describe('ExtensionServerClient', () => {
           {uuid: '456', surface: 'checkout'},
         ]
 
-        fetchMock.mockResponse(JSON.stringify({extensions}))
+        mockGet('http://example-host.com:8000').willResolve({extensions})
 
         const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
         await expect(client.api.extensions()).resolves.toStrictEqual({
@@ -98,7 +94,7 @@ describe('ExtensionServerClient', () => {
   describe('on()', () => {
     it('sends data with extensions filtered by surface option on "connected" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'admin'})
-      const connectSpy = jest.fn()
+      const connectSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -122,7 +118,7 @@ describe('ExtensionServerClient', () => {
 
     it('sends data with all extensions when surface option is not valid on "connected" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
-      const connectSpy = jest.fn()
+      const connectSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -146,7 +142,7 @@ describe('ExtensionServerClient', () => {
 
     it('sends data with extensions filtered by surface option on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'admin'})
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -170,7 +166,7 @@ describe('ExtensionServerClient', () => {
 
     it('sends data with all extensions when surface option is not valid on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -194,7 +190,7 @@ describe('ExtensionServerClient', () => {
 
     it('listens to persist events', async () => {
       const {socket, client} = setup()
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
       }
@@ -210,7 +206,7 @@ describe('ExtensionServerClient', () => {
 
     it('unsubscribes from persist events', async () => {
       const {socket, client} = setup()
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const unsubscribe = client.on('update', updateSpy)
 
       unsubscribe()
@@ -228,7 +224,7 @@ describe('ExtensionServerClient', () => {
 
     it('listens to dispatch events', async () => {
       const {socket, client} = setup()
-      const unfocusSpy = jest.fn()
+      const unfocusSpy = vi.fn()
 
       client.on('unfocus', unfocusSpy)
       socket.send({event: 'dispatch', data: {type: 'unfocus'}})
@@ -253,7 +249,7 @@ describe('ExtensionServerClient', () => {
     })
 
     it('warns if trying to "emit" a persist event', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
       const {socket, client} = setup()
 
       client.emit('update' as any, {})
@@ -278,7 +274,7 @@ describe('ExtensionServerClient', () => {
     })
 
     it('warns if trying to "persist" a dispatch event', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
       const {socket, client} = setup()
 
       client.persist('unfocus' as any, {})
@@ -325,7 +321,7 @@ describe('ExtensionServerClient', () => {
       const initialSocket = new WS(initialURL)
       const client = new ExtensionServerClient({connection: {url: initialURL}})
 
-      jest.spyOn(initialSocket, 'close')
+      vi.spyOn(initialSocket, 'close')
 
       await initialSocket.connected
 

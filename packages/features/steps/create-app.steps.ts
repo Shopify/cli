@@ -2,10 +2,18 @@ import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'
 import path from 'pathe'
+import fs from 'fs-extra'
 import {strict as assert} from 'assert'
 
+interface ExtensionConfiguration {
+  configuration: {
+    name: string
+  }
+  buildDirectory: string
+}
+
 When(
-  /I create an app named (.+) with (.+) as dependency manager/,
+  /I create an app named (.+) with (.+) as package manager/,
   {timeout: 5 * 60 * 1000},
   async function (appName: string, packageManager: string) {
     const {stdout} = await exec(
@@ -30,7 +38,7 @@ When(
 )
 
 Then(
-  /I have an app named (.+) scaffolded from the template with (.+) as dependency manager/,
+  /I have an app named (.+) scaffolded from the template with (.+) as package manager/,
   {},
   async function (appName: string, packageManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {
@@ -41,8 +49,24 @@ Then(
   },
 )
 
-Then(/I can build the app/, {timeout: 2 * 60 * 1000}, async function () {
+Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   await exec('node', [executables.cli, 'app', 'build', '--path', this.appDirectory], {
     env: {...process.env, ...this.temporaryEnv},
   })
+})
+
+Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
+  const appInfo = await this.appInfo()
+  const extensionsMissingBuildFile = appInfo.extensions.ui.filter((extension: ExtensionConfiguration) => {
+    const buildFilePath = path.join(extension.buildDirectory, 'main.js')
+
+    return !fs.pathExistsSync(buildFilePath)
+  })
+
+  if (extensionsMissingBuildFile.length) {
+    const extensionNames = extensionsMissingBuildFile.map(
+      (extensions: ExtensionConfiguration) => extensions.configuration.name,
+    )
+    assert.fail(`Extensions without built file:\n${extensionNames.join(', ')}`)
+  }
 })

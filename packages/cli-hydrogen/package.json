@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "3.7.1",
+  "version": "3.10.1",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "bugs": {
@@ -22,14 +22,14 @@
     }
   },
   "scripts": {
-    "clean": "rimraf dist/",
-    "build": "tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx run cli-hydrogen:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [
@@ -42,8 +42,8 @@
     "@shopify/mini-oxygen": "^0.1.0",
     "@types/prettier": "^2.6.3",
     "prettier": "^2.6.1",
-    "vite": "^2.9.9",
-    "@shopify/cli-kit": "3.7.1",
+    "vite": "^2.9.13",
+    "@shopify/cli-kit": "3.10.1",
     "fast-glob": "^3.2.11",
     "fs-extra": "^10.0.0",
     "typescript": "^4.7.4",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.12",
-    "vitest": "^0.17.1"
+    "vitest": "^0.22.1"
   },
   "engine-strict": true,
   "engines": {
@@ -64,5 +64,9 @@
   ],
   "oclif": {
     "commands": "dist/cli/commands"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/cli-hydrogen"
   }
 }

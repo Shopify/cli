@@ -2,7 +2,13 @@ import {findUp, moduleDirectory} from '../path.js'
 import {read} from '../file.js'
 import {Bug} from '../error.js'
 
-const HTMLFileNames = ['empty-url.html', 'auth-error.html', 'missing-code.html', 'missing-state.html', 'success.html']
+const HTMLFileNames = [
+  'empty-url.html',
+  'auth-error.html',
+  'missing-code.html',
+  'missing-state.html',
+  'success.html',
+] as const
 const StylesheetFilename = 'style.css'
 const FaviconFileName = 'favicon.svg'
 

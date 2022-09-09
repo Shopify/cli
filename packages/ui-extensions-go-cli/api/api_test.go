@@ -812,7 +812,8 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"localization": null,
 			"surface": "checkout",
 			"capabilities": {
-				"networkAccess": false
+				"networkAccess": false,
+				"blockProgress": false
 			}
 		}
 		]`, extensionAssetUrl, extensionRootUrl, dispatchExtensionUUID)

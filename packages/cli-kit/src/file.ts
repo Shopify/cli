@@ -38,6 +38,16 @@ export async function read(path: string, options: object = {encoding: 'utf-8'}):
   return content
 }
 
+/**
+ * Given a path, it determines the actual path. This is useful when working
+ * with paths that represent symlinks.
+ * @param path {string} Path whose real path will be returned.
+ * @returns
+ */
+export async function realpath(path: string): Promise<string> {
+  return fs.promises.realpath(path)
+}
+
 export function readSync(path: string, options: object = {encoding: 'utf-8'}): string {
   debug(outputContent`Sync-reading the content of file at ${token.path(path)}...`)
   const content = fs.readFileSync(path, options)

@@ -1,5 +1,4 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectOrCreateApp} from './dev/select-app.js'
+import {outputEnv} from './web-env.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {
@@ -9,9 +8,8 @@ import {
   themeExtensions,
   uiExtensions,
 } from '../constants.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
-import {os, output, path, session, store} from '@shopify/cli-kit'
+import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
@@ -33,28 +31,7 @@ export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Pr
 }
 
 export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
-  const token = await session.ensureAuthenticatedPartners()
-
-  const orgs = await fetchOrganizations(token)
-  const org = await selectOrganizationPrompt(orgs)
-  const {organization, apps} = await fetchOrgAndApps(org.id, token)
-
-  const selectedApp = await selectOrCreateApp(app, apps, organization, token)
-
-  if (format === 'json') {
-    return output.content`${output.token.json({
-      SHOPIFY_API_KEY: selectedApp.apiKey,
-      SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0].secret,
-      SCOPES: app.configuration.scopes,
-    })}`
-  } else {
-    return output.content`
-Use these environment variables to set up your deployment pipeline for this app:
-  · ${output.token.green('SHOPIFY_API_KEY')}: ${selectedApp.apiKey}
-  · ${output.token.green('SHOPIFY_API_SECRET')}: ${selectedApp.apiSecretKeys[0].secret}
-  · ${output.token.green('SCOPES')}: ${app.configuration.scopes}
-    `
-  }
+  return outputEnv(app, format)
 }
 
 export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
@@ -75,21 +52,20 @@ class AppInfo {
 
   constructor(app: AppInterface) {
     this.app = app
-    this.cachedAppInfo = store.cliKitStore().getAppInfo(app.directory)
   }
 
   async output(): Promise<string> {
     const sections: [string, string][] = [
-      this.devConfigsSection(),
+      await this.devConfigsSection(),
       this.projectSettingsSection(),
       this.appComponentsSection(),
       this.accessScopesSection(),
       await this.systemInfoSection(),
     ]
-    return sections.map((sectionContents: [string, string]) => this.section(...sectionContents)).join('\n\n')
+    return sections.map((sectionContents: [string, string]) => output.section(...sectionContents)).join('\n\n')
   }
 
-  devConfigsSection(): [string, string] {
+  async devConfigsSection(): Promise<[string, string]> {
     const title = 'Configs for Dev'
 
     let appName = NOT_CONFIGURED_TEXT
@@ -100,11 +76,12 @@ class AppInfo {
       this.app.packageManager,
       'dev',
     )}`.value
-    if (this.cachedAppInfo) {
-      if (this.cachedAppInfo.title) appName = this.cachedAppInfo.title
-      if (this.cachedAppInfo.storeFqdn) storeDescription = this.cachedAppInfo.storeFqdn
-      if (this.cachedAppInfo.appId) apiKey = this.cachedAppInfo.appId
-      if (this.cachedAppInfo.updateURLs !== undefined) updateURLs = this.cachedAppInfo.updateURLs ? 'Always' : 'Never'
+    const cachedAppInfo = await store.getAppInfo(this.app.directory)
+    if (cachedAppInfo) {
+      if (cachedAppInfo.title) appName = cachedAppInfo.title
+      if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
+      if (cachedAppInfo.appId) apiKey = cachedAppInfo.appId
+      if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
       postscript = output.content`💡 To change these, run ${output.token.packagejsonScript(
         this.app.packageManager,
         'dev',
@@ -117,7 +94,7 @@ class AppInfo {
       ['API key', apiKey],
       ['Update URLs', updateURLs],
     ]
-    return [title, `${this.linesToColumns(lines)}\n\n${postscript}`]
+    return [title, `${string.linesToColumns(lines)}\n\n${postscript}`]
   }
 
   projectSettingsSection(): [string, string] {
@@ -126,7 +103,7 @@ class AppInfo {
       ['Name', this.app.name],
       ['Root location', this.app.directory],
     ]
-    return [title, this.linesToColumns(lines)]
+    return [title, string.linesToColumns(lines)]
   }
 
   appComponentsSection(): [string, string] {
@@ -196,7 +173,7 @@ class AppInfo {
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
     if (errorContent.trim() === '') errorContent = ''
 
-    return `${subtitle}\n${this.linesToColumns([toplevel, ...sublevels])}${errorContent}`
+    return `${subtitle}\n${string.linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
   uiExtensionSubSection(extension: UIExtension): string {
@@ -209,7 +186,7 @@ class AppInfo {
       details.push(['     metafields', `${config.metafields.length}`])
     }
 
-    return `\n${this.linesToColumns(details)}`
+    return `\n${string.linesToColumns(details)}`
   }
 
   functionExtensionSubSection(extension: FunctionExtension): string {
@@ -219,7 +196,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `\n${this.linesToColumns(details)}`
+    return `\n${string.linesToColumns(details)}`
   }
 
   themeExtensionSubSection(extension: ThemeExtension): string {
@@ -229,7 +206,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `\n${this.linesToColumns(details)}`
+    return `\n${string.linesToColumns(details)}`
   }
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
@@ -237,8 +214,8 @@ class AppInfo {
       [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath))
-    return `\n${this.linesToColumns(details)}\n${error}`
+    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath)!)
+    return `\n${string.linesToColumns(details)}\n${error}`
   }
 
   formattedError(str: output.Message): string {
@@ -250,7 +227,7 @@ class AppInfo {
   accessScopesSection(): [string, string] {
     const title = 'Access Scopes in Root TOML File'
     const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
-    return [title, this.linesToColumns(lines)]
+    return [title, string.linesToColumns(lines)]
   }
 
   async systemInfoSection(): Promise<[string, string]> {
@@ -265,35 +242,11 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    return [title, `${this.linesToColumns(lines)}`]
-  }
-
-  linesToColumns(lines: string[][]): string {
-    const widths: number[] = []
-    for (let i = 0; i < lines[0].length; i++) {
-      const columnRows = lines.map((line) => line[i])
-      widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
-    }
-    const paddedLines = lines
-      .map((line) => {
-        return line
-          .map((col, index) => {
-            return `${col}${' '.repeat(widths[index] - output.unstyled(col).length)}`
-          })
-          .join('   ')
-          .trimEnd()
-      })
-      .join('\n')
-    return paddedLines
-  }
-
-  section(title: string, body: string): string {
-    const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
-    return output.content`${output.token.heading(formattedTitle)}\n${body}`.value
+    return [title, `${string.linesToColumns(lines)}`]
   }
 
   currentCliVersion(): string {
-    return this.app.nodeDependencies['@shopify/cli']
+    return this.app.nodeDependencies['@shopify/cli']!
   }
 
   async versionUpgradeMessage(): Promise<string> {

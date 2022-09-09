@@ -1,4 +1,17 @@
 {
     "extends": "./configurations/tsconfig.json",
-    "include": ["./**/*.ts", "./**/*.cjs", "./**/*.js"]
+    "include": [],
+    "references": [
+      {"path": "./packages/cli-main"},
+      {"path": "./packages/cli-hydrogen"},
+      {"path": "./packages/app"},
+      {"path": "./packages/theme"},
+      {"path": "./packages/cli-kit"},
+      {"path": "./packages/create-hydrogen"},
+      {"path": "./packages/create-app"},
+      {"path": "./packages/ui-extensions-cli"},
+      {"path": "./packages/ui-extensions-server-kit"},
+      {"path": "./packages/ui-extensions-test-utils"},
+      {"path": "./packages/plugin-ngrok"}
+    ]
 }

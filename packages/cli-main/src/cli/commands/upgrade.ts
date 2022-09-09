@@ -37,7 +37,7 @@ export default class Upgrade extends Command {
     const packageJsonDevDependencies: {[key: string]: string} = packageJson.devDependencies || {}
 
     const cliDependency = '@shopify/cli'
-    let currentVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[cliDependency]
+    let currentVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[cliDependency]!
     if (currentVersion.slice(0, 1).match(/[\^~]/)) currentVersion = this.config.version
     const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
 

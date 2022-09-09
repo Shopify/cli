@@ -1,5 +1,44 @@
 # @shopify/cli-kit
 
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+
+## 3.10.0
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+
+## 3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- 08c42c45: Use the Ruby bin directory from environment variable when provided (to fix homebrew issues)
+
+## 3.9.0
+
+### Minor Changes
+
+- c7137a3b: Grouping extension types in scaffold select type prompt
+
+## 3.8.0
+
+### Minor Changes
+
+- db4e6089: Releasing extensions binary in an automatic way
+- 79df925d: Add GraphQL endpoint to get Partners URLs
+
+### Patch Changes
+
+- 79df925d: Add new fields to app cache: updateURLs and newApp
+- 03bd5f28: Added `web-env` command to show and generate .env files without erasing existing ones
+
 ## 3.7.1
 
 ### Minor Changes

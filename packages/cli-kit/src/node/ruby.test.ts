@@ -26,36 +26,20 @@ describe('execCLI', () => {
     )
   })
 
-  it('throws an exception when RubyGems version requirement is not met', async () => {
-    const rubyVersion = '2.4.0'
-    const rubyGemsVersion = '2.3.0'
-    vi.mocked(file.exists).mockResolvedValue(true)
-    vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyVersion)
-    vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyGemsVersion)
-
-    await expect(() => execCLI2(['args'])).rejects.toThrowError(
-      `RubyGems version \u001b[33m${rubyGemsVersion}\u001b[39m is not supported`,
-    )
-  })
-
   it('throws an exception when Bundler is not installed', async () => {
-    const rubyVersion = '2.4.0'
-    const rubyGemsVersion = '2.6.0'
+    const rubyVersion = '2.7.5'
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyVersion)
-    vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyGemsVersion)
     vi.mocked(system.captureOutput).mockRejectedValue({})
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError(`Bundler not found`)
   })
 
   it('throws an exception when Bundler version requirement is not met', async () => {
-    const rubyVersion = '2.4.0'
-    const rubyGemsVersion = '2.5.0'
+    const rubyVersion = '2.7.5'
     const bundlerVersion = '2.2.0'
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyVersion)
-    vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyGemsVersion)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(bundlerVersion)
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError(
@@ -64,12 +48,10 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when creating CLI working directory', async () => {
-    const rubyVersion = '2.4.0'
-    const rubyGemsVersion = '2.5.0'
+    const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyVersion)
-    vi.mocked(system.captureOutput).mockResolvedValueOnce(rubyGemsVersion)
     vi.mocked(system.captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(file.mkdir).mockRejectedValue({message: 'Error'})
 

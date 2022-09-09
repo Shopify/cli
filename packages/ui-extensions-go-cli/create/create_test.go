@@ -156,40 +156,6 @@ func TestCreateAdditionalSourceFiles(t *testing.T) {
 	})
 }
 
-func TestInstallDependencies(t *testing.T) {
-	runnerWasCalled := false
-	Command = func(path, executable string, args ...string) Runner {
-		runnerWasCalled = true
-		return dummyRunner{}
-	}
-	LookPath = func(file string) (string, error) {
-		return file, nil
-	}
-	rootDir := "tmp/TestInstallDependencies"
-	extension := core.Extension{
-		Type: "integration_test",
-		Development: core.Development{
-			Template: "typescript-react",
-			RootDir:  rootDir,
-			Renderer: core.Renderer{Name: "@shopify/post-purchase-ui-extension"},
-		},
-	}
-
-	err := NewExtensionProject(extension)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if runnerWasCalled == false {
-		t.Fatal("Expected runner to be called")
-	}
-
-	t.Cleanup(func() {
-		os.RemoveAll(rootDir)
-	})
-}
-
 func TestCreateLocaleFiles(t *testing.T) {
 	Command = makeDummyRunner
 	LookPath = func(file string) (string, error) {

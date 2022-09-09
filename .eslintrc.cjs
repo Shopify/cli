@@ -8,6 +8,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     project: './tsconfig.json',
+    EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
     extraFileExtensions: ['.cjs'],
   },
   plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir'],
@@ -73,6 +74,7 @@ module.exports = {
     ],
     '@typescript-eslint/no-misused-promises': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-unnecessary-type-assertion': 'error',
     'consistent-return': 'off',
     'import/no-cycle': 'off',
     'callback-return': 'off',
@@ -107,7 +109,7 @@ module.exports = {
     'jest/max-nested-describe': [
       'error',
       {
-        max: 1,
+        max: 2,
       },
     ],
     'jest/no-disabled-tests': 'error',

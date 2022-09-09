@@ -1,5 +1,56 @@
 # @shopify/theme
 
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+- Updated dependencies [f04ec835]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+
+## 3.10.0
+
+### Patch Changes
+
+- 630153fc: Fix initialization of themes on Windows due to invalid arguments being passed
+- 30a048da: Fix pull command with --store flag
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+
+## 3.9.2
+
+### Patch Changes
+
+- 1e524fae: Fix syntax of the Homebrew formula
+  - @shopify/cli-kit@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- 869532f9: Remove the theme-command under the theme namespace
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+
+## 3.9.0
+
+### Patch Changes
+
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+
+## 3.8.0
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+
 ## 3.7.1
 
 ### Patch Changes

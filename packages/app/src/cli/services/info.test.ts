@@ -1,6 +1,6 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectOrCreateApp} from './dev/select-app.js'
+import {selectApp} from './app/select-app.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp} from '../models/app/app.test-data.js'
@@ -10,7 +10,7 @@ import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(async () => {
   vi.mock('./dev/fetch.js')
-  vi.mock('./dev/select-app.js')
+  vi.mock('./app/select-app.js')
   vi.mock('../prompts/dev.js')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -20,15 +20,12 @@ beforeEach(async () => {
         ensureAuthenticatedPartners: vi.fn(),
       },
       store: {
-        cliKitStore: vi.fn(),
+        getAppInfo: vi.fn(),
+        setAppInfo: vi.fn(),
+        clearAppInfo: vi.fn(),
       },
     }
   })
-  vi.mocked(store.cliKitStore).mockReturnValue({
-    getAppInfo: vi.fn(),
-    setAppInfo: vi.fn(),
-    clearAppInfo: vi.fn(),
-  } as any)
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
@@ -56,7 +53,7 @@ describe('info', () => {
       storeFqdn: 'my-app.example.com',
       updateURLs: true,
     }
-    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(cachedAppInfo)
+    vi.mocked(store.getAppInfo).mockResolvedValue(cachedAppInfo)
     const app = mockApp()
 
     // When
@@ -123,7 +120,7 @@ describe('info', () => {
       stores: [],
       apps: [organizationApp],
     })
-    vi.mocked(selectOrCreateApp).mockResolvedValue(organizationApp)
+    vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
@@ -131,12 +128,11 @@ describe('info', () => {
 
     // Then
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    "
+        SHOPIFY_API_KEY=api-key
+        SHOPIFY_API_SECRET=api-secret
+        SCOPES=my-scope
       "
-      Use these environment variables to set up your deployment pipeline for this app:
-        · SHOPIFY_API_KEY: api-key
-        · SHOPIFY_API_SECRET: api-secret
-        · SCOPES: my-scope
-          "
     `)
   })
 
@@ -168,7 +164,7 @@ describe('info', () => {
       stores: [],
       apps: [organizationApp],
     })
-    vi.mocked(selectOrCreateApp).mockResolvedValue(organizationApp)
+    vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When

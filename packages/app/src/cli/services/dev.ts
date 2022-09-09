@@ -60,10 +60,10 @@ async function dev(options: DevOptions) {
       throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
     }
     frontendPort = Number(matches[2])
-    frontendUrl = matches[1]
+    frontendUrl = matches[1]!
   } else {
     frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
+    frontendUrl = await generateURL(options.commandConfig, frontendPort)
   }
 
   const backendPort = await port.getRandomPort()
@@ -147,7 +147,7 @@ async function dev(options: DevOptions) {
   if (proxyTargets.length === 0) {
     await output.concurrent(additionalProcesses)
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort as number, proxyTargets, additionalProcesses)
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
 }
 
@@ -171,7 +171,7 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
   return {
     logPrefix: options.web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await system.exec(cmd, args, {
+      await system.exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -209,7 +209,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   return {
     prefix: web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-      await system.exec(cmd, args, {
+      await system.exec(cmd!, args, {
         cwd: web.directory,
         stdout,
         stderr,

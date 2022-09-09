@@ -1,17 +1,17 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-test-utils",
-  "version": "3.7.1",
+  "version": "3.10.1",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
-    "clean": "rimraf dist/",
-    "build": "tsc",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix"
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix"
   },
   "peerDependencies": {
-    "react": "16.14.0"
+    "react": "^17.0.2"
   },
   "eslintConfig": {
     "extends": [
@@ -23,16 +23,9 @@
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@types/jest": "^26.0.15",
-    "@types/node": "^12.0.0",
     "@types/react": "16.14.0",
     "@types/react-dom": "^16.9.11",
-    "jest": "^27.1.0",
-    "jest-websocket-mock": "^2.2.1",
     "mock-socket": "^9.0.5",
-    "ts-jest": "^27.0.5",
-    "ts-node": "^10.2.1",
-    "tsc": "^2.0.3",
-    "typescript": "^4.6.4"
+    "ts-node": "^10.2.1"
   }
 }

@@ -4,15 +4,14 @@ import {join as joinPath, dirname} from './path.js'
 import * as os from './os.js'
 import * as ruby from './node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {cliKitStore} from './store.js'
+import {getAppInfo} from './store.js'
 import constants from './constants.js'
-import {MONORAIL_COMMAND_TOPIC, publishEvent} from './monorail.js'
+import {publishEvent} from './monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
-  const schema = MONORAIL_COMMAND_TOPIC
   let publishEventMock: MockedFunction<typeof publishEvent>
 
   beforeEach(() => {
@@ -32,13 +31,6 @@ describe('event tracking', () => {
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
-
-    vi.mocked(cliKitStore).mockReturnValue({
-      setSession: vi.fn(),
-      getSession: vi.fn(),
-      removeSession: vi.fn(),
-      getAppInfo: vi.fn(),
-    } as any)
   })
 
   afterEach(() => {
@@ -58,7 +50,7 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const command = 'app dev'
-      vi.mocked(cliKitStore().getAppInfo).mockReturnValueOnce({
+      vi.mocked(getAppInfo).mockResolvedValueOnce({
         appId: 'key1',
         orgId: '1',
         storeFqdn: 'domain1',
@@ -101,8 +93,8 @@ describe('event tracking', () => {
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -139,8 +131,8 @@ describe('event tracking', () => {
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 

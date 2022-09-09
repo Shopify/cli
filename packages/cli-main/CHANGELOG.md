@@ -1,5 +1,58 @@
 # @shopify/cli
 
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- Updated dependencies [f04ec835]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+  - @shopify/plugin-ngrok@3.10.1
+
+## 3.10.0
+
+### Patch Changes
+
+- Updated dependencies [fcbcfcfa]
+- Updated dependencies [4c8853f1]
+  - @shopify/plugin-ngrok@3.10.0
+  - @shopify/cli-kit@3.10.0
+
+## 3.9.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+
+## 3.9.0
+
+### Patch Changes
+
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+
+## 3.8.0
+
+### Minor Changes
+
+- 36db5aa3: Add the option to choose typescript templates for ui extensions
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+
 ## 3.7.1
 
 ### Minor Changes

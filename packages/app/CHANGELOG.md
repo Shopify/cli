@@ -1,5 +1,79 @@
 # @shopify/app
 
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+- Updated dependencies [f04ec835]
+- Updated dependencies [dc364f39]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+  - @shopify/shopify-cli-extensions@3.10.1
+
+## 3.10.0
+
+### Minor Changes
+
+- 16627bb4: Add --api-key flag for app deploy
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+  - @shopify/shopify-cli-extensions@3.10.0
+
+## 3.9.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.9.2
+- @shopify/shopify-cli-extensions@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- b777c41e: Fixed bug when running CLI on Windows machine. The node executable path is now pointing directly to a node file instead of relying in the node generated files.
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+  - @shopify/shopify-cli-extensions@3.9.1
+
+## 3.9.0
+
+### Minor Changes
+
+- c7137a3b: Grouping extension types in scaffold select type prompt
+
+### Patch Changes
+
+- 3b94965e: Be more consistent in how we refer to the Partners Dashboard
+- 4a987a07: Displayed app URL more clearly in console output
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+  - @shopify/shopify-cli-extensions@3.9.0
+
+## 3.8.0
+
+### Minor Changes
+
+- 391f02a1: Fix using the wrong package manager when installing dependencies in dev
+- db4e6089: Releasing extensions binary in an automatic way
+- 79df925d: New update URL flow
+- 8a03b1cc: Fix a bug that caused pnpm not to work with Shopify app projects.
+- 03bd5f28: Added `web-env` command to show and generate .env files without erasing existing ones
+
+### Patch Changes
+
+- Updated dependencies [db4e6089]
+- Updated dependencies [79df925d]
+- Updated dependencies [03bd5f28]
+- Updated dependencies [79df925d]
+  - @shopify/cli-kit@3.8.0
+  - @shopify/shopify-cli-extensions@3.8.0
+
 ## 3.7.1
 
 ### Minor Changes

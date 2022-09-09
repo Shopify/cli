@@ -21,7 +21,7 @@ import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
     output.content`Invalid API key: ${apiKey}`,
-    output.content`You can find the API key in the app settings in the Partner Dashboard.`,
+    output.content`You can find the API key in the app settings in the Partners Dashboard.`,
   )
 }
 
@@ -86,7 +86,7 @@ export async function ensureDevEnvironment(
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
-  const cachedInfo = getAppDevCachedInfo({
+  const cachedInfo = await getAppDevCachedInfo({
     reset: options.reset,
     directory: options.app.directory,
   })
@@ -105,7 +105,7 @@ export async function ensureDevEnvironment(
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
-    store.cliKitStore().setAppInfo({
+    await store.setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.app.directory,
       storeFqdn: selectedStore.shopDomain,
@@ -117,7 +117,7 @@ export async function ensureDevEnvironment(
     return {
       app: {
         ...selectedApp,
-        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
       },
       storeFqdn: selectedStore.shopDomain,
       identifiers: {
@@ -130,7 +130,7 @@ export async function ensureDevEnvironment(
 
   const {organization, apps} = await fetchOrgAndApps(orgId, token)
   selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
-  store.cliKitStore().setAppInfo({
+  await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.app.directory,
@@ -144,7 +144,7 @@ export async function ensureDevEnvironment(
     selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
-  store.cliKitStore().setAppInfo({
+  await store.setAppInfo({
     appId: selectedApp.apiKey,
     directory: options.app.directory,
     storeFqdn: selectedStore?.shopDomain,
@@ -158,7 +158,7 @@ export async function ensureDevEnvironment(
   const result = {
     app: {
       ...selectedApp,
-      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0].secret,
+      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
     },
     storeFqdn: selectedStore.shopDomain,
     identifiers: {
@@ -188,6 +188,7 @@ async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string
 
 export interface DeployEnvironmentOptions {
   app: AppInterface
+  apiKey?: string
   reset: boolean
 }
 
@@ -208,7 +209,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = store.cliKitStore().getAppInfo(app.directory)?.appId
+  const devAppId = (await store.getAppInfo(app.directory))?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -230,8 +231,9 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
   } else if (envIdentifiers.app) {
-    partnersApp = await fetchAppFromApiKey(envIdentifiers.app, token)
-    if (!partnersApp) throw DeployAppNotFound(envIdentifiers.app, options.app.packageManager)
+    const apiKey = options.apiKey ?? envIdentifiers.app
+    partnersApp = await fetchAppFromApiKey(apiKey, token)
+    if (!partnersApp) throw DeployAppNotFound(apiKey, options.app.packageManager)
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
@@ -340,9 +342,15 @@ async function fetchDevDataFromOptions(
  * @param directory {string} The directory containing the app.
  * @returns
  */
-function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
-  if (reset) store.cliKitStore().clearAppInfo(directory)
-  return store.cliKitStore().getAppInfo(directory)
+async function getAppDevCachedInfo({
+  reset,
+  directory,
+}: {
+  reset: boolean
+  directory: string
+}): Promise<store.CachedAppInfo | undefined> {
+  if (reset) await store.clearAppInfo(directory)
+  return store.getAppInfo(directory)
 }
 
 /**
