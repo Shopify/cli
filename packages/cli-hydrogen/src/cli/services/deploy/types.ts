@@ -1,7 +1,8 @@
 export interface DeployConfig {
   deploymentToken: string
-  dmsAddress: string
+  oxygenAddress: string
   healthCheck: boolean
+  assumeYes: boolean
   path: string
   commitMessage?: string
   commitAuthor?: string
@@ -11,7 +12,7 @@ export interface DeployConfig {
 }
 export type ReqDeployConfig = Required<DeployConfig>
 
-export interface DMSError {
+export interface OxygenError {
   code: string
   unrecoverable: boolean
   debugInfo: string

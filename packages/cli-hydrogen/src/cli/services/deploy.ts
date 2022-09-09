@@ -28,12 +28,12 @@ export async function deployToOxygen(_config: DeployConfig) {
       },
     },
     {
-      title: '✨ Creating a deployment',
+      title: '💡 Initializing deployment',
       task: async (ctx, task) => {
         const {deploymentID, assetBaseURL} = await createDeployment(ctx.config)
         ctx.assetBaseURL = assetBaseURL
         ctx.deploymentID = deploymentID
-        task.title = '✨ Deployment created'
+        task.title = '✨ Deployment initialized'
       },
       retry: 2,
     },
@@ -79,7 +79,7 @@ export async function deployToOxygen(_config: DeployConfig) {
         if (retryCount && !isUnitTest) await system.sleep(backoffPolicy[retryCount - 1]!)
 
         await healthCheck(ctx.previewURL)
-        task.title = '✅ Deployed and healthy!'
+        task.title = '✅ Deployed successfully'
       },
       retry: backoffPolicy.length,
       skip: (ctx) => !ctx.config.healthCheck,

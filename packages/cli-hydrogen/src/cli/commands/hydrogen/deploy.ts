@@ -29,9 +29,15 @@ export default class Deploy extends Command {
       default: true,
       description: 'Require a health check before the deployment succeeds.',
     }),
-    dmsAddress: Flags.string({
+    assumeYes: Flags.boolean({
+      char: 'y',
+      env: 'SHOPIFY_HYDROGEN_FLAG_ASSUME_YES',
+      default: false,
+      description: 'Automatic yes to prompts. Assume "yes" as answer to all prompts and run non-interactively.',
+    }),
+    oxygenAddress: Flags.string({
       hidden: true,
-      env: 'SHOPIFY_HYDROGEN_FLAG_DMS_ADDRESS',
+      env: 'SHOPIFY_HYDROGEN_FLAG_OXYGEN_ADDRESS',
       default: 'oxygen-dms.shopifycloud.com',
     }),
   }

@@ -3,7 +3,7 @@
  * @readonly
  * @enum {number}
  */
-export type Service = 'shopify' | 'partners' | 'identity' | 'dms'
+export type Service = 'shopify' | 'partners' | 'identity'
 
 /**
  * Enum that represents the environment to use for a given service.

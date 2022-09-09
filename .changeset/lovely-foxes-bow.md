@@ -4,11 +4,9 @@
 '@shopify/cli-hydrogen': patch
 ---
 
-- cli-hydrogen:
-  - add support for asset URL rewriting when doing `shopify hydrogen build`
 - cli-kit:
-  - expose additional git functionality for commits, creating .gitignore, and insuring command is run in a git directory
-  - add additional 'dms' service type
-  - add additional exposed api & file functionality
+  - Added additional Git functionality for commits, generating .gitignore templates, and ensuring commands are run in a Git project.
+  - Added new Oxygen service type for interacting with the Oyxgen service
+  - New method for creating readable file streams
 - create-hydrogen
-  - add support for initializing a new local git repository when you initialize a new project
+  - Added support for initializing a local Git repository when you create a new Hydrogen project

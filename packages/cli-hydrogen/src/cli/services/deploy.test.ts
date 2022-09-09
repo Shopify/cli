@@ -7,8 +7,9 @@ import {describe, beforeEach, it, vi, expect} from 'vitest'
 
 const deployConfig: DeployConfig = {
   deploymentToken: 'token',
-  dmsAddress: 'unit.test',
+  oxygenAddress: 'unit.test',
   healthCheck: true,
+  assumeYes: false,
   path: '/unit/test',
 }
 

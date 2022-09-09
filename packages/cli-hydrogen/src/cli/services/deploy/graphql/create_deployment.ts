@@ -1,4 +1,4 @@
-import {DMSError} from '../types.js'
+import {OxygenError} from '../types.js'
 import {gql} from 'graphql-request'
 
 export const CreateDeploymentQuery = gql`
@@ -22,5 +22,5 @@ export interface CreateDeploymentQuerySchema {
 export interface CreateDeploymentResponse {
   deploymentID: string
   assetBaseURL: string
-  error: DMSError
+  error: OxygenError
 }

@@ -7,8 +7,9 @@ import {createReadStream} from 'node:fs'
 
 const defaultConfig: ReqDeployConfig = {
   deploymentToken: '123',
-  dmsAddress: 'unit.test',
+  oxygenAddress: 'unit.test',
   healthCheck: false,
+  assumeYes: false,
   path: '/unit/test',
   commitMessage: 'commitMessage',
   commitAuthor: 'commitAuthor',
@@ -24,7 +25,7 @@ beforeEach(() => {
 })
 
 describe('createDeploymentStep()', () => {
-  it('calls DMS with proper variables and headers', async () => {
+  it('calls Oxygen with proper variables and headers', async () => {
     const headers = {value: 'key'}
     const mockedRequest = vi.fn().mockResolvedValue({createDeployment: 'mock'})
     const mockedGraphqlClient = vi.fn().mockResolvedValue({request: mockedRequest})
@@ -43,7 +44,7 @@ describe('createDeploymentStep()', () => {
     expect(mockedGraphqlClient).toHaveBeenCalledOnce()
     expect(mockedGraphqlClient).toHaveBeenCalledWith({
       headers,
-      url: `https://${defaultConfig.dmsAddress}/api/graphql/deploy/v1`,
+      url: `https://${defaultConfig.oxygenAddress}/api/graphql/deploy/v1`,
     })
     expect(mockedRequest).toHaveBeenCalledOnce()
     expect(mockedRequest.mock.calls[0]?.[1]).toStrictEqual({
@@ -59,7 +60,7 @@ describe('createDeploymentStep()', () => {
 })
 
 describe('uploadDeploymentStep()', async () => {
-  it('calls DMS with proper formData and headers', async () => {
+  it('calls Oxygen with proper formData and headers', async () => {
     const deploymentId = '123'
     vi.mocked(createReadStream)
     const mockedZip = vi.fn()
@@ -70,7 +71,7 @@ describe('uploadDeploymentStep()', async () => {
     const headers = {value: 'key', 'Content-Type': 'key'}
     vi.mocked(api.buildHeaders).mockResolvedValue(headers)
     const previewURL = 'https://preview.url'
-    const dmsResponse = {
+    const oxygenResponse = {
       data: {
         uploadDeployment: {
           deployment: {
@@ -79,11 +80,11 @@ describe('uploadDeploymentStep()', async () => {
         },
       },
     }
-    const mockedShopifyFetch = vi.fn().mockResolvedValue({json: vi.fn().mockResolvedValue(dmsResponse)})
+    const mockedShopifyFetch = vi.fn().mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse)})
     vi.mocked<any>(http.shopifyFetch).mockImplementation(mockedShopifyFetch)
 
     const result = await uploadDeployment(
-      {...defaultConfig, path: '/unit/test', dmsAddress: 'dms.address'},
+      {...defaultConfig, path: '/unit/test', oxygenAddress: 'oxygen.address'},
       deploymentId,
     )
 
@@ -91,7 +92,7 @@ describe('uploadDeploymentStep()', async () => {
     expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
     expect(mockedZip).toHaveBeenCalledWith('/unit/test/dist', '/unit/test/dist/dist.zip')
     expect(headers).toStrictEqual({value: 'key'})
-    expect(mockedShopifyFetch).toHaveBeenCalledWith(`https://dms.address/api/graphql/deploy/v1`, {
+    expect(mockedShopifyFetch).toHaveBeenCalledWith(`https://oxygen.address/api/graphql/deploy/v1`, {
       method: 'POST',
       body: formData,
       headers,

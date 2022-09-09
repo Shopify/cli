@@ -13,7 +13,7 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
   const headers = await api.buildHeaders(config.deploymentToken)
   const client = await http.graphqlClient({
     headers,
-    url: getDmsAddress(config.dmsAddress),
+    url: getOxygenAddress(config.oxygenAddress),
   })
 
   const variables = {
@@ -33,8 +33,6 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
 export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: string): Promise<string> => {
   let headers = await api.buildHeaders(config.deploymentToken)
 
-  // note: may need validation for invalid deploymentID? oxygenctl does it
-  // note: we may want to remove the zip that we create in in this step
   const distPath = `${config.path}/dist`
   const distZipPath = `${distPath}/dist.zip`
   await zip(distPath, distZipPath)
@@ -50,7 +48,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     ...formData.getHeaders(),
   }
 
-  const response = await http.shopifyFetch(getDmsAddress(config.dmsAddress), {
+  const response = await http.shopifyFetch(getOxygenAddress(config.oxygenAddress), {
     method: 'POST',
     body: formData,
     headers,
@@ -73,6 +71,6 @@ const buildOperationsString = (deploymentID: string): string => {
   })
 }
 
-const getDmsAddress = (dmsHost: string): string => {
-  return `https://${dmsHost}/api/graphql/deploy/v1`
+const getOxygenAddress = (oxygenFqdn: string): string => {
+  return `https://${oxygenFqdn}/api/graphql/deploy/v1`
 }
