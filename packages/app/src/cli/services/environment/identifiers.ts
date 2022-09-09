@@ -65,7 +65,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   }
 
   const match = (await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers))
-    .mapError(() => GenericError())
+    .mapError(GenericError)
     .valueOrThrow()
 
   let validMatches = match.identifiers ?? {}
