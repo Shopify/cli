@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 import {error, file, output, path} from '@shopify/cli-kit'
 import {
-  addLatestNPMDependencies,
+  addNPMDependencies,
   checkForNewVersion,
   DependencyType,
   getPackageManager,
@@ -83,13 +83,17 @@ export default class Upgrade extends Command {
     directory: string,
   ): Promise<void> {
     const packages = ['@shopify/cli', '@shopify/app', '@shopify/cli-hydrogen']
-    const packagesToUpdate = packages.filter((pkg: string): boolean => {
-      const pkgRequirement: string | undefined = deps[pkg]
-      return Boolean(pkgRequirement)
-    })
+    const packagesToUpdate = packages
+      .filter((pkg: string): boolean => {
+        const pkgRequirement: string | undefined = deps[pkg]
+        return Boolean(pkgRequirement)
+      })
+      .map((pkg) => {
+        return {name: pkg, version: 'latest'}
+      })
 
     if (packagesToUpdate.length > 0) {
-      await addLatestNPMDependencies(packagesToUpdate, {
+      await addNPMDependencies(packagesToUpdate, {
         packageManager: await getPackageManager(directory),
         type: depsEnv,
         directory,

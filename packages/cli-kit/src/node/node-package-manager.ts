@@ -298,7 +298,6 @@ export interface DependencyVersion {
 export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
-  force = false,
 ) {
   debug(content`Adding the following dependencies if needed:
 ${token.json(dependencies)}
@@ -311,16 +310,21 @@ ${token.json(options)}
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
   let dependenciesToAdd = dependencies
-  if (!force) {
-    dependenciesToAdd = dependencies.filter((dep) => {
-      return !existingDependencies.includes(dep.name)
-    })
-  }
+  dependenciesToAdd = dependencies.filter((dep) => {
+    return !existingDependencies.includes(dep.name)
+  })
   if (dependenciesToAdd.length === 0) {
     return
   }
+  await addNPMDependencies(dependenciesToAdd, options)
+}
+
+export async function addNPMDependencies(
+  dependencies: DependencyVersion[],
+  options: AddNPMDependenciesIfNeededOptions,
+) {
   let args: string[]
-  const depedenciesWithVersion = dependenciesToAdd.map((dep) => {
+  const depedenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
   switch (options.packageManager) {
@@ -334,7 +338,7 @@ ${token.json(options)}
       args = argumentsToAddDependenciesWithPNPM(depedenciesWithVersion, options.type)
       break
   }
-  options.stdout?.write(`Executing...${args.join(' ')}`)
+  options.stdout?.write(`Executing... ${[options.packageManager, ...args].join(' ')}`)
   await exec(options.packageManager, args, {
     cwd: options.directory,
     stdout: options.stdout,
@@ -352,19 +356,6 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
       return {name: dependency, version: undefined}
     }),
     options,
-  )
-}
-
-// eslint-disable-next-line no-warning-comments
-// TODO: Switch it around so add-if-needed depends on this, rather than calling
-// if-needed with force: true which is counterintuitive.
-export async function addLatestNPMDependencies(dependencies: string[], options: AddNPMDependenciesIfNeededOptions) {
-  await addNPMDependenciesIfNeeded(
-    dependencies.map((dependency) => {
-      return {name: dependency, version: 'latest'}
-    }),
-    options,
-    true,
   )
 }
 
