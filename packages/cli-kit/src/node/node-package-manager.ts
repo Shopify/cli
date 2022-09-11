@@ -319,7 +319,10 @@ ${token.json(options)}
   await addNPMDependencies(dependenciesToAdd, options)
 }
 
-export async function addNPMDependencies(dependencies: DependencyVersion[], options: AddNPMDependenciesIfNeededOptions) {
+export async function addNPMDependencies(
+  dependencies: DependencyVersion[],
+  options: AddNPMDependenciesIfNeededOptions,
+) {
   let args: string[]
   const depedenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name

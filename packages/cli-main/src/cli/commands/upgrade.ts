@@ -15,7 +15,8 @@ export default class Upgrade extends Command {
     path: Flags.string({
       hidden: false,
       description: 'The path to your project directory.',
-      parse: (input, _) => Promise.resolve(path.resolve(input)), env: 'SHOPIFY_FLAG_PATH',
+      parse: (input, _) => Promise.resolve(path.resolve(input)),
+      env: 'SHOPIFY_FLAG_PATH',
     }),
   }
 
@@ -82,10 +83,14 @@ export default class Upgrade extends Command {
     directory: string,
   ): Promise<void> {
     const packages = ['@shopify/cli', '@shopify/app', '@shopify/cli-hydrogen']
-    const packagesToUpdate = packages.filter((pkg: string): boolean => {
-      const pkgRequirement: string | undefined = deps[pkg]
-      return Boolean(pkgRequirement)
-    }).map((pkg) => { return {name: pkg, version: 'latest'} })
+    const packagesToUpdate = packages
+      .filter((pkg: string): boolean => {
+        const pkgRequirement: string | undefined = deps[pkg]
+        return Boolean(pkgRequirement)
+      })
+      .map((pkg) => {
+        return {name: pkg, version: 'latest'}
+      })
 
     if (packagesToUpdate.length > 0) {
       await addNPMDependencies(packagesToUpdate, {
