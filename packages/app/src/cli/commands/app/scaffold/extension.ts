@@ -14,7 +14,7 @@ import {
 import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
-import scaffoldExtensionService from '../../../services/scaffold/extension.js'
+import scaffoldExtensionService, {ExtensionFlavor} from '../../../services/scaffold/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import {
   mapExternalExtensionTypeToExtensionType,
@@ -102,9 +102,8 @@ export default class AppScaffoldExtension extends Command {
 
     const extensionDirectory = await scaffoldExtensionService({
       ...promptAnswers,
-      extensionFlavor,
+      extensionFlavor: extensionFlavor as ExtensionFlavor,
       extensionType,
-      externalExtensionType: flags.type as ExternalExtensionTypes,
       app,
       cloneUrl: flags['clone-url'],
     })
