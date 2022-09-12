@@ -269,7 +269,6 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     // Request a device code to authorize without a browser redirect.
     debug(content`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
-    if (!deviceAuth.deviceCode || !deviceAuth.verificationUriComplete) throw new Error('Invalid device code response')
 
     // Poll for the identity token
     debug(content`Starting polling for the identity token...`)
