@@ -10,8 +10,8 @@ import {
 import {join as pathJoin} from './path.js'
 import {consoleLog} from './output.js'
 import {page} from './system.js'
-import {Transform, TransformCallback, TransformOptions} from 'node:stream'
-import {pipeline} from 'node:stream/promises'
+import {promisify} from 'node:util'
+import {Stream, Transform, TransformCallback, TransformOptions} from 'node:stream'
 import {WriteStream, createWriteStream, createReadStream, unlinkSync} from 'node:fs'
 import {EOL} from 'node:os'
 
@@ -122,6 +122,7 @@ async function truncateLogs(logFile: string) {
   const tmpLogFile = logFile.concat('.tmp')
   truncating = true
   const truncateLines = new LinesTruncatorTransformer(maxLogFileSize)
+  const pipeline = promisify(Stream.pipeline)
   await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
   await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile)).then(() => {
     unlinkSync(tmpLogFile)
