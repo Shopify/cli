@@ -98,6 +98,36 @@ export async function exchangeCustomPartnerToken(token: string): Promise<Applica
   return newToken[appId]!
 }
 
+export type IdentityDeviceError =
+  | 'authorization_pending'
+  | 'access_denied'
+  | 'expired_token'
+  | 'slow_down'
+  | 'unknown_failure'
+
+/**
+ * Given a deviceCode obtained after starting a device identity flow, request an identity token.
+ * @param deviceCode The device code obtained after starting a device identity flow
+ * @param scopes The scopes to request
+ * @returns {Promise<IdentityToken>} An instance with the identity access tokens.
+ */
+export async function exchangeDeviceCodeForAccessToken(
+  deviceCode: string,
+): Promise<{token?: IdentityToken; error?: IdentityDeviceError}> {
+  const clientId = await getIdentityClientId()
+
+  const params = {
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+    device_code: deviceCode,
+    client_id: clientId,
+  }
+
+  const tokenResult = await tokenRequest(params, false)
+
+  if (tokenResult.error) return {error: tokenResult.error}
+  return {token: buildIdentityToken(tokenResult)}
+}
+
 async function requestAppToken(
   api: API,
   token: string,
@@ -127,7 +157,7 @@ async function requestAppToken(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function tokenRequest(params: {[key: string]: string}): Promise<any> {
+async function tokenRequest(params: {[key: string]: string}, throws = true): Promise<any> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
@@ -145,6 +175,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<any> {
       await secureStore.remove()
       throw InvalidIdentityError
     } else {
+      if (!throws) return payload
       throw new Abort(payload.error_description)
     }
   }

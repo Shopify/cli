@@ -1,8 +1,10 @@
 import {isTruthy} from './utilities.js'
+import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import constants from '../constants.js'
 import {captureOutput} from '../system.js'
 import {Abort} from '../error.js'
 import {content, token} from '../output.js'
+import {exists, readSync} from '../file.js'
 
 export const SpinInstanceNotFound = (spinInstance: string | undefined, error: string) => {
   const errorMessage = content`${token.genericShellCommand(
@@ -17,14 +19,29 @@ ${error}
   return new Abort(errorMessage, nextSteps)
 }
 
+const spinFqdnFilePath = '/etc/spin/machine/fqdn'
+
 /**
  * When ran in a Spin environment, it returns the fqdn of the instance.
+ *
+ * Will cache the value of the Spin FQDN during the execution of the CLI.
+ * To avoid multiple calls to `readSync` or `show`
  * @returns {string} fqdn of the Spin environment.
  */
 export async function fqdn(env = process.env): Promise<string> {
-  const spinInstance = await instance(env)
-  const showResponse = await show(spinInstance, env)
-  return showResponse.fqdn
+  let spinFqdn = getCachedSpinFqdn()
+  if (spinFqdn) return spinFqdn
+
+  if (await exists(spinFqdnFilePath)) {
+    spinFqdn = await readSync(spinFqdnFilePath).toString()
+  } else {
+    const spinInstance = await instance(env)
+    const showResponse = await show(spinInstance, env)
+
+    spinFqdn = showResponse.fqdn
+  }
+  setCachedSpinFqdn(spinFqdn)
+  return spinFqdn
 }
 
 /**

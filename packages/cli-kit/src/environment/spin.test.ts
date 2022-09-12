@@ -1,15 +1,19 @@
 import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin.js'
+import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import {captureOutput} from '../system.js'
 import {describe, test, expect, vi, it} from 'vitest'
 
 vi.mock('../system')
+vi.mock('./spin-cache')
+
 const mockedCaptureOutput = vi.mocked(captureOutput)
 
 describe('fqdn', () => {
-  it('shows the latest when SPIN_INSTANCE is not present', async () => {
+  it('shows the latest when SPIN_INSTANCE is not present and there is no cached value', async () => {
     // Given
     const env = {}
     const showResponse = {fqdn: 'fqdn'}
+    vi.mocked(getCachedSpinFqdn).mockReturnValue(undefined)
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
 
     // When
@@ -18,11 +22,14 @@ describe('fqdn', () => {
     // Then
     expect(got).toEqual('fqdn')
     expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--latest', '--json'], {env})
+    expect(setCachedSpinFqdn).toBeCalledWith('fqdn')
   })
-  it("doesn't show the latest when SPIN_INSTANCE is present", async () => {
+
+  it("doesn't show the latest when SPIN_INSTANCE is present and there is no cached value", async () => {
     // Given
     const env = {SPIN_INSTANCE: 'instance'}
     const showResponse = {fqdn: 'fqdn'}
+    vi.mocked(getCachedSpinFqdn).mockReturnValue(undefined)
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
 
     // When
@@ -31,6 +38,21 @@ describe('fqdn', () => {
     // Then
     expect(got).toEqual('fqdn')
     expect(mockedCaptureOutput).toHaveBeenCalledWith('spin', ['show', '--json'], {env})
+    expect(setCachedSpinFqdn).toBeCalledWith('fqdn')
+  })
+
+  it('return cached spin fqdn if valid', async () => {
+    // Given
+    const env = {}
+    vi.mocked(getCachedSpinFqdn).mockReturnValue('cachedFQDN')
+
+    // When
+    const got = await fqdn(env)
+
+    // Then
+    expect(got).toEqual('cachedFQDN')
+    expect(mockedCaptureOutput).not.toHaveBeenCalledWith('spin', ['show', '--json'], {env})
+    expect(setCachedSpinFqdn).not.toBeCalled()
   })
 })
 

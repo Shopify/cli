@@ -86,6 +86,17 @@ export function isDebugGoBinary(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.debugGoBinary])
 }
 
+export function useDeviceAuth(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
+}
+
+export function isCloudEnvironment(env = process.env): boolean {
+  const isCodespaces = isTruthy(env[constants.environmentVariables.codespaces])
+  const isGitpod = isTruthy(env[constants.environmentVariables.gitpod])
+  const isSpin = isTruthy(env[constants.environmentVariables.spin])
+  return isCodespaces || isGitpod || isSpin
+}
+
 /**
  * Returns whether the environment has Git available.
  * @returns {Promise<boolean>} A promise that resolves with the value.
