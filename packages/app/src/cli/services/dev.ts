@@ -51,9 +51,12 @@ async function dev(options: DevOptions) {
   let frontendPort: number
   let frontendUrl: string
 
-  if (environment.local.gitpodURL()) {
+  if (environment.local.codespaceURL()) {
+    frontendPort = 4040
+    frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
+  } else if (environment.local.gitpodURL()) {
     const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
-    frontendPort = await port.getRandomPort()
+    frontendPort = 4040
     frontendUrl = `https://${frontendPort}-${defaultUrl}`
   } else if (options.noTunnel === true) {
     frontendPort = await port.getRandomPort()

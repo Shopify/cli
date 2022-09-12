@@ -94,6 +94,10 @@ export function gitpodURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.gitpod]
 }
 
+export function codespaceURL(env = process.env): string | undefined {
+  return env[constants.environmentVariables.codespaceName]
+}
+
 export function isCloudEnvironment(env = process.env): boolean {
   const isCodespaces = isTruthy(env[constants.environmentVariables.codespaces])
   const isGitpod = isTruthy(env[constants.environmentVariables.gitpod])
