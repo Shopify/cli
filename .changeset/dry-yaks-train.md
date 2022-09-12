@@ -1,5 +1,5 @@
 ---
-'@shopify/fixtures-app': patch
+'@shopify/app': patch
 '@shopify/cli-kit': patch
 ---
 
