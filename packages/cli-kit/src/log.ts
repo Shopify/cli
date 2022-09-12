@@ -20,8 +20,6 @@ const maxLogFileSize = 5 * 1024 * 1024
 let logFileStream: WriteStream
 let commandUuid: string
 let logFilePath: string
-let truncating = false
-
 export class LinesTruncatorTransformer extends Transform {
   linesToRetain: string[] = []
   lastLineCompleted = true
@@ -122,18 +120,15 @@ function getLogFilePath(options: {logDir?: string; override?: boolean} = {}) {
 
 // Shaves off older log lines if logs are over maxLogFileSize long.
 async function truncateLogs(logFile: string) {
-  if (truncating || fileSizeSync(logFile) < maxLogFileSize) {
+  if (fileSizeSync(logFile) < maxLogFileSize) {
     return
   }
   const tmpLogFile = logFile.concat('.tmp')
-  truncating = true
   const truncateLines = new LinesTruncatorTransformer(maxLogFileSize)
   const pipeline = promisify(Stream.pipeline)
   await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
   await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
   unlinkSync(tmpLogFile)
-  // eslint-disable-next-line require-atomic-updates
-  truncating = false
 }
 
 function logFileExists(): boolean {
