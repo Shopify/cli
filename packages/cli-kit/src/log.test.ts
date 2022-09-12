@@ -1,10 +1,10 @@
 import {file} from './index.js'
 import {isUnitTest} from './environment/local.js'
-import {initiateLogging, LinesTruncatorTransformer} from './log.js'
+import {closeLogging, initiateLogging, LinesTruncatorTransformer} from './log.js'
 import {generateRandomUUID} from './id.js'
 import {join} from './path.js'
 import fs from 'fs-extra'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeAll, describe, expect, it, vi} from 'vitest'
 import {appendFileSync} from 'fs'
 import {EOL} from 'os'
 import {randomBytes} from 'crypto'
@@ -15,7 +15,7 @@ const MB_2 = 2 * MB_1
 const MB_5 = 5 * MB_1
 const MB_7 = 7 * MB_1
 
-beforeEach(() => {
+beforeAll(() => {
   vi.mock('./id')
   vi.mock('./environment/local', async () => {
     return {
@@ -48,6 +48,7 @@ describe('initiateLogging', () => {
 
       // When
       await initiateLogging({logDir: tmpDir, override: true})
+      closeLogging()
 
       // Then
       expect(fileSize).toEqual(fileSizeSync(logPath))
@@ -65,6 +66,7 @@ describe('initiateLogging', () => {
 
       // When
       await initiateLogging({logDir: tmpDir, override: true})
+      closeLogging()
 
       // Then
       const finalLogFileSize = fileSizeSync(logPath)

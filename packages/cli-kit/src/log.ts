@@ -80,6 +80,12 @@ export async function initiateLogging(options: {logDir?: string; override?: bool
   logFileStream = createWriteStream(logFilePath, {flags: 'a'})
 }
 
+export function closeLogging() {
+  if (logFileExists()) {
+    logFileStream.end()
+  }
+}
+
 // DO NOT USE THIS FUNCTION DIRECTLY under normal circumstances.
 // It is exported purely for use in cases where output is already being logged
 // to the terminal but is not reflected in the logfile, e.g. Listr output.
@@ -126,7 +132,8 @@ async function truncateLogs(logFile: string) {
   await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
   await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
   unlinkSync(tmpLogFile)
-  truncating = truncating ? truncating : false
+  // eslint-disable-next-line require-atomic-updates
+  truncating = false
 }
 
 function logFileExists(): boolean {
