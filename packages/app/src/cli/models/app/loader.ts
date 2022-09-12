@@ -264,8 +264,8 @@ class AppLoader {
         configurationPath,
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
-        buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
+        outputBundlePath: path.join(directory, 'dist/main.js'),
         localIdentifier: path.basename(directory),
         // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
         devUUID: `dev-${id.generateRandomUUID()}`,

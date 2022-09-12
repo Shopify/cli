@@ -1,10 +1,8 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
-import {extensionConfig} from '../../utilities/extensions/configuration.js'
-import {error, system, yaml, output} from '@shopify/cli-kit'
+import {bundleExtension} from '../extensions/bundle.js'
+import {error, system, abort} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
-
 import {Writable} from 'node:stream'
 
 export interface ExtensionBuildOptions {
@@ -20,7 +18,7 @@ export interface ExtensionBuildOptions {
   /**
    * Signal to abort the build process.
    */
-  signal: error.AbortSignal
+  signal: abort.Signal
 
   /**
    * Overrides the default build directory.
@@ -56,34 +54,24 @@ export async function buildThemeExtensions(options: ThemeExtensionBuildOptions):
   })
 }
 
-export interface UiExtensionBuildOptions extends ExtensionBuildOptions {
-  /**
-   * The UI extensions to be built.
-   */
-  extensions: UIExtension[]
-}
-
 /**
  * It builds the UI extensions.
  * @param options {UiExtensionBuildOptions} Build options.
  */
-export async function buildUIExtensions(options: UiExtensionBuildOptions): Promise<void> {
-  if (options.extensions.length === 0) {
-    return
-  }
-  options.stdout.write(`Building UI extensions...`)
-  const fullOptions = {...options, extensions: options.extensions, includeResourceURL: false}
-  const configuration = await extensionConfig(fullOptions)
-  output.debug(output.content`Dev'ing extension with configuration:
-${output.token.json(configuration)}
-`)
-  const input = yaml.encode(configuration)
-  await runGoExtensionsCLI(['build', '-'], {
-    cwd: options.app.directory,
-    stdout: options.stdout,
+export async function buildUIExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
+  options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
+
+  await bundleExtension({
+    minify: true,
+    outputBundlePath: extension.outputBundlePath,
+    sourceFilePath: extension.entrySourceFilePath,
+    environment: 'production',
+    env: options.app.dotenv?.variables ?? {},
     stderr: options.stderr,
-    input,
+    stdout: options.stdout,
   })
+
+  options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
 export interface BuildFunctionExtensionOptions extends ExtensionBuildOptions {}

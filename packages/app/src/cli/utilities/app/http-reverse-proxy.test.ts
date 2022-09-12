@@ -5,7 +5,6 @@ import {port, output, fastify} from '@shopify/cli-kit'
 
 beforeAll(() => {
   vi.mock('@shopify/cli-kit')
-  vi.mock('./fastify-http-proxy/index.cjs')
   vi.mock('http-proxy', () => {
     return {
       default: {
