@@ -12,7 +12,7 @@ export async function validateIdentityToken(token: string) {
     }
     debug(`Sending Identity Introspection request to URL: ${instrospectionURL}`)
 
-    const response = await shopifyFetch('shopify', instrospectionURL, options)
+    const response = await shopifyFetch(instrospectionURL, options)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const json: any = await response.json()
 
@@ -26,7 +26,7 @@ export async function validateIdentityToken(token: string) {
 }
 
 async function getInstrospectionEndpoint(): Promise<string> {
-  const response = await shopifyFetch('identity', `https://${await identity()}/.well-known/openid-configuration.json`)
+  const response = await shopifyFetch(`https://${await identity()}/.well-known/openid-configuration.json`)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const json: any = await response.json()
   return json.introspection_endpoint

@@ -161,7 +161,7 @@ async function tokenRequest(params: {[key: string]: string}, throws = true): Pro
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-  const res = await shopifyFetch('identity', url.href, {method: 'POST'})
+  const res = await shopifyFetch(url.href, {method: 'POST'})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
   if (!res.ok) {

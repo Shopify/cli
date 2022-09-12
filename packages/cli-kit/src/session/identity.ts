@@ -1,14 +1,10 @@
 import {Bug} from '../error.js'
-import {
-  shopify as shopifyEnvironment,
-  partners as partnersEnvironment,
-  identity as identityEnvironment,
-} from '../environment/service.js'
 import {Environment} from '../network/service.js'
 import {API} from '../network/api.js'
+import {serviceEnvironment} from '../environment/service.js'
 
 export function clientId(): string {
-  const environment = identityEnvironment()
+  const environment = serviceEnvironment()
   if (environment === Environment.Local) {
     return 'e5380e02-312a-7408-5718-e07017e9cf52'
   } else if (environment === Environment.Production) {
@@ -21,7 +17,7 @@ export function clientId(): string {
 export function applicationId(api: API): string {
   switch (api) {
     case 'admin': {
-      const environment = shopifyEnvironment()
+      const environment = serviceEnvironment()
       if (environment === Environment.Local) {
         return 'e92482cebb9bfb9fb5a0199cc770fde3de6c8d16b798ee73e36c9d815e070e52'
       } else if (environment === Environment.Production) {
@@ -31,7 +27,7 @@ export function applicationId(api: API): string {
       }
     }
     case 'partners': {
-      const environment = partnersEnvironment()
+      const environment = serviceEnvironment()
       if (environment === Environment.Local) {
         return 'df89d73339ac3c6c5f0a98d9ca93260763e384d51d6038da129889c308973978'
       } else if (environment === Environment.Production) {
@@ -41,7 +37,7 @@ export function applicationId(api: API): string {
       }
     }
     case 'storefront-renderer': {
-      const environment = shopifyEnvironment()
+      const environment = serviceEnvironment()
       if (environment === Environment.Local) {
         return '46f603de-894f-488d-9471-5b721280ff49'
       } else if (environment === Environment.Production) {

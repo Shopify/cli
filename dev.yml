@@ -19,10 +19,7 @@ up:
 
 env:
   SHOPIFY_ENV: development
-  SHOPIFY_PARTNERS_API_ENV: production
-  SHOPIFY_ADMIN_API_ENV: production
-  SHOPIFY_STOREFRONT_RENDERER_API_ENV: production
-  SHOPIFY_IDENTITY_API_ENV: production
+  SHOPIFY_SERVICE_ENV: production
 
 open:
   app: http://localhost:3000
