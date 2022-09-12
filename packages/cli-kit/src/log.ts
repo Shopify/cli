@@ -34,7 +34,7 @@ export class LinesTruncatorTransformer extends Transform {
     const tokens = (chunk as string).toString().split(EOL)
 
     this.completeLastLine(tokens)
-    // if last character is a breakline last splitted token will be an empty string
+    // last splitted token will be an empty string when last character is a breakline
     this.lastLineCompleted = tokens[tokens.length - 1] === ''
     if (this.lastLineCompleted) {
       tokens.pop()
@@ -124,10 +124,9 @@ async function truncateLogs(logFile: string) {
   const truncateLines = new LinesTruncatorTransformer(maxLogFileSize)
   const pipeline = promisify(Stream.pipeline)
   await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
-  await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile)).then(() => {
-    unlinkSync(tmpLogFile)
-    truncating = false
-  })
+  await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
+  unlinkSync(tmpLogFile)
+  truncating = truncating ? truncating : false
 }
 
 function logFileExists(): boolean {

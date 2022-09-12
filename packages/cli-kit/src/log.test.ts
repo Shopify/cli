@@ -9,9 +9,11 @@ import {appendFileSync} from 'fs'
 import {EOL} from 'os'
 import {randomBytes} from 'crypto'
 
-const KB_256 = 0.256 * 1024 * 1024
-const MB_2 = 2 * 1024 * 1024
-const MB_7 = 7 * 1024 * 1024
+const MB_1 = 1024 * 1024
+const KB_256 = 0.256 * MB_1
+const MB_2 = 2 * MB_1
+const MB_5 = 5 * MB_1
+const MB_7 = 7 * MB_1
 
 beforeEach(() => {
   vi.mock('./id')
@@ -23,7 +25,7 @@ beforeEach(() => {
   })
 })
 
-describe.skip('initiateLogging', () => {
+describe('initiateLogging', () => {
   it('when unit testing should not initiate log file', async () => {
     // Given
     vi.mocked(isUnitTest).mockReturnValue(true)
@@ -59,13 +61,15 @@ describe.skip('initiateLogging', () => {
       vi.mocked(generateRandomUUID).mockReturnValue('random-uuid')
       const logPath = join(tmpDir, 'shopify.cli.log')
       createLogFile(logPath, KB_256, MB_7)
-      const fileSize = fileSizeSync(logPath)
+      const originalLogFileSize = fileSizeSync(logPath)
 
       // When
       await initiateLogging({logDir: tmpDir, override: true})
 
       // Then
-      expect(fileSize).toBeGreaterThan(fileSizeSync(logPath))
+      const finalLogFileSize = fileSizeSync(logPath)
+      expect(originalLogFileSize).toBeGreaterThan(finalLogFileSize)
+      expect(finalLogFileSize).toBeLessThan(MB_5)
     })
   })
 })
