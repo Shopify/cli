@@ -105,7 +105,7 @@ const LOCAL_APP = testApp({
   name: 'my-app',
   directory: '/app',
   configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products'},
+  configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
   webs: [
     {
       directory: '',
