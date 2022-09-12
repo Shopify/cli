@@ -3,7 +3,6 @@ import {normalize} from './path.js'
 import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'
-export {AbortSignal} from 'abort-controller'
 
 enum FatalErrorType {
   Abort,

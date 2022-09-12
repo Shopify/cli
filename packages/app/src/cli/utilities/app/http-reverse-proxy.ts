@@ -1,4 +1,4 @@
-import {port, output, error} from '@shopify/cli-kit'
+import {port, output, abort} from '@shopify/cli-kit'
 import httpProxy from 'http-proxy'
 import {Writable} from 'stream'
 import * as http from 'http'
@@ -19,7 +19,7 @@ export interface ReverseHTTPProxyTarget {
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
-  action: (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => Promise<void> | void
+  action: (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => Promise<void> | void
 }
 
 /**

@@ -43,8 +43,6 @@ func main() {
 	}
 
 	switch cmd {
-	case "build":
-		cli.build(args...)
 	case "create":
 		cli.create(args...)
 	case "serve":
@@ -56,34 +54,6 @@ func main() {
 
 type CLI struct {
 	config *core.Config
-}
-
-func (cli *CLI) build(args ...string) {
-	builds := len(cli.config.Extensions)
-	results := make(chan build.Result)
-
-	for _, extension := range cli.config.Extensions {
-		go build.Build(extension, func(result build.Result) {
-			results <- result
-		})
-	}
-
-	failedBuilds := 0
-	for i := 0; i < builds; i++ {
-		result := <-results
-		if !result.Success {
-			fmt.Fprintln(os.Stderr, result)
-			failedBuilds += 1
-		} else {
-			fmt.Println(result)
-		}
-	}
-
-	if failedBuilds > 0 {
-		os.Exit(1)
-	} else {
-		os.Exit(0)
-	}
 }
 
 func (cli *CLI) create(args ...string) {

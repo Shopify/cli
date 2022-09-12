@@ -50,7 +50,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           root_dir: path.relative(options.app.directory, extension.directory),
           build_dir: options.buildDirectory
             ? path.relative(extension.directory, options.buildDirectory)
-            : path.relative(extension.directory, extension.buildDirectory),
+            : path.relative(extension.directory, path.dirname(extension.outputBundlePath)),
           entries: {
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },

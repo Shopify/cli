@@ -26,7 +26,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
 export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {
   return {
     localIdentifier: uiExtension?.localIdentifier ?? 'test-ui-extension',
-    buildDirectory: uiExtension?.buildDirectory ?? '/tmp/project/extensions/test-ui-extension/dist',
+    outputBundlePath: uiExtension?.outputBundlePath ?? '/tmp/project/extensions/test-ui-extension/dist/main.js',
     configuration: uiExtension?.configuration ?? {
       name: uiExtension?.configuration?.name ?? 'test-ui-extension',
       type: uiExtension?.configuration?.type ?? 'product_subscription',

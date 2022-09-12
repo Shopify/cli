@@ -42,7 +42,7 @@ describe('extensionConfig', () => {
     const extension: UIExtension = {
       localIdentifier: extensionName,
       idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
-      buildDirectory: `${extensionRoot}/build`,
+      outputBundlePath: `${extensionRoot}/build/main.js`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
         name: 'My Extension Name',
