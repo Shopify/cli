@@ -10,7 +10,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
+import {error, analytics, output, port, system, session, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
@@ -51,7 +51,11 @@ async function dev(options: DevOptions) {
   let frontendPort: number
   let frontendUrl: string
 
-  if (options.noTunnel === true) {
+  if (environment.local.gitpodURL()) {
+    const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
+    frontendPort = await port.getRandomPort()
+    frontendUrl = `https://${frontendPort}-${defaultUrl}`
+  } else if (options.noTunnel === true) {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
   } else if (options.tunnelUrl) {

@@ -90,6 +90,10 @@ export function useDeviceAuth(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
 }
 
+export function gitpodURL(env = process.env): string | undefined {
+  return env[constants.environmentVariables.gitpod]
+}
+
 export function isCloudEnvironment(env = process.env): boolean {
   const isCodespaces = isTruthy(env[constants.environmentVariables.codespaces])
   const isGitpod = isTruthy(env[constants.environmentVariables.gitpod])
