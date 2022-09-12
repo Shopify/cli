@@ -48,7 +48,10 @@
     "win32"
   ],
   "oclif": {
-    "commands": "dist/cli/commands"
+    "commands": "dist/cli/commands",
+    "hooks": {
+      "init": "@shopify/cli-kit/node/hooks/init"
+    }
   },
   "repository": {
     "type": "git",
