@@ -16,7 +16,7 @@ vi.mock('@shopify/cli-kit', async () => {
     },
     file: {
       ...cliKit.file,
-      write: vi.fn(),
+      write: vi.fn(cliKit.file.write),
     },
   }
 })
@@ -62,8 +62,10 @@ describe('hydrogen preview', () => {
     it('writes a local mini oxygen config file with env bindings from a .env file', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         const tmpEnv = path.join(tmpDir, '.env')
+
+        vi.mocked(file.write).mockRestore()
         // create a .env file in tmpDir
-        file.writeSync(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
+        await file.write(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
 
         // Given
         const port = 5000
