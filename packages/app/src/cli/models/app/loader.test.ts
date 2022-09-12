@@ -45,13 +45,31 @@ scopes = "read_products"
     return path.join(tmpDir, blocks.extensions.directoryName, name)
   }
 
-  const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
+  const blockConfigurationPath = ({
+    blockType,
+    name,
+    directory,
+  }: {
+    blockType: BlockType
+    name: string
+    directory?: string
+  }) => {
     const configurationName = blocks.extensions.configurationName[blockType]
-    return path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
+    return directory
+      ? path.join(directory, configurationName)
+      : path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
   }
 
-  const makeBlockDir = async ({blockType, name}: {blockType: BlockType; name: string}) => {
-    const dirname = path.dirname(blockConfigurationPath({blockType, name}))
+  const makeBlockDir = async ({
+    blockType,
+    name,
+    directory,
+  }: {
+    blockType: BlockType
+    name: string
+    directory?: string
+  }) => {
+    const dirname = path.dirname(blockConfigurationPath({blockType, name, directory}))
     await file.mkdir(dirname)
     return dirname
   }
@@ -60,13 +78,15 @@ scopes = "read_products"
     blockType,
     blockConfiguration,
     name,
+    directory,
   }: {
     blockType: BlockType
     blockConfiguration: string
     name: string
+    directory?: string
   }) => {
-    const blockDir = await makeBlockDir({blockType, name})
-    const configPath = blockConfigurationPath({blockType, name})
+    const blockDir = await makeBlockDir({blockType, name, directory})
+    const configPath = blockConfigurationPath({blockType, name, directory})
     await file.write(configPath, blockConfiguration)
     return {blockDir, configPath}
   }
@@ -223,6 +243,36 @@ scopes = "read_products"
     expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
     expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
     expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
+  })
+
+  it('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
+    // Given
+    await writeConfig(`
+    scopes = ""
+    extension_directories = ["custom_extension"]
+    `)
+    const customExtensionDirectory = path.join(tmpDir, 'custom_extension')
+    await file.mkdir(customExtensionDirectory)
+
+    const blockConfiguration = `
+      name = "custom_extension"
+      type = "post_purchase_ui"
+    `
+    await writeBlockConfig({
+      blockType: 'ui',
+      blockConfiguration,
+      name: 'custom-extension',
+      directory: customExtensionDirectory,
+    })
+    await file.write(path.join(customExtensionDirectory, 'index.js'), '')
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.extensions.ui[0]!.configuration.name).toBe('custom_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.localIdentifier).toBe('custom_extension')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -515,10 +565,3 @@ scopes = "read_products"
     expect(metadata.getAllPublic()).toMatchObject({project_type: 'node'})
   })
 })
-
-function createPackageJson(tmpDir: string, type: string, version: string) {
-  const packagePath = path.join(tmpDir, 'node_modules', '@shopify', type, 'package.json')
-  const packageJson = {name: 'name', version}
-  const dirPath = path.join(tmpDir, 'node_modules', '@shopify', type)
-  return file.mkdir(dirPath).then(() => file.write(packagePath, JSON.stringify(packageJson)))
-}

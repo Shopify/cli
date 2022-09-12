@@ -65,18 +65,18 @@ class AppLoader {
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
-    const extensionPaths = configuration.extension_paths.map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath)
+    const extensionDirectories = configuration.extensionDirectories.map((extensionDirectory) => {
+      return path.join(this.appDirectory, extensionDirectory)
     })
     const dotenv = await this.loadDotEnv()
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
-      extensionPaths,
+      extensionDirectories,
     )
     const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
-      extensionPaths,
+      extensionDirectories,
     )
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
-      extensionPaths,
+      extensionDirectories,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
     const name = (await getPackageName(packageJSONPath)) ?? path.basename(this.appDirectory)
@@ -225,8 +225,10 @@ class AppLoader {
     return parseResult.data
   }
 
-  async loadUIExtensions(extensionPaths: string[]): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = extensionPaths.map((extensionPath) => {
+  async loadUIExtensions(
+    extensionDirectories: string[],
+  ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
+    const extensionConfigPaths = extensionDirectories.map((extensionPath) => {
       return path.join(extensionPath, `${configurationFileNames.extension.ui}`)
     })
     const configPaths = await path.glob(extensionConfigPaths)
@@ -278,8 +280,10 @@ class AppLoader {
     return {uiExtensions: await Promise.all(extensions), usedCustomLayout: false}
   }
 
-  async loadFunctions(extensionPaths: string[]): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = extensionPaths.map((extensionPath) => {
+  async loadFunctions(
+    extensionDirectories: string[],
+  ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
+    const functionConfigPaths = extensionDirectories.map((extensionPath) => {
       return path.join(extensionPath, `${configurationFileNames.extension.function}`)
     })
     const configPaths = await path.glob(functionConfigPaths)
@@ -315,9 +319,9 @@ class AppLoader {
   }
 
   async loadThemeExtensions(
-    extensionPaths: string[],
+    extensionDirectories: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = extensionPaths.map((extensionPath) => {
+    const themeConfigPaths = extensionDirectories.map((extensionPath) => {
       return path.join(extensionPath, `${configurationFileNames.extension.theme}`)
     })
     const configPaths = await path.glob(themeConfigPaths)
