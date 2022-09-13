@@ -4,8 +4,7 @@ import {IdentityToken} from './schema.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
 import {content, debug, info, token} from '../output.js'
-import {Abort} from '../error.js'
-import {output} from '@shopify/cli-kit'
+import {Bug} from '../error.js'
 
 export interface DeviceAuthorizationResponse {
   deviceCode: string
@@ -17,7 +16,7 @@ export interface DeviceAuthorizationResponse {
 }
 
 const DeviceAuthError = () => {
-  return new Abort('Failed to start authorization process')
+  return new Bug('Failed to start authorization process')
 }
 
 /**
@@ -50,9 +49,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
 
   info('\nTo run this command, log in to Shopify Partners.')
   info(content`User verification code: ${jsonResult.user_code}`)
-  info(
-    content`👉 Open this link to start the auth process: ${output.token.green(jsonResult.verification_uri_complete)}`,
-  )
+  info(content`👉 Open this link to start the auth process: ${token.green(jsonResult.verification_uri_complete)}`)
 
   return {
     deviceCode: jsonResult.device_code,

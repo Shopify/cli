@@ -90,10 +90,12 @@ export function useDeviceAuth(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
 }
 
+// https://www.gitpod.io/docs/environment-variables#default-environment-variables
 export function gitpodURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.gitpod]
 }
 
+// https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace#list-of-default-environment-variables
 export function codespaceURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.codespaceName]
 }

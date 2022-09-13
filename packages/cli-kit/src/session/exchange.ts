@@ -10,10 +10,8 @@ import {err, ok, Result} from '../common/result.js'
 
 export class InvalidGrantError extends Error {}
 
-const InvalidIdentityError = new Abort(
-  '\nError validating auth session',
-  "We've cleared the current session, please try again",
-)
+const InvalidIdentityError = () =>
+  new Abort('\nError validating auth session', "We've cleared the current session, please try again")
 
 export interface ExchangeScopes {
   admin: string[]
@@ -172,18 +170,19 @@ interface TokenRequestResult {
   scope: string
 }
 
-function tokenRequestErrorHandler(error: string) {
+async function tokenRequestErrorHandler(error: string) {
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
-    throw new InvalidGrantError()
+    return new InvalidGrantError()
   }
   if (error === 'invalid_request') {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
-    throw InvalidIdentityError
+    await secureStore.remove()
+    return InvalidIdentityError()
   }
-  throw new Abort(error)
+  return new Abort(error)
 }
 
 async function tokenRequest(params: {[key: string]: string}): Promise<Result<TokenRequestResult, string>> {
@@ -195,7 +194,6 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   const payload: any = await res.json()
 
   if (res.ok) return ok(payload)
-  if (payload.error === 'invalid_request') await secureStore.remove()
   return err(payload.error)
 }
 
