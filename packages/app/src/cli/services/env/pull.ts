@@ -4,18 +4,15 @@ import {output, file} from '@shopify/cli-kit'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 
-interface PopulateEnvOptions {
+interface PullEnvOptions {
   envFile: string
 }
 
-export async function populateEnv(app: AppInterface, {envFile}: PopulateEnvOptions): Promise<output.Message> {
+export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Promise<output.Message> {
   return updateEnvFile(app, envFile)
 }
 
-export async function updateEnvFile(
-  app: AppInterface,
-  envFile: PopulateEnvOptions['envFile'],
-): Promise<output.Message> {
+export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<output.Message> {
   const selectedApp = await selectApp()
 
   const updatedValues = {

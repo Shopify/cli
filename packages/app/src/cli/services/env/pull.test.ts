@@ -1,4 +1,4 @@
-import {populateEnv} from './populate.js'
+import {pullEnv} from './pull'
 import {fetchOrgAndApps, fetchOrganizations} from '../dev/fetch.js'
 import {selectApp} from '../app/select-app.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -24,7 +24,7 @@ beforeEach(async () => {
   vi.restoreAllMocks()
 })
 
-describe('env populate', () => {
+describe('env pull', () => {
   it('creates a new environment file when there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
@@ -59,7 +59,7 @@ describe('env populate', () => {
 
       // When
       const filePath = path.resolve(tmpDir, '.env')
-      const result = await populateEnv(app, {envFile: filePath})
+      const result = await pullEnv(app, {envFile: filePath})
 
       // Then
       expect(file.write).toHaveBeenCalledWith(
@@ -114,7 +114,7 @@ describe('env populate', () => {
       vi.spyOn(file, 'write')
 
       // When
-      const result = await populateEnv(app, {envFile: filePath})
+      const result = await pullEnv(app, {envFile: filePath})
 
       // Then
       expect(file.write).toHaveBeenCalledWith(
@@ -176,7 +176,7 @@ describe('env populate', () => {
 
       vi.spyOn(file, 'write')
       // When
-      const result = await populateEnv(app, {envFile: filePath})
+      const result = await pullEnv(app, {envFile: filePath})
 
       // Then
       expect(file.write).not.toHaveBeenCalled()
