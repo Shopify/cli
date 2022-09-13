@@ -1,4 +1,5 @@
 import {uploadFunctionExtensions} from './upload.js'
+import {blocks} from '../../constants.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -33,7 +34,6 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  vi.useFakeTimers()
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -228,6 +228,8 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
+      vi.spyOn(blocks.functions, 'compilationStatusWaitMs', 'get').mockReturnValue(1 as never)
+
       const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -260,11 +262,8 @@ describe('uploadFunctionExtensions', () => {
       // When
       const promise = () => uploadFunctionExtensions([extension], {token, identifiers})
 
-      vi.runAllTimers()
-
       // Then
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      expect(promise).rejects.toThrowError(/Function my-function compilation timed out./)
+      await expect(promise).rejects.toThrowError(/Function my-function compilation timed out./)
     })
   })
 
