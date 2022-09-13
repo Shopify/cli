@@ -278,7 +278,7 @@ class AppLoader {
         devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
-    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: false}
+    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: additionalExtensionDirectories.length !== 0}
   }
 
   async loadFunctions(
@@ -316,7 +316,7 @@ class AppLoader {
         },
       }
     })
-    return {functions: await Promise.all(functions), usedCustomLayout: false}
+    return {functions: await Promise.all(functions), usedCustomLayout: additionalExtensionDirectories.length !== 0}
   }
 
   async loadThemeExtensions(
@@ -340,7 +340,10 @@ class AppLoader {
         localIdentifier: path.basename(directory),
       }
     })
-    return {themeExtensions: await Promise.all(themeExtensions), usedCustomLayout: false}
+    return {
+      themeExtensions: await Promise.all(themeExtensions),
+      usedCustomLayout: additionalExtensionDirectories.length !== 0,
+    }
   }
 
   abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
