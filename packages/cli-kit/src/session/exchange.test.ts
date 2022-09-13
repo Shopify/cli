@@ -61,7 +61,7 @@ describe('exchange code for identity token', () => {
     // Given
     const responseBody = {
       error: 'invalid_grant',
-      error_description: 'The grant is invalid',
+      error_description: 'Invalid grant',
     }
     const response = new Response(JSON.stringify(responseBody), {status: 500})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
