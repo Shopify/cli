@@ -1,4 +1,4 @@
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange.js'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../http.js'
@@ -70,7 +70,7 @@ describe('exchange code for identity token', () => {
     const got = () => exchangeCodeForAccessToken(code)
 
     // Then
-    return expect(got).rejects.toThrowError(new InvalidGrantError())
+    return expect(got).rejects.toThrowError()
   })
 })
 
