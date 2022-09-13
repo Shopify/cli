@@ -11,11 +11,7 @@ export async function request<T>(query: RequestDocument, token: string, variable
     const url = `https://${fqdn}/api/cli/graphql`
     const headers = await buildHeaders(token)
     debugLogRequest(api, query, variables, headers)
-    const client = await graphqlClient({
-      headers,
-      service: 'partners',
-      url,
-    })
+    const client = await graphqlClient({headers, url})
     const response = await client.request<T>(query, variables)
     return response
   })
@@ -39,11 +35,7 @@ export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
   const headers = await buildHeaders(token)
-  const client = await graphqlClient({
-    headers,
-    url,
-    service: 'partners',
-  })
+  const client = await graphqlClient({headers, url})
   try {
     await client.request(query, {})
     return false

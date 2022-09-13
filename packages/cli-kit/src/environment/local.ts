@@ -100,7 +100,7 @@ export function codespaceURL(env = process.env): string | undefined {
 
 export function isCloudEnvironment(env = process.env): boolean {
   const isCodespaces = isTruthy(env[constants.environmentVariables.codespaces])
-  const isGitpod = isTruthy(env[constants.environmentVariables.gitpod])
+  const isGitpod = isSet(env[constants.environmentVariables.gitpod])
   const isSpin = isTruthy(env[constants.environmentVariables.spin])
   return isCodespaces || isGitpod || isSpin
 }

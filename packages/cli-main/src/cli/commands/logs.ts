@@ -1,5 +1,5 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {cli, output} from '@shopify/cli-kit'
+import {cli, log} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 
 export default class Logs extends Command {
@@ -17,6 +17,6 @@ export default class Logs extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Logs)
-    await output.pageLogs({lastCommand: flags['last-command']})
+    await log.pageLogs({lastCommand: flags['last-command']})
   }
 }

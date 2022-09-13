@@ -1,5 +1,3 @@
-import {Service} from '../network/service.js'
-
 import {httpsAgent} from '../http.js'
 import nodeFetch from 'node-fetch'
 import type {RequestInfo, RequestInit} from 'node-fetch'
@@ -26,7 +24,7 @@ export default async function fetch(url: RequestInfo, init?: RequestInit): Respo
  * TLS configuragion is used based on the environment in which the service is running
  * (e.g. spin)
  */
-export async function shopifyFetch(service: Service, url: RequestInfo, init?: RequestInit): Response {
-  const response = await nodeFetch(url, {...init, agent: await httpsAgent(service)})
+export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Response {
+  const response = await nodeFetch(url, {...init, agent: await httpsAgent()})
   return response
 }

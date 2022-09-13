@@ -46,7 +46,7 @@ describe('requestDeviceAuthorization', () => {
     const got = await requestDeviceAuthorization(['scope1', 'scope2'])
 
     // Then
-    expect(shopifyFetch).toBeCalledWith('identity', 'https://fqdn.com/oauth/device_authorization', {
+    expect(shopifyFetch).toBeCalledWith('https://fqdn.com/oauth/device_authorization', {
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
       body: 'client_id=clientId&scope=scope1 scope2',

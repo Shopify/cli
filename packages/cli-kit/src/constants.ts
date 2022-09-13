@@ -13,10 +13,8 @@ const constants = {
   environmentVariables: {
     unitTest: 'SHOPIFY_UNIT_TEST',
     env: 'SHOPIFY_ENV',
+    serviceEnv: 'SHOPIFY_SERVICE_ENV',
     runAsUser: 'SHOPIFY_RUN_AS_USER',
-    partnersEnv: 'SHOPIFY_PARTNERS_ENV',
-    shopifyEnv: 'SHOPIFY_SHOPIFY_ENV',
-    identityEnv: 'SHOPIFY_IDENTITY_ENV',
     spinInstance: 'SPIN_INSTANCE',
     spinWorkspace: 'SPIN_WORKSPACE',
     spinNamespace: 'SPIN_NAMESPACE',

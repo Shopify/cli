@@ -1,4 +1,3 @@
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {
   blocks,
   extensionTypeCategory,
@@ -9,11 +8,10 @@ import {
   UIExtensionTypes,
   FunctionExtensionTypes,
   versions,
-  ExternalExtensionTypes,
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
-import {error, file, git, path, string, template, ui, yaml, environment} from '@shopify/cli-kit'
+import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
@@ -30,17 +28,16 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<
-  TExtensionTypes extends ExtensionTypes = ExtensionTypes,
-  TExternalExtensionTypes extends ExternalExtensionTypes = ExternalExtensionTypes,
-> {
+interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
   name: string
   extensionType: TExtensionTypes
-  externalExtensionType: TExternalExtensionTypes
   app: AppInterface
   cloneUrl?: string
-  extensionFlavor?: string
+  extensionFlavor?: ExtensionFlavor
 }
+
+export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
+
 interface ExtensionDirectory {
   extensionDirectory: string
 }
@@ -73,7 +70,6 @@ async function themeExtensionInit({name, app, extensionType, extensionDirectory}
 async function uiExtensionInit({
   name,
   extensionType,
-  externalExtensionType,
   app,
   extensionFlavor,
   extensionDirectory,
@@ -109,38 +105,29 @@ async function uiExtensionInit({
         title: `Scaffold ${getExtensionOutputConfig(extensionType).humanKey} extension`,
         task: async (_, task) => {
           task.title = `Scaffolding ${getExtensionOutputConfig(extensionType).humanKey} extension...`
-          const input = yaml.encode({
-            extensions: [
-              {
-                title: name,
-                // Use the new templates
-                external_type: mapExtensionTypeToExternalExtensionType(extensionType),
-                type: extensionType,
-                metafields: [],
-                development: {
-                  root_dir: '.',
-                  template: extensionFlavor,
-                  install_dependencies: false,
-                },
-              },
-            ],
+
+          const templateDirectory = await path.findUp(
+            `templates/ui-extensions/projects/${mapExtensionTypeToExternalExtensionType(extensionType)}`,
+            {
+              type: 'directory',
+              cwd: path.moduleDirectory(import.meta.url),
+            },
+          )
+
+          if (!templateDirectory) {
+            throw new error.Bug(`Couldn't find the template for ${extensionType}`)
+          }
+
+          await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+            flavor: extensionFlavor,
+            type: extensionType,
+            name,
           })
-          await runGoExtensionsCLI(['create', '-'], {
-            cwd: extensionDirectory,
-            stderr: new stream.Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            }),
-            stdout: new stream.Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            }),
-            input,
-          })
+
+          if (extensionFlavor) {
+            await changeIndexFileExtension(extensionDirectory, extensionFlavor)
+          }
+
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension scaffolded`
         },
       },
@@ -167,6 +154,24 @@ export function getRuntimeDependencies({
       }
       return dependencies
     }
+  }
+}
+
+async function changeIndexFileExtension(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
+  const fileExtensionsMapper = {
+    'vanilla-js': 'js',
+    react: 'jsx',
+    typescript: 'ts',
+    'typescript-react': 'tsx',
+  }
+
+  const fileExtension = fileExtensionsMapper[extensionFlavor]
+
+  if (fileExtension) {
+    await file.move(
+      path.join(extensionDirectory, 'src/index'),
+      path.join(extensionDirectory, `src/index.${fileExtension}`),
+    )
   }
 }
 

@@ -52,13 +52,13 @@
     "vitest": "^0.22.1"
   },
   "dependencies": {
-    "@fastify/reply-from": "^8.0.0",
+    "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.10.1",
     "@shopify/shopify-cli-extensions": "3.10.1",
     "http-proxy": "^1.18.1",
     "diff": "^5.1.0",
-    "ws": "^8.7.0"
+    "esbuild": "0.15.7"
   },
   "repository": {
     "type": "git",

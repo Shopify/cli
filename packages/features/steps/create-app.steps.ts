@@ -9,7 +9,7 @@ interface ExtensionConfiguration {
   configuration: {
     name: string
   }
-  buildDirectory: string
+  outputBundlePath: string
 }
 
 When(
@@ -58,7 +58,7 @@ Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
 Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   const appInfo = await this.appInfo()
   const extensionsMissingBuildFile = appInfo.extensions.ui.filter((extension: ExtensionConfiguration) => {
-    const buildFilePath = path.join(extension.buildDirectory, 'main.js')
+    const buildFilePath = extension.outputBundlePath
 
     return !fs.pathExistsSync(buildFilePath)
   })

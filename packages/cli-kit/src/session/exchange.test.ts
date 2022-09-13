@@ -51,7 +51,6 @@ describe('exchange code for identity token', () => {
 
     // Then
     expect(shopifyFetch).toBeCalledWith(
-      'identity',
       'https://fqdn.com/oauth/token?grant_type=authorization_code&code=code&redirect_uri=http%3A%2F%2F127.0.0.1%3A3456&client_id=clientId&code_verifier=verifier',
       {method: 'POST'},
     )

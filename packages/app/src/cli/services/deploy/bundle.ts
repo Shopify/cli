@@ -1,9 +1,8 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtension} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {path, output, file, error} from '@shopify/cli-kit'
+import {path, output, file, abort} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
-
 import {Writable} from 'node:stream'
 
 interface BundleOptions {
@@ -22,7 +21,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
     await output.concurrent([
       {
         prefix: 'theme_extensions',
-        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
           await buildThemeExtensions({
             app: options.app,
             extensions: options.app.extensions.theme,
@@ -32,31 +31,24 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
           })
         },
       },
-      {
-        prefix: 'extensions',
-        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-          /**
-           * For deployment we want the build process to ouptut the artifacts directly in the directory
-           * to prevent artifacts from past builds from leaking into deploy builds.
-           */
-          const extensions = options.app.extensions.ui.map((extension) => {
-            const extensionId = options.identifiers.extensions[extension.localIdentifier]!
-            const buildDirectory = path.join(bundleDirectory, extensionId)
-            return {...extension, buildDirectory}
-          })
-          await buildUIExtensions({
-            app: options.app,
-            extensions,
-            stdout,
-            stderr,
-            signal,
-          })
-        },
-      },
+      ...options.app.extensions.ui.map((uiExtension) => {
+        return {
+          prefix: uiExtension.localIdentifier,
+          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+            const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
+            const mappedUIExtension: typeof uiExtension = {
+              ...uiExtension,
+              outputBundlePath: path.join(bundleDirectory, extensionId, path.basename(uiExtension.outputBundlePath)),
+            }
+
+            await buildUIExtension(mappedUIExtension, {stdout, stderr, signal, app: options.app})
+          },
+        }
+      }),
       ...options.app.extensions.function.map((functionExtension) => {
         return {
-          prefix: `function_${functionExtension.localIdentifier}`,
-          action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+          prefix: functionExtension.localIdentifier,
+          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
             await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
           },
         }

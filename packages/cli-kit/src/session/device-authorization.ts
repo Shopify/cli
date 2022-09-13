@@ -35,7 +35,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
   const url = `https://${fqdn}/oauth/device_authorization`
 
-  const response = await shopifyFetch('identity', url, {
+  const response = await shopifyFetch(url, {
     method: 'POST',
     headers: {'Content-type': 'application/x-www-form-urlencoded'},
     body: convertRequestToParams(queryParams),
