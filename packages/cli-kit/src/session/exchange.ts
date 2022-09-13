@@ -174,9 +174,13 @@ interface TokenRequestResult {
 
 function tokenRequestErrorHandler(error: string) {
   if (error === 'invalid_grant') {
+    // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
+    // using a valid refresh token. When that happens, we take the user through the authentication flow.
     throw new InvalidGrantError()
   }
   if (error === 'invalid_request') {
+    // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
+    // This means the token is invalid. We clear the session and throw an error to let the caller know.
     throw InvalidIdentityError
   }
   throw new Abort(error)
@@ -189,21 +193,10 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   const res = await shopifyFetch(url.href, {method: 'POST'})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
-  if (!res.ok) {
-    if (payload.error === 'invalid_grant') {
-      // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
-      // using a valid refresh token. When that happens, we take the user through the authentication flow.
-      return err(payload.error)
-    } else if (payload.error === 'invalid_request') {
-      // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
-      // This means the token is invalid. We clear the session and throw an error to let the caller know.
-      await secureStore.remove()
-      return err(payload.error)
-    } else {
-      return err(payload.error_description)
-    }
-  }
-  return ok(payload)
+
+  if (res.ok) return ok(payload)
+  if (payload.error === 'invalid_request') await secureStore.remove()
+  return err(payload.error)
 }
 
 function buildIdentityToken(result: TokenRequestResult): IdentityToken {
