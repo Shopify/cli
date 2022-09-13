@@ -70,7 +70,7 @@ describe('exchange code for identity token', () => {
     const got = () => exchangeCodeForAccessToken(code)
 
     // Then
-    return expect(got).rejects.toThrowError(new InvalidGrantError(responseBody.error_description))
+    return expect(got).rejects.toThrowError(new InvalidGrantError())
   })
 })
 

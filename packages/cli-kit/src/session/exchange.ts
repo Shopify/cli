@@ -174,7 +174,7 @@ interface TokenRequestResult {
 
 function tokenRequestErrorHandler(error: string) {
   if (error === 'invalid_grant') {
-    throw new InvalidGrantError('Invalid grant')
+    throw new InvalidGrantError()
   }
   if (error === 'invalid_request') {
     throw InvalidIdentityError
