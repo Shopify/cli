@@ -8,6 +8,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identity} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
+import {err, ok} from '../common/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
@@ -65,10 +66,10 @@ describe('pollForDeviceAuthorization', () => {
 
   it('poll until a valid token is received', async () => {
     // Given
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({error: 'authorization_pending'})
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({error: 'authorization_pending'})
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({error: 'authorization_pending'})
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({token: identityToken})
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(ok(identityToken))
 
     // When
     const got = await pollForDeviceAuthorization('device_code', 0.05)
@@ -80,9 +81,9 @@ describe('pollForDeviceAuthorization', () => {
 
   it('when polling, if an error is received, stop polling and throw error', async () => {
     // Given
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({error: 'authorization_pending'})
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({error: 'authorization_pending'})
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce({error: 'access_denied'})
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('access_denied'))
 
     // When
     const got = pollForDeviceAuthorization('device_code', 0.05)
