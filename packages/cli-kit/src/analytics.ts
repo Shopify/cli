@@ -21,7 +21,7 @@ export const start = async ({command, args, currentTime = new Date().getTime(), 
   await metadata.addSensitive(() => ({
     commandStartOptions: {
       startTime: currentTime,
-      startCommand: commandClass?.analyticsNameOverride() ?? command,
+      startCommand: command,
       startArgs: args,
     },
   }))
