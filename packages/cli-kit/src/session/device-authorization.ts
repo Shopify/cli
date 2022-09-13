@@ -78,7 +78,8 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
   return new Promise<IdentityToken>((resolve, reject) => {
     const onPoll = async () => {
       const result = await exchangeDeviceCodeForAccessToken(code)
-      if (result.token) return resolve(result.token)
+      if (!result.isErr()) return resolve(result.value)
+
       const error = result.error ?? 'unknown_failure'
 
       debug(content`Polling for device authorization... status: ${error}`)
