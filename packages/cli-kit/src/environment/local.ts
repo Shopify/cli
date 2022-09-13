@@ -101,10 +101,19 @@ export function codespaceURL(env = process.env): string | undefined {
 }
 
 export function isCloudEnvironment(env = process.env): boolean {
-  const isCodespaces = isTruthy(env[constants.environmentVariables.codespaces])
-  const isGitpod = isSet(env[constants.environmentVariables.gitpod])
-  const isSpin = isTruthy(env[constants.environmentVariables.spin])
-  return isCodespaces || isGitpod || isSpin
+  return isCodespaces(env) || isGitpod(env) || isSpin(env)
+}
+
+function isCodespaces(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.codespaces])
+}
+
+function isGitpod(env = process.env): boolean {
+  return isSet(env[constants.environmentVariables.gitpod])
+}
+
+function isSpin(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.spin])
 }
 
 /**
@@ -149,8 +158,7 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
  * Gets info on the Web IDE platform the CLI is running on, if applicable
  */
 export function webIDEPlatform(env = process.env) {
-  if (isTruthy(env.CODESPACES)) {
-    return 'codespaces'
-  }
+  if (isCodespaces(env)) return 'codespaces'
+  if (isGitpod(env)) return 'gitpod'
   return undefined
 }
