@@ -249,7 +249,7 @@ scopes = "read_products"
     // Given
     await writeConfig(`
     scopes = ""
-    extension_directories = ["custom_extension"]
+    additional_extension_directories = ["custom_extension"]
     `)
     const customExtensionDirectory = path.join(tmpDir, 'custom_extension')
     await file.mkdir(customExtensionDirectory)

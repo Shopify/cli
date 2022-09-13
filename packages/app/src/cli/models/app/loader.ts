@@ -65,9 +65,12 @@ class AppLoader {
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
-    const extensionDirectories = configuration.extensionDirectories.map((extensionDirectory) => {
-      return path.join(this.appDirectory, extensionDirectory)
-    })
+    const extensionDirectories = [
+      path.join(this.appDirectory, 'extensions/*'),
+      ...configuration.additionalExtensionDirectories.map((extensionDirectory) => {
+        return path.join(this.appDirectory, extensionDirectory)
+      }),
+    ]
     const dotenv = await this.loadDotEnv()
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
       extensionDirectories,
