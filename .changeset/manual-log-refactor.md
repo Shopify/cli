@@ -1,5 +1,5 @@
 ---
-'@shopify/cli-main': minor
+'@shopify/cli': minor
 '@shopify/cli-kit': minor
 ---
 
