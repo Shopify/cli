@@ -1,5 +1,5 @@
 import {isUnitTest} from './environment/local.js'
-import {AnyJson} from './json.js'
+import {JsonMap} from './json.js'
 import {MonorailEventPublic} from './monorail.js'
 import {sendErrorToBugsnag} from './node/error-handler.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
@@ -21,7 +21,7 @@ function getMetadataErrorHandlingStrategy(): 'mute-and-report' | 'bubble' {
   return 'mute-and-report'
 }
 
-interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
+export interface RuntimeMetadataManager<TPublic extends JsonMap, TSensitive extends JsonMap> {
   /** Add some public metadata -- this should not contain any PII */
   addPublic: (getData: ProvideMetadata<TPublic>, onError?: MetadataErrorHandling) => Promise<void>
   /** Add some potentially sensitive metadata -- this may include PII, but unnecessary data should never be tracked (this is a good fit for command args for instance) */
@@ -39,12 +39,12 @@ interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends Any
  *
  */
 export function createRuntimeMetadataContainer<
-  TPublic extends AnyJson,
-  TSensitive extends AnyJson = {[key: string]: never},
+  TPublic extends JsonMap,
+  TSensitive extends JsonMap = {[key: string]: never},
 >(): RuntimeMetadataManager<TPublic, TSensitive> {
-  const raw: {sensitive: Partial<TSensitive>; public: Partial<TPublic>} = {
-    sensitive: {},
-    public: {},
+  const raw: {sensitive: TSensitive; public: TPublic} = {
+    sensitive: {} as TSensitive,
+    public: {} as TPublic,
   }
   const addPublic = (data: Partial<TPublic>) => {
     Object.assign(raw.public, data)
