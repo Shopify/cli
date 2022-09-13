@@ -1,4 +1,3 @@
-import {isSpin} from './spin.js'
 import {hasGit, isDevelopment, isShopify, isUnitTest, analyticsDisabled, useDeviceAuth} from './local.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
@@ -6,9 +5,6 @@ import {expect, it, describe, vi, test} from 'vitest'
 
 vi.mock('../file')
 vi.mock('../system')
-vi.mock('./spin', () => ({
-  isSpin: vi.fn(),
-}))
 
 describe('isUnitTest', () => {
   it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
@@ -63,10 +59,10 @@ describe('isShopify', () => {
 
   it('returns true when it is a spin environment', async () => {
     // Given
-    vi.mocked(isSpin).mockReturnValue(true)
+    const env = {SPIN: '1'}
 
     // When
-    await expect(isShopify()).resolves.toBe(true)
+    await expect(isShopify(env)).resolves.toBe(true)
   })
 })
 

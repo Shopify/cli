@@ -50,7 +50,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
     return !isTruthy(env[constants.environmentVariables.runAsUser])
   }
   const devInstalled = await fileExists(constants.paths.executables.dev)
-  return devInstalled || isSpin()
+  return devInstalled || isSpin(env)
 }
 
 /**
@@ -110,10 +110,6 @@ function isCodespaces(env = process.env): boolean {
 
 function isGitpod(env = process.env): boolean {
   return isSet(env[constants.environmentVariables.gitpod])
-}
-
-function isSpin(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.spin])
 }
 
 /**
