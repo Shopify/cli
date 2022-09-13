@@ -30,6 +30,7 @@ const APP1: OrganizationApp = {
   apiKey: 'key1',
   apiSecretKeys: [{secret: 'secret1'}],
   organizationId: '1',
+  grantedScopes: [],
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -37,6 +38,7 @@ const APP2: OrganizationApp = {
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
   organizationId: '1',
+  grantedScopes: [],
 }
 
 beforeEach(() => {

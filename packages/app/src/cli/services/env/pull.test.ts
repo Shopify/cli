@@ -46,6 +46,7 @@ describe('env pull', () => {
         apiSecretKeys: [{secret: 'api-secret'}],
         organizationId: '1',
         apiKey: 'api-key',
+        grantedScopes: [],
       }
       vi.mocked(fetchOrganizations).mockResolvedValue([organization])
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
@@ -96,6 +97,7 @@ describe('env pull', () => {
         apiSecretKeys: [{secret: 'api-secret'}],
         organizationId: '1',
         apiKey: 'api-key',
+        grantedScopes: [],
       }
       vi.mocked(fetchOrganizations).mockResolvedValue([organization])
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
@@ -159,6 +161,7 @@ describe('env pull', () => {
         apiSecretKeys: [{secret: 'api-secret'}],
         organizationId: '1',
         apiKey: 'api-key',
+        grantedScopes: [],
       }
       vi.mocked(fetchOrganizations).mockResolvedValue([organization])
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)

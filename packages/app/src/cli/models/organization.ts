@@ -15,6 +15,7 @@ export interface OrganizationApp {
   }[]
   appType?: string
   newApp?: boolean
+  grantedScopes: string[]
 }
 
 export interface OrganizationStore {

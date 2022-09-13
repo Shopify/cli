@@ -49,6 +49,7 @@ const APP1: OrganizationApp = {
   apiKey: 'key1',
   organizationId: '1',
   apiSecretKeys: [{secret: 'secret1'}],
+  grantedScopes: [],
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -56,6 +57,7 @@ const APP2: OrganizationApp = {
   apiKey: 'key2',
   organizationId: '1',
   apiSecretKeys: [{secret: 'secret2'}],
+  grantedScopes: [],
 }
 
 const ORG1: api.graphql.AllOrganizationsQuerySchemaOrganization = {

@@ -22,6 +22,7 @@ export interface ExtensionConfigOptions {
   includeResourceURL?: boolean
   cartUrl?: string
   subscriptionProductUrl?: string
+  grantedScopes?: string[]
 }
 
 /**
@@ -67,6 +68,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           },
         },
         capabilities: extension.configuration.capabilities,
+        approval_scopes: options.grantedScopes ?? [],
       }
     }),
   )

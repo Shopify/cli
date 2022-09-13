@@ -73,6 +73,7 @@ describe('extensionConfig', () => {
       port: 8000,
       storeFqdn: 'storeFqdn',
       includeResourceURL: true,
+      grantedScopes: ['read_customer_personal_data'],
     }
 
     // When
@@ -118,6 +119,7 @@ describe('extensionConfig', () => {
           },
 
           capabilities: {network_access: true},
+          approval_scopes: ['read_customer_personal_data'],
         },
       ],
     })

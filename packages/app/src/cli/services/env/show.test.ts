@@ -52,6 +52,7 @@ describe('env show', () => {
       apiSecretKeys: [{secret: apiSecret}],
       organizationId: '1',
       apiKey,
+      grantedScopes: [],
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)

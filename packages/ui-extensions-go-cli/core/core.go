@@ -155,6 +155,7 @@ type Extension struct {
 	Title           string           `json:"title,omitempty" yaml:"title,omitempty"`
 	Name            string           `json:"name,omitempty" yaml:"name,omitempty"`
 	NodeExecutable  string           `json:"-" yaml:"node_executable,omitempty"`
+	ApprovalScopes  []string         `json:"approvalScopes,omitempty" yaml:"approval_scopes,omitempty"`
 }
 
 func (e Extension) String() string {
