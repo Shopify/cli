@@ -1,4 +1,4 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtension} from '../build/extension.js'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {path, output, file, abort} from '@shopify/cli-kit'
@@ -31,19 +31,21 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
           })
         },
       },
-      ...options.app.extensions.ui.map((uiExtension) => {
-        return {
-          prefix: uiExtension.localIdentifier,
-          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-            const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
-            const mappedUIExtension: typeof uiExtension = {
-              ...uiExtension,
-              outputBundlePath: path.join(bundleDirectory, extensionId, path.basename(uiExtension.outputBundlePath)),
-            }
-
-            await buildUIExtension(mappedUIExtension, {stdout, stderr, signal, app: options.app})
+      ...buildUIExtensions({
+        app: {
+          ...options.app,
+          extensions: {
+            ...options.app.extensions,
+            ui: options.app.extensions.ui.map((uiExtension) => {
+              const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
+              const mappedUIExtension: typeof uiExtension = {
+                ...uiExtension,
+                outputBundlePath: path.join(bundleDirectory, extensionId, path.basename(uiExtension.outputBundlePath)),
+              }
+              return mappedUIExtension
+            }),
           },
-        }
+        },
       }),
       ...options.app.extensions.function.map((functionExtension) => {
         return {

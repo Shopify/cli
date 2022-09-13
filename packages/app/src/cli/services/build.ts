@@ -1,10 +1,8 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtension} from './build/extension.js'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from './build/extension.js'
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface, Web} from '../models/app/app.js'
-import {extensionConfig} from '../utilities/extensions/configuration.js'
-import {runGoExtensionsCLI} from '../utilities/extensions/cli.js'
-import {output, abort, yaml, environment} from '@shopify/cli-kit'
+import {output, abort} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 interface BuildOptions {
@@ -57,43 +55,6 @@ async function build(options: BuildOptions) {
 
   output.newline()
   output.success(`${options.app.name} built`)
-}
-
-function buildUIExtensions(options: BuildOptions): output.OutputProcess[] {
-  if (options.app.extensions.ui.length === 0) {
-    return []
-  }
-  if (environment.utilities.isTruthy(process.env.SHOPIFY_CLI_UI_EXTENSIONS_USE_NODE)) {
-    return options.app.extensions.ui.map((uiExtension) => {
-      return {
-        prefix: uiExtension.localIdentifier,
-        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
-        },
-      }
-    })
-  } else {
-    return [
-      {
-        prefix: 'ui-extensions',
-        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          stdout.write(`Building UI extensions...`)
-          const fullOptions = {...options, extensions: options.app.extensions.ui, includeResourceURL: false}
-          const configuration = await extensionConfig(fullOptions)
-          output.debug(output.content`Dev'ing extension with configuration:
-${output.token.json(configuration)}
-`)
-          const input = yaml.encode(configuration)
-          await runGoExtensionsCLI(['build', '-'], {
-            cwd: options.app.directory,
-            stdout,
-            stderr,
-            input,
-          })
-        },
-      },
-    ]
-  }
 }
 
 export default build
