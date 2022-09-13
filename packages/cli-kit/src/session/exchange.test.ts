@@ -1,4 +1,4 @@
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken, InvalidGrantError} from './exchange.js'
+import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../http.js'
@@ -61,7 +61,7 @@ describe('exchange code for identity token', () => {
     // Given
     const responseBody = {
       error: 'invalid_grant',
-      error_description: 'The grant is invalid',
+      error_description: 'Invalid grant',
     }
     const response = new Response(JSON.stringify(responseBody), {status: 500})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
@@ -70,7 +70,7 @@ describe('exchange code for identity token', () => {
     const got = () => exchangeCodeForAccessToken(code)
 
     // Then
-    return expect(got).rejects.toThrowError(new InvalidGrantError(responseBody.error_description))
+    return expect(got).rejects.toThrowError()
   })
 })
 

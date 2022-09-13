@@ -29,7 +29,8 @@ const constants = {
     // Variables to detect if the CLI is running in a cloud environment
     spin: 'SPIN',
     codespaces: 'CODESPACES',
-    gitpod: 'GITPOD_WORKSPACE_ID',
+    codespaceName: 'CODESPACE_NAME',
+    gitpod: 'GITPOD_WORKSPACE_URL',
   },
   paths: {
     executables: {
