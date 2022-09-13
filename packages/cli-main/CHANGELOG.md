@@ -1,5 +1,20 @@
 # @shopify/cli
 
+## 3.11.0
+
+### Minor Changes
+
+- 79508f56: Don't allow the log file to grow too much
+
+### Patch Changes
+
+- Updated dependencies [38dedc05]
+- Updated dependencies [79508f56]
+- Updated dependencies [922c204e]
+- Updated dependencies [ddbf7ee4]
+  - @shopify/cli-kit@3.11.0
+  - @shopify/plugin-ngrok@3.11.0
+
 ## 3.10.1
 
 ### Patch Changes
