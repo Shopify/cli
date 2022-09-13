@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-go-cli
 
+## 3.11.0
+
+### Minor Changes
+
+- 81283e95: Move the extension creation business logic from the Go binary to the @shopify/app package
+
 ## 3.10.1
 
 ## 3.10.0

@@ -1,5 +1,13 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.11.0
+
+### Patch Changes
+
+- 9bfa8428: Fix the extensions hover background for Safari in the dev console
+- Updated dependencies [4fca2930]
+  - @shopify/ui-extensions-server-kit@3.11.0
+
 ## 3.10.1
 
 ### Patch Changes

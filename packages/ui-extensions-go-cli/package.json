@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-go-cli",
-  "version": "3.10.1",
+  "version": "3.11.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,6 +12,6 @@
     "lint:fix": "nx lint:fix"
   },
   "devDependencies": {
-    "@shopify/shopify-cli-extensions": "3.10.1"
+    "@shopify/shopify-cli-extensions": "3.11.0"
   }
 }
