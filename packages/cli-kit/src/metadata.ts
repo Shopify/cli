@@ -21,7 +21,7 @@ function getMetadataErrorHandlingStrategy(): 'mute-and-report' | 'bubble' {
   return 'mute-and-report'
 }
 
-export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
+interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
   /** Add some public metadata -- this should not contain any PII */
   addPublic: (getData: ProvideMetadata<TPublic>, onError?: MetadataErrorHandling) => Promise<void>
   /** Add some potentially sensitive metadata -- this may include PII, but unnecessary data should never be tracked (this is a good fit for command args for instance) */
@@ -31,9 +31,6 @@ export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive exte
   /** Get a snapshot of the tracked sensitive data */
   getAllSensitive: () => Partial<TSensitive>
 }
-
-export type PublicSchema<T> = T extends RuntimeMetadataManager<infer TPublic, infer _TSensitive> ? TPublic : never
-export type SensitiveSchema<T> = T extends RuntimeMetadataManager<infer _TPublic, infer TSensitive> ? TSensitive : never
 
 /**
  * Creates a container for metadata collected at runtime.
@@ -110,6 +107,3 @@ const coreData = createRuntimeMetadataContainer<
 >()
 
 export const {getAllPublic, getAllSensitive, addPublic, addSensitive} = coreData
-
-export type Public = PublicSchema<typeof coreData>
-export type Sensitive = SensitiveSchema<typeof coreData>
