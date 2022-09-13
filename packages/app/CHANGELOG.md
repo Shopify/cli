@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.11.0
+
+### Minor Changes
+
+- 81283e95: Move the extension creation business logic from the Go binary to the @shopify/app package
+- 922c204e: New Result type for handling errors
+
+### Patch Changes
+
+- 38dedc05: Fix getRandomPort retries
+- 70f3578a: Fixed upload unit test
+- Updated dependencies [38dedc05]
+- Updated dependencies [79508f56]
+- Updated dependencies [922c204e]
+- Updated dependencies [ddbf7ee4]
+  - @shopify/cli-kit@3.11.0
+  - @shopify/shopify-cli-extensions@3.11.0
+
 ## 3.10.1
 
 ### Patch Changes
