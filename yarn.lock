@@ -1464,24 +1464,25 @@
   resolved "https://registry.yarnpkg.com/@microsoft/fetch-event-source/-/fetch-event-source-2.0.1.tgz#9ceecc94b49fbaa15666e38ae8587f64acce007d"
   integrity sha512-W6CLUJ2eBMw3Rec70qrsEW0jOm/3twwJv21mrmj2yORiaVmVYGS4sSS5yUwvQc1ZlDLYGPnClVWmUUMagKNsfA==
 
-"@miniflare/cache@^2.5.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@miniflare/cache/-/cache-2.7.1.tgz#9aa13a475cdcbc0bb30396fd72101f80a6f0018d"
-  integrity sha512-QxN4yp8+cIlggbjIVP17xbSOjjJMco4coW5mXNPcTXazvqnbslwie9GDWmt4BkRvP77uwomf2CDUqEgxZC0frw==
+"@miniflare/cache@^2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/cache/-/cache-2.8.2.tgz#ea2f6cdf35e81fd4016b65d36291038fe7891d1f"
+  integrity sha512-YaFOsXKmlNLk5xDJfyDCMsRaoZLFLPqHAiEsZBZTcCl3FlZbG2GUIvcMlfkO4OKb1nCjtr9OxFgtIdW6DEuboA==
   dependencies:
-    "@miniflare/core" "2.7.1"
-    "@miniflare/shared" "2.7.1"
+    "@miniflare/core" "2.8.2"
+    "@miniflare/shared" "2.8.2"
     http-cache-semantics "^4.1.0"
     undici "5.9.1"
 
-"@miniflare/core@2.7.1", "@miniflare/core@^2.5.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@miniflare/core/-/core-2.7.1.tgz#a0d8da2c76cb9689ae39db2bba2bce8c0c8a87d0"
-  integrity sha512-Pdq5+FPSg0L0/eUOKrEfGFowcmbcEXKCIJa8iYz1iA35koSytgTN+6zeuuGPGVXQbGGEPhNugWlOz4u70FJ1GA==
+"@miniflare/core@2.8.2", "@miniflare/core@^2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/core/-/core-2.8.2.tgz#e90c5d2646bf3a530e67205de12fb90dc641c526"
+  integrity sha512-a9Ecyf4xALcvphQhK3qA+mtUApUrUbwcxCexXvvgVsPrQtMCOIjJ2qs7+RKrC+krCy2O8Eq/8eq2hYh4y/HOKQ==
   dependencies:
     "@iarna/toml" "^2.2.5"
-    "@miniflare/shared" "2.7.1"
-    "@miniflare/watcher" "2.7.1"
+    "@miniflare/queues" "2.8.2"
+    "@miniflare/shared" "2.8.2"
+    "@miniflare/watcher" "2.8.2"
     busboy "^1.6.0"
     dotenv "^10.0.0"
     kleur "^4.1.4"
@@ -1489,34 +1490,51 @@
     undici "5.9.1"
     urlpattern-polyfill "^4.0.3"
 
-"@miniflare/runner-vm@^2.5.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@miniflare/runner-vm/-/runner-vm-2.7.1.tgz#4fa3c0f756bebca7a9b4f5a69e7312525148710e"
-  integrity sha512-kcntTSq38Jk81EQbEYs1wSrcziz/KO1JD1DyyDSw1C9pDSFmhusgObDW0VxaGgEVyh92No8l5CNlTjY7kjiMHw==
+"@miniflare/queues@2.8.2", "@miniflare/queues@^2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/queues/-/queues-2.8.2.tgz#132fbd9325de11fee88e013d07326b675366db7c"
+  integrity sha512-WYlK5L7ukdcL86DdB/BsJhnX7jcLNzyYdcn5vPQbCnDyaK1Lz9lm1RCrtCz7qwJjTrq5z453pczm0ELTxa5n9g==
   dependencies:
-    "@miniflare/shared" "2.7.1"
+    "@miniflare/shared" "2.8.2"
 
-"@miniflare/shared@2.7.1", "@miniflare/shared@^2.5.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@miniflare/shared/-/shared-2.7.1.tgz#767112bd56fbc81d6043fa8956ac03dd2b082602"
-  integrity sha512-hQsx/mt5N/zBxJ3DyAJyGMtdT07WeuU+nYiWjkIwQOkPgH/p72Xu0tdi2kO/KQogtxeT2B+eTMVXlE0JqZOyhA==
+"@miniflare/runner-vm@^2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/runner-vm/-/runner-vm-2.8.2.tgz#e5ed5a76cf51258ed39fc21177c3e2928180d949"
+  integrity sha512-l9V/MedhH1Dc/xIEPEpXW57Y649lcTCYorwqnHPca3didiw75O8jI2g6MvuVlodmbimpg2WtwI7/2ac0WFZfWQ==
+  dependencies:
+    "@miniflare/shared" "2.8.2"
+
+"@miniflare/shared@2.8.2", "@miniflare/shared@^2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/shared/-/shared-2.8.2.tgz#a025508d71d584692410c3192aa034eea6d48b6c"
+  integrity sha512-cjuLIeTAlqcb1POrK4nLa8Bt79SfzbglUr/w78xRAUUoOdB0Lsm3HnEERzD1o0lO2G/Q9F+VDAp2QyglPFV61A==
   dependencies:
     kleur "^4.1.4"
     picomatch "^2.3.1"
 
-"@miniflare/storage-memory@^2.5.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@miniflare/storage-memory/-/storage-memory-2.7.1.tgz#e0e7d4e2e736905211d2f596cf4da18cd1328734"
-  integrity sha512-/YD6PshGEQneLmPC/FO+TnhN2STXT4oTuPxVo81fZ+q/XKglTA8iULtcgmF025lZ8S871ZANfmBtUzlxZJmW8Q==
+"@miniflare/storage-memory@^2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/storage-memory/-/storage-memory-2.8.2.tgz#eedadb7fd4eb2fa64349e4dae2c10afb9d30f949"
+  integrity sha512-9OclkkWBbJwo6WJEz2QCbHsvMt+qraq/xIbuFOByytAcyjomp1gm1ZUaKZ5VkkqMXMgdQ1E+6wTq2iA1p+YRcg==
   dependencies:
-    "@miniflare/shared" "2.7.1"
+    "@miniflare/shared" "2.8.2"
 
-"@miniflare/watcher@2.7.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@miniflare/watcher/-/watcher-2.7.1.tgz#f2f51fc240a49abb1560e0ea13e754b527491a5f"
-  integrity sha512-0P0jG2IoMIQtX2JHTABY13Yq3Fs2w5gs6f/LG/X0O9pBCN3SxeQXt0bp3ELkEHjNANQWLMUs6aohb7yZ6ZTfHg==
+"@miniflare/watcher@2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/watcher/-/watcher-2.8.2.tgz#13f0b7b6f286db6ddff0c801faca1d1c44468d59"
+  integrity sha512-2+awQITWkUGb9GlpzVmYwoe+qiSibni7C6gVDnkxorBRoecwUAzjFRF09QjdEn40+q7peNdE0ui1oWjZMgOaHg==
   dependencies:
-    "@miniflare/shared" "2.7.1"
+    "@miniflare/shared" "2.8.2"
+
+"@miniflare/web-sockets@2.8.2":
+  version "2.8.2"
+  resolved "https://registry.yarnpkg.com/@miniflare/web-sockets/-/web-sockets-2.8.2.tgz#93fc625180ba833399ae3e9343d9f78f50426d81"
+  integrity sha512-oW9vG7zImwZZ/OKuAI4CEMtVqYVQqWe9MoO47VoxmB/WMMdaXJArx+k8xcJJJL7tcHVtbwBHsypJf69DOtrCmg==
+  dependencies:
+    "@miniflare/core" "2.8.2"
+    "@miniflare/shared" "2.8.2"
+    undici "5.9.1"
+    ws "^8.2.2"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -2149,24 +2167,28 @@
   resolved "https://registry.yarnpkg.com/@shopify/i18n/-/i18n-1.0.9.tgz#9ed8af63851275bf69a99f77a735ceff9a8605bf"
   integrity sha512-ZxoIB8UTmWHvRig6E4zvYJt3fAa24iJGYTQLHsjZBV3cmqi/AiSet9Qys7GkqzKcYV/4xukZIfpeWXVjef3v7A==
 
-"@shopify/mini-oxygen@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@shopify/mini-oxygen/-/mini-oxygen-0.1.0.tgz#80073f1efa10a58f6ee9ee3214450bd69211d55d"
-  integrity sha512-idF8SGH/rWU0txWDO58+/EYNasBOL0dwdLwNi3WE390V8lcRO995JL08IkXkB8zOKFRxbHwoneRAZ2X65nCxFA==
+"@shopify/mini-oxygen@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@shopify/mini-oxygen/-/mini-oxygen-0.2.0.tgz#f072c5d117f5aba4a1b13873c209bdd25c9a9b56"
+  integrity sha512-yGIg6xFLrbmV3yNXSYrNRpfiAY80u2PZMkds3RwL3JLVGH780IpffBoK5Yov3i/EwwTN+4iIXgk3U/4Csqr1eA==
   dependencies:
-    "@miniflare/cache" "^2.5.1"
-    "@miniflare/core" "^2.5.1"
-    "@miniflare/runner-vm" "^2.5.1"
-    "@miniflare/shared" "^2.5.1"
-    "@miniflare/storage-memory" "^2.5.1"
+    "@miniflare/cache" "^2.8.2"
+    "@miniflare/core" "^2.8.2"
+    "@miniflare/queues" "^2.8.2"
+    "@miniflare/runner-vm" "^2.8.2"
+    "@miniflare/shared" "^2.8.2"
+    "@miniflare/storage-memory" "^2.8.2"
+    "@miniflare/web-sockets" "2.8.2"
     "@types/connect" "^3.4.35"
-    "@types/mime" "^2.0.3"
+    "@types/mime" "^3.0.1"
     body-parser "1.20.0"
     connect "^3.7.0"
+    fs-extra "^10.1.0"
     inquirer "^9.0.0"
     mime "^3.0.0"
     semiver "^1.1.0"
     typescript "^4.7.2"
+    vitest "^0.22.1"
 
 "@shopify/network@^1.5.1":
   version "1.6.4"
@@ -2654,10 +2676,10 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.184.tgz#23f96cd2a21a28e106dc24d825d4aa966de7a9fe"
   integrity sha512-RoZphVtHbxPZizt4IcILciSWiC6dcn+eZ8oX9IWEYfDMcocdd42f7NPI6fQj+6zI8y4E0L7gu2pcZKLGTRaV9Q==
 
-"@types/mime@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@types/mime/-/mime-2.0.3.tgz#c893b73721db73699943bfc3653b1deb7faa4a3a"
-  integrity sha512-Jus9s4CDbqwocc5pOAnh8ShfrnMcPHuJYzVcSUU7lrh8Ni5HuIqX3oilL86p3dlTrk0LzHRCgA/GQ7uNCw6l2Q==
+"@types/mime@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/mime/-/mime-3.0.1.tgz#5f8f2bca0a5863cb69bc0b0acd88c96cb1d4ae10"
+  integrity sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==
 
 "@types/minimatch@*":
   version "5.1.1"
@@ -12871,6 +12893,11 @@ ws@7.4.5:
   version "7.5.9"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
+
+ws@^8.2.2:
+  version "8.8.1"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.8.1.tgz#5dbad0feb7ade8ecc99b830c1d77c913d4955ff0"
+  integrity sha512-bGy2JzvzkPowEJV++hF07hAD6niYSr0JzBNo/J29WsB57A2r7Wlc1UFcTR9IzrPvuNVO4B8LGqF8qcpsVOhJCA==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"
