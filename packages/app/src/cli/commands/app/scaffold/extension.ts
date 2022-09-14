@@ -10,7 +10,7 @@ class AppScaffoldExtension extends AppGenerateExtension {
         `scaffold`,
       )} has been deprecated in favor of ${output.token.genericShellCommand(
         `generate`,
-      )} and will be deleted in the next major version.
+      )} and will be eventually deleted.
 You might need to update the ${output.token.genericShellCommand(`scaffold`)} script in the project's package.json.\n`,
     )
     await super.run()
