@@ -47,7 +47,11 @@ export async function runCreateCLI(options: RunCLIOptions) {
 export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boolean> {
   // Temporary flag while we test out this feature and ensure it won't break anything!
   if (!isTruthy(process.env[constants.environmentVariables.enableCliRedirect])) return false
+
+  // Setting an env variable in the child process prevents accidental recursion.
   if (isTruthy(process.env[constants.environmentVariables.skipCliRedirect])) return false
+
+  // If already running via package manager, we can assume it's running correctly already.
   if (process.env.npm_config_user_agent) return false
 
   const cliPackage = await localCliPackage()
