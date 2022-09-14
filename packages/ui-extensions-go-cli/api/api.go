@@ -2,7 +2,6 @@
 // - serving build artifacts
 // - sending build status updates via websocket
 // - provide metadata in form of a manifest to the UI Extension host on the client
-//
 package api
 
 import (

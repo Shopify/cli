@@ -2,8 +2,8 @@
 import AppScaffoldExtension from './extension.js'
 import {ExternalExtensionTypeNames, getExtensionOutputConfig} from '../../../constants.js'
 import {load as loadApp} from '../../../models/app/loader.js'
-import scaffoldExtensionPrompt from '../../../prompts/scaffold/extension.js'
-import scaffoldExtensionService from '../../../services/scaffold/extension.js'
+import generateExtensionPrompt from '../../../prompts/generate/extension.js'
+import generateExtensionService from '../../../services/generate/extension.js'
 import {testApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker} from '@shopify/cli-kit'
@@ -11,8 +11,8 @@ import {path, outputMocker} from '@shopify/cli-kit'
 beforeAll(() => {
   vi.mock('../../../constants.js')
   vi.mock('../../../models/app/loader.js')
-  vi.mock('../../../prompts/scaffold/extension.js')
-  vi.mock('../../../services/scaffold/extension.js')
+  vi.mock('../../../prompts/generate/extension.js')
+  vi.mock('../../../services/generate/extension.js')
 })
 
 afterEach(() => {
@@ -98,8 +98,8 @@ function mockSuccessfulCommandExecution(outputConfig: {
 
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(scaffoldExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
-  vi.mocked(scaffoldExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
+  vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
+  vi.mocked(generateExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
 
   return outputMocker.mockAndCaptureOutput()
 }

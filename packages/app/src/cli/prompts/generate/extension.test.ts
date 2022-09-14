@@ -1,4 +1,4 @@
-import scaffoldExtensionPrompt, {extensionFlavorQuestion} from './extension.js'
+import generateExtensionPrompt, {extensionFlavorQuestion} from './extension.js'
 import {extensions, extensionTypesGroups, getExtensionOutputConfig} from '../../constants.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
@@ -42,7 +42,7 @@ describe('extension prompt', async () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await generateExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([extensionTypeQuestion, extensionNameQuestion])
@@ -58,7 +58,7 @@ describe('extension prompt', async () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await generateExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([extensionTypeQuestion])
@@ -74,7 +74,7 @@ describe('extension prompt', async () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await generateExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenCalledWith([
@@ -102,7 +102,7 @@ describe('extension prompt', async () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await generateExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])
@@ -124,7 +124,7 @@ describe('extension prompt', async () => {
     prompt.mockResolvedValue(Promise.resolve(answers))
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await generateExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])
@@ -146,7 +146,7 @@ describe('extension prompt', async () => {
     prompt.mockResolvedValue(answers)
 
     // When
-    const got = await scaffoldExtensionPrompt(options, prompt)
+    const got = await generateExtensionPrompt(options, prompt)
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])

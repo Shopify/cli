@@ -14,7 +14,7 @@ When(
   /I create an extension named (.+) of type ([^\s]+) and flavor (.+)$/,
   {timeout: 5 * 60 * 1000},
   async function (name: string, type: string, flavor: string) {
-    await scaffoldExtension({
+    await generateExtension({
       name,
       type,
       directory: this.appDirectory,
@@ -28,7 +28,7 @@ When(
   /I create an extension named (.+) of type ([^\s]+)$/,
   {timeout: 5 * 60 * 1000},
   async function (name: string, type: string) {
-    await scaffoldExtension({
+    await generateExtension({
       name,
       type,
       directory: this.appDirectory,
@@ -117,21 +117,21 @@ Then(/The extension named (.+) contains the theme extension directories/, {}, as
   }
 })
 
-interface ScaffoldExtensionArgs {
+interface GenerateExtensionArgs {
   name: string
   type: string
   directory: string
   extraArgs: string[]
   env: {[key: string]: string}
 }
-async function scaffoldExtension({name, type, directory, extraArgs, env}: ScaffoldExtensionArgs) {
+async function generateExtension({name, type, directory, extraArgs, env}: GenerateExtensionArgs) {
   try {
     await exec(
       'node',
       [
         executables.cli,
         'app',
-        'scaffold',
+        'generate',
         'extension',
         '--name',
         name,
