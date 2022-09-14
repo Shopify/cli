@@ -227,7 +227,7 @@ class AppLoader {
   async loadUIExtensions(
     extensionDirectories?: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = [...(extensionDirectories ?? defaultExtensionDirectory)].map((extensionPath) => {
+    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
     })
     const configPaths = await path.glob(extensionConfigPaths)
@@ -282,7 +282,7 @@ class AppLoader {
   async loadFunctions(
     extensionDirectories?: string[],
   ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = [...(extensionDirectories ?? defaultExtensionDirectory)].map((extensionPath) => {
+    const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
     })
     const configPaths = await path.glob(functionConfigPaths)
@@ -320,7 +320,7 @@ class AppLoader {
   async loadThemeExtensions(
     extensionDirectories?: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = [...(extensionDirectories ?? defaultExtensionDirectory)].map((extensionPath) => {
+    const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
     })
     const configPaths = await path.glob(themeConfigPaths)
