@@ -4,8 +4,11 @@ import {addPublic} from '../metadata.js'
 import {hashString} from '../string.js'
 import {Command, Interfaces} from '@oclif/core'
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default abstract class extends Command {
+abstract class BaseCommand extends Command {
+  public static analyticsNameOverride(): string | undefined {
+    return undefined
+  }
+
   async catch(error: Error & {exitCode?: number | undefined}) {
     await errorHandler(error, this.config)
   }
@@ -29,6 +32,8 @@ export default abstract class extends Command {
     return result
   }
 }
+
+export default BaseCommand
 
 export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
   await addPublic(() => ({
