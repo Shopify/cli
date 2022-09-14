@@ -20,7 +20,7 @@ export interface FrontendURLOptions {
 export interface FrontendURLResult {
   frontendUrl: string
   frontendPort: number
-  usingTunnel: boolean
+  usingLocalhost: boolean
 }
 
 /**
@@ -36,22 +36,22 @@ export interface FrontendURLResult {
  * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
  */
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
-  let frontendPort: number
+  let frontendPort = 4040
   let frontendUrl: string
-  let usingTunnel = true
+  let usingLocalhost = false
   const hasExtensions = options.app.hasUIExtensions()
 
   const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
   if (environment.local.codespaceURL()) {
     frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
-    return {frontendUrl, frontendPort: 4040, usingTunnel: true}
+    return {frontendUrl, frontendPort, usingLocalhost}
   }
 
   if (environment.local.gitpodURL()) {
     const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
     frontendUrl = `https://${frontendPort}-${defaultUrl}`
-    return {frontendUrl, frontendPort: 4040, usingTunnel: true}
+    return {frontendUrl, frontendPort, usingLocalhost}
   }
 
   if (options.tunnelUrl) {
@@ -61,7 +61,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     }
     frontendPort = Number(matches[2])
     frontendUrl = matches[1]!
-    return {frontendUrl, frontendPort, usingTunnel}
+    return {frontendUrl, frontendPort, usingLocalhost}
   }
 
   if (needsTunnel && !options.cachedTunnelPlugin) {
@@ -84,10 +84,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   } else {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
-    usingTunnel = false
+    usingLocalhost = true
   }
 
-  return {frontendUrl, frontendPort, usingTunnel}
+  return {frontendUrl, frontendPort, usingLocalhost}
 }
 
 export async function generateURL(config: Config, frontendPort: number): Promise<string> {

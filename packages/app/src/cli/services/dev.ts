@@ -56,7 +56,7 @@ async function dev(options: DevOptions) {
   } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
 
-  const {frontendUrl, frontendPort, usingTunnel} = await generateFrontendURL({
+  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
     ...options,
     cachedTunnelPlugin: tunnelPlugin,
   })
@@ -67,7 +67,7 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
-  const exposedUrl = usingTunnel ? frontendUrl : `${frontendUrl}:${frontendPort}`
+  const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
@@ -94,8 +94,8 @@ async function dev(options: DevOptions) {
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyPort = usingTunnel ? frontendPort : await port.getRandomPort()
-  const proxyUrl = usingTunnel ? frontendUrl : `${frontendUrl}:${proxyPort}`
+  const proxyPort = usingLocalhost ? await port.getRandomPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
@@ -125,10 +125,10 @@ async function dev(options: DevOptions) {
       backendPort,
     }
 
-    if (usingTunnel) {
-      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
-    } else {
+    if (usingLocalhost) {
       additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
+    } else {
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     }
   }
 
