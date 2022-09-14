@@ -56,7 +56,6 @@ export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boole
   const correctExecutablePath = join(cliPackage.path, cliPackage.bin.shopify)
   if (correctExecutablePath === filepath) return false
   try {
-    const env = {}
     await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {
       stdio: 'inherit',
       env: {[constants.environmentVariables.skipCliRedirect]: '1'},
