@@ -18,7 +18,7 @@ up:
         version: 7.9.3
 
 env:
-  SHOPIFY_ENV: development
+  SHOPIFY_CLI_ENV: development
   SHOPIFY_SERVICE_ENV: production
 
 open:

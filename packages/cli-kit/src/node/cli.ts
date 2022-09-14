@@ -1,16 +1,27 @@
 // CLI
-import {findUpAndReadPackageJson} from './node-package-manager.js'
-import {errorHandler} from './error-handler.js'
-import {isDevelopment} from '../environment/local.js'
 import {isTruthy} from '../environment/utilities.js'
 import constants from '../constants.js'
-import {join, moduleDirectory} from '../path.js'
+import {join} from '../path.js'
 import {captureOutput, exec} from '../system.js'
-import {run, settings, flush} from '@oclif/core'
 
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
+  development: boolean
+}
+
+function setupEnvironmentVariables(options: RunCLIOptions) {
+  /**
+   * By setting DEBUG=* when --verbose is passed we are increasing the
+   * verbosity of oclif. Oclif uses debug (https://www.npmjs.com/package/debug)
+   * for logging, and it's configured through the DEBUG= environment variable.
+   */
+  if (process.argv.includes('--verbose')) {
+    process.env.DEBUG = process.env.DEBUG ?? '*'
+  }
+  if (options.development) {
+    process.env.SHOPIFY_CLI_ENV = process.env.SHOPIFY_CLI_ENV ?? 'development'
+  }
 }
 
 /**
@@ -19,6 +30,17 @@ interface RunCLIOptions {
  * @param options {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
+  setupEnvironmentVariables(options)
+
+  /**
+   * These imports need to be dynamic because if they are static
+   * they are loaded before se set the DEBUG=* environment variable
+   * and therefore it has no effect.
+   */
+  const {errorHandler} = await import('./error-handler.js')
+  const {isDevelopment} = await import('../environment/local.js')
+  const {run, settings, flush} = await import('@oclif/core')
+
   if (isDevelopment()) {
     settings.debug = true
   }
@@ -31,6 +53,15 @@ export async function runCLI(options: RunCLIOptions) {
  * @param options
  */
 export async function runCreateCLI(options: RunCLIOptions) {
+  /**
+   * We need to call this method before we do any imports because they
+   * migth transitively initialize debug and DEBUG=* has no effect then.
+   */
+  setupEnvironmentVariables(options)
+
+  const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
+  const {moduleDirectory} = await import('../path.js')
+
   const packageJson = await findUpAndReadPackageJson(moduleDirectory(options.moduleURL))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const packageName = (packageJson.content as any).name as string

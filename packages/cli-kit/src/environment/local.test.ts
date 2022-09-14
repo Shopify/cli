@@ -20,9 +20,9 @@ describe('isUnitTest', () => {
 })
 
 describe('isDevelopment', () => {
-  it('returns true when SHOPIFY_ENV is debug', () => {
+  it('returns true when SHOPIFY_CLI_ENV is debug', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'development'}
+    const env = {SHOPIFY_CLI_ENV: 'development'}
 
     // When
     const got = isDevelopment(env)
@@ -104,7 +104,7 @@ describe('analitycsDisabled', () => {
 
   it('returns true when in development', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'development'}
+    const env = {SHOPIFY_CLI_ENV: 'development'}
 
     // When
     const got = analyticsDisabled(env)
