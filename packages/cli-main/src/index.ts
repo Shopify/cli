@@ -1,6 +1,6 @@
 import {runCLI} from '@shopify/cli-kit/node/cli'
 
-export {replaceGlobalCLIWithLocal} from '@shopify/cli-kit/node/cli'
+export {useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 
 async function runShopifyCLI() {
   await runCLI({

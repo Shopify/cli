@@ -44,7 +44,7 @@ export async function runCreateCLI(options: RunCLIOptions) {
   await runCLI(options)
 }
 
-export async function replaceGlobalCLIWithLocal(filepath: string): Promise<boolean> {
+export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
   // Temporary flag while we test out this feature and ensure it won't break anything!
   if (!isTruthy(process.env[constants.environmentVariables.enableCliRedirect])) return false
 
