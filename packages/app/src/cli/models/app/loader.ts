@@ -18,8 +18,6 @@ import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-k
 
 export type AppLoaderMode = 'strict' | 'report'
 
-const extensionsDefaultDirectory = 'extensions/*'
-
 export class AppErrors {
   private errors: {
     [key: string]: output.Message
@@ -69,13 +67,13 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
-      configuration.additionalExtensionDirectories,
+      configuration.extensionDirectories,
     )
     const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
-      configuration.additionalExtensionDirectories,
+      configuration.extensionDirectories,
     )
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
-      configuration.additionalExtensionDirectories,
+      configuration.extensionDirectories,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
     const name = (await getPackageName(packageJSONPath)) ?? path.basename(this.appDirectory)
@@ -225,13 +223,11 @@ class AppLoader {
   }
 
   async loadUIExtensions(
-    additionalExtensionDirectories: string[],
+    extensionDirectories: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = [extensionsDefaultDirectory, ...additionalExtensionDirectories].map(
-      (extensionPath) => {
-        return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
-      },
-    )
+    const extensionConfigPaths = [...extensionDirectories].map((extensionPath) => {
+      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+    })
     const configPaths = await path.glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
@@ -278,13 +274,13 @@ class AppLoader {
         devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
-    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: additionalExtensionDirectories.length !== 0}
+    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories.length !== 0}
   }
 
   async loadFunctions(
-    additionalExtensionDirectories: string[],
+    extensionDirectories: string[],
   ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = [extensionsDefaultDirectory, ...additionalExtensionDirectories].map((extensionPath) => {
+    const functionConfigPaths = [...extensionDirectories].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
     })
     const configPaths = await path.glob(functionConfigPaths)
@@ -316,13 +312,13 @@ class AppLoader {
         },
       }
     })
-    return {functions: await Promise.all(functions), usedCustomLayout: additionalExtensionDirectories.length !== 0}
+    return {functions: await Promise.all(functions), usedCustomLayout: extensionDirectories.length !== 0}
   }
 
   async loadThemeExtensions(
-    additionalExtensionDirectories: string[],
+    extensionDirectories: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = [extensionsDefaultDirectory, ...additionalExtensionDirectories].map((extensionPath) => {
+    const themeConfigPaths = [...extensionDirectories].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
     })
     const configPaths = await path.glob(themeConfigPaths)
@@ -342,7 +338,7 @@ class AppLoader {
     })
     return {
       themeExtensions: await Promise.all(themeExtensions),
-      usedCustomLayout: additionalExtensionDirectories.length !== 0,
+      usedCustomLayout: extensionDirectories.length !== 0,
     }
   }
 

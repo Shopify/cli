@@ -7,7 +7,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
-    app.configuration ?? {scopes: '', additionalExtensionDirectories: []},
+    app.configuration ?? {scopes: '', extensionDirectories: []},
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [],

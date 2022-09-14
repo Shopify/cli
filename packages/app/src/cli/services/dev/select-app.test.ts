@@ -9,7 +9,7 @@ import {api} from '@shopify/cli-kit'
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
   configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products', additionalExtensionDirectories: ['extensions/*']},
+  configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
   webs: [
     {
       directory: '',
