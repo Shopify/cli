@@ -76,15 +76,22 @@ interface CliPackageInfo {
   bin: {shopify: string}
 }
 
+interface PackageJSON {
+  dependencies?: {[packageName: string]: CliPackageInfo}
+  devDependencies?: {[packageName: string]: CliPackageInfo}
+  peerDependencies?: {[packageName: string]: CliPackageInfo}
+}
+
 async function localCliPackage(): Promise<CliPackageInfo | undefined> {
   let npmListOutput = ''
+  let localShopifyCLI: PackageJSON = {}
   try {
     npmListOutput = await captureOutput('npm', ['list', '@shopify/cli', '--json', '-l'])
+    localShopifyCLI = JSON.parse(npmListOutput)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
     return
   }
-  const localShopifyCLI = JSON.parse(npmListOutput)
   const dependenciesList = {
     ...localShopifyCLI.peerDependencies,
     ...localShopifyCLI.devDependencies,
