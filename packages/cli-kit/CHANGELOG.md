@@ -1,5 +1,30 @@
 # @shopify/cli-kit
 
+## 3.11.0
+
+### Minor Changes
+
+- 79508f56: Don't allow the log file to grow too much
+- 922c204e: New Result type for handling errors
+- ddbf7ee4: Add new authentication method for cloud environments
+
+### Patch Changes
+
+- 38dedc05: Fix getRandomPort retries
+
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+
+## 3.10.0
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+
 ## 3.9.2
 
 ## 3.9.1

@@ -13,11 +13,8 @@ const constants = {
   environmentVariables: {
     unitTest: 'SHOPIFY_UNIT_TEST',
     env: 'SHOPIFY_ENV',
+    serviceEnv: 'SHOPIFY_SERVICE_ENV',
     runAsUser: 'SHOPIFY_RUN_AS_USER',
-    partnersEnv: 'SHOPIFY_PARTNERS_ENV',
-    shopifyEnv: 'SHOPIFY_SHOPIFY_ENV',
-    identityEnv: 'SHOPIFY_IDENTITY_ENV',
-    spin: 'SPIN',
     spinInstance: 'SPIN_INSTANCE',
     spinWorkspace: 'SPIN_WORKSPACE',
     spinNamespace: 'SPIN_NAMESPACE',
@@ -28,6 +25,12 @@ const constants = {
     alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
     firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
     debugGoBinary: 'SHOPIFY_DEBUG_GO_BINARY',
+    deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
+    // Variables to detect if the CLI is running in a cloud environment
+    spin: 'SPIN',
+    codespaces: 'CODESPACES',
+    codespaceName: 'CODESPACE_NAME',
+    gitpod: 'GITPOD_WORKSPACE_URL',
   },
   paths: {
     executables: {

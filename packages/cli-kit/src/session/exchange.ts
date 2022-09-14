@@ -6,13 +6,12 @@ import {Abort} from '../error.js'
 import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
+import {err, ok, Result} from '../common/result.js'
 
 export class InvalidGrantError extends Error {}
 
-const InvalidIdentityError = new Abort(
-  '\nError validating auth session',
-  "We've cleared the current session, please try again",
-)
+const InvalidIdentityError = () =>
+  new Abort('\nError validating auth session', "We've cleared the current session, please try again")
 
 export interface ExchangeScopes {
   admin: string[]
@@ -37,7 +36,9 @@ export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Prom
     code_verifier: codeData.codeVerifier,
   }
 
-  return tokenRequest(params).then(buildIdentityToken)
+  const tokenResult = await tokenRequest(params)
+  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrThrow()
+  return buildIdentityToken(value)
 }
 
 /**
@@ -83,7 +84,9 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
     refresh_token: currentToken.refreshToken,
     client_id: clientId,
   }
-  return tokenRequest(params).then(buildIdentityToken)
+  const tokenResult = await tokenRequest(params)
+  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrThrow()
+  return buildIdentityToken(value)
 }
 
 /**
@@ -96,6 +99,38 @@ export async function exchangeCustomPartnerToken(token: string): Promise<Applica
   const appId = applicationId('partners')
   const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
   return newToken[appId]!
+}
+
+export type IdentityDeviceError =
+  | 'authorization_pending'
+  | 'access_denied'
+  | 'expired_token'
+  | 'slow_down'
+  | 'unknown_failure'
+
+/**
+ * Given a deviceCode obtained after starting a device identity flow, request an identity token.
+ * @param deviceCode The device code obtained after starting a device identity flow
+ * @param scopes The scopes to request
+ * @returns {Promise<IdentityToken>} An instance with the identity access tokens.
+ */
+export async function exchangeDeviceCodeForAccessToken(
+  deviceCode: string,
+): Promise<Result<IdentityToken, IdentityDeviceError>> {
+  const clientId = await getIdentityClientId()
+
+  const params = {
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+    device_code: deviceCode,
+    client_id: clientId,
+  }
+
+  const tokenResult = await tokenRequest(params)
+  if (tokenResult.isErr()) {
+    return err(tokenResult.error as IdentityDeviceError)
+  }
+  const identityToken = buildIdentityToken(tokenResult.value)
+  return ok(identityToken)
 }
 
 async function requestAppToken(
@@ -122,41 +157,47 @@ async function requestAppToken(
   if (api === 'admin' && store) {
     identifier = `${store}-${appId}`
   }
-  const appToken = await tokenRequest(params).then(buildApplicationToken)
+  const tokenResult = await tokenRequest(params)
+  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrThrow()
+  const appToken = await buildApplicationToken(value)
   return {[identifier]: appToken}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function tokenRequest(params: {[key: string]: string}): Promise<any> {
+interface TokenRequestResult {
+  access_token: string
+  expires_in: number
+  refresh_token: string
+  scope: string
+}
+
+async function tokenRequestErrorHandler(error: string) {
+  if (error === 'invalid_grant') {
+    // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
+    // using a valid refresh token. When that happens, we take the user through the authentication flow.
+    return new InvalidGrantError()
+  }
+  if (error === 'invalid_request') {
+    // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
+    // This means the token is invalid. We clear the session and throw an error to let the caller know.
+    await secureStore.remove()
+    return InvalidIdentityError()
+  }
+  return new Abort(error)
+}
+
+async function tokenRequest(params: {[key: string]: string}): Promise<Result<TokenRequestResult, string>> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
-  const res = await shopifyFetch('identity', url.href, {method: 'POST'})
+  const res = await shopifyFetch(url.href, {method: 'POST'})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
-  if (!res.ok) {
-    if (payload.error === 'invalid_grant') {
-      // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
-      // using a valid refresh token. When that happens, we take the user through the authentication flow.
-      throw new InvalidGrantError(payload.error_description)
-    } else if (payload.error === 'invalid_request') {
-      // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
-      // This means the token is invalid. We clear the session and throw an error to let the caller know.
-      await secureStore.remove()
-      throw InvalidIdentityError
-    } else {
-      throw new Abort(payload.error_description)
-    }
-  }
-  return payload
+
+  if (res.ok) return ok(payload)
+  return err(payload.error)
 }
 
-function buildIdentityToken(result: {
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-}): IdentityToken {
+function buildIdentityToken(result: TokenRequestResult): IdentityToken {
   return {
     accessToken: result.access_token,
     refreshToken: result.refresh_token,
@@ -165,7 +206,7 @@ function buildIdentityToken(result: {
   }
 }
 
-function buildApplicationToken(result: {access_token: string; expires_in: number; scope: string}): ApplicationToken {
+function buildApplicationToken(result: TokenRequestResult): ApplicationToken {
   return {
     accessToken: result.access_token,
     expiresAt: new Date(Date.now() + result.expires_in * 1000),

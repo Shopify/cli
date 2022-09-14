@@ -7,7 +7,7 @@
 
 With the Shopify command line interface (Shopify CLI 3.0), you can:
 - build custom storefronts and manage their hosting
-- initialize, build, dev, and deploy Shopify apps — and scaffold app extensions
+- initialize, build, dev, and deploy Shopify apps — and generate app extensions
 
 <p>&nbsp;</p>
 

@@ -10,7 +10,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {Writable} from 'node:stream'
@@ -150,7 +150,7 @@ function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: numb
   const devFrontend = devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
       await devFrontend.action(stdout, stderr, signal, port)
     },
   }
@@ -170,7 +170,7 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
 
   return {
     logPrefix: options.web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
       await system.exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
@@ -208,7 +208,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
 
   return {
     prefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
       await system.exec(cmd!, args, {
         cwd: web.directory,
         stdout,
@@ -235,7 +235,7 @@ async function devExtensionsTarget(
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
       await devExtensions({
         app,
         extensions: app.extensions.ui,

@@ -9,7 +9,7 @@ interface ExtensionConfiguration {
   configuration: {
     name: string
   }
-  buildDirectory: string
+  outputBundlePath: string
 }
 
 When(
@@ -38,7 +38,7 @@ When(
 )
 
 Then(
-  /I have an app named (.+) scaffolded from the template with (.+) as package manager/,
+  /I have an app named (.+) generated from the template with (.+) as package manager/,
   {},
   async function (appName: string, packageManager: string) {
     const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {
@@ -58,7 +58,7 @@ Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
 Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   const appInfo = await this.appInfo()
   const extensionsMissingBuildFile = appInfo.extensions.ui.filter((extension: ExtensionConfiguration) => {
-    const buildFilePath = path.join(extension.buildDirectory, 'main.js')
+    const buildFilePath = extension.outputBundlePath
 
     return !fs.pathExistsSync(buildFilePath)
   })

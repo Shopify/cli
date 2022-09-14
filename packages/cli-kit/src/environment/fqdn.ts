@@ -1,9 +1,5 @@
-import {
-  partners as partnersEnvironment,
-  shopify as shopifyEnvironment,
-  identity as identityEnvironment,
-} from './service.js'
 import {fqdn as spinFqdn} from './spin.js'
+import {serviceEnvironment} from './service.js'
 import {Abort} from '../error.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
@@ -24,7 +20,7 @@ export const NotProvidedStoreFQDNError = new Abort(
  * @returns {string} Fully-qualified domain of the partners service we should interact with.
  */
 export async function partners(): Promise<string> {
-  const environment = partnersEnvironment()
+  const environment = serviceEnvironment()
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
     case 'local':
@@ -41,7 +37,7 @@ export async function partners(): Promise<string> {
  * @returns {string} Fully-qualified domain of the Identity service we should interact with.
  */
 export async function identity(): Promise<string> {
-  const environment = identityEnvironment()
+  const environment = serviceEnvironment()
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
@@ -59,7 +55,7 @@ export async function identity(): Promise<string> {
  * @returns {string} Fully-qualified domain of the Shopify service we should interact with.
  */
 export async function shopify(options: {storeFqdn?: string} = {}): Promise<string> {
-  const environment = shopifyEnvironment()
+  const environment = serviceEnvironment()
   switch (environment) {
     case 'local':
       return 'shopify.myshopify.io'

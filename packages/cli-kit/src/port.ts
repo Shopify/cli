@@ -9,7 +9,7 @@ import * as port from 'get-port-please'
  */
 export async function getRandomPort(): Promise<number> {
   debug(content`Getting a random port...`)
-  const randomPort = retryOnError(() => port.getRandomPort())
+  const randomPort = await retryOnError(() => port.getRandomPort())
   debug(content`Random port obtained: ${token.raw(`${randomPort}`)}`)
   return randomPort
 }

@@ -95,8 +95,8 @@ export type ThemeExtension = Extension & {
 
 export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
-  buildDirectory: string
   entrySourceFilePath: string
+  outputBundlePath: string
   devUUID: string
 }
 

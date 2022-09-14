@@ -19,10 +19,7 @@ up:
 
 env:
   SHOPIFY_ENV: development
-  SHOPIFY_PARTNERS_API_ENV: production
-  SHOPIFY_ADMIN_API_ENV: production
-  SHOPIFY_STOREFRONT_RENDERER_API_ENV: production
-  SHOPIFY_IDENTITY_API_ENV: production
+  SHOPIFY_SERVICE_ENV: production
 
 open:
   app: http://localhost:3000
@@ -73,9 +70,9 @@ commands:
       test:
         desc: Test the fixture project
         run: yarn --cwd fixtures/app test
-      scaffold:
-        desc: Scaffold in the fixture project
-        run: yarn --cwd fixtures/app scaffold
+      generate:
+        desc: Generate in the fixture project
+        run: yarn --cwd fixtures/app generate
       web-env:
         desc: Show and/or update the env file in the fixture project
         run: yarn --cwd fixtures/app web-env

@@ -20,15 +20,12 @@ beforeEach(async () => {
         ensureAuthenticatedPartners: vi.fn(),
       },
       store: {
-        cliKitStore: vi.fn(),
+        getAppInfo: vi.fn(),
+        setAppInfo: vi.fn(),
+        clearAppInfo: vi.fn(),
       },
     }
   })
-  vi.mocked(store.cliKitStore).mockReturnValue({
-    getAppInfo: vi.fn(),
-    setAppInfo: vi.fn(),
-    clearAppInfo: vi.fn(),
-  } as any)
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
@@ -56,7 +53,7 @@ describe('info', () => {
       storeFqdn: 'my-app.example.com',
       updateURLs: true,
     }
-    vi.mocked(store.cliKitStore().getAppInfo).mockReturnValue(cachedAppInfo)
+    vi.mocked(store.getAppInfo).mockResolvedValue(cachedAppInfo)
     const app = mockApp()
 
     // When

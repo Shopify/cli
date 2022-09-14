@@ -24,7 +24,8 @@ import {normalizeStoreName} from './string.js'
 import * as output from './output.js'
 import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
-import {firstPartyDev} from './environment/local.js'
+import {firstPartyDev, useDeviceAuth} from './environment/local.js'
+import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -263,13 +264,24 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     scopes.push('employee')
   }
 
-  // Authorize user via browser
-  debug(content`Authorizing through Identity's website...`)
-  const code = await authorize(scopes)
+  let identityToken: IdentityToken
+  if (useDeviceAuth()) {
+    // Request a device code to authorize without a browser redirect.
+    debug(content`Requesting device authorization code...`)
+    const deviceAuth = await requestDeviceAuthorization(scopes)
 
-  // Exchange code for identity token
-  debug(content`Authorization code received. Exchanging it for a CLI token...`)
-  const identityToken = await exchangeCodeForAccessToken(code)
+    // Poll for the identity token
+    debug(content`Starting polling for the identity token...`)
+    identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
+  } else {
+    // Authorize user via browser
+    debug(content`Authorizing through Identity's website...`)
+    const code = await authorize(scopes)
+
+    // Exchange code for identity token
+    debug(content`Authorization code received. Exchanging it for a CLI token...`)
+    identityToken = await exchangeCodeForAccessToken(code)
+  }
 
   // Exchange identity token for application tokens
   debug(content`CLI token received. Exchanging it for application tokens...`)

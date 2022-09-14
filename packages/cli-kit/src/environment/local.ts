@@ -50,7 +50,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
     return !isTruthy(env[constants.environmentVariables.runAsUser])
   }
   const devInstalled = await fileExists(constants.paths.executables.dev)
-  return devInstalled || isSpin()
+  return devInstalled || isSpin(env)
 }
 
 /**
@@ -84,6 +84,32 @@ export function firstPartyDev(env = process.env): boolean {
 
 export function isDebugGoBinary(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.debugGoBinary])
+}
+
+export function useDeviceAuth(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
+}
+
+// https://www.gitpod.io/docs/environment-variables#default-environment-variables
+export function gitpodURL(env = process.env): string | undefined {
+  return env[constants.environmentVariables.gitpod]
+}
+
+// https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace#list-of-default-environment-variables
+export function codespaceURL(env = process.env): string | undefined {
+  return env[constants.environmentVariables.codespaceName]
+}
+
+export function isCloudEnvironment(env = process.env): boolean {
+  return isCodespaces(env) || isGitpod(env) || isSpin(env)
+}
+
+function isCodespaces(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.codespaces])
+}
+
+function isGitpod(env = process.env): boolean {
+  return isSet(env[constants.environmentVariables.gitpod])
 }
 
 /**
@@ -128,8 +154,7 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
  * Gets info on the Web IDE platform the CLI is running on, if applicable
  */
 export function webIDEPlatform(env = process.env) {
-  if (isTruthy(env.CODESPACES)) {
-    return 'codespaces'
-  }
+  if (isCodespaces(env)) return 'codespaces'
+  if (isGitpod(env)) return 'gitpod'
   return undefined
 }

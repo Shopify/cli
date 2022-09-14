@@ -6,7 +6,7 @@ export default class Logout extends Command {
 
   async run(): Promise<void> {
     await session.logout()
-    store.cliKitStore().removeSession()
+    await store.removeSession()
     output.success('Logged out from Shopify')
   }
 }

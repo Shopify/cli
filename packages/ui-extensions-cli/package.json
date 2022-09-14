@@ -1,7 +1,7 @@
 {
   "name": "@shopify/shopify-cli-extensions",
   "author": "Shopify <app-extensions@shopify.com>",
-  "version": "3.9.2",
+  "version": "3.11.0",
   "description": "A command line tool to build UI extensions",
   "license": "MIT",
   "files": [
@@ -39,5 +39,12 @@
     "@luckycatfactory/esbuild-graphql-loader": "^3.6.0",
     "esbuild": "^0.12.22",
     "js-yaml": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/ui-extensions-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues/new/choose"
   }
 }

@@ -4,7 +4,7 @@ import {webEnv} from './web-env.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp} from '../models/app/app.test-data.js'
-import {path, session, output, store, file} from '@shopify/cli-kit'
+import {path, session, output, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 
 beforeEach(async () => {
@@ -17,11 +17,6 @@ beforeEach(async () => {
       ...cliKit,
       session: {
         ensureAuthenticatedPartners: vi.fn(),
-      },
-      store: {
-        cliKitStore: () => ({
-          getAppInfo: (): store.CachedAppInfo | undefined => undefined,
-        }),
       },
     }
   })

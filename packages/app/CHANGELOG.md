@@ -1,5 +1,48 @@
 # @shopify/app
 
+## 3.11.0
+
+### Minor Changes
+
+- 81283e95: Move the extension creation business logic from the Go binary to the @shopify/app package
+- 922c204e: New Result type for handling errors
+
+### Patch Changes
+
+- 38dedc05: Fix getRandomPort retries
+- 70f3578a: Fixed upload unit test
+- Updated dependencies [38dedc05]
+- Updated dependencies [79508f56]
+- Updated dependencies [922c204e]
+- Updated dependencies [ddbf7ee4]
+  - @shopify/cli-kit@3.11.0
+  - @shopify/shopify-cli-extensions@3.11.0
+
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+- Updated dependencies [f04ec835]
+- Updated dependencies [dc364f39]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+  - @shopify/shopify-cli-extensions@3.10.1
+
+## 3.10.0
+
+### Minor Changes
+
+- 16627bb4: Add --api-key flag for app deploy
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+  - @shopify/shopify-cli-extensions@3.10.0
+
 ## 3.9.2
 
 ### Patch Changes

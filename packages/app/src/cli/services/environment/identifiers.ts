@@ -16,7 +16,7 @@ const DeployError = (appName: string, packageManager: PackageManager) => {
     }
 • If this is the app you intended, check your local project and make sure
   it contains the same number and types of extensions as the Shopify app
-  you've selected. You may need to scaffold missing extensions.`,
+  you've selected. You may need to generate missing extensions.`,
   )
 }
 
@@ -64,16 +64,10 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     }
   }
 
-  // If there are more remote extensions than local, then something is missing and we can't continue
-  if (remoteRegistrations.length > localExtensions.length) {
-    throw GenericError()
-  }
+  const match = (await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers))
+    .mapError(GenericError)
+    .valueOrThrow()
 
-  const match = await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers)
-
-  if (match.result === 'invalid-environment') {
-    throw GenericError()
-  }
   let validMatches = match.identifiers ?? {}
   const validMatchesById: {[key: string]: string} = {}
 

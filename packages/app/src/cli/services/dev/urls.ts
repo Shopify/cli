@@ -1,7 +1,7 @@
 import {tunnelConfigurationPrompt, updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
-import {api, error, output, plugins, port, store} from '@shopify/cli-kit'
-import {Plugin} from '@oclif/core/lib/interfaces'
+import {api, environment, error, output, plugins, port, store} from '@shopify/cli-kit'
+import {Config} from '@oclif/core'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -14,7 +14,7 @@ export interface FrontendURLOptions {
   noTunnel: boolean
   tunnelUrl?: string
   cachedTunnelPlugin?: string
-  commandConfig: {plugins: Plugin[]}
+  commandConfig: Config
 }
 
 export interface FrontendURLResult {
@@ -43,6 +43,17 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
+  if (environment.local.codespaceURL()) {
+    frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
+    return {frontendUrl, frontendPort: 4040, usingTunnel: true}
+  }
+
+  if (environment.local.gitpodURL()) {
+    const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
+    frontendUrl = `https://${frontendPort}-${defaultUrl}`
+    return {frontendUrl, frontendPort: 4040, usingTunnel: true}
+  }
+
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
     if (!matches) {
@@ -63,13 +74,13 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     const useTunnel = await tunnelConfigurationPrompt()
     if (useTunnel === 'cancel') throw new error.CancelExecution()
     if (useTunnel === 'always') {
-      store.cliKitStore().setAppInfo({directory: options.app.directory, tunnelPlugin: 'ngrok'})
+      await store.setAppInfo({directory: options.app.directory, tunnelPlugin: 'ngrok'})
     }
   }
 
   if (needsTunnel) {
     frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
+    frontendUrl = await generateURL(options.commandConfig, frontendPort)
   } else {
     frontendPort = await port.getRandomPort()
     frontendUrl = 'http://localhost'
@@ -79,12 +90,15 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   return {frontendUrl, frontendPort, usingTunnel}
 }
 
-export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
-  const tunnelPlugin = await plugins.lookupTunnelPlugin(pluginList)
-  if (!tunnelPlugin) throw new error.Bug('The tunnel could not be found')
-  const url = await tunnelPlugin?.start({port: frontendPort})
+export async function generateURL(config: Config, frontendPort: number): Promise<string> {
+  // For the moment we assume to always have ngrok, this will change in a future PR
+  // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
+  const result = await plugins.runTunnelPlugin(config, frontendPort, 'ngrok')
+
+  if (result.error === 'multiple-urls') throw new error.Bug('Multiple tunnel plugins for ngrok found')
+  if (result.error === 'no-urls' || !result.url) throw new error.Bug('Ngrok failed to start the tunnel')
   output.success('The tunnel is running and you can now view your app')
-  return url
+  return result.url
 }
 
 export function generatePartnersURLs(baseURL: string): PartnersURLs {
@@ -145,7 +159,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         shouldUpdate = false
     }
     /* eslint-enable no-fallthrough */
-    store.cliKitStore().setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+    await store.setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
 }
