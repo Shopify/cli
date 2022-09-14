@@ -16,6 +16,8 @@ import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
 
+const defaultExtensionDirectory = 'extensions/*'
+
 export type AppLoaderMode = 'strict' | 'report'
 
 export class AppErrors {
@@ -223,9 +225,9 @@ class AppLoader {
   }
 
   async loadUIExtensions(
-    extensionDirectories: string[],
+    extensionDirectories?: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = [...extensionDirectories].map((extensionPath) => {
+    const extensionConfigPaths = [...(extensionDirectories ?? defaultExtensionDirectory)].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
     })
     const configPaths = await path.glob(extensionConfigPaths)
@@ -274,13 +276,13 @@ class AppLoader {
         devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
-    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories.length !== 0}
+    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadFunctions(
-    extensionDirectories: string[],
+    extensionDirectories?: string[],
   ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = [...extensionDirectories].map((extensionPath) => {
+    const functionConfigPaths = [...(extensionDirectories ?? defaultExtensionDirectory)].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
     })
     const configPaths = await path.glob(functionConfigPaths)
@@ -312,13 +314,13 @@ class AppLoader {
         },
       }
     })
-    return {functions: await Promise.all(functions), usedCustomLayout: extensionDirectories.length !== 0}
+    return {functions: await Promise.all(functions), usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadThemeExtensions(
-    extensionDirectories: string[],
+    extensionDirectories?: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = [...extensionDirectories].map((extensionPath) => {
+    const themeConfigPaths = [...(extensionDirectories ?? defaultExtensionDirectory)].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
     })
     const configPaths = await path.glob(themeConfigPaths)
@@ -338,7 +340,7 @@ class AppLoader {
     })
     return {
       themeExtensions: await Promise.all(themeExtensions),
-      usedCustomLayout: extensionDirectories.length !== 0,
+      usedCustomLayout: extensionDirectories !== undefined,
     }
   }
 
