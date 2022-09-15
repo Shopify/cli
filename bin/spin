@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 export NODE_TLS_REJECT_UNAUTHORIZED="${NODE_TLS_REJECT_UNAUTHORIZED:=0}"
-export SHOPIFY_SERVICE_ENV="${SHOPIFY_SERVICE_ENV:=spin}"
+export SHOPIFY_SERVICE_ENV="spin"
 export SPIN_INSTANCE="${SPIN_INSTANCE:=$(spin show --latest --json | jq -r '.name')}"
 export SPIN_WORKSPACE="${SPIN_WORKSPACE:=1}"
 export SPIN_NAMESPACE="${SPIN_NAMESPACE:=1}"
