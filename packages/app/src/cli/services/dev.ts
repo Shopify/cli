@@ -9,12 +9,13 @@ import {
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
-import {UIExtension} from '../models/app/extensions.js'
+import {ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {AdminSession} from '@shopify/cli-kit/src/session.js'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -31,7 +32,7 @@ export interface DevOptions {
   tunnel: boolean
   noTunnel: boolean
   theme?: string
-  port?: number
+  themeExtensionPort?: number
 }
 
 interface DevWebOptions {
@@ -59,6 +60,7 @@ async function dev(options: DevOptions) {
     tunnelPlugin,
   } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
+  const [adminSession, storefrontToken] = await ensureThemeExtensionTokens(options, storeFqdn)
 
   const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
     ...options,
@@ -114,7 +116,8 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
   if (options.app.extensions.theme.length > 0) {
-    const devExt = await devThemeExtensionTarget(options, apiKey, storeFqdn, token)
+    const extension = options.app.extensions.theme[0]!
+    const devExt = await devThemeExtensionTarget(options, extension, apiKey, adminSession!, storefrontToken!, token)
     proxyTargets.push(devExt)
   }
 
@@ -168,16 +171,16 @@ function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: numb
 
 function devThemeExtensionTarget(
   options: DevOptions,
+  extension: ThemeExtension,
   apiKey: string,
-  store: string,
+  adminSession: AdminSession,
+  storefrontToken: string,
   token: string,
 ): ReverseHTTPProxyTarget {
   return {
     logPrefix: 'extensions',
     action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal, _port: number) => {
-      const adminSession = await session.ensureAuthenticatedAdmin(store)
-      const storefrontToken = await session.ensureAuthenticatedStorefront()
-      const args = await themeExtensionArgs(apiKey, options)
+      const args = await themeExtensionArgs(extension, apiKey, options)
 
       await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
     },
@@ -281,6 +284,22 @@ async function devUIExtensionsTarget(
       })
     },
   }
+}
+
+/**
+ * Ensure the Admin session and the storefront renderer token
+ * @param options {DevOptions[]} - dev command optins
+ * @param store {string} - the store FQDN
+ */
+async function ensureThemeExtensionTokens(options: DevOptions, store: string): Promise<[AdminSession?, string?]> {
+  if (options.app.extensions.theme.length > 0) {
+    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
+
+    return [adminSession, storefrontToken]
+  }
+
+  return []
 }
 
 /**

@@ -78,11 +78,10 @@ export default class Dev extends Command {
       description: 'Theme ID or name of the theme app extension host theme.',
       env: 'SHOPIFY_FLAG_THEME',
     }),
-    port: Flags.integer({
+    'theme-app-extension-port': Flags.integer({
       hidden: false,
-      char: 'p',
       description: 'Local port of the theme app extension development server.',
-      env: 'SHOPIFY_FLAG_PORT',
+      env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
   }
 
@@ -106,7 +105,7 @@ export default class Dev extends Command {
       tunnel: flags.tunnel,
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
-      port: flags.port,
+      themeExtensionPort: flags['theme-app-extension-port'],
     })
   }
 }

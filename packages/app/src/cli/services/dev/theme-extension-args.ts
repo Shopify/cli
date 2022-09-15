@@ -1,13 +1,13 @@
 import {AppInterface} from '../../models/app/app.js'
+import {ThemeExtension} from '../../models/app/extensions.js'
 import {ensureDeployEnvironment} from '../environment.js'
 
 export async function themeExtensionArgs(
+  extension: ThemeExtension,
   apiKey: string,
-  options: {app: AppInterface; theme?: string; port?: number; reset: boolean},
+  options: {app: AppInterface; theme?: string; themeExtensionPort?: number; reset: boolean},
 ) {
   const {identifiers} = await ensureDeployEnvironment(options)
-
-  const extension = options.app.extensions.theme[0]!
 
   const directory = extension.directory
   const extensionId = identifiers.extensionIds[extension.localIdentifier]!
@@ -30,8 +30,8 @@ export async function themeExtensionArgs(
     args.push('--theme', options.theme)
   }
 
-  if (options.port) {
-    args.push('--port', options.port.toString())
+  if (options.themeExtensionPort) {
+    args.push('--port', options.themeExtensionPort.toString())
   }
 
   return args
