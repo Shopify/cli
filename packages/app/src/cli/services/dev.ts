@@ -1,5 +1,5 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generatePartnersURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
@@ -10,8 +10,9 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {error, analytics, output, port, system, session, environment, abort} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -25,6 +26,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
+  tunnel: boolean
   noTunnel: boolean
 }
 
@@ -45,33 +47,19 @@ async function dev(options: DevOptions) {
     }
   }
   const token = await session.ensureAuthenticatedPartners()
-  const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
+  const {
+    identifiers,
+    storeFqdn,
+    app,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
 
-  let frontendPort: number
-  let frontendUrl: string
-
-  if (environment.local.codespaceURL()) {
-    frontendPort = 4040
-    frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
-  } else if (environment.local.gitpodURL()) {
-    const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
-    frontendPort = 4040
-    frontendUrl = `https://${frontendPort}-${defaultUrl}`
-  } else if (options.noTunnel === true) {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = 'http://localhost'
-  } else if (options.tunnelUrl) {
-    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    }
-    frontendPort = Number(matches[2])
-    frontendUrl = matches[1]!
-  } else {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig, frontendPort)
-  }
+  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
+    ...options,
+    cachedTunnelPlugin: tunnelPlugin,
+  })
 
   const backendPort = await port.getRandomPort()
 
@@ -79,7 +67,7 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
-  const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
@@ -106,8 +94,8 @@ async function dev(options: DevOptions) {
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyUrl = frontendUrl
-  const proxyPort = options.noTunnel === true ? await port.getRandomPort() : frontendPort
+  const proxyPort = usingLocalhost ? await port.getRandomPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devExtensionsTarget(
       options.app,
@@ -120,7 +108,7 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(options.app, storeFqdn, options.noTunnel === true ? `${proxyUrl}:${proxyPort}` : proxyUrl)
+  outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
   if (backendConfig) {
@@ -128,24 +116,19 @@ async function dev(options: DevOptions) {
   }
 
   if (frontendConfig) {
-    const devFrontend = devFrontendTarget({
+    const frontendOptions: DevFrontendTargetOptions = {
       web: frontendConfig,
       apiKey,
       scopes: options.app.configuration.scopes,
       apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
-    })
-    if (options.noTunnel) {
-      const devFrontendProccess = {
-        prefix: devFrontend.logPrefix,
-        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          await devFrontend.action(stdout, stderr, signal, frontendPort)
-        },
-      }
-      additionalProcesses.push(devFrontendProccess)
+    }
+
+    if (usingLocalhost) {
+      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(devFrontend)
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     }
   }
 
@@ -163,7 +146,17 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
+  const devFrontend = devFrontendProxyTarget(options)
+  return {
+    prefix: devFrontend.logPrefix,
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      await devFrontend.action(stdout, stderr, signal, port)
+    },
+  }
+}
+
+function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {

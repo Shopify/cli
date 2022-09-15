@@ -63,6 +63,7 @@ interface DevEnvironmentOutput {
   storeFqdn: string
   identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
+  tunnelPlugin: string | undefined
 }
 
 /**
@@ -125,6 +126,7 @@ export async function ensureDevEnvironment(
         extensions,
       },
       updateURLs: cachedInfo?.updateURLs,
+      tunnelPlugin: cachedInfo?.tunnelPlugin,
     }
   }
 
@@ -166,6 +168,7 @@ export async function ensureDevEnvironment(
       extensions,
     },
     updateURLs: cachedInfo?.updateURLs,
+    tunnelPlugin: cachedInfo?.tunnelPlugin,
   }
   await logMetadataForLoadedDevEnvironment(result)
   return result
@@ -378,9 +381,12 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
   output.info(`- Org:          ${org}`)
   output.info(`- App:          ${cachedAppInfo.title}`)
   output.info(`- Dev store:    ${cachedAppInfo.storeFqdn}`)
-  output.info(`- Update URLs:  ${updateURLs}\n`)
+  output.info(`- Update URLs:  ${updateURLs}`)
+  if (cachedAppInfo.tunnelPlugin) {
+    output.info(`- Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
+  }
   output.info(
-    output.content`To reset your default dev config, run ${output.token.packagejsonScript(
+    output.content`\nTo reset your default dev config, run ${output.token.packagejsonScript(
       packageManager,
       'dev',
       '--reset',

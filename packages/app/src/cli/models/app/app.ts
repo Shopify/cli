@@ -49,6 +49,7 @@ export interface AppInterface {
   }
   errors?: AppErrors
   hasExtensions: () => boolean
+  hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
 }
 
@@ -111,6 +112,10 @@ export class App implements AppInterface {
     return (
       this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
     )
+  }
+
+  hasUIExtensions(): boolean {
+    return this.extensions.ui.length > 0
   }
 }
 

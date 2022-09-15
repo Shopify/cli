@@ -1,10 +1,95 @@
-import {updateURLsPrompt} from '../../prompts/dev.js'
-import {api, error, output, plugins, store} from '@shopify/cli-kit'
+import {tunnelConfigurationPrompt, updateURLsPrompt} from '../../prompts/dev.js'
+import {AppInterface} from '../../models/app/app.js'
+import {api, environment, error, output, plugins, port, store} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
+}
+
+export interface FrontendURLOptions {
+  app: AppInterface
+  tunnel: boolean
+  noTunnel: boolean
+  tunnelUrl?: string
+  cachedTunnelPlugin?: string
+  commandConfig: Config
+}
+
+export interface FrontendURLResult {
+  frontendUrl: string
+  frontendPort: number
+  usingLocalhost: boolean
+}
+
+/**
+ * The tunnel creation logic depends on 7 variables:
+ * - If a Codespaces environment is deteced, then the URL is built using the codespaces hostname. No need for tunnel
+ * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname. No need for tunnel
+ * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
+ * - If noTunnel is true, that takes second preference and localhost is used
+ * - A Tunnel is created then if any of these conditions are met:
+ *   - Tunnel flag is true
+ *   - The app has UI extensions
+ *   - In a previous run, the user selected to always use a tunnel (cachedTunnelPlugin)
+ * - Otherwise, localhost is used
+ *
+ * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
+ */
+export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
+  let frontendPort = 4040
+  let frontendUrl: string
+  let usingLocalhost = false
+  const hasExtensions = options.app.hasUIExtensions()
+
+  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
+
+  if (environment.local.codespaceURL()) {
+    frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (environment.local.gitpodURL()) {
+    const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
+    frontendUrl = `https://${frontendPort}-${defaultUrl}`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (options.tunnelUrl) {
+    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
+    if (!matches) {
+      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    }
+    frontendPort = Number(matches[2])
+    frontendUrl = matches[1]!
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (needsTunnel && !options.cachedTunnelPlugin) {
+    let message = "We'll run your tunnel with ngrok."
+    const extensionsWarning = 'Some parts of your app can only be previewed with a tunnel to your dev store.'
+    if (hasExtensions) message = `${extensionsWarning} ${message}`
+
+    output.info(`\n${message}\n`)
+
+    const useTunnel = await tunnelConfigurationPrompt()
+    if (useTunnel === 'cancel') throw new error.CancelExecution()
+    if (useTunnel === 'always') {
+      await store.setAppInfo({directory: options.app.directory, tunnelPlugin: 'ngrok'})
+    }
+  }
+
+  if (needsTunnel) {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = await generateURL(options.commandConfig, frontendPort)
+  } else {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = 'http://localhost'
+    usingLocalhost = true
+  }
+
+  return {frontendUrl, frontendPort, usingLocalhost}
 }
 
 export async function generateURL(config: Config, frontendPort: number): Promise<string> {
