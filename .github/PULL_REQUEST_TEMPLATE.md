@@ -27,6 +27,14 @@ Fixes #0000 <!-- link to issue if one exists -->
   Please, provide steps for the reviewer to test your changes locally.
 -->
 
+### Post-release steps
+
+<!--
+  If changes require post-release steps, for example merging and publishing some documentation changes,
+  specify it in this section and add the label "includes-post-release-steps".
+  If it doesn't, feel free to remove this section.
+-->
+
 ### Measuring impact
 
 How do we know this change was effective? Please choose one:
