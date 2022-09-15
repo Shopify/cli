@@ -6,10 +6,10 @@ import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
 import {logToFile} from './log.js'
-import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
+import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
 
-export function newListr(tasks: ListrTask[], options?: object) {
+export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
   const listr = new OriginalListr(tasks, options)
   listr.tasks.forEach((task) => {
     const loggedSubtaskTitles: string[] = []
