@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-go-cli
 
+## 3.12.0
+
+### Minor Changes
+
+- 3e98501c: [Web Pixel Extension] - the `configuration` property has been renamed to `settings` in the shopify.ui.extension.toml
+
 ## 3.11.0
 
 ### Minor Changes

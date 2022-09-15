@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.12.0
+
+### Minor Changes
+
+- 454641be: Allow running shopify installed globally instead of npm/yarn/pnpm shopify
+
 ## 3.11.0
 
 ### Minor Changes
