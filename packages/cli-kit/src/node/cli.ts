@@ -2,7 +2,10 @@
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {errorHandler} from './error-handler.js'
 import {isDevelopment} from '../environment/local.js'
-import {moduleDirectory} from '../path.js'
+import {isTruthy} from '../environment/utilities.js'
+import constants from '../constants.js'
+import {join, moduleDirectory} from '../path.js'
+import {captureOutput, exec} from '../system.js'
 import {run, settings, flush} from '@oclif/core'
 
 interface RunCLIOptions {
@@ -13,7 +16,7 @@ interface RunCLIOptions {
 /**
  * A function that abstracts away setting up the environment and running
  * a CLI
- * @param module {RunCLIOptions} Options.
+ * @param options {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
   if (isDevelopment()) {
@@ -39,6 +42,62 @@ export async function runCreateCLI(options: RunCLIOptions) {
     process.argv.splice(initIndex, 0, 'init')
   }
   await runCLI(options)
+}
+
+export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
+  // Temporary flag while we test out this feature and ensure it won't break anything!
+  if (!isTruthy(process.env[constants.environmentVariables.enableCliRedirect])) return false
+
+  // Setting an env variable in the child process prevents accidental recursion.
+  if (isTruthy(process.env[constants.environmentVariables.skipCliRedirect])) return false
+
+  // If already running via package manager, we can assume it's running correctly already.
+  if (process.env.npm_config_user_agent) return false
+
+  const cliPackage = await localCliPackage()
+  if (!cliPackage) return false
+
+  const correctExecutablePath = join(cliPackage.path, cliPackage.bin.shopify)
+  if (correctExecutablePath === filepath) return false
+  try {
+    await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {
+      stdio: 'inherit',
+      env: {[constants.environmentVariables.skipCliRedirect]: '1'},
+    })
+    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+  } catch (processError: any) {
+    process.exit(processError.exitCode)
+  }
+  return true
+}
+
+interface CliPackageInfo {
+  path: string
+  bin: {shopify: string}
+}
+
+interface PackageJSON {
+  dependencies?: {[packageName: string]: CliPackageInfo}
+  devDependencies?: {[packageName: string]: CliPackageInfo}
+  peerDependencies?: {[packageName: string]: CliPackageInfo}
+}
+
+async function localCliPackage(): Promise<CliPackageInfo | undefined> {
+  let npmListOutput = ''
+  let localShopifyCLI: PackageJSON = {}
+  try {
+    npmListOutput = await captureOutput('npm', ['list', '@shopify/cli', '--json', '-l'])
+    localShopifyCLI = JSON.parse(npmListOutput)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (err) {
+    return
+  }
+  const dependenciesList = {
+    ...localShopifyCLI.peerDependencies,
+    ...localShopifyCLI.devDependencies,
+    ...localShopifyCLI.dependencies,
+  }
+  return dependenciesList['@shopify/cli']
 }
 
 export default runCLI

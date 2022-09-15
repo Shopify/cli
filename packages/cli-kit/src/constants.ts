@@ -24,6 +24,8 @@ const constants = {
     noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
     alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
     firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
+    enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
+    skipCliRedirect: 'SHOPIFY_CLI_SKIP_CLI_REDIRECT',
     debugGoBinary: 'SHOPIFY_DEBUG_GO_BINARY',
     deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
     // Variables to detect if the CLI is running in a cloud environment
