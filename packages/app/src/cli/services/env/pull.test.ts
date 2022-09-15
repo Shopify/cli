@@ -1,16 +1,16 @@
-import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectApp} from './app/select-app.js'
-import {webEnv} from './web-env.js'
-import {AppInterface} from '../models/app/app.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {pullEnv} from './pull'
+import {fetchOrgAndApps, fetchOrganizations} from '../dev/fetch.js'
+import {selectApp} from '../app/select-app.js'
+import {AppInterface} from '../../models/app/app.js'
+import {selectOrganizationPrompt} from '../../prompts/dev.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {path, session, output, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 
 beforeEach(async () => {
-  vi.mock('./dev/fetch.js')
-  vi.mock('./app/select-app.js')
-  vi.mock('../prompts/dev.js')
+  vi.mock('../dev/fetch.js')
+  vi.mock('../app/select-app.js')
+  vi.mock('../../prompts/dev.js')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -24,55 +24,8 @@ beforeEach(async () => {
   vi.restoreAllMocks()
 })
 
-describe('web-env', () => {
-  it('only outputs the new environment when update is false', async () => {
-    // Given
-    vi.spyOn(file, 'write')
-
-    const app = mockApp()
-    const token = 'token'
-    const organization = {
-      id: '123',
-      appsNext: false,
-      businessName: 'test',
-      website: '',
-      apps: {nodes: []},
-    }
-    const apiKey = 'api-key'
-    const apiSecret = 'api-secret'
-    const organizationApp = {
-      id: '123',
-      title: 'Test app',
-      appType: 'custom',
-      apiSecretKeys: [{secret: apiSecret}],
-      organizationId: '1',
-      apiKey,
-    }
-    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({
-      organization,
-      stores: [],
-      apps: [organizationApp],
-    })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
-
-    // When
-    const result = await webEnv(app, {update: false, envFile: '.env'})
-
-    // Then
-    expect(file.write).not.toHaveBeenCalled()
-    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
-    "
-        SHOPIFY_API_KEY=api-key
-        SHOPIFY_API_SECRET=api-secret
-        SCOPES=my-scope
-      "
-    `)
-  })
-
-  it('creates a new environment file when update is true and there is no .env', async () => {
+describe('env pull', () => {
+  it('creates a new environment file when there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'write')
@@ -106,7 +59,7 @@ describe('web-env', () => {
 
       // When
       const filePath = path.resolve(tmpDir, '.env')
-      const result = await webEnv(app, {update: true, envFile: filePath})
+      const result = await pullEnv(app, {envFile: filePath})
 
       // Then
       expect(file.write).toHaveBeenCalledWith(
@@ -124,7 +77,7 @@ describe('web-env', () => {
     })
   })
 
-  it('updates an existing environment file and shows the diff when update is true', async () => {
+  it('updates an existing environment file and shows the diff', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const app = mockApp()
@@ -161,7 +114,7 @@ describe('web-env', () => {
       vi.spyOn(file, 'write')
 
       // When
-      const result = await webEnv(app, {update: true, envFile: filePath})
+      const result = await pullEnv(app, {envFile: filePath})
 
       // Then
       expect(file.write).toHaveBeenCalledWith(
@@ -187,7 +140,7 @@ describe('web-env', () => {
     })
   })
 
-  it('shows no changes if there is an already up to date env file when update is true', async () => {
+  it('shows no changes if there is an already up to date env file', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const app = mockApp()
@@ -223,7 +176,7 @@ describe('web-env', () => {
 
       vi.spyOn(file, 'write')
       // When
-      const result = await webEnv(app, {update: true, envFile: filePath})
+      const result = await pullEnv(app, {envFile: filePath})
 
       // Then
       expect(file.write).not.toHaveBeenCalled()
@@ -243,6 +196,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     configurationPath: path.join('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
+      extensionDirectories: ['extensions/*'],
     },
     nodeDependencies,
   })

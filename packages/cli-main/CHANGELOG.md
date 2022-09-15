@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.12.0
+
+### Minor Changes
+
+- 454641be: Allow running shopify installed globally instead of npm/yarn/pnpm shopify
+
+### Patch Changes
+
+- Updated dependencies [454641be]
+  - @shopify/cli-kit@3.12.0
+  - @shopify/plugin-ngrok@3.12.0
+
 ## 3.11.0
 
 ### Minor Changes
