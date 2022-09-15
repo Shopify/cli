@@ -35,7 +35,7 @@ Fixes #0000 <!-- link to issue if one exists -->
   If it doesn't, feel free to remove this section.
 -->
 
-- If your PR touches `dev` or `deploy` make sure to update [the documentation](https://www.figma.com/file/7vqUp50u6dm48Zfb4JRRn8/CLI3-Internals) accordingly if needed.
+- [ ] I've made sure that any changes to `dev` or `deploy` have been reflected in the [the documentation](https://www.figma.com/file/7vqUp50u6dm48Zfb4JRRn8/CLI3-Internals).
 
 ### Measuring impact
 
