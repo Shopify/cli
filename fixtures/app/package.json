@@ -11,7 +11,7 @@
     "push": "../shopify app push",
     "generate": "../shopify app generate",
     "deploy": "../shopify app deploy",
-    "web-env": "../shopify app web-env"
+    "env": "../shopify env"
   },
   "dependencies": {
     "@shopify/admin-ui-extensions-react": "^1.0.1",
