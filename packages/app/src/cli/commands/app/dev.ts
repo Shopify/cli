@@ -59,7 +59,7 @@ export default class Dev extends Command {
       exclusive: ['no-tunnel', 'tunnel'],
     }),
     'no-tunnel': Flags.boolean({
-      hidden: false,
+      hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
