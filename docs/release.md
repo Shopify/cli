@@ -21,3 +21,4 @@ The steps are:
        * Some of the binaries are not correctly uploaded to the release: The release should be deleted manually from Github and then retry again from _step 3_
     2. Publishing of the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). In case an error is produced the extension binary release should be deleted manually from Github and retry again from _step 3_
 5. Once the deployment completes, [find the PR](https://github.com/Shopify/homebrew-shopify/pulls) in the homebrew-shopify repository and merge the changes in the formula.
+6. Go through all the [PRs labeled with `includes-post-release-steps`](https://github.com/Shopify/cli/issues?q=label%3Aincludes-post-release-steps+is%3Aclosed) and follow the post-release steps described in those PRs. Delete the labels afterward.
