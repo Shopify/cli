@@ -72,6 +72,17 @@ export default class Dev extends Command {
       default: false,
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
+    theme: Flags.string({
+      hidden: false,
+      char: 't',
+      description: 'Theme ID or name of the theme app extension host theme.',
+      env: 'SHOPIFY_FLAG_THEME',
+    }),
+    'theme-app-extension-port': Flags.integer({
+      hidden: false,
+      description: 'Local port of the theme app extension development server.',
+      env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -93,6 +104,8 @@ export default class Dev extends Command {
       tunnelUrl: flags['tunnel-url'],
       tunnel: flags.tunnel,
       noTunnel: flags['no-tunnel'],
+      theme: flags.theme,
+      themeExtensionPort: flags['theme-app-extension-port'],
     })
   }
 }

@@ -1,6 +1,6 @@
 /* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension.js'
-import {ExternalExtensionTypeNames, getExtensionOutputConfig} from '../../../constants.js'
+import {ExternalExtensionTypeNames, isThemeExtensionType, getExtensionOutputConfig} from '../../../constants.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionPrompt from '../../../prompts/generate/extension.js'
 import generateExtensionService from '../../../services/generate/extension.js'
@@ -34,7 +34,7 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot('"\n  To find your extension, remember to cd extensions/name\n"')
   })
 
-  it('displays a confirmation message with human-facing name and help url', async () => {
+  it('displays a confirmation message with human-facing name and help url when app has a checkout UI extension', async () => {
     // Given
     const outputInfo = mockSuccessfulCommandExecution({
       humanKey: 'Checkout UI',
@@ -49,6 +49,28 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
       `"\n  To find your extension, remember to cd extensions/name\n  For more details, see the docs (​http://help.com​) ✨\n"`,
+    )
+  })
+
+  it('displays a confirmation message with human-facing name and help url when app has a theme app extension', async () => {
+    // Given
+    const outputInfo = mockSuccessfulCommandExecution({
+      humanKey: 'Theme app extension',
+      helpURL: 'http://help.com',
+    })
+    vi.mocked(isThemeExtensionType).mockReturnValue(true)
+
+    // When
+    await AppScaffoldExtension.run()
+
+    // Then
+    expect(outputInfo.completed()).toMatchInlineSnapshot(
+      '"Your Theme app extension extension was added to your project!"',
+    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(
+      '"\n  To find your extension, remember to cd extensions/name' +
+        '\n  To preview your project, run yarn dev' +
+        '\n  For more details, see the docs (​http://help.com​) ✨\n"',
     )
   })
 

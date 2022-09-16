@@ -1,5 +1,5 @@
 import {App, AppInterface} from './app.js'
-import {UIExtension} from './extensions.js'
+import {ThemeExtension, UIExtension} from './extensions.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -43,5 +43,20 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
     entrySourceFilePath: uiExtension?.entrySourceFilePath ?? '/tmp/project/extensions/test-ui-extension/src/index.js',
     idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
     devUUID: 'devUUID',
+  }
+}
+
+export function testThemeExtensions(): ThemeExtension {
+  return {
+    configuration: {
+      name: 'theme extension name',
+      type: 'theme',
+    },
+    idEnvironmentVariableName: '',
+    localIdentifier: 'extension title',
+    configurationPath: '',
+    directory: './my-extension',
+    type: 'theme',
+    graphQLType: 'THEME_APP_EXTENSION',
   }
 }

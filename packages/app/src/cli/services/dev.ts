@@ -3,6 +3,7 @@ import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdate
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -13,6 +14,8 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {OutputProcess} from '@shopify/cli-kit/src/output.js'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {AdminSession} from '@shopify/cli-kit/src/session.js'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -28,6 +31,8 @@ export interface DevOptions {
   tunnelUrl?: string
   tunnel: boolean
   noTunnel: boolean
+  theme?: string
+  themeExtensionPort?: number
 }
 
 interface DevWebOptions {
@@ -55,6 +60,7 @@ async function dev(options: DevOptions) {
     tunnelPlugin,
   } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
+  const [adminSession, storefrontToken] = await ensureThemeExtensionTokens(options, storeFqdn)
 
   const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
     ...options,
@@ -96,8 +102,9 @@ async function dev(options: DevOptions) {
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = usingLocalhost ? await port.getRandomPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
   if (options.app.extensions.ui.length > 0) {
-    const devExt = await devExtensionsTarget(
+    const devExt = await devUIExtensionsTarget(
       options.app,
       apiKey,
       proxyUrl,
@@ -112,6 +119,14 @@ async function dev(options: DevOptions) {
   outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
+
+  if (options.app.extensions.theme.length > 0) {
+    const extension = options.app.extensions.theme[0]!
+    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    const devExt = await devThemeExtensionTarget(args, adminSession!, storefrontToken!, token)
+    additionalProcesses.push(devExt)
+  }
+
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
@@ -153,6 +168,20 @@ function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: numb
     prefix: devFrontend.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
       await devFrontend.action(stdout, stderr, signal, port)
+    },
+  }
+}
+
+function devThemeExtensionTarget(
+  args: string[],
+  adminSession: AdminSession,
+  storefrontToken: string,
+  token: string,
+): output.OutputProcess {
+  return {
+    prefix: 'extensions',
+    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal) => {
+      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
     },
   }
 }
@@ -224,7 +253,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   }
 }
 
-async function devExtensionsTarget(
+async function devUIExtensionsTarget(
   app: AppInterface,
   apiKey: string,
   url: string,
@@ -254,6 +283,22 @@ async function devExtensionsTarget(
       })
     },
   }
+}
+
+/**
+ * Ensure the Admin session and the storefront renderer token
+ * @param options {DevOptions[]} - dev command optins
+ * @param store {string} - the store FQDN
+ */
+async function ensureThemeExtensionTokens(options: DevOptions, store: string): Promise<[AdminSession?, string?]> {
+  if (options.app.extensions.theme.length > 0) {
+    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
+
+    return [adminSession, storefrontToken]
+  }
+
+  return []
 }
 
 /**

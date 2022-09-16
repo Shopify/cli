@@ -7,14 +7,17 @@ import {
   fetchOrgFromId,
   fetchStoreByDomain,
   FetchResponse,
+  fetchAppExtensionRegistrations,
 } from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
+import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
+import {ThemeExtension} from '../models/app/extensions.js'
 import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -211,7 +214,7 @@ interface DeployEnvironmentOutput {
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
  */
-async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
+export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
   const devAppId = (await store.getAppInfo(app.directory))?.appId
   if (!devAppId) return undefined
 
@@ -225,28 +228,33 @@ async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<O
   return reuse ? partnersResponse : undefined
 }
 
+export async function ensureThemeExtensionDevEnvironment(
+  options: DevEnvironmentOptions,
+  extension: ThemeExtension,
+  token: string,
+): Promise<ExtensionRegistration> {
+  const [partnersApp, _] = await fetchAppAndIdentifiers(options, token)
+  const apiKey = partnersApp.apiKey
+
+  const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
+  const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
+    return extension.type === 'THEME_APP_EXTENSION'
+  })
+
+  if (remoteRegistrations.length > 0) {
+    return remoteRegistrations[0]!
+  }
+
+  const registration = await createExtension(apiKey, extension.type, extension.localIdentifier, token)
+
+  return registration
+}
+
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
   const token = await session.ensureAuthenticatedPartners()
-  let envIdentifiers = await getAppIdentifiers({app: options.app})
-
-  let partnersApp: OrganizationApp | undefined
-
-  if (options.reset) {
-    envIdentifiers = {app: undefined, extensions: {}}
-  } else if (envIdentifiers.app) {
-    const apiKey = options.apiKey ?? envIdentifiers.app
-    partnersApp = await fetchAppFromApiKey(apiKey, token)
-    if (!partnersApp) throw DeployAppNotFound(apiKey, options.app.packageManager)
-  } else {
-    partnersApp = await fetchDevAppAndPrompt(options.app, token)
-  }
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
-
-  if (!partnersApp) {
-    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
-    partnersApp = result.partnersApp
-  }
 
   identifiers = await ensureDeploymentIdsPresence({
     app: options.app,
@@ -279,7 +287,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
   return result
 }
 
-async function fetchOrganizationAndFetchOrCreateApp(
+export async function fetchOrganizationAndFetchOrCreateApp(
   app: AppInterface,
   token: string,
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
@@ -287,6 +295,32 @@ async function fetchOrganizationAndFetchOrCreateApp(
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const partnersApp = await selectOrCreateApp(app, apps, organization, token, undefined)
   return {orgId, partnersApp}
+}
+
+async function fetchAppAndIdentifiers(
+  options: {app: AppInterface; reset: boolean; packageManager?: PackageManager; apiKey?: string},
+  token: string,
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
+  let envIdentifiers = await getAppIdentifiers({app: options.app})
+
+  let partnersApp: OrganizationApp | undefined
+
+  if (options.reset) {
+    envIdentifiers = {app: undefined, extensions: {}}
+  } else if (envIdentifiers.app) {
+    const apiKey = options.apiKey ?? envIdentifiers.app
+    partnersApp = await fetchAppFromApiKey(apiKey, token)
+    if (!partnersApp) throw DeployAppNotFound(apiKey, options.app.packageManager)
+  } else {
+    partnersApp = await fetchDevAppAndPrompt(options.app, token)
+  }
+
+  if (!partnersApp) {
+    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
+    partnersApp = result.partnersApp
+  }
+
+  return [partnersApp, envIdentifiers]
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
