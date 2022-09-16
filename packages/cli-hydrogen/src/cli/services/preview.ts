@@ -1,9 +1,18 @@
 import {path, error, system, file, output} from '@shopify/cli-kit'
+import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
   directory: string
   port: number
+}
+
+interface PreviewOptionsWorker extends PreviewOptions {
+  envPath: string | undefined
+}
+
+interface EnvConfig {
+  env: DotEnvFile['variables']
 }
 
 export async function previewInNode({directory, port}: PreviewOptions) {
@@ -33,7 +42,7 @@ export async function previewInNode({directory, port}: PreviewOptions) {
   })
 }
 
-export async function previewInWorker({directory, port}: PreviewOptions) {
+export async function previewInWorker({directory, port, envPath}: PreviewOptionsWorker) {
   const config = {
     port,
     workerFile: 'dist/worker/index.js',
@@ -43,6 +52,7 @@ export async function previewInWorker({directory, port}: PreviewOptions) {
     watch: true,
     buildWatchPaths: ['./src'],
     autoReload: true,
+    ...(envPath && (await parseEnvPath(envPath))),
   }
 
   await file.write(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
@@ -50,6 +60,13 @@ export async function previewInWorker({directory, port}: PreviewOptions) {
   function cleanUp(options: {exit: boolean}) {
     if (options.exit) {
       file.removeSync(path.resolve(directory, 'mini-oxygen.config.json'))
+    }
+  }
+
+  async function parseEnvPath(envPath: string): Promise<EnvConfig> {
+    const {variables} = await readAndParseDotEnv(envPath)
+    return {
+      env: variables,
     }
   }
 
