@@ -9,7 +9,7 @@ import {
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
-import {ThemeExtension, UIExtension} from '../models/app/extensions.js'
+import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
@@ -115,15 +115,18 @@ async function dev(options: DevOptions) {
     )
     proxyTargets.push(devExt)
   }
-  if (options.app.extensions.theme.length > 0) {
-    const extension = options.app.extensions.theme[0]!
-    const devExt = await devThemeExtensionTarget(options, extension, apiKey, adminSession!, storefrontToken!, token)
-    proxyTargets.push(devExt)
-  }
 
   outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
+
+  if (options.app.extensions.theme.length > 0) {
+    const extension = options.app.extensions.theme[0]!
+    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    const devExt = await devThemeExtensionTarget(args, adminSession!, storefrontToken!, token)
+    additionalProcesses.push(devExt)
+  }
+
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
@@ -170,18 +173,14 @@ function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: numb
 }
 
 function devThemeExtensionTarget(
-  options: DevOptions,
-  extension: ThemeExtension,
-  apiKey: string,
+  args: string[],
   adminSession: AdminSession,
   storefrontToken: string,
   token: string,
-): ReverseHTTPProxyTarget {
+): output.OutputProcess {
   return {
-    logPrefix: 'extensions',
-    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal, _port: number) => {
-      const args = await themeExtensionArgs(extension, apiKey, token, options)
-
+    prefix: 'extensions',
+    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal) => {
       await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
     },
   }
