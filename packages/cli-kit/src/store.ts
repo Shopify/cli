@@ -141,7 +141,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
   }
 
   clearAppInfo(directory: string): void {
-    debug(content`Clearning app information for directory ${token.path(directory)}...`)
+    debug(content`Clearing app information for directory ${token.path(directory)}...`)
     const apps = this.get('appInfo') ?? []
     const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
     if (index !== -1) {
@@ -151,7 +151,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
   }
 
   clearAllAppInfo(): void {
-    debug(content`Clearning all app information...`)
+    debug(content`Clearing all app information...`)
     this.set('appInfo', [])
   }
 
