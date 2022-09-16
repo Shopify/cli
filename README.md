@@ -1,4 +1,4 @@
-Don't merge this :)
+Don't merge this :))
 
 <img src="https://github.com/Shopify/cli/blob/main/assets/logo.png?raw=true" width="150"/>
 
