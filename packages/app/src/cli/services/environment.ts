@@ -237,7 +237,9 @@ export async function ensureThemeExtensionDevEnvironment(
   const apiKey = partnersApp.apiKey
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
-  const remoteRegistrations = remoteSpecifications.app.extensionRegistrations
+  const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
+    return extension.type === 'THEME_APP_EXTENSION'
+  })
 
   if (remoteRegistrations.length > 0) {
     return remoteRegistrations[0]!

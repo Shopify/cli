@@ -506,6 +506,12 @@ describe('ensureThemeExtensionDevEnvironment', () => {
       app: {
         extensionRegistrations: [
           {
+            id: 'other ID',
+            uuid: 'other UUID',
+            title: 'other extension',
+            type: 'other',
+          },
+          {
             id: 'existing ID',
             uuid: 'UUID',
             title: 'theme app extension',
