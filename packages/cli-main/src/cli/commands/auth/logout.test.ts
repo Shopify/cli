@@ -17,10 +17,13 @@ beforeEach(() => {
 
 describe('logs out', () => {
   it('clears the session', async () => {
+    // Given
     const outputMock = outputMocker.mockAndCaptureOutput()
 
+    // When
     await Logout.run()
 
+    // Then
     expect(session.logout).toHaveBeenCalledOnce()
     expect(outputMock.success()).toMatchInlineSnapshot('"Logged out from Shopify"')
   })
