@@ -22,6 +22,7 @@ export const CreateAppQuery = gql`
           secret
         }
         appType
+        grantedScopes
       }
       userErrors {
         field
@@ -52,6 +53,7 @@ export interface CreateAppQuerySchema {
         secret: string
       }[]
       appType: string
+      grantedScopes: string[]
     }
     userErrors: {
       field: string[]

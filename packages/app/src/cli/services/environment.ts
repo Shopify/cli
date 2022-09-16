@@ -268,6 +268,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
       title: partnersApp.title,
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,
+      grantedScopes: partnersApp.grantedScopes,
     },
     partnersOrganizationId: partnersApp.organizationId,
     identifiers,

@@ -102,6 +102,7 @@ async function dev(options: DevOptions) {
       apiKey,
       proxyUrl,
       storeFqdn,
+      app.grantedScopes,
       options.subscriptionProductUrl,
       options.checkoutCartUrl,
     )
@@ -228,6 +229,7 @@ async function devExtensionsTarget(
   apiKey: string,
   url: string,
   storeFqdn: string,
+  grantedScopes: string[],
   subscriptionProductUrl?: string,
   checkoutCartUrl?: string,
 ): Promise<ReverseHTTPProxyTarget> {
@@ -246,6 +248,7 @@ async function devExtensionsTarget(
         port,
         storeFqdn,
         apiKey,
+        grantedScopes,
         cartUrl,
         subscriptionProductUrl,
       })
