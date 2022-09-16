@@ -1,5 +1,5 @@
 import {themeExtensionArgs} from './theme-extension-args'
-import {ensureDeployEnvironment} from '../environment'
+import {ensureThemeExtensionDevEnvironment} from '../environment'
 import {testApp, testThemeExtensions} from '../../models/app/app.test-data'
 import {beforeAll, describe, expect, it, vi} from 'vitest'
 
@@ -11,31 +11,21 @@ beforeAll(() => {
 describe('themeExtensionArgs', async () => {
   it('returns valid theme extension arguments', async () => {
     const apiKey = 'api_key_0000_1111_2222'
+    const token = 'token'
     const reset = false
     const options = {app: testApp(), reset, themeExtensionPort: 8282, theme: 'theme ID'}
     const extension = testThemeExtensions()
 
-    const deployEnvironmentOutput = {
-      app: options.app,
-      token: 'token',
-      partnersOrganizationId: '123',
-      partnersApp: {
-        id: '456',
-        title: 'title',
-        organizationId: 'orgID',
-      },
-      identifiers: {
-        app: options.app.name,
-        extensions: {},
-        extensionIds: {
-          'extension title': 'extension ID',
-        },
-      },
+    const registration = {
+      id: 'extension ID',
+      uuid: 'UUID',
+      type: 'THEME_APP_EXTENSION',
+      title: 'theme app extension',
     }
 
-    vi.mocked(ensureDeployEnvironment).mockReturnValue(Promise.resolve(deployEnvironmentOutput))
+    vi.mocked(ensureThemeExtensionDevEnvironment).mockReturnValue(Promise.resolve(registration))
 
-    const args = await themeExtensionArgs(extension, apiKey, options)
+    const args = await themeExtensionArgs(extension, apiKey, token, options)
 
     expect(args).toEqual([
       './my-extension',

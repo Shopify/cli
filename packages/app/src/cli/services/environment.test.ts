@@ -1,20 +1,34 @@
-import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
+import {
+  fetchAppExtensionRegistrations,
+  fetchAppFromApiKey,
+  fetchOrgAndApps,
+  fetchOrganizations,
+  fetchStoreByDomain,
+} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
-import {DevEnvironmentOptions, ensureDevEnvironment, ensureDeployEnvironment, DeployAppNotFound} from './environment.js'
+import {
+  DevEnvironmentOptions,
+  ensureDevEnvironment,
+  ensureDeployEnvironment,
+  ensureThemeExtensionDevEnvironment,
+  DeployAppNotFound,
+} from './environment.js'
+import {createExtension} from './dev/create-extension.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {WebType} from '../models/app/app.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
+  vi.mock('./dev/create-extension')
   vi.mock('./dev/select-app')
   vi.mock('./dev/select-store')
   vi.mock('../prompts/dev')
@@ -477,5 +491,64 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+  })
+})
+
+describe('ensureThemeExtensionDevEnvironment', () => {
+  test('fetches theme extension when it exists', async () => {
+    // Given
+    const app = testApp()
+    const token = 'token'
+    const extension = testThemeExtensions()
+
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+      app: {
+        extensionRegistrations: [
+          {
+            id: 'existing ID',
+            uuid: 'UUID',
+            title: 'theme app extension',
+            type: 'THEME_APP_EXTENSION',
+          },
+        ],
+      },
+    })
+
+    // When
+    const got = await ensureThemeExtensionDevEnvironment({app, reset: false}, extension, token)
+
+    // Then
+    expect('existing ID').toEqual(got.id)
+    expect('UUID').toEqual(got.uuid)
+    expect('theme app extension').toEqual(got.title)
+    expect('THEME_APP_EXTENSION').toEqual(got.type)
+  })
+
+  test('creates theme extension when it does not exist', async () => {
+    // Given
+    const app = testApp()
+    const token = 'token'
+    const extension = testThemeExtensions()
+
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+      app: {extensionRegistrations: []},
+    })
+    vi.mocked(createExtension).mockResolvedValue({
+      id: 'new ID',
+      uuid: 'UUID',
+      title: 'theme app extension',
+      type: 'THEME_APP_EXTENSION',
+    })
+
+    // When
+    const got = await ensureThemeExtensionDevEnvironment({app, reset: false}, extension, token)
+
+    // Then
+    expect('new ID').toEqual(got.id)
+    expect('UUID').toEqual(got.uuid)
+    expect('theme app extension').toEqual(got.title)
+    expect('THEME_APP_EXTENSION').toEqual(got.type)
   })
 })

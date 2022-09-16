@@ -180,7 +180,7 @@ function devThemeExtensionTarget(
   return {
     logPrefix: 'extensions',
     action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal, _port: number) => {
-      const args = await themeExtensionArgs(extension, apiKey, options)
+      const args = await themeExtensionArgs(extension, apiKey, token, options)
 
       await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
     },

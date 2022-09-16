@@ -1,16 +1,16 @@
 import {AppInterface} from '../../models/app/app.js'
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {ensureDeployEnvironment} from '../environment.js'
+import {ensureThemeExtensionDevEnvironment} from '../environment.js'
 
 export async function themeExtensionArgs(
   extension: ThemeExtension,
   apiKey: string,
+  token: string,
   options: {app: AppInterface; theme?: string; themeExtensionPort?: number; reset: boolean},
 ) {
-  const {identifiers} = await ensureDeployEnvironment(options)
-
+  const extensionRegistration = await ensureThemeExtensionDevEnvironment(options, extension, token)
+  const extensionId = extensionRegistration.id
   const directory = extension.directory
-  const extensionId = identifiers.extensionIds[extension.localIdentifier]!
   const extensionTitle = extension.localIdentifier
   const extensionType = extension.graphQLType
 
