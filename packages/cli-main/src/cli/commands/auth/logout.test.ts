@@ -13,7 +13,6 @@ beforeEach(() => {
       },
       store: {
         ...module.store,
-        removeSession: vi.fn(),
         clearAllAppInfo: vi.fn(),
       },
     }
@@ -25,7 +24,6 @@ describe('logs out', () => {
     await Logout.run()
 
     expect(session.logout).toHaveBeenCalledOnce()
-    expect(store.removeSession).toHaveBeenCalledOnce()
   })
 
   it('removes all app information', async () => {
