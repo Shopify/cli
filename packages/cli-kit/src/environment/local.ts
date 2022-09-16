@@ -100,8 +100,13 @@ export function codespaceURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.codespaceName]
 }
 
+// https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace#list-of-default-environment-variables
+export function codesandboxHost(env = process.env): string | undefined {
+  return env[constants.environmentVariables.codesandboxHost]
+}
+
 export function isCloudEnvironment(env = process.env): boolean {
-  return isCodespaces(env) || isGitpod(env) || isSpin(env)
+  return isCodespaces(env) || isGitpod(env) || isCodesandbox(env) || isSpin(env)
 }
 
 function isCodespaces(env = process.env): boolean {
@@ -110,6 +115,10 @@ function isCodespaces(env = process.env): boolean {
 
 function isGitpod(env = process.env): boolean {
   return isSet(env[constants.environmentVariables.gitpod])
+}
+
+function isCodesandbox(env = process.env): boolean {
+  return isSet(env[constants.environmentVariables.codesandboxHost])
 }
 
 /**

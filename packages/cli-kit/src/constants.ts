@@ -33,6 +33,7 @@ const constants = {
     codespaces: 'CODESPACES',
     codespaceName: 'CODESPACE_NAME',
     gitpod: 'GITPOD_WORKSPACE_URL',
+    codesandboxHost: 'HOSTNAME',
   },
   paths: {
     executables: {

@@ -2,6 +2,7 @@ import {tunnelConfigurationPrompt, updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {api, environment, error, output, plugins, port, store} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {codesandboxHost} from '@shopify/cli-kit/src/environment/local.js'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -44,6 +45,11 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   const hasExtensions = options.app.hasUIExtensions()
 
   const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
+
+  if (environment.local.codesandboxHost()) {
+    frontendUrl = `https://${codesandboxHost}.codesandbox.io`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
 
   if (environment.local.codespaceURL()) {
     frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
