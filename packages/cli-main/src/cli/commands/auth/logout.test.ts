@@ -1,6 +1,6 @@
 import Logout from './logout'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {session, store} from '@shopify/cli-kit'
+import {session, outputMocker} from '@shopify/cli-kit'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -11,24 +11,17 @@ beforeEach(() => {
         ...module.session,
         logout: vi.fn(),
       },
-      store: {
-        ...module.store,
-        clearAllAppInfo: vi.fn(),
-      },
     }
   })
 })
 
 describe('logs out', () => {
-  it('removes session', async () => {
+  it('clears the session', async () => {
+    const outputMock = outputMocker.mockAndCaptureOutput()
+
     await Logout.run()
 
     expect(session.logout).toHaveBeenCalledOnce()
-  })
-
-  it('removes all app information', async () => {
-    await Logout.run()
-
-    expect(store.clearAllAppInfo).toHaveBeenCalledOnce()
+    expect(outputMock.success()).toMatchInlineSnapshot('"Logged out from Shopify"')
   })
 })
