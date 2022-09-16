@@ -8,8 +8,6 @@ import Command from '@shopify/cli-kit/node/base-command'
 export default class EnvShow extends Command {
   static description = 'Print the environment variables for your app and extensions'
 
-  static hidden = true
-
   static flags = {
     ...cli.globalFlags,
     ...appFlags,

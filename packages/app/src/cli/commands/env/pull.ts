@@ -9,8 +9,6 @@ import Command from '@shopify/cli-kit/node/base-command'
 export default class EnvPull extends Command {
   static description = 'Pulls the environment variables for your app and extensions'
 
-  static hidden = true
-
   static flags = {
     ...cli.globalFlags,
     ...appFlags,
