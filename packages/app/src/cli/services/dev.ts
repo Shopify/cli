@@ -10,7 +10,8 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {error, analytics, output, port, system, session, abort} from '@shopify/cli-kit'
+import metadata from '../metadata.js'
+import {error, analytics, output, port, system, session, abort, plugins, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {Writable} from 'node:stream'
 
@@ -37,7 +38,8 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  if (!options.skipDependenciesInstallation) {
+  const skipDependenciesInstallation = options.skipDependenciesInstallation
+  if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign
     options = {
       ...options,
@@ -73,17 +75,18 @@ async function dev(options: DevOptions) {
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  let shouldUpdateURLs = false
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
-    const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
       appDirectory: options.app.directory,
       cachedUpdateURLs,
       newApp: app.newApp,
     })
-    if (shouldUpdate) await updateURLs(newURLs, apiKey, token)
-    outputUpdateURLsResult(shouldUpdate, newURLs, app)
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
     outputAppURL(storeFqdn, exposedUrl)
   }
 
@@ -141,6 +144,8 @@ async function dev(options: DevOptions) {
       proxyTargets.push(devFrontend)
     }
   }
+
+  await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
   await analytics.reportEvent({config: options.commandConfig})
 
@@ -264,6 +269,39 @@ async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, ch
   if (checkoutCartUrl) return checkoutCartUrl
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
+}
+
+async function logMetadataForDev(options: {
+  devOptions: DevOptions
+  tunnelUrl: string
+  shouldUpdateURLs: boolean
+  storeFqdn: string
+}) {
+  const tunnelType = await resolveTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  await metadata.addPublic(() => ({
+    cmd_dev_tunnel_type: tunnelType,
+    cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
+    cmd_dev_urls_updated: options.shouldUpdateURLs,
+    store_fqdn_hash: string.hashString(options.storeFqdn),
+  }))
+
+  await metadata.addSensitive(() => ({
+    store_fqdn: options.storeFqdn,
+    cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
+  }))
+}
+
+async function resolveTunnelType(options: Config, tunnelUrl: string): Promise<string | undefined> {
+  if (!tunnelUrl) {
+    return
+  }
+
+  if (tunnelUrl.includes('localhost')) {
+    return 'localhost'
+  }
+
+  const provider = (await plugins.getListOfTunnelPlugins(options)).plugins.find((plugin) => tunnelUrl.includes(plugin))
+  return provider ?? 'custom'
 }
 
 export default dev

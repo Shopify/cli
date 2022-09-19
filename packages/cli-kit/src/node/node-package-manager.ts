@@ -1,3 +1,4 @@
+import {frameworks, FrameworkDetectionItem} from './frameworks.js'
 import {exec} from '../system.js'
 import {exists as fileExists, read as readFile} from '../file.js'
 import {glob, dirname, join as pathJoin, findUp} from '../path.js'
@@ -6,6 +7,7 @@ import {latestNpmPackageVersion} from '../version.js'
 import {Version} from '../semver.js'
 import {content, token, debug} from '../output.js'
 import {AbortController, AbortSignal} from 'abort-controller'
+import {existsSync, readFileSync} from 'node:fs'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from '../system.js'
 
@@ -227,6 +229,11 @@ interface PackageJson {
    * The devDependencies attribute of the package.json
    */
   devDependencies?: {[key: string]: string}
+
+  /**
+   * The worskpaces attribute of the package.json
+   */
+  workspaces?: {packages?: string[]}
 }
 
 /**
@@ -443,4 +450,54 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
   } else {
     throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
   }
+}
+
+export async function resolveFramework(frontRootDirectory: string) {
+  const fwConfigFiles: {[key: string]: string | undefined} = {}
+
+  const matchedFramework = frameworks.find(
+    (framework) =>
+      (!framework.detectors?.some ||
+        framework.detectors?.some?.reduce(
+          (_previousDetectorsMatch: boolean, detector) =>
+            matchDetector(detector, loadFwConfigFile(frontRootDirectory, detector.path, fwConfigFiles)),
+          false,
+        )) &&
+      (!framework.detectors?.every ||
+        framework.detectors?.every?.reduce(
+          (previousDetectorsMatch: boolean, detector) =>
+            previousDetectorsMatch
+              ? matchDetector(detector, loadFwConfigFile(frontRootDirectory, detector.path, fwConfigFiles))
+              : false,
+          true,
+        )),
+  )
+
+  return matchedFramework ? matchedFramework.name : 'unknown'
+}
+
+function matchDetector(detector: FrameworkDetectionItem, fwConfigFiles: {[key: string]: string | undefined} = {}) {
+  if (!fwConfigFiles[detector.path]) return false
+
+  return !detector.matchContent || new RegExp(detector.matchContent).test(fwConfigFiles[detector.path]!)
+}
+
+function loadFwConfigFile(
+  rootPath: string,
+  fwConfigFileName: string,
+  fwConfigFiles: {[key: string]: string | undefined} = {},
+) {
+  if (fwConfigFiles[fwConfigFileName]) {
+    return fwConfigFiles
+  }
+
+  const fwConfigFilePath = pathJoin(rootPath, fwConfigFileName)
+  if (!existsSync(fwConfigFilePath)) {
+    return fwConfigFiles
+  }
+
+  const rawContent = readFileSync(fwConfigFilePath, {encoding: 'utf8'})
+
+  fwConfigFiles[fwConfigFileName] = rawContent
+  return fwConfigFiles
 }

@@ -1,3 +1,4 @@
+import {hashString} from './string.js'
 import {reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import {join as joinPath, dirname} from './path.js'
@@ -20,6 +21,7 @@ describe('event tracking', () => {
     vi.mock('./node/ruby.js')
     vi.mock('./os.js')
     vi.mock('./store.js')
+    vi.mock('./string.js')
 
     vi.mock('./version.js')
     vi.mock('./monorail.js')
@@ -28,6 +30,9 @@ describe('event tracking', () => {
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
     vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
     vi.mocked(environment.local.webIDEPlatform).mockReturnValue(undefined)
+    vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
+    vi.mocked(hashString).mockReturnValue('hashed-macaddress')
+    vi.mocked(environment.local.cloudEnvironment).mockReturnValue('spin')
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
@@ -49,14 +54,14 @@ describe('event tracking', () => {
   it('sends the expected data to Monorail with cached app info', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      const command = 'app dev'
+      const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
       vi.mocked(getAppInfo).mockResolvedValueOnce({
         appId: 'key1',
         orgId: '1',
         storeFqdn: 'domain1',
         directory: '/cached',
       })
-      await start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -71,11 +76,12 @@ describe('event tracking', () => {
         ],
       } as any
       await reportEvent({config})
-
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        command,
+        command: commandContent.command,
+        cmd_all_alias_used: commandContent.alias,
+        cmd_all_topic: commandContent.topic,
         time_start: 1643709599900,
         time_end: 1643709600000,
         total_time: 100,
@@ -87,10 +93,14 @@ describe('event tracking', () => {
         is_employee: false,
         env_plugin_installed_any_custom: true,
         env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
+        env_mac_address_hash: 'hashed-macaddress',
+        env_cloud: 'spin',
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
         metadata: expect.anything(),
+        env_mac_address: 'macAddress',
+        env_plugin_installed_all: JSON.stringify(['@shopify/built-in', 'a-custom-plugin']),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
       expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
@@ -101,8 +111,8 @@ describe('event tracking', () => {
   it('sends the expected data to Monorail when there is an error message', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      const command = 'app dev'
-      await start({command, args, currentTime: currentDate.getTime() - 100})
+      const commandContent = {command: 'dev', topic: 'app'}
+      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -114,7 +124,7 @@ describe('event tracking', () => {
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        command,
+        command: commandContent.command,
         time_start: 1643709599900,
         time_end: 1643709600000,
         total_time: 100,
@@ -140,8 +150,8 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
-      const command = 'app dev'
-      await start({command, args, currentTime: currentDate.getTime() - 100})
+      const commandContent = {command: 'dev', topic: 'app'}
+      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -158,12 +168,12 @@ describe('event tracking', () => {
   it('shows an error if something else fails', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      const command = 'app dev'
+      const commandContent = {command: 'dev', topic: 'app'}
       vi.mocked(os.platformAndArch).mockImplementationOnce(() => {
         throw new Error('Boom!')
       })
       const outputMock = mockAndCaptureOutput()
-      await start({command, args})
+      await start({commandContent, args})
 
       // When
       const config = {

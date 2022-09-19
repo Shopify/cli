@@ -7,6 +7,7 @@ import {
   getPackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
 import Command from '@shopify/cli-kit/node/base-command'
+import {getCliProjectDir} from '@shopify/cli-kit/src/cli.js'
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'
@@ -24,7 +25,7 @@ export default class Upgrade extends Command {
     const {flags} = await this.parse(Upgrade)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    const projectDir = await this.getProjectDir(directory)
+    const projectDir = await getCliProjectDir(directory)
     if (!projectDir) {
       throw new error.Abort(
         output.content`Couldn't find the configuration file for ${output.token.path(
@@ -58,23 +59,6 @@ export default class Upgrade extends Command {
     await this.installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
 
     output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
-  }
-
-  async getProjectDir(directory: string) {
-    return path.findUp(
-      async (dir: string) => {
-        const configFilesExist = await Promise.all(
-          ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'].map(async (configFile) => {
-            return file.exists(path.join(dir, configFile))
-          }),
-        )
-        if (configFilesExist.some((bool) => bool)) return dir
-      },
-      {
-        cwd: directory,
-        type: 'directory',
-      },
-    )
   }
 
   async installJsonDependencies(

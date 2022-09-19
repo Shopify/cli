@@ -4,6 +4,7 @@ import constants from '../constants.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import isInteractive from 'is-interactive'
+import macaddress from 'macaddress'
 import {homedir} from 'node:os'
 
 /**
@@ -91,10 +92,20 @@ export function useDeviceAuth(env = process.env): boolean {
 }
 
 export function isCloudEnvironment(env = process.env): boolean {
-  const isCodespaces = isTruthy(env[constants.environmentVariables.codespaces])
-  const isGitpod = isSet(env[constants.environmentVariables.gitpod])
-  const isSpin = isTruthy(env[constants.environmentVariables.spin])
-  return isCodespaces || isGitpod || isSpin
+  return cloudEnvironment(env) !== 'localhost'
+}
+
+export function cloudEnvironment(env = process.env): 'spin' | 'codespaces' | 'gitpod' | 'localhost' {
+  if (isTruthy(env[constants.environmentVariables.codespaces])) {
+    return 'codespaces'
+  }
+  if (isTruthy(env[constants.environmentVariables.gitpod])) {
+    return 'gitpod'
+  }
+  if (isTruthy(env[constants.environmentVariables.spin])) {
+    return 'spin'
+  }
+  return 'localhost'
 }
 
 /**
@@ -139,8 +150,12 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
  * Gets info on the Web IDE platform the CLI is running on, if applicable
  */
 export function webIDEPlatform(env = process.env) {
-  if (isTruthy(env.CODESPACES)) {
-    return 'codespaces'
-  }
-  return undefined
+  const cloudEnvironmentWithIDE = cloudEnvironment()
+  return cloudEnvironmentWithIDE === 'codespaces' || cloudEnvironmentWithIDE === 'gitpod'
+    ? cloudEnvironmentWithIDE
+    : undefined
+}
+
+export function macAddress() {
+  return macaddress.one()
 }

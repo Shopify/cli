@@ -14,7 +14,12 @@ import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/exten
 import metadata from '../../metadata.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
+import {
+  getDependencies,
+  getPackageManager,
+  getPackageName,
+  resolveFramework,
+} from '@shopify/cli-kit/node/node-package-manager'
 
 export type AppLoaderMode = 'strict' | 'report'
 
@@ -161,6 +166,7 @@ class AppLoader {
     return {
       directory: path.dirname(WebConfigurationFile),
       configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
+      framework: await resolveFramework(path.dirname(WebConfigurationFile)),
     }
   }
 
@@ -387,6 +393,10 @@ async function logMetadataForLoadedApp(
     const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
 
     const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webBackendFramework =
+      webBackendCount === 1
+        ? app.webs.filter((web) => web.configuration.type === WebType.Backend)[0]?.framework
+        : undefined
     const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
     const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
@@ -428,8 +438,15 @@ async function logMetadataForLoadedApp(
       app_web_backend_any: webBackendCount > 0,
       app_web_backend_count: webBackendCount,
       app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
+      app_web_framework: webBackendFramework,
       app_web_frontend_any: webFrontendCount > 0,
       app_web_frontend_count: webFrontendCount,
+    }
+  })
+
+  await metadata.addSensitive(async () => {
+    return {
+      app_name: app.name,
     }
   })
 }

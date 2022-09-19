@@ -1,5 +1,14 @@
 import {isSpin} from './spin.js'
-import {hasGit, isDevelopment, isShopify, isUnitTest, analyticsDisabled, useDeviceAuth} from './local.js'
+import {
+  hasGit,
+  isDevelopment,
+  isShopify,
+  isUnitTest,
+  analyticsDisabled,
+  useDeviceAuth,
+  cloudEnvironment,
+  macAddress,
+} from './local.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
@@ -183,5 +192,61 @@ describe('useDeviceAuth', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('cloudEnvironment', () => {
+  it('returns codespaces when CODESPACES is truthy', () => {
+    // Given
+    const env = {CODESPACES: '1'}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got).toBe('codespaces')
+  })
+
+  it('returns gitpod when GITPOD_WORKSPACE_ID is truthy', () => {
+    // Given
+    const env = {GITPOD_WORKSPACE_ID: '1'}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got).toBe('gitpod')
+  })
+
+  it('returns spin when SPIN is truthy', () => {
+    // Given
+    const env = {SPIN: '1'}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got).toBe('spin')
+  })
+
+  it('returns localhost when no cloud enviroment varible is ser', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got).toBe('localhost')
+  })
+})
+
+describe('macAddress', () => {
+  it('returns any mac address value', async () => {
+    // When
+    const got = await macAddress()
+
+    // Then
+    expect(got).not.toBeUndefined()
   })
 })

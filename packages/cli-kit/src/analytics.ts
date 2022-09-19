@@ -1,3 +1,4 @@
+import {string} from './index.js'
 import * as environment from './environment.js'
 import {platformAndArch} from './os.js'
 import {version as rubyVersion} from './node/ruby.js'
@@ -6,27 +7,32 @@ import constants from './constants.js'
 import * as metadata from './metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
-import {packageManagerUsedForCreating} from './node/node-package-manager.js'
+import {getPackageManager, packageManagerUsedForCreating} from './node/node-package-manager.js'
+import {macAddress} from './environment/local.js'
+import {CommandContent} from './node/hooks/prerun.js'
+import {isCliProject} from './cli.js'
 import {Interfaces} from '@oclif/core'
 
 interface StartOptions {
-  command: string
+  commandContent: CommandContent
   args: string[]
   currentTime?: number
   commandClass?: Interfaces.Command.Class
 }
 
-export const start = async ({command, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
+export const start = async ({commandContent, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
   await metadata.addSensitive(() => ({
     commandStartOptions: {
       startTime: currentTime,
-      startCommand: command,
+      startCommand: commandContent.command,
       startArgs: args,
     },
   }))
 
   await metadata.addPublic(() => ({
     cmd_all_launcher: packageManagerUsedForCreating(),
+    cmd_all_alias_used: commandContent.alias,
+    cmd_all_topic: commandContent.topic,
     cmd_all_plugin: commandClass?.plugin?.name,
   }))
 }
@@ -77,9 +83,14 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
   const currentTime = new Date().getTime()
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
-  const sensitivePluginData = await fanoutHooks(config, 'sensitive_command_metadata', {})
+  const {'@shopify/app': appSensitive, ...otherPluginsSensitive} = await fanoutHooks(
+    config,
+    'sensitive_command_metadata',
+    {},
+  )
 
-  const environmentData = getEnvironmentData(config)
+  const environmentData = await getEnvironmentData(config)
+  const sensitiveEnvironmentData = await getSensitiveEnvironmentData(config)
 
   return {
     public: {
@@ -99,24 +110,23 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
     sensitive: {
       args: startArgs.join(' '),
       error_message: errorMessage,
+      ...appSensitive,
+      ...sensitiveEnvironmentData,
       metadata: JSON.stringify({
         ...sensitiveMetadata,
         extraPublic: {
           ...otherPluginsPublic,
         },
-        extraSensitive: sensitivePluginData,
+        extraSensitive: {...otherPluginsSensitive},
       }),
     },
   }
 }
 
-export function getEnvironmentData(config: Interfaces.Config) {
+export async function getEnvironmentData(config: Interfaces.Config) {
   const ciPlatform = environment.local.ciPlatform()
 
-  const pluginNames = config.plugins
-    .map((plugin) => plugin.name)
-    .sort()
-    .filter((plugin) => !plugin.startsWith('@oclif/'))
+  const pluginNames = getPluginNames(config)
   const shopifyPlugins = pluginNames.filter((plugin) => plugin.startsWith('@shopify/'))
 
   const {platform, arch} = platformAndArch()
@@ -129,5 +139,22 @@ export function getEnvironmentData(config: Interfaces.Config) {
     env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
     env_shell: config.shell,
     env_web_ide: environment.local.webIDEPlatform(),
+    env_mac_address_hash: string.hashString(await macAddress()),
+    env_cloud: environment.local.cloudEnvironment(),
+    env_package_manager: (await isCliProject(process.cwd())) ? await getPackageManager(process.cwd()) : undefined,
   }
+}
+
+async function getSensitiveEnvironmentData(config: Interfaces.Config) {
+  return {
+    env_mac_address: await environment.local.macAddress(),
+    env_plugin_installed_all: JSON.stringify(getPluginNames(config)),
+  }
+}
+
+function getPluginNames(config: Interfaces.Config) {
+  return config.plugins
+    .map((plugin) => plugin.name)
+    .sort()
+    .filter((plugin) => !plugin.startsWith('@oclif/'))
 }
