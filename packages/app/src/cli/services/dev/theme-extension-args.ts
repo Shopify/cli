@@ -1,4 +1,3 @@
-import {AppInterface} from '../../models/app/app.js'
 import {ThemeExtension} from '../../models/app/extensions.js'
 import {ensureThemeExtensionDevEnvironment} from '../environment.js'
 
@@ -6,9 +5,9 @@ export async function themeExtensionArgs(
   extension: ThemeExtension,
   apiKey: string,
   token: string,
-  options: {app: AppInterface; theme?: string; themeExtensionPort?: number; reset: boolean},
+  options: {theme?: string; themeExtensionPort?: number},
 ) {
-  const extensionRegistration = await ensureThemeExtensionDevEnvironment(options, extension, token)
+  const extensionRegistration = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
   const extensionId = extensionRegistration.id
   const directory = extension.directory
   const extensionTitle = extension.localIdentifier
