@@ -229,11 +229,6 @@ interface PackageJson {
    * The devDependencies attribute of the package.json
    */
   devDependencies?: {[key: string]: string}
-
-  /**
-   * The worskpaces attribute of the package.json
-   */
-  workspaces?: {packages?: string[]}
 }
 
 /**

@@ -102,7 +102,6 @@ export interface Schemas {
       env_ci_platform?: Optional<string>
       env_mac_address_hash?: Optional<string>
       env_package_manager?: Optional<string>
-      env_package_manager_workspaces?: Optional<boolean>
       env_plugin_installed_any_custom?: Optional<boolean>
       env_plugin_installed_shopify?: Optional<string>
       env_shell?: Optional<string>
