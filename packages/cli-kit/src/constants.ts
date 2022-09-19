@@ -12,7 +12,7 @@ const cacheFolder = () => {
 const constants = {
   environmentVariables: {
     unitTest: 'SHOPIFY_UNIT_TEST',
-    env: 'SHOPIFY_ENV',
+    env: 'SHOPIFY_CLI_ENV',
     serviceEnv: 'SHOPIFY_SERVICE_ENV',
     runAsUser: 'SHOPIFY_RUN_AS_USER',
     spinInstance: 'SPIN_INSTANCE',
