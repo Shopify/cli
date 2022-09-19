@@ -19,10 +19,9 @@ export const hook: Hook.Prerun = async (options) => {
 }
 
 function parseNormalCommand(commandClass: Interfaces.Command.Class): CommandContent {
-  const parsedData = parseTopicAndCommand(commandClass.id)
   return {
-    command: parsedData.command,
-    topic: parsedData.topic,
+    command: commandClass.id.replace(/:/g, ' '),
+    topic: parseTopic(commandClass.id),
     alias: findAlias(commandClass.aliases),
   }
 }
@@ -37,14 +36,11 @@ function parseCreateCommand(commandClass: Interfaces.Command.Class): CommandCont
   return {command: commandClass.plugin?.alias.substring(commandClass.plugin?.alias.indexOf('/') + 1)}
 }
 
-function parseTopicAndCommand(cmd: string): {topic?: string; command: string} {
-  let command = cmd
-  let topic
-  if (cmd.lastIndexOf(':') !== -1) {
-    command = cmd.slice(cmd.lastIndexOf(':') + 1)
-    topic = cmd.slice(0, cmd.lastIndexOf(':')).replace(/:/g, ' ')
+function parseTopic(cmd: string) {
+  if (cmd.lastIndexOf(':') === -1) {
+    return
   }
-  return {topic, command}
+  return cmd.slice(0, cmd.lastIndexOf(':')).replace(/:/g, ' ')
 }
 
 function findAlias(aliases: string[]) {
@@ -52,7 +48,6 @@ function findAlias(aliases: string[]) {
     alias.split(':').every((aliasToken) => process.argv.includes(aliasToken)),
   )
   if (existingAlias) {
-    const existingAliasTokens = existingAlias.split(':')
-    return existingAliasTokens[existingAliasTokens.length - 1]
+    return existingAlias.replace(/:/g, ' ')
   }
 }
