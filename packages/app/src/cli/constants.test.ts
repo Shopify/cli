@@ -123,6 +123,19 @@ describe('get extension type output configuration', () => {
     })
   })
 
+  it('obtain the correct configuration for extension type delivery_customization', () => {
+    // Given
+    const extensionType = 'delivery_customization'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
+      humanKey: 'Delivery customization',
+    })
+  })
+
   it('obtain the correct configuration for extension type shipping_rate_presenter', () => {
     // Given
     const extensionType = 'shipping_rate_presenter'

@@ -97,6 +97,7 @@
           "shipping_discounts",
           "payment_customization",
           "shipping_rate_presenter",
+          "delivery_customization"
         ],
         "default": "checkout_ui_extension",
     },
