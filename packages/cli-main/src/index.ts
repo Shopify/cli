@@ -2,7 +2,11 @@ import {runCLI} from '@shopify/cli-kit/node/cli'
 
 export {useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 
-async function runShopifyCLI(development: boolean) {
+interface RunShopifyCLIOptions {
+  development: boolean
+}
+
+async function runShopifyCLI({development}: RunShopifyCLIOptions) {
   await runCLI({
     moduleURL: import.meta.url,
     development,

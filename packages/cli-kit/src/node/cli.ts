@@ -55,7 +55,7 @@ export async function runCLI(options: RunCLIOptions) {
 export async function runCreateCLI(options: RunCLIOptions) {
   /**
    * We need to call this method before we do any imports because they
-   * migth transitively initialize debug and DEBUG=* has no effect then.
+   * might transitively initialize debug and DEBUG=* has no effect then.
    */
   setupEnvironmentVariables(options)
 
