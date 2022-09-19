@@ -30,7 +30,7 @@ export default class Upgrade extends Command {
     const projectDir = await this.getProjectDir(directory)
     if (projectDir) {
       newestVersion = await this.upgradeLocalShopify(projectDir)
-    } else if (process.env.npm_config_user_agent) {
+    } else if (this.usingPackageManager()) {
       throw new error.Abort(
         output.content`Couldn't find the configuration file for ${output.token.path(
           directory,
@@ -68,7 +68,7 @@ export default class Upgrade extends Command {
     const packageJsonDevDependencies: {[key: string]: string} = packageJson.devDependencies || {}
 
     let currentVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[cliDependency]!
-    if (currentVersion.slice(0, 1).match(/[\^~]/)) currentVersion = this.config.version
+    if (currentVersion.slice(0, 1).match(/[\^~]/)) currentVersion = this.getCurrentVersion()
     const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
 
     if (!newestVersion) return this.wontInstall(currentVersion)
@@ -81,7 +81,7 @@ export default class Upgrade extends Command {
   }
 
   async upgradeGlobalShopify(): Promise<string | void> {
-    const currentVersion = this.config.version
+    const currentVersion = this.getCurrentVersion()
     const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
 
     if (!newestVersion) return this.wontInstall(currentVersion)
@@ -148,5 +148,13 @@ export default class Upgrade extends Command {
         stderr: process.stderr,
       })
     }
+  }
+
+  getCurrentVersion(): string {
+    return this.config.version
+  }
+
+  usingPackageManager(): boolean {
+    return Boolean(process.env.npm_config_user_agent)
   }
 }
