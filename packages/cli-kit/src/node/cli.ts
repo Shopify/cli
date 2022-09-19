@@ -1,10 +1,16 @@
+/**
+ * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
+ * set the DEBUG environment variable before the 'debug' package sets up its configuration when modules
+ * are loaded statically.
+ */
+
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
   development: boolean
 }
 
-export function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) {
+function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) {
   /**
    * By setting DEBUG=* when --verbose is passed we are increasing the
    * verbosity of oclif. Oclif uses debug (https://www.npmjs.com/package/debug)
@@ -24,6 +30,7 @@ export function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'developm
  * @param options {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
+  setupEnvironmentVariables(options)
   /**
    * These imports need to be dynamic because if they are static
    * they are loaded before se set the DEBUG=* environment variable
@@ -45,6 +52,8 @@ export async function runCLI(options: RunCLIOptions) {
  * @param options
  */
 export async function runCreateCLI(options: RunCLIOptions) {
+  setupEnvironmentVariables(options)
+
   const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
   const {moduleDirectory} = await import('../path.js')
 
