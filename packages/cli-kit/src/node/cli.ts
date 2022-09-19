@@ -1,16 +1,10 @@
-// CLI
-import {isTruthy} from '../environment/utilities.js'
-import constants from '../constants.js'
-import {join} from '../path.js'
-import {captureOutput, exec} from '../system.js'
-
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
   development: boolean
 }
 
-function setupEnvironmentVariables(options: RunCLIOptions) {
+export function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) {
   /**
    * By setting DEBUG=* when --verbose is passed we are increasing the
    * verbosity of oclif. Oclif uses debug (https://www.npmjs.com/package/debug)
@@ -30,8 +24,6 @@ function setupEnvironmentVariables(options: RunCLIOptions) {
  * @param options {RunCLIOptions} Options.
  */
 export async function runCLI(options: RunCLIOptions) {
-  setupEnvironmentVariables(options)
-
   /**
    * These imports need to be dynamic because if they are static
    * they are loaded before se set the DEBUG=* environment variable
@@ -53,12 +45,6 @@ export async function runCLI(options: RunCLIOptions) {
  * @param options
  */
 export async function runCreateCLI(options: RunCLIOptions) {
-  /**
-   * We need to call this method before we do any imports because they
-   * might transitively initialize debug and DEBUG=* has no effect then.
-   */
-  setupEnvironmentVariables(options)
-
   const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
   const {moduleDirectory} = await import('../path.js')
 
@@ -76,11 +62,16 @@ export async function runCreateCLI(options: RunCLIOptions) {
 }
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
+  const {isTruthy} = await import('../environment/utilities.js')
+  const constants = await import('../constants.js')
+  const {join} = await import('../path.js')
+  const {exec} = await import('../system.js')
+
   // Temporary flag while we test out this feature and ensure it won't break anything!
-  if (!isTruthy(process.env[constants.environmentVariables.enableCliRedirect])) return false
+  if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
 
   // Setting an env variable in the child process prevents accidental recursion.
-  if (isTruthy(process.env[constants.environmentVariables.skipCliRedirect])) return false
+  if (isTruthy(process.env[constants.default.environmentVariables.skipCliRedirect])) return false
 
   // If already running via package manager, we can assume it's running correctly already.
   if (process.env.npm_config_user_agent) return false
@@ -93,7 +84,7 @@ export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> 
   try {
     await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {
       stdio: 'inherit',
-      env: {[constants.environmentVariables.skipCliRedirect]: '1'},
+      env: {[constants.default.environmentVariables.skipCliRedirect]: '1'},
     })
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (processError: any) {
@@ -114,6 +105,8 @@ interface PackageJSON {
 }
 
 async function localCliPackage(): Promise<CliPackageInfo | undefined> {
+  const {captureOutput} = await import('../system.js')
+
   let npmListOutput = ''
   let localShopifyCLI: PackageJSON = {}
   try {
