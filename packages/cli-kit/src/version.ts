@@ -1,5 +1,5 @@
 import {content, token, debug} from './output.js'
-import {moduleDirectory} from './path.js'
+import {findUp, moduleDirectory} from './path.js'
 import {Bug} from './error.js'
 import {findUpAndReadPackageJson} from './node/node-package-manager.js'
 import latestVersion from 'latest-version'
