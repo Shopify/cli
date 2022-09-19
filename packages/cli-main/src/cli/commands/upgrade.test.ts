@@ -80,6 +80,39 @@ describe('upgrade global CLI', () => {
       `)
     })
   })
+
+  it('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
+    const currentCliVersion = await constants.versions.cliKit()
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputMock = outputMocker.mockAndCaptureOutput()
+      vi.spyOn(Upgrade.prototype as any, 'parse').mockResolvedValue({flags: {path: tmpDir}})
+      vi.spyOn(Upgrade.prototype as any, 'getCurrentVersion').mockReturnValue(oldCliVersion)
+      vi.spyOn(Upgrade.prototype as any, 'usingPackageManager').mockReturnValue(false)
+      const captureOutputSpy = vi.mocked(system.captureOutput)
+      captureOutputSpy.mockResolvedValue('shopify-cli@3')
+
+      // When
+      await Upgrade.run()
+
+      // Then
+      expect(captureOutputSpy).toHaveBeenCalledWith('brew', ['list', '-1'])
+      expect(vi.mocked(system.exec)).toHaveBeenCalledWith(
+        'brew',
+        [
+          'upgrade',
+          'shopify-cli@3',
+        ],
+        {stdio: 'inherit'}
+      )
+      expect(outputMock.info()).toMatchInlineSnapshot(`
+        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nHomebrew installation detected. Attempting to upgrade via brew upgrade..."
+      `)
+      expect(outputMock.success()).toMatchInlineSnapshot(`
+        "Upgraded Shopify CLI to version ${currentCliVersion}"
+      `)
+    })
+  })
 })
 
 describe('upgrade local CLI', () => {
