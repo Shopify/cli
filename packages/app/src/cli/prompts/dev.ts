@@ -19,11 +19,12 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 
 export async function selectAppPrompt(apps: OrganizationApp[]): Promise<OrganizationApp> {
   const appList = apps.map((app) => ({name: app.title, value: app.apiKey}))
+  appList.sort((a, b) => a.name.localeCompare(b.name))
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
       name: 'apiKey',
-      message: 'Which existing app is this for?',
+      message: 'Which existing app is this for? (Start typing to filter the list)',
       choices: appList,
     },
   ])

@@ -40,6 +40,13 @@ const APP2: OrganizationApp = {
   apiSecretKeys: [{secret: 'secret2'}],
   organizationId: '1',
 }
+const APPZ: OrganizationApp = {
+  id: '3',
+  title: 'z_app',
+  apiKey: 'key3',
+  apiSecretKeys: [{secret: 'secret3'}],
+  organizationId: '1',
+}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -108,10 +115,36 @@ describe('selectApp', () => {
       {
         type: 'autocomplete',
         name: 'apiKey',
-        message: 'Which existing app is this for?',
+        message: 'Which existing app is this for? (Start typing to filter the list)',
         choices: [
           {name: 'app1', value: 'key1'},
           {name: 'app2', value: 'key2'},
+        ],
+      },
+    ])
+  })
+})
+
+describe('sortedApps', () => {
+  it('returns apps sorted by name', async () => {
+    // Given the apps in reverse alphabetical order it should be returned sorted
+    const apps: OrganizationApp[] = [APPZ, APP1, APP2]
+    vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'key2'})
+
+    // When
+    const _got = await selectAppPrompt(apps)
+
+    // Then
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'autocomplete',
+        name: 'apiKey',
+        message: 'Which existing app is this for? (Start typing to filter the list)',
+        // The presented choices should be in alphabetical order
+        choices: [
+          {name: 'app1', value: 'key1'},
+          {name: 'app2', value: 'key2'},
+          {name: 'z_app', value: 'key3'},
         ],
       },
     ])
