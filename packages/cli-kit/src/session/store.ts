@@ -3,7 +3,7 @@ import constants from '../constants.js'
 import {platformAndArch} from '../os.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store.js'
 import {content, debug} from '../output.js'
-import {getSession, removeSession, setSession} from '../store.js'
+import {getSession, removeSession, setSession, clearAllAppInfo} from '../store.js'
 import type {Session} from './schema.js'
 
 /**
@@ -63,6 +63,8 @@ export async function remove() {
   } else {
     await removeSession()
   }
+
+  await clearAllAppInfo()
 }
 
 /**
