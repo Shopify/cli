@@ -10,7 +10,7 @@ import {
 import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
 import {haiku, ui, environment} from '@shopify/cli-kit'
 
-interface ScaffoldExtensionOptions {
+interface GenerateExtensionOptions {
   name?: string
   extensionType?: string
   extensionTypesAlreadyAtQuota: string[]
@@ -18,7 +18,7 @@ interface ScaffoldExtensionOptions {
   directory: string
 }
 
-interface ScaffoldExtensionOutput {
+interface GenerateExtensionOutput {
   name: string
   extensionType: ExtensionTypes
   extensionFlavor?: string
@@ -41,10 +41,10 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   }
 }
 
-const scaffoldExtensionPrompt = async (
-  options: ScaffoldExtensionOptions,
+const generateExtensionPrompt = async (
+  options: GenerateExtensionOptions,
   prompt = ui.prompt,
-): Promise<ScaffoldExtensionOutput> => {
+): Promise<GenerateExtensionOutput> => {
   const questions: ui.Question<'name' | 'extensionType'>[] = []
   const isShopify = await environment.local.isShopify()
   const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
@@ -90,7 +90,7 @@ const scaffoldExtensionPrompt = async (
       default: await haiku.generate({suffix: 'ext', directory: options.directory}),
     })
   }
-  let promptOutput: ScaffoldExtensionOutput = await prompt(questions)
+  let promptOutput: GenerateExtensionOutput = await prompt(questions)
   const extensionType = {...options, ...promptOutput}.extensionType
   if (!options.extensionFlavor && (isUiExtensionType(extensionType) || isFunctionExtensionType(extensionType))) {
     promptOutput = {
@@ -110,4 +110,4 @@ function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el
   return coll.includes(el as TNarrow)
 }
 
-export default scaffoldExtensionPrompt
+export default generateExtensionPrompt

@@ -1,8 +1,9 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generatePartnersURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -11,8 +12,11 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import metadata from '../metadata.js'
-import {error, analytics, output, port, system, session, abort, plugins, string} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, plugins, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {OutputProcess} from '@shopify/cli-kit/src/output.js'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {AdminSession} from '@shopify/cli-kit/src/session.js'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -26,7 +30,10 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
+  tunnel: boolean
   noTunnel: boolean
+  theme?: string
+  themeExtensionPort?: number
 }
 
 interface DevWebOptions {
@@ -47,26 +54,20 @@ async function dev(options: DevOptions) {
     }
   }
   const token = await session.ensureAuthenticatedPartners()
-  const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
+  const {
+    identifiers,
+    storeFqdn,
+    app,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
+  const [adminSession, storefrontToken] = await ensureThemeExtensionTokens(options, storeFqdn)
 
-  let frontendPort: number
-  let frontendUrl: string
-
-  if (options.noTunnel === true) {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = 'http://localhost'
-  } else if (options.tunnelUrl) {
-    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    }
-    frontendPort = Number(matches[2])
-    frontendUrl = matches[1]!
-  } else {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig, frontendPort)
-  }
+  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
+    ...options,
+    cachedTunnelPlugin: tunnelPlugin,
+  })
 
   const backendPort = await port.getRandomPort()
 
@@ -74,7 +75,7 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
-  const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
@@ -102,46 +103,51 @@ async function dev(options: DevOptions) {
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyUrl = frontendUrl
-  const proxyPort = options.noTunnel === true ? await port.getRandomPort() : frontendPort
+  const proxyPort = usingLocalhost ? await port.getRandomPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
   if (options.app.extensions.ui.length > 0) {
-    const devExt = await devExtensionsTarget(
+    const devExt = await devUIExtensionsTarget(
       options.app,
       apiKey,
       proxyUrl,
       storeFqdn,
+      app.grantedScopes,
       options.subscriptionProductUrl,
       options.checkoutCartUrl,
     )
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(options.app, storeFqdn, options.noTunnel === true ? `${proxyUrl}:${proxyPort}` : proxyUrl)
+  outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
+
+  if (options.app.extensions.theme.length > 0) {
+    const extension = options.app.extensions.theme[0]!
+    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    const devExt = await devThemeExtensionTarget(args, adminSession!, storefrontToken!, token)
+    additionalProcesses.push(devExt)
+  }
+
   if (backendConfig) {
     additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
   }
 
   if (frontendConfig) {
-    const devFrontend = devFrontendTarget({
+    const frontendOptions: DevFrontendTargetOptions = {
       web: frontendConfig,
       apiKey,
       scopes: options.app.configuration.scopes,
       apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
-    })
-    if (options.noTunnel) {
-      const devFrontendProccess = {
-        prefix: devFrontend.logPrefix,
-        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          await devFrontend.action(stdout, stderr, signal, frontendPort)
-        },
-      }
-      additionalProcesses.push(devFrontendProccess)
+    }
+
+    if (usingLocalhost) {
+      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(devFrontend)
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     }
   }
 
@@ -161,7 +167,31 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
+  const devFrontend = devFrontendProxyTarget(options)
+  return {
+    prefix: devFrontend.logPrefix,
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      await devFrontend.action(stdout, stderr, signal, port)
+    },
+  }
+}
+
+function devThemeExtensionTarget(
+  args: string[],
+  adminSession: AdminSession,
+  storefrontToken: string,
+  token: string,
+): output.OutputProcess {
+  return {
+    prefix: 'extensions',
+    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal) => {
+      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
+    },
+  }
+}
+
+function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
@@ -228,11 +258,12 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   }
 }
 
-async function devExtensionsTarget(
+async function devUIExtensionsTarget(
   app: AppInterface,
   apiKey: string,
   url: string,
   storeFqdn: string,
+  grantedScopes: string[],
   subscriptionProductUrl?: string,
   checkoutCartUrl?: string,
 ): Promise<ReverseHTTPProxyTarget> {
@@ -251,11 +282,28 @@ async function devExtensionsTarget(
         port,
         storeFqdn,
         apiKey,
+        grantedScopes,
         cartUrl,
         subscriptionProductUrl,
       })
     },
   }
+}
+
+/**
+ * Ensure the Admin session and the storefront renderer token
+ * @param options {DevOptions[]} - dev command optins
+ * @param store {string} - the store FQDN
+ */
+async function ensureThemeExtensionTokens(options: DevOptions, store: string): Promise<[AdminSession?, string?]> {
+  if (options.app.extensions.theme.length > 0) {
+    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
+
+    return [adminSession, storefrontToken]
+  }
+
+  return []
 }
 
 /**

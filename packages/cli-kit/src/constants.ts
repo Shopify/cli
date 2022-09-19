@@ -12,7 +12,7 @@ const cacheFolder = () => {
 const constants = {
   environmentVariables: {
     unitTest: 'SHOPIFY_UNIT_TEST',
-    env: 'SHOPIFY_ENV',
+    env: 'SHOPIFY_CLI_ENV',
     serviceEnv: 'SHOPIFY_SERVICE_ENV',
     runAsUser: 'SHOPIFY_RUN_AS_USER',
     spinInstance: 'SPIN_INSTANCE',
@@ -24,12 +24,15 @@ const constants = {
     noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
     alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
     firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
+    enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
+    skipCliRedirect: 'SHOPIFY_CLI_SKIP_CLI_REDIRECT',
     debugGoBinary: 'SHOPIFY_DEBUG_GO_BINARY',
     deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
     // Variables to detect if the CLI is running in a cloud environment
     spin: 'SPIN',
     codespaces: 'CODESPACES',
-    gitpod: 'GITPOD_WORKSPACE_ID',
+    codespaceName: 'CODESPACE_NAME',
+    gitpod: 'GITPOD_WORKSPACE_URL',
   },
   paths: {
     executables: {

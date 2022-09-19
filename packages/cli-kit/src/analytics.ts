@@ -8,6 +8,7 @@ import * as metadata from './metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
 import {getPackageManager, packageManagerUsedForCreating} from './node/node-package-manager.js'
+import BaseCommand from './node/base-command.js'
 import {macAddress} from './environment/local.js'
 import {CommandContent} from './node/hooks/prerun.js'
 import {isCliProject} from './cli.js'
@@ -17,14 +18,19 @@ interface StartOptions {
   commandContent: CommandContent
   args: string[]
   currentTime?: number
-  commandClass?: Interfaces.Command.Class
+  commandClass?: Interfaces.Command.Class | typeof BaseCommand
 }
 
 export const start = async ({commandContent, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
+  let startCommand: string = commandContent.command
+  if (commandClass && Object.prototype.hasOwnProperty.call(commandClass, 'analyticsNameOverride')) {
+    startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? commandContent.command
+  }
+
   await metadata.addSensitive(() => ({
     commandStartOptions: {
       startTime: currentTime,
-      startCommand: commandContent.command,
+      startCommand,
       startArgs: args,
     },
   }))

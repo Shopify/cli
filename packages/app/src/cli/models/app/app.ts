@@ -7,6 +7,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
+  extensionDirectories: schema.define.array(schema.define.string()).optional(),
 })
 
 export enum WebType {
@@ -49,6 +50,7 @@ export interface AppInterface {
   }
   errors?: AppErrors
   hasExtensions: () => boolean
+  hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
 }
 
@@ -111,6 +113,10 @@ export class App implements AppInterface {
     return (
       this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
     )
+  }
+
+  hasUIExtensions(): boolean {
+    return this.extensions.ui.length > 0
   }
 }
 

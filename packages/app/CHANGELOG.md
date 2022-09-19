@@ -1,5 +1,37 @@
 # @shopify/app
 
+## 3.12.0
+
+### Minor Changes
+
+- 8f3d677f: Add support for configuring extensions' directories via the attribute extension_directories in the shopify.app.toml file
+- 3e98501c: [Web Pixel Extension] - the `configuration` property has been renamed to `settings` in the shopify.ui.extension.toml
+
+### Patch Changes
+
+- 5fa3c854: Rename `web-env` command to `env pull` and `env show`
+- Updated dependencies [454641be]
+  - @shopify/cli-kit@3.12.0
+  - @shopify/shopify-cli-extensions@3.12.0
+
+## 3.11.0
+
+### Minor Changes
+
+- 81283e95: Move the extension creation business logic from the Go binary to the @shopify/app package
+- 922c204e: New Result type for handling errors
+
+### Patch Changes
+
+- 38dedc05: Fix getRandomPort retries
+- 70f3578a: Fixed upload unit test
+- Updated dependencies [38dedc05]
+- Updated dependencies [79508f56]
+- Updated dependencies [922c204e]
+- Updated dependencies [ddbf7ee4]
+  - @shopify/cli-kit@3.11.0
+  - @shopify/shopify-cli-extensions@3.11.0
+
 ## 3.10.1
 
 ### Patch Changes

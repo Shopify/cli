@@ -40,7 +40,7 @@ If you want to interact with it, you can `cd` into the directory and run the CLI
 | build | `yarn build` | `dev fixture build` |
 | dev | `yarn dev` | `dev fixture dev` |
 | test | `yarn test` | `dev fixture test` |
-| scaffold | `yarn scaffold` | `dev fixture scaffold` |
+| generate | `yarn generate` | `dev fixture generate` |
 
 ### More automation
 

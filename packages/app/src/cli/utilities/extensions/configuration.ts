@@ -22,6 +22,7 @@ export interface ExtensionConfigOptions {
   includeResourceURL?: boolean
   cartUrl?: string
   subscriptionProductUrl?: string
+  grantedScopes?: string[]
 }
 
 /**
@@ -43,6 +44,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
         extension_points: extension.configuration.extensionPoints || [],
+        categories: extension.configuration.categories,
         node_executable: await nodeExtensionsCLIPath(),
         surface: getUIExtensionSurface(extension.configuration.type),
         version: renderer?.version,
@@ -66,6 +68,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           },
         },
         capabilities: extension.configuration.capabilities,
+        approval_scopes: options.grantedScopes ?? [],
       }
     }),
   )

@@ -112,6 +112,7 @@ describe('info', () => {
       apiSecretKeys: [{secret: apiSecret}],
       organizationId: '1',
       apiKey,
+      grantedScopes: [],
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
@@ -156,6 +157,7 @@ describe('info', () => {
       apiSecretKeys: [{secret: apiSecret}],
       organizationId: '1',
       apiKey,
+      grantedScopes: [],
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
@@ -190,6 +192,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     configurationPath: path.join('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
+      extensionDirectories: ['extensions/*'],
     },
     nodeDependencies,
   })

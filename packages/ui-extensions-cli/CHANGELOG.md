@@ -1,5 +1,9 @@
 # @shopify/shopify-cli-extensions
 
+## 3.12.0
+
+## 3.11.0
+
 ## 3.10.1
 
 ### Patch Changes

@@ -2,6 +2,4 @@
 
 process.removeAllListeners('warning');
 
-import runCLI from "@shopify/cli";
-
-runCLI();
+runCLI({development: false})

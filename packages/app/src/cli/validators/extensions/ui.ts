@@ -8,6 +8,13 @@ const WebPixelConfigError = (property: string) => {
   )
 }
 
+const DeprecatedPropertyError = (deprecatedProperty: string, replacementProperty?: string) => {
+  return new error.Abort(
+    `The property "${deprecatedProperty}" is deprecated and no longer supported.`,
+    replacementProperty ? `It has been replaced by "${replacementProperty}".` : '',
+  )
+}
+
 export function validateUIExtensions(extensions: UIExtension[]) {
   for (const extension of extensions) {
     switch (extension.type) {
@@ -24,8 +31,10 @@ export function validateWebPixelConfig(extension: UIExtension) {
   if (!extension.configuration.runtimeContext) {
     throw WebPixelConfigError('runtime_context')
   }
-
-  if (!extension.configuration.configuration) {
-    throw WebPixelConfigError('configuration')
+  if (extension.configuration.configuration) {
+    throw DeprecatedPropertyError('configuration', 'settings')
+  }
+  if (!extension.configuration.settings) {
+    throw WebPixelConfigError('settings')
   }
 }

@@ -23,9 +23,6 @@ export class CustomAutocomplete extends AutocompletePrompt {
 
     if (this.status !== 'answered') {
       content += colors.gray('… ')
-      if (!this.isAutocomplete) {
-        process.stdout.write('\u001b[?25l')
-      }
     }
 
     if (this.status === 'answered') {

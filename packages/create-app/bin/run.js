@@ -4,4 +4,4 @@ process.removeAllListeners('warning');
 
 import runCreateApp from "@shopify/create-app";
 
-runCreateApp();
+runCreateApp(false);

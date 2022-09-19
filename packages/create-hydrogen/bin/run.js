@@ -4,4 +4,4 @@ process.removeAllListeners('warning');
 
 import runCreateHydrogen from "@shopify/create-hydrogen";
 
-runCreateHydrogen();
+runCreateHydrogen(false);

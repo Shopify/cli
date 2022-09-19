@@ -16,7 +16,7 @@ const DeployError = (appName: string, packageManager: PackageManager) => {
     }
 • If this is the app you intended, check your local project and make sure
   it contains the same number and types of extensions as the Shopify app
-  you've selected. You may need to scaffold missing extensions.`,
+  you've selected. You may need to generate missing extensions.`,
   )
 }
 

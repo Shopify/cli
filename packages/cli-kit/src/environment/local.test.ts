@@ -1,4 +1,3 @@
-import {isSpin} from './spin.js'
 import {
   hasGit,
   isDevelopment,
@@ -15,9 +14,6 @@ import {expect, it, describe, vi, test} from 'vitest'
 
 vi.mock('../file')
 vi.mock('../system')
-vi.mock('./spin', () => ({
-  isSpin: vi.fn(),
-}))
 
 describe('isUnitTest', () => {
   it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
@@ -33,9 +29,9 @@ describe('isUnitTest', () => {
 })
 
 describe('isDevelopment', () => {
-  it('returns true when SHOPIFY_ENV is debug', () => {
+  it('returns true when SHOPIFY_CLI_ENV is debug', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'development'}
+    const env = {SHOPIFY_CLI_ENV: 'development'}
 
     // When
     const got = isDevelopment(env)
@@ -72,10 +68,10 @@ describe('isShopify', () => {
 
   it('returns true when it is a spin environment', async () => {
     // Given
-    vi.mocked(isSpin).mockReturnValue(true)
+    const env = {SPIN: '1'}
 
     // When
-    await expect(isShopify()).resolves.toBe(true)
+    await expect(isShopify(env)).resolves.toBe(true)
   })
 })
 
@@ -117,7 +113,7 @@ describe('analitycsDisabled', () => {
 
   it('returns true when in development', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'development'}
+    const env = {SHOPIFY_CLI_ENV: 'development'}
 
     // When
     const got = analyticsDisabled(env)
@@ -139,59 +135,39 @@ describe('analitycsDisabled', () => {
 })
 
 describe('useDeviceAuth', () => {
-  it('returns true when SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
-    // Given
-    const env = {SHOPIFY_CLI_DEVICE_AUTH: '1'}
+  it.each(['SHOPIFY_CLI_DEVICE_AUTH', 'SPIN', 'CODESPACES', 'GITPOD_WORKSPACE_URL'])(
+    'returns true if %s is truthy',
+    (envVar) => {
+      // Given
+      const env = {[envVar]: '1'}
 
-    // When
-    const got = useDeviceAuth(env)
+      // When
+      const got = useDeviceAuth(env)
 
-    // Then
-    expect(got).toBe(true)
-  })
+      // Then
+      expect(got).toBe(true)
+    },
+  )
 
-  it('returns true when SPIN is truthy', () => {
-    // Given
-    const env = {SPIN: '1'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  it('returns true when CODESPACES is truthy', () => {
-    // Given
-    const env = {CODESPACES: '1'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  it('returns true when GITPOD_WORKSPACE_ID is truthy', () => {
-    // Given
-    const env = {GITPOD_WORKSPACE_ID: '1'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  it('returns false otherwise', () => {
+  it('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
     // Given
     const env = {}
 
     // When
-    const got = useDeviceAuth(env)
+    const got = cloudEnvironment(env)
 
     // Then
-    expect(got).toBe(false)
+    expect(got).toBe('localhost')
+  })
+})
+
+describe('macAddress', () => {
+  it('returns any mac address value', async () => {
+    // When
+    const got = await macAddress()
+
+    // Then
+    expect(got).not.toBeUndefined()
   })
 })
 

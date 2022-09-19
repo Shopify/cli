@@ -1,7 +1,9 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {error, system, abort} from '@shopify/cli-kit'
+import {extensionConfig} from '../../utilities/extensions/configuration.js'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
+import {error, system, abort, environment, output, yaml} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {Writable} from 'node:stream'
 
@@ -52,6 +54,47 @@ export async function buildThemeExtensions(options: ThemeExtensionBuildOptions):
     stdout: options.stdout,
     stderr: options.stderr,
   })
+}
+
+interface BuildUIExtensionsOptions {
+  app: AppInterface
+}
+
+export function buildUIExtensions(options: BuildUIExtensionsOptions): output.OutputProcess[] {
+  if (options.app.extensions.ui.length === 0) {
+    return []
+  }
+  if (environment.utilities.isTruthy(process.env.SHOPIFY_CLI_UI_EXTENSIONS_USE_NODE)) {
+    return options.app.extensions.ui.map((uiExtension) => {
+      return {
+        prefix: uiExtension.localIdentifier,
+        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+          await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
+        },
+      }
+    })
+  } else {
+    return [
+      {
+        prefix: 'ui-extensions',
+        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+          stdout.write(`Building UI extensions...`)
+          const fullOptions = {...options, extensions: options.app.extensions.ui, includeResourceURL: false}
+          const configuration = await extensionConfig(fullOptions)
+          output.debug(output.content`Dev'ing extension with configuration:
+${output.token.json(configuration)}
+`)
+          const input = yaml.encode(configuration)
+          await runGoExtensionsCLI(['build', '-'], {
+            cwd: options.app.directory,
+            stdout,
+            stderr,
+            input,
+          })
+        },
+      },
+    ]
+  }
 }
 
 /**

@@ -1,5 +1,6 @@
 import {start} from '../../analytics.js'
 import {debug} from '../../output.js'
+import Command from '../base-command.js'
 import {Hook, Interfaces} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -15,7 +16,7 @@ export const hook: Hook.Prerun = async (options) => {
   }
   const args = options.argv
   debug(`Running command ${commandContent.command}`)
-  await start({commandContent, args, commandClass: options.Command})
+  await start({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
 
 function parseNormalCommand(commandClass: Interfaces.Command.Class): CommandContent {
