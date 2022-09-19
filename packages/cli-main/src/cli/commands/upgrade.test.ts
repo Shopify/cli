@@ -1,6 +1,6 @@
 import Upgrade from './upgrade'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {constants, file, outputMocker, path, system} from '@shopify/cli-kit'
+import {constants, file, os, outputMocker, path, system} from '@shopify/cli-kit'
 // import {
   // checkForNewVersion,
 // } from '@shopify/cli-kit/node/node-package-manager'
@@ -17,6 +17,10 @@ beforeEach(async () => {
         ...module.output,
         getOutputUpdateCLIReminder: vi.fn(),
       },
+      os: {
+        ...module.os,
+        platformAndArch: vi.fn(),
+      },
       system: {
         ...module.system,
         captureOutput: vi.fn(),
@@ -24,6 +28,7 @@ beforeEach(async () => {
       }
     }
   })
+  vi.mocked(os.platformAndArch).mockReturnValue({platform: 'win32', arch: 'amd64'})
 })
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -89,6 +94,7 @@ describe('upgrade global CLI', () => {
       vi.spyOn(Upgrade.prototype as any, 'parse').mockResolvedValue({flags: {path: tmpDir}})
       vi.spyOn(Upgrade.prototype as any, 'getCurrentVersion').mockReturnValue(oldCliVersion)
       vi.spyOn(Upgrade.prototype as any, 'usingPackageManager').mockReturnValue(false)
+      vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'amd64'})
       const captureOutputSpy = vi.mocked(system.captureOutput)
       captureOutputSpy.mockResolvedValue('shopify-cli@3')
 
