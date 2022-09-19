@@ -229,13 +229,10 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
 }
 
 export async function ensureThemeExtensionDevEnvironment(
-  options: DevEnvironmentOptions,
   extension: ThemeExtension,
+  apiKey: string,
   token: string,
 ): Promise<ExtensionRegistration> {
-  const [partnersApp, _] = await fetchAppAndIdentifiers(options, token)
-  const apiKey = partnersApp.apiKey
-
   const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
   const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
     return extension.type === 'THEME_APP_EXTENSION'

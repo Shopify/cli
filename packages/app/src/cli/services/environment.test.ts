@@ -497,11 +497,10 @@ describe('ensureDeployEnvironment', () => {
 describe('ensureThemeExtensionDevEnvironment', () => {
   test('fetches theme extension when it exists', async () => {
     // Given
-    const app = testApp()
     const token = 'token'
+    const apiKey = 'apiKey'
     const extension = testThemeExtensions()
 
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {
         extensionRegistrations: [
@@ -522,7 +521,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     })
 
     // When
-    const got = await ensureThemeExtensionDevEnvironment({app, reset: false}, extension, token)
+    const got = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
 
     // Then
     expect('existing ID').toEqual(got.id)
@@ -533,11 +532,10 @@ describe('ensureThemeExtensionDevEnvironment', () => {
 
   test('creates theme extension when it does not exist', async () => {
     // Given
-    const app = testApp()
     const token = 'token'
+    const apiKey = 'apiKey'
     const extension = testThemeExtensions()
 
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {extensionRegistrations: []},
     })
@@ -549,7 +547,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     })
 
     // When
-    const got = await ensureThemeExtensionDevEnvironment({app, reset: false}, extension, token)
+    const got = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
 
     // Then
     expect('new ID').toEqual(got.id)

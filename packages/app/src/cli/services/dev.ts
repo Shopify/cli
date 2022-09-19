@@ -60,7 +60,6 @@ async function dev(options: DevOptions) {
     tunnelPlugin,
   } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
-  const [adminSession, storefrontToken] = await ensureThemeExtensionTokens(options, storeFqdn)
 
   const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
     ...options,
@@ -121,9 +120,11 @@ async function dev(options: DevOptions) {
   const additionalProcesses: output.OutputProcess[] = []
 
   if (options.app.extensions.theme.length > 0) {
+    const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
     const extension = options.app.extensions.theme[0]!
     const args = await themeExtensionArgs(extension, apiKey, token, options)
-    const devExt = await devThemeExtensionTarget(args, adminSession!, storefrontToken!, token)
+    const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
 
@@ -283,22 +284,6 @@ async function devUIExtensionsTarget(
       })
     },
   }
-}
-
-/**
- * Ensure the Admin session and the storefront renderer token
- * @param options {DevOptions[]} - dev command optins
- * @param store {string} - the store FQDN
- */
-async function ensureThemeExtensionTokens(options: DevOptions, store: string): Promise<[AdminSession?, string?]> {
-  if (options.app.extensions.theme.length > 0) {
-    const adminSession = await session.ensureAuthenticatedAdmin(store)
-    const storefrontToken = await session.ensureAuthenticatedStorefront()
-
-    return [adminSession, storefrontToken]
-  }
-
-  return []
 }
 
 /**
