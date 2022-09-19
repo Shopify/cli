@@ -19,7 +19,7 @@ interface StartOptions {
 
 export const start = async ({command, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
   let startCommand: string = command
-  if (commandClass && Object.prototype.hasOwnProperty.call(command, 'analyticsNameOverride')) {
+  if (commandClass && Object.prototype.hasOwnProperty.call(commandClass, 'analyticsNameOverride')) {
     startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? command
   }
 
