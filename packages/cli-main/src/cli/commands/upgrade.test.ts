@@ -69,8 +69,8 @@ describe('upgrade global CLI', () => {
         [
           "install",
           "-g",
-          "@shopify/cli",
-          "@shopify/theme",
+          "@shopify/cli@latest",
+          "@shopify/theme@latest",
         ],
         {stdio: 'inherit'}
       )

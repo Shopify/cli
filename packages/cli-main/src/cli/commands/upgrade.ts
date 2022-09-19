@@ -103,7 +103,7 @@ export default class Upgrade extends Command {
       }
     }
     const command = 'npm'
-    const args = ['install', '-g', '@shopify/cli', '@shopify/theme']
+    const args = ['install', '-g', '@shopify/cli@latest', '@shopify/theme@latest']
     output.info(
       output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`)
     await system.exec(command, args, {stdio: 'inherit'})
