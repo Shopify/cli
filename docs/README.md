@@ -8,7 +8,7 @@ our biggest decisions.
 
 * [Get started](./get-started.md)
 * [Architecture](./architecture.md)
-* [Code patterns](./code-patterns.md)
+* [Conventions](./conventions.md)
 * [Debugging](./debugging.md)
 * [ESLint rules](./eslint-rules.md)
 * [Principles](./principles.md)

@@ -1,14 +1,16 @@
-# Code patterns
+# Conventions
 
 Having conventions around code patterns **makes a codebase easy to navigate and work with**. You get free when you use opinionated frameworks like Rails, but that you need to come up with if you don't use a framework. The Shopify CLI doesn't have a framework, and therefore it's our responsibility to **define and ensure that patterns are followed**. What follows is the set of patterns that you'll find across the codebase and that we require contributors to follow.
 
-## Model-command-service (MCS)
+## Plugins (e.g `@shopify/app`)
+
+### Model-command-service (MCS)
 
 This pattern is a map of the well-known [model-view-controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) to the domain of a CLI.
 
-### Command (View)
+#### Command (View)
 
-#### Definition and responsibilities
+##### Definition and responsibilities
 
 Commands are akin to views in MVC.
 They represent the interface users interact with.
@@ -19,7 +21,7 @@ A command is represented by a name, description, and a set of flags and argument
 Their responsibility is **parsing and validating arguments and flags.**
 Business logic must be delegated to services that represent units of business logic.
 
-#### Naming and directory conventions
+##### Naming and directory conventions
 
 The commands' hierarchy is laid out inside the `src/cli/commands` directory. Every subdirectory represents a level of commands, and the command's name matches the file name. Below there's an example of the file structure that we need for the `shopify app build` command:
 
@@ -31,15 +33,15 @@ app/
         build.ts
 ```
 
-#### Resources
+##### Resources
 
 - [How to define commands using oclif classes](https://oclif.io/docs/commands)
 - [How to declare command arguments](https://oclif.io/docs/args)
 - [How to declare flags](https://oclif.io/docs/flags)
 
-### Service (Controller)
+#### Service (Controller)
 
-#### Definition and responsibilities
+##### Definition and responsibilities
 
 Services represent **reusable units of business logic.**
 They export a default function representing the service and might contain additional internal combined functions to form the service.
@@ -51,7 +53,7 @@ They usually take an options object that aligns with the command's flags.
 
 ```ts
 // commands/serve.ts
-import devService from "../services/dev"
+import { devService } from "../services/dev"
 
 export default class Dev extends Command {
   static description = 'Dev the app'
@@ -65,7 +67,7 @@ export default class Dev extends Command {
 }
 ```
 
-#### Naming and directory conventions
+##### Naming and directory conventions
 
 Services live under the `services` directory inside `cli`. For services that represent a command's business logic, the name must match the name of the command represent.
 
@@ -77,9 +79,9 @@ app/
         build.ts # For the build command
 ```
 
-### Model
+#### Model
 
-#### Definition and responsibilities
+##### Definition and responsibilities
 
 It is the application's dynamic data structure.
 They are represented by a class or a [Typescript interface](https://www.typescriptlang.org/docs/handbook/interfaces.html) or type that a Javascript object can implement.
@@ -105,9 +107,45 @@ app/
         app.ts
 ```
 
-## Additional patterns
+### Additional patterns
 
 Some additional patterns have emerged over time and that don't fit any of the MCS groups:
 
 - **Prompts:** Prompts are a particular type of service that prompts the user, collects, and returns the responses as a Javascript object. We recommend creating them under the `prompts/` directory.
 - **Utilities:** Utilities represent a sub-domain of responsibilities. For example, we can have a `server` utility that spins up an server to handle HTTP requests.
+
+## @shopify/cli-kit
+
+### Public and private modules
+
+**Public** modules must live in the `src/public` directory in any of the following sub-directories:
+
+- `node`: For modules that are dependent on the Node runtime.
+- `browser` For the modules that are dependent on the browser runtime.
+- `common`: For modules that are runtime-agnostic.
+
+The sub-organization helps clarify the runtime the functions exported by the module can run. For example, if we provide utilities for manipulating arrays, we'd create them in a `src/public/common/array.ts` module, and the consumers of the `@shopify/cli-kit` package would import them as:
+
+```ts
+import { getArrayHasDuplicates } from "@shopify/cli-kit/common/array"
+```
+
+**Private** modules must live in the `src/private` directory.
+
+### Named exports
+
+Default exports force the module importer to decide on a name, which leads to inconsistencies and thus makes a codebase harder to navigate. Use named exports and make it explicit in the name of the domain the function belongs to. The following API from Node is a bad example because farm from the `import` line, it is hard to know what `join` is for by looking at the name:
+
+```ts
+import { join } from "node:path"
+```
+
+A better name for the above function would have beeen:
+
+```ts
+import { joinPath } from "node:path"
+```
+
+### Document public modules
+
+Most IDEs integrate the code documentation to enrich developers' experience writing code. Let's ensure we enable that experience for the developers using `@shopify/cli-kit` and ensure the exported elements from the public modules are documented following the [JSDoc](https://jsdoc.app/) standard.
