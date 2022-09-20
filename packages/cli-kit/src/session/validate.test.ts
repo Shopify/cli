@@ -148,6 +148,21 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
+  it('returns needs_full_auth if identity token is invalid and partners token is revoked', async () => {
+    // Given
+    const session = {
+      identity: expiredIdentity,
+      applications: validApplications,
+    }
+    vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValueOnce(true)
+
+    // When
+    const got = await validateSession(requestedScopes, defaultApps, session)
+
+    // Then
+    expect(got).toBe('needs_full_auth')
+  })
+
   it('returns needs_refresh if identity is expired', async () => {
     // Given
     const session = {
