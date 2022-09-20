@@ -2,13 +2,14 @@ import {HydrogenApp} from '../models/hydrogen.js'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
+import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {output, string, os} from '@shopify/cli-kit'
 
 interface InfoOptions {
   showPrivateData: boolean
 }
 
-export function info(app: HydrogenApp, {showPrivateData}: InfoOptions): output.Message {
+export function info(app: HydrogenApp, {showPrivateData}: InfoOptions): Promise<output.Message> {
   const appInfo = new HydrogenAppInfo(app)
 
   return appInfo.output({showPrivateData})
@@ -23,12 +24,12 @@ class AppInfo {
     this.app = app
   }
 
-  output({showPrivateData}: InfoOptions): string {
+  async output({showPrivateData}: InfoOptions): Promise<output.Message> {
     const sections: [string, string][] = [
       this.projectSettingsSection(),
       this.storefrontSettingsSection({showPrivateData}),
-      this.eslintSection(),
-      this.systemInfoSection(),
+      await this.eslintSection(),
+      await this.systemInfoSection(),
     ]
     return sections.map((sectionContents: [string, string]) => this.section(...sectionContents)).join('\n\n')
   }
@@ -71,10 +72,10 @@ class AppInfo {
     return [title, `${this.linesToColumns(storefrontInfo)}${errorContent}`]
   }
 
-  eslintSection(): [string, string] {
+  async eslintSection(): Promise<[string, string]> {
     const errors: string[] = []
     const title = 'ESLint'
-    const dependencyResults = this.dependencyCheck(['eslint', 'eslint-plugin-hydrogen'])
+    const dependencyResults = await this.dependencyCheck(['eslint', 'eslint-plugin-hydrogen'])
 
     if (this.app.nodeDependencies.eslint && !this.app.nodeDependencies['eslint-plugin-hydrogen']) {
       errors.push('Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
@@ -110,21 +111,30 @@ class AppInfo {
     return result
   }
 
-  dependencyCheck(dependency: string | string[]): string[][] {
+  async dependencyCheck(dependency: string | string[]): Promise<string[][]> {
     const dependencies = Array.isArray(dependency) ? dependency : [dependency]
 
-    const result = dependencies.reduce<string[][]>((acc, dependency) => {
-      const found = this.app.nodeDependencies[dependency]
-      if (found) {
-        const result = [dependency, found]
-        return [...acc, result]
-      }
+    const results = await Promise.all(
+      dependencies.map(async (dep) => {
+        const version = this.app.nodeDependencies[dep]
 
-      const result = [dependency, NOT_FOUND_TEXT]
-      return [...acc, result]
-    }, [])
+        if (!version) {
+          return [dep, NOT_FOUND_TEXT]
+        }
 
-    return result
+        const latestVersion = await checkForNewVersion(dep, version)
+
+        if (latestVersion && latestVersion !== version) {
+          const upgradeMessage = output.getOutputUpdateCLIReminder(this.app.packageManager, latestVersion)
+
+          return [dep, `${version} ${upgradeMessage}`]
+        }
+
+        return [dep, version]
+      }),
+    )
+
+    return results
   }
 
   formattedError(str: string): string {
@@ -133,11 +143,11 @@ class AppInfo {
     return output.content`${output.token.errorText(errorLines.join('\n'))}`.value
   }
 
-  systemInfoSection(): [string, string] {
+  async systemInfoSection(): Promise<[string, string]> {
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
     const lines: string[][] = [
-      ...this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli']),
+      ...(await this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli'])),
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],

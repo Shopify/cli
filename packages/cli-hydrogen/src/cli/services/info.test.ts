@@ -1,6 +1,12 @@
 import {info} from './info.js'
 import {HydrogenApp} from '../models/hydrogen.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi, beforeEach} from 'vitest'
+import {output} from '@shopify/cli-kit'
+import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+
+beforeEach(async () => {
+  vi.mock('@shopify/cli-kit/node/node-package-manager')
+})
 
 describe('Project settings', () => {
   it('displays the name and directory of the app', async () => {
@@ -9,11 +15,11 @@ describe('Project settings', () => {
     const directory = './some/path'
 
     // When
-    const output = await mockInfoWithApp({name, directory})
+    const result = await mockInfoWithApp({name, directory})
 
     // Then
-    expect(output).toMatch(`Name ${name}`)
-    expect(output).toMatch(`Project location ${directory}`)
+    expect(result).toMatch(`Name               ${name}`)
+    expect(result).toMatch(`Project location   ${directory}`)
   })
 })
 
@@ -29,10 +35,9 @@ describe('ESLint settings', () => {
     }
 
     // When
-    const output = await mockInfoWithApp(app)
-
+    const result = await mockInfoWithApp(app)
     // Then
-    expect(output).toMatch('! Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
+    expect(result).toMatch('! Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
   })
 
   it('does not show an error when both the ESLint and the eslint-plugin-hydrogen exist', async () => {
@@ -47,10 +52,54 @@ describe('ESLint settings', () => {
     }
 
     // When
-    const output = await mockInfoWithApp(app)
+    const result = await mockInfoWithApp(app)
 
     // Then
-    expect(output).not.toMatch('! Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
+    expect(result).not.toMatch('! Run `yarn shopify add eslint` to install and configure eslint for hydrogen')
+  })
+})
+
+describe('System settings', () => {
+  it('shows an upgrade message when the CLI dependencies are out of date', async () => {
+    // Given
+    const app = {
+      configuration: {
+        nodeDependencies: {
+          '@shopify/cli': '1.0.0',
+          '@shopify/cli-hydrogen': '1.0.0',
+        },
+      },
+    }
+
+    const latestVersion = '2.0.0'
+
+    // When
+    vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
+    const result = await mockInfoWithApp(app)
+
+    // Then
+    expect(result).toMatch(`Version ${latestVersion} available! Run npm run shopify -- upgrade`)
+  })
+
+  it('does not show an upgrade message when the CLI dependencies are up of date', async () => {
+    // Given
+    const app = {
+      configuration: {
+        nodeDependencies: {
+          '@shopify/cli': '2.0.0',
+          '@shopify/cli-hydrogen': '2.0.0',
+        },
+      },
+    }
+
+    const latestVersion = '2.0.0'
+
+    // When
+    vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
+    const result = await mockInfoWithApp(app)
+
+    // Then
+    expect(result).not.toMatch(`Version ${latestVersion} available! Run npm run shopify -- upgrade`)
   })
 })
 
@@ -71,9 +120,5 @@ async function mockInfoWithApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     ...mockHydrogenApp,
   } as const
 
-  const output = await info(app, {showPrivateData: false})
-
-  const trimmedOuput = (output as string).replace(/\s+/g, ' ').trim()
-
-  return trimmedOuput
+  return output.unstyled(output.stringifyMessage(await info(app, {showPrivateData: false})))
 }

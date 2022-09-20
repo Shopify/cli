@@ -24,7 +24,7 @@ export default class Info extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: HydrogenApp = await loadApp(directory)
 
-    output.info(info(app, {showPrivateData: flags.showToken}))
+    output.info(await info(app, {showPrivateData: flags.showToken}))
     if (app.errors) process.exit(2)
   }
 }
