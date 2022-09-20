@@ -1,5 +1,25 @@
 # @shopify/create-hydrogen
 
+## 3.13.0
+
+### Minor Changes
+
+- a225e415: - cli-kit:
+  - Added additional Git functionality for commits, generating .gitignore templates, and ensuring commands are run in a Git project.
+  - Added new Oxygen service type for interacting with the Oyxgen service
+  - New method for creating readable file streams
+  - create-hydrogen
+    - Added support for initializing a local Git repository when you create a new Hydrogen project
+
+### Patch Changes
+
+- Updated dependencies [a979c0de]
+- Updated dependencies [afa808cb]
+- Updated dependencies [a225e415]
+- Updated dependencies [5336b01f]
+- Updated dependencies [2239cad9]
+  - @shopify/cli-kit@3.13.0
+
 ## 3.12.0
 
 ### Patch Changes

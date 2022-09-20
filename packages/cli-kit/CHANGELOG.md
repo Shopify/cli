@@ -1,5 +1,24 @@
 # @shopify/cli-kit
 
+## 3.13.0
+
+### Minor Changes
+
+- a225e415: - cli-kit:
+  - Added additional Git functionality for commits, generating .gitignore templates, and ensuring commands are run in a Git project.
+  - Added new Oxygen service type for interacting with the Oyxgen service
+  - New method for creating readable file streams
+  - create-hydrogen
+    - Added support for initializing a local Git repository when you create a new Hydrogen project
+- 5336b01f: Added support for extension development server to pass permissions metadata about the parent app to extension host systems
+- 2239cad9: - `@shopify/cli-kit` - Add support to partners tokens in the `execCLI2` function
+  - `@shopify/app` - Add support to theme app extensions in the `app dev` command
+
+### Patch Changes
+
+- a979c0de: Avoid the loosing of terminal cursor when using crtl+c with and active list prompt
+- afa808cb: The overriden command name is correctly used
+
 ## 3.12.0
 
 ### Minor Changes

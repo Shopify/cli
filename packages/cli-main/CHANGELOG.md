@@ -1,5 +1,19 @@
 # @shopify/cli
 
+## 3.13.0
+
+### Patch Changes
+
+- 24f08565: Add missing import that causes the CLI execution to fail in production
+- 89d6cb86: Clear app information when logging out
+- Updated dependencies [a979c0de]
+- Updated dependencies [afa808cb]
+- Updated dependencies [a225e415]
+- Updated dependencies [5336b01f]
+- Updated dependencies [2239cad9]
+  - @shopify/cli-kit@3.13.0
+  - @shopify/plugin-ngrok@3.13.0
+
 ## 3.12.0
 
 ### Minor Changes
