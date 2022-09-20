@@ -2,6 +2,6 @@
 
 process.removeAllListeners('warning');
 
-import runCLI from "@shopify/cli";
+import runCLI from "../dist/index.js";
 
-runCLI();
+runCLI({development: false})

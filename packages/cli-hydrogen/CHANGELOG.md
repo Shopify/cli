@@ -1,5 +1,13 @@
 # @shopify/cli-hydrogen
 
+## 3.12.0
+
+### Patch Changes
+
+- 5aaa340d: Fixes errors running `shopify hydrogen preview` due to missing stream support.
+- Updated dependencies [454641be]
+  - @shopify/cli-kit@3.12.0
+
 ## 3.11.0
 
 ### Patch Changes

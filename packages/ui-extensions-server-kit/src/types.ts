@@ -73,6 +73,8 @@ export interface ExtensionPayload {
   version: string
   surface: Surface
   title: string
+  extensionPoints?: string[]
+  categories?: string[]
 }
 
 export enum Status {

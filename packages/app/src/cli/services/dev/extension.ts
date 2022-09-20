@@ -57,6 +57,11 @@ export interface ExtensionDevOptions {
   storeFqdn: string
 
   /**
+   * List of granted approval scopes belonging to the parent app
+   */
+  grantedScopes: string[]
+
+  /**
    * Product variant ID, used for checkout_ui_extensions
    * If that extension is present, this is mandatory
    */

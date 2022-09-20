@@ -7,20 +7,26 @@ import * as metadata from './metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
 import {packageManagerUsedForCreating} from './node/node-package-manager.js'
+import BaseCommand from './node/base-command.js'
 import {Interfaces} from '@oclif/core'
 
 interface StartOptions {
   command: string
   args: string[]
   currentTime?: number
-  commandClass?: Interfaces.Command.Class
+  commandClass?: Interfaces.Command.Class | typeof BaseCommand
 }
 
 export const start = async ({command, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
+  let startCommand: string = command
+  if (commandClass && Object.prototype.hasOwnProperty.call(commandClass, 'analyticsNameOverride')) {
+    startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? command
+  }
+
   await metadata.addSensitive(() => ({
     commandStartOptions: {
       startTime: currentTime,
-      startCommand: command,
+      startCommand,
       startArgs: args,
     },
   }))

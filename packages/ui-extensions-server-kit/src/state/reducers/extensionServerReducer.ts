@@ -16,8 +16,8 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
       return {
         ...state,
         store: action.payload.store,
-        app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
-        extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
+        app: action.payload.app,
+        extensions,
       } as ExtensionServerState
     }
 

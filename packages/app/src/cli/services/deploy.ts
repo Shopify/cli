@@ -208,7 +208,7 @@ async function configFor(extension: UIExtension, app: AppInterface) {
       return {
         runtime_context: extension.configuration.runtimeContext,
 
-        runtime_configuration_definition: extension.configuration.configuration,
+        runtime_configuration_definition: extension.configuration.settings,
       }
     }
   }

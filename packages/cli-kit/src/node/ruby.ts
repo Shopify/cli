@@ -9,7 +9,7 @@ import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.23.0'
+const RubyCLIVersion = '2.25.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
@@ -19,6 +19,8 @@ interface ExecCLI2Options {
   adminSession?: AdminSession
   // Contains token for storefront access to pass to CLI 2.0 as environment variable
   storefrontToken?: string
+  // Contains token for partners access to pass to CLI 2.0 as environment variable
+  token?: string
   // Directory in which to execute the command. Otherwise the current directory will be used.
   directory?: string
 }
@@ -30,13 +32,17 @@ interface ExecCLI2Options {
  * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
  * @param options {ExecCLI2Options}
  */
-export async function execCLI2(args: string[], {adminSession, storefrontToken, directory}: ExecCLI2Options = {}) {
+export async function execCLI2(
+  args: string[],
+  {adminSession, storefrontToken, token, directory}: ExecCLI2Options = {},
+) {
   await installCLIDependencies()
   const env = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
+    SHOPIFY_CLI_AUTH_TOKEN: token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists

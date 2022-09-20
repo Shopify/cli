@@ -11,6 +11,7 @@ export interface CachedAppInfo {
   orgId?: string
   storeFqdn?: string
   updateURLs?: boolean
+  tunnelPlugin?: string
 }
 
 interface ConfSchema {
@@ -66,6 +67,7 @@ export async function setAppInfo(options: {
   storeFqdn?: string
   orgId?: string
   updateURLs?: boolean
+  tunnelPlugin?: string
 }): Promise<void> {
   const store = await cliKitStore()
   store.setAppInfo(options)
@@ -101,6 +103,11 @@ export async function removeSession(): Promise<void> {
   store.removeSession()
 }
 
+export async function clearAllAppInfo(): Promise<void> {
+  const store = await cliKitStore()
+  store.clearAllAppInfo()
+}
+
 export class CLIKitStore extends Conf<ConfSchema> {
   getAppInfo(directory: string): CachedAppInfo | undefined {
     debug(content`Reading cached app information for directory ${token.path(directory)}...`)
@@ -115,6 +122,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
     storeFqdn?: string
     orgId?: string
     updateURLs?: boolean
+    tunnelPlugin?: string
   }): void {
     debug(content`Storing app information for directory ${token.path(options.directory)}:${token.json(options)}`)
     const apps = this.get('appInfo') ?? []
@@ -130,19 +138,25 @@ export class CLIKitStore extends Conf<ConfSchema> {
         storeFqdn: options.storeFqdn ?? app.storeFqdn,
         orgId: options.orgId ?? app.orgId,
         updateURLs: options.updateURLs ?? app.updateURLs,
+        tunnelPlugin: options.tunnelPlugin ?? app.tunnelPlugin,
       }
     }
     this.set('appInfo', apps)
   }
 
   clearAppInfo(directory: string): void {
-    debug(content`Clearning app information for directory ${token.path(directory)}...`)
+    debug(content`Clearing app information for directory ${token.path(directory)}...`)
     const apps = this.get('appInfo') ?? []
     const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
     if (index !== -1) {
       apps.splice(index, 1)
     }
     this.set('appInfo', apps)
+  }
+
+  clearAllAppInfo(): void {
+    debug(content`Clearing all app information...`)
+    this.set('appInfo', [])
   }
 
   getThemeStore(): string | undefined {

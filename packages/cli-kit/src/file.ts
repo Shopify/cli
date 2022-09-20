@@ -148,6 +148,10 @@ export function sizeSync(path: string): number {
   return fs.statSync(path).size
 }
 
+export function createReadStream(path: string) {
+  return fs.createReadStream(path)
+}
+
 /**
  * Moves a file.
  * @param src {string} File to be moved.

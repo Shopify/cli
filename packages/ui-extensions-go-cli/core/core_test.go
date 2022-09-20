@@ -18,6 +18,9 @@ extensions:
 		capabilities:
 			network_access: true
 			block_progress: true
+    approval_scopes:
+      - read_customer_personal_data
+      - read_customer_email
 `)
 
 	config, err := core.LoadConfig(strings.NewReader(serializedConfig))
@@ -58,6 +61,14 @@ extensions:
 
 	if *extension.Capabilities.BlockProgress != true {
 		t.Errorf("invalid value for Capabilities - expected block_progress got %t", *extension.Capabilities.BlockProgress)
+	}
+
+	if extension.ApprovalScopes[0] != "read_customer_personal_data" {
+		t.Errorf("invalid ApprovalScope - expected read_customer_personal_data got %s", extension.ApprovalScopes[0])
+	}
+
+	if extension.ApprovalScopes[1] != "read_customer_email" {
+		t.Errorf("invalid ApprovalScope - expected read_customer_email got %s", extension.ApprovalScopes[1])
 	}
 }
 

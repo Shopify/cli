@@ -11,6 +11,7 @@ export const FindAppQuery = gql`
         secret
       }
       appType
+      grantedScopes
     }
   }
 `
@@ -25,5 +26,6 @@ export interface FindAppQuerySchema {
       secret: string
     }[]
     appType: string
+    grantedScopes: string[]
   }
 }

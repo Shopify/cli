@@ -1,6 +1,7 @@
-import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs} from './urls.js'
+import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, generateFrontendURL} from './urls.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
+import {api, environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 
 beforeEach(() => {
@@ -26,6 +27,15 @@ beforeEach(() => {
       },
       store: {
         setAppInfo: vi.fn(),
+      },
+      port: {
+        getRandomPort: async () => 3042,
+      },
+      environment: {
+        local: {
+          codespaceURL: vi.fn(),
+          gitpodURL: vi.fn(),
+        },
       },
     }
   })
@@ -269,5 +279,229 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(outputMock.output()).toMatch(/example.com\/home/)
     expect(outputMock.output()).toMatch(/example.com\/auth\/callback/)
+  })
+})
+
+describe('generateFrontendURL', () => {
+  beforeEach(() => {
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
+  })
+
+  it('returns tunnelUrl when there is a tunnelUrl ignoring all other false values', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingLocalhost: false})
+  })
+
+  it('returns tunnelUrl when there is a tunnelUrl ignoring all other true values', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: true,
+      noTunnel: true,
+      tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingLocalhost: false})
+  })
+
+  it('generates a tunnel url when tunnel is true and there is no tunnelUrl and there are no extensions', async () => {
+    // Given
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: true,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
+  })
+
+  it('generates a tunnel url when tunnel is false and there is no tunnelUrl and there are extensions', async () => {
+    // Given
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
+    expect(ui.prompt).toBeCalled()
+  })
+
+  it('returns localhost if tunnel is false and there is no tunnelUrl nor extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingLocalhost: true})
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('returns localhost if noTunnel is true even if there are extensions', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: false,
+      noTunnel: true,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingLocalhost: true})
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('raises error if tunnelUrl does not include port', async () => {
+    // Given
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      tunnelUrl: 'https://my-tunnel-provider.io',
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = generateFrontendURL(options)
+
+    // Then
+    await expect(got).rejects.toThrow(/Invalid tunnel URL/)
+  })
+
+  it('cancels execution if you select not to continue in the plugin prompt', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'cancel'})
+    const options = {
+      app: testApp({hasUIExtensions: () => true}),
+      tunnel: true,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = generateFrontendURL(options)
+
+    // Then
+    await expect(got).rejects.toThrow()
+  })
+
+  it('Stores the tunnel plugin in your presets if you select always', async () => {
+    // Given
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    const options = {
+      app: testApp({hasUIExtensions: () => true, directory: '/app-path'}),
+      tunnel: true,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
+    expect(store.setAppInfo).toBeCalledWith({directory: '/app-path', tunnelPlugin: 'ngrok'})
+  })
+
+  it('Reuses tunnel option if cached even if tunnel is false and there are no extensions', async () => {
+    // Given
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    const options = {
+      app: testApp({hasUIExtensions: () => false, directory: '/app-path'}),
+      tunnel: false,
+      noTunnel: false,
+      cachedTunnelPlugin: 'ngrok',
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
+    expect(store.setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('Returns a gitpod url if we are in a gitpod environment', async () => {
+    // Given
+    vi.mocked(environment.local.gitpodURL).mockReturnValue('https://gitpod.url.fqdn.com')
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
+    expect(store.setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('Returns a codespace url if we are in a codespace environment', async () => {
+    // Given
+    vi.mocked(environment.local.codespaceURL).mockReturnValue('codespace.url.fqdn.com')
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({
+      frontendUrl: 'https://codespace.url.fqdn.com-4040.githubpreview.dev',
+      frontendPort: 4040,
+      usingLocalhost: false,
+    })
+    expect(store.setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
   })
 })

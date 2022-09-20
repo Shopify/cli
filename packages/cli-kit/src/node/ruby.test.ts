@@ -57,4 +57,42 @@ describe('execCLI', () => {
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
   })
+
+  it('passes token to the CLI2', async () => {
+    // Setup
+    const originalEnv = process.env
+
+    // Given
+    const execSpy = vi.spyOn(system, 'exec')
+
+    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'}
+
+    vi.mocked(file.exists).mockResolvedValue(true)
+    vi.mocked(system.captureOutput).mockResolvedValueOnce('2.7.5')
+    vi.mocked(system.captureOutput).mockResolvedValueOnce('2.4.0')
+
+    // When
+    await execCLI2(['args'], {
+      token: 'token_0000_1111_2222_3333',
+      directory: './directory',
+    })
+
+    // Then
+    expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', 'shopify', 'args'], {
+      stdio: 'inherit',
+      cwd: './directory',
+      env: {
+        ...process.env,
+        SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_STORE: undefined,
+        SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
+        SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+        BUNDLE_GEMFILE: 'CLI2/Gemfile',
+      },
+    })
+
+    // Teardown
+    process.env = originalEnv
+  })
 })

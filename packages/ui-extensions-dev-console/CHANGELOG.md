@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.12.0
+
+### Patch Changes
+
+- @shopify/ui-extensions-server-kit@3.12.0
+
 ## 3.11.0
 
 ### Patch Changes

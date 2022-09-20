@@ -106,7 +106,7 @@ describe('ExtensionServerProvider tests', () => {
 
       wrapper.act(() => socket.send({event: 'connected', data}));
 
-      expect(wrapper.result.state).toStrictEqual({
+      expect(wrapper.result.state).toEqual({
         app,
         extensions: [extension],
         store: 'test-store.com',
@@ -130,7 +130,7 @@ describe('ExtensionServerProvider tests', () => {
         socket.send({event: 'update', data: {...data, extensions: [update]}});
       });
 
-      expect(wrapper.result.state).toStrictEqual({
+      expect(wrapper.result.state).toEqual({
         app,
         extensions: [update],
         store: 'test-store.com',

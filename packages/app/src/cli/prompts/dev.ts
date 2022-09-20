@@ -160,3 +160,21 @@ export async function updateURLsPrompt(): Promise<string> {
   ])
   return choice.value
 }
+
+export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'cancel'> {
+  const options = [
+    {name: 'Always use it by default', value: 'always'},
+    {name: 'Use it now and ask me next time', value: 'yes'},
+    {name: 'Nevermind, cancel dev', value: 'cancel'},
+  ]
+
+  const choice: {value: 'always' | 'yes' | 'cancel'} = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'How would you like your tunnel to work in the future?',
+      choices: options,
+    },
+  ])
+  return choice.value
+}
