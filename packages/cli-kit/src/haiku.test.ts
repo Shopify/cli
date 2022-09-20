@@ -1,19 +1,19 @@
 import {inTemporaryDirectory, write} from './file.js'
 import {join} from './path.js'
 import * as haiku from './haiku.js'
-import {randomPick} from './array.js'
+import {takeRandomFromArray} from './public/common/array.js'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('./array.js')
+vi.mock('../public/common/array.js')
 
 describe('generate', () => {
   test('rerolls the name if a directory exists with the same name', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(randomPick).mockReturnValueOnce('taken')
-      vi.mocked(randomPick).mockReturnValueOnce('directory')
-      vi.mocked(randomPick).mockReturnValueOnce('free')
-      vi.mocked(randomPick).mockReturnValueOnce('directory')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('taken')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('directory')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('free')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('directory')
 
       const content = 'test'
       const filePath = join(tmpDir, 'taken-directory-app')
@@ -24,7 +24,7 @@ describe('generate', () => {
 
       // Then
       expect(got).toEqual('free-directory-app')
-      expect(randomPick).toHaveBeenCalledTimes(4)
+      expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
     })
   })
 

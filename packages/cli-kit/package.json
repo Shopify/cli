@@ -17,6 +17,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./*": {
+      "import": "./dist/public/*.js",
+      "types": "./dist/public/*.d.ts"
+    },
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
