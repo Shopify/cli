@@ -66,7 +66,6 @@ describe('initialize a extension', () => {
 
         const firstDependenciesCallArgs = addDependenciesCalls[0]!
         expect(firstDependenciesCallArgs[0]).toEqual([
-          {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
         ])
         expect(firstDependenciesCallArgs[1].type).toEqual('prod')
@@ -74,7 +73,6 @@ describe('initialize a extension', () => {
 
         const secondDependencyCallArgs = addDependenciesCalls[1]!
         expect(firstDependenciesCallArgs[0]).toEqual([
-          {name: 'react', version: '^17.0.0'},
           {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
         ])
         expect(secondDependencyCallArgs[1].type).toEqual('prod')
@@ -130,16 +128,32 @@ describe('initialize a extension', () => {
 })
 
 describe('getRuntimeDependencies', () => {
-  test('includes React for UI extensions', () => {
+  test('no not include React for flavored Vanilla UI extensions', () => {
     // Given
     // Web Pixel extensions don't need React as a runtime dependency.
     const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
       (extension) => extension !== 'web_pixel_extension',
     )
+    const extensionFlavor: ExtensionFlavor = 'vanilla-js'
 
     // When/then
     extensions.forEach((extensionType) => {
-      const got = getRuntimeDependencies({extensionType})
+      const got = getRuntimeDependencies({extensionType, extensionFlavor})
+      expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeFalsy()
+    })
+  })
+
+  test('includes React for flavored React UI extensions', () => {
+    // Given
+    // Web Pixel extensions don't need React as a runtime dependency.
+    const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
+      (extension) => extension !== 'web_pixel_extension',
+    )
+    const extensionFlavor: ExtensionFlavor = 'react'
+
+    // When/then
+    extensions.forEach((extensionType) => {
+      const got = getRuntimeDependencies({extensionType, extensionFlavor})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
     })
   })
