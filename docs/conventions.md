@@ -2,6 +2,52 @@
 
 Having conventions around code patterns **makes a codebase easy to navigate and work with**. You get free when you use opinionated frameworks like Rails, but that you need to come up with if you don't use a framework. The Shopify CLI doesn't have a framework, and therefore it's our responsibility to **define and ensure that patterns are followed**. What follows is the set of patterns that you'll find across the codebase and that we require contributors to follow.
 
+## All packages
+
+### Named over default exports
+
+Default exports force the module importer to decide on a name, which leads to inconsistencies and thus makes a codebase harder to navigate. Use named exports and make it explicit in the name of the domain the function belongs to. The following API from Node is a bad example because it's hard to know the meaning of `join` far from the `import` context:
+
+```ts
+import { join } from "node:path"
+```
+
+A better name for the above function would have beeen:
+
+```ts
+import { joinPath } from "node:path"
+```
+
+
+### Modules free of side effects
+
+Modules must not perform any side effect when they are imported. For example, doing an IO operation at the root of the module:
+
+```ts
+// some-module.ts
+
+import { fs } from "node:fs"
+
+const content = fs.readSync("./package.json")
+```
+
+Modules with side effects might increase the load time of the dependency graph and complicate writing tests and reasoning about the code.
+
+### Stateless modules
+
+Don't use modules to store state at runtime. Due to how Node module resolution works and the no control we have our how package managers organize modules in the system, projects might end up with more than one copy of a module (and its state) in the dependency graph leading to unexpected behaviors. For example:
+
+```ts
+// store.ts
+
+const isInitialized = false;
+```
+
+Instead, you can:
+- **Store the state in the system.** It leads to IO operations, which impact the performance, but because the state is often little, it's preferred over an unreliable experience.
+- **Load and pass the state down:** Load the state upfront, for example, an in-memory representation of the project the CLI is interacting with, and pass it down through function arguments.
+
+
 ## Plugins (e.g `@shopify/app`)
 
 ### Model-command-service (MCS)
@@ -131,20 +177,6 @@ import { getArrayHasDuplicates } from "@shopify/cli-kit/common/array"
 ```
 
 **Private** modules must live in the `src/private` directory.
-
-### Named exports
-
-Default exports force the module importer to decide on a name, which leads to inconsistencies and thus makes a codebase harder to navigate. Use named exports and make it explicit in the name of the domain the function belongs to. The following API from Node is a bad example because it's hard to know the meaning of `join` far from the `import` context:
-
-```ts
-import { join } from "node:path"
-```
-
-A better name for the above function would have beeen:
-
-```ts
-import { joinPath } from "node:path"
-```
 
 ### Document public modules
 
