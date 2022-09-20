@@ -4,17 +4,17 @@ import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
-import {
-  ReverseHTTPProxyTarget,
-  runConcurrentHTTPProcessesAndPathForwardTraffic,
-} from '../utilities/app/http-reverse-proxy.js'
+import {ReverseHTTPProxyTarget} from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
+import {Dev} from '../components/Dev.js'
 import {analytics, output, port, system, session, abort, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {render} from 'ink'
+import React from 'react'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -157,7 +157,8 @@ async function dev(options: DevOptions) {
   if (proxyTargets.length === 0) {
     await output.concurrent(additionalProcesses)
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+    render(<Dev processes={additionalProcesses} />)
+    // await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
 }
 
