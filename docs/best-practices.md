@@ -1,16 +1,21 @@
-# Principles
+# Best practices
 
-## Zero configuration
+## 1 - Don't place business logic in commands
 
-Surfacing too much configuration to the users opens the door for creating strong dependencies with internal components of the CLI
-and diverging from the standard setup, which in turn might complicate updating the CLI in the future.
-This has traditionally been the case of many Javascript tools and frameworks,
-and a huge source of frustation for developers.
-We shouldn't make the same mistake and rather,
-align with approaches like [NextJS](https://nextjs.org/)'s where a recently created project contains a `package.json` with **a single dependency**.
+Commands are the views in CLIs, the surface with whom users interact. They are responsible for parsing and validating arguments and flags using the metadata statically defined in the command classes. Any business logic associated with a command must live in a **command service** (regardless of the size or complexity of the logic). This allows writing unit tests for commands that otherwise would have been test that test the integration between the command's logic and oclif's primitives:
 
+```
+packages/
+  app/
+    src/
+      commands/
+        dev.ts
+      services/
+        commands/
+          dev.ts
+```
 
-## Fixed dependencies
+## 2- Fixed dependencies
 
 The widespread practice in the Javascript community regarding dependencies is having many tiny NPM packages over few yet more complete ones.
 The consequence of that is very nested dependency graphs that often lead to incompabilities between nodes and with the system.

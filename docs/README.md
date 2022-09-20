@@ -11,7 +11,7 @@ our biggest decisions.
 * [Code patterns](./code-patterns.md)
 * [Debugging](./debugging.md)
 * [ESLint rules](./eslint-rules.md)
-* [Principles](./principles.md)
+* [Best practices](./best-practices.md)
 * [Release process](./release.md)
 * [Testing strategy](./testing-strategy.md)
 * [Troubleshooting](./troubleshooting.md)
