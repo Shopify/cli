@@ -9,7 +9,7 @@ import {
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path} from '@shopify/cli-kit'
+import {file, output, path, template} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import type {ExtensionFlavor} from './extension.js'
 
@@ -104,24 +104,30 @@ describe('initialize a extension', () => {
 
   it.each(
     uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js', 'js'])
-      accumulator.push([type, 'react', 'jsx'])
-      accumulator.push([type, 'typescript', 'ts'])
-      accumulator.push([type, 'typescript-react', 'tsx'])
+      accumulator.push([type, 'vanilla-js', 'js', ''])
+      accumulator.push([type, 'react', 'jsx', 'react'])
+      accumulator.push([type, 'typescript', 'ts', ''])
+      accumulator.push([type, 'typescript-react', 'tsx', 'react'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension][]),
+    }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension, string][]),
   )(
     'creates %s for %s with index file at extensions/[extension-name]/src/index.%s',
 
-    async (extensionType, extensionFlavor, fileExtension) => {
+    async (extensionType, extensionFlavor, fileExtension, liquidFlavor) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'extension-name'
+        const spy = vi.spyOn(template, 'recursiveDirectoryCopy')
 
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
 
         const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', `index.${fileExtension}`))
 
+        expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+          flavor: liquidFlavor,
+          type: extensionType,
+          name,
+        })
         expect(srcIndexFile.trim()).not.toBe('')
       })
     },
