@@ -5,8 +5,10 @@ import {
   DependencyType,
   getPackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
-
-const cliDependency = '@shopify/cli'
+import {fileURLToPath} from 'url'
+const cliDependency: string = JSON.parse(
+  file.readSync(path.resolve(fileURLToPath(import.meta.url), '../../../../package.json'))
+).name
 
 export async function upgrade(directory: string, currentVersion: string): Promise<void> {
   let newestVersion: string | void
