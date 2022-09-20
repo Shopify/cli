@@ -12,7 +12,9 @@ import {
 } from './post-auth.js'
 import {Abort, Bug} from '../error.js'
 import {content, info, token} from '../output.js'
+import {createApp, createRouter, IncomingMessage, ServerResponse, setResponseHeader, send as sendResponse} from 'h3'
 import url from 'url'
+import {createServer} from 'http'
 
 const ResponseTimeoutSeconds = 10
 const ServerStopDelaySeconds = 0.5
@@ -40,20 +42,26 @@ interface RedirectListenerOptions {
  */
 export class RedirectListener {
   private static createServer(callback: RedirectCallback) {
-    const server = Fastify().get('*', async (request, reply) => {
+    const app = createApp()
+    const router = createRouter()
+
+    router.get('*', async (request: IncomingMessage, response: ServerResponse) => {
       const requestUrl = request.url
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await getFavicon()
-        await reply.header('Content-Type', 'image/svg+xml').send(faviconFile)
+        setResponseHeader(response.event, 'Content-Type', 'image/svg+xml')
+        await sendResponse(response.event, faviconFile)
         return {}
       } else if (requestUrl === '/style.css') {
         const stylesheetFile = await getStylesheet()
-        await reply.header('Content-Type', 'text/css').send(stylesheetFile)
+        setResponseHeader(response.event, 'Content-Type', 'text/css')
+        await sendResponse(response.event, stylesheetFile)
         return {}
       }
 
       const respond = async (contents: string, error?: Error, state?: string, code?: string) => {
-        await reply.header('Content-Type', 'text/html').send(contents)
+        setResponseHeader(response.event, 'Content-Type', 'text/html')
+        await sendResponse(response.event, contents)
         callback(error, state, code)
         return {}
       }
@@ -91,7 +99,10 @@ export class RedirectListener {
       return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
 
-    return server
+    app.use(router)
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    return createServer(app)
   }
 
   port: number
