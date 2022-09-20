@@ -134,7 +134,7 @@ import { getArrayHasDuplicates } from "@shopify/cli-kit/common/array"
 
 ### Named exports
 
-Default exports force the module importer to decide on a name, which leads to inconsistencies and thus makes a codebase harder to navigate. Use named exports and make it explicit in the name of the domain the function belongs to. The following API from Node is a bad example because farm from the `import` line, it is hard to know what `join` is for by looking at the name:
+Default exports force the module importer to decide on a name, which leads to inconsistencies and thus makes a codebase harder to navigate. Use named exports and make it explicit in the name of the domain the function belongs to. The following API from Node is a bad example because it's hard to know the meaning of `join` far from the `import` context:
 
 ```ts
 import { join } from "node:path"
