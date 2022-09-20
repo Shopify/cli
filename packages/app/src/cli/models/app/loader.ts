@@ -7,8 +7,10 @@ import {
   ThemeExtensionConfigurationSchema,
   UIExtensionConfigurationSupportedSchema,
   Extension,
+  TypeSchema,
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
+import {parseFile} from './parser.js'
 import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
 import metadata from '../../metadata.js'
@@ -165,63 +167,33 @@ class AppLoader {
     }
   }
 
-  async loadConfigurationFile(
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = toml.decode,
-  ): Promise<unknown> {
-    if (!(await file.exists(filepath))) {
-      return this.abortOrReport(
-        output.content`Couldn't find the configuration file at ${output.token.path(filepath)}`,
-        '',
-        filepath,
-      )
-    }
-    const configurationContent = await file.read(filepath)
-    let configuration: object
-    try {
-      configuration = decode(configurationContent)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      // TOML errors have line, pos and col properties
-      if (err.line && err.pos && err.col) {
-        return this.abortOrReport(
-          output.content`Fix the following error in ${output.token.path(filepath)}:\n${err.message}`,
-          null,
-          filepath,
-        )
-      } else {
-        throw err
-      }
-    }
-    // Convert snake_case keys to camelCase before returning
-    return {
-      ...Object.fromEntries(Object.entries(configuration).map((kv) => [string.camelize(kv[0]), kv[1]])),
-    }
-  }
-
   async parseConfigurationFile<TSchema extends schema.define.ZodType>(
     schema: TSchema,
     filepath: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     decode: (input: any) => any = toml.decode,
   ): Promise<schema.define.TypeOf<TSchema>> {
-    const fallbackOutput = {} as schema.define.TypeOf<TSchema>
+    const result = await parseFile(schema, filepath, decode)
+    if (!result.isErr()) return result.value
 
-    const configurationObject = await this.loadConfigurationFile(filepath, decode)
-    if (!configurationObject) return fallbackOutput
-
-    const parseResult = schema.safeParse(configurationObject)
-
-    if (!parseResult.success) {
-      const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
-      return this.abortOrReport(
-        output.content`Fix a schema error in ${output.token.path(filepath)}:\n${formattedError}`,
-        fallbackOutput,
-        filepath,
-      )
+    let message: output.Message
+    switch (result.error.type) {
+      case 'file_not_found':
+        message = output.content`Couldn't find the configuration file at ${output.token.path(filepath)}`
+        break
+      case 'decode_error':
+        message = output.content`Fix the following error in ${output.token.path(filepath)}:\n${result.error.message}`
+        break
+      case 'invalid_schema': {
+        message = output.content`Fix a schema error in ${output.token.path(filepath)}:\n${result.error.message}`
+        break
+      }
+      case 'unknown':
+        message = output.content`Unkwnown error in ${output.token.path(filepath)}:\n${result.error.message}`
+        break
     }
-    return parseResult.data
+    const fallbackOutput = {} as schema.define.TypeOf<TSchema>
+    return this.abortOrReport(message, fallbackOutput, filepath)
   }
 
   async loadUIExtensions(
@@ -234,6 +206,7 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
+      const type = await this.parseConfigurationFile(TypeSchema, configurationPath)
       const configurationSupported = await this.parseConfigurationFile(
         UIExtensionConfigurationSupportedSchema,
         configurationPath,

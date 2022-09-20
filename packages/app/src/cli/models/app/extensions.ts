@@ -46,6 +46,10 @@ export const UIExtensionConfigurationSupportedSchema = UIExtensionConfigurationS
   type: schema.define.enum([...uiExtensions.types, ...uiExternalExtensionTypes.types]),
 })
 
+export const TypeSchema = schema.define.object({
+  type: schema.define.string(),
+})
+
 export const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.enum(functionExtensions.types),
@@ -100,7 +104,7 @@ export type UIExtension = Extension & {
   devUUID: string
 }
 
-type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
+export type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
