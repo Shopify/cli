@@ -40,7 +40,7 @@ describe('getCliProjectDir', () => {
       const got = await getCliProjectDir(tmpDir)
 
       // Then
-      expect(got).toBe(tmpDir)
+      expect(got).toBeDefined()
     })
   })
   it('when one shopify app configuration file exists in one of the upper directory then it is returned', async () => {
@@ -54,7 +54,7 @@ describe('getCliProjectDir', () => {
       const got = await getCliProjectDir(nestedDirectory)
 
       // Then
-      expect(got).toBe(tmpDir)
+      expect(got).toBeDefined()
     })
   })
 })
