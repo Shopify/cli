@@ -1,4 +1,4 @@
-import {string} from './index.js'
+import {hashString} from './string.js'
 import * as environment from './environment.js'
 import {platformAndArch} from './os.js'
 import {version as rubyVersion} from './node/ruby.js'
@@ -145,7 +145,7 @@ export async function getEnvironmentData(config: Interfaces.Config) {
     env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
     env_shell: config.shell,
     env_web_ide: environment.local.webIDEPlatform(),
-    env_mac_address_hash: string.hashString(await macAddress()),
+    env_mac_address_hash: hashString(await macAddress()),
     env_cloud: environment.local.cloudEnvironment(),
     env_package_manager: (await isCliProject(process.cwd())) ? await getPackageManager(process.cwd()) : undefined,
   }

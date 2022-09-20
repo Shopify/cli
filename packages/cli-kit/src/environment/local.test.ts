@@ -183,9 +183,9 @@ describe('cloudEnvironment', () => {
     expect(got).toBe('codespaces')
   })
 
-  it('returns gitpod when GITPOD_WORKSPACE_ID is truthy', () => {
+  it('returns gitpod when GITPOD_WORKSPACE_URL is truthy', () => {
     // Given
-    const env = {GITPOD_WORKSPACE_ID: '1'}
+    const env = {GITPOD_WORKSPACE_URL: '1'}
 
     // When
     const got = cloudEnvironment(env)
