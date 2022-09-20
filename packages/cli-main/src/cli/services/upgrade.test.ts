@@ -1,11 +1,12 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {constants, file, os, outputMocker, path, system} from '@shopify/cli-kit'
+import {file, os, outputMocker, path, system} from '@shopify/cli-kit'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 
 const oldCliVersion = '3.0.0'
-let currentCliVersion = '3.10.0' // just needs to be higher than oldCliVersion for these tests
+// just needs to be higher than oldCliVersion for these tests
+const currentCliVersion = '3.10.0'
 
 const OLD_ENV = {...process.env}
 
@@ -69,13 +70,8 @@ describe('upgrade global CLI', () => {
       // Then
       expect(vi.mocked(system.exec)).toHaveBeenCalledWith(
         'npm',
-        [
-          "install",
-          "-g",
-          "@shopify/cli@latest",
-          "@shopify/theme@latest",
-        ],
-        {stdio: 'inherit'}
+        ['install', '-g', '@shopify/cli@latest', '@shopify/theme@latest'],
+        {stdio: 'inherit'},
       )
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nAttempting to upgrade via npm install -g @shopify/cli@latest @shopify/theme@latest..."
@@ -100,14 +96,7 @@ describe('upgrade global CLI', () => {
 
       // Then
       expect(captureOutputSpy).toHaveBeenCalledWith('brew', ['list', '-1'])
-      expect(vi.mocked(system.exec)).toHaveBeenCalledWith(
-        'brew',
-        [
-          'upgrade',
-          'shopify-cli@3',
-        ],
-        {stdio: 'inherit'}
-      )
+      expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli@3'], {stdio: 'inherit'})
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nHomebrew installation detected. Attempting to upgrade via brew upgrade..."
       `)
@@ -158,7 +147,9 @@ describe('upgrade local CLI', () => {
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
-      const addNPMDependenciesMock = vi.spyOn(nodePackageManager as any, 'addNPMDependencies').mockResolvedValue(undefined)
+      const addNPMDependenciesMock = vi
+        .spyOn(nodePackageManager as any, 'addNPMDependencies')
+        .mockResolvedValue(undefined)
 
       // When
       await upgradeService.upgrade(tmpDir, oldCliVersion)
@@ -178,7 +169,7 @@ describe('upgrade local CLI', () => {
           directory: tmpDir,
           stdout: process.stdout,
           stderr: process.stderr,
-        }
+        },
       )
       expect(outputMock.success()).toMatchInlineSnapshot(`
         "Upgraded Shopify CLI to version ${currentCliVersion}"

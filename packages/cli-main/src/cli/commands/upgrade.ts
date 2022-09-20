@@ -1,7 +1,7 @@
+import {upgrade} from '../services/upgrade.js'
 import {Flags} from '@oclif/core'
 import {constants, path} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
-import {upgrade} from '../services/upgrade.js'
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'

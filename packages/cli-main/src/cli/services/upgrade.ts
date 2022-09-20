@@ -1,4 +1,4 @@
-import {constants, error, file, os, output, path, system} from '@shopify/cli-kit'
+import {error, file, os, output, path, system} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   checkForNewVersion,
@@ -77,26 +77,29 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
       const brewList = await system.captureOutput('brew', ['list', '-1'])
       if (brewList.match(/^shopify-cli@3$/m)) {
         output.info(
-          output.content`Homebrew installation detected. Attempting to upgrade via ${output.token.genericShellCommand('brew upgrade')}...`)
-        await system.exec('brew', ['upgrade', 'shopify-cli@3'], { stdio: 'inherit' })
+          output.content`Homebrew installation detected. Attempting to upgrade via ${output.token.genericShellCommand(
+            'brew upgrade',
+          )}...`,
+        )
+        await system.exec('brew', ['upgrade', 'shopify-cli@3'], {stdio: 'inherit'})
         return newestVersion
       }
-    } catch(e) {
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (err) {
       output.warn('Homebrew upgrade failed. Falling back to standard npm install.')
     }
   }
   const command = 'npm'
   const args = ['install', '-g', '@shopify/cli@latest', '@shopify/theme@latest']
   output.info(
-    output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`)
+    output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`,
+  )
   await system.exec(command, args, {stdio: 'inherit'})
   return newestVersion
 }
 
 function wontInstall(currentVersion: string): void {
-  output.info(
-    output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`,
-  )
+  output.info(output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`)
 }
 
 function outputUpgradeMessage(currentVersion: string, newestVersion: string): void {
@@ -114,13 +117,13 @@ export async function installJsonDependencies(
 ): Promise<void> {
   const packages = ['@shopify/cli', '@shopify/app', '@shopify/cli-hydrogen']
   const packagesToUpdate = packages
-  .filter((pkg: string): boolean => {
-    const pkgRequirement: string | undefined = deps[pkg]
-    return Boolean(pkgRequirement)
-  })
-  .map((pkg) => {
-    return {name: pkg, version: 'latest'}
-  })
+    .filter((pkg: string): boolean => {
+      const pkgRequirement: string | undefined = deps[pkg]
+      return Boolean(pkgRequirement)
+    })
+    .map((pkg) => {
+      return {name: pkg, version: 'latest'}
+    })
 
   if (packagesToUpdate.length > 0) {
     await addNPMDependencies(packagesToUpdate, {
