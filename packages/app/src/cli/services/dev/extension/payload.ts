@@ -46,6 +46,7 @@ export async function getUIExtensionPayload(
     },
     extensionPoints: extension.configuration.extensionPoints ?? null,
     localization: localization ?? null,
+    categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
     type: extension.configuration.type,
 

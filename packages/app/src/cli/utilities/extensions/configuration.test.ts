@@ -49,6 +49,7 @@ describe('extensionConfig', () => {
         metafields: [],
         type: 'checkout_post_purchase',
         capabilities: {network_access: false, block_progress: false},
+        categories: ['returns'],
       },
       type: 'checkout_post_purchase',
       graphQLType: 'CHECKOUT_POST_PURCHASE',
@@ -101,6 +102,7 @@ describe('extensionConfig', () => {
           node_executable: 'node-path',
 
           extension_points: [],
+          categories: ['returns'],
           development: {
             build: {env: {}},
             develop: {env: {}},
