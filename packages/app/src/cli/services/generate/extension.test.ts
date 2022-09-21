@@ -99,34 +99,63 @@ describe('initialize a extension', () => {
   )
 
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
+  type ExtensionLiquidFlavor = 'react' | ''
 
+  // For each combination of extension type and flavor, confirm that files are created with the expected extension
   it.each(
     uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js', 'js', ''])
-      accumulator.push([type, 'react', 'jsx', 'react'])
-      accumulator.push([type, 'typescript', 'ts', ''])
-      accumulator.push([type, 'typescript-react', 'tsx', 'react'])
+      accumulator.push([type, 'vanilla-js', 'js'])
+      accumulator.push([type, 'react', 'jsx'])
+      accumulator.push([type, 'typescript', 'ts'])
+      accumulator.push([type, 'typescript-react', 'tsx'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension, string][]),
+    }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension][]),
   )(
     'creates %s for %s with index file at extensions/[extension-name]/src/index.%s',
 
-    async (extensionType, extensionFlavor, fileExtension, liquidFlavor) => {
+    async (extensionType, extensionFlavor, fileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'extension-name'
-        const spy = vi.spyOn(template, 'recursiveDirectoryCopy')
 
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
 
         const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', `index.${fileExtension}`))
+        expect(srcIndexFile.trim()).not.toBe('')
+      })
+    },
+    30 * 1000,
+  )
 
-        expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+  // For each combination of extension type and flavor, confirm that the right parameters are passed to the template
+  it.each(
+    uiExtensions.types.reduce((accumulator, type) => {
+      accumulator.push([type, 'vanilla-js', ''])
+      accumulator.push([type, 'react', 'react'])
+      accumulator.push([type, 'typescript', ''])
+      accumulator.push([type, 'typescript-react', 'react'])
+
+      return accumulator
+    }, [] as [ExtensionTypes, ExtensionFlavor, ExtensionLiquidFlavor][]),
+  )(
+    'calls recursiveDirectoryCopy with type %s, flavor %s, file extension %s and liquid flavor %s',
+
+    async (extensionType, extensionFlavor, liquidFlavor) => {
+      await withTemporaryApp(async (tmpDir: string) => {
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        const fileMoveSpy = vi.spyOn(file, 'move').mockResolvedValue()
+        const name = 'extension-name'
+
+        await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
+
+        expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
           flavor: liquidFlavor,
           type: extensionType,
           name,
         })
-        expect(srcIndexFile.trim()).not.toBe('')
+
+        recursiveDirectoryCopySpy.mockRestore()
+        fileMoveSpy.mockRestore()
       })
     },
     30 * 1000,
