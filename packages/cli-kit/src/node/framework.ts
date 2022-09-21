@@ -1,4 +1,7 @@
-export interface FrameworkDetectionItem {
+import {join as pathJoin} from '../path.js'
+import {existsSync, readFileSync} from 'node:fs'
+
+interface FrameworkDetectionPattern {
   /**
    * A file path
    * @example "package.json"
@@ -11,7 +14,7 @@ export interface FrameworkDetectionItem {
   matchContent?: string
 }
 
-export interface Framework {
+interface Framework {
   /**
    * Name of the framework
    * @example "nextjs"
@@ -26,16 +29,16 @@ export interface Framework {
      * Collection of detectors that must be matched for the framework
      * to be detected.
      */
-    every?: FrameworkDetectionItem[]
+    every?: FrameworkDetectionPattern[]
     /**
      * Collection of detectors where one match triggers the framework
      * to be detected.
      */
-    some?: FrameworkDetectionItem[]
+    some?: FrameworkDetectionPattern[]
   }
 }
 
-export const frameworks: Framework[] = [
+const frameworks: Framework[] = [
   {
     name: 'remix',
     detectors: {
@@ -133,3 +136,60 @@ export const frameworks: Framework[] = [
     },
   },
 ]
+
+/**
+ * Tries to identify the using of a framework analyzing the existence and/or content of different files inside a
+ * specific directory.
+ *
+ * @param {string} rootDirectory - Directory from which the files required for each framework are searched
+ * @returns {string} The name of the framework used or 'unknown' otherwise
+ */
+export async function resolveFramework(rootDirectory: string) {
+  const fwConfigFiles: {[key: string]: string | undefined} = {}
+
+  const matchedFramework = frameworks.find(
+    (framework) =>
+      (!framework.detectors?.some ||
+        framework.detectors?.some?.reduce(
+          (_previousDetectorsMatch: boolean, detector) =>
+            matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
+          false,
+        )) &&
+      (!framework.detectors?.every ||
+        framework.detectors?.every?.reduce(
+          (previousDetectorsMatch: boolean, detector) =>
+            previousDetectorsMatch
+              ? matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles))
+              : false,
+          true,
+        )),
+  )
+
+  return matchedFramework ? matchedFramework.name : 'unknown'
+}
+
+function matchDetector(detector: FrameworkDetectionPattern, fwConfigFiles: {[key: string]: string | undefined} = {}) {
+  if (!fwConfigFiles[detector.path]) return false
+
+  return !detector.matchContent || new RegExp(detector.matchContent).test(fwConfigFiles[detector.path]!)
+}
+
+function loadFwConfigFile(
+  rootPath: string,
+  fwConfigFileName: string,
+  fwConfigFiles: {[key: string]: string | undefined} = {},
+) {
+  if (fwConfigFiles[fwConfigFileName]) {
+    return fwConfigFiles
+  }
+
+  const fwConfigFilePath = pathJoin(rootPath, fwConfigFileName)
+  if (!existsSync(fwConfigFilePath)) {
+    return fwConfigFiles
+  }
+
+  const rawContent = readFileSync(fwConfigFilePath, {encoding: 'utf8'})
+
+  fwConfigFiles[fwConfigFileName] = rawContent
+  return fwConfigFiles
+}

@@ -14,12 +14,8 @@ import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/exten
 import metadata from '../../metadata.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {
-  getDependencies,
-  getPackageManager,
-  getPackageName,
-  resolveFramework,
-} from '@shopify/cli-kit/node/node-package-manager'
+import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
+import {resolveFramework} from '@shopify/cli-kit/node/framework'
 
 const defaultExtensionDirectory = 'extensions/*'
 
