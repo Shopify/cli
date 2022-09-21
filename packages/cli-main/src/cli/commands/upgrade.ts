@@ -1,5 +1,5 @@
 import {Flags} from '@oclif/core'
-import {error, file, output, path} from '@shopify/cli-kit'
+import {error, file, output, path, cli} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   checkForNewVersion,
@@ -7,7 +7,6 @@ import {
   getPackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
 import Command from '@shopify/cli-kit/node/base-command'
-import {getCliProjectDir} from '@shopify/cli-kit/src/cli.js'
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI'
@@ -25,7 +24,7 @@ export default class Upgrade extends Command {
     const {flags} = await this.parse(Upgrade)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    const projectDir = await getCliProjectDir(directory)
+    const projectDir = await cli.getCliProjectDir(directory)
     if (!projectDir) {
       throw new error.Abort(
         output.content`Couldn't find the configuration file for ${output.token.path(
