@@ -166,7 +166,7 @@ describe('upgrade local CLI', () => {
         {
           packageManager: 'npm',
           type: 'prod',
-          directory: tmpDir,
+          directory: path.normalize(tmpDir),
           stdout: process.stdout,
           stderr: process.stderr,
         },
