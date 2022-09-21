@@ -20,7 +20,7 @@ beforeEach(() => {
     }
   })
   vi.mock('./node/cli.js')
-  vi.mock('./environment.js')
+  vi.mock('../environment.js')
   vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
 })
