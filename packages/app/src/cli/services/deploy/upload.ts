@@ -194,16 +194,13 @@ async function uploadFunctionExtension(
   extension: FunctionExtension,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
-  const {url, headers} = await getFunctionExtensionUploadURL({apiKey: options.apiKey, token: options.token})
-  headers['Content-Type'] = 'application/wasm'
+  const url = await uploadWasmBlob(extension, options.apiKey, options.token)
 
   let inputQuery: string | undefined
   if (await file.exists(extension.inputQueryPath())) {
     inputQuery = await file.read(extension.inputQueryPath())
   }
 
-  const functionContent = fs.readFileSync(extension.buildWasmPath())
-  await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   await compileFunctionExtension(extension, options, url)
 
   const query = api.graphql.AppFunctionSetMutation
@@ -238,6 +235,30 @@ ${output.token.json(userErrors)}
     throw new error.Abort(errorMessage)
   }
   return res.data.functionSet.function?.id as string
+}
+
+async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, token: string): Promise<string> {
+  const {url, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
+  headers['Content-Type'] = 'application/wasm'
+
+  const functionContent = await file.read(extension.buildWasmPath())
+  const res = await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
+  const resBody = res.body?.read()?.toString() || ''
+
+  if (res.status === 200) {
+    return url
+  } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
+    const errorMessage = output.content`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
+    throw new error.Abort(errorMessage)
+  } else if (res.status >= 400 && res.status < 500) {
+    const errorMessage = output.content`Something went wrong uploading the Function ${
+      extension.localIdentifier
+    }. The server responded with status ${res.status.toString()} and body: ${resBody}`
+    throw new error.Bug(errorMessage)
+  } else {
+    const errorMessage = output.content`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
+    throw new error.Abort(errorMessage)
+  }
 }
 
 async function compileFunctionExtension(
@@ -309,6 +330,7 @@ interface GetFunctionExtensionUploadURLOptions {
 
 interface GetFunctionExtensionUploadURLOutput {
   url: string
+  maxSize: string
   headers: {[key: string]: string}
 }
 
