@@ -13,23 +13,23 @@ interface Props {
 }
 
 const Process = ({process, color, width, abortControllerSignal, onError}: Props) => {
-  const [processOutput, setProcessOutput] = useState('')
+  const [processOutput, setProcessOutput] = useState<string[]>([])
 
   useEffect(() => {
     const runProcess = async () => {
       try {
         const stdout = new Writable({
           write(chunk, _encoding, next) {
-            const lines = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii'))
-            setProcessOutput((previousProcessOutput) => previousProcessOutput.concat(lines))
+            const lines = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split('\n')
+            setProcessOutput((previousProcessOutput) => [...previousProcessOutput, ...lines])
             next()
           },
         })
 
         const stderr = new Writable({
           write(chunk, _encoding, next) {
-            const lines = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii'))
-            setProcessOutput((previousProcessOutput) => previousProcessOutput.concat(lines))
+            const lines = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split('\n')
+            setProcessOutput((previousProcessOutput) => [...previousProcessOutput, ...lines])
             next()
           },
         })
@@ -52,8 +52,10 @@ const Process = ({process, color, width, abortControllerSignal, onError}: Props)
       </Text>
       <Newline />
 
-      <Box>
-        <Text>{processOutput}</Text>
+      <Box flexDirection="column">
+        {processOutput.map((line, index) => (
+          <Text key={index}>{line}</Text>
+        ))}
       </Box>
     </Box>
   )
