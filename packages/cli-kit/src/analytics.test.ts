@@ -26,6 +26,7 @@ describe('event tracking', () => {
 
     vi.mock('./version.js')
     vi.mock('./monorail.js')
+    vi.mock('./node/cli.js')
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
     vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)

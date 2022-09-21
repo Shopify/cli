@@ -35,12 +35,7 @@ abstract class BaseCommand extends Command {
 
 export default BaseCommand
 
-export async function addFromParsedFlags(flags: {
-  path?: string
-  verbose?: boolean
-  reset?: boolean
-  'skip-dependencies-installation'?: boolean
-}) {
+export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
   await addPublic(() => ({
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,
