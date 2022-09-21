@@ -216,13 +216,3 @@ describe('cloudEnvironment', () => {
     expect(got).toBe('localhost')
   })
 })
-
-describe('macAddress', () => {
-  it('returns any mac address value', async () => {
-    // When
-    const got = await macAddress()
-
-    // Then
-    expect(got).not.toBeUndefined()
-  })
-})
