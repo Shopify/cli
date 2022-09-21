@@ -154,10 +154,10 @@ describe('useDeviceAuth', () => {
     const env = {}
 
     // When
-    const got = cloudEnvironment(env)
+    const got = useDeviceAuth(env)
 
     // Then
-    expect(got).toBe('localhost')
+    expect(got).toBe(false)
   })
 })
 
@@ -172,37 +172,19 @@ describe('macAddress', () => {
 })
 
 describe('cloudEnvironment', () => {
-  it('returns codespaces when CODESPACES is truthy', () => {
+  it.each([
+    ['SPIN', 'spin'],
+    ['CODESPACES', 'codespaces'],
+    ['GITPOD_WORKSPACE_URL', 'gitpod'],
+  ])('returns correct cloud platform when %s is truthy', (envVar, platform) => {
     // Given
-    const env = {CODESPACES: '1'}
+    const env = {[envVar]: '1'}
 
     // When
     const got = cloudEnvironment(env)
 
     // Then
-    expect(got).toBe('codespaces')
-  })
-
-  it('returns gitpod when GITPOD_WORKSPACE_URL is truthy', () => {
-    // Given
-    const env = {GITPOD_WORKSPACE_URL: '1'}
-
-    // When
-    const got = cloudEnvironment(env)
-
-    // Then
-    expect(got).toBe('gitpod')
-  })
-
-  it('returns spin when SPIN is truthy', () => {
-    // Given
-    const env = {SPIN: '1'}
-
-    // When
-    const got = cloudEnvironment(env)
-
-    // Then
-    expect(got).toBe('spin')
+    expect(got.platform).toBe(platform)
   })
 
   it('returns localhost when no cloud enviroment varible is ser', () => {
@@ -213,6 +195,6 @@ describe('cloudEnvironment', () => {
     const got = cloudEnvironment(env)
 
     // Then
-    expect(got).toBe('localhost')
+    expect(got.platform).toBe('localhost')
   })
 })

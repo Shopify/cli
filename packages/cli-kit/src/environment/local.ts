@@ -101,21 +101,39 @@ export function codespaceURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.codespaceName]
 }
 
+/**
+ * Checks if the CLI is run from a cloud environment
+ *
+ * @param {ProcessEnv} env - Environment variables used when the cli is launched
+ *
+ * @returns {boolean} True in case the CLI is run from a cloud environment
+ */
 export function isCloudEnvironment(env = process.env): boolean {
-  return cloudEnvironment(env) !== 'localhost'
+  return cloudEnvironment(env).platform !== 'localhost'
 }
 
-export function cloudEnvironment(env = process.env): 'spin' | 'codespaces' | 'gitpod' | 'localhost' {
+/**
+ * Returns the cloud environment platform name and if the platform support online IDE in case the CLI is run from one of
+ * them. Platform name 'localhost' is returned otherwise
+ *
+ * @param {ProcessEnv} env - Environment variables used when the cli is launched
+ *
+ * @returns {{platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost', editor: boolean}} - Cloud platform information
+ */
+export function cloudEnvironment(env = process.env): {
+  platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
+  editor: boolean
+} {
   if (isTruthy(env[constants.environmentVariables.codespaces])) {
-    return 'codespaces'
+    return {platform: 'codespaces', editor: true}
   }
   if (isTruthy(env[constants.environmentVariables.gitpod])) {
-    return 'gitpod'
+    return {platform: 'gitpod', editor: true}
   }
   if (isTruthy(env[constants.environmentVariables.spin])) {
-    return 'spin'
+    return {platform: 'spin', editor: false}
   }
-  return 'localhost'
+  return {platform: 'localhost', editor: false}
 }
 
 /**
@@ -157,15 +175,10 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
 }
 
 /**
- * Gets info on the Web IDE platform the CLI is running on, if applicable
+ * Returns the first mac address found
+ *
+ *  @returns {Promise<string>}  Mac address
  */
-export function webIDEPlatform(env = process.env) {
-  const cloudEnvironmentWithIDE = cloudEnvironment()
-  return cloudEnvironmentWithIDE === 'codespaces' || cloudEnvironmentWithIDE === 'gitpod'
-    ? cloudEnvironmentWithIDE
-    : undefined
-}
-
-export function macAddress() {
+export function macAddress(): Promise<string> {
   return macaddress.one()
 }

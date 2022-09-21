@@ -144,9 +144,11 @@ export async function getEnvironmentData(config: Interfaces.Config) {
     env_plugin_installed_any_custom: pluginNames.length !== shopifyPlugins.length,
     env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
     env_shell: config.shell,
-    env_web_ide: environment.local.webIDEPlatform(),
+    env_web_ide: environment.local.cloudEnvironment().editor
+      ? environment.local.cloudEnvironment().platform
+      : undefined,
     env_mac_address_hash: hashString(await macAddress()),
-    env_cloud: environment.local.cloudEnvironment(),
+    env_cloud: environment.local.cloudEnvironment().platform,
     env_package_manager: (await localCliPackage()) ? await getPackageManager(process.cwd()) : undefined,
   }
 }
