@@ -9,7 +9,7 @@ import {
 } from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path} from '@shopify/cli-kit'
+import {file, output, path, template} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import type {ExtensionFlavor} from './extension.js'
 
@@ -99,7 +99,9 @@ describe('initialize a extension', () => {
   )
 
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
+  type ExtensionLiquidFlavor = 'react' | ''
 
+  // For each combination of extension type and flavor, confirm that files are created with the expected extension
   it.each(
     uiExtensions.types.reduce((accumulator, type) => {
       accumulator.push([type, 'vanilla-js', 'js'])
@@ -119,8 +121,41 @@ describe('initialize a extension', () => {
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
 
         const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', `index.${fileExtension}`))
-
         expect(srcIndexFile.trim()).not.toBe('')
+      })
+    },
+    30 * 1000,
+  )
+
+  // For each combination of extension type and flavor, confirm that the right parameters are passed to the template
+  it.each(
+    uiExtensions.types.reduce((accumulator, type) => {
+      accumulator.push([type, 'vanilla-js', ''])
+      accumulator.push([type, 'react', 'react'])
+      accumulator.push([type, 'typescript', ''])
+      accumulator.push([type, 'typescript-react', 'react'])
+
+      return accumulator
+    }, [] as [ExtensionTypes, ExtensionFlavor, ExtensionLiquidFlavor][]),
+  )(
+    'calls recursiveDirectoryCopy with type %s, flavor %s, file extension %s and liquid flavor %s',
+
+    async (extensionType, extensionFlavor, liquidFlavor) => {
+      await withTemporaryApp(async (tmpDir: string) => {
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        const fileMoveSpy = vi.spyOn(file, 'move').mockResolvedValue()
+        const name = 'extension-name'
+
+        await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
+
+        expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
+          flavor: liquidFlavor,
+          type: extensionType,
+          name,
+        })
+
+        recursiveDirectoryCopySpy.mockRestore()
+        fileMoveSpy.mockRestore()
       })
     },
     30 * 1000,
