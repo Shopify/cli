@@ -49,7 +49,6 @@ Initially, your extension will look like the following:
 
 Start writing code for your extension simply editing the `src/index.js` file (or equivalent file extension of your choice).
 
-> [!NOTE]
 > By default, the Checkout UI Extension is preconfigured as a [`Dynamic Extension Point`](https://shopify.dev/api/checkout-extensions/checkout#extension-points).
 > You can change it to your desired Extension Point location.
 
@@ -60,7 +59,6 @@ To shape your extension you have the following collection of tools available:
 
 With these tools you'll get access to Shopify-enabled resources (such as [Analytics](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#analytics), [Localization](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#localization) or [Storage](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#storage)) and the frameworks that you need to read (and mutate) data for your Checkout-UI extension (like Shop, Customer, CartLine, MetaFields, etc.).
 
-> [!IMPORTANT]
 > If you are using React, there is also a large collection of [React Hooks available](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#react-hooks) to ease access to these operations, otherwise you'll need to manually subscribe to the subscribable value directly with a callback.
 
 ## FAQ
