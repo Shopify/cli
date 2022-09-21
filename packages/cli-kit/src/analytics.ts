@@ -6,13 +6,13 @@ import {content, debug, token} from './output.js'
 import constants from './constants.js'
 import * as metadata from './metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
-import {fanoutHooks} from './plugins.js'
+import {fanoutHooks, getListOfTunnelPlugins} from './plugins.js'
 import {getPackageManager, packageManagerUsedForCreating} from './node/node-package-manager.js'
 import BaseCommand from './node/base-command.js'
 import {macAddress} from './environment/local.js'
 import {CommandContent} from './node/hooks/prerun.js'
 import {localCliPackage} from './node/cli.js'
-import {Interfaces} from '@oclif/core'
+import {Config, Interfaces} from '@oclif/core'
 
 interface StartOptions {
   commandContent: CommandContent
@@ -77,6 +77,28 @@ export async function reportEvent(options: ReportEventOptions) {
     }
     debug(message)
   }
+}
+
+/**
+ * Return the name of the tunnel provider used to send analytics. Returns 'localhost' or provider name if any of those
+ * strings are included in the {@link tunnelUrl} param. Resturns 'custom' otherwise
+ *
+ * @param {Config} options - Oclif configuration. Needed to call the hook for retrieving the list of tunner providers
+ * @param {string} tunnelUrl - Tunnel url. Used as pattern to match provider name
+ * @returns {Promise<string | undefined>} - Returns 'localhost' or provider name if any of those strings are included in
+ *  the tunnelUrl. Resturns 'custom' other wise
+ */
+export async function getAnalyticsTunnelType(options: Config, tunnelUrl: string): Promise<string | undefined> {
+  if (!tunnelUrl) {
+    return
+  }
+
+  if (tunnelUrl.includes('localhost')) {
+    return 'localhost'
+  }
+
+  const provider = (await getListOfTunnelPlugins(options)).plugins.find((plugin) => tunnelUrl?.includes(plugin))
+  return provider ?? 'custom'
 }
 
 const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {

@@ -12,11 +12,12 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import metadata from '../metadata.js'
-import {analytics, output, port, system, session, abort, plugins, string} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession} from '@shopify/cli-kit/src/session.js'
+import {getAnalyticsTunnelType} from '@shopify/cli-kit/src/analytics'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -325,7 +326,7 @@ async function logMetadataForDev(options: {
   shouldUpdateURLs: boolean
   storeFqdn: string
 }) {
-  const tunnelType = await resolveTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublic(() => ({
     cmd_dev_tunnel_type: tunnelType,
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
@@ -339,19 +340,6 @@ async function logMetadataForDev(options: {
     store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))
-}
-
-async function resolveTunnelType(options: Config, tunnelUrl: string): Promise<string | undefined> {
-  if (!tunnelUrl) {
-    return
-  }
-
-  if (tunnelUrl.includes('localhost')) {
-    return 'localhost'
-  }
-
-  const provider = (await plugins.getListOfTunnelPlugins(options)).plugins.find((plugin) => tunnelUrl.includes(plugin))
-  return provider ?? 'custom'
 }
 
 export default dev
