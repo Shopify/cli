@@ -66,7 +66,10 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   if (resolvedVersion.slice(0, 1).match(/[\^~]/)) resolvedVersion = currentVersion
   const newestVersion = await checkForNewVersion(await cliDependency(), resolvedVersion)
 
-  if (!newestVersion) return wontInstall(resolvedVersion)
+  if (!newestVersion) {
+    outputWontInstallMessage(resolvedVersion)
+    return
+  }
 
   outputUpgradeMessage(resolvedVersion, newestVersion)
 
@@ -78,28 +81,43 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
 async function upgradeGlobalShopify(currentVersion: string): Promise<string | void> {
   const newestVersion = await checkForNewVersion(await cliDependency(), currentVersion)
 
-  if (!newestVersion) return wontInstall(currentVersion)
+  if (!newestVersion) {
+    outputWontInstallMessage(currentVersion)
+    return
+  }
 
   outputUpgradeMessage(currentVersion, newestVersion)
 
   const {platform} = os.platformAndArch()
-  if (platform.match(/darwin/)) {
+  const isMacOS = platform.match(/darwin/)
+  let usesHomebrew = false
+  if (isMacOS) {
     try {
       const brewList = await system.captureOutput('brew', ['list', '-1'])
-      if (brewList.match(/^shopify-cli@3$/m)) {
-        output.info(
-          output.content`Homebrew installation detected. Attempting to upgrade via ${output.token.genericShellCommand(
-            'brew upgrade',
-          )}...`,
-        )
-        await system.exec('brew', ['upgrade', 'shopify-cli@3'], {stdio: 'inherit'})
-        return newestVersion
-      }
+      usesHomebrew = Boolean(brewList.match(/^shopify-cli@3$/m))
       // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (err) {
-      output.warn('Homebrew upgrade failed. Falling back to standard npm install.')
-    }
+    } catch (err) {}
   }
+
+  try {
+    await (usesHomebrew ? upgradeGlobalViaHomebrew() : upgradeGlobalViaNpm())
+  } catch (err) {
+    output.warn('Upgrade failed!')
+    throw err
+  }
+  return newestVersion
+}
+
+async function upgradeGlobalViaHomebrew(): Promise<void> {
+  output.info(
+    output.content`Homebrew installation detected. Attempting to upgrade via ${output.token.genericShellCommand(
+      'brew upgrade',
+    )}...`,
+  )
+  await system.exec('brew', ['upgrade', 'shopify-cli@3'], {stdio: 'inherit'})
+}
+
+async function upgradeGlobalViaNpm(): Promise<void> {
   const command = 'npm'
   const args = [
     'install',
@@ -111,10 +129,9 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
     output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`,
   )
   await system.exec(command, args, {stdio: 'inherit'})
-  return newestVersion
 }
 
-function wontInstall(currentVersion: string): void {
+function outputWontInstallMessage(currentVersion: string): void {
   output.info(output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`)
 }
 
