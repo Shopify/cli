@@ -20,7 +20,7 @@ Make sure you've completed the following prerequisites to develop a Checkout UI 
 The best way to get started is to follow some of the available Extension Tutorials:
 
 
-For creating an extensionL
+For creating an extension:
 * [Enable Extended Delivery Instructions](https://shopify.dev/apps/checkout/delivery-instructions) - Static Renderer
 * [Adding Product Offer Recommendations](https://shopify.dev/apps/checkout/product-offers) - Static Renderer
 * [Creating a Custom Banner](https://shopify.dev/apps/checkout/custom-banners) - Dynamic Renderer
