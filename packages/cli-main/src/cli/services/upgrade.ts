@@ -7,6 +7,9 @@ import {
   getPackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
 
+// Canonical list of oclif plugins that should be installed globally
+const globalPlugins = ['@shopify/theme']
+
 interface PackageJsonContents {
   name: string
   dependencies?: {[name: string]: string}
@@ -98,7 +101,12 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
     }
   }
   const command = 'npm'
-  const args = ['install', '-g', '@shopify/cli@latest', '@shopify/theme@latest']
+  const args = [
+    'install',
+    '-g',
+    `${await cliDependency()}@latest`,
+    ...globalPlugins.map((plugin) => `${plugin}@latest`),
+  ]
   output.info(
     output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`,
   )
