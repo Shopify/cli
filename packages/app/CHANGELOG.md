@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.13.1
+
+### Patch Changes
+
+- ac0d42b1: React depency only added for generated extensions with react flavor
+- 14737f76: Fix extensions generate not working with react templates
+- Updated dependencies [81d3ca50]
+  - @shopify/cli-kit@3.13.1
+  - @shopify/shopify-cli-extensions@3.13.1
+
 ## 3.13.0
 
 ### Minor Changes

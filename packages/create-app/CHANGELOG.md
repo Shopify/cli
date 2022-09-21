@@ -1,5 +1,13 @@
 # @shopify/create-app
 
+## 3.13.1
+
+### Patch Changes
+
+- 05ea6356: Change 'scaffold' to 'generate' in init app text
+- Updated dependencies [81d3ca50]
+  - @shopify/cli-kit@3.13.1
+
 ## 3.13.0
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.13.1
+
+### Patch Changes
+
+- 81d3ca50: Fix authentication issue when token is expired and invalid/revoked
+
 ## 3.13.0
 
 ### Minor Changes
