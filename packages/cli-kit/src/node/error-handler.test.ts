@@ -17,6 +17,7 @@ beforeEach(() => {
       },
     }
   })
+  vi.mock('./node/cli.js')
 })
 
 afterEach(() => {

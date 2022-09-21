@@ -104,11 +104,11 @@ export function codespaceURL(env = process.env): string | undefined {
 /**
  * Checks if the CLI is run from a cloud environment
  *
- * @param {ProcessEnv} env - Environment variables used when the cli is launched
+ * @param {NodeJS.ProcessEnv} env - Environment variables used when the cli is launched
  *
  * @returns {boolean} True in case the CLI is run from a cloud environment
  */
-export function isCloudEnvironment(env = process.env): boolean {
+export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolean {
   return cloudEnvironment(env).platform !== 'localhost'
 }
 
@@ -116,11 +116,11 @@ export function isCloudEnvironment(env = process.env): boolean {
  * Returns the cloud environment platform name and if the platform support online IDE in case the CLI is run from one of
  * them. Platform name 'localhost' is returned otherwise
  *
- * @param {ProcessEnv} env - Environment variables used when the cli is launched
+ * @param {NodeJS.ProcessEnv} env - Environment variables used when the cli is launched
  *
  * @returns {{platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost', editor: boolean}} - Cloud platform information
  */
-export function cloudEnvironment(env = process.env): {
+export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
   editor: boolean
 } {
@@ -179,6 +179,6 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
  *
  *  @returns {Promise<string>}  Mac address
  */
-export function macAddress(): Promise<string> {
+export function macAddress() {
   return macaddress.one()
 }
