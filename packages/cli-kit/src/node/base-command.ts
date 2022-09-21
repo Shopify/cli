@@ -45,7 +45,5 @@ export async function addFromParsedFlags(flags: {
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,
     cmd_all_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),
-    cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
-    cmd_app_reset_used: flags.reset,
   }))
 }
