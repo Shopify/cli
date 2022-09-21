@@ -4,7 +4,7 @@ import * as haiku from './haiku.js'
 import {takeRandomFromArray} from './public/common/array.js'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('../public/common/array.js')
+vi.mock('./public/common/array.js')
 
 describe('generate', () => {
   test('rerolls the name if a directory exists with the same name', async () => {
