@@ -113,7 +113,7 @@ interface PackageJSON {
   peerDependencies?: {[packageName: string]: CliPackageInfo}
 }
 
-async function localCliPackage(): Promise<CliPackageInfo | undefined> {
+export async function localCliPackage(): Promise<CliPackageInfo | undefined> {
   const {captureOutput} = await import('../system.js')
 
   let npmListOutput = ''

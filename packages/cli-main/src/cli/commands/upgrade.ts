@@ -1,5 +1,5 @@
 import {Flags} from '@oclif/core'
-import {error, file, output, path, cli} from '@shopify/cli-kit'
+import {error, file, output, path} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   checkForNewVersion,
@@ -24,7 +24,7 @@ export default class Upgrade extends Command {
     const {flags} = await this.parse(Upgrade)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    const projectDir = await cli.getCliProjectDir(directory)
+    const projectDir = await this.getProjectDir(directory)
     if (!projectDir) {
       throw new error.Abort(
         output.content`Couldn't find the configuration file for ${output.token.path(
@@ -58,6 +58,23 @@ export default class Upgrade extends Command {
     await this.installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
 
     output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
+  }
+
+  async getProjectDir(directory: string) {
+    return path.findUp(
+      async (dir: string) => {
+        const configFilesExist = await Promise.all(
+          ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'].map(async (configFile) => {
+            return file.exists(path.join(dir, configFile))
+          }),
+        )
+        if (configFilesExist.some((bool) => bool)) return dir
+      },
+      {
+        cwd: directory,
+        type: 'directory',
+      },
+    )
   }
 
   async installJsonDependencies(

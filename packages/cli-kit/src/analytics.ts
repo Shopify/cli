@@ -11,7 +11,7 @@ import {getPackageManager, packageManagerUsedForCreating} from './node/node-pack
 import BaseCommand from './node/base-command.js'
 import {macAddress} from './environment/local.js'
 import {CommandContent} from './node/hooks/prerun.js'
-import {isCliProject} from './cli.js'
+import {localCliPackage} from './node/cli.js'
 import {Interfaces} from '@oclif/core'
 
 interface StartOptions {
@@ -147,7 +147,7 @@ export async function getEnvironmentData(config: Interfaces.Config) {
     env_web_ide: environment.local.webIDEPlatform(),
     env_mac_address_hash: hashString(await macAddress()),
     env_cloud: environment.local.cloudEnvironment(),
-    env_package_manager: (await isCliProject(process.cwd())) ? await getPackageManager(process.cwd()) : undefined,
+    env_package_manager: (await localCliPackage()) ? await getPackageManager(process.cwd()) : undefined,
   }
 }
 
