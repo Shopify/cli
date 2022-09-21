@@ -1,6 +1,8 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler'
+import * as environment from '../environment.js'
 import * as error from '../error'
 import * as outputMocker from '../testing/output'
+import {hashString} from '../string.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const onNotify = vi.fn()
@@ -18,6 +20,9 @@ beforeEach(() => {
     }
   })
   vi.mock('./node/cli.js')
+  vi.mock('./environment.js')
+  vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
+  vi.mocked(hashString).mockReturnValue('hashed-macaddress')
 })
 
 afterEach(() => {

@@ -6,9 +6,12 @@ import constants from './constants.js'
 import * as metadata from './metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks, getListOfTunnelPlugins} from './plugins.js'
-import {packageManagerUsedForCreating} from './node/node-package-manager.js'
+import {getPackageManager, packageManagerUsedForCreating} from './node/node-package-manager.js'
 import BaseCommand from './node/base-command.js'
 import {CommandContent} from './node/hooks/prerun.js'
+import {hashString} from './string.js'
+import {macAddress} from './environment/local.js'
+import {localCliPackage} from './node/cli.js'
 import {Config, Interfaces} from '@oclif/core'
 
 interface StartOptions {
@@ -163,12 +166,12 @@ export async function getEnvironmentData(config: Interfaces.Config) {
     env_plugin_installed_any_custom: pluginNames.length !== shopifyPlugins.length,
     env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
     env_shell: config.shell,
-    // env_web_ide: environment.local.cloudEnvironment().editor
-    //   ? environment.local.cloudEnvironment().platform
-    //   : undefined,
-    // env_mac_address_hash: hashString(await macAddress()),
-    // env_cloud: environment.local.cloudEnvironment().platform,
-    // env_package_manager: (await localCliPackage()) ? await getPackageManager(process.cwd()) : undefined,
+    env_web_ide: environment.local.cloudEnvironment().editor
+      ? environment.local.cloudEnvironment().platform
+      : undefined,
+    env_mac_address_hash: hashString(await macAddress()),
+    env_cloud: environment.local.cloudEnvironment().platform,
+    env_package_manager: (await localCliPackage()) ? await getPackageManager(process.cwd()) : undefined,
   }
 }
 
