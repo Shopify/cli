@@ -12,7 +12,7 @@ import {
 import type {ExtensionServerState} from './types'
 
 describe('extensionServerReducer()', () => {
-  it('connects to server', () => {
+  test('connects to server', () => {
     const app = mockApp()
     const extension = mockExtension()
     const action = createConnectedAction({app, extensions: [extension], store: 'test-store.com'})
@@ -25,7 +25,7 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  it('replaces existing app and extensions when connecting twice', () => {
+  test('replaces existing app and extensions when connecting twice', () => {
     const app = mockApp()
     const extension = mockExtension()
     const action1 = createConnectedAction({app, extensions: [extension], store: 'test-store.com'})
@@ -50,7 +50,7 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  it('receives updates from the server', () => {
+  test('receives updates from the server', () => {
     const extension1 = mockExtension()
     const extension2 = mockExtension()
     const previousState: ExtensionServerState = {
@@ -71,7 +71,7 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  it('maintains extension order after update', () => {
+  test('maintains extension order after update', () => {
     const extension1 = mockExtension()
     const extension2 = mockExtension()
     const previousState: ExtensionServerState = {
@@ -93,7 +93,7 @@ describe('extensionServerReducer()', () => {
   })
 
   // eslint-disable-next-line jest/no-disabled-tests
-  it.skip('refreshes extension url', async () => {
+  test.skip('refreshes extension url', async () => {
     const extension = mockExtension()
     const previousState: ExtensionServerState = {
       store: 'test-store.com',
@@ -122,7 +122,7 @@ describe('extensionServerReducer()', () => {
   })
 
   describe('focus', () => {
-    it('focuses only one extension', () => {
+    test('focuses only one extension', () => {
       const extension1 = mockExtension()
       const extension2 = mockExtension()
 
@@ -143,7 +143,7 @@ describe('extensionServerReducer()', () => {
       expect(state2.extensions[1].development.focused).toBe(true)
     })
 
-    it('unfocuses extension', () => {
+    test('unfocuses extension', () => {
       const extension = mockExtension({development: {focused: true}})
 
       const previousState: ExtensionServerState = {

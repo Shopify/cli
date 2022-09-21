@@ -106,6 +106,13 @@ module.exports = {
         ],
       },
     ],
+    'jest/consistent-test-it': [
+      'error',
+      {
+        fn: 'test',
+        withinDescribe: 'test',
+      },
+    ],
     'jest/max-nested-describe': [
       'error',
       {

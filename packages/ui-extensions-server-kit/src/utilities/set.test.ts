@@ -2,7 +2,7 @@
 import {set} from './set'
 
 describe('set()', () => {
-  it('deep sets object without mutation', () => {
+  test('deep sets object without mutation', () => {
     const obj = {
       a: {b: {c: {d: '123'}}},
     }
