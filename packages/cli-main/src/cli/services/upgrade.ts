@@ -1,11 +1,11 @@
-import {error, file, os, output, path, system} from '@shopify/cli-kit'
+import {error, os, output, path, system} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
   checkForNewVersion,
   DependencyType,
   getPackageManager,
-  PackageJson
+  PackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 
 // Canonical list of oclif plugins that should be installed globally
@@ -33,10 +33,10 @@ export async function upgrade(directory: string, currentVersion: string): Promis
 }
 
 async function getProjectDir(directory: string): Promise<string | undefined> {
-  const configFile = await path.findUp(
-    ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'],
-    {cwd: directory, type: 'file'},
-  )
+  const configFile = await path.findUp(['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'], {
+    cwd: directory,
+    type: 'file',
+  })
   if (configFile) return path.dirname(configFile)
 }
 
@@ -78,7 +78,7 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
     try {
       const brewList = await system.captureOutput('brew', ['list', '-1'])
       usesHomebrew = Boolean(brewList.match(/^shopify-cli@3$/m))
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
     } catch (err) {}
   }
 
