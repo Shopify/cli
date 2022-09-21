@@ -5,19 +5,11 @@ import {
   checkForNewVersion,
   DependencyType,
   getPackageManager,
+  PackageJson
 } from '@shopify/cli-kit/node/node-package-manager'
 
 // Canonical list of oclif plugins that should be installed globally
 const globalPlugins = ['@shopify/theme']
-
-interface PackageJsonContents {
-  name: string
-  dependencies?: {[name: string]: string}
-  devDependencies?: {[name: string]: string}
-  oclif?: {
-    plugins?: string[]
-  }
-}
 
 export async function upgrade(directory: string, currentVersion: string): Promise<void> {
   let newestVersion: string | void
@@ -49,7 +41,7 @@ async function getProjectDir(directory: string): Promise<string | undefined> {
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<string | void> {
-  const packageJson = (await findUpAndReadPackageJson(projectDir)).content as PackageJsonContents
+  const packageJson = (await findUpAndReadPackageJson(projectDir)).content as PackageJson
   const packageJsonDependencies = packageJson.dependencies || {}
   const packageJsonDevDependencies = packageJson.devDependencies || {}
 
@@ -167,12 +159,13 @@ async function oclifPlugins(): Promise<string[]> {
   return (await packageJsonContents())?.oclif?.plugins || []
 }
 
-let _packageJsonContents: PackageJsonContents | undefined
+type PackageJsonWithName = Omit<PackageJson, 'name'> & {name: string}
+let _packageJsonContents: PackageJsonWithName | undefined
 
-async function packageJsonContents(): Promise<PackageJsonContents> {
+async function packageJsonContents(): Promise<PackageJsonWithName> {
   if (!_packageJsonContents) {
     const packageJson = await findUpAndReadPackageJson(path.moduleDirectory(import.meta.url))
-    _packageJsonContents = _packageJsonContents || (packageJson.content as PackageJsonContents)
+    _packageJsonContents = _packageJsonContents || (packageJson.content as PackageJsonWithName)
   }
   return _packageJsonContents
 }
