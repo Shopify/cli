@@ -19,9 +19,12 @@ beforeEach(() => {
       },
     }
   })
-  vi.mock('./node/cli.js')
+  vi.mock('./cli.js')
   vi.mock('../environment.js')
+  vi.mock('../string.js')
+  vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
   vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
+  vi.mocked(environment.local.cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
 })
 
