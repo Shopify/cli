@@ -40,21 +40,12 @@ export async function upgrade(directory: string, currentVersion: string): Promis
   }
 }
 
-async function getProjectDir(directory: string) {
-  return path.findUp(
-    async (dir: string) => {
-      const configFilesExist = await Promise.all(
-        ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'].map(async (configFile) => {
-          return file.exists(path.join(dir, configFile))
-        }),
-      )
-      if (configFilesExist.some((bool) => bool)) return dir
-    },
-    {
-      cwd: directory,
-      type: 'directory',
-    },
+async function getProjectDir(directory: string): Promise<string | undefined> {
+  const configFile = await path.findUp(
+    ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'],
+    {cwd: directory, type: 'file'},
   )
+  if (configFile) return path.dirname(configFile)
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<string | void> {
