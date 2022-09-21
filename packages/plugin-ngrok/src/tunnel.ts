@@ -6,13 +6,6 @@ import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
-export const NgrokError = (ngrokErrorMessage: string) => {
-  return new error.Abort(
-    `The ngrok tunnel could not be started.\n\n${ngrokErrorMessage}`,
-    buildTryMessage(ngrokErrorMessage),
-  )
-}
-
 // New entry point for hooks
 export async function hookStart(port: number): Promise<{url: string | undefined}> {
   try {
@@ -33,7 +26,7 @@ export async function start(options: {port: number}): Promise<string> {
   }
 
   const url = await ngrok.connect({proto: 'http', addr: options.port}).catch((err: Error) => {
-    throw NgrokError(err.message)
+    throw new error.Abort(`The ngrok tunnel could not be started.\n\n${err.message}`, buildTryMessage(err.message))
   })
   return url
 }

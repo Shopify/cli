@@ -144,6 +144,7 @@ module.exports = {
     'rulesdir/command-flags-with-env': 'error',
     'rulesdir/command-conventional-flag-env': 'error',
     'rulesdir/command-reserved-flags': 'error',
+    'rulesdir/no-error-factory-functions': 'error',
     'no-restricted-syntax': [
       'error',
       {
