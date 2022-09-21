@@ -192,7 +192,7 @@ The sub-organization helps clarify the runtime the functions exported by the mod
 import { getArrayHasDuplicates } from "@shopify/cli-kit/common/array"
 ```
 
-**Private** modules must live in the `src/private` directory.
+**Private** modules must live in the `src/private` directory using the same above subdirectories: `node`, `browser`, `common`.
 
 ### 3.2 - Document public modules
 
