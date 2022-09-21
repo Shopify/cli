@@ -80,7 +80,7 @@ async function uiExtensionInit({
         title: 'Install additional dependencies',
         task: async (_, task) => {
           task.title = 'Installing additional dependencies...'
-          const requiredDependencies = getRuntimeDependencies({extensionType})
+          const requiredDependencies = getRuntimeDependencies({extensionType, extensionFlavor})
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: app.packageManager,
             type: 'prod',
@@ -140,7 +140,8 @@ async function uiExtensionInit({
 
 export function getRuntimeDependencies({
   extensionType,
-}: Pick<UIExtensionInitOptions, 'extensionType'>): DependencyVersion[] {
+  extensionFlavor,
+}: Pick<UIExtensionInitOptions, 'extensionType' | 'extensionFlavor'>): DependencyVersion[] {
   switch (extensionType) {
     case 'product_subscription':
     case 'checkout_ui_extension':
@@ -148,7 +149,10 @@ export function getRuntimeDependencies({
     case 'web_pixel_extension':
     case 'customer_accounts_ui_extension':
     case 'checkout_post_purchase': {
-      const dependencies: DependencyVersion[] = [{name: 'react', version: versions.react}]
+      const dependencies: DependencyVersion[] = []
+      if (extensionFlavor?.includes('react')) {
+        dependencies.push({name: 'react', version: versions.react})
+      }
       const rendererDependency = getUIExtensionRendererDependency(extensionType)
       if (rendererDependency) {
         dependencies.push(rendererDependency)
@@ -217,6 +221,8 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
       return `checkout/${lang}/payment-customization/default`
     case 'shipping_rate_presenter':
       return `checkout/${lang}/shipping-rate-presenter/default`
+    case 'delivery_customization':
+      return `checkout/${lang}/delivery-customization/default`
   }
 }
 
