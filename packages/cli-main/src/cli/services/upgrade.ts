@@ -1,14 +1,20 @@
 import {error, file, os, output, path, system} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
+  findUpAndReadPackageJson,
   checkForNewVersion,
   DependencyType,
   getPackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {fileURLToPath} from 'url'
-const cliDependency: string = JSON.parse(
-  file.readSync(path.resolve(fileURLToPath(import.meta.url), '../../../../package.json'))
-).name
+
+interface PackageJsonContents {
+  name: string
+  dependencies?: {[name: string]: string}
+  devDependencies?: {[name: string]: string}
+  oclif?: {
+    plugins?: string[]
+  }
+}
 
 export async function upgrade(directory: string, currentVersion: string): Promise<void> {
   let newestVersion: string | void
@@ -49,13 +55,13 @@ async function getProjectDir(directory: string) {
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<string | void> {
-  const packageJson = JSON.parse(await file.read(path.join(projectDir, 'package.json')))
-  const packageJsonDependencies: {[key: string]: string} = packageJson.dependencies || {}
-  const packageJsonDevDependencies: {[key: string]: string} = packageJson.devDependencies || {}
+  const packageJson = (await findUpAndReadPackageJson(projectDir)).content as PackageJsonContents
+  const packageJsonDependencies = packageJson.dependencies || {}
+  const packageJsonDevDependencies = packageJson.devDependencies || {}
 
-  let resolvedVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[cliDependency]!
+  let resolvedVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[await cliDependency()]!
   if (resolvedVersion.slice(0, 1).match(/[\^~]/)) resolvedVersion = currentVersion
-  const newestVersion = await checkForNewVersion(cliDependency, resolvedVersion)
+  const newestVersion = await checkForNewVersion(await cliDependency(), resolvedVersion)
 
   if (!newestVersion) return wontInstall(resolvedVersion)
 
@@ -67,7 +73,7 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
 }
 
 async function upgradeGlobalShopify(currentVersion: string): Promise<string | void> {
-  const newestVersion = await checkForNewVersion(cliDependency, currentVersion)
+  const newestVersion = await checkForNewVersion(await cliDependency(), currentVersion)
 
   if (!newestVersion) return wontInstall(currentVersion)
 
@@ -112,13 +118,12 @@ function outputUpgradeMessage(currentVersion: string, newestVersion: string): vo
   )
 }
 
-export async function installJsonDependencies(
+async function installJsonDependencies(
   depsEnv: DependencyType,
   deps: {[key: string]: string},
   directory: string,
 ): Promise<void> {
-  const packages = ['@shopify/cli', '@shopify/app', '@shopify/cli-hydrogen']
-  const packagesToUpdate = packages
+  const packagesToUpdate = [await cliDependency(), ...(await oclifPlugins())]
     .filter((pkg: string): boolean => {
       const pkgRequirement: string | undefined = deps[pkg]
       return Boolean(pkgRequirement)
@@ -136,6 +141,24 @@ export async function installJsonDependencies(
       stderr: process.stderr,
     })
   }
+}
+
+async function cliDependency(): Promise<string> {
+  return (await packageJsonContents()).name
+}
+
+async function oclifPlugins(): Promise<string[]> {
+  return (await packageJsonContents())?.oclif?.plugins || []
+}
+
+let _packageJsonContents: PackageJsonContents | undefined
+
+async function packageJsonContents(): Promise<PackageJsonContents> {
+  if (!_packageJsonContents) {
+    const packageJson = await findUpAndReadPackageJson(path.moduleDirectory(import.meta.url))
+    _packageJsonContents = _packageJsonContents || (packageJson.content as PackageJsonContents)
+  }
+  return _packageJsonContents
 }
 
 function usingPackageManager(): boolean {
