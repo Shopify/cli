@@ -62,7 +62,7 @@ With these tools you'll get access to Shopify-enabled resources (such as [Analyt
 
 ## FAQ
 ---
-* **How can I preview my extension**
+* **How can I preview my extension?**
 
     Depending on your extension location they may be either `dynamic` or `static` renderers, which diferr slightly on the process to place them for testing.
     - `Dynamic renderers`: Using a [query string parameter](https://shopify.dev/apps/checkout/test-ui-extensions#dynamic-extension-points) at the end of the URL you can place your renderer in the desired renderer point.
