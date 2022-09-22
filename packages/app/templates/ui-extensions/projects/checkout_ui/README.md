@@ -56,17 +56,24 @@ With these tools you'll get access to Shopify-enabled resources (such as [Analyt
 
 ## FAQ
 ---
-* **How can I preview my extension**
+* **How can I preview my extension?**
 
-    Depending on your extension location they may be either `dynamic` or `static` renderers, which diferr slightly on the process to place them for testing.
-    - `Dynamic renderers`: Using a [query string parameter](https://shopify.dev/apps/checkout/test-ui-extensions#dynamic-extension-points) at the end of the URL you can place your renderer in the desired renderer point.
-    - `Static renderer`: No special work is required here, just note that a static renders is shown only if the section that they are attached to is enabled.
+  1. Make sure you've started your local development server using `npm|yarn|pnpm dev`
+  2. Depending on your selected location they may be either `dynamic` or `static` extension points, which diferr slightly on the process to preview them.
+      - `Dynamic extensions` can be placed using a [query string parameter](https://shopify.dev/apps/checkout/test-ui-extensions#dynamic-extension-points).
+      - `Static extensions` require no extra work, just note that a static extension is shown only if the section that they are attached to is enabled.
 
-* **How can I change my extension renderer type?**
+* **How can I change my extension type?**
 
-    To change your extension render type, be mindful that you have to change it in the following places:
+    To change your extension type, be mindful that you have to change it in the following places:
     1. In your `script file`, where you declared the extension (will be either _render()_ or _extend()_), you'll have to change the declared Extension Point.
     2. In your `settings TOML file` (shopify.ui.extension.toml) you'll have to change the `extension_points` declaration for your new desired type.
+
+* **How do I let merchants customize my extension?**
+
+    You can enable merchants to customize your extension through the [checkout ui extension settings](https://shopify.dev/api/checkout-extensions/checkout/configuration#settings-definition) which define a set of fields and values that the merchant can set from the checkout editor. You can use validation options to apply additional constraints to the data that the setting can store, such as a minimum or maximum value.
+
+    To learn more, you can follow the step-by-step process in the tutorial to [add a custom banner](https://shopify.dev/apps/checkout/custom-banners/add-custom-banner).
 
 ## Useful Links
 ---
