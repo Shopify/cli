@@ -169,7 +169,7 @@ export async function getEnvironmentData(config: Interfaces.Config) {
     env_web_ide: environment.local.cloudEnvironment().editor
       ? environment.local.cloudEnvironment().platform
       : undefined,
-    env_mac_address_hash: hashString(await macAddress()),
+    env_device_id: hashString(await macAddress()),
     env_cloud: environment.local.cloudEnvironment().platform,
     env_package_manager: (await localCliPackage()) ? await getPackageManager(process.cwd()) : undefined,
   }
@@ -177,7 +177,6 @@ export async function getEnvironmentData(config: Interfaces.Config) {
 
 async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   return {
-    env_mac_address: await environment.local.macAddress(),
     env_plugin_installed_all: JSON.stringify(getPluginNames(config)),
   }
 }

@@ -101,13 +101,12 @@ describe('event tracking', () => {
         is_employee: false,
         env_plugin_installed_any_custom: true,
         env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
-        env_mac_address_hash: 'hashed-macaddress',
+        env_device_id: 'hashed-macaddress',
         env_cloud: 'spin',
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
         metadata: expect.anything(),
-        env_mac_address: 'macAddress',
         env_plugin_installed_all: JSON.stringify(['@shopify/built-in', 'a-custom-plugin']),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()

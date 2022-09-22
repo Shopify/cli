@@ -23,7 +23,6 @@ export interface Schemas {
       cmd_dev_tunnel_custom?: Optional<string>
 
       // Environment
-      env_mac_address?: Optional<string>
       env_plugin_installed_all?: Optional<string>
     }
     public: {
@@ -100,7 +99,7 @@ export interface Schemas {
       // Environment
       env_ci?: Optional<boolean>
       env_ci_platform?: Optional<string>
-      env_mac_address_hash?: Optional<string>
+      env_device_id?: Optional<string>
       env_package_manager?: Optional<string>
       env_plugin_installed_any_custom?: Optional<boolean>
       env_plugin_installed_shopify?: Optional<string>
