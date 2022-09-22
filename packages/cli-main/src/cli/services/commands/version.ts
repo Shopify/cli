@@ -12,7 +12,7 @@ export async function versionService(options: VersionServiceOptions): Promise<vo
   const lastVersion = await checkForNewVersion(cliDependency, currentVersion)
   if (lastVersion) {
     const packageManager = packageManagerUsedForCreating()
-    output.info(output.getOutputUpdateCLIReminder(packageManager === 'unknown' ? 'npm' : packageManager, lastVersion))
+    output.info(output.getOutputUpdateCLIReminder(packageManager, lastVersion))
   }
   throw new error.CancelExecution()
 }
