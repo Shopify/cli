@@ -4,11 +4,9 @@ Checkout UI extensions let app developers build custom functionality that mercha
 
 
 ## Prerequisites
----
 Make sure to complete [all the prerequisites](https://shopify.dev/apps/checkout/delivery-instructions/getting-started#requirements) from any tutorials to develop a Checkout UI extension.
 
 ## Tutorials
----
 The best way to get started is to follow some of the available Extension Tutorials:
 
 For creating an extension:
@@ -21,7 +19,6 @@ To add specific features to an extension
 * [Localizing an exstension](https://shopify.dev/apps/checkout/localize-ui-extensions)
 
 ## Getting Started
----
 Initially, your extension will have the following files:
 
 ```
@@ -52,7 +49,6 @@ With these tools you'll get access to Shopify-enabled resources (such as [Analyt
 > If you are using React, there is also a large collection of [React Hooks available](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#react-hooks) to ease access to these operations, otherwise you'll need to manually subscribe to the subscribable value directly with a callback.
 
 ## FAQ
----
 * **How can I preview my extension?**
 
   1. Make sure you've started your local development server using `npm|yarn|pnpm dev`
@@ -73,7 +69,6 @@ With these tools you'll get access to Shopify-enabled resources (such as [Analyt
     To learn more, you can follow the step-by-step process in the tutorial to [add a custom banner](https://shopify.dev/apps/checkout/custom-banners/add-custom-banner).
 
 ## Useful Links
----
 
 - [Checkout app documentation](https://shopify.dev/apps/checkout)
 
