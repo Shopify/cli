@@ -7,11 +7,9 @@ Checkout UI extensions let app developers build custom functionality that mercha
 ---
 Make sure to complete [all the prerequisites](https://shopify.dev/apps/checkout/delivery-instructions/getting-started#requirements) from any tutorials to develop a Checkout UI extension.
 
-
 ## Tutorials
 ---
 The best way to get started is to follow some of the available Extension Tutorials:
-
 
 For creating an extension:
 * [Enable extended delivery instructions](https://shopify.dev/apps/checkout/delivery-instructions)
