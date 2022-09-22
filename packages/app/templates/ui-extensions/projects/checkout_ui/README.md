@@ -5,7 +5,7 @@ Checkout UI extensions let app developers build custom functionality that mercha
 
 ## Prerequisites
 ---
-Make sure you've completed the following prerequisites to develop a Checkout UI extension:
+Make sure you've completed the following prerequisites to develop a checkout UI extension:
 
 * You have a [Partner Account](https://www.shopify.com/partners).
 * You created a [Development Store](https://shopify.dev/apps/tools/development-stores) and [enabled the developer preview](https://shopify.dev/api/release-notes/developer-previews#previewing-new-features) for checkout UI extensions.
