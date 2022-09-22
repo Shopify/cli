@@ -12,7 +12,6 @@ Make sure you've completed the following prerequisites to develop a Checkout UI 
 * Your store is populated with [test products](https://shopify.dev/apps/getting-started/create#step-4-add-and-publish-products-to-your-development-store-for-testing).
 * You have an [ngrok account](https://ngrok.com/) and [auth token](https://dashboard.ngrok.com/auth/your-authtoken).
     * This is used to preview apps that contain UI extensions with Shopify CLI. More info inthe [ngrok’s documentation](https://ngrok.com/docs#config).
-* You've created a Shopify app that uses [Shopify CLI 3.0 or higher](https://shopify.dev/apps/getting-started/create) (or you've [migrated your existing app](https://shopify.dev/apps/tools/cli/migrate)).
 * You’ve [Created](https://shopify.dev/apps/checkout/custom-banners/getting-started#step-1-generate-a-new-extension) a [Checkout UI extension](https://shopify.dev/api/checkout-extensions/checkout) that you can [Preview](https://shopify.dev/apps/checkout/custom-banners/getting-started#step-2-preview-your-extension) and [Deploy](https://shopify.dev/apps/checkout/custom-banners/getting-started#step-3-deploy-the-extension).
 
 ## Tutorials
