@@ -44,8 +44,6 @@ To shape your extension you have the following collection of tools available:
 * [UI components](https://shopify.dev/api/checkout-extensions/checkout/components), the visual elements you can render in your extension.
 * [Extension APIs](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api), which give you access to read and write data in the checkout.
 
-With these tools you'll get access to Shopify-enabled resources (such as [Analytics](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#analytics), [Localization](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#localization) or [Storage](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#storage)) and the frameworks that you need to read (and mutate) data for your Checkout-UI extension (like Shop, Customer, CartLine, MetaFields, etc.).
-
 > If you are using React, there is also a large collection of [React Hooks available](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#react-hooks) to ease access to these operations, otherwise you'll need to manually subscribe to the subscribable value directly with a callback.
 
 ## FAQ
