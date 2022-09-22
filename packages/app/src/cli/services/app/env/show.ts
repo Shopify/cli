@@ -1,5 +1,5 @@
-import {selectApp} from '../app/select-app.js'
-import {AppInterface} from '../../models/app/app.js'
+import {selectApp} from '../select-app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {output} from '@shopify/cli-kit'
 
 type Format = 'json' | 'text'
