@@ -1,3 +1,4 @@
+import {render} from '../../components/Dev.js'
 import {port, output, abort} from '@shopify/cli-kit'
 import httpProxy from 'http-proxy'
 import {Writable} from 'stream'
@@ -81,14 +82,13 @@ ${output.token.json(JSON.stringify(rules))}
     socket.destroy()
   })
 
-  await Promise.all([
-    output.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
-      abortSignal.addEventListener('abort', () => {
-        server.close()
-      })
-    }),
-    server.listen(availablePort),
-  ])
+  server.listen(availablePort)
+
+  await render([...processes, ...additionalProcesses], (abortSignal) => {
+    abortSignal.addEventListener('abort', () => {
+      server.close()
+    })
+  })
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {

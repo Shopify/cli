@@ -6,10 +6,10 @@ import {AbortController} from 'abort-controller'
 
 interface Props {
   processes: output.OutputProcess[]
+  abortController: AbortController
 }
 
-const ConcurrentOutput: FunctionComponent<Props> = ({processes}) => {
-  const abortController = new AbortController()
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
 
   function prefixColor(index: number) {
