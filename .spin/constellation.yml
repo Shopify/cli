@@ -1,0 +1,6 @@
+schema: v1
+extend: partners
+description: Testing constellation
+repos:
+  - cli:
+      branch: feature/add_spin_support
