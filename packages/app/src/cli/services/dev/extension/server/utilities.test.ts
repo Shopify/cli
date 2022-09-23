@@ -35,7 +35,7 @@ describe('getRedirectURL()', () => {
     const options = {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
-      cartUrl: 'mock/cart/url',
+      checkoutCartUrl: 'mock/cart/url',
     } as unknown as ExtensionDevOptions
 
     const result = getRedirectUrl(extension, options)

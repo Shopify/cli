@@ -31,7 +31,7 @@
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
           "commands": [
-            "OUT_DIR='../app/assets/dev-console' yarn vite build"
+            "cross-env OUT_DIR='../app/assets/dev-console' yarn vite build"
           ],
           "cwd": "packages/ui-extensions-dev-console"
         }
@@ -42,7 +42,7 @@
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
           "commands": [
-            "OUT_DIR=../ui-extensions-go-cli/api/dev-console yarn vite build"
+            "cross-env OUT_DIR=../ui-extensions-go-cli/api/dev-console yarn vite build"
           ],
           "cwd": "packages/ui-extensions-dev-console"
         }
