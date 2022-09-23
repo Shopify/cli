@@ -1,5 +1,4 @@
 import {getLocalization} from './localization.js'
-import * as utilities from './utilities.js'
 import {file, path} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -81,7 +80,7 @@ describe('when there locale files', () => {
   it('returns the lastUpdated timestamp of the most recently updated locale', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       const timestamps = [457, 789, 132]
-      vi.spyOn(utilities, 'getLastUpdatedTimestamp').mockImplementation(async () => {
+      vi.spyOn(file, 'lastUpdatedTimestamp').mockImplementation(async () => {
         return timestamps.shift() as number
       })
 
@@ -92,6 +91,7 @@ describe('when there locale files', () => {
 
       const result = await testGetLocalization(tmpDir)
 
+      expect(file.lastUpdatedTimestamp).toHaveBeenCalledTimes(3)
       expect(result.localization!.lastUpdated).toBe(789)
     })
   })

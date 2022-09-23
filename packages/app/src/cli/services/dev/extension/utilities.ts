@@ -1,6 +1,5 @@
 import {UIExtension} from '../../../models/app/extensions.js'
 import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
-import {file} from '@shopify/cli-kit'
 
 /**
  * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
@@ -20,10 +19,4 @@ export async function getCartPathFromExtensions(extensions: UIExtension[], store
  */
 export function getExtensionNeedsCartURL(extension: UIExtension) {
   return extension.configuration.type === 'checkout_ui_extension'
-}
-
-export async function getLastUpdatedTimestamp(path: string) {
-  const lastUpdatedDateTime = await file.lastUpdated(path)
-
-  return lastUpdatedDateTime.getTime()
 }

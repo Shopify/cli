@@ -1,4 +1,3 @@
-import {getLastUpdatedTimestamp} from './utilities.js'
 import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {path, file, output} from '@shopify/cli-kit'
@@ -86,7 +85,7 @@ async function compileLocalizationFiles(
 }
 
 async function calculateLastUpdatedTimestamp(path: string, localization: Localization) {
-  const lastUpdatedDateTime = await getLastUpdatedTimestamp(path)
+  const lastUpdatedDateTime = await file.lastUpdatedTimestamp(path)
 
   if (lastUpdatedDateTime > localization.lastUpdated) {
     localization.lastUpdated = lastUpdatedDateTime

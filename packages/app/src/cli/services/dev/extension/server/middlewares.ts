@@ -1,15 +1,9 @@
 import {getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
-import {ExtensionDevOptions} from '../../extension.js'
+import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getUIExtensionSurface} from '../../../../utilities/extensions/configuration.js'
 import {getHTML} from '../templates.js'
-import {ExtensionsPayloadStore} from '../payload/store.js'
 import {file, http, output, path} from '@shopify/cli-kit'
-
-export interface ExtensionsPayloadMiddlewareOptions {
-  devOptions: ExtensionDevOptions
-  payloadStore: ExtensionsPayloadStore
-}
 
 export function corsMiddleware(
   request: http.IncomingMessage,
@@ -84,7 +78,7 @@ export async function fileServerMiddleware(
   response.end(fileContent)
 }
 
-export function extensionAssetMiddleware({devOptions}: ExtensionsPayloadMiddlewareOptions) {
+export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
     const {extensionId, assetPath} = request.context.params
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionId)
@@ -104,7 +98,7 @@ export function extensionAssetMiddleware({devOptions}: ExtensionsPayloadMiddlewa
   }
 }
 
-export function extensionsPayloadMiddleware({payloadStore}: ExtensionsPayloadMiddlewareOptions) {
+export function getExtensionsPayloadMiddleware({payloadStore}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
     response.setHeader('content-type', 'application/json')
     response.end(JSON.stringify(payloadStore.getRawPayload()))
@@ -157,7 +151,7 @@ export async function devConsoleAssetsMiddleware(
   })
 }
 
-export function logMiddleware({devOptions}: ExtensionsPayloadMiddlewareOptions) {
+export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
     output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, (message) =>
       devOptions.stdout.write(message, 'utf8'),
@@ -166,7 +160,7 @@ export function logMiddleware({devOptions}: ExtensionsPayloadMiddlewareOptions) 
   }
 }
 
-export function extensionPayloadMiddleware({devOptions}: ExtensionsPayloadMiddlewareOptions) {
+export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
@@ -209,7 +203,7 @@ export function extensionPayloadMiddleware({devOptions}: ExtensionsPayloadMiddle
           url: new URL('/extensions', devOptions.url).toString(),
         },
         socket: {
-          url: getWebscoketUrl(devOptions),
+          url: getWebsocketUrl(devOptions),
         },
         devConsole: {
           url: new URL('/extensions/dev-console', devOptions.url).toString(),
@@ -221,7 +215,7 @@ export function extensionPayloadMiddleware({devOptions}: ExtensionsPayloadMiddle
   }
 }
 
-function getWebscoketUrl(devOptions: ExtensionsPayloadMiddlewareOptions['devOptions']) {
+function getWebsocketUrl(devOptions: GetExtensionsMiddlewareOptions['devOptions']) {
   const socket = new URL('/extensions', devOptions.url)
   socket.protocol = 'wss:'
 

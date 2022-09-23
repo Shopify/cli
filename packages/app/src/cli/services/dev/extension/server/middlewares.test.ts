@@ -1,13 +1,13 @@
 import {
   corsMiddleware,
-  extensionAssetMiddleware,
-  extensionPayloadMiddleware,
-  ExtensionsPayloadMiddlewareOptions,
+  getExtensionAssetMiddleware,
+  getExtensionPayloadMiddleware,
   fileServerMiddleware,
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
+import {GetExtensionsMiddlewareOptions} from './models.js'
 import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
@@ -180,7 +180,7 @@ describe('fileServerMiddleware()', async () => {
   })
 })
 
-describe('extensionAssetMiddleware()', () => {
+describe('getExtensionAssetMiddleware()', () => {
   it('returns a 404 if the extensionID is not found', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
@@ -195,11 +195,11 @@ describe('extensionAssetMiddleware()', () => {
           ],
         },
         payloadStore: {},
-      } as unknown as ExtensionsPayloadMiddlewareOptions
+      } as unknown as GetExtensionsMiddlewareOptions
 
       const response = getMockResponse()
 
-      await extensionAssetMiddleware(options)(
+      await getExtensionAssetMiddleware(options)(
         getMockRequest({
           context: {
             params: {
@@ -235,13 +235,13 @@ describe('extensionAssetMiddleware()', () => {
           ],
         },
         payloadStore: {},
-      } as unknown as ExtensionsPayloadMiddlewareOptions
+      } as unknown as GetExtensionsMiddlewareOptions
 
       await file.mkdir(path.join(tmpDir, devUUID))
       await file.touch(outputBundlePath)
       await file.write(outputBundlePath, `content from ${fileName}`)
 
-      await extensionAssetMiddleware(options)(
+      await getExtensionAssetMiddleware(options)(
         getMockRequest({
           context: {
             params: {
@@ -261,7 +261,7 @@ describe('extensionAssetMiddleware()', () => {
   })
 })
 
-describe('extensionPayloadMiddleware()', () => {
+describe('getExtensionPayloadMiddleware()', () => {
   it('returns a 404 if the extension is not found', async () => {
     vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
@@ -278,11 +278,11 @@ describe('extensionPayloadMiddleware()', () => {
         ],
       },
       payloadStore: {},
-    } as unknown as ExtensionsPayloadMiddlewareOptions
+    } as unknown as GetExtensionsMiddlewareOptions
 
     const response = getMockResponse()
 
-    await extensionPayloadMiddleware(options)(
+    await getExtensionPayloadMiddleware(options)(
       getMockRequest({
         context: {
           params: {
@@ -320,11 +320,11 @@ describe('extensionPayloadMiddleware()', () => {
           ],
         },
         payloadStore: {},
-      } as unknown as ExtensionsPayloadMiddlewareOptions
+      } as unknown as GetExtensionsMiddlewareOptions
 
       const response = getMockResponse()
 
-      await extensionPayloadMiddleware(options)(
+      await getExtensionPayloadMiddleware(options)(
         getMockRequest({
           headers: {
             accept: 'text/html',
@@ -369,11 +369,11 @@ describe('extensionPayloadMiddleware()', () => {
           ],
         },
         payloadStore: {},
-      } as unknown as ExtensionsPayloadMiddlewareOptions
+      } as unknown as GetExtensionsMiddlewareOptions
 
       const response = getMockResponse()
 
-      await extensionPayloadMiddleware(options)(
+      await getExtensionPayloadMiddleware(options)(
         getMockRequest({
           headers: {
             accept: 'text/html',
@@ -414,11 +414,11 @@ describe('extensionPayloadMiddleware()', () => {
           ],
         },
         payloadStore: {},
-      } as unknown as ExtensionsPayloadMiddlewareOptions
+      } as unknown as GetExtensionsMiddlewareOptions
 
       const response = getMockResponse()
 
-      await extensionPayloadMiddleware(options)(
+      await getExtensionPayloadMiddleware(options)(
         getMockRequest({
           context: {
             params: {

@@ -2,10 +2,10 @@ import {
   corsMiddleware,
   devConsoleAssetsMiddleware,
   devConsoleIndexMiddleware,
-  extensionAssetMiddleware,
-  extensionPayloadMiddleware,
-  extensionsPayloadMiddleware,
-  logMiddleware,
+  getExtensionAssetMiddleware,
+  getExtensionPayloadMiddleware,
+  getExtensionsPayloadMiddleware,
+  getLogMiddleware,
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
 } from './server/middlewares.js'
@@ -23,16 +23,16 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   const httpApp = http.createApp()
   const httpRouter = http.createRouter()
 
-  httpApp.use(logMiddleware(options))
+  httpApp.use(getLogMiddleware(options))
   httpApp.use(corsMiddleware)
   httpApp.use(noCacheMiddleware)
   httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)
-  httpRouter.use('/extensions/:extensionId', extensionPayloadMiddleware(options))
-  httpRouter.use('/extensions/:extensionId/', extensionPayloadMiddleware(options))
-  httpRouter.use('/extensions/:extensionId/assets/**:assetPath', extensionAssetMiddleware(options))
-  httpRouter.use('/extensions', extensionsPayloadMiddleware(options))
-  httpRouter.use('/extensions/', extensionsPayloadMiddleware(options))
+  httpRouter.use('/extensions/:extensionId', getExtensionPayloadMiddleware(options))
+  httpRouter.use('/extensions/:extensionId/', getExtensionPayloadMiddleware(options))
+  httpRouter.use('/extensions/:extensionId/assets/**:assetPath', getExtensionAssetMiddleware(options))
+  httpRouter.use('/extensions', getExtensionsPayloadMiddleware(options))
+  httpRouter.use('/extensions/', getExtensionsPayloadMiddleware(options))
   httpRouter.use('/', redirectToDevConsoleMiddleware)
 
   httpApp.use(httpRouter)

@@ -1,4 +1,9 @@
-import {connectionDoneHandler, onMessageHandler, payloadUpdateHandler, websocketUpgradeHandler} from './handlers.js'
+import {
+  getConnectionDoneHandler,
+  getOnMessageHandler,
+  getPayloadUpdateHandler,
+  websocketUpgradeHandler,
+} from './handlers.js'
 import {SetupWebSocketConnectionOptions} from './models.js'
 import {ExtensionsEndpointPayload} from '../payload/models.js'
 import {vi, describe, test, expect} from 'vitest'
@@ -54,11 +59,11 @@ function getMockSetupWebSocketConnectionOptions() {
   } as unknown as SetupWebSocketConnectionOptions
 }
 
-describe('payloadUpdateHandler()', () => {
+describe('getPayloadUpdateHandler()', () => {
   test('sends a websocket message to all clients containing the extension payloads filtered', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
-    payloadUpdateHandler(wss, options)(['test_extension_1'])
+    getPayloadUpdateHandler(wss, options)(['test_extension_1'])
 
     expect(options.payloadStore.getRawPayloadFilteredByExtensionIds).toHaveBeenCalledWith(['test_extension_1'])
     wss.clients.forEach((ws) => expect(ws.send).toHaveBeenCalledWith('{"event":"update","version":"3","data":{}}'))
@@ -66,7 +71,7 @@ describe('payloadUpdateHandler()', () => {
 })
 
 describe('websocketUpgradeHandler()', () => {
-  test('on an upgrade request with path `/extension` passes the connectionDoneHandler() to handlerUpgrade', () => {
+  test('on an upgrade request with path `/extension` passes the getConnectionDoneHandler() to handlerUpgrade', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
     const request = getMockRequest()
@@ -78,12 +83,12 @@ describe('websocketUpgradeHandler()', () => {
   })
 })
 
-describe('connectionDoneHandler()', () => {
+describe('getConnectionDoneHandler()', () => {
   test('on client connection sends a connected message', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
     const ws = getMockWebsocket()
-    connectionDoneHandler(wss, options)(ws)
+    getConnectionDoneHandler(wss, options)(ws)
     expect(ws.send).toHaveBeenCalledWith(
       JSON.stringify({
         event: 'connected',
@@ -96,11 +101,11 @@ describe('connectionDoneHandler()', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
     const ws = getMockWebsocket()
-    connectionDoneHandler(wss, options)(ws)
+    getConnectionDoneHandler(wss, options)(ws)
     expect(ws.on).toHaveBeenCalledWith('message', expect.anything())
   })
 })
-describe('onMessageHandler()', () => {
+describe('getOnMessageHandler()', () => {
   test('on an incomming update message updates the app and the extensios', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
@@ -111,7 +116,7 @@ describe('onMessageHandler()', () => {
         extensions: [],
       },
     }) as unknown as RawData
-    onMessageHandler(wss, options)(data)
+    getOnMessageHandler(wss, options)(data)
 
     expect(options.payloadStore.updateApp).toHaveBeenCalledWith({})
     expect(options.payloadStore.updateExtensions).toHaveBeenCalledWith([])
@@ -127,7 +132,7 @@ describe('onMessageHandler()', () => {
         app: {},
       },
     }) as unknown as RawData
-    onMessageHandler(wss, options)(data)
+    getOnMessageHandler(wss, options)(data)
 
     expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
     expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()

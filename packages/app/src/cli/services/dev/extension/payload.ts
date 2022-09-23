@@ -1,12 +1,11 @@
 import {getLocalization} from './localization.js'
-import {getLastUpdatedTimestamp} from './utilities.js'
 import {Capabilities, UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionResourceURL, getUIExtensionSurface} from '../../../utilities/extensions/configuration.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../../utilities/extensions/name-mapper.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
-import {string} from '@shopify/cli-kit'
+import {string, file} from '@shopify/cli-kit'
 
 type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
@@ -37,7 +36,7 @@ export async function getUIExtensionPayload(
       main: {
         name: 'main',
         url: `${url}/assets/main.js`,
-        lastUpdated: await getLastUpdatedTimestamp(extension.outputBundlePath),
+        lastUpdated: await file.lastUpdatedTimestamp(extension.outputBundlePath),
       },
     },
     capabilities,
