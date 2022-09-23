@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.14.0
+
+### Minor Changes
+
+- 1dba11ec: Support upgrade of a globally installed CLI
+
+### Patch Changes
+
+- Updated dependencies [1dba11ec]
+  - @shopify/cli-kit@3.14.0
+  - @shopify/plugin-ngrok@3.14.0
+
 ## 3.13.1
 
 ### Patch Changes
