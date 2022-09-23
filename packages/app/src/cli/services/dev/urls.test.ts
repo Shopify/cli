@@ -338,24 +338,6 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
   })
 
-  it('generates a tunnel url when tunnel is false and there is no tunnelUrl and there are extensions', async () => {
-    // Given
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
-    const options = {
-      app: testApp({hasUIExtensions: () => true}),
-      tunnel: false,
-      noTunnel: false,
-      commandConfig: new Config({root: ''}),
-    }
-
-    // When
-    const got = await generateFrontendURL(options)
-
-    // Then
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
-    expect(ui.prompt).toBeCalled()
-  })
-
   it('returns localhost if tunnel is false and there is no tunnelUrl nor extensions', async () => {
     // Given
     const options = {
@@ -422,25 +404,6 @@ describe('generateFrontendURL', () => {
 
     // Then
     await expect(got).rejects.toThrow()
-  })
-
-  it('Stores the tunnel plugin in your presets if you select always', async () => {
-    // Given
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
-    const options = {
-      app: testApp({hasUIExtensions: () => true, directory: '/app-path'}),
-      tunnel: true,
-      noTunnel: false,
-      commandConfig: new Config({root: ''}),
-    }
-
-    // When
-    const got = await generateFrontendURL(options)
-
-    // Then
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
-    expect(store.setAppInfo).toBeCalledWith({directory: '/app-path', tunnelPlugin: 'ngrok'})
   })
 
   it('Reuses tunnel option if cached even if tunnel is false and there are no extensions', async () => {

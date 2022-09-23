@@ -1,4 +1,4 @@
-import {tunnelConfigurationPrompt, updateURLsPrompt} from '../../prompts/dev.js'
+import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {api, environment, error, output, plugins, port, store} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
@@ -64,20 +64,6 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendPort = Number(matches[2])
     frontendUrl = matches[1]!
     return {frontendUrl, frontendPort, usingLocalhost}
-  }
-
-  if (needsTunnel && !options.cachedTunnelPlugin) {
-    let message = "We'll run your tunnel with ngrok."
-    const extensionsWarning = 'Some parts of your app can only be previewed with a tunnel to your dev store.'
-    if (hasExtensions) message = `${extensionsWarning} ${message}`
-
-    output.info(`\n${message}\n`)
-
-    const useTunnel = await tunnelConfigurationPrompt()
-    if (useTunnel === 'cancel') throw new error.CancelExecution()
-    if (useTunnel === 'always') {
-      await store.setAppInfo({directory: options.app.directory, tunnelPlugin: 'ngrok'})
-    }
   }
 
   if (needsTunnel) {

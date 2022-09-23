@@ -69,7 +69,7 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Use ngrok to create a tunnel to your service entry point',
       env: 'SHOPIFY_FLAG_TUNNEL',
-      default: false,
+      default: true,
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({
