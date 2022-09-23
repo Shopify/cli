@@ -1,4 +1,4 @@
-import {output} from '@shopify/cli-kit'
+import {OutputProcess, stripAnsiEraseCursorEscapeCharacters} from '../output.js'
 import {Box, Newline, Text} from 'ink'
 import React, {useEffect, useState} from 'react'
 import {AbortController} from 'abort-controller'
@@ -6,7 +6,7 @@ import {Writable} from 'node:stream'
 
 interface Props {
   color: string
-  process: output.OutputProcess
+  process: OutputProcess
   width: string
   abortControllerSignal: AbortController['signal']
   onError: () => void
@@ -20,7 +20,7 @@ const Process = ({process, color, width, abortControllerSignal, onError}: Props)
       try {
         const stdout = new Writable({
           write(chunk, _encoding, next) {
-            const lines = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split('\n')
+            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split('\n')
             setProcessOutput((previousProcessOutput) => [...previousProcessOutput, ...lines])
             next()
           },
@@ -28,7 +28,7 @@ const Process = ({process, color, width, abortControllerSignal, onError}: Props)
 
         const stderr = new Writable({
           write(chunk, _encoding, next) {
-            const lines = output.stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split('\n')
+            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split('\n')
             setProcessOutput((previousProcessOutput) => [...previousProcessOutput, ...lines])
             next()
           },
