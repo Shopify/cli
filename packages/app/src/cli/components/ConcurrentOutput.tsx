@@ -1,8 +1,8 @@
 import Process from './Process.js'
 import React, {FunctionComponent} from 'react'
-import {Box} from 'ink'
 import {output} from '@shopify/cli-kit'
 import {AbortController} from 'abort-controller'
+import {Box} from 'ink'
 
 interface Props {
   processes: output.OutputProcess[]

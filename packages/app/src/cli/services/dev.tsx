@@ -12,10 +12,12 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {render} from '../components/Dev.js'
+import {render, renderOnce} from '../components/Dev.js'
 import {analytics, output, port, system, session, abort, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {Box, Text} from 'ink'
+import React from 'react'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -44,6 +46,20 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  renderOnce(
+    <Box width="100%" borderColor="green" borderStyle="round" flexDirection="column" padding={1}>
+      <Text color="green">Success!</Text>
+    </Box>,
+  )
+  // sleep 2 seconds
+  await new Promise((resolve) => setTimeout(resolve, 2000))
+
+  renderOnce(
+    <Box borderColor="red" borderStyle="round" flexDirection="column" padding={1}>
+      <Text color="red">Failure!</Text>
+    </Box>,
+  )
+
   const skipDependenciesInstallation = options.skipDependenciesInstallation
   if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign
