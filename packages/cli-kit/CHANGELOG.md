@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.14.0
+
+### Minor Changes
+
+- 1dba11ec: Support upgrade of a globally installed CLI
+
 ## 3.13.1
 
 ### Patch Changes

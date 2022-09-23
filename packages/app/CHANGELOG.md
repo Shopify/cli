@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.14.0
+
+### Minor Changes
+
+- ddba7e55: Use tunnel by default again (temporary change)
+
+### Patch Changes
+
+- Updated dependencies [1dba11ec]
+  - @shopify/cli-kit@3.14.0
+  - @shopify/shopify-cli-extensions@3.14.0
+
 ## 3.13.1
 
 ### Patch Changes
