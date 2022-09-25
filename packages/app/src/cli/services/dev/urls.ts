@@ -89,7 +89,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendPort = await port.getRandomPort()
     frontendUrl = await generateURL(options.commandConfig, frontendPort)
   } else {
-    frontendPort = await port.getRandomPort()
+    frontendPort = environment.spin.isSpin() ? frontendPort : await port.getRandomPort()
     frontendUrl = 'http://localhost'
     usingLocalhost = true
   }
