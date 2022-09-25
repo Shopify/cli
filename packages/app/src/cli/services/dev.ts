@@ -76,7 +76,7 @@ async function dev(options: DevOptions) {
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const finalExposedUrl = environment.spin.isSpin()
-      ? `https//${await environment.spin.fqdn()}:${frontendPort}`
+      ? `https://${await environment.spin.fqdn()}:${frontendPort}`
       : exposedUrl
     const newURLs = generatePartnersURLs(finalExposedUrl)
     const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
