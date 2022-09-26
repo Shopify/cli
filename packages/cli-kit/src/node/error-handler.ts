@@ -167,7 +167,7 @@ export async function addBugsnagMetadata(event: Event, config: Interfaces.Config
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
 
-  const environment = getEnvironmentData(config)
+  const environment = await getEnvironmentData(config)
 
   const allMetadata = {
     command: startCommand,

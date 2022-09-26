@@ -112,6 +112,7 @@
     "liquidjs": "^9.36.0",
     "listr2": "^4.0.5",
     "log-update": "^4.0.0",
+    "macaddress": "^0.5.3",
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
     "open": "^8.4.0",

@@ -95,8 +95,10 @@ export function createRuntimeMetadataContainer<
   }
 }
 
-// We want to track anything that ends up getting sent to monorail as `cmd_all_*`
-type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'>
+// We want to track anything that ends up getting sent to monorail as `cmd_all_*` and
+// `cmd_app_*`
+type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_app_'>
 
 const coreData = createRuntimeMetadataContainer<
   CmdFieldsFromMonorail,
@@ -104,6 +106,7 @@ const coreData = createRuntimeMetadataContainer<
     commandStartOptions: {
       startTime: number
       startCommand: string
+      startTopic?: string
       startArgs: string[]
     }
   }

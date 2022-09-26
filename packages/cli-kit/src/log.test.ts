@@ -1,4 +1,4 @@
-import {file} from './index.js'
+import {inTemporaryDirectory} from './file.js'
 import {isUnitTest} from './environment/local.js'
 import {closeLogging, initiateLogging, LinesTruncatorTransformer} from './log.js'
 import {generateRandomUUID} from './id.js'
@@ -38,7 +38,7 @@ describe('initiateLogging', () => {
   })
 
   it('when log file is not big enough no truncation is executed', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(isUnitTest).mockReturnValue(false)
       vi.mocked(generateRandomUUID).mockReturnValue('random-uuid')
@@ -56,7 +56,7 @@ describe('initiateLogging', () => {
   })
 
   it('when log file is big enough it should be truncated', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(isUnitTest).mockReturnValue(false)
       vi.mocked(generateRandomUUID).mockReturnValue('random-uuid')

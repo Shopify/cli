@@ -1,6 +1,6 @@
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
-import {MonorailEventPublic} from './monorail.js'
+import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
 import {Config, Interfaces} from '@oclif/core'
@@ -25,11 +25,20 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
   PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 
+type AppSpecificSensitiveMonorailFields = PickByPrefix<MonorailEventSensitive, 'app_'>
+
 interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
       '@shopify/app': Partial<AppSpecificMonorailFields>
+      [pluginName: string]: JsonMap
+    }
+  }
+  sensitive_command_metadata: {
+    options: {[key: string]: never}
+    pluginReturns: {
+      '@shopify/app': Partial<AppSpecificSensitiveMonorailFields>
       [pluginName: string]: JsonMap
     }
   }
