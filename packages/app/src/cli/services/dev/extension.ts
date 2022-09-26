@@ -11,15 +11,54 @@ import {output, abort, yaml, environment} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionDevOptions {
+  /**
+   * Standard output stream to send the output through.
+   */
   stdout: Writable
+  /**
+   * Standard error stream to send the error output through.
+   */
   stderr: Writable
+
+  /**
+   * Signal to abort the build process.
+   */
   signal: abort.Signal
+
+  /**
+   * Overrides the default build directory.
+   */
   buildDirectory?: string
+
+  /**
+   * The extension to be built.
+   */
   extensions: UIExtension[]
+
+  /**
+   * The app that contains the extension.
+   */
   app: AppInterface
+
+  /**
+   * The app identifier
+   */
   apiKey: string
+
+  /**
+   * URL where the extension is locally served from. It's usually the tunnel URL
+   */
   url: string
+
+  /**
+   * The port where the extension is hosted.
+   * It's usually the tunnel port
+   */
   port: number
+
+  /**
+   * The development store where the extension wants to be previewed
+   */
   storeFqdn: string
 
   /**

@@ -1,7 +1,4 @@
-import {createRequire} from 'node:module'
-
-const require = createRequire(import.meta.url)
-const deepmerge = require('deepmerge')
+import deepMerge from 'deepmerge'
 
 /**
  * Deep merges the two objects and returns a new object
@@ -12,5 +9,5 @@ const deepmerge = require('deepmerge')
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function deepMergeObjects(lhs: any, rhs: any): any {
-  return deepmerge(lhs, rhs)
+  return deepMerge(lhs, rhs)
 }
