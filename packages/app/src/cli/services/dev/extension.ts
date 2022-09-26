@@ -87,7 +87,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   }
 }
 
-export async function devUIExtensionsWithGo(options: ExtensionDevOptions): Promise<void> {
+async function devUIExtensionsWithGo(options: ExtensionDevOptions): Promise<void> {
   const config = await extensionConfig({includeResourceURL: true, ...options})
   output.debug(output.content`Dev'ing extension with configuration:
 ${output.token.json(config)}
@@ -102,7 +102,7 @@ ${output.token.json(config)}
   })
 }
 
-export async function devUIExtensionsWithNode(options: ExtensionDevOptions): Promise<void> {
+async function devUIExtensionsWithNode(options: ExtensionDevOptions): Promise<void> {
   const devOptions: ExtensionDevOptions = {
     ...options,
     checkoutCartUrl: await getCartPathFromExtensions(options.extensions, options.storeFqdn, options.checkoutCartUrl),
@@ -133,7 +133,7 @@ export async function devUIExtensionsWithNode(options: ExtensionDevOptions): Pro
   })
 }
 
-export function getWebSocketUrl(url: ExtensionDevOptions['url']) {
+function getWebSocketUrl(url: ExtensionDevOptions['url']) {
   const websocketURL = new URL('/extensions', url)
   websocketURL.protocol = 'wss:'
 
