@@ -1,5 +1,47 @@
 # @shopify/app
 
+## 3.14.0
+
+### Minor Changes
+
+- ddba7e55: Use tunnel by default again (temporary change)
+
+### Patch Changes
+
+- Updated dependencies [1dba11ec]
+  - @shopify/cli-kit@3.14.0
+  - @shopify/shopify-cli-extensions@3.14.0
+
+## 3.13.1
+
+### Patch Changes
+
+- ac0d42b1: React depency only added for generated extensions with react flavor
+- 14737f76: Fix extensions generate not working with react templates
+- Updated dependencies [81d3ca50]
+  - @shopify/cli-kit@3.13.1
+  - @shopify/shopify-cli-extensions@3.13.1
+
+## 3.13.0
+
+### Minor Changes
+
+- 42ba3761: Add tunnel flag and use localhost by default instead of tunneling
+- 5336b01f: Added support for extension development server to pass permissions metadata about the parent app to extension host systems
+- 2239cad9: - `@shopify/cli-kit` - Add support to partners tokens in the `execCLI2` function
+  - `@shopify/app` - Add support to theme app extensions in the `app dev` command
+
+### Patch Changes
+
+- 0c29f260: Fix an issue to avoid duplicated app selection when users execute `dev --reset`
+- Updated dependencies [a979c0de]
+- Updated dependencies [afa808cb]
+- Updated dependencies [a225e415]
+- Updated dependencies [5336b01f]
+- Updated dependencies [2239cad9]
+  - @shopify/cli-kit@3.13.0
+  - @shopify/shopify-cli-extensions@3.13.0
+
 ## 3.12.0
 
 ### Minor Changes

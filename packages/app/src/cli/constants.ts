@@ -59,7 +59,12 @@ export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
 export const functionExtensions = {
-  types: [...publicFunctionExtensions.types, 'shipping_rate_presenter', 'payment_customization'],
+  types: [
+    ...publicFunctionExtensions.types,
+    'shipping_rate_presenter',
+    'payment_customization',
+    'delivery_customization',
+  ],
 } as const
 
 export const functionExtensionTemplates = [
@@ -141,7 +146,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
-      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.18.0'}
+      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.19.0'}
     case 'checkout_post_purchase':
       return {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
     case 'pos_ui_extension':
@@ -172,6 +177,7 @@ export const functionExternalExtensionTypes = {
     'shipping_discount',
     'payment_customization',
     'delivery_option_presenter',
+    'delivery_customization',
   ],
 } as const
 
@@ -207,6 +213,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
     extensions: [
       'customer_accounts_ui_extension',
       'payment_customization',
+      'delivery_customization',
       'pos_ui_extension',
       'shipping_rate_presenter',
     ],
@@ -227,6 +234,7 @@ export const externalExtensionTypeNames = {
     'Function - Shipping discount',
     'Payment customization',
     'Delivery option presenter',
+    'Delivery customization',
   ],
 } as const
 
@@ -269,6 +277,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('Payment customization')
     case 'shipping_rate_presenter':
       return buildExtensionOutputConfig('Delivery option presenter')
+    case 'delivery_customization':
+      return buildExtensionOutputConfig('Delivery customization')
   }
 }
 
@@ -298,6 +308,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'order_discounts':
     case 'shipping_discounts':
     case 'payment_customization':
+    case 'delivery_customization':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.
       return type

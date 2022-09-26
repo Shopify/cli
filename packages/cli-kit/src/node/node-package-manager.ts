@@ -207,7 +207,7 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
 /**
  * An interface that represents a package.json
  */
-interface PackageJson {
+export interface PackageJson {
   /**
    * The name attribute of the package.json
    */
@@ -227,6 +227,13 @@ interface PackageJson {
    * The devDependencies attribute of the package.json
    */
   devDependencies?: {[key: string]: string}
+
+  /**
+   * The optional oclif settings attribute of the package.json
+   */
+  oclif?: {
+    plugins?: string[]
+  }
 }
 
 /**

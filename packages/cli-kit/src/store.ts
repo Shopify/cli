@@ -103,6 +103,11 @@ export async function removeSession(): Promise<void> {
   store.removeSession()
 }
 
+export async function clearAllAppInfo(): Promise<void> {
+  const store = await cliKitStore()
+  store.clearAllAppInfo()
+}
+
 export class CLIKitStore extends Conf<ConfSchema> {
   getAppInfo(directory: string): CachedAppInfo | undefined {
     debug(content`Reading cached app information for directory ${token.path(directory)}...`)
@@ -140,13 +145,18 @@ export class CLIKitStore extends Conf<ConfSchema> {
   }
 
   clearAppInfo(directory: string): void {
-    debug(content`Clearning app information for directory ${token.path(directory)}...`)
+    debug(content`Clearing app information for directory ${token.path(directory)}...`)
     const apps = this.get('appInfo') ?? []
     const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
     if (index !== -1) {
       apps.splice(index, 1)
     }
     this.set('appInfo', apps)
+  }
+
+  clearAllAppInfo(): void {
+    debug(content`Clearing all app information...`)
+    this.set('appInfo', [])
   }
 
   getThemeStore(): string | undefined {

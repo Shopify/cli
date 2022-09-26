@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.12.0",
+  "version": "3.14.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -16,6 +16,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/public/*.js",
+      "types": "./dist/public/*.d.ts"
     },
     "./node/*": {
       "node": "./dist/node/*.js",
@@ -108,6 +112,7 @@
     "liquidjs": "^9.36.0",
     "listr2": "^4.0.5",
     "log-update": "^4.0.0",
+    "macaddress": "^0.5.3",
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
     "open": "^8.4.0",

@@ -30,6 +30,7 @@ export type WebConfigurationCommands = keyof WebConfiguration['commands']
 export interface Web {
   directory: string
   configuration: WebConfiguration
+  framework?: string
 }
 
 export interface AppInterface {

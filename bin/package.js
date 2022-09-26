@@ -93,8 +93,18 @@ async function getTarballAndShaForPackage(pkg, cliVersion) {
 }
 
 async function getTarballForPackage(pkg, cliVersion) {
-  const response = await fetch(`https://registry.npmjs.com/${pkg}`)
-  return (await response.json()).versions[cliVersion].dist.tarball
+  let retryCount = 1
+  while (true) {
+    const response = await fetch(`https://registry.npmjs.com/${pkg}`)
+    const npmPackage = (await response.json()).versions[cliVersion]
+    if (npmPackage) return npmPackage.dist.tarball
+    if (retryCount++ < 10) {
+      console.log(`${pkg} v${cliVersion} not found in NPM registry. Retrying in 5 seconds...`)
+      await new Promise((resolve) => setTimeout(resolve, 5000))
+    } else {
+      throw new Error(`${pkg} v${cliVersion} not found in NPM registry`)
+    }
+  }
 }
 
 async function getSha256ForTarball(url) {

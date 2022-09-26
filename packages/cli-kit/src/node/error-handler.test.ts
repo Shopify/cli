@@ -1,6 +1,8 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler'
+import * as environment from '../environment.js'
 import * as error from '../error'
 import * as outputMocker from '../testing/output'
+import {hashString} from '../string.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const onNotify = vi.fn()
@@ -17,6 +19,13 @@ beforeEach(() => {
       },
     }
   })
+  vi.mock('./cli.js')
+  vi.mock('../environment.js')
+  vi.mock('../string.js')
+  vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
+  vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
+  vi.mocked(environment.local.cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
+  vi.mocked(hashString).mockReturnValue('hashed-macaddress')
 })
 
 afterEach(() => {

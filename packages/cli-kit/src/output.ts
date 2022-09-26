@@ -486,9 +486,12 @@ export function shouldDisplayColors(): boolean {
  * @param version {string} The version to update to
  * @returns {te}
  */
-export function getOutputUpdateCLIReminder(packageManager: PackageManager | undefined, version: string): string {
+export function getOutputUpdateCLIReminder(
+  packageManager: PackageManager | 'unknown' | undefined,
+  version: string,
+): string {
   const versionMessage = `💡 Version ${version} available!`
-  if (!packageManager) return versionMessage
+  if (!packageManager || packageManager === 'unknown') return versionMessage
 
   const updateCommand = token.packagejsonScript(packageManager, 'shopify', 'upgrade')
   return content`${versionMessage} Run ${updateCommand}`.value

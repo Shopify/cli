@@ -4,7 +4,7 @@ import dev from '../../services/dev.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
-import {path, string, cli} from '@shopify/cli-kit'
+import {path, string, cli, metadata} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -69,7 +69,7 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Use ngrok to create a tunnel to your service entry point',
       env: 'SHOPIFY_FLAG_TUNNEL',
-      default: false,
+      default: true,
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({
@@ -87,6 +87,12 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+
+    await metadata.addPublic(() => ({
+      cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
+      cmd_app_reset_used: flags.reset,
+    }))
+
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config

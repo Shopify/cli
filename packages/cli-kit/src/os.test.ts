@@ -18,6 +18,18 @@ describe('platformAndArch', () => {
     expect(got.arch).toEqual('amd64')
   })
 
+  it("returns the right architecture when it's ia32", () => {
+    // Given
+    vi.mocked(osArch).mockReturnValue('ia32')
+
+    // When
+    const got = platformAndArch('darwin')
+
+    // Got
+    expect(got.platform).toEqual('darwin')
+    expect(got.arch).toEqual('386')
+  })
+
   it('returns the right architecture', () => {
     // Given
     vi.mocked(osArch).mockReturnValue('arm64')

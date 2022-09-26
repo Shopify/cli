@@ -4,6 +4,7 @@ import constants from '../constants.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import isInteractive from 'is-interactive'
+import macaddress from 'macaddress'
 import {homedir} from 'node:os'
 
 /**
@@ -100,16 +101,39 @@ export function codespaceURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.codespaceName]
 }
 
-export function isCloudEnvironment(env = process.env): boolean {
-  return isCodespaces(env) || isGitpod(env) || isSpin(env)
+/**
+ * Checks if the CLI is run from a cloud environment
+ *
+ * @param {NodeJS.ProcessEnv} env - Environment variables used when the cli is launched
+ *
+ * @returns {boolean} True in case the CLI is run from a cloud environment
+ */
+export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolean {
+  return cloudEnvironment(env).platform !== 'localhost'
 }
 
-function isCodespaces(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.codespaces])
-}
-
-function isGitpod(env = process.env): boolean {
-  return isSet(env[constants.environmentVariables.gitpod])
+/**
+ * Returns the cloud environment platform name and if the platform support online IDE in case the CLI is run from one of
+ * them. Platform name 'localhost' is returned otherwise
+ *
+ * @param {NodeJS.ProcessEnv} env - Environment variables used when the cli is launched
+ *
+ * @returns {{platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost', editor: boolean}} - Cloud platform information
+ */
+export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
+  platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
+  editor: boolean
+} {
+  if (isTruthy(env[constants.environmentVariables.codespaces])) {
+    return {platform: 'codespaces', editor: true}
+  }
+  if (isTruthy(env[constants.environmentVariables.gitpod])) {
+    return {platform: 'gitpod', editor: true}
+  }
+  if (isTruthy(env[constants.environmentVariables.spin])) {
+    return {platform: 'spin', editor: false}
+  }
+  return {platform: 'localhost', editor: false}
 }
 
 /**
@@ -151,10 +175,10 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
 }
 
 /**
- * Gets info on the Web IDE platform the CLI is running on, if applicable
+ * Returns the first mac address found
+ *
+ *  @returns {Promise<string>}  Mac address
  */
-export function webIDEPlatform(env = process.env) {
-  if (isCodespaces(env)) return 'codespaces'
-  if (isGitpod(env)) return 'gitpod'
-  return undefined
+export function macAddress() {
+  return macaddress.one()
 }

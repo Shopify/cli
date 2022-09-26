@@ -1,4 +1,4 @@
-import {randomPick} from './array.js'
+import {takeRandomFromArray} from './public/common/array.js'
 import {exists} from './file.js'
 import {join} from './path.js'
 
@@ -57,7 +57,7 @@ export const SAFE_NOUNS = [
 ]
 
 function generateRandomName() {
-  return `${randomPick(SAFE_ADJECTIVES)}-${randomPick(SAFE_NOUNS)}`
+  return `${takeRandomFromArray(SAFE_ADJECTIVES)}-${takeRandomFromArray(SAFE_NOUNS)}`
 }
 
 export async function generate({suffix, directory}: {suffix: string; directory: string}): Promise<string> {

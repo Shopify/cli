@@ -1,8 +1,8 @@
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
-import {MonorailEventPublic} from './monorail.js'
+import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
-import {containsDuplicates, filterUndefined} from './array.js'
+import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
 import {Config, Interfaces} from '@oclif/core'
 
 /**
@@ -25,11 +25,20 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
   PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 
+type AppSpecificSensitiveMonorailFields = PickByPrefix<MonorailEventSensitive, 'app_'>
+
 interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
       '@shopify/app': Partial<AppSpecificMonorailFields>
+      [pluginName: string]: JsonMap
+    }
+  }
+  sensitive_command_metadata: {
+    options: {[key: string]: never}
+    pluginReturns: {
+      '@shopify/app': Partial<AppSpecificSensitiveMonorailFields>
       [pluginName: string]: JsonMap
     }
   }
@@ -63,8 +72,8 @@ export type FanoutHookFunction<
  */
 export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: string[]; error?: string}> {
   const hooks = await fanoutHooks(config, 'tunnel_provider', {})
-  const names = filterUndefined(Object.values(hooks).map((key) => key?.name))
-  if (containsDuplicates(names)) return {plugins: names, error: 'multiple-plugins-for-provider'}
+  const names = getArrayRejectingUndefined(Object.values(hooks).map((key) => key?.name))
+  if (getArrayContainsDuplicates(names)) return {plugins: names, error: 'multiple-plugins-for-provider'}
   return {plugins: names}
 }
 
@@ -83,7 +92,7 @@ export async function runTunnelPlugin(
   provider: string,
 ): Promise<{url?: string; error?: string}> {
   const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
-  const urls = filterUndefined(Object.values(hooks).map((key) => key?.url))
+  const urls = getArrayRejectingUndefined(Object.values(hooks).map((key) => key?.url))
   if (urls.length > 1) return {error: 'multiple-urls'}
   if (urls.length === 0) return {error: 'no-urls'}
   return {url: urls[0]}

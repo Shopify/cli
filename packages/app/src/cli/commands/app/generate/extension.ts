@@ -67,7 +67,7 @@ export default class AppScaffoldExtension extends Command {
   static args = [{name: 'file'}]
 
   public static analyticsNameOverride(): string | undefined {
-    return 'scaffold'
+    return 'app scaffold extension'
   }
 
   public async run(): Promise<void> {

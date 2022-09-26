@@ -1,5 +1,15 @@
 # @shopify/ui-extensions-go-cli
 
+## 3.14.0
+
+## 3.13.1
+
+## 3.13.0
+
+### Minor Changes
+
+- 5336b01f: Added support for extension development server to pass permissions metadata about the parent app to extension host systems
+
 ## 3.12.0
 
 ### Minor Changes

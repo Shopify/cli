@@ -2,7 +2,7 @@
 import {replaceUpdated} from './replaceUpdated'
 
 describe('replaceUpdated', () => {
-  it('replaces updated items in place, and appends new items', () => {
+  test('replaces updated items in place, and appends new items', () => {
     const arr = [
       {id: 1, a: 'a'},
       {id: 2, a: 'b'},

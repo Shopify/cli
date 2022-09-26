@@ -154,7 +154,7 @@ async function init(options: InitOptions) {
   ${hyphenizedName} is ready for you to build! Remember to ${output.token.genericShellCommand(`cd ${hyphenizedName}`)}
   Check the setup instructions in your README file
   To preview your project, run ${output.token.packagejsonScript(packageManager, 'dev')}
-  To add extensions, run ${output.token.packagejsonScript(packageManager, 'scaffold extension')}
+  To add extensions, run ${output.token.packagejsonScript(packageManager, 'generate extension')}
   For more details on all that you can build, see the docs: ${output.token.link(
     'shopify.dev',
     'https://shopify.dev',

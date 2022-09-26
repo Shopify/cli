@@ -1,6 +1,6 @@
-import Version from './version'
+import {versionService} from './version'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {outputMocker, output} from '@shopify/cli-kit'
+import {outputMocker, output, error} from '@shopify/cli-kit'
 import {
   checkForNewVersion,
   PackageManager,
@@ -9,7 +9,6 @@ import {
 
 const currentVersion = '2.2.2'
 beforeEach(() => {
-  vi.spyOn(Version.prototype as any, 'getCurrentVersion').mockReturnValue(currentVersion)
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')
@@ -40,7 +39,9 @@ describe('check CLI version', () => {
       const outputReminder = vi.mocked(output.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
 
       // When
-      await Version.run()
+      await expect(async () => {
+        await versionService({currentVersion})
+      }).rejects.toThrowError(new error.CancelExecution())
 
       // Then
       expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -58,7 +59,9 @@ describe('check CLI version', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(currentVersion)
 
     // When
-    await Version.run()
+    await expect(async () => {
+      await versionService({currentVersion})
+    }).rejects.toThrowError(new error.CancelExecution())
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -74,7 +77,9 @@ describe('check CLI version', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
     // When
-    await Version.run()
+    await expect(async () => {
+      await versionService({currentVersion})
+    }).rejects.toThrowError(new error.CancelExecution())
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot('"Current Shopify CLI version: 2.2.2"')

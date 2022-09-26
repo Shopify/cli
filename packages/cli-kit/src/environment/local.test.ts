@@ -1,4 +1,13 @@
-import {hasGit, isDevelopment, isShopify, isUnitTest, analyticsDisabled, useDeviceAuth} from './local.js'
+import {
+  hasGit,
+  isDevelopment,
+  isShopify,
+  isUnitTest,
+  analyticsDisabled,
+  useDeviceAuth,
+  cloudEnvironment,
+  macAddress,
+} from './local.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
@@ -20,9 +29,9 @@ describe('isUnitTest', () => {
 })
 
 describe('isDevelopment', () => {
-  it('returns true when SHOPIFY_ENV is debug', () => {
+  it('returns true when SHOPIFY_CLI_ENV is debug', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'development'}
+    const env = {SHOPIFY_CLI_ENV: 'development'}
 
     // When
     const got = isDevelopment(env)
@@ -104,7 +113,7 @@ describe('analitycsDisabled', () => {
 
   it('returns true when in development', () => {
     // Given
-    const env = {SHOPIFY_ENV: 'development'}
+    const env = {SHOPIFY_CLI_ENV: 'development'}
 
     // When
     const got = analyticsDisabled(env)
@@ -149,5 +158,43 @@ describe('useDeviceAuth', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('macAddress', () => {
+  it('returns any mac address value', async () => {
+    // When
+    const got = await macAddress()
+
+    // Then
+    expect(got).not.toBeUndefined()
+  })
+})
+
+describe('cloudEnvironment', () => {
+  it.each([
+    ['SPIN', 'spin'],
+    ['CODESPACES', 'codespaces'],
+    ['GITPOD_WORKSPACE_URL', 'gitpod'],
+  ])('returns correct cloud platform when %s is truthy', (envVar, platform) => {
+    // Given
+    const env = {[envVar]: '1'}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got.platform).toBe(platform)
+  })
+
+  it('returns localhost when no cloud enviroment varible is ser', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got.platform).toBe('localhost')
   })
 })

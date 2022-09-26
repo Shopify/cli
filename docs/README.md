@@ -2,13 +2,9 @@
 
 # Contributors documentation
 
-You can learn about [how to contribute](./introduction), read about
-[CLI kit](./Kit:-Introduction), or learn about the rationale underlying some of
-our biggest decisions.
-
 * [Get started](./get-started.md)
 * [Architecture](./architecture.md)
-* [Code patterns](./code-patterns.md)
+* [Conventions](./conventions.md)
 * [Debugging](./debugging.md)
 * [ESLint rules](./eslint-rules.md)
 * [Principles](./principles.md)

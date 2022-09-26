@@ -2,8 +2,6 @@
 
 process.removeAllListeners('warning');
 
-import runCLI, {useLocalCLIIfDetected} from "@shopify/cli";
+import runCLI from "../dist/index.js";
 
-// If we run a local CLI instead, don't run the global one again after!
-const ranLocalInstead = await useLocalCLIIfDetected(import.meta.url);
-if (!ranLocalInstead) runCLI();
+runCLI({development: false})
