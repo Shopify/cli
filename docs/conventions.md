@@ -1,6 +1,6 @@
 # Conventions
 
-Having conventions around code patterns **makes a codebase easy to navigate and work with**. You get free when you use opinionated frameworks like Rails, but that you need to come up with if you don't use a framework. The Shopify CLI doesn't have a framework, and therefore it's our responsibility to **define and ensure that patterns are followed**. What follows is the set of patterns that you'll find across the codebase and that we require contributors to follow.
+Having conventions around code patterns **makes a codebase easy to navigate and work with**. You get it for free when you use opinionated frameworks like Rails, but the Shopify CLI doesn't have a framework, and therefore it's our responsibility to **define and ensure that patterns are followed**. What follows is the set of patterns that you'll find across the codebase and that we require contributors to follow.
 
 ## 1 - All packages
 
@@ -35,7 +35,7 @@ Modules with side effects might increase the load time of the dependency graph a
 
 ### 1.3 - Stateless modules
 
-Don't use modules to store state at runtime. Due to how Node module resolution works and the no control we have our how package managers organize modules in the system, projects might end up with more than one copy of a module (and its state) in the dependency graph leading to unexpected behaviors. For example:
+Don't use modules to store state at runtime. Due to how Node module resolution works, we don't have control over how package managers organize modules in the filesystem. Therefore, projects might end up with more than one copy of a module (and its state) in the dependency graph, which can lead to unexpected behaviors. For example:
 
 ```ts
 // store.ts
