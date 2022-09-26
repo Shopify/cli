@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -40,10 +39,6 @@ func New(config *core.Config) *ExtensionsApi {
 }
 
 func (api *ExtensionsApi) sendUpdateEvent(extensions []core.Extension) {
-	fmt.Fprintln(os.Stderr, "WS: HANDLE UPDATE EVENT")
-	jsonPayload, _ := json.Marshal(extensions)
-	fmt.Fprintln(os.Stderr, string(jsonPayload))
-
 	api.notifyClients(func() (message notification, err error) {
 		return api.getNotification("update", extensions)
 	})
@@ -311,11 +306,6 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 	}, closeConnection)
 
 	notification, err := api.getNotification("connected", api.Extensions)
-
-	content, _ := json.Marshal(notification)
-	fmt.Fprintln(os.Stderr, "WS: CONNECTED")
-	fmt.Fprintln(os.Stderr, string(content))
-
 	if err != nil {
 		closeConnection(websocket.CloseNoStatusReceived, fmt.Sprintf("cannot send connected message, failed with error: %v", err))
 	}
@@ -325,7 +315,6 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// WHEN: We receive message from the client.
 	go api.handleClientMessages(connection)
 
 	for {
@@ -333,15 +322,7 @@ func (api *ExtensionsApi) sendStatusUpdates(rw http.ResponseWriter, r *http.Requ
 		case <-done:
 			return
 		case notification := <-notifications:
-			// WHEN: From the server (e.g. when the files change)
 
-			fmt.Fprintln(os.Stderr, "WS: NOTIFICATION RECEIVED")
-			content, _ := json.Marshal(notification)
-			fmt.Fprintln(os.Stderr, string(content))
-
-			fmt.Fprintln(os.Stderr, "WS: NOTIFICATION RESPONDED")
-			responded, _ := json.Marshal(notification)
-			fmt.Fprintln(os.Stderr, string(responded))
 			err = api.writeJSONMessage(connection, &notification)
 			if err != nil {
 				// the client has closed the connection so we can return
@@ -460,19 +441,12 @@ func (api *ExtensionsApi) handleClientMessages(ws *websocketConnection) {
 				break
 			}
 			_, updated := api.getMergedAppMap(data.App, true)
-
 			if updated {
 				api.sendUpdateEvent([]core.Extension{})
 			}
-			fmt.Fprintln(os.Stderr, "WS: HANDLE UPDATE EXTENSIONS")
-			updatedJson, _ := json.Marshal(data.Extensions)
-			fmt.Fprintln(os.Stderr, string(updatedJson))
 			api.Notify(data.Extensions)
 
 		case "dispatch":
-			fmt.Fprintln(os.Stderr, "WS: HANDLE DISPATCH")
-			jsonPayload, _ := json.Marshal(jsonMessage.Data)
-			fmt.Fprintln(os.Stderr, string(jsonPayload))
 			api.notifyClients(func() (message notification, err error) {
 				return api.getDispatchNotification(jsonMessage.Data)
 			})
