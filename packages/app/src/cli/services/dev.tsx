@@ -4,10 +4,7 @@ import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
-import {
-  ReverseHTTPProxyTarget,
-  runConcurrentHTTPProcessesAndPathForwardTraffic,
-} from '../utilities/app/http-reverse-proxy.js'
+import {ReverseHTTPProxyTarget} from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
@@ -46,7 +43,7 @@ interface DevWebOptions {
 
 async function dev(options: DevOptions) {
   render.once(
-    <Box width="100%" borderColor="green" borderStyle="round" flexDirection="column" padding={1}>
+    <Box borderColor="green" borderStyle="round" flexDirection="column" padding={1}>
       <Text color="green">Success!</Text>
     </Box>,
   )
@@ -170,11 +167,11 @@ async function dev(options: DevOptions) {
 
   await analytics.reportEvent({config: options.commandConfig})
 
-  if (proxyTargets.length === 0) {
-    await render.concurrent(additionalProcesses)
-  } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
-  }
+  // if (proxyTargets.length === 0) {
+  //   await render.concurrent(additionalProcesses)
+  // } else {
+  //   await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+  // }
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {
