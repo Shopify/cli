@@ -11,7 +11,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -235,6 +235,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
     BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
+    ...(environment.spin.isSpin() && {SHOP_CUSTOM_DOMAIN: '.*spin\\.dev'}),
   }
 
   return {
