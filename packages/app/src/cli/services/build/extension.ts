@@ -60,11 +60,11 @@ interface BuildUIExtensionsOptions {
   app: AppInterface
 }
 
-export function buildUIExtensions(options: BuildUIExtensionsOptions): output.OutputProcess[] {
+export async function buildUIExtensions(options: BuildUIExtensionsOptions): Promise<output.OutputProcess[]> {
   if (options.app.extensions.ui.length === 0) {
     return []
   }
-  if (environment.utilities.isTruthy(process.env.SHOPIFY_CLI_UI_EXTENSIONS_USE_NODE)) {
+  if (await environment.local.isShopify()) {
     return options.app.extensions.ui.map((uiExtension) => {
       return {
         prefix: uiExtension.localIdentifier,

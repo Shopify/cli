@@ -1,10 +1,24 @@
 import {serviceEnvironment} from './environment/service.js'
 import https from 'https'
 
+export {H3Error} from 'h3'
+
 export {default as fetch} from './http/fetch.js'
 export {graphqlClient} from './http/graphql.js'
 export {shopifyFetch} from './http/fetch.js'
 export {default as formData} from './http/formdata.js'
+
+export {
+  createApp,
+  createRouter,
+  IncomingMessage,
+  ServerResponse,
+  CompatibilityEvent,
+  createError,
+  send,
+  sendError,
+  sendRedirect,
+} from 'h3'
 
 /**
  * This utility function returns the https.Agent to use for a given service. The agent

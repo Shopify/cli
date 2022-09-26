@@ -20,7 +20,7 @@ export interface ExtensionConfigOptions {
   port?: number
   storeFqdn?: string
   includeResourceURL?: boolean
-  cartUrl?: string
+  checkoutCartUrl?: string
   subscriptionProductUrl?: string
   grantedScopes?: string[]
 }
@@ -83,11 +83,11 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
     extensions: extensionsConfig,
   }
 }
-
-export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: ExtensionConfigOptions) {
+type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl'>
+export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: GetUIExensionResourceURLOptions) {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
-      return {url: options.cartUrl}
+      return {url: options.checkoutCartUrl}
     case 'checkout_post_purchase':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
@@ -99,6 +99,8 @@ export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionType
       return {url: options.subscriptionProductUrl}
   }
 }
+
+export type UIExtensionSurface = ReturnType<typeof getUIExtensionSurface>
 
 export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
   switch (uiExtensionType) {

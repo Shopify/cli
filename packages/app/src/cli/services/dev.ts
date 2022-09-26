@@ -1,7 +1,7 @@
 import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
-import {devExtensions} from './dev/extension.js'
+import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {
@@ -104,15 +104,15 @@ async function dev(options: DevOptions) {
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   if (options.app.extensions.ui.length > 0) {
-    const devExt = await devUIExtensionsTarget(
-      options.app,
+    const devExt = await devUIExtensionsTarget({
+      app: options.app,
       apiKey,
-      proxyUrl,
+      url: proxyUrl,
       storeFqdn,
-      app.grantedScopes,
-      options.subscriptionProductUrl,
-      options.checkoutCartUrl,
-    )
+      grantedScopes: app.grantedScopes,
+      subscriptionProductUrl: options.subscriptionProductUrl,
+      checkoutCartUrl: options.checkoutCartUrl,
+    })
     proxyTargets.push(devExt)
   }
 
@@ -257,21 +257,30 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   }
 }
 
-async function devUIExtensionsTarget(
-  app: AppInterface,
-  apiKey: string,
-  url: string,
-  storeFqdn: string,
-  grantedScopes: string[],
-  subscriptionProductUrl?: string,
-  checkoutCartUrl?: string,
-): Promise<ReverseHTTPProxyTarget> {
-  const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
+interface DevUIExtensionsTargetOptions {
+  app: AppInterface
+  apiKey: string
+  url: string
+  storeFqdn: string
+  grantedScopes: string[]
+  subscriptionProductUrl?: string
+  checkoutCartUrl?: string
+}
+
+async function devUIExtensionsTarget({
+  app,
+  apiKey,
+  url,
+  storeFqdn,
+  grantedScopes,
+  subscriptionProductUrl,
+  checkoutCartUrl,
+}: DevUIExtensionsTargetOptions): Promise<ReverseHTTPProxyTarget> {
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
     action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
-      await devExtensions({
+      await devUIExtensions({
         app,
         extensions: app.extensions.ui,
         stdout,
@@ -282,24 +291,11 @@ async function devUIExtensionsTarget(
         storeFqdn,
         apiKey,
         grantedScopes,
-        cartUrl,
+        checkoutCartUrl,
         subscriptionProductUrl,
       })
     },
   }
-}
-
-/**
- * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
- * @param extensions {UIExtension[]} - The UI Extensions to dev
- * @param store {string} - The store FQDN
- */
-async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
-  const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
-  if (!hasUIExtension) return undefined
-  if (checkoutCartUrl) return checkoutCartUrl
-  const variantId = await fetchProductVariant(store)
-  return `/cart/${variantId}:1`
 }
 
 async function logMetadataForDev(options: {

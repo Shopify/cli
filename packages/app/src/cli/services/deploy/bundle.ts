@@ -31,7 +31,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
           })
         },
       },
-      ...buildUIExtensions({
+      ...(await buildUIExtensions({
         app: {
           ...options.app,
           extensions: {
@@ -46,7 +46,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
             }),
           },
         },
-      }),
+      })),
       ...options.app.extensions.function.map((functionExtension) => {
         return {
           prefix: functionExtension.localIdentifier,

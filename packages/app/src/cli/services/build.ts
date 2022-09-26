@@ -1,4 +1,4 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from './build/extension.js'
+import {buildThemeExtensions, buildFunctionExtension, buildUIExtension} from './build/extension.js'
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface, Web} from '../models/app/app.js'
@@ -42,7 +42,14 @@ async function build(options: BuildOptions) {
         })
       },
     },
-    ...buildUIExtensions(options),
+    ...options.app.extensions.ui.map((uiExtension) => {
+      return {
+        prefix: uiExtension.localIdentifier,
+        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+          await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
+        },
+      }
+    }),
     ...options.app.extensions.function.map((functionExtension) => {
       return {
         prefix: functionExtension.localIdentifier,

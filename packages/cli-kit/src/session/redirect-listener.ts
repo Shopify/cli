@@ -12,8 +12,9 @@ import {
 } from './post-auth.js'
 import {Abort, Bug} from '../error.js'
 import {content, info, token} from '../output.js'
-import Fastify from 'fastify'
+import {createApp, IncomingMessage, ServerResponse} from 'h3'
 import url from 'url'
+import {createServer, Server} from 'http'
 
 const ResponseTimeoutSeconds = 10
 const ServerStopDelaySeconds = 0.5
@@ -40,21 +41,24 @@ interface RedirectListenerOptions {
  * an HTTP server that runs and listens to the request.
  */
 export class RedirectListener {
-  private static createServer(callback: RedirectCallback) {
-    const server = Fastify().get('*', async (request, reply) => {
+  private static createServer(callback: RedirectCallback): Server {
+    const app = createApp().use('*', async (request: IncomingMessage, response: ServerResponse) => {
       const requestUrl = request.url
       if (requestUrl === '/favicon.svg') {
         const faviconFile = await getFavicon()
-        await reply.header('Content-Type', 'image/svg+xml').send(faviconFile)
+        response.setHeader('Content-Type', 'image/svg+xml').write(faviconFile)
+        response.end()
         return {}
       } else if (requestUrl === '/style.css') {
         const stylesheetFile = await getStylesheet()
-        await reply.header('Content-Type', 'text/css').send(stylesheetFile)
+        response.setHeader('Content-Type', 'text/css').write(stylesheetFile)
+        response.end()
         return {}
       }
 
       const respond = async (contents: string, error?: Error, state?: string, code?: string) => {
-        await reply.header('Content-Type', 'text/html').send(contents)
+        response.setHeader('Content-Type', 'text/html').write(contents)
+        response.end()
         callback(error, state, code)
         return {}
       }
@@ -92,7 +96,8 @@ export class RedirectListener {
       return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
     })
 
-    return server
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    return createServer(app)
   }
 
   port: number

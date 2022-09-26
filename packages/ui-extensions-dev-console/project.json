@@ -9,16 +9,41 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
+          "commands": [
+            "yarn rimraf dist/ ../ui-extensions-go-cli/api/dev-console",
+            "yarn rimraf dist/ ../app/assets/dev-console"
+          ],
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "build": {
+        "outputs": [],
+        "executor": "nx:run-commands",
+        "dependsOn": ["build:into-app", "build:into-go"],
+        "options": {
+          "commands": [],
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "build:into-app": {
+        "outputs": ["../app/assets/dev-console"],
+        "executor": "nx:run-commands",
+        "inputs": ["{projectRoot}/src/**/*"],
+        "options": {
+          "commands": [
+            "OUT_DIR='../app/assets/dev-console' yarn vite build"
+          ],
+          "cwd": "packages/ui-extensions-dev-console"
+        }
+      },
+      "build:into-go": {
         "outputs": ["../ui-extensions-go-cli/api/dev-console"],
         "executor": "nx:run-commands",
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
-          "command": "yarn tsc --project tsconfig.build.json --noEmit && yarn vite build",
+          "commands": [
+            "OUT_DIR=../ui-extensions-go-cli/api/dev-console yarn vite build"
+          ],
           "cwd": "packages/ui-extensions-dev-console"
         }
       },

@@ -152,6 +152,11 @@ export function createReadStream(path: string) {
   return fs.createReadStream(path)
 }
 
+export async function lastUpdated(path: string): Promise<Date> {
+  debug(outputContent`Getting last updated timestamp for file at ${token.path(path)}...`)
+  return (await fs.stat(path)).ctime
+}
+
 /**
  * Moves a file.
  * @param src {string} File to be moved.

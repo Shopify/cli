@@ -8,7 +8,7 @@
       "@shopify/ui-extensions-test-utils": ["../ui-extensions-test-utils/src"],
     }
   },
-  "exclude": ["tests/**/*", "src/**/*.test.tsx", "src/**/*.test.ts"],
+  "exclude": ["tests/**/*", "src/**/*.test.tsx", "src/**/*.test.ts", "dist/**"],
   "include": ["src/**/*", "src/**/*.json"],
   "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../ui-extensions-test-utils"}]
 }

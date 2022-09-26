@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [reactRefresh()],
   build: {
-    outDir: '../ui-extensions-go-cli/api/dev-console',
+    outDir: process.env.OUT_DIR,
     assetsDir: 'extensions/dev-console/assets',
   },
   resolve: {
