@@ -11,7 +11,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, environment} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -75,10 +75,7 @@ async function dev(options: DevOptions) {
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
-    const finalExposedUrl = environment.spin.isSpin()
-      ? `https://${await environment.spin.fqdn()}:${frontendPort}`
-      : exposedUrl
-    const newURLs = generatePartnersURLs(finalExposedUrl)
+    const newURLs = generatePartnersURLs(exposedUrl)
     const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
       currentURLs,
       appDirectory: options.app.directory,
@@ -87,7 +84,7 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdate) await updateURLs(newURLs, apiKey, token)
     outputUpdateURLsResult(shouldUpdate, newURLs, app)
-    outputAppURL(storeFqdn, finalExposedUrl)
+    outputAppURL(storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
