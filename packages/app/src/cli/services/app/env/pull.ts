@@ -1,5 +1,5 @@
-import {selectApp} from '../app/select-app.js'
-import {AppInterface} from '../../models/app/app.js'
+import {selectApp} from '../select-app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {output, file} from '@shopify/cli-kit'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
