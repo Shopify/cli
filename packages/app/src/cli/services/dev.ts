@@ -14,10 +14,7 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import metadata from '../metadata.js'
 import {analytics, output, port, system, session, abort, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
-import {OutputProcess} from '@shopify/cli-kit/src/output.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {AdminSession} from '@shopify/cli-kit/src/session.js'
-import {getAnalyticsTunnelType} from '@shopify/cli-kit/src/analytics'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -169,7 +166,7 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): output.OutputProcess {
   const devFrontend = devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
@@ -181,7 +178,7 @@ function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: numb
 
 function devThemeExtensionTarget(
   args: string[],
-  adminSession: AdminSession,
+  adminSession: session.AdminSession,
   storefrontToken: string,
   token: string,
 ): output.OutputProcess {
@@ -311,7 +308,7 @@ async function logMetadataForDev(options: {
   shouldUpdateURLs: boolean
   storeFqdn: string
 }) {
-  const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  const tunnelType = await analytics.getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublic(() => ({
     cmd_dev_tunnel_type: tunnelType,
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
