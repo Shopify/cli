@@ -127,11 +127,9 @@ async function devUIExtensionsWithNode(options: ExtensionDevOptions): Promise<vo
   const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
 
   options.signal.addEventListener('abort', () => {
-    httpServer.close()
-    // TODO: Does it matter the order?
-    // TODO: Document the contracts through websockets and HTTP
-    websocketConnection.close()
     fileWatcher.close()
+    websocketConnection.close()
+    httpServer.close()
   })
 }
 

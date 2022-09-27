@@ -46,14 +46,18 @@ ${output.token.json(eventData)}
           `)
 
     if (eventType === 'update') {
-      /**
-       * App updates must take precedence over extensions. Otherwise the websocket server
-       * will send an update to the client with missing app data and will cause the loading
-       * of extensions to fail.
-       */
       const payloadStoreApiKey = options.payloadStore.getRawPayload().app.apiKey
       const eventAppApiKey = eventData.app?.apiKey
-      if (eventData.app && payloadStoreApiKey === eventAppApiKey) {
+
+      if (eventData.app) {
+        if (payloadStoreApiKey !== eventAppApiKey) {
+          return
+        }
+        /**
+         * App updates must take precedence over extensions. Otherwise the websocket server
+         * will send an update to the client with missing app data and will cause the loading
+         * of extensions to fail.
+         */
         options.payloadStore.updateApp(eventData.app)
       }
       if (eventData.extensions) {

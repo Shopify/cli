@@ -122,7 +122,7 @@ describe('getOnMessageHandler()', () => {
     expect(options.payloadStore.updateApp).toHaveBeenCalledWith(eventApp)
     expect(options.payloadStore.updateExtensions).toHaveBeenCalledWith([])
   })
-  test("on an incomming update message doesn't update the app if the API keys don't match", () => {
+  test("on an incoming update message doesn't update the app if the API keys don't match", () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
     const data = JSON.stringify({
@@ -137,6 +137,22 @@ describe('getOnMessageHandler()', () => {
     getOnMessageHandler(wss, options)(data)
 
     expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
+  })
+  test("on an incoming update message doesn't update the extensions if the API keys don't match", () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = JSON.stringify({
+      event: 'update',
+      data: {
+        app: {
+          apiKey: 'other-api-key',
+        },
+        extensions: [],
+      },
+    }) as unknown as RawData
+    getOnMessageHandler(wss, options)(data)
+
+    expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()
   })
   test('on an incomming dispatch notify clients', () => {
     const wss = getMockWebsocketServer()
