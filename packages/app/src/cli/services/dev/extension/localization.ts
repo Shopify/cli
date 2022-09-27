@@ -53,14 +53,13 @@ export async function getLocalization(
   let status: ExtensionAssetBuildStatus = 'success'
 
   await Promise.all(compilingTranslations)
-    .then(() => calculateLastUpdatedTimestamp(localization))
+    .then(async () => {
+      localization.lastUpdated = Date.now()
+      output.debug(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`)
+    })
     .catch(() => {
       status = 'error'
     })
-
-  if (status === 'success') {
-    await output.debug(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`)
-  }
 
   return {
     localization,
@@ -81,13 +80,5 @@ async function compileLocalizationFiles(
     const message = `Error parsing ${locale} locale for ${extension.configuration.name} at ${path}: ${error.message}`
     await output.warn(message)
     throw new Error(message)
-  }
-}
-
-function calculateLastUpdatedTimestamp(localization: Localization) {
-  const lastUpdatedDateTime = Date.now()
-
-  if (lastUpdatedDateTime > localization.lastUpdated) {
-    localization.lastUpdated = lastUpdatedDateTime
   }
 }
