@@ -18,39 +18,39 @@ export interface FileWatcher {
   close: () => void
 }
 
-export function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
+export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   const abortController = new abort.Controller()
 
-  options.devOptions.extensions.forEach((extension) => {
-    // TODO: Something here is not working as expected
-    const esbuild = await bundleExtension({
-      minify: false,
-      outputBundlePath: extension.outputBundlePath,
-      sourceFilePath: extension.entrySourceFilePath,
-      environment: 'development',
-      env: options.devOptions.app.dotenv?.variables ?? {},
-      stderr: options.devOptions.stderr,
-      stdout: options.devOptions.stdout,
-      watchSignal: abortController.signal,
-      watch: (error, result) => {
-        output.debug(
-          `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
-            error ? 'an error' : 'changed'
-          }`,
-        )
+  const bundlers: Promise<void>[] = []
 
-        options.payloadStore
-          .updateExtension(extension, {
-            status: error ? 'error' : 'success',
-          })
-          .then((_) => {
-            // TODO: Show logs
-          })
-          .catch((_) => {
-            // TODO: Show logs
-          })
-      },
-    })
+  options.devOptions.extensions.forEach((extension) => {
+    bundlers.push(
+      bundleExtension({
+        minify: false,
+        outputBundlePath: extension.outputBundlePath,
+        sourceFilePath: extension.entrySourceFilePath,
+        environment: 'development',
+        env: options.devOptions.app.dotenv?.variables ?? {},
+        stderr: options.devOptions.stderr,
+        stdout: options.devOptions.stdout,
+        watchSignal: abortController.signal,
+        watch: (error) => {
+          output.debug(
+            `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
+              error ? 'an error' : 'changed'
+            }`,
+          )
+
+          options.payloadStore
+            .updateExtension(extension, {
+              status: error ? 'error' : 'success',
+            })
+            // ESBuild handles error output
+            .then((_) => {})
+            .catch((_) => {})
+        },
+      }),
+    )
 
     const localeWatcher = chokidar
       .watch(path.join(extension.directory, 'locales', '**.json'))
@@ -81,6 +81,9 @@ export function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         })
     })
   })
+
+  await Promise.all(bundlers)
+
   return {
     close: () => {
       abortController.abort()

@@ -41,7 +41,7 @@ describe('devUIExtensions()', () => {
       vi.spyOn(websocket, 'setupWebsocketConnection').mockReturnValue({
         close: websocketCloseSpy,
       } as unknown as WebsocketConnection)
-      vi.spyOn(bundler, 'setupBundlerAndFileWatcher').mockReturnValue({
+      vi.spyOn(bundler, 'setupBundlerAndFileWatcher').mockResolvedValue({
         close: bundlerCloseSpy,
       })
     }

@@ -124,7 +124,7 @@ async function devUIExtensionsWithNode(options: ExtensionDevOptions): Promise<vo
     payloadStore,
   })
   output.debug(`Setting up the UI extensions bundler and file watching...`)
-  const fileWatcher = setupBundlerAndFileWatcher({devOptions, payloadStore})
+  const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
 
   options.signal.addEventListener('abort', () => {
     httpServer.close()
