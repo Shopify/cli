@@ -14,6 +14,8 @@ import {analytics, output, port, system, session, abort, string} from '@shopify/
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Writable} from 'node:stream'
+import { UIExtension } from '../models/app/extensions.js'
+import { fetchProductVariant } from '../utilities/extensions/fetch-product-variant.js'
 
 export interface DevOptions {
   app: AppInterface
@@ -274,6 +276,7 @@ async function devUIExtensionsTarget({
   subscriptionProductUrl,
   checkoutCartUrl,
 }: DevUIExtensionsTargetOptions): Promise<ReverseHTTPProxyTarget> {
+  const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
@@ -289,11 +292,24 @@ async function devUIExtensionsTarget({
         storeFqdn,
         apiKey,
         grantedScopes,
-        checkoutCartUrl,
+        checkoutCartUrl: cartUrl,
         subscriptionProductUrl,
       })
     },
   }
+}
+
+/**
+ * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
+ * @param extensions {UIExtension[]} - The UI Extensions to dev
+ * @param store {string} - The store FQDN
+ */
+async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
+  const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
+  if (!hasUIExtension) return undefined
+  if (checkoutCartUrl) return checkoutCartUrl
+  const variantId = await fetchProductVariant(store)
+  return `/cart/${variantId}:1`
 }
 
 async function logMetadataForDev(options: {
