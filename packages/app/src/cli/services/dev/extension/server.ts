@@ -29,7 +29,6 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)
   httpRouter.use('/extensions/:extensionId', getExtensionPayloadMiddleware(options))
-  // TODO: Can we merge the two registrations?
   httpRouter.use('/extensions/:extensionId/', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/assets/**:assetPath', getExtensionAssetMiddleware(options))
   httpRouter.use('/extensions', getExtensionsPayloadMiddleware(options))
