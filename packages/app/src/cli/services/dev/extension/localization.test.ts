@@ -1,6 +1,6 @@
 import {getLocalization} from './localization.js'
-import {file, path} from '@shopify/cli-kit'
-import {describe, expect, it} from 'vitest'
+import {file, path, output} from '@shopify/cli-kit'
+import {describe, expect, it, vi} from 'vitest'
 
 async function testGetLocalization(tmpDir: string) {
   return getLocalization({
@@ -99,6 +99,21 @@ describe('when there locale files', () => {
       const result = await testGetLocalization(tmpDir)
 
       expect(result.status).toBe('success')
+    })
+  })
+
+  it('outputs message when there are no JSON errors', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      vi.spyOn(output, 'info')
+
+      await file.mkdir(path.join(tmpDir, 'locales'))
+      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
+
+      const result = await testGetLocalization(tmpDir)
+
+      expect(output.info).toHaveBeenCalledWith(expect.stringContaining('mock-name'))
+      expect(output.info).toHaveBeenCalledWith(expect.stringContaining(tmpDir))
     })
   })
 
