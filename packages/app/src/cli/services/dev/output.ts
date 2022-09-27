@@ -3,14 +3,14 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {output, string} from '@shopify/cli-kit'
+import {output, string, environment} from '@shopify/cli-kit'
 
-export function outputUpdateURLsResult(
+export async function outputUpdateURLsResult(
   updated: boolean,
   urls: PartnersURLs,
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
 ) {
-  const dashboardURL = partnersURL(app.organizationId, app.id)
+  const dashboardURL = await partnersURL(app.organizationId, app.id)
   if (app.newApp) {
     outputUpdatedURLFirstTime(urls.applicationUrl, dashboardURL)
   } else if (updated) {
@@ -136,9 +136,9 @@ function getHumanKey(type: ExtensionTypes) {
   return string.capitalize(getExtensionOutputConfig(type).humanKey)
 }
 
-function partnersURL(organizationId: string, appId: string): string {
+async function partnersURL(organizationId: string, appId: string): Promise<string> {
   return output.content`${output.token.link(
     `Partners Dashboard`,
-    `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+    `https://${await environment.fqdn.partners()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

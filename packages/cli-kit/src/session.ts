@@ -2,7 +2,7 @@ import {applicationId} from './session/identity.js'
 import {Abort, Bug} from './error.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
-import {identity as identityFqdn} from './environment/fqdn.js'
+import {identity as identityFqdn, partners as partnersFqdn} from './environment/fqdn.js'
 import {open} from './system.js'
 import {
   exchangeAccessForApplicationTokens,
@@ -245,7 +245,7 @@ export async function ensureUserHasPartnerAccount(partnersToken: string) {
     output.info(`\nA Shopify Partners organization is needed to proceed.`)
     output.info(`👉 Press any key to create one`)
     await keypress()
-    await open(`https://partners.shopify.com/signup`)
+    await open(`https://${await partnersFqdn()}.shopify.com/signup`)
     output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
     output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
