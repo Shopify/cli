@@ -9,6 +9,7 @@ import {
   readAndParsePackageJson,
   findUpAndReadPackageJson,
   FindUpAndReadPackageJsonNotFoundError,
+  usesWorkspaces,
 } from './node-package-manager.js'
 import {exec} from '../system.js'
 import {join as pathJoin, normalize as pathNormalize} from '../path.js'
@@ -120,6 +121,65 @@ describe('packageJSONContents', () => {
 
       // Then
       expect(got).toEqual(packageJson)
+    })
+  })
+})
+
+describe('usesWorkspaces', () => {
+  test('returns true when workspaces are used in the package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+        workspaces: ['packages/*'],
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await usesWorkspaces(tmpDir)
+
+      // Then
+      expect(got).toEqual(true)
+    })
+  })
+
+  test('returns true when workspaces are used by pnpm', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      const pnpmWorkspaceFilePath = pathJoin(tmpDir, 'pnpm-workspace.yaml')
+      await writeFile(pnpmWorkspaceFilePath, '')
+
+      // When
+      const got = await usesWorkspaces(tmpDir)
+
+      // Then
+      expect(got).toEqual(true)
+    })
+  })
+
+  test('returns false when workspaces are not used', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await usesWorkspaces(tmpDir)
+
+      // Then
+      expect(got).toEqual(false)
     })
   })
 })

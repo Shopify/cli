@@ -15,6 +15,9 @@ export const yarnLockfile = 'yarn.lock'
 /** The name of the pnpm lock file */
 export const pnpmLockfile = 'pnpm-lock.yaml'
 
+/** The name of the pnpm workspace file */
+export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
+
 /** An array containing the lockfiles from all the package managers */
 export const lockfiles = [yarnLockfile, pnpmLockfile]
 
@@ -184,6 +187,19 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
 }
 
 /**
+ * Returns true if the app uses workspaces, false otherwise.
+ * @param packageJsonPath {string} Path to the package.json file
+ * @param pnpmWorkspacePath {string} Path to the pnpm-workspace.yaml file
+ * @returns A promise that resolves with true if the app uses workspaces, false otherwise.
+ */
+
+export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
+  const packageJsonPath = pathJoin(appDirectory, 'package.json')
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  const pnpmWorkspacePath = pathJoin(appDirectory, pnpmWorkspaceFile)
+  return Boolean(packageJsonContent.workspaces) || fileExists(pnpmWorkspacePath)
+}
+/**
  * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
  * @param dependency {string} The dependency name (e.g. react)
  * @param currentVersion {string} The current version.
@@ -234,6 +250,11 @@ export interface PackageJson {
   oclif?: {
     plugins?: string[]
   }
+
+  /**
+   * The workspaces attribute of the package.json
+   */
+  workspaces?: string[]
 }
 
 /**
