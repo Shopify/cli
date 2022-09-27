@@ -22,7 +22,8 @@ export function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   const abortController = new abort.Controller()
 
   options.devOptions.extensions.forEach((extension) => {
-    const esbuild = bundleExtension({
+    // TODO: Something here is not working as expected
+    const esbuild = await bundleExtension({
       minify: false,
       outputBundlePath: extension.outputBundlePath,
       sourceFilePath: extension.entrySourceFilePath,
@@ -42,8 +43,12 @@ export function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
           .updateExtension(extension, {
             status: error ? 'error' : 'success',
           })
-          .then((_) => {})
-          .catch((_) => {})
+          .then((_) => {
+            // TODO: Show logs
+          })
+          .catch((_) => {
+            // TODO: Show logs
+          })
       },
     })
 
