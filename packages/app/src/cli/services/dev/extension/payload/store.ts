@@ -102,6 +102,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     payloadExtensions[index] = await getUIExtensionPayload(extension, {
       ...this.options,
       currentDevelopmentPayload: development || {status: payloadExtensions[index]?.development.status},
+      currentLocalizationPayload: payloadExtensions[index]?.localization,
     })
 
     this.rawPayload.extensions = payloadExtensions

@@ -20,6 +20,7 @@ export async function getLocalizationFilePaths(extension: UIExtension): Promise<
 
 export async function getLocalization(
   extension: UIExtension,
+  currentLocalizattion?: Localization | null,
 ): Promise<{localization: Localization | undefined; status: ExtensionAssetBuildStatus}> {
   const localeFiles = await getLocalizationFilePaths(extension)
 
@@ -27,14 +28,15 @@ export async function getLocalization(
     return {localization: undefined, status: 'success'}
   }
 
-  const localization = {
-    defaultLocale: 'en',
-    translations: {},
-    lastUpdated: 0,
-  } as Localization
+  const localization = currentLocalizattion
+    ? currentLocalizattion
+    : ({
+        defaultLocale: 'en',
+        translations: {},
+        lastUpdated: 0,
+      } as Localization)
 
   const compilingTranslations = []
-  const calculatingLastUpdatedAts = []
 
   for (const path of localeFiles) {
     const [locale, ...fileNameSegments] = (path.split('/').pop() as string).split('.')
@@ -45,18 +47,16 @@ export async function getLocalization(
       }
 
       compilingTranslations.push(compileLocalizationFiles(locale, path, localization, extension))
-      calculatingLastUpdatedAts.push(calculateLastUpdatedTimestamp(path, localization))
     }
   }
 
   let status: ExtensionAssetBuildStatus = 'success'
 
-  await Promise.all(compilingTranslations).catch(() => {
-    status = 'error'
-  })
-  await Promise.all(calculatingLastUpdatedAts).catch(() => {
-    status = 'error'
-  })
+  await Promise.all(compilingTranslations)
+    .then(() => calculateLastUpdatedTimestamp(localization))
+    .catch(() => {
+      status = 'error'
+    })
 
   if (status === 'success') {
     await output.debug(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`)
@@ -84,8 +84,8 @@ async function compileLocalizationFiles(
   }
 }
 
-async function calculateLastUpdatedTimestamp(path: string, localization: Localization) {
-  const lastUpdatedDateTime = await file.lastUpdatedTimestamp(path)
+function calculateLastUpdatedTimestamp(localization: Localization) {
+  const lastUpdatedDateTime = Date.now()
 
   if (lastUpdatedDateTime > localization.lastUpdated) {
     localization.lastUpdated = lastUpdatedDateTime
