@@ -1,8 +1,6 @@
 import {serviceEnvironment} from './environment/service.js'
 import https from 'https'
 
-export {H3Error} from 'h3'
-
 export {default as fetch} from './http/fetch.js'
 export {graphqlClient} from './http/graphql.js'
 export {shopifyFetch} from './http/fetch.js'
@@ -18,6 +16,7 @@ export {
   send,
   sendError,
   sendRedirect,
+  H3Error,
 } from 'h3'
 
 /**
