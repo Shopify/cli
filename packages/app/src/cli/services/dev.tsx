@@ -51,17 +51,57 @@ async function dev(options: DevOptions) {
   await new Promise((resolve) => setTimeout(resolve, 2000))
 
   render.once(
-    <Box width={100} borderColor="green" borderStyle="round" flexDirection="column" padding={1}>
-      <Text color="green">Success!</Text>
-    </Box>,
+    <component.Banner type="success">
+      <Box marginBottom={1}>
+        <Text>Title</Text>
+      </Box>
+
+      <Box marginLeft={1}>
+        <Text dimColor>Body Text</Text>
+      </Box>
+    </component.Banner>,
   )
-  // sleep 2 seconds
+
   await new Promise((resolve) => setTimeout(resolve, 2000))
 
   render.once(
-    <Box width={50} borderColor="red" borderStyle="round" flexDirection="column" padding={1}>
-      <Text color="red">Failure!</Text>
-    </Box>,
+    <component.Banner type="info">
+      <Box marginBottom={1}>
+        <Text>Title</Text>
+      </Box>
+
+      <Box marginLeft={1}>
+        <Text dimColor>Body Text</Text>
+      </Box>
+    </component.Banner>,
+  )
+
+  await new Promise((resolve) => setTimeout(resolve, 2000))
+
+  render.once(
+    <component.Banner type="warning">
+      <Box marginBottom={1}>
+        <Text>Title</Text>
+      </Box>
+
+      <Box marginLeft={1}>
+        <Text dimColor>Body Text</Text>
+      </Box>
+    </component.Banner>,
+  )
+
+  await new Promise((resolve) => setTimeout(resolve, 2000))
+
+  render.once(
+    <component.Banner type="error">
+      <Box marginBottom={1}>
+        <Text>Title</Text>
+      </Box>
+
+      <Box marginLeft={1}>
+        <Text dimColor>Body Text</Text>
+      </Box>
+    </component.Banner>,
   )
 
   const skipDependenciesInstallation = options.skipDependenciesInstallation
