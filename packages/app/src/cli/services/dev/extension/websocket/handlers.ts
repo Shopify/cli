@@ -51,7 +51,9 @@ ${output.token.json(eventData)}
        * will send an update to the client with missing app data and will cause the loading
        * of extensions to fail.
        */
-      if (eventData.app) {
+      const payloadStoreApiKey = options.payloadStore.getRawPayload().app.apiKey
+      const eventAppApiKey = eventData.app?.apiKey
+      if (eventData.app && payloadStoreApiKey === eventAppApiKey) {
         options.payloadStore.updateApp(eventData.app)
       }
       if (eventData.extensions) {

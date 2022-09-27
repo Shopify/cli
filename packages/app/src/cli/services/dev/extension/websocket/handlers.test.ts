@@ -51,7 +51,7 @@ function getMockSetupWebSocketConnectionOptions() {
         return {app: {appId: 'Test app'}, store: 'test.store', extensions: []}
       }),
       getRawPayload: vi.fn(() => {
-        return {app: {appId: 'Test app'}, store: 'test.store'}
+        return {app: {appId: 'Test app', apiKey: 'test-app-api-key'}, store: 'test.store'}
       }),
       updateApp: vi.fn(),
       updateExtensions: vi.fn(),
@@ -106,20 +106,37 @@ describe('getConnectionDoneHandler()', () => {
   })
 })
 describe('getOnMessageHandler()', () => {
-  test('on an incomming update message updates the app and the extensios', () => {
+  test('on an incomming update message updates the app and the extensions', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
+    const eventApp = {apiKey: 'test-app-api-key'}
     const data = JSON.stringify({
       event: 'update',
       data: {
-        app: {},
+        app: eventApp,
         extensions: [],
       },
     }) as unknown as RawData
     getOnMessageHandler(wss, options)(data)
 
-    expect(options.payloadStore.updateApp).toHaveBeenCalledWith({})
+    expect(options.payloadStore.updateApp).toHaveBeenCalledWith(eventApp)
     expect(options.payloadStore.updateExtensions).toHaveBeenCalledWith([])
+  })
+  test("on an incomming update message doesn't update the app if the API keys don't match", () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = JSON.stringify({
+      event: 'update',
+      data: {
+        app: {
+          apiKey: 'other-api-key',
+        },
+        extensions: [],
+      },
+    }) as unknown as RawData
+    getOnMessageHandler(wss, options)(data)
+
+    expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
   })
   test('on an incomming dispatch notify clients', () => {
     const wss = getMockWebsocketServer()
@@ -142,7 +159,7 @@ describe('getOnMessageHandler()', () => {
       data: {
         type: 'focus',
         extensions: [],
-        app: {appId: 'Test app'},
+        app: {appId: 'Test app', apiKey: 'test-app-api-key'},
         store: 'test.store',
       },
       version: '3',
