@@ -620,6 +620,15 @@
   dependencies:
     "@changesets/types" "^5.1.0"
 
+"@changesets/changelog-github@0.4.6":
+  version "0.4.6"
+  resolved "https://registry.yarnpkg.com/@changesets/changelog-github/-/changelog-github-0.4.6.tgz#5880448c578a160c06d8bd804872355ec0745dcb"
+  integrity sha512-ahR/+o3OPodzfG9kucEMU/tEtBgwy6QoJiWi1sDBPme8n3WjT6pBlbhqNYpWAJKilomwfjBGY0MTUTs6r9d1RQ==
+  dependencies:
+    "@changesets/get-github-info" "^0.5.1"
+    "@changesets/types" "^5.1.0"
+    dotenv "^8.1.0"
+
 "@changesets/cli@^2.22.0":
   version "2.24.4"
   resolved "https://registry.yarnpkg.com/@changesets/cli/-/cli-2.24.4.tgz#35b200d49403342cb657b5a941d5c8ef32583eb1"
@@ -689,6 +698,14 @@
     chalk "^2.1.0"
     fs-extra "^7.0.1"
     semver "^5.4.1"
+
+"@changesets/get-github-info@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@changesets/get-github-info/-/get-github-info-0.5.1.tgz#5a20328b26f301b2193717abb32e73651e8811b7"
+  integrity sha512-w2yl3AuG+hFuEEmT6j1zDlg7GQLM/J2UxTmk0uJBMdRqHni4zXGe/vUlPfLom5KfX3cRfHc0hzGvloDPjWFNZw==
+  dependencies:
+    dataloader "^1.4.0"
+    node-fetch "^2.5.0"
 
 "@changesets/get-release-plan@^3.0.14":
   version "3.0.14"
@@ -1944,12 +1961,27 @@
   dependencies:
     "@remote-ui/rpc" "^1.3.3"
 
+"@remote-ui/async-subscription@^2.1.13":
+  version "2.1.13"
+  resolved "https://registry.yarnpkg.com/@remote-ui/async-subscription/-/async-subscription-2.1.13.tgz#458ca03d407e2bd931ef2b5246a7c2b79f44a13d"
+  integrity sha512-Mc7iZ4nCIizdG/UWTW31HdtdmGpmjTah6Im+NJgwmmXZ8cnfFjxHFgpKc+kIhJTVKdmuN4KFHmNIXVSmeMTZdA==
+  dependencies:
+    "@remote-ui/rpc" "^1.3.4"
+
 "@remote-ui/core@^2.1.10", "@remote-ui/core@^2.1.12", "@remote-ui/core@^2.1.15", "@remote-ui/core@^2.1.3", "@remote-ui/core@^2.1.6":
   version "2.1.15"
   resolved "https://registry.yarnpkg.com/@remote-ui/core/-/core-2.1.15.tgz#5cbd15c4917d6d975e3039566607fa5afbe44366"
   integrity sha512-w3EFxm8s67H2snp50iFCBXZrMFl/83iGEpZc8yCgGncPACcKt0KrY/SjEFkZ3B0OZhXcTtSwIp145YoXzHr0Bg==
   dependencies:
     "@remote-ui/rpc" "^1.3.3"
+    "@remote-ui/types" "^1.1.2"
+
+"@remote-ui/core@^2.1.16":
+  version "2.1.16"
+  resolved "https://registry.yarnpkg.com/@remote-ui/core/-/core-2.1.16.tgz#8b5fbfdc22a5619334d29a4cb7d4fd20bf67c5f3"
+  integrity sha512-PcaljPmv0Ra8PeRT+M/vKPTYSkU1KssjwB2gjcE+TK2zM2SBbJwB5K18MjJhNlb9n6LTFE99fDqYxc5DbCyMIg==
+  dependencies:
+    "@remote-ui/rpc" "^1.3.4"
     "@remote-ui/types" "^1.1.2"
 
 "@remote-ui/react@^4.1.3", "@remote-ui/react@^4.1.5", "@remote-ui/react@^4.5.2", "@remote-ui/react@^4.5.4":
@@ -1964,10 +1996,27 @@
     "@types/react-reconciler" "^0.26.0"
     react-reconciler ">=0.26.0 <0.27.0"
 
+"@remote-ui/react@^4.5.11":
+  version "4.5.12"
+  resolved "https://registry.yarnpkg.com/@remote-ui/react/-/react-4.5.12.tgz#4f3ad96924226bef14ef08670dfb4647a9d6fdea"
+  integrity sha512-EMdnjmrvofBkDjHiFppHFnrpjLnD3xAVXArxq03IQGAQzTcF86Y633lous5ZFkqQaqSzHiwnGUPJtgJHYWW0iw==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.13"
+    "@remote-ui/core" "^2.1.16"
+    "@remote-ui/rpc" "^1.3.4"
+    "@types/react" ">=17.0.0 <18.0.0"
+    "@types/react-reconciler" "^0.26.0"
+    react-reconciler ">=0.26.0 <0.27.0"
+
 "@remote-ui/rpc@^1.3.3":
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/@remote-ui/rpc/-/rpc-1.3.3.tgz#b10b5a4a86014d60f719d16d5dc6f50af766d192"
   integrity sha512-HPNYiJ2h6AqzXRZFVaNZP5iaXtHk+sZHkHu8wDYe/L4FL4sEm3zf7zt5XiSOoNR7KgGxY5TTa8RiuP3BsvGqOA==
+
+"@remote-ui/rpc@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@remote-ui/rpc/-/rpc-1.3.4.tgz#99568362349c630c42c6b60d6a04a3b8c11e704e"
+  integrity sha512-KwZ2egbGQqO+DjgwoZlQ4QedMZHeFuGY/2FiGUrqvyhp4bGheSLr5bm3jF23+2tQVywUHB2gDPqzUgR/47Lb2g==
 
 "@remote-ui/types@^1.1.2":
   version "1.1.2"
@@ -2021,14 +2070,14 @@
     base64url "^3.0.1"
     web-vitals "^2.1.4"
 
-"@shopify/checkout-ui-extensions-react@0.18.0":
-  version "0.18.0"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.18.0.tgz#fcb2e1fc4757ddbb5a3848ebf56232dc95670dbf"
-  integrity sha512-ahyrlHgG/YC46TQ8Ze5e3fsSLlN2kC8p0xN4O9FyR3AJsl70iuJZwI3Eq6TBSw2tHsgVJAfKm5V90diS7aWcXg==
+"@shopify/checkout-ui-extensions-react@0.19.0", "@shopify/checkout-ui-extensions-react@^0.19.0":
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.19.0.tgz#61e742e58406d3c6b0463ab15eac3033069d1dfd"
+  integrity sha512-1o0bPEH17MU9Ygb8cWzpwN3MEAeUc/nBuQm9MZWQapjG1L3Qkro6pEzM1K2qiEwGzMTOw67NW9at6nZ6zHxVHA==
   dependencies:
-    "@remote-ui/async-subscription" "^2.1.10"
-    "@remote-ui/react" "^4.5.4"
-    "@shopify/checkout-ui-extensions" "^0.18.0"
+    "@remote-ui/async-subscription" "^2.1.12"
+    "@remote-ui/react" "^4.5.11"
+    "@shopify/checkout-ui-extensions" "^0.19.0"
     "@types/react" ">=17.0.0 <18.0.0"
 
 "@shopify/checkout-ui-extensions-react@^0.17.1":
@@ -2041,16 +2090,6 @@
     "@shopify/checkout-ui-extensions" "^0.17.1"
     "@types/react" ">=17.0.0 <18.0.0"
 
-"@shopify/checkout-ui-extensions-react@^0.18.0":
-  version "0.18.1"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.18.1.tgz#70fa5252689805196aaf60c60947c1e302fdbf3f"
-  integrity sha512-VY0OOeePNMqnyj1M3bp5Mt94FAyfpQ4NwA8GP/AgOCbVhB7+bVH4OZou8Y+HMFTS28CqoWz69wJiXYi8Wa/czg==
-  dependencies:
-    "@remote-ui/async-subscription" "^2.1.10"
-    "@remote-ui/react" "^4.5.4"
-    "@shopify/checkout-ui-extensions" "^0.18.1"
-    "@types/react" ">=17.0.0 <18.0.0"
-
 "@shopify/checkout-ui-extensions@^0.17.1":
   version "0.17.1"
   resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.17.1.tgz#757a9ff008ffbaf3c61027926478db12d5409dbb"
@@ -2059,13 +2098,13 @@
     "@remote-ui/async-subscription" "^2.1.10"
     "@remote-ui/core" "^2.1.12"
 
-"@shopify/checkout-ui-extensions@^0.18.0", "@shopify/checkout-ui-extensions@^0.18.1":
-  version "0.18.1"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.18.1.tgz#71f37546ab6a619c44d9864e472f4472da1878c8"
-  integrity sha512-WJixM4Fchzj6IYfIPPNtImtoFy083sA7GX9PA0BFH+0g1FSuscf85HicOkseFomRhb/Z7eLi0xYFgGZylhQElQ==
+"@shopify/checkout-ui-extensions@^0.19.0":
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.19.0.tgz#8e50ec0e0cb8e2a76837879ae9cb62d9cf64c169"
+  integrity sha512-2efHL6GvrRxPYA/JCCfTIDwJeOCcvSce46T+4Duht+LinJ6mOJhjroX57zfwaU3V5jKUuFrj+XdVtKQvKcnhuw==
   dependencies:
-    "@remote-ui/async-subscription" "^2.1.10"
-    "@remote-ui/core" "^2.1.12"
+    "@remote-ui/async-subscription" "^2.1.12"
+    "@remote-ui/core" "^2.1.15"
 
 "@shopify/customer-account-ui-extensions-react@^0.0.8":
   version "0.0.8"
@@ -4772,6 +4811,11 @@ dataloader@2.0.0:
   resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-2.0.0.tgz#41eaf123db115987e21ca93c005cd7753c55fe6f"
   integrity sha512-YzhyDAwA4TaQIhM5go+vCLmU0UikghC/t9DTQYZR2M/UvZ1MdOhPezSDZcjj9uqQJOMqjLcpWtyW2iNINdlatQ==
 
+dataloader@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-1.4.0.tgz#bca11d867f5d3f1b9ed9f737bd15970c65dff5c8"
+  integrity sha512-68s5jYdlvasItOJnCuI2Q9s4q98g0pCyL3HrcKJu8KNugUl8ahgmZYg38ysLTgQjjXX3H8CJLkAvWrclWfcalw==
+
 debounce-fn@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/debounce-fn/-/debounce-fn-4.0.0.tgz#ed76d206d8a50e60de0dd66d494d82835ffe61c7"
@@ -5099,6 +5143,11 @@ dotenv@^10.0.0, dotenv@~10.0.0:
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-10.0.0.tgz#3d4227b8fb95f81096cdd2b66653fb2c7085ba81"
   integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
+
+dotenv@^8.1.0:
+  version "8.6.0"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.6.0.tgz#061af664d19f7f4d8fc6e4ff9b584ce237adcb8b"
+  integrity sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==
 
 download@8.0.0:
   version "8.0.0"
@@ -9271,7 +9320,7 @@ node-fetch@2.6.1:
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
   integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
-node-fetch@2.6.7, node-fetch@^2.6.1, node-fetch@^2.6.7:
+node-fetch@2.6.7, node-fetch@^2.5.0, node-fetch@^2.6.1, node-fetch@^2.6.7:
   version "2.6.7"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.7.tgz#24de9fba827e3b4ae44dc8b20256a379160052ad"
   integrity sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==
