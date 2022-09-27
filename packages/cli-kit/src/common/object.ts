@@ -7,7 +7,6 @@ import deepMerge from 'deepmerge'
  * @param rhs {any} Another object to be merged.
  * @returns {any} A Javascrip tobject with th emerged objects.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function deepMergeObjects(lhs: any, rhs: any): any {
+export function deepMergeObjects<T1, T2>(lhs: Partial<T1>, rhs: Partial<T2>): T1 & T2 {
   return deepMerge(lhs, rhs)
 }

@@ -66,8 +66,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     return this.rawPayload
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updateApp(app: any) {
+  updateApp(app: Partial<ExtensionsEndpointPayload> & {[key: string]: unknown}) {
     this.rawPayload = deepMergeObjects(this.rawPayload, {
       app,
     })
