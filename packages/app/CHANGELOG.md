@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.15.0
+
+### Minor Changes
+
+- 9f7d90d9: Add dev, build, deploy and another additional baseline instrumentantion
+
+### Patch Changes
+
+- 5fa4439c: Show `env pull` and `env show` in the `help` command output and move them under the `app` topic
+- Updated dependencies [9f7d90d9]
+  - @shopify/cli-kit@3.15.0
+  - @shopify/shopify-cli-extensions@3.15.0
+
 ## 3.14.0
 
 ### Minor Changes
