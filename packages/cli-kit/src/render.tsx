@@ -1,18 +1,37 @@
 import ConcurrentOutput from './components/ConcurrentOutput.js'
 import {OutputProcess} from './output.js'
 import {Signal} from './abort.js'
-import React, {useEffect} from 'react'
-import {Box, render as inkRender, Static, useApp} from 'ink'
+import React, {ReactElement} from 'react'
+import {render as inkRender} from 'ink'
 import {AbortController} from 'abort-controller'
+import {EventEmitter} from 'events'
 
-const RenderOnce: React.FC = ({children}) => {
-  const {exit} = useApp()
+interface Instance {
+  output: string | undefined
+  unmount: () => void
+  cleanup: () => void
+  stdout: OutputStream
+  stderr: OutputStream
+  frames: string[]
+}
+export class OutputStream extends EventEmitter {
+  columns: number
+  readonly frames: string[] = []
+  private _lastFrame?: string
 
-  useEffect(() => {
-    setTimeout(() => exit(), 0)
-  }, [])
+  constructor(options: {columns: number}) {
+    super()
+    this.columns = options.columns
+  }
 
-  return <Static items={[0]}>{(_item) => <Box flexGrow={1}>{children}</Box>}</Static>
+  write = (frame: string) => {
+    this.frames.push(frame)
+    this._lastFrame = frame
+  }
+
+  lastFrame = () => {
+    return this._lastFrame
+  }
 }
 
 export async function concurrent(processes: OutputProcess[], onAbort?: (abortSignal: Signal) => void) {
@@ -25,9 +44,36 @@ export async function concurrent(processes: OutputProcess[], onAbort?: (abortSig
 }
 
 export function once(element: JSX.Element) {
-  inkRender(<RenderOnce>{element}</RenderOnce>)
+  const {output, unmount} = renderString(element)
+  // eslint-disable-next-line no-console
+  console.log(output)
+  unmount()
 }
 
 export function sticky(element: JSX.Element) {
   inkRender(element)
+}
+
+export const renderString = (element: ReactElement): Instance => {
+  const stdout = new OutputStream({columns: process.stdout.columns})
+  const stderr = new OutputStream({columns: process.stderr.columns})
+
+  const instance = inkRender(element, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stdout: stdout as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stderr: stderr as any,
+    debug: true,
+    exitOnCtrlC: false,
+    patchConsole: false,
+  })
+
+  return {
+    output: stdout.lastFrame(),
+    stdout,
+    stderr,
+    cleanup: instance.cleanup,
+    unmount: instance.unmount,
+    frames: stdout.frames,
+  }
 }
