@@ -11,6 +11,7 @@ const defaultConfig: ReqDeployConfig = {
   healthCheck: false,
   assumeYes: false,
   path: '/unit/test',
+  pathToBuild: '',
   commitMessage: 'commitMessage',
   commitAuthor: 'commitAuthor',
   commitSha: 'commitSha',

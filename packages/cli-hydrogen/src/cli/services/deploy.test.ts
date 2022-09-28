@@ -15,6 +15,7 @@ const deployConfig: DeployConfig = {
 
 const reqDeployConfig: ReqDeployConfig = {
   ...deployConfig,
+  pathToBuild: '',
   commitMessage: 'commitMessage',
   commitAuthor: 'commitAuthor',
   commitSha: 'commitSha',
@@ -91,6 +92,18 @@ describe('deployToOxygen()', () => {
     expect(mockedCreateDeployment).toHaveBeenCalledTimes(2)
     expect(mockedUploadDeployment).toHaveBeenCalledTimes(2)
     expect(mockedHealthCheck).toHaveBeenCalledTimes(3)
+  })
+
+  describe('when the deploy config has pathToBuild set', () => {
+    it('skips build step', async () => {
+      mockedFillDeployConfig.mockResolvedValue({...reqDeployConfig, pathToBuild: '/some/test/path'})
+      mockedCreateDeployment.mockResolvedValue({deploymentID: 'deploymentID', assetBaseURL: 'assetBaseURL'})
+      mockedBuildTaskList.mockReturnValue([])
+
+      await deployToOxygen(deployConfig)
+
+      expect(mockedBuildTaskList).not.toHaveBeenCalled()
+    })
   })
 
   describe('when the deploy config has healthCheck set to false', () => {
