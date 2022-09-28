@@ -122,4 +122,46 @@ describe('setupBundlerAndFileWatcher()', () => {
       {status: 'error'},
     )
   })
+
+  test('Watches the locales directory for change events', async () => {
+    const chokidarOnSpy = vi.fn() as any
+
+    // GIVEN
+    vi.spyOn(bundle, 'bundleExtension').mockResolvedValue(undefined)
+    vi.spyOn(chokidar, 'watch').mockReturnValue({
+      on: chokidarOnSpy,
+    } as any)
+
+    // WHEN
+    await testBundlerAndFileWatcher()
+
+    // THEN
+    expect(chokidar.watch).toHaveBeenCalledWith('directory/1/locales/**.json')
+    expect(chokidar.watch).toHaveBeenCalledWith('directory/2/locales/**.json')
+    expect(chokidarOnSpy).toHaveBeenCalledTimes(2)
+    expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
+  })
+
+  test('Updates the extension when a locale changes', async () => {
+    const chokidarOnSpy = vi.fn() as any
+
+    // GIVEN
+    vi.spyOn(bundle, 'bundleExtension').mockResolvedValue(undefined)
+    vi.spyOn(chokidar, 'watch').mockReturnValue({
+      on: chokidarOnSpy,
+    } as any)
+
+    // WHEN
+    const fileWatcherOptions = await testBundlerAndFileWatcher()
+    chokidarOnSpy.mock.calls[0][1]()
+    chokidarOnSpy.mock.calls[1][1]()
+
+    // THEN
+    expect(fileWatcherOptions.payloadStore.updateExtension).toHaveBeenCalledWith(
+      fileWatcherOptions.devOptions.extensions[0],
+    )
+    expect(fileWatcherOptions.payloadStore.updateExtension).toHaveBeenCalledWith(
+      fileWatcherOptions.devOptions.extensions[1],
+    )
+  })
 })
