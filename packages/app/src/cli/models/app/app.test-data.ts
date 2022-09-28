@@ -35,6 +35,10 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
       name: uiExtension?.configuration?.name ?? 'test-ui-extension',
       type: uiExtension?.configuration?.type ?? 'product_subscription',
       metafields: [],
+      capabilities: {
+        blockProgress: false,
+        networkAccess: false,
+      },
     },
     type: 'checkout_post_purchase',
     graphQLType: 'CHECKOUT_POST_PURCHASE',
