@@ -48,7 +48,7 @@ describe('extensionConfig', () => {
         name: 'My Extension Name',
         metafields: [],
         type: 'checkout_post_purchase',
-        capabilities: {network_access: true},
+        capabilities: {networkAccess: false, blockProgress: false},
       },
       type: 'checkout_post_purchase',
       graphQLType: 'CHECKOUT_POST_PURCHASE',

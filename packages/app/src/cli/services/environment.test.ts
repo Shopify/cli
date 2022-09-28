@@ -111,7 +111,12 @@ const EXTENSION_A: UIExtension = {
   directory: '',
   type: 'checkout_post_purchase',
   graphQLType: 'CHECKOUT_POST_PURCHASE',
-  configuration: {name: '', type: 'checkout_post_purchase', metafields: []},
+  configuration: {
+    name: '',
+    type: 'checkout_post_purchase',
+    metafields: [],
+    capabilities: {blockProgress: false, networkAccess: false},
+  },
   entrySourceFilePath: '',
   outputBundlePath: '',
   devUUID: 'devUUID',
