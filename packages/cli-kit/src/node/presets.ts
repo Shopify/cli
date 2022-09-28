@@ -1,6 +1,6 @@
-import {exists as fileExists, read as fileRead} from './file.js'
-import {findUp, join as pathJoin} from './path.js'
-import {decode as tomlDecode} from './toml.js'
+import {exists as fileExists, read as fileRead} from '../file.js'
+import {findUp, join as pathJoin} from '../path.js'
+import {decode as tomlDecode} from '../toml.js'
 
 const PRESETS_FILENAME = 'shopify.presets.toml'
 
