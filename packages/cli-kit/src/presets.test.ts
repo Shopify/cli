@@ -17,13 +17,13 @@ describe('loading presets', async () => {
         flag1: 'value',
         flag2: true,
         flag3: 0,
-        flag4: ['hello', 'world']
+        flag4: ['hello', 'world'],
       }
       const preset2 = {
         flag1: 'value2',
         flag2: false,
         flag3: 1,
-        flag4: ['goodbye', 'world']
+        flag4: ['goodbye', 'world'],
       }
       await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1, preset2}))
       expect(await presets.load(tmpDir)).toEqual({preset1, preset2})
