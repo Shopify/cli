@@ -1,8 +1,10 @@
 import {Box, Text} from 'ink'
 import React from 'react'
 
+export type BannerType = 'success' | 'error' | 'warning' | 'info'
+
 interface Props {
-  type: 'success' | 'error' | 'warning' | 'info'
+  type: BannerType
 }
 
 function typeToColor(type: Props['type']) {

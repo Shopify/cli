@@ -4,16 +4,17 @@ import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
-import {ReverseHTTPProxyTarget} from '../utilities/app/http-reverse-proxy.js'
+import {
+  ReverseHTTPProxyTarget,
+  runConcurrentHTTPProcessesAndPathForwardTraffic,
+} from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, render, component} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string, render} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import React from 'react'
-import {Box, Text} from 'ink'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -42,68 +43,6 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  render.sticky(
-    <component.TextAnimation>
-      <Text>{`█████████████████████`}</Text>
-    </component.TextAnimation>,
-  )
-
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  render.once(
-    <component.Banner type="success">
-      <Box marginBottom={1}>
-        <Text>Title</Text>
-      </Box>
-
-      <Box marginLeft={1}>
-        <Text dimColor>Body Text</Text>
-      </Box>
-    </component.Banner>,
-  )
-
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  render.once(
-    <component.Banner type="info">
-      <Box marginBottom={1}>
-        <Text>Title</Text>
-      </Box>
-
-      <Box marginLeft={1}>
-        <Text dimColor>Body Text</Text>
-      </Box>
-    </component.Banner>,
-  )
-
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  render.once(
-    <component.Banner type="warning">
-      <Box marginBottom={1}>
-        <Text>Title</Text>
-      </Box>
-
-      <Box marginLeft={1}>
-        <Text dimColor>Body Text</Text>
-      </Box>
-    </component.Banner>,
-  )
-
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  render.once(
-    <component.Banner type="error">
-      <Box marginBottom={1}>
-        <Text>Title</Text>
-      </Box>
-
-      <Box marginLeft={1}>
-        <Text dimColor>Body Text</Text>
-      </Box>
-    </component.Banner>,
-  )
-
   const skipDependenciesInstallation = options.skipDependenciesInstallation
   if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign
@@ -215,11 +154,11 @@ async function dev(options: DevOptions) {
 
   await analytics.reportEvent({config: options.commandConfig})
 
-  // if (proxyTargets.length === 0) {
-  //   await render.concurrent(additionalProcesses)
-  // } else {
-  //   await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
-  // }
+  if (proxyTargets.length === 0) {
+    await render.concurrent(additionalProcesses)
+  } else {
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+  }
 }
 
 interface DevFrontendTargetOptions extends DevWebOptions {

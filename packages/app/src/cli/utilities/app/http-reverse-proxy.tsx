@@ -81,13 +81,14 @@ ${output.token.json(JSON.stringify(rules))}
     socket.destroy()
   })
 
-  server.listen(availablePort)
-
-  await render.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
-    abortSignal.addEventListener('abort', () => {
-      server.close()
-    })
-  })
+  await Promise.all([
+    render.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
+      abortSignal.addEventListener('abort', () => {
+        server.close()
+      })
+    }),
+    server.listen(availablePort),
+  ])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
