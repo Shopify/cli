@@ -8,11 +8,19 @@ import {decode as tomlDecode} from './toml.js'
 const PRESETS_FILENAME = 'shopify.presets.toml'
 
 export type Presets = {[name: string]: object}
-export async function load(dir: string): Promise<Presets> {
-  const presetsFilePath = await findUp(PRESETS_FILENAME, {
-    cwd: dir,
-    type: 'file'
-  })
+export async function load(dir: string, opts?: {findUp: boolean}): Promise<Presets> {
+  let presetsFilePath: string | undefined
+  if (opts?.findUp) {
+    presetsFilePath = await findUp(PRESETS_FILENAME, {
+      cwd: dir,
+      type: 'file'
+    })
+  } else {
+    const allowedPresetsFilePath = pathJoin(dir, PRESETS_FILENAME)
+    if (await fileExists(allowedPresetsFilePath)) {
+      presetsFilePath = allowedPresetsFilePath
+    }
+  }
   if (presetsFilePath) {
     return tomlDecode(await fileRead(presetsFilePath)) as Presets
   } else {

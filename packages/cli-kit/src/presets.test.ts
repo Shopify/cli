@@ -30,13 +30,23 @@ describe('loading presets', async () => {
     })
   })
 
-  test('searches upwards for presets when no file exists', async () => {
+  test('does not search upwards for presets when no file exists and searching up is disabled', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const preset1 = {flag1: 'value'}
       await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
       const subdir = pathJoin(tmpDir, 'subdir')
       await mkdir(subdir)
-      expect(await presets.load(subdir)).toEqual({preset1})
+      expect(await presets.load(subdir)).toEqual({})
+    })
+  })
+
+  test('searches upwards for presets when no file exists and searching up is enabled', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const preset1 = {flag1: 'value'}
+      await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
+      const subdir = pathJoin(tmpDir, 'subdir')
+      await mkdir(subdir)
+      expect(await presets.load(subdir, {findUp: true})).toEqual({preset1})
     })
   })
 })
