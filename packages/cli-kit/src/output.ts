@@ -449,7 +449,7 @@ export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
 
-function consoleError(message: string): void {
+export function consoleError(message: string): void {
   console.error(withOrWithoutStyle(message))
 }
 

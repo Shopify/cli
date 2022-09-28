@@ -42,7 +42,7 @@ async function build(options: BuildOptions) {
         })
       },
     },
-    ...buildUIExtensions(options),
+    ...(await buildUIExtensions({app: options.app})),
     ...options.app.extensions.function.map((functionExtension) => {
       return {
         prefix: functionExtension.localIdentifier,

@@ -38,6 +38,13 @@ export function outputAppURL(storeFqdn: string, url: string) {
   output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
 }
 
+export function outputDevConsoleURL(url: string) {
+  const title = 'Shopify extension dev console URL'
+  const heading = output.token.heading(title)
+  const devConsoleURL = `${url}/extensions/dev-console`
+  output.info(output.content`${heading}\n\n  ${devConsoleURL}\n`)
+}
+
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
   outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
   outputFunctionsMessage(app.extensions.function)
@@ -45,6 +52,10 @@ export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, u
 }
 
 function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
+  if (extensions.length > 0) {
+    outputDevConsoleURL(url)
+  }
+
   for (const extension of extensions) {
     const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)})`)
     let message: string

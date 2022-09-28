@@ -1,8 +1,13 @@
+import {getCartPathFromExtensions} from './extension/utilities.js'
+import {setupWebsocketConnection} from './extension/websocket.js'
+import {setupBundlerAndFileWatcher} from './extension/bundler.js'
+import {setupHTTPServer} from './extension/server.js'
+import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
 import {extensionConfig} from '../../utilities/extensions/configuration.js'
-import {yaml, output, abort} from '@shopify/cli-kit'
+import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
+import {output, abort, yaml, environment} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionDevOptions {
@@ -65,7 +70,7 @@ export interface ExtensionDevOptions {
    * Product variant ID, used for checkout_ui_extensions
    * If that extension is present, this is mandatory
    */
-  cartUrl?: string
+  checkoutCartUrl?: string
 
   /**
    * Subscription product URL, used for subscription_ui_extensions
@@ -74,7 +79,15 @@ export interface ExtensionDevOptions {
   subscriptionProductUrl?: string
 }
 
-export async function devExtensions(options: ExtensionDevOptions): Promise<void> {
+export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
+  if (await environment.local.isShopify()) {
+    await devUIExtensionsWithNode(options)
+  } else {
+    await devUIExtensionsWithGo(options)
+  }
+}
+
+async function devUIExtensionsWithGo(options: ExtensionDevOptions): Promise<void> {
   const config = await extensionConfig({includeResourceURL: true, ...options})
   output.debug(output.content`Dev'ing extension with configuration:
 ${output.token.json(config)}
@@ -87,4 +100,42 @@ ${output.token.json(config)}
     stderr: options.stderr,
     input,
   })
+}
+
+async function devUIExtensionsWithNode(options: ExtensionDevOptions): Promise<void> {
+  const devOptions: ExtensionDevOptions = {
+    ...options,
+    checkoutCartUrl: await getCartPathFromExtensions(options.extensions, options.storeFqdn, options.checkoutCartUrl),
+  }
+
+  const payloadStoreOptions = {
+    ...devOptions,
+    websocketURL: getWebSocketUrl(options.url),
+  }
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions)
+  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
+
+  output.debug(`Setting up the UI extensions HTTP server...`)
+  const httpServer = setupHTTPServer({devOptions, payloadStore})
+
+  output.debug(`Setting up the UI extensions Websocket server...`)
+  const websocketConnection = setupWebsocketConnection({
+    httpServer,
+    payloadStore,
+  })
+  output.debug(`Setting up the UI extensions bundler and file watching...`)
+  const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
+
+  options.signal.addEventListener('abort', () => {
+    fileWatcher.close()
+    websocketConnection.close()
+    httpServer.close()
+  })
+}
+
+function getWebSocketUrl(url: ExtensionDevOptions['url']) {
+  const websocketURL = new URL('/extensions', url)
+  websocketURL.protocol = 'wss:'
+
+  return websocketURL.toString()
 }

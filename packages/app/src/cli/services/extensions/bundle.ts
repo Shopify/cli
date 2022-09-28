@@ -1,5 +1,5 @@
 import {abort, path} from '@shopify/cli-kit'
-import {build as esBuild, formatMessagesSync} from 'esbuild'
+import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {Writable} from 'node:stream'
 
 interface BundleOptions {
@@ -15,7 +15,7 @@ interface BundleOptions {
    * When ESBuild detects changes in any of the modules of the graph it re-bundles it
    * and calls this watch function.
    */
-  watch?: () => void
+  watch?: (error: BuildFailure | null, result: BuildResult | null) => void
 
   /**
    * This signal allows the caller to stop the watching process.
@@ -94,12 +94,13 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
   }
   if (options.watch) {
+    const watch = options.watch
     esbuildOptions = {
       ...esbuildOptions,
       watch: {
-        // eslint-disable-next-line node/handle-callback-err
-        onRebuild: (_error, result) => {
+        onRebuild: (error, result) => {
           onResult(result, options)
+          watch(error, result)
         },
       },
     }

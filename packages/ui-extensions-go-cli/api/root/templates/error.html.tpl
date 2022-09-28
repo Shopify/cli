@@ -8,7 +8,7 @@
 
 <body>
 	<div id="title">Error accessing the extension</div>
-    
+
 	<div id="description"> {{ .Error }}</div>
 	<style>
 		html {

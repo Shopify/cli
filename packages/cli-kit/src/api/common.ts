@@ -57,7 +57,7 @@ export function debugLogRequest<T>(
   headers: {[key: string]: string} = {},
 ) {
   debug(`
-Sending ${token.raw(api)} GraphQL request:
+Sending ${token.json(api)} GraphQL request:
 ${query}
 
 With variables:

@@ -153,6 +153,27 @@ export function createReadStream(path: string) {
 }
 
 /**
+ * Returns the Date object for the last modification of a file.
+ * @param path {string} Path to the directory or file.
+ * @returns {number} A unix timestamp.
+ */
+export async function lastUpdated(path: string): Promise<Date> {
+  debug(outputContent`Getting last updated timestamp for file at ${token.path(path)}...`)
+  return (await fs.stat(path)).ctime
+}
+
+/**
+ * Returns the unix timestamp of the last modification of a file.
+ * @param path {string} Path to the directory or file.
+ * @returns {number} A unix timestamp.
+ */
+export async function lastUpdatedTimestamp(path: string) {
+  const lastUpdatedDateTime = await lastUpdated(path)
+
+  return lastUpdatedDateTime.getTime()
+}
+
+/**
  * Moves a file.
  * @param src {string} File to be moved.
  * @param dest {string} Path to be moved to.

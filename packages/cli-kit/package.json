@@ -17,9 +17,9 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./*": {
-      "import": "./dist/public/*.js",
-      "types": "./dist/public/*.d.ts"
+    "./common/array": {
+      "import": "./dist/public/common/array.js",
+      "types": "./dist/public/common/array.d.ts"
     },
     "./node/*": {
       "node": "./dist/node/*.js",
@@ -87,12 +87,12 @@
     "commondir": "^1.0.1",
     "conf": "^10.1.2",
     "cross-zip": "^4.0.0",
+    "deepmerge": "4.2.2",
     "del": "^6.0.0",
     "env-paths": "^3.0.0",
     "envfile": "^6.18.0",
     "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
-    "fastify": "^4.2.1",
     "find-process": "^1.4.7",
     "find-up": "^6.2.0",
     "find-versions": "^5.0.0",
@@ -102,6 +102,7 @@
     "get-port-please": "^2.5.0",
     "graphql": "^16.4.0",
     "graphql-request": "^4.3.0",
+    "h3": "^0.7.21",
     "inquirer": "^8.2.4",
     "inquirer-autocomplete-prompt": "^2.0.0",
     "is-interactive": "^2.0.0",
