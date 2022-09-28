@@ -95,7 +95,8 @@ describe('setupBundlerAndFileWatcher()', () => {
     const fileWatcherOptions = await testBundlerAndFileWatcher()
 
     // WHEN
-    bundle.bundleExtension.mock.calls[0][0].watch()
+    const bundleExtensionFn = bundle.bundleExtension as any
+    bundleExtensionFn.mock.calls[0][0].watch()
 
     // THEN
     expect(fileWatcherOptions.payloadStore.updateExtension).toHaveBeenCalledWith(
@@ -114,7 +115,8 @@ describe('setupBundlerAndFileWatcher()', () => {
 
     // WHEN
     const buildFailure = {} as unknown as BuildFailure
-    bundle.bundleExtension.mock.calls[0][0].watch(buildFailure)
+    const bundleExtensionFn = bundle.bundleExtension as any
+    bundleExtensionFn.mock.calls[0][0].watch(buildFailure)
 
     // THEN
     expect(fileWatcherOptions.payloadStore.updateExtension).toHaveBeenCalledWith(
