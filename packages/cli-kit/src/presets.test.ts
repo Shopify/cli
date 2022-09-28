@@ -7,7 +7,7 @@ import {describe, expect, test} from 'vitest'
 describe('loading presets', async () => {
   test('returns empty array when no presets file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      expect(await presets.load(tmpDir)).toEqual({})
+      expect(await presets.loadPresetsFromDirectory(tmpDir)).toEqual({})
     })
   })
 
@@ -26,7 +26,7 @@ describe('loading presets', async () => {
         flag4: ['goodbye', 'world'],
       }
       await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1, preset2}))
-      expect(await presets.load(tmpDir)).toEqual({preset1, preset2})
+      expect(await presets.loadPresetsFromDirectory(tmpDir)).toEqual({preset1, preset2})
     })
   })
 
@@ -36,7 +36,7 @@ describe('loading presets', async () => {
       await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
       const subdir = pathJoin(tmpDir, 'subdir')
       await mkdir(subdir)
-      expect(await presets.load(subdir)).toEqual({})
+      expect(await presets.loadPresetsFromDirectory(subdir)).toEqual({})
     })
   })
 
@@ -46,7 +46,7 @@ describe('loading presets', async () => {
       await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
       const subdir = pathJoin(tmpDir, 'subdir')
       await mkdir(subdir)
-      expect(await presets.load(subdir, {findUp: true})).toEqual({preset1})
+      expect(await presets.loadPresetsFromDirectory(subdir, {findUp: true})).toEqual({preset1})
     })
   })
 })

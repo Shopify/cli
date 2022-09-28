@@ -7,7 +7,7 @@ const PRESETS_FILENAME = 'shopify.presets.toml'
 export interface Presets {
   [name: string]: object
 }
-export async function load(dir: string, opts?: {findUp: boolean}): Promise<Presets> {
+export async function loadPresetsFromDirectory(dir: string, opts?: {findUp: boolean}): Promise<Presets> {
   let presetsFilePath: string | undefined
   if (opts?.findUp) {
     presetsFilePath = await findUp(PRESETS_FILENAME, {
