@@ -118,7 +118,7 @@ describe('extensionConfig', () => {
             },
           },
 
-          capabilities: {network_access: true},
+          capabilities: {networkAccess: false, blockProgress: false},
           approval_scopes: ['read_customer_personal_data'],
         },
       ],
