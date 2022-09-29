@@ -29,7 +29,7 @@ describe('when there are no locale files', () => {
   it('returns undefined as the localization', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       const result = await testGetLocalization(tmpDir)
-      expect(result.status).toBe('success')
+      expect(result.status).toBe('')
     })
   })
 

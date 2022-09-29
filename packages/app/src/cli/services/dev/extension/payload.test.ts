@@ -76,7 +76,7 @@ describe('getUIExtensionPayload', () => {
         },
         development: {
           hidden: true,
-          localizationStatus: 'success',
+          localizationStatus: '',
           resource: {
             url: 'https://my-domain.com/subscription',
           },

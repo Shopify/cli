@@ -3,7 +3,7 @@ import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
-import {error, path} from '@shopify/cli-kit'
+import {error, path, string} from '@shopify/cli-kit'
 
 const RendererNotFoundBug = (extension: string) => {
   return new error.Bug(
@@ -67,7 +67,11 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             env: options.app.dotenv?.variables ?? {},
           },
         },
-        capabilities: extension.configuration.capabilities,
+        capabilities: Object.fromEntries(
+          Object.entries(extension.configuration.capabilities).map((entry) => {
+            return [string.underscore(entry[0]), entry[1]]
+          }),
+        ),
         approval_scopes: options.grantedScopes ?? [],
       }
     }),
@@ -96,7 +100,7 @@ export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, opt
       // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
       return {url: 'invalid_url'}
     case 'product_subscription':
-      return {url: options.subscriptionProductUrl}
+      return {url: options.subscriptionProductUrl ?? ''}
   }
 }
 

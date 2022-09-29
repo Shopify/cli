@@ -25,7 +25,7 @@ export async function getLocalization(
   const localeFiles = await getLocalizationFilePaths(extension)
 
   if (!localeFiles.length) {
-    return {localization: undefined, status: 'success'}
+    return {localization: undefined, status: ''}
   }
 
   const localization = currentLocalizattion
