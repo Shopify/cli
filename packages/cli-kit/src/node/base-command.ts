@@ -6,6 +6,11 @@ import {hashString} from '../string.js'
 import {loadPresetsFromDirectory} from '../public/node/presets.js'
 import {Command, Interfaces} from '@oclif/core'
 
+interface PresettableFlags {
+  preset?: string
+  path?: string
+}
+
 abstract class BaseCommand extends Command {
   public static analyticsNameOverride(): string | undefined {
     return undefined
@@ -34,13 +39,18 @@ abstract class BaseCommand extends Command {
     argv?: string[] | undefined,
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     const rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
-    const flags = rawResult.flags as {preset?: string}
-    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(await withPresets(options, rawResult), argv)
+    const flags = rawResult.flags as PresettableFlags
+    const presetsDirectory = await this.presetsPath(flags)
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(await withPresets(options, rawResult, presetsDirectory), argv)
     if (flags.preset) {
       reportDifferences(rawResult.flags, result.flags, flags.preset)
     }
     await addFromParsedFlags(result.flags)
     return result
+  }
+
+  protected async presetsPath(_rawFlags: {path?: string}): Promise<string> {
+    return process.cwd()
   }
 }
 
@@ -54,13 +64,14 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
   }))
 }
 
-async function withPresets<TFlags extends {path?: string, preset?: string}, TArgs extends {[name: string]: any}>(
+async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name: string]: any}>(
   options: Interfaces.Input<TFlags> | undefined,
-  rawResult: Interfaces.ParserOutput<TFlags, TArgs>
+  rawResult: Interfaces.ParserOutput<TFlags, TArgs>,
+  presetsDirectory: string
 ): Promise<Interfaces.Input<TFlags> | undefined> {
   const flags = rawResult.flags
   if (flags.preset) {
-    const presets = await loadPresetsFromDirectory(flags.path ? flags.path : process.cwd())
+    const presets = await loadPresetsFromDirectory(presetsDirectory)
     const selectedPreset = presets[flags.preset]
     if (selectedPreset && options?.flags) {
       const newFlags = {...options.flags} as {[name: string]: object}
