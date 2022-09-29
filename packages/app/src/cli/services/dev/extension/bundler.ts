@@ -9,7 +9,7 @@ export interface WatchEvent {
   type: 'build' | 'localization'
 }
 
-interface FileWatcherOptions {
+export interface FileWatcherOptions {
   devOptions: ExtensionDevOptions
   payloadStore: ExtensionsPayloadStore
 }
