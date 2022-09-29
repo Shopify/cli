@@ -23,10 +23,10 @@ import {
   mapExtensionTypeToExternalExtensionType,
 } from '../../../utilities/extensions/name-mapper.js'
 import metadata from '../../../metadata.js'
+import Command from '../../../utilities/app-command.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an Extension'
