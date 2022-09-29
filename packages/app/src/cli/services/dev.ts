@@ -235,7 +235,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
     BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
-    ...((environment.spin.isSpin() || environment.service.serviceEnvironment()) && {
+    ...(environment.service.serviceEnvironment() === environment.network.Environment.Spin && {
       SHOP_CUSTOM_DOMAIN: '.*spin\\.dev',
     }),
   }

@@ -118,6 +118,7 @@ export async function convertToTestStoreIfNeeded(
   org: Organization,
   token: string,
 ): Promise<void> {
+  if (environment.service.serviceEnvironment() === environment.network.Environment.Spin) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }

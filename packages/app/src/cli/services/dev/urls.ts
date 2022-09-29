@@ -56,10 +56,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  /* if (environment.spin.isSpin()) {
-    frontendUrl = `https://${await environment.spin.fqdn()}:${frontendPort}`
+  if (environment.spin.isSpin()) {
+    frontendUrl = `https://cli.${await environment.spin.fqdn()}`
     return {frontendUrl, frontendPort, usingLocalhost}
-  } */
+  }
 
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)

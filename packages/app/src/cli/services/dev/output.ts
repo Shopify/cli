@@ -34,8 +34,11 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 export function outputAppURL(storeFqdn: string, url: string) {
   const title = url.includes('localhost') ? 'App URL' : 'Shareable app URL'
   const heading = output.token.heading(title)
+  const firstPartyHint = environment.local.firstPartyDev()
+    ? `\nTo access the app:\n  1. Login in the store as staff: https://${storeFqdn}/admin/staff/login\n  2. Access the app: `
+    : '\n\n  '
   const appURL = buildAppURL(storeFqdn, url)
-  output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
+  output.info(output.content`\n\n${heading}${firstPartyHint}${appURL}\n`)
 }
 
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
