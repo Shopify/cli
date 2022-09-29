@@ -241,7 +241,7 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   const {url, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = await file.read(extension.buildWasmPath())
+  const functionContent = await file.read(extension.buildWasmPath(), {})
   const res = await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const resBody = res.body?.read()?.toString() || ''
 

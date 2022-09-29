@@ -484,7 +484,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
@@ -555,7 +555,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
@@ -623,7 +623,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
@@ -746,7 +746,7 @@ describe('uploadFunctionExtensions', () => {
         token,
       )
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: '',
+        body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
