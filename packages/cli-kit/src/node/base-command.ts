@@ -41,7 +41,8 @@ abstract class BaseCommand extends Command {
     const rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     const flags = rawResult.flags as PresettableFlags
     const presetsDirectory = await this.presetsPath(flags)
-    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(await withPresets(options, rawResult, presetsDirectory), argv)
+    const findUp = this.findUpForPresets()
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(await withPresets({options, rawResult, presetsDirectory, findUp}), argv)
     if (flags.preset) {
       reportDifferences(rawResult.flags, result.flags, flags.preset)
     }
@@ -51,6 +52,10 @@ abstract class BaseCommand extends Command {
 
   protected async presetsPath(_rawFlags: {path?: string}): Promise<string> {
     return process.cwd()
+  }
+
+  protected findUpForPresets(): boolean {
+    return false
   }
 }
 
@@ -64,14 +69,20 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
   }))
 }
 
-async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name: string]: any}>(
+async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name: string]: any}>({
+  options,
+  rawResult,
+  presetsDirectory,
+  findUp,
+}: {
   options: Interfaces.Input<TFlags> | undefined,
   rawResult: Interfaces.ParserOutput<TFlags, TArgs>,
-  presetsDirectory: string
-): Promise<Interfaces.Input<TFlags> | undefined> {
+  presetsDirectory: string,
+  findUp: boolean,
+}): Promise<Interfaces.Input<TFlags> | undefined> {
   const flags = rawResult.flags
   if (flags.preset) {
-    const presets = await loadPresetsFromDirectory(presetsDirectory)
+    const presets = await loadPresetsFromDirectory(presetsDirectory, {findUp})
     const selectedPreset = presets[flags.preset]
     if (selectedPreset && options?.flags) {
       const newFlags = {...options.flags} as {[name: string]: object}
