@@ -3,8 +3,11 @@ import {SetupWebSocketConnectionOptions, WebsocketConnection} from './websocket/
 import {getPayloadUpdateHandler, websocketUpgradeHandler} from './websocket/handlers.js'
 import {WebSocketServer} from 'ws'
 
+const PING_INTERVAL_SEC = 10
+
 export function setupWebsocketConnection(options: SetupWebSocketConnectionOptions): WebsocketConnection {
   const wss = new WebSocketServer({noServer: true, clientTracking: true})
+  const timer = pingAliveClientsPeriodically(wss)
 
   options.httpServer.on('upgrade', websocketUpgradeHandler(wss, options))
   options.payloadStore.on(ExtensionsPayloadStoreEvent.Update, getPayloadUpdateHandler(wss, options))
@@ -12,6 +15,17 @@ export function setupWebsocketConnection(options: SetupWebSocketConnectionOption
   return {
     close: () => {
       wss.close()
+      clearInterval(timer)
     },
   }
+}
+function pingAliveClientsPeriodically(wss: WebSocketServer) {
+  return setInterval(() => {
+    wss.clients.forEach((ws) => {
+      const connectionAlive = ws.readyState < 2
+      if (connectionAlive) {
+        ws.ping()
+      }
+    })
+  }, PING_INTERVAL_SEC * 1000)
 }
