@@ -21,6 +21,10 @@
       "import": "./dist/public/common/array.js",
       "types": "./dist/public/common/array.d.ts"
     },
+    "./node/presets": {
+      "import": "./dist/public/node/presets.js",
+      "types": "./dist/public/node/presets.d.ts"
+    },
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
