@@ -59,8 +59,6 @@ abstract class BaseCommand extends Command {
   }
 }
 
-export default BaseCommand
-
 export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
   await addPublic(() => ({
     cmd_all_verbose: flags.verbose,
@@ -105,3 +103,5 @@ function reportDifferences(rawFlags: {[name: string]: any}, flagsWithPresets: {[
 
 ${Object.entries(changes).map(([k, v]) => `• ${k} = ${v}`).join('\n')}\n`)
 }
+
+export default BaseCommand
