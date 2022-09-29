@@ -41,7 +41,7 @@ describe('when there are no locale files', () => {
   })
 })
 
-describe('when there locale files', () => {
+describe('when there are locale files', () => {
   it('returns defaultLocale using the locale marked as .default', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
@@ -82,6 +82,11 @@ describe('when there locale files', () => {
   })
 
   it('returns the lastUpdated timestamp of the most recently updated locale', async () => {
+    let timestamp = 0
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      return (timestamp += 1)
+    })
+
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
@@ -90,7 +95,8 @@ describe('when there locale files', () => {
 
       const result = await testGetLocalization(tmpDir)
 
-      expect(result.localization!.lastUpdated).toBeLessThanOrEqual(Date.now())
+      expect(Date.now).toBeCalledTimes(4)
+      expect(result.localization!.lastUpdated).equals(timestamp)
     })
   })
 
