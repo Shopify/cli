@@ -1,7 +1,9 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {isDevelopment} from '../environment/local.js'
 import {addPublic} from '../metadata.js'
+import {content, info, token} from '../output.js'
 import {hashString} from '../string.js'
+import {loadPresetsFromDirectory} from '../public/node/presets.js'
 import {Command, Interfaces} from '@oclif/core'
 
 abstract class BaseCommand extends Command {
@@ -31,7 +33,12 @@ abstract class BaseCommand extends Command {
     options?: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
     argv?: string[] | undefined,
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
-    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    const rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    const flags = rawResult.flags as {preset?: string}
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(await withPresets(options, rawResult), argv)
+    if (flags.preset) {
+      reportDifferences(rawResult.flags, result.flags, flags.preset)
+    }
     await addFromParsedFlags(result.flags)
     return result
   }
@@ -45,4 +52,34 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
     cmd_all_path_override: flags.path !== undefined,
     cmd_all_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),
   }))
+}
+
+async function withPresets<TFlags extends {path?: string, preset?: string}, TArgs extends {[name: string]: any}>(
+  options: Interfaces.Input<TFlags> | undefined,
+  rawResult: Interfaces.ParserOutput<TFlags, TArgs>
+): Promise<Interfaces.Input<TFlags> | undefined> {
+  const flags = rawResult.flags
+  if (flags.preset) {
+    const presets = await loadPresetsFromDirectory(flags.path ? flags.path : process.cwd())
+    const selectedPreset = presets[flags.preset]
+    if (selectedPreset && options?.flags) {
+      const newFlags = {...options.flags} as {[name: string]: object}
+      for (const [k, v] of Object.entries(newFlags)) {
+        if (selectedPreset.hasOwnProperty(k)) newFlags[k] = {...v, default: selectedPreset[k]}
+      }
+      return {...options, flags: newFlags} as typeof options
+    }
+  }
+  return options
+}
+
+function reportDifferences(rawFlags: {[name: string]: any}, flagsWithPresets: {[name: string]: any}, preset: string): void {
+  const changes: {[name: string]: any} = {}
+  for (const [k, v] of Object.entries(flagsWithPresets)) {
+    if (v !== rawFlags[k]) changes[k] = v
+  }
+  if (Object.keys(changes).length === 0) return
+  info(content`Using applicable flags from the preset ${token.yellow(preset)}:
+
+${Object.entries(changes).map(([k, v]) => `• ${k} = ${v}`).join('\n')}\n`)
 }
