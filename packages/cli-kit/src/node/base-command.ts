@@ -42,7 +42,10 @@ abstract class BaseCommand extends Command {
     const flags = rawResult.flags as PresettableFlags
     const presetsDirectory = await this.presetsPath(flags)
     const findUp = this.findUpForPresets()
-    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(await withPresets({options, rawResult, presetsDirectory, findUp}), argv)
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(
+      await withPresets({options, rawResult, presetsDirectory, findUp}),
+      argv,
+    )
     if (flags.preset) {
       reportDifferences(rawResult.flags, result.flags, flags.preset)
     }
@@ -67,16 +70,16 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
   }))
 }
 
-async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name: string]: any}>({
+async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name: string]: unknown}>({
   options,
   rawResult,
   presetsDirectory,
   findUp,
 }: {
-  options: Interfaces.Input<TFlags> | undefined,
-  rawResult: Interfaces.ParserOutput<TFlags, TArgs>,
-  presetsDirectory: string,
-  findUp: boolean,
+  options: Interfaces.Input<TFlags> | undefined
+  rawResult: Interfaces.ParserOutput<TFlags, TArgs>
+  presetsDirectory: string
+  findUp: boolean
 }): Promise<Interfaces.Input<TFlags> | undefined> {
   const flags = rawResult.flags
   if (flags.preset) {
@@ -84,8 +87,9 @@ async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name
     const selectedPreset = presets[flags.preset]
     if (selectedPreset && options?.flags) {
       const newFlags = {...options.flags} as {[name: string]: object}
-      for (const [k, v] of Object.entries(newFlags)) {
-        if (selectedPreset.hasOwnProperty(k)) newFlags[k] = {...v, default: selectedPreset[k]}
+      for (const [name, settings] of Object.entries(newFlags)) {
+        if (Object.prototype.hasOwnProperty.call(selectedPreset, name))
+          newFlags[name] = {...settings, default: selectedPreset[name]}
       }
       return {...options, flags: newFlags} as typeof options
     }
@@ -93,15 +97,21 @@ async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name
   return options
 }
 
-function reportDifferences(rawFlags: {[name: string]: any}, flagsWithPresets: {[name: string]: any}, preset: string): void {
-  const changes: {[name: string]: any} = {}
-  for (const [k, v] of Object.entries(flagsWithPresets)) {
-    if (v !== rawFlags[k]) changes[k] = v
+function reportDifferences(
+  rawFlags: {[name: string]: unknown},
+  flagsWithPresets: {[name: string]: unknown},
+  preset: string,
+): void {
+  const changes: {[name: string]: unknown} = {}
+  for (const [name, value] of Object.entries(flagsWithPresets)) {
+    if (value !== rawFlags[name]) changes[name] = value
   }
   if (Object.keys(changes).length === 0) return
   info(content`Using applicable flags from the preset ${token.yellow(preset)}:
 
-${Object.entries(changes).map(([k, v]) => `• ${k} = ${v}`).join('\n')}\n`)
+${Object.entries(changes)
+  .map(([name, value]) => `• ${name} = ${value}`)
+  .join('\n')}\n`)
 }
 
 export default BaseCommand
