@@ -24,4 +24,8 @@ export default abstract class ThemeCommand extends Command {
     }
     return passThroughFlags
   }
+
+  findUpForPresets(): boolean {
+    return true
+  }
 }

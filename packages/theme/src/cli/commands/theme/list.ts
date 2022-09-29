@@ -1,10 +1,10 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import Command from '@shopify/cli-kit/node/base-command'
 
-export default class List extends Command {
+export default class List extends ThemeCommand {
   static description = 'Lists your remote themes.'
 
   static flags = {
