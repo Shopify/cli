@@ -10,11 +10,12 @@ import {AbortController, AbortSignal} from 'abort-controller'
  * containing the process prefix and the right column containing the output.
  * Every process will be rendered with a different color, up to 4 colors.
  *
- * For example:
+ * For example running `shopify app dev`:
  *
+ * ```shell
  * backend    |
  * backend    | > shopify-app-template-node@0.1.0 dev
- * backend    | > cross-env NODE_ENV=development nodemon backend/index.js --watch ./backend    |
+ * backend    | > cross-env NODE_ENV=development ...
  * backend    |
 
  * frontend   |
@@ -27,6 +28,7 @@ import {AbortController, AbortSignal} from 'abort-controller'
  * backend    | [nodemon] watching path(s): backend/
  * backend    | [nodemon] watching extensions: js,mjs,json
  * backend    | [nodemon] starting `node backend/index.js
+ * ```
  *
  * @param {OutputProcess[]} processes
  * @param {(abortSignal: AbortSignal) => void} [onAbort]
@@ -41,6 +43,7 @@ export async function renderConcurrent(processes: OutputProcess[], onAbort?: (ab
 /**
  * Renders information to the console in the form of:
  *
+ * ```
  * ╭─ info ─────────────────────╮
  * │                            │
  * │ Title                      │
@@ -48,6 +51,7 @@ export async function renderConcurrent(processes: OutputProcess[], onAbort?: (ab
  * │  Body Text                 │
  * │                            │
  * ╰────────────────────────────╯
+ * ```
  * @param {Omit<BannerProps, 'type'>} options
  */
 export function renderInfo(options: Omit<BannerProps, 'type'>) {
@@ -57,6 +61,7 @@ export function renderInfo(options: Omit<BannerProps, 'type'>) {
 /**
  * Renders a success message to the console in the form of:
  *
+ * ```
  * ╭─ success ──────────────────╮
  * │                            │
  * │ Title                      │
@@ -64,6 +69,7 @@ export function renderInfo(options: Omit<BannerProps, 'type'>) {
  * │  Body Text                 │
  * │                            │
  * ╰────────────────────────────╯
+ * ```
  * @param {Omit<BannerProps, 'type'>} options
  */
 export function renderSuccess(options: Omit<BannerProps, 'type'>) {
@@ -73,6 +79,7 @@ export function renderSuccess(options: Omit<BannerProps, 'type'>) {
 /**
  * Renders a warning message to the console in the form of:
  *
+ * ```
  * ╭─ warning ──────────────────╮
  * │                            │
  * │ Title                      │
@@ -80,6 +87,7 @@ export function renderSuccess(options: Omit<BannerProps, 'type'>) {
  * │  Body Text                 │
  * │                            │
  * ╰────────────────────────────╯
+ * ```
  * @param {Omit<BannerProps, 'type'>} options
  */
 export function renderWarning(options: Omit<BannerProps, 'type'>) {
@@ -89,6 +97,7 @@ export function renderWarning(options: Omit<BannerProps, 'type'>) {
 /**
  * Renders an error message to the console in the form of:
  *
+ * ```
  * ╭─ error ────────────────────
  * │                            │
  * │ Title                      │
@@ -96,6 +105,7 @@ export function renderWarning(options: Omit<BannerProps, 'type'>) {
  * │  Body Text                 │
  * │                            │
  * ╰────────────────────────────╯
+ * ```
  * @param {Omit<BannerProps, 'type'>} options
  */
 export function renderError(options: Omit<BannerProps, 'type'>) {
