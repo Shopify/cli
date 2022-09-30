@@ -65,9 +65,7 @@
     "esbuild": "0.15.7",
     "serve-static": "1.15.0",
     "ws": "8.8.1",
-    "chokidar": "3.5.3",
-    "ink": "^3.2.0",
-    "react": "^17.0.2"
+    "chokidar": "3.5.3"
   },
   "repository": {
     "type": "git",
