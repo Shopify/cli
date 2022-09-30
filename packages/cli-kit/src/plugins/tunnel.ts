@@ -1,3 +1,4 @@
+import {ExtensionPlugin} from './extension.js'
 import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
 
 /**
@@ -5,7 +6,7 @@ import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
  *
  * Any plugin that provides tunnel functionality should implement `defineProvider`and `startTunnel`
  */
-export interface HookReturnPerTunnelPlugin {
+export interface HookReturnPerTunnelPlugin extends ExtensionPlugin {
   tunnel_start: {
     options: {port: number; provider: string}
     pluginReturns: {

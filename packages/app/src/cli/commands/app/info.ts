@@ -1,9 +1,6 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
-import {Format, info} from '../../services/info.js'
-import {load as loadApp} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
-import {output, path, cli} from '@shopify/cli-kit'
+import {cli, plugins} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AppInfo extends Command {
@@ -27,9 +24,10 @@ export default class AppInfo extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: AppInterface = await loadApp(directory, 'report')
-    output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
-    if (app.errors) process.exit(2)
+    await plugins.runExtensionsPlugin(this.config)
+    // const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    // const app: AppInterface = await loadApp(directory, 'report')
+    // output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
+    // if (app.errors) process.exit(2)
   }
 }

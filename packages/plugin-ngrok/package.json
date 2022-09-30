@@ -35,7 +35,8 @@
   "dependencies": {
     "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.14.0",
-    "@shopify/ngrok": "^4.3.2"
+    "@shopify/ngrok": "^4.3.2",
+    "@shopify/app": "3.14.0"
   },
   "eslintConfig": {
     "extends": [
@@ -58,7 +59,8 @@
     "commands": "dist/commands",
     "hooks": {
       "tunnel_start": "dist/tunnel",
-      "tunnel_provider": "dist/provider"
+      "tunnel_provider": "dist/provider",
+      "find_extensions": "dist/extensions"
     },
     "topics": {
       "ngrok": {

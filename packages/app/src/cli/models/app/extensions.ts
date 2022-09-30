@@ -105,6 +105,6 @@ export type UIExtension = Extension & {
 }
 
 export type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
-type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
+export type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
-type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
+export type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>

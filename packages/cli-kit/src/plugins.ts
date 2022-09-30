@@ -44,7 +44,7 @@ interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   }
   [hookName: string]: {
     options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: JsonMap}
+    pluginReturns: {[key: string]: unknown}
   }
 }
 
@@ -96,4 +96,11 @@ export async function runTunnelPlugin(
   if (urls.length > 1) return {error: 'multiple-urls'}
   if (urls.length === 0) return {error: 'no-urls'}
   return {url: urls[0]}
+}
+
+export async function runExtensionsPlugin(config: Config) {
+  const ext = await fanoutHooks(config, 'find_extensions', {})
+  console.log(ext)
+  const aaaa = new ext['@shopify/plugin-ngrok']!.extensions[0]!.ClassType()
+  console.log(aaaa.customMethod())
 }

@@ -1,235 +1,266 @@
-/* eslint-disable line-comment-position */
-import {FunctionExtensionConfiguration, FunctionExtensionMetadata, TypeSchema} from '../app/extensions.js'
-import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
-import {parseFile} from '../app/parser.js'
-import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
-import {environment, error, file, id, output, path, schema, string} from '@shopify/cli-kit'
+// /* eslint-disable line-comment-position */
+// import {TypeSchema} from '../app/extensions.js'
+// import {parseFile} from '../app/parser.js'
+// import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
+// import {environment, error, file, id, path, schema, string} from '@shopify/cli-kit'
+// import {err, ok, Result} from '@shopify/cli-kit/common/result'
+
+import {file, path} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
-export interface ExtensionSpecification {
-  name?: string
-  externalName?: string
-  identifier?: string
-  externalIdentifier?: string
-  surface?: string
-  gated?: boolean
-  registrationLimit?: number
-}
+// export interface ExtensionSpecification {
+//   name: string
+//   externalName: string
+//   identifier: string
+//   externalIdentifier: string
+//   surface?: string
+//   gated: boolean
+//   registrationLimit: number
+// }
 
-export type ExtensionUIGroup = 'discounts_and_checkout' | 'analytics' | 'merchant_admin' | 'other'
+// const MetafieldSchema = schema.define.object({
+//   namespace: schema.define.string(),
+//   key: schema.define.string(),
+// })
 
-export interface LocalSpecification {
-  path: string
-  entrySourceFilePath: string
-  config: unknown
-}
+// const BaseExtensionSchema = schema.define.object({
+//   name: schema.define.string(),
+//   type: schema.define.string(),
+//   metafields: schema.define.array(MetafieldSchema).default([]),
+//   extensionPoints: schema.define.array(schema.define.string()).optional(),
+//   capabilities: schema.define.any().optional(),
+// })
 
-const MetafieldSchema = schema.define.object({
-  namespace: schema.define.string(),
-  key: schema.define.string(),
-})
+// const CheckoutUISchema = BaseExtensionSchema.extend({
+//   settings: schema.define.any().optional(),
+// })
 
-// No need for abstract class since all functions are generic enough to not need subclassing
-export class BaseFunction {
-  configuration: FunctionExtensionConfiguration
-  metadata: FunctionExtensionMetadata
-  directory: string
+// const NewSchema = BaseExtensionSchema.extend({
+//   settings: schema.define.any().optional(),
+//   somethingNew: schema.define.any()
+// })
 
-  constructor(options: {
-    directory: string
-    configuration: FunctionExtensionConfiguration
-    metadata: FunctionExtensionMetadata
-  }) {
-    this.directory = options.directory
-    this.configuration = options.configuration
-    this.metadata = options.metadata
-  }
+// export interface LocalExtensionSpecification {
+//   identifier: string
+//   dependency: DependencyVersion
+//   schema: typeof BaseExtensionSchema
+// }
 
-  // buildWasmPath() {
-  //   return this.configuration.build.path
-  //     ? path.join(this.directory, this.configuration.build.path)
-  //     : path.join(this.directory, 'dist/index.wasm')
-  // }
+// const LocalCheckoutSpecification: LocalExtensionSpecification = {
+//   identifier = "checkout_ui_extension",
+//   dependency = {
+//     name = "@shopify/checkout-ui-extensions",
+//     version = "0.0.0",
+//   },
+//   schema = CheckoutUISchema
+// }
 
-  inputQueryPath() {
-    return path.join(this.directory, 'input.graphql')
-  }
+// const LocalNewSpecification: LocalExtensionSpecification = {
+//   identifier = "new_ui_extension",
+//   dependency = {
+//     name = "@shopify/new-ui-extensions",
+//     version = "0.0.0",
+//   },
+//   schema = NewSchema
+// }
 
-  build() {
-    // build function
-  }
+// const allLocalSpecifications = [LocalCheckoutSpecification, LocalNewSpecification]
 
-  validate() {
-    // validate function
-  }
-}
+//
 
-const ArgoExtensionSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.string(),
-  metafields: schema.define.array(MetafieldSchema).default([]),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
-  capabilities: schema.define.any().optional(),
-})
+// export interface LocalSpecification {
+//   path: string
+//   entrySourceFilePath: string
+//   config: unknown
+// }
 
-abstract class ArgoExtension {
-  // Must be equal to the `identifier` from Remote Specifications
-  abstract type: string
+// interface BaseExtensionOptions {
+//   path: string
+//   config: schema.define.infer<typeof BaseExtensionSchema>
+//   specification: ExtensionSpecification
+// }
 
-  // Properties from remote specification
-  name: string
-  externalName: string
-  gated: boolean
-  externalIdentifier: string
-  surface?: string
+// abstract class BaseExtension {
+//   // Must override these static properties
+//   static type: string // Must be equal to the `identifier` from Remote Specifications
+//   static schema = BaseExtensionSchema // This is the schema for the extension's configuration file
+//   static uiGroup: ExtensionUIGroup = 'other' // Grouped by this value when shown in the extension select prompt UI. By default: `other`
 
-  // Local properties handled by the CLI
-  uiGroup: ExtensionUIGroup // Grouped by this value when shown in the extension select prompt UI
-  devUUID: string // UUID used for dev
-  rendererDependency: DependencyVersion // npm dependency for this extension
-  abstract configuration: unknown // toml configuration loaded using the schema
+//   rendererDependency?: DependencyVersion // npm dependency for this extension
+//   configuration: schema.define.infer<typeof BaseExtensionSchema> // toml configuration loaded using the schema
 
-  // Path related properties, these are generated from the initial `path` in the constructor
-  directory: string // Directory where the extension is located
-  localIdentifier: string // Basename of current directory used as identifier
-  configurationPath: string // Path for the toml configuration file
-  entrySourceFilePath: string // relative path to the entry file, of type `src/index.ts`
-  outputBundlePath: string // path to the output bundle, of type `dist/main.js`
+//   // Properties from remote specification
+//   // Subclasses shouldn't need to override these.
+//   name: string
+//   identifier: string
+//   externalName: string
+//   gated: boolean
+//   externalIdentifier: string
+//   surface?: string
 
-  constructor(options: {path: string; config: unknown; specification: ExtensionSpecification}) {
-    this.directory = path.dirname(options.path)
-    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
-    this.localIdentifier = path.basename(this.directory)
-    // this.configuration = options.config
-    this.configurationPath = options.path
+//   // Path related properties, these are generated from the initial `path` in the constructor
+//   // Subclasses shouldn't need to override these.
+//   directory: string // Directory where the extension is located
+//   localIdentifier: string // Generated from the extension directory
+//   configurationPath: string // Path to the toml configuration file
+//   entrySourceFilePath: string // Relative path to the entry file, of type `src/index.ts`
+//   outputBundlePath: string // Path to the output bundle, of type `dist/main.js`
 
-    this.entrySourceFilePath = '' // options.entrySourceFilePath
-    this.outputBundlePath = path.join(this.directory, 'dist/main.js')
+//   constructor(options: BaseExtensionOptions) {
+//     this.directory = path.dirname(options.path)
+//     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+//     this.localIdentifier = path.basename(this.directory)
+//     this.configuration = options.config
+//     this.configurationPath = options.path
 
-    this.name = options.specification.name
-    this.externalName = options.specification.externalName
-    this.identifier = options.specification.identifier
-    this.externalIdentifier = options.specification.externalIdentifier
-    this.gated = options.specification.gated
-    this.registrationLimit = options.specification.registrationLimit
-    this.surface = options.specification.surface
-    this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.rendererDependency = {name: 'unknown-extension', version: '0.0.0'}
-    this.uiGroup = 'other'
-  }
+//     this.entrySourceFilePath = '' // options.entrySourceFilePath
+//     this.outputBundlePath = path.join(this.directory, 'dist/main.js')
 
-  // Example of generic method abstracted in main class
-  public async publishURL(orgId: string, appId: string, extensionId: string): Promise<string> {
-    const partnersFqdn = await environment.fqdn.partners()
-    return `https://${partnersFqdn}/${orgId}/apps/${appId}/extensions/${this.type}/${extensionId}`
-  }
+//     this.name = options.specification.name
+//     this.externalName = options.specification.externalName
+//     this.identifier = options.specification.identifier
+//     this.externalIdentifier = options.specification.externalIdentifier
+//     this.gated = options.specification.gated
+//     this.surface = options.specification.surface
+//     this.devUUID = `dev-${id.generateRandomUUID()}`
+//     this.rendererDependency = undefined
+//   }
 
-  // If the extension is not valid, return error
-  public abstract validate(): Promise<Result<unknown, Error>>
+//   // Example of generic method in base class
+//   public async publishURL(orgId: string, appId: string, extensionId: string): Promise<string> {
+//     const partnersFqdn = await environment.fqdn.partners()
+//     return `https://${partnersFqdn}/${orgId}/apps/${appId}/extensions/${this.type}/${extensionId}`
+//   }
 
-  // Config values needed to start the dev server
-  public abstract devConfig(): unknown
+//   // If the extension is not valid, return error, all extensions should implement this.
+//   public abstract validate(): Promise<Result<unknown, Error>>
 
-  // default build implementation
-  public build() {}
+//   // Config values needed to start the dev server
+//   public devConfig(): unknown {
+//     return {}
+//   }
 
-  // Other generic methods
-}
+//   // default build implementation
+//   public build() {}
 
-const CheckoutUISchema = ArgoExtensionSchema.extend({
-  settings: schema.define.any().optional(),
-})
+//   // An extension might want to customize the dev process
+//   public dev() {}
 
-export class CheckoutUIExtensionSpecification extends ArgoExtension {
-  type = 'checkout_ui_extension'
-  uiGroup: ExtensionUIGroup = 'discounts_and_checkout'
-  rendererDependency: DependencyVersion = {name: '@shopify/checkout-ui-extensions-react', version: 'latest'}
+//   // Other generic methods
+// }
 
-  // If you need a custom schema you need to override the `configuration` variable and the constructor
-  // Is there a better way to do this?
-  configuration: schema.define.infer<typeof CheckoutUISchema>
-  constructor(options: {path: string; config: schema.define.infer<typeof CheckoutUISchema>; specification: ExtensionSpecification}) {
-    super(options)
-    this.configuration = options.config
-  }
+// export class CheckoutUIExtension extends BaseExtension {
+//   // Mandatory overrides
+//   static type = 'checkout_ui_extension'
+//   static schema = CheckoutUISchema
+//   static uiGroup: ExtensionUIGroup = 'discounts_and_checkout'
+//   rendererDependency: DependencyVersion = {name: '@shopify/checkout-ui-extensions-react', version: 'latest'}
 
-  public async validate(): Promise<Result<unknown, Error>> {
-    return ok({})
-  }
+//   // If you need a custom schema you need to override the `configuration` variable and the constructor
+//   configuration: schema.define.infer<typeof CheckoutUISchema>
+//   constructor(options: {
+//     path: string
+//     config: schema.define.infer<typeof CheckoutUISchema>
+//     specification: ExtensionSpecification
+//   }) {
+//     super(options)
+//     this.configuration = options.config
+//   }
 
-  public async devConfig() {
-    return {
-      extension_points: this.configuration.extensionPoints,
-      capabilities: this.configuration.capabilities,
-      metafields: this.configuration.metafields,
-      name: this.configuration.name,
-      settings: this.configuration.settings,
-      localization: await this.loadLocalesConfig(),
-    }
-  }
+//   public async validate(): Promise<Result<unknown, Error>> {
+//     // Validate that all the required fields are present, all locales are valid, etc...
+//     return ok({})
+//   }
 
-  private async loadLocalesConfig() {
-    // Load the locales, this is specific for checkout ui extensions
-  }
-}
+//   public async devConfig() {
+//     return {
+//       extension_points: this.configuration.extensionPoints,
+//       capabilities: this.configuration.capabilities,
+//       metafields: this.configuration.metafields,
+//       name: this.configuration.name,
+//       settings: this.configuration.settings,
+//       localization: await this.loadLocalesConfig(),
+//     }
+//   }
 
-const ThemeAppExtSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.enum(['theme']),
-})
+//   private async loadLocalesConfig() {
+//     // Load locales, this is specific for checkout ui extensions
+//   }
+// }
 
-export class ThemeAppExtensionSpecification extends ArgoExtension {
-  type = 'theme_app_extension'
-  uiGroup: ExtensionUIGroup = 'other'
+// const ThemeAppExtSchema = schema.define.object({
+//   name: schema.define.string(),
+//   type: schema.define.enum(['theme']),
+// })
 
-  configuration: schema.define.infer<typeof ThemeAppExtSchema>
-  constructor(options: {path: string; config: schema.define.infer<typeof ThemeAppExtSchema>; specification: ExtensionSpecification}) {
-    super(options)
-    this.configuration = options.config
-  }
+// export class ThemeAppExtensionSpecification extends BaseExtension {
+//   type = 'theme_app_extension'
+//   uiGroup: ExtensionUIGroup = 'other'
+//   rendererDependency = undefined
 
-  public async validate(): Promise<Result<unknown, Error>> {
-    return ok({})
-  }
+//   public async validate(): Promise<Result<unknown, Error>> {
+//     // Validate liquid files
+//     console.log(this.configuration)
+//     return ok({})
+//   }
 
-  // Not needed for theme app extensions
-  public async devConfig() { return {} }
+//   public async build() {
+//     // custom build of liquid files
+//   }
 
-  public async build() {
-    // custom build of liquid files
-  }
+//   public dev() {
+//     // custom dev process
+//   }
+// }
 
-  public startDev() {
-    // custom dev process
-  }
-}
+// export class NewExtension extends BaseExtension {
+//   type = 'new_extension'
+//   rendererDependency: DependencyVersion = {name: 'new-extension', version: '1.0.0'}
 
+//   public async validate(): Promise<Result<unknown, Error>> {
+//     return ok({})
+//   }
+// }
 
-const ClassMapping: {[key: string]: typeof ArgoExtension} = {
-  checkout_ui_extension: CheckoutUIExtensionSpecification,
-}
+// // List of all available local specifications
+// const extensionClasses = [CheckoutUIExtension, NewExtension]
 
-export async function extensionFactory<T>(configurationPath: string): Promise<T extends typeof ArgoExtension> {
-  const result = await parseFile(TypeSchema, configurationPath)
-  if (result.isErr()) throw new error.Abort('not handled yet')
-  const type = result.value.type
-  const ExtensionClass = ClassMapping[type]
-  if (!ExtensionClass) throw new error.Abort('unkonwn extension type')
-  const config = await parseFile(ExtensionClass.ConfigSchema, configurationPath)
-  const directory = path.dirname(configurationPath)
-  const entryPoint = await findEntrySourceFilePath(directory)
-  if (config.isErr()) throw new error.Abort('not handled yet')
-  if (entryPoint.isErr()) throw new error.Abort('not handled yet')
-  const specification = {}
-  const newClass = new CheckoutUIExtensionSpecification({
-    path: configurationPath,
-    config: config.value,
-    specification,
-  })
-  return newClass
-}
+// export async function extensionFactory(
+//   configurationPath: string,
+//   specifications: ExtensionSpecification[],
+// ): Promise<Result<BaseExtension, string>> {
+//   // Read type from config file
+//   const result = await parseFile(TypeSchema, configurationPath)
+//   if (result.isErr()) return err('error_reading_extension_type')
+//   const type = result.value.type
 
-async function findEntrySourceFilePath(directory: string): Promise<Result<string, string>> {
+//   // Get extension class from type
+//   const ExtensionClass = extensionClasses.find((extClass) => extClass.type === type)
+//   if (!ExtensionClass) return err('local_specification_not_found')
+
+//   // Get extension specification
+//   const specification = specifications.find((spec) => spec.identifier === type)
+//   if (!specification) return err('remote_specification_not_found')
+
+//   // Read the config file for the extension
+//   const config = await parseFile(ExtensionClass.schema, configurationPath)
+
+//   // Find the entry point for the extension (async operation)
+//   const directory = path.dirname(configurationPath)
+//   const entryPoint = await findEntrySourceFilePath(directory)
+//   if (config.isErr()) return err('error_loading_config_file')
+//   if (entryPoint.isErr()) return err('entry_point_not_found')
+
+//   // Create the extension
+//   const newClass = new ExtensionClass({
+//     path: configurationPath,
+//     config: config.value,
+//     specification,
+//   })
+//   return ok(newClass)
+// }
+
+export async function findEntrySourceFilePath(directory: string): Promise<Result<string, string>> {
   const entrySourceFilePath = (
     await Promise.all(
       ['index']
