@@ -2007,14 +2007,14 @@
     base64url "^3.0.1"
     web-vitals "^2.1.4"
 
-"@shopify/checkout-ui-extensions-react@0.19.0", "@shopify/checkout-ui-extensions-react@^0.19.0":
-  version "0.19.0"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.19.0.tgz#61e742e58406d3c6b0463ab15eac3033069d1dfd"
-  integrity sha512-1o0bPEH17MU9Ygb8cWzpwN3MEAeUc/nBuQm9MZWQapjG1L3Qkro6pEzM1K2qiEwGzMTOw67NW9at6nZ6zHxVHA==
+"@shopify/checkout-ui-extensions-react@0.20.0", "@shopify/checkout-ui-extensions-react@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.20.0.tgz#dd619f2aee7db700c6871ba46752588ffa53293e"
+  integrity sha512-G2B52oje2ODwWk4jJ5Qg6X2yq4Q3QAMyp2RlJt5d28lpoXHqon0oUnty1xfMK7HIlXJwasNCBer7uvRd4vJ9sA==
   dependencies:
     "@remote-ui/async-subscription" "^2.1.12"
     "@remote-ui/react" "^4.5.11"
-    "@shopify/checkout-ui-extensions" "^0.19.0"
+    "@shopify/checkout-ui-extensions" "^0.20.0"
     "@types/react" ">=17.0.0 <18.0.0"
 
 "@shopify/checkout-ui-extensions-react@^0.17.1":
@@ -2035,10 +2035,10 @@
     "@remote-ui/async-subscription" "^2.1.10"
     "@remote-ui/core" "^2.1.12"
 
-"@shopify/checkout-ui-extensions@^0.19.0":
-  version "0.19.0"
-  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.19.0.tgz#8e50ec0e0cb8e2a76837879ae9cb62d9cf64c169"
-  integrity sha512-2efHL6GvrRxPYA/JCCfTIDwJeOCcvSce46T+4Duht+LinJ6mOJhjroX57zfwaU3V5jKUuFrj+XdVtKQvKcnhuw==
+"@shopify/checkout-ui-extensions@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.20.0.tgz#fe949eff62992f71362677e4ce9ce50b900430ca"
+  integrity sha512-mQCidC90I8sKc9IxXIBsxaKo6Lw1HcXTw5PfDyGKUoMkBUNzxR4ln/0XCRaj53/TSa/zY/HNJnlZSH7H6bIzdQ==
   dependencies:
     "@remote-ui/async-subscription" "^2.1.12"
     "@remote-ui/core" "^2.1.15"
