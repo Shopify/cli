@@ -1,5 +1,5 @@
 import {App, AppInterface} from './app.js'
-import {ThemeExtension, UIExtension} from './extensions.js'
+import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -63,5 +63,31 @@ export function testThemeExtensions(): ThemeExtension {
     directory: './my-extension',
     type: 'theme',
     graphQLType: 'THEME_APP_EXTENSION',
+  }
+}
+
+export function testFunctionExtension(): FunctionExtension {
+  return {
+    configuration: {
+      name: 'test function extension',
+      description: 'description',
+      type: 'product_discounts',
+      build: {
+        command: 'echo "hello world"',
+      },
+      apiVersion: '2022-07',
+      configurationUi: true,
+    },
+    buildWasmPath: () => '',
+    inputQueryPath: () => '',
+    metadata: {
+      schemaVersions: {},
+    },
+    idEnvironmentVariableName: '',
+    localIdentifier: 'extension title',
+    configurationPath: '',
+    directory: './my-extension',
+    type: 'product_discounts',
+    graphQLType: 'PRODUCT_DISCOUNTS',
   }
 }
