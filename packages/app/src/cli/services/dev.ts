@@ -129,7 +129,7 @@ async function dev(options: DevOptions) {
   }
 
   if (backendConfig) {
-    additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
+    additionalProcesses.push(await devBackendTarget(backendConfig, backendOptions))
   }
 
   if (frontendConfig) {
@@ -222,7 +222,7 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
   }
 }
 
-function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProcess {
+async function devBackendTarget(web: Web, options: DevWebOptions): Promise<output.OutputProcess> {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
@@ -236,7 +236,7 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
     SCOPES: options.scopes,
     NODE_ENV: `development`,
     ...(environment.service.serviceEnvironment() === environment.network.Environment.Spin && {
-      SHOP_CUSTOM_DOMAIN: '.*spin\\.dev',
+      SHOPIFY_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
     }),
   }
 
