@@ -12,9 +12,10 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, render} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -155,7 +156,7 @@ async function dev(options: DevOptions) {
   await analytics.reportEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await render.concurrent(additionalProcesses)
+    await renderConcurrent(additionalProcesses)
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }

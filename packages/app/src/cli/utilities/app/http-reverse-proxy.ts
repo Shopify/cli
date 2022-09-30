@@ -1,5 +1,6 @@
-import {port, output, abort, render} from '@shopify/cli-kit'
+import {port, output, abort} from '@shopify/cli-kit'
 import httpProxy from 'http-proxy'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -82,7 +83,7 @@ ${output.token.json(JSON.stringify(rules))}
   })
 
   await Promise.all([
-    render.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
+    renderConcurrent([...processes, ...additionalProcesses], (abortSignal) => {
       abortSignal.addEventListener('abort', () => {
         server.close()
       })

@@ -1,9 +1,6 @@
-import ConcurrentOutput from './components/ConcurrentOutput.js'
-import {OutputProcess} from './output.js'
 import {Banner, BannerType} from './components/Banner.js'
 import React, {ReactElement} from 'react'
 import {Box, render as inkRender, Text} from 'ink'
-import {AbortController, AbortSignal} from 'abort-controller'
 import {EventEmitter} from 'events'
 
 interface Instance {
@@ -14,6 +11,7 @@ interface Instance {
   stderr: OutputStream
   frames: string[]
 }
+
 export class OutputStream extends EventEmitter {
   columns: number
   readonly frames: string[] = []
@@ -34,32 +32,25 @@ export class OutputStream extends EventEmitter {
   }
 }
 
-export async function concurrent(processes: OutputProcess[], onAbort?: (abortSignal: AbortSignal) => void) {
-  const abortController = new AbortController()
-  if (onAbort) onAbort(abortController.signal)
-
-  inkRender(<ConcurrentOutput processes={processes} abortController={abortController} />)
-}
-
-export function once(element: JSX.Element) {
+export function renderOnce(element: JSX.Element) {
   const {output, unmount} = renderString(element)
   // eslint-disable-next-line no-console
   console.log(output)
   unmount()
 }
 
-export function sticky(element: JSX.Element) {
+export function render(element: JSX.Element) {
   inkRender(element)
 }
 
-interface BannerProps {
+export interface BannerProps {
   type: BannerType
   title: string
   body: string
 }
 
 export function banner({type, title, body}: BannerProps) {
-  once(
+  renderOnce(
     <Banner type={type}>
       <Box marginBottom={1}>
         <Text>{title}</Text>

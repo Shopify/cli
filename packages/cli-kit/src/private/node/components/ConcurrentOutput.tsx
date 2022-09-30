@@ -1,4 +1,4 @@
-import {OutputProcess, stripAnsiEraseCursorEscapeCharacters} from '../output.js'
+import {OutputProcess, stripAnsiEraseCursorEscapeCharacters} from '../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {AbortController} from 'abort-controller'
 import {Static, Text} from 'ink'
