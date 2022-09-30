@@ -5,30 +5,8 @@ import React from 'react'
 import {AbortController, AbortSignal} from 'abort-controller'
 
 /**
- * Renders output from concurrent processes to the terminal.
- * Output will be divided in a two column layout, with the left column
- * containing the process prefix and the right column containing the output.
- * Every process will be rendered with a different color, up to 4 colors.
- *
- * For example running `shopify app dev`:
- *
- * ```shell
- * backend    |
- * backend    | > shopify-app-template-node@0.1.0 dev
- * backend    | > cross-env NODE_ENV=development ...
- * backend    |
-
- * frontend   |
- * frontend   | > starter-react-frontend-app@0.1.0 dev
- * frontend   | > cross-env NODE_ENV=development node vite-server.js
- * frontend   |
-
- * backend    | [nodemon] 2.0.19
- * backend    | [nodemon] to restart at any time, enter `rs`
- * backend    | [nodemon] watching path(s): backend/
- * backend    | [nodemon] watching extensions: js,mjs,json
- * backend    | [nodemon] starting `node backend/index.js
- * ```
+ * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
+ * This function instantiates an `AbortController` so that the various processes can subscribe to the same abort signal.
  *
  * @param {OutputProcess[]} processes
  * @param {(abortSignal: AbortSignal) => void} [onAbort]

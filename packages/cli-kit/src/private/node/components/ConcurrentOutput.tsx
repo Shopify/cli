@@ -1,7 +1,8 @@
-import {OutputProcess, stripAnsiEraseCursorEscapeCharacters} from '../../../output.js'
+import {OutputProcess} from '../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {AbortController} from 'abort-controller'
 import {Static, Text} from 'ink'
+import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
 interface Props {
@@ -15,6 +16,34 @@ interface Line {
   prefix: string
 }
 
+/**
+ * Renders output from concurrent processes to the terminal.
+ * Output will be divided in a two column layout, with the left column
+ * containing the process prefix and the right column containing the output.
+ * Every process will be rendered with a different color, up to 4 colors.
+ *
+ * For example running `shopify app dev`:
+ *
+ * ```shell
+ * backend    |
+ * backend    | > shopify-app-template-node@0.1.0 dev
+ * backend    | > cross-env NODE_ENV=development ...
+ * backend    |
+
+ * frontend   |
+ * frontend   | > starter-react-frontend-app@0.1.0 dev
+ * frontend   | > cross-env NODE_ENV=development node vite-server.js
+ * frontend   |
+
+ * backend    | [nodemon] 2.0.19
+ * backend    | [nodemon] to restart at any time, enter `rs`
+ * backend    | [nodemon] watching path(s): backend/
+ * backend    | [nodemon] watching extensions: js,mjs,json
+ * backend    | [nodemon] starting `node backend/index.js
+ * ```
+ *
+ * @param {React.PropsWithChildren<{processes: OutputProcess[], onAbort?: (abortSignal: AbortSignal): void}>} props
+ */
 const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
   const [processOutput, setProcessOutput] = useState<Line[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
@@ -32,7 +61,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
           processes.map(async (process, index) => {
             const stdout = new Writable({
               write(chunk, _encoding, next) {
-                const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+                const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
                 setProcessOutput((previousProcessOutput) => [
                   ...previousProcessOutput,
                   ...lines.map((line) => ({
@@ -47,7 +76,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
 
             const stderr = new Writable({
               write(chunk, _encoding, next) {
-                const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
+                const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
                 setProcessOutput((previousProcessOutput) => [
                   ...previousProcessOutput,
                   ...lines.map((line) => ({

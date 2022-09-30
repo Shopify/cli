@@ -441,7 +441,7 @@ const eraseCursorAnsiRegex = [
  * @param value - String whose erase cursor escape characters will be stripped.
  * @returns Stripped string.
  */
-export function stripAnsiEraseCursorEscapeCharacters(value: string): string {
+function stripAnsiEraseCursorEscapeCharacters(value: string): string {
   return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
 }
 
