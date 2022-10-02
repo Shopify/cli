@@ -38,16 +38,17 @@ abstract class BaseCommand extends Command {
     options?: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
     argv?: string[] | undefined,
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
-    const rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    let rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     const flags = rawResult.flags as PresettableFlags
-    const presetsDirectory = await this.presetsPath(flags)
-    const findUp = this.findUpForPresets()
-    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(
-      await withPresets({options, rawResult, presetsDirectory, findUp}),
-      argv,
-    )
+    let result = rawResult
     if (flags.preset) {
-      reportDifferences(rawResult.flags, result.flags, flags.preset)
+      const presets = await loadPresetsFromDirectory(await this.presetsPath(flags), {findUp: this.findUpForPresets()})
+      const preset = presets[flags.preset]
+      if (preset) {
+        const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
+        result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [...(argv || this.argv), ...argsFromPreset<TFlags, TArgs>(preset, options, noDefaultsResult)])
+        reportDifferences(rawResult.flags, result.flags, flags.preset)
+      }
     }
     await addFromParsedFlags(result.flags)
     return result
@@ -70,33 +71,6 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
   }))
 }
 
-async function withPresets<TFlags extends PresettableFlags, TArgs extends {[name: string]: unknown}>({
-  options,
-  rawResult,
-  presetsDirectory,
-  findUp,
-}: {
-  options: Interfaces.Input<TFlags> | undefined
-  rawResult: Interfaces.ParserOutput<TFlags, TArgs>
-  presetsDirectory: string
-  findUp: boolean
-}): Promise<Interfaces.Input<TFlags> | undefined> {
-  const flags = rawResult.flags
-  if (flags.preset) {
-    const presets = await loadPresetsFromDirectory(presetsDirectory, {findUp})
-    const selectedPreset = presets[flags.preset]
-    if (selectedPreset && options?.flags) {
-      const newFlags = {...options.flags} as {[name: string]: object}
-      for (const [name, settings] of Object.entries(newFlags)) {
-        if (Object.prototype.hasOwnProperty.call(selectedPreset, name))
-          newFlags[name] = {...settings, default: selectedPreset[name]}
-      }
-      return {...options, flags: newFlags} as typeof options
-    }
-  }
-  return options
-}
-
 function reportDifferences(
   rawFlags: {[name: string]: unknown},
   flagsWithPresets: {[name: string]: unknown},
@@ -112,6 +86,40 @@ function reportDifferences(
 ${Object.entries(changes)
   .map(([name, value]) => `• ${name} = ${value}`)
   .join('\n')}\n`)
+}
+
+function noDefaultsOptions<TFlags>(options: Interfaces.Input<TFlags> | undefined): Interfaces.Input<TFlags> | undefined {
+  if (!options?.flags) return options
+  return {
+    ...options,
+    flags: Object.fromEntries(Object.entries(options.flags).map(([label, settings]) => {
+      const copiedSettings = {...(settings as {default?: unknown})}
+      delete copiedSettings.default
+      return [label, copiedSettings]
+    })) as Interfaces.FlagInput<TFlags>,
+  }
+}
+
+function argsFromPreset<TFlags, TArgs>(
+  preset: {[name: string]: unknown},
+  options: Interfaces.Input<TFlags> | undefined,
+  noDefaultsResult: Interfaces.ParserOutput<TFlags, TArgs>,
+): string[] {
+  const args: string[] = []
+  for (const [label, value] of Object.entries(preset)) {
+    const flagIsRelevantToCommand = options?.flags && Object.prototype.hasOwnProperty.call(options.flags, label)
+    const userSpecifiedThisFlag = noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
+    if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
+      if (typeof value === 'boolean') {
+        args.push(`--${value ? '' : 'no-'}${label}`)
+      } else if (Array.isArray(value)) {
+        value.forEach((element) => args.push(`--${label}`, `${element}`))
+      } else {
+        args.push(`--${label}`, `${value}`)
+      }
+    }
+  }
+  return args
 }
 
 export default BaseCommand
