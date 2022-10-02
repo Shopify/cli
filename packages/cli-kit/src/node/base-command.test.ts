@@ -25,6 +25,7 @@ class MockCommand extends Command {
     someExclusiveBoolean: Flags.boolean({
       exclusive: ['someBoolean'],
     }),
+    someMultipleString: Flags.string({multiple: true}),
   }
   /* eslint-enable rulesdir/command-flags-with-env */
 
@@ -65,6 +66,10 @@ const presetWithNegativeBoolean = {
   someBoolean: false,
 }
 
+const presetWithMultiples = {
+  someMultipleString: ['multiple', 'stringies'],
+}
+
 describe('applying presets', async () => {
   let tmpDir: string
 
@@ -78,6 +83,7 @@ describe('applying presets', async () => {
         presetWithIncorrectType,
         presetWithExclusiveArguments,
         presetWithNegativeBoolean,
+        presetWithMultiples,
       }),
     )
   })
@@ -165,7 +171,19 @@ describe('applying presets', async () => {
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
       preset: 'presetWithNegativeBoolean',
-      someBoolean: false,
+      ...presetWithNegativeBoolean,
+    })
+  })
+
+  test('handles multiples correctly', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithMultiples'])
+
+    // Then
+    expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
+      preset: 'presetWithMultiples',
+      ...presetWithMultiples,
     })
   })
 
