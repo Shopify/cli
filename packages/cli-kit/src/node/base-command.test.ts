@@ -7,6 +7,7 @@ import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 
 let testResult: {[flag: string]: unknown} = {}
+let testError: Error | undefined
 
 class MockCommand extends Command {
   static flags = {
@@ -15,8 +16,14 @@ class MockCommand extends Command {
       parse: (input, _) => Promise.resolve(resolvePath(input)),
       default: '.',
     }),
-    someString: Flags.string({
+    someString: Flags.string({}),
+    someInteger: Flags.integer({}),
+    someBoolean: Flags.boolean({
+      allowNo: true,
     }),
+    someExclusiveBoolean: Flags.boolean({
+      exclusive: ['someBoolean'],
+    })
   }
 
   async presetsPath(rawFlags: {path?: string}): Promise<string> {
@@ -27,15 +34,33 @@ class MockCommand extends Command {
     const {flags} = await this.parse(MockCommand)
     testResult = flags
   }
+
+  async catch(error: Error): Promise<void> {
+    testError = error
+  }
 }
 
 const validPreset = {
   someString: 'stringy',
+  someBoolean: true,
 }
 
 const validPresetWithIrrelevantFlag = {
   ...validPreset,
   irrelevantString: 'stringy',
+}
+
+const presetWithIncorrectType = {
+  someInteger: 'stringy',
+}
+
+const presetWithExclusiveArguments = {
+  someBoolean: true,
+  someExclusiveBoolean: false,
+}
+
+const presetWithNegativeBoolean = {
+  someBoolean: false,
 }
 
 describe('applying presets', async () => {
@@ -46,6 +71,9 @@ describe('applying presets', async () => {
     await writeFile(pathJoin(tmpDir, 'shopify.presets.toml'), encodeTOML({
       validPreset,
       validPresetWithIrrelevantFlag,
+      presetWithIncorrectType,
+      presetWithExclusiveArguments,
+      presetWithNegativeBoolean,
     }))
   })
 
@@ -54,6 +82,7 @@ describe('applying presets', async () => {
       await rmdir(tmpDir)
     }
     testResult = {}
+    testError = undefined
   })
 
   test('does not apply a preset when none is specified', async () => {
@@ -97,5 +126,41 @@ describe('applying presets', async () => {
       preset: 'validPresetWithIrrelevantFlag',
       ...validPreset,
     })
+  })
+
+  test('throws when an argument of the incorrect type is provided', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithIncorrectType'])
+
+    // Then
+    expect(testError?.message).toEqual('Expected an integer but received: stringy')
+  })
+
+  test('throws when exclusive arguments are provided', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithExclusiveArguments'])
+
+    // Then
+    expect(testError?.message).toMatch('Unexpected argument: --no-someExclusiveBoolean')
+  })
+
+  test('negates booleans correctly', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithNegativeBoolean'])
+
+    //Then
+    expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
+      preset: 'presetWithNegativeBoolean',
+      someBoolean: false,
+    })
+  })
+
+  test('throws when exclusive arguments are provided when combining command line + preset', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveBoolean'])
+
+    // Then
+    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveBoolean=')
   })
 })
