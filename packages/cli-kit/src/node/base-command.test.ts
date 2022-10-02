@@ -10,6 +10,7 @@ let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
 
 class MockCommand extends Command {
+  /* eslint-disable rulesdir/command-flags-with-env */
   static flags = {
     ...globalFlags,
     path: Flags.string({
@@ -23,8 +24,9 @@ class MockCommand extends Command {
     }),
     someExclusiveBoolean: Flags.boolean({
       exclusive: ['someBoolean'],
-    })
+    }),
   }
+  /* eslint-enable rulesdir/command-flags-with-env */
 
   async presetsPath(rawFlags: {path?: string}): Promise<string> {
     return rawFlags.path ? rawFlags.path : process.cwd()
@@ -68,13 +70,16 @@ describe('applying presets', async () => {
 
   beforeEach(async () => {
     tmpDir = await mkTmpDir()
-    await writeFile(pathJoin(tmpDir, 'shopify.presets.toml'), encodeTOML({
-      validPreset,
-      validPresetWithIrrelevantFlag,
-      presetWithIncorrectType,
-      presetWithExclusiveArguments,
-      presetWithNegativeBoolean,
-    }))
+    await writeFile(
+      pathJoin(tmpDir, 'shopify.presets.toml'),
+      encodeTOML({
+        validPreset,
+        validPresetWithIrrelevantFlag,
+        presetWithIncorrectType,
+        presetWithExclusiveArguments,
+        presetWithNegativeBoolean,
+      }),
+    )
   })
 
   afterEach(async () => {
@@ -156,7 +161,7 @@ describe('applying presets', async () => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithNegativeBoolean'])
 
-    //Then
+    // Then
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
       preset: 'presetWithNegativeBoolean',

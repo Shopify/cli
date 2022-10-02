@@ -38,7 +38,7 @@ abstract class BaseCommand extends Command {
     options?: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
     argv?: string[] | undefined,
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
-    let rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    const rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     const flags = rawResult.flags as PresettableFlags
     let result = rawResult
     if (flags.preset) {
@@ -46,7 +46,10 @@ abstract class BaseCommand extends Command {
       const preset = presets[flags.preset]
       if (preset) {
         const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
-        result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [...(argv || this.argv), ...argsFromPreset<TFlags, TArgs>(preset, options, noDefaultsResult)])
+        result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
+          ...(argv || this.argv),
+          ...argsFromPreset<TFlags, TArgs>(preset, options, noDefaultsResult),
+        ])
         reportDifferences(rawResult.flags, result.flags, flags.preset)
       }
     }
@@ -88,15 +91,19 @@ ${Object.entries(changes)
   .join('\n')}\n`)
 }
 
-function noDefaultsOptions<TFlags>(options: Interfaces.Input<TFlags> | undefined): Interfaces.Input<TFlags> | undefined {
+function noDefaultsOptions<TFlags>(
+  options: Interfaces.Input<TFlags> | undefined,
+): Interfaces.Input<TFlags> | undefined {
   if (!options?.flags) return options
   return {
     ...options,
-    flags: Object.fromEntries(Object.entries(options.flags).map(([label, settings]) => {
-      const copiedSettings = {...(settings as {default?: unknown})}
-      delete copiedSettings.default
-      return [label, copiedSettings]
-    })) as Interfaces.FlagInput<TFlags>,
+    flags: Object.fromEntries(
+      Object.entries(options.flags).map(([label, settings]) => {
+        const copiedSettings = {...(settings as {default?: unknown})}
+        delete copiedSettings.default
+        return [label, copiedSettings]
+      }),
+    ) as Interfaces.FlagInput<TFlags>,
   }
 }
 
@@ -108,7 +115,8 @@ function argsFromPreset<TFlags, TArgs>(
   const args: string[] = []
   for (const [label, value] of Object.entries(preset)) {
     const flagIsRelevantToCommand = options?.flags && Object.prototype.hasOwnProperty.call(options.flags, label)
-    const userSpecifiedThisFlag = noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
+    const userSpecifiedThisFlag =
+      noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
       if (typeof value === 'boolean') {
         args.push(`--${value ? '' : 'no-'}${label}`)
