@@ -6,7 +6,7 @@ import {join as pathJoin, resolve as resolvePath} from '../path.js'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 
-let testResult: {[flag: string]: unknown}
+let testResult: {[flag: string]: unknown} = {}
 
 class MockCommand extends Command {
   static flags = {
@@ -33,18 +33,27 @@ const validPreset = {
   someString: 'stringy',
 }
 
+const validPresetWithIrrelevantFlag = {
+  ...validPreset,
+  irrelevantString: 'stringy',
+}
+
 describe('applying presets', async () => {
   let tmpDir: string
 
   beforeEach(async () => {
     tmpDir = await mkTmpDir()
-    await writeFile(pathJoin(tmpDir, 'shopify.presets.toml'), encodeTOML({validPreset}))
+    await writeFile(pathJoin(tmpDir, 'shopify.presets.toml'), encodeTOML({
+      validPreset,
+      validPresetWithIrrelevantFlag,
+    }))
   })
 
   afterEach(async () => {
     if (tmpDir) {
       await rmdir(tmpDir)
     }
+    testResult = {}
   })
 
   test('does not apply a preset when none is specified', async () => {
@@ -63,6 +72,29 @@ describe('applying presets', async () => {
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
       preset: 'validPreset',
+      ...validPreset,
+    })
+  })
+
+  test('ignores the specified preset when it does not exist', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'nonexistentPreset'])
+
+    // Then
+    expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
+      preset: 'nonexistentPreset',
+    })
+  })
+
+  test('does not apply flags irrelevant to the current command', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'validPresetWithIrrelevantFlag'])
+
+    // Then
+    expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
+      preset: 'validPresetWithIrrelevantFlag',
       ...validPreset,
     })
   })
