@@ -1,4 +1,5 @@
 import Command from './base-command.js'
+import {presetsFilename} from '../public/node/presets.js'
 import {globalFlags} from '../cli.js'
 import {mkTmpDir, rmdir, write as writeFile} from '../file.js'
 import {encode as encodeTOML} from '../toml.js'
@@ -76,7 +77,7 @@ describe('applying presets', async () => {
   beforeEach(async () => {
     tmpDir = await mkTmpDir()
     await writeFile(
-      pathJoin(tmpDir, 'shopify.presets.toml'),
+      pathJoin(tmpDir, presetsFilename),
       encodeTOML({
         validPreset,
         validPresetWithIrrelevantFlag,
