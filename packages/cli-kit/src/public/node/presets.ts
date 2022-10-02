@@ -1,11 +1,12 @@
 import {exists as fileExists, read as fileRead} from '../../file.js'
+import {JsonMap} from '../../json.js'
 import {findUp, join as pathJoin} from '../../path.js'
 import {decode as tomlDecode} from '../../toml.js'
 
 const PRESETS_FILENAME = 'shopify.presets.toml'
 
 export interface Presets {
-  [name: string]: {[flag: string]: unknown}
+  [name: string]: JsonMap
 }
 export async function loadPresetsFromDirectory(dir: string, opts?: {findUp: boolean}): Promise<Presets> {
   let presetsFilePath: string | undefined

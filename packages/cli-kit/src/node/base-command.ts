@@ -1,4 +1,5 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
+import {JsonMap} from '../json.js'
 import {isDevelopment} from '../environment/local.js'
 import {addPublic} from '../metadata.js'
 import {content, info, token} from '../output.js'
@@ -50,7 +51,7 @@ abstract class BaseCommand extends Command {
           ...(argv || this.argv),
           ...argsFromPreset<TFlags, TArgs>(preset, options, noDefaultsResult),
         ])
-        reportDifferences(rawResult.flags, result.flags, flags.preset)
+        reportDifferences<TFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset)
       }
     }
     await addFromParsedFlags(result.flags)
@@ -74,14 +75,14 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
   }))
 }
 
-function reportDifferences(
-  rawFlags: {[name: string]: unknown},
-  flagsWithPresets: {[name: string]: unknown},
+function reportDifferences<TFlags, TArgs>(
+  specifiedFlags: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
+  flagsWithPresets: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
   preset: string,
 ): void {
-  const changes: {[name: string]: unknown} = {}
+  const changes: JsonMap = {}
   for (const [name, value] of Object.entries(flagsWithPresets)) {
-    if (value !== rawFlags[name]) changes[name] = value
+    if (!Object.prototype.hasOwnProperty.call(specifiedFlags, name)) changes[name] = value
   }
   if (Object.keys(changes).length === 0) return
   info(content`Using applicable flags from the preset ${token.yellow(preset)}:
@@ -108,7 +109,7 @@ function noDefaultsOptions<TFlags>(
 }
 
 function argsFromPreset<TFlags, TArgs>(
-  preset: {[name: string]: unknown},
+  preset: JsonMap,
   options: Interfaces.Input<TFlags> | undefined,
   noDefaultsResult: Interfaces.ParserOutput<TFlags, TArgs>,
 ): string[] {
