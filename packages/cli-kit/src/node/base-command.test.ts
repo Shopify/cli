@@ -105,6 +105,14 @@ describe('applying presets', async () => {
     })
   })
 
+  test('prefers command line arguments to preset settings', async () => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someString', 'cheesy'])
+
+    // Then
+    expect(testResult.someString).toEqual('cheesy')
+  })
+
   test('ignores the specified preset when it does not exist', async () => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'nonexistentPreset'])
