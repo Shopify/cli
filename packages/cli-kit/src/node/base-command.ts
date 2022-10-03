@@ -58,7 +58,7 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  async presetsPath(rawFlags: {path?: string}): Promise<string> {
+  protected async presetsPath(rawFlags: {path?: string}): Promise<string> {
     return rawFlags.path || process.cwd()
   }
 

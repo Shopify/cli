@@ -1,7 +1,7 @@
 import Command from './base-command.js'
 import {presetsFilename} from '../public/node/presets.js'
 import {globalFlags} from '../cli.js'
-import {mkTmpDir, rmdir, write as writeFile} from '../file.js'
+import {mkdir, mkTmpDir, rmdir, write as writeFile} from '../file.js'
 import {encode as encodeTOML} from '../toml.js'
 import {join as pathJoin, resolve as resolvePath} from '../path.js'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
@@ -9,6 +9,7 @@ import {Flags} from '@oclif/core'
 
 let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
+let disableFindUpPresets = true
 
 class MockCommand extends Command {
   /* eslint-disable rulesdir/command-flags-with-env */
@@ -30,10 +31,6 @@ class MockCommand extends Command {
   }
   /* eslint-enable rulesdir/command-flags-with-env */
 
-  async presetsPath(rawFlags: {path?: string}): Promise<string> {
-    return rawFlags.path ? rawFlags.path : process.cwd()
-  }
-
   async run(): Promise<void> {
     const {flags} = await this.parse(MockCommand)
     testResult = flags
@@ -41,6 +38,11 @@ class MockCommand extends Command {
 
   async catch(error: Error): Promise<void> {
     testError = error
+  }
+
+  findUpForPresets() {
+    if (disableFindUpPresets) return false
+    return super.findUpForPresets()
   }
 }
 
@@ -87,6 +89,7 @@ describe('applying presets', async () => {
         presetWithMultiples,
       }),
     )
+    disableFindUpPresets = false
   })
 
   afterEach(async () => {
@@ -114,6 +117,38 @@ describe('applying presets', async () => {
       path: resolvePath(tmpDir),
       preset: 'validPreset',
       ...validPreset,
+    })
+  })
+
+  test('searches up recursively from path by default', async () => {
+    // Given
+    const subdir = pathJoin(tmpDir, 'somedir', '--preset', 'validPreset')
+    await mkdir(subdir)
+
+    // When
+    await MockCommand.run(['--path', subdir, '--preset', 'validPreset'])
+
+    // Then
+    expect(testResult).toEqual({
+      path: resolvePath(subdir),
+      preset: 'validPreset',
+      ...validPreset,
+    })
+  })
+
+  test('searches only in the current directory when recursive search is disabled', async () => {
+    // Given
+    const subdir = pathJoin(tmpDir, 'somedir')
+    await mkdir(subdir)
+    disableFindUpPresets = true
+
+    // When
+    await MockCommand.run(['--path', subdir, '--preset', 'validPreset'])
+
+    // Then
+    expect(testResult).toEqual({
+      path: resolvePath(subdir),
+      preset: 'validPreset',
     })
   })
 
