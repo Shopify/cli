@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.16.0
+
+### Minor Changes
+
+- d460e738: Add the `app generate schema <function-name>` command
+- 66d31140: Migrate the logic for serving extensions from Go to Node
+
+### Patch Changes
+
+- 2030174c: Print relevant error message when function wasm blob fails to upload
+- Updated dependencies [d460e738]
+  - @shopify/cli-kit@3.16.0
+  - @shopify/shopify-cli-extensions@3.16.0
+
 ## 3.15.0
 
 ### Minor Changes

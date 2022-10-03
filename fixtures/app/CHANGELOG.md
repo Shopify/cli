@@ -1,5 +1,15 @@
 # app
 
+## 3.16.0
+
+### Patch Changes
+
+- Updated dependencies [2030174c]
+- Updated dependencies [d460e738]
+- Updated dependencies [66d31140]
+  - @shopify/app@3.16.0
+  - @shopify/cli@3.16.0
+
 ## 3.15.0
 
 ### Patch Changes

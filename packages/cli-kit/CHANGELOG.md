@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.16.0
+
+### Minor Changes
+
+- d460e738: Add the `app generate schema <function-name>` command
+
 ## 3.15.0
 
 ### Minor Changes
