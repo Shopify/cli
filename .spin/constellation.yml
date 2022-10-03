@@ -1,3 +1,5 @@
 schema: v1
 extend: partners
 description: CLI constellation
+repos:
+  - cli
