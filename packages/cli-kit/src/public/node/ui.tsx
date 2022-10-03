@@ -18,21 +18,37 @@ export async function renderConcurrent(processes: OutputProcess[], onAbort?: (ab
   render(<ConcurrentOutput processes={processes} abortController={abortController} />)
 }
 
+type RenderBannerOptions = Omit<BannerProps, 'type'>
+
 /**
  * Renders information to the console in the form of:
  *
  * ```
- * ╭─ info ─────────────────────╮
- * │                            │
- * │ Title                      │
- * │                            │
- * │  Body Text                 │
- * │                            │
- * ╰────────────────────────────╯
+ * ╭─ info ───────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Title                                                    │
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * │ Next Steps                                               │
+ * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
+ * │     elit sed do eiusmod tempor incididunt ut labore et   │
+ * │     dolore magna aliqua                                  │
+ * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
+ * │     ullamco laboris nisi ut aliquip ex ea commodo        │
+ * │     consequat                                            │
+ * │                                                          │
+ * │ Reference                                                │
+ * │   • Reference 1                                          │
+ * │   • Reference 2                                          │
+ * │                                                          │
+ * │ Link: https://shopify.com                                │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {Omit<BannerProps, 'type'>} options
+ * @param {RenderBannerOptions} options
  */
-export function renderInfo(options: Omit<BannerProps, 'type'>) {
+export function renderInfo(options: RenderBannerOptions) {
   banner({...options, type: 'info'})
 }
 
@@ -40,17 +56,31 @@ export function renderInfo(options: Omit<BannerProps, 'type'>) {
  * Renders a success message to the console in the form of:
  *
  * ```
- * ╭─ success ──────────────────╮
- * │                            │
- * │ Title                      │
- * │                            │
- * │  Body Text                 │
- * │                            │
- * ╰────────────────────────────╯
+ * ╭─ success ────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Title                                                    │
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * │ Next Steps                                               │
+ * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
+ * │     elit sed do eiusmod tempor incididunt ut labore et   │
+ * │     dolore magna aliqua                                  │
+ * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
+ * │     ullamco laboris nisi ut aliquip ex ea commodo        │
+ * │     consequat                                            │
+ * │                                                          │
+ * │ Reference                                                │
+ * │   • Reference 1                                          │
+ * │   • Reference 2                                          │
+ * │                                                          │
+ * │ Link: https://shopify.com                                │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {Omit<BannerProps, 'type'>} options
+ * @param {RenderBannerOptions} options
  */
-export function renderSuccess(options: Omit<BannerProps, 'type'>) {
+export function renderSuccess(options: RenderBannerOptions) {
   banner({...options, type: 'success'})
 }
 
@@ -58,17 +88,31 @@ export function renderSuccess(options: Omit<BannerProps, 'type'>) {
  * Renders a warning message to the console in the form of:
  *
  * ```
- * ╭─ warning ──────────────────╮
- * │                            │
- * │ Title                      │
- * │                            │
- * │  Body Text                 │
- * │                            │
- * ╰────────────────────────────╯
+ * ╭─ warning ────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Title                                                    │
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * │ Next Steps                                               │
+ * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
+ * │     elit sed do eiusmod tempor incididunt ut labore et   │
+ * │     dolore magna aliqua                                  │
+ * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
+ * │     ullamco laboris nisi ut aliquip ex ea commodo        │
+ * │     consequat                                            │
+ * │                                                          │
+ * │ Reference                                                │
+ * │   • Reference 1                                          │
+ * │   • Reference 2                                          │
+ * │                                                          │
+ * │ Link: https://shopify.com                                │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {Omit<BannerProps, 'type'>} options
+ * @param {RenderBannerOptions} options
  */
-export function renderWarning(options: Omit<BannerProps, 'type'>) {
+export function renderWarning(options: RenderBannerOptions) {
   banner({...options, type: 'warning'})
 }
 
@@ -76,16 +120,30 @@ export function renderWarning(options: Omit<BannerProps, 'type'>) {
  * Renders an error message to the console in the form of:
  *
  * ```
- * ╭─ error ────────────────────
- * │                            │
- * │ Title                      │
- * │                            │
- * │  Body Text                 │
- * │                            │
- * ╰────────────────────────────╯
+ * ╭─ error ──────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Title                                                    │
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * │ Next Steps                                               │
+ * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
+ * │     elit sed do eiusmod tempor incididunt ut labore et   │
+ * │     dolore magna aliqua                                  │
+ * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
+ * │     ullamco laboris nisi ut aliquip ex ea commodo        │
+ * │     consequat                                            │
+ * │                                                          │
+ * │ Reference                                                │
+ * │   • Reference 1                                          │
+ * │   • Reference 2                                          │
+ * │                                                          │
+ * │ Link: https://shopify.com                                │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {Omit<BannerProps, 'type'>} options
+ * @param {RenderBannerOptions} options
  */
-export function renderError(options: Omit<BannerProps, 'type'>) {
+export function renderError(options: RenderBannerOptions) {
   banner({...options, type: 'error'})
 }

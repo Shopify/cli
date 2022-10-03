@@ -18,9 +18,9 @@ function typeToColor(type: Props['type']) {
 
 const Banner: React.FC<Props> = ({type, children}) => {
   return (
-    <Box width={30} padding={1} borderStyle="round" flexDirection="column" borderColor={typeToColor(type)}>
+    <Box width={60} padding={1} borderStyle="round" flexDirection="column" borderColor={typeToColor(type)}>
       <Box marginTop={-2} marginBottom={1}>
-        <Text>{` ${type} `}</Text>
+        <Text dimColor bold>{` ${type} `}</Text>
       </Box>
       {children}
     </Box>

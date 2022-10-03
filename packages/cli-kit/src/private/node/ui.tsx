@@ -1,4 +1,6 @@
 import {Banner, BannerType} from './components/Banner.js'
+import {Link} from './components/Link.js'
+import {List} from './components/List.js'
 import React, {ReactElement} from 'react'
 import {Box, render as inkRender, Text} from 'ink'
 import {EventEmitter} from 'events'
@@ -45,20 +47,47 @@ export function render(element: JSX.Element) {
 
 export interface BannerProps {
   type: BannerType
-  title: string
+  headline?: string
   body: string
+  nextSteps?: string[]
+  reference?: string[]
+  link?: {
+    label: string
+    url: string
+  }
 }
 
-export function banner({type, title, body}: BannerProps) {
+export function banner({type, headline, body, nextSteps, reference, link}: BannerProps) {
   renderOnce(
     <Banner type={type}>
-      <Box marginBottom={1}>
-        <Text>{title}</Text>
-      </Box>
+      {headline && (
+        <Box marginBottom={1}>
+          <Text>{headline}</Text>
+        </Box>
+      )}
 
-      <Box marginLeft={1}>
+      <Box>
         <Text dimColor>{body}</Text>
       </Box>
+
+      {nextSteps && (
+        <Box marginTop={1}>
+          <List title="Next Steps" items={nextSteps} />
+        </Box>
+      )}
+
+      {reference && (
+        <Box marginTop={1}>
+          <List title="Reference" items={reference} />
+        </Box>
+      )}
+
+      {link && (
+        <Box marginTop={1}>
+          <Text dimColor>{`${link.label}: `}</Text>
+          <Link url={link.url} />
+        </Box>
+      )}
     </Banner>,
   )
 }
