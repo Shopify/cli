@@ -1,28 +1,31 @@
-import {getLocalization} from './localization.js'
+import {getLocalization, Localization} from './localization.js'
 import {file, path, output} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
-async function testGetLocalization(tmpDir: string) {
-  return getLocalization({
-    configuration: {
-      name: 'mock-name',
-      type: 'checkout_ui_extension',
-      metafields: [],
-      capabilities: {
-        blockProgress: false,
-        networkAccess: false,
+async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
+  return getLocalization(
+    {
+      configuration: {
+        name: 'mock-name',
+        type: 'checkout_ui_extension',
+        metafields: [],
+        capabilities: {
+          blockProgress: false,
+          networkAccess: false,
+        },
       },
+      idEnvironmentVariableName: 'mockId',
+      localIdentifier: 'localIdentifier',
+      configurationPath: `${tmpDir}/shopify.ui.extension.toml`,
+      directory: tmpDir,
+      type: 'checkout_ui_extension',
+      graphQLType: 'graphQLType',
+      devUUID: 'dev-uuid',
+      outputBundlePath: `${tmpDir}/dist/main.js`,
+      entrySourceFilePath: `${tmpDir}/dist/main.js`,
     },
-    idEnvironmentVariableName: 'mockId',
-    localIdentifier: 'localIdentifier',
-    configurationPath: `${tmpDir}/shopify.ui.extension.toml`,
-    directory: tmpDir,
-    type: 'checkout_ui_extension',
-    graphQLType: 'graphQLType',
-    devUUID: 'dev-uuid',
-    outputBundlePath: `${tmpDir}/dist/main.js`,
-    entrySourceFilePath: `${tmpDir}/dist/main.js`,
-  })
+    currentLocalization,
+  )
 }
 
 describe('when there are no locale files', () => {
@@ -41,7 +44,7 @@ describe('when there are no locale files', () => {
   })
 })
 
-describe('when there locale files', () => {
+describe('when there are locale files', () => {
   it('returns defaultLocale using the locale marked as .default', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
@@ -82,6 +85,11 @@ describe('when there locale files', () => {
   })
 
   it('returns the lastUpdated timestamp of the most recently updated locale', async () => {
+    let timestamp = 0
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      return (timestamp += 1)
+    })
+
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
@@ -90,10 +98,28 @@ describe('when there locale files', () => {
 
       const result = await testGetLocalization(tmpDir)
 
-      expect(result.localization!.lastUpdated).toBeLessThanOrEqual(Date.now())
+      expect(Date.now).toBeCalledTimes(4)
+      expect(result.localization!.lastUpdated).equals(timestamp)
     })
   })
+  it('returns the last succesful locale built when there are JSON errors', async () => {
+    let timestamp = 0
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      return (timestamp += 1)
+    })
 
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      await file.mkdir(path.join(tmpDir, 'locales'))
+      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      const {localization: lastSuccesfulLocalization} = await testGetLocalization(tmpDir)
+
+      await file.write(path.join(tmpDir, 'locales', 'es.json'), '{"greeting: "Hola!"}')
+
+      const result = await testGetLocalization(tmpDir, lastSuccesfulLocalization)
+
+      expect(result.localization!.lastUpdated).equals(lastSuccesfulLocalization!.lastUpdated)
+    })
+  })
   it("returns 'success' as the status when there are no JSON errors", async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
@@ -105,7 +131,6 @@ describe('when there locale files', () => {
       expect(result.status).toBe('success')
     })
   })
-
   it('outputs message when there are no JSON errors', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       vi.spyOn(output, 'info')
