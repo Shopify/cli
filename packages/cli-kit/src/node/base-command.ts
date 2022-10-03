@@ -58,12 +58,12 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  protected async presetsPath(_rawFlags: {path?: string}): Promise<string> {
-    return process.cwd()
+  async presetsPath(rawFlags: {path?: string}): Promise<string> {
+    return rawFlags.path || process.cwd()
   }
 
   protected findUpForPresets(): boolean {
-    return false
+    return true
   }
 }
 

@@ -24,12 +24,4 @@ export default abstract class ThemeCommand extends Command {
     }
     return passThroughFlags
   }
-
-  async presetsPath(rawFlags: {path?: string}): Promise<string> {
-    return rawFlags.path || process.cwd()
-  }
-
-  findUpForPresets(): boolean {
-    return true
-  }
 }

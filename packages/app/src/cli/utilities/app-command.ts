@@ -11,4 +11,8 @@ export default abstract class AppCommand extends Command {
     })
     return appTOML ? path.dirname(appTOML) : specifiedPath
   }
+
+  findUpForPresets(): boolean {
+    return false
+  }
 }
