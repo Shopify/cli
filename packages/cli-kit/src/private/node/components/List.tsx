@@ -4,7 +4,7 @@ import React from 'react'
 interface Props {
   title: string
   items: string[]
-  ordered: boolean
+  ordered?: boolean
 }
 
 const DOT = '•'
