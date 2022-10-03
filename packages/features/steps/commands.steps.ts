@@ -25,8 +25,9 @@ Then(/I see all available commands and they match the snapshot/, async function 
   const commandFlags = ['commands', '--no-header', '--columns=Command,Plugin']
   const result: string = (
     await exec('node', [executables.cli, ...commandFlags], {env: {...process.env, ...this.temporaryEnv}})
-  ).stdout.trimEnd()
-  const snapshot: string = (await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})).trimEnd()
+  ).stdout
+  const snapshot: string = await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})
 
-  assert.equal(snapshot, result, errorMessage)
+  const normalize = (value: string) => value.replace(/\r\n/g, '\n').trimEnd()
+  assert.equal(normalize(snapshot), normalize(result), errorMessage)
 })
