@@ -93,6 +93,11 @@ export async function setAppInfo(options: {
   store.setAppInfo(options)
 }
 
+export async function clearAppInfo(directory: string): Promise<void> {
+  const store = await cliKitStore()
+  store.clearAppInfo(directory)
+}
+
 export async function getActivePreset(directory: string): Promise<string | undefined> {
   const store = await cliKitStore()
   return store.getActivePreset(directory)
@@ -103,9 +108,9 @@ export async function setActivePreset(options: ActivePreset): Promise<void> {
   store.setActivePreset(options)
 }
 
-export async function clearAppInfo(directory: string): Promise<void> {
+export async function clearActivePreset(directory: string): Promise<void> {
   const store = await cliKitStore()
-  store.clearAppInfo(directory)
+  store.clearActivePreset(directory)
 }
 
 export async function getThemeStore(): Promise<string | undefined> {
@@ -174,6 +179,16 @@ export class CLIKitStore extends Conf<ConfSchema> {
     this.set('appInfo', apps)
   }
 
+  clearAppInfo(directory: string): void {
+    debug(content`Clearing app information for directory ${token.path(directory)}...`)
+    const apps = this.get('appInfo') ?? []
+    const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
+    if (index !== -1) {
+      apps.splice(index, 1)
+    }
+    this.set('appInfo', apps)
+  }
+
   getActivePreset(directory: string): string | undefined {
     debug(content`Reading active preset for directory ${token.path(directory)}...`)
     const activePresets = this.get('activePresets') ?? []
@@ -197,14 +212,14 @@ export class CLIKitStore extends Conf<ConfSchema> {
     this.set('activePresets', activePresets)
   }
 
-  clearAppInfo(directory: string): void {
-    debug(content`Clearing app information for directory ${token.path(directory)}...`)
-    const apps = this.get('appInfo') ?? []
-    const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
+  clearActivePreset(directory: string): void {
+    debug(content`Clearing active preset for directory ${token.path(directory)}...`)
+    const activePresets = this.get('activePresets') ?? []
+    const index = activePresets.findIndex((saved: ActivePreset) => saved.directory === directory)
     if (index !== -1) {
-      apps.splice(index, 1)
+      activePresets.splice(index, 1)
     }
-    this.set('appInfo', apps)
+    this.set('activePresets', activePresets)
   }
 
   clearAllAppInfo(): void {

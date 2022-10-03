@@ -26,7 +26,8 @@ export default class Activate extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Activate)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const loadedPresets = await loadPresetsFromDirectory(directory, {findUp: true})
+    const directoryContainingPreset = await this.presetDirectory(directory)
+    const loadedPresets = await loadPresetsFromDirectory(directoryContainingPreset)
     const selectedPreset = args.preset
     if (!Object.prototype.hasOwnProperty.call(loadedPresets, selectedPreset)) {
       let message = `Preset ${selectedPreset} not found!`
@@ -35,7 +36,18 @@ export default class Activate extends Command {
       }
       throw new error.Abort(message)
     }
-    activatePreset(selectedPreset, directory)
-    output.info(output.content`Activated preset ${output.token.yellow(selectedPreset)} for directory ${output.token.path(directory)}`)
+    activatePreset(selectedPreset, directoryContainingPreset)
+    output.info(output.content`Activated preset ${output.token.yellow(selectedPreset)} for directory ${output.token.path(directoryContainingPreset)}`)
+  }
+
+  async presetDirectory(dir: string): Promise<string> {
+    const presetsFilename = 'shopify.presets.toml'
+    const presetDirectory = await path.findUp(presetsFilename, {type: 'file', cwd: dir})
+    if (!presetDirectory) {
+      throw new error.Abort(`No presets file found for ${output.token.path(dir)}
+
+Try running in a directory with a configured ${output.token.path(presetsFilename)} file.`)
+    }
+    return path.dirname(presetDirectory)
   }
 }
