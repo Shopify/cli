@@ -16,7 +16,7 @@
   "dependencies": {
     "@shopify/admin-ui-extensions-react": "^1.0.1",
     "@shopify/app": "3.15.0",
-    "@shopify/checkout-ui-extensions-react": "^0.19.0",
+    "@shopify/checkout-ui-extensions-react": "^0.20.0",
     "@shopify/cli": "3.15.0",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.3",
     "@shopify/web-pixels-extension": "^0.1.1",
