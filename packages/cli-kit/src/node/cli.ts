@@ -44,7 +44,9 @@ export async function runCLI(options: RunCLIOptions) {
     settings.debug = true
   }
 
-  run(undefined, options.moduleURL).then(flush).catch(errorHandler)
+  run(undefined, options.moduleURL)
+    .then(() => flush())
+    .catch(errorHandler)
 }
 
 /**

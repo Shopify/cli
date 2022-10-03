@@ -22,12 +22,16 @@ abstract class BaseCommand extends Command {
     return super.init()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected async parse<TFlags extends {path?: string; verbose?: boolean}, TArgs extends {[name: string]: any}>(
-    options?: Interfaces.Input<TFlags> | undefined,
+  protected async parse<
+    TFlags extends Interfaces.FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends Interfaces.FlagOutput,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    TArgs extends {[name: string]: any},
+  >(
+    options?: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
     argv?: string[] | undefined,
-  ): Promise<Interfaces.ParserOutput<TFlags, TArgs>> {
-    const result = await super.parse<TFlags, TArgs>(options, argv)
+  ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     await addFromParsedFlags(result.flags)
     return result
   }
