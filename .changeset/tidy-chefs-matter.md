@@ -1,6 +1,6 @@
 ---
-'@shopify/app': major
-'@shopify/cli-kit': major
+'@shopify/app': minor
+'@shopify/cli-kit': minor
 ---
 
 Enable external access to cli inside a spin instance
