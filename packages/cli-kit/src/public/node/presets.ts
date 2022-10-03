@@ -1,5 +1,6 @@
 import {exists as fileExists, read as fileRead} from '../../file.js'
 import {findUp, join as pathJoin} from '../../path.js'
+import {setActivePreset} from '../../store.js'
 import {decode as tomlDecode} from '../../toml.js'
 
 const PRESETS_FILENAME = 'shopify.presets.toml'
@@ -25,4 +26,8 @@ export async function loadPresetsFromDirectory(dir: string, opts?: {findUp: bool
   } else {
     return {}
   }
+}
+
+export async function activatePreset(preset: string, directory: string): Promise<void> {
+  await setActivePreset({preset, directory})
 }

@@ -14,10 +14,16 @@ export interface CachedAppInfo {
   tunnelPlugin?: string
 }
 
+interface ActivePreset {
+  directory: string
+  preset: string
+}
+
 interface ConfSchema {
   appInfo: CachedAppInfo[]
   themeStore: string
   session: string
+  activePresets: ActivePreset[]
 }
 
 const schema = {
@@ -38,6 +44,20 @@ const schema = {
       },
     },
   },
+  activePresets: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        directory: {
+          type: 'string',
+        },
+        preset: {
+          type: 'string'
+        },
+      },
+    },
+  }
 } as unknown as Schema<ConfSchema>
 
 let _instance: CLIKitStore | undefined
@@ -71,6 +91,16 @@ export async function setAppInfo(options: {
 }): Promise<void> {
   const store = await cliKitStore()
   store.setAppInfo(options)
+}
+
+export async function getActivePreset(directory: string): Promise<string | undefined> {
+  const store = await cliKitStore()
+  return store.getActivePreset(directory)
+}
+
+export async function setActivePreset(options: ActivePreset): Promise<void> {
+  const store = await cliKitStore()
+  store.setActivePreset(options)
 }
 
 export async function clearAppInfo(directory: string): Promise<void> {
@@ -142,6 +172,29 @@ export class CLIKitStore extends Conf<ConfSchema> {
       }
     }
     this.set('appInfo', apps)
+  }
+
+  getActivePreset(directory: string): string | undefined {
+    debug(content`Reading active preset for directory ${token.path(directory)}...`)
+    const activePresets = this.get('activePresets') ?? []
+    const activePreset = activePresets.find((info: ActivePreset) => info.directory === directory)
+    return activePreset?.preset
+  }
+
+  setActivePreset(options: {
+    directory: string
+    preset: string
+  }): void {
+    debug(content`Storing active preset for directory ${token.path(options.directory)}:${token.yellow(options.preset)}`)
+    const activePresets = this.get('activePresets') ?? []
+    const index = activePresets.findIndex((saved: ActivePreset) => saved.directory === options.directory)
+    if (index === -1) {
+      activePresets.push(options)
+    } else {
+      const activePreset: ActivePreset = activePresets[index]!
+      activePreset.preset = options.preset
+    }
+    this.set('activePresets', activePresets)
   }
 
   clearAppInfo(directory: string): void {
