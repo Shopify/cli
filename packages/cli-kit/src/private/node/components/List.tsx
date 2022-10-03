@@ -1,13 +1,40 @@
+import {CommandWithText} from './CommandWithText.js'
+import {LinkWithText} from './LinkWithText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
+interface CommandItem {
+  text: string
+  command: string
+}
+
+interface LinkItem {
+  text: string
+  link: {
+    label: string
+    url: string
+  }
+}
+
+export type ListItem = string | CommandItem | LinkItem
+
 interface Props {
   title: string
-  items: string[]
+  items: ListItem[]
   ordered?: boolean
 }
 
 const DOT = '•'
+
+const renderListItem = (item: ListItem) => {
+  if (typeof item === 'string') {
+    return <Text dimColor>{item}</Text>
+  } else if ('command' in item) {
+    return <CommandWithText text={item.text} command={item.command} />
+  } else {
+    return <LinkWithText text={item.text} link={item.link} />
+  }
+}
 
 /**
  * `List` displays an unordered or ordered list with text aligned with the bullet point
@@ -26,7 +53,7 @@ const List: React.FC<Props> = ({title, items, ordered = false}: React.PropsWithC
           </Box>
 
           <Box flexGrow={1} marginLeft={1}>
-            <Text dimColor>{item}</Text>
+            {renderListItem(item)}
           </Box>
         </Box>
       ))}

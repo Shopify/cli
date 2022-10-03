@@ -1,6 +1,7 @@
 import {Banner, BannerType} from './components/Banner.js'
+import {List, ListItem} from './components/List.js'
 import {Link} from './components/Link.js'
-import {List} from './components/List.js'
+import {Fatal} from '../../error.js'
 import React, {ReactElement} from 'react'
 import {Box, render as inkRender, Text} from 'ink'
 import {EventEmitter} from 'events'
@@ -34,10 +35,10 @@ export class OutputStream extends EventEmitter {
   }
 }
 
-export function renderOnce(element: JSX.Element) {
+// eslint-disable-next-line no-console
+export function renderOnce(element: JSX.Element, logger = console.log) {
   const {output, unmount} = renderString(element)
-  // eslint-disable-next-line no-console
-  console.log(output)
+  logger(output)
   unmount()
 }
 
@@ -45,19 +46,19 @@ export function render(element: JSX.Element) {
   inkRender(element)
 }
 
-export interface BannerProps {
-  type: BannerType
+export interface AlertProps {
+  type: Exclude<BannerType, 'error'>
   headline?: string
   body: string
-  nextSteps?: string[]
-  reference?: string[]
+  nextSteps?: ListItem[]
+  reference?: ListItem[]
   link?: {
     label: string
     url: string
   }
 }
 
-export function banner({type, headline, body, nextSteps, reference, link}: BannerProps) {
+export function alert({type, headline, body, nextSteps, reference, link}: AlertProps) {
   renderOnce(
     <Banner type={type}>
       {headline && (
@@ -84,10 +85,25 @@ export function banner({type, headline, body, nextSteps, reference, link}: Banne
 
       {link && (
         <Box marginTop={1}>
-          <Text dimColor>{`${link.label}: `}</Text>
-          <Link url={link.url} />
+          <Link url={link.url} label={link.label} />
         </Box>
       )}
+    </Banner>,
+  )
+}
+
+export interface ErrorProps {
+  error: Fatal
+}
+
+export function error({error}: ErrorProps) {
+  renderOnce(
+    <Banner type="error">
+      <Box marginBottom={1}>
+        <Text>{error.message}</Text>
+      </Box>
+
+      {error.tryMessage && <List title="What to try:" items={[error.tryMessage]} />}
     </Banner>,
   )
 }

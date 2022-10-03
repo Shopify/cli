@@ -1,4 +1,4 @@
-import {Box, Text} from 'ink'
+import {Box, Text, useStdout} from 'ink'
 import React from 'react'
 
 export type BannerType = 'success' | 'error' | 'warning' | 'info'
@@ -17,8 +17,16 @@ function typeToColor(type: Props['type']) {
 }
 
 const Banner: React.FC<Props> = ({type, children}) => {
+  const {stdout} = useStdout()
+
   return (
-    <Box width={60} padding={1} borderStyle="round" flexDirection="column" borderColor={typeToColor(type)}>
+    <Box
+      width={(stdout?.columns ?? 0) >= 60 ? 60 : stdout?.columns}
+      padding={1}
+      borderStyle="round"
+      flexDirection="column"
+      borderColor={typeToColor(type)}
+    >
       <Box marginTop={-2} marginBottom={1}>
         <Text dimColor bold>{` ${type} `}</Text>
       </Box>

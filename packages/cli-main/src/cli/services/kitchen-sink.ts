@@ -1,3 +1,4 @@
+import {error} from '@shopify/cli-kit'
 import {renderError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export async function kitchenSink() {
@@ -5,10 +6,29 @@ export async function kitchenSink() {
     headline: 'Title',
     body: 'Body',
     nextSteps: [
-      'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat',
+      {
+        text: 'Run',
+        command: 'cd santorini-goods',
+      },
+      {
+        text: 'To preview your project, run',
+        command: 'npm app dev',
+      },
+      {
+        text: 'To add extensions, run',
+        command: 'npm generate extension',
+      },
     ],
-    reference: ['Reference 1', 'Reference 2'],
+    reference: [
+      {text: 'Run', command: 'npm shopify help'},
+      {
+        text: "Press 'return' to open the",
+        link: {
+          label: 'dev docs',
+          url: 'https://shopify.dev',
+        },
+      },
+    ],
     link: {
       label: 'Link',
       url: 'https://shopify.com',
@@ -25,11 +45,9 @@ export async function kitchenSink() {
   })
 
   renderError({
-    headline: 'Title',
-    body: 'Body',
-    nextSteps: [
-      'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
-      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat',
-    ],
+    error: new error.Abort(
+      "Couldn't connect to the Shopify Partner Dashboard.",
+      'Check your internet connection and try again.',
+    ),
   })
 }
