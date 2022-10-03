@@ -36,6 +36,10 @@ beforeEach(() => {
           codespaceURL: vi.fn(),
           gitpodURL: vi.fn(),
         },
+        spin: {
+          isSpin: vi.fn(),
+          fqdn: vi.fn(),
+        },
       },
     }
   })
@@ -461,6 +465,30 @@ describe('generateFrontendURL', () => {
     // Then
     expect(got).toEqual({
       frontendUrl: 'https://codespace.url.fqdn.com-4040.githubpreview.dev',
+      frontendPort: 4040,
+      usingLocalhost: false,
+    })
+    expect(store.setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('Returns a spin url if we are in a spin environment', async () => {
+    // Given
+    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
+    vi.mocked(environment.spin.fqdn).mockResolvedValue('spin.domain.dev')
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({
+      frontendUrl: 'https://cli.spin.domain.dev',
       frontendPort: 4040,
       usingLocalhost: false,
     })

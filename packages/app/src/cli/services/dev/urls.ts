@@ -27,6 +27,8 @@ export interface FrontendURLResult {
  * The tunnel creation logic depends on 7 variables:
  * - If a Codespaces environment is deteced, then the URL is built using the codespaces hostname. No need for tunnel
  * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname. No need for tunnel
+ * - If a Spin environment is detected, then the URL is built using the cli + fqdn hostname as configured in nginx.
+ *   No need for tunnel
  * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
  * - If noTunnel is true, that takes second preference and localhost is used
  * - A Tunnel is created then if any of these conditions are met:
@@ -53,6 +55,11 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   if (environment.local.gitpodURL()) {
     const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
     frontendUrl = `https://${frontendPort}-${defaultUrl}`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (environment.spin.isSpin()) {
+    frontendUrl = `https://cli.${await environment.spin.fqdn()}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
