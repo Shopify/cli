@@ -30,7 +30,10 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         outputBundlePath: extension.outputBundlePath,
         sourceFilePath: extension.entrySourceFilePath,
         environment: 'development',
-        env: options.devOptions.app.dotenv?.variables ?? {},
+        env: {
+          ...(options.devOptions.app.dotenv?.variables ?? {}),
+          APP_URL: options.devOptions.url,
+        },
         stderr: options.devOptions.stderr,
         stdout: options.devOptions.stdout,
         watchSignal: abortController.signal,

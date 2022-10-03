@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.15.0",
+  "version": "3.16.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -57,8 +57,8 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "1.16.4",
-    "@shopify/cli-kit": "3.15.0",
-    "@shopify/shopify-cli-extensions": "3.15.0",
+    "@shopify/cli-kit": "3.16.0",
+    "@shopify/shopify-cli-extensions": "3.16.0",
     "http-proxy": "^1.18.1",
     "diff": "^5.1.0",
     "esbuild": "0.15.7",
