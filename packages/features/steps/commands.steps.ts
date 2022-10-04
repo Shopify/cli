@@ -1,6 +1,6 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
-import {Then} from '@cucumber/cucumber'
+import {When, Then} from '@cucumber/cucumber'
 import * as fs from 'fs/promises'
 import {strict as assert} from 'assert'
 
@@ -21,13 +21,15 @@ If instead you didn't mean to change a command, UH OH. Check the commands in
 the diff below and figure out what is broken.
 `
 
-Then(/I see all available commands and they match the snapshot/, async function () {
+When(/I list the available commands/, async function () {
   const commandFlags = ['commands', '--no-header', '--columns=Command,Plugin']
-  const result: string = (
+  this.commandResult = (
     await exec('node', [executables.cli, ...commandFlags], {env: {...process.env, ...this.temporaryEnv}})
   ).stdout
-  const snapshot: string = await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})
+})
 
+Then(/I see all commands matching the snapshot/, async function () {
+  const snapshot: string = await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})
   const normalize = (value: string) => value.replace(/\r\n/g, '\n').trimEnd()
-  assert.equal(normalize(snapshot), normalize(result), errorMessage)
+  assert.equal(normalize(snapshot), normalize(this.commandResult), errorMessage)
 })
