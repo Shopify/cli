@@ -3,18 +3,19 @@ import {Link} from './Link.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
-interface CommandItem {
+interface CommandToken {
   command: string
 }
 
-interface LinkItem {
+interface LinkToken {
   link: {
     label: string
     url: string
   }
 }
 
-export type ListItem = string | CommandItem | LinkItem | ListItem[]
+type Token = string | CommandToken | LinkToken
+export type ListItem = Token | Token[]
 
 interface Props {
   title: string
