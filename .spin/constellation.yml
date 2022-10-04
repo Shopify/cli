@@ -1,0 +1,9 @@
+schema: v1
+extend: cd
+repos:
+  - billing
+  - partners:
+      env:
+        DISABLE_SHOPIFY_INTERNAL_API_INTERCEPTOR: "1"
+        DISABLE_BILLING_INTERCEPTOR: "1"
+  - cli
