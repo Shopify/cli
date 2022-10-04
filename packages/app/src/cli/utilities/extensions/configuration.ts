@@ -3,7 +3,7 @@ import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
-import {error, path, string} from '@shopify/cli-kit'
+import {error, path} from '@shopify/cli-kit'
 
 const RendererNotFoundBug = (extension: string) => {
   return new error.Bug(
@@ -67,7 +67,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             env: options.app.dotenv?.variables ?? {},
           },
         },
-        capabilities: string.underscoreKeys(extension.configuration.capabilities),
+        capabilities: extension.configuration.capabilities,
         approval_scopes: options.grantedScopes ?? [],
       }
     }),

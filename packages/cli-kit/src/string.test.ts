@@ -1,4 +1,4 @@
-import {hashString, linesToColumns, normalizeStoreName, tryParseInt, underscoreKeys} from './string.js'
+import {hashString, linesToColumns, normalizeStoreName, tryParseInt} from './string.js'
 import {describe, expect, it} from 'vitest'
 
 describe('normalizeStore', () => {
@@ -53,14 +53,6 @@ describe('hashString', () => {
     const hash2 = hashString('hello')
     expect(hash1).toEqual(hash2)
     expect(hash1).toMatch(/[a-f0-9]{40}/)
-  })
-})
-
-describe('underscoreKeys', () => {
-  it('converts the string keys of an object to underscore', () => {
-    const obj = {networkAccess: true, already_underscore: true}
-    const got = underscoreKeys(obj)
-    expect(got).toEqual({network_access: true, already_underscore: true})
   })
 })
 

@@ -16,7 +16,7 @@ import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExte
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import {path, output, file, error, environment, string} from '@shopify/cli-kit'
+import {path, output, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
 const RendererNotFoundBug = (extension: string) => {
@@ -190,7 +190,7 @@ async function configFor(extension: UIExtension, app: AppInterface) {
     case 'checkout_ui_extension': {
       return {
         extension_points: extension.configuration.extensionPoints,
-        capabilities: string.underscoreKeys(extension.configuration.capabilities),
+        capabilities: extension.configuration.capabilities,
         metafields: extension.configuration.metafields,
         name: extension.configuration.name,
         settings: extension.configuration.settings,

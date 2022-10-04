@@ -1,6 +1,4 @@
 import {unstyled} from './output.js'
-import {JsonMap} from './json.js'
-import {snakeCase} from 'change-case'
 import crypto from 'crypto'
 
 export {camelCase as camelize} from 'change-case'
@@ -29,13 +27,6 @@ function sha256(str: string) {
 
 export function hashString(str: string): string {
   return crypto.createHash('sha1').update(str).digest('hex')
-}
-
-export function underscoreKeys(obj: JsonMap): JsonMap {
-  return Object.keys(obj).reduce((result: JsonMap, key) => {
-    result[snakeCase(key)] = obj[key]
-    return result
-  }, {})
 }
 
 /**
