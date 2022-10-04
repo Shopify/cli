@@ -33,7 +33,7 @@ const renderListItem = (item: ListItem): JSX.Element => {
     return (
       <Text>
         {item.map((listItem, index) => (
-          <Text>
+          <Text key={index}>
             {renderListItem(listItem)}
             {index < item.length - 1 && <Text> </Text>}
           </Text>
