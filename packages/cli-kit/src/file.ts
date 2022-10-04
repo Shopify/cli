@@ -167,10 +167,14 @@ export async function lastUpdated(path: string): Promise<Date> {
  * @param path {string} Path to the directory or file.
  * @returns {number} A unix timestamp.
  */
-export async function lastUpdatedTimestamp(path: string) {
-  const lastUpdatedDateTime = await lastUpdated(path)
-
-  return lastUpdatedDateTime.getTime()
+export async function lastUpdatedTimestamp(path: string): Promise<number | undefined> {
+  try {
+    const lastUpdatedDateTime = await lastUpdated(path)
+    return lastUpdatedDateTime.getTime()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
 }
 
 /**
