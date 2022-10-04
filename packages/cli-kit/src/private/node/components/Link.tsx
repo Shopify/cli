@@ -5,7 +5,6 @@ import terminalLink from 'terminal-link'
 interface Props {
   url: string
   label: string
-  dimLabelColor?: boolean
 }
 
 /**
@@ -14,14 +13,14 @@ interface Props {
  * @param {React.PropsWithChildren<Props>} props
  * @returns {JSX.Element}
  */
-const Link: React.FC<Props> = ({url, label, dimLabelColor = true}: React.PropsWithChildren<Props>): JSX.Element => {
+const Link: React.FC<Props> = ({url, label}: React.PropsWithChildren<Props>): JSX.Element => {
   return (
-    <>
-      <Text dimColor={dimLabelColor}>{`${label}: `}</Text>
+    <Text>
+      <Text dimColor={true}>{`${label}: `}</Text>
       <Transform transform={(children) => terminalLink(children, url, {fallback: false})}>
         <Text underline>{url}</Text>
       </Transform>
-    </>
+    </Text>
   )
 }
 

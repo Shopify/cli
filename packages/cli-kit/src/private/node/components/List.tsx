@@ -1,22 +1,20 @@
-import {CommandWithText} from './CommandWithText.js'
-import {LinkWithText} from './LinkWithText.js'
+import {Command} from './Command.js'
+import {Link} from './Link.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
 interface CommandItem {
-  text: string
   command: string
 }
 
 interface LinkItem {
-  text: string
   link: {
     label: string
     url: string
   }
 }
 
-export type ListItem = string | CommandItem | LinkItem
+export type ListItem = string | CommandItem | LinkItem | ListItem[]
 
 interface Props {
   title: string
@@ -24,17 +22,28 @@ interface Props {
   ordered?: boolean
 }
 
-const DOT = '•'
-
-const renderListItem = (item: ListItem) => {
+const renderListItem = (item: ListItem): JSX.Element => {
   if (typeof item === 'string') {
     return <Text dimColor>{item}</Text>
   } else if ('command' in item) {
-    return <CommandWithText text={item.text} command={item.command} />
+    return <Command command={item.command} />
+  } else if ('link' in item) {
+    return <Link {...item.link} />
   } else {
-    return <LinkWithText text={item.text} link={item.link} />
+    return (
+      <Text>
+        {item.map((listItem, index) => (
+          <Text>
+            {renderListItem(listItem)}
+            {index < item.length - 1 && <Text> </Text>}
+          </Text>
+        ))}
+      </Text>
+    )
   }
 }
+
+const DOT = '•'
 
 /**
  * `List` displays an unordered or ordered list with text aligned with the bullet point
@@ -49,7 +58,7 @@ const List: React.FC<Props> = ({title, items, ordered = false}: React.PropsWithC
       {items.map((item, index) => (
         <Box key={index}>
           <Box>
-            <Text dimColor>{`  ${ordered ? `${index}.` : DOT}`}</Text>
+            <Text dimColor>{`  ${ordered ? `${index + 1}.` : DOT}`}</Text>
           </Box>
 
           <Box flexGrow={1} marginLeft={1}>

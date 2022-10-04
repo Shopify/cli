@@ -1,6 +1,9 @@
 import ConcurrentOutput from '../../private/node/components/ConcurrentOutput.js'
 import {OutputProcess} from '../../output.js'
-import {render, AlertProps, alert, error, ErrorProps} from '../../private/node/ui.js'
+import {render} from '../../private/node/ui.js'
+import {Fatal} from '../../error.js'
+import {AlertProps, alert} from '../../private/node/ui/alert.js'
+import {fatalError, error} from '../../private/node/ui/error.js'
 import React from 'react'
 import {AbortController, AbortSignal} from 'abort-controller'
 
@@ -21,28 +24,39 @@ export async function renderConcurrent(processes: OutputProcess[], onAbort?: (ab
 type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
- * Renders information to the console in the form of:
+ * Renders an information banner to the console.
+ *
+ * Basic:
  *
  * ```
- * ╭─ info ───────────────────────────────────────────────────╮
-│                                                          │
-│ Title                                                    │
-│                                                          │
-│ Body                                                     │
-│                                                          │
-│ Next Steps                                               │
-│   • Run cd santorini-goods                               │
-│   • To preview your project, run npm app dev             │
-│   • To add extensions, run npm generate extension        │
-│                                                          │
-│ Reference                                                │
-│   • Run npm shopify help                                 │
-│   • Press 'return' to open the dev docs:                 │
-│     https://shopify.dev                                  │
-│                                                          │
-│ Link: https://shopify.com                                │
-│                                                          │
-╰──────────────────────────────────────────────────────────╯
+ * ╭ info ────────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
+ * ```
+ *
+ * Complete:
+ * ```
+ * ╭ info ────────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Title                                                    │
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * │ Next steps                                               │
+ * │   • Run cd santorini-goods                               │
+ * │   • To preview your project, run npm app dev             │
+ * │   • To add extensions, run npm generate extension        │
+ * │                                                          │
+ * │ Reference                                                │
+ * │   • Run npm shopify help                                 │
+ * │   • Press 'return' to open the dev docs:                 │
+ * │     https://shopify.dev                                  │
+ * │                                                          │
+ * │ Link: https://shopify.com                                │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  * ```
  * @param {RenderAlertOptions} options
  */
@@ -51,26 +65,35 @@ export function renderInfo(options: RenderAlertOptions) {
 }
 
 /**
- * Renders a success message to the console in the form of:
+ * Renders a success banner to the console.
+ *
+ * Basic:
  *
  * ```
- * ╭─ success ────────────────────────────────────────────────╮
+ * ╭ success ─────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
+ * ```
+ *
+ * Complete:
+ * ```
+ * ╭ success ─────────────────────────────────────────────────╮
  * │                                                          │
  * │ Title                                                    │
  * │                                                          │
  * │ Body                                                     │
  * │                                                          │
- * │ Next Steps                                               │
- * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
- * │     elit sed do eiusmod tempor incididunt ut labore et   │
- * │     dolore magna aliqua                                  │
- * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
- * │     ullamco laboris nisi ut aliquip ex ea commodo        │
- * │     consequat                                            │
+ * │ Next steps                                               │
+ * │   • Run cd santorini-goods                               │
+ * │   • To preview your project, run npm app dev             │
+ * │   • To add extensions, run npm generate extension        │
  * │                                                          │
  * │ Reference                                                │
- * │   • Reference 1                                          │
- * │   • Reference 2                                          │
+ * │   • Run npm shopify help                                 │
+ * │   • Press 'return' to open the dev docs:                 │
+ * │     https://shopify.dev                                  │
  * │                                                          │
  * │ Link: https://shopify.com                                │
  * │                                                          │
@@ -83,69 +106,81 @@ export function renderSuccess(options: RenderAlertOptions) {
 }
 
 /**
- * Renders a warning message to the console in the form of:
- * @param {RenderAlertOptions} options
-
+ * Renders a warning banner to the console.
+ *
+ * Basic:
+ *
  * ```
- * ╭─ success ────────────────────────────────────────────────╮
-   │                                                          │
-   │ Body                                                     │
-   │                                                          │
-   ╰──────────────────────────────────────────────────────────╯
-```
+ * ╭ warning ─────────────────────────────────────────────────╮
+ * │                                                          │
+ * │ Body                                                     │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  * ```
- * ╭─ warning ────────────────────────────────────────────────╮
+ *
+ * Complete:
+ * ```
+ * ╭ warning ─────────────────────────────────────────────────╮
  * │                                                          │
  * │ Title                                                    │
  * │                                                          │
  * │ Body                                                     │
  * │                                                          │
- * │ Next Steps                                               │
- * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
- * │     elit sed do eiusmod tempor incididunt ut labore et   │
- * │     dolore magna aliqua                                  │
- * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
- * │     ullamco laboris nisi ut aliquip ex ea commodo        │
- * │     consequat                                            │
+ * │ Next steps                                               │
+ * │   • Run cd santorini-goods                               │
+ * │   • To preview your project, run npm app dev             │
+ * │   • To add extensions, run npm generate extension        │
  * │                                                          │
  * │ Reference                                                │
- * │   • Reference 1                                          │
- * │   • Reference 2                                          │
+ * │   • Run npm shopify help                                 │
+ * │   • Press 'return' to open the dev docs:                 │
+ * │     https://shopify.dev                                  │
  * │                                                          │
  * │ Link: https://shopify.com                                │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
+ * @param {RenderAlertOptions} options
  */
 export function renderWarning(options: RenderAlertOptions) {
   alert({...options, type: 'warning'})
 }
 
-type RenderErrorOptions = ErrorProps
+export interface RenderErrorOptions {
+  headline: string
+  tryMessages?: string[]
+}
 
 /**
- * Renders an error message to the console in the form of:
+ * Renders a Fatal error to the console inside a banner.
  *
  * ```
- * ╭─ error ──────────────────────────────────────────────────╮
+ * ╭ error ───────────────────────────────────────────────────╮
  * │                                                          │
- * │ Title                                                    │
+ * │ Couldn't connect to the Shopify Partner Dashboard.       │
  * │                                                          │
- * │ Body                                                     │
+ * │ What to try                                              │
+ * │   • Check your internet connection and try again.        │
  * │                                                          │
- * │ Next Steps                                               │
- * │   • lorem ipsum dolor sit amet consectetur adipiscing    │
- * │     elit sed do eiusmod tempor incididunt ut labore et   │
- * │     dolore magna aliqua                                  │
- * │   • Ut enim ad minim veniam, quis nostrud exercitation   │
- * │     ullamco laboris nisi ut aliquip ex ea commodo        │
- * │     consequat                                            │
+ * ╰──────────────────────────────────────────────────────────╯
+ * ```
+ * @param {Fatal} error
+ */
+export function renderFatalError(error: Fatal) {
+  fatalError(error)
+}
+
+/**
+ * Renders a geneirc error to the console inside a banner.
+ *
+ * ```
+ * ╭ error ───────────────────────────────────────────────────╮
  * │                                                          │
- * │ Reference                                                │
- * │   • Reference 1                                          │
- * │   • Reference 2                                          │
+ * │ Something went wrong.                                    │
  * │                                                          │
- * │ Link: https://shopify.com                                │
+ * │ What to try                                              │
+ * │   • Check your internet connection.                      │
+ * │   • Try again.                                           │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```

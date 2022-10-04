@@ -1,9 +1,5 @@
-import {Banner, BannerType} from './components/Banner.js'
-import {List, ListItem} from './components/List.js'
-import {Link} from './components/Link.js'
-import {Fatal} from '../../error.js'
-import React, {ReactElement} from 'react'
-import {Box, render as inkRender, Text} from 'ink'
+import {ReactElement} from 'react'
+import {render as inkRender} from 'ink'
 import {EventEmitter} from 'events'
 
 interface Instance {
@@ -44,68 +40,6 @@ export function renderOnce(element: JSX.Element, logger = console.log) {
 
 export function render(element: JSX.Element) {
   inkRender(element)
-}
-
-export interface AlertProps {
-  type: Exclude<BannerType, 'error'>
-  headline?: string
-  body: string
-  nextSteps?: ListItem[]
-  reference?: ListItem[]
-  link?: {
-    label: string
-    url: string
-  }
-}
-
-export function alert({type, headline, body, nextSteps, reference, link}: AlertProps) {
-  renderOnce(
-    <Banner type={type}>
-      {headline && (
-        <Box marginBottom={1}>
-          <Text>{headline}</Text>
-        </Box>
-      )}
-
-      <Box>
-        <Text dimColor>{body}</Text>
-      </Box>
-
-      {nextSteps && (
-        <Box marginTop={1}>
-          <List title="Next Steps" items={nextSteps} />
-        </Box>
-      )}
-
-      {reference && (
-        <Box marginTop={1}>
-          <List title="Reference" items={reference} />
-        </Box>
-      )}
-
-      {link && (
-        <Box marginTop={1}>
-          <Link url={link.url} label={link.label} />
-        </Box>
-      )}
-    </Banner>,
-  )
-}
-
-export interface ErrorProps {
-  error: Fatal
-}
-
-export function error({error}: ErrorProps) {
-  renderOnce(
-    <Banner type="error">
-      <Box marginBottom={1}>
-        <Text>{error.message}</Text>
-      </Box>
-
-      {error.tryMessage && <List title="What to try:" items={[error.tryMessage]} />}
-    </Banner>,
-  )
 }
 
 export const renderString = (element: ReactElement): Instance => {
