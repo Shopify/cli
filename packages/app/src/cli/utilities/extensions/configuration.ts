@@ -67,11 +67,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             env: options.app.dotenv?.variables ?? {},
           },
         },
-        capabilities: Object.fromEntries(
-          Object.entries(extension.configuration.capabilities).map((entry) => {
-            return [string.underscore(entry[0]), entry[1]]
-          }),
-        ),
+        capabilities: string.underscoreKeys(extension.configuration.capabilities),
         approval_scopes: options.grantedScopes ?? [],
       }
     }),

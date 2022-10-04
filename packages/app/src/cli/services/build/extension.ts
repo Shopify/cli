@@ -85,6 +85,7 @@ export async function buildUIExtensions(options: BuildUIExtensionsOptions): Prom
 ${output.token.json(configuration)}
 `)
           const input = yaml.encode(configuration)
+
           await runGoExtensionsCLI(['build', '-'], {
             cwd: options.app.directory,
             stdout,
