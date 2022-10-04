@@ -30,8 +30,8 @@ describe('getUIExtensionPayload', () => {
           metafields: [],
           extensionPoints: ['EXTENSION-POINT'],
           capabilities: {
-            blockProgress: false,
-            networkAccess: true,
+            block_progress: false,
+            network_access: true,
           },
         },
       })
@@ -71,8 +71,8 @@ describe('getUIExtensionPayload', () => {
           },
         },
         capabilities: {
-          blockProgress: false,
-          networkAccess: true,
+          block_progress: false,
+          network_access: true,
         },
         development: {
           hidden: true,
