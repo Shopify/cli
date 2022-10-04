@@ -55,7 +55,7 @@ export async function selectStore(
     return store
   }
 
-  output.info(`\n${CreateStoreLink(org.id)}`)
+  output.info(`\n${await CreateStoreLink(org.id)}`)
   await system.sleep(5)
 
   const reload = await reloadStoreListPrompt(org)
