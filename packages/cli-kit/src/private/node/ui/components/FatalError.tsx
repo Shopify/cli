@@ -1,7 +1,6 @@
 import {Banner} from './Banner.js'
 import {List} from './List.js'
 import {Bug, cleanSingleStackTracePath, Fatal} from '../../../../error.js'
-import {colors} from '../../../../node/colors.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 import StackTracey from 'stacktracey'
@@ -25,7 +24,6 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
         return !entry.file.includes('@oclif/core')
       })
       .map((item) => {
-        item.calleeShort = colors.yellow(item.calleeShort)
         /** We make the paths relative to the packages/ directory */
         const fileShortComponents = item.fileShort.split('packages/')
         item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1]! : fileShortComponents[0]!
@@ -47,12 +45,21 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
       {stack && stack.items.length !== 0 && (
         <Box marginTop={1} flexDirection="column">
           <Text bold>Stack trace:</Text>
-          {stack
-            .asTable({})
-            .split('\n')
-            .map((line, index) => (
-              <Text key={index}>{line}</Text>
-            ))}
+          {stack.items.map((item, index) => (
+            <Box key={index}>
+              <Box width="20%" paddingRight={1}>
+                <Text wrap="truncate-end">
+                  at <Text color="yellow">{item.calleeShort}</Text>
+                </Text>
+              </Box>
+              <Box width="35%" paddingRight={1}>
+                <Text wrap="truncate-start">{item.fileShort && `${item.fileShort}: ${item.line}`}</Text>
+              </Box>
+              <Box width="45%">
+                <Text wrap="truncate-end">{item.sourceLine?.trim()}</Text>
+              </Box>
+            </Box>
+          ))}
         </Box>
       )}
     </Banner>
