@@ -84,7 +84,7 @@ async function dev(options: DevOptions) {
       newApp: app.newApp,
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-    outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
     outputAppURL(storeFqdn, exposedUrl)
   }
 
