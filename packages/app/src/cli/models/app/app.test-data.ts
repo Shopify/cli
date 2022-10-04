@@ -36,8 +36,8 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
       type: uiExtension?.configuration?.type ?? 'product_subscription',
       metafields: [],
       capabilities: {
-        blockProgress: false,
-        networkAccess: false,
+        block_progress: false,
+        network_access: false,
       },
     },
     type: 'checkout_post_purchase',

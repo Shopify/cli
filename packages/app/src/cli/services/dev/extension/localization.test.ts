@@ -10,8 +10,8 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
         type: 'checkout_ui_extension',
         metafields: [],
         capabilities: {
-          blockProgress: false,
-          networkAccess: false,
+          block_progress: false,
+          network_access: false,
         },
       },
       idEnvironmentVariableName: 'mockId',
