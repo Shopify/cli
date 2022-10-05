@@ -8,8 +8,8 @@ import {file, path} from '@shopify/cli-kit'
 
 vi.mock('../../../models/app/app.js')
 
-describe('getUIExtensionPayload', () => {
-  test('returns the right payload', async () => {
+describe('returns the right payload', () => {
+  test('getUIExtensionPayload', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputBundlePath = path.join(tmpDir, 'main.js')
@@ -94,6 +94,42 @@ describe('getUIExtensionPayload', () => {
         type: 'product_subscription',
         uuid: 'devUUID',
         version: '1.2.3',
+      })
+    })
+  })
+
+  test('default values', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputBundlePath = path.join(tmpDir, 'main.js')
+      await file.touch(outputBundlePath)
+      const signal: any = vi.fn()
+      const stdout: any = vi.fn()
+      const stderr: any = vi.fn()
+      vi.mocked(getUIExtensionRendererVersion).mockResolvedValue({
+        name: 'extension-renderer',
+        version: '1.2.3',
+      })
+
+      const uiExtension = testUIExtension()
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+      })
+
+      // Then
+      expect(got).toMatchObject({
+        development: {
+          hidden: false,
+        },
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+        },
       })
     })
   })
