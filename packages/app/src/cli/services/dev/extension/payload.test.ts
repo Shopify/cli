@@ -8,8 +8,8 @@ import {file, path} from '@shopify/cli-kit'
 
 vi.mock('../../../models/app/app.js')
 
-describe('returns the right payload', () => {
-  test('getUIExtensionPayload', async () => {
+describe('getUIExtensionPayload', () => {
+  test('returns the right payload', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputBundlePath = path.join(tmpDir, 'main.js')

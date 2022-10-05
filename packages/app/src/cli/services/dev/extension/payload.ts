@@ -32,10 +32,8 @@ export async function getUIExtensionPayload(
       },
     },
     capabilities: {
-      // defaults
-      block_progress: false,
-      network_access: false,
-      ...extension.configuration.capabilities,
+      block_progress: extension.configuration.capabilities?.block_progress || false,
+      network_access: extension.configuration.capabilities?.network_access || false,
     },
     development: {
       ...options.currentDevelopmentPayload,
