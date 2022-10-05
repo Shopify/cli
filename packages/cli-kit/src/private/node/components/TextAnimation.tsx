@@ -3,24 +3,26 @@ import chalkAnimation from 'chalk-animation'
 import {Text} from 'ink'
 import React, {useEffect, useState} from 'react'
 
+type AnimationName = 'rainbow' | 'pulse' | 'glitch' | 'radar' | 'neon' | 'karaoke'
+
 interface Props {
-  name?: 'rainbow' | 'pulse' | 'glitch' | 'radar' | 'neon'
+  name?: AnimationName
   speed?: number
 }
 
-const delays = {
+const delays: {[key in AnimationName]: number} = {
   rainbow: 15,
   pulse: 16,
   glitch: 55,
   radar: 50,
   neon: 500,
+  karaoke: 50,
 }
 
 /**
  * `TextAnimation` applies animations from [chalk-animation](https://github.com/bokub/chalk-animation) to `Text` Children
 
  * @param {React.PropsWithChildren<Props>} props
- * @returns {JSX.Element}
  */
 const TextAnimation: React.FC<Props> = ({
   name = 'rainbow',

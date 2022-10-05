@@ -7,7 +7,6 @@ import React, {useEffect, useState} from 'react'
  * - You want to respond to the resize event of the terminal. Whenever the user resizes their terminal window the output's height and width will be recalculated and re-rendered properly.
  *
  * @param {{children?: React.ReactNode}} props
- * @returns {JSX.Element}
  */
 const FullScreen: React.FC = (props: {children?: React.ReactNode}): JSX.Element => {
   const [size, setSize] = useState({
