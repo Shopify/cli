@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       nx_level:
-        description: "command to pass to nx, to run everything: 'run-many --all'"
+        description: 'Command to pass to nx (if you want to run everything: run-many --all)'
         required: true
         default: "affected"
+      debug_enabled:
+        type: boolean
+        description: 'Enable tmate debugging'
+        required: false
+        default: false
   push:
     branches:
       - main
@@ -220,3 +225,8 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
+      - name: Setup tmate session
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
