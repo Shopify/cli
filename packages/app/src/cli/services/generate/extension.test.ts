@@ -10,7 +10,7 @@ import {
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path, template} from '@shopify/cli-kit'
-import {addNPMDependenciesIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
+import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
@@ -120,6 +120,13 @@ describe('initialize a extension', () => {
 
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
 
+        const addDependenciesCalls = vi.mocked(addResolutionOrOverride).mock.calls
+        if (extensionFlavor === 'typescript-react') {
+          expect(addDependenciesCalls.length).toEqual(1)
+        } else {
+          expect(addDependenciesCalls.length).toEqual(0)
+        }
+
         const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', `index.${fileExtension}`))
         expect(srcIndexFile.trim()).not.toBe('')
       })
@@ -147,6 +154,13 @@ describe('initialize a extension', () => {
         const name = 'extension-name'
 
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
+
+        const addDependenciesCalls = vi.mocked(addResolutionOrOverride).mock.calls
+        if (extensionFlavor === 'typescript-react') {
+          expect(addDependenciesCalls.length).toEqual(1)
+        } else {
+          expect(addDependenciesCalls.length).toEqual(0)
+        }
 
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
           flavor: liquidFlavor,
