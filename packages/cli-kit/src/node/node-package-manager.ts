@@ -1,5 +1,5 @@
 import {exec} from '../system.js'
-import {exists as fileExists, read as readFile} from '../file.js'
+import {exists as fileExists, read as readFile, write as writeFile} from '../file.js'
 import {glob, dirname, join as pathJoin, findUp} from '../path.js'
 import {Abort, Bug} from '../error.js'
 import {latestNpmPackageVersion} from '../version.js'
@@ -255,6 +255,16 @@ export interface PackageJson {
    * The workspaces attribute of the package.json
    */
   workspaces?: string[]
+
+  /**
+   * The resolutions attribute of the package.json. Only useful when using yarn as package manager
+   */
+  resolutions?: {[key: string]: string}
+
+  /**
+   * The overrides attribute of the package.json. Only useful when using npm o npmn as package managers
+   */
+  overrides?: {[key: string]: string}
 }
 
 /**
@@ -471,4 +481,23 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
   } else {
     throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
   }
+}
+
+export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}) {
+  const packageManager = await getPackageManager(directory)
+  const packageJsonPath = pathJoin(directory, 'package.json')
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+
+  if (packageManager === 'yarn') {
+    packageJsonContent.resolutions = packageJsonContent.resolutions
+      ? {...packageJsonContent.resolutions, ...dependencies}
+      : dependencies
+  }
+  if (packageManager === 'npm' || packageManager === 'pnpm') {
+    packageJsonContent.overrides = packageJsonContent.overrides
+      ? {...packageJsonContent.overrides, ...dependencies}
+      : dependencies
+  }
+
+  await writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2))
 }

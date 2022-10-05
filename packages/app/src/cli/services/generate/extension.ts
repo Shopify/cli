@@ -12,7 +12,11 @@ import {
 import {AppInterface} from '../../models/app/app.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
 import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
-import {addNPMDependenciesIfNeeded, DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {
+  addNPMDependenciesIfNeeded,
+  addResolutionOrOverride,
+  DependencyVersion,
+} from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
 import stream from 'node:stream'
 
@@ -80,6 +84,7 @@ async function uiExtensionInit({
         title: 'Install additional dependencies',
         task: async (_, task) => {
           task.title = 'Installing additional dependencies...'
+          await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
           const requiredDependencies = getRuntimeDependencies({extensionType, extensionFlavor})
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: app.packageManager,
@@ -236,6 +241,12 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   }
   await file.mkdir(extensionDirectory)
   return extensionDirectory
+}
+
+async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavor) {
+  if (extensionFlavor === 'typescript-react') {
+    await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
+  }
 }
 
 export default extensionInit
