@@ -561,7 +561,7 @@ describe('findUpAndReadPackageJson', () => {
 })
 
 describe('addResolutionOrOverride', () => {
-  it('when no package jason then an abort exception is thrown', async () => {
+  it('when no package.json then an abort exception is thrown', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const reactType = {'@types/react': '17.0.30'}

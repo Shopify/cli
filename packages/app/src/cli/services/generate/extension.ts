@@ -244,11 +244,9 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
 }
 
 async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavor) {
-  if (extensionFlavor === undefined || extensionFlavor !== 'typescript-react') {
-    return
+  if (extensionFlavor === 'typescript-react') {
+    await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }
-
-  await addResolutionOrOverride(directory, {'@types/react': '17.0.30'})
 }
 
 export default extensionInit
