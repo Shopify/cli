@@ -101,16 +101,6 @@ describe('getUIExtensionPayload', () => {
   test('default values', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputBundlePath = path.join(tmpDir, 'main.js')
-      await file.touch(outputBundlePath)
-      const signal: any = vi.fn()
-      const stdout: any = vi.fn()
-      const stderr: any = vi.fn()
-      vi.mocked(getUIExtensionRendererVersion).mockResolvedValue({
-        name: 'extension-renderer',
-        version: '1.2.3',
-      })
-
       const uiExtension = testUIExtension()
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
       const development: Partial<UIExtensionPayload['development']> = {}
