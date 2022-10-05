@@ -10,9 +10,6 @@ type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
 /**
  * Validate if an identity token is valid for the requested scopes
- * @param requestedScopes scopes
- * @param identity
- * @returns
  */
 function validateScopes(requestedScopes: string[], identity: IdentityToken) {
   const currentScopes = identity.scopes

@@ -113,9 +113,6 @@ export async function uploadUIExtensionsBundle(
 
 /**
  * It generates a URL to upload an app bundle.
- * @param apiKey {string} The application API key
- * @param deploymentUUID {string} The unique identifier of the deployment.
- * @returns
  */
 export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string) {
   const mutation = api.graphql.GenerateSignedUploadUrl

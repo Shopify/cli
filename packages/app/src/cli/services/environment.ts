@@ -344,8 +344,6 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
 /**
  * Any data sent via input flags takes precedence and needs to be validated.
  * If any of the inputs is invalid, we must throw an error and stop the execution.
- * @param input
- * @returns
  */
 async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
@@ -375,7 +373,6 @@ async function fetchDevDataFromOptions(
  * Retrieve cached info from the global configuration based on the current local app
  * @param reset {boolean} Whether to reset the cache or not
  * @param directory {string} The directory containing the app.
- * @returns
  */
 async function getAppDevCachedInfo({
   reset,

@@ -22,8 +22,6 @@ export interface ExchangeScopes {
  * Given a valid authorization code, request an identity access token.
  * This token can then be used to get API specific tokens.
  * @param codeData code and codeVerifier from the authorize endpoint
- * @param clientId
- * @param identityFqdn
  * @returns {Promise<IdentityToken>} An instance with the identity access tokens.
  */
 export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Promise<IdentityToken> {
@@ -45,8 +43,6 @@ export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Prom
  * Given an identity token, request an application token.
  * @param token access token obtained in a previous step
  * @param store the store to use, only needed for admin API
- * @param clientId
- * @param identityFqdn
  * @returns {Promise<ApplicationSchema>} An array with the application access tokens.
  */
 export async function exchangeAccessForApplicationTokens(
@@ -73,8 +69,6 @@ export async function exchangeAccessForApplicationTokens(
 
 /**
  * Given an expired access token, refresh it to get a new one.
- * @param currentToken
- * @returns
  */
 export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
