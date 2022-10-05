@@ -9,8 +9,6 @@ interface Props {
 
 /**
  * `Link` displays a clickable link when supported by the terminal.
- *
- * @param {React.PropsWithChildren<Props>} props
  */
 const Link: React.FC<Props> = ({url, label}: React.PropsWithChildren<Props>): JSX.Element => {
   return (

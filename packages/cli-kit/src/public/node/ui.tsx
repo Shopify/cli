@@ -10,9 +10,6 @@ import {AbortController, AbortSignal} from 'abort-controller'
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * This function instantiates an `AbortController` so that the various processes can subscribe to the same abort signal.
- *
- * @param {OutputProcess[]} processes
- * @param {(abortSignal: AbortSignal) => void} [onAbort]
  */
 export async function renderConcurrent(processes: OutputProcess[], onAbort?: (abortSignal: AbortSignal) => void) {
   const abortController = new AbortController()
@@ -74,7 +71,6 @@ type RenderAlertOptions = Omit<AlertProps, 'type'>
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {RenderAlertOptions} options
  */
 export function renderInfo(options: RenderAlertOptions) {
   alert({...options, type: 'info'})
@@ -115,7 +111,6 @@ export function renderInfo(options: RenderAlertOptions) {
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {RenderAlertOptions} options
  */
 export function renderSuccess(options: RenderAlertOptions) {
   alert({...options, type: 'success'})
@@ -156,7 +151,6 @@ export function renderSuccess(options: RenderAlertOptions) {
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {RenderAlertOptions} options
  */
 export function renderWarning(options: RenderAlertOptions) {
   alert({...options, type: 'warning'})
@@ -180,7 +174,6 @@ export interface RenderErrorOptions {
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {Fatal} error
  */
 export function renderFatalError(error: Fatal) {
   fatalError(error)
@@ -200,7 +193,6 @@ export function renderFatalError(error: Fatal) {
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
- * @param {RenderErrorOptions} options
  */
 export function renderError(options: RenderErrorOptions) {
   error(options)

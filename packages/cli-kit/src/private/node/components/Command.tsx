@@ -7,8 +7,6 @@ interface Props {
 
 /**
  * `Command` displays a command as non-dimmed text.
- *
- * @param {React.PropsWithChildren<Props>} props
  */
 const Command: React.FC<Props> = ({command}: React.PropsWithChildren<Props>): JSX.Element => {
   return <Text>{command}</Text>

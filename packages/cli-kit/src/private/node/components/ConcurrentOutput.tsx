@@ -43,8 +43,6 @@ interface Line {
  * backend    | [nodemon] watching extensions: js,mjs,json
  * backend    | [nodemon] starting `node backend/index.js
  * ```
- *
- * @param {React.PropsWithChildren<Props>} props
  */
 const ConcurrentOutput: FunctionComponent<Props> = ({processes, runProcesses}) => {
   const [processOutput, setProcessOutput] = useState<Line[]>([])

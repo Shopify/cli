@@ -21,8 +21,6 @@ const delays: {[key in AnimationName]: number} = {
 
 /**
  * `TextAnimation` applies animations from [chalk-animation](https://github.com/bokub/chalk-animation) to `Text` Children
-
- * @param {React.PropsWithChildren<Props>} props
  */
 const TextAnimation: React.FC<Props> = ({
   name = 'rainbow',
