@@ -24,10 +24,12 @@ const FullScreen: React.FC = (props: {children?: React.ReactNode}): JSX.Element 
     }
 
     process.stdout.on('resize', onResize)
-    process.stdout.write('\x1b[?1049h')
+    // switch to an alternate buffer
+    process.stdout.write('\u001B[?1049h')
     return () => {
       process.stdout.off('resize', onResize)
-      process.stdout.write('\x1b[?1049l')
+      // switch back to the main buffer
+      process.stdout.write('\u001B[?1049l')
     }
   }, [])
 
