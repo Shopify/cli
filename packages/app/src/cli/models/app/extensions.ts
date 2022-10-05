@@ -30,10 +30,13 @@ export const UIExtensionConfigurationSchema = schema.define.object({
   extensionPoints: schema.define.array(schema.define.string()).optional(),
   capabilities: schema.define
     .object({
-      block_progress: schema.define.boolean().optional(),
-      network_access: schema.define.boolean().optional(),
+      block_progress: schema.define.boolean().default(false),
+      network_access: schema.define.boolean().default(false),
     })
-    .optional(),
+    .default({
+      block_progress: false,
+      network_access: false,
+    }),
 
   // Only for CheckoutUiExtension
   settings: schema.define.any().optional(),
