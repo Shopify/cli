@@ -83,6 +83,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     sourceRoot: path.dirname(options.sourceFilePath),
     bundle: true,
     define,
+    jsx: 'automatic',
     loader: {
       '.esnext': 'ts',
       '.js': 'jsx',

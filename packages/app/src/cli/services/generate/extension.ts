@@ -127,6 +127,7 @@ async function uiExtensionInit({
 
           if (extensionFlavor) {
             await changeIndexFileExtension(extensionDirectory, extensionFlavor)
+            await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
           }
 
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension generated`
@@ -177,6 +178,14 @@ async function changeIndexFileExtension(extensionDirectory: string, extensionFla
       path.join(extensionDirectory, 'src/index'),
       path.join(extensionDirectory, `src/index.${fileExtension}`),
     )
+  }
+}
+
+async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
+  // tsconfig.json file is only needed in extension folder to inform the IDE
+  // About the `react-jsx` tsconfig option, so IDE don't complain about missing react import
+  if (extensionFlavor !== 'typescript-react') {
+    await file.remove(path.join(extensionDirectory, 'tsconfig.json'))
   }
 }
 

@@ -65,6 +65,7 @@ describe('buildExtension', () => {
     expect(options.legalComments).toEqual('none')
     expect(options.minify).toBeTruthy()
     expect(options.target).toEqual('es6')
+    expect(options.jsx).toEqual('automatic')
     expect(options.resolveExtensions).toEqual(['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'])
     expect(options.define).toEqual({
       'process.env.FOO': JSON.stringify('BAR'),
