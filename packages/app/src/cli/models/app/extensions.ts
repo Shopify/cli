@@ -40,6 +40,7 @@ export const UIExtensionConfigurationSchema = schema.define.object({
 
   // Only for CustomerAccountsUiExtension
   categories: schema.define.array(schema.define.string()).optional(),
+  localization: schema.define.any().optional(),
 
   // Only for WebPixel
   runtimeContext: schema.define.string().optional(),

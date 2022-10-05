@@ -75,6 +75,11 @@ export interface ExtensionPayload {
   title: string
   extensionPoints?: string[]
   categories?: string[]
+  localization?: {
+    defaultLocale: string
+    lastUpdated: number
+    translations: {[locale: string]: string}
+  }
 }
 
 export enum Status {

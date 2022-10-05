@@ -52,6 +52,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
     // in a generalized, non-surprising way
     extensionPoints: obj.extensionPoints as any,
     categories: obj.categories as any,
+    localization: obj.localization as any,
   }
 }
 
