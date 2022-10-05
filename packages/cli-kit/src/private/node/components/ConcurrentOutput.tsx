@@ -1,13 +1,15 @@
 import {OutputProcess} from '../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
-import {AbortController} from 'abort-controller'
 import {Static, Text} from 'ink'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
+export type WritableStream = (process: OutputProcess, index: number) => Writable
+export type RunProcesses = (writableStream: WritableStream) => Promise<void>
+
 interface Props {
   processes: OutputProcess[]
-  abortController: AbortController
+  runProcesses: RunProcesses
 }
 
 interface Line {
@@ -42,9 +44,9 @@ interface Line {
  * backend    | [nodemon] starting `node backend/index.js
  * ```
  *
- * @param {React.PropsWithChildren<{processes: OutputProcess[], onAbort?: (abortSignal: AbortSignal): void}>} props
+ * @param {React.PropsWithChildren<Props>} props
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, runProcesses}) => {
   const [processOutput, setProcessOutput] = useState<Line[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
@@ -54,52 +56,28 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
     return concurrentColors[colorIndex]!
   }
 
+  const writableStream = (process: OutputProcess, index: number) => {
+    return new Writable({
+      write(chunk, _encoding, next) {
+        const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
+
+        setProcessOutput((previousProcessOutput) => [
+          ...previousProcessOutput,
+          ...lines.map((line) => ({
+            color: lineColor(index),
+            value: line,
+            prefix: process.prefix,
+          })),
+        ])
+
+        next()
+      },
+    })
+  }
+
   useEffect(() => {
-    const runProcess = async () => {
-      try {
-        await Promise.all(
-          processes.map(async (process, index) => {
-            const stdout = new Writable({
-              write(chunk, _encoding, next) {
-                const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
-                setProcessOutput((previousProcessOutput) => [
-                  ...previousProcessOutput,
-                  ...lines.map((line) => ({
-                    color: lineColor(index),
-                    value: line,
-                    prefix: process.prefix,
-                  })),
-                ])
-                next()
-              },
-            })
-
-            const stderr = new Writable({
-              write(chunk, _encoding, next) {
-                const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
-                setProcessOutput((previousProcessOutput) => [
-                  ...previousProcessOutput,
-                  ...lines.map((line) => ({
-                    color: lineColor(index),
-                    value: line,
-                    prefix: process.prefix,
-                  })),
-                ])
-                next()
-              },
-            })
-
-            await process.action(stdout, stderr, abortController.signal)
-          }),
-        )
-      } catch (error) {
-        abortController.abort()
-        throw error
-      }
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    runProcess()
+    runProcesses(writableStream)
   }, [])
 
   return (

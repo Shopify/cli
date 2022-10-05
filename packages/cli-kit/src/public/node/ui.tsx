@@ -1,4 +1,4 @@
-import ConcurrentOutput from '../../private/node/components/ConcurrentOutput.js'
+import ConcurrentOutput, {WritableStream} from '../../private/node/components/ConcurrentOutput.js'
 import {OutputProcess} from '../../output.js'
 import {render} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
@@ -18,7 +18,23 @@ export async function renderConcurrent(processes: OutputProcess[], onAbort?: (ab
   const abortController = new AbortController()
   if (onAbort) onAbort(abortController.signal)
 
-  render(<ConcurrentOutput processes={processes} abortController={abortController} />)
+  const runProcesses = async (writableStream: WritableStream) => {
+    try {
+      await Promise.all(
+        processes.map(async (process, index) => {
+          const stdout = writableStream(process, index)
+          const stderr = writableStream(process, index)
+
+          await process.action(stdout, stderr, abortController.signal)
+        }),
+      )
+    } catch (error) {
+      abortController.abort()
+      throw error
+    }
+  }
+
+  render(<ConcurrentOutput processes={processes} runProcesses={runProcesses} />)
 }
 
 type RenderAlertOptions = Omit<AlertProps, 'type'>
