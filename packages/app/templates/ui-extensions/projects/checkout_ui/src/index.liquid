@@ -1,5 +1,8 @@
 {%- if flavor == "react" -%}
+{%- if isShopify == false -%}
 import React from 'react';
+{%- endif -%}
+
 import {
   useExtensionApi,
   render,

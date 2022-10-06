@@ -124,7 +124,10 @@ async function uiExtensionInit({
           }
 
           const flavor = extensionFlavor?.includes('react') ? 'react' : ''
+          const isShopify = await environment.local.isShopify()
+
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+            isShopify,
             flavor,
             type: extensionType,
             name,
@@ -132,7 +135,7 @@ async function uiExtensionInit({
 
           if (extensionFlavor) {
             await changeIndexFileExtension(extensionDirectory, extensionFlavor)
-            await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
+            await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor, isShopify)
           }
 
           task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension generated`
@@ -186,10 +189,14 @@ async function changeIndexFileExtension(extensionDirectory: string, extensionFla
   }
 }
 
-async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
+async function removeUnwantedTemplateFilesPerFlavor(
+  extensionDirectory: string,
+  extensionFlavor: ExtensionFlavor,
+  isShopify: boolean,
+) {
   // tsconfig.json file is only needed in extension folder to inform the IDE
   // About the `react-jsx` tsconfig option, so IDE don't complain about missing react import
-  if (extensionFlavor !== 'typescript-react') {
+  if (!isShopify || extensionFlavor !== 'typescript-react') {
     await file.remove(path.join(extensionDirectory, 'tsconfig.json'))
   }
 }
