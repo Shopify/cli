@@ -51,7 +51,7 @@ abstract class BaseCommand extends Command {
           ...(argv || this.argv),
           ...argsFromPreset<TFlags, TArgs>(preset, options, noDefaultsResult),
         ])
-        reportDifferences<TFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset)
+        reportDifferences<TFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset, preset)
       }
     }
     await addFromParsedFlags(result.flags)
@@ -76,16 +76,19 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
 }
 
 function reportDifferences<TFlags, TArgs>(
-  specifiedFlags: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
+  noDefaultsFlags: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
   flagsWithPresets: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
-  preset: string,
+  presetName: string,
+  preset: JsonMap
 ): void {
   const changes: JsonMap = {}
   for (const [name, value] of Object.entries(flagsWithPresets)) {
-    if (!Object.prototype.hasOwnProperty.call(specifiedFlags, name)) changes[name] = value
+    const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
+    const presetContainsFlag = Object.prototype.hasOwnProperty.call(preset, name)
+    if (!userSpecifiedThisFlag && presetContainsFlag) changes[name] = value
   }
   if (Object.keys(changes).length === 0) return
-  info(content`Using applicable flags from the preset ${token.yellow(preset)}:
+  info(content`Using applicable flags from the preset ${token.yellow(presetName)}:
 
 ${Object.entries(changes)
   .map(([name, value]) => `• ${name} = ${value}`)
