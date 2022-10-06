@@ -4,7 +4,7 @@ import {clearActivePreset, locatePresetsFile} from '@shopify/cli-kit/node/preset
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Clear extends Command {
-  static description = 'Clears the current active preset'
+  static description = 'Clear the current active preset'
   static hidden = true
 
   static flags = {
