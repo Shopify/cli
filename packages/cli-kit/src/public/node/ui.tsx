@@ -180,7 +180,7 @@ export function renderFatalError(error: Fatal) {
 }
 
 /**
- * Renders a geneirc error to the console inside a banner.
+ * Renders a generic error to the console inside a banner.
  *
  * ```
  * ╭ error ───────────────────────────────────────────────────╮
