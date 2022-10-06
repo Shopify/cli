@@ -19,8 +19,9 @@ export default class Clear extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Clear)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    await clearActivePreset(await this.presetsDirectory(directory))
-    output.info('Active preset cleared.')
+    const directoryContainingPresets = await this.presetsDirectory(directory)
+    await clearActivePreset(directoryContainingPresets)
+    output.info(output.content`Active preset cleared for directory ${output.token.path(directoryContainingPresets)}`)
   }
 
 
