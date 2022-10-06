@@ -3,6 +3,7 @@
   "version": "3.16.3",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
