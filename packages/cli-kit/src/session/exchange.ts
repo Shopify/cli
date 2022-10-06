@@ -21,10 +21,8 @@ export interface ExchangeScopes {
 /**
  * Given a valid authorization code, request an identity access token.
  * This token can then be used to get API specific tokens.
- * @param codeData code and codeVerifier from the authorize endpoint
- * @param clientId
- * @param identityFqdn
- * @returns {Promise<IdentityToken>} An instance with the identity access tokens.
+ * @param codeData - code and codeVerifier from the authorize endpoint
+ * @returns An instance with the identity access tokens.
  */
 export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
@@ -43,11 +41,9 @@ export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Prom
 
 /**
  * Given an identity token, request an application token.
- * @param token access token obtained in a previous step
- * @param store the store to use, only needed for admin API
- * @param clientId
- * @param identityFqdn
- * @returns {Promise<ApplicationSchema>} An array with the application access tokens.
+ * @param identityToken - access token obtained in a previous step
+ * @param store - the store to use, only needed for admin API
+ * @returns An array with the application access tokens.
  */
 export async function exchangeAccessForApplicationTokens(
   identityToken: IdentityToken,
@@ -73,8 +69,6 @@ export async function exchangeAccessForApplicationTokens(
 
 /**
  * Given an expired access token, refresh it to get a new one.
- * @param currentToken
- * @returns
  */
 export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
   const clientId = await getIdentityClientId()
@@ -92,8 +86,8 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
 /**
  * Given a custom CLI token passed as ENV variable, request a valid partners API token
  * This token does not accept extra scopes, just the cli one.
- * @param token {string} The CLI token passed as ENV variable
- * @returns {Promise<ApplicationToken>} An instance with the application access tokens.
+ * @param token - The CLI token passed as ENV variable
+ * @returns An instance with the application access tokens.
  */
 export async function exchangeCustomPartnerToken(token: string): Promise<ApplicationToken> {
   const appId = applicationId('partners')
@@ -110,9 +104,9 @@ export type IdentityDeviceError =
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.
- * @param deviceCode The device code obtained after starting a device identity flow
- * @param scopes The scopes to request
- * @returns {Promise<IdentityToken>} An instance with the identity access tokens.
+ * @param deviceCode - The device code obtained after starting a device identity flow
+ * @param scopes - The scopes to request
+ * @returns An instance with the identity access tokens.
  */
 export async function exchangeDeviceCodeForAccessToken(
   deviceCode: string,

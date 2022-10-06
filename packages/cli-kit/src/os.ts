@@ -62,7 +62,7 @@ export const username = async (platform: typeof processPlatform = processPlatfor
 
 /**
  * Returns the platform and architecture.
- * @returns {{platform: string, arch: string}} Returns the current platform and architecture.
+ * @returns Returns the current platform and architecture.
  */
 export const platformAndArch = (
   platform: typeof processPlatform = processPlatform,

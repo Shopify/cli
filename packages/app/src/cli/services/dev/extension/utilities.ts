@@ -3,8 +3,8 @@ import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-v
 
 /**
  * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
- * @param extensions {UIExtension[]} - The UI Extensions to dev
- * @param store {string} - The store FQDN
+ * @param extensions - The UI Extensions to dev
+ * @param store - The store FQDN
  */
 export async function getCartPathFromExtensions(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.filter(getExtensionNeedsCartURL).length > 0

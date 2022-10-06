@@ -10,8 +10,8 @@ type Response = ReturnType<typeof nodeFetch>
  * Note that we are exposing types from "node-fetch". The reason being is that
  * they are consistent with the Web API so if we drop node-fetch in the future
  * it won't require changes from the callers.
- * @param url {RequestInfo} This defines the resource that you wish to fetch.
- * @param init {RequestInit} An object containing any custom settings that you want to apply to the request
+ * @param url - This defines the resource that you wish to fetch.
+ * @param init - An object containing any custom settings that you want to apply to the request
  * @returns A promise that resolves with the response.
  */
 export default async function fetch(url: RequestInfo, init?: RequestInit): Response {

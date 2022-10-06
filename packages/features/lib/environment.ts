@@ -1,6 +1,6 @@
 /**
  * Given an environment variable, it returns true if its value represents a truthy value.
- * @param value The environment variable value or undefined if it's not defined.
+ * @param value - The environment variable value or undefined if it's not defined.
  * @returns True if the variable represents a truthy value.
  */
 function isTruthy(value: string | undefined): boolean {

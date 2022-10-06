@@ -80,8 +80,8 @@ interface DevEnvironmentOutput {
  *  - The new selection will be saved as global configuration
  *  - The `shopify.app.toml` file will be updated with the new app apiKey
  *
- * @param options {DevEnvironmentInput} Current dev environment options
- * @returns {Promise<DevEnvironmentOutput>} The selected org, app and dev store
+ * @param options - Current dev environment options
+ * @returns The selected org, app and dev store
  */
 export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
@@ -208,9 +208,9 @@ interface DeployEnvironmentOutput {
 
 /**
  * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
- * @param app {AppInterface} The local app object
- * @param token {string} The token to use to access the Partners API
- * @returns {Promise<OrganizationApp | undefined>}
+ * @param app - The local app object
+ * @param token - The token to use to access the Partners API
+ * @returns
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
  */
@@ -344,8 +344,6 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
 /**
  * Any data sent via input flags takes precedence and needs to be validated.
  * If any of the inputs is invalid, we must throw an error and stop the execution.
- * @param input
- * @returns
  */
 async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
@@ -373,9 +371,8 @@ async function fetchDevDataFromOptions(
 
 /**
  * Retrieve cached info from the global configuration based on the current local app
- * @param reset {boolean} Whether to reset the cache or not
- * @param directory {string} The directory containing the app.
- * @returns
+ * @param reset - Whether to reset the cache or not
+ * @param directory - The directory containing the app.
  */
 async function getAppDevCachedInfo({
   reset,
@@ -390,8 +387,8 @@ async function getAppDevCachedInfo({
 
 /**
  * Fetch all orgs the user belongs to and show a prompt to select one of them
- * @param token {string} Token to access partners API
- * @returns {Promise<string>} The selected organization ID
+ * @param token - Token to access partners API
+ * @returns The selected organization ID
  */
 async function selectOrg(token: string): Promise<string> {
   const orgs = await fetchOrganizations(token)
@@ -401,9 +398,9 @@ async function selectOrg(token: string): Promise<string> {
 
 /**
  * Message shown to the user in case we are reusing a previous configuration
- * @param org {string} Organization name
- * @param app {string} App name
- * @param store {string} Store domain
+ * @param org - Organization name
+ * @param app - App name
+ * @param store - Store domain
  */
 function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager): void {
   let updateURLs = 'Not yet configured'
@@ -428,9 +425,9 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
 
 /**
  * Message shown to the user in case we are reusing a previous configuration
- * @param org {string} Organization name
- * @param app {string} App name
- * @param store {string} Store domain
+ * @param org - Organization name
+ * @param app - App name
+ * @param store - Store domain
  */
 function showDevValues(org: string, appName: string) {
   output.info('\nYour configs for dev were:')

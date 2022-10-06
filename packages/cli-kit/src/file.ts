@@ -29,8 +29,8 @@ export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | 
 /**
  * It reads a file and returns its content as a string using the
  * utf-8 encoding
- * @param path {string} Path to the file to read.
- * @returns {Promise<string>} A promise that resolves with the content of the file.
+ * @param path - Path to the file to read.
+ * @returns A promise that resolves with the content of the file.
  */
 export async function read(path: string, options: object = {encoding: 'utf-8'}): Promise<string> {
   debug(outputContent`Reading the content of file at ${token.path(path)}...`)
@@ -41,8 +41,7 @@ export async function read(path: string, options: object = {encoding: 'utf-8'}):
 /**
  * Given a path, it determines the actual path. This is useful when working
  * with paths that represent symlinks.
- * @param path {string} Path whose real path will be returned.
- * @returns
+ * @param path - Path whose real path will be returned.
  */
 export async function realpath(path: string): Promise<string> {
   return fs.promises.realpath(path)
@@ -56,8 +55,8 @@ export function readSync(path: string, options: object = {encoding: 'utf-8'}): s
 
 /**
  * Copies a file
- * @param from {string} Path to the directory or file to be copied.
- * @param to {string} Destination path.
+ * @param from - Path to the directory or file to be copied.
+ * @param to - Destination path.
  */
 export async function copy(from: string, to: string): Promise<void> {
   debug(outputContent`Copying file from ${token.path(from)} to ${token.path(to)}...`)
@@ -154,8 +153,8 @@ export function createReadStream(path: string) {
 
 /**
  * Returns the Date object for the last modification of a file.
- * @param path {string} Path to the directory or file.
- * @returns {number} A unix timestamp.
+ * @param path - Path to the directory or file.
+ * @returns A unix timestamp.
  */
 export async function lastUpdated(path: string): Promise<Date> {
   debug(outputContent`Getting last updated timestamp for file at ${token.path(path)}...`)
@@ -164,8 +163,8 @@ export async function lastUpdated(path: string): Promise<Date> {
 
 /**
  * Returns the unix timestamp of the last modification of a file.
- * @param path {string} Path to the directory or file.
- * @returns {number} A unix timestamp.
+ * @param path - Path to the directory or file.
+ * @returns A unix timestamp.
  */
 export async function lastUpdatedTimestamp(path: string): Promise<number | undefined> {
   try {
@@ -179,9 +178,9 @@ export async function lastUpdatedTimestamp(path: string): Promise<number | undef
 
 /**
  * Moves a file.
- * @param src {string} File to be moved.
- * @param dest {string} Path to be moved to.
- * @param options {object} Moving options.
+ * @param src - File to be moved.
+ * @param dest - Path to be moved to.
+ * @param options - Moving options.
  */
 export async function move(src: string, dest: string, options: {overwrite?: boolean} = {}): Promise<void> {
   await fs.move(src, dest, options)
@@ -189,8 +188,8 @@ export async function move(src: string, dest: string, options: {overwrite?: bool
 
 /**
  * Changes the permissions of a directory or file.
- * @param path {string} Path to the file or directory whose permissions will be modified.
- * @param mode {string | numbers} Permissions to set to the file or directory.
+ * @param path - Path to the file or directory whose permissions will be modified.
+ * @param mode - Permissions to set to the file or directory.
  */
 export async function chmod(path: string, mode: number | string): Promise<void> {
   await fs.promises.chmod(path, mode)
@@ -198,7 +197,7 @@ export async function chmod(path: string, mode: number | string): Promise<void> 
 
 /**
  * Checks if a file has executable permissions.
- * @param path {string} Path to the file whose permissions will be checked.
+ * @param path - Path to the file whose permissions will be checked.
  */
 export async function hasExecutablePermissions(path: string): Promise<boolean> {
   try {
@@ -212,8 +211,8 @@ export async function hasExecutablePermissions(path: string): Promise<boolean> {
 
 /**
  * Returns true if a file or directory exists
- * @param path {string} Path to the directory or file.
- * @returns {boolean} True if it exists.
+ * @param path - Path to the directory or file.
+ * @returns True if it exists.
  */
 export async function exists(path: string): Promise<boolean> {
   try {

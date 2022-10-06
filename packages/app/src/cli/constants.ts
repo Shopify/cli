@@ -139,7 +139,7 @@ export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionTy
 
 /**
  * Returns the runtime renderer dependency for a given UI extension type.
- * @param extensionType {UIExtensionTypes} Extension type.
+ * @param extensionType - Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
 export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): DependencyVersion | undefined {
@@ -286,8 +286,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
 /**
  * Each extension has a different ID in GraphQL.
  * Sometimes the ID is the same as the type, sometimes it's different.
- * @param type {string} The extension type
- * @returns {string} The extension GraphQL ID
+ * @param type - The extension type
+ * @returns The extension GraphQL ID
  */
 export const extensionGraphqlId = (type: ExtensionTypes) => {
   switch (type) {

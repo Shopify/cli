@@ -141,7 +141,7 @@ export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' |
 
 /**
  * It maps a level to a numeric value.
- * @param level {LogLevel} The level for which we'll return its numeric value.
+ * @param level - The level for which we'll return its numeric value.
  * @returns The numeric value of the level.
  */
 const logLevelValue = (level: LogLevel): number => {
@@ -165,7 +165,7 @@ const logLevelValue = (level: LogLevel): number => {
 
 /**
  *
- * @returns {LogLevel} It returns the log level set by the user.
+ * @returns It returns the log level set by the user.
  */
 export const currentLogLevel = (): LogLevel => {
   if (isVerbose()) {
@@ -191,8 +191,8 @@ export let collectedLogs: {[key: string]: string[]} = {}
  * This is only used during UnitTesting.
  * If we are in a testing context, instead of printing the logs to the console,
  * we will store them in a variable that can be accessed from the tests.
- * @param key {string} The key of the log.
- * @param content {string} The content of the log.
+ * @param key - The key of the log.
+ * @param content - The content of the log.
  */
 const collectLog = (key: string, content: Message) => {
   const output = collectedLogs.output ?? []
@@ -211,8 +211,8 @@ export const clearCollectedLogs = () => {
  * Ouputs information to the user.
  * Info messages don't get additional formatting.
  * Note: Info messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logger {Function} The logging function to use to output to the user.
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
  */
 export const info = (content: Message, logger: Logger = consoleLog) => {
   const message = stringifyMessage(content)
@@ -224,8 +224,8 @@ export const info = (content: Message, logger: Logger = consoleLog) => {
  * Outputs a success message to the user.
  * Success messages receive a special formatting to make them stand out in the console.
  * Note: Success messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logger {Function} The logging function to use to output to the user.
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
  */
 export const success = (content: Message, logger: Logger = consoleLog) => {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
@@ -237,8 +237,8 @@ export const success = (content: Message, logger: Logger = consoleLog) => {
  * Outputs a completed message to the user.
  * Completed message receive a special formatting to make them stand out in the console.
  * Note: Completed messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logger {Function} The logging function to use to output to the user.
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
  */
 export const completed = (content: Message, logger: Logger = consoleLog) => {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
@@ -250,8 +250,8 @@ export const completed = (content: Message, logger: Logger = consoleLog) => {
  * Ouputs debug information to the user. By default these output is hidden unless the user calls the CLI with --verbose.
  * Debug messages don't get additional formatting.
  * Note: Debug messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logger {Function} The logging function to use to output to the user.
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
  */
 export const debug = (content: Message, logger: Logger = consoleLog) => {
   if (isUnitTest()) collectLog('debug', content)
@@ -263,8 +263,8 @@ export const debug = (content: Message, logger: Logger = consoleLog) => {
  * Outputs a warning message to the user.
  * Warning messages receive a special formatting to make them stand out in the console.
  * Note: Warning messages are sent through the standard output.
- * @param content {string} The content to be output to the user.
- * @param logger {Function} The logging function to use to output to the user.
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
  */
 export const warn = (content: Message, logger: Logger = consoleWarn) => {
   if (isUnitTest()) collectLog('warn', content)
@@ -284,7 +284,7 @@ export const newline = () => {
  * Note: This API is not intended to be used internally. If you want to
  * abort the execution due to an error, raise a fatal error and let the
  * error handler handle and format it.
- * @param content {Fatal} The fatal error to be output.
+ * @param content - The fatal error to be output.
  */
 export const error = async (content: Fatal) => {
   if (!content.message) {
@@ -368,7 +368,7 @@ export interface OutputProcess {
  * Use this function when you have multiple concurrent processes that send data events
  * and we need to output them ensuring that they can visually differenciated by the user.
  *
- * @param processes {OutputProcess[]} A list of processes to run concurrently.
+ * @param processes - A list of processes to run concurrently.
  */
 export async function concurrent(
   processes: OutputProcess[],
@@ -438,8 +438,8 @@ const eraseCursorAnsiRegex = [
  * might contain ansii escape characters to move the cursor. That causes any additional
  * formatting to break. This function takes a string and strips escape characters that
  * manage the cursor in the terminal.
- * @param value {string} String whose erase cursor escape characters will be stripped.
- * @returns {string} Stripped string.
+ * @param value - String whose erase cursor escape characters will be stripped.
+ * @returns Stripped string.
  */
 function stripAnsiEraseCursorEscapeCharacters(value: string): string {
   return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
@@ -481,10 +481,8 @@ export function shouldDisplayColors(): boolean {
 }
 
 /**
- *
- * @param packageManager {PackageManager} The package manager that is being used.
- * @param version {string} The version to update to
- * @returns {te}
+ * @param packageManager - The package manager that is being used.
+ * @param version - The version to update to
  */
 export function getOutputUpdateCLIReminder(
   packageManager: PackageManager | 'unknown' | undefined,
@@ -499,9 +497,9 @@ export function getOutputUpdateCLIReminder(
 
 /**
  * Parse title and body to be a single formatted string
- * @param title {string} The title of the message. Will be formatted as a heading.
- * @param body {string} The body of the message. Will respect the original formatting.
- * @returns {string} The formatted message.
+ * @param title - The title of the message. Will be formatted as a heading.
+ * @param body - The body of the message. Will respect the original formatting.
+ * @returns The formatted message.
  */
 export function section(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`

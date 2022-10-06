@@ -53,7 +53,7 @@ export class Bug extends Fatal {
 
 /**
  * A function that handles errors that blow up in the CLI.
- * @param error Error to be handled.
+ * @param error - Error to be handled.
  * @returns A promise that resolves with the error passed.
  */
 export async function handler(error: unknown): Promise<unknown> {

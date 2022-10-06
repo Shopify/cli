@@ -5,7 +5,6 @@
  *  2. Render - If requested by `ShouldRender`, will be rendered after checkout
  *     completes
  */
-
 import {
   extend,
   BlockStack,

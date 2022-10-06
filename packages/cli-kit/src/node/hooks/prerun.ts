@@ -40,8 +40,8 @@ function parseNormalCommand(id: string, aliases: string[]): CommandContent {
  * Create commands implement Init by default, so the name of the command must be extracted from
  * the plugin/module name. Neither alias or topic are supported
  *
- * @param {Interfaces.Command.Class} commandClass - Oclif command configuration
- * @returns {(CommandContent | undefined)} Command content with the name of the command or undefined otherwise
+ * @param commandClass - Oclif command configuration
+ * @returns Command content with the name of the command or undefined otherwise
  */
 function parseCreateCommand(pluginAlias?: string): CommandContent | undefined {
   if (!pluginAlias || !pluginAlias.startsWith('@shopify/create-')) {
@@ -55,8 +55,8 @@ function parseCreateCommand(pluginAlias?: string): CommandContent | undefined {
  * Commands use this pattern topic:subtopic1:...:subtopicN:command. This method extract the topic and subtopic
  * information replacing the ':' separator with one space
  *
- * @param {string} cmd - Complete command string to extract the topic information
- * @returns {(string | undefined)} The topic name or undefined otherwise
+ * @param cmd - Complete command string to extract the topic information
+ * @returns The topic name or undefined otherwise
  */
 function parseTopic(cmd: string) {
   if (cmd.lastIndexOf(':') === -1) {
@@ -68,8 +68,8 @@ function parseTopic(cmd: string) {
 /**
  * Identifies if the command was launched using an alias instead of the oficial command name
  *
- * @param {string[]} aliases - List of possible alias a command has
- * @returns {(string | undefined)} The alias used or undefined otherwise
+ * @param aliases - List of possible alias a command has
+ * @returns The alias used or undefined otherwise
  */
 function findAlias(aliases: string[]) {
   const existingAlias = aliases.find((alias) =>

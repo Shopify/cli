@@ -9,7 +9,7 @@ import {homedir} from 'node:os'
 
 /**
  * It returns true if the terminal is interactive.
- * @returns {boolean} True if the terminal is interactive.
+ * @returns True if the terminal is interactive.
  */
 export function isTerminalInteractive(): boolean {
   return isInteractive()
@@ -17,7 +17,7 @@ export function isTerminalInteractive(): boolean {
 
 /**
  * Returns the path to the user's home directory.
- * @returns {string} The path to the user's home directory.
+ * @returns The path to the user's home directory.
  */
 export function homeDirectory(): string {
   return homedir()
@@ -25,7 +25,7 @@ export function homeDirectory(): string {
 
 /**
  * Returns true if the CLI is running in debug mode.
- * @param env The environment variables from the environment of the current process.
+ * @param env - The environment variables from the environment of the current process.
  * @returns true if SHOPIFY_ENV is development
  */
 export function isDevelopment(env = process.env): boolean {
@@ -34,7 +34,7 @@ export function isDevelopment(env = process.env): boolean {
 
 /**
  * Returns true if the CLI is running in verbose mode.
- * @param env The environment variables from the environment of the current process.
+ * @param env - The environment variables from the environment of the current process.
  * @returns true if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed
  */
 export function isVerbose(env = process.env): boolean {
@@ -44,7 +44,7 @@ export function isVerbose(env = process.env): boolean {
 /**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present) or a cloud environment (spin).
- * @returns {boolean} True if the CLI is used in a Shopify environment.
+ * @returns True if the CLI is used in a Shopify environment.
  */
 export async function isShopify(env = process.env): Promise<boolean> {
   if (Object.prototype.hasOwnProperty.call(env, constants.environmentVariables.runAsUser)) {
@@ -58,7 +58,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
  * This variable is used when running unit tests to indicate that the CLI's business logic
  * is run as a subject of a unit test. We can use this variable to disable output through
  * the standard streams.
- * @param env The environment variables from the environment of the current process.
+ * @param env - The environment variables from the environment of the current process.
  * @returns True if the SHOPIFY_UNIT_TEST environment variable is truthy.
  */
 export function isUnitTest(env = process.env): boolean {
@@ -67,7 +67,7 @@ export function isUnitTest(env = process.env): boolean {
 
 /**
  * Returns true if reporting analytics is enabled.
- * @param env The environment variables from the environment of the current process.
+ * @param env - The environment variables from the environment of the current process.
  * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
@@ -104,9 +104,9 @@ export function codespaceURL(env = process.env): string | undefined {
 /**
  * Checks if the CLI is run from a cloud environment
  *
- * @param {NodeJS.ProcessEnv} env - Environment variables used when the cli is launched
+ * @param env - Environment variables used when the cli is launched
  *
- * @returns {boolean} True in case the CLI is run from a cloud environment
+ * @returns True in case the CLI is run from a cloud environment
  */
 export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolean {
   return cloudEnvironment(env).platform !== 'localhost'
@@ -116,9 +116,9 @@ export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolea
  * Returns the cloud environment platform name and if the platform support online IDE in case the CLI is run from one of
  * them. Platform name 'localhost' is returned otherwise
  *
- * @param {NodeJS.ProcessEnv} env - Environment variables used when the cli is launched
+ * @param env - Environment variables used when the cli is launched
  *
- * @returns {{platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost', editor: boolean}} - Cloud platform information
+ * @returns Cloud platform information
  */
 export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
@@ -138,7 +138,7 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
 
 /**
  * Returns whether the environment has Git available.
- * @returns {Promise<boolean>} A promise that resolves with the value.
+ * @returns A promise that resolves with the value.
  */
 export async function hasGit(): Promise<boolean> {
   try {
@@ -177,7 +177,7 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
 /**
  * Returns the first mac address found
  *
- *  @returns {Promise<string>}  Mac address
+ * @returns Mac address
  */
 export function macAddress() {
   return macaddress.one()
