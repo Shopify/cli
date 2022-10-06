@@ -3,7 +3,6 @@
  * set the DEBUG environment variable before the 'debug' package sets up its configuration when modules
  * are loaded statically.
  */
-
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string

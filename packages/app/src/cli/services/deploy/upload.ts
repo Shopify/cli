@@ -21,7 +21,6 @@ interface DeployThemeExtensionOptions {
  * Uploads theme extension(s)
  * @param options - The upload options
  */
-
 export async function uploadThemeExtensions(
   themeExtensions: ThemeExtension[],
   options: DeployThemeExtensionOptions,

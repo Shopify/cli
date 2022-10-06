@@ -192,13 +192,13 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
  * @param pnpmWorkspacePath - Path to the pnpm-workspace.yaml file
  * @returns A promise that resolves with true if the app uses workspaces, false otherwise.
  */
-
 export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
   const packageJsonPath = pathJoin(appDirectory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   const pnpmWorkspacePath = pathJoin(appDirectory, pnpmWorkspaceFile)
   return Boolean(packageJsonContent.workspaces) || fileExists(pnpmWorkspacePath)
 }
+
 /**
  * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
  * @param dependency - The dependency name (e.g. react)
