@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {error, output, path} from '@shopify/cli-kit'
-import {loadPresetsFromDirectory, activatePreset} from '@shopify/cli-kit/node/presets'
+import {loadPresetsFromDirectory, locatePresetsFile, activatePreset} from '@shopify/cli-kit/node/presets'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Activate extends Command {
@@ -26,8 +26,8 @@ export default class Activate extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Activate)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const directoryContainingPreset = await this.presetDirectory(directory)
-    const loadedPresets = await loadPresetsFromDirectory(directoryContainingPreset)
+    const directoryContainingPresets = await this.presetsDirectory(directory)
+    const loadedPresets = await loadPresetsFromDirectory(directoryContainingPresets)
     const selectedPreset = args.preset
     if (!Object.prototype.hasOwnProperty.call(loadedPresets, selectedPreset)) {
       let message = `Preset ${selectedPreset} not found!`
@@ -36,18 +36,12 @@ export default class Activate extends Command {
       }
       throw new error.Abort(message)
     }
-    activatePreset(selectedPreset, directoryContainingPreset)
-    output.info(output.content`Activated preset ${output.token.yellow(selectedPreset)} for directory ${output.token.path(directoryContainingPreset)}`)
+    activatePreset(selectedPreset, directoryContainingPresets)
+    output.info(output.content`Activated preset ${output.token.yellow(selectedPreset)} for directory ${output.token.path(directoryContainingPresets)}`)
   }
 
-  async presetDirectory(dir: string): Promise<string> {
-    const presetsFilename = 'shopify.presets.toml'
-    const presetDirectory = await path.findUp(presetsFilename, {type: 'file', cwd: dir})
-    if (!presetDirectory) {
-      throw new error.Abort(`No presets file found for ${output.token.path(dir)}
-
-Try running in a directory with a configured ${output.token.path(presetsFilename)} file.`)
-    }
-    return path.dirname(presetDirectory)
+  async presetsDirectory(dir: string): Promise<string> {
+    const presetsDirectory = await locatePresetsFile(dir, {findUp: true, throwIfNotFound: true})
+    return path.dirname(presetsDirectory!)
   }
 }
