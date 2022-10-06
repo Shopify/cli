@@ -104,7 +104,7 @@ function reportPresetApplication<TFlags, TGlobalFlags, TArgs>(
   noDefaultsFlags: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
   flagsWithPresets: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
   presetName: string,
-  preset: JsonMap
+  preset: JsonMap,
 ): void {
   const changes: JsonMap = {}
   for (const [name, value] of Object.entries(flagsWithPresets)) {
