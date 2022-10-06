@@ -19,8 +19,8 @@ export async function request<T>(query: RequestDocument, token: string, variable
 
 /**
  * Check if the given token is revoked and no longer valid to interact with the Partners API.
- * @param token - - The token to check
- * @returns - True if the token is revoked, false otherwise
+ * @param token - The token to check
+ * @returns True if the token is revoked, false otherwise
  */
 export async function checkIfTokenIsRevoked(token: string): Promise<boolean> {
   const query = gql`

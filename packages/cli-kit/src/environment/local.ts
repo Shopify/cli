@@ -118,7 +118,7 @@ export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolea
  *
  * @param env - Environment variables used when the cli is launched
  *
- * @returns - Cloud platform information
+ * @returns Cloud platform information
  */
 export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
@@ -177,7 +177,7 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
 /**
  * Returns the first mac address found
  *
- *  @returns  Mac address
+ * @returns Mac address
  */
 export function macAddress() {
   return macaddress.one()

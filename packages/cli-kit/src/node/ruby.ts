@@ -30,7 +30,7 @@ interface ExecCLI2Options {
  * User must have a valid ruby+bundler environment to run any command.
  *
  * @param args - List of argumets to execute. (ex: ['theme', 'pull'])
- * @param options -
+ * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(
   args: string[],
