@@ -29,7 +29,7 @@ export interface ExtensionConfigOptions {
  * The extensions' Go binary receives the configuration through
  * standard input as a YAML-encoded object. This function returns the
  * Javascript object representing the configuration necessary for building.
- * @param extension {UIExtension} Extension that will be built.
+ * @param extension - Extension that will be built.
  * @returns
  */
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {

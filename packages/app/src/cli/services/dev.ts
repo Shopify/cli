@@ -301,8 +301,8 @@ async function devUIExtensionsTarget({
 
 /**
  * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
- * @param extensions {UIExtension[]} - The UI Extensions to dev
- * @param store {string} - The store FQDN
+ * @param extensions - - The UI Extensions to dev
+ * @param store - - The store FQDN
  */
 async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')

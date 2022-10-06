@@ -19,7 +19,7 @@ interface DeployThemeExtensionOptions {
 
 /**
  * Uploads theme extension(s)
- * @param options {DeployThemeExtensionOptions} The upload options
+ * @param options - The upload options
  */
 
 export async function uploadThemeExtensions(
@@ -71,7 +71,7 @@ export interface UploadExtensionValidationError {
 
 /**
  * Uploads a bundle.
- * @param options {UploadUIExtensionsBundleOptions} The upload options
+ * @param options - The upload options
  */
 export async function uploadUIExtensionsBundle(
   options: UploadUIExtensionsBundleOptions,
@@ -113,8 +113,8 @@ export async function uploadUIExtensionsBundle(
 
 /**
  * It generates a URL to upload an app bundle.
- * @param apiKey {string} The application API key
- * @param deploymentUUID {string} The unique identifier of the deployment.
+ * @param apiKey - The application API key
+ * @param deploymentUUID - The unique identifier of the deployment.
  * @returns
  */
 export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string) {
@@ -150,9 +150,9 @@ interface UploadFunctionExtensionsOptions {
  * If the function already has a local id, that one is used and the upload
  * does an override of the function existing server-side.
  *
- * @param extensions {FunctionExtension[]} The list of extensions to upload.
- * @param options {UploadFunctionExtensionsOptions} Options to adjust the upload.
- * @returns {Promise<Identifiers>} A promise that resolves with the identifiers.
+ * @param extensions - The list of extensions to upload.
+ * @param options - Options to adjust the upload.
+ * @returns A promise that resolves with the identifiers.
  */
 export async function uploadFunctionExtensions(
   extensions: FunctionExtension[],
