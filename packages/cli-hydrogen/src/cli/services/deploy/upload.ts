@@ -33,7 +33,7 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
 export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: string): Promise<string> => {
   let headers = await api.buildHeaders(config.deploymentToken)
 
-  const distPath = `${config.path}/dist`
+  const distPath = config.pathToBuild ? config.pathToBuild : `${config.path}/dist`
   const distZipPath = `${distPath}/dist.zip`
   await zip(distPath, distZipPath)
 

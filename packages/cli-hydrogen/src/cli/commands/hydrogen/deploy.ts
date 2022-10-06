@@ -24,6 +24,11 @@ export default class Deploy extends Command {
       env: 'SHOPIFY_HYDROGEN_FLAG_COMMIT_AUTHOR',
       description: 'Override the default Git commit author.',
     }),
+    pathToBuild: Flags.string({
+      hidden: true,
+      env: 'SHOPIFY_HYDROGEN_FLAG_PATH_TO_BUILD',
+      description: 'Skip build process and use provided value as build',
+    }),
     healthCheck: Flags.boolean({
       env: 'SHOPIFY_HYDROGEN_FLAG_HEALTH_CHECK',
       default: true,

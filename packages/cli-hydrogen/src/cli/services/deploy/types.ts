@@ -4,6 +4,7 @@ export interface DeployConfig {
   healthCheck: boolean
   assumeYes: boolean
   path: string
+  pathToBuild?: string
   commitMessage?: string
   commitAuthor?: string
   commitSha?: string

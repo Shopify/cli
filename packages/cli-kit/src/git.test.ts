@@ -64,11 +64,14 @@ describe('initializeRepository()', () => {
     const directory = '/tmp/git-repo'
 
     // When
-    await git.initializeRepository(directory)
+    await git.initializeRepository(directory, 'my-branch')
 
     // Then
+    expect(simpleGit).toHaveBeenCalledOnce()
     expect(simpleGit).toHaveBeenCalledWith('/tmp/git-repo')
+
     expect(mockedInit).toHaveBeenCalledOnce()
+    expect(mockedInit).toHaveBeenCalledWith({'--initial-branch': 'my-branch'})
   })
 })
 

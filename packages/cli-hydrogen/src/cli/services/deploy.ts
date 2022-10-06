@@ -52,6 +52,7 @@ export async function deployToOxygen(_config: DeployConfig) {
 
         return task.newListr(subTasks)
       },
+      skip: (ctx) => ctx.config.pathToBuild,
     },
     {
       title: '🚀 Uploading deployment files',
