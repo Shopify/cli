@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.16.3
+
+### Patch Changes
+
+- fc4d6c58: Removed unused fields from FunctionSet mutation
+
 ## 3.16.2
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.16.3
+
+### Patch Changes
+
+- 58147c33: Added back the React import for scaffolded checkout ui extensions.
+- Updated dependencies [fc4d6c58]
+  - @shopify/cli-kit@3.16.3
+  - @shopify/shopify-cli-extensions@3.16.3
+
 ## 3.16.2
 
 ### Patch Changes
