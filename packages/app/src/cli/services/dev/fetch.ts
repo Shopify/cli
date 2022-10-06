@@ -102,7 +102,6 @@ interface FetchStoreByDomainOutput {
  * @param orgId - Organization ID
  * @param token - Token to access partners API
  * @param shopDomain - shop domain fqdn
- * @returns
  */
 export async function fetchStoreByDomain(
   orgId: string,

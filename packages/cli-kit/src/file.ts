@@ -42,7 +42,6 @@ export async function read(path: string, options: object = {encoding: 'utf-8'}):
  * Given a path, it determines the actual path. This is useful when working
  * with paths that represent symlinks.
  * @param path - Path whose real path will be returned.
- * @returns
  */
 export async function realpath(path: string): Promise<string> {
   return fs.promises.realpath(path)

@@ -481,10 +481,8 @@ export function shouldDisplayColors(): boolean {
 }
 
 /**
- *
  * @param packageManager - The package manager that is being used.
  * @param version - The version to update to
- * @returns
  */
 export function getOutputUpdateCLIReminder(
   packageManager: PackageManager | 'unknown' | undefined,

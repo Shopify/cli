@@ -373,7 +373,6 @@ async function fetchDevDataFromOptions(
  * Retrieve cached info from the global configuration based on the current local app
  * @param reset - Whether to reset the cache or not
  * @param directory - The directory containing the app.
- * @returns
  */
 async function getAppDevCachedInfo({
   reset,

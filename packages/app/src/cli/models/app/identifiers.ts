@@ -75,8 +75,6 @@ interface GetAppIdentifiersOptions {
 /**
  * Given an app and a environment, it fetches the ids from the environment
  * and returns them.
- * @param options - Options.
- * @returns
  */
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,

@@ -57,6 +57,7 @@
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-jest": "^26.4.6",
+    "eslint-plugin-jsdoc": "^39.3.6",
     "eslint-plugin-no-catch-all": "^1.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-rulesdir": "^0.2.1",
