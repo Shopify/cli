@@ -39,35 +39,42 @@ abstract class BaseCommand extends Command {
     options?: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
     argv?: string[] | undefined,
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
-    // Default parse behavior
-    const rawResult = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
-    let result = rawResult
-
-    // If a preset is specified and found, apply it and report the effects.
-    const flags = rawResult.flags as PresettableFlags
-    if (flags.preset) {
-      const presets = await loadPresetsFromDirectory(await this.presetsPath(flags), {findUp: this.findUpForPresets()})
-      const preset = presets[flags.preset]
-      if (preset) {
-        // Parse using noDefaultsOptions to derive a list of flags specified as
-        // command-line arguments.
-        const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
-
-        // Add the preset's settings to argv and pass them to `super.parse`. This
-        // invokes oclif's validation system without breaking the oclif black box.
-        // Replace the original result with this one.
-        result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
-          // Need to specify argv default because we're merging with argsFromPreset.
-          ...(argv || this.argv),
-          ...argsFromPreset<TFlags, TGlobalFlags, TArgs>(preset, options, noDefaultsResult),
-        ])
-
-        // Report successful application of the preset.
-        reportPresetApplication<TFlags, TGlobalFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset, preset)
-      }
-    }
-
+    let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    result = await this.resultWithPreset<TFlags, TGlobalFlags, TArgs>(options, argv, result)
     await addFromParsedFlags(result.flags)
+    return result
+  }
+
+  protected async resultWithPreset<TFlags extends {path?: string; verbose?: boolean}, TGlobalFlags, TArgs extends {[name: string]: any}>(
+    options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
+    argv: string[] | undefined,
+    originalResult: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>,
+  ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
+    // If no preset is specified, don't modify the results
+    const flags = originalResult.flags as PresettableFlags
+    if (!flags.preset) return originalResult
+
+    // If the specified preset isn't found, don't modify the results
+    const presets = await loadPresetsFromDirectory(await this.presetsPath(flags), {findUp: this.findUpForPresets()})
+    const preset = presets[flags.preset]
+    if (!preset) return originalResult
+
+    // Parse using noDefaultsOptions to derive a list of flags specified as
+    // command-line arguments.
+    const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
+
+    // Add the preset's settings to argv and pass them to `super.parse`. This
+    // invokes oclif's validation system without breaking the oclif black box.
+    // Replace the original result with this one.
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
+      // Need to specify argv default because we're merging with argsFromPreset.
+      ...(argv || this.argv),
+      ...argsFromPreset<TFlags, TGlobalFlags, TArgs>(preset, options, noDefaultsResult),
+    ])
+
+    // Report successful application of the preset.
+    reportPresetApplication<TFlags, TGlobalFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset, preset)
+
     return result
   }
 
