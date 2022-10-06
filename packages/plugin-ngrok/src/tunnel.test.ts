@@ -1,12 +1,14 @@
 import {authenticate, hookStart} from './tunnel.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui, os, output, error} from '@shopify/cli-kit'
+import {ui, os, error} from '@shopify/cli-kit'
 import ngrok from '@shopify/ngrok'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
 const port = 1234
 
 beforeEach(async () => {
   vi.mock('@shopify/ngrok')
+  vi.mock('@shopify/cli-kit/node/ui')
   vi.mocked(ngrok.connect).mockResolvedValue('https://fake.ngrok.io')
   vi.mocked(ngrok.authtoken).mockResolvedValue(undefined)
   vi.mocked(ngrok.validConfig).mockResolvedValue(true)
@@ -22,10 +24,6 @@ beforeEach(async () => {
       environment: vi.fn(),
       os: {
         platformAndArch: vi.fn(),
-      },
-      output: {
-        ...cliKit.output,
-        error: vi.fn(),
       },
       error: {
         Abort: vi.fn(),
@@ -69,7 +67,7 @@ describe('start', () => {
       'The ngrok tunnel could not be started.\n\nYour account has been suspended',
       undefined,
     )
-    expect(output.error).toHaveBeenCalledWith(expect.any(error.Abort))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
     expect(got).toEqual({url: undefined})
   })
 
@@ -86,7 +84,7 @@ describe('start', () => {
       'The ngrok tunnel could not be started.\n\nerror message contains code err_ngrok_108',
       expect.stringContaining('Kill all the ngrok processes with \u001b[1m\u001b[33mkillall ngrok\u001b[39m\u001b[22m'),
     )
-    expect(output.error).toHaveBeenCalledWith(expect.any(error.Abort))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
   })
 
   it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in windows platform', async () => {
@@ -104,7 +102,7 @@ describe('start', () => {
         'Kill all the ngrok processes with \u001b[1m\u001b[33mtaskkill /f /im ngrok.exe\u001b[39m\u001b[22m',
       ),
     )
-    expect(output.error).toHaveBeenCalledWith(expect.any(error.Abort))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
   })
 
   it.each(['err_ngrok_105', 'err_ngrok_106', 'err_ngrok_107'])(
@@ -122,7 +120,7 @@ describe('start', () => {
           'Update your ngrok token with \u001b[1m\u001b[33mshopify ngrok auth\u001b[39m\u001b[22m',
         ),
       )
-      expect(output.error).toHaveBeenCalledWith(expect.any(error.Abort))
+      expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
     },
   )
 })

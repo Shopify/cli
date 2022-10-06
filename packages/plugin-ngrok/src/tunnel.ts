@@ -2,6 +2,7 @@ import {TUNNEL_PROVIDER} from './provider.js'
 import {error, os, output, ui} from '@shopify/cli-kit'
 import {startTunnel} from '@shopify/cli-kit/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
@@ -19,7 +20,7 @@ export async function hookStart(port: number): Promise<{url: string | undefined}
     return {url}
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    await output.error(error as error.Abort)
+    renderFatalError(error as error.Abort)
     return {url: undefined}
   }
 }
