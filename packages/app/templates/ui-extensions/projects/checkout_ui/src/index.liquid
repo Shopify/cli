@@ -12,7 +12,11 @@ render('Checkout::Dynamic::Render', () => <App />);
 function App() {
   const {extensionPoint} = useExtensionApi();
   const translate = useTranslate();
-  return <Banner>{translate('welcome', {extensionPoint})}</Banner>;
+  return (
+    <Banner title="{{ name }}">
+      {translate('welcome', {extensionPoint})}
+    </Banner>
+  );
 }
 
 {%- else -%}
@@ -22,7 +26,7 @@ extend("Checkout::Dynamic::Render", (root, { extensionPoint, i18n }) => {
   root.appendChild(
     root.createComponent(
       Banner,
-      {},
+      { title: "{{ name }}" },
       i18n.translate('welcome', {extensionPoint})
     )
   );
