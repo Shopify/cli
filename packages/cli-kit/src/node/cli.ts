@@ -27,7 +27,7 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
 /**
  * A function that abstracts away setting up the environment and running
  * a CLI
- * @param options {RunCLIOptions} Options.
+ * @param options - Options.
  */
 export async function runCLI(options: RunCLIOptions) {
   setupEnvironmentVariables(options)
@@ -49,7 +49,6 @@ export async function runCLI(options: RunCLIOptions) {
 
 /**
  * A function for create-x CLIs that automatically runs the "init" command.
- * @param options
  */
 export async function runCreateCLI(options: RunCLIOptions) {
   setupEnvironmentVariables(options)

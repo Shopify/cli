@@ -17,7 +17,7 @@ export const NotProvidedStoreFQDNError = new Abort(
 
 /**
  * It returns the Partners' API service we should interact with.
- * @returns {string} Fully-qualified domain of the partners service we should interact with.
+ * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function partners(): Promise<string> {
   const environment = serviceEnvironment()
@@ -34,7 +34,7 @@ export async function partners(): Promise<string> {
 
 /**
  * It returns the Identity service we should interact with.
- * @returns {string} Fully-qualified domain of the Identity service we should interact with.
+ * @returns Fully-qualified domain of the Identity service we should interact with.
  */
 export async function identity(): Promise<string> {
   const environment = serviceEnvironment()
@@ -52,7 +52,7 @@ export async function identity(): Promise<string> {
 /**
  * It returns the Shopify service we should interact with.
  * Note the same fqdn is sued for the Admin and the Storefront Renderer APIs.
- * @returns {string} Fully-qualified domain of the Shopify service we should interact with.
+ * @returns Fully-qualified domain of the Shopify service we should interact with.
  */
 export async function shopify(options: {storeFqdn?: string} = {}): Promise<string> {
   const environment = serviceEnvironment()
