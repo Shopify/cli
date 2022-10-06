@@ -31,7 +31,10 @@ export async function getUIExtensionPayload(
         lastUpdated: (await file.lastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
       },
     },
-    capabilities: extension.configuration.capabilities,
+    capabilities: {
+      block_progress: extension.configuration.capabilities?.block_progress || false,
+      network_access: extension.configuration.capabilities?.network_access || false,
+    },
     development: {
       ...options.currentDevelopmentPayload,
       resource: getUIExtensionResourceURL(extension.configuration.type, options),

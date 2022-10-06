@@ -97,4 +97,30 @@ describe('getUIExtensionPayload', () => {
       })
     })
   })
+
+  test('default values', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const uiExtension = testUIExtension()
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+      })
+
+      // Then
+      expect(got).toMatchObject({
+        development: {
+          hidden: false,
+        },
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+        },
+      })
+    })
+  })
 })
