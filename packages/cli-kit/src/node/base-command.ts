@@ -45,7 +45,11 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  protected async resultWithPreset<TFlags extends {path?: string; verbose?: boolean}, TGlobalFlags, TArgs extends {[name: string]: any}>(
+  protected async resultWithPreset<
+    TFlags extends {path?: string; verbose?: boolean},
+    TGlobalFlags,
+    TArgs extends {[name: string]: unknown},
+  >(
     options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
     argv: string[] | undefined,
     originalResult: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>,
