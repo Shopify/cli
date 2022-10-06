@@ -2,6 +2,7 @@ import {Banner, BannerType} from '../components/Banner.js'
 import {Link} from '../components/Link.js'
 import {List, ListItem} from '../components/List.js'
 import {renderOnce} from '../ui.js'
+import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../output.js'
 import React from 'react'
 import {Box, Text} from 'ink'
 
@@ -16,6 +17,18 @@ export interface AlertProps {
     url: string
   }
   orderedNextSteps?: boolean
+}
+
+const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
+  info: 'info',
+  warning: 'warn',
+  success: 'info',
+}
+
+const typeToLogger: {[key in AlertProps['type']]: Logger} = {
+  info: consoleLog,
+  warning: consoleWarn,
+  success: consoleLog,
 }
 
 export function alert({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}: AlertProps) {
@@ -49,5 +62,7 @@ export function alert({type, headline, body, nextSteps, reference, link, ordered
         </Box>
       )}
     </Banner>,
+    typeToLogLevel[type],
+    typeToLogger[type],
   )
 }

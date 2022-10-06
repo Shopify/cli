@@ -2,6 +2,7 @@ import {Fatal} from '../../../error.js'
 import {Banner} from '../components/Banner.js'
 import {List} from '../components/List.js'
 import {renderOnce} from '../ui.js'
+import {consoleError} from '../../../output.js'
 import React from 'react'
 import {Box, Text} from 'ink'
 import {RenderErrorOptions} from '@shopify/cli-kit/node/ui'
@@ -15,6 +16,8 @@ export function fatalError(error: Fatal) {
 
       {error.tryMessage && <List title="What to try" items={[error.tryMessage]} />}
     </Banner>,
+    'error',
+    consoleError,
   )
 }
 
@@ -27,5 +30,7 @@ export function error({headline, tryMessages = []}: RenderErrorOptions) {
 
       {tryMessages.length > 0 && <List title="What to try" items={tryMessages} />}
     </Banner>,
+    'error',
+    consoleError,
   )
 }

@@ -1,3 +1,5 @@
+import {isUnitTest} from '../../environment/local.js'
+import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
 import {ReactElement} from 'react'
 import {render as inkRender} from 'ink'
 import {EventEmitter} from 'events'
@@ -31,10 +33,14 @@ export class OutputStream extends EventEmitter {
   }
 }
 
-// eslint-disable-next-line no-console
-export function renderOnce(element: JSX.Element, logger = console.log) {
+export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
   const {output, unmount} = renderString(element)
-  logger(output)
+
+  if (output) {
+    if (isUnitTest()) collectLog(logLevel, output)
+    outputWhereAppropriate(logLevel, logger, output)
+  }
+
   unmount()
 }
 
