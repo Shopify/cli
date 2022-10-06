@@ -34,8 +34,6 @@ export const blocks = {
   functions: {
     defaultUrl: 'https://github.com/Shopify/function-examples',
     defaultLanguage: 'wasm',
-    maxCompilationStatusCheckCount: 7,
-    compilationStatusWaitMs: 2000,
   },
   web: {
     directoryName: 'web',
