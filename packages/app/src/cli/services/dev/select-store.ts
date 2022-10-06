@@ -121,12 +121,7 @@ export async function convertToTestStoreIfNeeded(
   /**
    * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
    */
-  if (
-    environment.service.serviceEnvironment() === environment.network.Environment.Spin &&
-    environment.local.firstPartyDev()
-  ) {
-    return
-  }
+  if (environment.service.isSpinEnvironment() && environment.local.firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }

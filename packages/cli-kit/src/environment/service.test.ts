@@ -1,4 +1,4 @@
-import {serviceEnvironment} from './service.js'
+import {isSpinEnvironment, serviceEnvironment} from './service.js'
 import {Environment} from '../network/service.js'
 import {expect, it, describe} from 'vitest'
 
@@ -56,5 +56,40 @@ describe('serviceEnvironment', () => {
 
     // Then
     expect(got).toBe(Environment.Spin)
+  })
+})
+
+describe('isSpinEnvironment', () => {
+  it('returns true when running against SPIN instance', () => {
+    // Given
+    process.env = {...process.env, SHOPIFY_SERVICE_ENV: 'spin'}
+
+    // When
+    const got = isSpinEnvironment()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true when running inside a SPIN instance', () => {
+    // Given
+    process.env = {...process.env, SPIN: '1'}
+
+    // When
+    const got = isSpinEnvironment()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns false when not working with spin instances', () => {
+    // Given
+    process.env = {...process.env, SHOPIFY_SERVICE_ENV: 'local'}
+
+    // When
+    const got = isSpinEnvironment()
+
+    // Then
+    expect(got).toBe(false)
   })
 })
