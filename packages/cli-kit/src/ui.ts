@@ -174,7 +174,6 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
 export const keypress = async () => {
   return new Promise((resolve, reject) => {
     const handler = (buffer: Buffer) => {
-      process.stdin.removeListener('data', handler)
       process.stdin.setRawMode(false)
       process.stdin.pause()
 
