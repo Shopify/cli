@@ -44,7 +44,7 @@ export class RedirectListener {
   private static createServer(callback: RedirectCallback): Server {
     const app = createApp().use('*', async (request: IncomingMessage, response: ServerResponse) => {
       const requestUrl = request.url
-      if (requestUrl === '/favicon.svg') {
+      if (requestUrl?.includes('favicon')) {
         const faviconFile = await getFavicon()
         response.setHeader('Content-Type', 'image/svg+xml').write(faviconFile)
         response.end()
