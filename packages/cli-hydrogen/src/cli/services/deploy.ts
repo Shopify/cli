@@ -12,10 +12,9 @@ interface TaskContext {
 }
 
 const isUnitTest = environment.local.isUnitTest()
+const backoffPolicy = [5, 10, 15, 30, 60]
 
 export async function deployToOxygen(_config: DeployConfig) {
-  const backoffPolicy = [5, 10, 15, 30, 60]
-
   await validateProject(_config)
 
   /* eslint-disable require-atomic-updates */
@@ -30,12 +29,14 @@ export async function deployToOxygen(_config: DeployConfig) {
     {
       title: '💡 Initializing deployment',
       task: async (ctx, task) => {
+        await shouldRetryOxygenCall(task, 'Could not create deployment on Oxygen.')
+
         const {deploymentID, assetBaseURL} = await createDeployment(ctx.config)
         ctx.assetBaseURL = assetBaseURL
         ctx.deploymentID = deploymentID
         task.title = '✨ Deployment initialized'
       },
-      retry: 2,
+      retry: backoffPolicy.length,
     },
     {
       title: '🛠 Building project',
@@ -57,6 +58,8 @@ export async function deployToOxygen(_config: DeployConfig) {
     {
       title: '🚀 Uploading deployment files',
       task: async (ctx, task) => {
+        await shouldRetryOxygenCall(task, 'Uploading files to Oxygen failed.')
+
         ctx.previewURL = await uploadDeployment(ctx.config, ctx.deploymentID)
         task.output = `Preview URL: ${ctx.previewURL}`
         task.title = '🚀 Files uploaded'
@@ -65,7 +68,7 @@ export async function deployToOxygen(_config: DeployConfig) {
         bottomBar: Infinity,
         persistentOutput: true,
       },
-      retry: 2,
+      retry: backoffPolicy.length,
     },
     {
       title: '📡 Checking deployment health',
@@ -95,4 +98,24 @@ export async function deployToOxygen(_config: DeployConfig) {
   })
 
   return list.run()
+}
+
+async function shouldRetryOxygenCall(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  task: ui.ListrTaskWrapper<TaskContext, any>,
+  errorMessage: string,
+) {
+  const retryCount = task.isRetrying()?.count
+  if (retryCount === backoffPolicy.length) {
+    throw new Error(`${errorMessage} ${task.errors[task.errors.length - 1]?.message}`)
+  }
+  if (retryCount) {
+    if (task.errors.length > 0) {
+      const unrecoverableError = task.errors.find((error) => error.message.includes('Unrecoverable'))
+      if (unrecoverableError) {
+        throw new Error(unrecoverableError.message)
+      }
+    }
+  }
+  if (retryCount && !isUnitTest) await system.sleep(backoffPolicy[retryCount - 1]!)
 }
