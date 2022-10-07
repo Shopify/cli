@@ -1,5 +1,5 @@
 schema: v1
 extend: extensions-sandbox-app
 repos:
-  - cli
-    branch: feature/add_external_access_to_cli_inside_spin
+  - cli:
+     branch: feature/add_external_access_to_cli_inside_spin
