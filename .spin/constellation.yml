@@ -1,9 +1,5 @@
 schema: v1
-extend: cd
+extend: extensions-sandbox-app
 repos:
-  - billing
-  - partners:
-      env:
-        DISABLE_SHOPIFY_INTERNAL_API_INTERCEPTOR: "1"
-        DISABLE_BILLING_INTERCEPTOR: "1"
   - cli
+    branch: feature/add_external_access_to_cli_inside_spin
