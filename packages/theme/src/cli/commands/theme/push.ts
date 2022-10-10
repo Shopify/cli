@@ -75,7 +75,7 @@ export default class Push extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)

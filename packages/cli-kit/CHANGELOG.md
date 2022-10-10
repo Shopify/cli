@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.17.0
+
+### Minor Changes
+
+- 483318aa: Create a new Oxygen service for interacting with Oxygen related services.
+
+### Patch Changes
+
+- dac186b2: Removing unnecessary calls to enqueue and check compilation status
+- 5617050a: initializeRepository now defaults to 'main' as initial branch.
+- 5703ce9b: Cloud environment checking was not working properly so wrong authentication method was used
+
 ## 3.16.3
 
 ### Patch Changes

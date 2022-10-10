@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.16.3",
+  "version": "3.17.0",
   "private": false,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@oclif/core": "1.16.4",
-    "@shopify/cli-kit": "3.16.3"
+    "@shopify/cli-kit": "3.17.0"
   },
   "devDependencies": {
     "vitest": "^0.22.1"
