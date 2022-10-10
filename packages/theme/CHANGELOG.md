@@ -1,5 +1,16 @@
 # @shopify/theme
 
+## 3.17.0
+
+### Patch Changes
+
+- ff7a13d5: Fix push command with --store flag
+- Updated dependencies [dac186b2]
+- Updated dependencies [5617050a]
+- Updated dependencies [5703ce9b]
+- Updated dependencies [483318aa]
+  - @shopify/cli-kit@3.17.0
+
 ## 3.16.3
 
 ### Patch Changes

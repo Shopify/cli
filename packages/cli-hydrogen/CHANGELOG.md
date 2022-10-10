@@ -1,5 +1,20 @@
 # @shopify/cli-hydrogen
 
+## 3.17.0
+
+### Minor Changes
+
+- 5617050a: initializeRepository now defaults to 'main' as initial branch.
+
+### Patch Changes
+
+- 483318aa: Create a new Oxygen service for interacting with Oxygen related services.
+- Updated dependencies [dac186b2]
+- Updated dependencies [5617050a]
+- Updated dependencies [5703ce9b]
+- Updated dependencies [483318aa]
+  - @shopify/cli-kit@3.17.0
+
 ## 3.16.3
 
 ### Patch Changes

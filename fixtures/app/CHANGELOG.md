@@ -1,5 +1,14 @@
 # app
 
+## 3.17.0
+
+### Patch Changes
+
+- Updated dependencies [7576f700]
+- Updated dependencies [dac186b2]
+  - @shopify/app@3.17.0
+  - @shopify/cli@3.17.0
+
 ## 3.16.3
 
 ### Patch Changes
