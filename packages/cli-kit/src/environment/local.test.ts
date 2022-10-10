@@ -176,7 +176,7 @@ describe('cloudEnvironment', () => {
     ['SPIN', 'spin'],
     ['CODESPACES', 'codespaces'],
     ['GITPOD_WORKSPACE_URL', 'gitpod'],
-  ])('returns correct cloud platform when %s is truthy', (envVar, platform) => {
+  ])('returns correct cloud platform when %s is exists', (envVar, platform) => {
     // Given
     const env = {[envVar]: platform}
 
@@ -187,7 +187,7 @@ describe('cloudEnvironment', () => {
     expect(got.platform).toBe(platform)
   })
 
-  it('returns localhost when no cloud enviroment varible is ser', () => {
+  it('returns localhost when no cloud enviroment varible exist', () => {
     // Given
     const env = {}
 
