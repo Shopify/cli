@@ -28,7 +28,7 @@ const Banner: React.FC<Props> = ({type, children}) => {
       borderColor={typeToColor(type)}
     >
       <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-        <Text bold>{` ${type} `}</Text>
+        <Text dimColor bold>{` ${type} `}</Text>
       </Box>
       {children}
     </Box>
