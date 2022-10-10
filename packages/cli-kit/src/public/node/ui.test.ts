@@ -3,7 +3,7 @@ import {Abort} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {Signal} from '../../abort.js'
 import {createStdout} from '../../testing/ui.js'
-import {afterEach, describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {Writable} from 'node:stream'
 
 afterEach(() => {
@@ -196,6 +196,7 @@ describe('renderFatalError', async () => {
 describe('renderConcurrent', async () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
     // Given
+    vi.useFakeTimers().setSystemTime(new Date(2022, 10, 10, 13, 15, 23))
     let promiseResolve: () => void
 
     const promise = new Promise<void>(function (resolve, _reject) {
@@ -231,13 +232,13 @@ describe('renderConcurrent', async () => {
 
     // Then
     expect(stdout.get()).toMatchInlineSnapshot(`
-      "backend  | first backend message
-      backend  | second backend message
-      backend  | third backend message
+      "2022-11-10 13:15:23 | backend  | first backend message
+      2022-11-10 13:15:23 | backend  | second backend message
+      2022-11-10 13:15:23 | backend  | third backend message
 
-      frontend | first frontend message
-      frontend | second frontend message
-      frontend | third frontend message
+      2022-11-10 13:15:23 | frontend | first frontend message
+      2022-11-10 13:15:23 | frontend | second frontend message
+      2022-11-10 13:15:23 | frontend | third frontend message
       "
     `)
   })

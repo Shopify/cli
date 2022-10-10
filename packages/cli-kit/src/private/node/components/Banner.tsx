@@ -12,7 +12,7 @@ function typeToColor(type: Props['type']) {
     success: 'green',
     error: 'red',
     warning: 'yellow',
-    info: 'white',
+    info: 'dim',
   }[type]
 }
 
@@ -28,7 +28,7 @@ const Banner: React.FC<Props> = ({type, children}) => {
       borderColor={typeToColor(type)}
     >
       <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-        <Text dimColor bold>{` ${type} `}</Text>
+        <Text bold>{` ${type} `}</Text>
       </Box>
       {children}
     </Box>
