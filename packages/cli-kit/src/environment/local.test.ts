@@ -135,19 +135,49 @@ describe('analitycsDisabled', () => {
 })
 
 describe('useDeviceAuth', () => {
-  it.each(['SHOPIFY_CLI_DEVICE_AUTH', 'SPIN', 'CODESPACES', 'GITPOD_WORKSPACE_URL'])(
-    'returns true if %s is truthy',
-    (envVar) => {
-      // Given
-      const env = {[envVar]: '1'}
+  it('returns true if SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
+    // Given
+    const env = {SHOPIFY_CLI_DEVICE_AUTH: '1'}
 
-      // When
-      const got = useDeviceAuth(env)
+    // When
+    const got = useDeviceAuth(env)
 
-      // Then
-      expect(got).toBe(true)
-    },
-  )
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true if SPIN is truthy', () => {
+    // Given
+    const env = {SPIN: '1'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true if CODESPACES is truthy', () => {
+    // Given
+    const env = {CODESPACES: '1'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true if GITPOD_WORKSPACE_URL is set', () => {
+    // Given
+    const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
 
   it('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
     // Given
@@ -172,19 +202,37 @@ describe('macAddress', () => {
 })
 
 describe('cloudEnvironment', () => {
-  it.each([
-    ['SPIN', 'spin'],
-    ['CODESPACES', 'codespaces'],
-    ['GITPOD_WORKSPACE_URL', 'gitpod'],
-  ])('returns correct cloud platform when %s is exists', (envVar, platform) => {
+  it('when spin environmentreturns correct cloud platform', () => {
     // Given
-    const env = {[envVar]: platform}
+    const env = {SPIN: '1'}
 
     // When
     const got = cloudEnvironment(env)
 
     // Then
-    expect(got.platform).toBe(platform)
+    expect(got.platform).toBe('spin')
+  })
+
+  it('when codespace environmentreturns correct cloud platform', () => {
+    // Given
+    const env = {CODESPACES: '1'}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got.platform).toBe('codespaces')
+  })
+
+  it('when gitpod environmentreturns correct cloud platform', () => {
+    // Given
+    const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
+
+    // When
+    const got = cloudEnvironment(env)
+
+    // Then
+    expect(got.platform).toBe('gitpod')
   })
 
   it('returns localhost when no cloud enviroment varible exist', () => {
