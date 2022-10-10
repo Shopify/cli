@@ -83,10 +83,13 @@ ${output.token.json(JSON.stringify(rules))}
   })
 
   await Promise.all([
-    renderConcurrent([...processes, ...additionalProcesses], (abortSignal) => {
-      abortSignal.addEventListener('abort', () => {
-        server.close()
-      })
+    renderConcurrent({
+      processes: [...processes, ...additionalProcesses],
+      onAbort: (abortSignal) => {
+        abortSignal.addEventListener('abort', () => {
+          server.close()
+        })
+      },
     }),
     server.listen(availablePort),
   ])

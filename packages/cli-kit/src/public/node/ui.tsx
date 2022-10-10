@@ -6,12 +6,19 @@ import {AlertProps, alert} from '../../private/node/ui/alert.js'
 import {fatalError, error} from '../../private/node/ui/error.js'
 import React from 'react'
 import {AbortController, AbortSignal} from 'abort-controller'
+import {EventEmitter} from 'events'
+
+interface RenderConcurrentOptions {
+  processes: OutputProcess[]
+  onAbort?: (abortSignal: AbortSignal) => void
+  stdout?: EventEmitter
+}
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * This function instantiates an `AbortController` so that the various processes can subscribe to the same abort signal.
  */
-export async function renderConcurrent(processes: OutputProcess[], onAbort?: (abortSignal: AbortSignal) => void) {
+export async function renderConcurrent({processes, onAbort, stdout}: RenderConcurrentOptions) {
   const abortController = new AbortController()
   if (onAbort) onAbort(abortController.signal)
 
@@ -25,13 +32,24 @@ export async function renderConcurrent(processes: OutputProcess[], onAbort?: (ab
           await process.action(stdout, stderr, abortController.signal)
         }),
       )
+
+      abortController.abort()
     } catch (error) {
       abortController.abort()
       throw error
     }
   }
 
-  render(<ConcurrentOutput processes={processes} runProcesses={runProcesses} />)
+  const {unmount, waitUntilExit} = render(
+    <ConcurrentOutput processes={processes} runProcesses={runProcesses} />,
+    stdout,
+  )
+
+  abortController.signal.addEventListener('abort', () => {
+    unmount()
+  })
+
+  return waitUntilExit()
 }
 
 type RenderAlertOptions = Omit<AlertProps, 'type'>

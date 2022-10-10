@@ -156,7 +156,7 @@ async function dev(options: DevOptions) {
   await analytics.reportEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await renderConcurrent(additionalProcesses)
+    await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }

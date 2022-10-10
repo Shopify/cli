@@ -1,7 +1,10 @@
-import {renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {renderConcurrent, renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {Abort} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
+import {Signal} from '../../abort.js'
+import {createStdout} from '../../testing/ui.js'
 import {afterEach, describe, expect, test} from 'vitest'
+import {Writable} from 'node:stream'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -186,6 +189,56 @@ describe('renderFatalError', async () => {
       │   • Check your internet connection and try again.                            │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
+    `)
+  })
+})
+
+describe('renderConcurrent', async () => {
+  test('renders a stream of concurrent outputs from sub-processes', async () => {
+    // Given
+    let promiseResolve: () => void
+
+    const promise = new Promise<void>(function (resolve, _reject) {
+      promiseResolve = resolve
+    })
+
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+
+        promiseResolve()
+      },
+    }
+
+    const frontendProcess = {
+      prefix: 'frontend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
+        await promise
+
+        stdout.write('first frontend message')
+        stdout.write('second frontend message')
+        stdout.write('third frontend message')
+      },
+    }
+
+    const stdout = createStdout()
+
+    // When
+    await renderConcurrent({processes: [backendProcess, frontendProcess], stdout})
+
+    // Then
+    expect(stdout.get()).toMatchInlineSnapshot(`
+      "backend  | first backend message
+      backend  | second backend message
+      backend  | third backend message
+
+      frontend | first frontend message
+      frontend | second frontend message
+      frontend | third frontend message
+      "
     `)
   })
 })

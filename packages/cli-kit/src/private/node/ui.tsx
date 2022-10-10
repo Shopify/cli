@@ -4,21 +4,6 @@ import {ReactElement} from 'react'
 import {render as inkRender} from 'ink'
 import {EventEmitter} from 'events'
 
-export class TestStream extends EventEmitter {
-  columns: number
-  logLevel: LogLevel
-
-  constructor(options: {columns: number; logLevel: LogLevel}) {
-    super()
-    this.columns = options.columns
-    this.logLevel = options.logLevel
-  }
-
-  write = (frame: string) => {
-    collectLog(this.logLevel, frame)
-  }
-}
-
 export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
   const {output, unmount} = renderString(element)
 
@@ -30,15 +15,12 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
   unmount()
 }
 
-export function render(element: JSX.Element) {
-  const stdout = isUnitTest() ? new TestStream({columns: 80, logLevel: 'info'}) : process.stdout
-  const stderr = isUnitTest() ? new TestStream({columns: 80, logLevel: 'error'}) : process.stderr
-
-  inkRender(element, {
+export function render(element: JSX.Element, stdout?: EventEmitter) {
+  return inkRender(element, {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stdout: stdout as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stderr: stderr as any,
+    stdout: (stdout ?? process.stdout) as any,
+    debug: isUnitTest(),
+    patchConsole: !isUnitTest(),
   })
 }
 
@@ -46,12 +28,12 @@ interface Instance {
   output: string | undefined
   unmount: () => void
   cleanup: () => void
-  stdout: RenderStringStream
-  stderr: RenderStringStream
+  stdout: OutputStream
+  stderr: OutputStream
   frames: string[]
 }
 
-export class RenderStringStream extends EventEmitter {
+export class OutputStream extends EventEmitter {
   columns: number
   readonly frames: string[] = []
   private _lastFrame?: string
@@ -72,8 +54,8 @@ export class RenderStringStream extends EventEmitter {
 }
 
 export const renderString = (element: ReactElement): Instance => {
-  const stdout = new RenderStringStream({columns: process.stdout.columns})
-  const stderr = new RenderStringStream({columns: process.stderr.columns})
+  const stdout = new OutputStream({columns: isUnitTest() ? 80 : process.stdout.columns})
+  const stderr = new OutputStream({columns: isUnitTest() ? 80 : process.stderr.columns})
 
   const instance = inkRender(element, {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
