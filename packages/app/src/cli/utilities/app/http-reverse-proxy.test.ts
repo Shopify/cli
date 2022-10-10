@@ -56,7 +56,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
 
     const concurrentCalls = (renderConcurrent as any).calls
     expect(concurrentCalls.length).toEqual(1)
-    const concurrentProcesses = concurrentCalls[0][0]
+    const concurrentProcesses = concurrentCalls[0][0].processes
     expect(concurrentProcesses[0].prefix).toEqual('extensions')
     expect(concurrentProcesses[1].prefix).toEqual('web')
     expect(server.close).not.toHaveBeenCalled()
