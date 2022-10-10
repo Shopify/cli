@@ -180,8 +180,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: ['windows-latest']
+        node: ['18.7.0']
     steps:
       - uses: actions/checkout@v2
         with:
@@ -226,7 +226,6 @@ jobs:
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
       - name: Setup tmate session
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
         uses: mxschmitt/action-tmate@v3
         with:
           limit-access-to-actor: true
