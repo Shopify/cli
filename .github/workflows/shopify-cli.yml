@@ -217,14 +217,11 @@ jobs:
       - name: Install yarn
         run: npm install --global yarn@${{ env.YARN_VERSION }}
       - name: Increase yarn timeout
-        run: yarn config set network-timeout 300000
+        run: yarn config set network-timeout 300001
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Unit tests
-        run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
-      - name: Acceptance tests
-        if: ${{ matrix.node == '18.7.0' }}
-        run: yarn nx run features:test
+        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         with:
