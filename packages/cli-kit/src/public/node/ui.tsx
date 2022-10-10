@@ -22,7 +22,7 @@ export async function renderConcurrent({processes, onAbort, stdout}: RenderConcu
   const abortController = new AbortController()
   if (onAbort) onAbort(abortController.signal)
 
-  const runProcesses = async (writableStream: WritableStream) => {
+  const runProcesses = async (writableStream: WritableStream, unmountInk: (error?: Error | undefined) => void) => {
     try {
       await Promise.all(
         processes.map(async (process, index) => {
@@ -33,7 +33,7 @@ export async function renderConcurrent({processes, onAbort, stdout}: RenderConcu
         }),
       )
 
-      abortController.abort()
+      unmountInk()
     } catch (error) {
       abortController.abort()
       throw error

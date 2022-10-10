@@ -1,11 +1,11 @@
 import {OutputProcess} from '../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Static, Text} from 'ink'
+import {Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
-export type RunProcesses = (writableStream: WritableStream) => Promise<void>
+export type RunProcesses = (writableStream: WritableStream, unmountInk: (error?: Error | undefined) => void) => Promise<void>
 
 interface Props {
   processes: OutputProcess[]
@@ -56,6 +56,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, runProcesses}) =
   const [processOutput, setProcessOutput] = useState<Line[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
+  const {exit: unmountInk} = useApp()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -83,7 +84,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, runProcesses}) =
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    runProcesses(writableStream)
+    runProcesses(writableStream, unmountInk)
   }, [])
 
   return (

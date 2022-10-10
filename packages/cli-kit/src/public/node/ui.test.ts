@@ -197,10 +197,10 @@ describe('renderConcurrent', async () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
     // Given
     vi.useFakeTimers().setSystemTime(new Date(2022, 10, 10, 13, 15, 23))
-    let promiseResolve: () => void
+    let backendPromiseResolve: () => void
 
-    const promise = new Promise<void>(function (resolve, _reject) {
-      promiseResolve = resolve
+    const backendPromise = new Promise<void>(function (resolve, _reject) {
+      backendPromiseResolve = resolve
     })
 
     const backendProcess = {
@@ -210,14 +210,14 @@ describe('renderConcurrent', async () => {
         stdout.write('second backend message')
         stdout.write('third backend message')
 
-        promiseResolve()
+        backendPromiseResolve()
       },
     }
 
     const frontendProcess = {
       prefix: 'frontend',
       action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
-        await promise
+        await backendPromise
 
         stdout.write('first frontend message')
         stdout.write('second frontend message')
