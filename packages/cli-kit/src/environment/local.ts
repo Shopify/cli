@@ -124,7 +124,7 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
   editor: boolean
 } {
-  if (isTruthy(env[constants.environmentVariables.codespaces])) {
+  if (isSet(env[constants.environmentVariables.codespaces])) {
     return {platform: 'codespaces', editor: true}
   }
   if (isSet(env[constants.environmentVariables.gitpod])) {
