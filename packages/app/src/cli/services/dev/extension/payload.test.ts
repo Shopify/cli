@@ -71,8 +71,8 @@ describe('getUIExtensionPayload', () => {
           },
         },
         capabilities: {
-          block_progress: false,
-          network_access: true,
+          blockProgress: false,
+          networkAccess: true,
         },
         development: {
           hidden: true,
@@ -117,8 +117,8 @@ describe('getUIExtensionPayload', () => {
           hidden: false,
         },
         capabilities: {
-          block_progress: false,
-          network_access: false,
+          blockProgress: false,
+          networkAccess: false,
         },
       })
     })
