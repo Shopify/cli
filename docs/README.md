@@ -10,6 +10,7 @@
 * [Principles](./principles.md)
 * [Release process](./release.md)
 * [Testing strategy](./testing-strategy.md)
+* [Cross-OS compatibility](./cross-os-compatibility.md)
 * [Troubleshooting](./troubleshooting.md)
 * [Plugins](./plugins.md)
 * [FAQ](./faq.md)
