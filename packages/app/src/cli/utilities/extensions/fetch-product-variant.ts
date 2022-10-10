@@ -13,8 +13,8 @@ You can add a new product here: https://${storeFqdn}/admin/products/new`,
 
 /**
  * Retrieve the first variant of the first product of the given store
- * @param store {string} Store FQDN
- * @returns {Promise<string>} variantID if exists
+ * @param store - Store FQDN
+ * @returns variantID if exists
  */
 export async function fetchProductVariant(store: string) {
   const adminSession = await session.ensureAuthenticatedAdmin(store)

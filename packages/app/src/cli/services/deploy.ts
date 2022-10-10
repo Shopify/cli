@@ -202,6 +202,7 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         extension_points: extension.configuration.extensionPoints,
         name: extension.configuration.name,
         categories: extension.configuration.categories,
+        localization: await loadLocalesConfig(extension.directory),
       }
     }
     case 'web_pixel_extension': {

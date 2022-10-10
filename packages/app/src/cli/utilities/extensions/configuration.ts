@@ -3,7 +3,7 @@ import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
-import {error, path, string} from '@shopify/cli-kit'
+import {error, path} from '@shopify/cli-kit'
 
 const RendererNotFoundBug = (extension: string) => {
   return new error.Bug(
@@ -29,8 +29,7 @@ export interface ExtensionConfigOptions {
  * The extensions' Go binary receives the configuration through
  * standard input as a YAML-encoded object. This function returns the
  * Javascript object representing the configuration necessary for building.
- * @param extension {UIExtension} Extension that will be built.
- * @returns
+ * @param extension - Extension that will be built.
  */
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
@@ -44,7 +43,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
         extension_points: extension.configuration.extensionPoints || [],
-        categories: extension.configuration.categories,
+        categories: extension.configuration.categories || [],
         node_executable: await nodeExtensionsCLIPath(),
         surface: getUIExtensionSurface(extension.configuration.type),
         version: renderer?.version,
@@ -67,11 +66,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             env: options.app.dotenv?.variables ?? {},
           },
         },
-        capabilities: Object.fromEntries(
-          Object.entries(extension.configuration.capabilities).map((entry) => {
-            return [string.underscore(entry[0]), entry[1]]
-          }),
-        ),
+        capabilities: extension.configuration.capabilities,
         approval_scopes: options.grantedScopes ?? [],
       }
     }),

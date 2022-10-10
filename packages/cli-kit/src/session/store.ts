@@ -14,7 +14,7 @@ export const identifier = 'session'
 /**
  * Serializes the session as a JSON and stores it securely in the system.
  * If the secure store is not available, the session is stored in the local config.
- * @param session {Session} the session to store.
+ * @param session - the session to store.
  */
 export async function store(session: Session) {
   const jsonSession = JSON.stringify(session)
@@ -31,7 +31,7 @@ export async function store(session: Session) {
  * If the format of the session is invalid, the method will discard it.
  * In the future might add some logic for supporting migrating the schema
  * of already-persisted sessions.
- * @returns {Promise<Session\undefined>} Returns a promise that resolves with the session if it exists and is valid.
+ * @returns Returns a promise that resolves with the session if it exists and is valid.
  */
 export async function fetch(): Promise<Session | undefined> {
   let content

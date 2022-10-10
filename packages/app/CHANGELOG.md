@@ -1,5 +1,32 @@
 # @shopify/app
 
+## 3.16.3
+
+### Patch Changes
+
+- 58147c33: Added back the React import for scaffolded checkout ui extensions.
+- Updated dependencies [fc4d6c58]
+  - @shopify/cli-kit@3.16.3
+  - @shopify/shopify-cli-extensions@3.16.3
+
+## 3.16.2
+
+### Patch Changes
+
+- b02e2ff1: add jsx transform support to extensions build
+- ca6c7295: React types dependency version should be overwritten when generating React Typescript extensions
+- Updated dependencies [ca6c7295]
+  - @shopify/cli-kit@3.16.2
+  - @shopify/shopify-cli-extensions@3.16.2
+
+## 3.16.1
+
+### Patch Changes
+
+- b0b66f8a: Fix error deploying extensions with capabilities
+  - @shopify/cli-kit@3.16.1
+  - @shopify/shopify-cli-extensions@3.16.1
+
 ## 3.16.0
 
 ### Minor Changes

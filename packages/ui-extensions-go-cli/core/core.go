@@ -146,6 +146,7 @@ type Extension struct {
 	Development     Development      `json:"development" yaml:"development,omitempty"`
 	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty" toml:"extension_points,omitempty"`
 	Localization    *Localization    `json:"localization" yaml:"-"`
+  Categories 			[]string         `json:"categories" yaml:"categories,omitempty" toml:"categories,omitempty"`
 	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
 	Type            string           `json:"type" yaml:"type,omitempty"`
 	ExternalType    string           `json:"externalType" yaml:"external_type"`

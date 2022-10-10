@@ -30,12 +30,12 @@ interface UpdateAppIdentifiersOptions {
   identifiers: UuidOnlyIdentifiers
   command: UpdateAppIdentifiersCommand
 }
+
 /**
  * Given an app and a set of identifiers, it persists the identifiers in the .env files.
- * @param options {UpdateAppIdentifiersOptions} Options.
- * @returns {AppInterface} An copy of the app with the environment updated to reflect the updated identifiers.
+ * @param options - Options.
+ * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
-
 export async function updateAppIdentifiers(
   {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
@@ -75,10 +75,7 @@ interface GetAppIdentifiersOptions {
 /**
  * Given an app and a environment, it fetches the ids from the environment
  * and returns them.
- * @param options {GetAppIdentifiersOptions} Options.
- * @returns
  */
-
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
   systemEnvironment = process.env,

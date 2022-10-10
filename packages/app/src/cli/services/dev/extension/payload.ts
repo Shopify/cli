@@ -28,10 +28,13 @@ export async function getUIExtensionPayload(
       main: {
         name: 'main',
         url: `${url}/assets/main.js`,
-        lastUpdated: await file.lastUpdatedTimestamp(extension.outputBundlePath),
+        lastUpdated: (await file.lastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
       },
     },
-    capabilities: extension.configuration.capabilities,
+    capabilities: {
+      blockProgress: extension.configuration.capabilities?.block_progress || false,
+      networkAccess: extension.configuration.capabilities?.network_access || false,
+    },
     development: {
       ...options.currentDevelopmentPayload,
       resource: getUIExtensionResourceURL(extension.configuration.type, options),
@@ -46,6 +49,7 @@ export async function getUIExtensionPayload(
     },
     extensionPoints: extension.configuration.extensionPoints ?? null,
     localization: localization ?? null,
+    categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
     type: extension.configuration.type,
 

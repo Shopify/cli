@@ -34,10 +34,10 @@ export const DetachedHeadError = () => {
   )
 }
 
-export async function initializeRepository(directory: string) {
+export async function initializeRepository(directory: string, initialBranch = 'main') {
   debug(content`Initializing git repository at ${token.path(directory)}...`)
   await ensurePresentOrAbort()
-  await git(directory).init()
+  await git(directory).init({'--initial-branch': initialBranch})
 }
 
 export interface GitIgnoreTemplate {

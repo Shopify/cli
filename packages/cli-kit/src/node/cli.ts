@@ -3,7 +3,6 @@
  * set the DEBUG environment variable before the 'debug' package sets up its configuration when modules
  * are loaded statically.
  */
-
 interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
@@ -27,7 +26,7 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
 /**
  * A function that abstracts away setting up the environment and running
  * a CLI
- * @param options {RunCLIOptions} Options.
+ * @param options - Options.
  */
 export async function runCLI(options: RunCLIOptions) {
   setupEnvironmentVariables(options)
@@ -51,7 +50,6 @@ export async function runCLI(options: RunCLIOptions) {
 
 /**
  * A function for create-x CLIs that automatically runs the "init" command.
- * @param options
  */
 export async function runCreateCLI(options: RunCLIOptions) {
   setupEnvironmentVariables(options)

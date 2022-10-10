@@ -11,7 +11,7 @@ module.exports = {
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
     extraFileExtensions: ['.cjs'],
   },
-  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir'],
+  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
@@ -155,6 +155,8 @@ module.exports = {
         message: "Be human - prefer don't to do not, won't to will not etc.",
       },
     ],
+    'tsdoc/syntax': 'error',
+    'jsdoc/require-returns-description': 'error',
   },
   overrides: [
     {

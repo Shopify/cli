@@ -1,5 +1,5 @@
 import {exec} from '../system.js'
-import {exists as fileExists, read as readFile} from '../file.js'
+import {exists as fileExists, read as readFile, write as writeFile} from '../file.js'
 import {glob, dirname, join as pathJoin, findUp} from '../path.js'
 import {Abort, Bug} from '../error.js'
 import {latestNpmPackageVersion} from '../version.js'
@@ -38,8 +38,8 @@ export type PackageManager = typeof packageManager[number]
 /**
  * Returns an abort error that's thrown when a directory that's expected to have
  * a package.json doesn't have it.
- * @param directory {string} The path to the directory that should contain a package.json
- * @returns {Abort} An abort error.
+ * @param directory - The path to the directory that should contain a package.json
+ * @returns An abort error.
  */
 export const PackageJsonNotFoundError = (directory: string) => {
   return new Abort(`The directory ${directory} doesn't have a package.json.`)
@@ -48,8 +48,8 @@ export const PackageJsonNotFoundError = (directory: string) => {
 /**
  * Returns a bug error that's thrown when the lookup of the package.json traversing the directory
  * hierarchy up can't find a package.json
- * @param directory {string} The directory from which the traverse has been done
- * @returns {Abort} An abort error.
+ * @param directory - The directory from which the traverse has been done
+ * @returns An abort error.
  */
 export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
   return new Bug(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
@@ -57,7 +57,7 @@ export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
 
 /**
  * Returns the dependency manager used to run the create workflow.
- * @param env {Object} The environment variables of the process in which the CLI runs.
+ * @param env - The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
 export function packageManagerUsedForCreating(env = process.env): PackageManager | 'unknown' {
@@ -73,7 +73,7 @@ export function packageManagerUsedForCreating(env = process.env): PackageManager
 
 /**
  * Returns the dependency manager used by an existing project.
- * @param directory {string} The root directory of the project.
+ * @param directory - The root directory of the project.
  * @returns The dependency manager
  */
 export async function getPackageManager(directory: string): Promise<PackageManager> {
@@ -109,7 +109,7 @@ interface InstallNPMDependenciesRecursivelyOptions {
  * This function traverses down a directory tree to find directories containing a package.json
  * and installs the dependencies if needed. To know if it's needed, it uses the "check" command
  * provided by dependency managers.
- * @param options {InstallNPMDependenciesRecursivelyOptions} Options to install dependencies recursively.
+ * @param options - Options to install dependencies recursively.
  */
 export async function installNPMDependenciesRecursively(options: InstallNPMDependenciesRecursivelyOptions) {
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
@@ -165,7 +165,7 @@ export async function installNodeModules(options: InstallNodeModulesOptions) {
 
 /**
  * Returns the name of the package configured in its package.json
- * @param packageJsonPath {string} Path to the package.json file
+ * @param packageJsonPath - Path to the package.json file
  * @returns A promise that resolves with the name.
  */
 export async function getPackageName(packageJsonPath: string): Promise<string | undefined> {
@@ -175,7 +175,7 @@ export async function getPackageName(packageJsonPath: string): Promise<string | 
 
 /**
  * Returns the list of production and dev dependencies of a package.json
- * @param packageJsonPath {string} Path to the package.json file
+ * @param packageJsonPath - Path to the package.json file
  * @returns A promise that resolves with the list of dependencies.
  */
 export async function getDependencies(packageJsonPath: string): Promise<{[key: string]: string}> {
@@ -188,22 +188,22 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
 
 /**
  * Returns true if the app uses workspaces, false otherwise.
- * @param packageJsonPath {string} Path to the package.json file
- * @param pnpmWorkspacePath {string} Path to the pnpm-workspace.yaml file
+ * @param packageJsonPath - Path to the package.json file
+ * @param pnpmWorkspacePath - Path to the pnpm-workspace.yaml file
  * @returns A promise that resolves with true if the app uses workspaces, false otherwise.
  */
-
 export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
   const packageJsonPath = pathJoin(appDirectory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   const pnpmWorkspacePath = pathJoin(appDirectory, pnpmWorkspaceFile)
   return Boolean(packageJsonContent.workspaces) || fileExists(pnpmWorkspacePath)
 }
+
 /**
  * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
- * @param dependency {string} The dependency name (e.g. react)
- * @param currentVersion {string} The current version.
- * @returns {Promise<string>} A promise that resolves with a more recent version or undefined if there's no more recent version.
+ * @param dependency - The dependency name (e.g. react)
+ * @param currentVersion - The current version.
+ * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
 export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
   debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
@@ -255,12 +255,22 @@ export interface PackageJson {
    * The workspaces attribute of the package.json
    */
   workspaces?: string[]
+
+  /**
+   * The resolutions attribute of the package.json. Only useful when using yarn as package manager
+   */
+  resolutions?: {[key: string]: string}
+
+  /**
+   * The overrides attribute of the package.json. Only useful when using npm o npmn as package managers
+   */
+  overrides?: {[key: string]: string}
 }
 
 /**
  * Reads and parses a package.json
- * @param packageJsonPath {string} Path to the package.json
- * @returns {Promise<PackageJson>} An promise that resolves with an in-memory representation
+ * @param packageJsonPath - Path to the package.json
+ * @returns An promise that resolves with an in-memory representation
  *    of the package.json or rejects with an error if the file is not found or the content is
  *    not decodable.
  */
@@ -299,10 +309,12 @@ export interface DependencyVersion {
    * The name of the NPM dependency as it's reflected in the package.json:
    *
    * @example
-   *  In the example below name would be "react"
-   *  {
-   *    "react": "1.2.3"
-   *  }
+   * In the example below name would be "react"
+   * ```
+   * {
+   *   "react": "1.2.3"
+   * }
+   * ```
    */
   name: string
 
@@ -310,18 +322,20 @@ export interface DependencyVersion {
    * The version of the NPM dependency as it's reflected in the package.json:
    *
    * @example
-   *  In the example below version would be "1.2.3"
-   *  {
-   *    "react": "1.2.3"
-   *  }
+   * In the example below version would be "1.2.3"
+   * ```
+   * {
+   *   "react": "1.2.3"
+   * }
+   * ```
    */
   version: string | undefined
 }
 
 /**
  * Adds dependencies to a Node project (i.e. a project that has a package.json)
- * @param dependencies {string[]} List of dependencies to be added.
- * @param options {AddNPMDependenciesIfNeededOptions} Options for adding dependencies.
+ * @param dependencies - List of dependencies to be added.
+ * @param options - Options for adding dependencies.
  */
 export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
@@ -389,9 +403,9 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
 
 /**
  * Returns the arguments to add dependencies using NPM.
- * @param dependencies {string[]} The list of dependencies to add
- * @param type {DependencyType} The dependency type.
- * @returns {string[]} An array with the arguments.
+ * @param dependencies - The list of dependencies to add
+ * @param type - The dependency type.
+ * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['install']
@@ -412,9 +426,9 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
 
 /**
  * Returns the arguments to add dependencies using Yarn.
- * @param dependencies {string[]} The list of dependencies to add
- * @param type {DependencyType} The dependency type.
- * @returns {string[]} An array with the arguments.
+ * @param dependencies - The list of dependencies to add
+ * @param type - The dependency type.
+ * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType): string[] {
   let command = ['add']
@@ -435,9 +449,9 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
 
 /**
  * Returns the arguments to add dependencies using PNPM.
- * @param dependencies {string[]} The list of dependencies to add
- * @param type {DependencyType} The dependency type.
- * @returns {string[]} An array with the arguments.
+ * @param dependencies - The list of dependencies to add
+ * @param type - The dependency type.
+ * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['add']
@@ -459,8 +473,8 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
 /**
  * Given a directory it traverses the directory up looking for a package.json and if found, it reads it
  * decodes the JSON, and returns its content as a Javascript object.
- * @param options {string} The directory from which traverse up.
- * @returns {Promise<{path: string; content: unknown}>} If found, the promise resolves with the path to the
+ * @param options - The directory from which traverse up.
+ * @returns If found, the promise resolves with the path to the
  *  package.json and its content. If not found, it throws a FindUpAndReadPackageJsonNotFoundError error.
  */
 export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: unknown}> {
@@ -471,4 +485,23 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
   } else {
     throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
   }
+}
+
+export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}) {
+  const packageManager = await getPackageManager(directory)
+  const packageJsonPath = pathJoin(directory, 'package.json')
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+
+  if (packageManager === 'yarn') {
+    packageJsonContent.resolutions = packageJsonContent.resolutions
+      ? {...packageJsonContent.resolutions, ...dependencies}
+      : dependencies
+  }
+  if (packageManager === 'npm' || packageManager === 'pnpm') {
+    packageJsonContent.overrides = packageJsonContent.overrides
+      ? {...packageJsonContent.overrides, ...dependencies}
+      : dependencies
+  }
+
+  await writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2))
 }

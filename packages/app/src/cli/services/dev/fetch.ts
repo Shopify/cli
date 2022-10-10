@@ -49,8 +49,8 @@ export async function fetchAppExtensionRegistrations({
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error
- * @param token {string} Token to access partners API
- * @returns {Promise<Organization[]>} List of organizations
+ * @param token - Token to access partners API
+ * @returns List of organizations
  */
 export async function fetchOrganizations(token: string) {
   const query = api.graphql.AllOrganizationsQuery
@@ -62,9 +62,9 @@ export async function fetchOrganizations(token: string) {
 
 /**
  * Fetch all apps and stores for the given organization
- * @param orgId {string} Organization ID
- * @param token {string} Token to access partners API
- * @returns {Promise<FetchResponse>} Current organization details and list of apps and stores
+ * @param orgId - Organization ID
+ * @param token - Token to access partners API
+ * @returns Current organization details and list of apps and stores
  */
 export async function fetchOrgAndApps(orgId: string, token: string): Promise<FetchResponse> {
   const query = api.graphql.FindOrganizationQuery
@@ -99,10 +99,9 @@ interface FetchStoreByDomainOutput {
 /**
  * Returns the organization and the store based on passed domain
  * If a store with that domain doesn't exist the method returns undefined
- * @param orgId {string} Organization ID
- * @param token {string} Token to access partners API
- * @param shopDomain {string} shop domain fqdn
- * @returns {Promise<FetchStoreByDomainOutput | undefined>}
+ * @param orgId - Organization ID
+ * @param token - Token to access partners API
+ * @param shopDomain - shop domain fqdn
  */
 export async function fetchStoreByDomain(
   orgId: string,

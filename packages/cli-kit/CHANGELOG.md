@@ -1,5 +1,19 @@
 # @shopify/cli-kit
 
+## 3.16.3
+
+### Patch Changes
+
+- fc4d6c58: Removed unused fields from FunctionSet mutation
+
+## 3.16.2
+
+### Patch Changes
+
+- ca6c7295: React types dependency version should be overwritten when generating React Typescript extensions
+
+## 3.16.1
+
 ## 3.16.0
 
 ### Minor Changes

@@ -3,13 +3,17 @@ import {existsSync, readFileSync} from 'node:fs'
 
 interface FrameworkDetectionPattern {
   /**
-   * A file path
-   * @example "package.json"
+   * @example A file path
+   * ```
+   * "package.json"
+   * ```
    */
   path: string
   /**
-   * A matcher
-   * @example "\"(dev)?(d|D)ependencies\":\\s*{[^}]*\"next\":\\s*\".+?\"[^}]*}"
+   * @example A matcher
+   * ```
+   * "\"(dev)?(d|D)ependencies\":\\s*{[^}]*\"next\":\\s*\".+?\"[^}]*}"
+   * ```
    */
   matchContent?: string
 }
@@ -141,8 +145,8 @@ const frameworks: Framework[] = [
  * Tries to identify the using of a framework analyzing the existence and/or content of different files inside a
  * specific directory.
  *
- * @param {string} rootDirectory - Directory from which the files required for each framework are searched
- * @returns {string} The name of the framework used or 'unknown' otherwise
+ * @param rootDirectory - Directory from which the files required for each framework are searched
+ * @returns The name of the framework used or 'unknown' otherwise
  */
 export async function resolveFramework(rootDirectory: string) {
   const fwConfigFiles: {[key: string]: string | undefined} = {}
