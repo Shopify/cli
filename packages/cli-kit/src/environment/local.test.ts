@@ -178,7 +178,7 @@ describe('cloudEnvironment', () => {
     ['GITPOD_WORKSPACE_URL', 'gitpod'],
   ])('returns correct cloud platform when %s is truthy', (envVar, platform) => {
     // Given
-    const env = {[envVar]: '1'}
+    const env = {[envVar]: platform}
 
     // When
     const got = cloudEnvironment(env)

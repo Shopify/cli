@@ -124,13 +124,13 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
   editor: boolean
 } {
-  if (isTruthy(env[constants.environmentVariables.codespaces])) {
+  if (env[constants.environmentVariables.codespaces]) {
     return {platform: 'codespaces', editor: true}
   }
-  if (isTruthy(env[constants.environmentVariables.gitpod])) {
+  if (env[constants.environmentVariables.gitpod]) {
     return {platform: 'gitpod', editor: true}
   }
-  if (isTruthy(env[constants.environmentVariables.spin])) {
+  if (env[constants.environmentVariables.spin]) {
     return {platform: 'spin', editor: false}
   }
   return {platform: 'localhost', editor: false}
