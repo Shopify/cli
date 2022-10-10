@@ -36,18 +36,15 @@ export async function renderConcurrent({processes, onAbort, stdout}: RenderConcu
       unmountInk()
     } catch (error) {
       abortController.abort()
+      unmountInk()
       throw error
     }
   }
 
-  const {unmount, waitUntilExit} = render(
+  const {waitUntilExit} = render(
     <ConcurrentOutput processes={processes} runProcesses={runProcesses} />,
     stdout,
   )
-
-  abortController.signal.addEventListener('abort', () => {
-    unmount()
-  })
 
   return waitUntilExit()
 }
