@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {DeployConfig, ReqDeployConfig} from './types.js'
 import {gitInit} from '../../prompts/git-init.js'
 import {git, error, path} from '@shopify/cli-kit'
@@ -13,11 +14,14 @@ const MINIMAL_GIT_IGNORE: git.GitIgnoreTemplate = {
 }
 
 export const validateProject = async (config: DeployConfig) => {
+  console.log('waiting for ensurePresentOrAbort')
   await git.ensurePresentOrAbort()
   try {
+    console.log('waiting for ensure inside git directory')
     await git.ensureInsideGitDirectory(config.path)
   } catch (err: unknown) {
     if ((err as error.Abort)?.message !== git.OutsideGitDirectoryError(config.path).message) throw error
+    console.log('waiting for initialising git')
     await initializeGit(config)
   }
 }
