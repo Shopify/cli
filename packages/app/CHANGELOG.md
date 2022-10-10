@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.17.0
+
+### Patch Changes
+
+- 7576f700: Send capabilities in payload as camelCase
+- dac186b2: Removing unnecessary calls to enqueue and check compilation status
+- Updated dependencies [dac186b2]
+- Updated dependencies [5617050a]
+- Updated dependencies [5703ce9b]
+- Updated dependencies [483318aa]
+  - @shopify/cli-kit@3.17.0
+  - @shopify/shopify-cli-extensions@3.17.0
+
 ## 3.16.3
 
 ### Patch Changes

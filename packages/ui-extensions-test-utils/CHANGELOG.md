@@ -1,5 +1,7 @@
 # @shopify/ui-extensions-test-utils
 
+## 3.17.0
+
 ## 3.16.3
 
 ## 3.16.2
