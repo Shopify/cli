@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import {validateProject, fillDeployConfig} from './config.js'
 import {gitInit} from '../../prompts/git-init.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {error, file, git} from '@shopify/cli-kit'
 
 const defaultConfig = {
