@@ -16,7 +16,6 @@ interface RenderConcurrentOptions {
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
- * This function instantiates an `AbortController` so that the various processes can subscribe to the same abort signal.
  */
 export async function renderConcurrent({processes, abortController}: RenderConcurrentOptions) {
   const {waitUntilExit} = render(<ConcurrentOutput processes={processes} abortController={abortController} />)
