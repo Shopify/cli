@@ -181,7 +181,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest']
-        node: ['18.7.0']
+        node: ['16.17.0']
     steps:
       - uses: actions/checkout@v2
         with:
@@ -222,9 +222,6 @@ jobs:
         run: yarn install --ignore-engines
       - name: Unit tests
         run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
-      - name: Acceptance tests
-        if: ${{ matrix.node == '18.7.0' }}
-        run: yarn nx run features:test
       - name: Setup tmate session
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
         uses: mxschmitt/action-tmate@v3
