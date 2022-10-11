@@ -22,23 +22,18 @@ Please don't assume that a successful working workflow in the OS in which it was
 
 #### Linux ([Podman](https://podman.io/))
 
-Run the following command from the CLI directory to create an temporary virtual Linux environment with the directory mounted in it:
+Run the following command from the CLI directory to create an temporary virtual Linux environment:
 
 ```bash
-podman run \
-  --rm --interactive --tty \
-  --volume "$(pwd):/src" \
-  --workdir "/src" \
-  node:18 \
-  /bin/bash
+podman run --rm --interactive --tty node:18 /bin/bash
 ```
 
-Then run `yarn install` to resolve and pull all the project dependencies into the environment.
+Then clone the [CLI repository](https://github.com/Shopify/cli) and install the dependencies with `yarn install`.
 
 
 #### Windows ([Parallels](https://www.parallels.com/pd/general/))
 
-After you've installed Parallels and virtualized the Windows environment, go to `Actions > Configure > Options (Tab) > Sharing > Share Custom Mac folders with Windows` and share the folder containing the CLI repository. Then open the coherence mode through `View > Enter Coherence`. The coherence mode will show Windows' windows as if they were part of the host. You might need to run `yarn install` from the Windows shell to ensure dependencies with native extensions pull the binaries for the Windows architecture. You might also need to run the following command if Yarn throws errors related to unsigned scripts:
+After you've installed Parallels and virtualized the Windows environment, install [Node](https://nodejs.org/en/download/) and [Yarn](https://yarnpkg.com/). Clone the [CLI repository](https://github.com/Shopify/cli), and install dependencies with `yarn install`. If Yarn yields "unsigned scripts" errors execute the following command:
 
 ```bash
 Set-ExecutionPolicy Unrestricted -Scope LocalMachine
