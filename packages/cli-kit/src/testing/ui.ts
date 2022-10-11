@@ -1,7 +1,7 @@
+import * as path from '../path'
 import {execa, ExecaChildProcess} from 'execa'
-import {path} from '@shopify/cli-kit'
 
-type Run = (fixture: string, props?: {env?: Record<string, any>}) => ExecaChildProcess<string>
+type Run = (fixture: string, props?: {env?: {[key: string]: unknown}}) => ExecaChildProcess<string>
 
 export const run: Run = (fixture, props) => {
   const env = {

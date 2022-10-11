@@ -1,6 +1,6 @@
-import { Writable } from "form-data"
-import { Signal } from "../../abort.js"
-import { renderConcurrent } from "@shopify/cli-kit/node/ui"
+import {Signal} from '../../abort.js'
+import {Writable} from 'form-data'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 let backendPromiseResolve: () => void
 
@@ -30,5 +30,5 @@ const frontendProcess = {
   },
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 renderConcurrent({processes: [backendProcess, frontendProcess]})
-

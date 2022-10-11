@@ -1,10 +1,8 @@
-import {renderConcurrent, renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {Abort} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
-import {Signal} from '../../abort.js'
 import {run} from '../../testing/ui.js'
-import {afterEach, describe, expect, test, vi} from 'vitest'
-import {Writable} from 'node:stream'
+import {afterEach, describe, expect, test} from 'vitest'
 import stripAnsi from 'strip-ansi'
 
 afterEach(() => {
