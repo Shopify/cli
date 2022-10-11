@@ -2,10 +2,12 @@ import ConcurrentOutput, {WritableStream} from '../../private/node/ui/components
 import {OutputProcess} from '../../output.js'
 import {render} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
-import {AlertProps, alert} from '../../private/node/ui/alert.js'
+import {alert} from '../../private/node/ui/alert.js'
 import {fatalError, error} from '../../private/node/ui/error.js'
+import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import React from 'react'
 import {AbortController, AbortSignal} from 'abort-controller'
+import { ErrorProps } from '../../private/node/ui/components/Error.js'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -166,11 +168,6 @@ export function renderWarning(options: RenderAlertOptions) {
   alert({...options, type: 'warning'})
 }
 
-export interface RenderErrorOptions {
-  headline: string
-  tryMessages?: string[]
-}
-
 /**
  * Renders a Fatal error to the console inside a banner.
  *
@@ -204,6 +201,6 @@ export function renderFatalError(error: Fatal) {
  * ╰──────────────────────────────────────────────────────────╯
  * ```
  */
-export function renderError(options: RenderErrorOptions) {
+export function renderError(options: ErrorProps) {
   error(options)
 }

@@ -24,6 +24,7 @@ interface Instance {
   unmount: () => void
 }
 
+const TEST_TERMINAL_WIDTH = 80
 class OutputStream extends EventEmitter {
   columns: number
   private _lastFrame?: string
@@ -43,8 +44,8 @@ class OutputStream extends EventEmitter {
 }
 
 export const renderString = (element: ReactElement): Instance => {
-  const stdout = new OutputStream({columns: isUnitTest() ? 80 : process.stdout.columns})
-  const stderr = new OutputStream({columns: isUnitTest() ? 80 : process.stderr.columns})
+  const stdout = new OutputStream({columns: isUnitTest() ? TEST_TERMINAL_WIDTH : process.stdout.columns})
+  const stderr = new OutputStream({columns: isUnitTest() ? TEST_TERMINAL_WIDTH : process.stderr.columns})
 
   const instance = inkRender(element, {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
