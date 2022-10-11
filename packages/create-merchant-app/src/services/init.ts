@@ -1,5 +1,4 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
-import cleanup from '../utils/template/cleanup.js'
 
 import {string, path, file, output, ui, template, npm, git, github, environment, error} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
@@ -31,6 +30,16 @@ async function init(options: InitOptions) {
       {
         title: `Initialize your app ${hyphenizedName}`,
         task: async (_, task) => {
+          const templateDirectory = (await path.findUp('templates/app', {
+            cwd: path.moduleDirectory(import.meta.url),
+            type: 'directory',
+          })) as string
+
+          await template.recursiveDirectoryCopy(templateDirectory, templateScaffoldDir, {
+            name: options.name,
+            packageManager: options.packageManager ?? 'yarn',
+          })
+
           const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
 
           await npm.updateAppData(packageJSON, hyphenizedName)
@@ -77,14 +86,6 @@ async function init(options: InitOptions) {
             }),
             {concurrent: false},
           )
-        },
-      },
-      {
-        title: 'Clean up',
-        task: async (_, task) => {
-          task.title = 'Cleaning up'
-          await cleanup(templateScaffoldDir)
-          task.title = 'Completed clean up'
         },
       },
       {
