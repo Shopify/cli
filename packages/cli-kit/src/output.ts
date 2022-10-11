@@ -473,7 +473,7 @@ function withOrWithoutStyle(message: string): string {
 }
 
 export function unstyled(message: string): string {
-  return colors.unstyle(message)
+  return stripAnsi(message)
 }
 
 export function shouldDisplayColors(): boolean {
