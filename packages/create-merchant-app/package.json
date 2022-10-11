@@ -21,6 +21,7 @@
     "create-merchant-app": "./bin/run.js"
   },
   "files": [
+    "/templates",
     "/bin/run.js",
     "/bin/run.cmd",
     "/dist",
