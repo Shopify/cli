@@ -64,16 +64,7 @@ export async function buildUIExtensions(options: BuildUIExtensionsOptions): Prom
   if (options.app.extensions.ui.length === 0) {
     return []
   }
-  if (await environment.local.isShopify()) {
-    return options.app.extensions.ui.map((uiExtension) => {
-      return {
-        prefix: uiExtension.localIdentifier,
-        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
-        },
-      }
-    })
-  } else {
+  if (await environment.local.useGoBinary()) {
     return [
       {
         prefix: 'ui-extensions',
@@ -94,6 +85,15 @@ ${output.token.json(configuration)}
         },
       },
     ]
+  } else {
+    return options.app.extensions.ui.map((uiExtension) => {
+      return {
+        prefix: uiExtension.localIdentifier,
+        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+          await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
+        },
+      }
+    })
   }
 }
 
