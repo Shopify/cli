@@ -1,4 +1,4 @@
-import ConcurrentOutput, {WritableStream} from '../../private/node/components/ConcurrentOutput.js'
+import ConcurrentOutput, {WritableStream} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {OutputProcess} from '../../output.js'
 import {render} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
@@ -6,7 +6,6 @@ import {AlertProps, alert} from '../../private/node/ui/alert.js'
 import {fatalError, error} from '../../private/node/ui/error.js'
 import React from 'react'
 import {AbortController, AbortSignal} from 'abort-controller'
-import {EventEmitter} from 'events'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -40,9 +39,7 @@ export async function renderConcurrent({processes, onAbort}: RenderConcurrentOpt
     }
   }
 
-  const {waitUntilExit} = render(
-    <ConcurrentOutput processes={processes} runProcesses={runProcesses} />
-  )
+  const {waitUntilExit} = render(<ConcurrentOutput processes={processes} runProcesses={runProcesses} />)
 
   return waitUntilExit()
 }

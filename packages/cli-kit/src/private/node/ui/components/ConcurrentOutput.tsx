@@ -1,4 +1,4 @@
-import {OutputProcess} from '../../../output.js'
+import {OutputProcess} from '../../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'

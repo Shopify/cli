@@ -1,4 +1,4 @@
-import {renderString} from '../ui.js'
+import {renderString} from '../../ui.js'
 import chalkAnimation from 'chalk-animation'
 import {Text} from 'ink'
 import React, {useEffect, useState} from 'react'
