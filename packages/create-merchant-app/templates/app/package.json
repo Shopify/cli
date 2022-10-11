@@ -20,9 +20,6 @@
     "@shopify/app": "^3.0.0",
     "@shopify/cli": "^3.0.0"
   },
-  "devDependencies": {
-    "@remix-run/dev": "^1.7.2"
-  },
   "engines": {
     "node": ">=18"
   }

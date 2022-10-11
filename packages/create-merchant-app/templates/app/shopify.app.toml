@@ -1,3 +1,4 @@
 # This file stores configurations for your Shopify app.
 
+type = "merchant"
 scopes = "write_products"
