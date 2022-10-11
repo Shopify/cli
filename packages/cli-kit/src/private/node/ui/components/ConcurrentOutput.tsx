@@ -2,6 +2,7 @@ import {OutputProcess} from '../../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
+import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
@@ -12,7 +13,7 @@ export type RunProcesses = (
 
 interface Props {
   processes: OutputProcess[]
-  runProcesses: RunProcesses
+  abortController: AbortController
 }
 
 interface Line {
@@ -57,7 +58,7 @@ interface Line {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, runProcesses}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
   const [processOutput, setProcessOutput] = useState<Line[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
@@ -87,9 +88,28 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, runProcesses}) =
     })
   }
 
+  const runProcesses = async () => {
+    try {
+      await Promise.all(
+        processes.map(async (process, index) => {
+          const stdout = writableStream(process, index)
+          const stderr = writableStream(process, index)
+
+          await process.action(stdout, stderr, abortController.signal)
+        }),
+      )
+
+      unmountInk()
+    } catch (error) {
+      abortController.abort()
+      unmountInk()
+      throw error
+    }
+  }
+
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    runProcesses(writableStream, unmountInk)
+    runProcesses()
   }, [])
 
   return (

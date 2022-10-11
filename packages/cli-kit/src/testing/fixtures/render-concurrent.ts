@@ -1,7 +1,9 @@
 import {Signal} from '../../abort.js'
 import {Writable} from 'form-data'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {AbortController} from 'abort-controller'
 
+const abortController = new AbortController()
 let backendPromiseResolve: () => void
 
 const backendPromise = new Promise<void>(function (resolve, _reject) {
@@ -31,4 +33,4 @@ const frontendProcess = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-renderConcurrent({processes: [backendProcess, frontendProcess]})
+renderConcurrent({processes: [backendProcess, frontendProcess], abortController})

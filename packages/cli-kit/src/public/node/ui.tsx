@@ -1,47 +1,25 @@
-import ConcurrentOutput, {WritableStream} from '../../private/node/ui/components/ConcurrentOutput.js'
+import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {OutputProcess} from '../../output.js'
 import {render} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {fatalError, error} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
+import {ErrorProps} from '../../private/node/ui/components/Error.js'
 import React from 'react'
-import {AbortController, AbortSignal} from 'abort-controller'
-import { ErrorProps } from '../../private/node/ui/components/Error.js'
+import {AbortController} from 'abort-controller'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
-  onAbort?: (abortSignal: AbortSignal) => void
+  abortController: AbortController
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * This function instantiates an `AbortController` so that the various processes can subscribe to the same abort signal.
  */
-export async function renderConcurrent({processes, onAbort}: RenderConcurrentOptions) {
-  const abortController = new AbortController()
-  if (onAbort) onAbort(abortController.signal)
-
-  const runProcesses = async (writableStream: WritableStream, unmountInk: (error?: Error | undefined) => void) => {
-    try {
-      await Promise.all(
-        processes.map(async (process, index) => {
-          const stdout = writableStream(process, index)
-          const stderr = writableStream(process, index)
-
-          await process.action(stdout, stderr, abortController.signal)
-        }),
-      )
-
-      unmountInk()
-    } catch (error) {
-      abortController.abort()
-      unmountInk()
-      throw error
-    }
-  }
-
-  const {waitUntilExit} = render(<ConcurrentOutput processes={processes} runProcesses={runProcesses} />)
+export async function renderConcurrent({processes, abortController}: RenderConcurrentOptions) {
+  const {waitUntilExit} = render(<ConcurrentOutput processes={processes} abortController={abortController} />)
 
   return waitUntilExit()
 }
