@@ -1,18 +1,20 @@
-import {vi} from 'vitest'
-import stripAnsi from 'strip-ansi'
-import EventEmitter from 'events'
+import {execa, ExecaChildProcess} from 'execa'
+import {path} from '@shopify/cli-kit'
 
-class Stream extends EventEmitter {
-  columns!: number
-  write!: (str: string) => void
-  get!: () => string | undefined
-}
+type Run = (fixture: string, props?: {env?: Record<string, any>}) => ExecaChildProcess<string>
 
-export function createStdout(columns?: number): Stream {
-  const stdout = new Stream()
-  stdout.columns = columns ?? 80
-  stdout.write = vi.fn()
-  stdout.get = () => stripAnsi(vi.mocked(stdout.write).mock.lastCall?.[0] ?? '')
+export const run: Run = (fixture, props) => {
+  const env = {
+    ...process.env,
+    ...props?.env,
+    // we need this because ink treats the CI environment differently
+    // by only writing the last frame to stdout on unmount
+    // See more here https://github.com/vadimdemedes/ink/pull/266
+    CI: 'false',
+  }
 
-  return stdout
+  return execa('ts-node-esm', [path.resolve(__dirname, `fixtures/${fixture}.ts`)], {
+    cwd: __dirname,
+    env,
+  })
 }

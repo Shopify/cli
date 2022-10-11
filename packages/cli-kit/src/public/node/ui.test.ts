@@ -2,9 +2,10 @@ import {renderConcurrent, renderError, renderFatalError, renderInfo, renderSucce
 import {Abort} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {Signal} from '../../abort.js'
-import {createStdout} from '../../testing/ui.js'
+import {run} from '../../testing/ui.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {Writable} from 'node:stream'
+import stripAnsi from 'strip-ansi'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -195,51 +196,23 @@ describe('renderFatalError', async () => {
 
 describe('renderConcurrent', async () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
-    // Given
-    vi.useFakeTimers().setSystemTime(new Date(2022, 10, 10, 13, 15, 23))
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>(function (resolve, _reject) {
-      backendPromiseResolve = resolve
-    })
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-
-        backendPromiseResolve()
-      },
-    }
-
-    const frontendProcess = {
-      prefix: 'frontend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
-        await backendPromise
-
-        stdout.write('first frontend message')
-        stdout.write('second frontend message')
-        stdout.write('third frontend message')
-      },
-    }
-
-    const stdout = createStdout()
-
     // When
-    await renderConcurrent({processes: [backendProcess, frontendProcess], stdout})
+    const {stdout} = await run('render-concurrent')
+    const lastFrame = stripAnsi(stdout)
+      .split('\n')
+      .slice(-7)
+      .map((line) => line.replace(/\d/g, '0'))
+      .join('\n')
 
     // Then
-    expect(stdout.get()).toMatchInlineSnapshot(`
-      "2022-11-10 13:15:23 | backend  | first backend message
-      2022-11-10 13:15:23 | backend  | second backend message
-      2022-11-10 13:15:23 | backend  | third backend message
+    expect(lastFrame).toMatchInlineSnapshot(`
+      "0000-00-00 00:00:00 | backend  | first backend message
+      0000-00-00 00:00:00 | backend  | second backend message
+      0000-00-00 00:00:00 | backend  | third backend message
 
-      2022-11-10 13:15:23 | frontend | first frontend message
-      2022-11-10 13:15:23 | frontend | second frontend message
-      2022-11-10 13:15:23 | frontend | third frontend message
-      "
+      0000-00-00 00:00:00 | frontend | first frontend message
+      0000-00-00 00:00:00 | frontend | second frontend message
+      0000-00-00 00:00:00 | frontend | third frontend message"
     `)
   })
 })

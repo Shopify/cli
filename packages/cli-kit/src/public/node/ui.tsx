@@ -11,14 +11,13 @@ import {EventEmitter} from 'events'
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
   onAbort?: (abortSignal: AbortSignal) => void
-  stdout?: EventEmitter
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * This function instantiates an `AbortController` so that the various processes can subscribe to the same abort signal.
  */
-export async function renderConcurrent({processes, onAbort, stdout}: RenderConcurrentOptions) {
+export async function renderConcurrent({processes, onAbort}: RenderConcurrentOptions) {
   const abortController = new AbortController()
   if (onAbort) onAbort(abortController.signal)
 
@@ -42,8 +41,7 @@ export async function renderConcurrent({processes, onAbort, stdout}: RenderConcu
   }
 
   const {waitUntilExit} = render(
-    <ConcurrentOutput processes={processes} runProcesses={runProcesses} />,
-    stdout,
+    <ConcurrentOutput processes={processes} runProcesses={runProcesses} />
   )
 
   return waitUntilExit()

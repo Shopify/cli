@@ -15,26 +15,17 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
   unmount()
 }
 
-export function render(element: JSX.Element, stdout?: EventEmitter) {
-  return inkRender(element, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stdout: (stdout ?? process.stdout) as any,
-    debug: isUnitTest(),
-  })
+export function render(element: JSX.Element) {
+  return inkRender(element)
 }
 
 interface Instance {
   output: string | undefined
   unmount: () => void
-  cleanup: () => void
-  stdout: OutputStream
-  stderr: OutputStream
-  frames: string[]
 }
 
 export class OutputStream extends EventEmitter {
   columns: number
-  readonly frames: string[] = []
   private _lastFrame?: string
 
   constructor(options: {columns: number}) {
@@ -43,7 +34,6 @@ export class OutputStream extends EventEmitter {
   }
 
   write = (frame: string) => {
-    this.frames.push(frame)
     this._lastFrame = frame
   }
 
@@ -68,10 +58,6 @@ export const renderString = (element: ReactElement): Instance => {
 
   return {
     output: stdout.lastFrame(),
-    stdout,
-    stderr,
-    cleanup: instance.cleanup,
     unmount: instance.unmount,
-    frames: stdout.frames,
   }
 }
