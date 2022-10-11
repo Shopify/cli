@@ -5,7 +5,10 @@ import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
-export type RunProcesses = (writableStream: WritableStream, unmountInk: (error?: Error | undefined) => void) => Promise<void>
+export type RunProcesses = (
+  writableStream: WritableStream,
+  unmountInk: (error?: Error | undefined) => void,
+) => Promise<void>
 
 interface Props {
   processes: OutputProcess[]
@@ -20,8 +23,10 @@ interface Line {
 
 /**
  * Renders output from concurrent processes to the terminal.
- * Output will be divided in a two column layout, with the left column
- * containing the process prefix and the right column containing the output.
+ * Output will be divided in a three column layout
+ * with the left column containing the timestamp,
+ * the right column containing the output,
+ * and the middle column containing the process prefix.
  * Every process will be rendered with a different color, up to 4 colors.
  *
  * For example running `shopify app dev`:
