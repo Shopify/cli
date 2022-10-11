@@ -20,7 +20,6 @@ export function render(element: JSX.Element, stdout?: EventEmitter) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stdout: (stdout ?? process.stdout) as any,
     debug: isUnitTest(),
-    patchConsole: !isUnitTest(),
   })
 }
 
