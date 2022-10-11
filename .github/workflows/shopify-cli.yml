@@ -138,7 +138,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ["18.7.0"]
-        target: ['build', 'type-check', 'lint']
+        target: ['build']
     steps:
       - uses: actions/checkout@v2
         with:
