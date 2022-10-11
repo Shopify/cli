@@ -24,7 +24,7 @@ interface Instance {
   unmount: () => void
 }
 
-export class OutputStream extends EventEmitter {
+class OutputStream extends EventEmitter {
   columns: number
   private _lastFrame?: string
 
