@@ -43,6 +43,99 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  if (options.app.configuration.type === 'merchant') {
+    devMerchantApp(options)
+  } else {
+    devApp(options)
+  }
+}
+
+async function devMerchantApp(options: DevOptions) {
+  const token = await session.ensureAuthenticatedPartners()
+  const {
+    identifiers,
+    storeFqdn,
+    app,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevEnvironment(options, token)
+  const apiKey = identifiers.app
+
+  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
+    ...options,
+    cachedTunnelPlugin: tunnelPlugin,
+  })
+
+  const webPort = await port.getRandomPort()
+
+  /** If the app doesn't have web/ the link message is not necessary */
+  const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  let shouldUpdateURLs = false
+  if (options.update) {
+    const currentURLs = await getURLs(apiKey, token)
+    const newURLs = generatePartnersURLs(exposedUrl)
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+      currentURLs,
+      appDirectory: options.app.directory,
+      cachedUpdateURLs,
+      newApp: app.newApp,
+    })
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
+    outputAppURL(storeFqdn, exposedUrl)
+  }
+
+  // If we have a real UUID for an extension, use that instead of a random one
+  options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
+
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
+  const proxyPort = usingLocalhost ? await port.getRandomPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
+  if (options.app.extensions.ui.length > 0) {
+    const devExt = await devUIExtensionsTarget({
+      app: options.app,
+      apiKey,
+      url: proxyUrl,
+      storeFqdn,
+      grantedScopes: app.grantedScopes,
+      subscriptionProductUrl: options.subscriptionProductUrl,
+      checkoutCartUrl: options.checkoutCartUrl,
+    })
+    proxyTargets.push(devExt)
+  }
+
+  outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
+
+  const additionalProcesses: output.OutputProcess[] = []
+
+  if (options.app.extensions.theme.length > 0) {
+    const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
+    const extension = options.app.extensions.theme[0]!
+    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    additionalProcesses.push(devExt)
+  }
+
+  if (usingLocalhost) {
+    // additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
+  } else {
+    // proxyTargets.push(devFrontendProxyTarget(frontendOptions))
+  }
+
+  await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
+
+  await analytics.reportEvent({config: options.commandConfig})
+
+  if (proxyTargets.length === 0) {
+    await output.concurrent(additionalProcesses)
+  } else {
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+  }
+}
+
+async function devApp(options: DevOptions) {
   const skipDependenciesInstallation = options.skipDependenciesInstallation
   if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign
