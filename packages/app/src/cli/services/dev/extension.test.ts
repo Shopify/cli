@@ -17,7 +17,7 @@ describe('devUIExtensions()', () => {
   const websocketCloseSpy = vi.fn()
   const bundlerCloseSpy = vi.fn()
 
-  describe('when user is Shopify', () => {
+  describe('when it should use Node workflow', () => {
     const options = {
       mock: 'options',
       url: 'https://mock.url',
@@ -25,7 +25,7 @@ describe('devUIExtensions()', () => {
     } as unknown as ExtensionDevOptions
 
     function spyOnEverything() {
-      vi.spyOn(environment.local, 'isShopify').mockResolvedValue(true)
+      vi.spyOn(environment.local, 'useGoBinary').mockResolvedValue(false)
       vi.spyOn(utilities, 'getCartPathFromExtensions').mockResolvedValue('mock/path/from/extensions')
       vi.spyOn(store, 'getExtensionsPayloadStoreRawPayload').mockResolvedValue({
         mock: 'payload',
@@ -129,10 +129,10 @@ describe('devUIExtensions()', () => {
     })
   })
 
-  describe('when user is not Shopify', () => {
+  describe('when it should use the Go binary', () => {
     test('initializes the payload store', async () => {
       // GIVEN
-      vi.spyOn(environment.local, 'isShopify').mockResolvedValue(false)
+      vi.spyOn(environment.local, 'useGoBinary').mockResolvedValue(true)
       vi.spyOn(configuration, 'extensionConfig').mockResolvedValue({mock: 'extension-config'})
       vi.spyOn(cli, 'runGoExtensionsCLI').mockResolvedValue(undefined)
       vi.spyOn(yaml, 'encode').mockReturnValue('yaml-encoded-config')
