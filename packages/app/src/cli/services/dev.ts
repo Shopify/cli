@@ -119,7 +119,14 @@ async function devMerchantApp(options: DevOptions) {
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
-  const remixCLI = path.join(path.dirname(require.resolve('@remix-run/dev')), 'cli.js')
+  const remixCLI = path.join(
+    path.dirname(
+      require.resolve('@remix-run/dev', {
+        paths: [options.app.directory],
+      }),
+    ),
+    'cli.js',
+  )
 
   if (usingLocalhost) {
     additionalProcesses.push({
