@@ -47,12 +47,10 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
           <Text bold>Stack trace:</Text>
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index}>
-              <Box>
-                <Text>
-                  at <Text color="yellow">{item.calleeShort}</Text>
-                  <Text>{item.fileShort && ` (${item.fileShort}:${item.line})`}</Text>
-                </Text>
-              </Box>
+              <Text>
+                at{item.calleeShort && <Text color="yellow">{` ${item.calleeShort}`}</Text>}
+                {item.fileShort && ` (${item.fileShort}:${item.line})`}
+              </Text>
               <Box paddingLeft={1}>
                 <Text dimColor>{item.sourceLine?.trim()}</Text>
               </Box>

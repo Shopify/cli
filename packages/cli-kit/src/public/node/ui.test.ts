@@ -1,5 +1,5 @@
 import {renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
-import {Abort} from '../../error.js'
+import {Abort, Bug} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {run} from '../../testing/ui.js'
 import {afterEach, describe, expect, test} from 'vitest'
@@ -193,6 +193,40 @@ describe('renderFatalError', async () => {
       │                                                                              │
       │  What to try                                                                 │
       │    • Check your internet connection and try again.                           │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯"
+    `)
+  })
+
+  test('renders a fatal error inside a banner with a stack trace', async () => {
+    // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
+
+    // When
+    const error = new Bug('Unexpected error')
+    error.stack = `
+      Error: Unexpected error
+          at Object.<anonymous> (/Users/username/Projects/shopify-app-cli/test/shopify-cli/ui/error_test.rb:1:1)
+          at Module._compile (internal/modules/cjs/loader.js:1137:30)
+          at Object.Module._extensions..js (internal/modules/cjs/loader.js:1157:10)
+          at Module.load (internal/modules/cjs/loader.js:985:32)
+          at Function.Module._load (internal/modules/cjs/loader.js:878:14)
+    `
+    renderFatalError(error)
+
+    // Then
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Unexpected error                                                            │
+      │                                                                              │
+      │  Stack trace:                                                                │
+      │  at <anonymous> (../../../../../../../username/Projects/shopify-app-cli/tes  │
+      │  t/shopify-cli/ui/error_test.rb:1)                                           │
+      │  at _compile (internal/modules/cjs/loader.js:1137)                           │
+      │  at js (internal/modules/cjs/loader.js:1157)                                 │
+      │  at load (internal/modules/cjs/loader.js:985)                                │
+      │  at _load (internal/modules/cjs/loader.js:878)                               │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
