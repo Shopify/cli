@@ -78,7 +78,7 @@ export interface ExtensionPayload {
   localization?: {
     defaultLocale: string
     lastUpdated: number
-    translations: {[locale: string]: string}
+    translations: {[locale: string]: ExtensionTranslationMap}
   }
 }
 
@@ -102,4 +102,8 @@ export interface App {
   }
   supportEmail?: string
   supportLocales?: string[]
+}
+
+interface ExtensionTranslationMap {
+  [key: string]: string
 }
