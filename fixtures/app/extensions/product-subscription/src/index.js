@@ -12,7 +12,7 @@ function App(root, { extensionPoint }) {
     root.createComponent(
       Text,
       {},
-      `It works the ${extensionPoint} extension! APP_URL is: ${process.env.APP_URL}`
+      `It works the ${extensionPoint} extension! API_KEY is: ${process.env.SHOPIFY_API_KEY}`
     )
   );
   root.mount();
