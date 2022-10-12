@@ -30,14 +30,35 @@ podman run --rm --interactive --tty node:18 /bin/bash
 
 Then clone the [CLI repository](https://github.com/Shopify/cli) and install the dependencies with `yarn install`.
 
-
 #### Windows ([Parallels](https://www.parallels.com/pd/general/))
 
-After you've installed Parallels and virtualized the Windows environment, install [Node](https://nodejs.org/en/download/) and [Yarn](https://yarnpkg.com/). Clone the [CLI repository](https://github.com/Shopify/cli), and install dependencies with `yarn install`. If Yarn yields "unsigned scripts" errors execute the following command:
+After you've installed Parallels and virtualized the Windows environment, you need to install the following software:
+
+- [Git](https://git-scm.com/download/win)
+- [Node](https://nodejs.org/en/download/)
+- [Yarn](https://yarnpkg.com/)
+- [Python](https://www.python.org/downloads/windows/) (needed for `node-gyp`)
+- [Visual Studio](https://code.visualstudio.com/download) (needed for `node-gyp`, make sure you install the "Desktop development with C++" workload)
+- [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.4 is recommended)
+- [Go](https://go.dev/doc/install) (needed for dev ui extensions)
+
+Git provides a shell called "Git Bash" which you can use. First set your global git user and email:
+
+```bash
+git config --global user.email "john.doe@gmail.com"
+git config --global user.name "John Doe"
+```
+
+Then you can clone the CLI repository:
+
+```bash
+git clone https://github.com/Shopify/cli.git
+```
+
+Now you can install dependencies with `yarn install`. If Yarn yields "unsigned scripts" errors execute the following command:
 
 ```bash
 Set-ExecutionPolicy Unrestricted -Scope LocalMachine
 ```
 
-
-
+Now you can run the test suite with `yarn test` and verify that everything works properly.
