@@ -16,15 +16,30 @@ function typeToColor(type: Props['type']) {
   }[type]
 }
 
-const BANNER_MAX_WIDTH = 80
+const BANNER_MIN_WIDTH = 80
+
+function calculateWidth(stdout: NodeJS.WriteStream | undefined) {
+  const fullWidth = stdout?.columns ?? BANNER_MIN_WIDTH
+  const twoThirdsOfWidth = Math.floor((fullWidth / 3) * 2)
+  let width
+
+  if (fullWidth <= BANNER_MIN_WIDTH) {
+    width = fullWidth
+  } else if (twoThirdsOfWidth < BANNER_MIN_WIDTH) {
+    width = BANNER_MIN_WIDTH
+  } else {
+    width = twoThirdsOfWidth
+  }
+
+  return width
+}
 
 const Banner: React.FC<Props> = ({type, children}) => {
   const {stdout} = useStdout()
-  const columns = stdout?.columns ?? BANNER_MAX_WIDTH
 
   return (
     <Box
-      width={Math.min(columns, BANNER_MAX_WIDTH)}
+      width={calculateWidth(stdout)}
       paddingY={1}
       paddingX={2}
       borderStyle="round"
