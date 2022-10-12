@@ -37,7 +37,10 @@ export const DetachedHeadError = () => {
 export async function initializeRepository(directory: string, initialBranch = 'main') {
   debug(content`Initializing git repository at ${token.path(directory)}...`)
   await ensurePresentOrAbort()
-  await git(directory).init({'--initial-branch': initialBranch})
+  // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
+  const repo = git(directory)
+  await repo.init()
+  await repo.checkoutLocalBranch(initialBranch)
 }
 
 export interface GitIgnoreTemplate {
