@@ -53,6 +53,7 @@ export interface UIExtensionPayload {
   version?: string
   surface: UIExtensionSurface
   title: string
+  approvalScopes: string[]
 }
 
 export type ExtensionAssetBuildStatus = 'success' | 'error' | ''
