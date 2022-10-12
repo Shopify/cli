@@ -22,7 +22,8 @@ const Banner: React.FC<Props> = ({type, children}) => {
   return (
     <Box
       width={(stdout?.columns ?? 0) >= 80 ? 80 : stdout?.columns}
-      padding={1}
+      paddingY={1}
+      paddingX={2}
       borderStyle="round"
       flexDirection="column"
       borderColor={typeToColor(type)}
