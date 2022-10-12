@@ -3,7 +3,7 @@
   "javascript.validate.enable": false,
   "css.validate": false,
   "scss.validate": false,
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsdk": "./node_modules/typescript/lib",
   "files.exclude": {
     ".dev": true,
     ".history/**": true,

@@ -194,7 +194,7 @@ export let collectedLogs: {[key: string]: string[]} = {}
  * @param key - The key of the log.
  * @param content - The content of the log.
  */
-const collectLog = (key: string, content: Message) => {
+export const collectLog = (key: string, content: Message) => {
   const output = collectedLogs.output ?? []
   const data = collectedLogs[key] ?? []
   data.push(stripAnsi(stringifyMessage(content) ?? ''))
@@ -453,11 +453,11 @@ export function consoleError(message: string): void {
   console.error(withOrWithoutStyle(message))
 }
 
-function consoleWarn(message: string): void {
+export function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
+export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
     logger(message)
   }
@@ -473,7 +473,7 @@ function withOrWithoutStyle(message: string): string {
 }
 
 export function unstyled(message: string): string {
-  return colors.unstyle(message)
+  return stripAnsi(message)
 }
 
 export function shouldDisplayColors(): boolean {

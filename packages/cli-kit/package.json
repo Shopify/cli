@@ -21,6 +21,10 @@
       "import": "./dist/public/common/array.js",
       "types": "./dist/public/common/array.d.ts"
     },
+    "./node/ui": {
+      "import": "./dist/public/node/ui.js",
+      "types": "./dist/public/node/ui.d.ts"
+    },
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"
@@ -80,8 +84,9 @@
     "@oclif/core": "1.9.2",
     "@types/archiver": "^5.3.1",
     "abort-controller": "^3.0.0",
-    "ansi-colors": "^4.1.1",
     "archiver": "^5.3.1",
+    "chalk": "^5.1.0",
+    "chalk-animation": "^2.0.3",
     "change-case": "^4.1.2",
     "color-json": "^2.0.1",
     "commondir": "^1.0.1",
@@ -103,6 +108,7 @@
     "graphql": "^16.4.0",
     "graphql-request": "^4.3.0",
     "h3": "^0.7.21",
+    "ink": "^3.2.0",
     "inquirer": "^8.2.4",
     "inquirer-autocomplete-prompt": "^2.0.0",
     "is-interactive": "^2.0.0",
@@ -119,6 +125,7 @@
     "open": "^8.4.0",
     "pathe": "0.2.0",
     "prettier": "^2.7.1",
+    "react": "^17.0.2",
     "semver": "^7.3.6",
     "simple-git": "^3.5.0",
     "source-map-support": "^0.5.21",
