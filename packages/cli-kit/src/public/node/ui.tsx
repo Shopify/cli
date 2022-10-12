@@ -31,32 +31,32 @@ type RenderAlertOptions = Omit<AlertProps, 'type'>
  * Basic:
  *
  * ```
- * ╭ info ────────────────────────────────────────────────────╮
+ * ╭─ info ───────────────────────────────────────────────────╮
  * │                                                          │
- * │ Body                                                     │
+ * │  Body                                                    │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
  *
  * Complete:
  * ```
- * ╭ info ────────────────────────────────────────────────────╮
+ * ╭─ info ───────────────────────────────────────────────────╮
  * │                                                          │
- * │ Title                                                    │
+ * │  Title                                                   │
  * │                                                          │
- * │ Body                                                     │
+ * │  Body                                                    │
  * │                                                          │
- * │ Next steps                                               │
- * │   • Run cd santorini-goods                               │
- * │   • To preview your project, run npm app dev             │
- * │   • To add extensions, run npm generate extension        │
+ * │  Next steps                                              │
+ * │    • Run cd santorini-goods                              │
+ * │    • To preview your project, run npm app dev            │
+ * │    • To add extensions, run npm generate extension       │
  * │                                                          │
- * │ Reference                                                │
- * │   • Run npm shopify help                                 │
- * │   • Press 'return' to open the dev docs:                 │
- * │     https://shopify.dev                                  │
+ * │  Reference                                               │
+ * │    • Run npm shopify help                                │
+ * │    • Press 'return' to open the dev docs:                │
+ * │      https://shopify.dev                                 │
  * │                                                          │
- * │ Link: https://shopify.com                                │
+ * │  Link: https://shopify.com                               │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -71,32 +71,32 @@ export function renderInfo(options: RenderAlertOptions) {
  * Basic:
  *
  * ```
- * ╭ success ─────────────────────────────────────────────────╮
+ * ╭─ success ────────────────────────────────────────────────╮
  * │                                                          │
- * │ Body                                                     │
+ * │  Body                                                    │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
  *
  * Complete:
  * ```
- * ╭ success ─────────────────────────────────────────────────╮
+ * ╭─ success ────────────────────────────────────────────────╮
  * │                                                          │
- * │ Title                                                    │
+ * │  Title                                                   │
  * │                                                          │
- * │ Body                                                     │
+ * │  Body                                                    │
  * │                                                          │
- * │ Next steps                                               │
- * │   • Run cd santorini-goods                               │
- * │   • To preview your project, run npm app dev             │
- * │   • To add extensions, run npm generate extension        │
+ * │  Next steps                                              │
+ * │    • Run cd santorini-goods                              │
+ * │    • To preview your project, run npm app dev            │
+ * │    • To add extensions, run npm generate extension       │
  * │                                                          │
- * │ Reference                                                │
- * │   • Run npm shopify help                                 │
- * │   • Press 'return' to open the dev docs:                 │
- * │     https://shopify.dev                                  │
+ * │  Reference                                               │
+ * │    • Run npm shopify help                                │
+ * │    • Press 'return' to open the dev docs:                │
+ * │      https://shopify.dev                                 │
  * │                                                          │
- * │ Link: https://shopify.com                                │
+ * │  Link: https://shopify.com                               │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -111,32 +111,32 @@ export function renderSuccess(options: RenderAlertOptions) {
  * Basic:
  *
  * ```
- * ╭ warning ─────────────────────────────────────────────────╮
+ * ╭─ warning ────────────────────────────────────────────────╮
  * │                                                          │
- * │ Body                                                     │
+ * │  Body                                                    │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
  *
  * Complete:
  * ```
- * ╭ warning ─────────────────────────────────────────────────╮
+ * ╭─ warning ────────────────────────────────────────────────╮
  * │                                                          │
- * │ Title                                                    │
+ * │  Title                                                   │
  * │                                                          │
- * │ Body                                                     │
+ * │  Body                                                    │
  * │                                                          │
- * │ Next steps                                               │
- * │   • Run cd santorini-goods                               │
- * │   • To preview your project, run npm app dev             │
- * │   • To add extensions, run npm generate extension        │
+ * │  Next steps                                              │
+ * │    • Run cd santorini-goods                              │
+ * │    • To preview your project, run npm app dev            │
+ * │    • To add extensions, run npm generate extension       │
  * │                                                          │
- * │ Reference                                                │
- * │   • Run npm shopify help                                 │
- * │   • Press 'return' to open the dev docs:                 │
- * │     https://shopify.dev                                  │
+ * │  Reference                                               │
+ * │    • Run npm shopify help                                │
+ * │    • Press 'return' to open the dev docs:                │
+ * │      https://shopify.dev                                 │
  * │                                                          │
- * │ Link: https://shopify.com                                │
+ * │  Link: https://shopify.com                               │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -149,12 +149,12 @@ export function renderWarning(options: RenderAlertOptions) {
  * Renders a Fatal error to the console inside a banner.
  *
  * ```
- * ╭ error ───────────────────────────────────────────────────╮
+ * ╭─ error ──────────────────────────────────────────────────╮
  * │                                                          │
- * │ Couldn't connect to the Shopify Partner Dashboard.       │
+ * │  Couldn't connect to the Shopify Partner Dashboard.      │
  * │                                                          │
- * │ What to try                                              │
- * │   • Check your internet connection and try again.        │
+ * │  What to try                                             │
+ * │    • Check your internet connection and try again.       │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -167,13 +167,13 @@ export function renderFatalError(error: Fatal) {
  * Renders a generic error to the console inside a banner.
  *
  * ```
- * ╭ error ───────────────────────────────────────────────────╮
+ * ╭─ error ──────────────────────────────────────────────────╮
  * │                                                          │
- * │ Something went wrong.                                    │
+ * │  Something went wrong.                                   │
  * │                                                          │
- * │ What to try                                              │
- * │   • Check your internet connection.                      │
- * │   • Try again.                                           │
+ * │  What to try                                             │
+ * │    • Check your internet connection.                     │
+ * │    • Try again.                                          │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```

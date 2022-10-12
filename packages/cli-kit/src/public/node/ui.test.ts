@@ -64,23 +64,23 @@ describe('renderInfo', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "╭ info ────────────────────────────────────────────────────────────────────────╮
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │ Title                                                                        │
+      │  Title                                                                       │
       │                                                                              │
-      │ Body                                                                         │
+      │  Body                                                                        │
       │                                                                              │
-      │ Next steps                                                                   │
-      │   • Run cd santorini-goods                                                   │
-      │   • To preview your project, run npm app dev                                 │
-      │   • To add extensions, run npm generate extension                            │
+      │  Next steps                                                                  │
+      │    • Run cd santorini-goods                                                  │
+      │    • To preview your project, run npm app dev                                │
+      │    • To add extensions, run npm generate extension                           │
       │                                                                              │
-      │ Reference                                                                    │
-      │   • Run npm shopify help                                                     │
-      │   • Press 'return' to open the really amazing and clean dev docs:            │
-      │     https://shopify.dev                                                      │
+      │  Reference                                                                   │
+      │    • Run npm shopify help                                                    │
+      │    • Press 'return' to open the really amazing and clean dev docs:           │
+      │      https://shopify.dev                                                     │
       │                                                                              │
-      │ Link: https://shopify.com                                                    │
+      │  Link: https://shopify.com                                                   │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
@@ -98,7 +98,13 @@ describe('renderSuccess', async () => {
     })
 
     // Then
-    expect(mockOutput.success()).toMatchInlineSnapshot('""')
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Body                                                                        │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯"
+    `)
   })
 })
 
@@ -120,22 +126,23 @@ describe('renderWarning', async () => {
 
     // Then
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
-      "╭ warning ─────────────────────────────────────────────────────────────────────╮
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │ Body                                                                         │
+      │  Body                                                                        │
       │                                                                              │
-      │ Next steps                                                                   │
-      │   1. First                                                                   │
-      │   2. Second                                                                  │
+      │  Next steps                                                                  │
+      │    1. First                                                                  │
+      │    2. Second                                                                 │
       │                                                                              │
-      │ Reference                                                                    │
-      │   • Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod  │
-      │     tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim     │
-      │     veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea  │
-      │     commodo consequat.                                                       │
-      │   • Duis aute irure dolor in reprehenderit in voluptate velit esse cillum    │
-      │     dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non   │
-      │     proident, sunt in culpa qui officia deserunt mollit anim id est laborum. │
+      │  Reference                                                                   │
+      │    • Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do         │
+      │      eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad  │
+      │       minim veniam, quis nostrud exercitation ullamco laboris nisi ut        │
+      │      aliquip ex ea commodo consequat.                                        │
+      │    • Duis aute irure dolor in reprehenderit in voluptate velit esse cillum   │
+      │      dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non  │
+      │       proident, sunt in culpa qui officia deserunt mollit anim id est        │
+      │      laborum.                                                                │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
@@ -155,13 +162,13 @@ describe('renderError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭ error ───────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │ Something went wrong.                                                        │
+      │  Something went wrong.                                                       │
       │                                                                              │
-      │ What to try                                                                  │
-      │   • Check your internet connection.                                          │
-      │   • Try again.                                                               │
+      │  What to try                                                                 │
+      │    • Check your internet connection.                                         │
+      │    • Try again.                                                              │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
@@ -180,12 +187,12 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭ error ───────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │ Couldn't connect to the Shopify Partner Dashboard.                           │
+      │  Couldn't connect to the Shopify Partner Dashboard.                          │
       │                                                                              │
-      │ What to try                                                                  │
-      │   • Check your internet connection and try again.                            │
+      │  What to try                                                                 │
+      │    • Check your internet connection and try again.                           │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
