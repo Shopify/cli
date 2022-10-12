@@ -16,12 +16,15 @@ function typeToColor(type: Props['type']) {
   }[type]
 }
 
+const BANNER_MAX_WIDTH = 80
+
 const Banner: React.FC<Props> = ({type, children}) => {
   const {stdout} = useStdout()
+  const columns = stdout?.columns ?? BANNER_MAX_WIDTH
 
   return (
     <Box
-      width={(stdout?.columns ?? 0) >= 80 ? 80 : stdout?.columns}
+      width={Math.min(columns, BANNER_MAX_WIDTH)}
       paddingY={1}
       paddingX={2}
       borderStyle="round"
