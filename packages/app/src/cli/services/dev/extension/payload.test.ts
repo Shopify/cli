@@ -94,6 +94,7 @@ describe('getUIExtensionPayload', () => {
         type: 'product_subscription',
         uuid: 'devUUID',
         version: '1.2.3',
+        approvalScopes: ['scope-a'],
       })
     })
   })
