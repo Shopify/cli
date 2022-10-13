@@ -66,6 +66,8 @@ export async function kitchenSink() {
     ),
   )
 
+  renderFatalError(new error.Bug('Unexpected error'))
+
   renderError({
     headline: 'Something went wrong.',
     tryMessages: ['Check your internet connection.', 'Try again.'],

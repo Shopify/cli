@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import {Fatal, Bug, cleanSingleStackTracePath} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
 import {PackageManager} from './node/node-package-manager.js'
 import {colors} from './node/colors.js'
@@ -18,7 +17,6 @@ import {
   SubHeadingContentToken,
 } from './content-tokens.js'
 import {logToFile} from './log.js'
-import StackTracey from 'stacktracey'
 import {AbortController, AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
@@ -277,65 +275,6 @@ export const warn = (content: Message, logger: Logger = consoleWarn) => {
  */
 export const newline = () => {
   console.log()
-}
-
-/**
- * Formats and outputs a fatal error.
- * Note: This API is not intended to be used internally. If you want to
- * abort the execution due to an error, raise a fatal error and let the
- * error handler handle and format it.
- * @param content - The fatal error to be output.
- */
-export const error = async (content: Fatal) => {
-  if (!content.message) {
-    return
-  }
-  let outputString = ''
-  const message = content.message
-  const padding = '    '
-  const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
-  const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-  outputString += header
-  const lines = message.split('\n')
-  for (const line of lines) {
-    outputString += `${padding}${line}\n`
-  }
-  if (content.tryMessage) {
-    outputString += `\n${padding}${colors.bold('What to try:')}\n`
-    const lines = content.tryMessage.split('\n')
-    for (const line of lines) {
-      outputString += `${padding}${line}\n`
-    }
-  }
-
-  let stack = new StackTracey(content)
-  stack.items.forEach((item) => {
-    item.file = cleanSingleStackTracePath(item.file)
-  })
-
-  stack = await stack.withSourcesAsync()
-  stack = stack
-    .filter((entry) => {
-      return !entry.file.includes('@oclif/core')
-    })
-    .map((item) => {
-      item.calleeShort = colors.yellow(item.calleeShort)
-      /** We make the paths relative to the packages/ directory */
-      const fileShortComponents = item.fileShort.split('packages/')
-      item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1]! : fileShortComponents[0]!
-      return item
-    })
-  if (content instanceof Bug) {
-    if (stack.items.length !== 0) {
-      outputString += `\n${padding}${colors.bold('Stack trace:')}\n`
-      const stackLines = stack.asTable({}).split('\n')
-      for (const stackLine of stackLines) {
-        outputString += `${padding}${stackLine}\n`
-      }
-    }
-  }
-  outputString += footer
-  outputWhereAppropriate('error', consoleError, outputString)
 }
 
 export function stringifyMessage(message: Message): string {
