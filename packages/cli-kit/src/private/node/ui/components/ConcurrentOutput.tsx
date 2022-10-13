@@ -1,6 +1,6 @@
 import {OutputProcess} from '../../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Static, Text, useApp} from 'ink'
+import {Box, Static, Text, useApp, useStdout} from 'ink'
 import stripAnsi from 'strip-ansi'
 import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
@@ -15,11 +15,29 @@ interface Props {
   processes: OutputProcess[]
   abortController: AbortController
 }
-
-interface Line {
+interface Chunk {
   color: string
-  value: string
   prefix: string
+  lines: string[]
+}
+
+const TIMESTAMP_COLUMN_WIDTH = 19
+const OUTPUT_MIN_WIDTH = 80
+const GUTTER_WIDTH = 2
+
+function chunkString(str: string, length: number) {
+  if (str.length <= length) {
+    return [str]
+  }
+
+  const numChunks = Math.ceil(str.length / length)
+  const chunks: string[] = new Array(numChunks)
+
+  for (let i = 0, start = 0; i < numChunks; i++, start += length) {
+    chunks[i] = str.slice(start, start + length)
+  }
+
+  return chunks
 }
 
 /**
@@ -41,13 +59,11 @@ interface Line {
  * 2022-10-10 13:11:03 | backend    | > cross-env NODE_ENV=development nodemon backend/index.js --watch ./backend
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    |
- *
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   | > starter-react-frontend-app@0.1.0 dev
  * 2022-10-10 13:11:03 | frontend   | > cross-env NODE_ENV=development node vite-server.js
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   |
-
  * 2022-10-10 13:11:03 | backend    | [nodemon] 2.0.19
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    | [nodemon] to restart at any time, enter `rs`
@@ -59,10 +75,12 @@ interface Line {
  * ```
  */
 const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
-  const [processOutput, setProcessOutput] = useState<Line[]>([])
-  const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
+  const [processOutput, setProcessOutput] = useState<Chunk[]>([])
+  const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {exit: unmountInk} = useApp()
+  const {stdout} = useStdout()
+  const fullWidth = stdout?.columns ?? OUTPUT_MIN_WIDTH
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -76,11 +94,11 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
-          ...lines.map((line) => ({
+          {
             color: lineColor(index),
-            value: line,
             prefix: process.prefix,
-          })),
+            lines,
+          },
         ])
 
         next()
@@ -114,22 +132,45 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
 
   return (
     <Static items={processOutput}>
-      {(line, index) => {
-        const previousLine = processOutput[index - 1]
+      {(chunk, index) => {
+        // -1 for the marginRight of the timestamp column
+        // -1 is for the paddingLeft of the line column
+        // -2 for the marginX of the middle one
+        const lineColumnWidth = fullWidth - prefixColumnSize - TIMESTAMP_COLUMN_WIDTH - GUTTER_WIDTH - 4
+        const chunkedLines = chunk.lines.map((line) => {
+          return chunkString(line, lineColumnWidth)
+        })
+
         return (
-          <Text key={index}>
-            {previousLine?.prefix && previousLine.prefix !== line.prefix && '\n'}
-            <Text color={line.color}>
-              <Text>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
-              <Text bold>{` | `}</Text>
-              <Text>
-                {line.prefix}
-                {' '.repeat(prefixColumnSize - line.prefix.length)}
-              </Text>
-              <Text bold>{` | `}</Text>
-              <Text>{line.value}</Text>
-            </Text>
-          </Text>
+          <Box flexDirection="column" key={index}>
+            {chunkedLines.map((lines, index) =>
+              lines.map((line, lineIndex) => (
+                <Box key={`${index}:${lineIndex}`} flexDirection="row">
+                  <Box width={TIMESTAMP_COLUMN_WIDTH} marginRight={1}>
+                    {lineIndex === 0 && (
+                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
+                    )}
+                  </Box>
+
+                  <Text bold color={chunk.color}>
+                    {lineIndex === 0 ? '|' : ' '}
+                  </Text>
+
+                  <Box width={prefixColumnSize} marginX={1}>
+                    {lineIndex === 0 && <Text color={chunk.color}>{chunk.prefix}</Text>}
+                  </Box>
+
+                  <Text bold color={chunk.color}>
+                    |
+                  </Text>
+
+                  <Box paddingLeft={1}>
+                    <Text color={chunk.color}>{line}</Text>
+                  </Box>
+                </Box>
+              )),
+            )}
+          </Box>
         )
       }}
     </Static>
