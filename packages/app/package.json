@@ -18,9 +18,9 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "exports": {
-    "./headless/*": {
-      "import": "./dist/headless/*.js",
-      "types": "./dist/headless/*.d.ts"
+    "./*": {
+      "import": "./dist/public/*.js",
+      "types": "./dist/public/*.d.ts"
     }
   },
   "scripts": {
