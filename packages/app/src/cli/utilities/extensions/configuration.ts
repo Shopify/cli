@@ -83,7 +83,10 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   }
 }
 type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl'>
-export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: GetUIExensionResourceURLOptions) {
+export function getUIExtensionResourceURL(
+  uiExtensionType: UIExtensionTypes,
+  options: GetUIExensionResourceURLOptions,
+): {url: string | undefined} {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
       return {url: options.checkoutCartUrl}
@@ -91,9 +94,7 @@ export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, opt
     case 'pos_ui_extension':
     case 'web_pixel_extension':
     case 'customer_accounts_ui_extension':
-      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
-      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
-      return {url: 'invalid_url'}
+      return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
   }
