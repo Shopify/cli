@@ -9,6 +9,12 @@ export const AllAppExtensionRegistrationsQuery = gql`
         title
         type
       }
+      functions {
+        id
+        uuid
+        title
+        type: extensionPointName
+      }
     }
   }
 `
@@ -19,6 +25,12 @@ export interface AllAppExtensionRegistrationsQueryVariables {
 
 export interface AllAppExtensionRegistrationsQuerySchema {
   app: {
+    functions: {
+      id: string
+      uuid: string
+      title: string
+      type: string
+    }[]
     extensionRegistrations: {
       id: string
       uuid: string

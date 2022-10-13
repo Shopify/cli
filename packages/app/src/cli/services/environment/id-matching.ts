@@ -5,15 +5,21 @@ import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
-  pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[]
-  toCreate: Extension[]
-  toManualMatch: {local: Extension[]; remote: ExtensionRegistration[]}
+  pendingConfirmation: {extension: LocalExtension; registration: ExtensionRegistration}[]
+  toCreate: LocalExtension[]
+  toManualMatch: {local: LocalExtension[]; remote: ExtensionRegistration[]}
+}
+
+export interface LocalExtension {
+  localIdentifier: string
+  graphQLType: string
 }
 
 export async function automaticMatchmaking(
-  localExtensions: Extension[],
+  localExtensions: LocalExtension[],
   remoteRegistrations: ExtensionRegistration[],
   identifiers: {[localIdentifier: string]: string},
+  registrationIdField: 'id' | 'uuid',
 ): Promise<Result<MatchResult, Error>> {
   const invalidEnvironmentError = err(new Error('invalid-environment'))
 
@@ -24,14 +30,14 @@ export async function automaticMatchmaking(
   const validIdentifiers = identifiers
 
   // Get the local UUID of an extension, if exists
-  const localId = (extension: Extension) => validIdentifiers[extension.localIdentifier]
+  const localId = (extension: LocalExtension) => validIdentifiers[extension.localIdentifier]
 
   // All local UUIDs available
   const localUUIDs = () => Object.values(validIdentifiers)
 
   // Whether an extension has an UUID and that UUID and type match with a remote extension
-  const existsRemotely = (extension: Extension) => {
-    const remote = remoteRegistrations.find((registration) => registration.uuid === localId(extension))
+  const existsRemotely = (extension: LocalExtension) => {
+    const remote = remoteRegistrations.find((registration) => registration[registrationIdField] === localId(extension))
     return remote !== undefined && remote.type === extension.graphQLType
   }
 
@@ -39,7 +45,9 @@ export async function automaticMatchmaking(
   const pendingLocal = localExtensions.filter((extension) => !existsRemotely(extension))
 
   // List of remote extensions that are not yet matched to a local extension
-  const pendingRemote = remoteRegistrations.filter((registration) => !localUUIDs().includes(registration.uuid))
+  const pendingRemote = remoteRegistrations.filter(
+    (registration) => !localUUIDs().includes(registration[registrationIdField]),
+  )
 
   // From pending to be matched remote extensions, this is the list of remote extensions with duplicated Type
   // If two or more extensions have the same type, we need to manually match them.
@@ -74,8 +82,8 @@ export async function automaticMatchmaking(
     return invalidEnvironmentError
   }
 
-  const extensionsToCreate: Extension[] = []
-  const pendingConfirmation: {extension: Extension; registration: ExtensionRegistration}[] = []
+  const extensionsToCreate: LocalExtension[] = []
+  const pendingConfirmation: {extension: LocalExtension; registration: ExtensionRegistration}[] = []
 
   // For each pending local extension, evaluate if it can be automatically matched or needs to be created
   newLocalPending.forEach((extension) => {
@@ -87,7 +95,7 @@ export async function automaticMatchmaking(
       extensionsToCreate.push(extension)
     } else if (possibleMatches[0]!.title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
       // There is a unique remote extension with the same type AND name. We can automatically match them.
-      validIdentifiers[extension.localIdentifier] = possibleMatches[0]!.uuid
+      validIdentifiers[extension.localIdentifier] = possibleMatches[0]![registrationIdField]
     } else {
       // There is a unique remote extension with the same type, but different name. We can match them but need to confirm
       pendingConfirmation.push({extension, registration: possibleMatches[0]!})

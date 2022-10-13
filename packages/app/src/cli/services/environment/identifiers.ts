@@ -38,7 +38,9 @@ interface ExtensionRegistration {
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions): Promise<Identifiers> {
   // All initial values both remote and local
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
-  const remoteRegistrations: ExtensionRegistration[] = remoteSpecifications.app.extensionRegistrations
+  const remoteExtensionRegistrations: ExtensionRegistration[] = remoteSpecifications.app.extensionRegistrations
+  const remoteFunctions: ExtensionRegistration[] = remoteSpecifications.app.functions
+
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const functionLocalIdentifiers = Object.fromEntries(
     options.app.extensions.function
@@ -55,57 +57,65 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   const GenericError = () => DeployError(options.appName, options.app.packageManager)
 
   // We need local extensions to deploy
-  if (localExtensions.length === 0) {
-    return {
-      app: options.appId,
-      extensions: {...functionLocalIdentifiers},
-      // Numeric extension IDs aren't relevant for functions
-      extensionIds: {},
-    }
-  }
+  // if (localExtensions.length === 0) {
+  //   return {
+  //     app: options.appId,
+  //     extensions: {...functionLocalIdentifiers},
+  //     // Numeric extension IDs aren't relevant for functions
+  //     extensionIds: {},
+  //   }
+  // }
 
-  const match = (await automaticMatchmaking(localExtensions, remoteRegistrations, validIdentifiers))
+  const match = (await automaticMatchmaking(localExtensions, remoteExtensionRegistrations, validIdentifiers, 'uuid'))
     .mapError(GenericError)
     .valueOrThrow()
 
-  let validMatches = match.identifiers ?? {}
-  const validMatchesById: {[key: string]: string} = {}
+  const matchFunctions = (
+    await automaticMatchmaking(options.app.extensions.function, remoteFunctions, validIdentifiers, 'id')
+  )
+    .mapError(GenericError)
+    .valueOrThrow()
 
-  if (match.pendingConfirmation.length > 0) {
-    for (const pending of match.pendingConfirmation) {
-      // eslint-disable-next-line no-await-in-loop
-      const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
-      if (!confirmed) throw new error.CancelExecution()
-      validMatches[pending.extension.localIdentifier] = pending.registration.uuid
-    }
-  }
+  console.log(JSON.stringify(matchFunctions, null, 2))
 
-  const extensionsToCreate = match.toCreate ?? []
+  // let validMatches = match.identifiers ?? {}
+  // const validMatchesById: {[key: string]: string} = {}
 
-  if (match.toManualMatch.local.length > 0) {
-    const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
-    if (matchResult.result === 'pending-remote') throw GenericError()
-    validMatches = {...validMatches, ...matchResult.identifiers}
-    extensionsToCreate.push(...matchResult.toCreate)
-  }
+  // if (match.pendingConfirmation.length > 0) {
+  //   for (const pending of match.pendingConfirmation) {
+  //     // eslint-disable-next-line no-await-in-loop
+  //     const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
+  //     if (!confirmed) throw new error.CancelExecution()
+  //     validMatches[pending.extension.localIdentifier] = pending.registration.uuid
+  //   }
+  // }
 
-  if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
-    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
-      validMatches[localIdentifier] = registration.uuid
-      validMatchesById[localIdentifier] = registration.id
-    }
-  }
+  // const extensionsToCreate = match.toCreate ?? []
 
-  for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
-    const registration = remoteRegistrations.find((registration) => registration.uuid === uuid)
-    if (registration) validMatchesById[localIdentifier] = registration.id
-  }
+  // if (match.toManualMatch.local.length > 0) {
+  //   const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
+  //   if (matchResult.result === 'pending-remote') throw GenericError()
+  //   validMatches = {...validMatches, ...matchResult.identifiers}
+  //   extensionsToCreate.push(...matchResult.toCreate)
+  // }
+
+  // if (extensionsToCreate.length > 0) {
+  //   const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
+  //   for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
+  //     validMatches[localIdentifier] = registration.uuid
+  //     validMatchesById[localIdentifier] = registration.id
+  //   }
+  // }
+
+  // for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
+  //   const registration = remoteExtensionRegistrations.find((registration) => registration.uuid === uuid)
+  //   if (registration) validMatchesById[localIdentifier] = registration.id
+  // }
 
   return {
     app: options.appId,
-    extensions: {...validMatches, ...functionLocalIdentifiers},
-    extensionIds: validMatchesById,
+    extensions: {...functionLocalIdentifiers},
+    extensionIds: {},
   }
 }
 
