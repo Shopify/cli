@@ -153,7 +153,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
                   </Box>
 
                   <Text bold color={chunk.color}>
-                    {lineIndex === 0 ? '|' : ' '}
+                    |
                   </Text>
 
                   <Box width={prefixColumnSize} marginX={1}>
