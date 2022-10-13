@@ -1,4 +1,4 @@
 # This file stores configurations for your Shopify app.
 
-type = "headless"
+type = "merchant"
 scopes = "write_products"

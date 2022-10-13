@@ -1,5 +1,5 @@
 {
-  "name": "@shopify/create-headless-app",
+  "name": "@shopify/create-merchant-app",
   "version": "3.17.0",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
@@ -18,7 +18,7 @@
     }
   },
   "bin": {
-    "create-headless-app": "./bin/run.js"
+    "create-merchant-app": "./bin/run.js"
   },
   "files": [
     "/templates",
@@ -37,7 +37,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "nx run create-headless-app:test",
+    "test": "nx run create-merchant-app:test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check"
   },
@@ -63,7 +63,7 @@
     "win32"
   ],
   "oclif": {
-    "bin": "create-headless-app",
+    "bin": "create-merchant-app",
     "commands": "./dist/commands",
     "additionalHelpFlags": [
       "-h"
@@ -75,7 +75,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/create-headless-app"
+    "url": "https://github.com/Shopify/cli/edit/main/packages/create-merchant-app"
   },
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues/new/choose"

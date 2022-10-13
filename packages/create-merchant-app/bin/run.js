@@ -2,6 +2,6 @@
 
 process.removeAllListeners('warning');
 
-import runCreateApp from "@shopify/create-headless-app";
+import runCreateApp from "@shopify/create-merchant-app";
 
 runCreateApp(false);
