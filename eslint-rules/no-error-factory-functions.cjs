@@ -25,8 +25,8 @@ module.exports = {
 
         if (isCLIKitError) {
           const filePath = context.getFilename()
-          const fileUpdatedAt = file.statSync(filePath).mtime.getTime()
           const relativePath = path.relative(path.resolve(__dirname, '..'), filePath)
+          const fileUpdatedAt = context.settings.gitFilesLastModified[relativePath]
           const shouldFail = !shitlist[relativePath] || shitlist[relativePath] < fileUpdatedAt
           if (shouldFail) {
             context.report(
@@ -44,7 +44,7 @@ const shitlist = {
   'packages/cli-kit/src/api/admin.ts': 1663587282910,
   'packages/app/src/cli/commands/app/generate/extension.ts': 1665628286000,
   'packages/cli-hydrogen/src/cli/services/deploy/error.ts': 1665628286000,
-  'packages/cli-kit/src/environment/spin.ts': 1665628286000,
+  'packages/cli-kit/src/environment/spin.ts': 1665057109000,
   'packages/cli-kit/src/git.ts': 1665628286000,
   'packages/app/src/cli/services/deploy.ts': 1665628286000,
   'packages/app/src/cli/services/dev/fetch.ts': 1665628286000,
