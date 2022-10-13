@@ -1,6 +1,7 @@
 {
   "name": "{{ name }}",
   "version": "0.1.0",
+  "type": "module",
   "main": "src/app.js",
   "license": "UNLICENSED",
   "scripts": {
@@ -12,14 +13,9 @@
     "deploy": "shopify app deploy"
   },
   "dependencies": {
-    "@remix-run/node": "^1.7.2",
-    "@remix-run/react": "^1.7.2",
-    "@remix-run/dev": "1.7.2",
-    "@remix-run/serve": "^1.7.2",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "@shopify/app": "^3.0.0",
-    "@shopify/cli": "^3.0.0"
+    "@shopify/cli": "^3.0.0",
+    "express": "^4.18.2"
   },
   "engines": {
     "node": ">=18"

@@ -17,6 +17,12 @@
     "access": "public",
     "@shopify:registry": "https://registry.npmjs.org"
   },
+  "exports": {
+    "./headless/*": {
+      "import": "./dist/headless/*.js",
+      "types": "./dist/headless/*.d.ts"
+    }
+  },
   "scripts": {
     "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
     "build": "nx build",

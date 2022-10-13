@@ -12,13 +12,14 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, path} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Writable} from 'node:stream'
 // @ts-ignore
 import {} from '@remix-run/dev'
 import {createRequire} from 'node:module'
+
 const require = createRequire(import.meta.url)
 
 export interface DevOptions {
@@ -47,14 +48,14 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  if (options.app.configuration.type === 'merchant') {
-    devMerchantApp(options)
+  if (options.app.configuration.type === 'headless') {
+    await devHeadlessApp(options)
   } else {
-    devApp(options)
+    await devApp(options)
   }
 }
 
-async function devMerchantApp(options: DevOptions) {
+async function devHeadlessApp(options: DevOptions) {
   const token = await session.ensureAuthenticatedPartners()
   const {
     identifiers,
@@ -119,50 +120,41 @@ async function devMerchantApp(options: DevOptions) {
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
-  const remixCLI = path.join(
-    path.dirname(
-      require.resolve('@remix-run/dev', {
-        paths: [options.app.directory],
-      }),
-    ),
-    'cli.js',
-  )
 
   if (usingLocalhost) {
     additionalProcesses.push({
       prefix: 'home',
       action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-        console.log(options.app.directory)
-        await system.exec('node', [remixCLI, '--port', `${frontendPort}`], {
-          cwd: options.app.directory,
-          stdout,
-          stderr,
-          env: {
-            ...process.env,
-            PORT: `${frontendPort}`,
-            NODE_ENV: 'development',
-            HOSTNAME: exposedUrl,
-          },
-          signal,
-        })
+        // await system.exec('node', [remixCLI, '--port', `${frontendPort}`], {
+        //   cwd: options.app.directory,
+        //   stdout,
+        //   stderr,
+        //   env: {
+        //     ...process.env,
+        //     PORT: `${frontendPort}`,
+        //     NODE_ENV: 'development',
+        //     HOSTNAME: exposedUrl,
+        //   },
+        //   signal,
+        // })
       },
     })
   } else {
     proxyTargets.push({
       logPrefix: 'home',
       action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
-        await system.exec('node', [remixCLI, '--port', `${port}`], {
-          cwd: options.app.directory,
-          stdout,
-          stderr,
-          env: {
-            ...process.env,
-            PORT: `${port}`,
-            NODE_ENV: 'development',
-            HOSTNAME: exposedUrl,
-          },
-          signal,
-        })
+        // await system.exec('node', [remixCLI, '--port', `${port}`], {
+        //   cwd: options.app.directory,
+        //   stdout,
+        //   stderr,
+        //   env: {
+        //     ...process.env,
+        //     PORT: `${port}`,
+        //     NODE_ENV: 'development',
+        //     HOSTNAME: exposedUrl,
+        //   },
+        //   signal,
+        // })
       },
     })
   }
