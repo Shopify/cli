@@ -11,14 +11,16 @@ import {AbortController} from 'abort-controller'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
-  abortController: AbortController
+  abortController?: AbortController
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  */
 export async function renderConcurrent({processes, abortController}: RenderConcurrentOptions) {
-  const {waitUntilExit} = render(<ConcurrentOutput processes={processes} abortController={abortController} />)
+  const {waitUntilExit} = render(
+    <ConcurrentOutput processes={processes} abortController={abortController ?? new AbortController()} />,
+  )
 
   return waitUntilExit()
 }
