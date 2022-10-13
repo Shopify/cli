@@ -10,13 +10,12 @@ Moreover, you should think about scenarios other than the happy path and build f
 
 If your logic needs to abort the execution, throw instantiating any of the errors exported by `@shopify/cli-kit`:
 
-```js
+```ts
 import {
   AbortError,
   AbortSilentError,
   BugError,
-  BugSilentError
-} from "@shopify/cli-kit/node/errors"
+} from "@shopify/cli-kit/node/error"
 
 throw new AbortError(
   "The project doesn't exist",
@@ -24,8 +23,42 @@ throw new AbortError(
 )
 ```
 
-- **AbortError:** This error is used to terminate the execution of the CLI process and output a message and next steps to the user.
-- **BugError:** This error behaves as `AbortError` and it gets reported to the error tracking platform.
-- **AbortSilentError** and **BugSilentError:** Are versions of the above errors that don't output anything to the user. This is useful in cases where the thrower of the error wants to control the formatting.
+- **AbortError:** This error is used to terminate the execution of the CLI process and output a message and thenext steps to the user.
+- **BugError:** This error behaves as `AbortError` and gets reported to the error tracking platform.
+- **AbortSilentError:** This version of `AbortError` doesn't output anything to the user. It is helpful in cases when the thrower wants to control the formatting.
 
-Please, **don't** use the global `process.exit` and `process.abort` APIs.
+Please, **don't** use the global `process.exit` and `process.abort` APIs. Also, don't `try {} catch {}` abort errors. If you need to communicate the failure of an operation to the caller (e.g., a 5xx HTTP response), use the result type from the following section.
+
+## Report a result from a function
+
+There are scenarios where a function needs to inform the caller about the success or failure of the operation. For that, `@shopify/cli-kit` provides a result utility:
+
+
+
+```ts
+import { FatalError } from "@shopify/cli-kit/node/error"
+import {err, ok, Result} from '@shopify/cli-kit/common/result'
+
+class ActionError extends FatalError {}
+
+function action({success}: {success: boolean}): Result<string, ActionError> {
+  if (success) {
+    return ok("ok")
+  } else {
+    return err(new ActionError("err"))
+  }
+}
+
+// OK result
+let result = action({success: true})
+result.isErr() // false
+result.valueOrThrow() // ok
+result.mapError((error) => new FatalError("other error"))
+
+// Error result
+let result = action({success: false})
+result.isErr() // true
+result.valueOrThrow() // throws!
+result.mapError((error) => new FatalError("other error"))
+```
+
