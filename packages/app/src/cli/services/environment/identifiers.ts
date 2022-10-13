@@ -1,8 +1,8 @@
-import {automaticMatchmaking} from './id-matching.js'
+import {automaticMatchmaking, LocalExtension} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {Extension} from '../../models/app/extensions.js'
+import {Extension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {createExtension} from '../dev/create-extension.js'
 import {error, output, session, ui} from '@shopify/cli-kit'
@@ -52,7 +52,10 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
       })
       .filter((entry) => entry !== undefined) as string[][],
   )
-  const localExtensions: Extension[] = [...options.app.extensions.ui, ...options.app.extensions.theme]
+  const localExtensions: (ThemeExtension | UIExtension)[] = [
+    ...options.app.extensions.ui,
+    ...options.app.extensions.theme,
+  ]
 
   const GenericError = () => DeployError(options.appName, options.app.packageManager)
 
@@ -66,7 +69,9 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   //   }
   // }
 
-  const match = (await automaticMatchmaking(localExtensions, remoteExtensionRegistrations, validIdentifiers, 'uuid'))
+  const matchExtensions = (
+    await automaticMatchmaking(localExtensions, remoteExtensionRegistrations, validIdentifiers, 'uuid')
+  )
     .mapError(GenericError)
     .valueOrThrow()
 
@@ -78,39 +83,49 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   console.log(JSON.stringify(matchFunctions, null, 2))
 
-  // let validMatches = match.identifiers ?? {}
-  // const validMatchesById: {[key: string]: string} = {}
+  let validMatches = matchExtensions.identifiers ?? {}
+  const validMatchesById: {[key: string]: string} = {}
 
-  // if (match.pendingConfirmation.length > 0) {
-  //   for (const pending of match.pendingConfirmation) {
-  //     // eslint-disable-next-line no-await-in-loop
-  //     const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
-  //     if (!confirmed) throw new error.CancelExecution()
-  //     validMatches[pending.extension.localIdentifier] = pending.registration.uuid
-  //   }
-  // }
+  const pendingConfirmation = {...matchExtensions.pendingConfirmation, ...matchFunctions.pendingConfirmation}
 
-  // const extensionsToCreate = match.toCreate ?? []
+  if (pendingConfirmation.length > 0) {
+    for (const pending of pendingConfirmation) {
+      // eslint-disable-next-line no-await-in-loop
+      const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
+      if (!confirmed) throw new error.CancelExecution()
+      validMatches[pending.extension.localIdentifier] = pending.registration.uuid
+    }
+  }
 
-  // if (match.toManualMatch.local.length > 0) {
-  //   const matchResult = await manualMatchIds(match.toManualMatch.local, match.toManualMatch.remote)
-  //   if (matchResult.result === 'pending-remote') throw GenericError()
-  //   validMatches = {...validMatches, ...matchResult.identifiers}
-  //   extensionsToCreate.push(...matchResult.toCreate)
-  // }
+  const extensionsToCreate = matchExtensions.toCreate ?? []
+  const functionsToCreate = matchFunctions.toCreate ?? []
 
-  // if (extensionsToCreate.length > 0) {
-  //   const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
-  //   for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
-  //     validMatches[localIdentifier] = registration.uuid
-  //     validMatchesById[localIdentifier] = registration.id
-  //   }
-  // }
+  if (matchExtensions.toManualMatch.local.length > 0) {
+    const matchResult = await manualMatchIds(matchExtensions.toManualMatch)
+    if (matchResult.result === 'pending-remote') throw GenericError()
+    validMatches = {...validMatches, ...matchResult.identifiers}
+    functionsToCreate.push(...matchResult.toCreate)
+  }
 
-  // for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
-  //   const registration = remoteExtensionRegistrations.find((registration) => registration.uuid === uuid)
-  //   if (registration) validMatchesById[localIdentifier] = registration.id
-  // }
+  if (matchFunctions.toManualMatch.local.length > 0) {
+    const matchResult = await manualMatchIds(matchFunctions.toManualMatch)
+    if (matchResult.result === 'pending-remote') throw GenericError()
+    validMatches = {...validMatches, ...matchResult.identifiers}
+    functionsToCreate.push(...matchResult.toCreate)
+  }
+
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
+    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
+      validMatches[localIdentifier] = registration.uuid
+      validMatchesById[localIdentifier] = registration.id
+    }
+  }
+
+  for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
+    const registration = remoteExtensionRegistrations.find((registration) => registration.uuid === uuid)
+    if (registration) validMatchesById[localIdentifier] = registration.id
+  }
 
   return {
     app: options.appId,
@@ -119,20 +134,20 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   }
 }
 
-async function createExtensions(extensions: Extension[], appId: string) {
+async function createExtensions(extensions: LocalExtension[], appId: string) {
   // PENDING: Function extensions can't be created before being deployed we'll need to handle that differently
   const token = await session.ensureAuthenticatedPartners()
   const result: {[localIdentifier: string]: ExtensionRegistration} = {}
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
-    const registration = await createExtension(appId, extension.type, extension.localIdentifier, token)
-    output.completed(`Created extension ${extension.localIdentifier}.`)
+    const registration = await createExtension(appId, extension.type, extension.configuration.name, token)
+    output.completed(`Created extension ${extension.configuration.name}.`)
     result[extension.localIdentifier] = registration
   }
   return result
 }
 
-async function matchConfirmationPrompt(extension: Extension, registration: ExtensionRegistration) {
+async function matchConfirmationPrompt(extension: LocalExtension, registration: ExtensionRegistration) {
   const choices = [
     {name: `Yes, that's right`, value: 'yes'},
     {name: `No, cancel deployment`, value: 'no'},

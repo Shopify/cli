@@ -2,12 +2,13 @@ import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
+import {LocalExtension} from './id-matching.js'
 
 export type ManualMatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
-      toCreate: Extension[]
+      toCreate: LocalExtension[]
     }
   | {result: 'pending-remote'}
 
@@ -16,18 +17,18 @@ export type ManualMatchResult =
  * The user can also select to create a new remote extension instead of selecting an existing one.
  * Manual matching will only show extensions of the same type as possible matches.
  * At the end of this process, all remote extensions must be matched to suceed.
- * @param localExtensions - The local extensions to match
- * @param remoteExtensions - The remote extensions to match
+ * @param local - The local extensions to match
+ * @param remote - The remote extensions to match
  * @returns The result of the manual matching
  */
-export async function manualMatchIds(
-  localExtensions: Extension[],
-  remoteExtensions: ExtensionRegistration[],
-): Promise<ManualMatchResult> {
+export async function manualMatchIds(options: {
+  local: LocalExtension[]
+  remote: ExtensionRegistration[]
+}): Promise<ManualMatchResult> {
   const identifiers: {[key: string]: string} = {}
-  let pendingRemote = remoteExtensions
-  let pendingLocal = localExtensions
-  for (const extension of localExtensions) {
+  let pendingRemote = options.remote
+  let pendingLocal = options.local
+  for (const extension of options.local) {
     const registrationsForType = pendingRemote.filter((reg) => reg.type === extension.graphQLType)
     if (registrationsForType.length === 0) continue
     // eslint-disable-next-line no-await-in-loop
@@ -44,7 +45,7 @@ export async function manualMatchIds(
 }
 
 export async function selectRegistrationPrompt(
-  extension: Extension,
+  extension: LocalExtension,
   registrations: ExtensionRegistration[],
 ): Promise<ExtensionRegistration> {
   const registrationList = registrations.map((reg) => ({

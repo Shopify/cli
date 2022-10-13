@@ -2,6 +2,8 @@ import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {Extension} from '../../models/app/extensions.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {string} from '@shopify/cli-kit'
+import {ExtensionTypes} from '../../constants.js'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -13,6 +15,8 @@ export interface MatchResult {
 export interface LocalExtension {
   localIdentifier: string
   graphQLType: string
+  type: ExtensionTypes
+  configuration: {name: string}
 }
 
 export async function automaticMatchmaking(
@@ -93,7 +97,7 @@ export async function automaticMatchmaking(
     if (possibleMatches.length === 0) {
       // There are no remote extensions with the same type. We need to create a new extension
       extensionsToCreate.push(extension)
-    } else if (possibleMatches[0]!.title.toLowerCase() === extension.localIdentifier.toLowerCase()) {
+    } else if (string.slugify(possibleMatches[0]!.title) === string.slugify(extension.configuration.name)) {
       // There is a unique remote extension with the same type AND name. We can automatically match them.
       validIdentifiers[extension.localIdentifier] = possibleMatches[0]![registrationIdField]
     } else {
