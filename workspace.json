@@ -8,7 +8,7 @@
     "theme": "packages/theme",
     "features": "packages/features",
     "create-app": "packages/create-app",
-    "create-merchant-app": "packages/create-merchant-app",
+    "create-headless-app": "packages/create-headless-app",
     "create-hydrogen": "packages/create-hydrogen",
     "ui-extensions-go-cli": "packages/ui-extensions-go-cli",
     "ui-extensions-cli": "packages/ui-extensions-cli",
