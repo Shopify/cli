@@ -12,7 +12,7 @@ function App(root, { extensionPoint }) {
     root.createComponent(
       Text,
       {},
-      `It works the ${extensionPoint} extension!`
+      `It works the ${extensionPoint} extension! APP_URL is: ${process.env.APP_URL}`
     )
   );
   root.mount();

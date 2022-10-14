@@ -31,7 +31,7 @@ export function hashString(str: string): string {
 
 /**
  * Given a string, it returns it with the first letter capitalized.
- * @param string {string} String whose first letter will be caplitalized.
+ * @param string - String whose first letter will be caplitalized.
  * @returns The given string with its first letter capitalized.
  */
 export function capitalize(string: string) {
@@ -40,7 +40,7 @@ export function capitalize(string: string) {
 
 /**
  * Given a store, returns a valid store fqdn removing protocol and adding .myshopify.com domain
- * @param store Original store name provided by the user
+ * @param store - Original store name provided by the user
  * @returns a valid store fqdn
  */
 export function normalizeStoreName(store: string) {

@@ -1,6 +1,6 @@
 {
   "extends": "../../configurations/tsconfig.json",
-  "include": ["./src/**/*.ts", "decs.d.ts"],
+  "include": ["./src/**/*.ts", "decs.d.ts", "./src/**/*.tsx"],
   "exclude": ["./dist"],
   "compilerOptions": {
     "outDir": "dist",

@@ -9,7 +9,7 @@ import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.25.0'
+const RubyCLIVersion = '2.27.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
@@ -29,8 +29,8 @@ interface ExecCLI2Options {
  * Installs a version of RubyCLI as a vendor dependency in a hidden folder in the system.
  * User must have a valid ruby+bundler environment to run any command.
  *
- * @param args {string[]} List of argumets to execute. (ex: ['theme', 'pull'])
- * @param options {ExecCLI2Options}
+ * @param args - List of argumets to execute. (ex: ['theme', 'pull'])
+ * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(
   args: string[],
@@ -75,8 +75,8 @@ interface ExecThemeCheckCLIOptions {
 
 /**
  * A function that installs (if needed) and runs the theme-check CLI.
- * @param options {ExecThemeCheckCLIOptions} Options to customize the execution of theme-check.
- * @returns {Promise<void>} A promise that resolves or rejects depending on the result of the underlying theme-check process.
+ * @param options - Options to customize the execution of theme-check.
+ * @returns A promise that resolves or rejects depending on the result of the underlying theme-check process.
  */
 export async function execThemeCheckCLI({
   directories,

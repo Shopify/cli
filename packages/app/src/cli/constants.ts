@@ -23,6 +23,7 @@ export const environmentVariables = {
 
 export const versions = {
   react: '^17.0.0',
+  reactTypes: '17.0.30',
 } as const
 
 export const blocks = {
@@ -33,8 +34,6 @@ export const blocks = {
   functions: {
     defaultUrl: 'https://github.com/Shopify/function-examples',
     defaultLanguage: 'wasm',
-    maxCompilationStatusCheckCount: 7,
-    compilationStatusWaitMs: 2000,
   },
   web: {
     directoryName: 'web',
@@ -138,7 +137,7 @@ export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionTy
 
 /**
  * Returns the runtime renderer dependency for a given UI extension type.
- * @param extensionType {UIExtensionTypes} Extension type.
+ * @param extensionType - Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
 export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): DependencyVersion | undefined {
@@ -146,11 +145,11 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
-      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.19.0'}
+      return {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
     case 'checkout_post_purchase':
       return {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
     case 'pos_ui_extension':
-      return {name: '@shopify/retail-ui-extensions-react', version: '^0.17.0'}
+      return {name: '@shopify/retail-ui-extensions-react', version: '^0.19.0'}
     case 'customer_accounts_ui_extension':
       return {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.5'}
     case 'web_pixel_extension':
@@ -285,8 +284,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
 /**
  * Each extension has a different ID in GraphQL.
  * Sometimes the ID is the same as the type, sometimes it's different.
- * @param type {string} The extension type
- * @returns {string} The extension GraphQL ID
+ * @param type - The extension type
+ * @returns The extension GraphQL ID
  */
 export const extensionGraphqlId = (type: ExtensionTypes) => {
   switch (type) {

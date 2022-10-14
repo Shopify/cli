@@ -42,7 +42,7 @@ export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
 
 /**
  * It builds the theme extensions.
- * @param options {ThemeExtensionBuildOptions} Build options.
+ * @param options - Build options.
  */
 export async function buildThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
   if (options.extensions.length === 0) return
@@ -99,7 +99,7 @@ ${output.token.json(configuration)}
 
 /**
  * It builds the UI extensions.
- * @param options {UiExtensionBuildOptions} Build options.
+ * @param options - Build options.
  */
 export async function buildUIExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
@@ -121,8 +121,8 @@ export interface BuildFunctionExtensionOptions extends ExtensionBuildOptions {}
 
 /**
  * Builds a function extension
- * @param extension {FunctionExtension} The function extension to build.
- * @param options {BuildFunctionExtensionOptions} Options to configure the build of the extension.
+ * @param extension - The function extension to build.
+ * @param options - Options to configure the build of the extension.
  */
 export async function buildFunctionExtension(
   extension: FunctionExtension,

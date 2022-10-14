@@ -3,7 +3,7 @@ import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api} from '@shopify/cli-kit'
+import {api, environment} from '@shopify/cli-kit'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
@@ -54,6 +54,18 @@ beforeEach(() => {
       },
       system: {
         sleep: vi.fn(),
+      },
+      environment: {
+        service: {
+          isSpinEnvironment: vi.fn(),
+        },
+        local: {
+          firstPartyDev: vi.fn(),
+          isUnitTest: vi.fn(() => true),
+        },
+        fqdn: {
+          partners: vi.fn(),
+        },
       },
     }
   })
@@ -108,6 +120,26 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+  })
+
+  it('not prompts user to convert store to non-transferable if selection is invalid inside spin instance and first party', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
+    vi.mocked(environment.service.isSpinEnvironment).mockReturnValue(true)
+    vi.mocked(environment.local.firstPartyDev).mockReturnValue(true)
+
+    // When
+    const got = await selectStore([STORE1, STORE2], ORG1, 'token')
+
+    // Then
+    expect(got).toEqual(STORE2)
+    expect(api.partners.request).not.toHaveBeenCalledWith({
+      input: {
+        organizationID: parseInt(ORG1.id, 10),
+        shopId: STORE2.shopId,
+      },
+    })
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 

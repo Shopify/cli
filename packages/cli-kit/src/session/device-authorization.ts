@@ -26,8 +26,8 @@ const DeviceAuthError = () => {
  *
  * Also returns a `deviceCode` used for polling the token endpoint in the next step.
  *
- * @param scopes The scopes to request
- * @returns {Promise<DeviceAuthorizationResponse>} An object with the device authorization response.
+ * @param scopes - The scopes to request
+ * @returns An object with the device authorization response.
  */
 export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
   const fqdn = await identityFqdn()
@@ -68,9 +68,9 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
  *
  * Timeout for the polling is defined by the server and is around 600 seconds.
  *
- * @param code The device code obtained after starting a device identity flow
- * @param interval The interval to poll the token endpoint
- * @returns {Promise<IdentityToken>} The identity token
+ * @param code - The device code obtained after starting a device identity flow
+ * @param interval - The interval to poll the token endpoint
+ * @returns The identity token
  */
 export async function pollForDeviceAuthorization(code: string, interval = 5): Promise<IdentityToken> {
   let currentIntervalInSeconds = interval

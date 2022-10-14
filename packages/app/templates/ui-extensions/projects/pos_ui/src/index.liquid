@@ -3,7 +3,7 @@ import React from 'react';
 import {Tile, Text, render} from '@shopify/retail-ui-extensions-react';
 
 const SmartGridTile = () => {
-  return <Tile title="Hello" subtitle="Hello" onPress={() => {}} enabled />
+  return <Tile title="My app" subtitle="SmartGrid Extension" onPress={() => {}} enabled />
 };
 
 const SmartGridModal = () => {
@@ -18,10 +18,10 @@ import { extend, Text } from "@shopify/retail-ui-extensions";
 extend('Retail::SmartGrid::Tile', (root, api) => {
   const tileProps = {
     title: 'My app',
-    subtitle: 'A test app',
+    subtitle: 'SmartGrid Extension',
     enabled: true,
     onPress: () => {
-      api.navigation.navigateToFullScreenModal();
+      api.smartGrid.presentModal();
     }
   }
 

@@ -1,5 +1,37 @@
 # @shopify/cli-kit
 
+## 3.17.0
+
+### Minor Changes
+
+- 483318aa: Create a new Oxygen service for interacting with Oxygen related services.
+
+### Patch Changes
+
+- dac186b2: Removing unnecessary calls to enqueue and check compilation status
+- 5617050a: initializeRepository now defaults to 'main' as initial branch.
+- 5703ce9b: Cloud environment checking was not working properly so wrong authentication method was used
+
+## 3.16.3
+
+### Patch Changes
+
+- fc4d6c58: Removed unused fields from FunctionSet mutation
+
+## 3.16.2
+
+### Patch Changes
+
+- ca6c7295: React types dependency version should be overwritten when generating React Typescript extensions
+
+## 3.16.1
+
+## 3.16.0
+
+### Minor Changes
+
+- d460e738: Add the `app generate schema <function-name>` command
+
 ## 3.15.0
 
 ### Minor Changes

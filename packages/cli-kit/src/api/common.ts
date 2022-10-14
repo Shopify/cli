@@ -32,8 +32,8 @@ export async function buildHeaders(token: string): Promise<{[key: string]: strin
 
 /**
  * Removes the sensitive data from the headers and outputs them as a string.
- * @param headers {{[key: string]: string}} HTTP headers.
- * @returns {string} A sanitized version of the headers as a string.
+ * @param headers - HTTP headers.
+ * @returns A sanitized version of the headers as a string.
  */
 export function sanitizedHeadersOutput(headers: {[key: string]: string}): string {
   const sanitized: {[key: string]: string} = {}

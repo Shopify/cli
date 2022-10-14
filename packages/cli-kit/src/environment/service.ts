@@ -12,3 +12,7 @@ export function serviceEnvironment(env = process.env): Environment {
     return Environment.Production
   }
 }
+
+export function isSpinEnvironment(env = process.env): boolean {
+  return serviceEnvironment(env) === Environment.Spin
+}

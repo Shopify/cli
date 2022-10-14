@@ -39,7 +39,7 @@ class Token {
 
   /**
    * Returns true if the session is expired.
-   * @returns {boolean} True if the session is expired.
+   * @returns True if the session is expired.
    */
   get isExpired(): boolean {
     return new Date() > this.expiresAt
