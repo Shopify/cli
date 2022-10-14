@@ -1,25 +1,12 @@
 const path = require('pathe')
-const execa = require('execa')
 
 const rulesDirPlugin = require('eslint-plugin-rulesdir')
 
 rulesDirPlugin.RULES_DIR = path.join(__dirname, 'eslint-rules')
 
-const gitFilesLastModified = Object.fromEntries(
-  execa
-    .sync(path.join(__dirname, './bin/git-files.sh'), {cwd: __dirname})
-    .stdout.split('\n')
-    .map((line) => {
-      const components = line.split(' ')
-      return [components[3], parseInt(Date.parse(components.slice(0, 3).join(' ')))]
-    }),
-)
-
 module.exports = {
   parser: '@typescript-eslint/parser',
-  settings: {
-    gitFilesLastModified,
-  },
+  settings: {},
   parserOptions: {
     project: './tsconfig.json',
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,

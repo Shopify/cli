@@ -1,6 +1,7 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
 const path = require('pathe')
 const file = require('node:fs')
+const execa = require('execa')
 
 const errors = ['Abort', 'AbortSilent', 'Bug', 'BugSilent']
 
@@ -26,7 +27,12 @@ module.exports = {
         if (isCLIKitError) {
           const filePath = context.getFilename()
           const relativePath = path.relative(path.resolve(__dirname, '..'), filePath)
-          const fileUpdatedAt = context.settings.gitFilesLastModified[relativePath]
+          const fileUpdatedAt =
+            parseInt(
+              execa.sync('git', ['--no-pager', 'log', '-1', '--pretty=%ct', relativePath], {
+                cwd: path.join(__dirname, '..'),
+              }).stdout,
+            ) * 1000
           const shouldFail = !shitlist[relativePath] || shitlist[relativePath] < fileUpdatedAt
           if (shouldFail) {
             context.report(
