@@ -1,21 +1,25 @@
 import {Banner} from './Banner.js'
-import {List} from './List.js'
+import {TextTokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
 export interface ErrorProps {
   headline: string
-  tryMessages?: string[]
+  tryMessage?: TextTokenItem
 }
 
-const Error: React.FC<ErrorProps> = ({headline, tryMessages}) => {
+const Error: React.FC<ErrorProps> = ({headline, tryMessage}) => {
   return (
     <Banner type="error">
-      <Box marginBottom={1}>
+      <Box>
         <Text>{headline}</Text>
       </Box>
 
-      {tryMessages && tryMessages.length > 0 && <List title="What to try" items={tryMessages} />}
+      {tryMessage && (
+        <Box marginTop={1}>
+          <TokenizedText item={tryMessage} />
+        </Box>
+      )}
     </Banner>
   )
 }

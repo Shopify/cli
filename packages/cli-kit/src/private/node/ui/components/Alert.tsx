@@ -1,15 +1,16 @@
 import {Banner, BannerType} from './Banner.js'
 import {Link} from './Link.js'
-import {List, ListItem} from './List.js'
+import {List} from './List.js'
+import {TextTokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
 export interface AlertProps {
   type: Exclude<BannerType, 'error'>
-  headline?: string
-  body: string
-  nextSteps?: ListItem[]
-  reference?: ListItem[]
+  headline: string
+  body?: TextTokenItem
+  nextSteps?: TextTokenItem[]
+  reference?: TextTokenItem[]
   link?: {
     label: string
     url: string
@@ -20,15 +21,15 @@ export interface AlertProps {
 const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}) => {
   return (
     <Banner type={type}>
-      {headline && (
-        <Box marginBottom={1}>
-          <Text>{headline}</Text>
+      <Box>
+        <Text>{headline}</Text>
+      </Box>
+
+      {body && (
+        <Box marginTop={1}>
+          <TokenizedText item={body} />
         </Box>
       )}
-
-      <Box>
-        <Text dimColor>{body}</Text>
-      </Box>
 
       {nextSteps && (
         <Box marginTop={1}>

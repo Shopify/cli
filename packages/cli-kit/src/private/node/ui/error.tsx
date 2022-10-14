@@ -9,6 +9,6 @@ export function fatalError(error: Fatal) {
   renderOnce(<FatalError error={error} />, 'error', consoleError)
 }
 
-export function error({headline, tryMessages = []}: ErrorProps) {
-  renderOnce(<Error headline={headline} tryMessages={tryMessages} />, 'error', consoleError)
+export function error({headline, tryMessage}: ErrorProps) {
+  renderOnce(<Error headline={headline} tryMessage={tryMessage} />, 'error', consoleError)
 }
