@@ -120,7 +120,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
             {chunk.lines.map((line, index) => (
               <Box key={index} flexDirection="row">
                 {showTimestamps && (
-                  <>
+                  <Box>
                     <Box marginRight={1}>
                       <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
                     </Box>
@@ -128,7 +128,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
                     <Text bold color={chunk.color}>
                       |
                     </Text>
-                  </>
+                  </Box>
                 )}
 
                 <Box width={prefixColumnSize} marginX={1}>
