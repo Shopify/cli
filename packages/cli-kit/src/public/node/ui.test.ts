@@ -229,16 +229,9 @@ describe('renderFatalError', async () => {
 
 describe('renderConcurrent', async () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
-    // Temporarily skip the test
-    return
-
     // When
     const {stdout} = await run('render-concurrent')
-    const lastFrame = stripAnsi(stdout)
-      .split('\n')
-      .slice(-7)
-      .map((line) => line.replace(/\d/g, '0'))
-      .join('\n')
+    const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
 
     // Then
     expect(lastFrame).toMatchInlineSnapshot(`
@@ -247,8 +240,11 @@ describe('renderConcurrent', async () => {
       0000-00-00 00:00:00 | backend  | third backend message
 
       0000-00-00 00:00:00 | frontend | first frontend message
+
       0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message"
+
+      0000-00-00 00:00:00 | frontend | third frontend message
+      "
     `)
   })
 })
