@@ -246,6 +246,34 @@ describe('ExtensionsPayloadStore()', () => {
         extensions: [{mock: 'getExtensionsPayloadResponse'}, {uuid: '456', development: {status: 'error'}}],
       })
     })
+    test('defaults localization to the current value', async () => {
+      // Given
+      const mockPayload = {
+        mock: 'payload',
+        extensions: [
+          {
+            uuid: '123',
+            development: {status: 'success'},
+            localization: {defaultLocale: 'en', lastUpdated: 100, translations: {en: {welcome: 'Welcome!'}}},
+          },
+        ],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
+
+      // When
+      await extensionsPayloadStore.updateExtension(updatedExtension)
+
+      // Then
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
+        ...mockOptions,
+        currentDevelopmentPayload: {
+          status: 'success',
+        },
+        currentLocalizationPayload: {defaultLocale: 'en', lastUpdated: 100, translations: {en: {welcome: 'Welcome!'}}},
+      })
+    })
 
     test('informs event listeners of the updated extension', async () => {
       // Given

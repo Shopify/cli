@@ -9,11 +9,11 @@ import {api, error, output} from '@shopify/cli-kit'
  * If a cachedAppId is provided, we check if it is valid and return it. If it's not valid, ignore it.
  * If there is no valid app yet, prompt the user to select one from the list or create a new one.
  * If no apps exists, we automatically prompt the user to create a new one.
- * @param app {AppInterface} Current local app information
- * @param apps {OrganizationApp[]} List of remote available apps
- * @param orgId {string} Current Organization
- * @param cachedAppId {string} Cached app apikey
- * @returns {Promise<OrganizationApp>} The selected (or created) app
+ * @param app - Current local app information
+ * @param apps - List of remote available apps
+ * @param orgId - Current Organization
+ * @param cachedAppId - Cached app apikey
+ * @returns The selected (or created) app
  */
 export async function selectOrCreateApp(
   localApp: AppInterface,

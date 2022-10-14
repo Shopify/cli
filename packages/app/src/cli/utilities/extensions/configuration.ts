@@ -3,7 +3,7 @@ import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {UIExtensionTypes} from '../../constants.js'
-import {error, path, string} from '@shopify/cli-kit'
+import {error, path} from '@shopify/cli-kit'
 
 const RendererNotFoundBug = (extension: string) => {
   return new error.Bug(
@@ -29,8 +29,7 @@ export interface ExtensionConfigOptions {
  * The extensions' Go binary receives the configuration through
  * standard input as a YAML-encoded object. This function returns the
  * Javascript object representing the configuration necessary for building.
- * @param extension {UIExtension} Extension that will be built.
- * @returns
+ * @param extension - Extension that will be built.
  */
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
@@ -44,7 +43,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
         extension_points: extension.configuration.extensionPoints || [],
-        categories: extension.configuration.categories,
+        categories: extension.configuration.categories || [],
         node_executable: await nodeExtensionsCLIPath(),
         surface: getUIExtensionSurface(extension.configuration.type),
         version: renderer?.version,
@@ -67,11 +66,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
             env: options.app.dotenv?.variables ?? {},
           },
         },
-        capabilities: Object.fromEntries(
-          Object.entries(extension.configuration.capabilities).map((entry) => {
-            return [string.underscore(entry[0]), entry[1]]
-          }),
-        ),
+        capabilities: extension.configuration.capabilities,
         approval_scopes: options.grantedScopes ?? [],
       }
     }),
@@ -88,7 +83,10 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
   }
 }
 type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl'>
-export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: GetUIExensionResourceURLOptions) {
+export function getUIExtensionResourceURL(
+  uiExtensionType: UIExtensionTypes,
+  options: GetUIExensionResourceURLOptions,
+): {url: string | undefined} {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
       return {url: options.checkoutCartUrl}
@@ -96,9 +94,7 @@ export function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, opt
     case 'pos_ui_extension':
     case 'web_pixel_extension':
     case 'customer_accounts_ui_extension':
-      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
-      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
-      return {url: 'invalid_url'}
+      return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
   }

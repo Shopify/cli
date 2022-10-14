@@ -1,5 +1,59 @@
 # @shopify/app
 
+## 3.17.0
+
+### Patch Changes
+
+- 7576f700: Send capabilities in payload as camelCase
+- dac186b2: Removing unnecessary calls to enqueue and check compilation status
+- Updated dependencies [dac186b2]
+- Updated dependencies [5617050a]
+- Updated dependencies [5703ce9b]
+- Updated dependencies [483318aa]
+  - @shopify/cli-kit@3.17.0
+  - @shopify/shopify-cli-extensions@3.17.0
+
+## 3.16.3
+
+### Patch Changes
+
+- 58147c33: Added back the React import for scaffolded checkout ui extensions.
+- Updated dependencies [fc4d6c58]
+  - @shopify/cli-kit@3.16.3
+  - @shopify/shopify-cli-extensions@3.16.3
+
+## 3.16.2
+
+### Patch Changes
+
+- b02e2ff1: add jsx transform support to extensions build
+- ca6c7295: React types dependency version should be overwritten when generating React Typescript extensions
+- Updated dependencies [ca6c7295]
+  - @shopify/cli-kit@3.16.2
+  - @shopify/shopify-cli-extensions@3.16.2
+
+## 3.16.1
+
+### Patch Changes
+
+- b0b66f8a: Fix error deploying extensions with capabilities
+  - @shopify/cli-kit@3.16.1
+  - @shopify/shopify-cli-extensions@3.16.1
+
+## 3.16.0
+
+### Minor Changes
+
+- d460e738: Add the `app generate schema <function-name>` command
+- 66d31140: Migrate the logic for serving extensions from Go to Node
+
+### Patch Changes
+
+- 2030174c: Print relevant error message when function wasm blob fails to upload
+- Updated dependencies [d460e738]
+  - @shopify/cli-kit@3.16.0
+  - @shopify/shopify-cli-extensions@3.16.0
+
 ## 3.15.0
 
 ### Minor Changes

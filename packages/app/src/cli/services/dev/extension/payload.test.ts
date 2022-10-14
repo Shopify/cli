@@ -30,8 +30,8 @@ describe('getUIExtensionPayload', () => {
           metafields: [],
           extensionPoints: ['EXTENSION-POINT'],
           capabilities: {
-            blockProgress: false,
-            networkAccess: true,
+            block_progress: false,
+            network_access: true,
           },
         },
       })
@@ -94,6 +94,32 @@ describe('getUIExtensionPayload', () => {
         type: 'product_subscription',
         uuid: 'devUUID',
         version: '1.2.3',
+      })
+    })
+  })
+
+  test('default values', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const uiExtension = testUIExtension()
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+      })
+
+      // Then
+      expect(got).toMatchObject({
+        development: {
+          hidden: false,
+        },
+        capabilities: {
+          blockProgress: false,
+          networkAccess: false,
+        },
       })
     })
   })

@@ -3,10 +3,15 @@ name: shopify-cli
 on:
   workflow_dispatch:
     inputs:
-      nxLevel:
-        description: "command to pass to nx, to run everything: 'run-many --all'"
+      nx_level:
+        description: 'Command to pass to nx (if you want to run everything: run-many --all)'
         required: true
         default: "affected"
+      debug_enabled:
+        type: boolean
+        description: 'Enable tmate debugging'
+        required: false
+        default: false
   push:
     branches:
       - main
@@ -110,16 +115,16 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Build
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=build
+        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Lint
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=lint
+        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=type-check
+        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=type-check
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'affected' }} --target=test --exclude=features
+        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
@@ -165,7 +170,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: ${{ matrix.target }}
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=${{ matrix.target }}
+        run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -216,7 +221,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Unit tests
-        run: yarn nx ${{ github.event.inputs.nxLevel || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
+        run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
+      - name: Setup tmate session
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true

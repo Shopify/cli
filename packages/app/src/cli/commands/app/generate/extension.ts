@@ -139,8 +139,8 @@ export default class AppScaffoldExtension extends Command {
   /**
    * If the type passed as flag is not valid because it has already been scaffolded
    * and we don't allow multiple extensions of that type, throw an error
-   * @param app {AppInterface} current App
-   * @param type {string} extension type
+   * @param app - current App
+   * @param type - extension type
    */
   validateExtensionTypeLimit(app: AppInterface, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
@@ -178,8 +178,8 @@ export default class AppScaffoldExtension extends Command {
    * Some extension types like `theme` and `product_subscription` are limited to one per app
    * Use this method to retrieve a list of the limited types that have already been scaffolded
    *
-   * @param app {AppInterface} current App
-   * @returns {string[]} list of extensions that are limited by quantity and are already scaffolded
+   * @param app - current App
+   * @returns list of extensions that are limited by quantity and are already scaffolded
    */
   limitedExtensionsAlreadyScaffolded(app: AppInterface): string[] {
     const themeTypes = app.extensions.theme.map((ext) => ext.configuration.type)

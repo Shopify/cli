@@ -52,7 +52,7 @@ If you encounter issues using the CLI or have feedback you'd like to share with 
 
 ## Contribute 👩🏽‍💻
 
-If you'd like to contribute to the project, check out the [contributors docs](/docs) and the [steps to get started](/docs/get-started).
+If you'd like to contribute to the project, check out the [contributors docs](/docs) and the [steps to get started](/docs/get-started.md).
 
 <p>&nbsp;</p>
 

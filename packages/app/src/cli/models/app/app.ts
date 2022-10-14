@@ -129,9 +129,9 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
 /**
  * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
- * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
- * @param app {AppInterface} App object containing the extension.
- * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
+ * @param uiExtensionType - UI extension whose renderer version will be obtained.
+ * @param app - App object containing the extension.
+ * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,

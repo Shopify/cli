@@ -36,7 +36,7 @@ interface BundleOptions {
 
 /**
  * Invokes ESBuild with the given options to bundle an extension.
- * @param options {BundleOptions} ESBuild options
+ * @param options - ESBuild options
  */
 export async function bundleExtension(options: BundleOptions) {
   const esbuildOptions = getESBuildOptions(options)
@@ -83,6 +83,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     sourceRoot: path.dirname(options.sourceFilePath),
     bundle: true,
     define,
+    jsx: 'automatic',
     loader: {
       '.esnext': 'ts',
       '.js': 'jsx',
@@ -112,7 +113,7 @@ type ESBuildPlugins = Parameters<typeof esBuild>[0]['plugins']
 
 /**
  * It returns the plugins that should be used with ESBuild.
- * @returns {ESBuildPlugins} List of plugins.
+ * @returns List of plugins.
  */
 function getPlugins(): ESBuildPlugins {
   const plugins = []
@@ -129,7 +130,7 @@ function getPlugins(): ESBuildPlugins {
  * Returns true if the "graphql" and "graphql-tag" packages can be
  * resolved. This information is used to determine whether we should
  * or not include the esbuild-graphql-loader plugin when invoking ESBuild
- * @returns {boolean} Returns true if the "graphql" and "graphql-tag" can be resolved.
+ * @returns Returns true if the "graphql" and "graphql-tag" can be resolved.
  */
 function isGraphqlPackageAvailable(): boolean {
   try {

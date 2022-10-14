@@ -1,33 +1,8 @@
 import {uploadFunctionExtensions} from './upload.js'
-import {blocks} from '../../constants.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {error, path, file, api, http} from '@shopify/cli-kit'
-
-function mockFunctionCompilation(jobId = 'job-id'): void {
-  const status = 'completed'
-
-  const compileModuleResponse: api.graphql.CompileModuleMutationSchema = {
-    data: {
-      compileModule: {
-        jobId,
-        userErrors: [],
-      },
-    },
-  }
-  const moduleCompilationStatusResponse: api.graphql.ModuleCompilationStatusQuerySchema = {
-    data: {
-      moduleCompilationStatus: {
-        status,
-        userErrors: [],
-      },
-    },
-  }
-
-  vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(compileModuleResponse)
-  vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(moduleCompilationStatusResponse)
-}
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -118,7 +93,6 @@ describe('uploadFunctionExtensions', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      const compilationJobId = 'job-id'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
@@ -132,7 +106,6 @@ describe('uploadFunctionExtensions', () => {
       }
       const uploadError = new Error('error')
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      mockFunctionCompilation(compilationJobId)
       vi.mocked(http.fetch).mockRejectedValue(uploadError)
 
       // When
@@ -152,7 +125,6 @@ describe('uploadFunctionExtensions', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      const compilationJobId = 'job-id'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
@@ -164,9 +136,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const uploadError = new Error('error')
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      mockFunctionCompilation(compilationJobId)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 400,
@@ -199,7 +169,6 @@ describe('uploadFunctionExtensions', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      const compilationJobId = 'job-id'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
@@ -212,7 +181,6 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      mockFunctionCompilation(compilationJobId)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 401,
@@ -245,7 +213,6 @@ describe('uploadFunctionExtensions', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      const compilationJobId = 'job-id'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
@@ -258,7 +225,6 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      mockFunctionCompilation(compilationJobId)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 500,
@@ -289,7 +255,6 @@ describe('uploadFunctionExtensions', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      const compilationJobId = 'job-id'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
       const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
@@ -302,7 +267,6 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      mockFunctionCompilation(compilationJobId)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 399,
@@ -361,95 +325,6 @@ describe('uploadFunctionExtensions', () => {
     })
   })
 
-  test('errors if the compilation fails', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-          },
-        },
-      }
-      const compileModuleResponse: api.graphql.CompileModuleMutationSchema = {
-        data: {
-          compileModule: {
-            jobId: 'job-id',
-            userErrors: [],
-          },
-        },
-      }
-      const moduleCompilationStatusResponse: api.graphql.ModuleCompilationStatusQuerySchema = {
-        data: {
-          moduleCompilationStatus: {
-            status: 'failed',
-            userErrors: [],
-          },
-        },
-      }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(compileModuleResponse)
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(moduleCompilationStatusResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-
-      // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        /Function my-function compilation failed./,
-      )
-    })
-  })
-
-  test('errors if the compilation times out', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
-      vi.spyOn(blocks.functions, 'compilationStatusWaitMs', 'get').mockReturnValue(1 as never)
-
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-          },
-        },
-      }
-      const compileModuleResponse: api.graphql.CompileModuleMutationSchema = {
-        data: {
-          compileModule: {
-            jobId: 'job-id',
-            userErrors: [],
-          },
-        },
-      }
-      const moduleCompilationStatusResponse: api.graphql.ModuleCompilationStatusQuerySchema = {
-        data: {
-          moduleCompilationStatus: {
-            status: 'pending',
-            userErrors: [],
-          },
-        },
-      }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(compileModuleResponse)
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValue(moduleCompilationStatusResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-
-      // When
-      const promise = () => uploadFunctionExtensions([extension], {token, identifiers})
-
-      // Then
-      await expect(promise).rejects.toThrowError(/Function my-function compilation timed out./)
-    })
-  })
-
   test('errors if the update of the function errors', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -468,7 +343,6 @@ describe('uploadFunctionExtensions', () => {
       const updateAppFunctionError = new Error('error')
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      mockFunctionCompilation()
       vi.mocked(api.partners.functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
 
       // When
@@ -489,7 +363,7 @@ describe('uploadFunctionExtensions', () => {
         method: 'PUT',
       })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
-        4,
+        2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
         token,
@@ -539,7 +413,6 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      mockFunctionCompilation()
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -560,7 +433,7 @@ describe('uploadFunctionExtensions', () => {
         method: 'PUT',
       })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
-        4,
+        2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
         token,
@@ -608,7 +481,6 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      mockFunctionCompilation()
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -628,7 +500,7 @@ describe('uploadFunctionExtensions', () => {
         method: 'PUT',
       })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
-        4,
+        2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
         token,
@@ -676,7 +548,6 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      mockFunctionCompilation()
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -684,7 +555,7 @@ describe('uploadFunctionExtensions', () => {
 
       // Then
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
-        4,
+        2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
         token,
@@ -731,7 +602,6 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      mockFunctionCompilation()
       vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -751,7 +621,7 @@ describe('uploadFunctionExtensions', () => {
         method: 'PUT',
       })
       expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
-        4,
+        2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
         token,

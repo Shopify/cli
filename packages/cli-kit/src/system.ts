@@ -24,8 +24,8 @@ export const open = async (url: string) => {
 
 /**
  * Runs a command asynchronously, aggregates the stdout data, and returns it.
- * @param command {string} Command to be executed.
- * @param args {string[]} Arguments to pass to the command.
+ * @param command - Command to be executed.
+ * @param args - Arguments to pass to the command.
  * @returns A promise that resolves with the aggregatted stdout of the command.
  */
 export const captureOutput = async (command: string, args: string[], options?: ExecOptions): Promise<string> => {
@@ -92,7 +92,7 @@ interface ConcurrentExecCommand {
  *   [my-script] Log coming from my script
  *
  * If one of the processes fails, it aborts the running ones and exits with that error.
- * @param commands {ConcurrentExecCommand[]} Commands to execute.
+ * @param commands - Commands to execute.
  */
 export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise<void> => {
   await concurrentOutput(
@@ -116,7 +116,7 @@ export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise
  * Displays a large file using the terminal pager set by the user, or a
  * reasonable default for the user's OS:
  *
- * @param filename string The path to the file to be displayed.
+ * @param filename - The path to the file to be displayed.
  */
 export async function page(filename: string) {
   let executable: string

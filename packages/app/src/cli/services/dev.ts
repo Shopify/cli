@@ -15,6 +15,8 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {analytics, output, port, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {AbortController} from 'abort-controller'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -155,7 +157,8 @@ async function dev(options: DevOptions) {
   await analytics.reportEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await output.concurrent(additionalProcesses)
+    const abortController = new AbortController()
+    await renderConcurrent({processes: additionalProcesses, abortController})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
@@ -304,8 +307,8 @@ async function devUIExtensionsTarget({
 
 /**
  * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
- * @param extensions {UIExtension[]} - The UI Extensions to dev
- * @param store {string} - The store FQDN
+ * @param extensions - The UI Extensions to dev
+ * @param store - The store FQDN
  */
 async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')

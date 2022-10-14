@@ -4,7 +4,6 @@
  * The output from this script is used by Nx to determine whether the cache should be invalidated
  * or not at the workspace level. This file is referenced from the nx.json file.
  */
-
 process.removeAllListeners('warning');
 
 import {dirname, join} from 'pathe'

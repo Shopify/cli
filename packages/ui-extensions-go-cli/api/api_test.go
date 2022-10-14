@@ -809,6 +809,7 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"version": "",
 			"extensionPoints": null,
 			"localization": null,
+      "categories": null,
 			"surface": "checkout",
 			"capabilities": {
 				"networkAccess": false,

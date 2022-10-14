@@ -15,8 +15,8 @@ const FaviconFileName = 'favicon.svg'
 /**
  * Finds the full path of the given file-name from the assets folder.
  *
- * @param {string} fileName The name of the file to look for.
- * @returns {string | null} The full path of the file, or null if not found.
+ * @param fileName - The name of the file to look for.
+ * @returns The full path of the file, or null if not found.
  */
 const getFilePath = async (fileName: string): Promise<string> => {
   const filePath = await findUp(`assets/${fileName}`, {

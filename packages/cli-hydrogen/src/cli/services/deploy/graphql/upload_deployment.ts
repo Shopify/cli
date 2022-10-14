@@ -6,6 +6,11 @@ export const UploadDeploymentQuery = gql`
       deployment {
         previewURL
       }
+      error {
+        code
+        unrecoverable
+        debugInfo
+      }
     }
   }
 `

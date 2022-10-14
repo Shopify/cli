@@ -1,0 +1,42 @@
+ app build              @shopify/app           
+ app deploy             @shopify/app           
+ app dev                @shopify/app           
+ app env pull           @shopify/app           
+ app env show           @shopify/app           
+ app generate extension @shopify/app           
+ app generate schema    @shopify/app           
+ app info               @shopify/app           
+ auth logout            @shopify/cli           
+ commands               @oclif/plugin-commands 
+ help                   @oclif/plugin-help     
+ hydrogen add tailwind  @shopify/cli-hydrogen  
+ hydrogen build         @shopify/cli-hydrogen  
+ hydrogen dev           @shopify/cli-hydrogen  
+ hydrogen info          @shopify/cli-hydrogen  
+ hydrogen preview       @shopify/cli-hydrogen  
+ logs                   @shopify/cli           
+ ngrok auth             @shopify/plugin-ngrok  
+ plugins                @oclif/plugin-plugins  
+ plugins add            @oclif/plugin-plugins  
+ plugins inspect        @oclif/plugin-plugins  
+ plugins install        @oclif/plugin-plugins  
+ plugins link           @oclif/plugin-plugins  
+ plugins remove         @oclif/plugin-plugins  
+ plugins uninstall      @oclif/plugin-plugins  
+ plugins unlink         @oclif/plugin-plugins  
+ plugins update         @oclif/plugin-plugins  
+ theme check            @shopify/theme         
+ theme delete           @shopify/theme         
+ theme dev              @shopify/theme         
+ theme info             @shopify/theme         
+ theme init             @shopify/theme         
+ theme language-server  @shopify/theme         
+ theme list             @shopify/theme         
+ theme open             @shopify/theme         
+ theme package          @shopify/theme         
+ theme publish          @shopify/theme         
+ theme pull             @shopify/theme         
+ theme push             @shopify/theme         
+ theme share            @shopify/theme         
+ upgrade                @shopify/cli           
+ version                @shopify/cli           

@@ -1,6 +1,6 @@
 import {DeployConfig, ReqDeployConfig} from './types.js'
 import {gitInit} from '../../prompts/git-init.js'
-import {git, error} from '@shopify/cli-kit'
+import {git, error, path} from '@shopify/cli-kit'
 
 const MINIMAL_GIT_IGNORE: git.GitIgnoreTemplate = {
   system: ['.DS_Store'],
@@ -42,6 +42,7 @@ export const fillDeployConfig = async (config: DeployConfig): Promise<ReqDeployC
 
   return {
     ...config,
+    pathToBuild: config.pathToBuild ? path.resolve(config.pathToBuild) : '',
     commitMessage: config.commitMessage ?? latestCommit.message,
     commitAuthor: config.commitAuthor ?? latestCommit.author_name,
     commitSha: latestCommit.hash,

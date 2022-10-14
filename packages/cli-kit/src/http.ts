@@ -38,7 +38,7 @@ export async function httpsAgent() {
  * This utility function allows controlling the behavior in a per-service level by returning
  * the value of for the "rejectUnauthorized" attribute that's used in the https agent.
  *
- * @returns {Promise<boolean>} A promise that resolves with a boolean indicating whether
+ * @returns A promise that resolves with a boolean indicating whether
  * unauthorized requests should be rejected or not.
  */
 export async function shouldRejectUnauthorizedRequests(): Promise<boolean> {

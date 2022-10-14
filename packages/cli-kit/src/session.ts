@@ -98,8 +98,8 @@ export const PartnerOrganizationNotFoundError = () => {
  * Ensure that we have a valid session to access the Partners API.
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored
- * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<string>} The access token for the Partners API.
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token for the Partners API.
  */
 export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
   debug(content`Ensuring that the user is authenticated with the Partners API with the following scopes:
@@ -118,8 +118,8 @@ ${token.json(scopes)}
 
 /**
  * Ensure that we have a valid session to access the Storefront API.
- * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<string>} The access token for the Storefront API.
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token for the Storefront API.
  */
 export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<string> {
   debug(content`Ensuring that the user is authenticated with the Storefront API with the following scopes:
@@ -134,9 +134,9 @@ ${token.json(scopes)}
 
 /**
  * Ensure that we have a valid Admin session for the given store.
- * @param store {string} Store fqdn to request auth for
- * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<string>} The access token for the Admin API
+ * @param store - Store fqdn to request auth for
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token for the Admin API
  */
 export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
   debug(content`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${token.raw(
@@ -153,8 +153,8 @@ ${token.json(scopes)}
 
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
- * @param applications {OAuthApplications} An object containing the applications we need to be authenticated with.
- * @returns {OAuthSession} An instance with the access tokens organized by application.
+ * @param applications - An object containing the applications we need to be authenticated with.
+ * @returns An instance with the access tokens organized by application.
  */
 export async function ensureAuthenticated(applications: OAuthApplications, env = process.env): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
@@ -237,7 +237,7 @@ export async function hasPartnerAccount(partnersToken: string): Promise<boolean>
  * If the user creates an account from the Identity website, the created
  * account won't get a Partner organization created. We need to detect that
  * and take the user to create a partner organization.
- * @param partnersToken {string} Partners token
+ * @param partnersToken - Partners token
  */
 export async function ensureUserHasPartnerAccount(partnersToken: string) {
   debug(content`Verifying that the user has a Partner organization`)

@@ -1,5 +1,7 @@
 import {port, output, abort} from '@shopify/cli-kit'
 import httpProxy from 'http-proxy'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {AbortController} from 'abort-controller'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -25,11 +27,11 @@ export interface ReverseHTTPProxyTarget {
 /**
  * A convenient function that runs an HTTP server and does path-based traffic forwarding to sub-processes that run
  * an HTTP server. The method assigns a random port to each of the processes.
- * @param tunnelUrl {string} The URL of the tunnel.
- * @param portNumber {number} The port to use for the proxy HTTP server. When undefined, a random port is automatically assigned.
- * @param proxyTargets {ReverseHTTPProxyTarget[]} List of target processes to forward traffic to.
- * @param additionalProcesses {output.OutputProcess[]} Additional processes to run. The proxy won't forward traffic to these processes.
- * @returns {Promise<ReverseHTTPProxy>} A promise that resolves with an interface to get the port of the proxy and stop it.
+ * @param tunnelUrl - The URL of the tunnel.
+ * @param portNumber - The port to use for the proxy HTTP server. When undefined, a random port is automatically assigned.
+ * @param proxyTargets - List of target processes to forward traffic to.
+ * @param additionalProcesses - Additional processes to run. The proxy won't forward traffic to these processes.
+ * @returns A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   portNumber: number | undefined = undefined,
@@ -81,11 +83,14 @@ ${output.token.json(JSON.stringify(rules))}
     socket.destroy()
   })
 
+  const abortController = new AbortController()
+  abortController.signal.addEventListener('abort', () => {
+    server.close()
+  })
   await Promise.all([
-    output.concurrent([...processes, ...additionalProcesses], (abortSignal) => {
-      abortSignal.addEventListener('abort', () => {
-        server.close()
-      })
+    renderConcurrent({
+      processes: [...processes, ...additionalProcesses],
+      abortController,
     }),
     server.listen(availablePort),
   ])

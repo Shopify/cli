@@ -24,10 +24,11 @@ async function testBundlerAndFileWatcher() {
       app: {
         dotenv: {
           variables: {
-            some_key: 'SOME_VALUE',
+            SOME_KEY: 'SOME_VALUE',
           },
         },
       },
+      url: 'mock/url',
       stderr: {
         mockStdErr: 'STD_ERR',
       },
@@ -57,7 +58,8 @@ describe('setupBundlerAndFileWatcher()', () => {
         sourceFilePath: 'source/file/path/1',
         environment: 'development',
         env: {
-          some_key: 'SOME_VALUE',
+          SOME_KEY: 'SOME_VALUE',
+          APP_URL: 'mock/url',
         },
         stderr: {
           mockStdErr: 'STD_ERR',
@@ -74,7 +76,8 @@ describe('setupBundlerAndFileWatcher()', () => {
         sourceFilePath: 'source/file/path/2',
         environment: 'development',
         env: {
-          some_key: 'SOME_VALUE',
+          SOME_KEY: 'SOME_VALUE',
+          APP_URL: 'mock/url',
         },
         stderr: {
           mockStdErr: 'STD_ERR',

@@ -16,9 +16,9 @@ export type ManualMatchResult =
  * The user can also select to create a new remote extension instead of selecting an existing one.
  * Manual matching will only show extensions of the same type as possible matches.
  * At the end of this process, all remote extensions must be matched to suceed.
- * @param localExtensions {Extension[]} The local extensions to match
- * @param remoteExtensions {ExtensionRegistration[]} The remote extensions to match
- * @returns {Promise<ManualMatchResult>} The result of the manual matching
+ * @param localExtensions - The local extensions to match
+ * @param remoteExtensions - The remote extensions to match
+ * @returns The result of the manual matching
  */
 export async function manualMatchIds(
   localExtensions: Extension[],

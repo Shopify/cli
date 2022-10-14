@@ -11,6 +11,7 @@ const mockedGetConfig = vi.fn(async () => ({}))
 const mockedGetLog = vi.fn(async () => ({}))
 const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
+const mockedCheckout = vi.fn(async () => ({}))
 
 beforeEach(() => {
   vi.mock('./environment/local')
@@ -27,6 +28,7 @@ beforeEach(() => {
     log: mockedGetLog,
     commit: mockedCommit,
     raw: mockedRaw,
+    checkoutLocalBranch: mockedCheckout,
   })
 })
 
@@ -64,11 +66,15 @@ describe('initializeRepository()', () => {
     const directory = '/tmp/git-repo'
 
     // When
-    await git.initializeRepository(directory)
+    await git.initializeRepository(directory, 'my-branch')
 
     // Then
+    expect(simpleGit).toHaveBeenCalledOnce()
     expect(simpleGit).toHaveBeenCalledWith('/tmp/git-repo')
+
     expect(mockedInit).toHaveBeenCalledOnce()
+    expect(mockedCheckout).toHaveBeenCalledOnce()
+    expect(mockedCheckout).toHaveBeenCalledWith('my-branch')
   })
 })
 

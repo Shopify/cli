@@ -16,7 +16,7 @@ For creating an extension:
 
 To add specific features to an extension
 * [Adding field validation](https://shopify.dev/apps/checkout/validation)
-* [Localizing an exstension](https://shopify.dev/apps/checkout/localize-ui-extensions)
+* [Localizing an extension](https://shopify.dev/apps/checkout/localize-ui-extensions)
 
 ## Getting Started
 Initially, your extension will have the following files:
