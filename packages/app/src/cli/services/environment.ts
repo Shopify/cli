@@ -47,10 +47,10 @@ const OrganizationNotFoundError = (orgId: string) => {
   return new error.Bug(`Could not find Organization for id ${orgId}.`)
 }
 
-const StoreNotFoundError = (storeName: string, org: Organization) => {
+const StoreNotFoundError = async (storeName: string, org: Organization) => {
   return new error.Bug(
     `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://partners.shopify.com/${org.id}/stores to create a new store in your organization`,
+    `Visit https://${await environment.fqdn.partners()}/${org.id}/stores to create a new store in your organization`,
   )
 }
 
@@ -361,7 +361,7 @@ async function fetchDevDataFromOptions(
   if (options.storeFqdn) {
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw OrganizationNotFoundError(orgId)
-    if (!orgWithStore.store) throw StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
+    if (!orgWithStore.store) throw await StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
     await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
     selectedStore = orgWithStore.store
   }

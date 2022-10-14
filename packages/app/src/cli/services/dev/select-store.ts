@@ -17,8 +17,8 @@ const InvalidStore = (storeName: string) => {
   )
 }
 
-const CreateStoreLink = (orgId: string) => {
-  const url = `https://partners.shopify.com/${orgId}/stores/new?store_type=dev_store`
+const CreateStoreLink = async (orgId: string) => {
+  const url = `https://${await environment.fqdn.partners()}/${orgId}/stores/new?store_type=dev_store`
   return (
     `Looks like you don't have a dev store in the Partners org you selected. ` +
     `Keep going — create a dev store on Shopify Partners:\n${url}\n`
@@ -55,7 +55,7 @@ export async function selectStore(
     return store
   }
 
-  output.info(`\n${CreateStoreLink(org.id)}`)
+  output.info(`\n${await CreateStoreLink(org.id)}`)
   await system.sleep(5)
 
   const reload = await reloadStoreListPrompt(org)
@@ -118,6 +118,10 @@ export async function convertToTestStoreIfNeeded(
   org: Organization,
   token: string,
 ): Promise<void> {
+  /**
+   * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
+   */
+  if (environment.service.isSpinEnvironment() && environment.local.firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }
