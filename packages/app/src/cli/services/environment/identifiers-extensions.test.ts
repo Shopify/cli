@@ -30,13 +30,6 @@ const REGISTRATION_B = {
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
-const REGISTRATION_C = {
-  uuid: 'UUID_C',
-  id: 'C',
-  title: 'C',
-  type: 'PRODUCT_DISCOUNTS',
-}
-
 const EXTENSION_A: UIExtension = {
   idEnvironmentVariableName: 'EXTENSION_A_ID',
   localIdentifier: 'EXTENSION_A',
@@ -91,56 +84,6 @@ const EXTENSION_B: UIExtension = {
   devUUID: 'devUUID',
 }
 
-const FUNCTION_C: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
-  idEnvironmentVariableName: 'FUNCTION_C_ID',
-  localIdentifier: 'FUNCTION_C',
-  configurationPath: '/function/shopify.function.extension.toml',
-  directory: '/function',
-  type: 'product_discounts',
-  graphQLType: 'PRODUCT_DISCOUNTS',
-  configuration: {
-    name: '',
-    type: 'product_discounts',
-    description: 'Function',
-    build: {
-      command: 'make build',
-      path: 'dist/index.wasm',
-    },
-    configurationUi: false,
-    apiVersion: '2022-07',
-  },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
-}
-
-const FUNCTION_D: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
-  idEnvironmentVariableName: 'FUNCTION_D_ID',
-  localIdentifier: 'FUNCTION_D',
-  configurationPath: '/function/shopify.function.extension.toml',
-  directory: '/function',
-  type: 'product_discounts',
-  graphQLType: 'PRODUCT_DISCOUNTS',
-  configuration: {
-    name: '',
-    type: 'product_discounts',
-    description: 'Function',
-    build: {
-      command: 'make build',
-      path: 'dist/index.wasm',
-    },
-    configurationUi: false,
-    apiVersion: '2022-07',
-  },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
-}
-
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
   return testApp({
     name: 'my-app',
@@ -170,7 +113,6 @@ beforeEach(() => {
       ui: {prompt: vi.fn()},
     }
   })
-  vi.mock('../dev/fetch')
   vi.mock('../dev/create-extension')
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')

@@ -23,17 +23,17 @@ export interface RemoteRegistration {
 
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'
 
-export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions): Promise<Identifiers> {
+export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
   // We need local extensions to deploy
   if (!options.app.hasExtensions()) return {app: options.appId, extensions: {}, extensionIds: {}}
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
   const functions = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-  if (functions.isErr()) throw handleIdsError(functions.error, options.appName, options.app.packageManager)
+  if (functions.isErr()) return handleIdsError(functions.error, options.appName, options.app.packageManager)
 
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
-  if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
+  if (extensions.isErr()) return handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
