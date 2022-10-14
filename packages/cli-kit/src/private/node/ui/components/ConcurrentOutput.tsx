@@ -22,23 +22,7 @@ interface Chunk {
   lines: string[]
 }
 
-const TIMESTAMP_COLUMN_WIDTH = 19
 const OUTPUT_MIN_WIDTH = 80
-
-function chunkString(str: string, length: number) {
-  if (str.length <= length) {
-    return [str]
-  }
-
-  const numChunks = Math.ceil(str.length / length)
-  const chunks: string[] = new Array(numChunks)
-
-  for (let i = 0, start = 0; i < numChunks; i++, start += length) {
-    chunks[i] = str.slice(start, start + length)
-  }
-
-  return chunks
-}
 
 /**
  * Renders output from concurrent processes to the terminal.
@@ -133,56 +117,35 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   return (
     <Static items={processOutput}>
       {(chunk, index) => {
-        // -1 for the paddingLeft of the line column
-        // -1 for the gutter width
-        // -2 for the marginX of the prefix one
-        let lineColumnWidth = fullWidth - prefixColumnSize - 1 - 1 - 2
-
-        if (showTimestamps) {
-          // -1 for the marginRight of the timestamp column
-          // -1 for the gutter width
-          lineColumnWidth -= TIMESTAMP_COLUMN_WIDTH - 1 - 1
-        }
-
-        const chunkedLines = chunk.lines.map((line) => {
-          return chunkString(line, lineColumnWidth)
-        })
-
         return (
           <Box flexDirection="column" key={index}>
-            {chunkedLines.map((lines, index) =>
-              lines.map((line, lineIndex) => (
-                <Box key={`${index}:${lineIndex}`} flexDirection="row">
-                  {showTimestamps && (
-                    <Box>
-                      <Box width={TIMESTAMP_COLUMN_WIDTH} marginRight={1}>
-                        {lineIndex === 0 && (
-                          <Text color={chunk.color}>
-                            {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
-                          </Text>
-                        )}
-                      </Box>
-
-                      <Text bold color={chunk.color}>
-                        |
-                      </Text>
+            {chunk.lines.map((line, index) => (
+              <Box key={index} flexDirection="row">
+                {showTimestamps && (
+                  <>
+                    <Box marginRight={1}>
+                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
                     </Box>
-                  )}
 
-                  <Box width={prefixColumnSize} marginX={1}>
-                    {lineIndex === 0 && <Text color={chunk.color}>{chunk.prefix}</Text>}
-                  </Box>
+                    <Text bold color={chunk.color}>
+                      |
+                    </Text>
+                  </>
+                )}
 
-                  <Text bold color={chunk.color}>
-                    |
-                  </Text>
-
-                  <Box paddingLeft={1}>
-                    <Text color={chunk.color}>{line}</Text>
-                  </Box>
+                <Box width={prefixColumnSize} marginX={1}>
+                  <Text color={chunk.color}>{chunk.prefix}</Text>
                 </Box>
-              )),
-            )}
+
+                <Text bold color={chunk.color}>
+                  |
+                </Text>
+
+                <Box paddingLeft={1}>
+                  <Text color={chunk.color}>{line}</Text>
+                </Box>
+              </Box>
+            ))}
           </Box>
         )
       }}
