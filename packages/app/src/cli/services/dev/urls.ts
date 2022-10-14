@@ -58,7 +58,11 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (environment.spin.isSpin()) {
+  /*
+   * Spin environments requires an nginx redirection to https://cli.${await environment.spin.fqdn()}. In case problems
+   * with that configurations, the flags Tunnel or Custom Tunnel url could be used
+   */
+  if (environment.spin.isSpin() && !options.tunnelUrl && !options.tunnel) {
     frontendUrl = `https://cli.${await environment.spin.fqdn()}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }
