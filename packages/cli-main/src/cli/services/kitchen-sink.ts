@@ -8,7 +8,6 @@ import {
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
-import {AbortController} from 'abort-controller'
 import {Writable} from 'node:stream'
 
 export async function kitchenSink() {
@@ -109,7 +108,6 @@ export async function kitchenSink() {
   renderFatalError(somethingWentWrong)
 
   // renderConcurrent at the end
-  const abortController = new AbortController()
   let backendPromiseResolve: () => void
 
   const backendPromise = new Promise<void>(function (resolve, _reject) {
@@ -144,5 +142,5 @@ export async function kitchenSink() {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  renderConcurrent({processes: [backendProcess, frontendProcess], abortController})
+  renderConcurrent({processes: [backendProcess, frontendProcess]})
 }

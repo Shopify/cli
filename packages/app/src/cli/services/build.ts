@@ -57,7 +57,7 @@ async function build(options: BuildOptions) {
     showTimestamps: false,
   })
 
-  renderSuccess({body: `${options.app.name} built`})
+  renderSuccess({headline: `${options.app.name} built`})
 }
 
 export default build

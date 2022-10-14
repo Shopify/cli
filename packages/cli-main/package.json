@@ -56,8 +56,7 @@
     "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",
     "@shopify/cli-kit": "3.17.0",
-    "@shopify/plugin-ngrok": "^3.17.0",
-    "abort-controller": "^3.0.0"
+    "@shopify/plugin-ngrok": "^3.17.0"
   },
   "devDependencies": {
     "vitest": "^0.22.1"
