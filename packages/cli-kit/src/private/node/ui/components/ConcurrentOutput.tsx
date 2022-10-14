@@ -1,6 +1,6 @@
 import {OutputProcess} from '../../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Box, Static, Text, useApp, useStdout} from 'ink'
+import {Box, Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
@@ -63,8 +63,6 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {exit: unmountInk} = useApp()
-  const {stdout} = useStdout()
-  const fullWidth = stdout?.columns ?? OUTPUT_MIN_WIDTH
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
