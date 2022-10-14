@@ -196,51 +196,64 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 describe('ensureDeploymentIdsPresence: matchmaking returns ok with pending manual matches', () => {
   it('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toCreate: [],
-        pendingConfirmation: [],
-        toManualMatch: {
-          local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
-          remote: [REGISTRATION_A, REGISTRATION_A_2],
-        },
-      }),
-    )
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toCreate: [],
-        pendingConfirmation: [],
-        toManualMatch: {
-          local: [FUNCTION_C, FUNCTION_D],
-          remote: [REGISTRATION_C],
-        },
-      }),
-    )
+    vi.mocked(automaticMatchmaking)
+      .mockResolvedValue(
+        ok({
+          identifiers: {},
+          toCreate: [],
+          pendingConfirmation: [],
+          toManualMatch: {
+            local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
+            remote: [REGISTRATION_A, REGISTRATION_A_2],
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        ok({
+          identifiers: {},
+          toCreate: [],
+          pendingConfirmation: [],
+          toManualMatch: {
+            local: [FUNCTION_C, FUNCTION_D],
+            remote: [REGISTRATION_C],
+          },
+        }),
+      )
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValueOnce({
       app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2], functions: [REGISTRATION_C]},
     })
-    vi.mocked(manualMatchIds).mockResolvedValueOnce({
-      result: 'ok',
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-      toCreate: [EXTENSION_B],
-    })
-    vi.mocked(manualMatchIds).mockResolvedValueOnce({
-      result: 'ok',
-      identifiers: {FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'},
-      toCreate: [FUNCTION_D],
-    })
+    vi.mocked(manualMatchIds)
+      .mockResolvedValue({
+        result: 'ok',
+        identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+        toCreate: [EXTENSION_B],
+      })
+      .mockResolvedValueOnce({
+        result: 'ok',
+        identifiers: {FUNCTION_C: 'ID_C', FUNCTION_D: 'ID_D'},
+        toCreate: [FUNCTION_D],
+      })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
 
     // When
-    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], []))
+    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C, FUNCTION_D]))
 
     // Then
-    expect(manualMatchIds).toBeCalledWith([EXTENSION_A, EXTENSION_A_2, EXTENSION_B], [REGISTRATION_A, REGISTRATION_A_2])
+    expect(manualMatchIds).toHaveBeenNthCalledWith(
+      1,
+      [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
+      [REGISTRATION_A, REGISTRATION_A_2],
+    )
+    expect(manualMatchIds).toHaveBeenNthCalledWith(2, [FUNCTION_C, FUNCTION_D], [REGISTRATION_C])
     expect(got).toEqual({
       app: 'appId',
-      extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B'},
+      extensions: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+        EXTENSION_B: 'UUID_B',
+        FUNCTION_C: 'ID_C',
+        FUNCTION_D: 'ID_D',
+      },
       extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', EXTENSION_B: 'B'},
     })
   })

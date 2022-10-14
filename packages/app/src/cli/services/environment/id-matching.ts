@@ -4,6 +4,7 @@ import {Extension} from '../../models/app/extensions.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {string} from '@shopify/cli-kit'
 import {ExtensionTypes} from '../../constants.js'
+import {MatchingError} from './identifiers.js'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -24,11 +25,9 @@ export async function automaticMatchmaking(
   remoteRegistrations: ExtensionRegistration[],
   identifiers: {[localIdentifier: string]: string},
   registrationIdField: 'id' | 'uuid',
-): Promise<Result<MatchResult, Error>> {
-  const invalidEnvironmentError = err(new Error('invalid-environment'))
-
+): Promise<Result<MatchResult, MatchingError>> {
   if (remoteRegistrations.length > localExtensions.length) {
-    return invalidEnvironmentError
+    return err('invalid-environment')
   }
 
   const validIdentifiers = identifiers
@@ -77,13 +76,13 @@ export async function automaticMatchmaking(
   // The user must solve the issue in their environment or deploy to a different app
   const impossible = newRemotePending.filter((reg) => !newLocalPending.map((ext) => ext.graphQLType).includes(reg.type))
   if (impossible.length > 0 || newRemotePending.length > newLocalPending.length) {
-    return invalidEnvironmentError
+    return err('invalid-environment')
   }
 
   // If there are more remote pending than local in total, then we can't automatically match
   // The user must solve the issue in their environment or deploy to a different app
   if (newRemotePending.length > newLocalPending.length) {
-    return invalidEnvironmentError
+    return err('invalid-environment')
   }
 
   const extensionsToCreate: LocalExtension[] = []

@@ -1,8 +1,7 @@
-import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {Extension} from '../../models/app/extensions.js'
-import {ui} from '@shopify/cli-kit'
 import {LocalExtension} from './id-matching.js'
+import {selectRegistrationPrompt} from './prompts.js'
+import {RemoteRegistration} from './identifiers.js'
 
 export type ManualMatchResult =
   | {
@@ -21,45 +20,29 @@ export type ManualMatchResult =
  * @param remote - The remote extensions to match
  * @returns The result of the manual matching
  */
-export async function manualMatchIds(options: {
-  local: LocalExtension[]
-  remote: ExtensionRegistration[]
-}): Promise<ManualMatchResult> {
+export async function manualMatchIds(
+  options: {
+    local: LocalExtension[]
+    remote: RemoteRegistration[]
+  },
+  registrationIdField: 'id' | 'uuid',
+): Promise<ManualMatchResult> {
   const identifiers: {[key: string]: string} = {}
   let pendingRemote = options.remote
   let pendingLocal = options.local
+  const idField = registrationIdField
   for (const extension of options.local) {
     const registrationsForType = pendingRemote.filter((reg) => reg.type === extension.graphQLType)
     if (registrationsForType.length === 0) continue
     // eslint-disable-next-line no-await-in-loop
-    const selected = await selectRegistrationPrompt(extension, registrationsForType)
+    const selected = await selectRegistrationPrompt(extension, registrationsForType, idField)
     if (!selected) continue
 
-    identifiers[extension.localIdentifier] = selected.uuid
-    pendingRemote = pendingRemote.filter((reg) => reg.uuid !== selected.uuid)
+    identifiers[extension.localIdentifier] = selected[idField]
+    pendingRemote = pendingRemote.filter((reg) => reg[idField] !== selected[idField])
     pendingLocal = pendingLocal.filter((reg) => reg.localIdentifier !== extension.localIdentifier)
   }
 
   if (pendingRemote.length > 0) return {result: 'pending-remote'}
   return {result: 'ok', identifiers, toCreate: pendingLocal}
-}
-
-export async function selectRegistrationPrompt(
-  extension: LocalExtension,
-  registrations: ExtensionRegistration[],
-): Promise<ExtensionRegistration> {
-  const registrationList = registrations.map((reg) => ({
-    name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners)`,
-    value: reg.uuid,
-  }))
-  registrationList.push({name: 'Create new extension', value: 'create'})
-  const choice: {uuid: string} = await ui.prompt([
-    {
-      type: 'autocomplete',
-      name: 'uuid',
-      message: `How would you like to deploy your "${extension.localIdentifier}"?`,
-      choices: registrationList,
-    },
-  ])
-  return registrations.find((reg) => reg.uuid === choice.uuid)!
 }
