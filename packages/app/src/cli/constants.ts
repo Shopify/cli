@@ -80,11 +80,11 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'],
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'order_details_ui_extension'],
 } as const
 
 export const activeUIExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'].filter,
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'order_details_ui_extension'].filter,
 }
 
 export type UIExtensionTypes = typeof uiExtensions.types[number]
@@ -144,6 +144,8 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   switch (extensionType) {
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
+    case 'order_details_ui_extension':
+      return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
       return {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
     case 'checkout_post_purchase':
@@ -158,7 +160,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
 }
 
 export const uiExternalExtensionTypes = {
-  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui'],
+  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui', 'order_details_ui'],
 } as const
 
 export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]
@@ -206,7 +208,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
-  {name: 'Merchant admin', extensions: ['product_subscription']},
+  {name: 'Merchant admin', extensions: ['product_subscription', 'order_details_ui_extension']},
   {
     name: 'Shopify private',
     extensions: [
@@ -234,6 +236,7 @@ export const externalExtensionTypeNames = {
     'Payment customization',
     'Delivery option presenter',
     'Delivery customization',
+    'Order Details UI',
   ],
 } as const
 
@@ -278,6 +281,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('Delivery option presenter')
     case 'delivery_customization':
       return buildExtensionOutputConfig('Delivery customization')
+    case 'order_details_ui_extension':
+      return buildExtensionOutputConfig('Order Details UI')
   }
 }
 
@@ -303,6 +308,8 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'WEB_PIXEL_EXTENSION'
     case 'customer_accounts_ui_extension':
       return 'CUSTOMER_ACCOUNTS_UI_EXTENSION'
+    case 'order_details_ui_extension':
+      return 'ORDER_DETAILS_UI_EXTENSION'
     case 'product_discounts':
     case 'order_discounts':
     case 'shipping_discounts':

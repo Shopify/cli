@@ -28,6 +28,8 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'theme_app_extension'
     case 'customer_accounts_ui_extension':
       return 'customer_accounts_ui'
+    case 'order_details_ui_extension':
+      return 'order_details_ui'
     default:
       return extensionType
   }
@@ -49,6 +51,8 @@ export function mapUIExternalExtensionTypeToUIExtensionType(
       return 'pos_ui_extension'
     case 'customer_accounts_ui':
       return 'customer_accounts_ui_extension'
+    case 'order_details_ui':
+      return 'order_details_ui_extension'
     default:
       return externalExtensionType
   }
@@ -80,6 +84,8 @@ export function mapExternalExtensionTypeToExtensionType(
       return 'theme'
     case 'customer_accounts_ui':
       return 'customer_accounts_ui_extension'
+    case 'order_details_ui':
+      return 'order_details_ui_extension'
     default:
       return externalExtensionType
   }

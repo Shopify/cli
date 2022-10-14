@@ -97,6 +97,8 @@ export function getUIExtensionResourceURL(
       return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
+    case 'order_details_ui_extension':
+      return {url: ''}
   }
 }
 

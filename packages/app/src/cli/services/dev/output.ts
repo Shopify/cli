@@ -77,6 +77,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         break
       }
       case 'pos_ui_extension':
+      case 'order_details_ui_extension':
       case 'web_pixel_extension':
         continue
     }

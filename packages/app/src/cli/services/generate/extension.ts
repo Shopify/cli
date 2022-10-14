@@ -154,6 +154,7 @@ export function getRuntimeDependencies({
     case 'pos_ui_extension':
     case 'web_pixel_extension':
     case 'customer_accounts_ui_extension':
+    case 'order_details_ui_extension':
     case 'checkout_post_purchase': {
       const dependencies: DependencyVersion[] = []
       if (extensionFlavor?.includes('react')) {

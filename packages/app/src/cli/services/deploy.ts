@@ -212,6 +212,8 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         runtime_configuration_definition: extension.configuration.settings,
       }
     }
+    case 'order_details_ui_extension':
+      return {metafields: extension.configuration.metafields}
   }
 }
 
@@ -238,6 +240,7 @@ async function getExtensionPublishURL({
       case 'checkout_ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':
+      case 'order_details_ui_extension':
       case 'customer_accounts_ui_extension':
         pathComponent = extension.type
         break
@@ -247,6 +250,7 @@ async function getExtensionPublishURL({
       case 'web_pixel_extension':
         pathComponent = 'web_pixel'
         break
+
     }
     return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
   } else if (isFunctionExtensionType(extension.type)) {
