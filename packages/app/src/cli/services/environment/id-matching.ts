@@ -1,10 +1,9 @@
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {Extension} from '../../models/app/extensions.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
-import {string} from '@shopify/cli-kit'
+import {error, string} from '@shopify/cli-kit'
 import {ExtensionTypes} from '../../constants.js'
-import {MatchingError} from './identifiers.js'
+import {MatchingError, RemoteRegistration} from './identifiers.js'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -85,23 +84,46 @@ export async function automaticMatchmaking(
     return err('invalid-environment')
   }
 
+  // First we need to do a pass to match extensions with the same type and name.
+  const matchByNameAndType = (pendingLocal: LocalExtension[], pendingRemote: RemoteRegistration[]) => {
+    pendingLocal.forEach((extension) => {
+      const possibleMatches = pendingRemote.filter((req) => req.type === extension.graphQLType)
+      for (const match of possibleMatches) {
+        if (string.slugify(match.title) === string.slugify(extension.configuration.name)) {
+          // There is a unique remote extension with the same type AND name. We can automatically match them.
+          validIdentifiers[extension.localIdentifier] = match![registrationIdField]
+          break
+        }
+      }
+    })
+    const unmatchedLocal = pendingLocal.filter((extension) => !localId(extension))
+    const unmatchedRemote = pendingRemote.filter((reg) => !localUUIDs().includes(reg[registrationIdField]))
+    return {unmatchedLocal, unmatchedRemote}
+  }
+
+  // Lists of extensions that we couldn't match automatically
+  const {unmatchedLocal, unmatchedRemote} = matchByNameAndType(newLocalPending, newRemotePending)
+
   const extensionsToCreate: LocalExtension[] = []
   const pendingConfirmation: {extension: LocalExtension; registration: ExtensionRegistration}[] = []
 
-  // For each pending local extension, evaluate if it can be automatically matched or needs to be created
-  newLocalPending.forEach((extension) => {
+  // For each unmatched local extension, evaluate if it can be manually matched or needs to be created
+  unmatchedLocal.forEach((extension) => {
     // Remote extensions that have the same type as the local one
-    const possibleMatches = newRemotePending.filter((req) => req.type === extension.graphQLType)
+    const possibleMatches = unmatchedRemote.filter((req) => req.type === extension.graphQLType)
 
     if (possibleMatches.length === 0) {
       // There are no remote extensions with the same type. We need to create a new extension
       extensionsToCreate.push(extension)
-    } else if (string.slugify(possibleMatches[0]!.title) === string.slugify(extension.configuration.name)) {
-      // There is a unique remote extension with the same type AND name. We can automatically match them.
-      validIdentifiers[extension.localIdentifier] = possibleMatches[0]![registrationIdField]
-    } else {
+    } else if (possibleMatches.length === 1) {
       // There is a unique remote extension with the same type, but different name. We can match them but need to confirm
       pendingConfirmation.push({extension, registration: possibleMatches[0]!})
+    } else {
+      // At this point we've already filtered out any duplicated type, we shouldn't have more than 1 possible match
+      throw new error.Bug(
+        `We detected multiple extension matches. This shouldn't happen.
+        Please report it at https://github.com/Shopify/cli/issues/new/choose`,
+      )
     }
   })
 
