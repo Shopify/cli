@@ -13,7 +13,7 @@ const MINIMAL_GIT_IGNORE: git.GitIgnoreTemplate = {
   production: ['/dist'],
 }
 
-export const validateProject = async (config: DeployConfig, whereFrom: string = '') => {
+export const validateProject = async (config: DeployConfig, whereFrom = '') => {
   console.log(`${whereFrom}waiting for ensurePresentOrAbort`)
   await git.ensurePresentOrAbort()
   try {
@@ -26,7 +26,7 @@ export const validateProject = async (config: DeployConfig, whereFrom: string = 
   }
 }
 
-export const initializeGit = async (config: DeployConfig, whereFrom: string = '') => {
+export const initializeGit = async (config: DeployConfig, whereFrom = '') => {
   if (!config.assumeYes) {
     console.log(`${whereFrom}config not assume yes, running git init`)
     const shouldGitInit = await gitInit()

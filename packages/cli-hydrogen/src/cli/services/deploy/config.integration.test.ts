@@ -29,15 +29,19 @@ describe('validateProject() & initializeGit()', () => {
       'initializes new git repository',
       async () => {
         await file.inTemporaryDirectory(async (tmpDir) => {
-          console.log('[intializes new] Waiting for touching integration file')
+          const log = (message: string) =>
+            console.log(`[initializes new] [${tmpDir}] [${new Date().toISOString()}] ${message}`)
+
+          log(`Waiting for touching integration file`)
           await file.touch(`${tmpDir}/integration.txt`)
 
-          console.log('[intializes new] Waiting for validate project')
+          log('Waiting for validate project')
           await validateProject({...defaultConfig, path: tmpDir}, '[intializes new] ')
 
-          console.log('[intializes new] Waiting for .gitignore exists')
+          log('Waiting for .gitignore exists')
           await expect(file.exists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
-          console.log('[intializes new] Waiting for getLastestCommit')
+
+          log('Waiting for getLastestCommit')
           await expect(git.getLatestCommit(tmpDir)).resolves.toBeDefined()
         })
       },
