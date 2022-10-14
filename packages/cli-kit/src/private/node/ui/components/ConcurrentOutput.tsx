@@ -139,7 +139,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
                   |
                 </Text>
 
-                <Box paddingLeft={1}>
+                <Box flexGrow={1} paddingLeft={1}>
                   <Text color={chunk.color}>{line}</Text>
                 </Box>
               </Box>
