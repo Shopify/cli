@@ -69,7 +69,7 @@ const shitlist = {
   'packages/app/src/cli/utilities/extensions/locales-configuration.ts': 1661517194379,
   'packages/app/src/cli/validators/extensions/functions.ts': 1661412160944,
   'packages/app/src/cli/validators/extensions/ui.ts': 1663587282905,
-  'packages/cli-kit/src/session.ts': 1665628286000,
+  'packages/cli-kit/src/session.ts': 1665732731000,
   'packages/create-app/src/commands/init.ts': 1661412160964,
   'packages/create-app/src/services/init.ts': 1663852141271,
 }
