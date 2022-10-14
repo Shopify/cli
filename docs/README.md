@@ -25,7 +25,7 @@ The list below contains valuable resources for people interested in contributing
 
 The [`@shopify/cli-kit`](https://www.npmjs.com/package/@shopify/cli-kit) NPM package provides utilities to abstract away interactions with the Shopify platform (e.g. authentication, API requests) and ensure experiences are consistent across the board. If you are creating a new plugin or contributing to an existing one, we recommend checking out the following resources:
 
-- [Errors]()
+- [Errors](cli-kit/errors.md)
 
 ## Plugins
 
