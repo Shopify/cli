@@ -31,7 +31,7 @@ module.exports = {
           if (shouldFail) {
             context.report(
               node,
-              `Factory functions returning instances of abort and bug errors are discouraged. This error arouse because either you are not following the pattern in a new module or you touched an existing one that needs migration.`,
+              `Factory functions returning instances of abort and bug errors are discouraged. This error arose because either you are not following the pattern in a new module or you touched an existing one that needs migration.`,
             )
           }
         }
