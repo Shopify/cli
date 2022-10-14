@@ -16,7 +16,6 @@ import {analytics, output, port, system, session, abort, string, environment} fr
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {AbortController} from 'abort-controller'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -157,8 +156,7 @@ async function dev(options: DevOptions) {
   await analytics.reportEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    const abortController = new AbortController()
-    await renderConcurrent({processes: additionalProcesses, abortController})
+    await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }

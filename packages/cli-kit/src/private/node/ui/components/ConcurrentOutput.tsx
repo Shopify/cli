@@ -1,6 +1,6 @@
 import {OutputProcess} from '../../../../output.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Static, Text, useApp} from 'ink'
+import {Box, Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
@@ -14,13 +14,15 @@ export type RunProcesses = (
 interface Props {
   processes: OutputProcess[]
   abortController: AbortController
+  showTimestamps?: boolean
+}
+interface Chunk {
+  color: string
+  prefix: string
+  lines: string[]
 }
 
-interface Line {
-  color: string
-  value: string
-  prefix: string
-}
+const OUTPUT_MIN_WIDTH = 80
 
 /**
  * Renders output from concurrent processes to the terminal.
@@ -41,13 +43,11 @@ interface Line {
  * 2022-10-10 13:11:03 | backend    | > cross-env NODE_ENV=development nodemon backend/index.js --watch ./backend
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    |
- *
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   | > starter-react-frontend-app@0.1.0 dev
  * 2022-10-10 13:11:03 | frontend   | > cross-env NODE_ENV=development node vite-server.js
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   |
-
  * 2022-10-10 13:11:03 | backend    | [nodemon] 2.0.19
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    | [nodemon] to restart at any time, enter `rs`
@@ -58,9 +58,9 @@ interface Line {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
-  const [processOutput, setProcessOutput] = useState<Line[]>([])
-  const concurrentColors = ['yellow', 'cyan', 'magenta', 'green']
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true}) => {
+  const [processOutput, setProcessOutput] = useState<Chunk[]>([])
+  const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {exit: unmountInk} = useApp()
 
@@ -76,11 +76,11 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
-          ...lines.map((line) => ({
+          {
             color: lineColor(index),
-            value: line,
             prefix: process.prefix,
-          })),
+            lines,
+          },
         ])
 
         next()
@@ -114,22 +114,37 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
 
   return (
     <Static items={processOutput}>
-      {(line, index) => {
-        const previousLine = processOutput[index - 1]
+      {(chunk, index) => {
         return (
-          <Text key={index}>
-            {previousLine?.prefix && previousLine.prefix !== line.prefix && '\n'}
-            <Text color={line.color}>
-              <Text>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
-              <Text bold>{` | `}</Text>
-              <Text>
-                {line.prefix}
-                {' '.repeat(prefixColumnSize - line.prefix.length)}
-              </Text>
-              <Text bold>{` | `}</Text>
-              <Text>{line.value}</Text>
-            </Text>
-          </Text>
+          <Box flexDirection="column" key={index}>
+            {chunk.lines.map((line, index) => (
+              <Box key={index} flexDirection="row">
+                {showTimestamps && (
+                  <Box>
+                    <Box marginRight={1}>
+                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
+                    </Box>
+
+                    <Text bold color={chunk.color}>
+                      |
+                    </Text>
+                  </Box>
+                )}
+
+                <Box width={prefixColumnSize} marginX={1}>
+                  <Text color={chunk.color}>{chunk.prefix}</Text>
+                </Box>
+
+                <Text bold color={chunk.color}>
+                  |
+                </Text>
+
+                <Box flexGrow={1} paddingLeft={1}>
+                  <Text color={chunk.color}>{line}</Text>
+                </Box>
+              </Box>
+            ))}
+          </Box>
         )
       }}
     </Static>
