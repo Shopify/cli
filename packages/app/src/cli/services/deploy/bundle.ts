@@ -62,6 +62,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
           }
         }),
       ],
+      showTimestamps: false,
     })
 
     if (options.bundle) {

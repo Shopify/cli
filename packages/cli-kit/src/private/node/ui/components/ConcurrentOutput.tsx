@@ -14,6 +14,7 @@ export type RunProcesses = (
 interface Props {
   processes: OutputProcess[]
   abortController: AbortController
+  showTimestamps?: boolean
 }
 interface Chunk {
   color: string
@@ -23,7 +24,6 @@ interface Chunk {
 
 const TIMESTAMP_COLUMN_WIDTH = 19
 const OUTPUT_MIN_WIDTH = 80
-const GUTTER_WIDTH = 2
 
 function chunkString(str: string, length: number) {
   if (str.length <= length) {
@@ -74,7 +74,7 @@ function chunkString(str: string, length: number) {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true}) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
@@ -133,10 +133,17 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
   return (
     <Static items={processOutput}>
       {(chunk, index) => {
-        // -1 for the marginRight of the timestamp column
-        // -1 is for the paddingLeft of the line column
-        // -2 for the marginX of the middle one
-        const lineColumnWidth = fullWidth - prefixColumnSize - TIMESTAMP_COLUMN_WIDTH - GUTTER_WIDTH - 4
+        // -1 for the paddingLeft of the line column
+        // -1 for the gutter width
+        // -2 for the marginX of the prefix one
+        let lineColumnWidth = fullWidth - prefixColumnSize - 1 - 1 - 2
+
+        if (showTimestamps) {
+          // -1 for the marginRight of the timestamp column
+          // -1 for the gutter width
+          lineColumnWidth -= TIMESTAMP_COLUMN_WIDTH - 1 - 1
+        }
+
         const chunkedLines = chunk.lines.map((line) => {
           return chunkString(line, lineColumnWidth)
         })
@@ -146,15 +153,21 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController}
             {chunkedLines.map((lines, index) =>
               lines.map((line, lineIndex) => (
                 <Box key={`${index}:${lineIndex}`} flexDirection="row">
-                  <Box width={TIMESTAMP_COLUMN_WIDTH} marginRight={1}>
-                    {lineIndex === 0 && (
-                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
-                    )}
-                  </Box>
+                  {showTimestamps && (
+                    <Box>
+                      <Box width={TIMESTAMP_COLUMN_WIDTH} marginRight={1}>
+                        {lineIndex === 0 && (
+                          <Text color={chunk.color}>
+                            {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
+                          </Text>
+                        )}
+                      </Box>
 
-                  <Text bold color={chunk.color}>
-                    |
-                  </Text>
+                      <Text bold color={chunk.color}>
+                        |
+                      </Text>
+                    </Box>
+                  )}
 
                   <Box width={prefixColumnSize} marginX={1}>
                     {lineIndex === 0 && <Text color={chunk.color}>{chunk.prefix}</Text>}
