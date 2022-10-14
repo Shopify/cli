@@ -241,7 +241,7 @@ async function devBackendTarget(web: Web, options: DevWebOptions): Promise<outpu
     BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
-    ...(environment.service.serviceEnvironment() === environment.network.Environment.Spin && {
+    ...(environment.service.isSpinEnvironment() && {
       SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
     }),
   }
