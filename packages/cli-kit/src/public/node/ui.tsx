@@ -73,7 +73,7 @@ export function renderInfo(options: RenderAlertOptions) {
  * ```
  * ╭─ success ────────────────────────────────────────────────╮
  * │                                                          │
- * │  Body                                                    │
+ * │  Title                                                   │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -113,7 +113,7 @@ export function renderSuccess(options: RenderAlertOptions) {
  * ```
  * ╭─ warning ────────────────────────────────────────────────╮
  * │                                                          │
- * │  Body                                                    │
+ * │  Title                                                   │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -153,8 +153,7 @@ export function renderWarning(options: RenderAlertOptions) {
  * │                                                          │
  * │  Couldn't connect to the Shopify Partner Dashboard.      │
  * │                                                          │
- * │  What to try                                             │
- * │    • Check your internet connection and try again.       │
+ * │  Check your internet connection and try again.           │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -171,9 +170,7 @@ export function renderFatalError(error: Fatal) {
  * │                                                          │
  * │  Something went wrong.                                   │
  * │                                                          │
- * │  What to try                                             │
- * │    • Check your internet connection.                     │
- * │    • Try again.                                          │
+ * │  Check your internet connection.                         │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```

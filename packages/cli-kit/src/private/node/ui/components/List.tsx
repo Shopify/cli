@@ -1,47 +1,11 @@
-import {Command} from './Command.js'
-import {Link} from './Link.js'
+import {TextTokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
-interface CommandToken {
-  command: string
-}
-
-interface LinkToken {
-  link: {
-    label: string
-    url: string
-  }
-}
-
-type Token = string | CommandToken | LinkToken
-export type ListItem = Token | Token[]
-
 interface Props {
   title: string
-  items: ListItem[]
+  items: TextTokenItem[]
   ordered?: boolean
-}
-
-const renderListItem = (item: ListItem): JSX.Element => {
-  if (typeof item === 'string') {
-    return <Text dimColor>{item}</Text>
-  } else if ('command' in item) {
-    return <Command command={item.command} />
-  } else if ('link' in item) {
-    return <Link {...item.link} />
-  } else {
-    return (
-      <Text>
-        {item.map((listItem, index) => (
-          <Text key={index}>
-            {renderListItem(listItem)}
-            {index < item.length - 1 && <Text> </Text>}
-          </Text>
-        ))}
-      </Text>
-    )
-  }
 }
 
 const DOT = '•'
@@ -61,7 +25,7 @@ const List: React.FC<Props> = ({title, items, ordered = false}: React.PropsWithC
           </Box>
 
           <Box flexGrow={1} marginLeft={1}>
-            {renderListItem(item)}
+            <TokenizedText item={item} />
           </Box>
         </Box>
       ))}

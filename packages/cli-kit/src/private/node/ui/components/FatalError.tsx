@@ -1,5 +1,5 @@
 import {Banner} from './Banner.js'
-import {List} from './List.js'
+import {TokenizedText} from './TokenizedText.js'
 import {Bug, cleanSingleStackTracePath, Fatal} from '../../../../error.js'
 import {Box, Text} from 'ink'
 import React from 'react'
@@ -39,12 +39,12 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
 
       {error.tryMessage && (
         <Box marginTop={1}>
-          <List title="What to try" items={[error.tryMessage]} />
+          <TokenizedText item={error.tryMessage} />
         </Box>
       )}
       {stack && stack.items.length !== 0 && (
         <Box marginTop={1} flexDirection="column">
-          <Text bold>Stack trace:</Text>
+          <Text dimColor>To investigate the issue, examine this stack trace:</Text>
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index}>
               <Text>
