@@ -6,6 +6,10 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
+      checkout_branch:
+        description: "Branch to checkout"
+        required: true
+        default: "main"
       nx_level:
         description: 'Command to pass to nx (if you want to run everything: run-many --all)'
         required: true
@@ -75,7 +79,7 @@ jobs:
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -179,7 +183,7 @@ jobs:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: pr-platform-agnostic
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -188,8 +192,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ inputs.checkout_branch || github.event.pull_request.head.ref }}
           fetch-depth: 0
       - name: Set Git configuration
         run: |
