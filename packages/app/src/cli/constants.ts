@@ -310,7 +310,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'delivery_customization':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.
-      return type
+      return type.toUpperCase()
   }
 }
 
