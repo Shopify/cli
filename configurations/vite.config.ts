@@ -16,6 +16,7 @@ export default function config(packagePath: string) {
       clearMocks: true,
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
+      threads: false,
     },
   })
 }
@@ -25,9 +26,12 @@ export const aliases = (packagePath: string) => {
     {
       find: /@shopify\/cli-kit\/(.+)/,
       replacement: (importedModule: string) => {
-        const migratedModules = ['array']
-        if (migratedModules.find((module) => importedModule.endsWith(module))) {
+        const migratedTsModules = ['array']
+        const migratedTsxModules = ['ui']
+        if (migratedTsModules.find((module) => importedModule.endsWith(module))) {
           return path.join(packagePath, `../cli-kit/src/public/${importedModule.replace('@shopify/cli-kit/', '')}.ts`)
+        } else if (migratedTsxModules.find((module) => importedModule.endsWith(module))) {
+          return path.join(packagePath, `../cli-kit/src/public/${importedModule.replace('@shopify/cli-kit/', '')}.tsx`)
         } else {
           return path.join(packagePath, `../cli-kit/src/${importedModule.replace('@shopify/cli-kit/', '')}.ts`)
         }

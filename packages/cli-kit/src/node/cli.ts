@@ -32,7 +32,7 @@ export async function runCLI(options: RunCLIOptions) {
   setupEnvironmentVariables(options)
   /**
    * These imports need to be dynamic because if they are static
-   * they are loaded before se set the DEBUG=* environment variable
+   * they are loaded before we set the DEBUG=* environment variable
    * and therefore it has no effect.
    */
   const {errorHandler} = await import('./error-handler.js')

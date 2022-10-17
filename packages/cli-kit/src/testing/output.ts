@@ -8,6 +8,7 @@ export function mockAndCaptureOutput() {
     success: () => (output.collectedLogs.success ?? []).join('\n'),
     completed: () => (output.collectedLogs.completed ?? []).join('\n'),
     warn: () => (output.collectedLogs.warn ?? []).join('\n'),
+    error: () => (output.collectedLogs.error ?? []).join('\n'),
     clear: () => {
       output.clearCollectedLogs()
     },

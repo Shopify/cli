@@ -1,10 +1,12 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
 import httpProxy from 'http-proxy'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
-import {port, output} from '@shopify/cli-kit'
+import {port} from '@shopify/cli-kit'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 beforeAll(() => {
   vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/ui')
   vi.mock('http-proxy', () => {
     return {
       default: {
@@ -52,9 +54,9 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     // Then
     expect(httpProxy.createProxy).toHaveBeenCalled()
 
-    const concurrentCalls = (output.concurrent as any).calls
+    const concurrentCalls = (renderConcurrent as any).calls
     expect(concurrentCalls.length).toEqual(1)
-    const concurrentProcesses = concurrentCalls[0][0]
+    const concurrentProcesses = concurrentCalls[0][0].processes
     expect(concurrentProcesses[0].prefix).toEqual('extensions')
     expect(concurrentProcesses[1].prefix).toEqual('web')
     expect(server.close).not.toHaveBeenCalled()

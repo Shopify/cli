@@ -113,7 +113,7 @@ describe('extensionConfig', () => {
             entries: {
               main: 'src/index.js',
             },
-            resource: {url: 'invalid_url'},
+            resource: {url: ''},
             renderer: {
               name: 'renderer-name',
               version: '2.1.5',

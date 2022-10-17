@@ -3,14 +3,14 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {output, string} from '@shopify/cli-kit'
+import {output, string, environment} from '@shopify/cli-kit'
 
-export function outputUpdateURLsResult(
+export async function outputUpdateURLsResult(
   updated: boolean,
   urls: PartnersURLs,
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
 ) {
-  const dashboardURL = partnersURL(app.organizationId, app.id)
+  const dashboardURL = await partnersURL(app.organizationId, app.id)
   if (app.newApp) {
     outputUpdatedURLFirstTime(urls.applicationUrl, dashboardURL)
   } else if (updated) {
@@ -69,7 +69,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         break
       }
       case 'customer_accounts_ui_extension': {
-        message = customerAccountsUIMessage(url, extension).value
+        message = customerAccountsUIMessage(storeFqdn, url, extension).value
         break
       }
       case 'product_subscription': {
@@ -133,9 +133,13 @@ function checkoutUIMessage(url: string, extension: UIExtension) {
   return output.content`Preview link: ${publicURL}`
 }
 
-function customerAccountsUIMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
+function customerAccountsUIMessage(storeFqdn: string, url: string, extension: UIExtension) {
+  const [storeName, ...storeDomainParts] = storeFqdn.split('.')
+  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+  const origin = encodeURIComponent(`${url}/extensions`)
+  const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${extension.devUUID}`
+  const notice = `Please open ${url} and click on 'Visit Site' and then close the tab to allow connections.\n`
+  return output.content`${notice}Preview link: ${publicURL}`
 }
 
 function productSubscriptionMessage(url: string, extension: UIExtension) {
@@ -147,9 +151,9 @@ function getHumanKey(type: ExtensionTypes) {
   return string.capitalize(getExtensionOutputConfig(type).humanKey)
 }
 
-function partnersURL(organizationId: string, appId: string): string {
+async function partnersURL(organizationId: string, appId: string): Promise<string> {
   return output.content`${output.token.link(
     `Partners Dashboard`,
-    `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+    `https://${await environment.fqdn.partners()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

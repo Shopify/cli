@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import {Fatal, Bug, cleanSingleStackTracePath} from './error.js'
 import {isUnitTest, isVerbose} from './environment/local.js'
 import {PackageManager} from './node/node-package-manager.js'
 import {colors} from './node/colors.js'
@@ -18,8 +17,7 @@ import {
   SubHeadingContentToken,
 } from './content-tokens.js'
 import {logToFile} from './log.js'
-import StackTracey from 'stacktracey'
-import {AbortController, AbortSignal} from 'abort-controller'
+import {AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 import type {Change} from 'diff'
@@ -194,7 +192,7 @@ export let collectedLogs: {[key: string]: string[]} = {}
  * @param key - The key of the log.
  * @param content - The content of the log.
  */
-const collectLog = (key: string, content: Message) => {
+export const collectLog = (key: string, content: Message) => {
   const output = collectedLogs.output ?? []
   const data = collectedLogs[key] ?? []
   data.push(stripAnsi(stringifyMessage(content) ?? ''))
@@ -279,65 +277,6 @@ export const newline = () => {
   console.log()
 }
 
-/**
- * Formats and outputs a fatal error.
- * Note: This API is not intended to be used internally. If you want to
- * abort the execution due to an error, raise a fatal error and let the
- * error handler handle and format it.
- * @param content - The fatal error to be output.
- */
-export const error = async (content: Fatal) => {
-  if (!content.message) {
-    return
-  }
-  let outputString = ''
-  const message = content.message
-  const padding = '    '
-  const header = colors.redBright(`\n━━━━━━ Error ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
-  const footer = colors.redBright('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-  outputString += header
-  const lines = message.split('\n')
-  for (const line of lines) {
-    outputString += `${padding}${line}\n`
-  }
-  if (content.tryMessage) {
-    outputString += `\n${padding}${colors.bold('What to try:')}\n`
-    const lines = content.tryMessage.split('\n')
-    for (const line of lines) {
-      outputString += `${padding}${line}\n`
-    }
-  }
-
-  let stack = new StackTracey(content)
-  stack.items.forEach((item) => {
-    item.file = cleanSingleStackTracePath(item.file)
-  })
-
-  stack = await stack.withSourcesAsync()
-  stack = stack
-    .filter((entry) => {
-      return !entry.file.includes('@oclif/core')
-    })
-    .map((item) => {
-      item.calleeShort = colors.yellow(item.calleeShort)
-      /** We make the paths relative to the packages/ directory */
-      const fileShortComponents = item.fileShort.split('packages/')
-      item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1]! : fileShortComponents[0]!
-      return item
-    })
-  if (content instanceof Bug) {
-    if (stack.items.length !== 0) {
-      outputString += `\n${padding}${colors.bold('Stack trace:')}\n`
-      const stackLines = stack.asTable({}).split('\n')
-      for (const stackLine of stackLines) {
-        outputString += `${padding}${stackLine}\n`
-      }
-    }
-  }
-  outputString += footer
-  outputWhereAppropriate('error', consoleError, outputString)
-}
-
 export function stringifyMessage(message: Message): string {
   if (message instanceof TokenizedString) {
     return message.value
@@ -365,61 +304,6 @@ export interface OutputProcess {
 }
 
 /**
- * Use this function when you have multiple concurrent processes that send data events
- * and we need to output them ensuring that they can visually differenciated by the user.
- *
- * @param processes - A list of processes to run concurrently.
- */
-export async function concurrent(
-  processes: OutputProcess[],
-  callback: ((signal: AbortSignal) => void) | undefined = undefined,
-) {
-  const abortController = new AbortController()
-
-  // eslint-disable-next-line node/callback-return
-  if (callback) callback(abortController.signal)
-
-  const concurrentColors = [token.yellow, token.cyan, token.magenta, token.green]
-  const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-
-  function linePrefix(prefix: string, index: number) {
-    const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    const color = concurrentColors[colorIndex]!
-    return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
-  }
-
-  try {
-    await Promise.all(
-      processes.map(async (process, index) => {
-        const stdout = new Writable({
-          write(chunk, _encoding, next) {
-            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-            for (const line of lines) {
-              info(content`${linePrefix(process.prefix, index)}${line}`)
-            }
-            next()
-          },
-        })
-        const stderr = new Writable({
-          write(chunk, _encoding, next) {
-            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-            for (const line of lines) {
-              message(content`${linePrefix(process.prefix, index)}${colors.bold(line)}`, 'error')
-            }
-            next()
-          },
-        })
-        await process.action(stdout, stderr, abortController.signal)
-      }),
-    )
-  } catch (_error) {
-    // We abort any running process
-    abortController.abort()
-    throw _error
-  }
-}
-
-/**
  * This regex can be used to find the erase cursor Ansii characters
  * to strip them from the string.
  * https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#erase-functions
@@ -433,18 +317,6 @@ const eraseCursorAnsiRegex = [
   .map((element) => `[\\u001B\\u009B][[\\]()#;?]*${element}`)
   .join('|')
 
-/**
- * The data sent through the standard pipelines of the sub-processes that we execute
- * might contain ansii escape characters to move the cursor. That causes any additional
- * formatting to break. This function takes a string and strips escape characters that
- * manage the cursor in the terminal.
- * @param value - String whose erase cursor escape characters will be stripped.
- * @returns Stripped string.
- */
-function stripAnsiEraseCursorEscapeCharacters(value: string): string {
-  return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
-}
-
 export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
@@ -453,11 +325,11 @@ export function consoleError(message: string): void {
   console.error(withOrWithoutStyle(message))
 }
 
-function consoleWarn(message: string): void {
+export function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
+export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
     logger(message)
   }
@@ -473,7 +345,7 @@ function withOrWithoutStyle(message: string): string {
 }
 
 export function unstyled(message: string): string {
-  return colors.unstyle(message)
+  return stripAnsi(message)
 }
 
 export function shouldDisplayColors(): boolean {

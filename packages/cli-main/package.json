@@ -55,8 +55,8 @@
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5.1.14",
     "@oclif/plugin-plugins": "^2.1.1",
-    "@shopify/plugin-ngrok": "^3.17.0",
-    "@shopify/cli-kit": "3.17.0"
+    "@shopify/cli-kit": "3.17.0",
+    "@shopify/plugin-ngrok": "^3.17.0"
   },
   "devDependencies": {
     "vitest": "^0.22.1"

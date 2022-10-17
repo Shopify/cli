@@ -1,5 +1,6 @@
-import {Message, stringifyMessage, error as outputError} from './output.js'
+import {Message, stringifyMessage} from './output.js'
 import {normalize} from './path.js'
+import {renderFatalError} from './public/node/ui.js'
 import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'
@@ -75,7 +76,7 @@ export async function handler(error: unknown): Promise<unknown> {
     }
   }
 
-  await outputError(fatal)
+  renderFatalError(fatal)
   return Promise.resolve(error)
 }
 
