@@ -9,7 +9,7 @@ interface CommandToken {
 
 interface LinkToken {
   link: {
-    label: string
+    label?: string
     url: string
   }
 }

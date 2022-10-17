@@ -1,6 +1,7 @@
-import {Message, stringifyMessage} from './output.js'
+import {Message, stringifyMessage, TokenizedString} from './output.js'
 import {normalize} from './path.js'
 import {renderFatalError} from './public/node/ui.js'
+import {TextTokenItem} from './private/node/ui/components/TokenizedText.js'
 import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'
@@ -18,11 +19,29 @@ export class CancelExecution extends Error {}
  * There shouldn't be code that catches fatal errors.
  */
 export abstract class Fatal extends Error {
-  tryMessage: string | null
+  tryMessage: TextTokenItem | null
   type: FatalErrorType
-  constructor(message: Message, type: FatalErrorType, tryMessage: Message | null = null) {
+  /**
+   *
+   * @param message - The error message
+   * @param type - The type of fatal error
+   * @param tryMessage - The message that recomments next steps to the user.
+   *                     You can pass a string a {@link TokenizedString} or a {@link TextTokenItem}
+   *                     if you need to style the message inside the error Banner component.
+   */
+  constructor(message: Message, type: FatalErrorType, tryMessage: TextTokenItem | Message | null = null) {
     super(stringifyMessage(message))
-    this.tryMessage = tryMessage ? stringifyMessage(tryMessage) : null
+
+    if (tryMessage) {
+      if (tryMessage instanceof TokenizedString) {
+        this.tryMessage = stringifyMessage(tryMessage)
+      } else {
+        this.tryMessage = tryMessage
+      }
+    } else {
+      this.tryMessage = null
+    }
+
     this.type = type
   }
 }
@@ -32,7 +51,7 @@ export abstract class Fatal extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer
  */
 export class Abort extends Fatal {
-  constructor(message: Message, tryMessage: Message | null = null) {
+  constructor(message: Message, tryMessage: TextTokenItem | Message | null = null) {
     super(message, FatalErrorType.Abort, tryMessage)
   }
 }
@@ -47,7 +66,7 @@ export class AbortSilent extends Fatal {
  * A bug error is an error that represents a bug and therefore should be reported.
  */
 export class Bug extends Fatal {
-  constructor(message: Message, tryMessage: string | null = null) {
+  constructor(message: Message, tryMessage: TextTokenItem | null = null) {
     super(message, FatalErrorType.Bug, tryMessage)
   }
 }
