@@ -1,8 +1,8 @@
-import {LocalExtension, RemoteRegistration} from './identifiers.js'
+import {LocalSource, RemoteSource} from './identifiers.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {ui} from '@shopify/cli-kit'
 
-export async function matchConfirmationPrompt(extension: LocalExtension, registration: ExtensionRegistration) {
+export async function matchConfirmationPrompt(extension: LocalSource, registration: ExtensionRegistration) {
   const choices = [
     {name: `Yes, that's right`, value: 'yes'},
     {name: `No, cancel deployment`, value: 'no'},
@@ -19,10 +19,10 @@ export async function matchConfirmationPrompt(extension: LocalExtension, registr
 }
 
 export async function selectRegistrationPrompt(
-  extension: LocalExtension,
-  registrations: RemoteRegistration[],
+  extension: LocalSource,
+  registrations: RemoteSource[],
   registrationIdField: 'id' | 'uuid',
-): Promise<RemoteRegistration> {
+): Promise<RemoteSource> {
   const registrationList = registrations.map((reg) => ({
     name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners)`,
     value: reg[registrationIdField],

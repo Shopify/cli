@@ -1,13 +1,13 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
-import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteRegistration} from './identifiers.js'
+import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteSource} from './identifiers.js'
 import {matchConfirmationPrompt} from './prompts.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
 export async function ensureFunctionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
-  remoteFunctions: RemoteRegistration[],
+  remoteFunctions: RemoteSource[],
 ): Promise<Result<IdentifiersExtensions, MatchingError>> {
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localFunctions = options.app.extensions.function

@@ -15,14 +15,14 @@ export interface EnsureDeploymentIdsPresenceOptions {
   envIdentifiers: Partial<Identifiers>
 }
 
-export interface RemoteRegistration {
+export interface RemoteSource {
   uuid: string
   type: string
   id: string
   title: string
 }
 
-export interface LocalExtension {
+export interface LocalSource {
   localIdentifier: string
   graphQLType: string
   type: ExtensionTypes

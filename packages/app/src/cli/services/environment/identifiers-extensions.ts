@@ -1,15 +1,15 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
-import {EnsureDeploymentIdsPresenceOptions, LocalExtension, MatchingError, RemoteRegistration} from './identifiers.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
 import {matchConfirmationPrompt} from './prompts.js'
-import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
+import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {output, session} from '@shopify/cli-kit'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
-  remoteExtensions: RemoteRegistration[],
+  remoteExtensions: RemoteSource[],
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
@@ -57,9 +57,9 @@ export async function ensureExtensionsIds(
   })
 }
 
-async function createExtensions(extensions: LocalExtension[], appId: string) {
+async function createExtensions(extensions: LocalSource[], appId: string) {
   const token = await session.ensureAuthenticatedPartners()
-  const result: {[localIdentifier: string]: ExtensionRegistration} = {}
+  const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
     // Create one at a time to aboid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop

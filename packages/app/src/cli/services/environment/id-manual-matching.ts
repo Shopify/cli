@@ -1,12 +1,12 @@
 import {selectRegistrationPrompt} from './prompts.js'
-import {LocalExtension, RemoteRegistration} from './identifiers.js'
+import {LocalSource, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 
 export type ManualMatchResult =
   | {
       result: 'ok'
       identifiers: IdentifiersExtensions
-      toCreate: LocalExtension[]
+      toCreate: LocalSource[]
     }
   | {result: 'pending-remote'}
 
@@ -21,8 +21,8 @@ export type ManualMatchResult =
  */
 export async function manualMatchIds(
   options: {
-    local: LocalExtension[]
-    remote: RemoteRegistration[]
+    local: LocalSource[]
+    remote: RemoteSource[]
   },
   registrationIdField: 'id' | 'uuid',
 ): Promise<ManualMatchResult> {

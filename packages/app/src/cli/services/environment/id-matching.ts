@@ -1,20 +1,19 @@
-import {LocalExtension} from './identifiers'
-import {MatchingError, RemoteRegistration} from './identifiers.js'
-import {ExtensionRegistration} from '../dev/create-extension.js'
+import {LocalSource} from './identifiers'
+import {MatchingError, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {error, string} from '@shopify/cli-kit'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
-  pendingConfirmation: {extension: LocalExtension; registration: ExtensionRegistration}[]
-  toCreate: LocalExtension[]
-  toManualMatch: {local: LocalExtension[]; remote: ExtensionRegistration[]}
+  pendingConfirmation: {extension: LocalSource; registration: RemoteSource}[]
+  toCreate: LocalSource[]
+  toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 }
 
 export async function automaticMatchmaking(
-  localExtensions: LocalExtension[],
-  remoteRegistrations: ExtensionRegistration[],
+  localExtensions: LocalSource[],
+  remoteRegistrations: RemoteSource[],
   identifiers: {[localIdentifier: string]: string},
   registrationIdField: 'id' | 'uuid',
 ): Promise<Result<MatchResult, MatchingError>> {
@@ -25,13 +24,13 @@ export async function automaticMatchmaking(
   const validIdentifiers = identifiers
 
   // Get the local UUID of an extension, if exists
-  const localId = (extension: LocalExtension) => validIdentifiers[extension.localIdentifier]
+  const localId = (extension: LocalSource) => validIdentifiers[extension.localIdentifier]
 
   // All local UUIDs available
   const localUUIDs = () => Object.values(validIdentifiers)
 
   // Whether an extension has an UUID and that UUID and type match with a remote extension
-  const existsRemotely = (extension: LocalExtension) => {
+  const existsRemotely = (extension: LocalSource) => {
     const remote = remoteRegistrations.find((registration) => registration[registrationIdField] === localId(extension))
     return remote !== undefined && remote.type === extension.graphQLType
   }
@@ -78,7 +77,7 @@ export async function automaticMatchmaking(
   }
 
   // First we need to do a pass to match extensions with the same type and name.
-  const matchByNameAndType = (pendingLocal: LocalExtension[], pendingRemote: RemoteRegistration[]) => {
+  const matchByNameAndType = (pendingLocal: LocalSource[], pendingRemote: RemoteSource[]) => {
     pendingLocal.forEach((extension) => {
       const possibleMatches = pendingRemote.filter((req) => req.type === extension.graphQLType)
       for (const match of possibleMatches) {
@@ -97,8 +96,8 @@ export async function automaticMatchmaking(
   // Lists of extensions that we couldn't match automatically
   const {unmatchedLocal, unmatchedRemote} = matchByNameAndType(newLocalPending, newRemotePending)
 
-  const extensionsToCreate: LocalExtension[] = []
-  const pendingConfirmation: {extension: LocalExtension; registration: ExtensionRegistration}[] = []
+  const extensionsToCreate: LocalSource[] = []
+  const pendingConfirmation: {extension: LocalSource; registration: RemoteSource}[] = []
 
   // For each unmatched local extension, evaluate if it can be manually matched or needs to be created
   unmatchedLocal.forEach((extension) => {
