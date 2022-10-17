@@ -1,6 +1,6 @@
 import {manualMatchIds} from './id-manual-matching.js'
-import {automaticMatchmaking, LocalExtension} from './id-matching.js'
-import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteRegistration} from './identifiers.js'
+import {automaticMatchmaking} from './id-matching.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalExtension, MatchingError, RemoteRegistration} from './identifiers.js'
 import {matchConfirmationPrompt} from './prompts.js'
 import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
@@ -61,7 +61,7 @@ async function createExtensions(extensions: LocalExtension[], appId: string) {
   const token = await session.ensureAuthenticatedPartners()
   const result: {[localIdentifier: string]: ExtensionRegistration} = {}
   for (const extension of extensions) {
-    // Create one at a time to avoid API rate limiting issues.
+    // Create one at a time to aboid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.type, extension.configuration.name, token)
     output.completed(`Created extension ${extension.configuration.name}.`)

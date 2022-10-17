@@ -1,7 +1,7 @@
+import {LocalExtension} from './identifiers'
 import {MatchingError, RemoteRegistration} from './identifiers.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {ExtensionTypes} from '../../constants.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {error, string} from '@shopify/cli-kit'
 
@@ -10,13 +10,6 @@ export interface MatchResult {
   pendingConfirmation: {extension: LocalExtension; registration: ExtensionRegistration}[]
   toCreate: LocalExtension[]
   toManualMatch: {local: LocalExtension[]; remote: ExtensionRegistration[]}
-}
-
-export interface LocalExtension {
-  localIdentifier: string
-  graphQLType: string
-  type: ExtensionTypes
-  configuration: {name: string}
 }
 
 export async function automaticMatchmaking(

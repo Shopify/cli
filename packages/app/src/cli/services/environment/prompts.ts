@@ -1,5 +1,4 @@
-import {LocalExtension} from './id-matching.js'
-import {RemoteRegistration} from './identifiers.js'
+import {LocalExtension, RemoteRegistration} from './identifiers.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {ui} from '@shopify/cli-kit'
 

@@ -1,6 +1,5 @@
-import {LocalExtension} from './id-matching.js'
 import {selectRegistrationPrompt} from './prompts.js'
-import {RemoteRegistration} from './identifiers.js'
+import {LocalExtension, RemoteRegistration} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 
 export type ManualMatchResult =
@@ -25,7 +24,7 @@ export async function manualMatchIds(
     local: LocalExtension[]
     remote: RemoteRegistration[]
   },
-  registrationIdField: 'id' | 'uuid' = 'uuid',
+  registrationIdField: 'id' | 'uuid',
 ): Promise<ManualMatchResult> {
   const identifiers: {[key: string]: string} = {}
   let pendingRemote = options.remote
