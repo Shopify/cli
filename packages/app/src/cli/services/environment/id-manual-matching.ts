@@ -25,7 +25,7 @@ export async function manualMatchIds(
     local: LocalExtension[]
     remote: RemoteRegistration[]
   },
-  registrationIdField: 'id' | 'uuid',
+  registrationIdField: 'id' | 'uuid' = 'uuid',
 ): Promise<ManualMatchResult> {
   const identifiers: {[key: string]: string} = {}
   let pendingRemote = options.remote

@@ -6,7 +6,6 @@ import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/common/result'
-import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 
 const REGISTRATION_A: ExtensionRegistration = {
@@ -129,22 +128,9 @@ beforeEach(() => {
 })
 
 describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
-  it('throw an invalid environment error if functions is invalid', async () => {
-    // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(err('invalid-environment'))
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
-
-    // Then
-    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
-  })
-
   it('throw an invalid environment error if there are pending remote matches', async () => {
     // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(err('pending-remote'))
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(err('pending-remote'))
 
     // When
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
@@ -155,7 +141,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 
   it('throw an invalid environment error if extensions is invalid', async () => {
     // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(ok({}))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(err('invalid-environment'))
 
     // When
@@ -169,18 +154,19 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
   it('returns the combination of functions and extensions', async () => {
     // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(ok({FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'}))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(
       ok({extensions: {EXTENSION_A: 'UUID_A'}, extensionIds: {EXTENSION_A: 'ID_A'}}),
     )
 
     // When
-    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
+    const got = await ensureDeploymentIdsPresence(
+      options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C], {FUNCTION_C: 'ID_C'}),
+    )
 
     // Then
     await expect(got).toEqual({
       app: 'appId',
-      extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'},
+      extensions: {EXTENSION_A: 'UUID_A', FUNCTION_C: 'ID_C'},
       extensionIds: {EXTENSION_A: 'ID_A'},
     })
   })

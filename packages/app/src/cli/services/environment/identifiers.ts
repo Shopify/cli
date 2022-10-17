@@ -3,7 +3,6 @@ import {Identifiers} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {output, error} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 
 export interface EnsureDeploymentIdsPresenceOptions {
@@ -26,18 +25,27 @@ export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-can
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
   // We need local extensions to deploy
   if (!options.app.hasExtensions()) return {app: options.appId, extensions: {}, extensionIds: {}}
+  const validIdentifiers = options.envIdentifiers.extensions ?? {}
+  const functionLocalIdentifiers = Object.fromEntries(
+    options.app.extensions.function
+      .map((extension) => extension.localIdentifier)
+      .map((extensionIdentifier) => {
+        return validIdentifiers[extensionIdentifier]
+          ? [extensionIdentifier, validIdentifiers[extensionIdentifier]]
+          : undefined
+      })
+      .filter((entry) => entry !== undefined) as string[][],
+  )
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  const functions = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-  if (functions.isErr()) return handleIdsError(functions.error, options.appName, options.app.packageManager)
-
+  // TODO: Ensure Functions IDs
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
   if (extensions.isErr()) return handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
-    extensions: {...functions.value, ...extensions.value.extensions},
+    extensions: {...extensions.value.extensions, ...functionLocalIdentifiers},
     extensionIds: extensions.value.extensionIds,
   }
 }

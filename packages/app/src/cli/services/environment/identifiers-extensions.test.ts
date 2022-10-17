@@ -113,6 +113,7 @@ beforeEach(() => {
       ui: {prompt: vi.fn()},
     }
   })
+  vi.mock('../dev/fetch')
   vi.mock('../dev/create-extension')
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')
