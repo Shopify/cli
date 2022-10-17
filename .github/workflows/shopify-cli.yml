@@ -1,6 +1,9 @@
 name: shopify-cli
 
 on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       nx_level:
