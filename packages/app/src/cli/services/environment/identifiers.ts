@@ -42,7 +42,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   // PENDING: Ensure Functions IDs
 
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
-  if (extensions.isErr()) return handleIdsError(extensions.error, options.appName, options.app.packageManager)
+  if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
