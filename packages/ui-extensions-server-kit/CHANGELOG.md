@@ -1,5 +1,7 @@
 # @shopify/ui-extensions-server-kit
 
+## 3.18.0
+
 ## 3.17.0
 
 ## 3.16.3

@@ -1,5 +1,19 @@
 # @shopify/cli-kit
 
+## 3.18.0
+
+### Minor Changes
+
+- b4dafa4f: Add timestamps to logs and introduce first UI kit components
+- 65625f47: Send a new environment variable to apps in dev command with the spin store domain.
+
+### Patch Changes
+
+- ef42fda6: Improve error outputs by using the new Banner component
+- 514f2cb5: Support git 2.28 or earlier when initializing a repository
+- 1455ee44: Improve how concurrent processes output looks
+- 0d674d64: Output messages with partners urls fixed when running against an spin instance
+
 ## 3.17.0
 
 ### Minor Changes
