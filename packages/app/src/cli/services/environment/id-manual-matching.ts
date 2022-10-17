@@ -1,7 +1,7 @@
-import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {LocalExtension} from './id-matching.js'
 import {selectRegistrationPrompt} from './prompts.js'
 import {RemoteRegistration} from './identifiers.js'
+import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 
 export type ManualMatchResult =
   | {

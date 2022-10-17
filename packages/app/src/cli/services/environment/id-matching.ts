@@ -1,9 +1,9 @@
+import {MatchingError, RemoteRegistration} from './identifiers.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {ExtensionTypes} from '../../constants.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {error, string} from '@shopify/cli-kit'
-import {ExtensionTypes} from '../../constants.js'
-import {MatchingError, RemoteRegistration} from './identifiers.js'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -91,7 +91,7 @@ export async function automaticMatchmaking(
       for (const match of possibleMatches) {
         if (string.slugify(match.title) === string.slugify(extension.configuration.name)) {
           // There is a unique remote extension with the same type AND name. We can automatically match them.
-          validIdentifiers[extension.localIdentifier] = match![registrationIdField]
+          validIdentifiers[extension.localIdentifier] = match[registrationIdField]
           break
         }
       }

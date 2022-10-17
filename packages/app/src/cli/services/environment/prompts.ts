@@ -1,7 +1,7 @@
-import {ui} from '@shopify/cli-kit'
-import {ExtensionRegistration} from '../dev/create-extension.js'
 import {LocalExtension} from './id-matching.js'
 import {RemoteRegistration} from './identifiers.js'
+import {ExtensionRegistration} from '../dev/create-extension.js'
+import {ui} from '@shopify/cli-kit'
 
 export async function matchConfirmationPrompt(extension: LocalExtension, registration: ExtensionRegistration) {
   const choices = [

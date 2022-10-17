@@ -1,9 +1,9 @@
+import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {output, error} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {ensureExtensionsIds} from './identifiers-extensions.js'
 
 export interface EnsureDeploymentIdsPresenceOptions {
   app: AppInterface
@@ -39,7 +39,8 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  // TODO: Ensure Functions IDs
+  // PENDING: Ensure Functions IDs
+
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
   if (extensions.isErr()) return handleIdsError(extensions.error, options.appName, options.app.packageManager)
 

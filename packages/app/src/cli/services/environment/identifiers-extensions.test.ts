@@ -1,12 +1,12 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
+import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/common/result'
-import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: ExtensionRegistration = {

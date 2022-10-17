@@ -1,11 +1,11 @@
-import {output, session} from '@shopify/cli-kit'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
-import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking, LocalExtension} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteRegistration} from './identifiers.js'
 import {matchConfirmationPrompt} from './prompts.js'
+import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
+import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {output, session} from '@shopify/cli-kit'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,

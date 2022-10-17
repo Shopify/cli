@@ -1,4 +1,5 @@
 import {ensureDeploymentIdsPresence} from './identifiers.js'
+import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -6,7 +7,6 @@ import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/common/result'
-import {ensureExtensionsIds} from './identifiers-extensions.js'
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',
@@ -123,7 +123,7 @@ beforeEach(() => {
   vi.mock('./identifiers-extensions')
   vi.mock('./identifiers-functions')
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B], functions: [REGISTRATION_C]},
+    app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B]},
   })
 })
 
