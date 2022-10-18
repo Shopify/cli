@@ -32,6 +32,20 @@ const REGISTRATION_A_2 = {
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
+const REGISTRATION_A_3 = {
+  uuid: 'UUID_A_3',
+  id: 'A_3',
+  title: 'EXTENSION_A_3',
+  type: 'CHECKOUT_POST_PURCHASE',
+}
+
+const REGISTRATION_A_4 = {
+  uuid: 'UUID_A_4',
+  id: 'A_4',
+  title: 'EXTENSION_A_4',
+  type: 'CHECKOUT_POST_PURCHASE',
+}
+
 const REGISTRATION_B = {
   uuid: 'UUID_B',
   id: 'B',
@@ -191,6 +205,62 @@ describe('automaticMatchmaking: case 3c some local extensions of the same type, 
   })
 })
 
+describe('automaticMatchmaking: case 3d some local extensions of the same type, a remote with same type but different name', () => {
+  it('success and prompts for confirmation', async () => {
+    // When
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A_3], {}, 'uuid')
+
+    // Then
+    const expected = ok({
+      identifiers: {},
+      pendingConfirmation: [
+        {local: EXTENSION_A, remote: REGISTRATION_A_3},
+        {local: EXTENSION_A_2, remote: REGISTRATION_A_3},
+      ],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    })
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: case 3e some local extensions of the same type, one matching remote and one not matching', () => {
+  it('success and prompts for confirmation', async () => {
+    // When
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A, REGISTRATION_A_3], {}, 'uuid')
+
+    // Then
+    const expected = ok({
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      pendingConfirmation: [{local: EXTENSION_A_2, remote: REGISTRATION_A_3}],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    })
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: case 3f some local extensions of the same type, two remotes that do not match', () => {
+  it('success and prompts for confirmation', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [EXTENSION_A, EXTENSION_A_2],
+      [REGISTRATION_A_3, REGISTRATION_A_4],
+      {},
+      'uuid',
+    )
+
+    // Then
+    const expected = ok({
+      identifiers: {},
+      pendingConfirmation: [],
+      toCreate: [],
+      toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3, REGISTRATION_A_4]},
+    })
+    expect(got).toEqual(expected)
+  })
+})
+
 describe('automaticMatchmaking: case 4 same number of extensions local and remote with matching types', () => {
   it('suceeds automatically', async () => {
     // When
@@ -255,10 +325,13 @@ describe('automaticMatchmaking: case 8 multiple extensions of the same type loca
 
     // Then
     const expected = ok({
-      identifiers: {},
+      identifiers: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+      },
       pendingConfirmation: [],
       toCreate: [],
-      toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A, REGISTRATION_A_2]},
+      toManualMatch: {local: [], remote: []},
     })
     expect(got).toEqual(expected)
   })
@@ -276,10 +349,13 @@ describe('automaticMatchmaking: case 9 multiple extensions of the same type loca
 
     // Then
     const expected = ok({
-      identifiers: {},
+      identifiers: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+      },
       pendingConfirmation: [],
       toCreate: [EXTENSION_B],
-      toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A, REGISTRATION_A_2]},
+      toManualMatch: {local: [], remote: []},
     })
     expect(got).toEqual(expected)
   })
@@ -378,10 +454,15 @@ describe('automaticMatchmaking: case 14 a bit of everything', () => {
 
     // Then
     const expected = ok({
-      identifiers: {EXTENSION_D: 'UUID_D', EXTENSION_B: 'UUID_B'},
+      identifiers: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+        EXTENSION_D: 'UUID_D',
+        EXTENSION_B: 'UUID_B',
+      },
       pendingConfirmation: [],
       toCreate: [EXTENSION_C],
-      toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A, REGISTRATION_A_2]},
+      toManualMatch: {local: [], remote: []},
     })
     expect(got).toEqual(expected)
   })
