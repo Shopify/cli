@@ -226,12 +226,4 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Unit tests
-        run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features --parallel=1
-      - name: Acceptance tests
-        if: ${{ matrix.node == '18.7.0' }}
-        run: yarn nx run features:test
-      - name: Setup tmate session
-        if: ${{ failure() && inputs.debug_enabled }}
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
+        run: DEBUG=simple-git,simple-git:* yarn nx run-many --output-style=stream --skip-nx-cache --target=test --projects=cli-hydrogen
