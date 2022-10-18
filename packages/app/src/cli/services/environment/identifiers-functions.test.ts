@@ -244,7 +244,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{extension: FUNCTION_B, registration: REGISTRATION_B}],
+        pendingConfirmation: [{local: FUNCTION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -272,7 +272,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{extension: FUNCTION_B, registration: REGISTRATION_B}],
+        pendingConfirmation: [{local: FUNCTION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
