@@ -31,7 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEBUG: "1"
+  DEBUG: "simple-git,simple-git:*"
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
   YARN_VERSION: "1.22.19"
@@ -226,4 +226,4 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
       - name: Unit tests
-        run: DEBUG=simple-git,simple-git:* yarn nx run-many --output-style=stream --skip-nx-cache --target=test --projects=cli-hydrogen
+        run: yarn nx run-many --output-style=stream --skip-nx-cache --target=test --projects=cli-hydrogen
