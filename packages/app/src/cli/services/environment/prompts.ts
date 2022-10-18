@@ -18,23 +18,23 @@ export async function matchConfirmationPrompt(extension: LocalSource, registrati
   return choice.value === 'yes'
 }
 
-export async function selectRegistrationPrompt(
-  extension: LocalSource,
-  registrations: RemoteSource[],
-  registrationIdField: 'id' | 'uuid',
+export async function selectRemoteSourcePrompt(
+  localSource: LocalSource,
+  remoteSourcesOfSameType: RemoteSource[],
+  remoteIdField: 'id' | 'uuid',
 ): Promise<RemoteSource> {
-  const registrationList = registrations.map((reg) => ({
-    name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners)`,
-    value: reg[registrationIdField],
+  const remoteOptions = remoteSourcesOfSameType.map((remote) => ({
+    name: `Match it to ${remote.title} (ID: ${remote.id} on Shopify Partners)`,
+    value: remote[remoteIdField],
   }))
-  registrationList.push({name: 'Create new extension', value: 'create'})
+  remoteOptions.push({name: 'Create new extension', value: 'create'})
   const choice: {uuid: string} = await ui.prompt([
     {
       type: 'autocomplete',
       name: 'uuid',
-      message: `How would you like to deploy your "${extension.configuration.name}"?`,
-      choices: registrationList,
+      message: `How would you like to deploy your "${localSource.configuration.name}"?`,
+      choices: remoteOptions,
     },
   ])
-  return registrations.find((reg) => reg[registrationIdField] === choice.uuid)!
+  return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === choice.uuid)!
 }

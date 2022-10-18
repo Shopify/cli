@@ -1,4 +1,4 @@
-import {selectRegistrationPrompt} from './prompts.js'
+import {selectRemoteSourcePrompt} from './prompts.js'
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 
@@ -39,7 +39,7 @@ export async function manualMatchIds(
     )
     if (remoteSourcesOfSameType.length === 0) continue
     // eslint-disable-next-line no-await-in-loop
-    const selected = await selectRegistrationPrompt(currentLocal, remoteSourcesOfSameType, remoteIdField)
+    const selected = await selectRemoteSourcePrompt(currentLocal, remoteSourcesOfSameType, remoteIdField)
     if (!selected) continue
 
     identifiers[currentLocal.localIdentifier] = selected[remoteIdField]
