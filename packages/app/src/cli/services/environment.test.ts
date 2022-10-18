@@ -522,6 +522,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
             type: 'THEME_APP_EXTENSION',
           },
         ],
+        functions: [],
       },
     })
 
@@ -542,7 +543,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     const extension = testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: []},
+      app: {extensionRegistrations: [], functions: []},
     })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',
