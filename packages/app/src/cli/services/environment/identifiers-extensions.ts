@@ -23,9 +23,9 @@ export async function ensureExtensionsIds(
 
   for (const pending of matchExtensions.pendingConfirmation) {
     // eslint-disable-next-line no-await-in-loop
-    const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
+    const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
     if (!confirmed) return err('user-cancelled')
-    validMatches[pending.extension.localIdentifier] = pending.registration.uuid
+    validMatches[pending.local.localIdentifier] = pending.remote.uuid
   }
 
   const extensionsToCreate = matchExtensions.toCreate ?? []

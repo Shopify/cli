@@ -1,8 +1,7 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
-import {ExtensionRegistration} from '../dev/create-extension.js'
 import {ui} from '@shopify/cli-kit'
 
-export async function matchConfirmationPrompt(extension: LocalSource, registration: ExtensionRegistration) {
+export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   const choices = [
     {name: `Yes, that's right`, value: 'yes'},
     {name: `No, cancel deployment`, value: 'no'},
@@ -11,7 +10,7 @@ export async function matchConfirmationPrompt(extension: LocalSource, registrati
     {
       type: 'select',
       name: 'value',
-      message: `Deploy ${extension.configuration.name} (local name) as ${registration.title} (name on Shopify Partners, ID: ${registration.id})?`,
+      message: `Deploy ${local.configuration.name} (local name) as ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
       choices,
     },
   ])
