@@ -398,8 +398,8 @@ describe('automaticMatchmaking: case 15 automatic matches with different names',
     const expected = ok({
       identifiers: {},
       pendingConfirmation: [
-        {extension: EXTENSION_A, registration: registrationNewA},
-        {extension: EXTENSION_B, registration: registrationNewB},
+        {local: EXTENSION_A, remote: registrationNewA},
+        {local: EXTENSION_B, remote: registrationNewB},
       ],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
