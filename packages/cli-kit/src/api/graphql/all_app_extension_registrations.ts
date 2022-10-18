@@ -13,7 +13,7 @@ export const AllAppExtensionRegistrationsQuery = gql`
         id
         uuid
         title
-        type: extensionPointName
+        type: apiType
       }
     }
   }
