@@ -19,15 +19,17 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 }
 
 export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
+  const appsByApiKey: {[apiKey: string]: MinimalOrganizationApp} = Object.fromEntries(apps.map((app) => [app.apiKey, app]))
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
   const allInputs = ['']
   let latestRequest: string
-  let cachedResults: {[input: string]: OrganizationApp[]} = {'': apps}
+  let cachedResults: {[input: string]: MinimalOrganizationApp[]} = {'': apps}
   const fetchInterval = setInterval(async () => {
     const input = allInputs.pop()
     if (!input) return
     const result = await fetchOrgAndApps(orgId, token, input)
+    result.apps.forEach((app) => appsByApiKey[app.apiKey] = app)
     cachedResults[input] = result.apps
   }, 1000)
   const choice = await ui.prompt([
@@ -51,7 +53,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
     },
   ])
   clearInterval(fetchInterval)
-  return apps.find((app) => app.apiKey === choice.apiKey)!
+  return appsByApiKey[choice.apiKey]!
 }
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
