@@ -1,6 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
-import {output, ui} from '@shopify/cli-kit'
+import {output, system, ui} from '@shopify/cli-kit'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -21,8 +21,15 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
+  const allInputs = ['']
   let latestRequest: string
-  let cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
+  let cachedResults: {[input: string]: OrganizationApp[]} = {'': apps}
+  const fetchInterval = setInterval(async () => {
+    const input = allInputs.pop()
+    if (!input) return
+    const result = await fetchOrgAndApps(orgId, token, input)
+    cachedResults[input] = result.apps
+  }, 1000)
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
@@ -30,19 +37,20 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
       message: 'Which existing app is this for?',
       choices: appList,
       source: (filterFunction: ui.FilterFunction) => {
+        const cachedFiltered: {[input: string]: ui.PromptAnswer[]} = {'': appList}
         return async (_answers: ui.PromptAnswer[], input = '') => {
           latestRequest = input
-          if (!cachedResults[input]) {
-            const result = await fetchOrgAndApps(orgId, token, input)
-            const newAppList = result.apps
-            const newAppAnswers = await filterFunction(newAppList.map(toAnswer), input)
-            cachedResults[input] = newAppAnswers
+          allInputs.push(input)
+          while (!cachedResults[input]) { await system.sleep(0.5) }
+          if (!cachedFiltered[input]) {
+            cachedFiltered[input] = await filterFunction(cachedResults[input]!.map(toAnswer), input)
           }
-          return cachedResults[latestRequest] || cachedResults[input]!
+          return cachedFiltered[latestRequest] || cachedFiltered[input]!
         }
       }
     },
   ])
+  clearInterval(fetchInterval)
   return apps.find((app) => app.apiKey === choice.apiKey)!
 }
 
