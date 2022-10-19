@@ -9,7 +9,7 @@ import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.28.0'
+const RubyCLIVersion = '2.29.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
@@ -41,7 +41,7 @@ export async function execCLI2(
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
-    SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
+    SHOPIFY_SHOP: adminSession?.storeFqdn,
     SHOPIFY_CLI_AUTH_TOKEN: token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     // Bundler uses this Gemfile to understand which gems are available in the
