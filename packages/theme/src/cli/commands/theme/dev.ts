@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, session, string} from '@shopify/cli-kit'
+import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Dev extends ThemeCommand {
@@ -11,7 +11,7 @@ export default class Dev extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
-    ...themeFlags,
+    path: themeFlags.path,
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
@@ -37,12 +37,7 @@ export default class Dev extends ThemeCommand {
       description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
     }),
-    store: Flags.string({
-      char: 's',
-      description: 'Store URL',
-      env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
-    }),
+    store: themeFlags.store,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -58,7 +53,7 @@ export default class Dev extends ThemeCommand {
 
     const store = await getThemeStore(flags)
 
-    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const adminSession = await session.ensureAuthenticatedThemes(store, undefined)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
     await execCLI2(command, {adminSession, storefrontToken})
   }

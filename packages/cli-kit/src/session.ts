@@ -152,6 +152,27 @@ ${token.json(scopes)}
 }
 
 /**
+ * Ensure that we have a valid session to access the Theme API.
+ * If a password is provided, that token will be used against Theme Access API.
+ * Otherwise, it will ensure that the user is authenticated with the Admin API.
+ * @param store - Store fqdn to request auth for
+ * @param password - Password generated from Theme Access app
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token and store
+ */
+export async function ensureAuthenticatedThemes(
+  store: string,
+  password: string | undefined,
+  scopes: string[] = [],
+): Promise<AdminSession> {
+  debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
+${token.json(scopes)}
+`)
+  if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
+  return ensureAuthenticatedAdmin(store, scopes)
+}
+
+/**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  * @param applications - An object containing the applications we need to be authenticated with.
  * @returns An instance with the access tokens organized by application.

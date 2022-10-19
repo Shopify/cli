@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.17.0",
+  "version": "3.19.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -55,8 +55,8 @@
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5.1.14",
     "@oclif/plugin-plugins": "^2.1.1",
-    "@shopify/cli-kit": "3.17.0",
-    "@shopify/plugin-ngrok": "^3.17.0"
+    "@shopify/cli-kit": "3.19.0",
+    "@shopify/plugin-ngrok": "^3.19.0"
   },
   "devDependencies": {
     "vitest": "^0.22.1"
