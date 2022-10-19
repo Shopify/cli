@@ -153,10 +153,12 @@ ${token.json(scopes)}
 
 /**
  * Ensure that we have a valid session to access the Theme API.
- * If SHOPIFY_CLI_THEME_TOKEN exists, that token will be used against Theme Access API.
+ * If a password is provided, that token will be used against Theme Access API.
  * Otherwise, it will ensure that the user is authenticated with the Admin API.
- * @param scopes {string[]} Optional array of extra scopes to authenticate with.
- * @returns {Promise<AdminSession>} The access token and store
+ * @param store - Store fqdn to request auth for
+ * @param password - Password generated from Theme Access app
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token and store
  */
 export async function ensureAuthenticatedThemes(
   store: string,
