@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.19.0
+
+### Minor Changes
+
+- 7bb5c23f: Add ensureAuthenticatedThemes helper for session
+
 ## 3.18.0
 
 ### Minor Changes
