@@ -35,12 +35,12 @@ export function mapper(question: Question): unknown {
       return {
         ...question,
         type: 'custom-select',
-        source: getAutompleteFilterType(),
+        source: getAutocompleteFilterType(),
         choices: question.choices ? groupAndMapChoices(question.choices) : undefined,
       }
     case 'autocomplete':
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
-      const filterType = getAutompleteFilterType()
+      const filterType = getAutocompleteFilterType()
       return {
         ...question,
         type: 'autocomplete',
@@ -69,7 +69,7 @@ function containsFilter(answers: {name: string; value: string}[], input = ''): P
   })
 }
 
-function getAutompleteFilterType() {
+function getAutocompleteFilterType() {
   return process.env.SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
 }
 
