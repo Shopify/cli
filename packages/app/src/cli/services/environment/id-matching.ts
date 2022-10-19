@@ -3,7 +3,7 @@ import {MatchingError, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {string} from '@shopify/cli-kit'
-import {difference, flatten, partition, pickBy, values, uniqBy, groupBy} from 'lodash-es'
+import {difference, partition, pickBy, uniqBy, groupBy} from 'lodash-es'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -12,7 +12,7 @@ export interface MatchResult {
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 }
 
-/*
+/**
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
@@ -45,6 +45,62 @@ function matchByNameAndType(
   return {matched: validMatches, pending: {local: pendingLocal, remote: pendingRemote}}
 }
 
+/**
+ * Ask the user to confirm the relationship between a local source and a remote source if they
+ * the only ones of their types.
+ */
+function matchByUniqueType(
+  localSources: LocalSource[],
+  remoteSources: RemoteSource[],
+): {
+  toCreate: LocalSource[]
+  toConfirm: {local: LocalSource; remote: RemoteSource}[]
+  pending: {local: LocalSource[]; remote: RemoteSource[]}
+} {
+  const localGroups = groupBy(localSources, 'graphQLType')
+  const localUnique = Object.values(pickBy(localGroups, (group, key) => group.length === 1)).flat()
+
+  const remoteGroups = groupBy(remoteSources, 'type')
+  const remoteUniqueMap = pickBy(remoteGroups, (group, key) => group.length === 1)
+
+  const toConfirm: {local: LocalSource; remote: RemoteSource}[] = []
+  const toCreate: LocalSource[] = []
+
+  // for every local source that has a unique type we either:
+  // - find a corresponding unique remote source and ask the user to confirm
+  // - create it from scratch
+  for (const local of localUnique) {
+    const remote = remoteUniqueMap[local.graphQLType]
+    if (remote && remote[0]) {
+      toConfirm.push({local, remote: remote[0]})
+    } else {
+      toCreate.push(local)
+    }
+  }
+
+  // now for every local source with a duplicated type we check
+  // if there is a remote source with the same type. if the answer is no,
+  // it means that we need to create them.
+  const localDuplicated = difference(localSources, localUnique)
+  const remotePending = difference(
+    remoteSources,
+    toConfirm.map((elem) => elem.remote),
+  )
+  const [localPending, localToCreate] = partition(localDuplicated, (local) =>
+    remotePending.map((remote) => remote.type).includes(local.graphQLType),
+  )
+  toCreate.push(...localToCreate)
+
+  return {
+    toCreate,
+    toConfirm,
+    pending: {
+      local: localPending,
+      remote: remotePending,
+    },
+  }
+}
+
 export async function automaticMatchmaking(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
@@ -57,60 +113,42 @@ export async function automaticMatchmaking(
 
   const localUUIDs = Object.values(identifiers)
   const existsRemotely = (local: LocalSource) => {
-    const remote = remoteSources.find((remote) => remote[remoteIdField] === identifiers[local.localIdentifier])
-    return remote !== undefined && remote.type === local.graphQLType
+    return Boolean(
+      remoteSources.find(
+        (remote) => remote[remoteIdField] === identifiers[local.localIdentifier] && remote.type === local.graphQLType,
+      ),
+    )
   }
 
   // We try to automatically match sources if they have the same name and type,
   // by considering local sources which are missing on the remote side and
   // remote sources which are not synchronized locally.
-  const {matched, pending} = matchByNameAndType(
+  const {matched: matchedByNameAndType, pending: matchResult} = matchByNameAndType(
     localSources.filter((local) => !existsRemotely(local)),
     remoteSources.filter((remote) => !localUUIDs.includes(remote[remoteIdField])),
     remoteIdField,
   )
 
-  const pendingConfirmation: {local: LocalSource; remote: RemoteSource}[] = []
-  const sourcesToCreate: LocalSource[] = []
+  // Now we try to find a match between a local source and remote one if they have
+  // the same type and they are unique even if they have different names. For example:
+  // LOCAL_CHECKOUT_UI_NAMED_APPLE -> REMOTE_CHECKOUT_UI_NAMED_PEAR
+  // LOCAL_PROD_SUBSCR_NAMED_ORANGE -> REMOTE_PROD_SUBSCR_NAMED_LEMON
+  const {toConfirm, toCreate, pending} = matchByUniqueType(matchResult.local, matchResult.remote)
 
-  const localGroups = groupBy(pending.local, 'graphQLType')
-  const localUnique = flatten(values(pickBy(localGroups, (group, key) => group.length === 1)))
-
-  const remoteGroups = groupBy(pending.remote, 'type')
-  const remoteUnique = pickBy(remoteGroups, (group, key) => group.length === 1)
-
-  for (const local of localUnique) {
-    const remote = remoteUnique[local.graphQLType]
-    if (remote && remote[0]) {
-      pendingConfirmation.push({local, remote: remote[0]})
-    } else {
-      sourcesToCreate.push(local)
-    }
-  }
-
-  let newLocalPending = difference(pending.local, localUnique)
-  const newRemotePending = difference(
-    pending.remote,
-    pendingConfirmation.map((elem) => elem.remote),
+  // If we still have remote sources with a type that's missing from the local sources,
+  // or if we have more remote sources than local sources, we return an error
+  const remoteUnmatched = pending.remote.filter(
+    (remote) => !pending.local.map((local) => local.graphQLType).includes(remote.type),
   )
-  const [localPending, toCreate] = partition(newLocalPending, (local) =>
-    newRemotePending.map((remote) => remote.type).includes(local.graphQLType),
-  )
-  sourcesToCreate.push(...toCreate)
-  newLocalPending = localPending
-
-  const impossible = newRemotePending.filter(
-    (remote) => !newLocalPending.map((local) => local.graphQLType).includes(remote.type),
-  )
-  if (impossible.length > 0 || newRemotePending.length > newLocalPending.length) {
+  if (remoteUnmatched.length > 0 || pending.remote.length > pending.local.length) {
     return err('invalid-environment')
   }
 
   // At this point, all sources are matched either automatically, manually or are new
   return ok({
-    identifiers: {...identifiers, ...matched},
-    pendingConfirmation,
-    toCreate: sourcesToCreate,
-    toManualMatch: {local: newLocalPending, remote: newRemotePending},
+    identifiers: {...identifiers, ...matchedByNameAndType},
+    pendingConfirmation: toConfirm,
+    toCreate,
+    toManualMatch: pending,
   })
 }
