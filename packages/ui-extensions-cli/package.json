@@ -1,7 +1,7 @@
 {
   "name": "@shopify/shopify-cli-extensions",
   "author": "Shopify <app-extensions@shopify.com>",
-  "version": "3.8.0",
+  "version": "3.18.0",
   "description": "A command line tool to build UI extensions",
   "license": "MIT",
   "files": [
@@ -13,11 +13,11 @@
   },
   "main": "./dist/cli.js",
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
-    "build": "tsc",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "clean": "rimraf dist/"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix"
   },
   "publishConfig": {
     "access": "public",
@@ -33,14 +33,18 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.3",
-    "@types/node": "^16.7.1",
-    "prettier": "^2.3.2",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.6.4"
+    "ts-node": "^10.2.1"
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "^3.6.0",
     "esbuild": "^0.12.22",
     "js-yaml": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/ui-extensions-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues/new/choose"
   }
 }

@@ -1,5 +1,139 @@
 # @shopify/create-app
 
+## 3.18.0
+
+### Patch Changes
+
+- Updated dependencies [ef42fda6]
+- Updated dependencies [514f2cb5]
+- Updated dependencies [1455ee44]
+- Updated dependencies [b4dafa4f]
+- Updated dependencies [65625f47]
+- Updated dependencies [0d674d64]
+  - @shopify/cli-kit@3.18.0
+
+## 3.17.0
+
+### Patch Changes
+
+- Updated dependencies [dac186b2]
+- Updated dependencies [5617050a]
+- Updated dependencies [5703ce9b]
+- Updated dependencies [483318aa]
+  - @shopify/cli-kit@3.17.0
+
+## 3.16.3
+
+### Patch Changes
+
+- Updated dependencies [fc4d6c58]
+  - @shopify/cli-kit@3.16.3
+
+## 3.16.2
+
+### Patch Changes
+
+- Updated dependencies [ca6c7295]
+  - @shopify/cli-kit@3.16.2
+
+## 3.16.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.16.1
+
+## 3.16.0
+
+### Patch Changes
+
+- Updated dependencies [d460e738]
+  - @shopify/cli-kit@3.16.0
+
+## 3.15.0
+
+### Patch Changes
+
+- Updated dependencies [9f7d90d9]
+  - @shopify/cli-kit@3.15.0
+
+## 3.14.0
+
+### Patch Changes
+
+- Updated dependencies [1dba11ec]
+  - @shopify/cli-kit@3.14.0
+
+## 3.13.1
+
+### Patch Changes
+
+- 05ea6356: Change 'scaffold' to 'generate' in init app text
+- Updated dependencies [81d3ca50]
+  - @shopify/cli-kit@3.13.1
+
+## 3.13.0
+
+### Patch Changes
+
+- Updated dependencies [a979c0de]
+- Updated dependencies [afa808cb]
+- Updated dependencies [a225e415]
+- Updated dependencies [5336b01f]
+- Updated dependencies [2239cad9]
+  - @shopify/cli-kit@3.13.0
+
+## 3.12.0
+
+### Patch Changes
+
+- Updated dependencies [454641be]
+  - @shopify/cli-kit@3.12.0
+
+## 3.11.0
+
+### Patch Changes
+
+- Updated dependencies [38dedc05]
+- Updated dependencies [79508f56]
+- Updated dependencies [922c204e]
+- Updated dependencies [ddbf7ee4]
+  - @shopify/cli-kit@3.11.0
+
+## 3.10.1
+
+### Patch Changes
+
+- Updated dependencies [f04ec835]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+
+## 3.10.0
+
+### Patch Changes
+
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+
+## 3.9.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+
+## 3.9.0
+
+### Patch Changes
+
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+
 ## 3.8.0
 
 ### Minor Changes

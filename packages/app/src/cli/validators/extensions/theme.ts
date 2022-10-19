@@ -89,7 +89,7 @@ function validateFile(filepath: string, dirname: string): void {
       `Make sure all theme app extension files are in the supported directories: ${SUPPORTED_BUCKETS.join(', ')}`,
     )
   }
-  const filenameValidation = SUPPORTED_EXTS[dirname]
+  const filenameValidation = SUPPORTED_EXTS[dirname]!
   if (!filepath.match(filenameValidation.validator)) {
     throw new error.Abort(`Invalid filename in your theme app extension: ${filepath}
 ${filenameValidation.failureMessage(filepath)}`)

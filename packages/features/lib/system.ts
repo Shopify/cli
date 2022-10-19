@@ -13,7 +13,7 @@ interface ExecOptions {
  * The implementation forwards the standard
  * output and error if the variable DEBUG=1 is set when running acceptance
  * tests.
- * @param command The command to be executed.
+ * @param command - The command to be executed.
  * @returns A promise that resolves or rejects when the command execution finishes.
  */
 export function exec(command: string, args: string[] = [], options?: ExecOptions) {

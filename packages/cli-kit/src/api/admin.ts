@@ -26,11 +26,7 @@ export async function request<T>(query: RequestDocument, session: AdminSession, 
     const version = await fetchApiVersion(session)
     const url = adminUrl(session.storeFqdn, version)
     const headers = await buildHeaders(session.token)
-    const client = await graphqlClient({
-      headers,
-      url,
-      service: 'shopify',
-    })
+    const client = await graphqlClient({headers, url})
     debugLogRequest(api, query, variables, headers)
     const response = await client.request<T>(query, variables)
     return response
@@ -41,7 +37,7 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
   const headers = await buildHeaders(session.token)
-  const client = await graphqlClient({url, headers, service: 'shopify'})
+  const client = await graphqlClient({url, headers})
   debug(`
 Sending Admin GraphQL request to URL ${url} with query:
 ${query}
@@ -58,7 +54,7 @@ ${query}
     .filter((item) => item.supported)
     .map((item) => item.handle)
     .sort()
-    .reverse()[0]
+    .reverse()[0]!
 }
 
 function adminUrl(store: string, version: string | undefined): string {

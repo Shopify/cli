@@ -17,11 +17,6 @@ type Address {
   zip: String
 }
 
-input Condition @oneOf {
-  productMinimumQuantity: ProductMinimumQuantity
-  productMinimumSubtotal: ProductMinimumSubtotal
-}
-
 type Customer implements HasMetafields {
   acceptsMarketing: Boolean
   email: String
@@ -54,7 +49,6 @@ type DeliveryLine {
 }
 
 input Discount {
-  conditions: [Condition!]
   message: String
   targets: [Target!]!
   value: Value!
@@ -191,18 +185,6 @@ type Product implements HasMetafields {
   vendor: String
 }
 
-input ProductMinimumQuantity {
-  ids: [ID!]!
-  minimumQuantity: Int!
-  targetType: TargetType!
-}
-
-input ProductMinimumSubtotal {
-  ids: [ID!]!
-  minimumAmount: Float!
-  targetType: TargetType!
-}
-
 input ProductVariantTarget {
   id: ID!
   quantity: Int
@@ -216,16 +198,6 @@ type Property {
 type SellingPlan {
   id: ID!
 }
-
-input Target @oneOf {
-  productVariant: ProductVariantTarget
-}
-
-enum TargetType {
-  ORDER_SUBTOTAL
-  PRODUCT_VARIANT
-}
-
 """
 Unsigned integer of up to 64 bit, encoded as a number (not a string).
 Example value: `1099511627776`

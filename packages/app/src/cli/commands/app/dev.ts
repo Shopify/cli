@@ -4,7 +4,7 @@ import dev from '../../services/dev.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
-import {path, string, cli} from '@shopify/cli-kit'
+import {path, string, cli, metadata} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -38,7 +38,7 @@ export default class Dev extends Command {
     }),
     'no-update': Flags.boolean({
       hidden: false,
-      description: 'Skips the dashboard URL update step.',
+      description: 'Skips the Partners Dashboard URL update step.',
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),
@@ -56,17 +56,43 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
+      exclusive: ['no-tunnel', 'tunnel'],
     }),
     'no-tunnel': Flags.boolean({
       hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
+      exclusive: ['tunnel-url', 'tunnel'],
+    }),
+    tunnel: Flags.boolean({
+      hidden: false,
+      description: 'Use ngrok to create a tunnel to your service entry point',
+      env: 'SHOPIFY_FLAG_TUNNEL',
+      default: true,
+      exclusive: ['tunnel-url', 'no-tunnel'],
+    }),
+    theme: Flags.string({
+      hidden: false,
+      char: 't',
+      description: 'Theme ID or name of the theme app extension host theme.',
+      env: 'SHOPIFY_FLAG_THEME',
+    }),
+    'theme-app-extension-port': Flags.integer({
+      hidden: false,
+      description: 'Local port of the theme app extension development server.',
+      env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+
+    await metadata.addPublic(() => ({
+      cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
+      cmd_app_reset_used: flags.reset,
+    }))
+
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
@@ -82,7 +108,10 @@ export default class Dev extends Command {
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
+      tunnel: flags.tunnel,
       noTunnel: flags['no-tunnel'],
+      theme: flags.theme,
+      themeExtensionPort: flags['theme-app-extension-port'],
     })
   }
 }

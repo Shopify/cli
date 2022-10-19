@@ -16,7 +16,7 @@ fi
 echo "Executing $(basename $0)..."
 
 HOST="127.0.0.1"
-PORT="12345"
+PORT="54321"
 
 while getopts h:p: TIMED 2>/dev/null; do
     case $TIMED in

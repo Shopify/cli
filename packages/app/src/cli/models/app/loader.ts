@@ -9,12 +9,20 @@ import {
   Extension,
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
-import {blocks, configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
 import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
 import metadata from '../../metadata.js'
 import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {getDependencies, getPackageManager, getPackageName} from '@shopify/cli-kit/node/node-package-manager'
+import {
+  getDependencies,
+  getPackageManager,
+  getPackageName,
+  usesWorkspaces as appUsesWorkspaces,
+} from '@shopify/cli-kit/node/node-package-manager'
+import {resolveFramework} from '@shopify/cli-kit/node/framework'
+
+const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
@@ -27,7 +35,7 @@ export class AppErrors {
     this.errors[path] = message
   }
 
-  getError(path: string): output.Message {
+  getError(path: string) {
     return this.errors[path]
   }
 
@@ -65,22 +73,22 @@ class AppLoader {
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
-    const extensionsPath = path.join(this.appDirectory, `${blocks.extensions.directoryName}`)
     const dotenv = await this.loadDotEnv()
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
-      extensionsPath,
+      configuration.extensionDirectories,
     )
     const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
-      extensionsPath,
+      configuration.extensionDirectories,
     )
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
-      extensionsPath,
+      configuration.extensionDirectories,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
     const name = (await getPackageName(packageJSONPath)) ?? path.basename(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()
+    const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
     const appClass = new App(
       name,
@@ -94,6 +102,7 @@ class AppLoader {
       uiExtensions,
       themeExtensions,
       functions,
+      usesWorkspaces,
       dotenv,
     )
 
@@ -161,6 +170,7 @@ class AppLoader {
     return {
       directory: path.dirname(WebConfigurationFile),
       configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
+      framework: await resolveFramework(path.dirname(WebConfigurationFile)),
     }
   }
 
@@ -223,8 +233,12 @@ class AppLoader {
     return parseResult.data
   }
 
-  async loadUIExtensions(extensionsPath: string): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = path.join(extensionsPath, `*/${configurationFileNames.extension.ui}`)
+  async loadUIExtensions(
+    extensionDirectories?: string[],
+  ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
+    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+    })
     const configPaths = await path.glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
@@ -264,18 +278,22 @@ class AppLoader {
         configurationPath,
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
-        buildDirectory: path.join(directory, 'dist'),
         entrySourceFilePath: entrySourceFilePath ?? '',
+        outputBundlePath: path.join(directory, 'dist/main.js'),
         localIdentifier: path.basename(directory),
         // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
         devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
-    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: false}
+    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories !== undefined}
   }
 
-  async loadFunctions(extensionsPath: string): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.function}`)
+  async loadFunctions(
+    extensionDirectories?: string[],
+  ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
+    const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
+    })
     const configPaths = await path.glob(functionConfigPaths)
 
     const functions = configPaths.map(async (configurationPath) => {
@@ -305,13 +323,15 @@ class AppLoader {
         },
       }
     })
-    return {functions: await Promise.all(functions), usedCustomLayout: false}
+    return {functions: await Promise.all(functions), usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadThemeExtensions(
-    extensionsPath: string,
+    extensionDirectories?: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = await path.join(extensionsPath, `*/${configurationFileNames.extension.theme}`)
+    const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
+    })
     const configPaths = await path.glob(themeConfigPaths)
 
     const themeExtensions = configPaths.map(async (configurationPath) => {
@@ -327,7 +347,10 @@ class AppLoader {
         localIdentifier: path.basename(directory),
       }
     })
-    return {themeExtensions: await Promise.all(themeExtensions), usedCustomLayout: false}
+    return {
+      themeExtensions: await Promise.all(themeExtensions),
+      usedCustomLayout: extensionDirectories !== undefined,
+    }
   }
 
   abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
@@ -352,7 +375,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     output.debug('Unable to decide project type as no web backend')
     return
   }
-  const {directory} = backendWebs[0]
+  const {directory} = backendWebs[0]!
 
   const nodeConfigFile = path.join(directory, 'package.json')
   const rubyConfigFile = path.join(directory, 'Gemfile')
@@ -387,6 +410,10 @@ async function logMetadataForLoadedApp(
     const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
 
     const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webBackendFramework =
+      webBackendCount === 1
+        ? app.webs.filter((web) => web.configuration.type === WebType.Backend)[0]?.framework
+        : undefined
     const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
     const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
@@ -428,8 +455,16 @@ async function logMetadataForLoadedApp(
       app_web_backend_any: webBackendCount > 0,
       app_web_backend_count: webBackendCount,
       app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
+      app_web_framework: webBackendFramework,
       app_web_frontend_any: webFrontendCount > 0,
       app_web_frontend_count: webFrontendCount,
+      env_package_manager_workspaces: app.usesWorkspaces,
+    }
+  })
+
+  await metadata.addSensitive(async () => {
+    return {
+      app_name: app.name,
     }
   })
 }

@@ -5,9 +5,6 @@ import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-pac
 import {Writable} from 'stream'
 import {platform} from 'node:os'
 
-let cliVersion: undefined | string
-let appVersion: undefined | string
-
 beforeEach(async () => {
   vi.mock('node:os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -27,8 +24,9 @@ beforeEach(async () => {
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
     const mockPackageJSON = {} as npm.PackageJSON
+    const directory = path.moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.dependencies['@shopify/cli']).toBe('1.2.3')
     expect(mockPackageJSON.dependencies['@shopify/app']).toBe('1.2.3')
@@ -36,8 +34,9 @@ describe('updateCLIDependencies', () => {
 
   it('does not update overrides or resolutions if local is false', async () => {
     const mockPackageJSON = {overrides: {}, resolutions: {}} as npm.PackageJSON
+    const directory = path.moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies(mockPackageJSON, false)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.overrides['@shopify/cli']).toBeUndefined()
     expect(mockPackageJSON.overrides['@shopify/app']).toBeUndefined()
@@ -51,10 +50,11 @@ describe('updateCLIDependencies', () => {
     'updates overrides for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
+      const directory = path.moduleDirectory(import.meta.url)
 
-      await updateCLIDependencies(mockPackageJSON, true)
+      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-      const dependencyOveride = mockPackageJSON.overrides[dependency]
+      const dependencyOveride = mockPackageJSON.overrides[dependency]!
       const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -66,10 +66,11 @@ describe('updateCLIDependencies', () => {
     'updates resolutions for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
+      const directory = path.moduleDirectory(import.meta.url)
 
-      await updateCLIDependencies(mockPackageJSON, true)
+      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-      const dependencyResolution = mockPackageJSON.resolutions[dependency]
+      const dependencyResolution = mockPackageJSON.resolutions[dependency]!
       const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -79,10 +80,11 @@ describe('updateCLIDependencies', () => {
 
   it.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
     const mockPackageJSON = {} as npm.PackageJSON
+    const directory = path.moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies(mockPackageJSON, true)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
-    const dependencyResolution = mockPackageJSON.dependencies[dependency]
+    const dependencyResolution = mockPackageJSON.dependencies[dependency]!
     const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await file.read(dependencyPath))
 
@@ -107,7 +109,8 @@ describe('updateCLIDependencies', () => {
         mock: 'value',
       },
     }
-    await updateCLIDependencies(mockPackageJSON, false)
+    const directory = path.moduleDirectory(import.meta.url)
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.dependencies.mock).toBe('value')
     expect(mockPackageJSON.overrides.mock).toBe('value')
@@ -192,7 +195,7 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{title: ''}, {title: ''}, {title: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       expect(taskStates).toContainEqual({title: `Installed dependencies in /`})
       expect(taskStates).toContainEqual({title: `Installed dependencies in /web/`})
@@ -206,12 +209,12 @@ describe('getDeepInstallNPMTasks', () => {
       const taskState = {output: ''} as ui.ListrTaskWrapper<any, any>
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir, didInstallEverything})
 
-      await tasks[0].task(null, taskState)
-      await tasks[1].task(null, taskState)
+      await tasks[0]!.task(null, taskState)
+      await tasks[1]!.task(null, taskState)
 
       expect(didInstallEverything).not.toHaveBeenCalled()
 
-      await tasks[2].task(null, taskState)
+      await tasks[2]!.task(null, taskState)
 
       expect(didInstallEverything).toHaveBeenCalled()
     })
@@ -222,7 +225,7 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{output: ''}, {output: ''}, {output: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       const install = vi.mocked(installNodeModules)
 
@@ -243,7 +246,7 @@ describe('getDeepInstallNPMTasks', () => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
       const taskStates = [{output: ''}, {output: ''}, {output: ''}] as ui.ListrTaskWrapper<any, any>[]
 
-      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i])))
+      await Promise.all(tasks.map(({task}, i) => task(null, taskStates[i]!)))
 
       const install = vi.mocked(installNodeModules)
 

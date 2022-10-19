@@ -42,13 +42,14 @@ describe('extensionConfig', () => {
     const extension: UIExtension = {
       localIdentifier: extensionName,
       idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
-      buildDirectory: `${extensionRoot}/build`,
+      outputBundlePath: `${extensionRoot}/build/main.js`,
       configurationPath: path.join(appRoot, 'shopify.app.toml'),
       configuration: {
         name: 'My Extension Name',
         metafields: [],
         type: 'checkout_post_purchase',
-        capabilities: {network_access: true},
+        capabilities: {network_access: false, block_progress: false},
+        categories: ['returns'],
       },
       type: 'checkout_post_purchase',
       graphQLType: 'CHECKOUT_POST_PURCHASE',
@@ -73,6 +74,7 @@ describe('extensionConfig', () => {
       port: 8000,
       storeFqdn: 'storeFqdn',
       includeResourceURL: true,
+      grantedScopes: ['read_customer_personal_data'],
     }
 
     // When
@@ -100,6 +102,7 @@ describe('extensionConfig', () => {
           node_executable: 'node-path',
 
           extension_points: [],
+          categories: ['returns'],
           development: {
             build: {env: {}},
             develop: {env: {}},
@@ -110,14 +113,15 @@ describe('extensionConfig', () => {
             entries: {
               main: 'src/index.js',
             },
-            resource: {url: 'invalid_url'},
+            resource: {url: ''},
             renderer: {
               name: 'renderer-name',
               version: '2.1.5',
             },
           },
 
-          capabilities: {network_access: true},
+          capabilities: {network_access: false, block_progress: false},
+          approval_scopes: ['read_customer_personal_data'],
         },
       ],
     })

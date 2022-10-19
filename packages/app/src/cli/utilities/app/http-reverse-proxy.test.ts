@@ -1,11 +1,12 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
 import httpProxy from 'http-proxy'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
-import {port, output, fastify} from '@shopify/cli-kit'
+import {port} from '@shopify/cli-kit'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 beforeAll(() => {
   vi.mock('@shopify/cli-kit')
-  vi.mock('./fastify-http-proxy/index.cjs')
+  vi.mock('@shopify/cli-kit/node/ui')
   vi.mock('http-proxy', () => {
     return {
       default: {
@@ -27,10 +28,9 @@ beforeAll(() => {
 })
 
 describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
-  test('proxies to all the targets using the Fastify HTTP Proxy', async () => {
+  test('proxies to all the targets using the HTTP Proxy', async () => {
     // Given
     const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(fastify.fastify).mockReturnValue(server)
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(3001)
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(3002)
 
@@ -54,9 +54,9 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     // Then
     expect(httpProxy.createProxy).toHaveBeenCalled()
 
-    const concurrentCalls = (output.concurrent as any).calls
+    const concurrentCalls = (renderConcurrent as any).calls
     expect(concurrentCalls.length).toEqual(1)
-    const concurrentProcesses = concurrentCalls[0][0]
+    const concurrentProcesses = concurrentCalls[0][0].processes
     expect(concurrentProcesses[0].prefix).toEqual('extensions')
     expect(concurrentProcesses[1].prefix).toEqual('web')
     expect(server.close).not.toHaveBeenCalled()
@@ -65,7 +65,6 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('uses a random port when no port is passed', async () => {
     // Given
     const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(fastify.fastify).mockReturnValue(server)
     vi.mocked(port.getRandomPort).mockResolvedValueOnce(4000)
 
     // When

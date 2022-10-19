@@ -1,18 +1,19 @@
-import {reportEvent, start} from './analytics.js'
+import {hashString} from './string.js'
+import {getAnalyticsTunnelType, reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import {join as joinPath, dirname} from './path.js'
 import * as os from './os.js'
 import * as ruby from './node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {cliKitStore} from './store.js'
+import {getAppInfo} from './store.js'
 import constants from './constants.js'
-import {MONORAIL_COMMAND_TOPIC, publishEvent} from './monorail.js'
+import {publishEvent} from './monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
+import {getListOfTunnelPlugins} from './plugins.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
-  const schema = MONORAIL_COMMAND_TOPIC
   let publishEventMock: MockedFunction<typeof publishEvent>
 
   beforeEach(() => {
@@ -21,24 +22,28 @@ describe('event tracking', () => {
     vi.mock('./node/ruby.js')
     vi.mock('./os.js')
     vi.mock('./store.js')
+    vi.mock('./string.js')
 
     vi.mock('./version.js')
     vi.mock('./monorail.js')
+    vi.mock('./node/cli.js')
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
     vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
     vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
-    vi.mocked(environment.local.webIDEPlatform).mockReturnValue(undefined)
+    vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
+    vi.mocked(hashString).mockReturnValue('hashed-macaddress')
+    vi.mocked(environment.local.cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
-
-    vi.mocked(cliKitStore).mockReturnValue({
-      setSession: vi.fn(),
-      getSession: vi.fn(),
-      removeSession: vi.fn(),
-      getAppInfo: vi.fn(),
-    } as any)
+    vi.mock('./plugins.js', async () => {
+      const plugins: any = await vi.importActual('./plugins.js')
+      return {
+        ...plugins,
+        getListOfTunnelPlugins: vi.fn(),
+      }
+    })
   })
 
   afterEach(() => {
@@ -57,14 +62,14 @@ describe('event tracking', () => {
   it('sends the expected data to Monorail with cached app info', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      const command = 'app dev'
-      vi.mocked(cliKitStore().getAppInfo).mockReturnValueOnce({
+      const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
+      vi.mocked(getAppInfo).mockResolvedValueOnce({
         appId: 'key1',
         orgId: '1',
         storeFqdn: 'domain1',
         directory: '/cached',
       })
-      await start({command, args, currentTime: currentDate.getTime() - 100})
+      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -79,11 +84,12 @@ describe('event tracking', () => {
         ],
       } as any
       await reportEvent({config})
-
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        command,
+        command: commandContent.command,
+        cmd_all_alias_used: commandContent.alias,
+        cmd_all_topic: commandContent.topic,
         time_start: 1643709599900,
         time_end: 1643709600000,
         total_time: 100,
@@ -95,22 +101,25 @@ describe('event tracking', () => {
         is_employee: false,
         env_plugin_installed_any_custom: true,
         env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
+        env_device_id: 'hashed-macaddress',
+        env_cloud: 'spin',
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
         metadata: expect.anything(),
+        env_plugin_installed_all: JSON.stringify(['@shopify/built-in', 'a-custom-plugin']),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
   it('sends the expected data to Monorail when there is an error message', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      const command = 'app dev'
-      await start({command, args, currentTime: currentDate.getTime() - 100})
+      const commandContent = {command: 'dev', topic: 'app'}
+      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -122,7 +131,7 @@ describe('event tracking', () => {
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
-        command,
+        command: commandContent.command,
         time_start: 1643709599900,
         time_end: 1643709600000,
         total_time: 100,
@@ -139,8 +148,8 @@ describe('event tracking', () => {
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0][1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0][2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -148,8 +157,8 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
-      const command = 'app dev'
-      await start({command, args, currentTime: currentDate.getTime() - 100})
+      const commandContent = {command: 'dev', topic: 'app'}
+      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -166,12 +175,12 @@ describe('event tracking', () => {
   it('shows an error if something else fails', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      const command = 'app dev'
+      const commandContent = {command: 'dev', topic: 'app'}
       vi.mocked(os.platformAndArch).mockImplementationOnce(() => {
         throw new Error('Boom!')
       })
       const outputMock = mockAndCaptureOutput()
-      await start({command, args})
+      await start({commandContent, args})
 
       // When
       const config = {
@@ -183,5 +192,50 @@ describe('event tracking', () => {
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
     })
+  })
+})
+
+describe('getAnalyticsTunnelType', () => {
+  it('when no tunnelUrl is passed then should return undefined', async () => {
+    // When
+    const got = await getAnalyticsTunnelType({} as any, undefined as any)
+
+    // Then
+    expect(got).toBeUndefined()
+  })
+
+  it('when a localhost tunnelUrl is passed then should return localhost', async () => {
+    // Given
+    const tunnelUrl = 'https://localhost'
+
+    // When
+    const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
+
+    // Then
+    expect(got).toBe('localhost')
+  })
+
+  it('return a provider in case tunnelUrl contains its name', async () => {
+    // Given
+    const tunnelUrl = 'https://www.existing-provider.com'
+    vi.mocked(getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
+
+    // When
+    const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
+
+    // Then
+    expect(got).toBe('existing-provider')
+  })
+
+  it('return a custom in case tunnelUrl is not either localhost or included in the provider plugin list', async () => {
+    // Given
+    const tunnelUrl = 'https://www.custom-provider.com'
+    vi.mocked(getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
+
+    // When
+    const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
+
+    // Then
+    expect(got).toBe('custom')
   })
 })

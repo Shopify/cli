@@ -20,16 +20,16 @@ export interface ExtensionConfigOptions {
   port?: number
   storeFqdn?: string
   includeResourceURL?: boolean
-  cartUrl?: string
+  checkoutCartUrl?: string
   subscriptionProductUrl?: string
+  grantedScopes?: string[]
 }
 
 /**
  * The extensions' Go binary receives the configuration through
  * standard input as a YAML-encoded object. This function returns the
  * Javascript object representing the configuration necessary for building.
- * @param extension {UIExtension} Extension that will be built.
- * @returns
+ * @param extension - Extension that will be built.
  */
 export async function extensionConfig(options: ExtensionConfigOptions): Promise<unknown> {
   const extensionsConfig = await Promise.all(
@@ -43,6 +43,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
         external_type: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
         metafields: extension.configuration.metafields,
         extension_points: extension.configuration.extensionPoints || [],
+        categories: extension.configuration.categories || [],
         node_executable: await nodeExtensionsCLIPath(),
         surface: getUIExtensionSurface(extension.configuration.type),
         version: renderer?.version,
@@ -50,7 +51,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           root_dir: path.relative(options.app.directory, extension.directory),
           build_dir: options.buildDirectory
             ? path.relative(extension.directory, options.buildDirectory)
-            : path.relative(extension.directory, extension.buildDirectory),
+            : path.relative(extension.directory, path.dirname(extension.outputBundlePath)),
           entries: {
             main: path.relative(extension.directory, extension.entrySourceFilePath),
           },
@@ -66,6 +67,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
           },
         },
         capabilities: extension.configuration.capabilities,
+        approval_scopes: options.grantedScopes ?? [],
       }
     }),
   )
@@ -80,22 +82,25 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
     extensions: extensionsConfig,
   }
 }
-
-export async function getUIExtensionResourceURL(uiExtensionType: UIExtensionTypes, options: ExtensionConfigOptions) {
+type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl'>
+export function getUIExtensionResourceURL(
+  uiExtensionType: UIExtensionTypes,
+  options: GetUIExensionResourceURLOptions,
+): {url: string | undefined} {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
-      return {url: options.cartUrl}
+      return {url: options.checkoutCartUrl}
     case 'checkout_post_purchase':
     case 'pos_ui_extension':
     case 'web_pixel_extension':
     case 'customer_accounts_ui_extension':
-      // This is a temporary workaround to avoid Admin crash when dev'ing multiple extensions
-      // Issue at shopify/web: https://github.com/Shopify/web/blob/main/app/components/Extensions/hooks/useResourceUrlQuery.ts#L15-L37
-      return {url: 'invalid_url'}
+      return {url: ''}
     case 'product_subscription':
-      return {url: options.subscriptionProductUrl}
+      return {url: options.subscriptionProductUrl ?? ''}
   }
 }
+
+export type UIExtensionSurface = ReturnType<typeof getUIExtensionSurface>
 
 export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
   switch (uiExtensionType) {

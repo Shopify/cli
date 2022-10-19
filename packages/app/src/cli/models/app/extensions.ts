@@ -28,13 +28,19 @@ export const UIExtensionConfigurationSchema = schema.define.object({
     )
     .default([]),
   extensionPoints: schema.define.array(schema.define.string()).optional(),
-  capabilities: schema.define.any().optional(),
+  capabilities: schema.define
+    .object({
+      block_progress: schema.define.boolean().optional(),
+      network_access: schema.define.boolean().optional(),
+    })
+    .optional(),
 
   // Only for CheckoutUiExtension
   settings: schema.define.any().optional(),
 
   // Only for CustomerAccountsUiExtension
   categories: schema.define.array(schema.define.string()).optional(),
+  localization: schema.define.any().optional(),
 
   // Only for WebPixel
   runtimeContext: schema.define.string().optional(),
@@ -95,8 +101,8 @@ export type ThemeExtension = Extension & {
 
 export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
-  buildDirectory: string
   entrySourceFilePath: string
+  outputBundlePath: string
   devUUID: string
 }
 

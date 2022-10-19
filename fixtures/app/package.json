@@ -1,6 +1,6 @@
 {
   "name": "@shopify/fixtures-app",
-  "version": "3.8.0",
+  "version": "3.18.0",
   "main": "web/backend/index.js",
   "license": "UNLICENSED",
   "private": true,
@@ -9,18 +9,19 @@
     "build": "../shopify app build",
     "dev": "../shopify app dev",
     "push": "../shopify app push",
-    "scaffold": "../shopify app scaffold",
+    "generate": "../shopify app generate",
     "deploy": "../shopify app deploy",
-    "web-env": "../shopify app web-env"
+    "env": "../shopify app env"
   },
   "dependencies": {
     "@shopify/admin-ui-extensions-react": "^1.0.1",
-    "@shopify/app": "3.8.0",
-    "@shopify/checkout-ui-extensions-react": "^0.18.0",
-    "@shopify/cli": "3.8.0",
+    "@shopify/app": "3.18.0",
+    "@shopify/checkout-ui-extensions-react": "^0.20.0",
+    "@shopify/cli": "3.18.0",
+    "@shopify/customer-account-ui-extensions-react": "^0.0.8",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.3",
     "@shopify/web-pixels-extension": "^0.1.1",
-    "react": "^18.1.0"
+    "react": "^17.0.2"
   },
   "author": "isaac"
 }

@@ -73,6 +73,13 @@ export interface ExtensionPayload {
   version: string
   surface: Surface
   title: string
+  extensionPoints?: string[]
+  categories?: string[]
+  localization?: {
+    defaultLocale: string
+    lastUpdated: number
+    translations: {[locale: string]: ExtensionTranslationMap}
+  }
 }
 
 export enum Status {
@@ -95,4 +102,8 @@ export interface App {
   }
   supportEmail?: string
   supportLocales?: string[]
+}
+
+interface ExtensionTranslationMap {
+  [key: string]: string
 }

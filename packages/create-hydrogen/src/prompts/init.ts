@@ -72,9 +72,9 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
   }
 
   const promptResults = await prompt(questions)
-  const name = options.name ?? promptResults.name
-  const templateName = options.template ?? promptResults.template
-  const language = options.language ?? promptResults.language
+  const name = options.name ?? promptResults.name!
+  const templateName = options.template ?? promptResults.template!
+  const language = options.language ?? promptResults.language!
   let template = templateName
 
   // Get final template URLS
@@ -89,9 +89,9 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 /**
  * Checks if the provided name is a Shopify template, or if it's a custom URL to a user-provided template.
  *
- * @param templateName: The name of the template to check.
- * @param language: The language of the template, only provided if the template is a Shopify template
- * @returns: The fully-formed template name (with the language suffixed) if it's a Shopify template, false otherwise.
+ * @param templateName - The name of the template to check.
+ * @param language -  The language of the template, only provided if the template is a Shopify template
+ * @returns The fully-formed template name (with the language suffixed) if it's a Shopify template, false otherwise.
  */
 const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
   if (!templateName) return false
@@ -105,8 +105,8 @@ const checkIfShopifyTemplateName = (templateName: string, language: string): str
 /**
  * Lets the user know if they're trying to use a template in the old naming format.
  *
- * @param templateName: The name of the template to check.
- * @returns: True if the template name is in the old format, false otherwise.
+ * @param templateName - The name of the template to check.
+ * @returns True if the template name is in the old format, false otherwise.
  */
 const warnIfDeprecatedTemplateNameFormat = (templateName: string): void => {
   const normalized = string.hyphenize(templateName).toLocaleLowerCase()
@@ -126,8 +126,8 @@ const warnIfDeprecatedTemplateNameFormat = (templateName: string): void => {
 /**
  * Takes the name of a Shopify template (for example, demo-store or hello-world) and converts it to a URL.
  *
- * @param templateName: The given name of a Shopify template.
- * @returns: The URL of the template.
+ * @param templateName - The given name of a Shopify template.
+ * @returns The URL of the template.
  */
 const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_BASE}${templateName}#${BRANCH}`
 
@@ -135,8 +135,8 @@ const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_B
  * Checks to see if the provided URL can be parsed by Github. For Shopify-specific templates, adds any
  * missing information (for example, a missing branch) to the repo information in the URL.
  *
- * @param templateUrl: The URL of the template to parse.
- * @returns: The parsed URL.
+ * @param templateUrl - The URL of the template to parse.
+ * @returns The parsed URL.
  */
 const parseTemplateUrl = (templateUrl: string): string => {
   const parsedTemplate = github.parseRepoUrl(templateUrl)
@@ -144,7 +144,7 @@ const parseTemplateUrl = (templateUrl: string): string => {
   const looksLikeHydrogenTemplate =
     parsedTemplate.name === 'hydrogen' &&
     parsedTemplate.user === 'Shopify' &&
-    parsedTemplate.subDirectory.startsWith('templates/')
+    parsedTemplate.subDirectory?.startsWith('templates/')
 
   return looksLikeHydrogenTemplate && missingBranch ? `${parsedTemplate.full}#${BRANCH}` : parsedTemplate.full
 }

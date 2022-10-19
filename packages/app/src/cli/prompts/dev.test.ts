@@ -7,6 +7,7 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
   updateURLsPrompt,
+  tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
@@ -32,6 +33,7 @@ const APP1: OrganizationApp = {
   apiKey: 'key1',
   apiSecretKeys: [{secret: 'secret1'}],
   organizationId: '1',
+  grantedScopes: [],
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -39,6 +41,7 @@ const APP2: OrganizationApp = {
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
   organizationId: '1',
+  grantedScopes: [],
 }
 const STORE1: OrganizationStore = {
   shopId: '1',
@@ -283,6 +286,31 @@ describe('updateURLsPrompt', () => {
           {name: 'Yes, this time', value: 'yes'},
           {name: 'No, not now', value: 'no'},
           {name: `Never, don't ask again`, value: 'never'},
+        ],
+      },
+    ])
+  })
+})
+
+describe('tunnelConfigurationPrompt', () => {
+  it('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
+    // Given
+    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+
+    // When
+    const got = await tunnelConfigurationPrompt()
+
+    // Then
+    expect(got).toEqual('always')
+    expect(ui.prompt).toHaveBeenCalledWith([
+      {
+        type: 'select',
+        name: 'value',
+        message: 'How would you like your tunnel to work in the future?',
+        choices: [
+          {name: 'Always use it by default', value: 'always'},
+          {name: 'Use it now and ask me next time', value: 'yes'},
+          {name: 'Nevermind, cancel dev', value: 'cancel'},
         ],
       },
     ])

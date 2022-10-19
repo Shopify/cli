@@ -1,4 +1,4 @@
-import {getTheme} from '../../utilities/theme-store.js'
+import {getThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
 import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -15,7 +15,7 @@ export default class List extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const store = getTheme(flags)
+    const store = await getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(['theme', 'list'], {adminSession})
   }

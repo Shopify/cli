@@ -3,7 +3,7 @@ import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
-import {yarnLockfile, pnpmLockfile} from '@shopify/cli-kit/node/node-package-manager'
+import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -22,7 +22,7 @@ scopes = "read_products"
     }
   })
 
-  const writeConfig = async (appConfiguration: string) => {
+  const writeConfig = async (appConfiguration: string, packageJson?: PackageJson) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
     const packageJsonPath = path.join(tmpDir, 'package.json')
     const webDirectory = path.join(tmpDir, blocks.web.directoryName)
@@ -34,7 +34,10 @@ scopes = "read_products"
     dev = "dev"
     `
     await file.write(appConfigurationPath, appConfiguration)
-    await file.write(packageJsonPath, JSON.stringify({name: 'my_app', dependencies: {}, devDependencies: {}}))
+    await file.write(
+      packageJsonPath,
+      JSON.stringify(packageJson ?? {name: 'my_app', dependencies: {}, devDependencies: {}}),
+    )
     await file.mkdir(webDirectory)
     await file.write(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
 
@@ -45,13 +48,31 @@ scopes = "read_products"
     return path.join(tmpDir, blocks.extensions.directoryName, name)
   }
 
-  const blockConfigurationPath = ({blockType, name}: {blockType: BlockType; name: string}) => {
+  const blockConfigurationPath = ({
+    blockType,
+    name,
+    directory,
+  }: {
+    blockType: BlockType
+    name: string
+    directory?: string
+  }) => {
     const configurationName = blocks.extensions.configurationName[blockType]
-    return path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
+    return directory
+      ? path.join(directory, configurationName)
+      : path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
   }
 
-  const makeBlockDir = async ({blockType, name}: {blockType: BlockType; name: string}) => {
-    const dirname = path.dirname(blockConfigurationPath({blockType, name}))
+  const makeBlockDir = async ({
+    blockType,
+    name,
+    directory,
+  }: {
+    blockType: BlockType
+    name: string
+    directory?: string
+  }) => {
+    const dirname = path.dirname(blockConfigurationPath({blockType, name, directory}))
     await file.mkdir(dirname)
     return dirname
   }
@@ -60,13 +81,15 @@ scopes = "read_products"
     blockType,
     blockConfiguration,
     name,
+    directory,
   }: {
     blockType: BlockType
     blockConfiguration: string
     name: string
+    directory?: string
   }) => {
-    const blockDir = await makeBlockDir({blockType, name})
-    const configPath = blockConfigurationPath({blockType, name})
+    const blockDir = await makeBlockDir({blockType, name, directory})
+    const configPath = blockConfigurationPath({blockType, name, directory})
     await file.write(configPath, blockConfiguration)
     return {blockDir, configPath}
   }
@@ -111,7 +134,7 @@ scopes = "read_products"
     expect(app.name).toBe('my_app')
   })
 
-  it('defaults to npm as package manager when the configuration is valid', async () => {
+  it('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -122,7 +145,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('npm')
   })
 
-  it('defaults to yarn st the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
+  it('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
     const yarnLockPath = path.join(tmpDir, yarnLockfile)
@@ -135,7 +158,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('yarn')
   })
 
-  it('defaults to pnpm st the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
+  it('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
     const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
@@ -146,6 +169,46 @@ scopes = "read_products"
 
     // Then
     expect(app.packageManager).toBe('pnpm')
+  })
+
+  it("identifies if the app doesn't use workspaces", async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.usesWorkspaces).toBe(false)
+  })
+
+  it('identifies if the app uses yarn or npm workspaces', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.usesWorkspaces).toBe(true)
+  })
+
+  it('identifies if the app uses pnpm workspaces', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const pnpmWorkspaceFilePath = path.join(tmpDir, pnpmWorkspaceFile)
+    await file.write(pnpmWorkspaceFilePath, '')
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.usesWorkspaces).toBe(true)
   })
 
   it("throws an error if the extension configuration file doesn't exist", async () => {
@@ -193,9 +256,9 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
-    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
+    expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
   })
 
   it('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
@@ -220,9 +283,39 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
-    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.extensions.ui[0].localIdentifier).toBe('my-extension')
+    expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
+  })
+
+  it('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
+    // Given
+    await writeConfig(`
+    scopes = ""
+    extension_directories = ["custom_extension"]
+    `)
+    const customExtensionDirectory = path.join(tmpDir, 'custom_extension')
+    await file.mkdir(customExtensionDirectory)
+
+    const blockConfiguration = `
+      name = "custom_extension"
+      type = "post_purchase_ui"
+    `
+    await writeBlockConfig({
+      blockType: 'ui',
+      blockConfiguration,
+      name: 'custom-extension',
+      directory: customExtensionDirectory,
+    })
+    await file.write(path.join(customExtensionDirectory, 'index.js'), '')
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.extensions.ui[0]!.configuration.name).toBe('custom_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.localIdentifier).toBe('custom_extension')
   })
 
   it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -244,8 +337,8 @@ scopes = "read_products"
 
     // Then
     expect(app.name).toBe('my_app')
-    expect(app.extensions.ui[0].configuration.name).toBe('my_extension')
-    expect(app.extensions.ui[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
+    expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   it('loads the app with several extensions that have valid configurations', async () => {
@@ -282,10 +375,10 @@ scopes = "read_products"
     const extensions = app.extensions.ui.sort((extA, extB) =>
       extA.configuration.name < extB.configuration.name ? -1 : 1,
     )
-    expect(extensions[0].configuration.name).toBe('my_extension_1')
-    expect(extensions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
-    expect(extensions[1].configuration.name).toBe('my_extension_2')
-    expect(extensions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
+    expect(extensions[0]!.configuration.name).toBe('my_extension_1')
+    expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
+    expect(extensions[1]!.configuration.name).toBe('my_extension_2')
+    expect(extensions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
   it('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
@@ -376,9 +469,9 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].configuration.name).toBe('my-function')
-    expect(app.extensions.function[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
-    expect(app.extensions.function[0].localIdentifier).toBe('my-function')
+    expect(app.extensions.function[0]!.configuration.name).toBe('my-function')
+    expect(app.extensions.function[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
+    expect(app.extensions.function[0]!.localIdentifier).toBe('my-function')
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -424,12 +517,12 @@ scopes = "read_products"
     const functions = app.extensions.function.sort((extA, extB) =>
       extA.configuration.name < extB.configuration.name ? -1 : 1,
     )
-    expect(functions[0].configuration.name).toBe('my-function-1')
-    expect(functions[1].configuration.name).toBe('my-function-2')
-    expect(functions[0].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
-    expect(functions[1].idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
-    expect(functions[0].localIdentifier).toBe('my-function-1')
-    expect(functions[1].localIdentifier).toBe('my-function-2')
+    expect(functions[0]!.configuration.name).toBe('my-function-1')
+    expect(functions[1]!.configuration.name).toBe('my-function-2')
+    expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
+    expect(functions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
+    expect(functions[0]!.localIdentifier).toBe('my-function-1')
+    expect(functions[1]!.localIdentifier).toBe('my-function-2')
   })
 
   it(`throws an error when the function's metadata.json file is missing`, async () => {
@@ -478,7 +571,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   it(`defaults the function wasm path if not configured`, async () => {
@@ -503,7 +596,7 @@ scopes = "read_products"
     const app = await load(tmpDir)
 
     // Then
-    expect(app.extensions.function[0].buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
+    expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
   })
 
   it(`updates metadata after loading`, async () => {
@@ -512,13 +605,20 @@ scopes = "read_products"
 
     await load(tmpDir)
 
-    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node'})
+    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
+  })
+
+  it(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
+    const {webDirectory} = await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await file.write(path.join(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await load(tmpDir)
+
+    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
   })
 })
-
-function createPackageJson(tmpDir: string, type: string, version: string) {
-  const packagePath = path.join(tmpDir, 'node_modules', '@shopify', type, 'package.json')
-  const packageJson = {name: 'name', version}
-  const dirPath = path.join(tmpDir, 'node_modules', '@shopify', type)
-  return file.mkdir(dirPath).then(() => file.write(packagePath, JSON.stringify(packageJson)))
-}

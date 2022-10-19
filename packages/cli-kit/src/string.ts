@@ -1,3 +1,4 @@
+import {unstyled} from './output.js'
 import crypto from 'crypto'
 
 export {camelCase as camelize} from 'change-case'
@@ -30,7 +31,7 @@ export function hashString(str: string): string {
 
 /**
  * Given a string, it returns it with the first letter capitalized.
- * @param string {string} String whose first letter will be caplitalized.
+ * @param string - String whose first letter will be caplitalized.
  * @returns The given string with its first letter capitalized.
  */
 export function capitalize(string: string) {
@@ -39,7 +40,7 @@ export function capitalize(string: string) {
 
 /**
  * Given a store, returns a valid store fqdn removing protocol and adding .myshopify.com domain
- * @param store Original store name provided by the user
+ * @param store - Original store name provided by the user
  * @returns a valid store fqdn
  */
 export function normalizeStoreName(store: string) {
@@ -62,3 +63,34 @@ export function tryParseInt(maybeInt: string | undefined) {
   }
   return asInt
 }
+
+/**
+ * Given a series of rows inside an array, where each row is an array of strings (representing columns)
+ * Parse it into a single string with the columns aligned
+ */
+export function linesToColumns(lines: string[][]): string {
+  const widths: number[] = []
+  for (let i = 0; lines[0] && i < lines[0].length; i++) {
+    const columnRows = lines.map((line) => line[i]!)
+    widths.push(Math.max(...columnRows.map((row) => unstyled(row).length)))
+  }
+  const paddedLines = lines
+    .map((line) => {
+      return line
+        .map((col, index) => {
+          return `${col}${' '.repeat(widths[index]! - unstyled(col).length)}`
+        })
+        .join('   ')
+        .trimEnd()
+    })
+    .join('\n')
+  return paddedLines
+}
+
+export const slugify = (str: string) =>
+  str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')

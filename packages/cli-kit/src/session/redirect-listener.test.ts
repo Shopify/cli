@@ -1,38 +1,28 @@
 import {RedirectListener} from './redirect-listener.js'
-import {beforeEach, describe, it, vi, expect} from 'vitest'
-import Fastify from 'fastify'
+import {describe, it, vi, expect} from 'vitest'
+import {createServer} from 'http'
 
-beforeEach(() => {
-  vi.mock('fastify', () => {
-    const server = {
-      listen: vi.fn(),
-      close: vi.fn(),
-    }
-    return {
-      default: () => ({
-        get: vi.fn(() => {
-          return server
-        }),
-      }),
-    }
-  })
-})
+vi.mock('http')
 
 describe('RedirectListener', () => {
   it('starts and stops the server', async () => {
     // Given
+    const server: any = {
+      listen: vi.fn(),
+      close: vi.fn(),
+    }
+    vi.mocked(createServer).mockReturnValue(server)
     const subject = new RedirectListener({
       port: 3000,
       host: 'localhost',
       callback: (_code, _error) => {},
     })
-    const fastify = (Fastify() as any).get()
 
     // When
     await subject.start()
 
     // Then
-    const listenCalls = vi.mocked(fastify.listen).mock.calls
+    const listenCalls = vi.mocked(server.listen).mock.calls
 
     expect(listenCalls.length).toEqual(1)
     expect(listenCalls[0][0]).toEqual({port: 3000, host: 'localhost'})
@@ -41,31 +31,39 @@ describe('RedirectListener', () => {
 
   it('stops the server', async () => {
     // Given
+    const server: any = {
+      listen: vi.fn(),
+      close: vi.fn(),
+    }
+    vi.mocked(createServer).mockReturnValue(server)
     const subject = new RedirectListener({
       port: 3000,
       host: 'localhost',
       callback: (_code, _error) => {},
     })
-    const fastify = (Fastify() as any).get()
 
     // When/Then
     await expect(subject.stop()).resolves.toBeUndefined()
-    const closeCalls = vi.mocked(fastify.close).mock.calls
+    const closeCalls = vi.mocked(server.close).mock.calls
     expect(closeCalls.length).toEqual(1)
   })
 
   it('stops error when the server fails to stop', async () => {
     // Given
+    const server: any = {
+      listen: vi.fn(),
+      close: vi.fn(),
+    }
+    vi.mocked(createServer).mockReturnValue(server)
     const subject = new RedirectListener({
       port: 3000,
       host: 'localhost',
       callback: (_code, _error) => {},
     })
-    const fastify = (Fastify() as any).get()
 
     // When/Then
     await expect(subject.stop()).resolves.toBeUndefined()
-    const closeCalls = vi.mocked(fastify.close).mock.calls
+    const closeCalls = vi.mocked(server.close).mock.calls
     expect(closeCalls.length).toEqual(1)
   })
 })

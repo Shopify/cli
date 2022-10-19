@@ -11,6 +11,7 @@ import {getEnvironmentData, reportEvent} from '../analytics.js'
 import * as path from '../path.js'
 import * as metadata from '../metadata.js'
 import {fanoutHooks} from '../plugins.js'
+import constants, {bugsnagApiKey} from '../constants.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
@@ -88,6 +89,7 @@ export async function sendErrorToBugsnag(
   reportableError.stack = `Error: ${reportableError.message}\n${formattedStacktrace}`
 
   if (report) {
+    await initializeBugsnag()
     await new Promise((resolve, reject) => {
       Bugsnag.notify(reportableError, undefined, (error, event) => {
         if (error) {
@@ -142,6 +144,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
       return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
     }),
   )
+  await initializeBugsnag()
   Bugsnag.addOnError(async (event) => {
     event.errors.forEach((error) => {
       error.stacktrace.forEach((stackFrame) => {
@@ -164,7 +167,7 @@ export async function addBugsnagMetadata(event: Event, config: Interfaces.Config
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
 
-  const environment = getEnvironmentData(config)
+  const environment = await getEnvironmentData(config)
 
   const allMetadata = {
     command: startCommand,
@@ -203,5 +206,19 @@ export async function addBugsnagMetadata(event: Event, config: Interfaces.Config
   }
   Object.entries(bugsnagMetadata).forEach(([section, values]) => {
     event.addMetadata(section, values)
+  })
+}
+
+async function initializeBugsnag() {
+  if (Bugsnag.isStarted()) {
+    return
+  }
+  Bugsnag.start({
+    appType: 'node',
+    apiKey: bugsnagApiKey,
+    logger: null,
+    appVersion: await constants.versions.cliKit(),
+    autoTrackSessions: false,
+    autoDetectErrors: false,
   })
 }

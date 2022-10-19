@@ -30,6 +30,7 @@ const ApplicationTokenSchema = define.object({
  * token exchanges.
  *
  * @example
+ * ```
  * {
  *    "accounts.shopify.com": {
  *      "identity": {...} // IdentityTokenSchema
@@ -43,8 +44,8 @@ const ApplicationTokenSchema = define.object({
  *      }
  *    },
  *    "identity.spin.com": {...}
- *}
- *
+ * }
+ * ```
  */
 export const SessionSchema = define.object({}).catchall(
   define.object({

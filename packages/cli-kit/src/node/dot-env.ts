@@ -5,8 +5,8 @@ import {parse, stringify} from 'envfile'
 
 /**
  * Error that's thrown when the .env is not found.
- * @param path {string} Path to the .env file.
- * @returns {Abort} An abort error.
+ * @param path - Path to the .env file.
+ * @returns An abort error.
  */
 export const DotEnvNotFoundError = (path: string) => {
   return new Abort(`The environment file at ${path} does not exist.`)
@@ -28,8 +28,8 @@ export interface DotEnvFile {
 
 /**
  * Reads and parses a .env file.
- * @param path {string} Path to the .env file
- * @returns {Promise<DotEnvFile>} An in-memory representation of the .env file.
+ * @param path - Path to the .env file
+ * @returns An in-memory representation of the .env file.
  */
 export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
   debug(outputContent`Reading the .env file at ${token.path(path)}`)
@@ -45,7 +45,7 @@ export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
 
 /**
  * Writes a .env file to disk.
- * @param file {DotEnvFile} .env file to be written.
+ * @param file - .env file to be written.
  */
 export async function writeDotEnv(file: DotEnvFile) {
   await writeFile(file.path, stringify(file.variables))
@@ -54,23 +54,26 @@ export async function writeDotEnv(file: DotEnvFile) {
 /**
  * Given an .env file content, generates a new one with new values
  * without removing already existing lines.
- * @param envFileContent {string | null} .env file contents.
- * @param updatedValues {[key: string]: string}} object containing new env variables values.
+ * @param envFileContent - .env file contents.
+ * @param updatedValues - object containing new env variables values.
  */
-export function patchEnvFile(envFileContent: string | null, updatedValues: {[key: string]: string}): string {
+export function patchEnvFile(
+  envFileContent: string | null,
+  updatedValues: {[key: string]: string | undefined},
+): string {
   const outputLines: string[] = []
   const lines = envFileContent === null ? [] : envFileContent.split('\n')
 
   const alreadyPresentKeys: string[] = []
 
-  const toLine = (key: string, value: string) => `${key}=${value}`
+  const toLine = (key: string, value?: string) => `${key}=${value}`
 
   for (const line of lines) {
     const match = line.match(/^([^=:#]+?)[=:](.*)/)
     let lineToWrite = line
 
     if (match) {
-      const key = match[1].trim()
+      const key = match[1]!.trim()
       const newValue = updatedValues[key]
       if (newValue) {
         alreadyPresentKeys.push(key)

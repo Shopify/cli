@@ -7,6 +7,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
+  extensionDirectories: schema.define.array(schema.define.string()).optional(),
 })
 
 export enum WebType {
@@ -29,6 +30,7 @@ export type WebConfigurationCommands = keyof WebConfiguration['commands']
 export interface Web {
   directory: string
   configuration: WebConfiguration
+  framework?: string
 }
 
 export interface AppInterface {
@@ -40,6 +42,7 @@ export interface AppInterface {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
+  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   extensions: {
     ui: UIExtension[]
@@ -48,6 +51,7 @@ export interface AppInterface {
   }
   errors?: AppErrors
   hasExtensions: () => boolean
+  hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
 }
 
@@ -60,6 +64,7 @@ export class App implements AppInterface {
   configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
+  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
   extensions: {
@@ -81,6 +86,7 @@ export class App implements AppInterface {
     ui: UIExtension[],
     theme: ThemeExtension[],
     functions: FunctionExtension[],
+    usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -99,6 +105,7 @@ export class App implements AppInterface {
       function: functions,
     }
     this.errors = errors
+    this.usesWorkspaces = usesWorkspaces
   }
 
   async updateDependencies() {
@@ -111,6 +118,10 @@ export class App implements AppInterface {
       this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
     )
   }
+
+  hasUIExtensions(): boolean {
+    return this.extensions.ui.length > 0
+  }
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
@@ -118,9 +129,9 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
 /**
  * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
- * @param uiExtensionType {UIExtensionTypes} UI extension whose renderer version will be obtained.
- * @param app {AppInterface} App object containing the extension.
- * @returns {{name: string; version: string} | undefined} The version if the dependency exists.
+ * @param uiExtensionType - UI extension whose renderer version will be obtained.
+ * @param app - App object containing the extension.
+ * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
   uiExtensionType: UIExtensionTypes,
@@ -141,7 +152,7 @@ export async function getUIExtensionRendererVersion(
    */
   if (isReact) {
     const dependencyName = fullName.split('/')
-    const pattern = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
+    const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
     const reactPackageJsonPath = await path.findUp(pattern, {
       type: 'file',
       cwd: app.directory,
@@ -155,7 +166,7 @@ export async function getUIExtensionRendererVersion(
 
   // Split the dependency name to avoid using "/" in windows
   const dependencyName = fullName.replace('-react', '').split('/')
-  const pattern = path.join('node_modules', dependencyName[0], dependencyName[1], 'package.json')
+  const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
 
   let packagePath = await path.findUp(pattern, {
     cwd,

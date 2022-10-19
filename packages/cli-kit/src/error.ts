@@ -1,9 +1,9 @@
-import {Message, stringifyMessage, error as outputError} from './output.js'
+import {Message, stringifyMessage} from './output.js'
 import {normalize} from './path.js'
+import {renderFatalError} from './public/node/ui.js'
 import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'
-export {AbortSignal} from 'abort-controller'
 
 enum FatalErrorType {
   Abort,
@@ -54,7 +54,7 @@ export class Bug extends Fatal {
 
 /**
  * A function that handles errors that blow up in the CLI.
- * @param error Error to be handled.
+ * @param error - Error to be handled.
  * @returns A promise that resolves with the error passed.
  */
 export async function handler(error: unknown): Promise<unknown> {
@@ -76,7 +76,7 @@ export async function handler(error: unknown): Promise<unknown> {
     }
   }
 
-  await outputError(fatal)
+  renderFatalError(fatal)
   return Promise.resolve(error)
 }
 

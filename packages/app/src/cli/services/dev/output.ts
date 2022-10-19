@@ -3,14 +3,14 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {output, string} from '@shopify/cli-kit'
+import {output, string, environment} from '@shopify/cli-kit'
 
-export function outputUpdateURLsResult(
+export async function outputUpdateURLsResult(
   updated: boolean,
   urls: PartnersURLs,
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
 ) {
-  const dashboardURL = partnersURL(app.organizationId, app.id)
+  const dashboardURL = await partnersURL(app.organizationId, app.id)
   if (app.newApp) {
     outputUpdatedURLFirstTime(urls.applicationUrl, dashboardURL)
   } else if (updated) {
@@ -32,10 +32,17 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 }
 
 export function outputAppURL(storeFqdn: string, url: string) {
+  const title = url.includes('localhost') ? 'App URL' : 'Shareable app URL'
+  const heading = output.token.heading(title)
   const appURL = buildAppURL(storeFqdn, url)
-  const heading = output.token.heading('App URL')
-  const message = `Once everything's built, your app's shareable link will be:\n${appURL}`
-  output.info(output.content`\n\n${heading}\n${message}\n`)
+  output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
+}
+
+export function outputDevConsoleURL(url: string) {
+  const title = 'Shopify extension dev console URL'
+  const heading = output.token.heading(title)
+  const devConsoleURL = `${url}/extensions/dev-console`
+  output.info(output.content`${heading}\n\n  ${devConsoleURL}\n`)
 }
 
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
@@ -45,6 +52,10 @@ export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, u
 }
 
 function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
+  if (extensions.length > 0) {
+    outputDevConsoleURL(url)
+  }
+
   for (const extension of extensions) {
     const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)})`)
     let message: string
@@ -58,7 +69,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         break
       }
       case 'customer_accounts_ui_extension': {
-        message = customerAccountsUIMessage(url, extension).value
+        message = customerAccountsUIMessage(storeFqdn, url, extension).value
         break
       }
       case 'product_subscription': {
@@ -84,7 +95,7 @@ One testing option is to use a separate app dedicated to staging.`
 
 function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
-  const heading = output.token.heading(`${extensions[0].configuration.name} (${getHumanKey(extensions[0].type)})`)
+  const heading = output.token.heading(`${extensions[0]!.configuration.name} (${getHumanKey(extensions[0]!.type)})`)
   const link = output.token.link(
     'dev doc instructions',
     'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
@@ -122,9 +133,13 @@ function checkoutUIMessage(url: string, extension: UIExtension) {
   return output.content`Preview link: ${publicURL}`
 }
 
-function customerAccountsUIMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
+function customerAccountsUIMessage(storeFqdn: string, url: string, extension: UIExtension) {
+  const [storeName, ...storeDomainParts] = storeFqdn.split('.')
+  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+  const origin = encodeURIComponent(`${url}/extensions`)
+  const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${extension.devUUID}`
+  const notice = `Please open ${url} and click on 'Visit Site' and then close the tab to allow connections.\n`
+  return output.content`${notice}Preview link: ${publicURL}`
 }
 
 function productSubscriptionMessage(url: string, extension: UIExtension) {
@@ -136,9 +151,9 @@ function getHumanKey(type: ExtensionTypes) {
   return string.capitalize(getExtensionOutputConfig(type).humanKey)
 }
 
-function partnersURL(organizationId: string, appId: string): string {
+async function partnersURL(organizationId: string, appId: string): Promise<string> {
   return output.content`${output.token.link(
-    `Shopify Partners dashboard`,
-    `https://partners.shopify.com/${organizationId}/apps/${appId}/edit`,
+    `Partners Dashboard`,
+    `https://${await environment.fqdn.partners()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

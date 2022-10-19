@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {cli} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 

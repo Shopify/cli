@@ -2,12 +2,12 @@ name: shopify-cli-next
 
 up:
   - node:
-      yarn: 1.22.18
+      yarn: 1.22.19
       version: v18.7.0
       packages:
         - ./
   - go:
-      version: 1.17.6
+      version: 1.19
       modules: true
   - ruby:
       version: 3.1.2
@@ -18,11 +18,8 @@ up:
         version: 7.9.3
 
 env:
-  SHOPIFY_ENV: development
-  SHOPIFY_PARTNERS_API_ENV: production
-  SHOPIFY_ADMIN_API_ENV: production
-  SHOPIFY_STOREFRONT_RENDERER_API_ENV: production
-  SHOPIFY_IDENTITY_API_ENV: production
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_SERVICE_ENV: production
 
 open:
   app: http://localhost:3000
@@ -55,9 +52,9 @@ commands:
   lint:fix:
     desc: 'Fix the lint issues in the project'
     run: yarn run lint:fix:affected
-  tsc:
+  type-check:
     desc: 'Type-check the project'
-    run: yarn run tsc:affected
+    run: yarn run type-check:affected
   fixture:
     desc: 'Commands to interact with the fixture project'
     subcommands:
@@ -73,12 +70,12 @@ commands:
       test:
         desc: Test the fixture project
         run: yarn --cwd fixtures/app test
-      scaffold:
-        desc: Scaffold in the fixture project
-        run: yarn --cwd fixtures/app scaffold
-      web-env:
+      generate:
+        desc: Generate in the fixture project
+        run: yarn --cwd fixtures/app generate
+      env:
         desc: Show and/or update the env file in the fixture project
-        run: yarn --cwd fixtures/app web-env
+        run: yarn --cwd fixtures/app env
   spin:
     desc: 'Run commands in spin context'
     run: bin/spin

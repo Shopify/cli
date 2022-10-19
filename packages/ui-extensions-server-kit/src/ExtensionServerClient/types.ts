@@ -41,14 +41,14 @@ declare global {
          * This defines if we should automatically attempt to connect when the
          * class is instantiated.
          *
-         * @default true
+         * @defaultValue true
          */
         automaticConnect?: boolean
 
         /**
          * The sub-protocol selected by the server.
          *
-         * @default []
+         * @defaultValue []
          */
         protocols?: string | string[]
       }
@@ -99,8 +99,6 @@ declare global {
 
       /**
        * Function that opens a connection with the extensions server.
-       *
-       * @param options ExtensionServer.Options
        */
       connect(options?: Options): () => void
     }
@@ -109,7 +107,10 @@ declare global {
      * This defines how the ExtensionServer client's static class is defined and the constructor
      * arguments it requires.
      *
-     * @example const client = new ExtensionServer({ url: 'wss://localhost:1234' });
+     * @example
+     * ```
+     * const client = new ExtensionServer({ url: 'wss://localhost:1234' });
+     * ```
      */
     type StaticClient = Static<ExtensionServer.Client, [option?: ExtensionServer.Options]>
 
@@ -229,7 +230,7 @@ declare global {
   }
 }
 
-export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'pos'] as const
+export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'pos', 'customer-accounts'] as const
 
 export type Surface = typeof AVAILABLE_SURFACES[number]
 

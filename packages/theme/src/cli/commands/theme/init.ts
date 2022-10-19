@@ -29,9 +29,11 @@ export default class Init extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const workingPath = args.name || (await this.promptName())
-    const command = ['theme', 'init', path.resolve(directory, workingPath)]
-    await execCLI2(command)
+    const name = args.name || (await this.promptName())
+    const command = ['theme', 'init', name]
+    await execCLI2(command, {
+      directory,
+    })
   }
 
   async promptName() {

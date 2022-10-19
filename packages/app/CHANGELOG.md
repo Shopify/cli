@@ -1,5 +1,222 @@
 # @shopify/app
 
+## 3.18.0
+
+### Minor Changes
+
+- b4dafa4f: Add timestamps to logs and introduce first UI kit components
+- 65625f47: Send a new environment variable to apps in dev command with the spin store domain.
+
+### Patch Changes
+
+- 1455ee44: Improve how concurrent processes output looks
+- 5a73a0e2: Remove old workaround for extensions resource_url
+- 0d674d64: Output messages with partners urls fixed when running against an spin instance
+- Updated dependencies [ef42fda6]
+- Updated dependencies [514f2cb5]
+- Updated dependencies [1455ee44]
+- Updated dependencies [b4dafa4f]
+- Updated dependencies [65625f47]
+- Updated dependencies [0d674d64]
+  - @shopify/cli-kit@3.18.0
+  - @shopify/shopify-cli-extensions@3.18.0
+
+## 3.17.0
+
+### Patch Changes
+
+- 7576f700: Send capabilities in payload as camelCase
+- dac186b2: Removing unnecessary calls to enqueue and check compilation status
+- Updated dependencies [dac186b2]
+- Updated dependencies [5617050a]
+- Updated dependencies [5703ce9b]
+- Updated dependencies [483318aa]
+  - @shopify/cli-kit@3.17.0
+  - @shopify/shopify-cli-extensions@3.17.0
+
+## 3.16.3
+
+### Patch Changes
+
+- 58147c33: Added back the React import for scaffolded checkout ui extensions.
+- Updated dependencies [fc4d6c58]
+  - @shopify/cli-kit@3.16.3
+  - @shopify/shopify-cli-extensions@3.16.3
+
+## 3.16.2
+
+### Patch Changes
+
+- b02e2ff1: add jsx transform support to extensions build
+- ca6c7295: React types dependency version should be overwritten when generating React Typescript extensions
+- Updated dependencies [ca6c7295]
+  - @shopify/cli-kit@3.16.2
+  - @shopify/shopify-cli-extensions@3.16.2
+
+## 3.16.1
+
+### Patch Changes
+
+- b0b66f8a: Fix error deploying extensions with capabilities
+  - @shopify/cli-kit@3.16.1
+  - @shopify/shopify-cli-extensions@3.16.1
+
+## 3.16.0
+
+### Minor Changes
+
+- d460e738: Add the `app generate schema <function-name>` command
+- 66d31140: Migrate the logic for serving extensions from Go to Node
+
+### Patch Changes
+
+- 2030174c: Print relevant error message when function wasm blob fails to upload
+- Updated dependencies [d460e738]
+  - @shopify/cli-kit@3.16.0
+  - @shopify/shopify-cli-extensions@3.16.0
+
+## 3.15.0
+
+### Minor Changes
+
+- 9f7d90d9: Add dev, build, deploy and another additional baseline instrumentantion
+
+### Patch Changes
+
+- 5fa4439c: Show `env pull` and `env show` in the `help` command output and move them under the `app` topic
+- Updated dependencies [9f7d90d9]
+  - @shopify/cli-kit@3.15.0
+  - @shopify/shopify-cli-extensions@3.15.0
+
+## 3.14.0
+
+### Minor Changes
+
+- ddba7e55: Use tunnel by default again (temporary change)
+
+### Patch Changes
+
+- Updated dependencies [1dba11ec]
+  - @shopify/cli-kit@3.14.0
+  - @shopify/shopify-cli-extensions@3.14.0
+
+## 3.13.1
+
+### Patch Changes
+
+- ac0d42b1: React depency only added for generated extensions with react flavor
+- 14737f76: Fix extensions generate not working with react templates
+- Updated dependencies [81d3ca50]
+  - @shopify/cli-kit@3.13.1
+  - @shopify/shopify-cli-extensions@3.13.1
+
+## 3.13.0
+
+### Minor Changes
+
+- 42ba3761: Add tunnel flag and use localhost by default instead of tunneling
+- 5336b01f: Added support for extension development server to pass permissions metadata about the parent app to extension host systems
+- 2239cad9: - `@shopify/cli-kit` - Add support to partners tokens in the `execCLI2` function
+  - `@shopify/app` - Add support to theme app extensions in the `app dev` command
+
+### Patch Changes
+
+- 0c29f260: Fix an issue to avoid duplicated app selection when users execute `dev --reset`
+- Updated dependencies [a979c0de]
+- Updated dependencies [afa808cb]
+- Updated dependencies [a225e415]
+- Updated dependencies [5336b01f]
+- Updated dependencies [2239cad9]
+  - @shopify/cli-kit@3.13.0
+  - @shopify/shopify-cli-extensions@3.13.0
+
+## 3.12.0
+
+### Minor Changes
+
+- 8f3d677f: Add support for configuring extensions' directories via the attribute extension_directories in the shopify.app.toml file
+- 3e98501c: [Web Pixel Extension] - the `configuration` property has been renamed to `settings` in the shopify.ui.extension.toml
+
+### Patch Changes
+
+- 5fa3c854: Rename `web-env` command to `env pull` and `env show`
+- Updated dependencies [454641be]
+  - @shopify/cli-kit@3.12.0
+  - @shopify/shopify-cli-extensions@3.12.0
+
+## 3.11.0
+
+### Minor Changes
+
+- 81283e95: Move the extension creation business logic from the Go binary to the @shopify/app package
+- 922c204e: New Result type for handling errors
+
+### Patch Changes
+
+- 38dedc05: Fix getRandomPort retries
+- 70f3578a: Fixed upload unit test
+- Updated dependencies [38dedc05]
+- Updated dependencies [79508f56]
+- Updated dependencies [922c204e]
+- Updated dependencies [ddbf7ee4]
+  - @shopify/cli-kit@3.11.0
+  - @shopify/shopify-cli-extensions@3.11.0
+
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+- Updated dependencies [f04ec835]
+- Updated dependencies [dc364f39]
+- Updated dependencies [b23e0461]
+  - @shopify/cli-kit@3.10.1
+  - @shopify/shopify-cli-extensions@3.10.1
+
+## 3.10.0
+
+### Minor Changes
+
+- 16627bb4: Add --api-key flag for app deploy
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+- Updated dependencies [4c8853f1]
+  - @shopify/cli-kit@3.10.0
+  - @shopify/shopify-cli-extensions@3.10.0
+
+## 3.9.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.9.2
+- @shopify/shopify-cli-extensions@3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- b777c41e: Fixed bug when running CLI on Windows machine. The node executable path is now pointing directly to a node file instead of relying in the node generated files.
+- Updated dependencies [08c42c45]
+  - @shopify/cli-kit@3.9.1
+  - @shopify/shopify-cli-extensions@3.9.1
+
+## 3.9.0
+
+### Minor Changes
+
+- c7137a3b: Grouping extension types in scaffold select type prompt
+
+### Patch Changes
+
+- 3b94965e: Be more consistent in how we refer to the Partners Dashboard
+- 4a987a07: Displayed app URL more clearly in console output
+- Updated dependencies [c7137a3b]
+  - @shopify/cli-kit@3.9.0
+  - @shopify/shopify-cli-extensions@3.9.0
+
 ## 3.8.0
 
 ### Minor Changes

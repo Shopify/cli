@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
-import {getTheme} from '../../utilities/theme-store.js'
-import ThemeCommand from '../theme-command.js'
+import {getThemeStore} from '../../utilities/theme-store.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, path, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -53,11 +53,11 @@ export default class Pull extends ThemeCommand {
       validPath = path.resolve(flags.path)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'store', 'password']})
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 
-    const store = getTheme(flags)
+    const store = await getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }

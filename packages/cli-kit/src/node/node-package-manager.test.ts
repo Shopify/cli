@@ -9,11 +9,14 @@ import {
   readAndParsePackageJson,
   findUpAndReadPackageJson,
   FindUpAndReadPackageJsonNotFoundError,
+  usesWorkspaces,
+  addResolutionOrOverride,
 } from './node-package-manager.js'
 import {exec} from '../system.js'
 import {join as pathJoin, normalize as pathNormalize} from '../path.js'
-import {inTemporaryDirectory, mkdir, write, write as writeFile} from '../file.js'
+import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../file.js'
 import {latestNpmPackageVersion} from '../version.js'
+import {Abort} from '../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
 
 vi.mock('../version.js')
@@ -120,6 +123,65 @@ describe('packageJSONContents', () => {
 
       // Then
       expect(got).toEqual(packageJson)
+    })
+  })
+})
+
+describe('usesWorkspaces', () => {
+  test('returns true when workspaces are used in the package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+        workspaces: ['packages/*'],
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await usesWorkspaces(tmpDir)
+
+      // Then
+      expect(got).toEqual(true)
+    })
+  })
+
+  test('returns true when workspaces are used by pnpm', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      const pnpmWorkspaceFilePath = pathJoin(tmpDir, 'pnpm-workspace.yaml')
+      await writeFile(pnpmWorkspaceFilePath, '')
+
+      // When
+      const got = await usesWorkspaces(tmpDir)
+
+      // Then
+      expect(got).toEqual(true)
+    })
+  })
+
+  test('returns false when workspaces are not used', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {
+        name: 'packageName',
+        version: '1.0.0',
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await usesWorkspaces(tmpDir)
+
+      // Then
+      expect(got).toEqual(false)
     })
   })
 })
@@ -494,6 +556,122 @@ describe('findUpAndReadPackageJson', () => {
       await expect(() => findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
         FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
+    })
+  })
+})
+
+describe('addResolutionOrOverride', () => {
+  it('when no package.json then an abort exception is thrown', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      // When
+      const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
+
+      // Then
+
+      await expect(result).rejects.toThrow(Abort)
+    })
+  })
+
+  it('when package.json without resolution and yarn manager then new resolution should be added', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+      await touch(pathJoin(tmpDir, 'yarn.lock'))
+
+      // When
+      await addResolutionOrOverride(tmpDir, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.resolutions).toBeDefined()
+      expect(packageJsonContent.resolutions).toEqual(reactType)
+      expect(packageJsonContent.overrides).toBeUndefined()
+    })
+  })
+
+  it('when package.json without resolution and npm manager then new overrides should be added', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+      await touch(pathJoin(tmpDir, 'pnpm-lock.yaml'))
+
+      // When
+      await addResolutionOrOverride(tmpDir, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.overrides).toBeDefined()
+      expect(packageJsonContent.overrides).toEqual(reactType)
+      expect(packageJsonContent.resolutions).toBeUndefined()
+    })
+  })
+
+  it('when package.json without resolution and pnpm manager then new overrides should be added', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+      await touch(pathJoin(tmpDir, 'pnpm-workspace.yaml'))
+
+      // When
+      await addResolutionOrOverride(tmpDir, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.overrides).toBeDefined()
+      expect(packageJsonContent.overrides).toEqual(reactType)
+      expect(packageJsonContent.resolutions).toBeUndefined()
+    })
+  })
+
+  it('when package.json with existing resolution type and yarn manager then dependency version is overwritten', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {resolutions: {'@types/react': '17.0.50'}}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+      await touch(pathJoin(tmpDir, 'yarn.lock'))
+
+      // When
+      await addResolutionOrOverride(tmpDir, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.resolutions).toBeDefined()
+      expect(packageJsonContent.resolutions).toEqual(reactType)
+      expect(packageJsonContent.overrides).toBeUndefined()
+    })
+  })
+
+  it('when package.json with different resolution types and yarn manager then dependency version is overwritten', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJson = {resolutions: {'@types/node': '^17.0.38'}}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+      await touch(pathJoin(tmpDir, 'yarn.lock'))
+
+      // When
+      await addResolutionOrOverride(tmpDir, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.resolutions).toBeDefined()
+      expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
+      expect(packageJsonContent.overrides).toBeUndefined()
     })
   })
 })

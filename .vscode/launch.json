@@ -7,31 +7,53 @@
       {
         "type": "node",
         "request": "launch",
-        "name": "shopify app dev",
-        "runtimeExecutable": "yarn",
+        "name": "shopify app build",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "shopify",
           "app",
-          "dev",
-          "--path=${input:appDir}"
+          "build",
+          "--path=${input:appDir}",
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_DEBUG_GO_BINARY": "0",       // Switch to 1 to pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
-          "<node_internals>/**"
+          "<node_internals>/**",
         ],
       },
       {
         "type": "node",
         "request": "launch",
-        "name": "shopify app scaffold extension",
+        "name": "shopify app dev",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "dev",
+          "--no-update",
+          "--path=${input:appDir}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
+        },
+        "skipFiles": [
+          "<node_internals>/**",
+        ],
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app generate extension",
         "runtimeExecutable": "yarn",
         "runtimeArgs": [
           "shopify",
           "app",
-          "scaffold",
+          "generate",
           "extension",
           "--path=${input:appDir}",
           "--name=${input:extensionName}",
@@ -40,44 +62,11 @@
         ],
         "env": {
           "DEBUG": "\"*\"",
-          "SHOPIFY_DEBUG_GO_BINARY": "0",       // Switch to 1 to pause execution of the Go binary until the debgger is attached.
+          "SHOPIFY_DEBUG_GO_BINARY": "1",
         },
         "skipFiles": [
           "<node_internals>/**"
         ],
-      },
-      {
-        "name": "Extension server: create",
-        "type": "go",
-        "request": "launch",
-        "mode": "auto",
-        "program": ".",
-        "args": ["create", "${input:extensionConfigPath}"]
-      },
-      {
-        "name": "Extension server: serve",
-        "type": "go",
-        "request": "launch",
-        "mode": "auto",
-        "program": ".",
-        "args": ["serve", "${input:extensionConfigPath}"]
-      },
-      {
-      "name": "Extension server: build",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": ".",
-      "args": ["build", "${input:extensionConfigPath}"]
-      },
-      {
-        "name": "Extension server: Attach to Debug Session",
-        "type": "go",
-        "debugAdapter": "dlv-dap",
-        "request": "attach",
-        "mode": "remote",
-        "host": "${input:remoteIpAddress}",
-        "port": "${input:remotePort}",
       },
     ],
     "inputs": [
@@ -85,6 +74,7 @@
         "id": "appDir",
         "type": "promptString",
         "description": "App Directory: ",
+        "default": ".",
       },
       {
         "id": "extensionName",
@@ -106,7 +96,8 @@
           "order_discounts",
           "shipping_discounts",
           "payment_customization",
-          "shipping_rate_presenter"
+          "shipping_rate_presenter",
+          "delivery_customization"
         ],
         "default": "checkout_ui_extension",
     },
@@ -120,27 +111,9 @@
         "typescript",
         "typescript-react",
         "wasm",
-        "rust"
+        "rust",
       ],
       "default": "react",
     },
-    {
-      "id": "extensionConfigPath",
-      "type": "promptString",
-      "description": "Extension Config Path: ",
-      "default": "testdata/extension.config.yml",
-      },
-      {
-      "id": "remoteIpAddress",
-      "type": "promptString",
-      "description": "Remote IP Address: ",
-      "default": "127.0.0.1",
-      },
-      {
-      "id": "remotePort",
-      "type": "promptString",
-      "description": "Remote Port: ",
-      "default": "12345",
-      },
-  ]
+  ],
 }

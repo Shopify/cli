@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {getConfigs} from './configs'
-import {build as esBuild, BuildFailure, BuildResult, formatMessages} from 'esbuild'
+import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 
 export interface Options {
   mode: 'development' | 'production'
@@ -23,10 +23,6 @@ export async function build({mode}: Options) {
 
   let built = false
 
-  if (isDevelopment) {
-    await onRebuild()
-  }
-
   esBuild({
     bundle: true,
     define,
@@ -42,7 +38,7 @@ export async function build({mode}: Options) {
     plugins: getPlugins(),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-    watch: isDevelopment,
+    watch: isDevelopment ? {onRebuild} : false,
   })
     .then((result) => {
       if (built) {
@@ -53,7 +49,7 @@ export async function build({mode}: Options) {
     })
     .catch((_e) => {
       console.error('Error building extension: ', _e)
-      process.exit(1)
+      if (!isDevelopment) process.exit(1)
     })
 }
 
@@ -79,24 +75,24 @@ function graphqlAvailable() {
   }
 }
 
-async function onRebuild(failure: BuildFailure | undefined = undefined, _result: BuildResult | undefined = undefined) {
+function onRebuild(failure: BuildFailure | null, _result: BuildResult | null) {
   if (failure) {
     console.error(failure.message)
   }
-  await logResult(failure)
+  logResult(failure)
 }
 
-async function logResult(result: BuildResult | undefined) {
+function logResult(result: BuildResult | null) {
   if (result?.errors.length || result?.warnings.length) {
-    await logErrors(result)
+    logErrors(result)
     return
   }
   console.log(`Build succeeded`)
 }
 
-async function logErrors(result: BuildResult) {
-  const errors = await formatMessages(result.errors, {kind: 'error'})
-  const warnings = await formatMessages(result.warnings, {kind: 'warning'})
+function logErrors(result: BuildResult) {
+  const errors = formatMessagesSync(result.errors, {kind: 'error'})
+  const warnings = formatMessagesSync(result.warnings, {kind: 'warning'})
   if (errors.length > 0) console.error(errors.join('\n'))
   if (warnings.length > 0) console.error(errors.join('\n'))
 }

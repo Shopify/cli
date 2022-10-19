@@ -3,7 +3,7 @@ import {output, ui} from '@shopify/cli-kit'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
-    return organizations[0]
+    return organizations[0]!
   }
   const orgList = organizations.map((org) => ({name: org.businessName, value: org.id}))
   const choice = await ui.prompt([
@@ -33,7 +33,7 @@ export async function selectAppPrompt(apps: OrganizationApp[]): Promise<Organiza
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
-    output.completed(`Using your default dev store (${stores[0].shopName}) to preview your project.`)
+    output.completed(`Using your default dev store (${stores[0]!.shopName}) to preview your project.`)
     return stores[0]
   }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))
@@ -154,6 +154,24 @@ export async function updateURLsPrompt(): Promise<string> {
       type: 'select',
       name: 'value',
       message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+      choices: options,
+    },
+  ])
+  return choice.value
+}
+
+export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'cancel'> {
+  const options = [
+    {name: 'Always use it by default', value: 'always'},
+    {name: 'Use it now and ask me next time', value: 'yes'},
+    {name: 'Nevermind, cancel dev', value: 'cancel'},
+  ]
+
+  const choice: {value: 'always' | 'yes' | 'cancel'} = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'How would you like your tunnel to work in the future?',
       choices: options,
     },
   ])

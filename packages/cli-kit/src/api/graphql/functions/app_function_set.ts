@@ -30,13 +30,6 @@ export const AppFunctionSetMutation = gql`
       }
       function {
         id
-        uuid
-        appKey
-        configuration {
-          schema
-        }
-        apiType
-        title
       }
     }
   }

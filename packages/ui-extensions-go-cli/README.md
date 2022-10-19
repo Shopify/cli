@@ -8,7 +8,7 @@ The information below is mainly targeting contributors rather than users. If you
 
 Prerequisites:
 
-- [Go](https://go.dev/), version 1.17 or higher
+- [Go](https://go.dev/), version 1.19 or higher
 - The current [LTS version](https://nodejs.org/en/about/releases/) of [Node.JS](https://nodejs.org/en/)
 
 Install Go by running

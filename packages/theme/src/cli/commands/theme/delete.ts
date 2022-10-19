@@ -1,5 +1,5 @@
-import {getTheme} from '../../utilities/theme-store.js'
-import ThemeCommand from '../theme-command.js'
+import {getThemeStore} from '../../utilities/theme-store.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {cli, session} from '@shopify/cli-kit'
@@ -35,7 +35,7 @@ export default class Delete extends ThemeCommand {
   async run(): Promise<void> {
     const {flags, argv} = await this.parse(Delete)
 
-    const store = getTheme(flags)
+    const store = await getThemeStore(flags)
 
     const command = ['theme', 'delete']
 

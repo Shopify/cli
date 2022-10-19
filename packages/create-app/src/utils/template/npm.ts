@@ -3,18 +3,29 @@ import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-pac
 import {Writable} from 'stream'
 import {platform} from 'node:os'
 
-export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local: boolean): Promise<npm.PackageJSON> {
+interface UpdateCLIDependenciesOptions {
+  directory: string
+  packageJSON: npm.PackageJSON
+  local: boolean
+}
+
+export async function updateCLIDependencies({
+  packageJSON,
+  local,
+}: UpdateCLIDependenciesOptions): Promise<npm.PackageJSON> {
   const cliKitVersion = await constants.versions.cliKit()
+  const moduleDirectory = path.moduleDirectory(import.meta.url)
 
   packageJSON.dependencies = packageJSON.dependencies || {}
   packageJSON.dependencies['@shopify/cli'] = cliKitVersion
   packageJSON.dependencies['@shopify/app'] = cliKitVersion
 
   if (local) {
-    const cliPath = `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`
-    const appPath = `file:${(await path.findUp('packages/app', {type: 'directory'})) as string}`
-    const cliKitPath = `file:${(await path.findUp('packages/cli-kit', {type: 'directory'})) as string}`
-    const extensionsCliPath = `file:${(await path.findUp('packages/ui-extensions-cli', {type: 'directory'})) as string}`
+    const cliPath = await packagePath('cli-main')
+    const appPath = await packagePath('app')
+    const cliKitPath = await packagePath('cli-kit')
+    const uiExtensionsCliPath = await packagePath('ui-extensions-cli')
+    const pluginNgrokPath = await packagePath('plugin-ngrok')
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
@@ -25,7 +36,8 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
       '@shopify/cli': cliPath,
       '@shopify/app': appPath,
       '@shopify/cli-kit': cliKitPath,
-      '@shopify/shopify-cli-extensions': extensionsCliPath,
+      '@shopify/shopify-cli-extensions': uiExtensionsCliPath,
+      '@shopify/plugin-ngrok': pluginNgrokPath,
     }
 
     packageJSON.overrides = packageJSON.overrides
@@ -38,6 +50,14 @@ export async function updateCLIDependencies(packageJSON: npm.PackageJSON, local:
   }
 
   return packageJSON
+}
+
+async function packagePath(packageName: string): Promise<string> {
+  const packageAbsolutePath = (await path.findUp(`packages/${packageName}`, {
+    type: 'directory',
+    cwd: path.moduleDirectory(import.meta.url),
+  })) as string
+  return `file:${packageAbsolutePath}`
 }
 
 export async function getDeepInstallNPMTasks({

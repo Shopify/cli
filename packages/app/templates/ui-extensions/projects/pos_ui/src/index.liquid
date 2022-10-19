@@ -1,0 +1,44 @@
+{%- if flavor == "react" -%}
+import React from 'react';
+import {Tile, Text, render} from '@shopify/retail-ui-extensions-react';
+
+const SmartGridTile = () => {
+  return <Tile title="My app" subtitle="SmartGrid Extension" onPress={() => {}} enabled />
+};
+
+const SmartGridModal = () => {
+  return <Text>Welcome to the extension!</Text>;
+}
+
+render('Retail::SmartGrid::Tile', () => <SmartGridTile />);
+render('Retail::SmartGrid::Modal', () => <SmartGridModal />);
+{%- else -%}
+import { extend, Text } from "@shopify/retail-ui-extensions";
+
+extend('Retail::SmartGrid::Tile', (root, api) => {
+  const tileProps = {
+    title: 'My app',
+    subtitle: 'SmartGrid Extension',
+    enabled: true,
+    onPress: () => {
+      api.smartGrid.presentModal();
+    }
+  }
+
+  const tile = root.createComponent('Tile', tileProps);
+
+  root.appendChild(tile);
+  root.mount();
+});
+
+extend('Retail::SmartGrid::Modal', (root, api) => {
+  root.appendChild(
+    root.createComponent(
+      Text,
+      {},
+      `Welcome to the ${api.extensionPoint} extension surface!`
+    )
+  );
+  root.mount();
+});
+{%- endif -%}

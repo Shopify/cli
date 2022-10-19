@@ -2,15 +2,21 @@ import {findUp, moduleDirectory} from '../path.js'
 import {read} from '../file.js'
 import {Bug} from '../error.js'
 
-const HTMLFileNames = ['empty-url.html', 'auth-error.html', 'missing-code.html', 'missing-state.html', 'success.html']
+const HTMLFileNames = [
+  'empty-url.html',
+  'auth-error.html',
+  'missing-code.html',
+  'missing-state.html',
+  'success.html',
+] as const
 const StylesheetFilename = 'style.css'
 const FaviconFileName = 'favicon.svg'
 
 /**
  * Finds the full path of the given file-name from the assets folder.
  *
- * @param {string} fileName The name of the file to look for.
- * @returns {string | null} The full path of the file, or null if not found.
+ * @param fileName - The name of the file to look for.
+ * @returns The full path of the file, or null if not found.
  */
 const getFilePath = async (fileName: string): Promise<string> => {
   const filePath = await findUp(`assets/${fileName}`, {

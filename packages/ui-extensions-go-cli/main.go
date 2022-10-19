@@ -12,7 +12,6 @@ import (
 	"github.com/Shopify/shopify-cli-extensions/api"
 	"github.com/Shopify/shopify-cli-extensions/build"
 	"github.com/Shopify/shopify-cli-extensions/core"
-	"github.com/Shopify/shopify-cli-extensions/create"
 )
 
 var ctx context.Context
@@ -45,8 +44,6 @@ func main() {
 	switch cmd {
 	case "build":
 		cli.build(args...)
-	case "create":
-		cli.create(args...)
 	case "serve":
 		cli.serve(args...)
 	case "version":
@@ -83,15 +80,6 @@ func (cli *CLI) build(args ...string) {
 		os.Exit(1)
 	} else {
 		os.Exit(0)
-	}
-}
-
-func (cli *CLI) create(args ...string) {
-	for _, extension := range cli.config.Extensions {
-		err := create.NewExtensionProject(extension)
-		if err != nil {
-			panic(fmt.Errorf("failed to create a new extension: %w", err))
-		}
 	}
 }
 

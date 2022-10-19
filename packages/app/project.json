@@ -6,11 +6,57 @@
     "implicitDependencies": ["ui-extensions-go-cli"],
     "tags": ["scope:feature"],
     "targets": {
+      "clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn rimraf dist/",
+          "cwd": "packages/app"
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "outputs": ["dist"],
+        "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+        "options": {
+          "command": "yarn tsc -b ./tsconfig.build.json",
+          "cwd": "packages/app"
+        }
+      },
+      "lint": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint \"src/**/*.ts\"",
+          "cwd": "packages/app"
+        }
+      },
+      "lint:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/app"
+        }
+      },
       "test": {
-        "executor": "nx:run-script",
+        "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "script": "test:nx"
+          "command": "yarn vitest run",
+          "cwd": "packages/app"
+        }
+      },
+      "test:watch": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["^build"],
+        "options": {
+          "command": "yarn vitest watch",
+          "cwd": "packages/app"
+        }
+      },
+      "type-check": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn tsc --noEmit",
+          "cwd": "packages/app"
         }
       }
     }

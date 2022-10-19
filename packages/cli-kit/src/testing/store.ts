@@ -4,8 +4,8 @@ import uniqueString from 'unique-string'
 
 /**
  * Creates a temporary configuration store and ties its lifecycle to the callback.
- * @param callback {(string) => void} Callback to execute. When the callback exits, the local config is destroyed.
- * @returns {Promise<T>} Promise that resolves with the value returned by the callback.
+ * @param callback - Callback to execute. When the callback exits, the local config is destroyed.
+ * @returns Promise that resolves with the value returned by the callback.
  */
 export async function temporaryTestStore<T>(callback: (store: CLIKitStore) => Promise<T>): Promise<T> {
   let localConf: CLIKitStore | undefined

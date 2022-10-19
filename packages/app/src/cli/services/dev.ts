@@ -1,17 +1,21 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generatePartnersURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
-import {devExtensions} from './dev/extension.js'
+import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
+import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {error, analytics, output, port, system, session} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -25,7 +29,10 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
+  tunnel: boolean
   noTunnel: boolean
+  theme?: string
+  themeExtensionPort?: number
 }
 
 interface DevWebOptions {
@@ -37,7 +44,8 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  if (!options.skipDependenciesInstallation) {
+  const skipDependenciesInstallation = options.skipDependenciesInstallation
+  if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign
     options = {
       ...options,
@@ -45,26 +53,19 @@ async function dev(options: DevOptions) {
     }
   }
   const token = await session.ensureAuthenticatedPartners()
-  const {identifiers, storeFqdn, app, updateURLs: cachedUpdateURLs} = await ensureDevEnvironment(options, token)
+  const {
+    identifiers,
+    storeFqdn,
+    app,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevEnvironment(options, token)
   const apiKey = identifiers.app
 
-  let frontendPort: number
-  let frontendUrl: string
-
-  if (options.noTunnel === true) {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = 'http://localhost'
-  } else if (options.tunnelUrl) {
-    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
-    if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
-    }
-    frontendPort = Number(matches[2])
-    frontendUrl = matches[1]
-  } else {
-    frontendPort = await port.getRandomPort()
-    frontendUrl = await generateURL(options.commandConfig.plugins, frontendPort)
-  }
+  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
+    ...options,
+    cachedTunnelPlugin: tunnelPlugin,
+  })
 
   const backendPort = await port.getRandomPort()
 
@@ -72,18 +73,19 @@ async function dev(options: DevOptions) {
   const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
-  const exposedUrl = options.noTunnel === true ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
+  let shouldUpdateURLs = false
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl)
-    const shouldUpdate: boolean = await shouldOrPromptUpdateURLs({
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
       appDirectory: options.app.directory,
       cachedUpdateURLs,
       newApp: app.newApp,
     })
-    if (shouldUpdate) await updateURLs(newURLs, apiKey, token)
-    outputUpdateURLsResult(shouldUpdate, newURLs, app)
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
     outputAppURL(storeFqdn, exposedUrl)
   }
 
@@ -99,53 +101,62 @@ async function dev(options: DevOptions) {
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyUrl = frontendUrl
-  const proxyPort = options.noTunnel === true ? await port.getRandomPort() : frontendPort
+  const proxyPort = usingLocalhost ? await port.getRandomPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
   if (options.app.extensions.ui.length > 0) {
-    const devExt = await devExtensionsTarget(
-      options.app,
+    const devExt = await devUIExtensionsTarget({
+      app: options.app,
       apiKey,
-      proxyUrl,
+      url: proxyUrl,
       storeFqdn,
-      options.subscriptionProductUrl,
-      options.checkoutCartUrl,
-    )
+      grantedScopes: app.grantedScopes,
+      subscriptionProductUrl: options.subscriptionProductUrl,
+      checkoutCartUrl: options.checkoutCartUrl,
+    })
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(options.app, storeFqdn, options.noTunnel === true ? `${proxyUrl}:${proxyPort}` : proxyUrl)
+  outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
+
+  if (options.app.extensions.theme.length > 0) {
+    const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
+    const storefrontToken = await session.ensureAuthenticatedStorefront()
+    const extension = options.app.extensions.theme[0]!
+    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    additionalProcesses.push(devExt)
+  }
+
   if (backendConfig) {
-    additionalProcesses.push(devBackendTarget(backendConfig, backendOptions))
+    additionalProcesses.push(await devBackendTarget(backendConfig, backendOptions))
   }
 
   if (frontendConfig) {
-    const devFrontend = devFrontendTarget({
+    const frontendOptions: DevFrontendTargetOptions = {
       web: frontendConfig,
       apiKey,
       scopes: options.app.configuration.scopes,
       apiSecret: (app.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
-    })
-    if (options.noTunnel) {
-      const devFrontendProccess = {
-        prefix: devFrontend.logPrefix,
-        action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-          await devFrontend.action(stdout, stderr, signal, frontendPort)
-        },
-      }
-      additionalProcesses.push(devFrontendProccess)
+    }
+
+    if (usingLocalhost) {
+      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(devFrontend)
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     }
   }
+
+  await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
   await analytics.reportEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await output.concurrent(additionalProcesses)
+    await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
   }
@@ -156,7 +167,31 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): output.OutputProcess {
+  const devFrontend = devFrontendProxyTarget(options)
+  return {
+    prefix: devFrontend.logPrefix,
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      await devFrontend.action(stdout, stderr, signal, port)
+    },
+  }
+}
+
+function devThemeExtensionTarget(
+  args: string[],
+  adminSession: session.AdminSession,
+  storefrontToken: string,
+  token: string,
+): output.OutputProcess {
+  return {
+    prefix: 'extensions',
+    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal) => {
+      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
+    },
+  }
+}
+
+function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
@@ -170,8 +205,8 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
 
   return {
     logPrefix: options.web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await system.exec(cmd, args, {
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
+      await system.exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -191,7 +226,7 @@ function devFrontendTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyT
   }
 }
 
-function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProcess {
+async function devBackendTarget(web: Web, options: DevWebOptions): Promise<output.OutputProcess> {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
@@ -204,12 +239,15 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
     BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
+    ...(environment.service.isSpinEnvironment() && {
+      SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
+    }),
   }
 
   return {
     prefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal) => {
-      await system.exec(cmd, args, {
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      await system.exec(cmd!, args, {
         cwd: web.directory,
         stdout,
         stderr,
@@ -223,20 +261,31 @@ function devBackendTarget(web: Web, options: DevWebOptions): output.OutputProces
   }
 }
 
-async function devExtensionsTarget(
-  app: AppInterface,
-  apiKey: string,
-  url: string,
-  storeFqdn: string,
-  subscriptionProductUrl?: string,
-  checkoutCartUrl?: string,
-): Promise<ReverseHTTPProxyTarget> {
+interface DevUIExtensionsTargetOptions {
+  app: AppInterface
+  apiKey: string
+  url: string
+  storeFqdn: string
+  grantedScopes: string[]
+  subscriptionProductUrl?: string
+  checkoutCartUrl?: string
+}
+
+async function devUIExtensionsTarget({
+  app,
+  apiKey,
+  url,
+  storeFqdn,
+  grantedScopes,
+  subscriptionProductUrl,
+  checkoutCartUrl,
+}: DevUIExtensionsTargetOptions): Promise<ReverseHTTPProxyTarget> {
   const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
-    action: async (stdout: Writable, stderr: Writable, signal: error.AbortSignal, port: number) => {
-      await devExtensions({
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
+      await devUIExtensions({
         app,
         extensions: app.extensions.ui,
         stdout,
@@ -246,7 +295,8 @@ async function devExtensionsTarget(
         port,
         storeFqdn,
         apiKey,
-        cartUrl,
+        grantedScopes,
+        checkoutCartUrl: cartUrl,
         subscriptionProductUrl,
       })
     },
@@ -255,8 +305,8 @@ async function devExtensionsTarget(
 
 /**
  * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
- * @param extensions {UIExtension[]} - The UI Extensions to dev
- * @param store {string} - The store FQDN
+ * @param extensions - The UI Extensions to dev
+ * @param store - The store FQDN
  */
 async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
@@ -264,6 +314,28 @@ async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, ch
   if (checkoutCartUrl) return checkoutCartUrl
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
+}
+
+async function logMetadataForDev(options: {
+  devOptions: DevOptions
+  tunnelUrl: string
+  shouldUpdateURLs: boolean
+  storeFqdn: string
+}) {
+  const tunnelType = await analytics.getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  await metadata.addPublic(() => ({
+    cmd_dev_tunnel_type: tunnelType,
+    cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
+    cmd_dev_urls_updated: options.shouldUpdateURLs,
+    store_fqdn_hash: string.hashString(options.storeFqdn),
+    cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
+    cmd_app_reset_used: options.devOptions.reset,
+  }))
+
+  await metadata.addSensitive(() => ({
+    store_fqdn: options.storeFqdn,
+    cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
+  }))
 }
 
 export default dev

@@ -8,9 +8,10 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     project: './tsconfig.json',
+    EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
     extraFileExtensions: ['.cjs'],
   },
-  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir'],
+  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
@@ -105,10 +106,17 @@ module.exports = {
         ],
       },
     ],
+    'jest/consistent-test-it': [
+      'error',
+      {
+        fn: 'test',
+        withinDescribe: 'test',
+      },
+    ],
     'jest/max-nested-describe': [
       'error',
       {
-        max: 1,
+        max: 2,
       },
     ],
     'jest/no-disabled-tests': 'error',
@@ -147,6 +155,8 @@ module.exports = {
         message: "Be human - prefer don't to do not, won't to will not etc.",
       },
     ],
+    'tsdoc/syntax': 'error',
+    'jsdoc/require-returns-description': 'error',
   },
   overrides: [
     {

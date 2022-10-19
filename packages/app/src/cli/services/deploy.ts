@@ -30,6 +30,9 @@ interface DeployOptions {
   /** The app to be built and uploaded */
   app: AppInterface
 
+  /** API key of the app in Partners admin */
+  apiKey?: string
+
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 }
@@ -52,7 +55,7 @@ export const deploy = async (options: DeployOptions) => {
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {
       return {
-        uuid: identifiers.extensions[extension.localIdentifier],
+        uuid: identifiers.extensions[extension.localIdentifier]!,
         config: JSON.stringify(await configFor(extension, app)),
         context: '',
       }
@@ -199,13 +202,14 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         extension_points: extension.configuration.extensionPoints,
         name: extension.configuration.name,
         categories: extension.configuration.categories,
+        localization: await loadLocalesConfig(extension.directory),
       }
     }
     case 'web_pixel_extension': {
       return {
         runtime_context: extension.configuration.runtimeContext,
 
-        runtime_configuration_definition: extension.configuration.configuration,
+        runtime_configuration_definition: extension.configuration.settings,
       }
     }
   }

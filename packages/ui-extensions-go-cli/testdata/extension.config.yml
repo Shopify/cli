@@ -20,7 +20,7 @@ extensions:
       template: 'javascript-react'
       renderer:
         name: '@shopify/checkout-ui-extensions'
-        version: '0.18.0'
+        version: '0.20.0'
       entries:
         main: 'src/index.jsx'
       resource:

@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
@@ -76,7 +76,7 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
-    await execCLI2(['theme', 'check', ...this.passThroughFlags(flags, {exclude: ['path', 'verbose']})], {
+    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {exclude: ['path', 'verbose']})], {
       directory: flags.path,
     })
   }

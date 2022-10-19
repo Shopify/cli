@@ -1,5 +1,133 @@
 # @shopify/cli-kit
 
+## 3.18.0
+
+### Minor Changes
+
+- b4dafa4f: Add timestamps to logs and introduce first UI kit components
+- 65625f47: Send a new environment variable to apps in dev command with the spin store domain.
+
+### Patch Changes
+
+- ef42fda6: Improve error outputs by using the new Banner component
+- 514f2cb5: Support git 2.28 or earlier when initializing a repository
+- 1455ee44: Improve how concurrent processes output looks
+- 0d674d64: Output messages with partners urls fixed when running against an spin instance
+
+## 3.17.0
+
+### Minor Changes
+
+- 483318aa: Create a new Oxygen service for interacting with Oxygen related services.
+
+### Patch Changes
+
+- dac186b2: Removing unnecessary calls to enqueue and check compilation status
+- 5617050a: initializeRepository now defaults to 'main' as initial branch.
+- 5703ce9b: Cloud environment checking was not working properly so wrong authentication method was used
+
+## 3.16.3
+
+### Patch Changes
+
+- fc4d6c58: Removed unused fields from FunctionSet mutation
+
+## 3.16.2
+
+### Patch Changes
+
+- ca6c7295: React types dependency version should be overwritten when generating React Typescript extensions
+
+## 3.16.1
+
+## 3.16.0
+
+### Minor Changes
+
+- d460e738: Add the `app generate schema <function-name>` command
+
+## 3.15.0
+
+### Minor Changes
+
+- 9f7d90d9: Add dev, build, deploy and another additional baseline instrumentantion
+
+## 3.14.0
+
+### Minor Changes
+
+- 1dba11ec: Support upgrade of a globally installed CLI
+
+## 3.13.1
+
+### Patch Changes
+
+- 81d3ca50: Fix authentication issue when token is expired and invalid/revoked
+
+## 3.13.0
+
+### Minor Changes
+
+- a225e415: - cli-kit:
+  - Added additional Git functionality for commits, generating .gitignore templates, and ensuring commands are run in a Git project.
+  - Added new Oxygen service type for interacting with the Oyxgen service
+  - New method for creating readable file streams
+  - create-hydrogen
+    - Added support for initializing a local Git repository when you create a new Hydrogen project
+- 5336b01f: Added support for extension development server to pass permissions metadata about the parent app to extension host systems
+- 2239cad9: - `@shopify/cli-kit` - Add support to partners tokens in the `execCLI2` function
+  - `@shopify/app` - Add support to theme app extensions in the `app dev` command
+
+### Patch Changes
+
+- a979c0de: Avoid the loosing of terminal cursor when using crtl+c with and active list prompt
+- afa808cb: The overriden command name is correctly used
+
+## 3.12.0
+
+### Minor Changes
+
+- 454641be: Allow running shopify installed globally instead of npm/yarn/pnpm shopify
+
+## 3.11.0
+
+### Minor Changes
+
+- 79508f56: Don't allow the log file to grow too much
+- 922c204e: New Result type for handling errors
+- ddbf7ee4: Add new authentication method for cloud environments
+
+### Patch Changes
+
+- 38dedc05: Fix getRandomPort retries
+
+## 3.10.1
+
+### Patch Changes
+
+- f04ec835: Fix store initialization for Homebrew (project version error)
+- b23e0461: Add theme info command
+
+## 3.10.0
+
+### Patch Changes
+
+- 4c8853f1: Use hooks to communicate with ngrok plugin
+
+## 3.9.2
+
+## 3.9.1
+
+### Patch Changes
+
+- 08c42c45: Use the Ruby bin directory from environment variable when provided (to fix homebrew issues)
+
+## 3.9.0
+
+### Minor Changes
+
+- c7137a3b: Grouping extension types in scaffold select type prompt
+
 ## 3.8.0
 
 ### Minor Changes

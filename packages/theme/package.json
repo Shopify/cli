@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.8.0",
+  "version": "3.18.0",
   "private": false,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -17,14 +17,14 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "clean": "rimraf dist/",
-    "build": "tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build && cp ../../README.md README.md",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx run theme:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [
@@ -33,10 +33,10 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.8.0"
+    "@shopify/cli-kit": "3.18.0"
   },
   "devDependencies": {
-    "vitest": "^0.17.1"
+    "vitest": "^0.22.1"
   },
   "engine-strict": true,
   "engines": {
@@ -52,5 +52,9 @@
     "hooks": {
       "init": "@shopify/cli-kit/node/hooks/init"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/theme"
   }
 }

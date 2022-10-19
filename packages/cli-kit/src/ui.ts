@@ -1,14 +1,15 @@
-import {CancelExecution, Abort} from './error.js'
+import {CancelExecution, Abort, AbortSilent} from './error.js'
 import {remove, exists} from './file.js'
-import {info, completed, content, token, logUpdate, logToFile, Message, Logger, stringifyMessage} from './output.js'
+import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
 import {colors} from './node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
-import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState} from 'listr2'
+import {logToFile} from './log.js'
+import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
 
-export function newListr(tasks: ListrTask[], options?: object) {
+export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
   const listr = new OriginalListr(tasks, options)
   listr.tasks.forEach((task) => {
     const loggedSubtaskTitles: string[] = []
@@ -45,7 +46,13 @@ export interface Question<TName extends string = string> {
   default?: string
   result?: (value: string) => string | boolean
   type: 'input' | 'select' | 'autocomplete' | 'password'
-  choices?: {name: string; value: string}[]
+  choices?: QuestionChoiceType[]
+}
+
+export interface QuestionChoiceType {
+  name: string
+  value: string
+  group?: {name: string; order: number}
 }
 
 const started = (content: Message, logger: Logger) => {
@@ -144,7 +151,7 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
 
   const processInfo = await findProcess('port', port)
   const formattedProcessName =
-    processInfo && processInfo.length > 0 && processInfo[0].name
+    processInfo && processInfo.length > 0 && processInfo[0]?.name
       ? ` ${content`${token.italic(`(${processInfo[0].name})`)}`.value}`
       : ''
 
@@ -165,12 +172,22 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
 }
 
 export const keypress = async () => {
-  process.stdin.setRawMode(true)
-  process.stdin.resume()
-  return new Promise<void>((resolve) =>
-    process.stdin.once('data', () => {
+  return new Promise((resolve, reject) => {
+    const handler = (buffer: Buffer) => {
       process.stdin.setRawMode(false)
-      resolve()
-    }),
-  )
+      process.stdin.pause()
+
+      const bytes = Array.from(buffer)
+
+      if (bytes.length && bytes[0] === 3) {
+        debug('Canceled keypress, User pressed CTRL+C')
+        reject(new AbortSilent())
+      }
+      process.nextTick(resolve)
+    }
+
+    process.stdin.resume()
+    process.stdin.setRawMode(true)
+    process.stdin.once('data', handler)
+  })
 }

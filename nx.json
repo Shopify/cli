@@ -6,15 +6,31 @@
       "runner": "@nrwl/workspace/tasks-runners/default",
       "options": {
         "cacheableOperations": [
-          "build",
-          "test",
-          "lint",
-          "tsc"
+          "build"
+        ],
+        "runtimeCacheInputs": [
+          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js"
         ]
       }
     }
   },
   "affected": {
     "defaultBase": "main"
+  },
+  "targetDefaults": {
+    "clean": {
+      "dependsOn": ["^clean"]
+    },
+    "build": {
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+    },
+    "lint:fix": {
+      "dependsOn": ["build"]
+    },
+    "type-check": {
+      "dependsOn": ["^build"]
+    }
   }
 }

@@ -1,12 +1,12 @@
 import {Web, WebConfigurationCommands} from '../models/app/app.js'
-import {error, system} from '@shopify/cli-kit'
+import {system, abort} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 interface WebOptions {
   web: Web
   stdout: Writable
   stderr: Writable
-  signal: error.AbortSignal
+  signal: abort.Signal
   env?: {[variable: string]: string}
 }
 
@@ -20,6 +20,6 @@ export default async function web(
   }
 
   const [cmd, ...args] = script.split(' ')
-  await system.exec(cmd, args, {cwd: web.directory, stdout, stderr, signal, env})
+  await system.exec(cmd!, args, {cwd: web.directory, stdout, stderr, signal, env})
   stdout.write('Web successfully built.')
 }

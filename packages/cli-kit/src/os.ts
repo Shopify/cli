@@ -62,7 +62,7 @@ export const username = async (platform: typeof processPlatform = processPlatfor
 
 /**
  * Returns the platform and architecture.
- * @returns {{platform: string, arch: string}} Returns the current platform and architecture.
+ * @returns Returns the current platform and architecture.
  */
 export const platformAndArch = (
   platform: typeof processPlatform = processPlatform,
@@ -70,6 +70,9 @@ export const platformAndArch = (
   let arch = osArch()
   if (arch === 'x64') {
     arch = 'amd64'
+  }
+  if (arch === 'ia32') {
+    arch = '386'
   }
   let platformString = platform as string
   if (platform.match(/^win.+/)) {

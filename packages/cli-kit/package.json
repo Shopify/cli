@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.8.0",
+  "version": "3.18.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -16,6 +16,14 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./common/array": {
+      "import": "./dist/public/common/array.js",
+      "types": "./dist/public/common/array.d.ts"
+    },
+    "./node/ui": {
+      "import": "./dist/public/node/ui.js",
+      "types": "./dist/public/node/ui.d.ts"
     },
     "./node/*": {
       "node": "./dist/node/*.js",
@@ -47,14 +55,14 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "clean": "rimraf dist/",
-    "build": "tsc -b ./tsconfig.build.json",
-    "prepack": "cross-env NODE_ENV=production yarn run build",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint 'src/**/*.ts' --fix",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "tsc": "tsc --noEmit"
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx run cli-kit:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [
@@ -76,19 +84,20 @@
     "@oclif/core": "1.9.2",
     "@types/archiver": "^5.3.1",
     "abort-controller": "^3.0.0",
-    "ansi-colors": "^4.1.1",
     "archiver": "^5.3.1",
+    "chalk": "^5.1.0",
+    "chalk-animation": "^2.0.3",
     "change-case": "^4.1.2",
     "color-json": "^2.0.1",
     "commondir": "^1.0.1",
     "conf": "^10.1.2",
     "cross-zip": "^4.0.0",
+    "deepmerge": "4.2.2",
     "del": "^6.0.0",
     "env-paths": "^3.0.0",
-    "envfile": "^6.17.0",
+    "envfile": "^6.18.0",
     "execa": "^6.0.0",
     "fast-glob": "^3.2.11",
-    "fastify": "^4.2.1",
     "find-process": "^1.4.7",
     "find-up": "^6.2.0",
     "find-versions": "^5.0.0",
@@ -98,6 +107,8 @@
     "get-port-please": "^2.5.0",
     "graphql": "^16.4.0",
     "graphql-request": "^4.3.0",
+    "h3": "^0.7.21",
+    "ink": "^3.2.0",
     "inquirer": "^8.2.4",
     "inquirer-autocomplete-prompt": "^2.0.0",
     "is-interactive": "^2.0.0",
@@ -108,11 +119,13 @@
     "liquidjs": "^9.36.0",
     "listr2": "^4.0.5",
     "log-update": "^4.0.0",
+    "macaddress": "^0.5.3",
     "md5-file": "^5.0.0",
     "node-fetch": "^3.2.4",
     "open": "^8.4.0",
     "pathe": "0.2.0",
-    "prettier": "^2.6.2",
+    "prettier": "^2.7.1",
+    "react": "^17.0.2",
     "semver": "^7.3.6",
     "simple-git": "^3.5.0",
     "source-map-support": "^0.5.21",
@@ -133,6 +146,13 @@
     "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.17.1"
+    "vitest": "^0.22.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/cli-kit"
+  },
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues/new/choose"
   }
 }

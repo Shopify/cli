@@ -5,8 +5,8 @@ on:
     types: [created, edited]
 
 env:
-  GO_VERSION: "1.17"
-  YARN_VERSION: "1.22.18"
+  GO_VERSION: "1.19"
+  YARN_VERSION: "1.22.19"
 
 jobs:
   releases-matrix:

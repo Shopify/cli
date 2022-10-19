@@ -8,4 +8,3 @@ template/
 templates/
 fixtures/
 .eslintrc.cjs
-fastify-http-proxy

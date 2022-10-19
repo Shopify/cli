@@ -1,6 +1,7 @@
-import {concurrent as concurrentOutput, shouldDisplayColors, debug} from './output.js'
+import {shouldDisplayColors, debug} from './output.js'
 import {platformAndArch} from './os.js'
 import {Abort} from './error.js'
+import {renderConcurrent} from './public/node/ui.js'
 import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
 import type {Writable, Readable} from 'node:stream'
@@ -24,8 +25,8 @@ export const open = async (url: string) => {
 
 /**
  * Runs a command asynchronously, aggregates the stdout data, and returns it.
- * @param command {string} Command to be executed.
- * @param args {string[]} Arguments to pass to the command.
+ * @param command - Command to be executed.
+ * @param args - Arguments to pass to the command.
  * @returns A promise that resolves with the aggregatted stdout of the command.
  */
 export const captureOutput = async (command: string, args: string[], options?: ExecOptions): Promise<string> => {
@@ -85,18 +86,15 @@ interface ConcurrentExecCommand {
 
 /**
  * Runs commands concurrently and combines the standard output and error data
- * into a single stream that differenciates the sources using a colored prefix:
- *
- * Example:
- *   [my-extension] Log coming from my-extension
- *   [my-script] Log coming from my script
+ * into a single stream. See {@link renderConcurrent} for more information about
+ * the output format.
  *
  * If one of the processes fails, it aborts the running ones and exits with that error.
- * @param commands {ConcurrentExecCommand[]} Commands to execute.
+ * @param commands - Commands to execute.
  */
 export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise<void> => {
-  await concurrentOutput(
-    commands.map((command) => {
+  await renderConcurrent({
+    processes: commands.map((command) => {
       return {
         prefix: command.prefix,
         action: async (stdout, stderr, signal) => {
@@ -109,14 +107,14 @@ export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise
         },
       }
     }),
-  )
+  })
 }
 
 /**
  * Displays a large file using the terminal pager set by the user, or a
  * reasonable default for the user's OS:
  *
- * @param filename string The path to the file to be displayed.
+ * @param filename - The path to the file to be displayed.
  */
 export async function page(filename: string) {
   let executable: string

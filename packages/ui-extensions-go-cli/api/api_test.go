@@ -259,7 +259,7 @@ func TestCheckoutTunnelError(t *testing.T) {
 	uuid := api.Extensions[0].UUID
 	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
-	message := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL%s/%s</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
+	message := fmt.Sprintf("Make sure you have a secure URL for your local development server by using the <code>--tunnel</code> flag.")
 
 	t.Logf("response: %s", response)
 
@@ -273,7 +273,7 @@ func TestAdminTunnelError(t *testing.T) {
 	uuid := api.Extensions[1].UUID
 	response := getSingleExtensionHTMLResponse(api, t, uuid)
 
-	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code> and then visit the url https://TUNNEL_URL%s/%s</code>, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
+	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by using the <code>--tunnel</code> flag.")
 
 	t.Logf("response: %s", response)
 
@@ -284,10 +284,9 @@ func TestAdminTunnelError(t *testing.T) {
 
 func TestPostPurchaseTunnelError(t *testing.T) {
 	api := New(noPublicUrlConfig)
-	uuid := api.Extensions[2].UUID
 	response := getSingleExtensionHTMLResponse(api, t, api.Extensions[2].UUID)
 
-	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by running <code>shopify extension tunnel start --port=8000</code>, create a checkout, and append <code>?dev=https://TUNNEL_URL%s/%s</code> to the URL, where <code>TUNNEL_URL</code> is replaced with your own ngrok URL.", api.ApiRoot, uuid)
+	instructions := fmt.Sprintf("Make sure you have a secure URL for your local development server by using the <code>--tunnel</code> flag.")
 
 	t.Logf("response: %s", response)
 
@@ -810,9 +809,11 @@ func TestWebsocketClientDispatchEventWithoutMutatingData(t *testing.T) {
 			"version": "",
 			"extensionPoints": null,
 			"localization": null,
+      "categories": null,
 			"surface": "checkout",
 			"capabilities": {
-				"networkAccess": false
+				"networkAccess": false,
+				"blockProgress": false
 			}
 		}
 		]`, extensionAssetUrl, extensionRootUrl, dispatchExtensionUUID)

@@ -1,18 +1,92 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {api, error, output, plugins, store} from '@shopify/cli-kit'
-import {Plugin} from '@oclif/core/lib/interfaces'
+import {AppInterface} from '../../models/app/app.js'
+import {api, environment, error, output, plugins, port, store} from '@shopify/cli-kit'
+import {Config} from '@oclif/core'
 
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
 }
 
-export async function generateURL(pluginList: Plugin[], frontendPort: number): Promise<string> {
-  const tunnelPlugin = await plugins.lookupTunnelPlugin(pluginList)
-  if (!tunnelPlugin) throw new error.Bug('The tunnel could not be found')
-  const url = await tunnelPlugin?.start({port: frontendPort})
+export interface FrontendURLOptions {
+  app: AppInterface
+  tunnel: boolean
+  noTunnel: boolean
+  tunnelUrl?: string
+  cachedTunnelPlugin?: string
+  commandConfig: Config
+}
+
+export interface FrontendURLResult {
+  frontendUrl: string
+  frontendPort: number
+  usingLocalhost: boolean
+}
+
+/**
+ * The tunnel creation logic depends on 7 variables:
+ * - If a Codespaces environment is deteced, then the URL is built using the codespaces hostname. No need for tunnel
+ * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname. No need for tunnel
+ * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
+ * - If noTunnel is true, that takes second preference and localhost is used
+ * - A Tunnel is created then if any of these conditions are met:
+ *   - Tunnel flag is true
+ *   - The app has UI extensions
+ *   - In a previous run, the user selected to always use a tunnel (cachedTunnelPlugin)
+ * - Otherwise, localhost is used
+ *
+ * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
+ */
+export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
+  let frontendPort = 4040
+  let frontendUrl: string
+  let usingLocalhost = false
+  const hasExtensions = options.app.hasUIExtensions()
+
+  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
+
+  if (environment.local.codespaceURL()) {
+    frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (environment.local.gitpodURL()) {
+    const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
+    frontendUrl = `https://${frontendPort}-${defaultUrl}`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (options.tunnelUrl) {
+    const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
+    if (!matches) {
+      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+    }
+    frontendPort = Number(matches[2])
+    frontendUrl = matches[1]!
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (needsTunnel) {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = await generateURL(options.commandConfig, frontendPort)
+  } else {
+    frontendPort = await port.getRandomPort()
+    frontendUrl = 'http://localhost'
+    usingLocalhost = true
+  }
+
+  return {frontendUrl, frontendPort, usingLocalhost}
+}
+
+export async function generateURL(config: Config, frontendPort: number): Promise<string> {
+  // For the moment we assume to always have ngrok, this will change in a future PR
+  // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
+  const result = await plugins.runTunnelPlugin(config, frontendPort, 'ngrok')
+
+  if (result.error === 'multiple-urls') throw new error.Bug('Multiple tunnel plugins for ngrok found')
+  if (result.error === 'no-urls' || !result.url) throw new error.Bug('Ngrok failed to start the tunnel')
   output.success('The tunnel is running and you can now view your app')
-  return url
+  return result.url
 }
 
 export function generatePartnersURLs(baseURL: string): PartnersURLs {
@@ -73,7 +147,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         shouldUpdate = false
     }
     /* eslint-enable no-fallthrough */
-    store.cliKitStore().setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+    await store.setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
 }

@@ -30,12 +30,12 @@ interface UpdateAppIdentifiersOptions {
   identifiers: UuidOnlyIdentifiers
   command: UpdateAppIdentifiersCommand
 }
+
 /**
  * Given an app and a set of identifiers, it persists the identifiers in the .env files.
- * @param options {UpdateAppIdentifiersOptions} Options.
- * @returns {AppInterface} An copy of the app with the environment updated to reflect the updated identifiers.
+ * @param options - Options.
+ * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
-
 export async function updateAppIdentifiers(
   {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
@@ -54,7 +54,7 @@ export async function updateAppIdentifiers(
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
-      updatedVariables[envVariable] = identifiers.extensions[identifier]
+      updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
 
@@ -75,10 +75,7 @@ interface GetAppIdentifiersOptions {
 /**
  * Given an app and a environment, it fetches the ids from the environment
  * and returns them.
- * @param options {GetAppIdentifiersOptions} Options.
- * @returns
  */
-
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
   systemEnvironment = process.env,
@@ -90,7 +87,7 @@ export function getAppIdentifiers(
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
-      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]
+      extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
   }
   app.extensions.ui.forEach(processExtension)

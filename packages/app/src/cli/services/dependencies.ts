@@ -6,8 +6,8 @@ import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-pack
  * Given an app, it installs its NPM dependencies by traversing
  * the sub-directories and finding the ones that have NPM dependencies
  * defined in package.json files.
- * @param app {AppInterface} App whose dependencies will be installed.
- * @returns {Promise<AppInterface>} An copy of the app with the Node dependencies updated.
+ * @param app - App whose dependencies will be installed.
+ * @returns An copy of the app with the Node dependencies updated.
  */
 export async function installAppDependencies(app: AppInterface) {
   const list = ui.newListr(

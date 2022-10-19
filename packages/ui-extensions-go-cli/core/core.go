@@ -83,6 +83,10 @@ func normalizeConfig(config *Config) {
 			config.Extensions[index].Capabilities.NetworkAccess = NewBoolPointer(false)
 		}
 
+		if config.Extensions[index].Capabilities.BlockProgress == nil {
+			config.Extensions[index].Capabilities.BlockProgress = NewBoolPointer(false)
+		}
+
 		if config.Extensions[index].Development.Hidden == nil {
 			config.Extensions[index].Development.Hidden = NewBoolPointer(false)
 		}
@@ -133,6 +137,7 @@ type Localization struct {
 
 type Capabilities struct {
 	NetworkAccess *bool `json:"networkAccess" yaml:"network_access"`
+	BlockProgress *bool `json:"blockProgress" yaml:"block_progress"`
 }
 
 type Extension struct {
@@ -141,6 +146,7 @@ type Extension struct {
 	Development     Development      `json:"development" yaml:"development,omitempty"`
 	ExtensionPoints []string         `json:"extensionPoints" yaml:"extension_points,omitempty" toml:"extension_points,omitempty"`
 	Localization    *Localization    `json:"localization" yaml:"-"`
+  Categories 			[]string         `json:"categories" yaml:"categories,omitempty" toml:"categories,omitempty"`
 	Metafields      []Metafield      `json:"metafields" yaml:"metafields,omitempty"`
 	Type            string           `json:"type" yaml:"type,omitempty"`
 	ExternalType    string           `json:"externalType" yaml:"external_type"`
@@ -150,6 +156,7 @@ type Extension struct {
 	Title           string           `json:"title,omitempty" yaml:"title,omitempty"`
 	Name            string           `json:"name,omitempty" yaml:"name,omitempty"`
 	NodeExecutable  string           `json:"-" yaml:"node_executable,omitempty"`
+	ApprovalScopes  []string         `json:"approvalScopes,omitempty" yaml:"approval_scopes,omitempty"`
 }
 
 func (e Extension) String() string {

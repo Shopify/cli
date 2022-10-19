@@ -234,7 +234,7 @@ describe('when existing session is expired', () => {
 
   it('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {
     // Given
-    const tokenResponseError = new InvalidGrantError('Invalid grant')
+    const tokenResponseError = new InvalidGrantError()
 
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(secureFetch).mockResolvedValue(validSession)

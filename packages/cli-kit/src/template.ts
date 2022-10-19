@@ -16,9 +16,9 @@ export function create(templateContent: string) {
  * and replaces variables in directory and file names, and files' content
  * using the Liquid template engine.
  * Files indicate that they are liquid template by using the .liquid extension.
- * @param from {string} Directory that contains the template.
- * @param to {string} Output directory.
- * @param data {string} Data to feed the template engine.
+ * @param from - Directory that contains the template.
+ * @param to - Output directory.
+ * @param data - Data to feed the template engine.
  */
 export async function recursiveDirectoryCopy(from: string, to: string, data: object) {
   debug(content`Copying template from directory ${token.path(from)} to ${token.path(to)}`)

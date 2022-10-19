@@ -1,18 +1,13 @@
-/* eslint-disable jest/max-nested-describe */
 import {ExtensionServerClient} from './ExtensionServerClient'
 import {mockApp} from '../testing'
 import WS from 'jest-websocket-mock'
-import fetchMock from 'jest-fetch-mock'
+import {mockGet} from 'vi-fetch'
 
 const defaultOptions = {
   connection: {url: 'ws://example-host.com:8000/extensions/'},
 }
 
 describe('ExtensionServerClient', () => {
-  beforeEach(() => {
-    fetchMock.enableMocks()
-  })
-
   function setup(options: ExtensionServer.Options = defaultOptions) {
     if (!options.connection.url) {
       throw new Error('Please set a URL')
@@ -24,7 +19,7 @@ describe('ExtensionServerClient', () => {
   }
 
   describe('initialization', () => {
-    it('connects to the target websocket', async () => {
+    test('connects to the target websocket', async () => {
       const {socket, client} = setup()
 
       expect(client.connection).toBeDefined()
@@ -33,7 +28,7 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('does not connect to the target websocket if "automaticConnect" is false', async () => {
+    test('does not connect to the target websocket if "automaticConnect" is false', async () => {
       const {client, socket} = setup({
         connection: {automaticConnect: false, url: 'ws://example-host.com:8000/extensions/'},
       })
@@ -44,8 +39,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
+    // eslint-disable-next-line jest/max-nested-describe
     describe('API client', () => {
-      it('is initialized with the given URL', () => {
+      test('is initialized with the given URL', () => {
         const url = 'ws://initial.socket.com'
 
         const client = new ExtensionServerClient({connection: {url}})
@@ -53,7 +49,7 @@ describe('ExtensionServerClient', () => {
         expect(client.api.url).toBe(url.replace('ws', 'http'))
       })
 
-      it('is initialized with a secure URL', () => {
+      test('is initialized with a secure URL', () => {
         const url = 'wss://initial.socket.com'
 
         const client = new ExtensionServerClient({connection: {url}})
@@ -61,13 +57,13 @@ describe('ExtensionServerClient', () => {
         expect(client.api.url).toBe(url.replace('wss', 'https'))
       })
 
-      it('returns extensions filtered by surface option', async () => {
+      test('returns extensions filtered by surface option', async () => {
         const extensions = [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
         ]
 
-        fetchMock.mockResponse(JSON.stringify({extensions}))
+        mockGet('http://example-host.com:8000').willResolve({extensions})
 
         const {socket, client} = setup({...defaultOptions, surface: 'admin'})
         await expect(client.api.extensions()).resolves.toStrictEqual({
@@ -77,13 +73,13 @@ describe('ExtensionServerClient', () => {
         socket.close()
       })
 
-      it('returns all extensions when surface option is not valid', async () => {
+      test('returns all extensions when surface option is not valid', async () => {
         const extensions = [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
         ]
 
-        fetchMock.mockResponse(JSON.stringify({extensions}))
+        mockGet('http://example-host.com:8000').willResolve({extensions})
 
         const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
         await expect(client.api.extensions()).resolves.toStrictEqual({
@@ -96,9 +92,9 @@ describe('ExtensionServerClient', () => {
   })
 
   describe('on()', () => {
-    it('sends data with extensions filtered by surface option on "connected" event', async () => {
+    test('sends data with extensions filtered by surface option on "connected" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'admin'})
-      const connectSpy = jest.fn()
+      const connectSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -120,9 +116,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('sends data with all extensions when surface option is not valid on "connected" event', async () => {
+    test('sends data with all extensions when surface option is not valid on "connected" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
-      const connectSpy = jest.fn()
+      const connectSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -144,9 +140,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('sends data with extensions filtered by surface option on "update" event', async () => {
+    test('sends data with extensions filtered by surface option on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'admin'})
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -168,9 +164,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('sends data with all extensions when surface option is not valid on "update" event', async () => {
+    test('sends data with all extensions when surface option is not valid on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
         extensions: [
@@ -192,9 +188,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('listens to persist events', async () => {
+    test('listens to persist events', async () => {
       const {socket, client} = setup()
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
       }
@@ -208,9 +204,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('unsubscribes from persist events', async () => {
+    test('unsubscribes from persist events', async () => {
       const {socket, client} = setup()
-      const updateSpy = jest.fn()
+      const updateSpy = vi.fn()
       const unsubscribe = client.on('update', updateSpy)
 
       unsubscribe()
@@ -226,9 +222,9 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('listens to dispatch events', async () => {
+    test('listens to dispatch events', async () => {
       const {socket, client} = setup()
-      const unfocusSpy = jest.fn()
+      const unfocusSpy = vi.fn()
 
       client.on('unfocus', unfocusSpy)
       socket.send({event: 'dispatch', data: {type: 'unfocus'}})
@@ -241,7 +237,7 @@ describe('ExtensionServerClient', () => {
   })
 
   describe('emit()', () => {
-    it('emits an event', async () => {
+    test('emits an event', async () => {
       const {socket, client} = setup()
       const data = {data: {type: 'unfocus'}, event: 'dispatch'}
 
@@ -252,8 +248,8 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('warns if trying to "emit" a persist event', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    test('warns if trying to "emit" a persist event', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
       const {socket, client} = setup()
 
       client.emit('update' as any, {})
@@ -266,7 +262,7 @@ describe('ExtensionServerClient', () => {
   })
 
   describe('persist()', () => {
-    it('persists a mutation', async () => {
+    test('persists a mutation', async () => {
       const {socket, client} = setup()
       const data = {event: 'update', data: {extensions: [{uuid: '123'}]}}
 
@@ -277,8 +273,8 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
-    it('warns if trying to "persist" a dispatch event', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    test('warns if trying to "persist" a dispatch event', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
       const {socket, client} = setup()
 
       client.persist('unfocus' as any, {})
@@ -291,7 +287,7 @@ describe('ExtensionServerClient', () => {
   })
 
   describe('connect()', () => {
-    it('updates the client options', () => {
+    test('updates the client options', () => {
       const client = new ExtensionServerClient()
 
       client.connect({connection: {automaticConnect: false}})
@@ -304,7 +300,7 @@ describe('ExtensionServerClient', () => {
       })
     })
 
-    it('does not attempt to connect if the URL is undefined', () => {
+    test('does not attempt to connect if the URL is undefined', () => {
       const client = new ExtensionServerClient()
 
       client.connect()
@@ -312,7 +308,7 @@ describe('ExtensionServerClient', () => {
       expect(client.connection).toBeUndefined()
     })
 
-    it('does not attempt to connect if the URL is empty', () => {
+    test('does not attempt to connect if the URL is empty', () => {
       const client = new ExtensionServerClient({connection: {url: ''}})
 
       client.connect()
@@ -320,12 +316,12 @@ describe('ExtensionServerClient', () => {
       expect(client.connection).toBeUndefined()
     })
 
-    it('re-use existing connection if connect options have not changed', async () => {
+    test('re-use existing connection if connect options have not changed', async () => {
       const initialURL = 'ws://initial.socket.com'
       const initialSocket = new WS(initialURL)
       const client = new ExtensionServerClient({connection: {url: initialURL}})
 
-      jest.spyOn(initialSocket, 'close')
+      vi.spyOn(initialSocket, 'close')
 
       await initialSocket.connected
 
@@ -339,7 +335,7 @@ describe('ExtensionServerClient', () => {
       initialSocket.close()
     })
 
-    it('creates a new connection if the URL has changed', async () => {
+    test('creates a new connection if the URL has changed', async () => {
       const initialURL = 'ws://initial.socket.com'
       const initialSocket = new WS(initialURL)
       const updatedURL = 'ws://updated.socket.com'
@@ -362,7 +358,7 @@ describe('ExtensionServerClient', () => {
       updatedSocket.close()
     })
 
-    it('initializes the API client if the URL was changed', () => {
+    test('initializes the API client if the URL was changed', () => {
       const initialURL = 'ws://initial.socket.com'
       const updatedURL = 'ws://updated.socket.com'
       const client = new ExtensionServerClient({connection: {url: initialURL}})
