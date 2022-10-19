@@ -238,11 +238,8 @@ describe('renderConcurrent', async () => {
       "0000-00-00 00:00:00 | backend  | first backend message
       0000-00-00 00:00:00 | backend  | second backend message
       0000-00-00 00:00:00 | backend  | third backend message
-
       0000-00-00 00:00:00 | frontend | first frontend message
-
       0000-00-00 00:00:00 | frontend | second frontend message
-
       0000-00-00 00:00:00 | frontend | third frontend message
       "
     `)

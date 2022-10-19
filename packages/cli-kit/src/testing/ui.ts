@@ -10,7 +10,8 @@ export const run: Run = (fixture, props) => {
     // we need this because ink treats the CI environment differently
     // by only writing the last frame to stdout on unmount
     // See more here https://github.com/vadimdemedes/ink/pull/266
-    CI: 'false',
+    // this way local and CI tests behave the same
+    CI: 'true',
   }
 
   return execa(
