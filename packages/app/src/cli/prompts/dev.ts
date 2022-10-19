@@ -21,6 +21,8 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
+  let latestRequest: string
+  let cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
@@ -28,10 +30,15 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
       message: 'Which existing app is this for?',
       choices: appList,
       source: (filterFunction: ui.FilterFunction) => {
-        return async (_answers: {name: string; value: string}[], input = '') => {
-          const result = await fetchOrgAndApps(orgId, token, input)
-          const newAppList = result.apps
-          return filterFunction(newAppList.map(toAnswer), input)
+        return async (_answers: ui.PromptAnswer[], input = '') => {
+          latestRequest = input
+          if (!cachedResults[input]) {
+            const result = await fetchOrgAndApps(orgId, token, input)
+            const newAppList = result.apps
+            const newAppAnswers = await filterFunction(newAppList.map(toAnswer), input)
+            cachedResults[input] = newAppAnswers
+          }
+          return cachedResults[latestRequest] || cachedResults[input]!
         }
       }
     },
