@@ -1,4 +1,5 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
+import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, ui} from '@shopify/cli-kit'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -17,14 +18,22 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === choice.id)!
 }
 
-export async function selectAppPrompt(apps: MinimalOrganizationApp[]): Promise<MinimalOrganizationApp> {
-  const appList = apps.map((app) => ({name: app.title, value: app.apiKey}))
+export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
+  const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
+  const appList = apps.map(toAnswer)
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
       name: 'apiKey',
       message: 'Which existing app is this for?',
       choices: appList,
+      source: (filterFunction: ui.FilterFunction) => {
+        return async (_answers: {name: string; value: string}[], input = '') => {
+          const result = await fetchOrgAndApps(orgId, token, input)
+          const newAppList = result.apps
+          return filterFunction(newAppList.map(toAnswer), input)
+        }
+      }
     },
   ])
   return apps.find((app) => app.apiKey === choice.apiKey)!

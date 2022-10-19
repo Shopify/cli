@@ -2,7 +2,7 @@ import {CustomInput} from './inquirer/input.js'
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
 import {CustomPassword} from './inquirer/password.js'
-import {Question, QuestionChoiceType} from '../ui.js'
+import {PromptAnswer, Question, QuestionChoiceType} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
 
@@ -40,15 +40,16 @@ export function mapper(question: Question): unknown {
       }
     case 'autocomplete':
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
+      const filterType = getAutompleteFilterType()
       return {
         ...question,
         type: 'autocomplete',
-        source: getAutompleteFilterType(),
+        source: question.source ? question.source(filterType) : filterType,
       }
   }
 }
 
-function fuzzyFilter(answers: {name: string; value: string}[], input = '') {
+function fuzzyFilter(answers: {name: string; value: string}[], input = ''): Promise<PromptAnswer[]> {
   return new Promise((resolve) => {
     resolve(
       fuzzy
@@ -62,7 +63,7 @@ function fuzzyFilter(answers: {name: string; value: string}[], input = '') {
   })
 }
 
-function containsFilter(answers: {name: string; value: string}[], input = '') {
+function containsFilter(answers: {name: string; value: string}[], input = ''): Promise<PromptAnswer[]> {
   return new Promise((resolve) => {
     resolve(Object.values(answers).filter((answer) => !answer.name || answer.name.includes(input)))
   })

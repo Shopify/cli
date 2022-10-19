@@ -37,6 +37,10 @@ export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOp
 
 export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
+
+export type PromptAnswer = {name: string; value: string}
+export type FilterFunction = (answers: PromptAnswer[], input: string) => Promise<PromptAnswer[]>
+
 interface BaseQuestion<TName extends string> {
   name: TName
   message: string
@@ -45,6 +49,7 @@ interface BaseQuestion<TName extends string> {
   default?: string
   result?: (value: string) => string | boolean
   choices?: QuestionChoiceType[]
+  source?: (filter: FilterFunction) => FilterFunction
 }
 
 type TextQuestion<TName extends string> = BaseQuestion<TName> & {
