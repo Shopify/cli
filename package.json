@@ -43,6 +43,7 @@
     "@shopify/retail-ui-extensions": "0.19.0",
     "@shopify/typescript-configs": "^5.1.0",
     "@shopify/web-pixels-extension": "0.1.4",
+    "@types/lodash": "^4.14.186",
     "@types/node": "^17.0.38",
     "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.3",

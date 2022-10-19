@@ -2,7 +2,8 @@ import {LocalSource} from './identifiers'
 import {MatchingError, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
-import {error, string} from '@shopify/cli-kit'
+import {string} from '@shopify/cli-kit'
+import {difference, flatten, partition, pickBy, values, uniqBy, groupBy} from 'lodash-es'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -19,28 +20,6 @@ const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
 }
 
 /**
- * Find unique local sources (with a unique union of type and name)
- */
-const findUniqueLocal = (localSources: LocalSource[]) => {
-  return localSources.filter((local) => {
-    return (
-      localSources.filter(
-        (elem) => elem.graphQLType === local.graphQLType && elem.configuration.name === local.configuration.name,
-      ).length === 1
-    )
-  })
-}
-
-/**
- * Find unique remote sources (with a unique union of type and name)
- */
-const findUniqueRemote = (remoteSources: RemoteSource[]) => {
-  return remoteSources.filter((remote) => {
-    return remoteSources.filter((elem) => elem.type === remote.type && elem.title === remote.title).length === 1
-  })
-}
-
-/**
  * Automatically match local and remote sources if they have the same type and name
  *
  * If multiple local or remote sources have the same type and name, they can't be matched automatically
@@ -50,8 +29,8 @@ function matchByNameAndType(
   remote: RemoteSource[],
   remoteIdField: 'id' | 'uuid',
 ): {matched: IdentifiersExtensions; pending: {local: LocalSource[]; remote: RemoteSource[]}} {
-  const uniqueLocal = findUniqueLocal(local)
-  const uniqueRemote = findUniqueRemote(remote)
+  const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.configuration.name])
+  const uniqueRemote = uniqBy(remote, (elem) => [elem.type, elem.title])
   const validMatches: IdentifiersExtensions = {}
 
   uniqueLocal.forEach((localSource) => {
@@ -91,28 +70,35 @@ export async function automaticMatchmaking(
     remoteIdField,
   )
 
-  // This is the list of remote sources with duplicated Type.
-  // If two or more sources have the same type, we need to manually match them.
-  const remoteNeedsManualMatch = (() => {
-    const types = pending.remote.map((remote) => remote.type).filter((type, i, array) => array.indexOf(type) !== i)
-    return pending.remote.filter((remote) => types.includes(remote.type))
-  })()
+  const pendingConfirmation: {local: LocalSource; remote: RemoteSource}[] = []
+  const sourcesToCreate: LocalSource[] = []
 
-  // This is the list of local sources with duplicated Type.
-  // If two or more sources have the same type, we need to manually match them.
-  const localNeedsManualMatch = (() => {
-    const types = pending.local.map((local) => local.graphQLType).filter((type, i, array) => array.indexOf(type) !== i)
-    // If local extensions with duplicated types do not have a possible remote match, they need to be created
-    const manualTypes = types.filter((type) => remoteNeedsManualMatch.some((reg) => reg.type === type))
-    return pending.local.filter((local) => manualTypes.includes(local.graphQLType))
-  })()
+  const localGroups = groupBy(pending.local, 'graphQLType')
+  const localUnique = flatten(values(pickBy(localGroups, (group, key) => group.length === 1)))
 
-  // Sources we can match or create automatically should not contain duplicated types
-  const newLocalPending = pending.local.filter((local) => !localNeedsManualMatch.includes(local))
-  const newRemotePending = pending.remote.filter((remote) => !remoteNeedsManualMatch.includes(remote))
+  const remoteGroups = groupBy(pending.remote, 'type')
+  const remoteUnique = pickBy(remoteGroups, (group, key) => group.length === 1)
 
-  // If there are remote pending with types not present locally, we can't automatically match
-  // The user must solve the issue in their environment or deploy to a different app
+  for (const local of localUnique) {
+    const remote = remoteUnique[local.graphQLType]
+    if (remote && remote[0]) {
+      pendingConfirmation.push({local, remote: remote[0]})
+    } else {
+      sourcesToCreate.push(local)
+    }
+  }
+
+  let newLocalPending = difference(pending.local, localUnique)
+  const newRemotePending = difference(
+    pending.remote,
+    pendingConfirmation.map((elem) => elem.remote),
+  )
+  const [localPending, toCreate] = partition(newLocalPending, (local) =>
+    newRemotePending.map((remote) => remote.type).includes(local.graphQLType),
+  )
+  sourcesToCreate.push(...toCreate)
+  newLocalPending = localPending
+
   const impossible = newRemotePending.filter(
     (remote) => !newLocalPending.map((local) => local.graphQLType).includes(remote.type),
   )
@@ -120,40 +106,11 @@ export async function automaticMatchmaking(
     return err('invalid-environment')
   }
 
-  // If there are more remote pending than local in total, then we can't automatically match
-  // The user must solve the issue in their environment or deploy to a different app
-  if (newRemotePending.length > newLocalPending.length) {
-    return err('invalid-environment')
-  }
-
-  const sourcesToCreate: LocalSource[] = []
-  const pendingConfirmation: {local: LocalSource; remote: RemoteSource}[] = []
-
-  // For each unmatched local source, evaluate if it can be manually matched or needs to be created
-  newLocalPending.forEach((local) => {
-    // Remote sources that have the same type as the local one
-    const possibleMatches = newRemotePending.filter((req) => req.type === local.graphQLType)
-
-    if (possibleMatches.length === 0) {
-      // There are no remote sources with the same type. We need to create a new one
-      sourcesToCreate.push(local)
-    } else if (possibleMatches.length === 1) {
-      // There is a unique remote source with the same type, but different name. We can match them but need to confirm
-      pendingConfirmation.push({local, remote: possibleMatches[0]!})
-    } else {
-      // At this point we've already filtered out any duplicated type, we shouldn't have more than 1 possible match
-      throw new error.Bug(
-        `We detected multiple extension matches. This shouldn't happen.
-        Please report it at https://github.com/Shopify/cli/issues/new/choose`,
-      )
-    }
-  })
-
   // At this point, all sources are matched either automatically, manually or are new
   return ok({
     identifiers: {...identifiers, ...matched},
     pendingConfirmation,
     toCreate: sourcesToCreate,
-    toManualMatch: {local: localNeedsManualMatch, remote: remoteNeedsManualMatch},
+    toManualMatch: {local: newLocalPending, remote: newRemotePending},
   })
 }
