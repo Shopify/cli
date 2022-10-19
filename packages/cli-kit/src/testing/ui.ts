@@ -13,8 +13,12 @@ export const run: Run = (fixture, props) => {
     CI: 'false',
   }
 
-  return execa('ts-node-esm', [path.resolve(__dirname, `fixtures/${fixture}.ts`)], {
-    cwd: __dirname,
-    env,
-  })
+  return execa(
+    path.resolve(__dirname, '../../../../node_modules/.bin/ts-node-esm'),
+    [path.resolve(__dirname, `fixtures/${fixture}.ts`)],
+    {
+      cwd: __dirname,
+      env,
+    },
+  )
 }
