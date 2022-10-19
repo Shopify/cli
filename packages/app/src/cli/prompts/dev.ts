@@ -43,7 +43,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
         return async (_answers: ui.PromptAnswer[], input = '') => {
           latestRequest = input
           allInputs.push(input)
-          while (!cachedResults[input]) { await system.sleep(0.5) }
+          while (!cachedResults[input]) { await system.sleep(0.2) }
           if (!cachedFiltered[input]) {
             cachedFiltered[input] = await filterFunction(cachedResults[input]!.map(toAnswer), input)
           }
