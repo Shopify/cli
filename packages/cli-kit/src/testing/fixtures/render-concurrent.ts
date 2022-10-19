@@ -1,6 +1,6 @@
 import {Signal} from '../../abort.js'
+import {renderConcurrent} from '../../public/node/ui.js'
 import {Writable} from 'form-data'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 let backendPromiseResolve: () => void
 
