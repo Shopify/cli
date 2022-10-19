@@ -103,7 +103,7 @@ describe('selectApp', () => {
     vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'key2'})
 
     // When
-    const got = await selectAppPrompt(apps)
+    const got = await selectAppPrompt(apps, ORG1.id, 'token')
 
     // Then
     expect(got).toEqual(APP2)
@@ -116,6 +116,7 @@ describe('selectApp', () => {
           {name: 'app1', value: 'key1'},
           {name: 'app2', value: 'key2'},
         ],
+        validate: expect.any(Function),
       },
     ])
   })
