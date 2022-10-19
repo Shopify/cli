@@ -25,7 +25,7 @@ export abstract class Fatal extends Error {
    *
    * @param message - The error message
    * @param type - The type of fatal error
-   * @param tryMessage - The message that recomments next steps to the user.
+   * @param tryMessage - The message that recommends next steps to the user.
    *                     You can pass a string a {@link TokenizedString} or a {@link TextTokenItem}
    *                     if you need to style the message inside the error Banner component.
    */
