@@ -1,5 +1,7 @@
 # @shopify/ui-extensions-go-cli
 
+## 3.19.0
+
 ## 3.18.0
 
 ## 3.17.0
