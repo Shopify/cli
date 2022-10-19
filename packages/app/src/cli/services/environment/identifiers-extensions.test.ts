@@ -139,7 +139,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
       ok({
         identifiers: {},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
           remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -182,7 +182,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
       ok({
         identifiers: {},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [EXTENSION_A],
           remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -206,7 +206,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [],
+        toConfirm: [],
         toCreate: [EXTENSION_A, EXTENSION_A_2],
         toManualMatch: {
           local: [],
@@ -238,7 +238,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{local: EXTENSION_B, remote: REGISTRATION_B}],
+        toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -268,7 +268,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{local: EXTENSION_B, remote: REGISTRATION_B}],
+        toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -292,7 +292,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
       ok({
         identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [],
           remote: [],

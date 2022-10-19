@@ -21,7 +21,7 @@ export async function ensureExtensionsIds(
   let validMatches = matchExtensions.identifiers
   const validMatchesById: {[key: string]: string} = {}
 
-  for (const pending of matchExtensions.pendingConfirmation) {
+  for (const pending of matchExtensions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
     const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
     if (!confirmed) return err('user-cancelled')

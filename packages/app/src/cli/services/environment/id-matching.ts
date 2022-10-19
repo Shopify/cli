@@ -7,7 +7,7 @@ import {difference, partition, pickBy, uniqBy, groupBy} from 'lodash-es'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
-  pendingConfirmation: {local: LocalSource; remote: RemoteSource}[]
+  toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toCreate: LocalSource[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 }
@@ -101,6 +101,11 @@ function matchByUniqueType(
   }
 }
 
+/**
+ * Automatically match local sources to remote sources.
+ * If we can't match a local source to any remote sources, we can create it.
+ * If we are unsure about the matching we can ask the user to confirm the relationship.
+ */
 export async function automaticMatchmaking(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
@@ -147,7 +152,7 @@ export async function automaticMatchmaking(
   // At this point, all sources are matched either automatically, manually or are new
   return ok({
     identifiers: {...identifiers, ...matchedByNameAndType},
-    pendingConfirmation: toConfirm,
+    toConfirm,
     toCreate,
     toManualMatch: pending,
   })

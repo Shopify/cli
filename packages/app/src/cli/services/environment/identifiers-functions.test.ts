@@ -158,7 +158,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches
       ok({
         identifiers: {},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [FUNCTION_A, FUNCTION_A_2, FUNCTION_B],
           remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -196,7 +196,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches
       ok({
         identifiers: {},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [FUNCTION_A],
           remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -220,7 +220,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [],
+        toConfirm: [],
         toCreate: [FUNCTION_A, FUNCTION_A_2],
         toManualMatch: {
           local: [],
@@ -244,7 +244,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{local: FUNCTION_B, remote: REGISTRATION_B}],
+        toConfirm: [{local: FUNCTION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -272,7 +272,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{local: FUNCTION_B, remote: REGISTRATION_B}],
+        toConfirm: [{local: FUNCTION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -296,7 +296,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with nothing pending', () =
       ok({
         identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [],
           remote: [],

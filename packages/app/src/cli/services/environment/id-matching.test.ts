@@ -190,7 +190,7 @@ describe('automaticMatchmaking: case 3 some local extensions, no remote ones', (
     // Then
     const expected = ok({
       identifiers: {},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_A, EXTENSION_B],
       toManualMatch: {local: [], remote: []},
     })
@@ -206,7 +206,7 @@ describe('automaticMatchmaking: case 3b some local extensions of the same type, 
     // Then
     const expected = ok({
       identifiers: {},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_A, EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
     })
@@ -222,7 +222,7 @@ describe('automaticMatchmaking: case 3c some local extensions of the same type, 
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A'},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
     })
@@ -238,7 +238,7 @@ describe('automaticMatchmaking: case 3d some local extensions of the same type, 
     // Then
     const expected = ok({
       identifiers: {},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3]},
     })
@@ -254,7 +254,7 @@ describe('automaticMatchmaking: case 3e some local extensions of the same type, 
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A'},
-      pendingConfirmation: [{local: EXTENSION_A_2, remote: REGISTRATION_A_3}],
+      toConfirm: [{local: EXTENSION_A_2, remote: REGISTRATION_A_3}],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     })
@@ -275,7 +275,7 @@ describe('automaticMatchmaking: case 3f some local extensions of the same type, 
     // Then
     const expected = ok({
       identifiers: {},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3, REGISTRATION_A_4]},
     })
@@ -296,7 +296,7 @@ describe('automaticMatchmaking: case 3g two pairs of local extensions and only 1
     // Then
     const expected = ok({
       identifiers: {},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_B, EXTENSION_B_2],
       toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3, REGISTRATION_A_4]},
     })
@@ -312,7 +312,7 @@ describe('automaticMatchmaking: case 4 same number of extensions local and remot
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     })
@@ -333,7 +333,7 @@ describe('automaticMatchmaking: case 5 more extensions local than remote, all re
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_C, EXTENSION_D],
       toManualMatch: {local: [], remote: []},
     })
@@ -372,7 +372,7 @@ describe('automaticMatchmaking: case 8 multiple extensions of the same type loca
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
       },
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     })
@@ -396,7 +396,7 @@ describe('automaticMatchmaking: case 9 multiple extensions of the same type loca
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
       },
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_B],
       toManualMatch: {local: [], remote: []},
     })
@@ -429,7 +429,7 @@ describe('automaticMatchmaking: case 11 some extension have uuid, others can be 
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     })
@@ -452,7 +452,7 @@ describe("automaticMatchmaking: case 12 some extension have uuid, but doesn't ma
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     })
@@ -475,7 +475,7 @@ describe('automaticMatchmaking: case 13 duplicated extension types but some of t
     // Then
     const expected = ok({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B'},
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     })
@@ -503,7 +503,7 @@ describe('automaticMatchmaking: case 14 a bit of everything', () => {
         EXTENSION_D: 'UUID_D',
         EXTENSION_B: 'UUID_B',
       },
-      pendingConfirmation: [],
+      toConfirm: [],
       toCreate: [EXTENSION_C],
       toManualMatch: {local: [], remote: []},
     })
@@ -521,7 +521,7 @@ describe('automaticMatchmaking: case 15 automatic matches with different names',
     // Then
     const expected = ok({
       identifiers: {},
-      pendingConfirmation: [
+      toConfirm: [
         {local: EXTENSION_A, remote: registrationNewA},
         {local: EXTENSION_B, remote: registrationNewB},
       ],
