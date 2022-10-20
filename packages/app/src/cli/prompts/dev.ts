@@ -20,25 +20,43 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 
 export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
   const appsByApiKey: {[apiKey: string]: MinimalOrganizationApp} = Object.fromEntries(apps.map((app) => [app.apiKey, app]))
+  const addToApiKeyCache = (apps: MinimalOrganizationApp[]) => apps.forEach((app) => appsByApiKey[app.apiKey] = app)
+  addToApiKeyCache(apps)
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
+
+  /* allInputs serves as a LIFO stack, so we always can pop off the latest input
+   * as the most urgent search term, then fill in intermediate steps in the
+   * background.
+   * latestRequest tracks the most recent input, so we know which result should
+   * be displayed at all times.
+   */
   const allInputs = ['']
   let latestRequest: string
+
+  // Set up an event loop, searching for apps using the latest user input once
+  // per second to avoid hitting rate limits.
   let cachedResults: {[input: string]: MinimalOrganizationApp[]} = {'': apps}
   const fetchInterval = setInterval(async () => {
     const input = allInputs.pop()
     if (!input) return
     const result = await fetchOrgAndApps(orgId, token, input)
-    result.apps.forEach((app) => appsByApiKey[app.apiKey] = app)
+    addToApiKeyCache(result.apps)
     cachedResults[input] = result.apps
   }, 1000)
+
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
       name: 'apiKey',
       message: 'Which existing app is this for?',
       choices: appList,
-      source: (filterFunction: ui.FilterFunction) => {
+      /* filterFunction is a local filter-and-search, to be applied to the
+       * results from the remote search for proper sorting and display.
+       * This source function wraps the local function in a function that
+       * fetches remote results when appropriate.
+       */
+      source: (filterFunction: ui.FilterFunction): ui.FilterFunction => {
         const cachedFiltered: {[input: string]: ui.PromptAnswer[]} = {'': appList}
         return async (_answers: ui.PromptAnswer[], input = '') => {
           // Only perform remote search for apps if we haven't fetched them all
@@ -46,10 +64,20 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
 
           latestRequest = input
           allInputs.push(input)
+          // Await the event loop returning a result
           while (!cachedResults[input]) { await system.sleep(0.2) }
+
+          // Cache the answerified results to avoid race conditions
           if (!cachedFiltered[input]) {
             cachedFiltered[input] = await filterFunction(cachedResults[input]!.map(toAnswer), input)
           }
+
+          /* If the user types "hello" we will have this function running 5
+           * times, for each substring ("h", "he", "hel", "hell", "hello").
+           * If the latest input "hello" is available, display that result.
+           * Otherwise, display the result of whatever intermediate step is
+           * available, so the user at least sees something is happening.
+           */
           return cachedFiltered[latestRequest] || cachedFiltered[input]!
         }
       }
