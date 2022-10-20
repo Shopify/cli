@@ -16,7 +16,7 @@ export const run: Run = (fixture, props) => {
 
   return execa(
     path.resolve(__dirname, '../../../../node_modules/.bin/ts-node-esm'),
-    ['--transpileOnly', path.resolve(__dirname, `fixtures/${fixture}.ts`)],
+    ['--swc', path.resolve(__dirname, `fixtures/${fixture}.ts`)],
     {
       cwd: __dirname,
       env,
