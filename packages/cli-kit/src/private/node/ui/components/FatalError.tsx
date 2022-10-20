@@ -4,6 +4,7 @@ import {Bug, cleanSingleStackTracePath, Fatal} from '../../../../error.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 import StackTracey from 'stacktracey'
+import stripAnsi from 'strip-ansi'
 
 export interface FatalErrorProps {
   error: Fatal
@@ -34,7 +35,7 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
   return (
     <Banner type="error">
       <Box>
-        <Text>{error.message}</Text>
+        <Text>{stripAnsi(error.message)}</Text>
       </Box>
 
       {error.tryMessage && (
