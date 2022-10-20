@@ -28,9 +28,11 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
 }
 
 export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {
+  const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
+
   return {
     localIdentifier: uiExtension?.localIdentifier ?? 'test-ui-extension',
-    outputBundlePath: uiExtension?.outputBundlePath ?? '/tmp/project/extensions/test-ui-extension/dist/main.js',
+    outputBundlePath: uiExtension?.outputBundlePath ?? `${directory}/dist/main.js`,
     configuration: uiExtension?.configuration ?? {
       name: uiExtension?.configuration?.name ?? 'test-ui-extension',
       type: uiExtension?.configuration?.type ?? 'product_subscription',
@@ -42,10 +44,9 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
     },
     type: 'checkout_post_purchase',
     graphQLType: 'CHECKOUT_POST_PURCHASE',
-    configurationPath:
-      uiExtension?.configurationPath ?? '/tmp/project/extensions/test-ui-extension/shopify.ui.extension.toml',
-    directory: uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension',
-    entrySourceFilePath: uiExtension?.entrySourceFilePath ?? '/tmp/project/extensions/test-ui-extension/src/index.js',
+    configurationPath: uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`,
+    directory,
+    entrySourceFilePath: uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`,
     idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
     devUUID: 'devUUID',
   }
