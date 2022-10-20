@@ -1,6 +1,7 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {JsonMap} from '../json.js'
 import {isDevelopment} from '../environment/local.js'
+import {Abort} from '../error.js'
 import {addPublic} from '../metadata.js'
 import {content, info, token} from '../output.js'
 import {hashString} from '../string.js'
@@ -134,20 +135,25 @@ ${Object.entries(changes)
 /**
  * Strips the defaults from configured flags. For example, if flags contains:
  *
+ * ```
  *   someFlag: Flags.boolean({
  *     description: 'some flag',
- *     default: false,
+ *     default: false
  *   })
+ * ```
  *
  * it becomes:
  *
+ * ```
  *   someFlag: Flags.boolean({
- *     description: 'some flag',
+ *     description: 'some flag'
  *   })
+ * ```
  *
  * If we parse using this configuration, the only specified flags will be those
  * the user actually passed on the command line.
  */
+
 function noDefaultsOptions<TFlags, TGlobalFlags>(
   options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
 ): Interfaces.Input<TFlags, TGlobalFlags> | undefined {
@@ -180,7 +186,13 @@ function argsFromPreset<TFlags, TGlobalFlags, TArgs>(
       noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
       if (typeof value === 'boolean') {
-        args.push(`--${value ? '' : 'no-'}${label}`)
+        if (value === true) {
+          args.push(`--${label}`)
+        } else {
+          throw new Abort(
+            content`Presets can only specify true for boolean flags. Attempted to set ${token.yellow(label)} to false.`,
+          )
+        }
       } else if (Array.isArray(value)) {
         value.forEach((element) => args.push(`--${label}`, `${element}`))
       } else {

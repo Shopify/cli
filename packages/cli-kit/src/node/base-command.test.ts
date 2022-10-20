@@ -22,10 +22,8 @@ class MockCommand extends Command {
     }),
     someString: Flags.string({}),
     someInteger: Flags.integer({}),
-    someBoolean: Flags.boolean({
-      allowNo: true,
-    }),
-    someExclusiveBoolean: Flags.boolean({
+    someBoolean: Flags.boolean({}),
+    someExclusiveString: Flags.string({
       exclusive: ['someBoolean'],
     }),
     someMultipleString: Flags.string({multiple: true}),
@@ -66,7 +64,7 @@ const presetWithIncorrectType = {
 
 const presetWithExclusiveArguments = {
   someBoolean: true,
-  someExclusiveBoolean: false,
+  someExclusiveString: 'exclusive stringy',
 }
 
 const presetWithNegativeBoolean = {
@@ -241,15 +239,17 @@ describe('applying presets', async () => {
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithExclusiveArguments'])
 
     // Then
-    expect(testError?.message).toMatch('Unexpected argument: --no-someExclusiveBoolean')
+    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString=')
   })
 
-  test('negates booleans correctly', async () => {
+  test('throws on negated booleans', async () => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithNegativeBoolean'])
 
     // Then
-    expectFlags(tmpDir, 'presetWithNegativeBoolean')
+    expect(testError?.message).toMatch(
+      /Presets can only specify true for boolean flags\. Attempted to set .+someBoolean.+ to false\./,
+    )
   })
 
   test('handles multiples correctly', async () => {
@@ -262,10 +262,10 @@ describe('applying presets', async () => {
 
   test('throws when exclusive arguments are provided when combining command line + preset', async () => {
     // When
-    await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveBoolean'])
+    await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveString', 'stringy'])
 
     // Then
-    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveBoolean=')
+    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString=')
   })
 
   test('reports preset settings that do not match defaults', async () => {
