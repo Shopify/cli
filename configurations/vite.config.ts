@@ -17,7 +17,6 @@ export default function config(packagePath: string) {
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
       threads: false,
-      testTimeout: 20000,
     },
   })
 }
