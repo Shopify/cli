@@ -43,6 +43,18 @@ export default class Dev extends ThemeCommand {
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
+    only: Flags.string({
+      char: 'o',
+      multiple: true,
+      description: 'Hot reload only files that match the specified pattern.',
+      env: 'SHOPIFY_FLAG_ONLY',
+    }),
+    ignore: Flags.string({
+      char: 'x',
+      multiple: true,
+      description: 'Skip hot reloading any files that match the specified pattern.',
+      env: 'SHOPIFY_FLAG_IGNORE',
+    }),
   }
 
   async run(): Promise<void> {
