@@ -34,12 +34,18 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
   const allInputs = ['']
   let latestRequest: string
 
-  // Set up an event loop, searching for apps using the latest user input once
-  // per second to avoid hitting rate limits.
+  /* Set up an event loop, searching for apps using the latest user input once
+   * per second to avoid hitting rate limits.
+   * If we don't have any previously unseen input to search for, return without
+   * action.
+   */
   let cachedResults: {[input: string]: MinimalOrganizationApp[]} = {'': apps}
   const fetchInterval = setInterval(async () => {
-    const input = allInputs.pop()
-    if (!input) return
+    let input: string | undefined
+    do {
+      input = allInputs.pop()
+      if (input === undefined) return
+    } while (cachedResults[input])
     const result = await fetchOrgAndApps(orgId, token, input)
     addToApiKeyCache(result.apps)
     cachedResults[input] = result.apps
