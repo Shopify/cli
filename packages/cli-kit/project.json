@@ -37,6 +37,7 @@
       },
       "test": {
         "executor": "nx:run-commands",
+        "dependsOn": ["build"],
         "options": {
           "command": "yarn vitest run",
           "cwd": "packages/cli-kit"
@@ -44,7 +45,7 @@
       },
       "test:watch": {
         "executor": "nx:run-commands",
-        "dependsOn": ["^build"],
+        "dependsOn": ["build"],
         "options": {
           "command": "yarn vitest watch",
           "cwd": "packages/cli-kit"
