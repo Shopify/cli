@@ -1,5 +1,5 @@
 import * as path from '../path'
-import {execa, ExecaChildProcess} from 'execa'
+import {ExecaChildProcess, execaNode} from 'execa'
 
 type Run = (fixture: string, props?: {env?: {[key: string]: unknown}}) => ExecaChildProcess<string>
 
@@ -14,12 +14,9 @@ export const run: Run = (fixture, props) => {
     CI: 'true',
   }
 
-  return execa(
-    path.resolve(__dirname, '../../../../node_modules/.bin/ts-node-esm'),
-    ['--swc', path.resolve(__dirname, `fixtures/${fixture}.ts`)],
-    {
-      cwd: __dirname,
-      env,
-    },
-  )
+  // we want to load the compiled js directly in order avoid unnecessary transpilation
+  return execaNode(path.resolve(__dirname, `../../dist/testing/fixtures/${fixture}.js`), {
+    cwd: __dirname,
+    env,
+  })
 }
