@@ -41,6 +41,9 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
       source: (filterFunction: ui.FilterFunction) => {
         const cachedFiltered: {[input: string]: ui.PromptAnswer[]} = {'': appList}
         return async (_answers: ui.PromptAnswer[], input = '') => {
+          // Only perform remote search for apps if we haven't fetched them all
+          if (appList.length < 100) return filterFunction(appList, input)
+
           latestRequest = input
           allInputs.push(input)
           while (!cachedResults[input]) { await system.sleep(0.2) }
