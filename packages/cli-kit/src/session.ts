@@ -138,13 +138,17 @@ ${token.json(scopes)}
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @returns The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
+export async function ensureAuthenticatedAdmin(
+  store: string,
+  scopes: string[] = [],
+  forceRefresh = false,
+): Promise<AdminSession> {
   debug(content`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${token.raw(
     store,
   )}:
 ${token.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
   if (!tokens.admin) {
     throw MissingAdminTokenError
   }
@@ -170,7 +174,7 @@ export async function ensureAuthenticatedThemes(
 ${token.json(scopes)}
 `)
   if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
-  return ensureAuthenticatedAdmin(store, scopes)
+  return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 
 /**
@@ -328,7 +332,6 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
 async function refreshTokens(token: IdentityToken, applications: OAuthApplications, fqdn: string): Promise<Session> {
   // Refresh Identity Token
   const identityToken = await refreshAccessToken(token)
-
   // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
   const applicationTokens = await exchangeAccessForApplicationTokens(
