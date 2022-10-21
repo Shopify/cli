@@ -12,6 +12,7 @@ const cacheFolder = () => {
 const constants = {
   environmentVariables: {
     alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
+    useGoBinary: 'SHOPIFY_CLI_USE_GO_BINARY',
     debugGoBinary: 'SHOPIFY_DEBUG_GO_BINARY',
     deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
     enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
