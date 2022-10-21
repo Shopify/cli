@@ -60,7 +60,7 @@ export default class Dev extends ThemeCommand {
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     setInterval(async () => {
-      output.debug('Refreshing theme session. Restarting theme serve.')
+      output.debug('Refreshing theme session...')
       controller.abort()
       controller = new abort.Controller()
       await this.execute(store, command, controller)
