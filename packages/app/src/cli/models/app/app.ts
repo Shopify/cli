@@ -17,6 +17,7 @@ export enum WebType {
 
 export const WebConfigurationSchema = schema.define.object({
   type: schema.define.enum([WebType.Frontend, WebType.Backend]),
+  authCallbackPath: schema.define.string().default(''),
   commands: schema.define.object({
     build: schema.define.string().optional(),
     dev: schema.define.string(),
