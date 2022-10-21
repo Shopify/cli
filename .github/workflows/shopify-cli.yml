@@ -3,15 +3,34 @@ name: shopify-cli
 on:
   workflow_dispatch:
     inputs:
-      nx_level:
-        description: 'Command to pass to nx (if you want to run everything: run-many --all)'
+      branch-name:
+        type: string
+        description: 'Branch'
         required: true
-        default: "affected"
-      debug_enabled:
+        default: 'main'
+      node-version:
+        description: 'Node version'
+        required: true
+        default: '18.7.0' 
+        type: choice
+        options:
+          - 14.20.0
+          - 16.17.0
+          - 18.7.0
+      os:
+        description: 'Operating system'
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      debug-enabled:
         type: boolean
         description: 'Enable tmate debugging'
-        required: false
-        default: false
+        required: true
+        default: true
   push:
     branches:
       - main
@@ -49,6 +68,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build the fixture app
         run: yarn shopify app build --path ./fixtures/app
+
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -130,8 +150,27 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
+
+  manually-triggered:
+    name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
+    runs-on: ${{ inputs.os }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.branch-name }}
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Unit tests
+        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
+      - name: Acceptance tests
+        run: yarn nx run features:test
       - name: Setup tmate session
-        if: ${{ failure() && inputs.debug_enabled }}
+        if: ${{ failure() && inputs.debug-enabled }}
         uses: mxschmitt/action-tmate@v3
         with:
           limit-access-to-actor: true
