@@ -1,6 +1,7 @@
 import {OutputProcess} from '../../../../output.js'
+import {AbortSilent} from '../../../../error.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Box, Static, Text, useApp} from 'ink'
+import {Box, Static, Text, useApp, useInput, useStdout} from 'ink'
 import stripAnsi from 'strip-ansi'
 import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
@@ -15,14 +16,13 @@ interface Props {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
+  onCtrlC?: (stdout: Writable) => Promise<void>
 }
 interface Chunk {
   color: string
   prefix: string
   lines: string[]
 }
-
-const OUTPUT_MIN_WIDTH = 80
 
 /**
  * Renders output from concurrent processes to the terminal.
@@ -58,11 +58,12 @@ const OUTPUT_MIN_WIDTH = 80
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true, onCtrlC}) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {exit: unmountInk} = useApp()
+  const {stdout} = useStdout()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -105,6 +106,20 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
       unmountInk()
       throw error
     }
+  }
+
+  if (onCtrlC) {
+    useInput((input, key) => {
+      if (input === 'c' && key.ctrl) {
+        onCtrlC(stdout!)
+          .then(() => {
+            unmountInk()
+          })
+          .catch(() => {
+            throw new AbortSilent()
+          })
+      }
+    })
   }
 
   useEffect(() => {

@@ -1,30 +1,39 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
-import {OutputProcess} from '../../output.js'
 import {render} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {fatalError, error} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {ErrorProps} from '../../private/node/ui/components/Error.js'
+import {OutputProcess} from '../../output.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
+import {Writable} from 'node:stream'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
   abortController?: AbortController
   showTimestamps?: boolean
+  onCtrlC?: (stdout: Writable) => Promise<void>
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  */
-export async function renderConcurrent({processes, abortController, showTimestamps = true}: RenderConcurrentOptions) {
+export async function renderConcurrent({
+  processes,
+  abortController,
+  showTimestamps = true,
+  onCtrlC,
+}: RenderConcurrentOptions) {
   const {waitUntilExit} = render(
     <ConcurrentOutput
       processes={processes}
       abortController={abortController ?? new AbortController()}
       showTimestamps={showTimestamps}
+      onCtrlC={onCtrlC}
     />,
+    {exitOnCtrlC: false},
   )
 
   return waitUntilExit()

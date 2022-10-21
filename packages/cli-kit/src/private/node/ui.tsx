@@ -1,7 +1,7 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
 import {ReactElement} from 'react'
-import {render as inkRender} from 'ink'
+import {render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
 
 export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
@@ -15,8 +15,8 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
   unmount()
 }
 
-export function render(element: JSX.Element) {
-  return inkRender(element)
+export function render(element: JSX.Element, inkOptions: RenderOptions) {
+  return inkRender(element, inkOptions)
 }
 
 interface Instance {
