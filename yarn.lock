@@ -1700,7 +1700,7 @@
     supports-color "^8.1.1"
     tslib "^2"
 
-"@oclif/core@1.16.4", "@oclif/core@^1.16.4", "@oclif/core@^1.2.0":
+"@oclif/core@1.16.4", "@oclif/core@^1.16.4":
   version "1.16.4"
   resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.16.4.tgz#fafa338ada0624d7f1adac036302b05a37cd96d0"
   integrity sha512-l+xHtVMteJWeTZZ+f2yLyNjf69X0mhAH8GILXnmoAGAemXbc1DVstvloxOouarvm9xyHHhquzO1Qg5l6xa1VIw==
