@@ -1,15 +1,15 @@
 import {manualMatchIds} from './id-manual-matching.js'
-import {automaticMatchmaking, LocalExtension} from './id-matching.js'
-import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteRegistration} from './identifiers.js'
+import {automaticMatchmaking} from './id-matching.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
 import {matchConfirmationPrompt} from './prompts.js'
-import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
+import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {output, session} from '@shopify/cli-kit'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
-  remoteExtensions: RemoteRegistration[],
+  remoteExtensions: RemoteSource[],
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
@@ -21,11 +21,11 @@ export async function ensureExtensionsIds(
   let validMatches = matchExtensions.identifiers
   const validMatchesById: {[key: string]: string} = {}
 
-  for (const pending of matchExtensions.pendingConfirmation) {
+  for (const pending of matchExtensions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
-    const confirmed = await matchConfirmationPrompt(pending.extension, pending.registration)
+    const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
     if (!confirmed) return err('user-cancelled')
-    validMatches[pending.extension.localIdentifier] = pending.registration.uuid
+    validMatches[pending.local.localIdentifier] = pending.remote.uuid
   }
 
   const extensionsToCreate = matchExtensions.toCreate ?? []
@@ -57,9 +57,9 @@ export async function ensureExtensionsIds(
   })
 }
 
-async function createExtensions(extensions: LocalExtension[], appId: string) {
+async function createExtensions(extensions: LocalSource[], appId: string) {
   const token = await session.ensureAuthenticatedPartners()
-  const result: {[localIdentifier: string]: ExtensionRegistration} = {}
+  const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop

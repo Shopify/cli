@@ -1,7 +1,8 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
-import {createExtension, ExtensionRegistration} from '../dev/create-extension.js'
+import {RemoteSource} from './identifiers.js'
+import {createExtension} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
@@ -9,7 +10,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/common/result'
 import {ui} from '@shopify/cli-kit'
 
-const REGISTRATION_A: ExtensionRegistration = {
+const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
   id: 'A',
   title: 'A',
@@ -113,7 +114,6 @@ beforeEach(() => {
       ui: {prompt: vi.fn()},
     }
   })
-  vi.mock('../dev/fetch')
   vi.mock('../dev/create-extension')
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')
@@ -139,7 +139,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
       ok({
         identifiers: {},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
           remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -182,7 +182,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
       ok({
         identifiers: {},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [EXTENSION_A],
           remote: [REGISTRATION_A, REGISTRATION_A_2],
@@ -206,7 +206,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [],
+        toConfirm: [],
         toCreate: [EXTENSION_A, EXTENSION_A_2],
         toManualMatch: {
           local: [],
@@ -238,7 +238,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{extension: EXTENSION_B, registration: REGISTRATION_B}],
+        toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -268,7 +268,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
       ok({
         identifiers: {},
-        pendingConfirmation: [{extension: EXTENSION_B, registration: REGISTRATION_B}],
+        toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
         toCreate: [],
         toManualMatch: {
           local: [],
@@ -292,7 +292,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
       ok({
         identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
         toCreate: [],
-        pendingConfirmation: [],
+        toConfirm: [],
         toManualMatch: {
           local: [],
           remote: [],

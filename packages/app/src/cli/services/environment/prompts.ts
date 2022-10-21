@@ -1,9 +1,7 @@
-import {LocalExtension} from './id-matching.js'
-import {RemoteRegistration} from './identifiers.js'
-import {ExtensionRegistration} from '../dev/create-extension.js'
+import {LocalSource, RemoteSource} from './identifiers.js'
 import {ui} from '@shopify/cli-kit'
 
-export async function matchConfirmationPrompt(extension: LocalExtension, registration: ExtensionRegistration) {
+export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   const choices = [
     {name: `Yes, that's right`, value: 'yes'},
     {name: `No, cancel deployment`, value: 'no'},
@@ -12,30 +10,30 @@ export async function matchConfirmationPrompt(extension: LocalExtension, registr
     {
       type: 'select',
       name: 'value',
-      message: `Deploy ${extension.configuration.name} (local name) as ${registration.title} (name on Shopify Partners, ID: ${registration.id})?`,
+      message: `Deploy ${local.configuration.name} (local name) as ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
       choices,
     },
   ])
   return choice.value === 'yes'
 }
 
-export async function selectRegistrationPrompt(
-  extension: LocalExtension,
-  registrations: RemoteRegistration[],
-  registrationIdField: 'id' | 'uuid',
-): Promise<RemoteRegistration> {
-  const registrationList = registrations.map((reg) => ({
-    name: `Match it to ${reg.title} (ID: ${reg.id} on Shopify Partners)`,
-    value: reg[registrationIdField],
+export async function selectRemoteSourcePrompt(
+  localSource: LocalSource,
+  remoteSourcesOfSameType: RemoteSource[],
+  remoteIdField: 'id' | 'uuid',
+): Promise<RemoteSource> {
+  const remoteOptions = remoteSourcesOfSameType.map((remote) => ({
+    name: `Match it to ${remote.title} (ID: ${remote.id} on Shopify Partners)`,
+    value: remote[remoteIdField],
   }))
-  registrationList.push({name: 'Create new extension', value: 'create'})
+  remoteOptions.push({name: 'Create new extension', value: 'create'})
   const choice: {uuid: string} = await ui.prompt([
     {
       type: 'autocomplete',
       name: 'uuid',
-      message: `How would you like to deploy your "${extension.configuration.name}"?`,
-      choices: registrationList,
+      message: `How would you like to deploy your "${localSource.configuration.name}"?`,
+      choices: remoteOptions,
     },
   ])
-  return registrations.find((reg) => reg[registrationIdField] === choice.uuid)!
+  return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === choice.uuid)!
 }

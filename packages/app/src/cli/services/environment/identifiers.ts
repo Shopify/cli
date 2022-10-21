@@ -1,7 +1,9 @@
+import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {ExtensionTypes} from '../../constants.js'
 import {output, error} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -13,11 +15,18 @@ export interface EnsureDeploymentIdsPresenceOptions {
   envIdentifiers: Partial<Identifiers>
 }
 
-export interface RemoteRegistration {
+export interface RemoteSource {
   uuid: string
   type: string
   id: string
   title: string
+}
+
+export interface LocalSource {
+  localIdentifier: string
+  graphQLType: string
+  type: ExtensionTypes
+  configuration: {name: string}
 }
 
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'
@@ -25,28 +34,18 @@ export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-can
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
   // We need local extensions to deploy
   if (!options.app.hasExtensions()) return {app: options.appId, extensions: {}, extensionIds: {}}
-  const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const functionLocalIdentifiers = Object.fromEntries(
-    options.app.extensions.function
-      .map((extension) => extension.localIdentifier)
-      .map((extensionIdentifier) => {
-        return validIdentifiers[extensionIdentifier]
-          ? [extensionIdentifier, validIdentifiers[extensionIdentifier]]
-          : undefined
-      })
-      .filter((entry) => entry !== undefined) as string[][],
-  )
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  // PENDING: Ensure Functions IDs
+  const functions = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
+  if (functions.isErr()) throw handleIdsError(functions.error, options.appName, options.app.packageManager)
 
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
   if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
-    extensions: {...extensions.value.extensions, ...functionLocalIdentifiers},
+    extensions: {...functions.value, ...extensions.value.extensions},
     extensionIds: extensions.value.extensionIds,
   }
 }
