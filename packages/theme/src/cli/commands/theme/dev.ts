@@ -4,6 +4,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {AbortController} from 'abort-controller'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -53,8 +54,22 @@ export default class Dev extends ThemeCommand {
 
     const store = await getThemeStore(flags)
 
-    const adminSession = await session.ensureAuthenticatedThemes(store, undefined)
+    let controller = new AbortController()
+    await this.execute(store, command, controller, false)
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    setInterval(async () => {
+      console.log('Restarting theme serve command')
+      controller.abort()
+      controller = new AbortController()
+      await this.execute(store, command, controller, true)
+      console.log("Restarted theme serve command. You're good to go!")
+    }, 10000)
+  }
+
+  async execute(store: string, command: string[], controller: AbortController, refresh: boolean) {
+    const adminSession = await session.ensureAuthenticatedThemes(store, undefined, [], refresh)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
-    await execCLI2(command, {adminSession, storefrontToken})
+    await execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
 }

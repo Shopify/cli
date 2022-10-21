@@ -164,6 +164,7 @@ export async function ensureAuthenticatedThemes(
   store: string,
   password: string | undefined,
   scopes: string[] = [],
+  forceRefresh = false,
 ): Promise<AdminSession> {
   debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${token.json(scopes)}
@@ -177,7 +178,11 @@ ${token.json(scopes)}
  * @param applications - An object containing the applications we need to be authenticated with.
  * @returns An instance with the access tokens organized by application.
  */
-export async function ensureAuthenticated(applications: OAuthApplications, env = process.env): Promise<OAuthSession> {
+export async function ensureAuthenticated(
+  applications: OAuthApplications,
+  env = process.env,
+  forceRefresh = false,
+): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
   if (applications.adminApi?.storeFqdn) {
@@ -200,7 +205,7 @@ ${token.json(applications)}
   if (validationResult === 'needs_full_auth') {
     debug(content`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
-  } else if (validationResult === 'needs_refresh') {
+  } else if (validationResult === 'needs_refresh' || forceRefresh) {
     debug(content`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
