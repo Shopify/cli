@@ -33,7 +33,7 @@ export async function renderConcurrent({
       showTimestamps={showTimestamps}
       onCtrlC={onCtrlC}
     />,
-    {exitOnCtrlC: false},
+    {exitOnCtrlC: typeof onCtrlC === 'undefined'},
   )
 
   return waitUntilExit()
