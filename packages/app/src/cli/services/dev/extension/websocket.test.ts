@@ -1,7 +1,7 @@
 import {ExtensionsPayloadStore, ExtensionsPayloadStoreEvent} from './payload/store.js'
 import {setupWebsocketConnection} from './websocket.js'
 import {websocketUpgradeHandler, getPayloadUpdateHandler} from './websocket/handlers.js'
-import {describe, test, expect, vi} from 'vitest'
+import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {WebSocketServer} from 'ws'
 import {Server} from 'node:https'
 
@@ -9,15 +9,23 @@ vi.mock('./websocket/handlers.js')
 vi.mock('ws')
 
 describe('setupWebsocketConnection', () => {
+  const websocketServer = new WebSocketServer()
+  const handler: any = {}
+  const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
+  const httpServer: Server = {on: vi.fn()} as any
+  const options = {httpServer, payloadStore}
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   test('handles upgrades in the HTTP server', () => {
     // Given
-    const websocketServer = new WebSocketServer()
-    const handler: any = {}
-    const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
-    const httpServer: Server = {on: vi.fn()} as any
-    const options = {httpServer, payloadStore}
     vi.mocked(websocketUpgradeHandler).mockReturnValue(handler)
-    vi.useFakeTimers()
 
     // When
     setupWebsocketConnection(options)
@@ -28,13 +36,7 @@ describe('setupWebsocketConnection', () => {
   })
   test('handles payload store updates and notifies the clients', () => {
     // Given
-    const websocketServer = new WebSocketServer()
-    const handler: any = {}
-    const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
-    const httpServer: Server = {on: vi.fn()} as any
-    const options = {httpServer, payloadStore}
     vi.mocked(getPayloadUpdateHandler).mockReturnValue(handler)
-    vi.useFakeTimers()
 
     // When
     setupWebsocketConnection(options)
@@ -46,13 +48,7 @@ describe('setupWebsocketConnection', () => {
 
   test('closes the connection when close is called', () => {
     // Given
-    const websocketServer = new WebSocketServer()
-    const handler: any = {}
-    const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
-    const httpServer: Server = {on: vi.fn()} as any
-    const options = {httpServer, payloadStore}
     vi.mocked(getPayloadUpdateHandler).mockReturnValue(handler)
-    vi.useFakeTimers()
 
     // When
     setupWebsocketConnection(options).close()
@@ -63,15 +59,9 @@ describe('setupWebsocketConnection', () => {
 
   test('pings alive clients periodically to keep the connection alive', () => {
     // Given
-    const handler: any = {}
-    const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
-    const httpServer: Server = {on: vi.fn()} as any
-    const options = {httpServer, payloadStore}
     const client = {readyState: 1, ping: vi.fn()}
     WebSocketServer.prototype.clients = [client] as any
-
     vi.mocked(getPayloadUpdateHandler).mockReturnValue(handler)
-    vi.useFakeTimers()
 
     // When
     setupWebsocketConnection(options)
@@ -83,15 +73,9 @@ describe('setupWebsocketConnection', () => {
 
   test("doesn't ping disconnected clients periodically", () => {
     // Given
-    const handler: any = {}
-    const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
-    const httpServer: Server = {on: vi.fn()} as any
-    const options = {httpServer, payloadStore}
     const client = {readyState: 3, ping: vi.fn()}
     WebSocketServer.prototype.clients = [client] as any
-
     vi.mocked(getPayloadUpdateHandler).mockReturnValue(handler)
-    vi.useFakeTimers()
 
     // When
     setupWebsocketConnection(options)
