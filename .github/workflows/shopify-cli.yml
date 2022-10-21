@@ -52,7 +52,7 @@ jobs:
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -68,16 +68,16 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
-        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=build
+        run: yarn nx affected --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Lint
-        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=lint
+        run: yarn nx affected --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=type-check
+        run: yarn nx affected --target=type-check
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
-        run: yarn nx ${{ inputs.nx_level || 'affected' }} --target=test --exclude=features
+        run: yarn nx affected --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
@@ -103,7 +103,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: ${{ matrix.target }}
-        run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=${{ matrix.target }}
+        run: yarn nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -126,7 +126,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: yarn nx ${{ inputs.nx_level || 'run-many --all --skip-nx-cache' }} --target=test --exclude=features
+        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: yarn nx run features:test
