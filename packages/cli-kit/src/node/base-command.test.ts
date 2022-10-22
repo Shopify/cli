@@ -1,11 +1,11 @@
 import Command from './base-command.js'
 import {Presets, presetsFilename} from '../public/node/presets.js'
 import {globalFlags} from '../cli.js'
-import {mkdir, mkTmpDir, rmdir, write as writeFile} from '../file.js'
+import {inTemporaryDirectory, mkdir, write as writeFile} from '../file.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
 import {encode as encodeTOML} from '../toml.js'
 import {join as pathJoin, resolve as resolvePath} from '../path.js'
-import {afterEach, beforeEach, describe, expect, test} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 
 let testResult: {[flag: string]: unknown} = {}
@@ -95,21 +95,18 @@ const allPresets: Presets = {
 }
 
 describe('applying presets', async () => {
-  let tmpDir: string
+  const runTestInTmpDir = (testName: string, testFunc: (tmpDir: string) => Promise<void>) => {
+    test(testName, async () => {
+      testResult = {}
+      testError = undefined
+      disableFindUpPresets = false
 
-  beforeEach(async () => {
-    tmpDir = await mkTmpDir()
-    await writeFile(pathJoin(tmpDir, presetsFilename), encodeTOML(allPresets as any))
-    disableFindUpPresets = false
-  })
-
-  afterEach(async () => {
-    if (tmpDir) {
-      await rmdir(tmpDir)
-    }
-    testResult = {}
-    testError = undefined
-  })
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(pathJoin(tmpDir, presetsFilename), encodeTOML(allPresets as any))
+        await testFunc(tmpDir)
+      })
+    })
+  }
 
   function expectFlags(path: string, preset: keyof typeof allPresets) {
     expect(testResult).toEqual({
@@ -121,7 +118,7 @@ describe('applying presets', async () => {
     })
   }
 
-  test('does not apply a preset when none is specified', async () => {
+  runTestInTmpDir('does not apply a preset when none is specified', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -138,7 +135,7 @@ describe('applying presets', async () => {
     expect(outputMock.info()).toEqual('')
   })
 
-  test('applies a preset when one is specified', async () => {
+  runTestInTmpDir('applies a preset when one is specified', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -156,7 +153,7 @@ describe('applying presets', async () => {
     `)
   })
 
-  test('searches up recursively from path by default', async () => {
+  runTestInTmpDir('searches up recursively from path by default', async (tmpDir: string) => {
     // Given
     const subdir = pathJoin(tmpDir, 'somedir', '--preset', 'validPreset')
     await mkdir(subdir)
@@ -168,26 +165,29 @@ describe('applying presets', async () => {
     expectFlags(subdir, 'validPreset')
   })
 
-  test('searches only in the current directory when recursive search is disabled', async () => {
-    // Given
-    const subdir = pathJoin(tmpDir, 'somedir')
-    await mkdir(subdir)
-    disableFindUpPresets = true
+  runTestInTmpDir(
+    'searches only in the current directory when recursive search is disabled',
+    async (tmpDir: string) => {
+      // Given
+      const subdir = pathJoin(tmpDir, 'somedir')
+      await mkdir(subdir)
+      disableFindUpPresets = true
 
-    // When
-    await MockCommand.run(['--path', subdir, '--preset', 'validPreset'])
+      // When
+      await MockCommand.run(['--path', subdir, '--preset', 'validPreset'])
 
-    // Then
-    expect(testResult).toEqual({
-      path: resolvePath(subdir),
-      preset: 'validPreset',
-      verbose: false,
-      // no flags applied from the preset
-      someStringWithDefault: 'default stringy',
-    })
-  })
+      // Then
+      expect(testResult).toEqual({
+        path: resolvePath(subdir),
+        preset: 'validPreset',
+        verbose: false,
+        // no flags applied from the preset
+        someStringWithDefault: 'default stringy',
+      })
+    },
+  )
 
-  test('prefers command line arguments to preset settings', async () => {
+  runTestInTmpDir('prefers command line arguments to preset settings', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -204,7 +204,7 @@ describe('applying presets', async () => {
     `)
   })
 
-  test('ignores the specified preset when it does not exist', async () => {
+  runTestInTmpDir('ignores the specified preset when it does not exist', async (tmpDir: string) => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'nonexistentPreset'])
 
@@ -217,7 +217,7 @@ describe('applying presets', async () => {
     })
   })
 
-  test('does not apply flags irrelevant to the current command', async () => {
+  runTestInTmpDir('does not apply flags irrelevant to the current command', async (tmpDir: string) => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'validPresetWithIrrelevantFlag'])
 
@@ -231,7 +231,7 @@ describe('applying presets', async () => {
     })
   })
 
-  test('throws when an argument of the incorrect type is provided', async () => {
+  runTestInTmpDir('throws when an argument of the incorrect type is provided', async (tmpDir: string) => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithIncorrectType'])
 
@@ -239,7 +239,7 @@ describe('applying presets', async () => {
     expect(testError?.message).toEqual('Expected an integer but received: stringy')
   })
 
-  test('throws when exclusive arguments are provided', async () => {
+  runTestInTmpDir('throws when exclusive arguments are provided', async (tmpDir: string) => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithExclusiveArguments'])
 
@@ -247,7 +247,7 @@ describe('applying presets', async () => {
     expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
   })
 
-  test('throws on negated booleans', async () => {
+  runTestInTmpDir('throws on negated booleans', async (tmpDir: string) => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithNegativeBoolean'])
 
@@ -257,7 +257,7 @@ describe('applying presets', async () => {
     )
   })
 
-  test('handles multiples correctly', async () => {
+  runTestInTmpDir('handles multiples correctly', async (tmpDir: string) => {
     // When
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithMultiples'])
 
@@ -265,15 +265,18 @@ describe('applying presets', async () => {
     expectFlags(tmpDir, 'presetWithMultiples')
   })
 
-  test('throws when exclusive arguments are provided when combining command line + preset', async () => {
-    // When
-    await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveString', 'stringy'])
+  runTestInTmpDir(
+    'throws when exclusive arguments are provided when combining command line + preset',
+    async (tmpDir: string) => {
+      // When
+      await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveString', 'stringy'])
 
-    // Then
-    expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
-  })
+      // Then
+      expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
+    },
+  )
 
-  test('reports preset settings that do not match defaults', async () => {
+  runTestInTmpDir('reports preset settings that do not match defaults', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -290,7 +293,7 @@ describe('applying presets', async () => {
     `)
   })
 
-  test('reports preset settings that match defaults', async () => {
+  runTestInTmpDir('reports preset settings that match defaults', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
