@@ -114,6 +114,7 @@ describe('applying presets', async () => {
   function expectFlags(path: string, preset: keyof typeof allPresets) {
     expect(testResult).toEqual({
       path: resolvePath(path),
+      verbose: false,
       someStringWithDefault: 'default stringy',
       preset,
       ...allPresets[preset],
@@ -131,6 +132,7 @@ describe('applying presets', async () => {
     // Then
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
+      verbose: false,
       someStringWithDefault: 'default stringy',
     })
     expect(outputMock.info()).toEqual('')
@@ -179,6 +181,7 @@ describe('applying presets', async () => {
     expect(testResult).toEqual({
       path: resolvePath(subdir),
       preset: 'validPreset',
+      verbose: false,
       // no flags applied from the preset
       someStringWithDefault: 'default stringy',
     })
@@ -210,6 +213,7 @@ describe('applying presets', async () => {
       path: resolvePath(tmpDir),
       preset: 'nonexistentPreset',
       someStringWithDefault: 'default stringy',
+      verbose: false,
     })
   })
 
@@ -221,6 +225,7 @@ describe('applying presets', async () => {
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
       preset: 'validPresetWithIrrelevantFlag',
+      verbose: false,
       ...validPreset,
       someStringWithDefault: 'default stringy',
     })
@@ -239,7 +244,7 @@ describe('applying presets', async () => {
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithExclusiveArguments'])
 
     // Then
-    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString=')
+    expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
   })
 
   test('throws on negated booleans', async () => {
@@ -265,7 +270,7 @@ describe('applying presets', async () => {
     await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveString', 'stringy'])
 
     // Then
-    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString=')
+    expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
   })
 
   test('reports preset settings that do not match defaults', async () => {
