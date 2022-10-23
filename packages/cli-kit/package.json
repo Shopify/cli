@@ -25,6 +25,10 @@
       "import": "./dist/public/node/ui.js",
       "types": "./dist/public/node/ui.d.ts"
     },
+    "./node/presets": {
+      "import": "./dist/public/node/presets.js",
+      "types": "./dist/public/node/presets.d.ts"
+    },
     "./node/*": {
       "node": "./dist/node/*.js",
       "types": "./dist/node/*.d.ts"

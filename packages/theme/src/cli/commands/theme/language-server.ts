@@ -1,8 +1,8 @@
-import Command from '@shopify/cli-kit/node/base-command'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {cli} from '@shopify/cli-kit'
 
-export default class LanguageServer extends Command {
+export default class LanguageServer extends ThemeCommand {
   static description = 'Start a Language Server Protocol server.'
 
   static flags = {
