@@ -36,7 +36,7 @@ export default class Open extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Open)
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose', 'password']})
     const command = ['theme', 'open', ...flagsToPass]
 
     const store = await getThemeStore(flags)
