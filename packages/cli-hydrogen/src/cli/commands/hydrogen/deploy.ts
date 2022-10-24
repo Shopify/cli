@@ -29,8 +29,9 @@ export default class Deploy extends Command {
       env: 'SHOPIFY_HYDROGEN_FLAG_PATH_TO_BUILD',
       description: 'Skip build process and use provided value as build',
     }),
+    // eslint-disable-next-line rulesdir/command-flags-with-env
     healthCheck: Flags.boolean({
-      env: 'SHOPIFY_HYDROGEN_FLAG_HEALTH_CHECK',
+      // env: 'SHOPIFY_HYDROGEN_FLAG_HEALTH_CHECK',
       default: true,
       description: 'Require a health check before the deployment succeeds.',
     }),

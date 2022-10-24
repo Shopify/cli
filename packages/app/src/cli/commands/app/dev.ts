@@ -58,17 +58,19 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
       exclusive: ['no-tunnel', 'tunnel'],
     }),
+    // eslint-disable-next-line rulesdir/command-flags-with-env
     'no-tunnel': Flags.boolean({
       hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
-      env: 'SHOPIFY_FLAG_NO_TUNNEL',
+      // env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
       exclusive: ['tunnel-url', 'tunnel'],
     }),
+    // eslint-disable-next-line rulesdir/command-flags-with-env
     tunnel: Flags.boolean({
       hidden: false,
       description: 'Use ngrok to create a tunnel to your service entry point',
-      env: 'SHOPIFY_FLAG_TUNNEL',
+      // env: 'SHOPIFY_FLAG_TUNNEL',
       default: true,
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),

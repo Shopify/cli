@@ -18,9 +18,10 @@ export default class Build extends Command {
       description: ' the public path when served in production',
       env: 'SHOPIFY_FLAG_BUILD_BASE',
     }),
+    // eslint-disable-next-line rulesdir/command-flags-with-env
     client: Flags.boolean({
       description: 'build the client code',
-      env: 'SHOPIFY_FLAG_BUILD_CLIENT',
+      // env: 'SHOPIFY_FLAG_BUILD_CLIENT',
       allowNo: true,
       default: true,
     }),

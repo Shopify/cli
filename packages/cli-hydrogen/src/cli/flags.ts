@@ -10,7 +10,7 @@ export const hydrogenFlags = {
     hidden: true,
     default: true,
     description: 'should install packages',
-    env: 'SHOPIFY_HYDROGEN_FLAG_INSTALL',
+    // env: 'SHOPIFY_HYDROGEN_FLAG_INSTALL',
     allowNo: true,
   }),
 }
