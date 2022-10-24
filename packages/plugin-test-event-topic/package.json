@@ -1,0 +1,63 @@
+{
+  "name": "@shopify/plugin-test-event-topic",
+  "version": "0.1.0",
+  "description": "Request the delivery of a webhook for an event topic",
+  "keywords": [
+    "shopify",
+    "shopify-cli"
+  ],
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
+  "author": "Shopify",
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "test": "nx run test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check",
+    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md"
+  },
+  "dependencies": {
+    "@oclif/core": "1.16.4",
+    "@shopify/cli-kit": "3.19.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "devDependencies": {
+    "vitest": "^0.22.1"
+  },
+  "engine-strict": true,
+  "engines": {
+    "node": ">=14.13.1"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "oclif": {
+    "commands": "dist/commands",
+    "topics": {
+      "test-event-topic": {
+        "description": "Request the delivery of a webhook for an event topic"
+      }
+    }
+  }
+}

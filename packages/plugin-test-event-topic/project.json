@@ -1,0 +1,64 @@
+{
+  "name": "plugin-test-event-topic",
+  "root": "packages/plugin-test-event-topic",
+  "sourceRoot": "packages/plugin-test-event-topic/src",
+  "projectType": "library",
+  "implicitDependencies": [],
+  "tags": ["scope:plugin"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn rimraf dist/",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "dependsOn": ["clean"],
+      "options": {
+        "command": "yarn tsc -b ./tsconfig.build.json",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn eslint 'src/**/*.ts'",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn eslint 'src/**/*.ts' --fix",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "yarn vitest run",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    },
+    "test-watch": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "yarn vitest watch",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn tsc --noEmit",
+        "cwd": "packages/plugin-test-event-topic"
+      }
+    }
+  }
+}
