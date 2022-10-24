@@ -51,7 +51,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "1.16.4",
+    "@oclif/core": "1.9.2",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5.1.14",
     "@oclif/plugin-plugins": "^2.1.1",
