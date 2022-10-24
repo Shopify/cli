@@ -39,10 +39,9 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   let functions: IdentifiersExtensions
   if (environment.local.useFunctionMatching()) {
-    const functionsResults = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-    if (functionsResults.isErr())
-      throw handleIdsError(functionsResults.error, options.appName, options.app.packageManager)
-    functions = functionsResults.value
+    const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
+    if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
+    functions = result.value
   } else {
     functions = unmatchedFunctionIdentifiers(options)
   }
