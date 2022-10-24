@@ -30,6 +30,7 @@ const constants = {
     themeToken: 'SHOPIFY_CLI_THEME_TOKEN',
     unitTest: 'SHOPIFY_UNIT_TEST',
     verbose: 'SHOPIFY_FLAG_VERBOSE',
+    functionMatching: 'SHOPIFY_CLI_FUNCTION_MATCHING',
     // Variables to detect if the CLI is running in a cloud environment
     codespaceName: 'CODESPACE_NAME',
     codespaces: 'CODESPACES',
