@@ -1,10 +1,10 @@
 import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
-import {Identifiers} from '../../models/app/identifiers.js'
+import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {ExtensionTypes} from '../../constants.js'
-import {output, error} from '@shopify/cli-kit'
+import {output, error, environment} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export interface EnsureDeploymentIdsPresenceOptions {
@@ -37,17 +37,38 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  const functions = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-  if (functions.isErr()) throw handleIdsError(functions.error, options.appName, options.app.packageManager)
+  let functions: IdentifiersExtensions
+  if (environment.local.useFunctionMatching()) {
+    const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
+    if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
+    functions = result.value
+  } else {
+    functions = unmatchedFunctionIdentifiers(options)
+  }
 
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
   if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
-    extensions: {...functions.value, ...extensions.value.extensions},
+    extensions: {...functions, ...extensions.value.extensions},
     extensionIds: extensions.value.extensionIds,
   }
+}
+
+function unmatchedFunctionIdentifiers(options: EnsureDeploymentIdsPresenceOptions) {
+  const validIdentifiers = options.envIdentifiers.extensions ?? {}
+  const functionLocalIdentifiers: IdentifiersExtensions = Object.fromEntries(
+    options.app.extensions.function
+      .map((extension) => extension.localIdentifier)
+      .map((extensionIdentifier) => {
+        return validIdentifiers[extensionIdentifier]
+          ? [extensionIdentifier, validIdentifiers[extensionIdentifier]]
+          : undefined
+      })
+      .filter((entry) => entry !== undefined) as string[][],
+  )
+  return functionLocalIdentifiers
 }
 
 function handleIdsError(errorType: MatchingError, appName: string, packageManager: PackageManager) {
