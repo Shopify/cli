@@ -212,6 +212,23 @@ describe('when existing session is valid', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(expected)
   })
+
+  it('refreshes token if forceRefresh is true', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, true)
+
+    // Then
+    expect(authorize).not.toHaveBeenCalledOnce()
+    expect(exchangeCodeForAccessToken).not.toBeCalled()
+    expect(refreshAccessToken).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
+  })
 })
 
 describe('when existing session is expired', () => {

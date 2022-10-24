@@ -7,6 +7,7 @@ import constants from '../constants.js'
 import {coerce} from '../semver.js'
 import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
+import {AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
 const RubyCLIVersion = '2.29.0'
@@ -23,6 +24,8 @@ interface ExecCLI2Options {
   token?: string
   // Directory in which to execute the command. Otherwise the current directory will be used.
   directory?: string
+
+  signal?: AbortSignal
 }
 /**
  * Execute CLI 2.0 commands.
@@ -34,7 +37,7 @@ interface ExecCLI2Options {
  */
 export async function execCLI2(
   args: string[],
-  {adminSession, storefrontToken, token, directory}: ExecCLI2Options = {},
+  {adminSession, storefrontToken, token, directory, signal}: ExecCLI2Options = {},
 ) {
   await installCLIDependencies()
   const env = {
@@ -55,6 +58,7 @@ export async function execCLI2(
       stdio: 'inherit',
       cwd: directory ?? process.cwd(),
       env,
+      signal,
     })
   } catch (error) {
     // CLI2 will show it's own errors, we don't need to show an additional CLI3 error
