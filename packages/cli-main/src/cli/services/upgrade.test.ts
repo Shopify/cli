@@ -98,7 +98,9 @@ describe('upgrade global CLI', () => {
 
         // Then
         expect(captureOutputSpy).toHaveBeenCalledWith('brew', ['list', '-1'])
-        expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {stdio: 'inherit'})
+        expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
+          stdio: 'inherit',
+        })
         expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nHomebrew installation detected. Attempting to upgrade via brew upgrade..."
       `)
