@@ -3,7 +3,7 @@ import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
 import {error, file, git} from '@shopify/cli-kit'
 
-const isWin = process.platform === 'win32'
+const isWin = false
 
 const defaultConfig = {
   deploymentToken: 'abcdefg',

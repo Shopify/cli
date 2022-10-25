@@ -43,7 +43,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEBUG: "1"
+  DEBUG: "simple-git,simple-git:*"
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
   YARN_VERSION: "1.22.19"
@@ -134,7 +134,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        os: ['windows-latest']
         node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
@@ -147,10 +147,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
-      - name: Acceptance tests
-        if: ${{ matrix.node == '18.7.0' }}
-        run: yarn nx run features:test
+        run: cd packages/cli-hydrogen && yarn test --reporter verbose
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
