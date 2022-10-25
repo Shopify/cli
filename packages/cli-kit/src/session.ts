@@ -87,12 +87,6 @@ export interface OAuthSession {
   partners?: string
   storefront?: string
 }
-export const PartnerOrganizationNotFoundError = () => {
-  return new Abort(
-    `Couldn't find your Shopify Partners organization`,
-    `Have you confirmed your accounts from the emails you received?`,
-  )
-}
 
 /**
  * Ensure that we have a valid session to access the Partners API.
@@ -280,7 +274,10 @@ export async function ensureUserHasPartnerAccount(partnersToken: string) {
     output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
     if (!(await hasPartnerAccount(partnersToken))) {
-      throw PartnerOrganizationNotFoundError()
+      throw new Abort(
+        `Couldn't find your Shopify Partners organization`,
+        `Have you confirmed your accounts from the emails you received?`,
+      )
     }
   }
 }
