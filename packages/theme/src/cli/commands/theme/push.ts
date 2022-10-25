@@ -64,6 +64,12 @@ export default class Push extends ThemeCommand {
       description: 'Publish as the live theme after uploading.',
       env: 'SHOPIFY_FLAG_PUBLISH',
     }),
+    stable: Flags.boolean({
+      hidden: true,
+      description:
+        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
+      env: 'SHOPIFY_FLAG_STABLE',
+    }),
   }
 
   async run(): Promise<void> {

@@ -55,6 +55,12 @@ export default class Dev extends ThemeCommand {
       description: 'Skip hot reloading any files that match the specified pattern.',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
+    stable: Flags.boolean({
+      hidden: true,
+      description:
+        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
+      env: 'SHOPIFY_FLAG_STABLE',
+    }),
   }
 
   // Tokens are valid for 120m, better to be safe and refresh every 90min
