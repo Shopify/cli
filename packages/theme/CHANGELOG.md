@@ -1,5 +1,24 @@
 # @shopify/theme
 
+## 3.20.0
+
+### Minor Changes
+
+- 96d5b175: Enable experimental presets feature for apps and themes
+- 65aac089: Add the hidden `--stable` flag in the `theme dev/push` commands
+- 0a35aca5: Introduce `--only/--ignore` support into the `shopify theme dev` command
+- 4bd05555: Add experimental preset flag for pre-specifying command line flags
+
+### Patch Changes
+
+- efa5b071: Refresh theme dev session every 90 minutes
+- 78372fe7: Fix password flag for theme open/publish
+- Updated dependencies [96d5b175]
+- Updated dependencies [0a8ee2a3]
+- Updated dependencies [efa5b071]
+- Updated dependencies [4bd05555]
+  - @shopify/cli-kit@3.20.0
+
 ## 3.19.0
 
 ### Minor Changes
