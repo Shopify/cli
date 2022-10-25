@@ -1,15 +1,22 @@
-type = "{{ type }}"
 name = "{{ name }}"
 
-extension_points = [
-  'Checkout::Dynamic::Render'
-]
+[capabilities]
+network_access = true
+block_progress = true
 
-# [[metafields]]
+[[extension_points]]
+target = "Checkout::Dynamic::Render"
+module = "./src/CheckoutDynamicRender.{{ flavor}}"
+
+# [[extension_points.metafields]]
 # namespace = "my-namespace"
 # key = "my-key"
 
-# [[metafields]]
+[[extension_points]]
+target = "Admin::Checkout::Editor"
+module = "./src/AdminCheckoutEditor.{{ flavor}}"
+
+# [[extension_points.metafields]]
 # namespace = "my-namespace"
 # key = "my-key-2"
 
