@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.20.0
+
+### Minor Changes
+
+- 96d5b175: Enable experimental presets feature for apps and themes
+- 1e157c5b: Default to Node for building and deving extensions
+- 4bd05555: Add experimental preset flag for pre-specifying command line flags
+
+### Patch Changes
+
+- 48dfd98e: Include the approvalScopes attributes when serving extensions form the new extensions' server implemented in Node
+- Updated dependencies [96d5b175]
+- Updated dependencies [0a8ee2a3]
+- Updated dependencies [efa5b071]
+- Updated dependencies [4bd05555]
+  - @shopify/cli-kit@3.20.0
+  - @shopify/shopify-cli-extensions@3.20.0
+
 ## 3.19.0
 
 ### Patch Changes
