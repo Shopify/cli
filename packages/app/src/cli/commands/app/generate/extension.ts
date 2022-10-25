@@ -161,6 +161,7 @@ export default class AppScaffoldExtension extends Command {
     const functionExtensionTemplateNames = functionExtensionTemplates.map((template) => template.value)
 
     const invalidTemplateError = (templates: string[]) => {
+      // eslint-disable-next-line rulesdir/no-error-factory-functions
       return new error.Abort(
         'Specified extension template on invalid extension type',
         `You can only specify a template for these extension types: ${templates.join(', ')}.`,
