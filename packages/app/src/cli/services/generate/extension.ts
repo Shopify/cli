@@ -123,7 +123,12 @@ async function uiExtensionInit({
             throw new error.Bug(`Couldn't find the template for ${extensionType}`)
           }
 
-          const flavor = extensionFlavor?.includes('react') ? 'react' : ''
+          let flavor = extensionFlavor?.includes('react') ? 'react' : ''
+
+          if (extensionType === 'customer_accounts_ui_extension') {
+            flavor = extensionFlavor ?? ''
+          }
+
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
             flavor,
             type: extensionType,

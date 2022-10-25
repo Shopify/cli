@@ -151,7 +151,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
     case 'pos_ui_extension':
       return {name: '@shopify/retail-ui-extensions-react', version: '^0.19.0'}
     case 'customer_accounts_ui_extension':
-      return {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.5'}
+      return {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
     case 'web_pixel_extension':
       return {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
   }

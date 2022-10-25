@@ -162,11 +162,19 @@ describe('initialize a extension', () => {
           expect(addDependenciesCalls.length).toEqual(0)
         }
 
-        expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
-          flavor: liquidFlavor,
-          type: extensionType,
-          name,
-        })
+        if (extensionType === 'customer_accounts_ui_extension') {
+          expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
+            flavor: extensionFlavor,
+            type: extensionType,
+            name,
+          })
+        } else {
+          expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
+            flavor: liquidFlavor,
+            type: extensionType,
+            name,
+          })
+        }
 
         recursiveDirectoryCopySpy.mockRestore()
         fileMoveSpy.mockRestore()

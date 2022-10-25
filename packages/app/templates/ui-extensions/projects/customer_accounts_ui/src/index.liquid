@@ -1,23 +1,45 @@
-{%- if flavor == "react" -%}
-import React from 'react';
-import {render, Banner} from '@shopify/customer-account-ui-extensions-react';
-
-render('CustomerAccount::FullPage::RenderWithin', () => <App />);
-
-function App() {
-  return <Banner>Welcome</Banner>;
-}
-{%- else -%}
+{%- if flavor == "typescript" or flavor == "vanilla-js" -%}
 import { extend, Banner } from "@shopify/customer-account-ui-extensions";
 
-extend('CustomerAccount::FullPage::RenderWithin', (root) => {
+extend('CustomerAccount::FullPage::RenderWithin', (root, { i18n }) => {
   root.appendChild(
     root.createComponent(
       Banner,
       {},
-      'Welcome'
+      i18n.translate('welcome')
     )
   );
   root.mount();
 });
+{%- endif -%}
+
+{%- if flavor == "typescript-react" -%}
+import React from "react";
+import { render, Banner } from "@shopify/customer-account-ui-extensions-react";
+import { ApiForExtension, ExtensionPoint } from "@shopify/customer-account-ui-extensions";
+
+render("CustomerAccount::FullPage::RenderWithin", (api) => <App api={api} />);
+
+function App({ api }: { api: ApiForExtension<ExtensionPoint> }) {
+  const { i18n } = api;
+
+  return (
+    <Banner>{i18n.translate("welcome")}</Banner>
+  );
+}
+{%- endif -%}
+
+{%- if flavor == "react" -%}
+import React from "react";
+import { render, Banner } from "@shopify/customer-account-ui-extensions-react";
+
+render("CustomerAccount::FullPage::RenderWithin", (api) => <App api={api} />);
+
+function App({ api }) {
+  const { i18n } = api;
+
+  return (
+    <Banner>{i18n.translate("welcome")}</Banner>
+  );
+}
 {%- endif -%}
