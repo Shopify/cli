@@ -1,36 +1,32 @@
 {%- if flavor == "react" -%}
 import React from 'react';
 
-// TODO: What should the imports be for an Admin Checkout Editor?
 import {
   render,
   Text,
   useExtensionApi,
-  useTranslate
 } from '@shopify/admin-ui-extensions-react'
 
 render('Admin::Checkout::Editor', () => <App />);
 
 function App() {
   const {extensionPoint} = useExtensionApi();
-  const translate = useTranslate();
   return (
     <Text>
-      {translate('welcome', {extensionPoint})}
+      `Welcome to the ${extensionPoint} extension`
     </Text>
   );
 }
 
 {%- else -%}
-// TODO: What should the imports be for an Admin Checkout Editor?
 import { Text, extend } from "@shopify/admin-ui-extensions";
 
-extend("Admin::Checkout::Editor", (root, { extensionPoint, i18n }) => {
+extend("Admin::Checkout::Editor", (root, { extensionPoint }) => {
   root.appendChild(
     root.createComponent(
       Text,
       {},
-      i18n.translate("welcome", { extensionPoint })
+      `Welcome to the ${extensionPoint} extension`
     )
   );
   root.mount();
