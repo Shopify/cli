@@ -1,5 +1,14 @@
 # @shopify/cli
 
+## 3.20.1
+
+### Patch Changes
+
+- 3f285ff9: Fix homebrew upgrade to handle shopify-cli package
+- Updated dependencies [3f285ff9]
+  - @shopify/cli-kit@3.20.1
+  - @shopify/plugin-ngrok@3.20.1
+
 ## 3.20.0
 
 ### Patch Changes
