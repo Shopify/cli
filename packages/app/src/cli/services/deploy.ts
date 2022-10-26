@@ -19,13 +19,6 @@ import {OrganizationApp} from '../models/organization.js'
 import {path, output, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
-const RendererNotFoundBug = (extension: string) => {
-  return new error.Bug(
-    `Couldn't find renderer version for extension ${extension}`,
-    'Make sure you have all your dependencies up to date',
-  )
-}
-
 interface DeployOptions {
   /** The app to be built and uploaded */
   app: AppInterface
@@ -184,8 +177,22 @@ async function configFor(extension: UIExtension, app: AppInterface) {
     case 'pos_ui_extension':
     case 'product_subscription': {
       const result = await getUIExtensionRendererVersion(type, app)
-      if (result === 'not_found') throw RendererNotFoundBug(type)
+      if (result === 'not_found') {
+        throw new error.Bug(
+          `Couldn't find renderer version for extension ${extension}`,
+          'Make sure you have all your dependencies up to date',
+        )
+      }
       return {renderer_version: result?.version}
+    }
+    case 'checkout_ui_extension_beta': {
+      return {
+        extension_points: extension.configuration.extensionPoints,
+        capabilities: extension.configuration.capabilities,
+        name: extension.configuration.name,
+        settings: extension.configuration.settings,
+        localization: await loadLocalesConfig(extension.directory),
+      }
     }
     case 'checkout_ui_extension': {
       return {
@@ -236,6 +243,7 @@ async function getExtensionPublishURL({
     let pathComponent: string
     switch (extension.type as UIExtensionTypes) {
       case 'checkout_ui_extension':
+      case 'checkout_ui_extension_beta':
       case 'pos_ui_extension':
       case 'product_subscription':
       case 'customer_accounts_ui_extension':

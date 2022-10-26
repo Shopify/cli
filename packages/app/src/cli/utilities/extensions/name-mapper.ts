@@ -10,6 +10,8 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'post_purchase_ui'
     case 'checkout_ui_extension':
       return 'checkout_ui'
+    case 'checkout_ui_extension_beta':
+      return 'checkout_ui_beta'
     case 'product_discounts':
       return 'product_discount'
     case 'order_discounts':
@@ -41,6 +43,8 @@ export function mapUIExternalExtensionTypeToUIExtensionType(
       return 'checkout_post_purchase'
     case 'checkout_ui':
       return 'checkout_ui_extension'
+    case 'checkout_ui_beta':
+      return 'checkout_ui_extension_beta'
     case 'subscription_ui':
       return 'product_subscription'
     case 'web_pixel':
@@ -62,6 +66,8 @@ export function mapExternalExtensionTypeToExtensionType(
       return 'checkout_post_purchase'
     case 'checkout_ui':
       return 'checkout_ui_extension'
+    case 'checkout_ui_beta':
+      return 'checkout_ui_extension_beta'
     case 'product_discount':
       return 'product_discounts'
     case 'order_discount':

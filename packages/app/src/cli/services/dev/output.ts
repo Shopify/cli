@@ -68,6 +68,10 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         message = checkoutUIMessage(url, extension).value
         break
       }
+      case 'checkout_ui_extension_beta': {
+        message = checkoutUIMessage(url, extension).value
+        break
+      }
       case 'customer_accounts_ui_extension': {
         message = customerAccountsUIMessage(storeFqdn, url, extension).value
         break

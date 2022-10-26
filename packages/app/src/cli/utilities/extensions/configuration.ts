@@ -11,6 +11,7 @@ export function getUIExtensionResourceURL(
 ): {url: string | undefined} {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
+    case 'checkout_ui_extension_beta':
       return {url: options.checkoutCartUrl}
     case 'checkout_post_purchase':
     case 'pos_ui_extension':
@@ -28,6 +29,8 @@ export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
       return 'checkout'
+    case 'checkout_ui_extension_beta':
+      return 'checkout_beta'
     case 'checkout_post_purchase':
       return 'post_purchase'
     case 'customer_accounts_ui_extension':
