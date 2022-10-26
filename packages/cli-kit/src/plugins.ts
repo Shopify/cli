@@ -98,17 +98,15 @@ export async function runTunnelPlugin(
   provider: string,
 ): Promise<Result<string, TunnelPluginError>> {
   const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
-  const urls = Object.values(hooks).filter(
+  const urlResults = Object.values(hooks).filter(
     (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
   )
-  if (urls.length > 1) return err({type: 'multiple-urls'})
-  if (urls.length === 0) return err({type: 'no-provider'})
+  if (urlResults.length > 1) return err({type: 'multiple-urls'})
+  if (urlResults.length === 0 || !urlResults[0]) return err({type: 'no-provider'})
 
-  return urls[0]
-    ? urls[0]
-        .map((data) => data.url)
-        .mapError((error) =>
-          error.type === 'unknown' ? {type: 'unknown', message: error.message} : {type: 'handled-error'},
-        )
-    : err({type: 'unknown', message: 'Tunnel plugin return undefined value'})
+  return urlResults[0]
+    .map((data) => data.url)
+    .mapError((error) =>
+      error.type === 'unknown' ? {type: 'unknown', message: error.message} : {type: 'handled-error'},
+    )
 }
