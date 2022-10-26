@@ -6,7 +6,7 @@ block_progress = true
 
 [[extension_points]]
 target = "Checkout::Dynamic::Render"
-module = "./src/CheckoutDynamicRender.{{ flavor}}"
+module = "./src/CheckoutDynamicRender.{{ srcFileExtension }}"
 
 # [[extension_points.metafields]]
 # namespace = "my-namespace"
@@ -14,7 +14,7 @@ module = "./src/CheckoutDynamicRender.{{ flavor}}"
 
 [[extension_points]]
 target = "Admin::Checkout::Editor"
-module = "./src/AdminCheckoutEditor.{{ flavor}}"
+module = "./src/AdminCheckoutEditor.{{ srcFileExtension }}"
 
 # [[extension_points.metafields]]
 # namespace = "my-namespace"
