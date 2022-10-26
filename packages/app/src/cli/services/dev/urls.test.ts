@@ -503,16 +503,4 @@ describe('generatePartnersURLs', () => {
       redirectUrlWhitelist: [`${applicationUrl}${overridePath}`],
     })
   })
-
-  it('Adds a missing / to the start of the override path', () => {
-    const applicationUrl = 'http://my-base-url'
-    const overridePath = 'my/custom/path'
-
-    const got = generatePartnersURLs(applicationUrl, overridePath)
-
-    expect(got).toMatchObject({
-      applicationUrl,
-      redirectUrlWhitelist: [`${applicationUrl}/${overridePath}`],
-    })
-  })
 })

@@ -15,7 +15,6 @@ const LOCAL_APP: AppInterface = testApp({
       directory: '',
       configuration: {
         type: WebType.Backend,
-        authCallbackPath: '',
         commands: {dev: ''},
       },
     },

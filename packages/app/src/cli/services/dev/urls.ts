@@ -92,8 +92,7 @@ export async function generateURL(config: Config, frontendPort: number): Promise
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
-    const cleanCallbackPath = authCallbackPath.startsWith('/') ? authCallbackPath : `/${authCallbackPath}`
-    redirectUrlWhitelist = [`${baseURL}${cleanCallbackPath}`]
+    redirectUrlWhitelist = [`${baseURL}${authCallbackPath}`]
   } else {
     redirectUrlWhitelist = [
       `${baseURL}/auth/callback`,
