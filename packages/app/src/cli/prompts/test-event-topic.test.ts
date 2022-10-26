@@ -73,7 +73,6 @@ describe('deliveryMethodPrompt', () => {
         name: 'value',
         message: 'Delivery method',
         choices: [
-          {name: 'Print to screen', value: 'console'},
           {name: 'HTTP', value: 'http'},
           {name: 'Google Pub/Sub', value: 'google-pub-sub'},
           {name: 'Amazon EventBridge', value: 'event-bridge'},

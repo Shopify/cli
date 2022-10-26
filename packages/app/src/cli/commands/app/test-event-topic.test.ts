@@ -92,23 +92,6 @@ describe('run', () => {
       expect(outputSpy).toHaveBeenCalledWith('Webhook will be delivered shortly')
     })
 
-    it('prints output result when console method is used', async () => {
-      // Given
-      vi.mocked(collectCliOptions).mockResolvedValue(sampleConsoleOptions())
-      vi.mocked(requestSample).mockResolvedValue(successDirectResponse)
-      vi.mocked(sendLocal)
-
-      const outputSpy = vi.spyOn(output, 'info')
-
-      // When
-      await TopicTesting.run()
-
-      // Then
-      expect(requestSample).toHaveBeenCalledWith(aTopic, aVersion, 'console', '', aSecret)
-      expect(sendLocal).toHaveBeenCalledTimes(0)
-      expect(outputSpy).toHaveBeenCalledWith(samplePayload)
-    })
-
     describe('Localhost delivery', () => {
       it('delivers to localhost', async () => {
         // Given
@@ -152,25 +135,6 @@ describe('run', () => {
         ...env,
         SHOPIFY_FLAG_SHARED_SECRET: 'A_SECRET',
       }
-    })
-
-    it('uses console delivery method params', async () => {
-      // Given
-      vi.mocked(collectCliOptions).mockResolvedValue(sampleConsoleOptions())
-      vi.mocked(requestSample).mockResolvedValue(successDirectResponse)
-      vi.mocked(sendLocal)
-
-      // When
-      await TopicTesting.run(['--topic', aTopic, '--api-version', aVersion, '--delivery-method', 'console'])
-
-      // Then
-      const expectedParams: TestWebhookFlags = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        deliveryMethod: 'console',
-      }
-      expect(collectCliOptions).toHaveBeenCalledWith(expectedParams)
-      expect(sendLocal).toHaveBeenCalledTimes(0)
     })
 
     it('uses localhost delivery method params', async () => {
@@ -242,7 +206,7 @@ describe('run', () => {
     const options: TestWebhookOptions = {
       topic: aTopic,
       apiVersion: aVersion,
-      deliveryMethod: 'console',
+      deliveryMethod: 'event-bridge',
       sharedSecret: aSecret,
       localhostPort: '',
       localhostUrlPath: '',

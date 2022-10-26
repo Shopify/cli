@@ -24,7 +24,6 @@ export interface UserErrors {
 }
 
 export const DELIVERY_METHOD = {
-  CONSOLE: 'console',
   LOCALHOST: 'localhost',
   HTTP: 'http',
   PUBSUB: 'google-pub-sub',
@@ -111,10 +110,6 @@ export async function collectCliOptions(flags: TestWebhookFlags): Promise<TestWe
     address: '',
     localhostPort: '',
     localhostUrlPath: '',
-  }
-
-  if (options.deliveryMethod === DELIVERY_METHOD.CONSOLE) {
-    return options
   }
 
   if (options.deliveryMethod === DELIVERY_METHOD.HTTP) {

@@ -143,33 +143,6 @@ describe('collectCliOptions', () => {
       vi.mocked(sharedSecretPrompt).mockResolvedValue(aSecret)
     })
 
-    it('collects console params', async () => {
-      // Given
-      vi.mocked(deliveryMethodPrompt).mockResolvedValue('console')
-      vi.mocked(addressPrompt)
-      vi.mocked(localPortPrompt)
-      vi.mocked(localUrlPathPrompt)
-
-      // When
-      const options = await collectCliOptions({})
-
-      // Then
-      const expected: TestWebhookOptions = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        sharedSecret: aSecret,
-        deliveryMethod: 'console',
-        localhostPort: '',
-        localhostUrlPath: '',
-        address: '',
-      }
-      expect(options).toEqual(expected)
-      expectBasicPromptsToHaveBeenCalledOnce()
-      expect(addressPrompt).toHaveBeenCalledTimes(0)
-      expect(localPortPrompt).toHaveBeenCalledTimes(0)
-      expect(localUrlPathPrompt).toHaveBeenCalledTimes(0)
-    })
-
     it('collects HTTP localhost params', async () => {
       // Given
       vi.mocked(deliveryMethodPrompt).mockResolvedValue('http')
@@ -246,31 +219,6 @@ describe('collectCliOptions', () => {
         ...env,
         SHOPIFY_FLAG_SHARED_SECRET: 'A_SECRET',
       }
-    })
-
-    it('collects console delivery method required params', async () => {
-      // Given
-      const flags: TestWebhookFlags = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        deliveryMethod: 'console',
-      }
-
-      // When
-      const options = await collectCliOptions(flags)
-
-      // Then
-      const expected: TestWebhookOptions = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        sharedSecret: aSecret,
-        deliveryMethod: 'console',
-        localhostPort: '',
-        localhostUrlPath: '',
-        address: '',
-      }
-      expect(options).toEqual(expected)
-      expectNoPrompts()
     })
 
     it('collects localhost delivery method required params', async () => {

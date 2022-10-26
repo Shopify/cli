@@ -35,7 +35,6 @@ export async function apiVersionPrompt(defaultValue?: string): Promise<string> {
 
 export async function deliveryMethodPrompt(): Promise<string> {
   const choices = [
-    {name: 'Print to screen', value: DELIVERY_METHOD.CONSOLE},
     {name: 'HTTP', value: DELIVERY_METHOD.HTTP},
     {name: 'Google Pub/Sub', value: DELIVERY_METHOD.PUBSUB},
     {name: 'Amazon EventBridge', value: DELIVERY_METHOD.EVENTBRIDGE},

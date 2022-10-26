@@ -17,8 +17,7 @@ export default class TopicTesting extends Command {
       hidden: false,
       char: 'h',
       env: 'SHOPIFY_FLAG_HELP',
-      description: `CLI test-event-topic help:
-        The command will prompt for any values not passed as command-line arguments.
+      description: `The command will prompt for any values not passed as command-line arguments.
         For security reasons Shared Secret is not allowed via flags.
         SHOPIFY_FLAG_SHARED_SECRET env variable can be used to avoid interactive prompt.`,
     }),
@@ -40,7 +39,7 @@ export default class TopicTesting extends Command {
       required: false,
       hidden: false,
       char: 'm',
-      options: [DELIVERY_METHOD.CONSOLE, DELIVERY_METHOD.HTTP, DELIVERY_METHOD.PUBSUB, DELIVERY_METHOD.EVENTBRIDGE],
+      options: [DELIVERY_METHOD.HTTP, DELIVERY_METHOD.PUBSUB, DELIVERY_METHOD.EVENTBRIDGE],
       env: 'SHOPIFY_FLAG_DELIVERY_METHOD',
       description: `Method chosen to deliver the topic payload.`,
     }),
@@ -87,11 +86,6 @@ export default class TopicTesting extends Command {
 
     if (!sample.success) {
       await output.consoleError(JSON.stringify(sample.userErrors))
-      return
-    }
-
-    if (options.deliveryMethod === DELIVERY_METHOD.CONSOLE) {
-      output.info(sample.samplePayload)
       return
     }
 
