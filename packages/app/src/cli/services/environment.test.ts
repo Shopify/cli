@@ -132,6 +132,7 @@ const LOCAL_APP = testApp({
       directory: '',
       configuration: {
         type: WebType.Backend,
+        authCallbackPath: '',
         commands: {dev: ''},
       },
     },
