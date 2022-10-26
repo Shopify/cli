@@ -25,7 +25,6 @@ beforeEach(async () => {
       },
       system: {
         ...module.system,
-        captureOutput: vi.fn(),
         exec: vi.fn(),
       },
     }
@@ -89,15 +88,12 @@ describe('upgrade global CLI', () => {
         // Given
         const outputMock = outputMocker.mockAndCaptureOutput()
         vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
-        vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'amd64'})
-        const captureOutputSpy = vi.mocked(system.captureOutput)
-        captureOutputSpy.mockResolvedValue(homebrewPackageName)
+        process.env.SHOPIFY_HOMEBREW_FORMULA = homebrewPackageName
 
         // When
         await upgrade(tmpDir, oldCliVersion)
 
         // Then
-        expect(captureOutputSpy).toHaveBeenCalledWith('brew', ['list', '-1'])
         expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
           stdio: 'inherit',
         })

@@ -41,6 +41,7 @@ class ShopifyCli{% if formulaVersion %}AT{{formulaVersion}}{% endif %} < Formula
       #!/usr/bin/env node
 
       process.env.SHOPIFY_RUBY_BINDIR = "#{Formula["ruby"].opt_bin}"
+      process.env.SHOPIFY_HOMEBREW_FORMULA = "shopify-cli{% if formulaVersion %}@{{formulaVersion}}{% endif %}"
 
       import("./shopify");
     SCRIPT

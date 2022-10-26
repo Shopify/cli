@@ -73,18 +73,7 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
 
   outputUpgradeMessage(currentVersion, newestVersion)
 
-  const {platform} = os.platformAndArch()
-  const isMacOS = platform.match(/darwin/)
-  let homebrewPackage: HomebrewPackageName | undefined
-  if (isMacOS) {
-    try {
-      const brewList = await system.captureOutput('brew', ['list', '-1'])
-      const homebrewMatch = brewList.match(/^shopify-cli(@3)?$/m)
-      if (homebrewMatch) homebrewPackage = homebrewMatch[0] as HomebrewPackageName
-      // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
-    } catch (err) {}
-  }
-
+  let homebrewPackage = process.env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
   try {
     await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
   } catch (err) {
