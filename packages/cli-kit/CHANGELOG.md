@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.20.1
+
+### Patch Changes
+
+- 3f285ff9: Fix homebrew upgrade to handle shopify-cli package
+
 ## 3.20.0
 
 ### Minor Changes
