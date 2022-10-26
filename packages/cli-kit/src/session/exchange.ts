@@ -7,6 +7,7 @@ import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
 import {err, ok, Result} from '../public/common/result.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export class InvalidGrantError extends Error {}
 
@@ -174,9 +175,9 @@ async function tokenRequestErrorHandler(error: string) {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
     await secureStore.remove()
-    return InvalidIdentityError()
+    return new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
   }
-  return new Abort(error)
+  return new AbortError(error)
 }
 
 async function tokenRequest(params: {[key: string]: string}): Promise<Result<TokenRequestResult, string>> {
