@@ -1,4 +1,4 @@
-import {error, os, output, path, system} from '@shopify/cli-kit'
+import {error, output, path, system} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -73,7 +73,7 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
 
   outputUpgradeMessage(currentVersion, newestVersion)
 
-  let homebrewPackage = process.env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
+  const homebrewPackage = process.env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
   try {
     await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
   } catch (err) {
