@@ -3,6 +3,7 @@ import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
+import {err, Result} from './public/common/result.js'
 import {Config, Interfaces} from '@oclif/core'
 
 /**
@@ -44,7 +45,7 @@ interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   }
   [hookName: string]: {
     options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: JsonMap}
+    pluginReturns: {[key: string]: JsonMap | Result<JsonMap, Error>}
   }
 }
 
@@ -77,6 +78,11 @@ export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: 
   return {plugins: names}
 }
 
+export interface TunnelPluginError {
+  type: 'multiple-urls' | 'handled-error' | 'unknown' | 'no-provider'
+  message?: string
+}
+
 /**
  * Execute the 'tunnel_start' hook for the given provider.
  * Fails if there aren't plugins for that provider or if there are more than one.
@@ -90,10 +96,19 @@ export async function runTunnelPlugin(
   config: Config,
   port: number,
   provider: string,
-): Promise<{url?: string; error?: string}> {
+): Promise<Result<string, TunnelPluginError>> {
   const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
-  const urls = getArrayRejectingUndefined(Object.values(hooks).map((key) => key?.url))
-  if (urls.length > 1) return {error: 'multiple-urls'}
-  if (urls.length === 0) return {error: 'no-urls'}
-  return {url: urls[0]}
+  const urls = Object.values(hooks).filter(
+    (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
+  )
+  if (urls.length > 1) return err({type: 'multiple-urls'})
+  if (urls.length === 0) return err({type: 'no-provider'})
+
+  return urls[0]
+    ? urls[0]
+        .map((data) => data.url)
+        .mapError((error) =>
+          error.type === 'unknown' ? {type: 'unknown', message: error.message} : {type: 'handled-error'},
+        )
+    : err({type: 'unknown', message: 'Tunnel plugin return undefined value'})
 }

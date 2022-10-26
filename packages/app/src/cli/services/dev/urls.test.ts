@@ -3,6 +3,8 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {err, ok} from '@shopify/cli-kit/common/result'
+import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -45,7 +47,7 @@ describe('generateURL', () => {
   it('returns a tunnel URL by default', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.ngrok.io'))
 
     // When
     const got = await generateURL(config, 3456)
@@ -57,25 +59,52 @@ describe('generateURL', () => {
   it('throws error if there are multiple urls', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({error: 'multiple-urls'})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'multiple-urls'}))
 
     // When
     const got = generateURL(config, 3456)
 
     // Then
+    await expect(got).rejects.toThrow(BugError)
     await expect(got).rejects.toThrow(/Multiple tunnel plugins for ngrok found/)
+  })
+
+  it('throws error if there is no provider', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'no-provider'}))
+
+    // When
+    const got = generateURL(config, 3456)
+
+    // Then
+    await expect(got).rejects.toThrow(BugError)
+    await expect(got).rejects.toThrow(/Tunnel plugin for ngrok not found/)
+  })
+
+  it('throws error if there is an unknown error with the provider', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'unknown', message: 'message'}))
+
+    // When
+    const got = generateURL(config, 3456)
+
+    // Then
+    await expect(got).rejects.toThrow(BugError)
+    await expect(got).rejects.toThrow(/message/)
   })
 
   it('throws error if there are no tunnel urls', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({error: 'no-urls'})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'handled-error'}))
 
     // When
     const got = generateURL(config, 3456)
 
     // Then
-    await expect(got).rejects.toThrow(/Ngrok failed to start the tunnel/)
+    await expect(got).rejects.toThrow(AbortSilentError)
   })
 })
 
@@ -323,7 +352,7 @@ describe('generateFrontendURL', () => {
 
   it('generates a tunnel url when tunnel is true and there is no tunnelUrl and there are no extensions', async () => {
     // Given
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.ngrok.io'))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: true,
@@ -408,7 +437,7 @@ describe('generateFrontendURL', () => {
 
   it('Reuses tunnel option if cached even if tunnel is false and there are no extensions', async () => {
     // Given
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.ngrok.io'))
     const options = {
       app: testApp({hasUIExtensions: () => false, directory: '/app-path'}),
       tunnel: false,

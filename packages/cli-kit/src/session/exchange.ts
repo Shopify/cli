@@ -6,7 +6,7 @@ import {Abort} from '../error.js'
 import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
-import {err, ok, Result} from '../common/result.js'
+import {err, ok, Result} from '../public/common/result.js'
 
 export class InvalidGrantError extends Error {}
 

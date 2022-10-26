@@ -8,7 +8,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identity} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
-import {err, ok} from '../common/result.js'
+import {err, ok} from '../public/common/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Response} from 'node-fetch'
 

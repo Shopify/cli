@@ -26,7 +26,7 @@ export const aliases = (packagePath: string) => {
     {
       find: /@shopify\/cli-kit\/(.+)/,
       replacement: (importedModule: string) => {
-        const migratedTsModules = ['array', 'error']
+        const migratedTsModules = ['array', 'error', 'result']
         const migratedTsxModules = ['ui']
         if (migratedTsModules.find((module) => importedModule.endsWith(module))) {
           return path.join(packagePath, `../cli-kit/src/public/${importedModule.replace('@shopify/cli-kit/', '')}.ts`)

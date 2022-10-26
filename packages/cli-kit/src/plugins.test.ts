@@ -1,4 +1,5 @@
 import {getListOfTunnelPlugins, runTunnelPlugin} from './plugins.js'
+import {err, ok} from './public/common/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Config} from '@oclif/core'
 
@@ -58,7 +59,7 @@ describe('runTunnelPlugin', () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
-      successes: [{result: {url: 'tunnel_url'}, plugin: {name: 'plugin-ngrok'}}],
+      successes: [{result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-ngrok'}}],
       errors: [],
     } as any)
 
@@ -66,16 +67,16 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 1234, 'ngrok')
 
     // Then
-    expect(got).toEqual({url: 'tunnel_url'})
+    expect(got.valueOrThrow()).toEqual('tunnel_url')
   })
 
-  it('returns error if multiple plugins responded to the hook', async () => {
+  it('returns tunnel url when there are two tunnel providers and one not matched the requested', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
       successes: [
-        {result: {url: 'tunnel_url'}, plugin: {name: 'plugin-ngrok'}},
-        {result: {url: 'tunnel_url_2'}, plugin: {name: 'plugin-ngrok-2'}},
+        {result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-ngrok'}},
+        {result: err({type: 'invalid-provider'}), plugin: {name: 'other-plugin'}},
       ],
       errors: [],
     } as any)
@@ -84,7 +85,25 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 1234, 'ngrok')
 
     // Then
-    expect(got).toEqual({error: 'multiple-urls'})
+    expect(got.valueOrThrow()).toEqual('tunnel_url')
+  })
+
+  it('returns error if multiple plugins responded to the hook', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [
+        {result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-ngrok'}},
+        {result: ok({url: 'tunnel_url_2'}), plugin: {name: 'plugin-ngrok-2'}},
+      ],
+      errors: [],
+    } as any)
+
+    // When
+    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+
+    // Then
+    expect(got.isErr() && got.error.type).equal('multiple-urls')
   })
 
   it('returns error if no plugin responds with a url', async () => {
@@ -96,6 +115,22 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 1234, 'ngrok')
 
     // Then
-    expect(got).toEqual({error: 'no-urls'})
+    expect(got.isErr() && got.error.type).equal('no-provider')
+  })
+
+  it('returns error if plugin responds with an uknonwn error', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [{result: err({type: 'unknown', message: 'message'}), plugin: {name: 'plugin-ngrok'}}],
+      errors: [],
+    } as any)
+
+    // When
+    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+
+    // Then
+    expect(got.isErr() && got.error.type).equal('unknown')
+    expect(got.isErr() && got.error.message).equal('message')
   })
 })

@@ -1,4 +1,14 @@
+import {err, Result} from '../public/common/result.js'
 import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
+
+export type TunnelErrorType = 'invalid-provider' | 'tunnel-already-running' | 'wrong-credentials' | 'unknown'
+export class TunnelError extends Error {
+  type: TunnelErrorType
+  constructor(type: TunnelErrorType, message?: string) {
+    super(message)
+    this.type = type
+  }
+}
 
 /**
  * Tunnel Plugins types
@@ -9,7 +19,7 @@ export interface HookReturnPerTunnelPlugin {
   tunnel_start: {
     options: {port: number; provider: string}
     pluginReturns: {
-      [pluginName: string]: {url: string | undefined}
+      [pluginName: string]: Result<{url: string}, TunnelError>
     }
   }
   tunnel_provider: {
@@ -30,7 +40,7 @@ export const defineProvider = (input: {name: string}): TunnelProviderFunction =>
 }
 export const startTunnel = (options: {provider: string; action: TunnelStartAction}): TunnelStartFunction => {
   return async (inputs: {provider: string; port: number}): Promise<TunnelStartReturn> => {
-    if (inputs.provider !== options.provider) return {url: undefined}
+    if (inputs.provider !== options.provider) return err(new TunnelError('invalid-provider'))
     return options.action(inputs.port)
   }
 }
