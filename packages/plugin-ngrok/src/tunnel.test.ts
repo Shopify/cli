@@ -1,7 +1,6 @@
 import {authenticate, hookStart} from './tunnel.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui, os} from '@shopify/cli-kit'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {ui, os, error} from '@shopify/cli-kit'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
@@ -10,7 +9,7 @@ const port = 1234
 beforeEach(async () => {
   vi.mock('@shopify/ngrok')
   vi.mock('@shopify/cli-kit/node/ui')
-  vi.mock('@shopify/cli-kit/node/error')
+
   vi.mocked(ngrok.connect).mockResolvedValue('https://fake.ngrok.io')
   vi.mocked(ngrok.authtoken).mockResolvedValue(undefined)
   vi.mocked(ngrok.validConfig).mockResolvedValue(true)
@@ -26,6 +25,9 @@ beforeEach(async () => {
       environment: vi.fn(),
       os: {
         platformAndArch: vi.fn(),
+      },
+      error: {
+        Abort: vi.fn(),
       },
     }
   })
@@ -62,11 +64,11 @@ describe('start', () => {
     const got = await hookStart(port)
 
     // Then
-    expect(AbortError).toHaveBeenCalledWith(
+    expect(error.Abort).toHaveBeenCalledWith(
       'The ngrok tunnel could not be started.\n\nYour account has been suspended',
       undefined,
     )
-    expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
     expect(got.isErr() && got.error.type).toEqual('unknown')
     expect(got.isErr() && got.error.message).toEqual('Your account has been suspended')
   })
@@ -80,11 +82,11 @@ describe('start', () => {
     const got = await hookStart(port)
 
     // Then
-    expect(AbortError).toHaveBeenCalledWith(
+    expect(error.Abort).toHaveBeenCalledWith(
       'The ngrok tunnel could not be started.\n\nerror message contains code err_ngrok_108',
       expect.stringContaining('Kill all the ngrok processes with \u001b[1m\u001b[33mkillall ngrok\u001b[39m\u001b[22m'),
     )
-    expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
     expect(got.isErr() && got.error.type).toEqual('tunnel-already-running')
     expect(got.isErr() && got.error.message).toEqual('error message contains code err_ngrok_108')
   })
@@ -98,13 +100,13 @@ describe('start', () => {
     const got = await hookStart(port)
 
     // Then
-    expect(AbortError).toHaveBeenCalledWith(
+    expect(error.Abort).toHaveBeenCalledWith(
       'The ngrok tunnel could not be started.\n\nerror message contains code err_ngrok_108',
       expect.stringContaining(
         'Kill all the ngrok processes with \u001b[1m\u001b[33mtaskkill /f /im ngrok.exe\u001b[39m\u001b[22m',
       ),
     )
-    expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
     expect(got.isErr() && got.error.type).toEqual('tunnel-already-running')
     expect(got.isErr() && got.error.message).toEqual('error message contains code err_ngrok_108')
   })
@@ -118,13 +120,13 @@ describe('start', () => {
       // When
       const got = await hookStart(port)
 
-      expect(AbortError).toHaveBeenCalledWith(
+      expect(error.Abort).toHaveBeenCalledWith(
         `The ngrok tunnel could not be started.\n\nerror message contains code ${ngrokError}`,
         expect.stringContaining(
           'Update your ngrok token with \u001b[1m\u001b[33mshopify ngrok auth\u001b[39m\u001b[22m',
         ),
       )
-      expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+      expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
       expect(got.isErr() && got.error.type).toEqual('wrong-credentials')
       expect(got.isErr() && got.error.message).not.toBeUndefined()
     },
