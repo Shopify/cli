@@ -58,7 +58,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (environment.spin.isSpin() && !options.tunnelUrl && !options.tunnel) {
+  if (environment.spin.isSpin() && !options.tunnelUrl) {
     frontendUrl = `https://cli.${await environment.spin.fqdn()}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }

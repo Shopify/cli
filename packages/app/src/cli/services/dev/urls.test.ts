@@ -496,24 +496,6 @@ describe('generateFrontendURL', () => {
     expect(ui.prompt).not.toBeCalled()
   })
 
-  it('Returns a tunnel url if we are in a spin environment but tunnel option is active', async () => {
-    // Given
-    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce({url: 'https://fake-url.ngrok.io'})
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnel: true,
-      noTunnel: false,
-      commandConfig: new Config({root: ''}),
-    }
-
-    // When
-    const got = await generateFrontendURL(options)
-
-    // Then
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
-  })
-
   it('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {
     // Given
     vi.mocked(environment.spin.isSpin).mockReturnValue(true)
