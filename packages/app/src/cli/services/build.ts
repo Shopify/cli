@@ -2,7 +2,8 @@ import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '.
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface, Web} from '../models/app/app.js'
-import {output, abort} from '@shopify/cli-kit'
+import {abort} from '@shopify/cli-kit'
+import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'node:stream'
 
 interface BuildOptions {
@@ -21,40 +22,42 @@ async function build(options: BuildOptions) {
     env.SHOPIFY_API_KEY = options.apiKey
   }
 
-  await output.concurrent([
-    ...options.app.webs.map((web: Web) => {
-      return {
-        prefix: web.configuration.type,
+  await renderConcurrent({
+    processes: [
+      ...options.app.webs.map((web: Web) => {
+        return {
+          prefix: web.configuration.type,
+          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+            await buildWeb('build', {web, stdout, stderr, signal, env})
+          },
+        }
+      }),
+      {
+        prefix: 'theme_extensions',
         action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          await buildWeb('build', {web, stdout, stderr, signal, env})
+          await buildThemeExtensions({
+            app: options.app,
+            extensions: options.app.extensions.theme,
+            stdout,
+            stderr,
+            signal,
+          })
         },
-      }
-    }),
-    {
-      prefix: 'theme_extensions',
-      action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-        await buildThemeExtensions({
-          app: options.app,
-          extensions: options.app.extensions.theme,
-          stdout,
-          stderr,
-          signal,
-        })
       },
-    },
-    ...(await buildUIExtensions({app: options.app})),
-    ...options.app.extensions.function.map((functionExtension) => {
-      return {
-        prefix: functionExtension.localIdentifier,
-        action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-          await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
-        },
-      }
-    }),
-  ])
+      ...(await buildUIExtensions({app: options.app})),
+      ...options.app.extensions.function.map((functionExtension) => {
+        return {
+          prefix: functionExtension.localIdentifier,
+          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+            await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
+          },
+        }
+      }),
+    ],
+    showTimestamps: false,
+  })
 
-  output.newline()
-  output.success(`${options.app.name} built`)
+  renderSuccess({headline: `${options.app.name} built!`})
 }
 
 export default build

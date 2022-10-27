@@ -3,6 +3,8 @@ import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
 import {error, file, git} from '@shopify/cli-kit'
 
+const isWin = process.platform === 'win32'
+
 const defaultConfig = {
   deploymentToken: 'abcdefg',
   oxygenAddress: 'https://integration.test',
@@ -12,7 +14,7 @@ const defaultConfig = {
 
 describe('validateProject() & initializeGit()', () => {
   describe('User refuses to initialize new repository', () => {
-    it('silent abort since outside git directory', async () => {
+    it.skipIf(isWin)('silent abort since outside git directory', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         vi.mock('../../prompts/git-init.js')
         vi.mocked(gitInit).mockResolvedValue(false)
@@ -24,7 +26,7 @@ describe('validateProject() & initializeGit()', () => {
     })
   })
   describe('User accepts to initialize new repository', () => {
-    it(
+    it.skipIf(isWin)(
       'initializes new git repository',
       async () => {
         await file.inTemporaryDirectory(async (tmpDir) => {
@@ -42,7 +44,7 @@ describe('validateProject() & initializeGit()', () => {
 })
 
 describe('getDeployConfig()', () => {
-  it(
+  it.skipIf(isWin)(
     'extract basic information from git',
     async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {

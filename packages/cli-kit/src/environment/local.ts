@@ -74,6 +74,10 @@ export function analyticsDisabled(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDevelopment(env)
 }
 
+export function useGoBinary(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.useGoBinary])
+}
+
 /** Returns true if reporting analytics should always happen, regardless of DEBUG mode etc. */
 export function alwaysLogAnalytics(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.alwaysLogAnalytics])
@@ -89,6 +93,10 @@ export function isDebugGoBinary(env = process.env): boolean {
 
 export function useDeviceAuth(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
+}
+
+export function useFunctionMatching(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.functionMatching])
 }
 
 // https://www.gitpod.io/docs/environment-variables#default-environment-variables

@@ -1,6 +1,7 @@
 import {authenticate, hookStart} from './tunnel.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui, os, error} from '@shopify/cli-kit'
+import {ui, os} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
@@ -9,6 +10,7 @@ const port = 1234
 beforeEach(async () => {
   vi.mock('@shopify/ngrok')
   vi.mock('@shopify/cli-kit/node/ui')
+  vi.mock('@shopify/cli-kit/node/error')
   vi.mocked(ngrok.connect).mockResolvedValue('https://fake.ngrok.io')
   vi.mocked(ngrok.authtoken).mockResolvedValue(undefined)
   vi.mocked(ngrok.validConfig).mockResolvedValue(true)
@@ -25,9 +27,6 @@ beforeEach(async () => {
       os: {
         platformAndArch: vi.fn(),
       },
-      error: {
-        Abort: vi.fn(),
-      },
     }
   })
 })
@@ -39,7 +38,7 @@ describe('start', () => {
 
     // Then
     expect(ngrok.connect).toHaveBeenCalledWith({proto: 'http', addr: 1234})
-    expect(got).toEqual({url: 'https://fake.ngrok.io'})
+    expect(got.valueOrThrow()).toEqual({url: 'https://fake.ngrok.io'})
   })
 
   it('asks for the token and authenticates if the configuration file is wrong', async () => {
@@ -63,12 +62,13 @@ describe('start', () => {
     const got = await hookStart(port)
 
     // Then
-    expect(error.Abort).toHaveBeenCalledWith(
+    expect(AbortError).toHaveBeenCalledWith(
       'The ngrok tunnel could not be started.\n\nYour account has been suspended',
       undefined,
     )
-    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
-    expect(got).toEqual({url: undefined})
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+    expect(got.isErr() && got.error.type).toEqual('unknown')
+    expect(got.isErr() && got.error.message).toEqual('Your account has been suspended')
   })
 
   it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in a non windows platform', async () => {
@@ -77,14 +77,16 @@ describe('start', () => {
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arch'})
 
     // When
-    await hookStart(port)
+    const got = await hookStart(port)
 
     // Then
-    expect(error.Abort).toHaveBeenCalledWith(
+    expect(AbortError).toHaveBeenCalledWith(
       'The ngrok tunnel could not be started.\n\nerror message contains code err_ngrok_108',
       expect.stringContaining('Kill all the ngrok processes with \u001b[1m\u001b[33mkillall ngrok\u001b[39m\u001b[22m'),
     )
-    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+    expect(got.isErr() && got.error.type).toEqual('tunnel-already-running')
+    expect(got.isErr() && got.error.message).toEqual('error message contains code err_ngrok_108')
   })
 
   it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in windows platform', async () => {
@@ -93,16 +95,18 @@ describe('start', () => {
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'windows', arch: 'arch'})
 
     // When
-    await hookStart(port)
+    const got = await hookStart(port)
 
     // Then
-    expect(error.Abort).toHaveBeenCalledWith(
+    expect(AbortError).toHaveBeenCalledWith(
       'The ngrok tunnel could not be started.\n\nerror message contains code err_ngrok_108',
       expect.stringContaining(
         'Kill all the ngrok processes with \u001b[1m\u001b[33mtaskkill /f /im ngrok.exe\u001b[39m\u001b[22m',
       ),
     )
-    expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
+    expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+    expect(got.isErr() && got.error.type).toEqual('tunnel-already-running')
+    expect(got.isErr() && got.error.message).toEqual('error message contains code err_ngrok_108')
   })
 
   it.each(['err_ngrok_105', 'err_ngrok_106', 'err_ngrok_107'])(
@@ -112,15 +116,17 @@ describe('start', () => {
       vi.mocked(ngrok.connect).mockRejectedValue(new Error(`error message contains code ${ngrokError}`))
 
       // When
-      await hookStart(port)
+      const got = await hookStart(port)
 
-      expect(error.Abort).toHaveBeenCalledWith(
+      expect(AbortError).toHaveBeenCalledWith(
         `The ngrok tunnel could not be started.\n\nerror message contains code ${ngrokError}`,
         expect.stringContaining(
           'Update your ngrok token with \u001b[1m\u001b[33mshopify ngrok auth\u001b[39m\u001b[22m',
         ),
       )
-      expect(renderFatalError).toHaveBeenCalledWith(expect.any(error.Abort))
+      expect(renderFatalError).toHaveBeenCalledWith(expect.any(AbortError))
+      expect(got.isErr() && got.error.type).toEqual('wrong-credentials')
+      expect(got.isErr() && got.error.message).not.toBeUndefined()
     },
   )
 })

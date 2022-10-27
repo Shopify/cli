@@ -72,6 +72,8 @@ describe('errorHandler', () => {
 
 describe('bugsnag stack cleaning', () => {
   it.each([
+    ['dependency in relative path', 'cool-project/node_modules/deppy/foo/bar.ts', 'deppy/foo/bar.ts'],
+    ['dependency in absolute path', '/Users/ju/Desktop/cool/node_modules/deppy/foo/bar.ts', 'deppy/foo/bar.ts'],
     ['plugin in project', 'node_modules/@plugin/name/foo/bar.ts', '@plugin/name/foo/bar.ts'],
     ['plugin outside project', '/global/node_modules/@plugin/global/foo/bar.ts', '@plugin/global/foo/bar.ts'],
     ['some relative path', 'users/own/code.ts', 'users/own/code.ts'],

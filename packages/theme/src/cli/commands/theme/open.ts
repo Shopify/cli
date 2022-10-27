@@ -1,7 +1,8 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {cli, session, string} from '@shopify/cli-kit'
+import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Open extends ThemeCommand {
@@ -9,6 +10,7 @@ export default class Open extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
+    password: themeFlags.password,
     development: Flags.boolean({
       char: 'd',
       description: 'Delete your development theme.',
@@ -29,21 +31,16 @@ export default class Open extends ThemeCommand {
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
-    store: Flags.string({
-      char: 's',
-      description: 'Store URL',
-      env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
-    }),
+    store: themeFlags.store,
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Open)
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose', 'password']})
     const command = ['theme', 'open', ...flagsToPass]
 
     const store = await getThemeStore(flags)
-    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }
 }

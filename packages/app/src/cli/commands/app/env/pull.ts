@@ -2,9 +2,9 @@ import {appFlags} from '../../../flags.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {pullEnv} from '../../../services/app/env/pull.js'
+import Command from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
-import Command from '@shopify/cli-kit/node/base-command'
 
 export default class EnvPull extends Command {
   static description = 'Pull app and extensions environment variables'

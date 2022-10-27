@@ -1,5 +1,55 @@
 # @shopify/theme
 
+## 3.20.1
+
+### Patch Changes
+
+- Updated dependencies [3f285ff9]
+  - @shopify/cli-kit@3.20.1
+
+## 3.20.0
+
+### Minor Changes
+
+- 96d5b175: Enable experimental presets feature for apps and themes
+- 65aac089: Add the hidden `--stable` flag in the `theme dev/push` commands
+- 0a35aca5: Introduce `--only/--ignore` support into the `shopify theme dev` command
+- 4bd05555: Add experimental preset flag for pre-specifying command line flags
+
+### Patch Changes
+
+- efa5b071: Refresh theme dev session every 90 minutes
+- 78372fe7: Fix password flag for theme open/publish
+- Updated dependencies [96d5b175]
+- Updated dependencies [0a8ee2a3]
+- Updated dependencies [efa5b071]
+- Updated dependencies [4bd05555]
+  - @shopify/cli-kit@3.20.0
+
+## 3.19.0
+
+### Minor Changes
+
+- 7bb5c23f: Enable Theme Kit Access passwords
+
+### Patch Changes
+
+- Updated dependencies [7bb5c23f]
+  - @shopify/cli-kit@3.19.0
+
+## 3.18.0
+
+### Patch Changes
+
+- 72171c1b: `shopify theme check` no longer ignores the `.theme-check.yml` file
+- Updated dependencies [ef42fda6]
+- Updated dependencies [514f2cb5]
+- Updated dependencies [1455ee44]
+- Updated dependencies [b4dafa4f]
+- Updated dependencies [65625f47]
+- Updated dependencies [0d674d64]
+  - @shopify/cli-kit@3.18.0
+
 ## 3.17.0
 
 ### Patch Changes

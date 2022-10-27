@@ -16,6 +16,7 @@ export default function config(packagePath: string) {
       clearMocks: true,
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
+      threads: false,
     },
   })
 }
@@ -25,7 +26,7 @@ export const aliases = (packagePath: string) => {
     {
       find: /@shopify\/cli-kit\/(.+)/,
       replacement: (importedModule: string) => {
-        const migratedTsModules = ['array']
+        const migratedTsModules = ['array', 'error', 'result']
         const migratedTsxModules = ['ui']
         if (migratedTsModules.find((module) => importedModule.endsWith(module))) {
           return path.join(packagePath, `../cli-kit/src/public/${importedModule.replace('@shopify/cli-kit/', '')}.ts`)

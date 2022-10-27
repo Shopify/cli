@@ -25,7 +25,6 @@ beforeEach(async () => {
       },
       system: {
         ...module.system,
-        captureOutput: vi.fn(),
         exec: vi.fn(),
       },
     }
@@ -82,27 +81,29 @@ describe('upgrade global CLI', () => {
     })
   })
 
-  it('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const outputMock = outputMocker.mockAndCaptureOutput()
-      vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
-      vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'amd64'})
-      const captureOutputSpy = vi.mocked(system.captureOutput)
-      captureOutputSpy.mockResolvedValue('shopify-cli@3')
+  const homebrewPackageNames = ['shopify-cli', 'shopify-cli@3']
+  homebrewPackageNames.forEach((homebrewPackageName: string) => {
+    it('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
+      await file.inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const outputMock = outputMocker.mockAndCaptureOutput()
+        vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
+        process.env.SHOPIFY_HOMEBREW_FORMULA = homebrewPackageName
 
-      // When
-      await upgrade(tmpDir, oldCliVersion)
+        // When
+        await upgrade(tmpDir, oldCliVersion)
 
-      // Then
-      expect(captureOutputSpy).toHaveBeenCalledWith('brew', ['list', '-1'])
-      expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli@3'], {stdio: 'inherit'})
-      expect(outputMock.info()).toMatchInlineSnapshot(`
+        // Then
+        expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
+          stdio: 'inherit',
+        })
+        expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nHomebrew installation detected. Attempting to upgrade via brew upgrade..."
       `)
-      expect(outputMock.success()).toMatchInlineSnapshot(`
+        expect(outputMock.success()).toMatchInlineSnapshot(`
         "Upgraded Shopify CLI to version ${currentCliVersion}"
       `)
+      })
     })
   })
 })

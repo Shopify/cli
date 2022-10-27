@@ -1,4 +1,4 @@
-import {error, os, output, path, system} from '@shopify/cli-kit'
+import {error, output, path, system} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -7,6 +7,8 @@ import {
   getPackageManager,
   PackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
+
+type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
 // Canonical list of oclif plugins that should be installed globally
 const globalPlugins = ['@shopify/theme']
@@ -71,19 +73,9 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
 
   outputUpgradeMessage(currentVersion, newestVersion)
 
-  const {platform} = os.platformAndArch()
-  const isMacOS = platform.match(/darwin/)
-  let usesHomebrew = false
-  if (isMacOS) {
-    try {
-      const brewList = await system.captureOutput('brew', ['list', '-1'])
-      usesHomebrew = Boolean(brewList.match(/^shopify-cli@3$/m))
-      // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
-    } catch (err) {}
-  }
-
+  const homebrewPackage = process.env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
   try {
-    await (usesHomebrew ? upgradeGlobalViaHomebrew() : upgradeGlobalViaNpm())
+    await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
   } catch (err) {
     output.warn('Upgrade failed!')
     throw err
@@ -91,13 +83,13 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
   return newestVersion
 }
 
-async function upgradeGlobalViaHomebrew(): Promise<void> {
+async function upgradeGlobalViaHomebrew(homebrewPackage: HomebrewPackageName): Promise<void> {
   output.info(
     output.content`Homebrew installation detected. Attempting to upgrade via ${output.token.genericShellCommand(
       'brew upgrade',
     )}...`,
   )
-  await system.exec('brew', ['upgrade', 'shopify-cli@3'], {stdio: 'inherit'})
+  await system.exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
 }
 
 async function upgradeGlobalViaNpm(): Promise<void> {

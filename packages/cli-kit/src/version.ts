@@ -4,10 +4,6 @@ import {Bug} from './error.js'
 import {findUpAndReadPackageJson} from './node/node-package-manager.js'
 import latestVersion from 'latest-version'
 
-export const PackageJsonVersionNotFoundError = (packageJsonPath: string) => {
-  return new Bug(content`The package.json at path ${token.path(packageJsonPath)} doesn't contain a version`)
-}
-
 /**
  * Returns the latest available version of an NPM package.
  * @param name - The name of the NPM package.
@@ -34,7 +30,7 @@ export async function findPackageVersionUp(options: FindPackageVersionUpOptions)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const version = (packageJson.content as any).version
   if (!version) {
-    throw PackageJsonVersionNotFoundError(packageJson.path)
+    throw new Bug(content`The package.json at path ${token.path(packageJson.path)} doesn't contain a version`)
   }
   return version
 }

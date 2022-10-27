@@ -11,14 +11,21 @@ import {AbortController} from 'abort-controller'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
-  abortController: AbortController
+  abortController?: AbortController
+  showTimestamps?: boolean
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  */
-export async function renderConcurrent({processes, abortController}: RenderConcurrentOptions) {
-  const {waitUntilExit} = render(<ConcurrentOutput processes={processes} abortController={abortController} />)
+export async function renderConcurrent({processes, abortController, showTimestamps = true}: RenderConcurrentOptions) {
+  const {waitUntilExit} = render(
+    <ConcurrentOutput
+      processes={processes}
+      abortController={abortController ?? new AbortController()}
+      showTimestamps={showTimestamps}
+    />,
+  )
 
   return waitUntilExit()
 }
@@ -73,7 +80,7 @@ export function renderInfo(options: RenderAlertOptions) {
  * ```
  * ╭─ success ────────────────────────────────────────────────╮
  * │                                                          │
- * │  Body                                                    │
+ * │  Title                                                   │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -113,7 +120,7 @@ export function renderSuccess(options: RenderAlertOptions) {
  * ```
  * ╭─ warning ────────────────────────────────────────────────╮
  * │                                                          │
- * │  Body                                                    │
+ * │  Title                                                   │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -153,8 +160,7 @@ export function renderWarning(options: RenderAlertOptions) {
  * │                                                          │
  * │  Couldn't connect to the Shopify Partner Dashboard.      │
  * │                                                          │
- * │  What to try                                             │
- * │    • Check your internet connection and try again.       │
+ * │  Check your internet connection and try again.           │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```
@@ -171,9 +177,7 @@ export function renderFatalError(error: Fatal) {
  * │                                                          │
  * │  Something went wrong.                                   │
  * │                                                          │
- * │  What to try                                             │
- * │    • Check your internet connection.                     │
- * │    • Try again.                                          │
+ * │  Check your internet connection.                         │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * ```

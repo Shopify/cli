@@ -17,7 +17,7 @@ import {
   SubHeadingContentToken,
 } from './content-tokens.js'
 import {logToFile} from './log.js'
-import {AbortController, AbortSignal} from 'abort-controller'
+import {AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 import type {Change} from 'diff'
@@ -304,61 +304,6 @@ export interface OutputProcess {
 }
 
 /**
- * Use this function when you have multiple concurrent processes that send data events
- * and we need to output them ensuring that they can visually differenciated by the user.
- *
- * @param processes - A list of processes to run concurrently.
- */
-export async function concurrent(
-  processes: OutputProcess[],
-  callback: ((signal: AbortSignal) => void) | undefined = undefined,
-) {
-  const abortController = new AbortController()
-
-  // eslint-disable-next-line node/callback-return
-  if (callback) callback(abortController.signal)
-
-  const concurrentColors = [token.yellow, token.cyan, token.magenta, token.green]
-  const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-
-  function linePrefix(prefix: string, index: number) {
-    const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    const color = concurrentColors[colorIndex]!
-    return color(`${prefix}${' '.repeat(prefixColumnSize - prefix.length)} ${colors.bold('|')} `)
-  }
-
-  try {
-    await Promise.all(
-      processes.map(async (process, index) => {
-        const stdout = new Writable({
-          write(chunk, _encoding, next) {
-            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-            for (const line of lines) {
-              info(content`${linePrefix(process.prefix, index)}${line}`)
-            }
-            next()
-          },
-        })
-        const stderr = new Writable({
-          write(chunk, _encoding, next) {
-            const lines = stripAnsiEraseCursorEscapeCharacters(chunk.toString('ascii')).split(/\n/)
-            for (const line of lines) {
-              message(content`${linePrefix(process.prefix, index)}${colors.bold(line)}`, 'error')
-            }
-            next()
-          },
-        })
-        await process.action(stdout, stderr, abortController.signal)
-      }),
-    )
-  } catch (_error) {
-    // We abort any running process
-    abortController.abort()
-    throw _error
-  }
-}
-
-/**
  * This regex can be used to find the erase cursor Ansii characters
  * to strip them from the string.
  * https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#erase-functions
@@ -371,18 +316,6 @@ const eraseCursorAnsiRegex = [
 ]
   .map((element) => `[\\u001B\\u009B][[\\]()#;?]*${element}`)
   .join('|')
-
-/**
- * The data sent through the standard pipelines of the sub-processes that we execute
- * might contain ansii escape characters to move the cursor. That causes any additional
- * formatting to break. This function takes a string and strips escape characters that
- * manage the cursor in the terminal.
- * @param value - String whose erase cursor escape characters will be stripped.
- * @returns Stripped string.
- */
-function stripAnsiEraseCursorEscapeCharacters(value: string): string {
-  return value.replace(/(\n)$/, '').replace(new RegExp(eraseCursorAnsiRegex, 'g'), '')
-}
 
 export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))

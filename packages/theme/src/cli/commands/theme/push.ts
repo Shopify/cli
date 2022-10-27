@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, session, string} from '@shopify/cli-kit'
+import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Push extends ThemeCommand {
@@ -19,12 +19,12 @@ export default class Push extends ThemeCommand {
     }),
     development: Flags.boolean({
       char: 'd',
-      description: 'Pull theme files from your remote development theme.',
+      description: 'Push theme files from your remote development theme.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     live: Flags.boolean({
       char: 'l',
-      description: 'Pull theme files from your remote live theme.',
+      description: 'Push theme files from your remote live theme.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
     unpublished: Flags.boolean({
@@ -34,7 +34,7 @@ export default class Push extends ThemeCommand {
     }),
     nodelete: Flags.boolean({
       char: 'n',
-      description: 'Runs the pull command without deleting local files.',
+      description: 'Runs the push command without deleting local files.',
       env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({
@@ -64,22 +64,22 @@ export default class Push extends ThemeCommand {
       description: 'Publish as the live theme after uploading.',
       env: 'SHOPIFY_FLAG_PUBLISH',
     }),
-    store: Flags.string({
-      char: 's',
-      description: 'Store URL',
-      env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
+    stable: Flags.boolean({
+      hidden: true,
+      description:
+        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
+      env: 'SHOPIFY_FLAG_STABLE',
     }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose', 'password']})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)
-    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }
 }

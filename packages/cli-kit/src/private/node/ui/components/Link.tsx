@@ -4,7 +4,7 @@ import terminalLink from 'terminal-link'
 
 interface Props {
   url: string
-  label: string
+  label?: string
 }
 
 /**
@@ -13,7 +13,7 @@ interface Props {
 const Link: React.FC<Props> = ({url, label}: React.PropsWithChildren<Props>): JSX.Element => {
   return (
     <Text>
-      <Text dimColor>{`${label}: `}</Text>
+      {label && <Text dimColor>{`${label}: `}</Text>}
       <Transform transform={(children) => terminalLink(children, url, {fallback: false})}>
         <Text underline>{url}</Text>
       </Transform>

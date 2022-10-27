@@ -1,26 +1,22 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
-import {Flags} from '@oclif/core'
-import {cli, session, string} from '@shopify/cli-kit'
+import {themeFlags} from '../../flags.js'
+import ThemeCommand from '../../utilities/theme-command.js'
+import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import Command from '@shopify/cli-kit/node/base-command'
 
-export default class List extends Command {
+export default class List extends ThemeCommand {
   static description = 'Lists your remote themes.'
 
   static flags = {
     ...cli.globalFlags,
-    store: Flags.string({
-      char: 's',
-      description: 'Store URL',
-      env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
-    }),
+    password: themeFlags.password,
+    store: themeFlags.store,
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
     const store = await getThemeStore(flags)
-    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(['theme', 'list'], {adminSession})
   }
 }

@@ -1,10 +1,10 @@
 import {themeFlags} from '../../flags.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, path, ui} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import Command from '@shopify/cli-kit/node/base-command'
 
-export default class Init extends Command {
+export default class Init extends ThemeCommand {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
 
   static args = [
@@ -17,7 +17,7 @@ export default class Init extends Command {
 
   static flags = {
     ...cli.globalFlags,
-    ...themeFlags,
+    path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
       description:

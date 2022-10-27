@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, path, session, string} from '@shopify/cli-kit'
+import {cli, path, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Pull extends ThemeCommand {
@@ -43,12 +43,6 @@ export default class Pull extends ThemeCommand {
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    store: Flags.string({
-      char: 's',
-      description: 'Store URL',
-      env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
-    }),
   }
 
   async run(): Promise<void> {
@@ -59,12 +53,12 @@ export default class Pull extends ThemeCommand {
       validPath = path.resolve(flags.path)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'store']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'store', 'password']})
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 
     const store = await getThemeStore(flags)
-    const adminSession = await session.ensureAuthenticatedAdmin(store)
+    const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }
 }

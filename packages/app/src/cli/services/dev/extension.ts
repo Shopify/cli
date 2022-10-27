@@ -80,10 +80,10 @@ export interface ExtensionDevOptions {
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
-  if (await environment.local.isShopify()) {
-    await devUIExtensionsWithNode(options)
-  } else {
+  if (await environment.local.useGoBinary()) {
     await devUIExtensionsWithGo(options)
+  } else {
+    await devUIExtensionsWithNode(options)
   }
 }
 

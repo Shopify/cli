@@ -87,12 +87,6 @@ export interface OAuthSession {
   partners?: string
   storefront?: string
 }
-export const PartnerOrganizationNotFoundError = () => {
-  return new Abort(
-    `Couldn't find your Shopify Partners organization`,
-    `Have you confirmed your accounts from the emails you received?`,
-  )
-}
 
 /**
  * Ensure that we have a valid session to access the Partners API.
@@ -138,13 +132,17 @@ ${token.json(scopes)}
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @returns The access token for the Admin API
  */
-export async function ensureAuthenticatedAdmin(store: string, scopes: string[] = []): Promise<AdminSession> {
+export async function ensureAuthenticatedAdmin(
+  store: string,
+  scopes: string[] = [],
+  forceRefresh = false,
+): Promise<AdminSession> {
   debug(content`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${token.raw(
     store,
   )}:
 ${token.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}})
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
   if (!tokens.admin) {
     throw MissingAdminTokenError
   }
@@ -152,11 +150,37 @@ ${token.json(scopes)}
 }
 
 /**
+ * Ensure that we have a valid session to access the Theme API.
+ * If a password is provided, that token will be used against Theme Access API.
+ * Otherwise, it will ensure that the user is authenticated with the Admin API.
+ * @param store - Store fqdn to request auth for
+ * @param password - Password generated from Theme Access app
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token and store
+ */
+export async function ensureAuthenticatedThemes(
+  store: string,
+  password: string | undefined,
+  scopes: string[] = [],
+  forceRefresh = false,
+): Promise<AdminSession> {
+  debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
+${token.json(scopes)}
+`)
+  if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
+  return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
+}
+
+/**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  * @param applications - An object containing the applications we need to be authenticated with.
  * @returns An instance with the access tokens organized by application.
  */
-export async function ensureAuthenticated(applications: OAuthApplications, env = process.env): Promise<OAuthSession> {
+export async function ensureAuthenticated(
+  applications: OAuthApplications,
+  env = process.env,
+  forceRefresh = false,
+): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
   if (applications.adminApi?.storeFqdn) {
@@ -179,7 +203,7 @@ ${token.json(applications)}
   if (validationResult === 'needs_full_auth') {
     debug(content`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
-  } else if (validationResult === 'needs_refresh') {
+  } else if (validationResult === 'needs_refresh' || forceRefresh) {
     debug(content`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
@@ -250,7 +274,10 @@ export async function ensureUserHasPartnerAccount(partnersToken: string) {
     output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
     if (!(await hasPartnerAccount(partnersToken))) {
-      throw PartnerOrganizationNotFoundError()
+      throw new Abort(
+        `Couldn't find your Shopify Partners organization`,
+        `Have you confirmed your accounts from the emails you received?`,
+      )
     }
   }
 }
@@ -302,7 +329,6 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
 async function refreshTokens(token: IdentityToken, applications: OAuthApplications, fqdn: string): Promise<Session> {
   // Refresh Identity Token
   const identityToken = await refreshAccessToken(token)
-
   // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
   const applicationTokens = await exchangeAccessForApplicationTokens(

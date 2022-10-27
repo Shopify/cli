@@ -8,7 +8,7 @@ export default class Package extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
-    ...themeFlags,
+    path: themeFlags.path,
   }
 
   async run(): Promise<void> {

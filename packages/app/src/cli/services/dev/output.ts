@@ -69,7 +69,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         break
       }
       case 'customer_accounts_ui_extension': {
-        message = customerAccountsUIMessage(url, extension).value
+        message = customerAccountsUIMessage(storeFqdn, url, extension).value
         break
       }
       case 'product_subscription': {
@@ -133,9 +133,13 @@ function checkoutUIMessage(url: string, extension: UIExtension) {
   return output.content`Preview link: ${publicURL}`
 }
 
-function customerAccountsUIMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
+function customerAccountsUIMessage(storeFqdn: string, url: string, extension: UIExtension) {
+  const [storeName, ...storeDomainParts] = storeFqdn.split('.')
+  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+  const origin = encodeURIComponent(`${url}/extensions`)
+  const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${extension.devUUID}`
+  const notice = `Please open ${url} and click on 'Visit Site' and then close the tab to allow connections.\n`
+  return output.content`${notice}Preview link: ${publicURL}`
 }
 
 function productSubscriptionMessage(url: string, extension: UIExtension) {

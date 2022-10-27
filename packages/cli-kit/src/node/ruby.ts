@@ -7,9 +7,10 @@ import constants from '../constants.js'
 import {coerce} from '../semver.js'
 import {AdminSession} from '../session.js'
 import {content, token} from '../output.js'
+import {AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.27.0'
+const RubyCLIVersion = '2.29.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
@@ -23,6 +24,8 @@ interface ExecCLI2Options {
   token?: string
   // Directory in which to execute the command. Otherwise the current directory will be used.
   directory?: string
+
+  signal?: AbortSignal
 }
 /**
  * Execute CLI 2.0 commands.
@@ -34,14 +37,14 @@ interface ExecCLI2Options {
  */
 export async function execCLI2(
   args: string[],
-  {adminSession, storefrontToken, token, directory}: ExecCLI2Options = {},
+  {adminSession, storefrontToken, token, directory, signal}: ExecCLI2Options = {},
 ) {
   await installCLIDependencies()
   const env = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
-    SHOPIFY_CLI_STORE: adminSession?.storeFqdn,
+    SHOPIFY_SHOP: adminSession?.storeFqdn,
     SHOPIFY_CLI_AUTH_TOKEN: token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     // Bundler uses this Gemfile to understand which gems are available in the
@@ -55,6 +58,7 @@ export async function execCLI2(
       stdio: 'inherit',
       cwd: directory ?? process.cwd(),
       env,
+      signal,
     })
   } catch (error) {
     // CLI2 will show it's own errors, we don't need to show an additional CLI3 error

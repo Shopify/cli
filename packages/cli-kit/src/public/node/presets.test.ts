@@ -1,4 +1,5 @@
 import * as presets from './presets.js'
+import {presetsFilename} from './presets.js'
 import {inTemporaryDirectory, mkdir, write as fileWrite} from '../../file.js'
 import {join as pathJoin} from '../../path.js'
 import {encode as tomlEncode} from '../../toml.js'
@@ -31,7 +32,7 @@ describe('loading presets', async () => {
   test('returns an empty object when an empty presets file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await fileWrite(pathJoin(tmpDir, 'shopify.presets.toml'), '# no content')
+      await fileWrite(pathJoin(tmpDir, presetsFilename), '# no content')
 
       // When
       const loaded = await presets.loadPresetsFromDirectory(tmpDir)

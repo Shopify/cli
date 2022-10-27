@@ -9,7 +9,7 @@ export default class Check extends ThemeCommand {
 
   static flags = {
     ...cli.globalFlags,
-    ...themeFlags,
+    path: themeFlags.path,
     'auto-correct': Flags.boolean({
       char: 'a',
       required: false,

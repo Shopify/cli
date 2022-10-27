@@ -24,6 +24,7 @@ describe('getUIExtensionPayload', () => {
 
       const uiExtension = testUIExtension({
         outputBundlePath,
+        directory: tmpDir,
         configuration: {
           name: 'test-ui-extension',
           type: 'product_subscription',
@@ -101,7 +102,7 @@ describe('getUIExtensionPayload', () => {
   test('default values', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uiExtension = testUIExtension()
+      const uiExtension = testUIExtension({directory: tmpDir})
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 

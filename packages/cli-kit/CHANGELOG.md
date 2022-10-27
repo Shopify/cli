@@ -1,5 +1,43 @@
 # @shopify/cli-kit
 
+## 3.20.1
+
+### Patch Changes
+
+- 3f285ff9: Fix homebrew upgrade to handle shopify-cli package
+
+## 3.20.0
+
+### Minor Changes
+
+- 96d5b175: Enable experimental presets feature for apps and themes
+- 4bd05555: Add experimental preset flag for pre-specifying command line flags
+
+### Patch Changes
+
+- 0a8ee2a3: Document how to style error messages
+- efa5b071: Refresh theme dev session every 90 minutes
+
+## 3.19.0
+
+### Minor Changes
+
+- 7bb5c23f: Add ensureAuthenticatedThemes helper for session
+
+## 3.18.0
+
+### Minor Changes
+
+- b4dafa4f: Add timestamps to logs and introduce first UI kit components
+- 65625f47: Send a new environment variable to apps in dev command with the spin store domain.
+
+### Patch Changes
+
+- ef42fda6: Improve error outputs by using the new Banner component
+- 514f2cb5: Support git 2.28 or earlier when initializing a repository
+- 1455ee44: Improve how concurrent processes output looks
+- 0d674d64: Output messages with partners urls fixed when running against an spin instance
+
 ## 3.17.0
 
 ### Minor Changes

@@ -1,5 +1,52 @@
 # @shopify/cli
 
+## 3.20.1
+
+### Patch Changes
+
+- 3f285ff9: Fix homebrew upgrade to handle shopify-cli package
+- Updated dependencies [3f285ff9]
+  - @shopify/cli-kit@3.20.1
+  - @shopify/plugin-ngrok@3.20.1
+
+## 3.20.0
+
+### Patch Changes
+
+- Updated dependencies [96d5b175]
+- Updated dependencies [0a8ee2a3]
+- Updated dependencies [efa5b071]
+- Updated dependencies [4bd05555]
+  - @shopify/cli-kit@3.20.0
+  - @shopify/plugin-ngrok@3.20.0
+
+## 3.19.0
+
+### Patch Changes
+
+- Updated dependencies [7bb5c23f]
+  - @shopify/cli-kit@3.19.0
+  - @shopify/plugin-ngrok@3.19.0
+
+## 3.18.0
+
+### Minor Changes
+
+- b4dafa4f: Add timestamps to logs and introduce first UI kit components
+
+### Patch Changes
+
+- ef42fda6: Improve error outputs by using the new Banner component
+- 1455ee44: Improve how concurrent processes output looks
+- Updated dependencies [ef42fda6]
+- Updated dependencies [514f2cb5]
+- Updated dependencies [1455ee44]
+- Updated dependencies [b4dafa4f]
+- Updated dependencies [65625f47]
+- Updated dependencies [0d674d64]
+  - @shopify/cli-kit@3.18.0
+  - @shopify/plugin-ngrok@3.18.0
+
 ## 3.17.0
 
 ### Patch Changes

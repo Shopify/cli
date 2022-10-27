@@ -1,7 +1,7 @@
 {
   "name": "@shopify/shopify-cli-extensions",
   "author": "Shopify <app-extensions@shopify.com>",
-  "version": "3.17.0",
+  "version": "3.20.1",
   "description": "A command line tool to build UI extensions",
   "license": "MIT",
   "files": [

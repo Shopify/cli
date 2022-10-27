@@ -94,14 +94,14 @@ describe('renderSuccess', async () => {
 
     // When
     renderSuccess({
-      body: 'Body',
+      headline: 'Title',
     })
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Body                                                                        │
+      │  Title                                                                       │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
@@ -115,7 +115,7 @@ describe('renderWarning', async () => {
 
     // When
     renderWarning({
-      body: 'Body',
+      headline: 'Title',
       reference: [
         'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
         'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
@@ -128,7 +128,7 @@ describe('renderWarning', async () => {
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Body                                                                        │
+      │  Title                                                                       │
       │                                                                              │
       │  Next steps                                                                  │
       │    1. First                                                                  │
@@ -157,7 +157,7 @@ describe('renderError', async () => {
     // When
     renderError({
       headline: 'Something went wrong.',
-      tryMessages: ['Check your internet connection.', 'Try again.'],
+      tryMessage: 'Check your internet connection.',
     })
 
     // Then
@@ -166,9 +166,7 @@ describe('renderError', async () => {
       │                                                                              │
       │  Something went wrong.                                                       │
       │                                                                              │
-      │  What to try                                                                 │
-      │    • Check your internet connection.                                         │
-      │    • Try again.                                                              │
+      │  Check your internet connection.                                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
@@ -191,8 +189,7 @@ describe('renderFatalError', async () => {
       │                                                                              │
       │  Couldn't connect to the Shopify Partner Dashboard.                          │
       │                                                                              │
-      │  What to try                                                                 │
-      │    • Check your internet connection and try again.                           │
+      │  Check your internet connection and try again.                               │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
@@ -219,7 +216,7 @@ describe('renderFatalError', async () => {
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
-      │  Stack trace:                                                                │
+      │  To investigate the issue, examine this stack trace:                         │
       │  at _compile (internal/modules/cjs/loader.js:1137)                           │
       │  at js (internal/modules/cjs/loader.js:1157)                                 │
       │  at load (internal/modules/cjs/loader.js:985)                                │
@@ -232,26 +229,19 @@ describe('renderFatalError', async () => {
 
 describe('renderConcurrent', async () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
-    // Temporarily skip the test
-    return
-
     // When
     const {stdout} = await run('render-concurrent')
-    const lastFrame = stripAnsi(stdout)
-      .split('\n')
-      .slice(-7)
-      .map((line) => line.replace(/\d/g, '0'))
-      .join('\n')
+    const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
 
     // Then
     expect(lastFrame).toMatchInlineSnapshot(`
       "0000-00-00 00:00:00 | backend  | first backend message
       0000-00-00 00:00:00 | backend  | second backend message
       0000-00-00 00:00:00 | backend  | third backend message
-
       0000-00-00 00:00:00 | frontend | first frontend message
       0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message"
+      0000-00-00 00:00:00 | frontend | third frontend message
+      "
     `)
   })
 })

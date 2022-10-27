@@ -1,6 +1,7 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
-import {api, environment, error, output, plugins, port, store} from '@shopify/cli-kit'
+import {api, environment, output, plugins, port, store} from '@shopify/cli-kit'
+import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 
 export interface PartnersURLs {
@@ -66,7 +67,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
     if (!matches) {
-      throw new error.Abort(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
+      throw new AbortError(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
     }
     frontendPort = Number(matches[2])
     frontendUrl = matches[1]!
@@ -88,12 +89,11 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 export async function generateURL(config: Config, frontendPort: number): Promise<string> {
   // For the moment we assume to always have ngrok, this will change in a future PR
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
-  const result = await plugins.runTunnelPlugin(config, frontendPort, 'ngrok')
-
-  if (result.error === 'multiple-urls') throw new error.Bug('Multiple tunnel plugins for ngrok found')
-  if (result.error === 'no-urls' || !result.url) throw new error.Bug('Ngrok failed to start the tunnel')
-  output.success('The tunnel is running and you can now view your app')
-  return result.url
+  const provider = 'ngrok'
+  return (await plugins.runTunnelPlugin(config, frontendPort, provider))
+    .doOnOk(() => output.success('The tunnel is running and you can now view your app'))
+    .mapError(mapRunTunnelPluginError)
+    .valueOrThrow()
 }
 
 export function generatePartnersURLs(baseURL: string): PartnersURLs {
@@ -113,7 +113,7 @@ export async function updateURLs(urls: PartnersURLs, apiKey: string, token: stri
   const result: api.graphql.UpdateURLsQuerySchema = await api.partners.request(query, token, variables)
   if (result.appUpdate.userErrors.length > 0) {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 }
 
@@ -157,4 +157,17 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     await store.setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
+}
+
+function mapRunTunnelPluginError(tunnelPluginError: plugins.TunnelPluginError) {
+  switch (tunnelPluginError.type) {
+    case 'no-provider':
+      return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
+    case 'multiple-urls':
+      return new BugError('Multiple tunnel plugins for ngrok found')
+    case 'unknown':
+      return new BugError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`)
+    default:
+      return new AbortSilentError()
+  }
 }

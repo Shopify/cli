@@ -15,6 +15,7 @@ import {
   ensureAuthenticatedAdmin,
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
+  ensureAuthenticatedThemes,
   OAuthApplications,
   OAuthSession,
 } from './session.js'
@@ -211,6 +212,23 @@ describe('when existing session is valid', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(expected)
   })
+
+  it('refreshes token if forceRefresh is true', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, true)
+
+    // Then
+    expect(authorize).not.toHaveBeenCalledOnce()
+    expect(exchangeCodeForAccessToken).not.toBeCalled()
+    expect(refreshAccessToken).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(secureStore).toBeCalledWith(validSession)
+    expect(got).toEqual(validTokens)
+  })
 })
 
 describe('when existing session is expired', () => {
@@ -340,5 +358,39 @@ describe('ensureAuthenticatedPartners', () => {
 
     // Then
     expect(got).toEqual('custom_partners_token')
+  })
+})
+
+describe('ensureAuthenticatedTheme', () => {
+  it('returns admin token when no password is provided', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const got = await ensureAuthenticatedThemes('mystore', undefined)
+
+    // Then
+    expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
+  })
+
+  it('throws error if there is no token when no password is provided', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(secureFetch).mockResolvedValue(sessionWithoutTokens)
+
+    // When
+    const got = ensureAuthenticatedThemes('mystore', undefined)
+
+    // Then
+    await expect(got).rejects.toThrow(`No admin token`)
+  })
+
+  it('returns the password when is provided', async () => {
+    // When
+    const got = await ensureAuthenticatedThemes('mystore', 'password')
+
+    // Then
+    expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
   })
 })
