@@ -45,6 +45,10 @@ beforeEach(() => {
           codespaceURL: vi.fn(),
           gitpodURL: vi.fn(),
         },
+        spin: {
+          isSpin: vi.fn(),
+          fqdn: vi.fn(),
+        },
       },
     }
   })
@@ -504,6 +508,48 @@ describe('generateFrontendURL', () => {
     })
     expect(store.setAppInfo).not.toBeCalled()
     expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('Returns a spin url if we are in a spin environment', async () => {
+    // Given
+    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
+    vi.mocked(environment.spin.fqdn).mockResolvedValue('spin.domain.dev')
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({
+      frontendUrl: 'https://cli.spin.domain.dev',
+      frontendPort: 4040,
+      usingLocalhost: false,
+    })
+    expect(store.setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {
+    // Given
+    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: true,
+      noTunnel: false,
+      tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingLocalhost: false})
   })
 })
 
