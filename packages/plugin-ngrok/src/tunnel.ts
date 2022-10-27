@@ -1,20 +1,25 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {error, os, output, ui} from '@shopify/cli-kit'
-import {startTunnel} from '@shopify/cli-kit/plugins/tunnel'
+import {os, output, ui} from '@shopify/cli-kit'
+import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
 // New entry point for hooks
-export async function hookStart(port: number): Promise<{url: string | undefined}> {
+export async function hookStart(port: number): Promise<Result<{url: string}, TunnelError>> {
   try {
     const url = await start({port})
-    return {url}
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    renderFatalError(error as error.Abort)
-    return {url: undefined}
+    return ok({url})
+    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    const errorType = getErrorType(error.message)
+    renderFatalError(
+      new AbortError(`The ngrok tunnel could not be started.\n\n${error.message}`, buildTryMessage(errorType)),
+    )
+    return err(new TunnelError(errorType, error.message))
   }
 }
 
@@ -25,10 +30,7 @@ export async function start(options: {port: number}): Promise<string> {
     await authenticate(token)
   }
 
-  const url = await ngrok.connect({proto: 'http', addr: options.port}).catch((err: Error) => {
-    throw new error.Abort(`The ngrok tunnel could not be started.\n\n${err.message}`, buildTryMessage(err.message))
-  })
-  return url
+  return ngrok.connect({proto: 'http', addr: options.port})
 }
 
 export async function authenticate(token: string): Promise<void> {
@@ -63,8 +65,8 @@ async function tokenPrompt(showExplanation = true): Promise<string> {
   return input.token
 }
 
-function buildTryMessage(nrokErrorMessage: string): string | undefined {
-  if (/err_ngrok_108/.test(nrokErrorMessage)) {
+function buildTryMessage(errorType: TunnelErrorType): string | undefined {
+  if (errorType === 'tunnel-already-running') {
     const {platform} = os.platformAndArch()
     const tryMessage = 'Kill all the ngrok processes with '
     if (platform === 'windows') {
@@ -72,8 +74,17 @@ function buildTryMessage(nrokErrorMessage: string): string | undefined {
     } else {
       return tryMessage.concat(output.content`${output.token.genericShellCommand('killall ngrok')}`.value)
     }
-  } else if (/err_ngrok_105|err_ngrok_106|err_ngrok_107/.test(nrokErrorMessage)) {
+  } else if (errorType === 'wrong-credentials') {
     return output.content`Update your ngrok token with ${output.token.genericShellCommand('shopify ngrok auth')}`.value
   }
   return undefined
+}
+
+function getErrorType(nrokErrorMessage: string): TunnelErrorType {
+  if (/err_ngrok_108/.test(nrokErrorMessage)) {
+    return 'tunnel-already-running'
+  } else if (/err_ngrok_105|err_ngrok_106|err_ngrok_107/.test(nrokErrorMessage)) {
+    return 'wrong-credentials'
+  }
+  return 'unknown'
 }

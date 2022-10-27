@@ -21,6 +21,10 @@
       "import": "./dist/public/common/array.js",
       "types": "./dist/public/common/array.d.ts"
     },
+    "./common/result": {
+      "import": "./dist/public/common/result.js",
+      "types": "./dist/public/common/result.d.ts"
+    },
     "./node/ui": {
       "import": "./dist/public/node/ui.js",
       "types": "./dist/public/node/ui.d.ts"
@@ -28,6 +32,10 @@
     "./node/presets": {
       "import": "./dist/public/node/presets.js",
       "types": "./dist/public/node/presets.d.ts"
+    },
+    "./node/error": {
+      "import": "./dist/public/node/error.js",
+      "types": "./dist/public/node/error.d.ts"
     },
     "./node/*": {
       "node": "./dist/node/*.js",
