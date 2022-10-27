@@ -79,6 +79,7 @@ export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: 
 }
 
 export interface TunnelPluginError {
+  provider: string
   type: 'multiple-urls' | 'handled-error' | 'unknown' | 'no-provider'
   message?: string
 }
@@ -101,12 +102,14 @@ export async function runTunnelPlugin(
   const urlResults = Object.values(hooks).filter(
     (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
   )
-  if (urlResults.length > 1) return err({type: 'multiple-urls'})
-  if (urlResults.length === 0 || !urlResults[0]) return err({type: 'no-provider'})
+  if (urlResults.length > 1) return err({provider, type: 'multiple-urls'})
+  if (urlResults.length === 0 || !urlResults[0]) return err({provider, type: 'no-provider'})
 
   return urlResults[0]
     .map((data) => data.url)
     .mapError((error) =>
-      error.type === 'unknown' ? {type: 'unknown', message: error.message} : {type: 'handled-error'},
+      error.type === 'unknown'
+        ? {provider, type: 'unknown', message: error.message}
+        : {provider, type: 'handled-error'},
     )
 }

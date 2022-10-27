@@ -82,7 +82,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 export async function generateURL(config: Config, frontendPort: number): Promise<string> {
   // For the moment we assume to always have ngrok, this will change in a future PR
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
-  return (await plugins.runTunnelPlugin(config, frontendPort, 'ngrok'))
+  const provider = 'ngrok'
+  return (await plugins.runTunnelPlugin(config, frontendPort, provider))
     .doOnOk(() => output.success('The tunnel is running and you can now view your app'))
     .mapError(mapRunTunnelPluginError)
     .valueOrThrow()
@@ -154,11 +155,11 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
 function mapRunTunnelPluginError(tunnelPluginError: plugins.TunnelPluginError) {
   switch (tunnelPluginError.type) {
     case 'no-provider':
-      return new BugError('Tunnel plugin for ngrok not found')
+      return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
     case 'multiple-urls':
       return new BugError('Multiple tunnel plugins for ngrok found')
     case 'unknown':
-      return new BugError(`Ngrok failed to start the tunnel.\n${tunnelPluginError.message}`)
+      return new BugError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`)
     default:
       return new AbortSilentError()
   }

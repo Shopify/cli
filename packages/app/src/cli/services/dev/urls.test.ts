@@ -59,7 +59,7 @@ describe('generateURL', () => {
   it('throws error if there are multiple urls', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'multiple-urls'}))
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'multiple-urls'}))
 
     // When
     const got = generateURL(config, 3456)
@@ -72,20 +72,22 @@ describe('generateURL', () => {
   it('throws error if there is no provider', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'no-provider'}))
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'no-provider'}))
 
     // When
     const got = generateURL(config, 3456)
 
     // Then
     await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/Tunnel plugin for ngrok not found/)
+    await expect(got).rejects.toThrow(/We couldn't find the ngrok tunnel plugin/)
   })
 
   it('throws error if there is an unknown error with the provider', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'unknown', message: 'message'}))
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(
+      err({provider: 'ngrok', type: 'unknown', message: 'message'}),
+    )
 
     // When
     const got = generateURL(config, 3456)
@@ -98,7 +100,7 @@ describe('generateURL', () => {
   it('throws error if there are no tunnel urls', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({type: 'handled-error'}))
+    vi.mocked(plugins.runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'handled-error'}))
 
     // When
     const got = generateURL(config, 3456)
