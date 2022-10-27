@@ -1,5 +1,5 @@
 ---
-'@shopify/app': major
+'@shopify/app': minor
 ---
 
 Adding support for a new auth_callback_path setting in web.shopify.toml, which overrides the values in the app setup when running the dev command.
