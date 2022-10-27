@@ -147,7 +147,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: cd packages/cli-hydrogen && yarn test --reporter verbose
+        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features --output-style=stream
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
