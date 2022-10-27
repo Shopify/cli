@@ -68,7 +68,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         message = checkoutUIMessage(url, extension).value
         break
       }
-      case 'checkout_ui_extension_beta': {
+      case 'ui_extension': {
         message = checkoutUIMessage(url, extension).value
         break
       }

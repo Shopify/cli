@@ -80,12 +80,7 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [
-    ...publicUIExtensions.types,
-    'pos_ui_extension',
-    'customer_accounts_ui_extension',
-    'checkout_ui_extension_beta',
-  ],
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'ui_extension'],
 } as const
 
 export const activeUIExtensions = {
@@ -149,7 +144,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   switch (extensionType) {
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
-    case 'checkout_ui_extension_beta':
+    case 'ui_extension':
       return {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
     case 'checkout_ui_extension':
       return {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
@@ -217,7 +212,6 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
       'order_discounts',
       'shipping_discounts',
       'checkout_ui_extension',
-      'checkout_ui_extension_beta',
       'checkout_post_purchase',
     ],
   },
@@ -231,6 +225,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
       'delivery_customization',
       'pos_ui_extension',
       'shipping_rate_presenter',
+      'ui_extension',
     ],
   },
 ]
@@ -241,7 +236,7 @@ export const externalExtensionTypeNames = {
     'Post-purchase UI',
     'Theme app extension',
     'Checkout UI',
-    'Checkout UI Beta (shopifolk only)',
+    'Checkout UI Beta',
     'POS UI',
     'Customer accounts UI',
     'Subscription UI',
@@ -295,8 +290,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('Delivery option presenter')
     case 'delivery_customization':
       return buildExtensionOutputConfig('Delivery customization')
-    case 'checkout_ui_extension_beta':
-      return buildExtensionOutputConfig('Checkout UI Beta (shopifolk only)')
+    case 'ui_extension':
+      return buildExtensionOutputConfig('Checkout UI Beta')
   }
 }
 
@@ -328,7 +323,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'payment_customization':
     case 'delivery_customization':
     case 'shipping_rate_presenter':
-    case 'checkout_ui_extension_beta':
+    case 'ui_extension':
       // As we add new extensions, this bug will force us to add a new case here.
       return type.toUpperCase()
   }

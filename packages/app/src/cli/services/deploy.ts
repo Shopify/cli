@@ -185,7 +185,7 @@ async function configFor(extension: UIExtension, app: AppInterface) {
       }
       return {renderer_version: result?.version}
     }
-    case 'checkout_ui_extension_beta': {
+    case 'ui_extension': {
       return {
         extension_points: extension.configuration.extensionPoints,
         capabilities: extension.configuration.capabilities,
@@ -243,7 +243,7 @@ async function getExtensionPublishURL({
     let pathComponent: string
     switch (extension.type as UIExtensionTypes) {
       case 'checkout_ui_extension':
-      case 'checkout_ui_extension_beta':
+      case 'ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':
       case 'customer_accounts_ui_extension':
