@@ -41,7 +41,6 @@ describe('initialize a extension', () => {
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
         const extensionType = 'checkout_post_purchase'
-        const externalExtensionType = 'post_purchase_ui'
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({
           name: name1,
@@ -101,7 +100,57 @@ describe('initialize a extension', () => {
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
   type ExtensionLiquidFlavor = 'react' | ''
 
-  // For each combination of extension type and flavor, confirm that files are created with the expected extension
+  it.each(uiExtensions.types.map((type) => [type]))(
+    'adds dependencies for "%s" extension when extension flavor is "typescript-react"',
+
+    async (extensionType) => {
+      await withTemporaryApp(async (tmpDir: string) => {
+        const addResolutionOrOverrideMock = vi.mocked(addResolutionOrOverride)
+
+        await createFromTemplate({
+          extensionType,
+          appDirectory: tmpDir,
+          name: 'extension-name',
+          extensionFlavor: 'typescript-react',
+        })
+
+        expect(addResolutionOrOverrideMock).toHaveBeenCalledOnce()
+        expect(addResolutionOrOverrideMock).toHaveBeenCalledWith(expect.any(String), {
+          '@types/react': expect.any(String),
+        })
+      })
+    },
+    30 * 1000,
+  )
+
+  it.each(
+    uiExtensions.types.reduce((accumulator, type) => {
+      accumulator.push([type, 'vanilla-js'])
+      accumulator.push([type, 'react'])
+      accumulator.push([type, 'typescript'])
+
+      return accumulator
+    }, [] as [ExtensionTypes, ExtensionFlavor][]),
+  )(
+    'does not add dependencies for "%s" extension when extension flavor is "%s"',
+
+    async (extensionType, extensionFlavor) => {
+      await withTemporaryApp(async (tmpDir: string) => {
+        const addResolutionOrOverrideMock = vi.mocked(addResolutionOrOverride)
+
+        await createFromTemplate({
+          extensionType,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          name: 'extension-name',
+        })
+
+        expect(addResolutionOrOverrideMock).not.toHaveBeenCalled()
+      })
+    },
+    30 * 1000,
+  )
+
   it.each(
     uiExtensions.types.reduce((accumulator, type) => {
       accumulator.push([type, 'vanilla-js', 'js'])
@@ -112,7 +161,7 @@ describe('initialize a extension', () => {
       return accumulator
     }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension][]),
   )(
-    'creates %s for %s with index file at extensions/[extension-name]/src/index.%s',
+    'creates "%s" for "%s" with ".%s" src files',
 
     async (extensionType, extensionFlavor, fileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
@@ -120,56 +169,45 @@ describe('initialize a extension', () => {
 
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
 
-        const addDependenciesCalls = vi.mocked(addResolutionOrOverride).mock.calls
-        if (extensionFlavor === 'typescript-react') {
-          expect(addDependenciesCalls.length).toEqual(1)
-        } else {
-          expect(addDependenciesCalls.length).toEqual(0)
-        }
+        const srcFiles = await path.glob(path.join(tmpDir, 'extensions', name, 'src', `*`))
 
-        const srcIndexFile = await file.read(path.join(tmpDir, 'extensions', name, 'src', `index.${fileExtension}`))
-        expect(srcIndexFile.trim()).not.toBe('')
+        expect(srcFiles.length).toBeGreaterThan(0)
+
+        srcFiles.forEach((filePath) => {
+          expect(filePath.endsWith(`.${fileExtension}`)).toBe(true)
+        })
       })
     },
     30 * 1000,
   )
 
-  // For each combination of extension type and flavor, confirm that the right parameters are passed to the template
   it.each(
     uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js', ''])
-      accumulator.push([type, 'react', 'react'])
-      accumulator.push([type, 'typescript', ''])
-      accumulator.push([type, 'typescript-react', 'react'])
+      accumulator.push([type, 'vanilla-js', '', 'js'])
+      accumulator.push([type, 'react', 'react', 'jsx'])
+      accumulator.push([type, 'typescript', '', 'ts'])
+      accumulator.push([type, 'typescript-react', 'react', 'tsx'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor, ExtensionLiquidFlavor][]),
+    }, [] as [ExtensionTypes, ExtensionFlavor, ExtensionLiquidFlavor, FileExtension][]),
   )(
-    'calls recursiveDirectoryCopy with type %s, flavor %s, file extension %s and liquid flavor %s',
+    'calls recursiveDirectoryCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
 
-    async (extensionType, extensionFlavor, liquidFlavor) => {
+    async (extensionType, extensionFlavor, flavor, srcFileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
+        vi.spyOn(file, 'move').mockResolvedValue()
+
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
-        const fileMoveSpy = vi.spyOn(file, 'move').mockResolvedValue()
         const name = 'extension-name'
 
         await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
 
-        const addDependenciesCalls = vi.mocked(addResolutionOrOverride).mock.calls
-        if (extensionFlavor === 'typescript-react') {
-          expect(addDependenciesCalls.length).toEqual(1)
-        } else {
-          expect(addDependenciesCalls.length).toEqual(0)
-        }
-
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
-          flavor: liquidFlavor,
           type: extensionType,
+          flavor,
+          srcFileExtension,
           name,
         })
-
-        recursiveDirectoryCopySpy.mockRestore()
-        fileMoveSpy.mockRestore()
       })
     },
     30 * 1000,
