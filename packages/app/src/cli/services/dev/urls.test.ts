@@ -1,4 +1,11 @@
-import {updateURLs, generateURL, getURLs, shouldOrPromptUpdateURLs, generateFrontendURL} from './urls.js'
+import {
+  updateURLs,
+  generateURL,
+  getURLs,
+  shouldOrPromptUpdateURLs,
+  generateFrontendURL,
+  generatePartnersURLs,
+} from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
@@ -497,5 +504,34 @@ describe('generateFrontendURL', () => {
     })
     expect(store.setAppInfo).not.toBeCalled()
     expect(ui.prompt).not.toBeCalled()
+  })
+})
+
+describe('generatePartnersURLs', () => {
+  it('Returns the default values without an override', () => {
+    const applicationUrl = 'http://my-base-url'
+
+    const got = generatePartnersURLs(applicationUrl)
+
+    expect(got).toMatchObject({
+      applicationUrl,
+      redirectUrlWhitelist: [
+        `${applicationUrl}/auth/callback`,
+        `${applicationUrl}/auth/shopify/callback`,
+        `${applicationUrl}/api/auth/callback`,
+      ],
+    })
+  })
+
+  it('Returns just the override value when set', () => {
+    const applicationUrl = 'http://my-base-url'
+    const overridePath = '/my/custom/path'
+
+    const got = generatePartnersURLs(applicationUrl, overridePath)
+
+    expect(got).toMatchObject({
+      applicationUrl,
+      redirectUrlWhitelist: [`${applicationUrl}${overridePath}`],
+    })
   })
 })

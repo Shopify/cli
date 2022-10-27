@@ -89,14 +89,21 @@ export async function generateURL(config: Config, frontendPort: number): Promise
     .valueOrThrow()
 }
 
-export function generatePartnersURLs(baseURL: string): PartnersURLs {
-  return {
-    applicationUrl: baseURL,
-    redirectUrlWhitelist: [
+export function generatePartnersURLs(baseURL: string, authCallbackPath?: string): PartnersURLs {
+  let redirectUrlWhitelist: string[]
+  if (authCallbackPath && authCallbackPath.length > 0) {
+    redirectUrlWhitelist = [`${baseURL}${authCallbackPath}`]
+  } else {
+    redirectUrlWhitelist = [
       `${baseURL}/auth/callback`,
       `${baseURL}/auth/shopify/callback`,
       `${baseURL}/api/auth/callback`,
-    ],
+    ]
+  }
+
+  return {
+    applicationUrl: baseURL,
+    redirectUrlWhitelist,
   }
 }
 
