@@ -1,11 +1,11 @@
 import {execCLI2} from './ruby.js'
-import * as file from '../file.js'
-import * as system from '../system.js'
+import * as file from '../../file.js'
+import * as system from '../../system.js'
 import {beforeAll, describe, expect, it, vi} from 'vitest'
 
 beforeAll(() => {
-  vi.mock('../file')
-  vi.mock('../system')
+  vi.mock('../../file')
+  vi.mock('../../system')
 })
 
 describe('execCLI', () => {

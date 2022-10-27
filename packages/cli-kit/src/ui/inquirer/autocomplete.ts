@@ -1,4 +1,4 @@
-import {colors} from '../../node/colors.js'
+import colors from '../../public/node/colors.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
 import inquirer from 'inquirer'

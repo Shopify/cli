@@ -1,3 +1,3 @@
 import chalk from 'chalk'
 
-export {chalk as colors}
+export {chalk as default}

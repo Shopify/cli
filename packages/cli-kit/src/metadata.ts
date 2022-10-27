@@ -1,7 +1,7 @@
 import {isUnitTest} from './environment/local.js'
 import {AnyJson} from './json.js'
 import {MonorailEventPublic} from './monorail.js'
-import {sendErrorToBugsnag} from './node/error-handler.js'
+import {sendErrorToBugsnag} from './public/node/error-handler.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
 
 type ProvideMetadata<T> = () => Partial<T> | Promise<Partial<T>>

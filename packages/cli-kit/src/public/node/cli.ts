@@ -36,7 +36,7 @@ export async function runCLI(options: RunCLIOptions) {
    * and therefore it has no effect.
    */
   const {errorHandler} = await import('./error-handler.js')
-  const {isDevelopment} = await import('../environment/local.js')
+  const {isDevelopment} = await import('../../environment/local.js')
   const {run, settings, flush} = await import('@oclif/core')
 
   if (isDevelopment()) {
@@ -55,7 +55,7 @@ export async function runCreateCLI(options: RunCLIOptions) {
   setupEnvironmentVariables(options)
 
   const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
-  const {moduleDirectory} = await import('../path.js')
+  const {moduleDirectory} = await import('../../path.js')
 
   const packageJson = await findUpAndReadPackageJson(moduleDirectory(options.moduleURL))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,10 +71,10 @@ export async function runCreateCLI(options: RunCLIOptions) {
 }
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
-  const {isTruthy} = await import('../environment/utilities.js')
-  const constants = await import('../constants.js')
-  const {join} = await import('../path.js')
-  const {exec} = await import('../system.js')
+  const {isTruthy} = await import('../../environment/utilities.js')
+  const constants = await import('../../constants.js')
+  const {join} = await import('../../path.js')
+  const {exec} = await import('../../system.js')
 
   // Temporary flag while we test out this feature and ensure it won't break anything!
   if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
@@ -114,7 +114,7 @@ interface PackageJSON {
 }
 
 export async function localCliPackage(): Promise<CliPackageInfo | undefined> {
-  const {captureOutput} = await import('../system.js')
+  const {captureOutput} = await import('../../system.js')
 
   let npmListOutput = ''
   let localShopifyCLI: PackageJSON = {}

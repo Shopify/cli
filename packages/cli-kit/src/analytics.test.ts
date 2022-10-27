@@ -3,7 +3,7 @@ import {getAnalyticsTunnelType, reportEvent, start} from './analytics.js'
 import * as environment from './environment.js'
 import {join as joinPath, dirname} from './path.js'
 import * as os from './os.js'
-import * as ruby from './node/ruby.js'
+import * as ruby from './public/node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {getAppInfo} from './store.js'
 import constants from './constants.js'
@@ -19,14 +19,14 @@ describe('event tracking', () => {
   beforeEach(() => {
     vi.setSystemTime(currentDate)
     vi.mock('./environment.js')
-    vi.mock('./node/ruby.js')
+    vi.mock('./public/node/ruby.js')
     vi.mock('./os.js')
     vi.mock('./store.js')
     vi.mock('./string.js')
 
     vi.mock('./version.js')
     vi.mock('./monorail.js')
-    vi.mock('./node/cli.js')
+    vi.mock('./public/node/cli.js')
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
     vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)

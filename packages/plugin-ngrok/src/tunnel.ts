@@ -1,6 +1,6 @@
 import {TUNNEL_PROVIDER} from './provider.js'
 import {os, output, ui} from '@shopify/cli-kit'
-import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/plugins/tunnel'
+import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'

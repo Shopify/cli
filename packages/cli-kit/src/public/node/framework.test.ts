@@ -1,6 +1,6 @@
 import {resolveFramework} from './framework.js'
-import {inTemporaryDirectory, write as writeFile} from '../file.js'
-import {join as pathJoin} from '../path.js'
+import {inTemporaryDirectory, write as writeFile} from '../../file.js'
+import {join as pathJoin} from '../../path.js'
 import {describe, expect, it} from 'vitest'
 
 describe('frontFrameworkUsed', () => {

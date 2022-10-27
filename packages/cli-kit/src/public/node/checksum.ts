@@ -1,6 +1,6 @@
-import {fetch} from '../http.js'
-import {Abort} from '../error.js'
-import {debug, token} from '../output.js'
+import {AbortError} from './error.js'
+import {fetch} from '../../http.js'
+import {debug, token} from '../../output.js'
 import md5File from 'md5-file'
 
 /**
@@ -9,7 +9,7 @@ import md5File from 'md5-file'
  * @returns An instance of Abort.
  */
 export const InvalidChecksumError = ({file, expected, got}: {file: string; expected: string; got: string}) => {
-  return new Abort(`The validation of ${file} failed. We expected the checksum ${expected}, but got ${got})`)
+  return new AbortError(`The validation of ${file} failed. We expected the checksum ${expected}, but got ${got})`)
 }
 /**
  * Given a local file and a URL pointing to a remote file representing the MD5 of a local file,

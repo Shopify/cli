@@ -1,6 +1,6 @@
 import {zip} from './archiver.js'
-import {exists, inTemporaryDirectory, mkdir, touch} from '../file.js'
-import {join as joinPath, dirname} from '../path.js'
+import {exists, inTemporaryDirectory, mkdir, touch} from '../../file.js'
+import {join as joinPath, dirname} from '../../path.js'
 import {describe, expect, test} from 'vitest'
 import StreamZip from 'node-stream-zip'
 

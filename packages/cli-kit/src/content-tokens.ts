@@ -1,5 +1,5 @@
 import {relativize as relativizePath} from './path.js'
-import {colors} from './node/colors.js'
+import colors from './public/node/colors.js'
 import {Message, stringifyMessage} from './output.js'
 import terminalLink from 'terminal-link'
 import cjs from 'color-json'
