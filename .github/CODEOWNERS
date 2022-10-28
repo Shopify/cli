@@ -4,3 +4,6 @@ packages/cli-hydrogen/ @shopify/hydrogen
 packages/create-hydrogen/ @shopify/hydrogen
 
 packages/theme/ @shopify/theme-developer-tools
+
+packages/app/src/cli/services/dev/extension/ @shopify/ui-extensions-cli
+packages/app/src/cli/services/dev/extension.ts @shopify/ui-extensions-cli
