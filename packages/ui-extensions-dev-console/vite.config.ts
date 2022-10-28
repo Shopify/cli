@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [reactRefresh()],
   build: {
-    outDir: process.env.OUT_DIR,
+    outDir: '../app/assets/dev-console',
     assetsDir: 'extensions/dev-console/assets',
   },
   resolve: {
