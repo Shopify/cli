@@ -1,5 +1,5 @@
 /* eslint-disable id-length */
-import {replaceUpdated} from './replaceUpdated'
+import {replaceUpdated} from './replaceUpdated.js'
 
 describe('replaceUpdated', () => {
   test('replaces updated items in place, and appends new items', () => {

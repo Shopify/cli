@@ -1,2 +1,2 @@
-export * from './actions'
-export * from './types'
+export * from './actions.js'
+export * from './types.js'

@@ -1,4 +1,4 @@
-import {extensionServerReducer, INITIAL_STATE} from '../state'
+import {extensionServerReducer, INITIAL_STATE} from '../state/index.js'
 import {useReducer} from 'react'
 
 export function useExtensionServerState() {

@@ -1,13 +1,13 @@
-import {extensionServerReducer} from './extensionServerReducer'
-import {INITIAL_STATE} from './constants'
-import {mockExtension, mockApp} from '../../testing'
+import {extensionServerReducer} from './extensionServerReducer.js'
+import {INITIAL_STATE} from './constants.js'
+import {mockExtension, mockApp} from '../../testing/index.js'
 import {
   createConnectedAction,
   createUpdateAction,
   createRefreshAction,
   createFocusAction,
   createUnfocusAction,
-} from '../actions'
+} from '../actions/index.js'
 
 import type {ExtensionServerState} from './types'
 

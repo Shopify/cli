@@ -1,5 +1,5 @@
-import {ExtensionServerClient} from './ExtensionServerClient'
-import {mockApp} from '../testing'
+import {ExtensionServerClient} from './ExtensionServerClient.js'
+import {mockApp} from '../testing/index.js'
 import WS from 'jest-websocket-mock'
 import {mockGet} from 'vi-fetch'
 

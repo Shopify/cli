@@ -1,5 +1,5 @@
 /* eslint-disable @shopify/strict-component-boundaries */
-import './ExtensionServerClient/types'
+import './ExtensionServerClient/types.js'
 import type {Surface} from './ExtensionServerClient/types'
 
 declare global {

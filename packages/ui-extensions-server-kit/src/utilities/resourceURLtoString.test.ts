@@ -1,4 +1,4 @@
-import {resourceURLtoString} from './resourceURLtoString'
+import {resourceURLtoString} from './resourceURLtoString.js'
 import type {ResourceURL} from '../types'
 
 describe('resourceURLtoString tests', () => {

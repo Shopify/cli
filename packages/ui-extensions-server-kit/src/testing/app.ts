@@ -1,4 +1,4 @@
-import {App} from '../types'
+import {App} from '../types.js'
 
 export function mockApp(): App {
   return {

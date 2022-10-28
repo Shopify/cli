@@ -1,4 +1,4 @@
-import {ExtensionPayload, Status} from '../types'
+import {ExtensionPayload, Status} from '../types.js'
 
 type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>

@@ -1,6 +1,6 @@
-import {ExtensionServerClient} from '../ExtensionServerClient'
-import {INITIAL_STATE} from '../state'
-import {noop} from '../utilities'
+import {ExtensionServerClient} from '../ExtensionServerClient/index.js'
+import {INITIAL_STATE} from '../state/index.js'
+import {noop} from '../utilities/index.js'
 import {createContext} from 'react'
 
 import type {ExtensionServerContext} from './types'

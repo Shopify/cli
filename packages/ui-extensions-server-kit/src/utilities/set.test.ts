@@ -1,5 +1,5 @@
 /* eslint-disable id-length */
-import {set} from './set'
+import {set} from './set.js'
 
 describe('set()', () => {
   test('deep sets object without mutation', () => {

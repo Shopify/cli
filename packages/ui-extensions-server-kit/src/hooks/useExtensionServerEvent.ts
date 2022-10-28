@@ -1,5 +1,5 @@
-import {useExtensionServerContext} from './useExtensionServerContext'
-import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect'
+import {useExtensionServerContext} from './useExtensionServerContext.js'
+import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect.js'
 
 export function useExtensionServerEvent<TEvent extends keyof ExtensionServer.InboundEvents>(
   event: TEvent,

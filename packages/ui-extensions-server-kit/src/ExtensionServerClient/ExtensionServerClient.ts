@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import {APIClient} from './APIClient'
-import {isValidSurface} from '../utilities'
-import {DeepPartial} from '../types'
+import {APIClient} from './APIClient.js'
+import {isValidSurface} from '../utilities/index.js'
+import {DeepPartial} from '../types.js'
 
 export class ExtensionServerClient implements ExtensionServer.Client {
   public id: string

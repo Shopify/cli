@@ -1,4 +1,4 @@
-import {set, replaceUpdated, resourceURLtoString} from '../../utilities'
+import {set, replaceUpdated, resourceURLtoString} from '../../utilities/index.js'
 import type {ExtensionServerActions} from '../actions'
 import type {ExtensionPayload} from '../../types'
 
