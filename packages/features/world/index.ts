@@ -1,5 +1,5 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
+import {executables} from '../lib/constants.js'
+import {exec} from '../lib/system.js'
 import {setWorldConstructor} from '@cucumber/cucumber'
 
 export interface WorldConstructorParams {

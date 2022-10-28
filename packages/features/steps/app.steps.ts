@@ -1,5 +1,5 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
+import {executables} from '../lib/constants.js'
+import {exec} from '../lib/system.js'
 import path from 'pathe'
 import {When, Then} from '@cucumber/cucumber'
 import fs from 'fs-extra'

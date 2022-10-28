@@ -1,4 +1,4 @@
-import {isDebug} from './environment'
+import {isDebug} from './environment.js'
 import colors from 'ansi-colors'
 
 const execa = require('execa')

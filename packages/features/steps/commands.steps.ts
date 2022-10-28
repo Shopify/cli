@@ -1,5 +1,5 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
+import {executables} from '../lib/constants.js'
+import {exec} from '../lib/system.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as fs from 'fs/promises'
 import {strict as assert} from 'assert'
