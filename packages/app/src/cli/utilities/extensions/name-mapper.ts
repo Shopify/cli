@@ -1,4 +1,4 @@
-import {ExtensionTypes, ExternalExtensionTypes, UIExtensionTypes, UIExternalExtensionTypes} from '../../constants'
+import {ExtensionTypes, ExternalExtensionTypes, UIExtensionTypes, UIExternalExtensionTypes} from '../../constants.js'
 
 export function mapExtensionTypesToExternalExtensionTypes(extensionTypes: ExtensionTypes[]): ExternalExtensionTypes[] {
   return extensionTypes.map(mapExtensionTypeToExternalExtensionType)

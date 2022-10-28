@@ -1,7 +1,7 @@
-import {generateSchemaService} from './generate-schema'
+import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './environment.js'
 import * as identifiers from '../models/app/identifiers.js'
-import {testApp, testFunctionExtension} from '../models/app/app.test-data'
+import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {api, environment, error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 
