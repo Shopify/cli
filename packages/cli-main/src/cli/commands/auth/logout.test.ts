@@ -1,4 +1,4 @@
-import Logout from './logout'
+import Logout from './logout.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {session, outputMocker} from '@shopify/cli-kit'
 
