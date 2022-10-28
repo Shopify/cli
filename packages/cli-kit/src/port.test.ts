@@ -1,6 +1,6 @@
-import {getRandomPort} from './port'
-import * as System from './system'
-import {Abort} from './error'
+import {getRandomPort} from './port.js'
+import * as System from './system.js'
+import {Abort} from './error.js'
 import * as port from 'get-port-please'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 

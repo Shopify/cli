@@ -1,7 +1,7 @@
-import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler'
+import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
 import * as environment from '../environment.js'
-import * as error from '../error'
-import * as outputMocker from '../testing/output'
+import * as error from '../error.js'
+import * as outputMocker from '../testing/output.js'
 import {hashString} from '../string.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 

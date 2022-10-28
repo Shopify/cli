@@ -1,4 +1,4 @@
-import * as path from '../path'
+import * as path from '../path.js'
 import {ExecaChildProcess, execaNode} from 'execa'
 
 type Run = (fixture: string, props?: {env?: {[key: string]: unknown}}) => ExecaChildProcess<string>
