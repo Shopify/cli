@@ -1,4 +1,5 @@
-import {isDebug} from './environment.js'
+/* eslint-disable import/extensions */
+import {isDebug} from './environment'
 import colors from 'ansi-colors'
 
 const execa = require('execa')

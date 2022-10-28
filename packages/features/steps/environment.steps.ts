@@ -1,6 +1,7 @@
+/* eslint-disable import/extensions */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import {writeFile} from '../lib/fs.js'
+import {writeFile} from '../lib/fs'
 import {Given, After, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
 import rimraf from 'rimraf'

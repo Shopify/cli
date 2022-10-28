@@ -1,5 +1,6 @@
-import {executables} from '../lib/constants.js'
-import {exec} from '../lib/system.js'
+/* eslint-disable import/extensions */
+import {executables} from '../lib/constants'
+import {exec} from '../lib/system'
 import {setWorldConstructor} from '@cucumber/cucumber'
 
 export interface WorldConstructorParams {
