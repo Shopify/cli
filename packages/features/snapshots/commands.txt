@@ -6,6 +6,7 @@
  app generate extension @shopify/app           
  app generate schema    @shopify/app           
  app info               @shopify/app           
+ app test event-topic   @shopify/app           
  auth logout            @shopify/cli           
  commands               @oclif/plugin-commands 
  help                   @oclif/plugin-help     
