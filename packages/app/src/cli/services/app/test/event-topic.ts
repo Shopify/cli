@@ -6,7 +6,7 @@ import {
   localUrlPathPrompt,
   sharedSecretPrompt,
   deliveryMethodPrompt,
-} from '../prompts/test-event-topic.js'
+} from '../../../prompts/test/event-topic.js'
 import {api, http, session} from '@shopify/cli-kit'
 
 export interface SamplePayloadSchema {

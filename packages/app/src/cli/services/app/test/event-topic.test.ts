@@ -1,4 +1,4 @@
-import {requestSample, sendLocal, collectCliOptions, TestWebhookOptions, TestWebhookFlags} from './test-event-topic.js'
+import {requestSample, sendLocal, collectCliOptions, TestWebhookOptions, TestWebhookFlags} from './event-topic.js'
 import {
   addressPrompt,
   apiVersionPrompt,
@@ -7,7 +7,7 @@ import {
   localUrlPathPrompt,
   sharedSecretPrompt,
   topicPrompt,
-} from '../prompts/test-event-topic.js'
+} from '../../../prompts/test/event-topic.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, http, session} from '@shopify/cli-kit'
 
@@ -125,7 +125,7 @@ describe('sendLocal', () => {
 
 describe('collectCliOptions', () => {
   beforeEach(async () => {
-    vi.mock('../prompts/test-event-topic.js')
+    vi.mock('../../../prompts/test/event-topic.js')
 
     process.env = {
       ...env,

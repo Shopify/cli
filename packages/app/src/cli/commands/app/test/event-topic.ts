@@ -4,12 +4,12 @@ import {
   collectCliOptions,
   DELIVERY_METHOD,
   TestWebhookFlags,
-} from '../../services/test-event-topic.js'
+} from '../../../services/app/test/event-topic.js'
 import {Command, Flags} from '@oclif/core'
 import {output} from '@shopify/cli-kit'
 
 export default class TopicTesting extends Command {
-  static description = 'Trigger sample event topic payload to be sent to a designated address.'
+  static description = 'Trigger sample event topic payload to be sent to a designated address'
 
   static flags = {
     help: Flags.help({
