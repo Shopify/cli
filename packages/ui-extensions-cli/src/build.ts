@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {getConfigs} from './configs'
+import {getConfigs} from './configs.js'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 
 export interface Options {
