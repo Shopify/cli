@@ -6,9 +6,6 @@ up:
       version: v18.7.0
       packages:
         - ./
-  - go:
-      version: 1.19
-      modules: true
   - ruby:
       version: 3.1.2
   - homebrew:

@@ -4,14 +4,9 @@ ci:
 dependencies:
   override:
     - yarn install
-    - wget https://go.dev/dl/go1.19.linux-amd64.tar.gz
-    - tar -C /tmp -xzf go1.19.linux-amd64.tar.gz
-    - /tmp/go/bin/go version
 
 deploy:
   override:
-    - PATHGO=/tmp/go/bin bin/release.js
-    - PATH=$PATH:/tmp/go/bin npm_config_loglevel=verbose yarn run changeset publish
     - ./bin/package.js
   post:
     - yarn run update-bugsnag

@@ -40,7 +40,6 @@ After you've installed Parallels and virtualized the Windows environment, you ne
 - [Python](https://www.python.org/downloads/windows/) (needed for `node-gyp`)
 - [Visual Studio](https://code.visualstudio.com/download) (needed for `node-gyp`, make sure you install the "Desktop development with C++" workload)
 - [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.4 is recommended)
-- [Go](https://go.dev/doc/install) (needed for dev ui extensions)
 
 Git provides a shell called "Git Bash" which you can use. First set your global git user and email:
 
