@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.21.0
+
+### Minor Changes
+
+- 5cda6300: Enable external access to cli inside a spin instance
+
+### Patch Changes
+
+- e4352f2e: Do not report handled tunnel plugin errors to Bugsnag
+- c906187f: Add backticks surrounding command tokens
+
 ## 3.20.1
 
 ### Patch Changes

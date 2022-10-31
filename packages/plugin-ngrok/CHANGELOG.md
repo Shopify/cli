@@ -1,5 +1,15 @@
 # @shopify/plugin-ngrok
 
+## 3.21.0
+
+### Patch Changes
+
+- e4352f2e: Do not report handled tunnel plugin errors to Bugsnag
+- Updated dependencies [e4352f2e]
+- Updated dependencies [c906187f]
+- Updated dependencies [5cda6300]
+  - @shopify/cli-kit@3.21.0
+
 ## 3.20.1
 
 ### Patch Changes
