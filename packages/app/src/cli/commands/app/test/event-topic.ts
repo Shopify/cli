@@ -9,7 +9,7 @@ import {Command, Flags} from '@oclif/core'
 import {output} from '@shopify/cli-kit'
 
 export default class TopicTesting extends Command {
-  static description = 'Trigger sample event topic payload to be sent to a designated address'
+  static description = 'Trigger delivery of a sample event topic payload to a designated address'
 
   static flags = {
     help: Flags.help({
@@ -18,8 +18,8 @@ export default class TopicTesting extends Command {
       char: 'h',
       env: 'SHOPIFY_FLAG_HELP',
       description: `The command will prompt for any values not passed as command-line arguments.
-        For security reasons Shared Secret is not allowed via flags.
-        SHOPIFY_FLAG_SHARED_SECRET env variable can be used to avoid interactive prompt.`,
+        For security reasons Shared Secret isn't allowed using flags.
+        Set SHOPIFY_FLAG_SHARED_SECRET env variable to avoid interactive prompt.`,
     }),
     topic: Flags.string({
       required: false,
@@ -33,7 +33,7 @@ export default class TopicTesting extends Command {
       hidden: false,
       char: 'v',
       env: 'SHOPIFY_FLAG_API_VERSION',
-      description: 'Event tpic API Version.',
+      description: 'Event topic API Version.',
     }),
     'delivery-method': Flags.string({
       required: false,
@@ -48,17 +48,17 @@ export default class TopicTesting extends Command {
       hidden: false,
       char: 'a',
       env: 'SHOPIFY_FLAG_ADDRESS',
-      description: `Destination url (only for ${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB} or ${DELIVERY_METHOD.EVENTBRIDGE} delivery methods).`,
+      description: `Destination url (allowed for ${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB} or ${DELIVERY_METHOD.EVENTBRIDGE} delivery methods).`,
     }),
     port: Flags.string({
       hidden: false,
       env: 'SHOPIFY_FLAG_PORT',
-      description: `Destination port (only for ${DELIVERY_METHOD.HTTP} delivery method when address is localhost).`,
+      description: `Destination port (allowed for ${DELIVERY_METHOD.HTTP} delivery method when address is localhost).`,
     }),
     'url-path': Flags.string({
       hidden: false,
       env: 'SHOPIFY_FLAG_URL_PATH',
-      description: `Endpoint path (only for ${DELIVERY_METHOD.HTTP} delivery method when address is localhost).`,
+      description: `Endpoint path (allowed for ${DELIVERY_METHOD.HTTP} delivery method when address is localhost).`,
     }),
   }
 
