@@ -47,6 +47,11 @@ export default class Dev extends Command {
       description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
       env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
     }),
+    'resource-url': Flags.string({
+      hidden: false,
+      description: 'Resource URL. Format: "/{resource}/{id}"',
+      env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
+    }),
     'checkout-cart-url': Flags.string({
       hidden: false,
       description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
