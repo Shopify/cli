@@ -76,6 +76,18 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         message = productSubscriptionMessage(url, extension).value
         break
       }
+      case 'od_ui_extension': {
+        message = productSubscriptionMessage(url, extension).value
+        break
+      }
+      case 'doc_ui_extension': {
+        message = productSubscriptionMessage(url, extension).value
+        break
+      }
+      case 'dod_ui_extension': {
+        message = productSubscriptionMessage(url, extension).value
+        break
+      }
       case 'pos_ui_extension':
       case 'web_pixel_extension':
         continue

@@ -22,6 +22,7 @@ export interface ExtensionConfigOptions {
   includeResourceURL?: boolean
   checkoutCartUrl?: string
   subscriptionProductUrl?: string
+  resourceUrl?: string
   grantedScopes?: string[]
 }
 
@@ -82,7 +83,7 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
     extensions: extensionsConfig,
   }
 }
-type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl'>
+type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl' | 'resourceUrl'>
 export function getUIExtensionResourceURL(
   uiExtensionType: UIExtensionTypes,
   options: GetUIExensionResourceURLOptions,
@@ -97,6 +98,12 @@ export function getUIExtensionResourceURL(
       return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
+    case 'od_ui_extension':
+      return {url: options.resourceUrl ?? ''}
+    case 'dod_ui_extension':
+      return {url: options.resourceUrl ?? ''}
+    case 'doc_ui_extension':
+      return {url: options.resourceUrl ?? ''}
   }
 }
 
@@ -112,6 +119,9 @@ export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
       return 'customer_accounts'
     case 'pos_ui_extension':
       return 'pos'
+    case 'od_ui_extension':
+    case 'dod_ui_extension':
+    case 'doc_ui_extension':
     case 'product_subscription':
       return 'admin'
     case 'web_pixel_extension':

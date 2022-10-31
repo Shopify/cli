@@ -28,6 +28,12 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'theme_app_extension'
     case 'customer_accounts_ui_extension':
       return 'customer_accounts_ui'
+    case 'od_ui_extension':
+      return 'od_ui'
+    case 'dod_ui_extension':
+      return 'dod_ui'
+    case 'doc_ui_extension':
+      return 'doc_ui'
     default:
       return extensionType
   }
@@ -49,6 +55,12 @@ export function mapUIExternalExtensionTypeToUIExtensionType(
       return 'pos_ui_extension'
     case 'customer_accounts_ui':
       return 'customer_accounts_ui_extension'
+    case 'od_ui':
+      return 'od_ui_extension'
+    case 'dod_ui':
+      return 'dod_ui_extension'
+    case 'doc_ui':
+      return 'doc_ui_extension'
     default:
       return externalExtensionType
   }
@@ -80,6 +92,12 @@ export function mapExternalExtensionTypeToExtensionType(
       return 'theme'
     case 'customer_accounts_ui':
       return 'customer_accounts_ui_extension'
+    case 'od_ui':
+      return 'od_ui_extension'
+    case 'dod_ui':
+      return 'dod_ui_extension'
+    case 'doc_ui':
+      return 'doc_ui_extension'
     default:
       return externalExtensionType
   }

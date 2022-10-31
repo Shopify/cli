@@ -182,6 +182,9 @@ async function configFor(extension: UIExtension, app: AppInterface) {
     case 'checkout_post_purchase':
       return {metafields: extension.configuration.metafields}
     case 'pos_ui_extension':
+    case 'od_ui_extension':
+    case 'dod_ui_extension':
+    case 'doc_ui_extension':
     case 'product_subscription': {
       const result = await getUIExtensionRendererVersion(type, app)
       if (result === 'not_found') throw RendererNotFoundBug(type)
@@ -235,6 +238,9 @@ async function getExtensionPublishURL({
      */
     let pathComponent: string
     switch (extension.type as UIExtensionTypes) {
+      case 'od_ui_extension':
+      case 'dod_ui_extension':
+      case 'doc_ui_extension':
       case 'checkout_ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':

@@ -80,7 +80,7 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'],
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'od_ui_extension', 'dod_ui_extension', 'doc_ui_extension'],
 } as const
 
 export const activeUIExtensions = {
@@ -142,6 +142,9 @@ export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionTy
  */
 export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): DependencyVersion | undefined {
   switch (extensionType) {
+    case 'od_ui_extension':
+    case 'doc_ui_extension':
+    case 'dod_ui_extension':
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
@@ -158,7 +161,7 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
 }
 
 export const uiExternalExtensionTypes = {
-  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui'],
+  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui', 'od_ui', 'doc_ui', 'dod_ui'],
 } as const
 
 export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]
@@ -206,7 +209,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
-  {name: 'Merchant admin', extensions: ['product_subscription']},
+  {name: 'Merchant admin', extensions: ['product_subscription', 'pos_ui_extension', 'customer_accounts_ui_extension', 'od_ui_extension', 'doc_ui_extension', 'dod_ui_extension']},
   {
     name: 'Shopify private',
     extensions: [
@@ -234,6 +237,9 @@ export const externalExtensionTypeNames = {
     'Payment customization',
     'Delivery option presenter',
     'Delivery customization',
+    'OD UI',
+    'DOC UI',
+    'DOD UI',
   ],
 } as const
 
@@ -278,6 +284,12 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('Delivery option presenter')
     case 'delivery_customization':
       return buildExtensionOutputConfig('Delivery customization')
+    case 'od_ui_extension':
+      return buildExtensionOutputConfig('OD UI')
+    case 'doc_ui_extension':
+      return buildExtensionOutputConfig('DOC UI')
+    case 'dod_ui_extension':
+      return buildExtensionOutputConfig('DOD UI')
   }
 }
 
@@ -309,6 +321,9 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'payment_customization':
     case 'delivery_customization':
     case 'shipping_rate_presenter':
+    case 'od_ui_extension':
+    case 'doc_ui_extension':
+    case 'dod_ui_extension':
       // As we add new extensions, this bug will force us to add a new case here.
       return type.toUpperCase()
   }
