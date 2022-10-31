@@ -54,12 +54,12 @@ type RenderAlertOptions = Omit<AlertProps, 'type'>
  * │  Body                                                    │
  * │                                                          │
  * │  Next steps                                              │
- * │    • Run cd santorini-goods                              │
- * │    • To preview your project, run npm app dev            │
- * │    • To add extensions, run npm generate extension       │
+ * │    • Run `cd santorini-goods`                            │
+ * │    • To preview your project, run `npm app dev`          │
+ * │    • To add extensions, run `npm generate extension`     │
  * │                                                          │
  * │  Reference                                               │
- * │    • Run npm shopify help                                │
+ * │    • Run `npm shopify help`                              │
  * │    • Press 'return' to open the dev docs:                │
  * │      https://shopify.dev                                 │
  * │                                                          │
@@ -94,12 +94,12 @@ export function renderInfo(options: RenderAlertOptions) {
  * │  Body                                                    │
  * │                                                          │
  * │  Next steps                                              │
- * │    • Run cd santorini-goods                              │
- * │    • To preview your project, run npm app dev            │
- * │    • To add extensions, run npm generate extension       │
+ * │    • Run `cd santorini-goods`                              │
+ * │    • To preview your project, run `npm app dev`            │
+ * │    • To add extensions, run `npm generate extension`       │
  * │                                                          │
  * │  Reference                                               │
- * │    • Run npm shopify help                                │
+ * │    • Run `npm shopify help`                                │
  * │    • Press 'return' to open the dev docs:                │
  * │      https://shopify.dev                                 │
  * │                                                          │
@@ -134,12 +134,12 @@ export function renderSuccess(options: RenderAlertOptions) {
  * │  Body                                                    │
  * │                                                          │
  * │  Next steps                                              │
- * │    • Run cd santorini-goods                              │
- * │    • To preview your project, run npm app dev            │
- * │    • To add extensions, run npm generate extension       │
+ * │    • Run `cd santorini-goods`                            │
+ * │    • To preview your project, run `npm app dev`          │
+ * │    • To add extensions, run `npm generate extension`     │
  * │                                                          │
  * │  Reference                                               │
- * │    • Run npm shopify help                                │
+ * │    • Run `npm shopify help`                              │
  * │    • Press 'return' to open the dev docs:                │
  * │      https://shopify.dev                                 │
  * │                                                          │
