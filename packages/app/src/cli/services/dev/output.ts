@@ -78,6 +78,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
       }
       case 'pos_ui_extension':
       case 'web_pixel_extension':
+      case 'ui_extension':
         continue
     }
     output.info(output.content`${heading}\n${message}\n`)

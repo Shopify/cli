@@ -1,0 +1,18 @@
+type = "ui_extension"
+name = "test-ui-extension"
+
+[settings]
+  [[settings.fields]]
+  key = "field_key"
+  type = "boolean"
+  name = "field-name"
+  [[settings.fields]]
+  key = "field_key_2"
+  type = "number_integer"
+  name = "field-name-2"
+
+[[extension_points]]
+target = "Checkout::Actions::RenderBefore"
+
+[[extension_points]]
+target = "Admin::Checkout::Editor"

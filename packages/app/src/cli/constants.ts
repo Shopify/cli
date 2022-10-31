@@ -80,7 +80,7 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'],
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'ui_extension'],
 } as const
 
 export const activeUIExtensions = {
@@ -158,7 +158,15 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
 }
 
 export const uiExternalExtensionTypes = {
-  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui'],
+  types: [
+    'web_pixel',
+    'post_purchase_ui',
+    'checkout_ui',
+    'pos_ui',
+    'subscription_ui',
+    'customer_accounts_ui',
+    'ui_extension',
+  ],
 } as const
 
 export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]
@@ -234,6 +242,7 @@ export const externalExtensionTypeNames = {
     'Payment customization',
     'Delivery option presenter',
     'Delivery customization',
+    'UI extension',
   ],
 } as const
 
@@ -246,6 +255,8 @@ export interface ExtensionOutputConfig {
 
 export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
   switch (extensionType) {
+    case 'ui_extension':
+      return buildExtensionOutputConfig('UI extension')
     case 'web_pixel_extension':
       return buildExtensionOutputConfig('Web pixel')
     case 'checkout_post_purchase':
@@ -309,6 +320,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'payment_customization':
     case 'delivery_customization':
     case 'shipping_rate_presenter':
+    case 'ui_extension':
       // As we add new extensions, this bug will force us to add a new case here.
       return type.toUpperCase()
   }

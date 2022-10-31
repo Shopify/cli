@@ -28,6 +28,8 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'theme_app_extension'
     case 'customer_accounts_ui_extension':
       return 'customer_accounts_ui'
+    case 'ui_extension':
+      return 'ui_extension'
     default:
       return extensionType
   }

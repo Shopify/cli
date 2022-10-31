@@ -94,6 +94,7 @@ export function getUIExtensionResourceURL(
     case 'pos_ui_extension':
     case 'web_pixel_extension':
     case 'customer_accounts_ui_extension':
+    case 'ui_extension':
       return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}

@@ -197,6 +197,15 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         localization: await loadLocalesConfig(extension.directory),
       }
     }
+    case 'ui_extension': {
+      return {
+        extension_points: extension.configuration.extensionPoints,
+        capabilities: extension.configuration.capabilities,
+        name: extension.configuration.name,
+        settings: extension.configuration.settings,
+        localization: await loadLocalesConfig(extension.directory),
+      }
+    }
     case 'customer_accounts_ui_extension': {
       return {
         extension_points: extension.configuration.extensionPoints,
@@ -238,6 +247,7 @@ async function getExtensionPublishURL({
       case 'checkout_ui_extension':
       case 'pos_ui_extension':
       case 'product_subscription':
+      case 'ui_extension':
       case 'customer_accounts_ui_extension':
         pathComponent = extension.type
         break

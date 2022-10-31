@@ -149,6 +149,7 @@ export function getRuntimeDependencies({
   extensionFlavor,
 }: Pick<UIExtensionInitOptions, 'extensionType' | 'extensionFlavor'>): DependencyVersion[] {
   switch (extensionType) {
+    case 'ui_extension':
     case 'product_subscription':
     case 'checkout_ui_extension':
     case 'pos_ui_extension':

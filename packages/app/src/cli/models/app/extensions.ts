@@ -27,7 +27,7 @@ export const UIExtensionConfigurationSchema = schema.define.object({
       }),
     )
     .default([]),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  extensionPoints: schema.define.array(schema.define.object({target: schema.define.string()})).optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
