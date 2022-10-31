@@ -71,12 +71,12 @@ describe('renderInfo', async () => {
       │  Body                                                                        │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Run cd santorini-goods                                                  │
-      │    • To preview your project, run npm app dev                                │
-      │    • To add extensions, run npm generate extension                           │
+      │    • Run \`cd santorini-goods\`                                                │
+      │    • To preview your project, run \`npm app dev\`                              │
+      │    • To add extensions, run \`npm generate extension\`                         │
       │                                                                              │
       │  Reference                                                                   │
-      │    • Run npm shopify help                                                    │
+      │    • Run \`npm shopify help\`                                                  │
       │    • Press 'return' to open the really amazing and clean dev docs:           │
       │      https://shopify.dev                                                     │
       │                                                                              │
