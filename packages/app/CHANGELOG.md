@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 3.21.0
+
+### Minor Changes
+
+- ad31c0bd: Adding support for a new auth_callback_path setting in web.shopify.toml, which overrides the values in the app setup when running the dev command.
+
+  This enables apps to use custom paths for their OAuth callback, but still have the CLI set the appropriate value in the Partners Dashboard to keep the development flow unchanged.
+
+  If you use a non-standard OAuth callback path, you can set this value to have the CLI automatically set the correct value for you.
+
+- 5cda6300: Enable external access to cli inside a spin instance
+
+### Patch Changes
+
+- e4352f2e: Do not report handled tunnel plugin errors to Bugsnag
+- Updated dependencies [e4352f2e]
+- Updated dependencies [c906187f]
+- Updated dependencies [5cda6300]
+  - @shopify/cli-kit@3.21.0
+  - @shopify/shopify-cli-extensions@3.21.0
+
 ## 3.20.1
 
 ### Patch Changes
