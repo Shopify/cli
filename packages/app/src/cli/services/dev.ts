@@ -89,9 +89,6 @@ async function dev(options: DevOptions) {
     outputAppURL(storeFqdn, exposedUrl)
   }
 
-  // If we have a real UUID for an extension, use that instead of a random one
-  options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
-
   const backendOptions = {
     apiKey,
     backendPort,
