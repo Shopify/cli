@@ -252,22 +252,16 @@ class AppLoader {
         type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
       }
 
-      const entrySourceFilePath = (
-        await Promise.all(
-          ['index']
-            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-            .map((relativePath) => path.join(directory, relativePath))
-            .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
-        )
-      ).find((sourcePath) => sourcePath !== undefined)
-      if (!entrySourceFilePath) {
-        this.abortOrReport(
-          output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+      const entrySourceFilePaths = await path.glob(path.join(directory, 'src', '*.+(ts|js|tsx|jsx)'))
+
+      if (!entrySourceFilePaths[0]) {
+        // TODO: Previosuly this was abortOrReport, but aborting guarantees types safety
+        // In what circumstance would we want this process to continue if there are no src files?
+        // There being no src files seems like a terminal problem.
+        throw new error.Abort(
+          output.content`Couldn't find any js, jsx, ts or tsx files in the directories ${output.token.path(
             directory,
           )} or ${output.token.path(path.join(directory, 'src'))}`,
-          undefined,
-          directory,
         )
       }
 
@@ -276,15 +270,16 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
+        entrySourceFilePaths,
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
-        entrySourceFilePath: entrySourceFilePath ?? '',
         outputBundlePath: path.join(directory, 'dist/main.js'),
         localIdentifier: path.basename(directory),
         // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
         devUUID: `dev-${id.generateRandomUUID()}`,
       }
     })
+
     return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories !== undefined}
   }
 
