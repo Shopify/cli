@@ -3,7 +3,7 @@ import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'e
 import {Writable} from 'node:stream'
 import type {StdinOptions} from 'esbuild'
 
-export interface BundleOptions {
+interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputBundlePath: string
