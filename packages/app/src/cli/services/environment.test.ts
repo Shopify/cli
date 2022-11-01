@@ -117,7 +117,7 @@ const EXTENSION_A: UIExtension = {
     metafields: [],
     capabilities: {block_progress: false, network_access: false},
   },
-  entrySourceFilePath: '',
+  entrySourceFilePaths: [''],
   outputBundlePath: '',
   devUUID: 'devUUID',
 }

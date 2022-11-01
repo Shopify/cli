@@ -1,10 +1,4 @@
-import {
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
-  ExtensionTypes,
-  uiExternalExtensionTypes,
-} from '../../constants.js'
+import {functionExtensions, themeExtensions, uiExtensions, ExtensionTypes} from '../../constants.js'
 import {schema} from '@shopify/cli-kit'
 
 export interface Extension {
@@ -16,18 +10,31 @@ export interface Extension {
   graphQLType: string
 }
 
+const metafieldsSchema = schema.define
+  .array(
+    schema.define.object({
+      namespace: schema.define.string(),
+      key: schema.define.string(),
+    }),
+  )
+  .default([])
+
 export const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(uiExtensions.types),
-  metafields: schema.define
-    .array(
-      schema.define.object({
-        namespace: schema.define.string(),
-        key: schema.define.string(),
-      }),
-    )
-    .default([]),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  type: schema.define.enum([...uiExtensions.types]).default('ui_extension'),
+  metafields: metafieldsSchema,
+  extensionPoints: schema.define
+    .union([
+      schema.define.array(schema.define.string()),
+      schema.define.array(
+        schema.define.object({
+          target: schema.define.string(),
+          module: schema.define.string(),
+          metafields: metafieldsSchema,
+        }),
+      ),
+    ])
+    .optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
@@ -46,10 +53,6 @@ export const UIExtensionConfigurationSchema = schema.define.object({
   runtimeContext: schema.define.string().optional(),
   version: schema.define.string().optional(),
   configuration: schema.define.any().optional(),
-})
-
-export const UIExtensionConfigurationSupportedSchema = UIExtensionConfigurationSchema.extend({
-  type: schema.define.enum([...uiExtensions.types, ...uiExternalExtensionTypes.types]),
 })
 
 export const FunctionExtensionConfigurationSchema = schema.define.object({
@@ -101,7 +104,7 @@ export type ThemeExtension = Extension & {
 
 export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
-  entrySourceFilePath: string
+  entrySourceFilePaths: string[]
   outputBundlePath: string
   devUUID: string
 }

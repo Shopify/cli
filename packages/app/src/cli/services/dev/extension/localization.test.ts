@@ -22,7 +22,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
       graphQLType: 'graphQLType',
       devUUID: 'dev-uuid',
       outputBundlePath: `${tmpDir}/dist/main.js`,
-      entrySourceFilePath: `${tmpDir}/dist/main.js`,
+      entrySourceFilePaths: [`${tmpDir}/dist/main.js`],
     },
     currentLocalization,
   )

@@ -46,7 +46,7 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
     graphQLType: 'CHECKOUT_POST_PURCHASE',
     configurationPath: uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`,
     directory,
-    entrySourceFilePath: uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`,
+    entrySourceFilePaths: uiExtension?.entrySourceFilePaths ?? [`${directory}/src/index.js`],
     idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
     devUUID: 'devUUID',
   }

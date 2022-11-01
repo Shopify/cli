@@ -83,7 +83,7 @@ export async function buildUIExtension(extension: UIExtension, options: Extensio
   await bundleExtension({
     minify: true,
     outputBundlePath: extension.outputBundlePath,
-    sourceFilePath: extension.entrySourceFilePath,
+    sourceFilePath: extension.entrySourceFilePaths[0] as string,
     environment: 'production',
     env: options.app.dotenv?.variables ?? {},
     stderr: options.stderr,

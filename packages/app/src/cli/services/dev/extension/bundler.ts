@@ -1,6 +1,6 @@
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {bundleExtension} from '../../extensions/bundle.js'
+import {bundleExtension, BundleOptions} from '../../extensions/bundle.js'
 import {abort, path, output} from '@shopify/cli-kit'
 import chokidar from 'chokidar'
 
@@ -24,36 +24,49 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   const bundlers: Promise<void>[] = []
 
   options.devOptions.extensions.forEach((extension) => {
-    bundlers.push(
-      bundleExtension({
-        minify: false,
-        outputBundlePath: extension.outputBundlePath,
-        sourceFilePath: extension.entrySourceFilePath,
-        environment: 'development',
-        env: {
-          ...(options.devOptions.app.dotenv?.variables ?? {}),
-          APP_URL: options.devOptions.url,
-        },
-        stderr: options.devOptions.stderr,
-        stdout: options.devOptions.stdout,
-        watchSignal: abortController.signal,
-        watch: (error) => {
-          output.debug(
-            `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
-              error ? 'an error' : 'changed'
-            }`,
-          )
+    const bundleOptions: BundleOptions = {
+      minify: false,
+      outputBundlePath: extension.outputBundlePath,
+      environment: 'development',
+      env: {
+        ...(options.devOptions.app.dotenv?.variables ?? {}),
+        APP_URL: options.devOptions.url,
+      },
+      stderr: options.devOptions.stderr,
+      stdout: options.devOptions.stdout,
+      watchSignal: abortController.signal,
+      watch: (error) => {
+        output.debug(
+          `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
+            error ? 'an error' : 'changed'
+          }`,
+        )
 
-          options.payloadStore
-            .updateExtension(extension, {
-              status: error ? 'error' : 'success',
-            })
-            // ESBuild handles error output
-            .then((_) => {})
-            .catch((_) => {})
-        },
-      }),
-    )
+        options.payloadStore
+          .updateExtension(extension, {
+            status: error ? 'error' : 'success',
+          })
+          // ESBuild handles error output
+          .then((_) => {})
+          .catch((_) => {})
+      },
+    }
+
+    if (extension.configuration.type === 'ui_extension') {
+      const stdinContent = extension.entrySourceFilePaths
+        .map((filePath) => `import './${path.relative(extension.directory, filePath)}';`)
+        .join('\n')
+
+      bundleOptions.stdin = {
+        contents: stdinContent,
+        resolveDir: extension.directory,
+        loader: 'tsx',
+      }
+    } else {
+      bundleOptions.sourceFilePath = extension.entrySourceFilePaths[0] as string
+    }
+
+    bundlers.push(bundleExtension(bundleOptions))
 
     const localeWatcher = chokidar
       .watch(path.join(extension.directory, 'locales', '**.json'))

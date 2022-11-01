@@ -44,7 +44,7 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      sourceFilePath: extension.entrySourceFilePaths[0],
       stdout,
       stderr,
     })
@@ -55,9 +55,9 @@ describe('buildExtension', () => {
     const options: BuildOptions = call[0]
 
     expect(options.bundle).toBeTruthy()
-    expect(options.entryPoints).toEqual([extension.entrySourceFilePath])
+    expect(options.entryPoints).toEqual([extension.entrySourceFilePaths[0]])
     expect(options.outfile).toEqual(extension.outputBundlePath)
-    expect(options.sourceRoot).toEqual(path.dirname(extension.entrySourceFilePath))
+    expect(options.sourceRoot).toEqual(path.dirname(extension.entrySourceFilePaths[0] as string))
     expect(options.loader).toEqual({
       '.esnext': 'ts',
       '.js': 'jsx',
@@ -121,7 +121,7 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      sourceFilePath: extension.entrySourceFilePaths[0],
       stdout,
       stderr,
       watchSignal: abortController.signal,
@@ -163,7 +163,7 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      sourceFilePath: extension.entrySourceFilePaths[0],
       stdout,
       stderr,
       watch: watcher,

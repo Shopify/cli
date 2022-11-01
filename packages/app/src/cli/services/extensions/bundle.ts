@@ -1,14 +1,16 @@
 import {abort, path} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {Writable} from 'node:stream'
+import type {StdinOptions} from 'esbuild'
 
-interface BundleOptions {
+export interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputBundlePath: string
-  sourceFilePath: string
+  sourceFilePath?: string
   stdout: Writable
   stderr: Writable
+  stdin?: StdinOptions
 
   /**
    * When provided, the bundling process keeps running and notifying about changes.
@@ -78,9 +80,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
   let esbuildOptions: Parameters<typeof esBuild>[0] = {
-    entryPoints: [options.sourceFilePath],
     outfile: options.outputBundlePath,
-    sourceRoot: path.dirname(options.sourceFilePath),
     bundle: true,
     define,
     jsx: 'automatic',
@@ -94,6 +94,14 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
   }
+
+  if (options.sourceFilePath) {
+    esbuildOptions.entryPoints = [options.sourceFilePath]
+    esbuildOptions.sourceRoot = path.dirname(options.sourceFilePath)
+  } else if (options.stdin) {
+    esbuildOptions.stdin = options.stdin
+  }
+
   if (options.watch) {
     const watch = options.watch
     esbuildOptions = {

@@ -5,7 +5,7 @@ import {
   FunctionExtensionConfigurationSchema,
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
-  UIExtensionConfigurationSupportedSchema,
+  UIExtensionConfigurationSchema,
   Extension,
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
@@ -244,9 +244,10 @@ class AppLoader {
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configurationSupported = await this.parseConfigurationFile(
-        UIExtensionConfigurationSupportedSchema,
+        UIExtensionConfigurationSchema,
         configurationPath,
       )
+
       const configuration = {
         ...configurationSupported,
         type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
@@ -255,7 +256,7 @@ class AppLoader {
       const entrySourceFilePaths = await path.glob(path.join(directory, 'src', '*.+(ts|js|tsx|jsx)'))
 
       if (!entrySourceFilePaths[0]) {
-        // TODO: Previosuly this was abortOrReport, but aborting guarantees types safety
+        // Previosuly this was abortOrReport, but aborting guarantees types safety
         // In what circumstance would we want this process to continue if there are no src files?
         // There being no src files seems like a terminal problem.
         throw new error.Abort(

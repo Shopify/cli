@@ -47,7 +47,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
           },
           devUUID: 'dev-94b5f0a6-1264-461d-8f78-08db4565b044',
           outputBundlePath: '/extensions/ui-extension',
-          entrySourceFilePath: '/extensions/ui-extension/index.js',
+          entrySourceFilePaths: ['/extensions/ui-extension/index.js'],
           configurationPath: '/extensions/ui-extension/shopify.app.yml',
           directory: '/extensions/ui-extension',
           graphQLType: 'CustomerAccountsUiExtension',
