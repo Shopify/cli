@@ -46,11 +46,9 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         stdout: options.devOptions.stdout,
         watchSignal: abortController.signal,
         watch: (error) => {
-          output.debug(
-            `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
-              error ? 'an error' : 'changed'
-            }`,
-          )
+          if (!error) {
+            output.info(`${extension.configuration.name} UI extension javascript built successfully`)
+          }
 
           options.payloadStore
             .updateExtension(extension, {
