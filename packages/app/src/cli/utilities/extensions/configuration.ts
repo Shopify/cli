@@ -30,7 +30,7 @@ export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
     case 'checkout_ui_extension':
       return 'checkout'
     case 'ui_extension':
-      return 'checkout_beta'
+      return 'checkout'
     case 'checkout_post_purchase':
       return 'post_purchase'
     case 'customer_accounts_ui_extension':

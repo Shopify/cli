@@ -7,7 +7,7 @@ import {
   useExtensionApi,
 } from '@shopify/admin-ui-extensions-react'
 
-render('Admin::Checkout::Editor', () => <App />);
+render('Admin::CheckoutEditor::RenderSettings', () => <App />);
 
 function App() {
   const {extensionPoint} = useExtensionApi();
@@ -21,7 +21,7 @@ function App() {
 {%- else -%}
 import { Text, extend } from "@shopify/admin-ui-extensions";
 
-extend("Admin::Checkout::Editor", (root, { extensionPoint }) => {
+extend("Admin::CheckoutEditor::RenderSettings", (root, { extensionPoint }) => {
   root.appendChild(
     root.createComponent(
       Text,
@@ -29,6 +29,5 @@ extend("Admin::Checkout::Editor", (root, { extensionPoint }) => {
       `Welcome to the ${extensionPoint} extension`
     )
   );
-  root.mount();
 });
 {%- endif -%}

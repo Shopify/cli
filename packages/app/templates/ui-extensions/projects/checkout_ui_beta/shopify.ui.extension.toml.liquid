@@ -6,19 +6,15 @@ block_progress = true
 
 [[extension_points]]
 target = "Checkout::Dynamic::Render"
-module = "./src/CheckoutDynamicRender.{{ srcFileExtension }}"
+module = "./src/checkoutDynamicRender.{{ srcFileExtension }}"
 
 # [[extension_points.metafields]]
 # namespace = "my-namespace"
 # key = "my-key"
 
 [[extension_points]]
-target = "Admin::Checkout::Editor"
-module = "./src/AdminCheckoutEditor.{{ srcFileExtension }}"
-
-# [[extension_points.metafields]]
-# namespace = "my-namespace"
-# key = "my-key-2"
+target = "Admin::CheckoutEditor::RenderSettings"
+module = "./src/adminCheckoutEditorRenderSettings.{{ srcFileExtension }}"
 
 # Read more on extension settings at https://shopify.dev/api/checkout-extensions/checkout/configuration
 # [settings]

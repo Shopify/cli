@@ -63,11 +63,13 @@ export function mapExternalExtensionTypeToExtensionType(
 ): ExtensionTypes {
   switch (externalExtensionType) {
     case 'post_purchase_ui':
-      return 'checkout_post_purchase'
     case 'checkout_ui':
-      return 'checkout_ui_extension'
     case 'checkout_ui_beta':
-      return 'ui_extension'
+    case 'subscription_ui':
+    case 'web_pixel':
+    case 'pos_ui':
+    case 'customer_accounts_ui':
+      return mapUIExternalExtensionTypeToUIExtensionType(externalExtensionType)
     case 'product_discount':
       return 'product_discounts'
     case 'order_discount':
@@ -76,16 +78,8 @@ export function mapExternalExtensionTypeToExtensionType(
       return 'shipping_discounts'
     case 'delivery_option_presenter':
       return 'shipping_rate_presenter'
-    case 'subscription_ui':
-      return 'product_subscription'
-    case 'web_pixel':
-      return 'web_pixel_extension'
-    case 'pos_ui':
-      return 'pos_ui_extension'
     case 'theme_app_extension':
       return 'theme'
-    case 'customer_accounts_ui':
-      return 'customer_accounts_ui_extension'
     default:
       return externalExtensionType
   }
