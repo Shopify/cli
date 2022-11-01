@@ -30,6 +30,6 @@ When(/I list the available commands/, async function () {
 
 Then(/I see all commands matching the snapshot/, async function () {
   const snapshot: string = await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})
-  const normalize = (value: string) => value.replace(/\r\n/g, '\n').trimEnd()
+  const normalize = (value: string) => value.replace(/\r\n/g, '\n').replace(/\s+$/g, '').trimStart().trimEnd()
   assert.equal(normalize(snapshot), normalize(this.commandResult), errorMessage)
 })
