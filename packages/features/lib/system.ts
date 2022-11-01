@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import {isDebug} from './environment'
 import colors from 'ansi-colors'
 

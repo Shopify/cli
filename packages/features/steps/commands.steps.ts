@@ -1,4 +1,3 @@
-/* eslint-disable import/extensions */
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'

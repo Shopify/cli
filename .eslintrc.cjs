@@ -169,5 +169,11 @@ module.exports = {
         'no-restricted-syntax': 'off',
       },
     },
+    {
+      files: ['lib/**/*.ts', 'steps/**/*.ts', 'world/**/*.ts'],
+      rules: {
+        'import/extensions': 'off',
+      },
+    },
   ],
 }
