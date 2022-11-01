@@ -6,4 +6,4 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # regenerate commands snapshot file
-../../cli-main/bin/dev.js commands --no-header --columns=Command,Plugin > commands.txt
+../../cli-main/bin/dev.js commands --no-header --columns=Command,Plugin | awk '{ gsub(/ +$/, ""); print }' > commands.txt
