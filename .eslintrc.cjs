@@ -12,16 +12,7 @@ module.exports = {
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
     extraFileExtensions: ['.cjs'],
   },
-  plugins: [
-    'no-catch-all',
-    'jest',
-    '@nrwl/nx',
-    'unused-imports',
-    'rulesdir',
-    'eslint-plugin-tsdoc',
-    'jsdoc',
-    'eslint-plugin-import',
-  ],
+  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
