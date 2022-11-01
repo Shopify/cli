@@ -172,7 +172,7 @@ module.exports = {
     {
       files: ['lib/**/*.ts', 'steps/**/*.ts', 'world/**/*.ts'],
       rules: {
-        'import/extensions': 'off',
+        'import/extensions': ['error', 'never', {ignorePackages: true}],
       },
     },
   ],
