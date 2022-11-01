@@ -56,6 +56,21 @@ export class Abort extends Fatal {
   }
 }
 
+/**
+ * An external error is similar to Abort but has extra command and args attributes.
+ * This is useful to represent errors coming from external commands, usually executed by execa.
+ */
+export class ExternalError extends Fatal {
+  command: string
+  args: string[]
+
+  constructor(message: Message, command: string, args: string[], tryMessage: TextTokenItem | Message | null = null) {
+    super(message, FatalErrorType.Abort, tryMessage)
+    this.command = command
+    this.args = args
+  }
+}
+
 export class AbortSilent extends Fatal {
   constructor() {
     super('', FatalErrorType.AbortSilent)

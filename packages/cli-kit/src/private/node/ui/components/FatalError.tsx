@@ -1,10 +1,10 @@
 import {Banner} from './Banner.js'
 import {TokenizedText} from './TokenizedText.js'
-import {Bug, cleanSingleStackTracePath, Fatal} from '../../../../error.js'
+import {Command} from './Command.js'
+import {Bug, cleanSingleStackTracePath, ExternalError, Fatal} from '../../../../error.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 import StackTracey from 'stacktracey'
-import stripAnsi from 'strip-ansi'
 
 export interface FatalErrorProps {
   error: Fatal
@@ -12,6 +12,7 @@ export interface FatalErrorProps {
 
 const FatalError: React.FC<FatalErrorProps> = ({error}) => {
   let stack
+  let tool
 
   if (error instanceof Bug) {
     stack = new StackTracey(error)
@@ -32,10 +33,22 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
       })
   }
 
+  if (error instanceof ExternalError) {
+    tool = `${error.command} ${error.args.join(' ')}`
+  }
+
   return (
-    <Banner type="error">
+    <Banner type={tool ? 'external_error' : 'error'}>
+      {tool && (
+        <Box marginBottom={1}>
+          <Text>
+            Error coming from <Command command={tool} />
+          </Text>
+        </Box>
+      )}
+
       <Box>
-        <Text>{stripAnsi(error.message)}</Text>
+        <Text>{error.message}</Text>
       </Box>
 
       {error.tryMessage && (
