@@ -4,7 +4,7 @@ import dev from '../../services/dev.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import {path, string, cli, metadata} from '@shopify/cli-kit'
+import {path, string, cli, metadata, error, output} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -69,7 +69,7 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Use ngrok to create a tunnel to your service entry point',
       env: 'SHOPIFY_FLAG_TUNNEL',
-      default: true,
+      default: false,
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({
@@ -82,6 +82,12 @@ export default class Dev extends Command {
       hidden: false,
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
+    }),
+    token: Flags.string({
+      hidden: false,
+      char: 't',
+      description: 'The token generated after installing a custom app',
+      env: 'SHOPIFY_FLAG_TOKEN',
     }),
   }
 
@@ -96,6 +102,17 @@ export default class Dev extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
+
+    if (app.configuration.type === 'merchant' && !flags.store) {
+      throw new error.Abort(
+        output.content`The flag ${output.token.genericShellCommand('--store')} is required for custom merchant apps`,
+      )
+    }
+    if (app.configuration.type === 'merchant' && !flags.token) {
+      throw new error.Abort(
+        output.content`The flag ${output.token.genericShellCommand('--token')} is required for custom merchant apps`,
+      )
+    }
 
     await dev({
       app,
@@ -112,6 +129,7 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      token: flags.token,
     })
   }
 }

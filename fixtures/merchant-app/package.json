@@ -1,0 +1,23 @@
+{
+  "name": "merchant-app",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "shopify": "../shopify",
+    "build": "../shopify app build",
+    "dev": "../shopify app dev",
+    "info": "../shopify app info",
+    "generate": "../shopify app generate",
+    "deploy": "../shopify app deploy"
+  },
+  "dependencies": {
+    "@shopify/app": "3.20.1",
+    "@shopify/cli": "3.20.1",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "pepicrft"
+}
