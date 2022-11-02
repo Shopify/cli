@@ -1,4 +1,5 @@
-import {haiku, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 interface InitOptions {
   name?: string
@@ -21,7 +22,7 @@ export const templateURLMap = {
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
   const defaults = {
-    name: await haiku.generate({suffix: 'app', directory: options.directory}),
+    name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
     template: templateURLMap.node,
   } as const
 
