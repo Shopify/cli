@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Dev Panel</title>
+    <title>Shopify Dev Panel</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@shopify/polaris@10.10.1/build/esm/styles.css"
+    />
     <style>
       body {
         height: 100%;
@@ -13,7 +17,97 @@
   </head>
 
   <body>
-    <div id="root"></div>
-    <script type="module" src="./index.jsx"></script>
+    <div class="Polaris-Page Polaris-Page--fullWidth">
+      <div class="Polaris-Page__Content">
+        <div class="Polaris-Layout">
+          <div class="Polaris-Layout__Section">
+            <div class="Polaris-Card" data-controller="webhooks">
+              <div class="Polaris-Card__Header">
+                <h2 class="Polaris-Heading">Developer tools</h2>
+              </div>
+              <div class="Polaris-Card__Section">
+                <div class="Polaris-Card__SectionHeader">
+                  <h3 aria-label="Reports" class="Polaris-Subheading">Webhooks simulator</h3>
+                  <p>
+                    You can simulate the delivery of the following webhooks
+                  </p>
+                </div>
+                <div class="Polaris-ResourceList__ResourceListWrapper">
+                  <ul class="Polaris-ResourceList" aria-live="polite">
+                    <li class="Polaris-ResourceItem__ListItem">
+                      <div class="Polaris-ResourceItem__ItemWrapper">
+                        <div class="Polaris-ResourceItem Polaris-ResourceItem--selectable Polaris-ResourceItem--persistActions" data-href="customers/341">
+                          <a aria-describedby="112" aria-label="View details for Mae Jemison" class="Polaris-ResourceItem__Link" tabindex="0" id="PolarisResourceListItemOverlay1" href="customers/341" data-polaris-unstyled="true">
+                          </a>
+                          <div class="Polaris-ResourceItem__Container" id="112">
+                            <div class="Polaris-ResourceItem__Content">
+                              <h3>
+                                <span class="Polaris-TextStyle--variationStrong">products/create</span>
+                              </h3>
+                              <div>Sent when a new product gets created</div>
+                            </div>
+                            <div class="Polaris-ResourceItem__Actions">
+                              <div class="Polaris-ButtonGroup">
+                                <div class="Polaris-ButtonGroup__Item Polaris-ButtonGroup__Item--plain">
+                                  <button class="Polaris-Button Polaris-Button--primary" type="button" data-action="click->webhooks#sendProductsCreateWebhook">
+                                    <span class="Polaris-Button__Content">
+                                      <span class="Polaris-Button__Text">Send</span>
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="Polaris-ResourceItem__Disclosure">
+                              <div>
+                                <button class="Polaris-Button Polaris-Button--plain Polaris-Button--iconOnly" aria-label="Actions dropdown" type="button" tabindex="0" aria-controls="Polarispopover1" aria-owns="Polarispopover1" aria-expanded="false">
+                                  <span class="Polaris-Button__Content">
+                                    <span class="Polaris-Button__Icon">
+                                      <span class="Polaris-Icon">
+                                        <span class="Polaris-VisuallyHidden">
+                                        </span>
+                                        <svg viewBox="0 0 20 20" class="Polaris-Icon__Svg" focusable="false" aria-hidden="true">
+                                          <path d="M6 10a2 2 0 1 1-4.001-.001 2 2 0 0 1 4.001.001zm6 0a2 2 0 1 1-4.001-.001 2 2 0 0 1 4.001.001zm6 0a2 2 0 1 1-4.001-.001 2 2 0 0 1 4.001.001z">
+                                          </path>
+                                        </svg>
+                                      </span>
+                                    </span>
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div data-controller="app-info" class="Polaris-Layout__Section Polaris-Layout__Section--secondary">
+            <div class="Polaris-Card">
+              <div class="Polaris-Card__Header">
+                <h2 class="Polaris-Heading">Information</h2>
+              </div>
+              <div class="Polaris-Card__Section">
+                <div class="Polaris-Card__SectionHeader">
+                  <h3 aria-label="Reports" class="Polaris-Subheading">App URL</h3>
+                </div>
+                <a target="_blank" data-app-info-target="url"></a>
+              </div>
+              <div class="Polaris-Card__Section">
+                <div class="Polaris-Card__SectionHeader">
+                  <h3 aria-label="Reports" class="Polaris-Subheading">Scopes</h3>
+                </div>
+                <div data-app-info-target="scopes"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+
   </body>
 </html>
