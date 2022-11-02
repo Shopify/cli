@@ -1,8 +1,8 @@
 import {Extension} from './extensions.js'
-import {AppInterface} from './app'
 import {dotEnvFileNames} from '../../constants.js'
 import {path, string} from '@shopify/cli-kit'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
+import type {AppInterface} from './app'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string

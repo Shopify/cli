@@ -1,4 +1,4 @@
-import {versionService} from './version'
+import {versionService} from './version.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {outputMocker, output, error} from '@shopify/cli-kit'
 import {

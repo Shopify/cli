@@ -1,5 +1,5 @@
 import {colors} from '../../node/colors.js'
-// eslint-disable-next-line import/extensions
+
 import Input from 'inquirer/lib/prompts/input.js'
 import inquirer from 'inquirer'
 import readline, {Interface} from 'readline'

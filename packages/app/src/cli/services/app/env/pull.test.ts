@@ -1,4 +1,4 @@
-import {pullEnv} from './pull'
+import {pullEnv} from './pull.js'
 import {fetchOrgAndApps, fetchOrganizations} from '../../dev/fetch.js'
 import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'

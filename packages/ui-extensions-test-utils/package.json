@@ -19,7 +19,8 @@
       "../../.eslintrc.cjs"
     ],
     "rules": {
-      "@typescript-eslint/no-explicit-any": "off"
+      "@typescript-eslint/no-explicit-any": "off",
+      "import/extensions": ["error", "never", {"ignorePackages": true}]
     }
   },
   "devDependencies": {
