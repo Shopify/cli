@@ -1,6 +1,6 @@
-import {Abort} from '../error.js'
-import {exists, read as readFile, write as writeFile} from '../file.js'
-import {debug, content as outputContent, token} from '../output.js'
+import {AbortError} from './error.js'
+import {exists, read as readFile, write as writeFile} from '../../file.js'
+import {debug, content as outputContent, token} from '../../output.js'
 import {parse, stringify} from 'envfile'
 
 /**
@@ -9,7 +9,7 @@ import {parse, stringify} from 'envfile'
  * @returns An abort error.
  */
 export const DotEnvNotFoundError = (path: string) => {
-  return new Abort(`The environment file at ${path} does not exist.`)
+  return new AbortError(`The environment file at ${path} does not exist.`)
 }
 
 /**

@@ -1,6 +1,6 @@
-import {start} from '../../analytics.js'
-import {debug} from '../../output.js'
-import Command from '../base-command.js'
+import {start} from '../../../analytics.js'
+import {debug} from '../../../output.js'
+import Command from '../../../public/node/base-command.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {

@@ -1,5 +1,4 @@
-import {colors} from '../../node/colors.js'
-
+import colors from '../../public/node/colors.js'
 import Input from 'inquirer/lib/prompts/input.js'
 import inquirer from 'inquirer'
 import readline, {Interface} from 'readline'

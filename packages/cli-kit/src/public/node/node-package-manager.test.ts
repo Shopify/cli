@@ -12,15 +12,15 @@ import {
   usesWorkspaces,
   addResolutionOrOverride,
 } from './node-package-manager.js'
-import {exec} from '../system.js'
-import {join as pathJoin, normalize as pathNormalize} from '../path.js'
-import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../file.js'
-import {latestNpmPackageVersion} from '../version.js'
-import {Abort} from '../error.js'
+import {exec} from '../../system.js'
+import {join as pathJoin, normalize as pathNormalize} from '../../path.js'
+import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../../file.js'
+import {latestNpmPackageVersion} from '../../version.js'
+import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
 
-vi.mock('../version.js')
-vi.mock('../system.js')
+vi.mock('../../version.js')
+vi.mock('../../system.js')
 const mockedExec = vi.mocked(exec)
 
 describe('packageManagerUsedForCreating', () => {

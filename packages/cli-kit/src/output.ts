@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './environment/local.js'
-import {PackageManager} from './node/node-package-manager.js'
-import {colors} from './node/colors.js'
+import {PackageManager} from './public/node/node-package-manager.js'
+import colors from './public/node/colors.js'
 import {
   ColorContentToken,
   CommandContentToken,

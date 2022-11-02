@@ -1,13 +1,13 @@
-import {exec} from '../system.js'
-import {exists as fileExists, read as readFile, write as writeFile} from '../file.js'
-import {glob, dirname, join as pathJoin, findUp} from '../path.js'
-import {Abort, Bug} from '../error.js'
-import {latestNpmPackageVersion} from '../version.js'
-import {Version} from '../semver.js'
-import {content, token, debug} from '../output.js'
+import {AbortError, BugError} from './error.js'
+import {exec} from '../../system.js'
+import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
+import {glob, dirname, join as pathJoin, findUp} from '../../path.js'
+import {latestNpmPackageVersion} from '../../version.js'
+import {Version} from '../../semver.js'
+import {content, token, debug} from '../../output.js'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
-import type {ExecOptions} from '../system.js'
+import type {ExecOptions} from '../../system.js'
 
 /** The name of the Yarn lock file */
 export const yarnLockfile = 'yarn.lock'
@@ -42,7 +42,7 @@ export type PackageManager = typeof packageManager[number]
  * @returns An abort error.
  */
 export const PackageJsonNotFoundError = (directory: string) => {
-  return new Abort(`The directory ${directory} doesn't have a package.json.`)
+  return new AbortError(`The directory ${directory} doesn't have a package.json.`)
 }
 
 /**
@@ -52,7 +52,7 @@ export const PackageJsonNotFoundError = (directory: string) => {
  * @returns An abort error.
  */
 export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
-  return new Bug(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
+  return new BugError(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
 }
 
 /**

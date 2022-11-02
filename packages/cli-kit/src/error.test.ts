@@ -1,9 +1,9 @@
 import {Abort, Bug, handler, cleanSingleStackTracePath} from './error.js'
+import {renderFatalError} from './public/node/ui.js'
 import {describe, expect, test, vi, beforeEach, it} from 'vitest'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
+  vi.mock('./public/node/ui.js')
 })
 
 describe('handler', () => {

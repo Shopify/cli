@@ -7,7 +7,7 @@ import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
 import {err, ok, Result} from '../public/common/result.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '../public/node/error.js'
 
 export class InvalidGrantError extends Error {}
 

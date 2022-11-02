@@ -1,7 +1,7 @@
 import {CancelExecution, Abort, AbortSilent} from './error.js'
 import {remove, exists} from './file.js'
 import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
-import {colors} from './node/colors.js'
+import colors from './public/node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {mapper as mapperUI, run as executorUI} from './ui/executor.js'

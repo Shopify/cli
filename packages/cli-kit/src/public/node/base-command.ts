@@ -1,11 +1,11 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {JsonMap} from '../json.js'
-import {isDevelopment} from '../environment/local.js'
-import {Abort} from '../error.js'
-import {addPublic} from '../metadata.js'
-import {content, info, token} from '../output.js'
-import {hashString} from '../string.js'
-import {loadPresetsFromDirectory} from '../public/node/presets.js'
+import {loadPresetsFromDirectory} from './presets.js'
+import {JsonMap} from '../../json.js'
+import {isDevelopment} from '../../environment/local.js'
+import {Abort} from '../../error.js'
+import {addPublic} from '../../metadata.js'
+import {content, info, token} from '../../output.js'
+import {hashString} from '../../string.js'
 import {Command, Interfaces} from '@oclif/core'
 
 interface PresettableFlags {

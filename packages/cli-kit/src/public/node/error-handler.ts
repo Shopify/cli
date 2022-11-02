@@ -5,13 +5,13 @@ import {
   shouldReport as shouldReportError,
   handler,
   cleanSingleStackTracePath,
-} from '../error.js'
-import {debug, info} from '../output.js'
-import {getEnvironmentData, reportEvent} from '../analytics.js'
-import * as path from '../path.js'
-import * as metadata from '../metadata.js'
-import {fanoutHooks} from '../plugins.js'
-import constants, {bugsnagApiKey} from '../constants.js'
+} from '../../error.js'
+import {debug, info} from '../../output.js'
+import {getEnvironmentData, reportEvent} from '../../analytics.js'
+import * as path from '../../path.js'
+import * as metadata from '../../metadata.js'
+import {fanoutHooks} from '../../plugins.js'
+import constants, {bugsnagApiKey} from '../../constants.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'

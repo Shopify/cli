@@ -1,6 +1,6 @@
 import {installNPMDependenciesRecursively} from './node-package-manager.js'
-import {write as writeFile, mkdir, inTemporaryDirectory} from '../file.js'
-import {join as pathJoin, dirname} from '../path.js'
+import {write as writeFile, mkdir, inTemporaryDirectory} from '../../file.js'
+import {join as pathJoin, dirname} from '../../path.js'
 import {describe, expect, test} from 'vitest'
 
 describe('installNPMDependenciesRecursively', () => {

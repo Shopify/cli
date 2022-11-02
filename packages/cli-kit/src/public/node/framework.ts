@@ -1,4 +1,4 @@
-import {join as pathJoin} from '../path.js'
+import {join as pathJoin} from '../../path.js'
 import {existsSync, readFileSync} from 'node:fs'
 
 interface FrameworkDetectionPattern {

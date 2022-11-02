@@ -1,8 +1,7 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {os, output, ui} from '@shopify/cli-kit'
-import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/plugins/tunnel'
+import {os, output, ui, error as cliKitError} from '@shopify/cli-kit'
+import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 
@@ -17,7 +16,7 @@ export async function hookStart(port: number): Promise<Result<{url: string}, Tun
   } catch (error: any) {
     const errorType = getErrorType(error.message)
     renderFatalError(
-      new AbortError(`The ngrok tunnel could not be started.\n\n${error.message}`, buildTryMessage(errorType)),
+      new cliKitError.Abort(`The ngrok tunnel could not be started.\n\n${error.message}`, buildTryMessage(errorType)),
     )
     return err(new TunnelError(errorType, error.message))
   }
