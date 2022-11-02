@@ -11,7 +11,7 @@ on:
       node-version:
         description: 'Node version'
         required: true
-        default: '18.7.0' 
+        default: '18.7.0'
         type: choice
         options:
           - 14.20.0
@@ -50,7 +50,6 @@ env:
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
   PNPM_VERSION: "7.9.4"
-  GO_VERSION: "1.19"
 
 jobs:
   fixture:

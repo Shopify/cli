@@ -2380,6 +2380,15 @@
     tslib "^2.0.3"
     uuid "^8.3.1"
 
+"@shopify/shopify-cli-extensions@3.21.0":
+  version "3.21.0"
+  resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-3.21.0.tgz#505bce6acf46b15963a8956e53f744074142fb51"
+  integrity sha512-jCWASUgPoA7RgI/7TvR4fN4wvc9QcPRNkaYDlkdQuuHj+YO35RuR3c/P+Rdbcxo4sNTPVbeXCzQWxkI27wG0TQ==
+  dependencies:
+    "@luckycatfactory/esbuild-graphql-loader" "^3.6.0"
+    esbuild "^0.12.22"
+    js-yaml "^4.1.0"
+
 "@shopify/typescript-configs@^5.1.0":
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/@shopify/typescript-configs/-/typescript-configs-5.1.0.tgz#f6e8fdd3291bf0a406578b2c6eb21f8c542d3c0a"
@@ -2664,11 +2673,6 @@
   integrity sha512-c3mAZEuK0lvBp8tmuL74XRKn1+y2dcwOUpH7x4WrF6gk1GIgiluDRgMYQtw2OFcBvAJWlt6ASU3tSqxp0Uu0Aw==
   dependencies:
     "@types/istanbul-lib-report" "*"
-
-"@types/js-yaml@^4.0.3":
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-4.0.5.tgz#738dd390a6ecc5442f35e7f03fa1431353f7e138"
-  integrity sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==
 
 "@types/json-buffer@~3.0.0":
   version "3.0.0"
