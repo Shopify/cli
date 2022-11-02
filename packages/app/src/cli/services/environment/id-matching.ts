@@ -1,9 +1,9 @@
-import {LocalSource} from './identifiers'
 import {MatchingError, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {string} from '@shopify/cli-kit'
 import {difference, partition, pickBy, uniqBy, groupBy} from 'lodash-es'
+import type {LocalSource} from './identifiers'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions

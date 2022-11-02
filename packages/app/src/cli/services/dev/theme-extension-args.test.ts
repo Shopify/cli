@@ -1,6 +1,6 @@
-import {themeExtensionArgs} from './theme-extension-args'
-import {ensureThemeExtensionDevEnvironment} from '../environment'
-import {testThemeExtensions} from '../../models/app/app.test-data'
+import {themeExtensionArgs} from './theme-extension-args.js'
+import {ensureThemeExtensionDevEnvironment} from '../environment.js'
+import {testThemeExtensions} from '../../models/app/app.test-data.js'
 import {beforeAll, describe, expect, it, vi} from 'vitest'
 
 beforeAll(() => {

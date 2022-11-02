@@ -73,6 +73,7 @@ module.exports = {
         format: null,
       },
     ],
+    'import/extensions': ['error', 'always', {ignorePackages: true}],
     '@typescript-eslint/no-misused-promises': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',

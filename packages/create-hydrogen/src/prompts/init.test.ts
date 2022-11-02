@@ -1,4 +1,4 @@
-import init from './init'
+import init from './init.js'
 import {describe, test, it, expect, vi} from 'vitest'
 
 describe('init', () => {

@@ -9,6 +9,7 @@
  auth logout            @shopify/cli           
  commands               @oclif/plugin-commands 
  help                   @oclif/plugin-help     
+ hydrogen add eslint    @shopify/cli-hydrogen  
  hydrogen add tailwind  @shopify/cli-hydrogen  
  hydrogen build         @shopify/cli-hydrogen  
  hydrogen dev           @shopify/cli-hydrogen  

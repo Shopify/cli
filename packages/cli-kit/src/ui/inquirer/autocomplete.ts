@@ -2,7 +2,7 @@ import {colors} from '../../node/colors.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
 import inquirer from 'inquirer'
-// eslint-disable-next-line import/extensions
+
 import Paginator from 'inquirer/lib/utils/paginator.js'
 import {Interface} from 'readline'
 

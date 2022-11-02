@@ -30,7 +30,8 @@
       "../../.eslintrc.cjs"
     ],
     "rules": {
-      "no-console": "off"
+      "no-console": "off",
+      "import/extensions": ["error", "never", {"ignorePackages": true}]
     }
   }
 }

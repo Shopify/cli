@@ -1,5 +1,5 @@
 import {CustomAutocomplete} from './autocomplete.js'
-// eslint-disable-next-line import/extensions
+
 import utils from 'inquirer/lib/utils/readline.js'
 import inquirer from 'inquirer'
 import {Interface} from 'readline'
