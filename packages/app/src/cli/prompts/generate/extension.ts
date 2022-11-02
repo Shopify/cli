@@ -8,7 +8,8 @@ import {
   extensionTypesGroups,
 } from '../../constants.js'
 import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
-import {haiku, ui, environment} from '@shopify/cli-kit'
+import {ui, environment} from '@shopify/cli-kit'
+import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 interface GenerateExtensionOptions {
   name?: string
@@ -87,7 +88,7 @@ const generateExtensionPrompt = async (
       type: 'input',
       name: 'name',
       message: "Your extension's working name?",
-      default: await haiku.generate({suffix: 'ext', directory: options.directory}),
+      default: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
     })
   }
   let promptOutput: GenerateExtensionOutput = await prompt(questions)

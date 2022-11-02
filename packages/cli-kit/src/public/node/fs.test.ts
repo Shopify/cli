@@ -1,12 +1,12 @@
-import {inTemporaryDirectory, write} from './file.js'
-import {join} from './path.js'
-import * as haiku from './haiku.js'
-import {takeRandomFromArray} from './public/common/array.js'
+import {generateRandomNameForSubdirectory} from './fs.js'
+import {takeRandomFromArray} from '../common/array.js'
+import {inTemporaryDirectory, write} from '../../file.js'
+import {join} from '../../path.js'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('./public/common/array.js')
+vi.mock('../common/array.js')
 
-describe('generate', () => {
+describe('makeDirectoryWithRandomName', () => {
   test('rerolls the name if a directory exists with the same name', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -20,24 +20,11 @@ describe('generate', () => {
       await write(filePath, content)
 
       // When
-      const got = await haiku.generate({suffix: 'app', directory: tmpDir})
+      const got = await generateRandomNameForSubdirectory({suffix: 'app', directory: tmpDir})
 
       // Then
       expect(got).toEqual('free-directory-app')
       expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
-    })
-  })
-
-  test('produces a name only containing the safe words', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      vi.restoreAllMocks()
-
-      // When
-      const got = await haiku.generate({suffix: 'app', directory: tmpDir})
-
-      // Then
-      expect(got).toMatch(new RegExp(`${haiku.SAFE_ADJECTIVES.join('|')}-${haiku.SAFE_NOUNS.join('|')}-app`))
     })
   })
 })
