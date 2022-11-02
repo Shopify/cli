@@ -10,9 +10,3 @@ app.get('/', (req, res) => {
 })
 
 app.listen(process.env.PORT ?? 3000)
-
-/**
- * Next
- * ====
- * 1. Webhook generation
- */
