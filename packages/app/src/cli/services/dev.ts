@@ -58,62 +58,17 @@ async function dev(options: DevOptions) {
   }
 }
 
-function runDevPanel(options: DevOptions & {port: number; devPanelPort: number; appURL: string; devPanelURL: string}) {
-  return {
-    prefix: 'dev-panel',
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-      const rootDirectory = (await path.findUp('assets/dev-panel', {
-        cwd: path.moduleDirectory(import.meta.url),
-        type: 'directory',
-      })) as string
-      const app = express()
-      const viteServer = await createServer({
-        cacheDir: undefined,
-        configFile: false,
-        root: rootDirectory,
-        server: {
-          port: options.port,
-          cors: false,
-        },
-        logLevel: 'silent',
-        define: {
-          __TOKEN__: JSON.stringify(options.token),
-        },
-      })
-      // App middleware
-      app.use(
-        createProxyMiddleware(
-          (pathname, req) => {
-            return !pathname.startsWith('/_shopify')
-          },
-          {target: options.appURL, logLevel: 'silent'},
-        ),
-      )
-      // Dev middleware
-      app.use(
-        createProxyMiddleware(
-          (pathname, req) => {
-            return pathname.startsWith('/_shopify')
-          },
-          {target: options.devPanelURL, logLevel: 'silent'},
-        ),
-      )
-      await viteServer.listen(options.devPanelPort)
-      await app.listen(options.port)
-    },
-  }
-}
-
 async function devMerchantApp(options: DevOptions) {
-  const {frontendUrl: appFQDN, frontendPort: appPort} = await generateFrontendURL({
-    ...options,
-  })
-
-  const appURL = `${appFQDN}:${appPort}`
+  const appFQDN = 'http://127.0.0.1'
+  const appPort = await port.getRandomPort()
+  const server = express()
+  const serverPort = await port.getRandomPort()
   const devPanelPort = await port.getRandomPort()
-  const devPanelURL = `${appFQDN}:${devPanelPort}/_shopify/`
+  const devPanelURL = `${appFQDN}:${devPanelPort}/`
+  const appURL = `${appFQDN}:${appPort}/`
+  const serverURL = `${appFQDN}:${serverPort}/`
 
-  output.info(output.content`\n${output.token.heading('App URL')}\n\n  ${devPanelURL}\n`)
+  output.info(output.content`\n${output.token.heading('App URL')}\n\n  ${serverURL}_shopify\n`)
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = await port.getRandomPort()
@@ -130,7 +85,7 @@ async function devMerchantApp(options: DevOptions) {
   )
   const appEntryPoint = path.join(options.app.directory, 'app.js')
 
-  additionalProcesses.push(runDevPanel({...options, port: devPanelPort, devPanelPort, appURL, devPanelURL}))
+  additionalProcesses.push(runDevPanel({...options, devPanelPort}))
   additionalProcesses.push({
     prefix: 'home',
     action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
@@ -150,10 +105,59 @@ async function devMerchantApp(options: DevOptions) {
     },
   })
 
+  // Dev middleware
+  server.use(
+    createProxyMiddleware(
+      (pathname, req) => {
+        return (
+          pathname.startsWith('/_shopify') || pathname.startsWith('/@vite/client') || pathname.startsWith('/index.jsx')
+        )
+      },
+      {target: devPanelURL, logLevel: 'silent', changeOrigin: true},
+    ),
+  )
+
+  // App middleware
+  server.use(
+    createProxyMiddleware(
+      (pathname, req) => {
+        return !pathname.startsWith('/_shopify')
+      },
+      {target: appURL, logLevel: 'silent'},
+    ),
+  )
+  await server.listen(serverPort)
+
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+  }
+}
+
+type RunDevPanelOptions = DevOptions & {
+  devPanelPort: number
+}
+
+function runDevPanel(options: RunDevPanelOptions) {
+  return {
+    prefix: 'dev-panel',
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      const rootDirectory = (await path.findUp('assets/dev-panel', {
+        cwd: path.moduleDirectory(import.meta.url),
+        type: 'directory',
+      })) as string
+      const viteServer = await createServer({
+        cacheDir: undefined,
+        configFile: false,
+        root: rootDirectory,
+        logLevel: 'silent',
+        define: {
+          __TOKEN__: JSON.stringify(options.token),
+        },
+      })
+      await viteServer.listen(options.devPanelPort)
+    },
   }
 }
 
