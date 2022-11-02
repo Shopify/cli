@@ -16,9 +16,9 @@ import {analytics, output, port, system, session, abort, string, path, environme
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {createServer} from 'vite'
 import express from 'express'
 import {createProxyMiddleware} from 'http-proxy-middleware'
+import fetch from 'node-fetch'
 import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
@@ -63,8 +63,6 @@ async function devMerchantApp(options: DevOptions) {
   const appPort = await port.getRandomPort()
   const server = express()
   const serverPort = await port.getRandomPort()
-  const devPanelPort = await port.getRandomPort()
-  const devPanelURL = `${appFQDN}:${devPanelPort}/`
   const appURL = `${appFQDN}:${appPort}/`
   const serverURL = `${appFQDN}:${serverPort}/`
 
@@ -85,7 +83,6 @@ async function devMerchantApp(options: DevOptions) {
   )
   const appEntryPoint = path.join(options.app.directory, 'app.js')
 
-  additionalProcesses.push(runDevPanel({...options, devPanelPort}))
   additionalProcesses.push({
     prefix: 'home',
     action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
@@ -105,19 +102,126 @@ async function devMerchantApp(options: DevOptions) {
     },
   })
 
-  // Dev middleware
-  server.use(
-    createProxyMiddleware(
-      (pathname, req) => {
-        return (
-          pathname.startsWith('/_shopify') || pathname.startsWith('/@vite/client') || pathname.startsWith('/index.jsx')
-        )
-      },
-      {target: devPanelURL, logLevel: 'silent', changeOrigin: true},
-    ),
-  )
+  const rootDirectory = (await path.findUp('assets/dev-panel', {
+    cwd: path.moduleDirectory(import.meta.url),
+    type: 'directory',
+  })) as string
+  server.use('/_shopify', express.static(rootDirectory))
 
-  // App middleware
+  server.get('/api/app-info', (req, res, next) => {
+    return res.json({url: serverURL, scopes: options.app.configuration.scopes}).end()
+  })
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  server.post('/api/webhooks/products/create', async (req, res, next) => {
+    await fetch(`${serverURL}webhooks`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: 788032119674292922,
+        title: 'Example T-Shirt',
+        body_html: null,
+        vendor: 'Acme',
+        product_type: 'Shirts',
+        created_at: null,
+        handle: 'example-t-shirt',
+        updated_at: '2022-10-03T12:55:32-04:00',
+        published_at: '2022-10-03T12:55:32-04:00',
+        template_suffix: null,
+        status: 'active',
+        published_scope: 'web',
+        tags: 'example, mens, t-shirt',
+        admin_graphql_api_id: 'gid://shopify/Product/788032119674292922',
+        variants: [
+          {
+            id: 642667041472713922,
+            product_id: 788032119674292922,
+            title: '',
+            price: '19.99',
+            sku: 'example-shirt-s',
+            position: 0,
+            inventory_policy: 'deny',
+            compare_at_price: '24.99',
+            fulfillment_service: 'manual',
+            inventory_management: 'shopify',
+            option1: 'Small',
+            option2: null,
+            option3: null,
+            created_at: null,
+            updated_at: null,
+            taxable: true,
+            barcode: null,
+            grams: 200,
+            image_id: null,
+            weight: 200.0,
+            weight_unit: 'g',
+            inventory_item_id: null,
+            inventory_quantity: 75,
+            old_inventory_quantity: 75,
+            requires_shipping: true,
+            admin_graphql_api_id: 'gid://shopify/ProductVariant/642667041472713922',
+          },
+          {
+            id: 757650484644203962,
+            product_id: 788032119674292922,
+            title: '',
+            price: '19.99',
+            sku: 'example-shirt-m',
+            position: 0,
+            inventory_policy: 'deny',
+            compare_at_price: '24.99',
+            fulfillment_service: 'manual',
+            inventory_management: 'shopify',
+            option1: 'Medium',
+            option2: null,
+            option3: null,
+            created_at: null,
+            updated_at: null,
+            taxable: true,
+            barcode: null,
+            grams: 200,
+            image_id: null,
+            weight: 200.0,
+            weight_unit: 'g',
+            inventory_item_id: null,
+            inventory_quantity: 50,
+            old_inventory_quantity: 50,
+            requires_shipping: true,
+            admin_graphql_api_id: 'gid://shopify/ProductVariant/757650484644203962',
+          },
+        ],
+        options: [
+          {
+            id: 527050010214937811,
+            product_id: 788032119674292922,
+            name: 'Title',
+            position: 1,
+            values: ['Small', 'Medium'],
+          },
+        ],
+        images: [
+          {
+            id: 539438707724640965,
+            product_id: 788032119674292922,
+            position: 0,
+            created_at: null,
+            updated_at: null,
+            alt: null,
+            width: 323,
+            height: 434,
+            src: '//cdn.shopify.com/shopifycloud/shopify/assets/shopify_shirt-39bb555874ecaeed0a1170417d58bbcf792f7ceb56acfe758384f788710ba635.png',
+            variant_ids: [],
+            admin_graphql_api_id: 'gid://shopify/ProductImage/539438707724640965',
+          },
+        ],
+        image: null,
+      }),
+      headers: {
+        'X-Shopify-Topic': `products/create`,
+        'Content-Type': 'application/json',
+      },
+    })
+    return res.status(200).end()
+  })
+
   server.use(
     createProxyMiddleware(
       (pathname, req) => {
@@ -126,38 +230,13 @@ async function devMerchantApp(options: DevOptions) {
       {target: appURL, logLevel: 'silent'},
     ),
   )
+
   await server.listen(serverPort)
 
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
-  }
-}
-
-type RunDevPanelOptions = DevOptions & {
-  devPanelPort: number
-}
-
-function runDevPanel(options: RunDevPanelOptions) {
-  return {
-    prefix: 'dev-panel',
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-      const rootDirectory = (await path.findUp('assets/dev-panel', {
-        cwd: path.moduleDirectory(import.meta.url),
-        type: 'directory',
-      })) as string
-      const viteServer = await createServer({
-        cacheDir: undefined,
-        configFile: false,
-        root: rootDirectory,
-        logLevel: 'silent',
-        define: {
-          __TOKEN__: JSON.stringify(options.token),
-        },
-      })
-      await viteServer.listen(options.devPanelPort)
-    },
   }
 }
 
