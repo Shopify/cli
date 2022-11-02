@@ -12,11 +12,17 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, environment} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string, path, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {createServer} from 'vite'
+import express from 'express'
+import {createProxyMiddleware} from 'http-proxy-middleware'
 import {Writable} from 'node:stream'
+import {createRequire} from 'node:module'
+
+const require = createRequire(import.meta.url)
 
 export interface DevOptions {
   app: AppInterface
@@ -33,6 +39,7 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  token?: string
 }
 
 interface DevWebOptions {
@@ -44,6 +51,113 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  if (options.app.configuration.type === 'merchant') {
+    await devMerchantApp(options)
+  } else {
+    await devApp(options)
+  }
+}
+
+function runDevPanel(options: DevOptions & {port: number; devPanelPort: number; appURL: string; devPanelURL: string}) {
+  return {
+    prefix: 'dev-panel',
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      const rootDirectory = (await path.findUp('assets/dev-panel', {
+        cwd: path.moduleDirectory(import.meta.url),
+        type: 'directory',
+      })) as string
+      const app = express()
+      const viteServer = await createServer({
+        cacheDir: undefined,
+        configFile: false,
+        root: rootDirectory,
+        server: {
+          port: options.port,
+          cors: false,
+        },
+        logLevel: 'silent',
+        define: {
+          __TOKEN__: JSON.stringify(options.token),
+        },
+      })
+      // App middleware
+      app.use(
+        createProxyMiddleware(
+          (pathname, req) => {
+            return !pathname.startsWith('/_shopify')
+          },
+          {target: options.appURL, logLevel: 'silent'},
+        ),
+      )
+      // Dev middleware
+      app.use(
+        createProxyMiddleware(
+          (pathname, req) => {
+            return pathname.startsWith('/_shopify')
+          },
+          {target: options.devPanelURL, logLevel: 'silent'},
+        ),
+      )
+      await viteServer.listen(options.devPanelPort)
+      await app.listen(options.port)
+    },
+  }
+}
+
+async function devMerchantApp(options: DevOptions) {
+  const {frontendUrl: appFQDN, frontendPort: appPort} = await generateFrontendURL({
+    ...options,
+  })
+
+  const appURL = `${appFQDN}:${appPort}`
+  const devPanelPort = await port.getRandomPort()
+  const devPanelURL = `${appFQDN}:${devPanelPort}/_shopify/`
+
+  output.info(output.content`\n${output.token.heading('App URL')}\n\n  ${devPanelURL}\n`)
+
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
+  const proxyPort = await port.getRandomPort()
+
+  const additionalProcesses: output.OutputProcess[] = []
+
+  const nodemonCLI = path.join(
+    path.dirname(
+      require.resolve('nodemon', {
+        paths: [path.moduleDirectory(import.meta.url)],
+      }),
+    ),
+    '../bin/nodemon.js',
+  )
+  const appEntryPoint = path.join(options.app.directory, 'app.js')
+
+  additionalProcesses.push(runDevPanel({...options, port: devPanelPort, devPanelPort, appURL, devPanelURL}))
+  additionalProcesses.push({
+    prefix: 'home',
+    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      await system.exec('node', [nodemonCLI, appEntryPoint], {
+        cwd: options.app.directory,
+        stdout,
+        stderr,
+        env: {
+          ...process.env,
+          PORT: `${appPort}`,
+          NODE_ENV: 'development',
+          HOSTNAME: appURL,
+          SHOPIFY_ADMIN_TOKEN: options.token as string,
+        },
+        signal,
+      })
+    },
+  })
+
+  if (proxyTargets.length === 0) {
+    await renderConcurrent({processes: additionalProcesses})
+  } else {
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+  }
+}
+
+async function devApp(options: DevOptions) {
   const skipDependenciesInstallation = options.skipDependenciesInstallation
   if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign

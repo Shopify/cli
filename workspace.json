@@ -8,6 +8,7 @@
     "theme": "packages/theme",
     "features": "packages/features",
     "create-app": "packages/create-app",
+    "create-merchant-app": "packages/create-merchant-app",
     "create-hydrogen": "packages/create-hydrogen",
     "ui-extensions-dev-console": "packages/ui-extensions-dev-console",
     "ui-extensions-server-kit": "packages/ui-extensions-server-kit",
