@@ -6,7 +6,7 @@ import {Box, Text} from 'ink'
 import React from 'react'
 
 export interface AlertProps {
-  type: Exclude<BannerType, 'error'>
+  type: Exclude<BannerType, 'error' | 'external_error'>
   headline: string
   body?: TextTokenItem
   nextSteps?: TextTokenItem[]
