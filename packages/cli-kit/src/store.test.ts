@@ -128,3 +128,35 @@ describe('removeSession', () => {
     })
   })
 })
+
+describe('cache', () => {
+  it('runs only once', async () => {
+    await temporaryTestStore(async (localConf) => {
+      // Given
+      let counter = 0
+      const firstRunResult = await localConf.cache('counter', async () => ++counter)
+      expect(firstRunResult).toEqual(1)
+
+      // When
+      const secondRunResult = await localConf.cache('counter', async () => ++counter)
+
+      // Then
+      expect(secondRunResult).toEqual(1)
+    })
+  })
+
+  it('expires', async () => {
+    await temporaryTestStore(async (localConf) => {
+      // Given
+      let counter = 0
+      const firstRunResult = await localConf.cache('counter', async () => ++counter)
+      expect(firstRunResult).toEqual(1)
+
+      // When
+      const secondRunResult = await localConf.cache('counter', async () => ++counter, 0)
+
+      // Then
+      expect(secondRunResult).toEqual(2)
+    })
+  })
+})

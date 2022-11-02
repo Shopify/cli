@@ -18,6 +18,7 @@ interface ConfSchema {
   appInfo: CachedAppInfo[]
   themeStore: string
   session: string
+  cache: {[key: string]: {value: unknown; updatedAt: string}}
 }
 
 const schema = {
@@ -108,6 +109,15 @@ export async function clearAllAppInfo(): Promise<void> {
   store.clearAllAppInfo()
 }
 
+export async function cache<TValue>(
+  key: string,
+  source: () => Promise<TValue>,
+  expirySeconds = 24 * 3600,
+): Promise<TValue> {
+  const store = await cliKitStore()
+  return store.cache(key, source, expirySeconds)
+}
+
 export class CLIKitStore extends Conf<ConfSchema> {
   getAppInfo(directory: string): CachedAppInfo | undefined {
     debug(content`Reading cached app information for directory ${token.path(directory)}...`)
@@ -182,5 +192,19 @@ export class CLIKitStore extends Conf<ConfSchema> {
   removeSession(): void {
     debug(content`Removing session store...`)
     this.set('sessionStore', '')
+  }
+
+  async cache<TValue>(key: string, source: () => Promise<TValue>, expirySeconds = 24 * 3600): Promise<TValue> {
+    const expiryMilliseconds = expirySeconds * 1000
+    const cache = this.get('cache') || {}
+    if (cache[key]) {
+      if (new Date().getTime() - Date.parse(cache[key]!.updatedAt) < expiryMilliseconds) {
+        return cache[key]!.value as TValue
+      }
+    }
+    const value = await source()
+    cache[key] = {value, updatedAt: new Date().toISOString()}
+    this.set('cache', cache)
+    return value
   }
 }
