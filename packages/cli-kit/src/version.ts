@@ -1,5 +1,6 @@
 import {content, token, debug} from './output.js'
 import {moduleDirectory} from './path.js'
+import {cache} from './store.js'
 import {Bug} from './error.js'
 import {findUpAndReadPackageJson} from './public/node/node-package-manager.js'
 import latestVersion from 'latest-version'
@@ -11,7 +12,7 @@ import latestVersion from 'latest-version'
  */
 export async function latestNpmPackageVersion(name: string) {
   debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
-  return latestVersion(name)
+  return cache(`latest-npm-package-version-${name}`, async () => latestVersion(name))
 }
 
 interface FindPackageVersionUpOptions {
