@@ -21,6 +21,7 @@ export class CancelExecution extends Error {}
 export abstract class Fatal extends Error {
   tryMessage: TextTokenItem | null
   type: FatalErrorType
+  nextSteps?: TextTokenItem[]
   /**
    *
    * @param message - The error message
@@ -29,7 +30,12 @@ export abstract class Fatal extends Error {
    *                     You can pass a string a {@link TokenizedString} or a {@link TextTokenItem}
    *                     if you need to style the message inside the error Banner component.
    */
-  constructor(message: Message, type: FatalErrorType, tryMessage: TextTokenItem | Message | null = null) {
+  constructor(
+    message: Message,
+    type: FatalErrorType,
+    tryMessage: TextTokenItem | Message | null = null,
+    nextSteps?: TextTokenItem[],
+  ) {
     super(stringifyMessage(message))
 
     if (tryMessage) {
@@ -43,6 +49,7 @@ export abstract class Fatal extends Error {
     }
 
     this.type = type
+    this.nextSteps = nextSteps
   }
 }
 
@@ -51,8 +58,9 @@ export abstract class Fatal extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer
  */
 export class Abort extends Fatal {
-  constructor(message: Message, tryMessage: TextTokenItem | Message | null = null) {
-    super(message, FatalErrorType.Abort, tryMessage)
+  nextSteps?: TextTokenItem[]
+  constructor(message: Message, tryMessage: TextTokenItem | Message | null = null, nextSteps?: TextTokenItem[]) {
+    super(message, FatalErrorType.Abort, tryMessage, nextSteps)
   }
 }
 
