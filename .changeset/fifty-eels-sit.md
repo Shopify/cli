@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Add test event-topic command
+Add event trigger command

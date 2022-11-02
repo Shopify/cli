@@ -4,7 +4,7 @@ import {
   collectCliOptions,
   DELIVERY_METHOD,
   TestWebhookFlags,
-} from '../../../services/app/test/event-topic.js'
+} from '../../services/event/trigger.js'
 import {Command, Flags} from '@oclif/core'
 import {output} from '@shopify/cli-kit'
 

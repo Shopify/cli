@@ -1,4 +1,4 @@
-import {DELIVERY_METHOD} from '../../services/app/test/event-topic.js'
+import {DELIVERY_METHOD} from '../../services/event/trigger.js'
 import {ui} from '@shopify/cli-kit'
 
 export async function topicPrompt(defaultValue?: string): Promise<string> {

@@ -1,11 +1,11 @@
-import TopicTesting from './event-topic.js'
+import TopicTesting from './trigger.js'
 import {
   requestSample,
   sendLocal,
   collectCliOptions,
   TestWebhookOptions,
   TestWebhookFlags,
-} from '../../../services/app/test/event-topic.js'
+} from '../../services/event/trigger.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {output} from '@shopify/cli-kit'
 
@@ -35,8 +35,8 @@ const env = process.env
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit')
-  vi.mock('../../../prompts/test/event-topic.js')
-  vi.mock('../../../services/app/test/event-topic.js')
+  vi.mock('../../prompts/event/trigger.js')
+  vi.mock('../../services/event/trigger.js')
 
   process.env = {
     ...env,

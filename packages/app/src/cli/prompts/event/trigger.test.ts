@@ -6,7 +6,7 @@ import {
   localUrlPathPrompt,
   sharedSecretPrompt,
   topicPrompt,
-} from './event-topic.js'
+} from './trigger.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 
