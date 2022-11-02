@@ -5,9 +5,7 @@ import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {extensionConfig} from '../../utilities/extensions/configuration.js'
-import {runGoExtensionsCLI} from '../../utilities/extensions/cli.js'
-import {output, abort, yaml, environment} from '@shopify/cli-kit'
+import {output, abort} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 export interface ExtensionDevOptions {
@@ -80,29 +78,6 @@ export interface ExtensionDevOptions {
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
-  if (await environment.local.useGoBinary()) {
-    await devUIExtensionsWithGo(options)
-  } else {
-    await devUIExtensionsWithNode(options)
-  }
-}
-
-async function devUIExtensionsWithGo(options: ExtensionDevOptions): Promise<void> {
-  const config = await extensionConfig({includeResourceURL: true, ...options})
-  output.debug(output.content`Dev'ing extension with configuration:
-${output.token.json(config)}
-`)
-  const input = yaml.encode(config)
-  await runGoExtensionsCLI(['serve', '-'], {
-    cwd: options.app.directory,
-    signal: options.signal,
-    stdout: options.stdout,
-    stderr: options.stderr,
-    input,
-  })
-}
-
-async function devUIExtensionsWithNode(options: ExtensionDevOptions): Promise<void> {
   const devOptions: ExtensionDevOptions = {
     ...options,
     checkoutCartUrl: await getCartPathFromExtensions(options.extensions, options.storeFqdn, options.checkoutCartUrl),

@@ -9,8 +9,6 @@
     "features": "packages/features",
     "create-app": "packages/create-app",
     "create-hydrogen": "packages/create-hydrogen",
-    "ui-extensions-go-cli": "packages/ui-extensions-go-cli",
-    "ui-extensions-cli": "packages/ui-extensions-cli",
     "ui-extensions-dev-console": "packages/ui-extensions-dev-console",
     "ui-extensions-server-kit": "packages/ui-extensions-server-kit",
     "ui-extensions-test-utils": "packages/ui-extensions-test-utils",

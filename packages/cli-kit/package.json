@@ -96,7 +96,6 @@
     "inquirer": "^8.2.4",
     "inquirer-autocomplete-prompt": "^2.0.0",
     "is-interactive": "^2.0.0",
-    "js-yaml": "^4.1.0",
     "keytar": "^7.9.0",
     "kill-port-process": "^3.1.0",
     "latest-version": "^6.0.0",
@@ -127,7 +126,6 @@
     "@types/cross-zip": "^4.0.0",
     "@types/diff": "^5.0.2",
     "@types/inquirer": "^8.2.1",
-    "@types/js-yaml": "^4.0.5",
     "@types/semver": "^7.3.9",
     "node-stream-zip": "^1.15.0",
     "vitest": "^0.22.1"

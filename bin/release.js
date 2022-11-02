@@ -14,19 +14,16 @@ const octokit = new Octokit({
 });
 const supportedOSs = ['linux', 'windows', 'darwin']
 const supportedArchitectures =  ['386', 'amd64']
-const goPath = process.env.PATHGO
 const baseReleaseParams = {
     owner: 'shopify',
     repo: 'cli',
 }
 const binDirectory = dirname(fileURLToPath(import.meta.url))
 const rootDirectory = dirname(binDirectory)
-const extensionsPath = join(rootDirectory, 'packages/ui-extensions-go-cli')
 let cliVersion = getCliVersion()
 
 const versionsMatrix = generateVersionsMatrix()
 temporaryDirectoryTask(async (directory) => {
-    await Promise.all(versionsMatrix.map((version) => packageVersion(version, directory)))
     const release = await createRelease()
     await Promise.all(versionsMatrix.map((version) => updloadReleaseAssetVersion(version, release, directory)))
 })
@@ -38,23 +35,6 @@ function generateVersionsMatrix() {
             arch: (os === 'darwin' && arch === '386') ? 'arm64' : arch
         }
     }))
-}
-
-async function packageVersion(version, directory) {
-    console.log(`Generating version os: ${version.os} arch: ${version.arch}`)
-    await execa("yarn",
-        ["package"],
-        {
-            cwd: extensionsPath,
-            stdio: 'inherit',
-            env: {
-                GOOS: version.os,
-                GOARCH: version.arch,
-                PATHGO: goPath,
-                OUTPUT: directory
-            }
-        })
-
 }
 
 async function createRelease() {
