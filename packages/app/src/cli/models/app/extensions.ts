@@ -1,4 +1,10 @@
-import {functionExtensions, themeExtensions, uiExtensions, ExtensionTypes} from '../../constants.js'
+import {
+  functionExtensions,
+  themeExtensions,
+  uiExtensions,
+  ExtensionTypes,
+  uiExternalExtensionTypes,
+} from '../../constants.js'
 import {schema} from '@shopify/cli-kit'
 
 export interface Extension {
@@ -19,22 +25,20 @@ const metafieldsSchema = schema.define
   )
   .default([])
 
+export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
+export const NewExtensionPointsSchema = schema.define.array(
+  schema.define.object({
+    target: schema.define.string(),
+    module: schema.define.string(),
+    metafields: metafieldsSchema,
+  }),
+)
+
 export const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum([...uiExtensions.types]).default('ui_extension'),
+  type: schema.define.enum(uiExtensions.types).default('ui_extension'),
   metafields: metafieldsSchema,
-  extensionPoints: schema.define
-    .union([
-      schema.define.array(schema.define.string()),
-      schema.define.array(
-        schema.define.object({
-          target: schema.define.string(),
-          module: schema.define.string(),
-          metafields: metafieldsSchema,
-        }),
-      ),
-    ])
-    .optional(),
+  extensionPoints: schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema]).optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
@@ -53,6 +57,10 @@ export const UIExtensionConfigurationSchema = schema.define.object({
   runtimeContext: schema.define.string().optional(),
   version: schema.define.string().optional(),
   configuration: schema.define.any().optional(),
+})
+
+export const UIExtensionConfigurationSupportedSchema = UIExtensionConfigurationSchema.extend({
+  type: schema.define.enum([...uiExtensions.types, ...uiExternalExtensionTypes.types]).default('ui_extension'),
 })
 
 export const FunctionExtensionConfigurationSchema = schema.define.object({

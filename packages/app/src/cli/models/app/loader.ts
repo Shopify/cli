@@ -5,8 +5,10 @@ import {
   FunctionExtensionConfigurationSchema,
   FunctionExtensionMetadataSchema,
   ThemeExtensionConfigurationSchema,
-  UIExtensionConfigurationSchema,
+  UIExtensionConfigurationSupportedSchema,
   Extension,
+  OldExtensionPointsSchema,
+  NewExtensionPointsSchema,
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
@@ -244,7 +246,7 @@ class AppLoader {
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configurationSupported = await this.parseConfigurationFile(
-        UIExtensionConfigurationSchema,
+        UIExtensionConfigurationSupportedSchema,
         configurationPath,
       )
 
@@ -253,25 +255,12 @@ class AppLoader {
         type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
       }
 
-      const entrySourceFilePaths = await path.glob(path.join(directory, 'src', '*.+(ts|js|tsx|jsx)'))
-
-      if (!entrySourceFilePaths[0]) {
-        // Previosuly this was abortOrReport, but aborting guarantees types safety
-        // In what circumstance would we want this process to continue if there are no src files?
-        // There being no src files seems like a terminal problem.
-        throw new error.Abort(
-          output.content`Couldn't find any js, jsx, ts or tsx files in the directories ${output.token.path(
-            directory,
-          )} or ${output.token.path(path.join(directory, 'src'))}`,
-        )
-      }
-
       return {
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
         directory,
         configuration,
         configurationPath,
-        entrySourceFilePaths,
+        entrySourceFilePaths: await getEntrySourceFilePaths(directory, configuration),
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
         outputBundlePath: path.join(directory, 'dist/main.js'),
@@ -357,6 +346,55 @@ class AppLoader {
       return fallback
     }
   }
+}
+
+// WHY?
+// We are dealing with two different types of UI extension types.
+// ui_exension and then every other type.
+// a ui_extension specifies the path to it's source files in shopify.ui.extension.toml
+// Every other type assumes one source file in /my-extension/**.js or /my-extension/src/**.ts
+// Once we every other type to the new ui_extension much of this complexity will go away
+// For now this function contains some hackiness, which will go away with a simpler shopify.ui.extension.toml schema
+async function getEntrySourceFilePaths(directory: string, configuration: UIExtension['configuration']) {
+  const {success: isOldExtensionPointSchema} = OldExtensionPointsSchema.safeParse(configuration.extensionPoints)
+
+  if (isOldExtensionPointSchema) {
+    const entrySourceFilePath = (
+      await Promise.all(
+        ['index']
+          .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
+          .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+          .map((relativePath) => path.join(directory, relativePath))
+          .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
+      )
+    ).find((sourcePath) => sourcePath !== undefined)
+
+    if (!entrySourceFilePath) {
+      throw new error.Abort(
+        output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+          directory,
+        )} or ${output.token.path(path.join(directory, 'src'))}`,
+      )
+    }
+
+    return [entrySourceFilePath]
+  }
+
+  const extensionPoints = configuration.extensionPoints as schema.define.infer<typeof NewExtensionPointsSchema>
+  const entrySourceFilePaths = extensionPoints.map((extensionPoint) => path.join(directory, extensionPoint.module))
+
+  if (!entrySourceFilePaths[0]) {
+    // Previosuly this was abortOrReport, but aborting guarantees types safety
+    // In what circumstance would we want this process to continue if there are no src files?
+    // There being no src files seems like a terminal problem.
+    throw new error.Abort(
+      output.content`Couldn't find a js, jsx, ts or tsx file in the directories ${output.token.path(
+        directory,
+      )} or ${output.token.path(path.join(directory, 'src'))}`,
+    )
+  }
+
+  return entrySourceFilePaths
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
