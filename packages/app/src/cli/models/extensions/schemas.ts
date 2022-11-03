@@ -34,7 +34,7 @@ export const BaseExtensionSchema = schema.define.object({
   metafields: schema.define.array(MetafieldSchema).optional(),
 })
 
-export const FunctionExtensionConfigurationSchema = schema.define.object({
+export const BaseFunctionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string(),
   description: schema.define.string().default(''),
@@ -56,7 +56,7 @@ export const FunctionExtensionConfigurationSchema = schema.define.object({
   apiVersion: schema.define.string(),
 })
 
-export const FunctionExtensionMetadataSchema = schema.define.object({
+export const BaseFunctionMetadataSchema = schema.define.object({
   schemaVersions: schema.define.object({}).catchall(
     schema.define.object({
       major: schema.define.number(),

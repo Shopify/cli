@@ -1,17 +1,18 @@
-import {FunctionExtensionConfigurationSchema, FunctionExtensionMetadataSchema, TypeSchema} from './schemas'
+import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, TypeSchema} from './schemas'
 import {toml, schema, file, path, error, system, abort} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {Writable} from 'stream'
 
 // Base config types that all config schemas must extend
-type FunctionConfigType = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
-type MetadataType = schema.define.infer<typeof FunctionExtensionMetadataSchema>
+type FunctionConfigType = schema.define.infer<typeof BaseFunctionConfigurationSchema>
+type MetadataType = schema.define.infer<typeof BaseFunctionMetadataSchema>
 
 // Array with all registered functions
 const AllSpecs: FunctionSpec[] = []
+type LoadFunctionError = 'invalid_function_type' | 'invalid_function_config' | 'invalid_function_metadata'
 
 /**
- * Extension function with all the needed properties and methods to load an extension.
+ * Specification with all the needed properties and methods to load a function.
  */
 export interface FunctionSpec<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
@@ -119,7 +120,7 @@ function specForType(type: string): FunctionSpec | undefined {
  * If there is no spec for that type, return undefined.
  * Loading the function can fail if the config fail doesn't follow the given Schema
  */
-export async function loadFunction(configPath: string): Promise<Result<FunctionInstance, string>> {
+export async function loadFunction(configPath: string): Promise<Result<FunctionInstance, LoadFunctionError>> {
   const directory = path.dirname(configPath)
 
   // Read Config file

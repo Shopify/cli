@@ -1,5 +1,5 @@
 import {BaseExtensionSchema, TypeSchema, ExtensionPointSchema} from './schemas'
-import {LocalExtensionPoint} from './extension-points.js'
+import {ExtensionPointSpec} from './extension-points.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
 import {id, path, schema, toml, api, file} from '@shopify/cli-kit'
@@ -12,14 +12,14 @@ type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
 
 // Array with all registered extensions (locally)
 // PENDING: Register and load all extensions
-const AllLocalSpecs: LocalExtensionSpec[] = []
+const AllLocalSpecs: ExtensionSpec[] = []
 
 type LoadExtensionError = 'invalid_entry_path' | 'invalid_config' | 'invalid_extension_type'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface LocalExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
+export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
   ownerTeam: string
   dependency: {name: string; version: string}
@@ -51,8 +51,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   localIdentifier: string
 
   private config: TConfiguration
-  private specification: LocalExtensionSpec
-  private extensionPointSpecs?: LocalExtensionPoint[]
+  private specification: ExtensionSpec
+  private extensionPointSpecs?: ExtensionPointSpec[]
   private remoteSpecification?: api.graphql.RemoteSpecification
   private directory: string
 
@@ -68,9 +68,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     config: TConfiguration,
     entryPath: string,
     directory: string,
-    specification: LocalExtensionSpec,
+    specification: ExtensionSpec,
     remoteSpecification?: api.graphql.RemoteSpecification,
-    extensionPointSpecs?: LocalExtensionPoint[],
+    extensionPointSpecs?: ExtensionPointSpec[],
   ) {
     this.config = config
     this.entryPath = entryPath
@@ -125,16 +125,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
-  private extensionPointURL(point: LocalExtensionPoint, config: ExtensionPointContents): string {
+  private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
     if (point.resourceUrl) return point.resourceUrl(config)
     return ''
   }
 }
 
 /**
- * Find the registered spec for a given extension type
+ * Find the registered spececification for a given extension type
  */
-function specForType(type: string): LocalExtensionSpec | undefined {
+function specForType(type: string): ExtensionSpec | undefined {
   return AllLocalSpecs.find((spec) => spec.identifier === type)
 }
 
