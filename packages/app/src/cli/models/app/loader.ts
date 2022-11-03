@@ -381,18 +381,24 @@ async function getEntrySourceFilePaths(directory: string, configuration: UIExten
   }
 
   const extensionPoints = configuration.extensionPoints as schema.define.infer<typeof NewExtensionPointsSchema>
-  const entrySourceFilePaths = extensionPoints.map((extensionPoint) => path.join(directory, extensionPoint.module))
+  const entrySourceFilePaths = await Promise.all(
+    extensionPoints.map(async (extensionPoint) => {
+      const fullPath = path.join(directory, extensionPoint.module)
+      const fileExists = await file.exists(fullPath)
 
-  if (!entrySourceFilePaths[0]) {
-    // Previosuly this was abortOrReport, but aborting guarantees types safety
-    // In what circumstance would we want this process to continue if there are no src files?
-    // There being no src files seems like a terminal problem.
-    throw new error.Abort(
-      output.content`Couldn't find a js, jsx, ts or tsx file in the directories ${output.token.path(
-        directory,
-      )} or ${output.token.path(path.join(directory, 'src'))}`,
-    )
-  }
+      if (!fileExists) {
+        throw new error.Abort(
+          output.content`Couldn't find ${output.token.path(path.join(directory, extensionPoint.module))}
+
+Please check the module path for ${extensionPoint.target} in ${output.token.path(
+            path.join(directory, configurationFileNames.extension.ui),
+          )}`,
+        )
+      }
+
+      return fullPath
+    }),
+  )
 
   return entrySourceFilePaths
 }
