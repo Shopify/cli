@@ -24,6 +24,7 @@ import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
 const require = createRequire(import.meta.url)
+const virtual = require('vite-plugin-virtual')
 
 export interface DevOptions {
   app: AppInterface
@@ -69,9 +70,6 @@ async function devIntegrationApp(options: DevOptions) {
 
   output.info(output.content`\n${output.token.heading('App URL')}\n\n  ${serverURL}_shopify\n`)
   output.info(output.content`${output.token.heading('Logs')}`)
-
-  const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyPort = await port.getRandomPort()
 
   const rootDirectory = (await path.findUp('assets/dev-panel', {
     cwd: path.moduleDirectory(import.meta.url),
@@ -203,9 +201,31 @@ async function devIntegrationApp(options: DevOptions) {
   )
 
   const app = express()
+
   const viteServer = await createServer({
     root: options.app.directory,
     clearScreen: false,
+    plugins: [
+      virtual.default({
+        '@shopify/app/store': `
+      export async function graphqlRequest(query, variables = {}) {
+        const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
+        const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
+        console.log(url);
+        return (await fetch(url, {
+          method: 'POST',
+          headers: {
+            ...authenticationHeaders,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query,
+            variables
+          }),
+        })).json()
+      }`,
+      }),
+    ],
   })
   const webhooksDirectory = path.join(options.app.directory, 'webhooks')
   app.use([

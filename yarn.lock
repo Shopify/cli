@@ -13483,6 +13483,11 @@ vite-plugin-inspect@^0.3.6:
     sirv "^2.0.2"
     ufo "^0.7.10"
 
+vite-plugin-virtual@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/vite-plugin-virtual/-/vite-plugin-virtual-0.1.1.tgz#34fff2d2816ebaad0d53fdcd3500d12ec9c5fa0e"
+  integrity sha512-JnEbO2AOIfpMfL/uSz7snJ4HzTxCbJFtw7xX413UrYY0IiZjAnY78Ie/Kd7k03iBlyQsFpdzdKQu+ULxu0UXMg==
+
 vite-tsconfig-paths@^3.3.14:
   version "3.5.2"
   resolved "https://registry.yarnpkg.com/vite-tsconfig-paths/-/vite-tsconfig-paths-3.5.2.tgz#fd3232f93c426311d7e0d581187d8b63fff55fbc"

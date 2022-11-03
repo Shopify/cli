@@ -7,6 +7,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 
 export const AppConfigurationSchema = schema.define.object({
   type: schema.define.literal('integration').optional(),
+  api_version: schema.define.string().optional().default('2022-10'),
   scopes: schema.define.string().default(''),
   extensionDirectories: schema.define.array(schema.define.string()).optional(),
 })
