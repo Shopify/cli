@@ -77,6 +77,8 @@ export interface ExtensionDevOptions {
    * If not provided the first product in the store will be used
    */
   subscriptionProductUrl?: string
+
+  resourceUrl?: string
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {

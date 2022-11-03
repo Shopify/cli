@@ -50,7 +50,7 @@ export default class Dev extends Command {
     'resource-url': Flags.string({
       hidden: false,
       description: 'Resource URL. Format: "/{resource}/{id}"',
-      env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
+      env: 'SHOPIFY_FLAG_RESOURCE_URL',
     }),
     'checkout-cart-url': Flags.string({
       hidden: false,
@@ -111,6 +111,7 @@ export default class Dev extends Command {
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig,
       subscriptionProductUrl: flags['subscription-product-url'],
+      resourceUrl: flags['resource-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
       tunnel: flags.tunnel,

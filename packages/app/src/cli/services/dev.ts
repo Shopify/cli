@@ -33,6 +33,7 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  resourceUrl?: string
 }
 
 interface DevWebOptions {

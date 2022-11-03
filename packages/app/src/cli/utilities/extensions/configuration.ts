@@ -83,7 +83,10 @@ export async function extensionConfig(options: ExtensionConfigOptions): Promise<
     extensions: extensionsConfig,
   }
 }
-type GetUIExensionResourceURLOptions = Pick<ExtensionConfigOptions, 'checkoutCartUrl' | 'subscriptionProductUrl' | 'resourceUrl'>
+type GetUIExensionResourceURLOptions = Pick<
+  ExtensionConfigOptions,
+  'checkoutCartUrl' | 'subscriptionProductUrl' | 'resourceUrl'
+>
 export function getUIExtensionResourceURL(
   uiExtensionType: UIExtensionTypes,
   options: GetUIExensionResourceURLOptions,
