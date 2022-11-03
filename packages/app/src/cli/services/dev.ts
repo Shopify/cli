@@ -211,7 +211,6 @@ async function devIntegrationApp(options: DevOptions) {
       export async function graphqlRequest(query, variables = {}) {
         const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
         const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
-        console.log(url);
         return (await fetch(url, {
           method: 'POST',
           headers: {

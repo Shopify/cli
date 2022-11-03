@@ -13,5 +13,4 @@ export default defineProductsCreateWebhook(async (payload) => {
       }
     }
   `)
-  console.log(shopName)
 })
