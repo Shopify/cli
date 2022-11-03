@@ -3,6 +3,7 @@ import * as bundle from '../../extensions/bundle.js'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildFailure} from 'esbuild'
+import {path} from '@shopify/cli-kit'
 
 async function testBundlerAndFileWatcher() {
   const fileWatcherOptions = {
@@ -11,14 +12,20 @@ async function testBundlerAndFileWatcher() {
         {
           devUUID: '1',
           outputBundlePath: 'output/bundle/path/1',
-          entrySourceFilePath: 'source/file/path/1',
-          directory: 'directory/1',
+          entrySourceFilePaths: ['source/file/path/1'],
+          directory: 'directory/1/',
+          configuration: {
+            name: 'name 1',
+          },
         },
         {
           devUUID: '2',
           outputBundlePath: 'output/bundle/path/2',
-          entrySourceFilePath: 'source/file/path/2',
-          directory: 'directory/2',
+          entrySourceFilePaths: ['source/file/path/2'],
+          directory: 'directory/2/',
+          configuration: {
+            name: 'name 2',
+          },
         },
       ],
       app: {
@@ -50,12 +57,19 @@ describe('setupBundlerAndFileWatcher()', () => {
     vi.spyOn(chokidar, 'watch').mockReturnValue({
       on: vi.fn() as any,
     } as any)
+    vi.spyOn(path, 'relative').mockImplementation((directory, path) => directory + path)
+
     await testBundlerAndFileWatcher()
+
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
         outputBundlePath: 'output/bundle/path/1',
-        sourceFilePath: 'source/file/path/1',
+        stdin: {
+          contents: "import './directory/1/source/file/path/1';",
+          resolveDir: 'directory/1/',
+          loader: 'tsx',
+        },
         environment: 'development',
         env: {
           SOME_KEY: 'SOME_VALUE',
@@ -69,11 +83,16 @@ describe('setupBundlerAndFileWatcher()', () => {
         },
       }),
     )
+
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
         outputBundlePath: 'output/bundle/path/2',
-        sourceFilePath: 'source/file/path/2',
+        stdin: {
+          contents: "import './directory/2/source/file/path/2';",
+          resolveDir: 'directory/2/',
+          loader: 'tsx',
+        },
         environment: 'development',
         env: {
           SOME_KEY: 'SOME_VALUE',

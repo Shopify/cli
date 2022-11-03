@@ -139,10 +139,9 @@ describe('when there are locale files', () => {
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
       await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
 
-      const result = await testGetLocalization(tmpDir)
+      await testGetLocalization(tmpDir)
 
-      expect(output.info).toHaveBeenCalledWith(expect.stringContaining('mock-name'))
-      expect(output.info).toHaveBeenCalledWith(expect.stringContaining(tmpDir))
+      expect(output.info).toHaveBeenCalledWith('mock-name UI extension locales built successfully')
     })
   })
 
