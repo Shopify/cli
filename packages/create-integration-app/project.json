@@ -1,7 +1,7 @@
 {
-    "name": "create-merchant-app",
-    "root": "packages/create-merchant-app",
-    "sourceRoot": "packages/create-merchant-app/src",
+    "name": "create-integration-app",
+    "root": "packages/create-integration-app",
+    "sourceRoot": "packages/create-integration-app/src",
     "projectType": "library",
     "tags": ["scope:create-cli"],
     "targets": {
@@ -9,7 +9,7 @@
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn rimraf dist/",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       },
       "build": {
@@ -18,28 +18,28 @@
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
           "command": "yarn tsc -b ./tsconfig.build.json",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn eslint \"src/**/*.ts\"",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn eslint 'src/**/*.ts' --fix",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       },
       "test": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn vitest run",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       },
       "test:watch": {
@@ -47,14 +47,14 @@
         "dependsOn": ["^build"],
         "options": {
           "command": "yarn vitest watch",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {
           "command": "yarn tsc --noEmit",
-          "cwd": "packages/create-merchant-app"
+          "cwd": "packages/create-integration-app"
         }
       }
     }

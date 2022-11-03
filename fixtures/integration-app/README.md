@@ -1,4 +1,4 @@
-# merchant-app
+# integration-app
 
 This is a sample app to help developers bootstrap their Shopify merchant app development.
 

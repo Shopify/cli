@@ -12,13 +12,14 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, path, environment} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string, path, environment, file} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import express from 'express'
+import express, {Request, Response, NextFunction} from 'express'
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import fetch from 'node-fetch'
+import {createServer} from 'vite'
 import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
@@ -51,14 +52,14 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  if (options.app.configuration.type === 'merchant') {
-    await devMerchantApp(options)
+  if (options.app.configuration.type === 'integration') {
+    await devIntegrationApp(options)
   } else {
     await devApp(options)
   }
 }
 
-async function devMerchantApp(options: DevOptions) {
+async function devIntegrationApp(options: DevOptions) {
   const appFQDN = 'http://127.0.0.1'
   const appPort = await port.getRandomPort()
   const server = express()
@@ -67,40 +68,10 @@ async function devMerchantApp(options: DevOptions) {
   const serverURL = `${appFQDN}:${serverPort}/`
 
   output.info(output.content`\n${output.token.heading('App URL')}\n\n  ${serverURL}_shopify\n`)
+  output.info(output.content`${output.token.heading('Logs')}`)
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = await port.getRandomPort()
-
-  const additionalProcesses: output.OutputProcess[] = []
-
-  const nodemonCLI = path.join(
-    path.dirname(
-      require.resolve('nodemon', {
-        paths: [path.moduleDirectory(import.meta.url)],
-      }),
-    ),
-    '../bin/nodemon.js',
-  )
-  const appEntryPoint = path.join(options.app.directory, 'app.js')
-
-  additionalProcesses.push({
-    prefix: 'home',
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-      await system.exec('node', [nodemonCLI, appEntryPoint], {
-        cwd: options.app.directory,
-        stdout,
-        stderr,
-        env: {
-          ...process.env,
-          PORT: `${appPort}`,
-          NODE_ENV: 'development',
-          HOSTNAME: appURL,
-          SHOPIFY_ADMIN_TOKEN: options.token as string,
-        },
-        signal,
-      })
-    },
-  })
 
   const rootDirectory = (await path.findUp('assets/dev-panel', {
     cwd: path.moduleDirectory(import.meta.url),
@@ -231,13 +202,37 @@ async function devMerchantApp(options: DevOptions) {
     ),
   )
 
-  await server.listen(serverPort)
+  const app = express()
+  const viteServer = await createServer({
+    root: options.app.directory,
+    clearScreen: false,
+  })
+  const webhooksDirectory = path.join(options.app.directory, 'webhooks')
+  app.use([
+    express.json(),
+    async (req: Request, res: Response, next: NextFunction) => {
+      if (req.path === '/webhooks') {
+        const topic = req.headers['x-shopify-topic'] as string
+        const webhookModulePath = path.join(webhooksDirectory, `${topic}.js`)
+        if (await file.exists(webhookModulePath)) {
+          output.debug(`Processing Webhook with topic ${topic} with module ${webhookModulePath}`)
 
-  if (proxyTargets.length === 0) {
-    await renderConcurrent({processes: additionalProcesses})
-  } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
-  }
+          const module = await viteServer.ssrLoadModule(webhookModulePath)
+          await (
+            await module.default
+          )(req.body)
+        } else {
+          output.consoleError(`Webhook with topic ${topic} received but there's no handler defined for it`)
+        }
+        res.write('success')
+        return res.end()
+      } else {
+        return next()
+      }
+    },
+  ])
+  await app.listen(appPort)
+  await server.listen(serverPort)
 }
 
 async function devApp(options: DevOptions) {

@@ -10,7 +10,7 @@ export const InvalidGithubRepository = () => {
   )
 }
 export default class Init extends Command {
-  static aliases = ['create-merchant-app']
+  static aliases = ['create-integration-app']
 
   static flags = {
     ...cli.globalFlags,

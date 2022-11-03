@@ -6,7 +6,7 @@ import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 
 export const AppConfigurationSchema = schema.define.object({
-  type: schema.define.literal('merchant').optional(),
+  type: schema.define.literal('integration').optional(),
   scopes: schema.define.string().default(''),
   extensionDirectories: schema.define.array(schema.define.string()).optional(),
 })

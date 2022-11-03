@@ -103,12 +103,12 @@ export default class Dev extends Command {
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
 
-    if (app.configuration.type === 'merchant' && !flags.store) {
+    if (app.configuration.type === 'integration' && !flags.store) {
       throw new error.Abort(
         output.content`The flag ${output.token.genericShellCommand('--store')} is required for custom merchant apps`,
       )
     }
-    if (app.configuration.type === 'merchant' && !flags.token) {
+    if (app.configuration.type === 'integration' && !flags.token) {
       throw new error.Abort(
         output.content`The flag ${output.token.genericShellCommand('--token')} is required for custom merchant apps`,
       )
