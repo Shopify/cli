@@ -2018,6 +2018,13 @@
     human-id "^1.0.2"
     prettier "^2.7.1"
 
+"@cloudflare/kv-asset-handler@^0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@cloudflare/kv-asset-handler/-/kv-asset-handler-0.1.3.tgz#3eaaf962b16c48a7189db5d5ac1c4dca4e2ed1a0"
+  integrity sha512-FNcunDuTmEfQTLRLtA6zz+buIXUHj1soPvSWzzQFBC+n2lsy+CGf/NIrR3SEPCmsVNQj70/Jx2lViCpq+09YpQ==
+  dependencies:
+    mime "^2.5.2"
+
 "@colors/colors@1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
@@ -3262,6 +3269,22 @@
   resolved "https://registry.yarnpkg.com/@redis/time-series/-/time-series-1.0.3.tgz#4cfca8e564228c0bddcdf4418cba60c20b224ac4"
   integrity sha512-OFp0q4SGrTH0Mruf6oFsHGea58u8vS/iI5+NpYdicaM+7BgqBZH8FFvNZ8rYYLrUO/QRqMq72NpXmxLVNcdmjA==
 
+"@remix-run/cloudflare-workers@^1.7.5":
+  version "1.7.5"
+  resolved "https://registry.yarnpkg.com/@remix-run/cloudflare-workers/-/cloudflare-workers-1.7.5.tgz#65b7f6bc2097f08ae18cad7c6ba29874ca06a9c5"
+  integrity sha512-y4DYxIvfnZzZo0GC09wLxUxnCn2bT57+A+lifmbiGkS6E/DCIa9ROI+GRamopA/mU1MyiGlMEntqjtlldJfmnA==
+  dependencies:
+    "@cloudflare/kv-asset-handler" "^0.1.3"
+    "@remix-run/cloudflare" "1.7.5"
+
+"@remix-run/cloudflare@1.7.5", "@remix-run/cloudflare@^1.7.5":
+  version "1.7.5"
+  resolved "https://registry.yarnpkg.com/@remix-run/cloudflare/-/cloudflare-1.7.5.tgz#e9e38808734412133562b8cdf01f42516e65cb63"
+  integrity sha512-KcXiG2guNx98B13P8dD8BJQImntv7vYAhM1+oRFs6KsdLFL6gCgIcvvfQ0/ijbuiA0XZlkvVzObbm8xRAIK98Q==
+  dependencies:
+    "@cloudflare/kv-asset-handler" "^0.1.3"
+    "@remix-run/server-runtime" "1.7.5"
+
 "@remix-run/dev@^1.7.4":
   version "1.7.4"
   resolved "https://registry.yarnpkg.com/@remix-run/dev/-/dev-1.7.4.tgz#ab122bb5780332689c1041eaa854ffd326849e90"
@@ -3315,7 +3338,7 @@
   dependencies:
     "@remix-run/node" "1.7.4"
 
-"@remix-run/node@1.7.4", "@remix-run/node@^1.7.4":
+"@remix-run/node@1.7.4":
   version "1.7.4"
   resolved "https://registry.yarnpkg.com/@remix-run/node/-/node-1.7.4.tgz#8999fea37ed6d1d99cd51b5f05a5ea815a911d09"
   integrity sha512-kZSW2lLk89QTrdveS3ZCmvvmSmeC1suFKFC+r8wd6BgE0P64rWNTILnmLbcd37EexMqzGNIjXkWFbsmU3azA5g==
@@ -3357,6 +3380,18 @@
   version "1.7.4"
   resolved "https://registry.yarnpkg.com/@remix-run/server-runtime/-/server-runtime-1.7.4.tgz#9343ba3ffa6fa4272faa126c0bf0c615edcae486"
   integrity sha512-zGM1HI8sS73SPAXGFR7unV9ZlYPefbCokeXmLNB0lZevPeQ/ZBCNvNCZIeS7Fyal/FykCG9cB4Rd/pzdUbHCUA==
+  dependencies:
+    "@types/cookie" "^0.4.0"
+    "@web3-storage/multipart-parser" "^1.0.0"
+    cookie "^0.4.1"
+    react-router-dom "6.3.0"
+    set-cookie-parser "^2.4.8"
+    source-map "^0.7.3"
+
+"@remix-run/server-runtime@1.7.5":
+  version "1.7.5"
+  resolved "https://registry.yarnpkg.com/@remix-run/server-runtime/-/server-runtime-1.7.5.tgz#d7b3e594d43f354cad8efe333dcae902f9dd7b7b"
+  integrity sha512-wy/1UDUjN1AoZBAee12rV1gbq+N6RfHetarHLoEIHWrKx3oLb0Ik+MQmjD6PbyO41JdOVQ2tn+euJHJY7sz48g==
   dependencies:
     "@types/cookie" "^0.4.0"
     "@web3-storage/multipart-parser" "^1.0.0"
@@ -12173,7 +12208,7 @@ mime@1.6.0:
   resolved "https://registry.yarnpkg.com/mime/-/mime-1.6.0.tgz#32cd9e5c64553bd58d19a568af452acff04981b1"
   integrity sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==
 
-mime@2.6.0:
+mime@2.6.0, mime@^2.5.2:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/mime/-/mime-2.6.0.tgz#a2a682a95cd4d0cb1d6257e28f83da7e35800367"
   integrity sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg==
