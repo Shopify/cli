@@ -91,6 +91,12 @@ export async function getListOfExtensionPoints(config: Config): Promise<JsonMap[
   return specs
 }
 
+export async function getListOfFunctionSpecs(config: Config): Promise<JsonMap[]> {
+  const hooks = await fanoutHooks(config, 'function_spec', {})
+  const specs = getArrayRejectingUndefined(Object.values(hooks))
+  return specs
+}
+
 export interface TunnelPluginError {
   provider: string
   type: 'multiple-urls' | 'handled-error' | 'unknown' | 'no-provider'
