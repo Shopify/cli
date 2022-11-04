@@ -19,8 +19,8 @@
   },
   "exports": {
     "./*": {
-      "import": "./dist/public/*.js",
-      "types": "./dist/public/*.d.ts"
+      "types": "./dist/public/*.d.ts",
+      "require": "./dist/public/*.cjs"
     }
   },
   "scripts": {

@@ -16,7 +16,7 @@ import {analytics, output, port, system, session, abort, string, path, environme
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import express, {Request, Response, NextFunction} from 'express'
+import express, {Express, Request, Response, NextFunction} from 'express'
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import fetch from 'node-fetch'
 import {createServer} from 'vite'
@@ -65,21 +65,49 @@ async function devIntegrationApp(options: DevOptions) {
   const appPort = await port.getRandomPort()
   const server = express()
   const serverPort = await port.getRandomPort()
+  const remixPort = await port.getRandomPort()
+  const remixURL = `${appFQDN}:${remixPort}`
   const appURL = `${appFQDN}:${appPort}/`
   const serverURL = `${appFQDN}:${serverPort}/`
 
   output.info(output.content`\n${output.token.heading('App URL')}\n\n  ${serverURL}_shopify\n`)
   output.info(output.content`${output.token.heading('Logs')}`)
 
-  const rootDirectory = (await path.findUp('assets/dev-panel', {
-    cwd: path.moduleDirectory(import.meta.url),
-    type: 'directory',
-  })) as string
-  server.use('/_shopify', express.static(rootDirectory))
+  process.env._SHOPIFY_STORE_FQDN = options.storeFqdn
+  process.env._SHOPIFY_APP_TOKEN = options.token
+  process.env._SHOPIFY_API_VERSION = options.app.configuration.api_version
 
+  await addPanelMiddleware(server)
+  addAPIEndpoints(server, serverURL, options)
+  addWebhooksAppProxyMiddleware(server, appURL)
+  addRemixProxyMiddleware(server, remixURL)
+
+  // Remix
+  await startWebhooksApp(appPort, options)
+  await server.listen(serverPort)
+  await startRemix(remixPort, options)
+}
+
+function addRemixProxyMiddleware(server: Express, remixURL: string) {
+  server.use(createProxyMiddleware({target: remixURL, logLevel: 'silent'}))
+}
+
+function addWebhooksAppProxyMiddleware(server: Express, appURL: string) {
+  server.use(
+    createProxyMiddleware(
+      (pathname, req) => {
+        return pathname.startsWith('/webhooks')
+      },
+      {target: appURL, logLevel: 'silent'},
+    ),
+  )
+}
+
+function addAPIEndpoints(server: Express, serverURL: string, options: DevOptions) {
   server.get('/api/app-info', (req, res, next) => {
     return res.json({url: serverURL, scopes: options.app.configuration.scopes}).end()
   })
+
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   server.post('/api/webhooks/products/create', async (req, res, next) => {
     await fetch(`${serverURL}webhooks`, {
@@ -190,49 +218,53 @@ async function devIntegrationApp(options: DevOptions) {
     })
     return res.status(200).end()
   })
+}
 
-  server.use(
-    createProxyMiddleware(
-      (pathname, req) => {
-        return !pathname.startsWith('/_shopify')
-      },
-      {target: appURL, logLevel: 'silent'},
-    ),
-  )
+async function addPanelMiddleware(server: Express) {
+  const rootDirectory = (await path.findUp('assets/dev-panel', {
+    cwd: path.moduleDirectory(import.meta.url),
+    type: 'directory',
+  })) as string
+  server.use('/_shopify', express.static(rootDirectory))
+}
 
+async function startWebhooksApp(appPort: number, options: DevOptions) {
   const app = express()
-
   const viteServer = await createServer({
     root: options.app.directory,
     clearScreen: false,
     plugins: [
       virtual.default({
         '@shopify/app/store': `
-      export async function graphqlRequest(query, variables = {}) {
-        const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
-        const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
-        return (await fetch(url, {
-          method: 'POST',
-          headers: {
-            ...authenticationHeaders,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query,
-            variables
-          }),
-        })).json()
-      }`,
+        async function graphqlRequest(query, variables = {}) {
+          const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
+          const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
+          console.log(url);
+          return (await fetch(url, {
+            method: 'POST',
+            headers: {
+              ...authenticationHeaders,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              query,
+              variables
+            }),
+          })).json()
+        }
+        module.exports = {graphqlRequest}
+        `,
       }),
     ],
   })
+
   const webhooksDirectory = path.join(options.app.directory, 'webhooks')
   app.use([
     express.json(),
     async (req: Request, res: Response, next: NextFunction) => {
       if (req.path === '/webhooks') {
         const topic = req.headers['x-shopify-topic'] as string
-        const webhookModulePath = path.join(webhooksDirectory, `${topic}.js`)
+        const webhookModulePath = path.join(webhooksDirectory, `${topic}.mjs`)
         if (await file.exists(webhookModulePath)) {
           output.debug(`Processing Webhook with topic ${topic} with module ${webhookModulePath}`)
 
@@ -250,8 +282,16 @@ async function devIntegrationApp(options: DevOptions) {
       }
     },
   ])
+
   await app.listen(appPort)
-  await server.listen(serverPort)
+}
+
+async function startRemix(remixPort: number, options: DevOptions) {
+  const remixDevExecutable = path.join(options.app.directory, 'node_modules/@remix-run/dev/dist/cli.js')
+  await system.exec('node', [remixDevExecutable, options.app.directory, '--port', `${remixPort}`], {
+    cwd: options.app.directory,
+    stdio: 'inherit',
+  })
 }
 
 async function devApp(options: DevOptions) {

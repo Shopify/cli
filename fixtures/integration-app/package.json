@@ -1,7 +1,6 @@
 {
   "name": "integration-app",
   "version": "0.1.0",
-  "type": "module",
   "license": "UNLICENSED",
   "scripts": {
     "shopify": "../shopify",
