@@ -1,4 +1,4 @@
-import {BaseExtensionSchema, TypeSchema, ExtensionPointSchema} from './schemas'
+import {BaseExtensionSchema, TypeSchema, ExtensionPointSchema} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
