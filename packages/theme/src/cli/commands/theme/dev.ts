@@ -30,6 +30,7 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_POLL',
     }),
     'theme-editor-sync': Flags.boolean({
+      char: 'e',
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
