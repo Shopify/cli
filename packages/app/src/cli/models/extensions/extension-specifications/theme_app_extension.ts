@@ -3,7 +3,6 @@ import {BaseExtensionSchema} from '../schemas.js'
 
 const spec = createExtensionSpec({
   identifier: 'theme_app_extension',
-  ownerTeam: 'extensions',
   partnersWebId: 'theme_app_extension',
   schema: BaseExtensionSchema,
 })
