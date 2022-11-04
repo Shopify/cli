@@ -381,20 +381,19 @@ async function getEntrySourceFilePaths(directory: string, configuration: UIExten
   }
 
   const extensionPoints = configuration.extensionPoints as schema.define.infer<typeof NewExtensionPointsSchema>
-  const pathErrors: string[] = []
+  const errors: string[] = []
 
   const entrySourceFilePaths = await Promise.all(
-    extensionPoints.map(async (extensionPoint) => {
-      const fullPath = path.join(directory, extensionPoint.module)
+    extensionPoints.map(async ({module, target}) => {
+      const fullPath = path.join(directory, module)
       const fileExists = await file.exists(fullPath)
 
       if (!fileExists) {
-        const notFoundPath = output.token.path(path.join(directory, extensionPoint.module))
-        const tomlPath = output.token.path(path.join(directory, configurationFileNames.extension.ui))
+        const notFoundPath = output.token.path(path.join(directory, module))
 
-        pathErrors.push(
+        errors.push(
           output.content`Couldn't find ${notFoundPath}
-Please check the module path for ${extensionPoint.target} in ${tomlPath}`.value,
+Please check the module path for ${target}`.value,
         )
       }
 
@@ -402,9 +401,19 @@ Please check the module path for ${extensionPoint.target} in ${tomlPath}`.value,
     }),
   )
 
-  if (pathErrors.length) {
-    const errrors = pathErrors.join('\n\n')
-    throw new error.Abort(`${errrors}`)
+  const targets = extensionPoints.map(({target}) => target)
+  const duplicateTargets = targets.filter((item, index) => targets.indexOf(item) !== index)
+
+  if (duplicateTargets.length) {
+    errors.push(`Duplicate targets found: ${duplicateTargets.join(', ')}\nExtension point targets must be unique`)
+  }
+
+  if (errors.length) {
+    const tomlPath = path.join(directory, configurationFileNames.extension.ui)
+
+    errors.push(`Please check the configuration in ${tomlPath}`)
+
+    throw new error.Abort(`${errors.join('\n\n')}`)
   }
 
   return entrySourceFilePaths
