@@ -4,7 +4,7 @@ import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './public/node/plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
 import {err, Result} from './public/common/result.js'
-import {HookReturnPerExtensionPlugin} from './plugins/extension.js'
+import {HookReturnPerExtensionPlugin} from './public/node/plugins/extension.js'
 import {Config, Interfaces} from '@oclif/core'
 
 /**

@@ -1,4 +1,10 @@
-import {getListOfExtensionPoints, getListOfExtensionSpecs, getListOfTunnelPlugins, runTunnelPlugin} from './plugins.js'
+import {
+  getListOfExtensionPoints,
+  getListOfExtensionSpecs,
+  getListOfFunctionSpecs,
+  getListOfTunnelPlugins,
+  runTunnelPlugin,
+} from './plugins.js'
 import {err, ok} from './public/common/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Config} from '@oclif/core'
@@ -196,5 +202,37 @@ describe('getListOfExtensionPoints', () => {
 
     // Then
     expect(got).toEqual([{firstPoint: 1}, {secondPoint: 2}])
+  })
+})
+
+describe('getListOfFunctionSpecs', () => {
+  it('returns empty list when there are no function specs', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
+
+    // When
+    const got = await getListOfFunctionSpecs(config)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  it('returns list of function specs', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook').mockResolvedValue({
+      successes: [
+        {result: {firstSpec: 1}, plugin: {name: 'function-spec'}},
+        {result: {secondSpec: 2}, plugin: {name: 'function-spec-2'}},
+      ],
+      errors: [],
+    } as any)
+
+    // When
+    const got = await getListOfFunctionSpecs(config)
+
+    // Then
+    expect(got).toEqual([{firstSpec: 1}, {secondSpec: 2}])
   })
 })
