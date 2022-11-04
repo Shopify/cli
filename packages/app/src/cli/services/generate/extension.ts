@@ -123,9 +123,8 @@ async function uiExtensionInit({
             throw new error.Bug(`Couldn't find the template for ${extensionType}`)
           }
 
-          const flavor = extensionFlavor?.includes('react') ? 'react' : ''
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
-            flavor,
+            flavor: extensionFlavor ?? '',
             type: extensionType,
             name,
           })
