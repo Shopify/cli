@@ -143,22 +143,23 @@ export async function getUIExtensionRendererVersion(
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = getUIExtensionRendererDependency(uiExtensionType)
   if (!rendererDependency) return undefined
+  return getDependencyVersion(rendererDependency.name, app.directory)
+}
 
-  const fullName = rendererDependency.name
-  let cwd = app.directory
-  const isReact = fullName.includes('-react')
-
+export async function getDependencyVersion(dependency: string, directory: string): Promise<RendererVersionResult> {
+  const isReact = dependency.includes('-react')
+  let cwd = directory
   /**
    * PNPM creates a symlink to a global cache where dependencies are hoisted. Therefore
    * we need to first look up the *-react package and use that as a working directory from
    * where to look up the non-react package.
    */
   if (isReact) {
-    const dependencyName = fullName.split('/')
+    const dependencyName = dependency.split('/')
     const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
     const reactPackageJsonPath = await path.findUp(pattern, {
       type: 'file',
-      cwd: app.directory,
+      cwd: directory,
       allowSymlinks: true,
     })
     if (!reactPackageJsonPath) {
@@ -168,7 +169,7 @@ export async function getUIExtensionRendererVersion(
   }
 
   // Split the dependency name to avoid using "/" in windows
-  const dependencyName = fullName.replace('-react', '').split('/')
+  const dependencyName = dependency.replace('-react', '').split('/')
   const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
 
   let packagePath = await path.findUp(pattern, {
@@ -182,5 +183,5 @@ export async function getUIExtensionRendererVersion(
   // Load the package.json and extract the version
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
-  return {name: fullName, version: packageContent.version}
+  return {name: dependency, version: packageContent.version}
 }

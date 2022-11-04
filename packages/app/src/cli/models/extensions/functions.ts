@@ -20,7 +20,6 @@ export interface FunctionSpec<
   TMetadata extends MetadataType = MetadataType,
 > {
   identifier: string
-  ownerTeam: string
   templateURL: string
   languages: string[]
   configSchema: schema.define.ZodType<TConfiguration>
