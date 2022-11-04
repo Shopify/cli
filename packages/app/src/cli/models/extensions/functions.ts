@@ -1,6 +1,7 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, TypeSchema} from './schemas'
 import {toml, schema, file, path, error, system, abort} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {fqdn} from '@shopify/cli-kit/src/environment.js'
 import {Writable} from 'stream'
 
 // Base config types that all config schemas must extend
@@ -101,8 +102,8 @@ export class FunctionInstance<
     })
   }
 
-  publishURL(options: {orgId: string; appId: string}) {
-    const partnersFqdn = 'partners.shopify.com'
+  async publishURL(options: {orgId: string; appId: string}) {
+    const partnersFqdn = await fqdn.partners()
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions`
   }
 }

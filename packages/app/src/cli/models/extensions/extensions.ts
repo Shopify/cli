@@ -4,6 +4,7 @@ import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
 import {id, path, schema, toml, api, file} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {fqdn} from '@shopify/cli-kit/src/environment.js'
 import {Writable} from 'node:stream'
 
 // Base config type that all config schemas must extend.
@@ -107,27 +108,24 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 
   resourceUrl() {
     if (this.extensionPointSpecs) {
-      const urls = this.extensionPointSpecs.map((point) => {
+      return this.extensionPointSpecs.map((point) => {
         const conf = this.config.extension_points?.find((spec) => spec.type === point.type)
         if (!conf) return {type: point.type, url: undefined}
         return {type: point.type, url: this.extensionPointURL(point, conf)}
       })
-      return urls
     } else {
-      if (this.specification.resourceUrl) return this.specification.resourceUrl(this.config)
-      return ''
+      return this.specification.resourceUrl?.(this.config) ?? ''
     }
   }
 
-  publishURL(options: {orgId: string; appId: string; extensionId: string}) {
-    const partnersFqdn = 'partners.shopify.com'
+  async publishURL(options: {orgId: string; appId: string; extensionId: string}) {
+    const partnersFqdn = await fqdn.partners()
     const parnersPath = this.specification.partnersWebId
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
-    if (point.resourceUrl) return point.resourceUrl(config)
-    return ''
+    return point.resourceUrl?.(config) ?? ''
   }
 }
 
