@@ -1,39 +1,31 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {
-  ChevronRightMinor,
-  RefreshMinor,
-  ToolsMajor,
-  ViewMinor,
-  HideMinor,
-  MobileMajor,
-} from '@shopify/polaris-icons';
-import {useI18n} from '@shopify/react-i18n';
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit';
-import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal';
-import {ToastProvider} from '@/hooks/useToast';
-
-import {Checkbox} from './CheckBox';
-import {ExtensionRow} from './ExtensionRow';
-import {Action} from './ActionSet/Action';
-import * as styles from './DevConsole.module.scss';
+import {Checkbox} from './CheckBox'
+import {ExtensionRow} from './ExtensionRow'
+import {Action} from './ActionSet/Action'
+import * as styles from './DevConsole.module.scss'
 // eslint-disable-next-line @shopify/strict-component-boundaries
-import * as actionSetStyles from './ActionSet/ActionSet.module.scss';
-import en from './translations/en.json';
-import {QRCodeModal} from './QRCodeModal';
+import * as actionSetStyles from './ActionSet/ActionSet.module.scss'
+import en from './translations/en.json'
+import {QRCodeModal} from './QRCodeModal'
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {useI18n} from '@shopify/react-i18n'
+import {ChevronRightMinor, RefreshMinor, ToolsMajor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
+import React, {useCallback, useMemo, useState} from 'react'
+import {ToastProvider} from '@/hooks/useToast'
+import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal'
 
 // Hiding content until there are more options in the side nav
-const DISPLAY_SIDENAV = false;
+const DISPLAY_SIDENAV = false
 
 function getUuid({uuid}: {uuid: string}) {
-  return uuid;
+  return uuid
 }
 
 export function DevConsole() {
   const [i18n] = useI18n({
     id: 'DevConsole',
     fallback: en,
-  });
-  const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set());
+  })
+  const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set())
   const {
     state: {extensions},
     connect,
@@ -45,53 +37,47 @@ export function DevConsole() {
     client: {
       options: {surface},
     },
-  } = useDevConsoleInternal();
+  } = useDevConsoleInternal()
 
-  const allSelected = selectedExtensionsSet.size === extensions.length;
+  const allSelected = selectedExtensionsSet.size === extensions.length
 
   const toggleSelectAll = () => {
     if (allSelected) {
-      setSelectedExtensionsSet(new Set([]));
+      setSelectedExtensionsSet(new Set([]))
     } else {
-      setSelectedExtensionsSet(new Set(extensions.map(getUuid)));
+      setSelectedExtensionsSet(new Set(extensions.map(getUuid)))
     }
-  };
+  }
 
   const toggleSelect = useCallback((extension: ExtensionPayload) => {
     setSelectedExtensionsSet((set) => {
       // if delete === false, extension not selected; therefore select it instead
-      if (!set.delete(extension.uuid)) set.add(extension.uuid);
-      return new Set(set);
-    });
-  }, []);
+      if (!set.delete(extension.uuid)) set.add(extension.uuid)
+      return new Set(set)
+    })
+  }, [])
 
   const selectedExtensions = useMemo(
     () => extensions.filter((extension) => selectedExtensionsSet.has(extension.uuid)),
     [extensions, selectedExtensionsSet],
-  );
+  )
 
-  const refreshSelectedExtensions = () => refresh(selectedExtensions);
+  const refreshSelectedExtensions = () => refresh(selectedExtensions)
 
-  const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] =
-    useState<ExtensionPayload>();
+  const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] = useState<ExtensionPayload>()
 
   const actionHeaderMarkup = useMemo(() => {
-    if (!selectedExtensions.length) return null;
+    if (!selectedExtensions.length) return null
 
     const selectedExtensionsVisible: boolean =
-      selectedExtensions.findIndex((extension) => !extension.development.hidden) !== -1;
+      selectedExtensions.findIndex((extension) => !extension.development.hidden) !== -1
 
     return (
       <>
         {toggleViewAction()}
-        <Action
-          className={styles.Hidden}
-          source={MobileMajor}
-          accessibilityLabel=""
-          onAction={() => null}
-        />
+        <Action className={styles.Hidden} source={MobileMajor} accessibilityLabel="" onAction={() => null} />
       </>
-    );
+    )
 
     function toggleViewAction() {
       return selectedExtensionsVisible ? (
@@ -106,9 +92,9 @@ export function DevConsole() {
           accessibilityLabel={i18n.translate('bulkActions.show')}
           onAction={() => show(selectedExtensions)}
         />
-      );
+      )
     }
-  }, [selectedExtensions, show, hide, i18n]);
+  }, [selectedExtensions, show, hide, i18n])
 
   const ConsoleSidenav = () =>
     DISPLAY_SIDENAV ? (
@@ -122,7 +108,7 @@ export function DevConsole() {
           </ul>
         </nav>
       </aside>
-    ) : null;
+    ) : null
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
@@ -132,9 +118,7 @@ export function DevConsole() {
             <th>
               <Checkbox
                 label={
-                  allSelected
-                    ? i18n.translate('bulkActions.deselectAll')
-                    : i18n.translate('bulkActions.selectAll')
+                  allSelected ? i18n.translate('bulkActions.deselectAll') : i18n.translate('bulkActions.selectAll')
                 }
                 checked={allSelected}
                 onChange={toggleSelectAll}
@@ -158,7 +142,7 @@ export function DevConsole() {
         </thead>
         <tbody>
           {extensions.map((extension) => {
-            const uuid = extension.uuid;
+            const uuid = extension.uuid
             return (
               <ExtensionRow
                 key={uuid}
@@ -170,22 +154,20 @@ export function DevConsole() {
                 onCloseMobileQRCode={() => setActiveMobileQRCodeExtension(undefined)}
                 onShowMobileQRCode={setActiveMobileQRCodeExtension}
               />
-            );
+            )
           })}
         </tbody>
       </table>
     </section>
-  );
+  )
 
   const ConsoleEmpty = () => {
     return (
       <div className={styles.Empty}>
-        {surface
-          ? i18n.translate('errors.noExtensionsForSurface', {surface})
-          : i18n.translate('errors.noExtensions')}
+        {surface ? i18n.translate('errors.noExtensionsForSurface', {surface}) : i18n.translate('errors.noExtensions')}
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <ToastProvider>
@@ -209,5 +191,5 @@ export function DevConsole() {
         </div>
       </div>
     </ToastProvider>
-  );
+  )
 }
