@@ -99,7 +99,6 @@ describe('initialize a extension', () => {
   )
 
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
-  type ExtensionLiquidFlavor = 'react' | ''
 
   // For each combination of extension type and flavor, confirm that files are created with the expected extension
   it.each(
@@ -137,17 +136,17 @@ describe('initialize a extension', () => {
   // For each combination of extension type and flavor, confirm that the right parameters are passed to the template
   it.each(
     uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js', ''])
-      accumulator.push([type, 'react', 'react'])
-      accumulator.push([type, 'typescript', ''])
-      accumulator.push([type, 'typescript-react', 'react'])
+      accumulator.push([type, 'vanilla-js'])
+      accumulator.push([type, 'react'])
+      accumulator.push([type, 'typescript'])
+      accumulator.push([type, 'typescript-react'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor, ExtensionLiquidFlavor][]),
+    }, [] as [ExtensionTypes, ExtensionFlavor][]),
   )(
     'calls recursiveDirectoryCopy with type %s, flavor %s, file extension %s and liquid flavor %s',
 
-    async (extensionType, extensionFlavor, liquidFlavor) => {
+    async (extensionType, extensionFlavor) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
         const fileMoveSpy = vi.spyOn(file, 'move').mockResolvedValue()
@@ -163,7 +162,7 @@ describe('initialize a extension', () => {
         }
 
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
-          flavor: liquidFlavor,
+          flavor: extensionFlavor,
           type: extensionType,
           name,
         })
