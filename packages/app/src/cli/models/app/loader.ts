@@ -381,24 +381,31 @@ async function getEntrySourceFilePaths(directory: string, configuration: UIExten
   }
 
   const extensionPoints = configuration.extensionPoints as schema.define.infer<typeof NewExtensionPointsSchema>
+  const pathErrors: string[] = []
+
   const entrySourceFilePaths = await Promise.all(
     extensionPoints.map(async (extensionPoint) => {
       const fullPath = path.join(directory, extensionPoint.module)
       const fileExists = await file.exists(fullPath)
 
       if (!fileExists) {
-        throw new error.Abort(
-          output.content`Couldn't find ${output.token.path(path.join(directory, extensionPoint.module))}
+        const notFoundPath = output.token.path(path.join(directory, extensionPoint.module))
+        const tomlPath = output.token.path(path.join(directory, configurationFileNames.extension.ui))
 
-Please check the module path for ${extensionPoint.target} in ${output.token.path(
-            path.join(directory, configurationFileNames.extension.ui),
-          )}`,
+        pathErrors.push(
+          output.content`Couldn't find ${notFoundPath}
+Please check the module path for ${extensionPoint.target} in ${tomlPath}`.value,
         )
       }
 
       return fullPath
     }),
   )
+
+  if (pathErrors.length) {
+    const errrors = pathErrors.join('\n\n')
+    throw new error.Abort(`${errrors}`)
+  }
 
   return entrySourceFilePaths
 }
