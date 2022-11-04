@@ -17,18 +17,42 @@ import {EOL} from 'node:os'
 
 const logFileName = 'shopify.cli.log'
 const maxLogFileSize = 5 * 1024 * 1024
+const maxLogFileSizeToTruncate = 30 * 1024 * 1024
 let logFileStream: WriteStream
 let commandUuid: string
 let logFilePath: string
 export class LinesTruncatorTransformer extends Transform {
   linesToRetain: string[] = []
   lastLineCompleted = true
+  contentSize = 0
 
-  constructor(readonly maxFileSize: number, opts?: TransformOptions) {
+  constructor(
+    readonly fileSize: number,
+    readonly maxFileSize: number = maxLogFileSize,
+    readonly maxFileSizeToTruncate: number = maxLogFileSizeToTruncate,
+    opts?: TransformOptions,
+  ) {
     super(opts)
   }
 
   _transform(chunk: unknown, encoding: BufferEncoding, callback: TransformCallback): void {
+    this.contentSize += (chunk as string).toString().length
+    if (this.shouldTruncate()) {
+      this.truncate(chunk)
+    }
+    callback()
+  }
+
+  _flush(callback: TransformCallback): void {
+    this.push(this.linesToRetain.join(EOL))
+    callback()
+  }
+
+  shouldTruncate(): boolean {
+    return this.fileSize - this.contentSize < this.maxFileSizeToTruncate
+  }
+
+  truncate(chunk: unknown) {
     const tokens = (chunk as string).toString().split(EOL)
 
     this.completeLastLine(tokens)
@@ -43,12 +67,6 @@ export class LinesTruncatorTransformer extends Transform {
     if (this.linesToRetain.length > numLinesToRetain) {
       this.linesToRetain = this.linesToRetain.splice(this.linesToRetain.length - numLinesToRetain)
     }
-    callback()
-  }
-
-  _flush(callback: TransformCallback): void {
-    this.push(this.linesToRetain.join(EOL))
-    callback()
   }
 
   // Lines retained length average is used so the number of lines depends on the length of them
@@ -120,11 +138,12 @@ function getLogFilePath(options: {logDir?: string; override?: boolean} = {}) {
 
 // Shaves off older log lines if logs are over maxLogFileSize long.
 async function truncateLogs(logFile: string) {
-  if (fileSizeSync(logFile) < maxLogFileSize) {
+  const fileSize = fileSizeSync(logFile)
+  if (fileSize < maxLogFileSize) {
     return
   }
   const tmpLogFile = logFile.concat('.tmp')
-  const truncateLines = new LinesTruncatorTransformer(maxLogFileSize)
+  const truncateLines = new LinesTruncatorTransformer(fileSize)
   const pipeline = promisify(Stream.pipeline)
   await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
   await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
