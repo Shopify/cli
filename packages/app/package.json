@@ -13,6 +13,12 @@
     "/assets",
     "/templates"
   ],
+  "exports": {
+    "./plugins/extensions/*": {
+      "import": "./dist/cli/models/extensions/*.js",
+      "require": "./dist/cli/models/extensions/*.d.ts"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "@shopify:registry": "https://registry.npmjs.org"
