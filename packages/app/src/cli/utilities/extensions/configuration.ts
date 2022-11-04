@@ -1,12 +1,10 @@
-import {UIExtensionTypes} from '../../constants.js'
-
 interface GetUIExensionResourceURLOptions {
   checkoutCartUrl?: string
   subscriptionProductUrl?: string
 }
 
 export function getUIExtensionResourceURL(
-  uiExtensionType: UIExtensionTypes,
+  uiExtensionType: string,
   options: GetUIExensionResourceURLOptions,
 ): {url: string | undefined} {
   switch (uiExtensionType) {
@@ -19,12 +17,14 @@ export function getUIExtensionResourceURL(
       return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
+    default:
+      return {url: ''}
   }
 }
 
 export type UIExtensionSurface = ReturnType<typeof getUIExtensionSurface>
 
-export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
+export function getUIExtensionSurface(uiExtensionType: string) {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
       return 'checkout'

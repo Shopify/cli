@@ -1,20 +1,5 @@
-import {
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
-  ExtensionTypes,
-  uiExternalExtensionTypes,
-} from '../../constants.js'
+import {functionExtensions, themeExtensions, uiExtensions, uiExternalExtensionTypes} from '../../constants.js'
 import {schema} from '@shopify/cli-kit'
-
-export interface Extension {
-  idEnvironmentVariableName: string
-  localIdentifier: string
-  configurationPath: string
-  directory: string
-  type: ExtensionTypes
-  graphQLType: string
-}
 
 export const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
@@ -87,26 +72,3 @@ export const FunctionExtensionMetadataSchema = schema.define.object({
     }),
   ),
 })
-
-export type FunctionExtension = Extension & {
-  configuration: FunctionExtensionConfiguration
-  metadata: FunctionExtensionMetadata
-  buildWasmPath: () => string
-  inputQueryPath: () => string
-}
-
-export type ThemeExtension = Extension & {
-  configuration: ThemeExtensionConfiguration
-}
-
-export type UIExtension = Extension & {
-  configuration: UIExtensionConfiguration
-  entrySourceFilePath: string
-  outputBundlePath: string
-  devUUID: string
-}
-
-type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>
-type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
-type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
-type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>

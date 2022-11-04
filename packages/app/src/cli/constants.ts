@@ -45,9 +45,9 @@ export const blocks = {
  * List of extensions for each category that are limited by quantity, only 1 of each is allowed per app
  */
 export const limitedExtensions: {
-  ui: UIExtensionTypes[]
-  theme: ThemeExtensionTypes[]
-  function: FunctionExtensionTypes[]
+  ui: string[]
+  theme: string[]
+  function: string[]
 } = {
   ui: ['product_subscription', 'checkout_post_purchase', 'web_pixel_extension'],
   theme: ['theme'],
@@ -140,7 +140,7 @@ export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionTy
  * @param extensionType - Extension type.
  * @returns The renderer dependency that should be present in the app's package.json
  */
-export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes): DependencyVersion | undefined {
+export function getUIExtensionRendererDependency(extensionType: string): DependencyVersion | undefined {
   switch (extensionType) {
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}

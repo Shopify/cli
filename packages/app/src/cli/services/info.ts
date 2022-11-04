@@ -1,6 +1,5 @@
 import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {
   configurationFileNames,
   ExtensionTypes,
@@ -9,6 +8,8 @@ import {
   uiExtensions,
 } from '../constants.js'
 import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
+import {ExtensionInstance} from '../models/extensions/extensions.js'
+import {FunctionInstance} from '../models/extensions/functions.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -19,7 +20,7 @@ interface InfoOptions {
   webEnv: boolean
 }
 interface Configurable {
-  configuration?: {type?: string}
+  type?: string
 }
 
 export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<output.Message> {
@@ -118,7 +119,7 @@ class AppInfo {
     ) {
       extensionTypes.forEach((extensionType: string) => {
         const relevantExtensions = extensions.filter((extension: TExtension) => {
-          const configurationType = extension.configuration && extension.configuration.type
+          const configurationType = extension.type
           return configurationType === extensionType
         })
         if (relevantExtensions[0]) {
@@ -143,7 +144,7 @@ class AppInfo {
 
     const invalidExtensions = Object.values(this.app.extensions)
       .flat()
-      .filter((extension) => !extension.configuration || !extension.configuration.type)
+      .filter((extension) => !extension.type)
     if (invalidExtensions[0]) {
       body += `\n\n${output.content`${output.token.subheading('Extensions with errors')}`.value}`
       invalidExtensions.forEach((extension) => {
@@ -176,20 +177,20 @@ class AppInfo {
     return `${subtitle}\n${string.linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
-  uiExtensionSubSection(extension: UIExtension): string {
+  uiExtensionSubSection(extension: ExtensionInstance): string {
     const config = extension.configuration
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    if (config && config.metafields.length) {
+    if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
 
     return `\n${string.linesToColumns(details)}`
   }
 
-  functionExtensionSubSection(extension: FunctionExtension): string {
+  functionExtensionSubSection(extension: FunctionInstance): string {
     const config = extension.configuration
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
@@ -199,7 +200,7 @@ class AppInfo {
     return `\n${string.linesToColumns(details)}`
   }
 
-  themeExtensionSubSection(extension: ThemeExtension): string {
+  themeExtensionSubSection(extension: ExtensionInstance): string {
     const config = extension.configuration
     const details = [
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
@@ -209,7 +210,7 @@ class AppInfo {
     return `\n${string.linesToColumns(details)}`
   }
 
-  invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
+  invalidExtensionSubSection(extension: ExtensionInstance | FunctionInstance): string {
     const details = [
       [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],

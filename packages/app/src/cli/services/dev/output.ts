@@ -1,9 +1,9 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
-import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {output, string, environment} from '@shopify/cli-kit'
+import {ExtensionInstance} from '../../models/extensions/extensions.js'
+import {FunctionInstance} from '../../models/extensions/functions.js'
+import {output, environment} from '@shopify/cli-kit'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -51,51 +51,28 @@ export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, u
   outputThemeExtensionsMessage(app.extensions.theme)
 }
 
-function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
-  if (extensions.length > 0) {
-    outputDevConsoleURL(url)
-  }
+function outputUIExtensionsURLs(extensions: ExtensionInstance[], storeFqdn: string, url: string) {
+  if (extensions.length > 0) outputDevConsoleURL(url)
 
   for (const extension of extensions) {
-    const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)})`)
-    let message: string
-    switch (extension.type as UIExtensionTypes) {
-      case 'checkout_post_purchase': {
-        message = postPurchaseMessage(url, extension).value
-        break
-      }
-      case 'checkout_ui_extension': {
-        message = checkoutUIMessage(url, extension).value
-        break
-      }
-      case 'customer_accounts_ui_extension': {
-        message = customerAccountsUIMessage(storeFqdn, url, extension).value
-        break
-      }
-      case 'product_subscription': {
-        message = productSubscriptionMessage(url, extension).value
-        break
-      }
-      case 'pos_ui_extension':
-      case 'web_pixel_extension':
-        continue
-    }
-    output.info(output.content`${heading}\n${message}\n`)
+    const message = extension.previewMessage(url, storeFqdn)
+    if (!message) continue
+    output.info(message)
   }
 }
 
-function outputFunctionsMessage(extensions: FunctionExtension[]) {
+function outputFunctionsMessage(extensions: FunctionInstance[]) {
   if (extensions.length === 0) return
-  const names = extensions.map((ext) => ext.configuration.name)
+  const names = extensions.map((ext) => ext.name)
   const heading = output.token.heading(names.join(', '))
   const message = `These extensions need to be deployed to be manually tested.
 One testing option is to use a separate app dedicated to staging.`
   output.info(output.content`${heading}\n${message}\n`)
 }
 
-function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
+function outputThemeExtensionsMessage(extensions: ExtensionInstance[]) {
   if (extensions.length === 0) return
-  const heading = output.token.heading(`${extensions[0]!.configuration.name} (${getHumanKey(extensions[0]!.type)})`)
+  const heading = output.token.heading(`${extensions[0]!.name} (${extensions[0]?.humanName})`)
   const link = output.token.link(
     'dev doc instructions',
     'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
@@ -108,47 +85,6 @@ function buildAppURL(storeFqdn: string, publicURL: string) {
   const hostUrl = `${storeFqdn}/admin`
   const hostParam = Buffer.from(hostUrl).toString('base64').replace(/[=]/g, '')
   return `${publicURL}?shop=${storeFqdn}&host=${hostParam}`
-}
-
-function postPurchaseMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  const devDocsLink = output.token.link(
-    'dev docs',
-    'https://shopify.dev/apps/checkout/post-purchase/getting-started-post-purchase-extension#step-2-test-the-extension',
-  )
-  const chromeLink = output.token.link(
-    'Shopify’s post-purchase Chrome extension',
-    'https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong',
-  )
-  return output.content`To view this extension:
-  1. Install ${chromeLink}
-  2. Open the Chrome extension and paste this URL into it: ${publicURL}
-  3. Run a test purchase on your store to view your extension
-
-For more detail, see the ${devDocsLink}`
-}
-
-function checkoutUIMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
-}
-
-function customerAccountsUIMessage(storeFqdn: string, url: string, extension: UIExtension) {
-  const [storeName, ...storeDomainParts] = storeFqdn.split('.')
-  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
-  const origin = encodeURIComponent(`${url}/extensions`)
-  const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${extension.devUUID}`
-  const notice = `Please open ${url} and click on 'Visit Site' and then close the tab to allow connections.\n`
-  return output.content`${notice}Preview link: ${publicURL}`
-}
-
-function productSubscriptionMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
-}
-
-function getHumanKey(type: ExtensionTypes) {
-  return string.capitalize(getExtensionOutputConfig(type).humanKey)
 }
 
 async function partnersURL(organizationId: string, appId: string): Promise<string> {

@@ -10,8 +10,8 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
+import {ExtensionInstance} from '../models/extensions/extensions.js'
 import {analytics, output, port, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -308,7 +308,7 @@ async function devUIExtensionsTarget({
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
+async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl

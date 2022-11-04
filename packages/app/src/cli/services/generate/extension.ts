@@ -11,6 +11,7 @@ import {
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
+import {functionSpecForType} from '../../models/extensions/specifications.js'
 import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
@@ -195,11 +196,14 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   const url = options.cloneUrl || blocks.functions.defaultUrl
+  const spec = await functionSpecForType(options.extensionType)
+  if (!spec) throw new error.Bug(`Unknown function type ${options.extensionType}`)
+
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
     await ui.task({
-      title: `Generating ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
+      title: `Generating ${spec.externalName} extension...`,
       task: async () => {
         await file.mkdir(templateDownloadDir)
         await git.downloadRepository({
@@ -207,36 +211,19 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+        const templatePath = spec.templatePath(options.extensionFlavor || blocks.functions.defaultLanguage)
+        const origin = path.join(templateDownloadDir, templatePath)
         await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
         const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
         if (await file.exists(configYamlPath)) {
           await file.remove(configYamlPath)
         }
         return {
-          successMessage: `${getExtensionOutputConfig(options.extensionType).humanKey} extension generated`,
+          successMessage: `${spec.externalName} extension generated`,
         }
       },
     })
   })
-}
-
-function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensionInitOptions): string {
-  const lang = extensionFlavor || blocks.functions.defaultLanguage
-  switch (extensionType) {
-    case 'product_discounts':
-      return `discounts/${lang}/product-discounts/default`
-    case 'order_discounts':
-      return `discounts/${lang}/order-discounts/default`
-    case 'shipping_discounts':
-      return `discounts/${lang}/shipping-discounts/default`
-    case 'payment_customization':
-      return `checkout/${lang}/payment-customization/default`
-    case 'shipping_rate_presenter':
-      return `checkout/${lang}/shipping-rate-presenter/default`
-    case 'delivery_customization':
-      return `checkout/${lang}/delivery-customization/default`
-  }
 }
 
 async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {

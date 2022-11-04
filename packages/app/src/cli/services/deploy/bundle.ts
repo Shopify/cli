@@ -40,15 +40,9 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
               ...options.app.extensions,
               ui: options.app.extensions.ui.map((uiExtension) => {
                 const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
-                const mappedUIExtension: typeof uiExtension = {
-                  ...uiExtension,
-                  outputBundlePath: path.join(
-                    bundleDirectory,
-                    extensionId,
-                    path.basename(uiExtension.outputBundlePath),
-                  ),
-                }
-                return mappedUIExtension
+                const outputBundlePath = path.join(bundleDirectory, extensionId, path.basename(uiExtension.outputPath))
+                uiExtension.outputPath = outputBundlePath
+                return uiExtension
               }),
             },
           },

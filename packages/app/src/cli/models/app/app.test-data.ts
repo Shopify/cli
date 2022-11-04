@@ -1,5 +1,6 @@
 import {App, AppInterface} from './app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {ExtensionInstance} from '../extensions/extensions.js'
+import {FunctionInstance} from '../extensions/functions.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -27,7 +28,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   return newApp
 }
 
-export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {
+export function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): ExtensionInstance {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   return {
@@ -52,7 +53,7 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
   }
 }
 
-export function testThemeExtensions(): ThemeExtension {
+export function testThemeExtensions(): ExtensionInstance {
   return {
     configuration: {
       name: 'theme extension name',
@@ -67,7 +68,7 @@ export function testThemeExtensions(): ThemeExtension {
   }
 }
 
-export function testFunctionExtension(): FunctionExtension {
+export function testFunctionExtension(): FunctionInstance {
   return {
     configuration: {
       name: 'test function extension',

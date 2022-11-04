@@ -1,4 +1,4 @@
-import {UIExtension} from '../../../models/app/extensions.js'
+import {ExtensionInstance} from '../../../models/extensions/extensions.js'
 import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
 
 /**
@@ -6,7 +6,11 @@ import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-v
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-export async function getCartPathFromExtensions(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
+export async function getCartPathFromExtensions(
+  extensions: ExtensionInstance[],
+  store: string,
+  checkoutCartUrl?: string,
+) {
   const hasUIExtension = extensions.filter(getExtensionNeedsCartURL).length > 0
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl
@@ -17,6 +21,6 @@ export async function getCartPathFromExtensions(extensions: UIExtension[], store
 /**
  * Returns true if an extension needs a cart URL.
  */
-export function getExtensionNeedsCartURL(extension: UIExtension) {
+export function getExtensionNeedsCartURL(extension: ExtensionInstance) {
   return extension.configuration.type === 'checkout_ui_extension'
 }

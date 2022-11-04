@@ -1,5 +1,5 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, TypeSchema} from './schemas'
-import {toml, schema, file, path, error, system, abort} from '@shopify/cli-kit'
+import {toml, schema, file, path, error, system, abort, string} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {fqdn} from '@shopify/cli-kit/src/environment.js'
 import {Writable} from 'stream'
@@ -28,7 +28,7 @@ export interface FunctionSpec<
   languages?: {name: string; value: string}[]
   configSchema?: schema.define.ZodType<TConfiguration>
   metadataSchema?: schema.define.ZodType<TMetadata>
-  templatePath?: (lang: string) => string
+  templatePath: (lang: string) => string
   validate?: <T extends TConfiguration>(config: T) => unknown
 }
 
@@ -45,27 +45,37 @@ export class FunctionInstance<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
   TMetadata extends MetadataType = MetadataType,
 > {
-  private config: TConfiguration
+  idEnvironmentVariableName: string
+  localIdentifier: string
+  directory: string
+  configuration: TConfiguration
+  configurationPath: string
+
   private metadata: TMetadata
   private specification: FunctionSpec<TConfiguration>
-  private directory: string
-  private localIdentifier: string
 
   get type() {
     return this.specification.identifier
   }
 
+  get name() {
+    return this.configuration.name
+  }
+
   constructor(
-    config: TConfiguration,
+    configuration: TConfiguration,
+    configurationPath: string,
     metadata: TMetadata,
     specification: FunctionSpec<TConfiguration>,
     directory: string,
   ) {
-    this.config = config
+    this.configuration = configuration
+    this.configurationPath = configurationPath
     this.metadata = metadata
     this.specification = specification
     this.directory = directory
     this.localIdentifier = path.basename(directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
   get inputQueryPath() {
@@ -73,16 +83,16 @@ export class FunctionInstance<
   }
 
   get wasmPath() {
-    const relativePath = this.config.build.path ?? 'dist/index.wasm'
+    const relativePath = this.configuration.build.path ?? 'dist/index.wasm'
     return `${this.directory}/${relativePath}`
   }
 
   validate() {
-    return this.specification.validate?.(this.config)
+    return this.specification.validate?.(this.configuration)
   }
 
   async build(stdout: Writable, stderr: Writable, signal: abort.Signal) {
-    const buildCommand = this.config.build.command
+    const buildCommand = this.configuration.build.command
     if (!buildCommand || buildCommand.trim() === '') {
       stderr.write(`The function extension ${this.localIdentifier} doesn't have a build command or it's empty`)
       stderr.write(`
@@ -156,7 +166,7 @@ export async function loadFunction(configPath: string): Promise<Result<FunctionI
     return err('invalid_function_metadata')
   }
 
-  const instance = new FunctionInstance(config, metadata, spec, directory)
+  const instance = new FunctionInstance(config, configPath, metadata, spec, directory)
   return ok(instance)
 }
 

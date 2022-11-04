@@ -1,6 +1,7 @@
-import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
+import {FunctionInstance} from '../extensions/functions.js'
+import {ExtensionInstance} from '../extensions/extensions.js'
 import {path, schema, file} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -48,9 +49,9 @@ export interface AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   extensions: {
-    ui: UIExtension[]
-    theme: ThemeExtension[]
-    function: FunctionExtension[]
+    ui: ExtensionInstance[]
+    theme: ExtensionInstance[]
+    function: FunctionInstance[]
   }
   errors?: AppErrors
   hasExtensions: () => boolean
@@ -71,9 +72,9 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   extensions: {
-    ui: UIExtension[]
-    theme: ThemeExtension[]
-    function: FunctionExtension[]
+    ui: ExtensionInstance[]
+    theme: ExtensionInstance[]
+    function: FunctionInstance[]
   }
 
   // eslint-disable-next-line max-params
@@ -86,9 +87,9 @@ export class App implements AppInterface {
     configurationPath: string,
     nodeDependencies: {[key: string]: string},
     webs: Web[],
-    ui: UIExtension[],
-    theme: ThemeExtension[],
-    functions: FunctionExtension[],
+    ui: ExtensionInstance[],
+    theme: ExtensionInstance[],
+    functions: FunctionInstance[],
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,

@@ -1,5 +1,5 @@
 import {ExtensionAssetBuildStatus} from './payload/models.js'
-import {UIExtension} from '../../../models/app/extensions.js'
+import {ExtensionInstance} from '../../../models/extensions/extensions.js'
 import {path, file, output} from '@shopify/cli-kit'
 
 export type Locale = string
@@ -13,13 +13,13 @@ export interface Localization {
   lastUpdated: number
 }
 
-export async function getLocalizationFilePaths(extension: UIExtension): Promise<string[]> {
+export async function getLocalizationFilePaths(extension: ExtensionInstance): Promise<string[]> {
   const localePath = path.join(extension.directory, 'locales')
   return path.glob([path.join(localePath, '*.json')])
 }
 
 export async function getLocalization(
-  extension: UIExtension,
+  extension: ExtensionInstance,
   currentLocalizattion?: Localization | null,
 ): Promise<{localization: Localization | undefined; status: ExtensionAssetBuildStatus}> {
   const localeFiles = await getLocalizationFilePaths(extension)
@@ -71,7 +71,7 @@ async function compileLocalizationFiles(
   locale: string,
   path: string,
   localization: Localization,
-  extension: UIExtension,
+  extension: ExtensionInstance,
 ): Promise<void> {
   try {
     localization.translations[locale] = JSON.parse(await file.read(path))

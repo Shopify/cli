@@ -1,18 +1,9 @@
-import {
-  UIExtension,
-  ThemeExtension,
-  FunctionExtension,
-  FunctionExtensionConfigurationSchema,
-  FunctionExtensionMetadataSchema,
-  ThemeExtensionConfigurationSchema,
-  UIExtensionConfigurationSupportedSchema,
-  Extension,
-} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
-import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
-import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {FunctionInstance, loadFunction} from '../extensions/functions.js'
+import {ExtensionInstance, loadExtension} from '../extensions/extensions.js'
+import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -235,122 +226,44 @@ class AppLoader {
 
   async loadUIExtensions(
     extensionDirectories?: string[],
-  ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
+  ): Promise<{uiExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
     })
     const configPaths = await path.glob(extensionConfigPaths)
 
-    const extensions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
-      const configurationSupported = await this.parseConfigurationFile(
-        UIExtensionConfigurationSupportedSchema,
-        configurationPath,
-      )
-      const configuration = {
-        ...configurationSupported,
-        type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
-      }
-
-      const entrySourceFilePath = (
-        await Promise.all(
-          ['index']
-            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-            .map((relativePath) => path.join(directory, relativePath))
-            .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
-        )
-      ).find((sourcePath) => sourcePath !== undefined)
-      if (!entrySourceFilePath) {
-        this.abortOrReport(
-          output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
-            directory,
-          )} or ${output.token.path(path.join(directory, 'src'))}`,
-          undefined,
-          directory,
-        )
-      }
-
-      return {
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        directory,
-        configuration,
-        configurationPath,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        entrySourceFilePath: entrySourceFilePath ?? '',
-        outputBundlePath: path.join(directory, 'dist/main.js'),
-        localIdentifier: path.basename(directory),
-        // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
-        devUUID: `dev-${id.generateRandomUUID()}`,
-      }
-    })
-    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories !== undefined}
+    const extensionsPromises = configPaths.map(async (configurationPath) => loadExtension(configurationPath))
+    const extensionsResults = await Promise.all(extensionsPromises)
+    const extensions = extensionsResults.map((result) => result.valueOrThrow())
+    return {uiExtensions: extensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadFunctions(
     extensionDirectories?: string[],
-  ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
+  ): Promise<{functions: FunctionInstance[]; usedCustomLayout: boolean}> {
     const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
     })
     const configPaths = await path.glob(functionConfigPaths)
 
-    const functions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configurationPath)
-      const metadata = await this.parseConfigurationFile(
-        FunctionExtensionMetadataSchema,
-        path.join(directory, 'metadata.json'),
-        JSON.parse,
-      )
-      return {
-        directory,
-        configuration,
-        configurationPath,
-        metadata,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        localIdentifier: path.basename(directory),
-        buildWasmPath() {
-          return configuration.build.path
-            ? path.join(directory, configuration.build.path)
-            : path.join(directory, 'dist/index.wasm')
-        },
-        inputQueryPath() {
-          return path.join(directory, 'input.graphql')
-        },
-      }
-    })
-    return {functions: await Promise.all(functions), usedCustomLayout: extensionDirectories !== undefined}
+    const functionsPromises = configPaths.map(async (configurationPath) => loadFunction(configurationPath))
+    const functionsResults = await Promise.all(functionsPromises)
+    const functions = functionsResults.map((result) => result.valueOrThrow())
+    return {functions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadThemeExtensions(
     extensionDirectories?: string[],
-  ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
+  ): Promise<{themeExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
     const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
     })
     const configPaths = await path.glob(themeConfigPaths)
 
-    const themeExtensions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configurationPath)
-      return {
-        directory,
-        configuration,
-        configurationPath,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        localIdentifier: path.basename(directory),
-      }
-    })
-    return {
-      themeExtensions: await Promise.all(themeExtensions),
-      usedCustomLayout: extensionDirectories !== undefined,
-    }
+    const extensionsPromises = configPaths.map(async (configurationPath) => loadExtension(configurationPath))
+    const extensionsResults = await Promise.all(extensionsPromises)
+    const extensions = extensionsResults.map((result) => result.valueOrThrow())
+    return {themeExtensions: extensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
@@ -416,7 +329,7 @@ async function logMetadataForLoadedApp(
         : undefined
     const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
-    const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
+    const allExtensions: {type: string}[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
     const extensionsBreakdownMapping: {[key: string]: number} = {}
     for (const extension of allExtensions) {
       if (extensionsBreakdownMapping[extension.type] === undefined) {

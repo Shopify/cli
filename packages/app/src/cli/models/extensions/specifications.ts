@@ -14,6 +14,10 @@ export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
   return registrations
 }
 
+export async function functionSpecForType(type: string): Promise<FunctionSpec | undefined> {
+  return (await allFunctionSpecifications()).find((spec) => spec.identifier === type || spec.externalType === type)
+}
+
 export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
   if (loadedFunctionSpecs) return loadedFunctionSpecs
   const registrations = await loadSpecs('function-specifications')
