@@ -1,20 +1,18 @@
-import React, {MouseEvent, useCallback, useState} from 'react';
-import {useI18n} from '@shopify/react-i18n';
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit';
-
-import {Checkbox} from '../CheckBox';
-import {ActionSet, ActionSetProps} from '../ActionSet';
-
-import * as styles from './ExtensionRow.module.scss';
-import en from './translations/en.json';
+import * as styles from './ExtensionRow.module.scss'
+import en from './translations/en.json'
+import {Checkbox} from '../CheckBox'
+import {ActionSet, ActionSetProps} from '../ActionSet'
+import React, {MouseEvent, useCallback, useState} from 'react'
+import {useI18n} from '@shopify/react-i18n'
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 
 export type ExtensionRowProps = {
-  extension: ExtensionPayload;
-  selected?: boolean;
-  onSelect(extension: ExtensionPayload): void;
-  onHighlight(extension: ExtensionPayload): void;
-  onClearHighlight(): void;
-} & Pick<ActionSetProps, 'onShowMobileQRCode' | 'onCloseMobileQRCode'>;
+  extension: ExtensionPayload
+  selected?: boolean
+  onSelect(extension: ExtensionPayload): void
+  onHighlight(extension: ExtensionPayload): void
+  onClearHighlight(): void
+} & Pick<ActionSetProps, 'onShowMobileQRCode' | 'onCloseMobileQRCode'>
 
 export function ExtensionRow({
   extension,
@@ -27,33 +25,33 @@ export function ExtensionRow({
   const [i18n] = useI18n({
     id: 'ExtensionRow',
     fallback: en,
-  });
+  })
   const {
     development: {hidden, status},
-  } = extension;
+  } = extension
 
   const handleSelect = useCallback(
     (event?: MouseEvent) => {
-      if (event) event.stopPropagation();
-      onSelect(extension);
+      if (event) event.stopPropagation()
+      onSelect(extension)
     },
     [extension, onSelect],
-  );
+  )
 
-  const [isFocus, setFocus] = useState(false);
+  const [isFocus, setFocus] = useState(false)
 
-  const textClass = hidden ? styles.Hidden : undefined;
-  const statusClass = status ? (styles as any)[status || 'error'] : styles.error;
+  const textClass = hidden ? styles.Hidden : undefined
+  const statusClass = status ? styles[status || 'error'] : styles.error
 
   return (
     <tr
       className={styles.DevToolRow}
       onClick={handleSelect}
       onFocus={() => {
-        setFocus(true);
+        setFocus(true)
       }}
       onBlur={() => {
-        setFocus(false);
+        setFocus(false)
       }}
       onMouseEnter={() => onHighlight(extension)}
       onMouseLeave={onClearHighlight}
@@ -69,9 +67,7 @@ export function ExtensionRow({
       <td className={textClass}>{extension.title}</td>
       <td className={textClass}>{extension.externalType}</td>
       <td>
-        <span className={`${styles.Status} ${statusClass}`}>
-          {i18n.translate(`statuses.${status}`)}
-        </span>
+        <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
       </td>
       <ActionSet
         className={`${styles.ActionSet} ${isFocus ? styles.ForceVisible : ''}`}
@@ -80,5 +76,5 @@ export function ExtensionRow({
         {...actionSetProps}
       />
     </tr>
-  );
+  )
 }

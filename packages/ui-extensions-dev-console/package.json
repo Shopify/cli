@@ -27,9 +27,16 @@
     "extends": [
       "../../.eslintrc.cjs"
     ],
+    "plugins": ["react", "jsx-a11y"],
     "rules": {
       "@typescript-eslint/no-explicit-any": "off",
-      "import/extensions": ["error", "never", {"ignorePackages": true}]
+      "import/extensions": ["error", "never", {"ignorePackages": true}],
+      "react/jsx-no-constructed-context-values": "error",
+      "node/no-unsupported-features/node-builtins": ["error", {
+        "version": ">=10.0.0",
+        "ignores": []
+      }],
+      "jsx-a11y/click-events-have-key-events": "error"
     }
   },
   "devDependencies": {

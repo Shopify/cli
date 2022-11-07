@@ -41,14 +41,14 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn eslint \"src/**/*.ts\"",
+          "command": "yarn eslint src",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "command": "yarn eslint src --fix",
           "cwd": "packages/ui-extensions-server-kit"
         }
       },
