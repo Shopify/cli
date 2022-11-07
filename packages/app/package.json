@@ -14,7 +14,7 @@
     "/templates"
   ],
   "exports": {
-    "./plugins/extensions/*": {
+    "./extensions/*": {
       "import": "./dist/cli/models/extensions/*.js",
       "require": "./dist/cli/models/extensions/*.d.ts"
     },

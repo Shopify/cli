@@ -4,7 +4,6 @@ import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './public/node/plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
 import {err, Result} from './public/common/result.js'
-import {HookReturnPerExtensionPlugin} from './public/node/plugins/extension.js'
 import {Config, Interfaces} from '@oclif/core'
 
 /**
@@ -29,7 +28,7 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
 
 type AppSpecificSensitiveMonorailFields = PickByPrefix<MonorailEventSensitive, 'app_'>
 
-interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin, HookReturnPerExtensionPlugin {
+export interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
@@ -46,7 +45,7 @@ interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin, HookReturnPerE
   }
   [hookName: string]: {
     options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: JsonMap | Result<JsonMap, Error>}
+    pluginReturns: {[key: string]: unknown}
   }
 }
 
@@ -77,24 +76,6 @@ export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: 
   const names = getArrayRejectingUndefined(Object.values(hooks).map((key) => key?.name))
   if (getArrayContainsDuplicates(names)) return {plugins: names, error: 'multiple-plugins-for-provider'}
   return {plugins: names}
-}
-
-export async function getListOfExtensionSpecs(config: Config): Promise<JsonMap[]> {
-  const hooks = await fanoutHooks(config, 'extension_spec', {})
-  const specs = getArrayRejectingUndefined(Object.values(hooks))
-  return specs
-}
-
-export async function getListOfExtensionPoints(config: Config): Promise<JsonMap[]> {
-  const hooks = await fanoutHooks(config, 'extension_point', {})
-  const specs = getArrayRejectingUndefined(Object.values(hooks))
-  return specs
-}
-
-export async function getListOfFunctionSpecs(config: Config): Promise<JsonMap[]> {
-  const hooks = await fanoutHooks(config, 'function_spec', {})
-  const specs = getArrayRejectingUndefined(Object.values(hooks))
-  return specs
 }
 
 export interface TunnelPluginError {
