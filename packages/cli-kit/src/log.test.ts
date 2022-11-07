@@ -79,7 +79,7 @@ describe('initiateLogging', () => {
 describe('LinesTruncatorTransformer', () => {
   it('when one chunk not finished with breakline should return all lines correctly', async () => {
     // Given
-    const transformer = new LinesTruncatorTransformer(0, 128)
+    const transformer = new LinesTruncatorTransformer({fileSize: 0, maxFileSize: 128})
     const chunk1 = `chunk1`
     const chunk2 = `chunk21${EOL}chunk22`
 
@@ -95,7 +95,7 @@ describe('LinesTruncatorTransformer', () => {
 
   it('when all chunks finished with breakline should return all lines correctly', async () => {
     // Given
-    const transformer = new LinesTruncatorTransformer(0, 128)
+    const transformer = new LinesTruncatorTransformer({fileSize: 0, maxFileSize: 128})
     const chunk1 = `chunk1${EOL}`
     const chunk2 = `chunk21${EOL}chunk22`
 
@@ -112,7 +112,7 @@ describe('LinesTruncatorTransformer', () => {
 
   it('when all chunks not finished with breakline should return one lines correctly', async () => {
     // Given
-    const transformer = new LinesTruncatorTransformer(0, 128)
+    const transformer = new LinesTruncatorTransformer({fileSize: 0, maxFileSize: 128})
     const chunk1 = 'chunk1'
     const chunk2 = 'chunk2'
     const chunk3 = 'chunk3'
@@ -129,7 +129,7 @@ describe('LinesTruncatorTransformer', () => {
 
   it('when size of chunks are bigger than then max size should return less lines', async () => {
     // Given
-    const transformer = new LinesTruncatorTransformer(0, 12)
+    const transformer = new LinesTruncatorTransformer({fileSize: 0, maxFileSize: 12})
     const chunk1 = `chunk1${EOL}`
     const chunk2 = `chunk2${EOL}`
     const chunk3 = `chunk3${EOL}`
@@ -147,7 +147,7 @@ describe('LinesTruncatorTransformer', () => {
 
   it('when size of the file is bigger than max file size to truncate all the content is dropped', async () => {
     // Given
-    const transformer = new LinesTruncatorTransformer(128, 128, 0)
+    const transformer = new LinesTruncatorTransformer({fileSize: 128, maxFileSize: 128, maxFileSizeToTruncate: 0})
     const chunk1 = `chunk1${EOL}`
 
     // When

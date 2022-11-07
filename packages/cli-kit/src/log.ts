@@ -21,23 +21,25 @@ const maxLogFileSizeToTruncate = 30 * 1024 * 1024
 let logFileStream: WriteStream
 let commandUuid: string
 let logFilePath: string
+
+interface LinesTruncatorTransformerOptions {
+  fileSize: number
+  maxFileSize?: number
+  maxFileSizeToTruncate?: number
+}
 export class LinesTruncatorTransformer extends Transform {
   linesToRetain: string[] = []
   lastLineCompleted = true
   contentSize = 0
+  options: LinesTruncatorTransformerOptions
 
-  constructor(
-    readonly fileSize: number,
-    readonly maxFileSize: number = maxLogFileSize,
-    readonly maxFileSizeToTruncate: number = maxLogFileSizeToTruncate,
-    opts?: TransformOptions,
-  ) {
+  constructor(truncatorOptions: LinesTruncatorTransformerOptions, opts?: TransformOptions) {
     super(opts)
+    this.options = truncatorOptions
   }
 
   _transform(chunk: unknown, encoding: BufferEncoding, callback: TransformCallback): void {
-    this.contentSize += (chunk as string).toString().length
-    if (this.shouldTruncate()) {
+    if (this.shouldTruncate(chunk)) {
       this.truncate(chunk)
     }
     callback()
@@ -48,8 +50,9 @@ export class LinesTruncatorTransformer extends Transform {
     callback()
   }
 
-  shouldTruncate(): boolean {
-    return this.fileSize - this.contentSize < this.maxFileSizeToTruncate
+  shouldTruncate(chunk: unknown): boolean {
+    this.contentSize += (chunk as string).toString().length
+    return this.options.fileSize - this.contentSize < (this.options.maxFileSizeToTruncate ?? maxLogFileSizeToTruncate)
   }
 
   truncate(chunk: unknown) {
@@ -72,7 +75,7 @@ export class LinesTruncatorTransformer extends Transform {
   // Lines retained length average is used so the number of lines depends on the length of them
   calculateNumLinesToRetain() {
     return Math.floor(
-      this.maxFileSize /
+      (this.options.maxFileSize ?? maxLogFileSize) /
         (this.linesToRetain.map((line) => line.length).reduce((l1, l2) => l1 + l2, 0) / this.linesToRetain.length),
     )
   }
@@ -143,7 +146,7 @@ async function truncateLogs(logFile: string) {
     return
   }
   const tmpLogFile = logFile.concat('.tmp')
-  const truncateLines = new LinesTruncatorTransformer(fileSize)
+  const truncateLines = new LinesTruncatorTransformer({fileSize})
   const pipeline = promisify(Stream.pipeline)
   await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
   await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
