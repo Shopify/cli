@@ -7,6 +7,7 @@ dependencies:
 
 deploy:
   override:
+    - npm_config_loglevel=verbose yarn run changeset publish
     - ./bin/package.js
   post:
     - yarn run update-bugsnag
