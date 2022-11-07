@@ -3,13 +3,14 @@ import constants from './constants.js'
 import {generateRandomUUID} from './id.js'
 import {
   mkdirSync as fileMkdirSync,
-  sizeSync as fileSizeSync,
+  size as fileSize,
   touchSync as fileTouchSync,
   readSync as fileReadSync,
 } from './file.js'
 import {join as pathJoin} from './path.js'
 import {consoleLog} from './output.js'
 import {page} from './system.js'
+import * as ui from './ui.js'
 import {promisify} from 'node:util'
 import {Stream, Transform, TransformCallback, TransformOptions} from 'node:stream'
 import {WriteStream, createWriteStream, createReadStream, unlinkSync} from 'node:fs'
@@ -141,16 +142,28 @@ function getLogFilePath(options: {logDir?: string; override?: boolean} = {}) {
 
 // Shaves off older log lines if logs are over maxLogFileSize long.
 async function truncateLogs(logFile: string) {
-  const fileSize = fileSizeSync(logFile)
-  if (fileSize < maxLogFileSize) {
+  const size = await fileSize(logFile)
+  if (size < maxLogFileSize) {
     return
   }
-  const tmpLogFile = logFile.concat('.tmp')
-  const truncateLines = new LinesTruncatorTransformer({fileSize})
-  const pipeline = promisify(Stream.pipeline)
-  await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
-  await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
-  unlinkSync(tmpLogFile)
+  const list = ui.newListr([
+    {
+      title: 'Truncation of the log file',
+      task: async (_, task) => {
+        task.title = `Starting the truncation of the ${Math.floor(size / (1024 * 1024)).toLocaleString(
+          'en-US',
+        )}MB log file`
+        const tmpLogFile = logFile.concat('.tmp')
+        const truncateLines = new LinesTruncatorTransformer({fileSize: size})
+        const pipeline = promisify(Stream.pipeline)
+        await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
+        await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
+        unlinkSync(tmpLogFile)
+        task.title = 'Finished log truncation process'
+      },
+    },
+  ])
+  await list.run()
 }
 
 function logFileExists(): boolean {
