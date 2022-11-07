@@ -3,15 +3,14 @@ const {graphqlRequest} = require('@shopify/app/store')
 export async function loader() {
   const {
     data: {
-      shop: {name, email},
+      shop: {name},
     },
   } = await graphqlRequest(`
   query {
     shop {
       name
-      email
     }
   }
   `)
-  return {name, email}
+  return {name}
 }

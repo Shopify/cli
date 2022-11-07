@@ -7,14 +7,15 @@ const {graphqlRequest} = require('@shopify/app/store')
 export default defineProductsCreateWebhook(async (payload) => {
   const {
     data: {
-      shop: {name: shopName},
+      shop: {name: shopName, email},
     },
   } = await graphqlRequest(`
     query {
       shop {
         name
+        email
       }
     }
   `)
-  console.log(shopName)
+  console.log(email)
 })
