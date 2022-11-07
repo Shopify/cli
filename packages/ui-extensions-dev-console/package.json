@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-dev-console-app",
-  "version": "3.21.0",
+  "version": "3.22.0",
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
@@ -16,7 +16,7 @@
     "@shopify/polaris": "^6.6.0",
     "@shopify/polaris-icons": "^4.6.2",
     "@shopify/react-i18n": "^6.1.0",
-    "@shopify/ui-extensions-server-kit": "3.21.0",
+    "@shopify/ui-extensions-server-kit": "3.22.0",
     "@vitejs/plugin-react": "^2.0.1",
     "copy-to-clipboard": "^3.3.1",
     "qrcode.react": "^1.0.1",
@@ -27,21 +27,33 @@
     "extends": [
       "../../.eslintrc.cjs"
     ],
-    "plugins": ["react", "jsx-a11y"],
+    "plugins": [
+      "react",
+      "jsx-a11y"
+    ],
     "rules": {
       "@typescript-eslint/no-explicit-any": "off",
-      "import/extensions": ["error", "never", {"ignorePackages": true}],
+      "import/extensions": [
+        "error",
+        "never",
+        {
+          "ignorePackages": true
+        }
+      ],
       "react/jsx-no-constructed-context-values": "error",
-      "node/no-unsupported-features/node-builtins": ["error", {
-        "version": ">=10.0.0",
-        "ignores": []
-      }],
+      "node/no-unsupported-features/node-builtins": [
+        "error",
+        {
+          "version": ">=10.0.0",
+          "ignores": []
+        }
+      ],
       "jsx-a11y/click-events-have-key-events": "error"
     }
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@shopify/ui-extensions-test-utils": "3.21.0",
+    "@shopify/ui-extensions-test-utils": "3.22.0",
     "@types/qrcode.react": "^1.0.2",
     "@types/react": "16.14.0",
     "@types/react-dom": "^16.9.11",

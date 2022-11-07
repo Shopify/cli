@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 3.22.0
+
+### Patch Changes
+
+- e0b5c20b: Update the version of the Ruby CLI
+- 6de19ebd: Move haiku's exported logic into the @shopify/cli-kit/common/string and @shopify/cli-kit/node/fs modules and remove the export from @shopify/cli-kit
+- 6c0cd13d: Polish log truncation process
+- 7035d36b: Fixed third party errors formatting issue
+
 ## 3.21.0
 
 ### Minor Changes

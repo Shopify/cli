@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.22.0
+
+### Patch Changes
+
+- 6c0cd13d: Polish log truncation process
+- Updated dependencies [e0b5c20b]
+- Updated dependencies [6de19ebd]
+- Updated dependencies [6c0cd13d]
+- Updated dependencies [7035d36b]
+  - @shopify/cli-kit@3.22.0
+  - @shopify/plugin-ngrok@3.22.0
+
 ## 3.21.0
 
 ### Patch Changes
