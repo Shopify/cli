@@ -16,7 +16,7 @@ export interface MatchResult {
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && string.slugify(remote.title) === string.slugify(local.configuration.name)
+  return remote.type === local.identifier && string.slugify(remote.title) === string.slugify(local.name)
 }
 
 /**
@@ -29,7 +29,7 @@ function matchByNameAndType(
   remote: RemoteSource[],
   remoteIdField: 'id' | 'uuid',
 ): {matched: IdentifiersExtensions; pending: {local: LocalSource[]; remote: RemoteSource[]}} {
-  const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.configuration.name])
+  const uniqueLocal = uniqBy(local, (elem) => [elem.identifier, elem.name])
   const uniqueRemote = uniqBy(remote, (elem) => [elem.type, elem.title])
   const validMatches: IdentifiersExtensions = {}
 
@@ -70,7 +70,7 @@ function matchByUniqueType(
   // - find a corresponding unique remote source and ask the user to confirm
   // - create it from scratch
   for (const local of localUnique) {
-    const remote = remoteUniqueMap[local.graphQLType]
+    const remote = remoteUniqueMap[local.identifier]
     if (remote && remote[0]) {
       toConfirm.push({local, remote: remote[0]})
     } else {
@@ -87,7 +87,7 @@ function matchByUniqueType(
     toConfirm.map((elem) => elem.remote),
   )
   const [localPending, localToCreate] = partition(localDuplicated, (local) =>
-    remotePending.map((remote) => remote.type).includes(local.graphQLType),
+    remotePending.map((remote) => remote.type).includes(local.identifier),
   )
   toCreate.push(...localToCreate)
 
@@ -120,7 +120,7 @@ export async function automaticMatchmaking(
   const existsRemotely = (local: LocalSource) => {
     return Boolean(
       remoteSources.find(
-        (remote) => remote[remoteIdField] === identifiers[local.localIdentifier] && remote.type === local.graphQLType,
+        (remote) => remote[remoteIdField] === identifiers[local.localIdentifier] && remote.type === local.identifier,
       ),
     )
   }
@@ -143,7 +143,7 @@ export async function automaticMatchmaking(
   // If we still have remote sources with a type that's missing from the local sources,
   // or if we have more remote sources than local sources, we return an error
   const remoteUnmatched = pending.remote.filter(
-    (remote) => !pending.local.map((local) => local.graphQLType).includes(remote.type),
+    (remote) => !pending.local.map((local) => local.identifier).includes(remote.type),
   )
   if (remoteUnmatched.length > 0 || pending.remote.length > pending.local.length) {
     return err('invalid-environment')

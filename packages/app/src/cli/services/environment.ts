@@ -17,7 +17,7 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {ThemeExtension} from '../models/app/extensions.js'
+import {ExtensionInstance} from '../models/extensions/extensions.js'
 import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -229,7 +229,7 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
 }
 
 export async function ensureThemeExtensionDevEnvironment(
-  extension: ThemeExtension,
+  extension: ExtensionInstance,
   apiKey: string,
   token: string,
 ): Promise<ExtensionRegistration> {

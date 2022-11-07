@@ -1,6 +1,7 @@
 import {App, AppInterface} from './app.js'
 import {ExtensionInstance} from '../extensions/extensions.js'
 import {FunctionInstance} from '../extensions/functions.js'
+import {allExtensionSpecifications, allFunctionSpecifications} from '../extensions/specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -28,68 +29,55 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   return newApp
 }
 
-export function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): ExtensionInstance {
+export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): Promise<ExtensionInstance> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
-
-  return {
-    localIdentifier: uiExtension?.localIdentifier ?? 'test-ui-extension',
-    outputBundlePath: uiExtension?.outputBundlePath ?? `${directory}/dist/main.js`,
-    configuration: uiExtension?.configuration ?? {
-      name: uiExtension?.configuration?.name ?? 'test-ui-extension',
-      type: uiExtension?.configuration?.type ?? 'product_subscription',
-      metafields: [],
-      capabilities: {
-        block_progress: false,
-        network_access: false,
-      },
+  const configuration = uiExtension?.configuration ?? {
+    name: uiExtension?.configuration?.name ?? 'test-ui-extension',
+    type: uiExtension?.configuration?.type ?? 'product_subscription',
+    metafields: [],
+    capabilities: {
+      block_progress: false,
+      network_access: false,
     },
-    type: 'checkout_post_purchase',
-    graphQLType: 'CHECKOUT_POST_PURCHASE',
-    configurationPath: uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`,
-    directory,
-    entrySourceFilePath: uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`,
-    idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
-    devUUID: 'devUUID',
   }
+
+  const specifications = await allExtensionSpecifications()
+  const spec = specifications.find((spec) => spec.identifier === configuration.type)
+
+  return new ExtensionInstance(configuration, directory, 'entryPath', directory, spec!, undefined, undefined)
 }
 
-export function testThemeExtensions(): ExtensionInstance {
-  return {
-    configuration: {
-      name: 'theme extension name',
-      type: 'theme',
-    },
-    idEnvironmentVariableName: '',
-    localIdentifier: 'extension title',
-    configurationPath: '',
-    directory: './my-extension',
+export async function testThemeExtensions(): Promise<ExtensionInstance> {
+  const directory = './my-extension'
+  const configuration = {
+    name: 'theme extension name',
     type: 'theme',
-    graphQLType: 'THEME_APP_EXTENSION',
   }
+
+  const specifications = await allExtensionSpecifications()
+  const spec = specifications.find((spec) => spec.identifier === configuration.type)
+
+  return new ExtensionInstance(configuration, directory, 'entryPath', directory, spec!, undefined, undefined)
 }
 
-export function testFunctionExtension(): FunctionInstance {
-  return {
-    configuration: {
-      name: 'test function extension',
-      description: 'description',
-      type: 'product_discounts',
-      build: {
-        command: 'echo "hello world"',
-      },
-      apiVersion: '2022-07',
-      configurationUi: true,
-    },
-    buildWasmPath: () => '',
-    inputQueryPath: () => '',
-    metadata: {
-      schemaVersions: {},
-    },
-    idEnvironmentVariableName: '',
-    localIdentifier: 'extension title',
-    configurationPath: '',
-    directory: './my-extension',
+export async function testFunctionExtension(): Promise<FunctionInstance> {
+  const directory = './my-extension'
+  const configuration = {
+    name: 'test function extension',
+    description: 'description',
     type: 'product_discounts',
-    graphQLType: 'PRODUCT_DISCOUNTS',
+    build: {
+      command: 'echo "hello world"',
+    },
+    apiVersion: '2022-07',
+    configurationUi: true,
   }
+  const metadata = {
+    schemaVersions: {},
+  }
+
+  const specifications = await allFunctionSpecifications()
+  const spec = specifications.find((spec) => spec.identifier === configuration.type)
+
+  return new FunctionInstance(configuration, './my-extension', metadata, spec!, directory)
 }

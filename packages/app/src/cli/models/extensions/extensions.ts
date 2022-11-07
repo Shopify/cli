@@ -62,6 +62,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   private extensionPointSpecs?: ExtensionPointSpec[]
   private remoteSpecification?: api.graphql.RemoteSpecification
 
+  get identifier() {
+    return this.specification.identifier
+  }
+
   get type() {
     return this.specification.identifier
   }

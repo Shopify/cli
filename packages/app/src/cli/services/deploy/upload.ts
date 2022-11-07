@@ -1,6 +1,7 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extensions.js'
+import {FunctionInstance} from '../../models/extensions/functions.js'
 import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
@@ -21,7 +22,7 @@ interface DeployThemeExtensionOptions {
  * @param options - The upload options
  */
 export async function uploadThemeExtensions(
-  themeExtensions: ThemeExtension[],
+  themeExtensions: ExtensionInstance[],
   options: DeployThemeExtensionOptions,
 ): Promise<void> {
   const {apiKey, identifiers, token} = options
@@ -152,7 +153,7 @@ interface UploadFunctionExtensionsOptions {
  * @returns A promise that resolves with the identifiers.
  */
 export async function uploadFunctionExtensions(
-  extensions: FunctionExtension[],
+  extensions: FunctionInstance[],
   options: UploadFunctionExtensionsOptions,
 ): Promise<Identifiers> {
   let identifiers = options.identifiers
@@ -188,14 +189,14 @@ interface UploadFunctionExtensionOptions {
 }
 
 async function uploadFunctionExtension(
-  extension: FunctionExtension,
+  extension: FunctionInstance,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
   const url = await uploadWasmBlob(extension, options.apiKey, options.token)
 
   let inputQuery: string | undefined
-  if (await file.exists(extension.inputQueryPath())) {
-    inputQuery = await file.read(extension.inputQueryPath())
+  if (await file.exists(extension.inputQueryPath)) {
+    inputQuery = await file.read(extension.inputQueryPath)
   }
 
   const query = api.graphql.AppFunctionSetMutation
@@ -232,11 +233,11 @@ ${output.token.json(userErrors)}
   return res.data.functionSet.function?.id as string
 }
 
-async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, token: string): Promise<string> {
+async function uploadWasmBlob(extension: FunctionInstance, apiKey: string, token: string): Promise<string> {
   const {url, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = await file.read(extension.buildWasmPath(), {})
+  const functionContent = await file.read(extension.wasmPath, {})
   const res = await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const resBody = res.body?.read()?.toString() || ''
 

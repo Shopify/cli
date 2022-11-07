@@ -1,4 +1,4 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
+import {buildThemeExtensions, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {path, file, abort} from '@shopify/cli-kit'
@@ -51,7 +51,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
           return {
             prefix: functionExtension.localIdentifier,
             action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-              await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
+              await functionExtension.build(stdout, stderr, signal)
             },
           }
         }),

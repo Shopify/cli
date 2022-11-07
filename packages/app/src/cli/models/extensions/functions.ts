@@ -54,14 +54,6 @@ export class FunctionInstance<
   private metadata: TMetadata
   private specification: FunctionSpec<TConfiguration>
 
-  get type() {
-    return this.specification.identifier
-  }
-
-  get name() {
-    return this.configuration.name
-  }
-
   constructor(
     configuration: TConfiguration,
     configurationPath: string,
@@ -78,8 +70,20 @@ export class FunctionInstance<
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
+  get identifier() {
+    return this.specification.identifier
+  }
+
+  get type() {
+    return this.specification.identifier
+  }
+
+  get name() {
+    return this.configuration.name
+  }
+
   get inputQueryPath() {
-    return `${this.directory}/input.graphql`
+    return path.join(this.directory, 'input.graphql')
   }
 
   get wasmPath() {

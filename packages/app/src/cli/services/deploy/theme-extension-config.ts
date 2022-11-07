@@ -1,4 +1,4 @@
-import {ThemeExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extensions.js'
 import {file, path} from '@shopify/cli-kit'
 
 export interface ThemeExtensionConfig {
@@ -7,7 +7,7 @@ export interface ThemeExtensionConfig {
   }
 }
 
-export async function themeExtensionConfig(themeExtension: ThemeExtension): Promise<ThemeExtensionConfig> {
+export async function themeExtensionConfig(themeExtension: ExtensionInstance): Promise<ThemeExtensionConfig> {
   const files: {[key: string]: string} = {}
   const themeFiles = await path.glob(path.join(themeExtension.directory, '*/*'))
   await Promise.all(

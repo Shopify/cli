@@ -35,7 +35,7 @@ export async function manualMatchIds(
 
   for (const currentLocal of options.local) {
     const remoteSourcesOfSameType = pendingRemote.filter(
-      (remoteSource) => remoteSource.type === currentLocal.graphQLType,
+      (remoteSource) => remoteSource.type === currentLocal.identifier,
     )
     if (remoteSourcesOfSameType.length === 0) continue
     // eslint-disable-next-line no-await-in-loop

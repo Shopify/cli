@@ -10,7 +10,7 @@ export async function matchConfirmationPrompt(local: LocalSource, remote: Remote
     {
       type: 'select',
       name: 'value',
-      message: `Deploy ${local.configuration.name} (local name) as ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
+      message: `Deploy ${local.name} (local name) as ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
       choices,
     },
   ])
@@ -31,7 +31,7 @@ export async function selectRemoteSourcePrompt(
     {
       type: 'autocomplete',
       name: 'uuid',
-      message: `How would you like to deploy your "${localSource.configuration.name}"?`,
+      message: `How would you like to deploy your "${localSource.name}"?`,
       choices: remoteOptions,
     },
   ])

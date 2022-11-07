@@ -1,12 +1,12 @@
 import {fetchOrganizationAndFetchOrCreateApp} from './environment.js'
 import {AppInterface} from '../models/app/app.js'
-import {FunctionExtension} from '../models/app/extensions.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {FunctionInstance} from '../models/extensions/functions.js'
 import {session, output, api, error, environment} from '@shopify/cli-kit'
 
 interface GenerateSchemaOptions {
   app: AppInterface
-  extension: FunctionExtension
+  extension: FunctionInstance
   apiKey?: string
 }
 

@@ -1,8 +1,8 @@
-import {ThemeExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extensions.js'
 import {ensureThemeExtensionDevEnvironment} from '../environment.js'
 
 export async function themeExtensionArgs(
-  extension: ThemeExtension,
+  extension: ExtensionInstance,
   apiKey: string,
   token: string,
   options: {theme?: string; themeExtensionPort?: number},
@@ -11,7 +11,7 @@ export async function themeExtensionArgs(
   const extensionId = extensionRegistration.id
   const directory = extension.directory
   const extensionTitle = extension.localIdentifier
-  const extensionType = extension.graphQLType
+  const extensionType = extension.type
 
   const args: string[] = [
     directory,

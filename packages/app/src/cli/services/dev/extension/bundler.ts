@@ -27,8 +27,8 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     bundlers.push(
       bundleExtension({
         minify: false,
-        outputBundlePath: extension.outputBundlePath,
-        sourceFilePath: extension.entrySourceFilePath,
+        outputBundlePath: extension.outputPath,
+        sourceFilePath: extension.entryPath,
         environment: 'development',
         env: {
           ...(options.devOptions.app.dotenv?.variables ?? {}),

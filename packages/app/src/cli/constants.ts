@@ -287,7 +287,7 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
  * @param type - The extension type
  * @returns The extension GraphQL ID
  */
-export const extensionGraphqlId = (type: ExtensionTypes) => {
+export const extensionGraphqlId = (type: string) => {
   switch (type) {
     case 'product_subscription':
       return 'SUBSCRIPTION_MANAGEMENT'
@@ -310,6 +310,8 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     case 'delivery_customization':
     case 'shipping_rate_presenter':
       // As we add new extensions, this bug will force us to add a new case here.
+      return type.toUpperCase()
+    default:
       return type.toUpperCase()
   }
 }

@@ -1,4 +1,4 @@
-import {FunctionExtension} from '../../models/app/extensions.js'
+import {FunctionInstance} from '../../models/extensions/functions.js'
 import {file, output, error} from '@shopify/cli-kit'
 
 const FunctionsWithMissingWasm = (extensions: {id: string; path: string}[]) => {
@@ -16,20 +16,20 @@ const FunctionsWithMissingWasm = (extensions: {id: string; path: string}[]) => {
   )
 }
 
-export async function validateFunctionExtensions(extensions: FunctionExtension[]) {
+export async function validateFunctionExtensions(extensions: FunctionInstance[]) {
   await validateFunctionsWasmPresence(extensions)
 }
 
-export async function validateFunctionsWasmPresence(extensions: FunctionExtension[]) {
+export async function validateFunctionsWasmPresence(extensions: FunctionInstance[]) {
   const extensionsWithoutWasm = (
     await Promise.all(
       extensions.map(async (extension) => {
-        const wasmPath = extension.buildWasmPath()
+        const wasmPath = extension.wasmPath
         return (await file.exists(wasmPath))
           ? undefined
           : {
               id: extension.localIdentifier,
-              path: extension.buildWasmPath(),
+              path: extension.wasmPath,
             }
       }),
     )

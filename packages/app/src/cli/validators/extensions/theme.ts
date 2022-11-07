@@ -1,4 +1,4 @@
-import {ThemeExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extensions.js'
 import {error, file, output, path} from '@shopify/cli-kit'
 
 interface FilenameValidation {
@@ -38,11 +38,11 @@ const SUPPORTED_EXTS: {[dirname: string]: FilenameValidation} = {
 }
 const SUPPORTED_BUCKETS = Object.keys(SUPPORTED_EXTS)
 
-export async function validateThemeExtensions(extensions: ThemeExtension[]) {
+export async function validateThemeExtensions(extensions: ExtensionInstance[]) {
   await Promise.all(extensions.map((extension) => validateThemeExtension(extension)))
 }
 
-async function validateThemeExtension(extension: ThemeExtension): Promise<void> {
+async function validateThemeExtension(extension: ExtensionInstance): Promise<void> {
   const themeFiles = await path.glob(path.join(extension.directory, '*/*'))
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
