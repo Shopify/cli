@@ -106,7 +106,6 @@
     ],
     "hooks": {
       "prerun": "@shopify/cli-kit/node/hooks/prerun",
-      "init": "@shopify/cli-kit/node/hooks/init",
       "postrun": "@shopify/cli-kit/node/hooks/postrun"
     }
   },

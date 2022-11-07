@@ -6,6 +6,7 @@ import {Abort} from '../../error.js'
 import {addPublic} from '../../metadata.js'
 import {content, info, token} from '../../output.js'
 import {hashString} from '../../string.js'
+import {initiateLogging} from '../../log.js'
 import {Command, Interfaces} from '@oclif/core'
 
 interface PresettableFlags {
@@ -28,6 +29,7 @@ abstract class BaseCommand extends Command {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
+    await initiateLogging()
     return super.init()
   }
 

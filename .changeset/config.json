@@ -12,7 +12,6 @@
     "@shopify/cli-kit",
     "@shopify/fixtures-app",
     "@shopify/theme",
-    "@shopify/shopify-cli-extensions",
     "@shopify/ui-extensions-dev-console-app",
     "@shopify/ui-extensions-server-kit",
     "@shopify/ui-extensions-test-utils",

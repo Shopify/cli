@@ -3,13 +3,14 @@ import constants from './constants.js'
 import {generateRandomUUID} from './id.js'
 import {
   mkdirSync as fileMkdirSync,
-  sizeSync as fileSizeSync,
+  size as fileSize,
   touchSync as fileTouchSync,
   readSync as fileReadSync,
 } from './file.js'
 import {join as pathJoin} from './path.js'
 import {consoleLog} from './output.js'
 import {page} from './system.js'
+import * as ui from './ui.js'
 import {promisify} from 'node:util'
 import {Stream, Transform, TransformCallback, TransformOptions} from 'node:stream'
 import {WriteStream, createWriteStream, createReadStream, unlinkSync} from 'node:fs'
@@ -17,18 +18,45 @@ import {EOL} from 'node:os'
 
 const logFileName = 'shopify.cli.log'
 const maxLogFileSize = 5 * 1024 * 1024
+const maxLogFileSizeToTruncate = 30 * 1024 * 1024
 let logFileStream: WriteStream
 let commandUuid: string
 let logFilePath: string
+
+interface LinesTruncatorTransformerOptions {
+  fileSize: number
+  maxFileSize?: number
+  maxFileSizeToTruncate?: number
+}
 export class LinesTruncatorTransformer extends Transform {
   linesToRetain: string[] = []
   lastLineCompleted = true
+  contentSize = 0
+  options: LinesTruncatorTransformerOptions
 
-  constructor(readonly maxFileSize: number, opts?: TransformOptions) {
+  constructor(truncatorOptions: LinesTruncatorTransformerOptions, opts?: TransformOptions) {
     super(opts)
+    this.options = truncatorOptions
   }
 
   _transform(chunk: unknown, encoding: BufferEncoding, callback: TransformCallback): void {
+    if (this.shouldTruncate(chunk)) {
+      this.truncate(chunk)
+    }
+    callback()
+  }
+
+  _flush(callback: TransformCallback): void {
+    this.push(this.linesToRetain.join(EOL))
+    callback()
+  }
+
+  shouldTruncate(chunk: unknown): boolean {
+    this.contentSize += (chunk as string).toString().length
+    return this.options.fileSize - this.contentSize < (this.options.maxFileSizeToTruncate ?? maxLogFileSizeToTruncate)
+  }
+
+  truncate(chunk: unknown) {
     const tokens = (chunk as string).toString().split(EOL)
 
     this.completeLastLine(tokens)
@@ -43,18 +71,12 @@ export class LinesTruncatorTransformer extends Transform {
     if (this.linesToRetain.length > numLinesToRetain) {
       this.linesToRetain = this.linesToRetain.splice(this.linesToRetain.length - numLinesToRetain)
     }
-    callback()
-  }
-
-  _flush(callback: TransformCallback): void {
-    this.push(this.linesToRetain.join(EOL))
-    callback()
   }
 
   // Lines retained length average is used so the number of lines depends on the length of them
   calculateNumLinesToRetain() {
     return Math.floor(
-      this.maxFileSize /
+      (this.options.maxFileSize ?? maxLogFileSize) /
         (this.linesToRetain.map((line) => line.length).reduce((l1, l2) => l1 + l2, 0) / this.linesToRetain.length),
     )
   }
@@ -120,15 +142,28 @@ function getLogFilePath(options: {logDir?: string; override?: boolean} = {}) {
 
 // Shaves off older log lines if logs are over maxLogFileSize long.
 async function truncateLogs(logFile: string) {
-  if (fileSizeSync(logFile) < maxLogFileSize) {
+  const size = await fileSize(logFile)
+  if (size < maxLogFileSize) {
     return
   }
-  const tmpLogFile = logFile.concat('.tmp')
-  const truncateLines = new LinesTruncatorTransformer(maxLogFileSize)
-  const pipeline = promisify(Stream.pipeline)
-  await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
-  await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
-  unlinkSync(tmpLogFile)
+  const list = ui.newListr([
+    {
+      title: 'Truncation of the log file',
+      task: async (_, task) => {
+        task.title = `Starting the truncation of the ${Math.floor(size / (1024 * 1024)).toLocaleString(
+          'en-US',
+        )}MB log file`
+        const tmpLogFile = logFile.concat('.tmp')
+        const truncateLines = new LinesTruncatorTransformer({fileSize: size})
+        const pipeline = promisify(Stream.pipeline)
+        await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
+        await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
+        unlinkSync(tmpLogFile)
+        task.title = 'Finished log truncation process'
+      },
+    },
+  ])
+  await list.run()
 }
 
 function logFileExists(): boolean {
