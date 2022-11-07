@@ -20,13 +20,16 @@ export interface FunctionSpec<
   TMetadata extends MetadataType = MetadataType,
 > {
   identifier: string
-  ownerTeam: string
-  templateURL: string
-  languages: string[]
-  configSchema: schema.define.ZodType<TConfiguration>
-  metadataSchema: schema.define.ZodType<TMetadata>
-  templatePath: (lang: string) => string
-  validate: <T extends TConfiguration>(config: T) => unknown
+  externalType: string
+  externalName: string
+  helpURL?: string
+  public?: boolean
+  templateURL?: string
+  languages?: {name: string; value: string}[]
+  configSchema?: schema.define.ZodType<TConfiguration>
+  metadataSchema?: schema.define.ZodType<TMetadata>
+  templatePath?: (lang: string) => string
+  validate?: <T extends TConfiguration>(config: T) => unknown
 }
 
 /**
@@ -75,7 +78,7 @@ export class FunctionInstance<
   }
 
   validate() {
-    return this.specification.validate(this.config)
+    return this.specification.validate?.(this.config)
   }
 
   async build(stdout: Writable, stderr: Writable, signal: abort.Signal) {
@@ -136,7 +139,7 @@ export async function loadFunction(configPath: string): Promise<Result<FunctionI
   // Parse Config file
   let config
   try {
-    config = spec.configSchema.parse(obj)
+    config = (spec.configSchema ?? BaseFunctionConfigurationSchema).parse(obj)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return err('invalid_function_config')
@@ -147,7 +150,7 @@ export async function loadFunction(configPath: string): Promise<Result<FunctionI
   try {
     const fileContent = await file.read(path.join(directory, 'metadata.json'))
     const jsonObj = JSON.parse(fileContent)
-    metadata = spec.metadataSchema.parse(jsonObj)
+    metadata = (spec.metadataSchema ?? BaseFunctionMetadataSchema).parse(jsonObj)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return err('invalid_function_metadata')
@@ -155,4 +158,19 @@ export async function loadFunction(configPath: string): Promise<Result<FunctionI
 
   const instance = new FunctionInstance(config, metadata, spec, directory)
   return ok(instance)
+}
+
+export function createFunctionSpec<
+  TConfiguration extends FunctionConfigType = FunctionConfigType,
+  TMetadata extends MetadataType = MetadataType,
+>(spec: FunctionSpec<TConfiguration, TMetadata>): FunctionSpec<TConfiguration, TMetadata> {
+  const defaults = {
+    templateURL: 'https://github.com/Shopify/function-examples',
+    languages: [
+      {name: 'Wasm', value: 'wasm'},
+      {name: 'Rust', value: 'rust'},
+    ],
+    public: true,
+  }
+  return {...defaults, ...spec}
 }

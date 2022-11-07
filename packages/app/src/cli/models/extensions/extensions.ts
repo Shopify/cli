@@ -2,9 +2,8 @@ import {BaseExtensionSchema, TypeSchema, ExtensionPointSchema} from './schemas.j
 import {ExtensionPointSpec} from './extension-points.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
-import {id, path, schema, toml, api, file} from '@shopify/cli-kit'
+import {id, path, schema, toml, api, file, output, environment} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
-import {fqdn} from '@shopify/cli-kit/src/environment.js'
 import {Writable} from 'node:stream'
 
 // Base config type that all config schemas must extend.
@@ -22,15 +21,19 @@ type LoadExtensionError = 'invalid_entry_path' | 'invalid_config' | 'invalid_ext
  */
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
-  ownerTeam: string
-  dependency: {name: string; version: string}
+  dependency?: {name: string; version: string}
   partnersWebId: string
   templatePath?: string
   schema: schema.define.ZodType<TConfiguration>
-  deployConfig: (config: TConfiguration) => {[key: string]: unknown}
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => boolean
   resourceUrl?: (config: TConfiguration) => string
-  previewMessage?: (host: string, uuid: string, config: TConfiguration) => string
+  previewMessage?: (
+    host: string,
+    uuid: string,
+    config: TConfiguration,
+    storeFqdn: string,
+  ) => string | output.TokenizedString
 }
 
 /**
@@ -98,7 +101,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   deployConfig() {
-    return this.specification.deployConfig(this.config)
+    return this.specification.deployConfig?.(this.config, this.directory) ?? {}
   }
 
   validate() {
@@ -119,9 +122,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId: string}) {
-    const partnersFqdn = await fqdn.partners()
+    const partnersFqdn = await environment.fqdn.partners()
     const parnersPath = this.specification.partnersWebId
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+  }
+
+  previewMessage(url: string, storeFqdn: string) {
+    if (this.specification.previewMessage)
+      return this.specification.previewMessage(url, this.devUUID, this.config, storeFqdn)
+    const publicURL = `${url}/extensions/${this.devUUID}`
+    return output.content`Preview link: ${publicURL}`
   }
 
   private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
@@ -178,4 +188,10 @@ export async function loadExtension(configPath: string): Promise<Result<Extensio
   // PENDING: Add support for extension points and validate them
   const instance = new ExtensionInstance(config, entryPath[0], directory, localSpec, remoteSpec, [])
   return ok(instance)
+}
+
+export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+  spec: ExtensionSpec<TConfiguration>,
+): ExtensionSpec<TConfiguration> {
+  return spec
 }
