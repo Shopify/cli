@@ -10,8 +10,9 @@ import latestVersion from 'latest-version'
  * @param name - The name of the NPM package.
  * @returns A promise to get the latest available version of a package.
  */
-export async function latestNpmPackageVersion(name: string) {
+export async function latestNpmPackageVersion(name: string, options = {force: false}) {
   debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
+  if (options.force) return latestVersion(name)
   return cache(`latest-npm-package-version-${name}`, async () => latestVersion(name))
 }
 

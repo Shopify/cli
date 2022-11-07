@@ -49,7 +49,7 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
 
   let resolvedVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[await cliDependency()]!
   if (resolvedVersion.slice(0, 1).match(/[\^~]/)) resolvedVersion = currentVersion
-  const newestVersion = await checkForNewVersion(await cliDependency(), resolvedVersion)
+  const newestVersion = await checkForNewVersion(await cliDependency(), resolvedVersion, {force: true})
 
   if (!newestVersion) {
     outputWontInstallMessage(resolvedVersion)

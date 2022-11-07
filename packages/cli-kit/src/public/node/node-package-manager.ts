@@ -205,10 +205,14 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * @param currentVersion - The current version.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
-export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
+export async function checkForNewVersion(
+  dependency: string,
+  currentVersion: string,
+  opts = {force: false},
+): Promise<string | undefined> {
   debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
-    const lastVersion = await latestNpmPackageVersion(dependency)
+    const lastVersion = await latestNpmPackageVersion(dependency, opts)
     if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
       return lastVersion
     } else {
