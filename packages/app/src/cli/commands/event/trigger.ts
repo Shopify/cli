@@ -1,12 +1,8 @@
-import {
-  requestSample,
-  sendLocal,
-  collectCliOptions,
-  DELIVERY_METHOD,
-  TestWebhookFlags,
-} from '../../services/event/trigger.js'
+import {DELIVERY_METHOD} from '../../services/event/trigger-options.js'
+import {EventTriggerFlags, optionsPrompt} from '../../prompts/event/options-prompt.js'
+import {eventTriggerService} from '../../services/event/trigger.js'
+import {deliveryMethodInstructions} from '../../prompts/event/trigger.js'
 import {Command, Flags} from '@oclif/core'
-import {output} from '@shopify/cli-kit'
 
 export default class TopicTesting extends Command {
   static description = 'Trigger delivery of a sample event topic payload to a designated address'
@@ -17,9 +13,7 @@ export default class TopicTesting extends Command {
       hidden: false,
       char: 'h',
       env: 'SHOPIFY_FLAG_HELP',
-      description: `When you run this command the CLI will prompt you for any information that isn't passed using flags.
-        For security reasons, you can't pass the shared secret required for validation using a flag.
-        If you want to continue to use the same secret and avoid being prompted, you can set a SHOPIFY_FLAG_SHARED_SECRET environment variable.`,
+      description: `This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.`,
     }),
     topic: Flags.string({
       required: false,
@@ -41,69 +35,41 @@ export default class TopicTesting extends Command {
       char: 'm',
       options: [DELIVERY_METHOD.HTTP, DELIVERY_METHOD.PUBSUB, DELIVERY_METHOD.EVENTBRIDGE],
       env: 'SHOPIFY_FLAG_DELIVERY_METHOD',
-      description: `Method chosen to deliver the topic payload.`,
+      description: `Method chosen to deliver the topic payload. If not passed, it's inferred from the address`,
+    }),
+    'shared-secret': Flags.string({
+      required: false,
+      hidden: false,
+      char: 's',
+      env: 'SHOPIFY_FLAG_SHARED_SECRET',
+      description: `Shared secret used to build the X-Shopify-Hmac-SHA256 header.`,
     }),
     address: Flags.string({
       required: false,
       hidden: false,
       char: 'a',
       env: 'SHOPIFY_FLAG_ADDRESS',
-      description: `The URL where the webhook payload should be sent.`,
-    }),
-    port: Flags.string({
-      hidden: false,
-      env: 'SHOPIFY_FLAG_PORT',
-      description: `Destination port (Applies to the ${DELIVERY_METHOD.HTTP} delivery method when address is localhost).`,
-    }),
-    'url-path': Flags.string({
-      hidden: false,
-      env: 'SHOPIFY_FLAG_URL_PATH',
-      description: `Endpoint path (Applies to the ${DELIVERY_METHOD.HTTP} delivery method when address is localhost).
-        /api/webhooks by default.`,
+      description: `The URL where the webhook payload should be sent.
+                    For each delivery-method you will need a different address type:
+                     - ${DELIVERY_METHOD.HTTP}: ${deliveryMethodInstructions(DELIVERY_METHOD.HTTP)}
+                     - ${DELIVERY_METHOD.PUBSUB}: ${deliveryMethodInstructions(DELIVERY_METHOD.PUBSUB)}
+                     - ${DELIVERY_METHOD.EVENTBRIDGE}: ${deliveryMethodInstructions(DELIVERY_METHOD.EVENTBRIDGE)}`,
     }),
   }
 
   public async run() {
     const {flags} = await this.parse(TopicTesting)
 
-    const usedFlags: TestWebhookFlags = {
+    const usedFlags: EventTriggerFlags = {
       topic: flags.topic,
       apiVersion: flags['api-version'],
       deliveryMethod: flags['delivery-method'],
       address: flags.address,
-      port: flags.port,
-      urlPath: flags['url-path'],
+      sharedSecret: flags['shared-secret'],
     }
 
-    const options = await collectCliOptions(usedFlags)
+    const options = await optionsPrompt(usedFlags)
 
-    const sample = await requestSample(
-      options.topic,
-      options.apiVersion,
-      options.deliveryMethod,
-      options.address,
-      options.sharedSecret,
-    )
-
-    if (!sample.success) {
-      await output.consoleError(JSON.stringify(sample.userErrors))
-      return
-    }
-
-    if (options.deliveryMethod === DELIVERY_METHOD.LOCALHOST) {
-      const result = await sendLocal(options.address, sample.samplePayload, sample.headers)
-
-      if (result) {
-        output.success('Localhost delivery sucessful')
-        return
-      }
-
-      await output.consoleError('Localhost delivery failed')
-      return
-    }
-
-    if (sample.samplePayload === JSON.stringify({})) {
-      output.success('Webhook will be delivered shortly')
-    }
+    await eventTriggerService(options)
   }
 }

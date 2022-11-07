@@ -1,15 +1,9 @@
-import {requestSample, sendLocal, collectCliOptions, TestWebhookOptions, TestWebhookFlags} from './trigger.js'
-import {
-  addressPrompt,
-  apiVersionPrompt,
-  deliveryMethodPrompt,
-  localPortPrompt,
-  localUrlPathPrompt,
-  sharedSecretPrompt,
-  topicPrompt,
-} from '../../prompts/event/trigger.js'
+import {eventTriggerService} from './trigger.js'
+import {EventTriggerOptions} from './trigger-options.js'
+import {getEventSample} from './request-sample.js'
+import {triggerLocalEvent} from './trigger-local-event.js'
+import {output} from '@shopify/cli-kit'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, http, session} from '@shopify/cli-kit'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
@@ -19,270 +13,138 @@ const aSecret = 'A_SECRET'
 const aPort = '1234'
 const aUrlPath = '/a/url/path'
 const anAddress = 'http://example.org'
-const aLocalAddress = 'http://localhost'
-const env = process.env
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit')
+  vi.mock('./request-sample.js')
+  vi.mock('./trigger-local-event.js')
 })
 
 afterEach(async () => {
   vi.clearAllMocks()
 })
 
-describe('requestSample', () => {
-  beforeEach(async () => {
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('A_TOKEN')
-  })
+const emptyJson = '{}'
+const successDirectResponse = {
+  samplePayload,
+  headers: sampleHeaders,
+  success: true,
+  userErrors: [],
+}
+const successEmptyResponse = {
+  samplePayload: emptyJson,
+  headers: emptyJson,
+  success: true,
+  userErrors: [],
+}
+const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 
-  it('calls partners to request data', async () => {
+describe('execute', () => {
+  it('notifies about request errors', async () => {
     // Given
-    const inputValues = {
-      topic: 'A_TOPIC',
-      apiVersion: 'A_VERSION',
-      value: 'A_DELIVERY_METHOD',
-      address: 'https://example.org',
-      sharedSecret: 'A_SECRET',
+    const response = {
+      samplePayload: emptyJson,
+      headers: emptyJson,
+      success: false,
+      userErrors: [
+        {message: 'Error 1', fields: ['field1']},
+        {message: 'Error 2', fields: ['field1']},
+      ],
     }
-    const requestValues = {
-      topic: inputValues.topic,
-      api_version: inputValues.apiVersion,
-      address: inputValues.address,
-      delivery_method: inputValues.value,
-      shared_secret: inputValues.sharedSecret,
-    }
-    const graphQLResult = {
-      sendSampleWebhook: {
-        samplePayload,
-        headers: sampleHeaders,
-        success: false,
-        userErrors: [
-          {message: 'Error 1', fields: ['field1']},
-          {message: 'Error 2', fields: ['field1']},
-        ],
-      },
-    }
-    vi.mocked(api.partners.request).mockResolvedValue(graphQLResult)
+    vi.mocked(getEventSample).mockResolvedValue(response)
 
-    const requestSpy = vi.spyOn(api.partners, 'request')
-    const sessionSpy = vi.spyOn(session, 'ensureAuthenticatedPartners')
+    const outputSpy = vi.spyOn(output, 'consoleError')
 
     // When
-    const got = await requestSample(
-      inputValues.topic,
-      inputValues.apiVersion,
-      inputValues.value,
-      inputValues.address,
-      inputValues.sharedSecret,
-    )
+    await eventTriggerService(sampleOptions())
 
     // Then
-    expect(sessionSpy).toHaveBeenCalledOnce()
-    expect(requestSpy).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN', requestValues)
-    expect(got.samplePayload).toEqual(samplePayload)
-    expect(got.headers).toEqual(sampleHeaders)
-    expect(got.success).toEqual(graphQLResult.sendSampleWebhook.success)
-    expect(got.userErrors).toEqual(graphQLResult.sendSampleWebhook.userErrors)
+    expect(outputSpy).toHaveBeenCalledWith(JSON.stringify(response.userErrors))
   })
-})
 
-describe('sendLocal', () => {
-  it('delivers to localhost port', async () => {
+  it('notifies about real delivery being sent', async () => {
     // Given
-    const successResponse: any = {status: 200}
-    vi.mocked(http.fetch).mockResolvedValue(successResponse)
-    const fetchSpy = vi.spyOn(http, 'fetch')
+    vi.mocked(triggerLocalEvent)
+    vi.mocked(getEventSample).mockResolvedValue(successEmptyResponse)
+
+    const outputSpy = vi.spyOn(output, 'success')
 
     // When
-    const got = await sendLocal('http://localhost:1234/a/url/path', samplePayload, sampleHeaders)
+    await eventTriggerService(sampleRemoteOptions())
 
     // Then
-    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:1234/a/url/path', {
-      method: 'POST',
-      body: samplePayload,
-      headers: {
-        'Content-Type': 'application/json',
-        ...JSON.parse(sampleHeaders),
-      },
+    expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'http', anAddress, aSecret)
+    expect(triggerLocalEvent).toHaveBeenCalledTimes(0)
+    expect(outputSpy).toHaveBeenCalledWith('Webhook will be delivered shortly')
+  })
+
+  describe('Localhost delivery', () => {
+    it('delivers to localhost', async () => {
+      // Given
+      vi.mocked(getEventSample).mockResolvedValue(successDirectResponse)
+      vi.mocked(triggerLocalEvent).mockResolvedValue(true)
+
+      const outputSpy = vi.spyOn(output, 'success')
+
+      // When
+      await eventTriggerService(sampleLocalhostOptions())
+
+      // Then
+      expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
+      expect(triggerLocalEvent).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
+      expect(outputSpy).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
-    expect(got).toBeTruthy()
+
+    it('shows an error if localhost is not ready', async () => {
+      // Given
+      vi.mocked(getEventSample).mockResolvedValue(successDirectResponse)
+      vi.mocked(triggerLocalEvent).mockResolvedValue(false)
+
+      const outputSpy = vi.spyOn(output, 'consoleError')
+
+      // When
+      await eventTriggerService(sampleLocalhostOptions())
+
+      // Then
+      expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
+      expect(triggerLocalEvent).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
+      expect(outputSpy).toHaveBeenCalledWith('Localhost delivery failed')
+    })
   })
 
-  it('notifies failure to deliver to localhost port', async () => {
-    // Given
-    const errorResponse: any = {status: 500}
-    vi.mocked(http.fetch).mockResolvedValue(errorResponse)
-    const fetchSpy = vi.spyOn(http, 'fetch')
-
-    // When
-    const got = await sendLocal('http://localhost:1234/api/webhooks', samplePayload, sampleHeaders)
-
-    // Then
-    expect(fetchSpy).toHaveBeenCalledOnce()
-    expect(got).toBeFalsy()
-  })
-})
-
-describe('collectCliOptions', () => {
-  beforeEach(async () => {
-    vi.mock('../../prompts/event/trigger.js')
-
-    process.env = {
-      ...env,
-      SHOPIFY_FLAG_SHARED_SECRET: undefined,
+  function sampleOptions(): EventTriggerOptions {
+    const options: EventTriggerOptions = {
+      topic: aTopic,
+      apiVersion: aVersion,
+      deliveryMethod: 'event-bridge',
+      sharedSecret: aSecret,
+      address: '',
     }
-  })
 
-  afterEach(async () => {
-    process.env = env
-  })
-  describe('without params', () => {
-    beforeEach(async () => {
-      vi.mocked(topicPrompt).mockResolvedValue(aTopic)
-      vi.mocked(apiVersionPrompt).mockResolvedValue(aVersion)
-      vi.mocked(sharedSecretPrompt).mockResolvedValue(aSecret)
-    })
+    return options
+  }
 
-    it('collects HTTP localhost params', async () => {
-      // Given
-      vi.mocked(deliveryMethodPrompt).mockResolvedValue('http')
-      vi.mocked(addressPrompt).mockResolvedValue(aLocalAddress)
-      vi.mocked(localPortPrompt).mockResolvedValue(aPort)
-      vi.mocked(localUrlPathPrompt).mockResolvedValue(aUrlPath)
-
-      // When
-      const options = await collectCliOptions({})
-
-      // Then
-      const expected: TestWebhookOptions = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        sharedSecret: aSecret,
-        deliveryMethod: 'localhost',
-        localhostPort: aPort,
-        localhostUrlPath: aUrlPath,
-        address: `${aLocalAddress}:${aPort}${aUrlPath}`,
-      }
-      expect(options).toEqual(expected)
-      expectBasicPromptsToHaveBeenCalledOnce()
-      expect(addressPrompt).toHaveBeenCalledOnce()
-      expect(localPortPrompt).toHaveBeenCalledOnce()
-      expect(localUrlPathPrompt).toHaveBeenCalledOnce()
-    })
-
-    it('collects HTTP remote delivery params', async () => {
-      // Given
-      vi.mocked(deliveryMethodPrompt).mockResolvedValue('http')
-      vi.mocked(addressPrompt).mockResolvedValue(anAddress)
-      vi.mocked(localPortPrompt)
-      vi.mocked(localUrlPathPrompt)
-
-      // When
-      const options = await collectCliOptions({})
-
-      // Then
-      const expected: TestWebhookOptions = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        sharedSecret: aSecret,
-        deliveryMethod: 'http',
-        localhostPort: '',
-        localhostUrlPath: '',
-        address: anAddress,
-      }
-      expect(options).toEqual(expected)
-      expectBasicPromptsToHaveBeenCalledOnce()
-      expect(addressPrompt).toHaveBeenCalledOnce()
-      expect(localPortPrompt).toHaveBeenCalledTimes(0)
-      expect(localUrlPathPrompt).toHaveBeenCalledTimes(0)
-    })
-
-    function expectBasicPromptsToHaveBeenCalledOnce() {
-      expect(topicPrompt).toHaveBeenCalledOnce()
-      expect(apiVersionPrompt).toHaveBeenCalledOnce()
-      expect(sharedSecretPrompt).toHaveBeenCalledOnce()
-      expect(deliveryMethodPrompt).toHaveBeenCalledOnce()
+  function sampleLocalhostOptions(): EventTriggerOptions {
+    const options: EventTriggerOptions = {
+      topic: aTopic,
+      apiVersion: aVersion,
+      deliveryMethod: 'localhost',
+      sharedSecret: aSecret,
+      address: aFullLocalAddress,
     }
-  })
 
-  describe('with params', () => {
-    beforeEach(async () => {
-      vi.mocked(topicPrompt)
-      vi.mocked(apiVersionPrompt)
-      vi.mocked(sharedSecretPrompt)
-      vi.mocked(deliveryMethodPrompt)
-      vi.mocked(addressPrompt)
-      vi.mocked(localPortPrompt)
-      vi.mocked(localUrlPathPrompt)
+    return options
+  }
 
-      process.env = {
-        ...env,
-        SHOPIFY_FLAG_SHARED_SECRET: 'A_SECRET',
-      }
-    })
-
-    it('collects localhost delivery method required params', async () => {
-      // Given
-      const flags: TestWebhookFlags = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        deliveryMethod: 'http',
-        address: `${aLocalAddress}:8080/anything`,
-        port: aPort,
-        urlPath: aUrlPath,
-      }
-
-      // When
-      const options = await collectCliOptions(flags)
-
-      // Then
-      const expected: TestWebhookOptions = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        sharedSecret: aSecret,
-        deliveryMethod: 'localhost',
-        localhostPort: aPort,
-        localhostUrlPath: aUrlPath,
-        address: `${aLocalAddress}:${aPort}${aUrlPath}`,
-      }
-      expect(options).toEqual(expected)
-      expectNoPrompts()
-    })
-
-    it('collects remote delivery method required params', async () => {
-      // Given
-      const flags: TestWebhookFlags = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        deliveryMethod: 'http',
-        address: anAddress,
-      }
-
-      // When
-      const options = await collectCliOptions(flags)
-
-      // Then
-      const expected: TestWebhookOptions = {
-        topic: aTopic,
-        apiVersion: aVersion,
-        sharedSecret: aSecret,
-        deliveryMethod: 'http',
-        localhostPort: '',
-        localhostUrlPath: '',
-        address: anAddress,
-      }
-      expect(options).toEqual(expected)
-      expectNoPrompts()
-    })
-
-    function expectNoPrompts() {
-      expect(topicPrompt).toHaveBeenCalledTimes(0)
-      expect(apiVersionPrompt).toHaveBeenCalledTimes(0)
-      expect(sharedSecretPrompt).toHaveBeenCalledTimes(0)
-      expect(deliveryMethodPrompt).toHaveBeenCalledTimes(0)
-      expect(addressPrompt).toHaveBeenCalledTimes(0)
-      expect(localPortPrompt).toHaveBeenCalledTimes(0)
-      expect(localUrlPathPrompt).toHaveBeenCalledTimes(0)
+  function sampleRemoteOptions(): EventTriggerOptions {
+    const options: EventTriggerOptions = {
+      topic: aTopic,
+      apiVersion: aVersion,
+      deliveryMethod: 'http',
+      sharedSecret: aSecret,
+      address: anAddress,
     }
-  })
+
+    return options
+  }
 })

@@ -1,14 +1,14 @@
-import {DELIVERY_METHOD} from '../../services/event/trigger.js'
+import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/event/trigger-options.js'
 import {ui} from '@shopify/cli-kit'
 
-export async function topicPrompt(defaultValue?: string): Promise<string> {
+export async function topicPrompt(): Promise<string> {
   const input = await ui.prompt([
     {
       type: 'input',
       name: 'topic',
-      message: 'Webhook Topic Name',
-      default: defaultValue === undefined ? '' : defaultValue,
-      validate: (value) => {
+      message: 'Webhook Topic',
+      default: '',
+      validate: (value: string) => {
         if (value.length === 0) {
           return "Topic name can't be empty"
         }
@@ -20,13 +20,19 @@ export async function topicPrompt(defaultValue?: string): Promise<string> {
   return input.topic
 }
 
-export async function apiVersionPrompt(defaultValue?: string): Promise<string> {
+export async function apiVersionPrompt(): Promise<string> {
   const input = await ui.prompt([
     {
       type: 'input',
       name: 'apiVersion',
       message: 'Webhook ApiVersion',
-      default: defaultValue === undefined ? '2022-07' : defaultValue,
+      default: '2022-10',
+      validate: (value: string) => {
+        if (value.length === 0) {
+          return "ApiVersion name can't be empty"
+        }
+        return true
+      },
     },
   ])
 
@@ -52,54 +58,22 @@ export async function deliveryMethodPrompt(): Promise<string> {
   return input.value
 }
 
-export async function localPortPrompt(defaultValue?: string): Promise<string> {
-  const input = await ui.prompt([
-    {
-      type: 'input',
-      name: 'port',
-      message: 'Port for localhost delivery',
-      default: defaultValue === undefined ? '' : defaultValue,
-      validate: (value) => {
-        if (value.length === 0) {
-          return "Port can't be empty"
-        }
-        return true
-      },
-    },
-  ])
-
-  return input.port
-}
-
-export async function localUrlPathPrompt(defaultValue?: string): Promise<string> {
-  const input = await ui.prompt([
-    {
-      type: 'input',
-      name: 'urlPath',
-      message: 'URL path for localhost delivery',
-      default: defaultValue === undefined ? '/api/webhooks' : defaultValue,
-    },
-  ])
-
-  if (input.urlPath.length > 0 && !input.urlPath.startsWith('/')) {
-    input.urlPath = `/${input.urlPath}`
-  }
-
-  return input.urlPath
-}
-
-export async function addressPrompt(defaultValue?: string): Promise<string> {
+export async function addressPrompt(deliveryMethod: string): Promise<string> {
   const input = await ui.prompt([
     {
       type: 'input',
       name: 'address',
       message: 'Address for delivery',
-      default: defaultValue === undefined ? '' : defaultValue,
+      default: '',
       validate: (value) => {
         if (value.length === 0) {
           return "Address can't be empty"
         }
-        return true
+        if (isAddressAllowedForDeliveryMethod(value, deliveryMethod)) {
+          return true
+        }
+
+        return `${deliveryMethodInstructions(deliveryMethod)} for ${deliveryMethod}`
       },
     },
   ])
@@ -107,15 +81,35 @@ export async function addressPrompt(defaultValue?: string): Promise<string> {
   return input.address
 }
 
-export async function sharedSecretPrompt(defaultValue?: string): Promise<string> {
+export async function sharedSecretPrompt(): Promise<string> {
   const input = await ui.prompt([
     {
       type: 'input',
       name: 'sharedSecret',
       message: 'Shared Secret to endcode the webhook payload',
-      default: defaultValue === undefined ? 'shopify_test' : defaultValue,
+      default: 'shopify_test',
+      validate: (value: string) => {
+        if (value.length === 0) {
+          return "Shared Secret can't be empty"
+        }
+        return true
+      },
     },
   ])
 
   return input.sharedSecret
+}
+
+export function deliveryMethodInstructions(method: string): string {
+  if (method === DELIVERY_METHOD.HTTP) {
+    return 'Use either https:// for remote or http://localhost:{port}/{url-path} for local'
+  }
+  if (method === DELIVERY_METHOD.PUBSUB) {
+    return 'Use pubsub://{project-id}:{topic-id}'
+  }
+  if (method === DELIVERY_METHOD.EVENTBRIDGE) {
+    return 'Use an Amazon Resource Name (ARN) starting with arn:aws:events:'
+  }
+
+  return ''
 }

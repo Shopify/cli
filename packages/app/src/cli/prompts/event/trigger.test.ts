@@ -1,17 +1,14 @@
-import {
-  addressPrompt,
-  apiVersionPrompt,
-  deliveryMethodPrompt,
-  localPortPrompt,
-  localUrlPathPrompt,
-  sharedSecretPrompt,
-  topicPrompt,
-} from './trigger.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
+import {DELIVERY_METHOD} from '../../services/event/trigger-options.js'
+import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
+})
+
+afterEach(async () => {
+  vi.clearAllMocks()
 })
 
 describe('topicPrompt', () => {
@@ -28,7 +25,7 @@ describe('topicPrompt', () => {
       {
         type: 'input',
         name: 'topic',
-        message: 'Webhook Topic Name',
+        message: 'Webhook Topic',
         default: '',
         validate: expect.any(Function),
       },
@@ -51,7 +48,8 @@ describe('apiVersionPrompt', () => {
         type: 'input',
         name: 'apiVersion',
         message: 'Webhook ApiVersion',
-        default: '2022-07',
+        default: '2022-10',
+        validate: expect.any(Function),
       },
     ])
   })
@@ -82,114 +80,13 @@ describe('deliveryMethodPrompt', () => {
   })
 })
 
-describe('localPortPrompt', () => {
-  it('asks the user to enter a local port with no suggestion', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({port: '1234'})
-
-    // When
-    const got = await localPortPrompt()
-
-    // Then
-    expect(got).toEqual('1234')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'port',
-        message: 'Port for localhost delivery',
-        default: '',
-        validate: expect.any(Function),
-      },
-    ])
-  })
-
-  it('asks the user to enter a local port with suggestion', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({port: '1234'})
-
-    // When
-    const got = await localPortPrompt('8080')
-
-    // Then
-    expect(got).toEqual('1234')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'port',
-        message: 'Port for localhost delivery',
-        default: '8080',
-        validate: expect.any(Function),
-      },
-    ])
-  })
-})
-
-describe('localUrlPathPrompt', () => {
-  it('asks the user to enter url-path with default suggestion', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({urlPath: '/a/path'})
-
-    // When
-    const got = await localUrlPathPrompt()
-
-    // Then
-    expect(got).toEqual('/a/path')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'urlPath',
-        message: 'URL path for localhost delivery',
-        default: '/api/webhooks',
-      },
-    ])
-  })
-
-  it('asks the user to enter url-path with custom suggestion', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({urlPath: '/a/path'})
-
-    // When
-    const got = await localUrlPathPrompt('/another/path')
-
-    // Then
-    expect(got).toEqual('/a/path')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'urlPath',
-        message: 'URL path for localhost delivery',
-        default: '/another/path',
-      },
-    ])
-  })
-
-  it('adds leading slash in the url-path', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({urlPath: 'a/path'})
-
-    // When
-    const got = await localUrlPathPrompt()
-
-    // Then
-    expect(got).toEqual('/a/path')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'urlPath',
-        message: 'URL path for localhost delivery',
-        default: '/api/webhooks',
-      },
-    ])
-  })
-})
-
 describe('addressPrompt', () => {
-  it('asks the user to enter a destination address with no suggestion', async () => {
+  it('asks the user to enter a destination address', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValue({address: 'https://example.org'})
 
     // When
-    const got = await addressPrompt()
+    const got = await addressPrompt(DELIVERY_METHOD.HTTP)
 
     // Then
     expect(got).toEqual('https://example.org')
@@ -199,26 +96,6 @@ describe('addressPrompt', () => {
         name: 'address',
         message: 'Address for delivery',
         default: '',
-        validate: expect.any(Function),
-      },
-    ])
-  })
-
-  it('asks the user to enter a destination address with suggestion', async () => {
-    // Given
-    vi.mocked(ui.prompt).mockResolvedValue({address: 'https://example.org'})
-
-    // When
-    const got = await addressPrompt('http://localhost')
-
-    // Then
-    expect(got).toEqual('https://example.org')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'address',
-        message: 'Address for delivery',
-        default: 'http://localhost',
         validate: expect.any(Function),
       },
     ])
@@ -241,6 +118,7 @@ describe('sharedSecretPrompt', () => {
         name: 'sharedSecret',
         message: 'Shared Secret to endcode the webhook payload',
         default: 'shopify_test',
+        validate: expect.any(Function),
       },
     ])
   })
