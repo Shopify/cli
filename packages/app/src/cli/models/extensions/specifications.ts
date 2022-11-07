@@ -22,6 +22,10 @@ export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
   return registrations
 }
 
+/**
+ * Dynamically import all default exports from the given directory.
+ * Used to import all extension/function specifications without being explicit about them.
+ */
 async function loadSpecs(directoryName: string) {
   const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.js'))
   const files = await path.glob(url)
