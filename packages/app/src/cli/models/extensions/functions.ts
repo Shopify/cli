@@ -1,4 +1,4 @@
-import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, TypeSchema} from './schemas'
+import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, TypeSchema} from './schemas.js'
 import {toml, schema, file, path, error, system, abort, string} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {fqdn} from '@shopify/cli-kit/src/environment.js'

@@ -8,7 +8,7 @@ const WebPixelSchema = BaseExtensionSchema.extend({
   runtimeContext: schema.define.string(),
   version: schema.define.string().optional(),
   configuration: schema.define.any().optional(),
-  settings: schema.define.any(),
+  settings: schema.define.any().optional(),
 })
 
 const spec = createExtensionSpec({
@@ -23,11 +23,11 @@ const spec = createExtensionSpec({
     }
   },
   previewMessage: () => undefined,
-  preDeployValidation(config) {
+  preDeployValidation: (config) => {
     if (config.configuration) {
       throw new error.Abort(
         `The property "configuration" is deprecated and no longer supported.`,
-        `It has been replaced by "settings".`,
+        `It has been replaced by "settings.`,
       )
     }
     return true

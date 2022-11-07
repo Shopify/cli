@@ -1,16 +1,16 @@
-import React from 'react';
-import {createMount} from '@shopify/react-testing';
-import enTranslations from '@shopify/polaris/locales/en.json';
-import {AppProvider} from '@shopify/polaris';
-import {I18nContext, I18nManager} from '@shopify/react-i18n';
-import {DevServerContext, DevServerContextValue} from '@shopify/ui-extensions-server-kit';
-import {mockApp, mockExtensions} from '@shopify/ui-extensions-server-kit/testing';
+import React from 'react'
+import {createMount} from '@shopify/react-testing'
+import enTranslations from '@shopify/polaris/locales/en.json'
+import {AppProvider} from '@shopify/polaris'
+import {I18nContext, I18nManager} from '@shopify/react-i18n'
+import {DevServerContext, DevServerContextValue} from '@shopify/ui-extensions-server-kit'
+import {mockApp, mockExtensions} from '@shopify/ui-extensions-server-kit/testing'
 
 interface MountOptions {
-  console?: Partial<DevServerContextValue>;
+  console?: Partial<DevServerContextValue>
 }
 interface Context {
-  console: DevServerContextValue;
+  console: DevServerContextValue
 }
 
 export const mount = createMount<MountOptions, Context>({
@@ -24,19 +24,19 @@ export const mount = createMount<MountOptions, Context>({
         send: options.console?.send ?? jest.fn(),
         addListener: options.console?.addListener ?? jest.fn(),
       },
-    };
-    return context;
+    }
+    return context
   },
   render(element, context) {
-    const locale = 'en';
+    const locale = 'en'
     // eslint-disable-next-line react/jsx-no-constructed-context-values
     const i18nManager = new I18nManager({
       locale,
       onError(error) {
         // eslint-disable-next-line no-console
-        console.log(error);
+        console.log(error)
       },
-    });
+    })
 
     return (
       <I18nContext.Provider value={i18nManager}>
@@ -44,6 +44,6 @@ export const mount = createMount<MountOptions, Context>({
           <DevServerContext.Provider value={context.console}>{element}</DevServerContext.Provider>
         </AppProvider>
       </I18nContext.Provider>
-    );
+    )
   },
-});
+})
