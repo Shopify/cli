@@ -58,6 +58,7 @@ export interface AppInterface {
   hasExtensions: () => boolean
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
+  webhooksDirectory: () => string
 }
 
 export class App implements AppInterface {
@@ -116,6 +117,10 @@ export class App implements AppInterface {
   async updateDependencies() {
     const nodeDependencies = await getDependencies(path.join(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
+  }
+
+  webhooksDirectory(): string {
+    return path.join(this.directory, 'webhooks')
   }
 
   hasExtensions(): boolean {

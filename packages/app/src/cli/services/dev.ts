@@ -109,12 +109,11 @@ function getViteVirtualModulesPlugin(options: DevOptions) {
 }
 
 function addWebhooksMiddleware(server: Express, viteServer: ViteDevServer, options: DevOptions) {
-  const webhooksDirectory = path.join(options.app.directory, 'webhooks')
   server.use([
     async (req: Request, res: Response, next: NextFunction) => {
       if (req.path === '/webhooks') {
         const topic = req.headers['x-shopify-topic'] as string
-        const webhookModulePath = path.join(webhooksDirectory, `${topic}.js`)
+        const webhookModulePath = path.join(options.app.webhooksDirectory(), `${topic}.js`)
         if (await file.exists(webhookModulePath)) {
           output.debug(`Processing Webhook with topic ${topic} with module ${webhookModulePath}`)
 
