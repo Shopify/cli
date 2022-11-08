@@ -1,11 +1,17 @@
 import Command, {Environments} from './base-command.js'
 import {globalFlags} from '../../cli.js'
+import {inTemporaryDirectory, write as writeFile} from '../../file.js'
+import {AnyJson} from '../../json.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
+import {encode as encodeTOML} from '../../toml.js'
+import {join as pathJoin, resolve as resolvePath} from '../../path.js'
 import {describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 
 let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
+
+const projectFileName = 'shopify.project.toml'
 
 const validEnvironment = {
   someString: 'stringy',
@@ -57,6 +63,10 @@ class MockCommand extends Command {
   /* eslint-disable rulesdir/command-flags-with-env */
   static flags = {
     ...globalFlags,
+    path: Flags.string({
+      parse: (input, _) => Promise.resolve(resolvePath(input)),
+      default: '.',
+    }),
     someString: Flags.string({}),
     someInteger: Flags.integer({}),
     someBoolean: Flags.boolean({}),
@@ -79,45 +89,59 @@ class MockCommand extends Command {
     testError = error
   }
 
-  async environments(_flags: unknown) {
-    return allEnvironments
+  override projectFileName() {
+    return projectFileName
   }
 }
 
 describe('applying environments', async () => {
-  function expectFlags(environment: keyof typeof allEnvironments) {
+  const runTestInTmpDir = (testName: string, testFunc: (tmpDir: string) => Promise<void>) => {
+    test(testName, async () => {
+      testResult = {}
+      testError = undefined
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(pathJoin(tmpDir, projectFileName), encodeTOML({environments: allEnvironments} as AnyJson))
+        await testFunc(tmpDir)
+      })
+    })
+  }
+
+  function expectFlags(path: string, environment: keyof typeof allEnvironments) {
     expect(testResult).toEqual({
+      path: resolvePath(path),
       someStringWithDefault: 'default stringy',
       environment,
       ...allEnvironments[environment],
     })
   }
 
-  test('does not apply a environment when none is specified', async () => {
+  runTestInTmpDir('does not apply a environment when none is specified', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await MockCommand.run()
+    await MockCommand.run(['--path', tmpDir])
 
     // Then
     expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
       someStringWithDefault: 'default stringy',
     })
     expect(outputMock.info()).toEqual('')
   })
 
-  test('applies a environment when one is specified', async () => {
+  runTestInTmpDir('applies a environment when one is specified', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await MockCommand.run(['--environment', 'validEnvironment'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment'])
 
     // Then
-    expectFlags('validEnvironment')
+    expectFlags(tmpDir, 'validEnvironment')
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "Using applicable flags from the environment validEnvironment:
 
@@ -126,13 +150,13 @@ describe('applying environments', async () => {
     `)
   })
 
-  test('prefers command line arguments to environment settings', async () => {
+  runTestInTmpDir('prefers command line arguments to environment settings', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await MockCommand.run(['--environment', 'validEnvironment', '--someString', 'cheesy'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--someString', 'cheesy'])
 
     // Then
     expect(testResult.someString).toEqual('cheesy')
@@ -143,48 +167,50 @@ describe('applying environments', async () => {
     `)
   })
 
-  test('ignores the specified environment when it does not exist', async () => {
+  runTestInTmpDir('ignores the specified environment when it does not exist', async (tmpDir: string) => {
     // When
-    await MockCommand.run(['--environment', 'nonexistentEnvironment'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'nonexistentEnvironment'])
 
     // Then
     expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
       environment: 'nonexistentEnvironment',
       someStringWithDefault: 'default stringy',
     })
   })
 
-  test('does not apply flags irrelevant to the current command', async () => {
+  runTestInTmpDir('does not apply flags irrelevant to the current command', async (tmpDir: string) => {
     // When
-    await MockCommand.run(['--environment', 'validEnvironmentWithIrrelevantFlag'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironmentWithIrrelevantFlag'])
 
     // Then
     expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
       environment: 'validEnvironmentWithIrrelevantFlag',
       ...validEnvironment,
       someStringWithDefault: 'default stringy',
     })
   })
 
-  test('throws when an argument of the incorrect type is provided', async () => {
+  runTestInTmpDir('throws when an argument of the incorrect type is provided', async (tmpDir: string) => {
     // When
-    await MockCommand.run(['--environment', 'environmentWithIncorrectType'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithIncorrectType'])
 
     // Then
     expect(testError?.message).toEqual('Expected an integer but received: stringy')
   })
 
-  test('throws when exclusive arguments are provided', async () => {
+  runTestInTmpDir('throws when exclusive arguments are provided', async (tmpDir: string) => {
     // When
-    await MockCommand.run(['--environment', 'environmentWithExclusiveArguments'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithExclusiveArguments'])
 
     // Then
     expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString')
   })
 
-  test('throws on negated booleans', async () => {
+  runTestInTmpDir('throws on negated booleans', async (tmpDir: string) => {
     // When
-    await MockCommand.run(['--environment', 'environmentWithNegativeBoolean'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithNegativeBoolean'])
 
     // Then
     expect(testError?.message).toMatch(
@@ -192,35 +218,35 @@ describe('applying environments', async () => {
     )
   })
 
-  test('handles multiples correctly', async () => {
+  runTestInTmpDir('handles multiples correctly', async (tmpDir: string) => {
     // When
-    await MockCommand.run(['--environment', 'environmentWithMultiples'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithMultiples'])
 
     // Then
-    expectFlags('environmentWithMultiples')
+    expectFlags(tmpDir, 'environmentWithMultiples')
   })
 
-  test(
+  runTestInTmpDir(
     'throws when exclusive arguments are provided when combining command line + environment',
-    async () => {
+    async (tmpDir: string) => {
       // When
-      await MockCommand.run(['--environment', 'validEnvironment', '--someExclusiveString', 'stringy'])
+      await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--someExclusiveString', 'stringy'])
 
       // Then
       expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString')
     },
   )
 
-  test('reports environment settings that do not match defaults', async () => {
+  runTestInTmpDir('reports environment settings that do not match defaults', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await MockCommand.run(['--environment', 'environmentWithDefaultOverride'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithDefaultOverride'])
 
     // Then
-    expectFlags('environmentWithDefaultOverride')
+    expectFlags(tmpDir, 'environmentWithDefaultOverride')
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "Using applicable flags from the environment environmentWithDefaultOverride:
 
@@ -228,16 +254,16 @@ describe('applying environments', async () => {
     `)
   })
 
-  test('reports environment settings that match defaults', async () => {
+  runTestInTmpDir('reports environment settings that match defaults', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await MockCommand.run(['--environment', 'environmentMatchingDefault'])
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentMatchingDefault'])
 
     // Then
-    expectFlags('environmentMatchingDefault')
+    expectFlags(tmpDir, 'environmentMatchingDefault')
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "Using applicable flags from the environment environmentMatchingDefault:
 

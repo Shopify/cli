@@ -2,13 +2,16 @@ import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error
 import {JsonMap} from '../../json.js'
 import {isDevelopment} from '../../environment/local.js'
 import {Abort} from '../../error.js'
+import {read as readFile} from '../../file.js'
 import {addPublic} from '../../metadata.js'
 import {content, info, token} from '../../output.js'
+import {findUp} from '../../path.js'
 import {hashString} from '../../string.js'
+import {decode as decodeTOML} from '../../toml.js'
 import {initiateLogging} from '../../log.js'
 import {Command, Interfaces} from '@oclif/core'
 
-export interface EnvableFlags {
+interface EnvableFlags {
   environment?: string
   path?: string
 }
@@ -85,8 +88,26 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  protected async environments(_flags: EnvableFlags): Promise<Environments> {
+  // Can be overridden if necessary, intelligent default is specified
+  protected async environments(rawFlags: EnvableFlags): Promise<Environments> {
+    const projectFileName = this.projectFileName()
+    if (!projectFileName) return {}
+    const specifiedPath = rawFlags.path ? rawFlags.path : process.cwd()
+    const projectTOML = await findUp(projectFileName, {
+      cwd: specifiedPath,
+      type: 'file',
+    })
+    if (projectTOML) {
+      const decoded = decodeTOML(await readFile(projectTOML)) as {environments: Environments}
+      if (typeof decoded.environments === 'object') {
+        return decoded.environments
+      }
+    }
     return {}
+  }
+
+  protected projectFileName(): string | undefined {
+    return
   }
 }
 
