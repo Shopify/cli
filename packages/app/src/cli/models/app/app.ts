@@ -6,7 +6,6 @@ import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 
 export const AppConfigurationSchema = schema.define.object({
-  type: schema.define.literal('integration').optional(),
   scopes: schema.define.string().default(''),
   api_version: schema.define.string().optional().default('2022-10'),
   extensionDirectories: schema.define.array(schema.define.string()).optional(),
@@ -59,6 +58,7 @@ export interface AppInterface {
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   webhooksDirectory: () => string
+  isEmbedded: () => Promise<boolean>
 }
 
 export class App implements AppInterface {
@@ -121,6 +121,10 @@ export class App implements AppInterface {
 
   webhooksDirectory(): string {
     return path.join(this.directory, 'webhooks')
+  }
+
+  async isEmbedded(): Promise<boolean> {
+    return (await path.glob(path.join(this.directory, 'routes/**/*'))).length !== 0
   }
 
   hasExtensions(): boolean {

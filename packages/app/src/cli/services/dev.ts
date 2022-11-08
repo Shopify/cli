@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-catch-all/no-catch-all */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-misused-promises */
@@ -29,6 +30,30 @@ import {createRequire} from 'node:module'
 const require = createRequire(import.meta.url)
 const virtual = require('vite-plugin-virtual')
 
+const AppInstallations = {
+  async includes(shopDomain: string | undefined) {
+    // @ts-ignore
+    const shopSessions = await Shopify.Context.SESSION_STORAGE.findSessionsByShop(shopDomain)
+
+    if (shopSessions.length > 0) {
+      for (const session of shopSessions) {
+        if (session.accessToken) return true
+      }
+    }
+
+    return false
+  },
+
+  async delete(shopDomain: string | undefined) {
+    // @ts-ignore
+    const shopSessions = await Shopify.Context.SESSION_STORAGE.findSessionsByShop(shopDomain)
+    if (shopSessions.length > 0) {
+      // @ts-ignore
+      await Shopify.Context.SESSION_STORAGE.deleteSessions(shopSessions.map((session) => session.id))
+    }
+  },
+}
+
 export interface DevOptions {
   app: AppInterface
   apiKey?: string
@@ -56,11 +81,59 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const serverFQDN = 'http://127.0.0.1'
-  const serverPort = await port.getRandomPort()
-  const serverURL = `${serverFQDN}:${serverPort}/`
+  const isEmbedded = await options.app.isEmbedded()
+  let serverPort: number
+  let serverURL: string
+  let apiKey: string | undefined
+  let storeFqdn: string | undefined
 
-  output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}_shopify\n`)
+  if (isEmbedded) {
+    output.info(output.content`\n${output.token.cyan('Embedded')} app detected. Authenticating as a partner...`)
+    const token = await session.ensureAuthenticatedPartners()
+    const devOptions = await ensureDevEnvironment(options, token)
+    storeFqdn = devOptions.storeFqdn
+    apiKey = devOptions.identifiers.app
+    const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
+      ...options,
+      cachedTunnelPlugin: devOptions.tunnelPlugin,
+    })
+    serverPort = frontendPort
+    serverURL = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
+
+    let shouldUpdateURLs = false
+    const currentURLs = await getURLs(apiKey, token)
+    const newURLs = generatePartnersURLs(serverURL, undefined)
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+      currentURLs,
+      appDirectory: options.app.directory,
+      cachedUpdateURLs: devOptions.updateURLs,
+      newApp: devOptions.app.newApp,
+    })
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, devOptions.app)
+    outputAppURL(storeFqdn, serverURL)
+
+    const sessionStorage = new Shopify.Session.MemorySessionStorage()
+    Shopify.Context.initialize({
+      API_KEY: apiKey,
+      API_SECRET_KEY: devOptions.app.apiSecret as string,
+      SCOPES: options.app.configuration.scopes.split(','),
+      HOST_NAME: serverURL.replace(/https?:\/\//, ''),
+      HOST_SCHEME: serverURL.split('://')[0],
+      API_VERSION: options.app.configuration.api_version as any,
+      IS_EMBEDDED_APP: true,
+      // This should be replaced with your preferred storage strategy
+      // See note below regarding using CustomSessionStorage with this template.
+      SESSION_STORAGE: sessionStorage,
+      ...(process.env.SHOP_CUSTOM_DOMAIN && {CUSTOM_SHOP_DOMAINS: [process.env.SHOP_CUSTOM_DOMAIN]}),
+    })
+  } else {
+    output.info(output.content`\n${output.token.cyan('Non-embedded')} app detected`)
+    serverPort = await port.getRandomPort()
+    serverURL = `http://127.0.0.1:${serverPort}/`
+    output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}_shopify\n`)
+  }
+
   output.info(output.content`${output.token.heading('Logs')}`)
 
   const viteServer = await createServer({
@@ -73,21 +146,16 @@ async function dev(options: DevOptions) {
     plugins: [getViteVirtualModulesPlugin(options)],
   })
 
-  /** HTTP Server */
   const server = express()
   server.use(express.json())
   await addDevPanelMiddleware(server, serverURL, options)
   addWebhooksMiddleware(server, viteServer, options)
-  addAuthMiddleware(server, serverURL)
-
-  server.use('/', (req, res, next) => {
-    return res.send('hola').end()
-  })
+  addAuthMiddleware(server, serverURL, isEmbedded)
 
   await server.listen(serverPort)
 }
 
-function addAuthMiddleware(server: Express, serverURL: string) {
+function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boolean) {
   server.get('/api/auth', async (req, res) => {
     return redirectToAuth(req, res, server, serverURL)
   })
@@ -113,10 +181,9 @@ function addAuthMiddleware(server: Express, serverURL: string) {
       //   }
       // })
       const host = Shopify.Utils.sanitizeHost(req.query.host)
-      const redirectUrl = Shopify.Utils.getEmbeddedAppUrl(req)
-      // const redirectUrl = Shopify.Context.IS_EMBEDDED_APP
-      //   ? Shopify.Utils.getEmbeddedAppUrl(req)
-      //   : `/?shop=${session.shop}&host=${encodeURIComponent(serverURL)}`
+      const redirectUrl = isEmbedded
+        ? Shopify.Utils.getEmbeddedAppUrl(req)
+        : `/?shop=${session.shop}&host=${encodeURIComponent(serverURL)}`
       res.redirect(redirectUrl)
     } catch (error: any) {
       output.warn(`${error}`)
@@ -136,6 +203,45 @@ function addAuthMiddleware(server: Express, serverURL: string) {
           break
       }
     }
+  })
+
+  server.use((req: any, res: any, next) => {
+    const shop = Shopify.Utils.sanitizeShop(req.query.shop)
+    if (isEmbedded && shop) {
+      res.setHeader(
+        'Content-Security-Policy',
+        `frame-ancestors https://${encodeURIComponent(shop)} https://admin.shopify.com;`,
+      )
+    } else {
+      res.setHeader('Content-Security-Policy', `frame-ancestors 'none';`)
+    }
+    next()
+  })
+
+  server.use('/*', async (req: any, res: any, next) => {
+    if (typeof req.query.shop !== 'string') {
+      res.status(500)
+      return res.send('No shop provided')
+    }
+
+    const shop = Shopify.Utils.sanitizeShop(req.query.shop)
+    const appInstalled = await AppInstallations.includes(shop as string)
+
+    if (!appInstalled && !req.originalUrl.match(/^\/exitiframe/i)) {
+      return redirectToAuth(req, res, server, serverURL)
+    }
+
+    if (isEmbedded && req.query.embedded !== '1') {
+      const embeddedUrl = Shopify.Utils.getEmbeddedAppUrl(req)
+
+      return res.redirect(embeddedUrl + req.path)
+    }
+
+    // const htmlFile = join(isProd ? PROD_INDEX_PATH : DEV_INDEX_PATH, 'index.html')
+
+    return res.send('hola').end()
+
+    // return res.status(200).set('Content-Type', 'text/html').send(readFileSync(htmlFile))
   })
 }
 
