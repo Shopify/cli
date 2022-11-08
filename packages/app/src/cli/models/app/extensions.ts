@@ -1,10 +1,6 @@
-import {
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
-  ExtensionTypes,
-  uiExternalExtensionTypes,
-} from '../../constants.js'
+import {uiExtensions, ExtensionTypes, uiExternalExtensionTypes} from '../../constants.js'
+import {BaseConfigContents} from '../extensions/extensions.js'
+import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
 import {schema} from '@shopify/cli-kit'
 
 export interface Extension {
@@ -18,7 +14,7 @@ export interface Extension {
 
 export const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(uiExtensions.types),
+  type: schema.define.string(),
   metafields: schema.define
     .array(
       schema.define.object({
@@ -54,7 +50,7 @@ export const UIExtensionConfigurationSupportedSchema = UIExtensionConfigurationS
 
 export const FunctionExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(functionExtensions.types),
+  type: schema.define.string(),
   description: schema.define.string().default(''),
   build: schema.define.object({
     command: schema.define.string(),
@@ -76,7 +72,7 @@ export const FunctionExtensionConfigurationSchema = schema.define.object({
 
 export const ThemeExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(themeExtensions.types),
+  type: schema.define.string(),
 })
 
 export const FunctionExtensionMetadataSchema = schema.define.object({
@@ -88,18 +84,21 @@ export const FunctionExtensionMetadataSchema = schema.define.object({
   ),
 })
 
-export type FunctionExtension = Extension & {
-  configuration: FunctionExtensionConfiguration
-  metadata: FunctionExtensionMetadata
+export type FunctionExtension<
+  TConfiguration extends FunctionConfigType = FunctionConfigType,
+  TMetadata extends MetadataType = MetadataType,
+> = Extension & {
+  configuration: TConfiguration
+  metadata: TMetadata
   buildWasmPath: () => string
   inputQueryPath: () => string
 }
 
-export type ThemeExtension = Extension & {
+export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
   configuration: ThemeExtensionConfiguration
 }
 
-export type UIExtension = Extension & {
+export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
   configuration: UIExtensionConfiguration
   entrySourceFilePath: string
   outputBundlePath: string

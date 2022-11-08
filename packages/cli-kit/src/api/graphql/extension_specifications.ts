@@ -5,6 +5,7 @@ export const ExtensionSpecificationsQuery = gql`
     extensionSpecifications(apiKey: $api_key) {
       name
       externalName
+      externalIdentifier
       identifier
       options {
         managementExperience
@@ -27,6 +28,7 @@ export interface RemoteSpecification {
   name: string
   externalName: string
   identifier: string
+  externalIdentifier: string
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
