@@ -6,6 +6,7 @@ const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version:
 
 const spec = createExtensionSpec({
   identifier: 'checkout_post_purchase',
+  surface: 'post_purchase',
   dependency,
   partnersWebId: 'post_purchase',
   schema: BaseExtensionSchema,

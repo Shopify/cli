@@ -21,7 +21,7 @@ import {
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 const defaultExtensionDirectory = 'extensions/*'
 

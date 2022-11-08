@@ -1,8 +1,7 @@
-import {UIExtensionSurface} from '../../../utilities/extensions/configuration.js'
 import {path, template, file, error} from '@shopify/cli-kit'
 
 export interface GetHTMLOptions {
-  extensionSurface?: UIExtensionSurface
+  extensionSurface?: string
   template: Template
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any

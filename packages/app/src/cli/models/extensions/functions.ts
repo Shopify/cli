@@ -1,15 +1,12 @@
-import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, TypeSchema} from './schemas.js'
+import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
 import {FunctionExtension} from '../app/extensions.js'
-import {toml, schema, file, path, error, system, abort, string, environment} from '@shopify/cli-kit'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
 // Base config types that all config schemas must extend
 export type FunctionConfigType = schema.define.infer<typeof BaseFunctionConfigurationSchema>
 export type MetadataType = schema.define.infer<typeof BaseFunctionMetadataSchema>
-
-type LoadFunctionError = 'invalid_function_type' | 'invalid_function_config' | 'invalid_function_metadata'
 
 /**
  * Specification with all the needed properties and methods to load a function.
@@ -25,10 +22,10 @@ export interface FunctionSpec<
   public?: boolean
   templateURL?: string
   languages?: {name: string; value: string}[]
-  configSchema?: schema.define.ZodType<TConfiguration>
-  metadataSchema?: schema.define.ZodType<TMetadata>
+  configSchema?: ZodSchemaType<TConfiguration>
+  metadataSchema?: ZodSchemaType<TMetadata>
   templatePath: (lang: string) => string
-  validate?: <T extends TConfiguration>(config: T) => unknown
+  validate?: (config: TConfiguration) => unknown
 }
 
 /**
@@ -136,60 +133,20 @@ export async function functionSpecForType(type: string): Promise<FunctionSpec | 
   return (await allFunctionSpecifications()).find((spec) => spec.identifier === type)
 }
 
-/**
- * Given a path, read the type first, find the correct spec and load the function.
- *
- * If there is no spec for that type, return undefined.
- * Loading the function can fail if the config fail doesn't follow the given Schema
- */
-export async function loadFunction(configPath: string): Promise<Result<FunctionInstance, LoadFunctionError>> {
-  const directory = path.dirname(configPath)
-
-  // Read Config file
-  const fileContent = await file.read(configPath)
-  const obj = toml.decode(fileContent)
-
-  // Find spec for the current function type
-  const {type} = TypeSchema.parse(obj)
-  const spec = await functionSpecForType(type)
-
-  if (!spec) return err('invalid_function_type')
-
-  // Parse Config file
-  let config
-  try {
-    config = (spec.configSchema ?? BaseFunctionConfigurationSchema).parse(obj)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return err('invalid_function_config')
-  }
-
-  // Parse Metadata file
-  let metadata
-  try {
-    const fileContent = await file.read(path.join(directory, 'metadata.json'))
-    const jsonObj = JSON.parse(fileContent)
-    metadata = (spec.metadataSchema ?? BaseFunctionMetadataSchema).parse(jsonObj)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return err('invalid_function_metadata')
-  }
-
-  const instance = new FunctionInstance(config, configPath, metadata, spec, directory)
-  return ok(instance)
-}
-
 export function createFunctionSpec<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
   TMetadata extends MetadataType = MetadataType,
->(spec: FunctionSpec<TConfiguration, TMetadata>): FunctionSpec<TConfiguration, TMetadata> {
+>(spec: FunctionSpec): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
     languages: [
       {name: 'Wasm', value: 'wasm'},
       {name: 'Rust', value: 'rust'},
     ],
+    configSchema: BaseFunctionConfigurationSchema,
+    metadataSchema: BaseFunctionMetadataSchema,
     public: true,
   }
+
   return {...defaults, ...spec}
 }

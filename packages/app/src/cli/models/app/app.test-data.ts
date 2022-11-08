@@ -32,6 +32,7 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
 
   return {
     identifier: uiExtension?.configuration?.type ?? 'product_subscription',
+    surface: 'admin',
     name: uiExtension?.configuration?.name ?? 'test-ui-extension',
     localIdentifier: uiExtension?.localIdentifier ?? 'test-ui-extension',
     outputBundlePath: uiExtension?.outputBundlePath ?? `${directory}/dist/main.js`,

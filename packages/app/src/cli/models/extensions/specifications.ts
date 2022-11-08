@@ -8,7 +8,7 @@ let loadedFunctionSpecs: FunctionSpec[]
 
 export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
   if (loadedExtensionSpecs) return loadedExtensionSpecs
-  const registrations = await loadSpecs('extensions-specifications')
+  const registrations = await loadSpecs('extension-specifications')
   // eslint-disable-next-line require-atomic-updates
   loadedExtensionSpecs = registrations
   return registrations

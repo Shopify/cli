@@ -2,6 +2,7 @@ import {functionExtensions, themeExtensions, uiExtensions, uiExternalExtensionTy
 import {BaseConfigContents} from '../extensions/extensions.js'
 import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
 import {output, schema} from '@shopify/cli-kit'
+import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager.js'
 
 export interface Extension {
   idEnvironmentVariableName: string
@@ -106,6 +107,8 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   entrySourceFilePath: string
   outputBundlePath: string
   devUUID: string
+  surface: string
+  dependency?: DependencyVersion
   deployConfig: () => Promise<unknown>
   previewMessage: (url: string, storeFqdn: string) => output.TokenizedString | undefined
 }

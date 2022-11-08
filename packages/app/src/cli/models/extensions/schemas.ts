@@ -1,5 +1,8 @@
 import {schema} from '@shopify/cli-kit'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ZodSchemaType<T> = schema.define.ZodType<T, any, any>
+
 export const MetafieldSchema = schema.define.object({
   namespace: schema.define.string(),
   key: schema.define.string(),
@@ -38,7 +41,7 @@ export const BaseExtensionSchema = schema.define.object({
 export const BaseFunctionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string(),
-  description: schema.define.string().default(''),
+  description: schema.define.string().optional().default(''),
   build: schema.define.object({
     command: schema.define.string(),
     path: schema.define.string().optional(),

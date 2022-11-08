@@ -1,29 +1,27 @@
-import {BaseExtensionSchema, TypeSchema, ExtensionPointSchema} from './schemas.js'
+import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
 import {ThemeExtension, UIExtension} from '../app/extensions.js'
-import {id, path, schema, toml, api, file, output, environment, string} from '@shopify/cli-kit'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
 export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
 
-type LoadExtensionError = 'invalid_entry_path' | 'invalid_config' | 'invalid_extension_type'
-
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
-  dependency?: {name: string; version: string}
   partnersWebId: string
+  surface: string
+  dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
-  schema: schema.define.ZodType<TConfiguration>
+  schema: ZodSchemaType<TConfiguration>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => boolean
   resourceUrl?: (config: TConfiguration) => string
@@ -64,7 +62,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
-    return this.specification.graphQLType ?? this.specification.identifier
+    return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
   get identifier() {
@@ -89,6 +87,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 
   get externalType() {
     return this.remoteSpecification?.externalIdentifier ?? this.specification.identifier
+  }
+
+  get surface() {
+    return this.specification.surface
   }
 
   constructor(
@@ -177,46 +179,6 @@ export async function specForType(type: string): Promise<ExtensionSpec | undefin
 // PENDING: Fetch remote specs
 function remoteSpecForType(type: string): api.graphql.RemoteSpecification | undefined {
   return undefined
-}
-
-/**
- * Load an extension from given a path.
- * 1. Find the entryPoint file
- * 2. Read the type and find the registered spec for that type.
- * 3. Parse the config file using the schema from the spec
- *
- * If that fails the extension can't be loaded and we'll return an error (to be handled by the caller)
- */
-export async function loadExtension(configPath: string): Promise<Result<ExtensionInstance, LoadExtensionError>> {
-  const directory = path.dirname(configPath)
-
-  // Find entry paths
-  const entryPath = await path.glob(path.join(directory, 'src', '*.+(ts|js|tsx|jsx)'))
-  if (!entryPath[0]) return err('invalid_entry_path')
-
-  // Read Config file
-  const fileContent = await file.read(configPath)
-  const obj = toml.decode(fileContent)
-  const {type} = TypeSchema.parse(obj)
-
-  // Find spec for this type
-  const localSpec = await specForType(type)
-  const remoteSpec = remoteSpecForType(type)
-
-  if (!localSpec) return err('invalid_extension_type')
-
-  // Parse config for this extension type schema
-  let config
-  try {
-    config = localSpec.schema.parse(obj)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return err('invalid_config')
-  }
-
-  // PENDING: Add support for extension points and validate them
-  const instance = new ExtensionInstance(config, configPath, entryPath[0], directory, localSpec, remoteSpec, [])
-  return ok(instance)
 }
 
 export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(

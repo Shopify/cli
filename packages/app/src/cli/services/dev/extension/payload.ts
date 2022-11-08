@@ -1,6 +1,6 @@
 import {getLocalization} from './localization.js'
 import {UIExtensionPayload} from './payload/models.js'
-import {getUIExtensionResourceURL, getUIExtensionSurface} from '../../../utilities/extensions/configuration.js'
+import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {mapExtensionTypeToExternalExtensionType} from '../../../utilities/extensions/name-mapper.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
@@ -22,7 +22,7 @@ export async function getUIExtensionPayload(
     options.currentLocalizationPayload,
   )
 
-  const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
+  const renderer = await getUIExtensionRendererVersion(extension, options.app)
   return {
     assets: {
       main: {
@@ -56,7 +56,7 @@ export async function getUIExtensionPayload(
     externalType: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
     uuid: extension.devUUID,
 
-    surface: getUIExtensionSurface(extension.configuration.type),
+    surface: extension.surface,
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
