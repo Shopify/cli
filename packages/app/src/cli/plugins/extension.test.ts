@@ -62,7 +62,7 @@ describe('getListOfExtensionPoints', () => {
     const got = await getListOfExtensionPoints(config)
 
     // Then
-    expect(got).toEqual([{firstPoint: 1}, {secondPoint: 2}, {thirdPoint: 3, fourthPoint: 4}])
+    expect(got).toEqual([{firstPoint: 1}, {secondPoint: 2}, {thirdPoint: 3}, {fourthPoint: 4}])
   })
 })
 
