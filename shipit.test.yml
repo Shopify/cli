@@ -1,0 +1,12 @@
+ci:
+  require: []
+
+dependencies:
+  override:
+    - yarn install
+
+deploy:
+  override:
+    - ./bin/package.js
+  post:
+    - yarn run update-bugsnag
