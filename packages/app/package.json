@@ -67,6 +67,7 @@
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.22.1",
+    "@shopify/shopify-api": "^5.2.0",
     "@shopify/shopify-cli-extensions": "3.21.0",
     "abort-controller": "^3.0.0",
     "chokidar": "3.5.3",

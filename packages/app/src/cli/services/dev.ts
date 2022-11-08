@@ -1,3 +1,6 @@
+/* eslint-disable no-catch-all/no-catch-all */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
@@ -19,6 +22,7 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import express, {Express, Request, Response, NextFunction} from 'express'
 import fetch from 'node-fetch'
 import {createServer, ViteDevServer} from 'vite'
+import {Shopify} from '@shopify/shopify-api'
 import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
@@ -52,17 +56,9 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  if (options.app.configuration.type === 'integration') {
-    await devIntegrationApp(options)
-  } else {
-    await devApp(options)
-  }
-}
-
-async function devIntegrationApp(options: DevOptions) {
-  const appFQDN = 'http://127.0.0.1'
+  const serverFQDN = 'http://127.0.0.1'
   const serverPort = await port.getRandomPort()
-  const serverURL = `${appFQDN}:${serverPort}/`
+  const serverURL = `${serverFQDN}:${serverPort}/`
 
   output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}_shopify\n`)
   output.info(output.content`${output.token.heading('Logs')}`)
@@ -82,8 +78,105 @@ async function devIntegrationApp(options: DevOptions) {
   server.use(express.json())
   await addDevPanelMiddleware(server, serverURL, options)
   addWebhooksMiddleware(server, viteServer, options)
+  addAuthMiddleware(server, serverURL)
+
+  server.use('/', (req, res, next) => {
+    return res.send('hola').end()
+  })
 
   await server.listen(serverPort)
+}
+
+function addAuthMiddleware(server: Express, serverURL: string) {
+  server.get('/api/auth', async (req, res) => {
+    return redirectToAuth(req, res, server, serverURL)
+  })
+
+  server.get('/api/auth/callback', async (req: any, res: any) => {
+    try {
+      const session = await Shopify.Auth.validateAuthCallback(req, res, req.query)
+
+      // const responses = await Shopify.Webhooks.Registry.registerAll({
+      //   shop: session.shop,
+      //   accessToken: session.accessToken,
+      // })
+      // Object.entries(responses).map(([topic, response]) => {
+      //   // The response from registerAll will include errors for the GDPR topics.  These can be safely ignored.
+      //   // To register the GDPR topics, please set the appropriate webhook endpoint in the
+      //   // 'GDPR mandatory webhooks' section of 'App setup' in the Partners Dashboard.
+      //   if (!response.success && !gdprTopics.includes(topic)) {
+      //     if (response.result.errors) {
+      //       console.log(`Failed to register ${topic} webhook: ${response.result.errors[0].message}`)
+      //     } else {
+      //       console.log(`Failed to register ${topic} webhook: ${JSON.stringify(response.result.data, undefined, 2)}`)
+      //     }
+      //   }
+      // })
+      const host = Shopify.Utils.sanitizeHost(req.query.host)
+      const redirectUrl = Shopify.Utils.getEmbeddedAppUrl(req)
+      // const redirectUrl = Shopify.Context.IS_EMBEDDED_APP
+      //   ? Shopify.Utils.getEmbeddedAppUrl(req)
+      //   : `/?shop=${session.shop}&host=${encodeURIComponent(serverURL)}`
+      res.redirect(redirectUrl)
+    } catch (error: any) {
+      output.warn(`${error}`)
+      switch (true) {
+        case error instanceof Shopify.Errors.InvalidOAuthError:
+          res.status(400)
+          res.send(error.message)
+          break
+        case error instanceof Shopify.Errors.CookieNotFound:
+        case error instanceof Shopify.Errors.SessionNotFound:
+          // This is likely because the OAuth session cookie expired before the merchant approved the request
+          return redirectToAuth(req, res, server, serverURL)
+          break
+        default:
+          res.status(500)
+          res.send(error.message)
+          break
+      }
+    }
+  })
+}
+
+async function redirectToAuth(req: any, res: any, app: any, serverURL: string) {
+  if (!req.query.shop) {
+    res.status(500)
+    return res.send('No shop provided')
+  }
+
+  if (req.query.embedded === '1') {
+    return clientSideRedirect(req, res, serverURL)
+  }
+
+  return serverSideRedirect(req, res, app)
+}
+
+function clientSideRedirect(req: any, res: any, serverURL: string) {
+  const shop: any = Shopify.Utils.sanitizeShop(req.query.shop)
+  const redirectUriParams = new URLSearchParams({
+    shop,
+    host: req.query.host,
+  }).toString()
+  const queryParams = new URLSearchParams({
+    ...req.query,
+    shop,
+    redirectUri: `${serverURL}api/auth?${redirectUriParams}`,
+  }).toString()
+
+  return res.redirect(`/exitiframe?${queryParams}`)
+}
+
+async function serverSideRedirect(req: any, res: any, app: any) {
+  const redirectUrl = await Shopify.Auth.beginAuth(
+    req,
+    res,
+    req.query.shop,
+    '/api/auth/callback',
+    app.get('use-online-tokens'),
+  )
+
+  return res.redirect(redirectUrl)
 }
 
 function getViteVirtualModulesPlugin(options: DevOptions) {
@@ -138,7 +231,6 @@ async function addDevPanelMiddleware(server: Express, serverURL: string, options
     return res.json({url: serverURL, scopes: options.app.configuration.scopes}).end()
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   server.post('/_shopify/api/webhooks/products/create', async (req, res, next) => {
     await fetch(`${serverURL}webhooks`, {
       method: 'POST',

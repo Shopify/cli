@@ -3070,6 +3070,26 @@
     tslib "^2.0.3"
     uuid "^8.3.1"
 
+"@shopify/shopify-api@^5.2.0":
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/@shopify/shopify-api/-/shopify-api-5.2.0.tgz#8decaba920fe7eda75e51b41b0269a4290f44d7a"
+  integrity sha512-P7ErhxteIEH1tak+UhBAnxsM0iC4RT9s9ZQbtarSCsBNex2BhB7epeDHXH0Bgchu3wTneods7xXhWT1UBMvxsw==
+  dependencies:
+    "@shopify/network" "^1.5.1"
+    "@types/jsonwebtoken" "^8.5.0"
+    "@types/node-fetch" "^2.5.7"
+    "@types/supertest" "^2.0.10"
+    cookies "^0.8.0"
+    jsonwebtoken "^8.5.1"
+    mongodb "^4.5.0"
+    mysql2 "^2.3.3"
+    node-fetch "^2.6.1"
+    pg "^8.7.3"
+    redis "^4.1.0"
+    sqlite3 "^5.0.8"
+    tslib "^2.0.3"
+    uuid "^8.3.1"
+
 "@shopify/shopify-cli-extensions@3.21.0":
   version "3.21.0"
   resolved "https://registry.yarnpkg.com/@shopify/shopify-cli-extensions/-/shopify-cli-extensions-3.21.0.tgz#505bce6acf46b15963a8956e53f744074142fb51"
@@ -11545,7 +11565,7 @@ redeyed@~2.1.0:
   dependencies:
     esprima "~4.0.0"
 
-redis@^4.0.6:
+redis@^4.0.6, redis@^4.1.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/redis/-/redis-4.4.0.tgz#bd73fe74e910ecff6bbe89c7e50887c09b3df6e2"
   integrity sha512-tQyFG6O9iewLxxHYRyirJNklhe2QI7M/0o8q0jk7D9Z/Cxh/7oZrQyHKyjWz0TkkCls8ool/xvhL9K8zRnkaYQ==
