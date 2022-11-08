@@ -1,19 +1,20 @@
 import {createExtensionSpec} from '../extensions.js'
 import {BaseExtensionSchema} from '../schemas.js'
 import {output} from '@shopify/cli-kit'
-import {TokenizedString} from '@shopify/cli-kit/src/output.js'
 
 const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
 
 const spec = createExtensionSpec({
   identifier: 'checkout_post_purchase',
+  externalIdentifier: 'post_purchase_ui',
+  surface: 'post_purchase',
   dependency,
   partnersWebId: 'post_purchase',
   schema: BaseExtensionSchema,
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },
-  previewMessage: (host, uuid, _): TokenizedString => {
+  previewMessage: (host, uuid, _): output.TokenizedString => {
     const publicURL = `${host}/extensions/${uuid}`
     const devDocsLink = output.token.link(
       'dev docs',
