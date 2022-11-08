@@ -14,7 +14,11 @@
   "dependencies": {
     "@shopify/app": "3.22.1",
     "@shopify/cli": "3.22.1",
-    "express": "^4.18.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^2.2.0"
   },
   "engines": {
     "node": ">=18"

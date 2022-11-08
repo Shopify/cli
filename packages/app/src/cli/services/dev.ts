@@ -138,7 +138,14 @@ async function dev(options: DevOptions) {
 
   output.info(output.content`${output.token.heading('Logs')}`)
 
+  const viteConfigPath = path.join(options.app.directory, 'vite.config.js')
+  let userConfig: any = {}
+  if (await file.exists(viteConfigPath)) {
+    userConfig = (await import(viteConfigPath)).default
+  }
+
   const viteServer = await createServer({
+    ...userConfig,
     root: options.app.directory,
     server: {
       middlewareMode: true,
@@ -149,7 +156,7 @@ async function dev(options: DevOptions) {
     },
     clearScreen: false,
     logLevel: 'silent',
-    plugins: [getViteVirtualModulesPlugin(options)],
+    plugins: [...userConfig.plugins, getViteVirtualModulesPlugin(options)],
   })
 
   const server = express()
