@@ -1,18 +1,20 @@
 import {configurationFileNames} from '../constants.js'
-import Command from '@shopify/cli-kit/node/base-command'
-import {path} from '@shopify/cli-kit'
+import Command, {Environments, EnvableFlags} from '@shopify/cli-kit/node/base-command'
+import {file, path, toml} from '@shopify/cli-kit'
 
 export default abstract class AppCommand extends Command {
-  async presetsPath(rawFlags: {path?: string}): Promise<string> {
+  override async environments(rawFlags: EnvableFlags): Promise<Environments> {
     const specifiedPath = rawFlags.path ? rawFlags.path : process.cwd()
     const appTOML = await path.findUp(configurationFileNames.app, {
       cwd: specifiedPath,
       type: 'file',
     })
-    return appTOML ? path.dirname(appTOML) : specifiedPath
-  }
-
-  findUpForPresets(): boolean {
-    return false
+    if (appTOML) {
+      const decoded = toml.decode(await file.read(appTOML)) as {environments: Environments}
+      if (typeof decoded.environments === 'object') {
+        return decoded.environments
+      }
+    }
+    return {}
   }
 }
