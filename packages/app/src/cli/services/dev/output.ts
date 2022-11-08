@@ -89,43 +89,6 @@ function buildAppURL(storeFqdn: string, publicURL: string) {
   return `${publicURL}?shop=${storeFqdn}&host=${hostParam}`
 }
 
-function postPurchaseMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  const devDocsLink = output.token.link(
-    'dev docs',
-    'https://shopify.dev/apps/checkout/post-purchase/getting-started-post-purchase-extension#step-2-test-the-extension',
-  )
-  const chromeLink = output.token.link(
-    'Shopify’s post-purchase Chrome extension',
-    'https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong',
-  )
-  return output.content`To view this extension:
-  1. Install ${chromeLink}
-  2. Open the Chrome extension and paste this URL into it: ${publicURL}
-  3. Run a test purchase on your store to view your extension
-
-For more detail, see the ${devDocsLink}`
-}
-
-function checkoutUIMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
-}
-
-function customerAccountsUIMessage(storeFqdn: string, url: string, extension: UIExtension) {
-  const [storeName, ...storeDomainParts] = storeFqdn.split('.')
-  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
-  const origin = encodeURIComponent(`${url}/extensions`)
-  const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${extension.devUUID}`
-  const notice = `Please open ${url} and click on 'Visit Site' and then close the tab to allow connections.\n`
-  return output.content`${notice}Preview link: ${publicURL}`
-}
-
-function productSubscriptionMessage(url: string, extension: UIExtension) {
-  const publicURL = `${url}/extensions/${extension.devUUID}`
-  return output.content`Preview link: ${publicURL}`
-}
-
 function getHumanKey(type: ExtensionTypes) {
   return string.capitalize(getExtensionOutputConfig(type).humanKey)
 }

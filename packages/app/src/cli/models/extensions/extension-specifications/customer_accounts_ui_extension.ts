@@ -12,6 +12,7 @@ const CustomerAccountsSchema = BaseExtensionSchema.extend({
 
 const spec = createExtensionSpec({
   identifier: 'customer_accounts_ui_extension',
+  externalIdentifier: 'customer_accounts_ui',
   surface: 'customer_accounts',
   dependency,
   partnersWebId: 'customer_accounts_ui_extension',

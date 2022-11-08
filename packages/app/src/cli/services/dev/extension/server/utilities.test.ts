@@ -1,16 +1,15 @@
 import {getRedirectUrl} from './utilities.js'
-import {UIExtension} from '../../../../models/app/extensions.js'
 import {ExtensionDevOptions} from '../../extension.js'
+import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {describe, expect, it} from 'vitest'
 
 describe('getRedirectURL()', () => {
   it('returns a URL with a URL param', () => {
-    const extension = {
+    const extension = testUIExtension({
       devUUID: '123abc',
-      configuration: {
-        type: 'checkout_post_purchase',
-      },
-    } as UIExtension
+      surface: 'post_purchase',
+      type: 'checkout_post_purchase',
+    })
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -25,12 +24,11 @@ describe('getRedirectURL()', () => {
   })
 
   it('returns a URL with a dev param if the surface is checkout and the etension has a resourceURL', () => {
-    const extension = {
+    const extension = testUIExtension({
       devUUID: '123abc',
-      configuration: {
-        type: 'checkout_ui_extension',
-      },
-    } as UIExtension
+      surface: 'checkout',
+      type: 'checkout_ui_extension',
+    })
 
     const options = {
       storeFqdn: 'example.myshopify.com',

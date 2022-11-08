@@ -51,7 +51,7 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
     directory,
     entrySourceFilePath: uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`,
     idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
-    devUUID: 'devUUID',
+    devUUID: uiExtension?.devUUID ?? 'devUUID',
     publishURL: (options) => {
       return new Promise((resolve, reject) => resolve('publish_url'))
     },

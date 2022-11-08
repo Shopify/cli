@@ -25,6 +25,7 @@ async function getTemplatePath(name: string): Promise<string> {
     cwd: path.dirname(fileURLToPath(import.meta.url)),
     type: 'directory',
   })
+
   if (templatePath) {
     return templatePath
   } else {

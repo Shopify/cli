@@ -16,6 +16,7 @@ export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSc
  */
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
+  externalIdentifier: string
   partnersWebId: string
   surface: string
   dependency?: {name: string; version: string}
@@ -86,7 +87,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? this.specification.identifier
+    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
   }
 
   get surface() {
@@ -173,7 +174,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
  */
 export async function specForType(type: string): Promise<ExtensionSpec | undefined> {
   const allSpecs = await allExtensionSpecifications()
-  return allSpecs.find((spec) => spec.identifier === type)
+  return allSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
 // PENDING: Fetch remote specs

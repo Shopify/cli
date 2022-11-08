@@ -2,7 +2,7 @@ import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
-import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import {getDependencyVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 
@@ -17,7 +17,7 @@ describe('getUIExtensionPayload', () => {
       const signal: any = vi.fn()
       const stdout: any = vi.fn()
       const stderr: any = vi.fn()
-      vi.mocked(getUIExtensionRendererVersion).mockResolvedValue({
+      vi.mocked(getDependencyVersion).mockResolvedValue({
         name: 'extension-renderer',
         version: '1.2.3',
       })
@@ -25,6 +25,7 @@ describe('getUIExtensionPayload', () => {
       const uiExtension = testUIExtension({
         outputBundlePath,
         directory: tmpDir,
+        dependency: {name: 'extension-renderer', version: '1.2.3'},
         configuration: {
           name: 'test-ui-extension',
           type: 'product_subscription',
@@ -86,8 +87,10 @@ describe('getUIExtensionPayload', () => {
           },
           status: 'success',
         },
+        approvalScopes: ['scope-a'],
         extensionPoints: ['EXTENSION-POINT'],
         externalType: 'subscription_ui',
+        categories: null,
         localization: null,
         metafields: null,
         surface: 'admin',

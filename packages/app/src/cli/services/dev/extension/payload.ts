@@ -4,7 +4,7 @@ import {getUIExtensionResourceURL} from '../../../utilities/extensions/configura
 import {mapExtensionTypeToExternalExtensionType} from '../../../utilities/extensions/name-mapper.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import {getDependencyVersion} from '../../../models/app/app.js'
 import {file} from '@shopify/cli-kit'
 
 type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
@@ -22,7 +22,8 @@ export async function getUIExtensionPayload(
     options.currentLocalizationPayload,
   )
 
-  const renderer = await getUIExtensionRendererVersion(extension, options.app)
+  const dependency = extension.dependency?.name
+  const renderer = dependency ? getDependencyVersion(dependency, options.app.directory) : undefined
   return {
     assets: {
       main: {

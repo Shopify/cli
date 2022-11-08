@@ -7,6 +7,7 @@ const dependency = {name: '@shopify/retail-ui-extensions-react', version: '^0.19
 
 const spec = createExtensionSpec({
   identifier: 'pos_ui_extension',
+  externalIdentifier: 'pos_ui',
   surface: 'pos',
   dependency,
   partnersWebId: 'pos_ui_extension',

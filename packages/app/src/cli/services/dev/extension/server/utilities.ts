@@ -4,7 +4,7 @@ import {ExtensionDevOptions} from '../../extension.js'
 import {http} from '@shopify/cli-kit'
 
 export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOptions): string {
-  const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
+  const {url: resourceUrl} = getUIExtensionResourceURL(extension.type, options)
 
   if (extension.surface === 'checkout' && resourceUrl) {
     const rawUrl = new URL(`https://${options.storeFqdn}/`)
