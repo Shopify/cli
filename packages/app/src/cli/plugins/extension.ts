@@ -9,7 +9,7 @@ import {flatten} from 'lodash-es'
 /**
  * Extension Plugins types
  *
- * Any plugin that provides extension definitions should implement `defineExtensionSpec` and `defineExtensionPoint`
+ * Any plugin that provides extension definitions should implement `defineExtensionSpecs` and `defineExtensionPoints`
  */
 interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
   extension_spec: {
@@ -36,15 +36,15 @@ export type ExtensionSpecFunction = plugins.FanoutHookFunction<'extension_spec',
 export type ExtensionPointFunction = plugins.FanoutHookFunction<'extension_point', ''>
 export type FunctionSpecFunction = plugins.FanoutHookFunction<'function_spec', ''>
 
-export const defineExtensionSpec = (input: ExtensionSpec): ExtensionSpecFunction => {
+export const defineExtensionSpecs = (input: ExtensionSpec): ExtensionSpecFunction => {
   return async () => input
 }
 
-export const defineExtensionPoint = (input: ExtensionPointSpec): ExtensionPointFunction => {
+export const defineExtensionPoints = (input: ExtensionPointSpec): ExtensionPointFunction => {
   return async () => input
 }
 
-export const defineFunctionSpec = (input: FunctionSpec): FunctionSpecFunction => {
+export const defineFunctionSpecs = (input: FunctionSpec): FunctionSpecFunction => {
   return async () => input
 }
 

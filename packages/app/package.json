@@ -21,6 +21,10 @@
     "./plugins/*" : {
       "import": "./dist/cli/plugins/*.js",
       "require": "./dist/cli/plugins/*.d.ts"
+    },
+    "./utilities/extensions/*": {
+      "import": "./dist/cli/utilities/extensions/*.js",
+      "require": "./dist/cli/utilities/extensions/*.d.ts"
     }
   },
   "publishConfig": {
