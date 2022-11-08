@@ -1,12 +1,13 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
 import httpProxy from 'http-proxy'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
-import {port} from '@shopify/cli-kit'
+import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 beforeAll(() => {
   vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/ui')
+  vi.mock('@shopify/cli-kit/node/tcp')
   vi.mock('http-proxy', () => {
     return {
       default: {
@@ -31,8 +32,8 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('proxies to all the targets using the HTTP Proxy', async () => {
     // Given
     const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(port.getRandomPort).mockResolvedValueOnce(3001)
-    vi.mocked(port.getRandomPort).mockResolvedValueOnce(3002)
+    vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(3001)
+    vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(3002)
 
     // When
     const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(
@@ -65,7 +66,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('uses a random port when no port is passed', async () => {
     // Given
     const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(port.getRandomPort).mockResolvedValueOnce(4000)
+    vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(4000)
 
     // When
     const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(undefined, [], [])
