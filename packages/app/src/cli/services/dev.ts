@@ -24,6 +24,7 @@ import express, {Express, Request, Response, NextFunction} from 'express'
 import fetch from 'node-fetch'
 import {createServer, ViteDevServer} from 'vite'
 import {Shopify} from '@shopify/shopify-api'
+import {createProxyMiddleware} from 'http-proxy-middleware'
 import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
@@ -86,6 +87,7 @@ async function dev(options: DevOptions) {
   let serverURL: string
   let apiKey: string | undefined
   let storeFqdn: string | undefined
+  const vitePort = await port.getRandomPort()
 
   if (isEmbedded) {
     output.info(output.content`\n${output.token.cyan('Embedded')} app detected. Authenticating as a partner...`)
@@ -137,10 +139,14 @@ async function dev(options: DevOptions) {
   output.info(output.content`${output.token.heading('Logs')}`)
 
   const viteServer = await createServer({
+    root: options.app.directory,
     server: {
       middlewareMode: true,
+      hmr: {
+        path: '/vite/ws',
+        port: vitePort,
+      },
     },
-    root: options.app.directory,
     clearScreen: false,
     logLevel: 'silent',
     plugins: [getViteVirtualModulesPlugin(options)],
@@ -150,6 +156,10 @@ async function dev(options: DevOptions) {
   server.use(viteServer.middlewares)
 
   server.use(express.json())
+  const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
+  server.use('/vite/ws', wsproxy)
+  // @ts-ignore
+  server.on('upgrade', wsproxy.upgrade)
   await addDevPanelMiddleware(server, serverURL, options)
   addWebhooksMiddleware(server, viteServer, options)
   addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
