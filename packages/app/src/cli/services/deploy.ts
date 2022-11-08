@@ -12,7 +12,7 @@ import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface, getUIExtensionRendererVersion} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, UIExtension} from '../models/app/extensions.js'
-import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExtensionTypes} from '../constants.js'
+import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType} from '../constants.js'
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -170,8 +170,8 @@ async function outputCompletionMessage({
 }
 
 async function configFor(extension: UIExtension, app: AppInterface) {
-  const type = extension.type as UIExtensionTypes
-  switch (extension.type as UIExtensionTypes) {
+  const type = extension.type
+  switch (extension.type) {
     case 'checkout_post_purchase':
       return {metafields: extension.configuration.metafields}
     case 'pos_ui_extension':
@@ -231,19 +231,15 @@ async function getExtensionPublishURL({
      * https://github.com/Shopify/partners/tree/master/app/assets/javascripts/sections/apps/app-extensions/extensions
      */
     let pathComponent: string
-    switch (extension.type as UIExtensionTypes) {
-      case 'checkout_ui_extension':
-      case 'pos_ui_extension':
-      case 'product_subscription':
-      case 'customer_accounts_ui_extension':
-        pathComponent = extension.type
-        break
+    switch (extension.type) {
       case 'checkout_post_purchase':
         pathComponent = 'post_purchase'
         break
       case 'web_pixel_extension':
         pathComponent = 'web_pixel'
         break
+      default:
+        pathComponent = extension.type
     }
     return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
   } else if (isFunctionExtensionType(extension.type)) {
