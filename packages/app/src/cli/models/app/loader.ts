@@ -1,10 +1,4 @@
-import {
-  UIExtension,
-  ThemeExtension,
-  FunctionExtension,
-  ThemeExtensionConfigurationSchema,
-  Extension,
-} from './extensions.js'
+import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
@@ -358,7 +352,7 @@ class AppLoader {
         )
         return undefined
       }
-      const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configurationPath)
+      const configuration = await this.parseConfigurationFile(spec.schema, configurationPath)
 
       return new ExtensionInstance(configuration, configurationPath, '', directory, spec, undefined, undefined)
     })
