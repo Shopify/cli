@@ -4,29 +4,30 @@ import {FunctionSpec} from '../models/extensions/functions.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
+import {flatten} from 'lodash-es'
 
 /**
  * Extension Plugins types
  *
  * Any plugin that provides extension definitions should implement `defineExtensionSpec` and `defineExtensionPoint`
  */
-export interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
+interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
   extension_spec: {
     options: {[key: string]: never}
     pluginReturns: {
-      [pluginName: string]: ExtensionSpec
+      [pluginName: string]: ExtensionSpec[]
     }
   }
   extension_point: {
     options: {[key: string]: never}
     pluginReturns: {
-      [pluginName: string]: ExtensionPointSpec
+      [pluginName: string]: ExtensionPointSpec[]
     }
   }
   function_spec: {
     options: {[key: string]: never}
     pluginReturns: {
-      [pluginName: string]: FunctionSpec
+      [pluginName: string]: FunctionSpec[]
     }
   }
 }
@@ -49,7 +50,7 @@ export const defineFunctionSpec = (input: FunctionSpec): FunctionSpecFunction =>
 
 export async function getListOfExtensionSpecs(config: Config): Promise<ExtensionSpec[]> {
   const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_spec'>(config, 'extension_spec', {})
-  const specs = getArrayRejectingUndefined(Object.values(hooks))
+  const specs = flatten(getArrayRejectingUndefined(Object.values(hooks)))
   return specs
 }
 
@@ -59,12 +60,12 @@ export async function getListOfExtensionPoints(config: Config): Promise<Extensio
     'extension_point',
     {},
   )
-  const specs = getArrayRejectingUndefined(Object.values(hooks))
+  const specs = flatten(getArrayRejectingUndefined(Object.values(hooks)))
   return specs
 }
 
 export async function getListOfFunctionSpecs(config: Config): Promise<FunctionSpec[]> {
   const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'function_spec'>(config, 'function_spec', {})
-  const specs = getArrayRejectingUndefined(Object.values(hooks))
+  const specs = flatten(getArrayRejectingUndefined(Object.values(hooks)))
   return specs
 }
