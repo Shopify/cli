@@ -70,13 +70,15 @@ export default class Dev extends ThemeCommand {
     }),
   }
 
+  static cli2Flags = ['host', 'live-reload', 'poll', 'theme-editor-sync', 'port', 'theme', 'only', 'ignore', 'stable']
+
   // Tokens are valid for 120m, better to be safe and refresh every 90min
   ThemeRefreshTimeoutInMinutes = 90
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose']})
+    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)

@@ -4,15 +4,15 @@ interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
 }
 interface PassThroughFlagsOptions {
-  // Exclude flags that are only for CLI3 but will cause errors if passed to CLI2
-  exclude?: string[]
+  // Only pass on flags that are relevant to CLI2
+  relevantFlags?: string[]
 }
 
 export default abstract class ThemeCommand extends Command {
-  passThroughFlags(flags: FlagValues, {exclude}: PassThroughFlagsOptions): string[] {
+  passThroughFlags(flags: FlagValues, {relevantFlags}: PassThroughFlagsOptions): string[] {
     const passThroughFlags: string[] = []
     for (const [label, value] of Object.entries(flags)) {
-      if ((exclude ?? []).includes(label)) {
+      if (!(relevantFlags ?? []).includes(label)) {
         continue
       } else if (typeof value === 'boolean') {
         if (value) passThroughFlags.push(`--${label}`)
