@@ -12,19 +12,19 @@ import {flatten} from 'lodash-es'
  * Any plugin that provides extension definitions should implement `defineExtensionSpecs` and `defineExtensionPoints`
  */
 interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
-  extension_spec: {
+  extension_specs: {
     options: {[key: string]: never}
     pluginReturns: {
       [pluginName: string]: ExtensionSpec[]
     }
   }
-  extension_point: {
+  extension_points: {
     options: {[key: string]: never}
     pluginReturns: {
       [pluginName: string]: ExtensionPointSpec[]
     }
   }
-  function_spec: {
+  function_specs: {
     options: {[key: string]: never}
     pluginReturns: {
       [pluginName: string]: FunctionSpec[]
@@ -32,19 +32,19 @@ interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
   }
 }
 
-export type ExtensionSpecFunction = plugins.FanoutHookFunction<'extension_spec', ''>
-export type ExtensionPointFunction = plugins.FanoutHookFunction<'extension_point', ''>
-export type FunctionSpecFunction = plugins.FanoutHookFunction<'function_spec', ''>
+export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', ''>
+export type ExtensionPointsFunction = plugins.FanoutHookFunction<'extension_points', ''>
+export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', ''>
 
-export const defineExtensionSpecs = (input: ExtensionSpec): ExtensionSpecFunction => {
+export const defineExtensionSpecs = (input: ExtensionSpec): ExtensionSpecsFunction => {
   return async () => input
 }
 
-export const defineExtensionPoints = (input: ExtensionPointSpec): ExtensionPointFunction => {
+export const defineExtensionPoints = (input: ExtensionPointSpec): ExtensionPointsFunction => {
   return async () => input
 }
 
-export const defineFunctionSpecs = (input: FunctionSpec): FunctionSpecFunction => {
+export const defineFunctionSpecs = (input: FunctionSpec): FunctionSpecsFunction => {
   return async () => input
 }
 
