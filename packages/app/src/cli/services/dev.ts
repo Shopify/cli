@@ -147,15 +147,17 @@ async function dev(options: DevOptions) {
   })
 
   const server = express()
+  server.use(viteServer.middlewares)
+
   server.use(express.json())
   await addDevPanelMiddleware(server, serverURL, options)
   addWebhooksMiddleware(server, viteServer, options)
-  addAuthMiddleware(server, serverURL, isEmbedded)
+  addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
 
   await server.listen(serverPort)
 }
 
-function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boolean) {
+function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boolean, viteServer: ViteDevServer) {
   server.get('/api/auth', async (req, res) => {
     return redirectToAuth(req, res, server, serverURL)
   })
@@ -239,8 +241,22 @@ function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boole
 
     // const htmlFile = join(isProd ? PROD_INDEX_PATH : DEV_INDEX_PATH, 'index.html')
 
-    return res.send('hola').end()
+    let template = `<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vite App</title>
+      </head>
+      <body>
+        <div id="app"></div>
+        <script type="module" src="./app.jsx"></script>
+      </body>
+    </html>`
 
+    const url = req.originalUrl
+    template = await viteServer.transformIndexHtml(url, template)
+    res.status(200).set({'Content-Type': 'text/html'}).end(template)
     // return res.status(200).set('Content-Type', 'text/html').send(readFileSync(htmlFile))
   })
 }

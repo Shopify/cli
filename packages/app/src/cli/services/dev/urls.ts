@@ -46,7 +46,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let usingLocalhost = false
   const hasExtensions = options.app.hasUIExtensions()
 
-  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
+  const needsTunnel = true
+  // ;(hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
   if (environment.local.codespaceURL()) {
     frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
