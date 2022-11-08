@@ -1,0 +1,15 @@
+diff --git a/node_modules/@changesets/cli/dist/cli.esm.js b/node_modules/@changesets/cli/dist/cli.esm.js
+index 5eca136..5cda3d3 100644
+--- a/node_modules/@changesets/cli/dist/cli.esm.js
++++ b/node_modules/@changesets/cli/dist/cli.esm.js
+@@ -658,8 +658,8 @@ const getLastJsonObjectFromString = str => {
+   return null;
+ };
+ 
+-const npmRequestLimit = pLimit(40);
+-const npmPublishLimit = pLimit(10);
++const npmRequestLimit = pLimit(20);
++const npmPublishLimit = pLimit(5);
+ 
+ function jsonParse(input) {
+   try {
