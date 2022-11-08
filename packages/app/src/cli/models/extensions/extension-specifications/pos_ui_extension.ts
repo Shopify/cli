@@ -15,7 +15,7 @@ const spec = createExtensionSpec({
     if (result === 'not_found') throw new error.Bug(`Dependency ${dependency.name} not found`)
     return {renderer_version: result?.version}
   },
-  previewMessage: () => '',
+  previewMessage: () => undefined,
 })
 
 export default spec

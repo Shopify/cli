@@ -22,7 +22,7 @@ const spec = createExtensionSpec({
       runtime_configuration_definition: config.settings,
     }
   },
-  previewMessage: () => '',
+  previewMessage: () => undefined,
 })
 
 export default spec

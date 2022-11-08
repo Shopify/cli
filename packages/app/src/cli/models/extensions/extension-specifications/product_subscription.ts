@@ -6,8 +6,9 @@ import {error} from '@shopify/cli-kit'
 const dependency = {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
 
 const spec = createExtensionSpec({
-  identifier: 'subscription_management',
+  identifier: 'product_subscription',
   dependency,
+  graphQLType: 'subscription_management',
   partnersWebId: 'product_subscription',
   schema: BaseExtensionSchema,
   deployConfig: async (_, directory) => {

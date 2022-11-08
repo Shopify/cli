@@ -1,19 +1,18 @@
-import {
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
-  ExtensionTypes,
-  uiExternalExtensionTypes,
-} from '../../constants.js'
-import {schema} from '@shopify/cli-kit'
+import {functionExtensions, themeExtensions, uiExtensions, uiExternalExtensionTypes} from '../../constants.js'
+import {BaseConfigContents} from '../extensions/extensions.js'
+import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
+import {output, schema} from '@shopify/cli-kit'
 
 export interface Extension {
   idEnvironmentVariableName: string
   localIdentifier: string
   configurationPath: string
   directory: string
-  type: ExtensionTypes
+  identifier: string
+  type: string
+  name: string
   graphQLType: string
+  publishURL: (options: {orgId: string; appId: string; extensionId?: string}) => Promise<string>
 }
 
 export const UIExtensionConfigurationSchema = schema.define.object({
@@ -88,22 +87,27 @@ export const FunctionExtensionMetadataSchema = schema.define.object({
   ),
 })
 
-export type FunctionExtension = Extension & {
-  configuration: FunctionExtensionConfiguration
-  metadata: FunctionExtensionMetadata
+export type FunctionExtension<
+  TConfiguration extends FunctionConfigType = FunctionConfigType,
+  TMetadata extends MetadataType = MetadataType,
+> = Extension & {
+  configuration: TConfiguration
+  metadata: TMetadata
   buildWasmPath: () => string
   inputQueryPath: () => string
 }
 
-export type ThemeExtension = Extension & {
-  configuration: ThemeExtensionConfiguration
+export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
+  configuration: TConfiguration
 }
 
-export type UIExtension = Extension & {
-  configuration: UIExtensionConfiguration
+export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
+  configuration: TConfiguration
   entrySourceFilePath: string
   outputBundlePath: string
   devUUID: string
+  deployConfig: () => Promise<unknown>
+  previewMessage: (url: string, storeFqdn: string) => output.TokenizedString | undefined
 }
 
 type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurationSchema>

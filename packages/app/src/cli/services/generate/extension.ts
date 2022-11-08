@@ -164,6 +164,8 @@ export function getRuntimeDependencies({
       }
       return dependencies
     }
+    default:
+      return []
   }
 }
 
@@ -236,6 +238,8 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
       return `checkout/${lang}/shipping-rate-presenter/default`
     case 'delivery_customization':
       return `checkout/${lang}/delivery-customization/default`
+    default:
+      return ''
   }
 }
 

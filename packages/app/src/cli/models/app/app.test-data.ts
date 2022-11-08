@@ -31,6 +31,8 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   return {
+    identifier: uiExtension?.configuration?.type ?? 'product_subscription',
+    name: uiExtension?.configuration?.name ?? 'test-ui-extension',
     localIdentifier: uiExtension?.localIdentifier ?? 'test-ui-extension',
     outputBundlePath: uiExtension?.outputBundlePath ?? `${directory}/dist/main.js`,
     configuration: uiExtension?.configuration ?? {
@@ -49,11 +51,20 @@ export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExten
     entrySourceFilePath: uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`,
     idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
     devUUID: 'devUUID',
+    publishURL: (options) => {
+      return new Promise((resolve, reject) => resolve('publish_url'))
+    },
+    deployConfig: () => {
+      return new Promise((resolve, reject) => resolve({}))
+    },
+    previewMessage: (url, store) => undefined,
   }
 }
 
 export function testThemeExtensions(): ThemeExtension {
   return {
+    identifier: 'theme',
+    name: 'theme extension name',
     configuration: {
       name: 'theme extension name',
       type: 'theme',
@@ -64,11 +75,16 @@ export function testThemeExtensions(): ThemeExtension {
     directory: './my-extension',
     type: 'theme',
     graphQLType: 'THEME_APP_EXTENSION',
+    publishURL: (options) => {
+      return new Promise((resolve, reject) => resolve('publish_url'))
+    },
   }
 }
 
 export function testFunctionExtension(): FunctionExtension {
   return {
+    identifier: 'product_discounts',
+    name: 'test function extension',
     configuration: {
       name: 'test function extension',
       description: 'description',
@@ -90,5 +106,8 @@ export function testFunctionExtension(): FunctionExtension {
     directory: './my-extension',
     type: 'product_discounts',
     graphQLType: 'PRODUCT_DISCOUNTS',
+    publishURL: (options) => {
+      return new Promise((resolve, reject) => resolve('publish_url'))
+    },
   }
 }
