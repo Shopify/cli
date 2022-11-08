@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "ESNext"
+  },
+  "include": ["./**/*"],
+  "exclude": ["node_modules"]
+}

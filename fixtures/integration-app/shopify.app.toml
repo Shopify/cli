@@ -1,0 +1,5 @@
+# This file stores configurations for your Shopify app.
+
+type = "integration"
+scopes = "write_products"
+api_version = "2022-10"

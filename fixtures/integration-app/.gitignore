@@ -1,0 +1,34 @@
+# Environment Configuration
+.env
+.env.*
+
+# Dependency directory
+node_modules
+
+# Test coverage directory
+coverage
+
+# Ignore Apple macOS Desktop Services Store
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# ngrok tunnel file
+config/tunnel.pid
+
+# vite build output
+dist/
+
+# extensions build output
+extensions/*/build
+
+# Node library SQLite database
+web/database.sqlite
+
+# Partners can use npm, yarn or pnpm with the CLI.
+# We ignore lock files so they don't get a package manager mis-match
+# Without this, they may get a warning if using a different package manager to us
+yarn.lock
+package-lock.json

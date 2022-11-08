@@ -12,11 +12,18 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, environment} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string, path, environment, file} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import express, {Express, Request, Response, NextFunction} from 'express'
+import fetch from 'node-fetch'
+import {createServer, ViteDevServer} from 'vite'
 import {Writable} from 'node:stream'
+import {createRequire} from 'node:module'
+
+const require = createRequire(import.meta.url)
+const virtual = require('vite-plugin-virtual')
 
 export interface DevOptions {
   app: AppInterface
@@ -33,6 +40,7 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  token?: string
 }
 
 interface DevWebOptions {
@@ -44,6 +52,212 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  if (options.app.configuration.type === 'integration') {
+    await devIntegrationApp(options)
+  } else {
+    await devApp(options)
+  }
+}
+
+async function devIntegrationApp(options: DevOptions) {
+  const appFQDN = 'http://127.0.0.1'
+  const serverPort = await port.getRandomPort()
+  const serverURL = `${appFQDN}:${serverPort}/`
+
+  output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}_shopify\n`)
+  output.info(output.content`${output.token.heading('Logs')}`)
+
+  const viteServer = await createServer({
+    server: {
+      middlewareMode: true,
+    },
+    root: options.app.directory,
+    clearScreen: false,
+    logLevel: 'silent',
+    plugins: [getViteVirtualModulesPlugin(options)],
+  })
+
+  /** HTTP Server */
+  const server = express()
+  server.use(express.json())
+  await addDevPanelMiddleware(server, serverURL, options)
+  addWebhooksMiddleware(server, viteServer, options)
+
+  await server.listen(serverPort)
+}
+
+function getViteVirtualModulesPlugin(options: DevOptions) {
+  return virtual.default({
+    '@shopify/app/api': `
+    export async function graphqlRequest(query, variables = {}) {
+      const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
+      const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
+      return (await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...authenticationHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          variables
+        }),
+      })).json()
+    }
+    `,
+  })
+}
+
+function addWebhooksMiddleware(server: Express, viteServer: ViteDevServer, options: DevOptions) {
+  const webhooksDirectory = path.join(options.app.directory, 'webhooks')
+  server.use([
+    async (req: Request, res: Response, next: NextFunction) => {
+      if (req.path === '/webhooks') {
+        const topic = req.headers['x-shopify-topic'] as string
+        const webhookModulePath = path.join(webhooksDirectory, `${topic}.js`)
+        if (await file.exists(webhookModulePath)) {
+          output.debug(`Processing Webhook with topic ${topic} with module ${webhookModulePath}`)
+
+          const module = await viteServer.ssrLoadModule(webhookModulePath)
+          await (
+            await module.default
+          )(req.body)
+        } else {
+          output.consoleError(`Webhook with topic ${topic} received but there's no handler defined for it`)
+        }
+        res.write('success')
+        return res.end()
+      } else {
+        return next()
+      }
+    },
+  ])
+}
+
+async function addDevPanelMiddleware(server: Express, serverURL: string, options: DevOptions) {
+  server.get('/_shopify/api/app-info', (req, res, next) => {
+    return res.json({url: serverURL, scopes: options.app.configuration.scopes}).end()
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  server.post('/_shopify/api/webhooks/products/create', async (req, res, next) => {
+    await fetch(`${serverURL}webhooks`, {
+      method: 'POST',
+      body: JSON.stringify({
+        id: 788032119674292922,
+        title: 'Example T-Shirt',
+        body_html: null,
+        vendor: 'Acme',
+        product_type: 'Shirts',
+        created_at: null,
+        handle: 'example-t-shirt',
+        updated_at: '2022-10-03T12:55:32-04:00',
+        published_at: '2022-10-03T12:55:32-04:00',
+        template_suffix: null,
+        status: 'active',
+        published_scope: 'web',
+        tags: 'example, mens, t-shirt',
+        admin_graphql_api_id: 'gid://shopify/Product/788032119674292922',
+        variants: [
+          {
+            id: 642667041472713922,
+            product_id: 788032119674292922,
+            title: '',
+            price: '19.99',
+            sku: 'example-shirt-s',
+            position: 0,
+            inventory_policy: 'deny',
+            compare_at_price: '24.99',
+            fulfillment_service: 'manual',
+            inventory_management: 'shopify',
+            option1: 'Small',
+            option2: null,
+            option3: null,
+            created_at: null,
+            updated_at: null,
+            taxable: true,
+            barcode: null,
+            grams: 200,
+            image_id: null,
+            weight: 200.0,
+            weight_unit: 'g',
+            inventory_item_id: null,
+            inventory_quantity: 75,
+            old_inventory_quantity: 75,
+            requires_shipping: true,
+            admin_graphql_api_id: 'gid://shopify/ProductVariant/642667041472713922',
+          },
+          {
+            id: 757650484644203962,
+            product_id: 788032119674292922,
+            title: '',
+            price: '19.99',
+            sku: 'example-shirt-m',
+            position: 0,
+            inventory_policy: 'deny',
+            compare_at_price: '24.99',
+            fulfillment_service: 'manual',
+            inventory_management: 'shopify',
+            option1: 'Medium',
+            option2: null,
+            option3: null,
+            created_at: null,
+            updated_at: null,
+            taxable: true,
+            barcode: null,
+            grams: 200,
+            image_id: null,
+            weight: 200.0,
+            weight_unit: 'g',
+            inventory_item_id: null,
+            inventory_quantity: 50,
+            old_inventory_quantity: 50,
+            requires_shipping: true,
+            admin_graphql_api_id: 'gid://shopify/ProductVariant/757650484644203962',
+          },
+        ],
+        options: [
+          {
+            id: 527050010214937811,
+            product_id: 788032119674292922,
+            name: 'Title',
+            position: 1,
+            values: ['Small', 'Medium'],
+          },
+        ],
+        images: [
+          {
+            id: 539438707724640965,
+            product_id: 788032119674292922,
+            position: 0,
+            created_at: null,
+            updated_at: null,
+            alt: null,
+            width: 323,
+            height: 434,
+            src: '//cdn.shopify.com/shopifycloud/shopify/assets/shopify_shirt-39bb555874ecaeed0a1170417d58bbcf792f7ceb56acfe758384f788710ba635.png',
+            variant_ids: [],
+            admin_graphql_api_id: 'gid://shopify/ProductImage/539438707724640965',
+          },
+        ],
+        image: null,
+      }),
+      headers: {
+        'X-Shopify-Topic': `products/create`,
+        'Content-Type': 'application/json',
+      },
+    })
+    return res.status(200).end()
+  })
+
+  const rootDirectory = (await path.findUp('assets/dev-panel', {
+    cwd: path.moduleDirectory(import.meta.url),
+    type: 'directory',
+  })) as string
+  server.use('/_shopify', express.static(rootDirectory))
+}
+
+async function devApp(options: DevOptions) {
   const skipDependenciesInstallation = options.skipDependenciesInstallation
   if (!skipDependenciesInstallation) {
     // eslint-disable-next-line no-param-reassign
