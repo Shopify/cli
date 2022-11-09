@@ -4,7 +4,6 @@ import {FunctionSpec} from '../models/extensions/functions.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
-import {flatten} from 'lodash-es'
 
 /**
  * Extension Plugins types
@@ -49,23 +48,27 @@ export const defineFunctionSpecs = (input: FunctionSpec): FunctionSpecsFunction 
 }
 
 export async function getListOfExtensionSpecs(config: Config): Promise<ExtensionSpec[]> {
-  const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_spec'>(config, 'extension_spec', {})
-  const specs = flatten(getArrayRejectingUndefined(Object.values(hooks)))
+  const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_specs'>(
+    config,
+    'extension_specs',
+    {},
+  )
+  const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs
 }
 
 export async function getListOfExtensionPoints(config: Config): Promise<ExtensionPointSpec[]> {
-  const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_point'>(
+  const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_points'>(
     config,
-    'extension_point',
+    'extension_points',
     {},
   )
-  const specs = flatten(getArrayRejectingUndefined(Object.values(hooks)))
+  const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs
 }
 
 export async function getListOfFunctionSpecs(config: Config): Promise<FunctionSpec[]> {
-  const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'function_spec'>(config, 'function_spec', {})
-  const specs = flatten(getArrayRejectingUndefined(Object.values(hooks)))
+  const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'function_specs'>(config, 'function_specs', {})
+  const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs
 }
