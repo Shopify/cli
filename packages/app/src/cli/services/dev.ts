@@ -24,7 +24,7 @@ import express, {Express, Request, Response, NextFunction} from 'express'
 import fetch from 'node-fetch'
 import {createServer, ViteDevServer} from 'vite'
 import {Shopify} from '@shopify/shopify-api'
-import {createProxyMiddleware} from 'http-proxy-middleware'
+import react from '@vitejs/plugin-react'
 import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
@@ -149,7 +149,6 @@ async function dev(options: DevOptions) {
     // ...userConfig,
     root: options.app.directory,
     server: {
-      middlewareMode: true,
       hmr: {
         path: '/vite/ws',
         port: vitePort,
@@ -157,7 +156,8 @@ async function dev(options: DevOptions) {
     },
     clearScreen: false,
     logLevel: 'silent',
-    plugins: [getViteVirtualModulesPlugin(options)],
+    plugins: [react(), getViteVirtualModulesPlugin(options)],
+    appType: 'custom',
     resolve: {
       alias: [
         // @ts-ignore
@@ -175,10 +175,10 @@ async function dev(options: DevOptions) {
   server.use(viteServer.middlewares)
 
   server.use(express.json())
-  const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
-  server.use('/vite/ws', wsproxy)
+  // const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
+  // server.use('/vite/ws', wsproxy)
   // @ts-ignore
-  server.on('upgrade', wsproxy.upgrade)
+  // server.on('upgrade', wsproxy.upgrade)
   await addDevPanelMiddleware(server, serverURL, options)
   addWebhooksMiddleware(server, viteServer, options)
   addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
