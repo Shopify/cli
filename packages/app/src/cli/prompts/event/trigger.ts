@@ -102,13 +102,13 @@ export async function sharedSecretPrompt(): Promise<string> {
 
 export function deliveryMethodInstructions(method: string): string {
   if (method === DELIVERY_METHOD.HTTP) {
-    return 'Use either https:// for remote or http://localhost:{port}/{url-path} for local'
+    return `- For remote ${DELIVERY_METHOD.HTTP} testing, use a URL that starts with https://\n   - For local ${DELIVERY_METHOD.HTTP} testing, use http://localhost:{port}/{url-path}`
   }
   if (method === DELIVERY_METHOD.PUBSUB) {
-    return 'Use pubsub://{project-id}:{topic-id}'
+    return `- For ${DELIVERY_METHOD.PUBSUB} use pubsub://{project-id}:{topic-id}`
   }
   if (method === DELIVERY_METHOD.EVENTBRIDGE) {
-    return 'Use an Amazon Resource Name (ARN) starting with arn:aws:events:'
+    return `- For ${DELIVERY_METHOD.EVENTBRIDGE} use an Amazon Resource Name (ARN) starting with arn:aws:events:`
   }
 
   return ''

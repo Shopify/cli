@@ -52,7 +52,7 @@ export async function optionsPrompt(flags: EventTriggerFlags): Promise<EventTrig
 
   if (methodPassed && !validDeliveryMethodFlag(flags.deliveryMethod)) {
     throw new error.Abort(
-      'Invalid delivery-method passed',
+      'Invalid Delivery Method passed',
       `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
     )
   }
@@ -63,8 +63,8 @@ export async function optionsPrompt(flags: EventTriggerFlags): Promise<EventTrig
       options.deliveryMethod = inferMethodFromAddress(options.address)
     } else {
       throw new error.Abort(
-        'Invalid address for delivery method',
-        `${deliveryMethodInstructions(flags.deliveryMethod as string)} for ${flags.deliveryMethod}`,
+        "Can't deliver your webhook payload to this address. Run 'shopify event trigger --address=<VALUE>' with a valid URL",
+        `Try this\n\n   ${deliveryMethodInstructions(flags.deliveryMethod as string)}`,
       )
     }
   }
