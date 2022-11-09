@@ -1,7 +1,6 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
 import {FunctionExtension} from '../app/extensions.js'
-import {ExtensionTypes} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -17,10 +16,10 @@ export interface FunctionSpec<
   TMetadata extends MetadataType = MetadataType,
 > {
   identifier: string
-  externalType: string
+  externalIdentifier: string
   externalName: string
   helpURL?: string
-  public?: boolean
+  public: boolean
   templateURL?: string
   languages?: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
@@ -75,8 +74,12 @@ export class FunctionInstance<
     return this.specification.identifier
   }
 
-  get type(): ExtensionTypes {
+  get type() {
     return this.specification.identifier
+  }
+
+  get externalType() {
+    return this.specification.externalIdentifier
   }
 
   get name() {
@@ -134,7 +137,7 @@ export function createFunctionSpec<
   TMetadata extends MetadataType = MetadataType,
 >(spec: {
   identifier: string
-  externalType: string
+  externalIdentifier: string
   externalName: string
   helpURL?: string
   public?: boolean

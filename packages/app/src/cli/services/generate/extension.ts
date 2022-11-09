@@ -10,7 +10,6 @@ import {
   versions,
 } from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
-import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
 import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,

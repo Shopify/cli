@@ -19,6 +19,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   externalIdentifier: string
   partnersWebId: string
   surface: string
+  showInCLIHelp: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
@@ -182,8 +183,28 @@ function remoteSpecForType(type: string): api.graphql.RemoteSpecification | unde
   return undefined
 }
 
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
-  spec: ExtensionSpec<TConfiguration>,
-): ExtensionSpec<TConfiguration> {
-  return spec
+export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+  identifier: string
+  externalIdentifier: string
+  partnersWebId: string
+  surface: string
+  showInCLIHelp?: boolean
+  dependency?: {name: string; version: string}
+  templatePath?: string
+  graphQLType?: string
+  schema: ZodSchemaType<TConfiguration>
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
+  resourceUrl?: (config: TConfiguration) => string
+  previewMessage?: (
+    host: string,
+    uuid: string,
+    config: TConfiguration,
+    storeFqdn: string,
+  ) => output.TokenizedString | undefined
+}): ExtensionSpec<TConfiguration> {
+  const defaults = {
+    showInCLIHelp: true,
+  }
+  return {...defaults, ...spec}
 }

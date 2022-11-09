@@ -1,7 +1,6 @@
 import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
-import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance, specForType} from '../extensions/extensions.js'
 import {TypeSchema} from '../extensions/schemas.js'
@@ -254,11 +253,7 @@ class AppLoader {
         return undefined
       }
 
-      const configurationSupported = await this.parseConfigurationFile(spec.schema, configurationPath)
-      const configuration = {
-        ...configurationSupported,
-        type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
-      }
+      const configuration = await this.parseConfigurationFile(spec.schema, configurationPath)
 
       const entrySourceFilePath = (
         await Promise.all(
