@@ -24,7 +24,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
-  preDeployValidation?: (config: TConfiguration) => boolean
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
   previewMessage?: (
     host: string,
@@ -134,8 +134,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
   }
 
-  validate() {
-    if (!this.specification.preDeployValidation) return true
+  preDeployValidation() {
+    if (!this.specification.preDeployValidation) return Promise.resolve()
     return this.specification.preDeployValidation(this.configuration)
   }
 

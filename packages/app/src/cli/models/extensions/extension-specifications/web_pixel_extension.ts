@@ -1,6 +1,6 @@
 import {createExtensionSpec} from '../extensions.js'
 import {BaseExtensionSchema} from '../schemas.js'
-import {schema} from '@shopify/cli-kit'
+import {error, schema} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
 
@@ -23,6 +23,15 @@ const spec = createExtensionSpec({
       runtime_context: config.runtimeContext,
       runtime_configuration_definition: config.settings,
     }
+  },
+  preDeployValidation: (config) => {
+    if (config.configuration) {
+      throw new error.Abort(
+        `The property configuration is deprecated and no longer supported.`,
+        `It has been replaced by settings.`,
+      )
+    }
+    return true
   },
   previewMessage: () => undefined,
 })

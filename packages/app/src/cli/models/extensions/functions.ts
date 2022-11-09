@@ -23,10 +23,9 @@ export interface FunctionSpec<
   public?: boolean
   templateURL?: string
   languages?: {name: string; value: string}[]
-  configSchema?: ZodSchemaType<TConfiguration>
-  metadataSchema?: ZodSchemaType<TMetadata>
+  configSchema: ZodSchemaType<TConfiguration>
+  metadataSchema: ZodSchemaType<TMetadata>
   templatePath: (lang: string) => string
-  validate?: (config: TConfiguration) => unknown
 }
 
 /**
@@ -94,10 +93,6 @@ export class FunctionInstance<
     return path.join(this.directory, relativePath)
   }
 
-  validate() {
-    return this.specification.validate?.(this.configuration)
-  }
-
   async build(stdout: Writable, stderr: Writable, signal: abort.Signal) {
     const buildCommand = this.configuration.build.command
     if (!buildCommand || buildCommand.trim() === '') {
@@ -138,7 +133,18 @@ export async function functionSpecForType(type: string): Promise<FunctionSpec | 
 export function createFunctionSpec<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
   TMetadata extends MetadataType = MetadataType,
->(spec: FunctionSpec): FunctionSpec {
+>(spec: {
+  identifier: string
+  externalType: string
+  externalName: string
+  helpURL?: string
+  public?: boolean
+  templateURL?: string
+  languages?: {name: string; value: string}[]
+  configSchema?: ZodSchemaType<TConfiguration>
+  metadataSchema?: ZodSchemaType<TMetadata>
+  templatePath: (lang: string) => string
+}): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
     languages: [
