@@ -229,24 +229,29 @@ async function dev(options: DevOptions) {
   server.use(viteServer.middlewares)
 
   server.use(express.json())
-  // const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
-  // server.use('/vite/ws', wsproxy)
+  const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
+  server.use('/vite/ws', wsproxy)
   // @ts-ignore
-  // server.on('upgrade', wsproxy.upgrade)
+  server.on('upgrade', wsproxy.upgrade)
   await addDevPanelMiddleware(server, serverURL, options)
 
+  const graphqlAPIURL = `https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json`
   server.use(
     '/_shopify/api-proxy',
     createProxyMiddleware({
-      target: `https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json`,
+      logLevel: 'debug',
+      target: graphqlAPIURL,
+      ignorePath: true,
       pathRewrite: {'/_shopify/api-proxy': ''},
-      changeOrigin: true,
-      onProxyRes: async (proxyRes, req, res) => {
+      secure: false,
+      // @ts-ignore
+      onProxyRes: async (proxyRes: any, req: any, res: any) => {
         const session = await Shopify.Utils.loadCurrentSession(req, res, server.get('use-online-tokens'))
         proxyRes.headers['X-Shopify-Access-Token'] = session?.accessToken
       },
     }),
   )
+
   addWebhooksMiddleware(server, viteServer, options)
   addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
 
