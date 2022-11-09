@@ -40,7 +40,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": ">=14.13.1"
+    "node": ">=14.17.0"
   },
   "os": [
     "darwin",
