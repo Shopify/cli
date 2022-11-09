@@ -90,6 +90,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
+      "workspace",
       "fixtures/**/*"
     ]
   },

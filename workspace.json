@@ -1,6 +1,7 @@
 {
   "version": 2,
   "projects": {
+    "workspace": "workspace",
     "cli-main": "packages/cli-main",
     "cli-kit": "packages/cli-kit",
     "app": "packages/app",

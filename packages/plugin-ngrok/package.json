@@ -35,7 +35,7 @@
   "dependencies": {
     "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.23.0",
-    "@shopify/ngrok": "^4.3.2"
+    "@shopify/ngrok": "4.3.2"
   },
   "eslintConfig": {
     "extends": [
