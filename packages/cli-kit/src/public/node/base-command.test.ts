@@ -1,7 +1,6 @@
 import Command, {Environments} from './base-command.js'
 import {globalFlags} from '../../cli.js'
 import {inTemporaryDirectory, write as writeFile} from '../../file.js'
-import {AnyJson} from '../../json.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
 import {encode as encodeTOML} from '../../toml.js'
 import {join as pathJoin, resolve as resolvePath} from '../../path.js'
@@ -101,7 +100,7 @@ describe('applying environments', async () => {
       testError = undefined
 
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(pathJoin(tmpDir, projectFileName), encodeTOML({environments: allEnvironments} as AnyJson))
+        await writeFile(pathJoin(tmpDir, projectFileName), encodeTOML({environments: allEnvironments} as any))
         await testFunc(tmpDir)
       })
     })

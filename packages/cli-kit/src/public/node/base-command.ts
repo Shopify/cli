@@ -106,9 +106,7 @@ abstract class BaseCommand extends Command {
     return {}
   }
 
-  protected projectFileName(): string | undefined {
-    return
-  }
+  protected projectFileName(): string | undefined {}
 }
 
 export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
@@ -209,7 +207,9 @@ function argsFromEnvironment<TFlags extends Interfaces.FlagOutput, TArgs extends
           args.push(`--${label}`)
         } else {
           throw new Abort(
-            content`Environments can only specify true for boolean flags. Attempted to set ${token.yellow(label)} to false.`,
+            content`Environments can only specify true for boolean flags. Attempted to set ${token.yellow(
+              label,
+            )} to false.`,
           )
         }
       } else if (Array.isArray(value)) {
