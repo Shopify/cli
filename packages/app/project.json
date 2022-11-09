@@ -4,6 +4,7 @@
     "sourceRoot": "packages/app/src",
     "projectType": "library",
     "tags": ["scope:feature"],
+    "implicitDependencies": ["ui-extensions-dev-console"],
     "targets": {
       "clean": {
         "executor": "nx:run-commands",

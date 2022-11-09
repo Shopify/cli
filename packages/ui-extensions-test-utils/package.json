@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-test-utils",
-  "version": "3.21.0",
+  "version": "3.22.1",
   "license": "MIT",
   "main": "dist/index",
   "types": "dist/index",
@@ -20,7 +20,13 @@
     ],
     "rules": {
       "@typescript-eslint/no-explicit-any": "off",
-      "import/extensions": ["error", "never", {"ignorePackages": true}]
+      "import/extensions": [
+        "error",
+        "never",
+        {
+          "ignorePackages": true
+        }
+      ]
     }
   },
   "devDependencies": {

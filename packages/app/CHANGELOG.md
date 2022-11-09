@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 3.22.1
+
+### Patch Changes
+
+- b9275c2b: Fix dev-console not loading because it can't be found
+  - @shopify/cli-kit@3.22.1
+
+## 3.22.0
+
+### Patch Changes
+
+- Updated dependencies [e0b5c20b]
+- Updated dependencies [6de19ebd]
+- Updated dependencies [6c0cd13d]
+- Updated dependencies [7035d36b]
+  - @shopify/cli-kit@3.22.0
+
 ## 3.21.0
 
 ### Minor Changes
