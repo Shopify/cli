@@ -8,7 +8,7 @@ let loadedFunctionSpecs: FunctionSpec[]
 
 export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
   if (loadedExtensionSpecs) return loadedExtensionSpecs
-  const registrations = await loadSpecs('extensions-specifications')
+  const registrations = await loadSpecs('extension-specifications')
   // eslint-disable-next-line require-atomic-updates
   loadedExtensionSpecs = registrations
   return registrations
@@ -23,7 +23,7 @@ export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
 }
 
 async function loadSpecs(directoryName: string) {
-  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.js'))
+  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
   const files = await path.glob(url)
   const promises = files.map((file) => import(file))
   const modules = await Promise.all(promises)

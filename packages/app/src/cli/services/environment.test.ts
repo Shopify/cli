@@ -504,7 +504,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     // Given
     const token = 'token'
     const apiKey = 'apiKey'
-    const extension = testThemeExtensions()
+    const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {
@@ -540,7 +540,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     // Given
     const token = 'token'
     const apiKey = 'apiKey'
-    const extension = testThemeExtensions()
+    const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {extensionRegistrations: [], functions: []},

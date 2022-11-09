@@ -42,7 +42,7 @@ describe('generateSchemaService', () => {
   it('performs GraphQL query to fetch the schema', async () => {
     // Given
     const app = testApp()
-    const extension = testFunctionExtension()
+    const extension = await testFunctionExtension()
     const apiKey = 'api-key'
 
     // When
@@ -55,7 +55,7 @@ describe('generateSchemaService', () => {
   it('aborts if a schema could not be generated', async () => {
     // Given
     const app = testApp()
-    const extension = testFunctionExtension()
+    const extension = await testFunctionExtension()
     const apiKey = 'api-key'
     request.mockImplementation(() => Promise.resolve({definition: null}))
 
@@ -110,7 +110,7 @@ describe('generateSchemaService', () => {
     it('uses options API key if provided', async () => {
       // Given
       const app = testApp()
-      const extension = testFunctionExtension()
+      const extension = await testFunctionExtension()
       const {
         configuration: {apiVersion: version},
         type,
@@ -130,7 +130,7 @@ describe('generateSchemaService', () => {
     it('uses app identifier API key, if options API key is not provided', async () => {
       // Given
       const app = testApp()
-      const extension = testFunctionExtension()
+      const extension = await testFunctionExtension()
       const {
         configuration: {apiVersion: version},
         type,
@@ -150,7 +150,7 @@ describe('generateSchemaService', () => {
     it('prompts for app if no API key is provided in interactive mode', async () => {
       // Given
       const app = testApp()
-      const extension = testFunctionExtension()
+      const extension = await testFunctionExtension()
       const {
         configuration: {apiVersion: version},
         type,
@@ -171,7 +171,7 @@ describe('generateSchemaService', () => {
     it('aborts if no API key is provided in non-interactive mode', async () => {
       // Given
       const app = testApp()
-      const extension = testFunctionExtension()
+      const extension = await testFunctionExtension()
       getAppIdentifiers.mockReturnValue({app: undefined})
       isTerminalInteractive.mockReturnValue(false)
 

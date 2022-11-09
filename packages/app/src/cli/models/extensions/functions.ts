@@ -76,8 +76,7 @@ export class FunctionInstance<
   }
 
   get type(): ExtensionTypes {
-    return 'checkout_post_purchase'
-    // return this.specification.identifier
+    return this.specification.identifier
   }
 
   get name() {

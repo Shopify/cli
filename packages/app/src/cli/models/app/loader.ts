@@ -1,6 +1,6 @@
 import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
-import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance, specForType} from '../extensions/extensions.js'
@@ -357,15 +357,8 @@ class AppLoader {
       }
 
       const configuration = await this.parseConfigurationFile(spec.schema, configurationPath)
-      return {
-        directory,
-        configuration,
-        configurationPath,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        localIdentifier: path.basename(directory),
-      }
+
+      return new ExtensionInstance(configuration, configurationPath, '', directory, spec, undefined, undefined)
     })
 
     const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))

@@ -9,6 +9,7 @@ export interface Extension {
   directory: string
   type: ExtensionTypes
   graphQLType: string
+  publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
 }
 
 export type FunctionExtension<
@@ -30,5 +31,6 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   entrySourceFilePath: string
   outputBundlePath: string
   devUUID: string
-  preDeployValidation?: () => Promise<void>
+  preDeployValidation(): Promise<void>
+  deployConfig(): Promise<{[key: string]: unknown}>
 }

@@ -31,7 +31,7 @@ const spec = createExtensionSpec({
         `It has been replaced by settings.`,
       )
     }
-    return true
+    return Promise.resolve()
   },
   previewMessage: () => undefined,
 })
