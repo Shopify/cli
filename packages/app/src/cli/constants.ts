@@ -87,7 +87,7 @@ export const activeUIExtensions = {
   types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'].filter,
 }
 
-export type UIExtensionTypes = typeof uiExtensions.types[number]
+export type UIExtensionTypes = typeof uiExtensions.types[number] | string
 
 export const uiExtensionTemplates = [
   {name: 'TypeScript', value: 'typescript'},
@@ -104,21 +104,21 @@ export const themeExtensions = {
   types: ['theme'],
 } as const
 
-export type ThemeExtensionTypes = typeof themeExtensions.types[number]
+export type ThemeExtensionTypes = typeof themeExtensions.types[number] | string
 
 export function isThemeExtensionType(extensionType: string) {
   return (themeExtensions.types as ReadonlyArray<string>).includes(extensionType)
 }
 
-export type FunctionExtensionTypes = typeof functionExtensions.types[number]
+export type FunctionExtensionTypes = typeof functionExtensions.types[number] | string
 
-export const extensions = {
+export const extensions: {types: string[]; publicTypes: string[]} = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
   publicTypes: [...themeExtensions.types, ...publicUIExtensions.types, ...publicFunctionExtensions.types],
 }
 
-export type ExtensionTypes = typeof extensions.types[number]
-type PublicExtensionTypes = typeof extensions.publicTypes[number]
+export type ExtensionTypes = typeof extensions.types[number] | string
+type PublicExtensionTypes = typeof extensions.publicTypes[number] | string
 type GatedExtensionTypes = Exclude<ExtensionTypes, PublicExtensionTypes>
 
 export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 'function' | 'ui' {
@@ -132,7 +132,7 @@ export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 
 }
 
 export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionType is GatedExtensionTypes {
-  return !extensions.publicTypes.includes(extensionType as PublicExtensionTypes)
+  return !extensions.publicTypes.includes(extensionType)
 }
 
 /**
@@ -161,13 +161,13 @@ export const uiExternalExtensionTypes = {
   types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui'],
 } as const
 
-export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number]
+export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number] | string
 
 export const themeExternalExtensionTypes = {
   types: ['theme_app_extension'],
 } as const
 
-export type ThemeExternalExtensionTypes = typeof themeExternalExtensionTypes.types[number]
+export type ThemeExternalExtensionTypes = typeof themeExternalExtensionTypes.types[number] | string
 
 export const functionExternalExtensionTypes = {
   types: [
@@ -180,7 +180,7 @@ export const functionExternalExtensionTypes = {
   ],
 } as const
 
-export type FunctionExternalExtensionTypes = typeof functionExternalExtensionTypes.types[number]
+export type FunctionExternalExtensionTypes = typeof functionExternalExtensionTypes.types[number] | string
 
 export const externalExtensionTypes = {
   types: [
@@ -190,7 +190,7 @@ export const externalExtensionTypes = {
   ],
 } as const
 
-export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
+export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number] | string
 
 // The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
 export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[] = [
@@ -237,7 +237,7 @@ export const externalExtensionTypeNames = {
   ],
 } as const
 
-export type ExternalExtensionTypeNames = typeof externalExtensionTypeNames.types[number]
+export type ExternalExtensionTypeNames = typeof externalExtensionTypeNames.types[number] | string
 export interface ExtensionOutputConfig {
   humanKey: ExternalExtensionTypeNames
   helpURL?: string
@@ -278,6 +278,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('Delivery option presenter')
     case 'delivery_customization':
       return buildExtensionOutputConfig('Delivery customization')
+    default:
+      return buildExtensionOutputConfig('Other')
   }
 }
 
@@ -303,12 +305,7 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
       return 'WEB_PIXEL_EXTENSION'
     case 'customer_accounts_ui_extension':
       return 'CUSTOMER_ACCOUNTS_UI_EXTENSION'
-    case 'product_discounts':
-    case 'order_discounts':
-    case 'shipping_discounts':
-    case 'payment_customization':
-    case 'delivery_customization':
-    case 'shipping_rate_presenter':
+    default:
       // As we add new extensions, this bug will force us to add a new case here.
       return type.toUpperCase()
   }
