@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-catch-all/no-catch-all */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-misused-promises */
+
 import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
@@ -82,7 +82,7 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const isEmbedded = await options.app.isEmbedded()
+  const isEmbedded = !options.token || !options.storeFqdn
   let serverPort: number
   let serverURL: string
   let apiKey: string | undefined
@@ -90,7 +90,7 @@ async function dev(options: DevOptions) {
   const vitePort = await port.getRandomPort()
 
   if (isEmbedded) {
-    output.info(output.content`\n${output.token.cyan('Embedded')} app detected. Authenticating as a partner...`)
+    output.info(output.content`\nRunning as ${output.token.cyan('embedded app')}...`)
     const token = await session.ensureAuthenticatedPartners()
     const devOptions = await ensureDevEnvironment(options, token)
     storeFqdn = devOptions.storeFqdn
@@ -130,7 +130,7 @@ async function dev(options: DevOptions) {
       ...(process.env.SHOP_CUSTOM_DOMAIN && {CUSTOM_SHOP_DOMAINS: [process.env.SHOP_CUSTOM_DOMAIN]}),
     })
   } else {
-    output.info(output.content`\n${output.token.cyan('Non-embedded')} app detected`)
+    output.info(output.content`\nRunning as ${output.token.cyan('custom app')}...`)
     serverPort = await port.getRandomPort()
     serverURL = `http://127.0.0.1:${serverPort}`
     output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}/_shopify\n`)
@@ -139,13 +139,14 @@ async function dev(options: DevOptions) {
   output.info(output.content`${output.token.heading('Logs')}`)
 
   const viteConfigPath = path.join(options.app.directory, 'vite.config.js')
-  let userConfig: any = {}
-  if (await file.exists(viteConfigPath)) {
-    userConfig = (await import(viteConfigPath)).default
-  }
+  // TODO
+  // let userConfig: any = {}
+  // if (await file.exists(viteConfigPath)) {
+  //   userConfig = (await import(viteConfigPath)).default
+  // }
 
   const viteServer = await createServer({
-    ...userConfig,
+    // ...userConfig,
     root: options.app.directory,
     server: {
       middlewareMode: true,
@@ -156,7 +157,18 @@ async function dev(options: DevOptions) {
     },
     clearScreen: false,
     logLevel: 'silent',
-    plugins: [...userConfig.plugins, getViteVirtualModulesPlugin(options)],
+    plugins: [getViteVirtualModulesPlugin(options)],
+    resolve: {
+      alias: [
+        // @ts-ignore
+        {
+          find: /~(.+)/,
+          replacement: (importedModule: string) => {
+            return path.join(options.app.directory, `./lib/${importedModule.replace('~', '')}`)
+          },
+        },
+      ],
+    },
   })
 
   const server = express()

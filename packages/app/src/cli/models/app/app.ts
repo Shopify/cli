@@ -58,7 +58,6 @@ export interface AppInterface {
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   webhooksDirectory: () => string
-  isEmbedded: () => Promise<boolean>
 }
 
 export class App implements AppInterface {
@@ -121,10 +120,6 @@ export class App implements AppInterface {
 
   webhooksDirectory(): string {
     return path.join(this.directory, 'webhooks')
-  }
-
-  async isEmbedded(): Promise<boolean> {
-    return (await path.glob(path.join(this.directory, 'routes/**/*'))).length !== 0
   }
 
   hasExtensions(): boolean {

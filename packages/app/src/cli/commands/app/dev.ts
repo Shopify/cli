@@ -103,15 +103,9 @@ export default class Dev extends Command {
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
 
-    const isEmbedded = await app.isEmbedded()
-    if (!isEmbedded && !flags.store) {
+    if (flags.token && !flags.store) {
       throw new error.Abort(
         output.content`The flag ${output.token.genericShellCommand('--store')} is required for custom merchant apps`,
-      )
-    }
-    if (!isEmbedded && !flags.token) {
-      throw new error.Abort(
-        output.content`The flag ${output.token.genericShellCommand('--token')} is required for custom merchant apps`,
       )
     }
 

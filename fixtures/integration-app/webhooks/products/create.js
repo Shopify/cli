@@ -1,13 +1,7 @@
 import {defineWebhook} from '@shopify/app/webhook'
-import {graphqlRequest} from '@shopify/app/api'
+import {getShopName} from '~shop'
 
 export default defineWebhook('products/create', async (payload) => {
-  const response = await graphqlRequest(`
-  query {
-    shop {
-      name
-    }
-  }
-  `)
-  console.log(response)
+  const name = await getShopName()
+  console.log(name)
 })
