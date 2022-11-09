@@ -132,8 +132,8 @@ async function dev(options: DevOptions) {
   } else {
     output.info(output.content`\n${output.token.cyan('Non-embedded')} app detected`)
     serverPort = await port.getRandomPort()
-    serverURL = `http://127.0.0.1:${serverPort}/`
-    output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}_shopify\n`)
+    serverURL = `http://127.0.0.1:${serverPort}`
+    output.info(output.content`\n${output.token.heading('URL')}\n\n  ${serverURL}/_shopify\n`)
   }
 
   output.info(output.content`${output.token.heading('Logs')}`)
@@ -300,7 +300,7 @@ function clientSideRedirect(req: any, res: any, serverURL: string) {
   const queryParams = new URLSearchParams({
     ...req.query,
     shop,
-    redirectUri: `${serverURL}api/auth?${redirectUriParams}`,
+    redirectUri: `${serverURL}/api/auth?${redirectUriParams}`,
   }).toString()
 
   return res.redirect(`/exitiframe?${queryParams}`)
@@ -371,7 +371,7 @@ async function addDevPanelMiddleware(server: Express, serverURL: string, options
   })
 
   server.post('/_shopify/api/webhooks/products/create', async (req, res, next) => {
-    await fetch(`${serverURL}webhooks`, {
+    await fetch(`${serverURL}/webhooks`, {
       method: 'POST',
       body: JSON.stringify({
         id: 788032119674292922,

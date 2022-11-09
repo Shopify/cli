@@ -1,2 +1,4 @@
 - How to incorporate billing
+- What about metafields?
+- What about flow?
 -
