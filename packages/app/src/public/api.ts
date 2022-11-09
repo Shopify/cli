@@ -6,22 +6,4 @@
  * @returns
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function graphqlRequest(query: string, variables: any = {}): Promise<any> {
-  const authenticationHeaders = {'X-Shopify-Access-Token': process.env._SHOPIFY_APP_TOKEN}
-  const url = `https://${process.env._SHOPIFY_STORE_FQDN}/admin/api/${process.env._SHOPIFY_API_VERSION}/graphql.json`
-
-  // @ts-ignore
-  const response = await fetch(url, {
-    method: 'POST',
-    // @ts-ignore
-    headers: {
-      ...authenticationHeaders,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  })
-  return response.json()
-}
+export async function graphqlRequest(query: string, variables: any = {}): Promise<any> {}

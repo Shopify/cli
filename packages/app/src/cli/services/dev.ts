@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-catch-all/no-catch-all */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -25,6 +26,7 @@ import fetch from 'node-fetch'
 import {createServer, ViteDevServer} from 'vite'
 import {Shopify} from '@shopify/shopify-api'
 import react from '@vitejs/plugin-react'
+import {createProxyMiddleware} from 'http-proxy-middleware'
 import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
@@ -156,7 +158,59 @@ async function dev(options: DevOptions) {
     },
     clearScreen: false,
     logLevel: 'silent',
-    plugins: [react(), getViteVirtualModulesPlugin(options)],
+    plugins: [
+      {
+        enforce: 'pre',
+        name: 'shopify-app-plugin',
+        resolveId(id, importer) {
+          if (id === '@shopify/app/api') {
+            const clientPaths = ['routes', 'app.jsx'].map((clientPath) => path.join(options.app.directory, clientPath))
+            const isClientSide = clientPaths.find((clientPath) => importer?.includes(clientPath))
+            if (isClientSide) {
+              return `\0@shopify/app/api/client`
+            } else {
+              return `\0@shopify/app/api/server`
+            }
+          }
+        },
+        load(id) {
+          if (id === `\0@shopify/app/api/server`) {
+            return `
+            export async function graphqlRequest(query, variables = {}) {
+              const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
+              const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
+              return (await fetch(url, {
+                method: 'POST',
+                headers: {
+                  ...authenticationHeaders,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  query,
+                  variables
+                }),
+              })).json()
+            }
+            `
+          } else if (id === `\0@shopify/app/api/client`) {
+            return `export async function graphqlRequest(query, variables = {}) {
+              const url = "${serverURL}/_shopify/api-proxy";
+              return (await fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  query,
+                  variables
+                }),
+              })).json()
+            }`
+          }
+        },
+      },
+      react(),
+    ],
     appType: 'custom',
     resolve: {
       alias: [
@@ -180,6 +234,19 @@ async function dev(options: DevOptions) {
   // @ts-ignore
   // server.on('upgrade', wsproxy.upgrade)
   await addDevPanelMiddleware(server, serverURL, options)
+
+  server.use(
+    '/_shopify/api-proxy',
+    createProxyMiddleware({
+      target: `https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json`,
+      pathRewrite: {'/_shopify/api-proxy': ''},
+      changeOrigin: true,
+      onProxyRes: async (proxyRes, req, res) => {
+        const session = await Shopify.Utils.loadCurrentSession(req, res, server.get('use-online-tokens'))
+        proxyRes.headers['X-Shopify-Access-Token'] = session?.accessToken
+      },
+    }),
+  )
   addWebhooksMiddleware(server, viteServer, options)
   addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
 
@@ -268,6 +335,9 @@ function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boole
       return res.redirect(embeddedUrl + req.path)
     }
 
+    // React component (Client) ---- (graphqlRequest) ---------> Server (Token) -------------> Shopify Admin API
+    // React component (Client)                       ---------> Direct API
+
     // const htmlFile = join(isProd ? PROD_INDEX_PATH : DEV_INDEX_PATH, 'index.html')
 
     let template = `<!DOCTYPE html>
@@ -279,6 +349,7 @@ function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boole
       </head>
       <body>
         <div id="app"></div>
+        <div>Hello world</div>
         <script type="module" src="./app.jsx"></script>
       </body>
     </html>`
@@ -328,28 +399,6 @@ async function serverSideRedirect(req: any, res: any, app: any) {
   )
 
   return res.redirect(redirectUrl)
-}
-
-function getViteVirtualModulesPlugin(options: DevOptions) {
-  return virtual.default({
-    '@shopify/app/api': `
-    export async function graphqlRequest(query, variables = {}) {
-      const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
-      const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
-      return (await fetch(url, {
-        method: 'POST',
-        headers: {
-          ...authenticationHeaders,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-          variables
-        }),
-      })).json()
-    }
-    `,
-  })
 }
 
 function addWebhooksMiddleware(server: Express, viteServer: ViteDevServer, options: DevOptions) {
