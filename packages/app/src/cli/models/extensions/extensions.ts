@@ -4,7 +4,6 @@ import {allExtensionSpecifications} from './specifications.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
 import {ThemeExtension, UIExtension} from '../app/extensions.js'
-import {ExtensionTypes} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
@@ -71,9 +70,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.identifier
   }
 
-  get type(): ExtensionTypes {
-    return 'checkout_post_purchase'
-    // return this.specification.identifier
+  get type() {
+    return this.specification.identifier
   }
 
   get humanName() {
@@ -132,8 +130,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     stdout.write(`${this.localIdentifier} successfully built`)
   }
 
-  async deployConfig(): Promise<{[key: string]: unknown}> {
-    return this.specification.deployConfig?.(this.configuration, this.directory) ?? {}
+  deployConfig(): Promise<{[key: string]: unknown}> {
+    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
   }
 
   validate() {

@@ -90,8 +90,8 @@ export class FunctionInstance<
   }
 
   buildWasmPath() {
-    const relativePath = this.configuration.build.path ?? 'dist/index.wasm'
-    return `${this.directory}/${relativePath}`
+    const relativePath = this.configuration.build.path ?? path.join('dist', 'index.wasm')
+    return path.join(this.directory, relativePath)
   }
 
   validate() {
