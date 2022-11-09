@@ -1,13 +1,13 @@
-import {debug, content, token} from './output.js'
-import {Abort} from './error.js'
-import {sleep} from './system.js'
+import {debug, content, token} from '../../output.js'
+import {Abort} from '../../error.js'
+import {sleep} from '../../system.js'
 import * as port from 'get-port-please'
 
 /**
  * Returns an available port in the current environment.
  * @returns A promise that resolves with an availabe port.
  */
-export async function getRandomPort(): Promise<number> {
+export async function getAvailableTCPPort(): Promise<number> {
   debug(content`Getting a random port...`)
   const randomPort = await retryOnError(() => port.getRandomPort())
   debug(content`Random port obtained: ${token.raw(`${randomPort}`)}`)
