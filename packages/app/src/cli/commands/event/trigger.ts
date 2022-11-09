@@ -5,6 +5,7 @@ import {deliveryMethodInstructions} from '../../prompts/event/trigger.js'
 import {Command, Flags} from '@oclif/core'
 
 export default class TopicTesting extends Command {
+  static hidden = true
   static description = 'Trigger delivery of a sample event topic payload to a designated address'
 
   static flags = {
