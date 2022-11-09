@@ -12,5 +12,5 @@ export async function getShopName() {
       }
     }
   `)
-  return name
+  return `my-${name}`
 }

@@ -1,7 +1,7 @@
+import {getShopName} from '~shop.js'
 import {defineWebhook} from '@shopify/app/webhook'
-import {getShopName} from '~shop'
 
 export default defineWebhook('products/create', async (payload) => {
-  const name = await getShopName()
-  console.log(name)
+  const shopName = await getShopName()
+  console.log(shopName)
 })
