@@ -22,7 +22,7 @@ export class CustomAutocomplete extends AutocompletePrompt {
     let bottomContent = ''
 
     if (this.status !== 'answered') {
-      content += colors.gray('… ')
+      content += colors.gray(this.isAutocomplete && this.firstRender ? 'Type to search… ' : '… ')
     }
 
     if (this.status === 'answered') {
