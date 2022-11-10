@@ -2,7 +2,6 @@ import {automaticMatchmaking} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -182,88 +181,88 @@ const EXTENSION_D: UIExtension = {
   devUUID: 'devUUID',
 }
 
-describe('automaticMatchmaking: case 3 some local extensions, no remote ones', () => {
-  it('success and creates all local extensions', async () => {
+describe('automaticMatchmaking: some local, no remote ones', () => {
+  it('creates all local extensions', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {},
       toConfirm: [],
       toCreate: [EXTENSION_A, EXTENSION_B],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 3b some local extensions of the same type, no remote ones', () => {
-  it('success and creates all local extensions', async () => {
+describe('automaticMatchmaking: some local of the same type, no remote ones', () => {
+  it('creates all local extensions', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {},
       toConfirm: [],
       toCreate: [EXTENSION_A, EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 3c some local extensions of the same type, only one remote', () => {
-  it('success and creates all local extensions', async () => {
+describe('automaticMatchmaking: some local of the same type, only one remote', () => {
+  it('creates all local extensions', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A'},
       toConfirm: [],
       toCreate: [EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 3d some local extensions of the same type, a remote with same type but different name', () => {
-  it('success and prompts for confirmation', async () => {
+describe('automaticMatchmaking: some local of the same type, a remote with same type but different name', () => {
+  it('prompts for manual matching', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A_3], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3]},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 3e some local extensions of the same type, one matching remote and one not matching', () => {
-  it('success and prompts for confirmation', async () => {
+describe('automaticMatchmaking: some local of the same type, one matching remote and one not matching', () => {
+  it('prompts for manual matching', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A, REGISTRATION_A_3], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A'},
       toConfirm: [{local: EXTENSION_A_2, remote: REGISTRATION_A_3}],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 3f some local extensions of the same type, two remotes that do not match', () => {
-  it('success and prompts for confirmation', async () => {
+describe('automaticMatchmaking: some local of the same type, two remotes that do not match', () => {
+  it('prompts for manual matching', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_A_2],
@@ -273,18 +272,18 @@ describe('automaticMatchmaking: case 3f some local extensions of the same type, 
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3, REGISTRATION_A_4]},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 3g two pairs of local extensions and only 1 pair of remote but with diff names', () => {
-  it('success and creates 1 pair of local extensions, adds the other to manual match', async () => {
+describe('automaticMatchmaking: two pairs of local and only one pair of remote but with diff names', () => {
+  it('creates one pair, adds the other to manual match', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_A_2, EXTENSION_B, EXTENSION_B_2],
@@ -294,34 +293,34 @@ describe('automaticMatchmaking: case 3g two pairs of local extensions and only 1
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {},
       toConfirm: [],
       toCreate: [EXTENSION_B, EXTENSION_B_2],
       toManualMatch: {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A_3, REGISTRATION_A_4]},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 4 same number of extensions local and remote with matching types', () => {
-  it('suceeds automatically', async () => {
+describe('automaticMatchmaking: same number of local and remote with matching types', () => {
+  it('matches them automatically', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [REGISTRATION_A, REGISTRATION_B], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 5 more extensions local than remote, all remote match some local', () => {
-  it('suceeds and returns extensions pending creation', async () => {
+describe('automaticMatchmaking: more local than remote, all remote match some local', () => {
+  it('matches some and will create the rest', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_B, EXTENSION_C, EXTENSION_D],
@@ -331,43 +330,55 @@ describe('automaticMatchmaking: case 5 more extensions local than remote, all re
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
       toConfirm: [],
       toCreate: [EXTENSION_C, EXTENSION_D],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 6 remote extensions have types not present locally', () => {
-  it('throw error, invalid local environment', async () => {
+describe('automaticMatchmaking: remote have types not present locally', () => {
+  it('create local ones but remind we have unmatched remote', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [REGISTRATION_C, REGISTRATION_D], {}, 'uuid')
 
     // Then
-    expect(got).toEqual(err('invalid-environment'))
+    const expected = {
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [EXTENSION_A, EXTENSION_B],
+      toManualMatch: {local: [], remote: [REGISTRATION_C, REGISTRATION_D]},
+    }
+    expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 7 some extensions match, but other are missing', () => {
-  it('throw error, invalid local environment', async () => {
+describe('automaticMatchmaking: some sources match, but other are missing', () => {
+  it('matches when possible and leave rest to manual matching', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [REGISTRATION_A, REGISTRATION_C], {}, 'uuid')
 
     // Then
-    expect(got).toEqual(err('invalid-environment'))
+    const expected = {
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      toConfirm: [],
+      toCreate: [EXTENSION_B],
+      toManualMatch: {local: [], remote: [REGISTRATION_C]},
+    }
+    expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 8 multiple extensions of the same type locally and remotely', () => {
-  it('success and returns extensions pending manual match', async () => {
+describe('automaticMatchmaking: multiple sources of the same type locally and remotely', () => {
+  it('matches automatically', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A, REGISTRATION_A_2], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
@@ -375,13 +386,13 @@ describe('automaticMatchmaking: case 8 multiple extensions of the same type loca
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 9 multiple extensions of the same type locally and remotely, others can be matched', () => {
-  it('throw a needs manual match error', async () => {
+describe('automaticMatchmaking: multiple sources of the same type locally and remotely, others can be matched', () => {
+  it('matches automatically and creates new one', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
@@ -391,7 +402,7 @@ describe('automaticMatchmaking: case 9 multiple extensions of the same type loca
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
@@ -399,23 +410,61 @@ describe('automaticMatchmaking: case 9 multiple extensions of the same type loca
       toConfirm: [],
       toCreate: [EXTENSION_B],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 10 there are more remote than local extensions', () => {
-  it('throw error, invalid local environment', async () => {
+describe('automaticMatchmaking: more remote of the same type than local', () => {
+  it('matches one and leaves to manual matching', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A, REGISTRATION_A_2], {}, 'uuid')
 
     // Then
-    expect(got).toEqual(err('invalid-environment'))
+    const expected = {
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: [REGISTRATION_A_2]},
+    }
+    expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 11 some extension have uuid, others can be matched', () => {
-  it('suceeds automatically', async () => {
+describe('automaticMatchmaking: more remote of the same type than local, but none matching', () => {
+  it('leaves to manual matching', async () => {
+    // When
+    const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A_2, REGISTRATION_A_3], {}, 'uuid')
+
+    // Then
+    const expected = {
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [EXTENSION_A],
+      toManualMatch: {local: [], remote: [REGISTRATION_A_2, REGISTRATION_A_3]},
+    }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: more remote of different types than local', () => {
+  it('matches one and leaves to manual matching', async () => {
+    // When
+    const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A, REGISTRATION_B], {}, 'uuid')
+
+    // Then
+    const expected = {
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: [REGISTRATION_B]},
+    }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: some sources have uuid, others can be matched', () => {
+  it('matches automatically', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_B],
@@ -427,18 +476,18 @@ describe('automaticMatchmaking: case 11 some extension have uuid, others can be 
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe("automaticMatchmaking: case 12 some extension have uuid, but doesn't match a remote one", () => {
-  it('suceeds rematching the extension to the correct UUID if the type is valid', async () => {
+describe("automaticMatchmaking: some sources have uuid, but doesn't match a remote one", () => {
+  it('matches to the correct UUID', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_B],
@@ -450,18 +499,18 @@ describe("automaticMatchmaking: case 12 some extension have uuid, but doesn't ma
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 13 duplicated extension types but some of them already matched', () => {
-  it('suceeds matching the other extensions', async () => {
+describe('automaticMatchmaking: duplicated sources types but some of them already matched', () => {
+  it('matches the other extensions', async () => {
     // When
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
@@ -473,53 +522,25 @@ describe('automaticMatchmaking: case 13 duplicated extension types but some of t
     )
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
   })
 })
 
-describe('automaticMatchmaking: case 14 a bit of everything', () => {
-  it('suceeds returning automatic matches, including pending creation and manual', async () => {
-    // When
-    const got = await automaticMatchmaking(
-      [EXTENSION_A, EXTENSION_A_2, EXTENSION_B, EXTENSION_C, EXTENSION_D],
-      [REGISTRATION_A, REGISTRATION_A_2, REGISTRATION_B, REGISTRATION_D],
-      {
-        EXTENSION_D: 'UUID_D',
-      },
-      'uuid',
-    )
-
-    // Then
-    const expected = ok({
-      identifiers: {
-        EXTENSION_A: 'UUID_A',
-        EXTENSION_A_2: 'UUID_A_2',
-        EXTENSION_D: 'UUID_D',
-        EXTENSION_B: 'UUID_B',
-      },
-      toConfirm: [],
-      toCreate: [EXTENSION_C],
-      toManualMatch: {local: [], remote: []},
-    })
-    expect(got).toEqual(expected)
-  })
-})
-
-describe('automaticMatchmaking: case 15 automatic matches with different names', () => {
-  it('suceeds returning matches pending confirmation', async () => {
+describe('automaticMatchmaking: automatic matches with different names', () => {
+  it('matches pending confirmation', async () => {
     // When
     const registrationNewA = {...REGISTRATION_A, title: 'A_NEW'}
     const registrationNewB = {...REGISTRATION_B, title: 'B_NEW'}
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [registrationNewA, registrationNewB], {}, 'uuid')
 
     // Then
-    const expected = ok({
+    const expected = {
       identifiers: {},
       toConfirm: [
         {local: EXTENSION_A, remote: registrationNewA},
@@ -527,17 +548,7 @@ describe('automaticMatchmaking: case 15 automatic matches with different names',
       ],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
-    })
+    }
     expect(got).toEqual(expected)
-  })
-})
-
-describe('automaticMatchmaking: case 16 more remote than local extensions', () => {
-  it('throw error, invalid local environment', async () => {
-    // When
-    const got = await automaticMatchmaking([EXTENSION_A], [REGISTRATION_A, REGISTRATION_B], {}, 'uuid')
-
-    // Then
-    expect(got).toEqual(err('invalid-environment'))
   })
 })
