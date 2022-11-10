@@ -1,8 +1,9 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {string, path, file, output, ui, template, npm, git, github, environment, error} from '@shopify/cli-kit'
+import {string, path, file, ui, template, npm, git, github, environment, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name: string
@@ -150,18 +151,24 @@ async function init(options: InitOptions) {
     await file.move(templateScaffoldDir, outputDirectory)
   })
 
-  output.info(output.content`
-  ${hyphenizedName} is ready for you to build! Remember to ${output.token.genericShellCommand(`cd ${hyphenizedName}`)}
-  Check the setup instructions in your README file
-  To preview your project, run ${output.token.packagejsonScript(packageManager, 'dev')}
-  To add extensions, run ${output.token.packagejsonScript(packageManager, 'generate extension')}
-  For more details on all that you can build, see the docs: ${output.token.link(
-    'shopify.dev',
-    'https://shopify.dev',
-  )} ✨
-
-  For help and a list of commands, enter ${output.token.packagejsonScript(packageManager, 'shopify app', '--help')}
-  `)
+  renderSuccess({
+    headline: `${hyphenizedName} is ready for you to build!`,
+    nextSteps: [
+      ['Run', {command: `cd ${hyphenizedName}`}],
+      [
+        'For extensions, run',
+        {command: `${output.token.packagejsonScript(packageManager, 'generate extension').value}`},
+      ],
+      ['To see your app, run', {command: `${output.token.packagejsonScript(packageManager, 'dev').value}`}],
+    ],
+    reference: [
+      {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
+      [
+        'For an overview of commands, run',
+        {command: `${output.token.packagejsonScript(packageManager, 'shopify app', '--help').value}`},
+      ],
+    ],
+  })
 }
 
 function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
