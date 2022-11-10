@@ -1,4 +1,5 @@
 - How to incorporate billing
 - What about metafields?
 - What about flow?
+- Verify requests coming from the client
 -

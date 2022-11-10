@@ -17,7 +17,7 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {analytics, output, port, system, session, abort, string, path, environment, file} from '@shopify/cli-kit'
+import {analytics, output, port, system, session, abort, string, path, environment, file, http} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
@@ -236,21 +236,18 @@ async function dev(options: DevOptions) {
   await addDevPanelMiddleware(server, serverURL, options)
 
   const graphqlAPIURL = `https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json`
-  server.use(
-    '/_shopify/api-proxy',
-    createProxyMiddleware({
-      logLevel: 'debug',
-      target: graphqlAPIURL,
-      ignorePath: true,
-      pathRewrite: {'/_shopify/api-proxy': ''},
-      secure: false,
-      // @ts-ignore
-      onProxyRes: async (proxyRes: any, req: any, res: any) => {
-        const session = await Shopify.Utils.loadCurrentSession(req, res, server.get('use-online-tokens'))
-        proxyRes.headers['X-Shopify-Access-Token'] = session?.accessToken
+  server.use('/_shopify/api-proxy', async (req, res, next) => {
+    output.info(`Verifying session token from client request`)
+    output.info(`Session token valid. Sending request to ${graphqlAPIURL}`)
+    const response = await http.fetch(graphqlAPIURL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
       },
-    }),
-  )
+      body: JSON.stringify(req.body),
+    })
+    return res.status(response.status).end(JSON.stringify(await response.json()))
+  })
 
   addWebhooksMiddleware(server, viteServer, options)
   addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
