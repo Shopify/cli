@@ -1,26 +1,18 @@
 import {ExtensionSpec} from './extensions.js'
 import {FunctionSpec} from './functions.js'
 import {path} from '@shopify/cli-kit'
+import {memoize} from 'lodash-es'
 import {fileURLToPath} from 'url'
 
-let loadedExtensionSpecs: ExtensionSpec[]
-let loadedFunctionSpecs: FunctionSpec[]
-
 export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
-  if (loadedExtensionSpecs) return loadedExtensionSpecs
-  const registrations = await loadSpecs('extension-specifications')
-  // eslint-disable-next-line require-atomic-updates
-  loadedExtensionSpecs = registrations
-  return registrations
+  return memLoadSpecs('extension-specifications')
 }
 
 export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
-  if (loadedFunctionSpecs) return loadedFunctionSpecs
-  const registrations = await loadSpecs('function-specifications')
-  // eslint-disable-next-line require-atomic-updates
-  loadedFunctionSpecs = registrations
-  return registrations
+  return memLoadSpecs('function-specifications')
 }
+
+const memLoadSpecs = memoize(loadSpecs)
 
 async function loadSpecs(directoryName: string) {
   const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.js'))
