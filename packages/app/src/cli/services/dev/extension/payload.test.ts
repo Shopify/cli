@@ -35,8 +35,8 @@ describe('getUIExtensionPayload', () => {
             network_access: true,
           },
         },
+        devUUID: 'devUUID',
       })
-      uiExtension.devUUID = 'devUUID'
 
       const options: ExtensionDevOptions = {
         signal,

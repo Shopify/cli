@@ -120,6 +120,12 @@ const EXTENSION_A: UIExtension = {
   entrySourceFilePath: '',
   outputBundlePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const LOCAL_APP = testApp({

@@ -3,6 +3,7 @@
   "include": ["./src/**/*.ts","./src/**/*.js"],
   "exclude": ["./dist", "./src/templates/**/*"],
   "compilerOptions": {
+    "module": "esnext",
     "outDir": "dist",
     "allowJs": true,
     "rootDir": "src",
