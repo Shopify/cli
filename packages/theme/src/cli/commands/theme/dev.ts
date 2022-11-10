@@ -63,6 +63,7 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_STABLE',
     }),
     force: Flags.boolean({
+      hidden: true,
       char: 'f',
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
