@@ -77,7 +77,7 @@ export const token = {
     return new ColorContentToken(value, colors.green)
   },
   packagejsonScript: (packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]) => {
-    return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, scriptArgs))
+    return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, ...scriptArgs))
   },
   successIcon: () => {
     return new ColorContentToken('✔', colors.green)
@@ -90,7 +90,11 @@ export const token = {
   },
 }
 
-function formatPackageManagerCommand(packageManager: PackageManager, scriptName: string, scriptArgs: string[]): string {
+export function formatPackageManagerCommand(
+  packageManager: PackageManager,
+  scriptName: string,
+  ...scriptArgs: string[]
+): string {
   switch (packageManager) {
     case 'yarn': {
       const pieces = ['yarn', scriptName, ...scriptArgs]

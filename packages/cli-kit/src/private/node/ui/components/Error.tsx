@@ -10,7 +10,7 @@ export interface ErrorProps {
 
 const Error: React.FC<ErrorProps> = ({headline, tryMessage}) => {
   return (
-    <Banner type="error">
+    <Banner type="error" marginY={1}>
       <Box>
         <Text>{headline}</Text>
       </Box>
