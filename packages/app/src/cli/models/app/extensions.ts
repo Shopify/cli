@@ -1,6 +1,7 @@
 import {ExtensionTypes} from '../../constants.js'
 import {BaseConfigContents} from '../extensions/extensions.js'
 import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
+import {output} from '@shopify/cli-kit'
 
 export interface Extension {
   idEnvironmentVariableName: string
@@ -25,6 +26,7 @@ export type FunctionExtension<
 
 export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
   configuration: TConfiguration
+  previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
 }
 
 export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
@@ -35,4 +37,5 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   surface: string
   preDeployValidation(): Promise<void>
   deployConfig(): Promise<{[key: string]: unknown}>
+  previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
 }

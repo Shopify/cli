@@ -7,6 +7,7 @@ const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version:
 const spec = createExtensionSpec({
   identifier: 'checkout_post_purchase',
   externalIdentifier: 'post_purchase_ui',
+  externalName: 'Post-purchase UI',
   surface: 'post_purchase',
   dependency,
   partnersWebId: 'post_purchase',
@@ -25,11 +26,11 @@ const spec = createExtensionSpec({
       'https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong',
     )
     return output.content`To view this extension:
-    1. Install ${chromeLink}
-    2. Open the Chrome extension and paste this URL into it: ${publicURL}
-    3. Run a test purchase on your store to view your extension
+  1. Install ${chromeLink}
+  2. Open the Chrome extension and paste this URL into it: ${publicURL}
+  3. Run a test purchase on your store to view your extension
 
-  For more detail, see the ${devDocsLink}`
+For more detail, see the ${devDocsLink}`
   },
 })
 

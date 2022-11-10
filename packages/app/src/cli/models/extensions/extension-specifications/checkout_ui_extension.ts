@@ -13,6 +13,7 @@ const CheckoutSchema = BaseExtensionSchema.extend({
 const spec = createExtensionSpec({
   identifier: 'checkout_ui_extension',
   externalIdentifier: 'checkout_ui',
+  externalName: 'Checkout UI',
   surface: 'checkout',
   dependency,
   partnersWebId: 'checkout_ui_extension',
@@ -24,7 +25,7 @@ const spec = createExtensionSpec({
       metafields: config.metafields,
       name: config.name,
       settings: config.settings,
-      localization: await loadLocalesConfig(directory),
+      localization: await loadLocalesConfig(directory, 'checkout_ui'),
     }
   },
 })

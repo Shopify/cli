@@ -14,6 +14,7 @@ const WebPixelSchema = BaseExtensionSchema.extend({
 const spec = createExtensionSpec({
   identifier: 'web_pixel_extension',
   externalIdentifier: 'web_pixel',
+  externalName: 'Web pixel',
   surface: 'unknown',
   dependency,
   partnersWebId: 'web_pixel',

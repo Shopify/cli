@@ -17,6 +17,7 @@ export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSc
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
   externalIdentifier: string
+  externalName: string
   partnersWebId: string
   surface: string
   showInCLIHelp: boolean
@@ -76,7 +77,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.identifier
+    return this.remoteSpecification?.externalName ?? this.specification.externalName
   }
 
   get name() {
@@ -156,12 +157,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    if (this.specification.previewMessage)
-      return this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
-
     const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    const publicURL = `${url}/extensions/${this.devUUID}`
-    const message = output.content`Preview link: ${publicURL}`
+    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+
+    if (this.specification.previewMessage) {
+      const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
+      if (!customMessage) return
+      message = customMessage
+    }
+
     return output.content`${heading}\n${message.value}\n`
   }
 
@@ -188,6 +192,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   externalIdentifier: string
   partnersWebId: string
   surface: string
+  externalName: string
   showInCLIHelp?: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
