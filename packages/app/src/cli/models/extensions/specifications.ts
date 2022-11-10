@@ -24,7 +24,8 @@ export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
 
 async function loadSpecs(directoryName: string) {
   const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
-  const files = await path.glob(url)
+  const files = await path.glob(url, {ignore: ['**.d.ts']})
+  console.log(files)
   const promises = files.map((file) => import(file))
   const modules = await Promise.all(promises)
   const specs = modules.map((module) => module.default)

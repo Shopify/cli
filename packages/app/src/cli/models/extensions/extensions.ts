@@ -117,7 +117,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
-  async build(stderr: Writable, stdout: Writable, app: AppInterface) {
+  async build(stdout: Writable, stderr: Writable, app: AppInterface) {
     stdout.write(`Bundling UI extension ${this.localIdentifier}...`)
     await bundleExtension({
       minify: true,

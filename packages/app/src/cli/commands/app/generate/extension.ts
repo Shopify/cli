@@ -17,9 +17,13 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionService, {ExtensionFlavor} from '../../../services/generate/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
+import {
+  mapExternalExtensionTypeToExtensionType,
+  mapExtensionTypesToExternalExtensionTypes,
+  mapExtensionTypeToExternalExtensionType,
+} from '../../../utilities/extensions/name-mapper.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
-import {allExtensionSpecifications, allFunctionSpecifications} from '../../../models/extensions/specifications.js'
 import {output, path, cli, error, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -117,24 +121,18 @@ export default class AppScaffoldExtension extends Command {
     output.info(formattedSuccessfulMessage)
   }
 
-  // REVIEW: Should we remove this to be trully dynamic?
   async validateExtensionType(type: string | undefined) {
     if (!type) {
       return
     }
     const isShopify = await environment.local.isShopify()
     const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
-
-    const extensionSpecs = await allExtensionSpecifications()
-    const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => spec.public === true)
-
-    const extensionTypes = extensionSpecs.map((spec) => spec.externalIdentifier)
-    const functionTypes = functionSpecs.map((spec) => spec.externalIdentifier)
-
-    const allExternalTypes = extensionTypes.concat(functionTypes)
-
     if (!supportedExtensions.includes(type)) {
-      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+      throw new error.Abort(
+        `The following extension types are supported: ${mapExtensionTypesToExternalExtensionTypes(
+          supportedExtensions,
+        ).join(', ')}`,
+      )
     }
   }
 
@@ -146,7 +144,10 @@ export default class AppScaffoldExtension extends Command {
    */
   validateExtensionTypeLimit(app: AppInterface, type: string | undefined) {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
-      throw new error.Abort('Invalid extension type', `You can only scaffold one extension of type ${type} per app`)
+      throw new error.Abort(
+        'Invalid extension type',
+        `You can only scaffold one extension of type ${mapExtensionTypeToExternalExtensionType(type)} per app`,
+      )
     }
   }
 
