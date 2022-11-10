@@ -46,7 +46,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
 
   const spec = await specForType(configuration.type)
 
-  return new ExtensionInstance(
+  const extension = new ExtensionInstance(
     configuration,
     configurationPath,
     entrySourceFilePath,
@@ -55,6 +55,8 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     undefined,
     undefined,
   )
+  extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+  return extension
 }
 
 export async function testThemeExtensions(): Promise<ThemeExtension> {
