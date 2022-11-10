@@ -1,6 +1,5 @@
 import {createExtensionSpec} from '../extensions.js'
 import {BaseExtensionSchema} from '../schemas.js'
-import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {schema, output} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
@@ -22,7 +21,6 @@ const spec = createExtensionSpec({
       extension_points: config.extensionPoints,
       name: config.name,
       categories: config.categories,
-      localization: await loadLocalesConfig(directory),
     }
   },
   previewMessage: (host, uuid, _, storeFqdn) => {
