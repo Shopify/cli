@@ -37,3 +37,19 @@ export async function selectRemoteSourcePrompt(
   ])
   return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === choice.uuid)!
 }
+
+export async function confirmPartialDeploymentPrompt() {
+  const choices = [
+    {name: `Yes, proceed and deploy anyway`, value: 'yes'},
+    {name: `No, cancel deployment`, value: 'no'},
+  ]
+  const choice: {value: string} = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: `Some extensions are MISSING from your local project. Do you want to proceed?`,
+      choices,
+    },
+  ])
+  return choice.value === 'yes'
+}

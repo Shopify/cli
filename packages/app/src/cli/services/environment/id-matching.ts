@@ -1,9 +1,7 @@
-import {MatchingError, RemoteSource} from './identifiers.js'
+import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
 import {string} from '@shopify/cli-kit'
 import {difference, partition, pickBy, uniqBy, groupBy} from 'lodash-es'
-import type {LocalSource} from './identifiers'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -111,11 +109,7 @@ export async function automaticMatchmaking(
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,
   remoteIdField: 'id' | 'uuid',
-): Promise<Result<MatchResult, MatchingError>> {
-  if (remoteSources.length > localSources.length) {
-    return err('invalid-environment')
-  }
-
+): Promise<MatchResult> {
   const localUUIDs = Object.values(identifiers)
   const existsRemotely = (local: LocalSource) => {
     return Boolean(
@@ -140,20 +134,10 @@ export async function automaticMatchmaking(
   // LOCAL_PROD_SUBSCR_NAMED_ORANGE -> REMOTE_PROD_SUBSCR_NAMED_LEMON
   const {toConfirm, toCreate, pending} = matchByUniqueType(matchResult.local, matchResult.remote)
 
-  // If we still have remote sources with a type that's missing from the local sources,
-  // or if we have more remote sources than local sources, we return an error
-  const remoteUnmatched = pending.remote.filter(
-    (remote) => !pending.local.map((local) => local.graphQLType).includes(remote.type),
-  )
-  if (remoteUnmatched.length > 0 || pending.remote.length > pending.local.length) {
-    return err('invalid-environment')
-  }
-
-  // At this point, all sources are matched either automatically, manually or are new
-  return ok({
+  return {
     identifiers: {...identifiers, ...matchedByNameAndType},
     toConfirm,
     toCreate,
     toManualMatch: pending,
-  })
+  }
 }
