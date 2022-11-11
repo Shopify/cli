@@ -84,7 +84,7 @@ export default class Dev extends ThemeCommand {
     let controller: abort.Controller = new abort.Controller()
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setInterval(async () => {
+    const refreshThemeSessionInterval = setInterval(async () => {
       output.debug('Refreshing theme session...')
       controller.abort()
       controller = new abort.Controller()
@@ -92,6 +92,7 @@ export default class Dev extends ThemeCommand {
     }, this.ThemeRefreshTimeoutInMinutes * 60 * 1000)
 
     await this.execute(store, command, controller)
+    clearInterval(refreshThemeSessionInterval)
   }
 
   async execute(store: string, command: string[], controller: AbortController) {
