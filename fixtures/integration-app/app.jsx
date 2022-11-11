@@ -1,5 +1,4 @@
-import {authenticatedFetch} from '@shopify/app/api'
 
-const response = await authenticatedFetch("/something")
+import ReactDOM from "react-dom";
 
-console.log(response)
+ReactDOM.render(<div>Hello worldssss</div>, document.getElementById("app"));

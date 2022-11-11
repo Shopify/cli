@@ -92,7 +92,8 @@
     "packages": [
       "packages/*",
       "fixtures/**/*"
-    ]
+    ],
+    "nohoist": ["integration-app/react", "integration-app/react-native", "@shopify/cli-kit/react"]
   },
   "prettier": {
     "arrowParens": "always",

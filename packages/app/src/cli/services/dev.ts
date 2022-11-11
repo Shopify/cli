@@ -149,11 +149,9 @@ async function dev(options: DevOptions) {
 
   const server = express()
   server.use((req, res, next) => {
-    output.info(output.content` 🌍 Requests to ${req.path}`)
-    output.info(output.content`      Headers: ${output.token.json(req.headers)}`)
+    output.debug(output.content` 🌍 Request to ${req.path}`)
     return next()
   })
-  server.use(viteServer.middlewares)
 
   server.use(express.json())
   const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
@@ -179,6 +177,7 @@ async function dev(options: DevOptions) {
   })
 
   addWebhooksMiddleware(server, viteServer, options)
+  server.use(viteServer.middlewares)
   addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
 
   await server.listen(serverPort)
@@ -186,9 +185,9 @@ async function dev(options: DevOptions) {
 
 async function setupVite(options: DevOptions, vitePort: number, serverURL: string) {
   return createServer({
-    // ...userConfig,
     root: options.app.directory,
     server: {
+      middlewareMode: true,
       hmr: {
         path: '/vite/ws',
         port: vitePort,
@@ -198,8 +197,15 @@ async function setupVite(options: DevOptions, vitePort: number, serverURL: strin
       'process.env.SHOPIFY_API_KEY': JSON.stringify(options.apiKey),
     },
     clearScreen: false,
-    logLevel: 'silent',
+    logLevel: 'info',
+    optimizeDeps: {
+      include: ['react', 'react-dom'],
+    },
+    commonjsOptions: {
+      include: [/node_modules/, /react/, /react-dom/],
+    },
     plugins: [
+      react(),
       {
         enforce: 'pre',
         name: 'shopify-app-plugin',
@@ -250,7 +256,6 @@ async function setupVite(options: DevOptions, vitePort: number, serverURL: strin
           }
         },
       },
-      react(),
     ],
     appType: 'custom',
     resolve: {
@@ -363,7 +368,6 @@ function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boole
       </head>
       <body>
         <div id="app"></div>
-        <div>Hello world</div>
         <script type="module" src="./app.jsx"></script>
       </body>
     </html>`
