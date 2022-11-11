@@ -90,6 +90,7 @@ export default class Push extends ThemeCommand {
     'allow-live',
     'publish',
     'stable',
+    'force',
   ]
 
   async run(): Promise<void> {

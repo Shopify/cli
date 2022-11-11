@@ -20,10 +20,16 @@ export default class Share extends ThemeCommand {
     }),
   }
 
+  static cli2Flags = ['force']
+
   async run(): Promise<void> {
     const {flags} = await this.parse(Share)
+
+    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Share.cli2Flags})
+    const command = ['theme', 'push', flags.path, ...flagsToPass]
+
     const store = await getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
-    await execCLI2(['theme', 'share', flags.path], {adminSession})
+    await execCLI2(command, {adminSession})
   }
 }

@@ -46,12 +46,13 @@ export default class Pull extends ThemeCommand {
     force: Flags.boolean({
       hidden: true,
       char: 'f',
-      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      description:
+        'Proceed without confirmation, if current directory is not empty, or does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
   }
 
-  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore']
+  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force']
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Pull)
