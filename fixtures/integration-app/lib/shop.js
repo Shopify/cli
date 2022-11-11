@@ -1,11 +1,11 @@
-import {graphqlRequest} from '@shopify/app/api'
+import {adminGraphQLFetch} from '@shopify/app/api'
 
 export async function getShopName() {
   const {
     data: {
       shop: {name},
     },
-  } = await graphqlRequest(`
+  } = await adminGraphQLFetch(`
     query {
       shop {
         name

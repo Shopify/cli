@@ -2690,10 +2690,25 @@
   dependencies:
     "@shopify/app-bridge" "^2.3.0"
 
+"@shopify/app-bridge-utils@^3.1.0":
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/@shopify/app-bridge-utils/-/app-bridge-utils-3.4.3.tgz#d8cdbc3e7d7d9c5269c379396625484b651ce00c"
+  integrity sha512-3WJW44y4kJ4hRR9SXGJDm/bcuoKJ4d2LSZqU4IBcP3igMIuiubxdUxZJkW0KXBapABcbj6UujQ5m80OVEflI2w==
+  dependencies:
+    "@shopify/app-bridge" "^3.4.3"
+
 "@shopify/app-bridge@^2.0.19", "@shopify/app-bridge@^2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@shopify/app-bridge/-/app-bridge-2.3.0.tgz#894f5351128dd74e9a1f2422436a7eaa84d76a7d"
   integrity sha512-L9N+QRIkuhyOBAI+9SqG7v+6g6I7vvLFeVvKP9nbWVyo1voUGsw2HqDGOyoGIOznJvUs5lYki6KdxBPJKY0foA==
+  dependencies:
+    base64url "^3.0.1"
+    web-vitals "^3.0.1"
+
+"@shopify/app-bridge@^3.1.0", "@shopify/app-bridge@^3.4.3":
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/@shopify/app-bridge/-/app-bridge-3.4.3.tgz#b6442ebecfa1e72a4763afffd0b9f1609bf3d51c"
+  integrity sha512-V8RmcBZSAU0nUxM1ybeKZSMzMpLHGJZnsJSNSxlii/HaaIhAN1X9GEsuFqtGDG5VL89hVidgvUVpbBqrwlnt1Q==
   dependencies:
     base64url "^3.0.1"
     web-vitals "^3.0.1"
@@ -2975,7 +2990,7 @@
     react-transition-group "^4.4.1"
     serve "^12.0.0"
 
-"@shopify/polaris@^9.2.2":
+"@shopify/polaris@^9.11.0", "@shopify/polaris@^9.2.2":
   version "9.24.0"
   resolved "https://registry.yarnpkg.com/@shopify/polaris/-/polaris-9.24.0.tgz#c7a028457f76acac5a40dc9dc6aa2044a4e394c5"
   integrity sha512-7ca3maYnyAmG7kcz7P7s9tW/09nLGT7AQv5E98ekw4aAL7ZWGTV3hAh7n7wo0Cc7RLepkSZgqDI1jdYk99nZGQ==

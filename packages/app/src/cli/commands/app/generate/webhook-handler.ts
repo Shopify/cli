@@ -48,7 +48,7 @@ export default class AppGenerateWebhookHandler extends Command {
     }
     const webhookHandlerPath = path.join(app.webhooksDirectory(), `${options.topic}.js`)
     const code = `import {defineWebhook} from '@shopify/app/webhook'
-import {graphqlRequest} from '@shopify/app/api'
+import {adminGraphQLFetch} from '@shopify/app/api'
 
 export default defineWebhook('${options.topic}', async (payload) => {
     })`

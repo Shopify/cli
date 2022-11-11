@@ -64,6 +64,9 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^2.2.0",
+    "@shopify/app-bridge": "^3.1.0",
+    "@shopify/app-bridge-utils": "^3.1.0",
+    "@shopify/polaris": "^9.11.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.22.1",

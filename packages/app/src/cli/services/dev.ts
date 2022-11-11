@@ -117,7 +117,12 @@ async function dev(options: DevOptions) {
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, devOptions.app)
     outputAppURL(storeFqdn, serverURL)
 
-    const sessionStorage = new Shopify.Session.MemorySessionStorage()
+    const gitignoredShopifyDirectory = path.join(options.app.directory, '.shopify/dev-tokens.sqlite')
+    if (!(await file.exists(path.dirname(gitignoredShopifyDirectory)))) {
+      await file.mkdir(path.dirname(gitignoredShopifyDirectory))
+    }
+
+    const sessionStorage = new Shopify.Session.SQLiteSessionStorage(gitignoredShopifyDirectory)
     Shopify.Context.initialize({
       API_KEY: apiKey,
       API_SECRET_KEY: devOptions.app.apiSecret as string,
@@ -140,14 +145,47 @@ async function dev(options: DevOptions) {
 
   output.info(output.content`${output.token.heading('Logs')}`)
 
-  const viteConfigPath = path.join(options.app.directory, 'vite.config.js')
-  // TODO
-  // let userConfig: any = {}
-  // if (await file.exists(viteConfigPath)) {
-  //   userConfig = (await import(viteConfigPath)).default
-  // }
+  const viteServer = await setupVite(options, vitePort, serverURL)
 
-  const viteServer = await createServer({
+  const server = express()
+  server.use((req, res, next) => {
+    output.info(output.content` 🌍 Requests to ${req.path}`)
+    output.info(output.content`      Headers: ${output.token.json(req.headers)}`)
+    return next()
+  })
+  server.use(viteServer.middlewares)
+
+  server.use(express.json())
+  const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
+  server.use('/vite/ws', wsproxy)
+  // @ts-ignore
+  server.on('upgrade', wsproxy.upgrade)
+  await addDevPanelMiddleware(server, serverURL, options)
+
+  const graphqlAPIURL = `https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json`
+  server.use('/_shopify/api-proxy', async (req, res, next) => {
+    // TODO: - Verify the session token
+    // TODO: - Get the token at runtime
+    output.info(`Verifying session token from client request`)
+    output.info(`Session token valid. Sending request to ${graphqlAPIURL}`)
+    const response = await http.fetch(graphqlAPIURL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+    })
+    return res.status(response.status).end(JSON.stringify(await response.json()))
+  })
+
+  addWebhooksMiddleware(server, viteServer, options)
+  addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
+
+  await server.listen(serverPort)
+}
+
+async function setupVite(options: DevOptions, vitePort: number, serverURL: string) {
+  return createServer({
     // ...userConfig,
     root: options.app.directory,
     server: {
@@ -155,6 +193,9 @@ async function dev(options: DevOptions) {
         path: '/vite/ws',
         port: vitePort,
       },
+    },
+    define: {
+      'process.env.SHOPIFY_API_KEY': JSON.stringify(options.apiKey),
     },
     clearScreen: false,
     logLevel: 'silent',
@@ -176,7 +217,7 @@ async function dev(options: DevOptions) {
         load(id) {
           if (id === `\0@shopify/app/api/server`) {
             return `
-            export async function graphqlRequest(query, variables = {}) {
+            export async function adminGraphQLFetch(query, variables = {}) {
               const authenticationHeaders = { 'X-Shopify-Access-Token': '${options.token}'}
               const url = "https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json";
               return (await fetch(url, {
@@ -193,7 +234,7 @@ async function dev(options: DevOptions) {
             }
             `
           } else if (id === `\0@shopify/app/api/client`) {
-            return `export async function graphqlRequest(query, variables = {}) {
+            return `export async function adminGraphQLFetch(query, variables = {}) {
               const url = "${serverURL}/_shopify/api-proxy";
               return (await fetch(url, {
                 method: 'POST',
@@ -224,35 +265,6 @@ async function dev(options: DevOptions) {
       ],
     },
   })
-
-  const server = express()
-  server.use(viteServer.middlewares)
-
-  server.use(express.json())
-  const wsproxy = createProxyMiddleware(`wss://127.0.0.1:${vitePort}`, {logLevel: 'silent'})
-  server.use('/vite/ws', wsproxy)
-  // @ts-ignore
-  server.on('upgrade', wsproxy.upgrade)
-  await addDevPanelMiddleware(server, serverURL, options)
-
-  const graphqlAPIURL = `https://${options.storeFqdn}/admin/api/${options.app.configuration.api_version}/graphql.json`
-  server.use('/_shopify/api-proxy', async (req, res, next) => {
-    output.info(`Verifying session token from client request`)
-    output.info(`Session token valid. Sending request to ${graphqlAPIURL}`)
-    const response = await http.fetch(graphqlAPIURL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(req.body),
-    })
-    return res.status(response.status).end(JSON.stringify(await response.json()))
-  })
-
-  addWebhooksMiddleware(server, viteServer, options)
-  addAuthMiddleware(server, serverURL, isEmbedded, viteServer)
-
-  await server.listen(serverPort)
 }
 
 function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boolean, viteServer: ViteDevServer) {

@@ -1,11 +1,5 @@
-import {graphqlRequest} from '@shopify/app/api'
+import {authenticatedFetch} from '@shopify/app/api'
 
-const response = await graphqlRequest(`
-  query {
-    shop {
-      name
-    }
-  }
-`)
+const response = await authenticatedFetch("/something")
 
 console.log(response)

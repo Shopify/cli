@@ -1,4 +1,4 @@
 import {defineWebhook} from '@shopify/app/webhook'
-import {graphqlRequest} from '@shopify/app/api'
+import {adminGraphQLFetch} from '@shopify/app/api'
 
 export default defineWebhook('products/update', async (payload) => {})
