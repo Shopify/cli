@@ -8,7 +8,6 @@
  app info               @shopify/app           
  auth logout            @shopify/cli           
  commands               @oclif/plugin-commands 
- event trigger          @shopify/app           
  help                   @oclif/plugin-help     
  hydrogen add eslint    @shopify/cli-hydrogen  
  hydrogen add tailwind  @shopify/cli-hydrogen  
