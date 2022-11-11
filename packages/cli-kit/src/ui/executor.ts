@@ -38,7 +38,7 @@ export function mapper(question: Question): unknown {
         source: getAutocompleteFilterType(),
         choices: question.choices ? groupAndMapChoices(question.choices) : undefined,
       }
-    case 'autocomplete':
+    case 'autocomplete': {
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
       const filterType = getAutocompleteFilterType()
       return {
@@ -46,6 +46,7 @@ export function mapper(question: Question): unknown {
         type: 'autocomplete',
         source: question.source ? question.source(filterType) : filterType,
       }
+    }
   }
 }
 

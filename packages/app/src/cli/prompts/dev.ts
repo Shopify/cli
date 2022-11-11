@@ -19,7 +19,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 }
 
 export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
-  const appsByApiKey: {[apiKey: string]: MinimalOrganizationApp} = Object.fromEntries(apps.map((app) => [app.apiKey, app]))
+  const appsByApiKey: {[apiKey: string]: MinimalOrganizationApp} = {}
   const addToApiKeyCache = (apps: MinimalOrganizationApp[]) => apps.forEach((app) => appsByApiKey[app.apiKey] = app)
   addToApiKeyCache(apps)
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
@@ -40,6 +40,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
    * action.
    */
   let cachedResults: {[input: string]: MinimalOrganizationApp[]} = {'': apps}
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const fetchInterval = setInterval(async () => {
     let input: string | undefined
     do {
@@ -48,6 +49,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
     } while (cachedResults[input])
     const result = await fetchOrgAndApps(orgId, token, input)
     addToApiKeyCache(result.apps)
+    // eslint-disable-next-line require-atomic-updates
     cachedResults[input] = result.apps
   }, 1000)
 
@@ -71,10 +73,14 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
           latestRequest = input
           allInputs.push(input)
           // Await the event loop returning a result
-          while (!cachedResults[input]) { await system.sleep(0.2) }
+          while (!cachedResults[input]) {
+            // eslint-disable-next-line no-await-in-loop
+            await system.sleep(0.2)
+          }
 
           // Cache the answerified results to avoid race conditions
           if (!cachedFiltered[input]) {
+            // eslint-disable-next-line require-atomic-updates
             cachedFiltered[input] = await filterFunction(cachedResults[input]!.map(toAnswer), input)
           }
 
@@ -86,7 +92,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
            */
           return cachedFiltered[latestRequest] || cachedFiltered[input]!
         }
-      }
+      },
     },
   ])
   clearInterval(fetchInterval)
