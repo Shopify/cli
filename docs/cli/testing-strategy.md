@@ -40,12 +40,10 @@ yarn test path/to/my.test.ts
 If the subject under testing does a filesystem I/O operation, we recommend not stubbing that behavior instead of hitting the filesystem. Create a temporary directory whose lifecycle is tied to the lifecycle of the test:
 
 ```ts
-import {temporary} from "@shopify/cli-testing"
-import {file} from "@shopify/cli-kit"
-import {path} from "@shopify/cli-kit"
+import {file, path} from "@shopify/cli-kit"
 
 it("writes", async () => {
-  await temporary.directory(async (tmpDir) => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
     // Given
     const outputPath = path.join(tmpDir, "output")
 

@@ -13,6 +13,8 @@ const WebPixelSchema = BaseExtensionSchema.extend({
 
 const spec = createExtensionSpec({
   identifier: 'web_pixel_extension',
+  externalIdentifier: 'web_pixel',
+  surface: 'unknown',
   dependency,
   partnersWebId: 'web_pixel',
   schema: WebPixelSchema,
@@ -22,7 +24,7 @@ const spec = createExtensionSpec({
       runtime_configuration_definition: config.settings,
     }
   },
-  previewMessage: () => '',
+  previewMessage: () => undefined,
 })
 
 export default spec

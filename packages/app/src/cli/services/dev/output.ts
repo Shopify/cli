@@ -1,7 +1,7 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
-import {ExtensionTypes, getExtensionOutputConfig, UIExtensionTypes} from '../../constants.js'
+import {ExtensionTypes, getExtensionOutputConfig} from '../../constants.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {output, string, environment} from '@shopify/cli-kit'
 
@@ -59,7 +59,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
   for (const extension of extensions) {
     const heading = output.token.heading(`${extension.configuration.name} (${getHumanKey(extension.type)})`)
     let message: string
-    switch (extension.type as UIExtensionTypes) {
+    switch (extension.type) {
       case 'checkout_post_purchase': {
         message = postPurchaseMessage(url, extension).value
         break
@@ -76,8 +76,7 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         message = productSubscriptionMessage(url, extension).value
         break
       }
-      case 'pos_ui_extension':
-      case 'web_pixel_extension':
+      default:
         continue
     }
     output.info(output.content`${heading}\n${message}\n`)

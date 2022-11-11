@@ -12,13 +12,10 @@ export function getUIExtensionResourceURL(
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
       return {url: options.checkoutCartUrl}
-    case 'checkout_post_purchase':
-    case 'pos_ui_extension':
-    case 'web_pixel_extension':
-    case 'customer_accounts_ui_extension':
-      return {url: ''}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
+    default:
+      return {url: ''}
   }
 }
 

@@ -1,13 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
-import {
-  configurationFileNames,
-  ExtensionTypes,
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
-} from '../constants.js'
+import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
 import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -123,9 +117,7 @@ class AppInfo {
         })
         if (relevantExtensions[0]) {
           body += `\n\n${
-            output.content`${output.token.subheading(
-              mapExtensionTypeToExternalExtensionType(extensionType as ExtensionTypes),
-            )}`.value
+            output.content`${output.token.subheading(mapExtensionTypeToExternalExtensionType(extensionType))}`.value
           }`
           relevantExtensions.forEach((extension: TExtension) => {
             body += `${outputFormatter(extension)}`
