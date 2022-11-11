@@ -31,7 +31,6 @@ import {Writable} from 'node:stream'
 import {createRequire} from 'node:module'
 
 const require = createRequire(import.meta.url)
-const virtual = require('vite-plugin-virtual')
 
 const AppInstallations = {
   async includes(shopDomain: string | undefined) {
@@ -145,7 +144,7 @@ async function dev(options: DevOptions) {
 
   output.info(output.content`${output.token.heading('Logs')}`)
 
-  const viteServer = await setupVite(options, vitePort, serverURL)
+  const viteServer = await setupVite(options, vitePort, serverURL, apiKey)
 
   const server = express()
   server.use((req, res, next) => {
@@ -183,7 +182,7 @@ async function dev(options: DevOptions) {
   await server.listen(serverPort)
 }
 
-async function setupVite(options: DevOptions, vitePort: number, serverURL: string) {
+async function setupVite(options: DevOptions, vitePort: number, serverURL: string, apiKey: string | undefined) {
   return createServer({
     root: options.app.directory,
     server: {
@@ -195,6 +194,7 @@ async function setupVite(options: DevOptions, vitePort: number, serverURL: strin
     },
     define: {
       'process.env.SHOPIFY_API_KEY': JSON.stringify(options.apiKey),
+      'process.env.APP_DIRECTORY': JSON.stringify(options.app.directory),
     },
     clearScreen: false,
     logLevel: 'info',
@@ -218,6 +218,8 @@ async function setupVite(options: DevOptions, vitePort: number, serverURL: strin
             } else {
               return `\0@shopify/app/api/server`
             }
+          } else if (id === '@shopify/app/internal') {
+            return `\0@shopify/app/internal`
           }
         },
         load(id) {
@@ -253,6 +255,12 @@ async function setupVite(options: DevOptions, vitePort: number, serverURL: strin
                 }),
               })).json()
             }`
+          } else if (id === `\0@shopify/app/internal`) {
+            return `
+            export function getApiKey() {
+              return "${apiKey}"
+            }
+            `
           }
         },
       },
@@ -365,6 +373,16 @@ function addAuthMiddleware(server: Express, serverURL: string, isEmbedded: boole
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Vite App</title>
+        <script type="module">
+          if (!import.meta.env || !import.meta.env.PROD) {
+            // Because the base HTML is rendered in the server side, we need to manually embed the code to enable HMR in our
+            // code, so that the vite server is properly enabled to run HMR
+            const script = document.createElement('script');
+            script.setAttribute('type', "module");
+            script.setAttribute('src', "./dev_embed.js");
+            document.getElementsByTagName('head')[0].append(script);
+          }
+        </script>
       </head>
       <body>
         <div id="app"></div>

@@ -2683,6 +2683,13 @@
   dependencies:
     "@shopify/app-bridge" "^2.3.0"
 
+"@shopify/app-bridge-react@^3.4.3":
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/@shopify/app-bridge-react/-/app-bridge-react-3.4.3.tgz#a264d9b268d2d46ca66500c6a745aa1f1b6722ae"
+  integrity sha512-vkgaevd3AnGuUVqBBbTPYHyLUd/3+XwVmth+RO8FnvXlSGhFdIjImnsXJ4mkIdXFaXVqSs1G3WkIbup2tyaH3w==
+  dependencies:
+    "@shopify/app-bridge" "^3.4.3"
+
 "@shopify/app-bridge-utils@^2.0.19":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@shopify/app-bridge-utils/-/app-bridge-utils-2.3.0.tgz#e5defb1fecaa151c453e8c56ddb9c256eccbbf9d"
@@ -11521,7 +11528,7 @@ react-is@^18.0.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.2.0.tgz#199431eeaaa2e09f86427efbb4f1473edb47609b"
   integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
 
-react-query@^3.34.19:
+react-query@^3.34.19, react-query@^3.39.2:
   version "3.39.2"
   resolved "https://registry.yarnpkg.com/react-query/-/react-query-3.39.2.tgz#9224140f0296f01e9664b78ed6e4f69a0cc9216f"
   integrity sha512-F6hYDKyNgDQfQOuR1Rsp3VRzJnWHx6aRnnIZHMNGGgbL3SBgpZTDg8MQwmxOgpCAoqZJA+JSNCydF1xGJqKOCA==
@@ -11559,7 +11566,7 @@ react-refresh@^0.14.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.14.0.tgz#4e02825378a5f227079554d4284889354e5f553e"
   integrity sha512-wViHqhAd8OHeLS/IRMJjTSDHF3U9eWi62F/MledQGPdJGDhodXJ9PBLNGr6WWL7qlH12Mt3TyTpbS+hGXMjCzQ==
 
-react-router-dom@^6.3.0:
+react-router-dom@^6.3.0, react-router-dom@^6.4.3:
   version "6.4.3"
   resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-6.4.3.tgz#70093b5f65f85f1df9e5d4182eb7ff3a08299275"
   integrity sha512-MiaYQU8CwVCaOfJdYvt84KQNjT78VF0TJrA17SIQgNHRvLnXDJO6qsFqq8F/zzB1BWZjCFIrQpu4QxcshitziQ==

@@ -14,6 +14,10 @@
     "/templates"
   ],
   "exports": {
+    ".": {
+      "import": "./dist/public/index.js",
+      "types": "./dist/public/index.d.ts"
+    },
     "./*": {
       "import": "./dist/public/*.js",
       "types": "./dist/public/*.d.ts"
@@ -63,15 +67,16 @@
     "vitest": "^0.22.1"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^2.2.0",
-    "@shopify/app-bridge": "^3.1.0",
-    "@shopify/app-bridge-utils": "^3.1.0",
-    "@shopify/polaris": "^9.11.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "1.9.2",
+    "@shopify/app-bridge": "^3.1.0",
+    "@shopify/app-bridge-react": "^3.4.3",
+    "@shopify/app-bridge-utils": "^3.1.0",
     "@shopify/cli-kit": "3.22.1",
+    "@shopify/polaris": "^9.11.0",
     "@shopify/shopify-api": "^5.2.0",
     "@shopify/shopify-cli-extensions": "3.21.0",
+    "@vitejs/plugin-react": "^2.2.0",
     "abort-controller": "^3.0.0",
     "chokidar": "3.5.3",
     "diff": "^5.1.0",
@@ -86,6 +91,8 @@
     "nodemon": "^2.0.15",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-query": "^3.39.2",
+    "react-router-dom": "^6.4.3",
     "serve-static": "1.15.0",
     "vite": "^3.2.3",
     "vite-plugin-virtual": "^0.1.1",
