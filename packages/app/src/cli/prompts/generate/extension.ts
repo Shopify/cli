@@ -14,11 +14,11 @@ import {fetchAppAndIdentifiers} from '../../services/environment.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ui, environment, session} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {RemoteSpecification} from '@shopify/cli-kit/src/api/graphql'
 
 interface GenerateExtensionOptions {
   name?: string
   extensionType?: string
-  extensionTypesAlreadyAtQuota: string[]
   extensionFlavor?: string
   directory: string
   app: AppInterface
@@ -46,6 +46,28 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
     choices,
     default: 'react',
   }
+}
+
+export function buildChoices(extensionTypes: Pick<RemoteSpecification, 'identifier' | 'externalName'>[]) {
+  return extensionTypes
+    .map((type) => {
+      const choiceWithoutGroup = {
+        name: type.externalName,
+        value: type.identifier,
+      }
+      const group = extensionTypesGroups.find((group) => includes(group.extensions, type.identifier))
+      if (group) {
+        return {
+          ...choiceWithoutGroup,
+          group: {
+            name: group.name,
+            order: extensionTypesGroups.indexOf(group),
+          },
+        }
+      }
+      return choiceWithoutGroup
+    })
+    .sort((c1, c2) => c1.name.localeCompare(c2.name))
 }
 
 const generateExtensionPrompt = async (
@@ -89,25 +111,7 @@ const generateExtensionPrompt = async (
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: relevantExtensionTypes
-        .map((type) => {
-          const choiceWithoutGroup = {
-            name: type.externalName,
-            value: type.identifier,
-          }
-          const group = extensionTypesGroups.find((group) => includes(group.extensions, type.identifier))
-          if (group) {
-            return {
-              ...choiceWithoutGroup,
-              group: {
-                name: group.name,
-                order: extensionTypesGroups.indexOf(group),
-              },
-            }
-          }
-          return choiceWithoutGroup
-        })
-        .sort((c1, c2) => c1.name.localeCompare(c2.name)),
+      choices: buildChoices(relevantExtensionTypes),
     })
   }
   if (!options.name) {

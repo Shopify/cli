@@ -96,7 +96,6 @@ export default class AppScaffoldExtension extends Command {
 
     const promptAnswers = await generateExtensionPrompt({
       extensionType: flags.type,
-      extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
       extensionFlavor: flags.template,
       directory: path.join(directory, 'extensions'),
