@@ -4,7 +4,7 @@ import {eventTriggerService} from '../../services/event/trigger.js'
 import {deliveryMethodInstructions} from '../../prompts/event/trigger.js'
 import {Command, Flags} from '@oclif/core'
 
-export default class TopicTesting extends Command {
+export default class EventTrigger extends Command {
   static hidden = true
   static description = 'Trigger delivery of a sample event topic payload to a designated address'
 
@@ -53,7 +53,7 @@ export default class TopicTesting extends Command {
   }
 
   public async run() {
-    const {flags} = await this.parse(TopicTesting)
+    const {flags} = await this.parse(EventTrigger)
 
     const usedFlags: EventTriggerFlags = {
       topic: flags.topic,
