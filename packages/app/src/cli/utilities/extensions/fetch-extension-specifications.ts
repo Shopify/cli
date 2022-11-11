@@ -5,9 +5,13 @@ import {api} from '@shopify/cli-kit'
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchExtensionSpecifications(token: string) {
+export async function fetchExtensionSpecifications(token: string, apiKey: string) {
   const query = api.graphql.ExtensionSpecificationsQuery
-  const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token)
+  const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.functionProxyRequest(
+    apiKey,
+    query,
+    token,
+  )
   const extensionSpecifications = result.extensionSpecifications.filter(
     (specification) => specification.options.managementExperience === 'cli',
   )

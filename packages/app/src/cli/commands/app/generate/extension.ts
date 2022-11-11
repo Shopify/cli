@@ -62,6 +62,12 @@ export default class AppScaffoldExtension extends Command {
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
+    reset: Flags.boolean({
+      hidden: false,
+      description: 'Reset all your settings.',
+      env: 'SHOPIFY_FLAG_RESET',
+      default: false,
+    }),
   }
 
   static args = [{name: 'file'}]
@@ -94,6 +100,8 @@ export default class AppScaffoldExtension extends Command {
       name: flags.name,
       extensionFlavor: flags.template,
       directory: path.join(directory, 'extensions'),
+      app,
+      reset: flags.reset,
     })
 
     const {extensionType, extensionFlavor} = promptAnswers

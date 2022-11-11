@@ -1,14 +1,18 @@
 import {
-  extensions,
   ExtensionTypes,
-  getExtensionOutputConfig,
   isUiExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
   extensionTypesGroups,
+  functionExtensions,
+  publicFunctionExtensions,
+  getExtensionOutputConfig,
 } from '../../constants.js'
 import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
-import {ui, environment} from '@shopify/cli-kit'
+import {fetchExtensionSpecifications} from '../../utilities/extensions/fetch-extension-specifications.js'
+import {fetchAppAndIdentifiers} from '../../services/environment.js'
+import {AppInterface} from '../../models/app/app.js'
+import {ui, environment, session} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 interface GenerateExtensionOptions {
@@ -17,6 +21,8 @@ interface GenerateExtensionOptions {
   extensionTypesAlreadyAtQuota: string[]
   extensionFlavor?: string
   directory: string
+  app: AppInterface
+  reset: boolean
 }
 
 interface GenerateExtensionOutput {
@@ -48,16 +54,37 @@ const generateExtensionPrompt = async (
 ): Promise<GenerateExtensionOutput> => {
   const questions: ui.Question<'name' | 'extensionType'>[] = []
   const isShopify = await environment.local.isShopify()
-  const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
+  const token = await session.ensureAuthenticatedPartners()
+  const [_partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const extensionSpecifications = await fetchExtensionSpecifications(token, envIdentifiers.app!)
+  const supportedFunctionExtensions = isShopify ? functionExtensions.types : publicFunctionExtensions.types
+
+  const supportedExtensions = [
+    ...extensionSpecifications,
+    ...supportedFunctionExtensions.map((extension) => {
+      return {
+        identifier: extension,
+        externalName: getExtensionOutputConfig(extension).humanKey,
+        options: {
+          registrationLimit: 1,
+        },
+      }
+    }),
+  ]
+  const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
+
   if (!options.extensionType) {
-    let relevantExtensionTypes = supportedExtensions.filter(
-      (type) => !options.extensionTypesAlreadyAtQuota.includes(type),
-    )
+    let relevantExtensionTypes = supportedExtensions.filter((specification) => {
+      const localExtensionForType = localExtensions.filter((extension) => extension.type === specification.identifier)
+      return localExtensionForType.length < specification.options.registrationLimit
+    })
+
     if (options.extensionFlavor) {
       relevantExtensionTypes = relevantExtensionTypes.filter((relevantExtensionType) =>
-        isValidUIExtensionTemplate(relevantExtensionType, options.extensionFlavor),
+        isValidUIExtensionTemplate(relevantExtensionType.identifier, options.extensionFlavor),
       )
     }
+
     questions.push({
       type: 'select',
       name: 'extensionType',
@@ -65,10 +92,10 @@ const generateExtensionPrompt = async (
       choices: relevantExtensionTypes
         .map((type) => {
           const choiceWithoutGroup = {
-            name: getExtensionOutputConfig(type).humanKey,
-            value: type,
+            name: type.externalName,
+            value: type.identifier,
           }
-          const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
+          const group = extensionTypesGroups.find((group) => includes(group.extensions, type.identifier))
           if (group) {
             return {
               ...choiceWithoutGroup,

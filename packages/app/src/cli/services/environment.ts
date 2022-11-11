@@ -294,7 +294,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
   return {orgId, partnersApp}
 }
 
-async function fetchAppAndIdentifiers(
+export async function fetchAppAndIdentifiers(
   options: {app: AppInterface; reset: boolean; packageManager?: PackageManager; apiKey?: string},
   token: string,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
