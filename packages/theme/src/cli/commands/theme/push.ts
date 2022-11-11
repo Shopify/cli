@@ -70,6 +70,12 @@ export default class Push extends ThemeCommand {
         'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
 
   async run(): Promise<void> {
