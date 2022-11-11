@@ -18,7 +18,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   identifier: string
   externalIdentifier: string
   externalName: string
-  partnersWebId: string
+  partnersWebIdentifier: string
   surface: string
   showInCLIHelp: boolean
   dependency?: {name: string; version: string}
@@ -96,25 +96,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.surface
   }
 
-  constructor(
-    configuration: TConfiguration,
-    configuationPath: string,
-    entryPath: string,
-    directory: string,
-    specification: ExtensionSpec,
-    remoteSpecification?: api.graphql.RemoteSpecification,
-    extensionPointSpecs?: ExtensionPointSpec[],
-  ) {
-    this.configuration = configuration
-    this.configurationPath = configuationPath
-    this.entrySourceFilePath = entryPath
-    this.directory = directory
-    this.specification = specification
-    this.remoteSpecification = remoteSpecification
-    this.extensionPointSpecs = extensionPointSpecs
-    this.outputBundlePath = path.join(directory, 'dist/main.js')
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    entryPath: string
+    directory: string
+    specification: ExtensionSpec
+    remoteSpecification?: api.graphql.RemoteSpecification
+    extensionPointSpecs?: ExtensionPointSpec[]
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.entrySourceFilePath = options.entryPath
+    this.directory = options.directory
+    this.specification = options.specification
+    this.remoteSpecification = options.remoteSpecification
+    this.extensionPointSpecs = options.extensionPointSpecs
+    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.localIdentifier = path.basename(directory)
+    this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
@@ -152,7 +152,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = this.specification.partnersWebId
+    const parnersPath = this.specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
@@ -190,7 +190,7 @@ function remoteSpecForType(type: string): api.graphql.RemoteSpecification | unde
 export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
   identifier: string
   externalIdentifier: string
-  partnersWebId: string
+  partnersWebIdentifier: string
   surface: string
   externalName: string
   showInCLIHelp?: boolean

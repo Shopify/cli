@@ -8,7 +8,7 @@ const spec = createExtensionSpec({
   externalName: 'Theme app extension',
   surface: 'unknown',
   graphQLType: 'theme_app_extension',
-  partnersWebId: 'theme_app_extension',
+  partnersWebIdentifier: 'theme_app_extension',
   schema: BaseExtensionSchema,
   previewMessage(_) {
     const link = output.token.link(

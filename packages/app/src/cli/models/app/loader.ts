@@ -240,20 +240,20 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const spec = await specForType(type)
+      const specification = await specForType(type)
 
-      if (!spec) {
+      if (!specification) {
         this.abortOrReport(
           output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
             configurationPath,
-          )}`,
+          )}.`,
           undefined,
           configurationPath,
         )
         return undefined
       }
 
-      const configuration = await this.parseConfigurationFile(spec.schema, configurationPath)
+      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
       const entrySourceFilePath = (
         await Promise.all(
@@ -274,15 +274,15 @@ class AppLoader {
         )
       }
 
-      return new ExtensionInstance(
+      return new ExtensionInstance({
         configuration,
         configurationPath,
-        entrySourceFilePath ?? '',
+        entryPath: entrySourceFilePath ?? '',
         directory,
-        spec,
-        undefined,
-        undefined,
-      )
+        specification,
+        remoteSpecification: undefined,
+        extensionPointSpecs: undefined,
+      })
     })
 
     const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
@@ -302,8 +302,8 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const spec = await functionSpecForType(type)
-      if (!spec) {
+      const specification = await functionSpecForType(type)
+      if (!specification) {
         this.abortOrReport(
           output.content`Unknown function type ${output.token.yellow(type)} in ${output.token.path(configurationPath)}`,
           undefined,
@@ -312,14 +312,14 @@ class AppLoader {
         return undefined
       }
 
-      const configuration = await this.parseConfigurationFile(spec.configSchema, configurationPath)
+      const configuration = await this.parseConfigurationFile(specification.configSchema, configurationPath)
       const metadata = await this.parseConfigurationFile(
-        spec.metadataSchema,
+        specification.metadataSchema,
         path.join(directory, 'metadata.json'),
         JSON.parse,
       )
 
-      return new FunctionInstance(configuration, configurationPath, metadata, spec, directory)
+      return new FunctionInstance({configuration, configurationPath, metadata, specification, directory})
     })
     const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
     return {functions, usedCustomLayout: extensionDirectories !== undefined}
@@ -338,9 +338,9 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const spec = await specForType(type)
+      const specification = await specForType(type)
 
-      if (!spec) {
+      if (!specification) {
         this.abortOrReport(
           output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
             configurationPath,
@@ -351,9 +351,17 @@ class AppLoader {
         return undefined
       }
 
-      const configuration = await this.parseConfigurationFile(spec.schema, configurationPath)
+      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
-      return new ExtensionInstance(configuration, configurationPath, '', directory, spec, undefined, undefined)
+      return new ExtensionInstance({
+        configuration,
+        configurationPath,
+        entryPath: '',
+        directory,
+        specification,
+        remoteSpecification: undefined,
+        extensionPointSpecs: undefined,
+      })
     })
 
     const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))

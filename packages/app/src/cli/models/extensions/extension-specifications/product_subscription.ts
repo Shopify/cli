@@ -12,7 +12,7 @@ const spec = createExtensionSpec({
   surface: 'admin',
   dependency,
   graphQLType: 'subscription_management',
-  partnersWebId: 'product_subscription',
+  partnersWebIdentifier: 'product_subscription',
   schema: BaseExtensionSchema,
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency.name, directory)

@@ -15,7 +15,7 @@ const spec = createExtensionSpec({
   externalName: 'Customer accounts UI',
   surface: 'customer_accounts',
   dependency,
-  partnersWebId: 'customer_accounts_ui_extension',
+  partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
   deployConfig: async (config, directory) => {
     return {

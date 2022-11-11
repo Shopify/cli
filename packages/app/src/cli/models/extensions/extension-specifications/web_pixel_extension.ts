@@ -17,7 +17,7 @@ const spec = createExtensionSpec({
   externalName: 'Web pixel',
   surface: 'unknown',
   dependency,
-  partnersWebId: 'web_pixel',
+  partnersWebIdentifier: 'web_pixel',
   schema: WebPixelSchema,
   deployConfig: async (config, _) => {
     return {

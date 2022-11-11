@@ -50,19 +50,19 @@ export class FunctionInstance<
 
   private specification: FunctionSpec<TConfiguration>
 
-  constructor(
-    configuration: TConfiguration,
-    configurationPath: string,
-    metadata: TMetadata,
-    specification: FunctionSpec<TConfiguration>,
-    directory: string,
-  ) {
-    this.configuration = configuration
-    this.configurationPath = configurationPath
-    this.metadata = metadata
-    this.specification = specification
-    this.directory = directory
-    this.localIdentifier = path.basename(directory)
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    metadata: TMetadata
+    specification: FunctionSpec<TConfiguration>
+    directory: string
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.metadata = options.metadata
+    this.specification = options.specification
+    this.directory = options.directory
+    this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 

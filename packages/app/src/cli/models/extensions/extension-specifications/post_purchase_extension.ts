@@ -10,7 +10,7 @@ const spec = createExtensionSpec({
   externalName: 'Post-purchase UI',
   surface: 'post_purchase',
   dependency,
-  partnersWebId: 'post_purchase',
+  partnersWebIdentifier: 'post_purchase',
   schema: BaseExtensionSchema,
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}

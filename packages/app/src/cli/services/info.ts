@@ -169,7 +169,7 @@ class AppInfo {
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    if (config && config.metafields.length) {
+    if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
 

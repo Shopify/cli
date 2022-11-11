@@ -44,17 +44,17 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const spec = await specForType(configuration.type)
+  const specification = await specForType(configuration.type)
 
-  const extension = new ExtensionInstance(
+  const extension = new ExtensionInstance({
     configuration,
     configurationPath,
-    entrySourceFilePath,
+    entryPath: entrySourceFilePath,
     directory,
-    spec!,
-    undefined,
-    undefined,
-  )
+    specification: specification!,
+    remoteSpecification: undefined,
+    extensionPointSpecs: undefined,
+  })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
   return extension
 }
@@ -66,8 +66,16 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     metafields: [],
   }
 
-  const spec = await specForType(configuration.type)
-  return new ExtensionInstance(configuration, '', '', './my-extension', spec!, undefined, undefined)
+  const specification = await specForType(configuration.type)
+  return new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    entryPath: '',
+    directory: './my-extension',
+    specification: specification!,
+    remoteSpecification: undefined,
+    extensionPointSpecs: undefined,
+  })
 }
 
 export async function testFunctionExtension(): Promise<FunctionExtension> {
@@ -82,6 +90,12 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     configurationUi: true,
   }
 
-  const spec = await functionSpecForType(configuration.type)
-  return new FunctionInstance(configuration, '', {schemaVersions: {}}, spec!, './my-extension')
+  const specification = await functionSpecForType(configuration.type)
+  return new FunctionInstance({
+    configuration,
+    configurationPath: '',
+    metadata: {schemaVersions: {}},
+    specification: specification!,
+    directory: './my-extension',
+  })
 }

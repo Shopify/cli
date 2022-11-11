@@ -16,7 +16,7 @@ const spec = createExtensionSpec({
   externalName: 'Checkout UI',
   surface: 'checkout',
   dependency,
-  partnersWebId: 'checkout_ui_extension',
+  partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
   deployConfig: async (config, directory) => {
     return {
