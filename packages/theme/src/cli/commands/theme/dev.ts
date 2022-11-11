@@ -71,7 +71,7 @@ export default class Dev extends ThemeCommand {
   }
 
   // Tokens are valid for 120m, better to be safe and refresh every 90min
-  ThemeRefreshTimeouInMinutes = 90
+  ThemeRefreshTimeoutInMinutes = 90
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
@@ -89,7 +89,7 @@ export default class Dev extends ThemeCommand {
       controller.abort()
       controller = new abort.Controller()
       await this.execute(store, command, controller)
-    }, this.ThemeRefreshTimeouInMinutes * 60 * 1000)
+    }, this.ThemeRefreshTimeoutInMinutes * 60 * 1000)
 
     await this.execute(store, command, controller)
   }
