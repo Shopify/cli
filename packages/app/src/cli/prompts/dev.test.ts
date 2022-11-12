@@ -116,7 +116,7 @@ describe('selectApp', () => {
           {name: 'app1', value: 'key1'},
           {name: 'app2', value: 'key2'},
         ],
-        validate: expect.any(Function),
+        source: expect.any(Function),
       },
     ])
   })
