@@ -1,6 +1,6 @@
 export * from './all_app_extension_registrations.js'
 export * from './all_orgs.js'
-export * from './all_stores_by_org.js'
+export * from './all_dev_stores_by_org.js'
 export * from './convert_dev_to_test_store.js'
 export * from './create_app.js'
 export * from './create_deployment.js'

@@ -228,7 +228,7 @@ describe('renderFatalError', async () => {
 })
 
 describe('renderConcurrent', async () => {
-  test('renders a stream of concurrent outputs from sub-processes', async () => {
+  test.skip('renders a stream of concurrent outputs from sub-processes', async () => {
     // When
     const {stdout} = await run('render-concurrent')
     const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
