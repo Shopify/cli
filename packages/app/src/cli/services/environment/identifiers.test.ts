@@ -44,7 +44,7 @@ const EXTENSION_A: UIExtension = {
     capabilities: {network_access: false, block_progress: false},
   },
   outputBundlePath: '',
-  entrySourceFilePaths: [''],
+  entrySourceFilePath: '',
   devUUID: 'devUUID',
 }
 
@@ -62,7 +62,7 @@ const EXTENSION_A_2: UIExtension = {
     capabilities: {network_access: false, block_progress: false},
   },
   outputBundlePath: '',
-  entrySourceFilePaths: [''],
+  entrySourceFilePath: '',
   devUUID: 'devUUID',
 }
 

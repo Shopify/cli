@@ -112,7 +112,7 @@ export type ThemeExtension = Extension & {
 
 export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
-  entrySourceFilePaths: string[]
+  entrySourceFilePath?: string
   outputBundlePath: string
   devUUID: string
 }
@@ -121,3 +121,4 @@ type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurat
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
+export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>

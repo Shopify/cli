@@ -12,7 +12,7 @@ async function testBundlerAndFileWatcher() {
         {
           devUUID: '1',
           outputBundlePath: 'output/bundle/path/1',
-          entrySourceFilePaths: ['source/file/path/1'],
+          entrySourceFilePath: 'source/file/path/1',
           directory: 'directory/1/',
           configuration: {
             name: 'name 1',
@@ -21,7 +21,7 @@ async function testBundlerAndFileWatcher() {
         {
           devUUID: '2',
           outputBundlePath: 'output/bundle/path/2',
-          entrySourceFilePaths: ['source/file/path/2'],
+          entrySourceFilePath: 'source/file/path/2',
           directory: 'directory/2/',
           configuration: {
             name: 'name 2',
