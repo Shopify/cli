@@ -97,6 +97,7 @@ export type FunctionExtension = Extension & {
 
 export type ThemeExtension = Extension & {
   configuration: ThemeExtensionConfiguration
+  outputBundlePath: string
 }
 
 export type UIExtension = Extension & {

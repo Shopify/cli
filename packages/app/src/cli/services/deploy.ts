@@ -16,6 +16,7 @@ import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExte
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
+import { themeExtensionConfig as generateThemeExtensionConfig} from './deploy/theme-extension-config.js'
 import {path, output, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
@@ -54,6 +55,18 @@ export const deploy = async (options: DeployOptions) => {
       }
     }),
   )
+  if (environment.local.useThemeBundling()) {
+    const themeExtensions = await Promise.all(
+      options.app.extensions.theme.map(async (extension) => {
+        return {
+          uuid: identifiers.extensions[extension.localIdentifier]!,
+          config: JSON.stringify(await generateThemeExtensionConfig(extension)),
+          context: '',
+        }
+      })
+    )
+    extensions.push(...themeExtensions)
+  }
 
   await file.inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -80,7 +93,9 @@ export const deploy = async (options: DeployOptions) => {
         validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
 
-      await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
+      if (!environment.local.useThemeBundling()) {
+        await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
+      }
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 

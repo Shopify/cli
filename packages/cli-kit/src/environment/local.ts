@@ -91,6 +91,10 @@ export function useFunctionMatching(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.functionMatching])
 }
 
+export function useThemeBundling(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.themeBundling])
+}
+
 // https://www.gitpod.io/docs/environment-variables#default-environment-variables
 export function gitpodURL(env = process.env): string | undefined {
   return env[constants.environmentVariables.gitpod]

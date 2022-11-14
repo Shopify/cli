@@ -26,7 +26,17 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
           action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
             await buildThemeExtensions({
               app: options.app,
-              extensions: options.app.extensions.theme,
+              extensions: options.app.extensions.theme.map((themeExtension) => {
+                const extensionId = options.identifiers.extensions[themeExtension.localIdentifier]!
+                const mappedThemeExtension: typeof themeExtension = {
+                  ...themeExtension,
+                  outputBundlePath: path.join(
+                    bundleDirectory,
+                    extensionId
+                  ),
+                }
+                return mappedThemeExtension
+              }),
               stdout,
               stderr,
               signal,
