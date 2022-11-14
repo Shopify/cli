@@ -1,11 +1,11 @@
 import {gql} from 'graphql-request'
 
-export const AllStoresByOrganizationQuery = gql`
+export const AllDevStoresByOrganizationQuery = gql`
   query FindOrganization($id: ID!) {
     organizations(id: $id, first: 1) {
       nodes {
         id
-        stores(first: 500, archived: false) {
+        stores(first: 500, archived: false, type: DEVELOPMENT) {
           nodes {
             shopId
             link
@@ -20,7 +20,7 @@ export const AllStoresByOrganizationQuery = gql`
   }
 `
 
-export interface AllStoresByOrganizationSchema {
+export interface AllDevStoresByOrganizationSchema {
   organizations: {
     nodes: {
       id: string

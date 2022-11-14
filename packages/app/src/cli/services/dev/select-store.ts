@@ -1,4 +1,4 @@
-import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
+import {fetchAllDevStores, fetchStoreByDomain} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
@@ -85,7 +85,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
         task: async () => {
           for (let i = 0; i < retries; i++) {
             // eslint-disable-next-line no-await-in-loop
-            const stores = await fetchAllStores(orgId, token)
+            const stores = await fetchAllDevStores(orgId, token)
             if (stores.length > 0) {
               data = stores
               return
