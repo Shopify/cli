@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 3.23.0
+
+### Patch Changes
+
+- d5e81d69: Add hidden `--force` flag for validation on `shopify theme dev/pull/push/share` if users are running the command in a theme directory.
+- Updated dependencies [c15ad5df]
+- Updated dependencies [1ee1cfd1]
+  - @shopify/cli-kit@3.23.0
+
 ## 3.22.1
 
 ### Patch Changes

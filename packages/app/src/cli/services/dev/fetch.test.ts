@@ -1,5 +1,5 @@
 import {
-  fetchAllStores,
+  fetchAllDevStores,
   fetchOrgAndApps,
   fetchOrganizations,
   fetchStoreByDomain,
@@ -128,17 +128,19 @@ describe('fetchApp', async () => {
   })
 })
 
-describe('fetchAllStores', async () => {
+describe('fetchAllDevStores', async () => {
   it('returns fetched stores', async () => {
     // Given
     vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await fetchAllStores(ORG1.id, 'token')
+    const got = await fetchAllDevStores(ORG1.id, 'token')
 
     // Then
     expect(got).toEqual([STORE1])
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllStoresByOrganizationQuery, 'token', {id: ORG1.id})
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllDevStoresByOrganizationQuery, 'token', {
+      id: ORG1.id,
+    })
   })
 })
 

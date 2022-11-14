@@ -62,10 +62,16 @@ export default class Dev extends ThemeCommand {
         'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
 
   // Tokens are valid for 120m, better to be safe and refresh every 90min
-  ThemeRefreshTimeouInMinutes = 90
+  ThemeRefreshTimeoutInMinutes = 90
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
@@ -78,14 +84,15 @@ export default class Dev extends ThemeCommand {
     let controller: abort.Controller = new abort.Controller()
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setInterval(async () => {
+    const refreshThemeSessionInterval = setInterval(async () => {
       output.debug('Refreshing theme session...')
       controller.abort()
       controller = new abort.Controller()
       await this.execute(store, command, controller)
-    }, this.ThemeRefreshTimeouInMinutes * 60 * 1000)
+    }, this.ThemeRefreshTimeoutInMinutes * 60 * 1000)
 
     await this.execute(store, command, controller)
+    clearInterval(refreshThemeSessionInterval)
   }
 
   async execute(store: string, command: string[], controller: AbortController) {
