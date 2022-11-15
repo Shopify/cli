@@ -3,7 +3,6 @@ import * as bundle from '../../extensions/bundle.js'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildFailure} from 'esbuild'
-import {path} from '@shopify/cli-kit'
 
 async function testBundlerAndFileWatcher() {
   const fileWatcherOptions = {
@@ -11,18 +10,18 @@ async function testBundlerAndFileWatcher() {
       extensions: [
         {
           devUUID: '1',
-          outputBundlePath: 'output/bundle/path/1',
-          entrySourceFilePath: 'source/file/path/1',
-          directory: 'directory/1/',
+          outputBundlePath: 'output/bundle/path/1/',
+          entrySourceFilePath: 'directory/path/1/src/1.js',
+          directory: 'directory/path/1',
           configuration: {
             name: 'name 1',
           },
         },
         {
           devUUID: '2',
-          outputBundlePath: 'output/bundle/path/2',
-          entrySourceFilePath: 'source/file/path/2',
-          directory: 'directory/2/',
+          outputBundlePath: 'output/bundle/path/2/',
+          entrySourceFilePath: 'directory/path/2/src/2.js',
+          directory: 'directory/path/2',
           configuration: {
             name: 'name 2',
           },
@@ -57,17 +56,16 @@ describe('setupBundlerAndFileWatcher()', () => {
     vi.spyOn(chokidar, 'watch').mockReturnValue({
       on: vi.fn() as any,
     } as any)
-    vi.spyOn(path, 'relative').mockImplementation((directory, path) => directory + path)
 
     await testBundlerAndFileWatcher()
 
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputBundlePath: 'output/bundle/path/1',
+        outputBundlePath: 'output/bundle/path/1/',
         stdin: {
-          contents: "import './directory/1/source/file/path/1';",
-          resolveDir: 'directory/1/',
+          contents: "import './src/1.js';",
+          resolveDir: 'directory/path/1',
           loader: 'tsx',
         },
         environment: 'development',
@@ -87,10 +85,10 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputBundlePath: 'output/bundle/path/2',
+        outputBundlePath: 'output/bundle/path/2/',
         stdin: {
-          contents: "import './directory/2/source/file/path/2';",
-          resolveDir: 'directory/2/',
+          contents: "import './src/2.js';",
+          resolveDir: 'directory/path/2',
           loader: 'tsx',
         },
         environment: 'development',
@@ -160,8 +158,8 @@ describe('setupBundlerAndFileWatcher()', () => {
     await testBundlerAndFileWatcher()
 
     // THEN
-    expect(chokidar.watch).toHaveBeenCalledWith('directory/1/locales/**.json')
-    expect(chokidar.watch).toHaveBeenCalledWith('directory/2/locales/**.json')
+    expect(chokidar.watch).toHaveBeenCalledWith('directory/path/1/locales/**.json')
+    expect(chokidar.watch).toHaveBeenCalledWith('directory/path/2/locales/**.json')
     expect(chokidarOnSpy).toHaveBeenCalledTimes(2)
     expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
   })

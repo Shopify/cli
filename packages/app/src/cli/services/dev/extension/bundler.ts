@@ -1,7 +1,6 @@
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {bundleExtension} from '../../extensions/bundle.js'
-import {NewExtensionPointType, UIExtension} from '../../../models/app/extensions.js'
+import {bundleExtension, getBundleExtensionStdIn} from '../../extensions/bundle.js'
 import {abort, path, output} from '@shopify/cli-kit'
 import chokidar from 'chokidar'
 
@@ -30,7 +29,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         minify: false,
         outputBundlePath: extension.outputBundlePath,
         stdin: {
-          contents: getStdinContents(extension),
+          contents: getBundleExtensionStdIn(extension),
           resolveDir: extension.directory,
           loader: 'tsx',
         },
@@ -95,17 +94,4 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
       abortController.abort()
     },
   }
-}
-
-// This will probably be on the extension after Isaac's refactor
-export function getStdinContents(extension: UIExtension) {
-  if (extension.configuration.type === 'ui_extension') {
-    const extensionPoints = extension.configuration.extensionPoints as NewExtensionPointType
-
-    return extensionPoints.map(({module}) => `import './${path.relative(extension.directory, module)}';`).join('\n')
-  }
-
-  const entrySourceFilePath = extension.entrySourceFilePath as string
-
-  return `import './${path.relative(extension.directory, entrySourceFilePath)}';`
 }

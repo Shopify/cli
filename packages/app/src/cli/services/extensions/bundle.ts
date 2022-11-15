@@ -1,4 +1,5 @@
-import {abort, path} from '@shopify/cli-kit'
+import {NewExtensionPointType, UIExtension} from '../../models/app/extensions.js'
+import {abort} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {Writable} from 'node:stream'
 import type {StdinOptions} from 'esbuild'
@@ -7,10 +8,9 @@ interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputBundlePath: string
-  sourceFilePath?: string
+  stdin: StdinOptions
   stdout: Writable
   stderr: Writable
-  stdin?: StdinOptions
 
   /**
    * When provided, the bundling process keeps running and notifying about changes.
@@ -81,6 +81,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
   )
   let esbuildOptions: Parameters<typeof esBuild>[0] = {
     outfile: options.outputBundlePath,
+    stdin: options.stdin,
     bundle: true,
     define,
     jsx: 'automatic',
@@ -93,13 +94,6 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     plugins: getPlugins(),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-  }
-
-  if (options.sourceFilePath) {
-    esbuildOptions.entryPoints = [options.sourceFilePath]
-    esbuildOptions.sourceRoot = path.dirname(options.sourceFilePath)
-  } else if (options.stdin) {
-    esbuildOptions.stdin = options.stdin
   }
 
   if (options.watch) {
@@ -149,4 +143,17 @@ function isGraphqlPackageAvailable(): boolean {
   } catch {
     return false
   }
+}
+
+// This will probably be on the extension instance after Isaac's refactor
+export function getBundleExtensionStdIn({configuration, directory, entrySourceFilePath}: UIExtension) {
+  if (configuration.type === 'ui_extension') {
+    const extensionPoints = configuration.extensionPoints as NewExtensionPointType
+
+    return extensionPoints.map(({module}) => `import '${module}';`).join('\n')
+  }
+
+  const relativeImportPath = (entrySourceFilePath as string).replace(directory, '')
+
+  return `import '.${relativeImportPath}';`
 }
