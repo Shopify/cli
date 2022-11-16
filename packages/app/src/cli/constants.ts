@@ -34,7 +34,7 @@ export const blocks = {
     configurationName: configurationFileNames.extension,
   },
   functions: {
-    defaultUrl: 'https://github.com/Shopify/function-examples',
+    defaultUrl: 'https://github.com/Shopify/function-templates',
     defaultLanguage: 'wasm',
   },
   web: {

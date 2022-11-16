@@ -139,7 +139,7 @@ export function createFunctionSpec<TConfiguration extends FunctionConfigType = F
   templatePath: (lang: string) => string
 }): FunctionSpec {
   const defaults = {
-    templateURL: 'https://github.com/Shopify/function-examples',
+    templateURL: 'https://github.com/Shopify/function-templates',
     languages: [
       {name: 'Wasm', value: 'wasm'},
       {name: 'Rust', value: 'rust'},
