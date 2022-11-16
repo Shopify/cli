@@ -54,6 +54,7 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
+      enable_create: schema.define.boolean().optional(),
       paths: schema.define
         .object({
           create: schema.define.string(),
