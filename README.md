@@ -50,7 +50,7 @@ If you encounter issues using the CLI or have feedback you'd like to share with 
 - [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.
 - [CLI Documentation - Apps](https://shopify.dev/apps/tools/cli) - To view our complete API documentation
 - [CLI Documentation - Themes](https://shopify.dev/themes/tools/cli) - To view CLI documentation for theme development
-- [CLI Documentation - Hyrdogen](https://shopify.dev/custom-storefronts/tools/cli) - To view CLI documentation for Hydogen (Custom storefront) development
+- [CLI Documentation - Hydrogen](https://shopify.dev/custom-storefronts/tools/cli) - To view CLI documentation for Hydrogen (custom storefront) development
 
 ## Contribute 👩🏽‍💻
 
