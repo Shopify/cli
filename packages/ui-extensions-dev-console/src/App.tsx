@@ -9,7 +9,7 @@ import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-se
 
 function getConnectionUrl() {
   if (import.meta.env.VITE_CONNECTION_URL) {
-    return import.meta.env.VITE_CONNECTION_URL.replace("https", "wss").replace("dev-console", "")
+    return import.meta.env.VITE_CONNECTION_URL.replace("https", "wss").replace("/dev-console", "")
   }
 
   const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:'
