@@ -7,7 +7,7 @@ import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal'
+import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 import {useToast} from '@/hooks/useToast'
 
 export interface QRCodeModalProps extends Pick<ModalProps, 'open' | 'onClose'> {
@@ -33,7 +33,7 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
     fallback: en,
   })
   const {extension} = props
-  const {state} = useDevConsoleInternal()
+  const {state} = useExtensionsInternal()
 
   const showToast = useToast()
 
