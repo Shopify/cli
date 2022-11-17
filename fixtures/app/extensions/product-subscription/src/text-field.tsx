@@ -1,8 +1,15 @@
-import React, {useState, useCallback} from 'react';
-import {Card, BlockStack, TextField, Text} from '@shopify/admin-ui-extensions-react';
+import React, {useState, useMemo, useCallback, useEffect} from 'react';
+import {BlockStack, TextField, Text, useExtensionApi} from '@shopify/admin-ui-extensions-react';
+import {
+  makeStatefulSubscribable,
+  RemoteSubscribable,
+} from '@remote-ui/async-subscription';
 
 export function TextFieldExample() {
-  const [firstName, setFirstName] = useState('');
+  const {extensionState: subscribaleExtensionState, applyStateUpdates} = useExtensionApi();
+  const extensionState = useMemo(() => makeStatefulSubscribable<RemoteSubscribable<any>>(subscribaleExtensionState), []);
+
+  const [firstName, setFirstName] = useState(extensionState.current.firstName || '');
   const clearFirstName = useCallback(() => setFirstName(''), []);
   const [lastName, setLastName] = useState('');
   const clearLastName = useCallback(() => setLastName(''), []);
@@ -10,13 +17,25 @@ export function TextFieldExample() {
   const [review, setReview] = useState('');
   const [numberValue, setNumberValue] = useState('0');
 
+  useEffect(() => {
+    return extensionState.subscribe(() => {
+    console.log('updated', extensionState.current);
+    if(extensionState.current.hasOwnProperty('firstName')) {
+      setFirstName(extensionState.current.firstName)
+    }
+  });
+  }, [setFirstName, extensionState.subscribe]);
+
   return (
       <BlockStack>
         <TextField
           label="First name"
           placeholder="Type your first name (onChange)"
           value={firstName}
-          onChange={setFirstName}
+          onChange={(value) => {
+            setFirstName(value);
+            applyStateUpdates({firstName: value});
+          }}
           clearButton
           onClearButtonPress={clearFirstName}
         />
