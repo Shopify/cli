@@ -35,10 +35,10 @@
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
-      "start": {
+      "dev": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn vite start",
+          "command": "yarn vite dev",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
