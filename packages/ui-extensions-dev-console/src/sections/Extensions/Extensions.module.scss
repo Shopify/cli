@@ -16,11 +16,11 @@
   width: 100%;
   color: var(--dc-text);
   font-family: var(--dc-font);
-  
+
   overflow: hidden;
   border-radius: var(--border-radius) var(--border-radius) 0 0;
 
-  
+
   h1 {
     font-weight: 700;
   }
@@ -144,4 +144,9 @@
   width: 100%;
   text-align: center;
   padding: 1.5rem;
+}
+
+.ActionGroup {
+  display: flex;
+  justify-content: flex-end;
 }

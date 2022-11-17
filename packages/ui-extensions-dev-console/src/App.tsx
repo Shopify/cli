@@ -1,5 +1,5 @@
 import * as styles from './theme.module.css'
-import {DevConsole} from './DevConsole'
+import {Extensions} from './sections/Extensions'
 import React from 'react'
 import '@shopify/polaris/dist/styles.css'
 import enTranslations from '@shopify/polaris/locales/en.json'
@@ -39,7 +39,7 @@ function App() {
       <ExtensionServerProvider options={extensionServerOptions}>
         <I18nContext.Provider value={i18nManager}>
           <AppProvider i18n={enTranslations}>
-            <DevConsole />
+            <Extensions />
           </AppProvider>
         </I18nContext.Provider>
       </ExtensionServerProvider>

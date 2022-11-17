@@ -1,6 +1,6 @@
 import {ExtensionPayload, useExtensionServerContext} from '@shopify/ui-extensions-server-kit'
 
-export function useDevConsoleInternal() {
+export function useExtensionsInternal() {
   const extensionServer = useExtensionServerContext()
   const embedded = new URLSearchParams(location.search).get('embedded') === 'true'
 

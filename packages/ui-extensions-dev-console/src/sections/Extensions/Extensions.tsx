@@ -1,17 +1,17 @@
-import {Checkbox} from './CheckBox'
-import {ExtensionRow} from './ExtensionRow'
-import {Action} from './ActionSet/Action'
-import * as styles from './DevConsole.module.scss'
+import * as styles from './Extensions.module.scss'
+
 // eslint-disable-next-line @shopify/strict-component-boundaries
-import * as actionSetStyles from './ActionSet/ActionSet.module.scss'
+import {QRCodeModal} from './components/QRCodeModal'
 import en from './translations/en.json'
-import {QRCodeModal} from './QRCodeModal'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
 import {ChevronRightMinor, RefreshMinor, ToolsMajor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
 import React, {useCallback, useMemo, useState} from 'react'
+import {Action} from '@/components/Action'
+import {ExtensionRow} from '@/sections/Extensions/components/ExtensionRow'
+import {Checkbox} from '@/components/CheckBox'
 import {ToastProvider} from '@/hooks/useToast'
-import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal'
+import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
 // Hiding content until there are more options in the side nav
 const DISPLAY_SIDENAV = false
@@ -20,9 +20,9 @@ function getUuid({uuid}: {uuid: string}) {
   return uuid
 }
 
-export function DevConsole() {
+export function Extensions() {
   const [i18n] = useI18n({
-    id: 'DevConsole',
+    id: 'Extensions',
     fallback: en,
   })
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set())
@@ -37,7 +37,7 @@ export function DevConsole() {
     client: {
       options: {surface},
     },
-  } = useDevConsoleInternal()
+  } = useExtensionsInternal()
 
   const allSelected = selectedExtensionsSet.size === extensions.length
 
@@ -129,7 +129,7 @@ export function DevConsole() {
             <th>{i18n.translate('extensionList.type')}</th>
             <th>{i18n.translate('extensionList.status')}</th>
             <th>
-              <div className={actionSetStyles.ActionGroup}>
+              <div className={styles.ActionGroup}>
                 {actionHeaderMarkup}
                 <Action
                   source={RefreshMinor}

@@ -1,7 +1,7 @@
-import {DevConsole} from '../DevConsole'
-import {ExtensionRow} from '../ExtensionRow'
-import {Action} from '../ActionSet/Action'
-import en from '../translations/en.json'
+// eslint-disable-next-line @shopify/strict-component-boundaries
+import {ExtensionRow} from './components/ExtensionRow'
+import en from './translations/en.json'
+import {Extensions} from './Extensions.js'
 import React from 'react'
 import {Checkbox} from '@shopify/polaris'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
@@ -9,14 +9,15 @@ import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {DefaultProviders} from 'tests/DefaultProviders'
 import {mockI18n} from 'tests/mock-i18n'
+import {Action} from '@/components/Action'
 
 const i18n = mockI18n(en)
 
-describe('DevConsole', () => {
+describe('Extensions', () => {
   test('renders ExtensionRow based on localStorage', async () => {
     const extensions = [mockExtension()]
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       state: {extensions, store: 'shop1.myshopify.io'},
     })
 
@@ -35,7 +36,7 @@ describe('DevConsole', () => {
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       client,
       state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
     })
@@ -57,7 +58,7 @@ describe('DevConsole', () => {
   test('toggles selection of all extensions when select all checkbox is clicked', async () => {
     const extensions = [mockExtension(), mockExtension()]
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       state: {extensions, store: 'shop1.myshopify.io'},
     })
 
@@ -78,7 +79,7 @@ describe('DevConsole', () => {
     const toggleExtension = mockExtension()
     const otherExtension = mockExtension()
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       state: {extensions: [toggleExtension, otherExtension], store: 'shop1.myshopify.io'},
     })
 
@@ -117,7 +118,7 @@ describe('DevConsole', () => {
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       client,
       state: {extensions: [focusExtension, prevFocusedExtension], store: 'shop1.myshopify.io'},
     })
@@ -140,7 +141,7 @@ describe('DevConsole', () => {
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       client,
       state: {extensions: [extension1, extension2], store: 'shop1.myshopify.io'},
     })
@@ -164,7 +165,7 @@ describe('DevConsole', () => {
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       client,
       state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
     })
@@ -191,7 +192,7 @@ describe('DevConsole', () => {
     const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
-    const container = render(<DevConsole />, withProviders(DefaultProviders), {
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
       client,
       state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
     })

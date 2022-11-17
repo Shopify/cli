@@ -1,10 +1,10 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
-import {Checkbox} from '../CheckBox'
 import {ActionSet, ActionSetProps} from '../ActionSet'
 import React, {MouseEvent, useCallback, useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {Checkbox} from '@/components/CheckBox'
 
 export type ExtensionRowProps = {
   extension: ExtensionPayload
