@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react'
-import {BlockStack, TextField, Text, useExtensionApi} from '@shopify/admin-ui-extensions-react'
+import {Checkbox, Heading, BlockStack, TextField, Text, useExtensionApi} from '@shopify/admin-ui-extensions-react'
 import {makeStatefulSubscribable, RemoteSubscribable} from '@remote-ui/async-subscription'
 
 export function TextFieldExample() {
@@ -7,10 +7,9 @@ export function TextFieldExample() {
   const extensionState = useMemo(() => makeStatefulSubscribable<RemoteSubscribable<any>>(subscribableState), [])
 
   const initialValue = extensionState.current
-  const [firstName, setFirstName] = useState(initialValue.firstName || '')
-  const clearFirstName = useCallback(() => applyStateUpdates({firstName: ''}), [])
-  const [lastName, setLastName] = useState(initialValue.lastName || '')
-  const clearLastName = useCallback(() => applyStateUpdates({firstName: ''}), [])
+  const [customProduct, setCustomProduct] = useState(initialValue.customProduct || false)
+  const [manufacturerPart, setManufacturerPart] = useState(initialValue.manufacturerPart || '')
+  const clearFirstName = useCallback(() => applyStateUpdates({manufacturerPart: ''}), [])
 
   useEffect(() => {
     return extensionState.subscribe(() => {
@@ -18,35 +17,27 @@ export function TextFieldExample() {
 
       console.log('update received from host: ', updatedState);
 
-      setFirstName(updatedState.firstName || '');
-      setLastName(updatedState.lastName || '');
+      setManufacturerPart(updatedState.manufacturerPart || '');
+      setCustomProduct(updatedState.customProduct || false);
     })
-  }, [setFirstName, setLastName, extensionState.subscribe]);
+  }, [setManufacturerPart, extensionState.subscribe]);
 
   return (
     <BlockStack>
+      <Text size="small">Product identifier</Text>
+      <Text>Custom products usually don't have a barcode (GTIN), or a Manufacturer Part Number (MPN).</Text>
+      <Checkbox label="This is a custom product" checked={customProduct} onChange={(value) => {
+          applyStateUpdates({customProduct: value})
+        }} />
       <TextField
-        label="First name"
-        placeholder="Type your first name (onChange)"
-        value={firstName}
+        label="Manufacturer Part Number (MPN)"
+        value={manufacturerPart}
         onInput={(value) => {
-          applyStateUpdates({firstName: value})
+          applyStateUpdates({manufacturerPart: value})
         }}
         clearButton
         onClearButtonPress={clearFirstName}
       />
-      {firstName && <Text>First name: {firstName}</Text>}
-      <TextField
-        label="Last name"
-        placeholder="Type your last name (onInput)"
-        value={lastName}
-        onInput={(value) => {
-          applyStateUpdates({lastName: value})
-        }}
-        clearButton
-        onClearButtonPress={clearLastName}
-      />
-      {lastName && <Text>Last name: {lastName}</Text>}
     </BlockStack>
   )
 }
