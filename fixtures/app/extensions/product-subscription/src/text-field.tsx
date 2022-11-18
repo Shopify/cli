@@ -16,7 +16,7 @@ export function TextFieldExample() {
     return extensionState.subscribe(() => {
       const updatedState = extensionState.current;
 
-      console.log('updated: ', updatedState);
+      console.log('update received from host: ', updatedState);
 
       setFirstName(updatedState.firstName || '');
       setLastName(updatedState.lastName || '');
