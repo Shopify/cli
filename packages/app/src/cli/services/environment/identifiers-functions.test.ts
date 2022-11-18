@@ -53,6 +53,8 @@ const FUNCTION_A: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const FUNCTION_A_2: FunctionExtension = {
@@ -78,6 +80,8 @@ const FUNCTION_A_2: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const FUNCTION_B: FunctionExtension = {
@@ -103,6 +107,8 @@ const FUNCTION_B: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {

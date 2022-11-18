@@ -1,7 +1,6 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
 import {FunctionExtension} from '../app/extensions.js'
-import {ExtensionTypes} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -17,16 +16,15 @@ export interface FunctionSpec<
   TMetadata extends MetadataType = MetadataType,
 > {
   identifier: string
-  externalType: string
+  externalIdentifier: string
   externalName: string
   helpURL?: string
-  public?: boolean
+  public: boolean
   templateURL?: string
   languages?: {name: string; value: string}[]
-  configSchema?: ZodSchemaType<TConfiguration>
-  metadataSchema?: ZodSchemaType<TMetadata>
+  configSchema: ZodSchemaType<TConfiguration>
+  metadataSchema: ZodSchemaType<TMetadata>
   templatePath: (lang: string) => string
-  validate?: (config: TConfiguration) => unknown
 }
 
 /**
@@ -52,19 +50,19 @@ export class FunctionInstance<
 
   private specification: FunctionSpec<TConfiguration>
 
-  constructor(
-    configuration: TConfiguration,
-    configurationPath: string,
-    metadata: TMetadata,
-    specification: FunctionSpec<TConfiguration>,
-    directory: string,
-  ) {
-    this.configuration = configuration
-    this.configurationPath = configurationPath
-    this.metadata = metadata
-    this.specification = specification
-    this.directory = directory
-    this.localIdentifier = path.basename(directory)
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    metadata: TMetadata
+    specification: FunctionSpec<TConfiguration>
+    directory: string
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.metadata = options.metadata
+    this.specification = options.specification
+    this.directory = options.directory
+    this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
@@ -76,9 +74,12 @@ export class FunctionInstance<
     return this.specification.identifier
   }
 
-  get type(): ExtensionTypes {
-    return 'checkout_post_purchase'
-    // return this.specification.identifier
+  get type() {
+    return this.specification.identifier
+  }
+
+  get externalType() {
+    return this.specification.externalIdentifier
   }
 
   get name() {
@@ -92,10 +93,6 @@ export class FunctionInstance<
   buildWasmPath() {
     const relativePath = this.configuration.build.path ?? path.join('dist', 'index.wasm')
     return path.join(this.directory, relativePath)
-  }
-
-  validate() {
-    return this.specification.validate?.(this.configuration)
   }
 
   async build(stdout: Writable, stderr: Writable, signal: abort.Signal) {
@@ -138,7 +135,18 @@ export async function functionSpecForType(type: string): Promise<FunctionSpec | 
 export function createFunctionSpec<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
   TMetadata extends MetadataType = MetadataType,
->(spec: FunctionSpec): FunctionSpec {
+>(spec: {
+  identifier: string
+  externalIdentifier: string
+  externalName: string
+  helpURL?: string
+  public?: boolean
+  templateURL?: string
+  languages?: {name: string; value: string}[]
+  configSchema?: ZodSchemaType<TConfiguration>
+  metadataSchema?: ZodSchemaType<TMetadata>
+  templatePath: (lang: string) => string
+}): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
     languages: [

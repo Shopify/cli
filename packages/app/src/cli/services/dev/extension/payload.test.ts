@@ -22,7 +22,7 @@ describe('getUIExtensionPayload', () => {
         version: '1.2.3',
       })
 
-      const uiExtension = testUIExtension({
+      const uiExtension = await testUIExtension({
         outputBundlePath,
         directory: tmpDir,
         configuration: {
@@ -35,7 +35,9 @@ describe('getUIExtensionPayload', () => {
             network_access: true,
           },
         },
+        devUUID: 'devUUID',
       })
+
       const options: ExtensionDevOptions = {
         signal,
         stdout,
@@ -102,7 +104,7 @@ describe('getUIExtensionPayload', () => {
   test('default values', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uiExtension = testUIExtension({directory: tmpDir})
+      const uiExtension = await testUIExtension({directory: tmpDir})
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 

@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.22.1",
+  "version": "3.23.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "license": "MIT",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -14,9 +14,17 @@
     "/templates"
   ],
   "exports": {
-    "./plugins/extensions/*": {
+    "./extensions/*": {
       "import": "./dist/cli/models/extensions/*.js",
       "require": "./dist/cli/models/extensions/*.d.ts"
+    },
+    "./plugins/*" : {
+      "import": "./dist/cli/plugins/*.js",
+      "require": "./dist/cli/plugins/*.d.ts"
+    },
+    "./utilities/extensions/*": {
+      "import": "./dist/cli/utilities/extensions/*.js",
+      "require": "./dist/cli/utilities/extensions/*.d.ts"
     }
   },
   "publishConfig": {
@@ -65,7 +73,7 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.22.1",
+    "@shopify/cli-kit": "3.23.0",
     "@shopify/shopify-cli-extensions": "3.21.0",
     "abort-controller": "^3.0.0",
     "chokidar": "3.5.3",

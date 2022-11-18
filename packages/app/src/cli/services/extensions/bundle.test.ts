@@ -15,7 +15,7 @@ vi.mock('esbuild', async () => {
 describe('buildExtension', () => {
   test('invokes ESBuild with the right options and forwards the logs', async () => {
     // Given
-    const extension = testUIExtension()
+    const extension = await testUIExtension()
     const stdout: any = {
       write: vi.fn(),
     }
@@ -85,7 +85,7 @@ describe('buildExtension', () => {
 
   test('stops the ESBuild when the abort signal receives an event', async () => {
     // Given
-    const extension = testUIExtension()
+    const extension = await testUIExtension()
     const app = testApp({
       directory: '/project',
       dotenv: {
@@ -134,7 +134,7 @@ describe('buildExtension', () => {
 
   test('forwards and outputs watch events', async () => {
     // Given
-    const extension = testUIExtension()
+    const extension = await testUIExtension()
     const app = testApp({
       directory: '/project',
       dotenv: {

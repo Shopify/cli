@@ -1,18 +1,11 @@
-import {
-  UIExtension,
-  ThemeExtension,
-  FunctionExtension,
-  FunctionExtensionConfigurationSchema,
-  FunctionExtensionMetadataSchema,
-  ThemeExtensionConfigurationSchema,
-  UIExtensionConfigurationSupportedSchema,
-  Extension,
-} from './extensions.js'
+import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
-import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
-import {mapUIExternalExtensionTypeToUIExtensionType} from '../../utilities/extensions/name-mapper.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {error, file, id, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {ExtensionInstance, specForType} from '../extensions/extensions.js'
+import {TypeSchema} from '../extensions/schemas.js'
+import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -21,6 +14,7 @@ import {
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -243,14 +237,23 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const configurationSupported = await this.parseConfigurationFile(
-        UIExtensionConfigurationSupportedSchema,
-        configurationPath,
-      )
-      const configuration = {
-        ...configurationSupported,
-        type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
+      const fileContent = await file.read(configurationPath)
+      const obj = toml.decode(fileContent)
+      const {type} = TypeSchema.parse(obj)
+      const specification = await specForType(type)
+
+      if (!specification) {
+        this.abortOrReport(
+          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
+            configurationPath,
+          )}.`,
+          undefined,
+          configurationPath,
+        )
+        return undefined
       }
+
+      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
       const entrySourceFilePath = (
         await Promise.all(
@@ -271,21 +274,19 @@ class AppLoader {
         )
       }
 
-      return {
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        directory,
+      return new ExtensionInstance({
         configuration,
         configurationPath,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        entrySourceFilePath: entrySourceFilePath ?? '',
-        outputBundlePath: path.join(directory, 'dist/main.js'),
-        localIdentifier: path.basename(directory),
-        // The convention is that unpublished extensions will have a random UUID with prefix `dev-`
-        devUUID: `dev-${id.generateRandomUUID()}`,
-      }
+        entryPath: entrySourceFilePath ?? '',
+        directory,
+        specification,
+        remoteSpecification: undefined,
+        extensionPointSpecs: undefined,
+      })
     })
-    return {uiExtensions: await Promise.all(extensions), usedCustomLayout: extensionDirectories !== undefined}
+
+    const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+    return {uiExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadFunctions(
@@ -296,34 +297,32 @@ class AppLoader {
     })
     const configPaths = await path.glob(functionConfigPaths)
 
-    const functions = configPaths.map(async (configurationPath) => {
+    const allFunctions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(FunctionExtensionConfigurationSchema, configurationPath)
+      const fileContent = await file.read(configurationPath)
+      const obj = toml.decode(fileContent)
+      const {type} = TypeSchema.parse(obj)
+      const specification = await functionSpecForType(type)
+      if (!specification) {
+        this.abortOrReport(
+          output.content`Unknown function type ${output.token.yellow(type)} in ${output.token.path(configurationPath)}`,
+          undefined,
+          configurationPath,
+        )
+        return undefined
+      }
+
+      const configuration = await this.parseConfigurationFile(specification.configSchema, configurationPath)
       const metadata = await this.parseConfigurationFile(
-        FunctionExtensionMetadataSchema,
+        specification.metadataSchema,
         path.join(directory, 'metadata.json'),
         JSON.parse,
       )
-      return {
-        directory,
-        configuration,
-        configurationPath,
-        metadata,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        localIdentifier: path.basename(directory),
-        buildWasmPath() {
-          return configuration.build.path
-            ? path.join(directory, configuration.build.path)
-            : path.join(directory, 'dist/index.wasm')
-        },
-        inputQueryPath() {
-          return path.join(directory, 'input.graphql')
-        },
-      }
+
+      return new FunctionInstance({configuration, configurationPath, metadata, specification, directory})
     })
-    return {functions: await Promise.all(functions), usedCustomLayout: extensionDirectories !== undefined}
+    const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
+    return {functions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadThemeExtensions(
@@ -334,23 +333,40 @@ class AppLoader {
     })
     const configPaths = await path.glob(themeConfigPaths)
 
-    const themeExtensions = configPaths.map(async (configurationPath) => {
+    const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(ThemeExtensionConfigurationSchema, configurationPath)
-      return {
-        directory,
+      const fileContent = await file.read(configurationPath)
+      const obj = toml.decode(fileContent)
+      const {type} = TypeSchema.parse(obj)
+      const specification = await specForType(type)
+
+      if (!specification) {
+        this.abortOrReport(
+          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
+            configurationPath,
+          )}`,
+          undefined,
+          configurationPath,
+        )
+        return undefined
+      }
+
+      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
+
+      return new ExtensionInstance({
         configuration,
         configurationPath,
-        type: configuration.type,
-        graphQLType: extensionGraphqlId(configuration.type),
-        idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
-        localIdentifier: path.basename(directory),
-      }
+        entryPath: '',
+        directory,
+        specification,
+        remoteSpecification: undefined,
+        extensionPointSpecs: undefined,
+      })
     })
-    return {
-      themeExtensions: await Promise.all(themeExtensions),
-      usedCustomLayout: extensionDirectories !== undefined,
-    }
+
+    const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+
+    return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {

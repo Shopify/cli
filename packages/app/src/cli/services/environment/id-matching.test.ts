@@ -90,6 +90,12 @@ const EXTENSION_A: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -108,6 +114,12 @@ const EXTENSION_A_2: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const EXTENSION_B: UIExtension = {
@@ -126,6 +138,12 @@ const EXTENSION_B: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -144,6 +162,12 @@ const EXTENSION_B_2: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const EXTENSION_C: UIExtension = {
@@ -162,6 +186,12 @@ const EXTENSION_C: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const EXTENSION_D: UIExtension = {
@@ -180,6 +210,12 @@ const EXTENSION_D: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 describe('automaticMatchmaking: case 3 some local extensions, no remote ones', () => {

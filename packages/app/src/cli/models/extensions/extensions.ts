@@ -17,14 +17,16 @@ export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSc
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
   externalIdentifier: string
-  partnersWebId: string
+  externalName: string
+  partnersWebIdentifier: string
   surface: string
+  showInCLIHelp: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
-  preDeployValidation?: (config: TConfiguration) => boolean
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
   previewMessage?: (
     host: string,
@@ -75,7 +77,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.identifier
+    return this.remoteSpecification?.externalName ?? this.specification.externalName
   }
 
   get name() {
@@ -94,29 +96,29 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.surface
   }
 
-  constructor(
-    configuration: TConfiguration,
-    configuationPath: string,
-    entryPath: string,
-    directory: string,
-    specification: ExtensionSpec,
-    remoteSpecification?: api.graphql.RemoteSpecification,
-    extensionPointSpecs?: ExtensionPointSpec[],
-  ) {
-    this.configuration = configuration
-    this.configurationPath = configuationPath
-    this.entrySourceFilePath = entryPath
-    this.directory = directory
-    this.specification = specification
-    this.remoteSpecification = remoteSpecification
-    this.extensionPointSpecs = extensionPointSpecs
-    this.outputBundlePath = path.join(directory, 'dist/main.js')
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    entryPath: string
+    directory: string
+    specification: ExtensionSpec
+    remoteSpecification?: api.graphql.RemoteSpecification
+    extensionPointSpecs?: ExtensionPointSpec[]
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.entrySourceFilePath = options.entryPath
+    this.directory = options.directory
+    this.specification = options.specification
+    this.remoteSpecification = options.remoteSpecification
+    this.extensionPointSpecs = options.extensionPointSpecs
+    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.localIdentifier = path.basename(directory)
+    this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
-  async build(stderr: Writable, stdout: Writable, app: AppInterface) {
+  async build(stdout: Writable, stderr: Writable, app: AppInterface) {
     stdout.write(`Bundling UI extension ${this.localIdentifier}...`)
     await bundleExtension({
       minify: true,
@@ -134,8 +136,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
   }
 
-  validate() {
-    if (!this.specification.preDeployValidation) return true
+  preDeployValidation() {
+    if (!this.specification.preDeployValidation) return Promise.resolve()
     return this.specification.preDeployValidation(this.configuration)
   }
 
@@ -150,17 +152,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = this.specification.partnersWebId
+    const parnersPath = this.specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    if (this.specification.previewMessage)
-      return this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
-
     const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    const publicURL = `${url}/extensions/${this.devUUID}`
-    const message = output.content`Preview link: ${publicURL}`
+    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+
+    if (this.specification.previewMessage) {
+      const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
+      if (!customMessage) return
+      message = customMessage
+    }
+
     return output.content`${heading}\n${message.value}\n`
   }
 
@@ -182,8 +187,29 @@ function remoteSpecForType(type: string): api.graphql.RemoteSpecification | unde
   return undefined
 }
 
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
-  spec: ExtensionSpec<TConfiguration>,
-): ExtensionSpec<TConfiguration> {
-  return spec
+export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+  identifier: string
+  externalIdentifier: string
+  partnersWebIdentifier: string
+  surface: string
+  externalName: string
+  showInCLIHelp?: boolean
+  dependency?: {name: string; version: string}
+  templatePath?: string
+  graphQLType?: string
+  schema: ZodSchemaType<TConfiguration>
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
+  resourceUrl?: (config: TConfiguration) => string
+  previewMessage?: (
+    host: string,
+    uuid: string,
+    config: TConfiguration,
+    storeFqdn: string,
+  ) => output.TokenizedString | undefined
+}): ExtensionSpec<TConfiguration> {
+  const defaults = {
+    showInCLIHelp: true,
+  }
+  return {...defaults, ...spec}
 }

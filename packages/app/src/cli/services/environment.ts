@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {
-  fetchAllStores,
+  fetchAllDevStores,
   fetchAppFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
@@ -145,7 +145,7 @@ export async function ensureDevEnvironment(
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   if (!selectedStore) {
-    const allStores = await fetchAllStores(orgId, token)
+    const allStores = await fetchAllDevStores(orgId, token)
     selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
   }
 
@@ -328,7 +328,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
         title: 'Fetching organization data',
         task: async () => {
           const organizationAndApps = await fetchOrgAndApps(orgId, token)
-          const stores = await fetchAllStores(orgId, token)
+          const stores = await fetchAllDevStores(orgId, token)
           data = {...organizationAndApps, stores} as FetchResponse
           // We need ALL stores so we can validate the selected one.
           // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.

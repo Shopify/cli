@@ -1,6 +1,5 @@
 import {ExtensionTypes, ExternalExtensionTypes} from '../../../../constants.js'
 import {Localization} from '../localization.js'
-import {UIExtensionSurface} from '../../../../utilities/extensions/configuration.js'
 
 export interface ExtensionsPayloadInterface {
   app: {
@@ -51,7 +50,7 @@ export interface UIExtensionPayload {
   externalType: ExternalExtensionTypes
   uuid: string
   version?: string
-  surface: UIExtensionSurface
+  surface: string
   title: string
   approvalScopes: string[]
 }

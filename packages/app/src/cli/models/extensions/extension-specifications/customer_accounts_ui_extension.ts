@@ -1,6 +1,5 @@
 import {createExtensionSpec} from '../extensions.js'
 import {BaseExtensionSchema} from '../schemas.js'
-import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {schema, output} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
@@ -13,16 +12,16 @@ const CustomerAccountsSchema = BaseExtensionSchema.extend({
 const spec = createExtensionSpec({
   identifier: 'customer_accounts_ui_extension',
   externalIdentifier: 'customer_accounts_ui',
+  externalName: 'Customer accounts UI',
   surface: 'customer_accounts',
   dependency,
-  partnersWebId: 'customer_accounts_ui_extension',
+  partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,
       name: config.name,
       categories: config.categories,
-      localization: await loadLocalesConfig(directory),
     }
   },
   previewMessage: (host, uuid, _, storeFqdn) => {

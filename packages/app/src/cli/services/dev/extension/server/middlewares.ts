@@ -1,7 +1,6 @@
 import {getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
-import {getUIExtensionSurface} from '../../../../utilities/extensions/configuration.js'
 import {getHTML} from '../templates.js'
 import {file, http, output, path} from '@shopify/cli-kit'
 
@@ -173,7 +172,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
     }
 
     if (request.headers.accept?.startsWith('text/html')) {
-      const extensionSurface = getUIExtensionSurface(extension.configuration.type)
+      const extensionSurface = extension.surface
 
       if (extensionSurface === 'post_purchase') {
         const body = await getHTML({

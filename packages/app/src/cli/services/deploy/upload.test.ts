@@ -54,6 +54,8 @@ describe('uploadFunctionExtensions', () => {
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: () => '/function/dist/index.wasm',
       inputQueryPath: () => '/function/input.graphql',
+      publishURL: (_) => Promise.resolve(''),
+      externalType: 'order_discounts',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'my-function',
       metadata: {schemaVersions: {order_discounts: {major: 1, minor: 0}}},

@@ -28,7 +28,7 @@ type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'proj
 
 type AppSpecificSensitiveMonorailFields = PickByPrefix<MonorailEventSensitive, 'app_'>
 
-interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
+export interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
     options: {[key: string]: never}
     pluginReturns: {
@@ -45,7 +45,7 @@ interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   }
   [hookName: string]: {
     options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: JsonMap | Result<JsonMap, Error>}
+    pluginReturns: {[key: string]: unknown}
   }
 }
 

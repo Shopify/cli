@@ -13,7 +13,7 @@ describe('themeExtensionArgs', async () => {
     const apiKey = 'api_key_0000_1111_2222'
     const token = 'token'
     const options = {themeExtensionPort: 8282, theme: 'theme ID'}
-    const extension = testThemeExtensions()
+    const extension = await testThemeExtensions()
 
     const registration = {
       id: 'extension ID',
@@ -35,7 +35,7 @@ describe('themeExtensionArgs', async () => {
       '--extension-id',
       'extension ID',
       '--extension-title',
-      'extension title',
+      'my-extension',
       '--extension-type',
       'THEME_APP_EXTENSION',
 
