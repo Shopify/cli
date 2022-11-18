@@ -22,7 +22,7 @@ Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [n
 When you’re building a Shopify app, you can initialize your project using your preferred package manager. A single command will install all the dependencies you need — including Shopify CLI itself.
 
 Initialize your project using one of the following commands:
-- `npx @shopify/create-app@latest` (installed by default with Node)
+- `npm init @shopify/app@latest` (installed by default with Node)
 - `pnpm create @shopify/create-app@latest`
 - `yarn create @shopify/app`
 
