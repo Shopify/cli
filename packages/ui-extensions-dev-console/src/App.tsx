@@ -5,7 +5,7 @@ import enTranslations from '@shopify/polaris/locales/en.json'
 import {AppProvider} from '@shopify/polaris'
 import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
-import Layout from '@/Layout'
+import Layout from '@/Layout/Layout'
 import Routes from '@/Routes'
 
 function getConnectionUrl() {
