@@ -5,16 +5,12 @@ import {QRCodeModal} from './components/QRCodeModal'
 import en from './translations/en.json'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
-import {ChevronRightMinor, RefreshMinor, ToolsMajor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
+import {RefreshMinor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
 import React, {useCallback, useMemo, useState} from 'react'
 import {Action} from '@/components/Action'
 import {ExtensionRow} from '@/sections/Extensions/components/ExtensionRow'
 import {Checkbox} from '@/components/CheckBox'
-import {ToastProvider} from '@/hooks/useToast'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
-
-// Hiding content until there are more options in the side nav
-const DISPLAY_SIDENAV = false
 
 function getUuid({uuid}: {uuid: string}) {
   return uuid
@@ -28,7 +24,6 @@ export function Extensions() {
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set())
   const {
     state: {extensions},
-    connect,
     refresh,
     show,
     hide,
@@ -96,20 +91,6 @@ export function Extensions() {
     }
   }, [selectedExtensions, show, hide, i18n])
 
-  const ConsoleSidenav = () =>
-    DISPLAY_SIDENAV ? (
-      <aside className={styles.SideBar}>
-        <nav>
-          <ul>
-            <li className={styles.MenuItem}>
-              {i18n.translate('extensionList.title')}
-              <ChevronRightMinor />
-            </li>
-          </ul>
-        </nav>
-      </aside>
-    ) : null
-
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
       <table>
@@ -170,26 +151,13 @@ export function Extensions() {
   }
 
   return (
-    <ToastProvider>
-      <div className={styles.OuterContainer}>
-        <div className={styles.DevTool}>
-          <header className={styles.Header}>
-            <section className={styles.HeaderLeft}>
-              <ToolsMajor />
-              <h1>&nbsp;{i18n.translate('title')}</h1>
-            </section>
-          </header>
-          <main>
-            <ConsoleSidenav />
-            {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
-            <QRCodeModal
-              extension={activeMobileQRCodeExtension}
-              open={activeMobileQRCodeExtension !== undefined}
-              onClose={() => setActiveMobileQRCodeExtension(undefined)}
-            />
-          </main>
-        </div>
-      </div>
-    </ToastProvider>
+    <>
+      {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
+      <QRCodeModal
+        extension={activeMobileQRCodeExtension}
+        open={activeMobileQRCodeExtension !== undefined}
+        onClose={() => setActiveMobileQRCodeExtension(undefined)}
+      />
+    </>
   )
 }
