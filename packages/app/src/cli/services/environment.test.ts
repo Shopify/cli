@@ -120,6 +120,12 @@ const EXTENSION_A: UIExtension = {
   entrySourceFilePath: '',
   outputBundlePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const LOCAL_APP = testApp({
@@ -504,7 +510,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     // Given
     const token = 'token'
     const apiKey = 'apiKey'
-    const extension = testThemeExtensions()
+    const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {
@@ -540,7 +546,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     // Given
     const token = 'token'
     const apiKey = 'apiKey'
-    const extension = testThemeExtensions()
+    const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {extensionRegistrations: [], functions: []},

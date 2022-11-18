@@ -1,14 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
-import {
-  configurationFileNames,
-  ExtensionTypes,
-  functionExtensions,
-  themeExtensions,
-  uiExtensions,
-} from '../constants.js'
-import {mapExtensionTypeToExternalExtensionType} from '../utilities/extensions/name-mapper.js'
+import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -19,7 +12,8 @@ interface InfoOptions {
   webEnv: boolean
 }
 interface Configurable {
-  configuration?: {type?: string}
+  type: string
+  externalType: string
 }
 
 export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<output.Message> {
@@ -117,16 +111,9 @@ class AppInfo {
       outputFormatter: (extension: TExtension) => string,
     ) {
       extensionTypes.forEach((extensionType: string) => {
-        const relevantExtensions = extensions.filter((extension: TExtension) => {
-          const configurationType = extension.configuration && extension.configuration.type
-          return configurationType === extensionType
-        })
+        const relevantExtensions = extensions.filter((extension: TExtension) => extension.type === extensionType)
         if (relevantExtensions[0]) {
-          body += `\n\n${
-            output.content`${output.token.subheading(
-              mapExtensionTypeToExternalExtensionType(extensionType as ExtensionTypes),
-            )}`.value
-          }`
+          body += `\n\n${output.content`${output.token.subheading(relevantExtensions[0].externalType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
             body += `${outputFormatter(extension)}`
           })
@@ -182,7 +169,7 @@ class AppInfo {
       [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    if (config && config.metafields.length) {
+    if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
 

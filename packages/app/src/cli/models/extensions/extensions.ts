@@ -1,39 +1,39 @@
-import {BaseExtensionSchema, TypeSchema, ExtensionPointSchema} from './schemas.js'
+import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
+import {allExtensionSpecifications} from './specifications.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
-import {id, path, schema, toml, api, file, output, environment} from '@shopify/cli-kit'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {ThemeExtension, UIExtension} from '../app/extensions.js'
+import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
 // Base config type that all config schemas must extend.
-type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
-type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
-
-// Array with all registered extensions (locally)
-// PENDING: Register and load all extensions
-const AllLocalSpecs: ExtensionSpec[] = []
-
-type LoadExtensionError = 'invalid_entry_path' | 'invalid_config' | 'invalid_extension_type'
+export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
+export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
+  externalIdentifier: string
+  externalName: string
+  partnersWebIdentifier: string
+  surface: string
+  showInCLIHelp: boolean
   dependency?: {name: string; version: string}
-  partnersWebId: string
   templatePath?: string
-  schema: schema.define.ZodType<TConfiguration>
+  graphQLType?: string
+  schema: ZodSchemaType<TConfiguration>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
-  preDeployValidation?: (config: TConfiguration) => boolean
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
   previewMessage?: (
     host: string,
     uuid: string,
     config: TConfiguration,
     storeFqdn: string,
-  ) => string | output.TokenizedString
+  ) => output.TokenizedString | undefined
 }
 
 /**
@@ -48,50 +48,82 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents> {
-  entryPath: string
-  outputPath: string
+export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  implements UIExtension<TConfiguration>, ThemeExtension<TConfiguration>
+{
+  entrySourceFilePath: string
+  outputBundlePath: string
   devUUID: string
   localIdentifier: string
+  idEnvironmentVariableName: string
+  directory: string
+  configuration: TConfiguration
+  configurationPath: string
 
-  private config: TConfiguration
   private specification: ExtensionSpec
   private extensionPointSpecs?: ExtensionPointSpec[]
   private remoteSpecification?: api.graphql.RemoteSpecification
-  private directory: string
+
+  get graphQLType() {
+    return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
+  }
+
+  get identifier() {
+    return this.specification.identifier
+  }
 
   get type() {
     return this.specification.identifier
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName
+    return this.remoteSpecification?.externalName ?? this.specification.externalName
   }
 
-  constructor(
-    config: TConfiguration,
-    entryPath: string,
-    directory: string,
-    specification: ExtensionSpec,
-    remoteSpecification?: api.graphql.RemoteSpecification,
-    extensionPointSpecs?: ExtensionPointSpec[],
-  ) {
-    this.config = config
-    this.entryPath = entryPath
-    this.directory = directory
-    this.specification = specification
-    this.remoteSpecification = remoteSpecification
-    this.extensionPointSpecs = extensionPointSpecs
-    this.outputPath = `${this.directory}/dist/main.js`
+  get name() {
+    return this.configuration.name
+  }
+
+  get dependency() {
+    return this.specification.dependency
+  }
+
+  get externalType() {
+    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
+  }
+
+  get surface() {
+    return this.specification.surface
+  }
+
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    entryPath: string
+    directory: string
+    specification: ExtensionSpec
+    remoteSpecification?: api.graphql.RemoteSpecification
+    extensionPointSpecs?: ExtensionPointSpec[]
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.entrySourceFilePath = options.entryPath
+    this.directory = options.directory
+    this.specification = options.specification
+    this.remoteSpecification = options.remoteSpecification
+    this.extensionPointSpecs = options.extensionPointSpecs
+    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.localIdentifier = path.basename(directory)
+    this.localIdentifier = path.basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
-  async build(stderr: Writable, stdout: Writable, app: AppInterface) {
+  async build(stdout: Writable, stderr: Writable, app: AppInterface) {
+    stdout.write(`Bundling UI extension ${this.localIdentifier}...`)
     await bundleExtension({
       minify: true,
-      outputBundlePath: this.outputPath,
-      sourceFilePath: this.entryPath,
+      outputBundlePath: this.outputBundlePath,
+      sourceFilePath: this.entrySourceFilePath,
       environment: 'production',
       env: app.dotenv?.variables ?? {},
       stderr,
@@ -100,38 +132,41 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     stdout.write(`${this.localIdentifier} successfully built`)
   }
 
-  deployConfig() {
-    return this.specification.deployConfig?.(this.config, this.directory) ?? {}
+  deployConfig(): Promise<{[key: string]: unknown}> {
+    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
   }
 
-  validate() {
-    if (!this.specification.preDeployValidation) return true
-    return this.specification.preDeployValidation(this.config)
+  preDeployValidation() {
+    if (!this.specification.preDeployValidation) return Promise.resolve()
+    return this.specification.preDeployValidation(this.configuration)
   }
 
   resourceUrl() {
     if (this.extensionPointSpecs) {
-      return this.extensionPointSpecs.map((point) => {
-        const conf = this.config.extension_points?.find((spec) => spec.type === point.type)
-        if (!conf) return {type: point.type, url: undefined}
-        return {type: point.type, url: this.extensionPointURL(point, conf)}
-      })
+      // PENDING: Add support for externsion pints
+      return ''
     } else {
-      return this.specification.resourceUrl?.(this.config) ?? ''
+      return this.specification.resourceUrl?.(this.configuration) ?? ''
     }
   }
 
-  async publishURL(options: {orgId: string; appId: string; extensionId: string}) {
+  async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = this.specification.partnersWebId
+    const parnersPath = this.specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    if (this.specification.previewMessage)
-      return this.specification.previewMessage(url, this.devUUID, this.config, storeFqdn)
-    const publicURL = `${url}/extensions/${this.devUUID}`
-    return output.content`Preview link: ${publicURL}`
+    const heading = output.token.heading(`${this.name} (${this.humanName})`)
+    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+
+    if (this.specification.previewMessage) {
+      const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
+      if (!customMessage) return
+      message = customMessage
+    }
+
+    return output.content`${heading}\n${message.value}\n`
   }
 
   private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
@@ -142,8 +177,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 /**
  * Find the registered spececification for a given extension type
  */
-function specForType(type: string): ExtensionSpec | undefined {
-  return AllLocalSpecs.find((spec) => spec.identifier === type)
+export async function specForType(type: string): Promise<ExtensionSpec | undefined> {
+  const allSpecs = await allExtensionSpecifications()
+  return allSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
 // PENDING: Fetch remote specs
@@ -151,47 +187,29 @@ function remoteSpecForType(type: string): api.graphql.RemoteSpecification | unde
   return undefined
 }
 
-/**
- * Load an extension from given a path.
- * 1. Find the entryPoint file
- * 2. Read the type and find the registered spec for that type.
- * 3. Parse the config file using the schema from the spec
- *
- * If that fails the extension can't be loaded and we'll return an error (to be handled by the caller)
- */
-export async function loadExtension(configPath: string): Promise<Result<ExtensionInstance, LoadExtensionError>> {
-  const directory = path.dirname(configPath)
-
-  // Find entry paths
-  const entryPath = await path.glob(path.join(directory, 'src', '*.+(ts|js|tsx|jsx)'))
-  if (!entryPath[0]) return err('invalid_entry_path')
-
-  // Read Config file
-  const fileContent = await file.read(configPath)
-  const obj = toml.decode(fileContent)
-  const {type} = TypeSchema.parse(obj)
-
-  // Find spec for this type
-  const localSpec = specForType(type)
-  const remoteSpec = remoteSpecForType(type)
-  if (!localSpec) return err('invalid_extension_type')
-
-  // Parse config for this extension type schema
-  let config
-  try {
-    config = localSpec.schema.parse(obj)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return err('invalid_config')
+export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+  identifier: string
+  externalIdentifier: string
+  partnersWebIdentifier: string
+  surface: string
+  externalName: string
+  showInCLIHelp?: boolean
+  dependency?: {name: string; version: string}
+  templatePath?: string
+  graphQLType?: string
+  schema: ZodSchemaType<TConfiguration>
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
+  resourceUrl?: (config: TConfiguration) => string
+  previewMessage?: (
+    host: string,
+    uuid: string,
+    config: TConfiguration,
+    storeFqdn: string,
+  ) => output.TokenizedString | undefined
+}): ExtensionSpec<TConfiguration> {
+  const defaults = {
+    showInCLIHelp: true,
   }
-
-  // PENDING: Add support for extension points and validate them
-  const instance = new ExtensionInstance(config, entryPath[0], directory, localSpec, remoteSpec, [])
-  return ok(instance)
-}
-
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
-  spec: ExtensionSpec<TConfiguration>,
-): ExtensionSpec<TConfiguration> {
-  return spec
+  return {...defaults, ...spec}
 }

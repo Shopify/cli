@@ -3,6 +3,7 @@ import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {cli, session} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {Flags} from '@oclif/core'
 
 export default class Share extends ThemeCommand {
   static description =
@@ -11,6 +12,12 @@ export default class Share extends ThemeCommand {
   static flags = {
     ...cli.globalFlags,
     ...themeFlags,
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
 
   async run(): Promise<void> {

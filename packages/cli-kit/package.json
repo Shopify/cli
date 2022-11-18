@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.22.1",
+  "version": "3.23.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -55,7 +55,7 @@
   },
   "engine-strict": true,
   "engines": {
-    "node": ">=14.13.1"
+    "node": ">=14.17.0"
   },
   "os": [
     "darwin",

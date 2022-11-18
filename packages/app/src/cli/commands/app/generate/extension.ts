@@ -127,7 +127,7 @@ export default class AppScaffoldExtension extends Command {
     }
     const isShopify = await environment.local.isShopify()
     const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
-    if (!(supportedExtensions as string[]).includes(type)) {
+    if (!supportedExtensions.includes(type)) {
       throw new error.Abort(
         `The following extension types are supported: ${mapExtensionTypesToExternalExtensionTypes(
           supportedExtensions,
@@ -146,9 +146,7 @@ export default class AppScaffoldExtension extends Command {
     if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
       throw new error.Abort(
         'Invalid extension type',
-        `You can only scaffold one extension of type ${mapExtensionTypeToExternalExtensionType(
-          type as ExtensionTypes,
-        )} per app`,
+        `You can only scaffold one extension of type ${mapExtensionTypeToExternalExtensionType(type)} per app`,
       )
     }
   }
