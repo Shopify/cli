@@ -1,0 +1,24 @@
+name: Reviewers reminder
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: comment PR
+        uses: unsplash/comment-on-pr@v1.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          msg: |
+            Thanks for your contribution!
+
+            Depending on what you are working on, you may want to request a review from a Shopify team:
+            - Themes: @shopify/theme-developer-tools
+            - UI extensions: @shopify/ui-extensions-cli
+            - Hydrogen: @shopify/hydrogen
+            - Other: @shopify/cli-foundations
