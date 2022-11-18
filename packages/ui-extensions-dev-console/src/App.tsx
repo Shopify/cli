@@ -5,6 +5,7 @@ import enTranslations from '@shopify/polaris/locales/en.json'
 import {AppProvider} from '@shopify/polaris'
 import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
+import Layout from '@/Layout'
 import Routes from '@/Routes'
 
 function getConnectionUrl() {
@@ -39,7 +40,9 @@ function App() {
       <ExtensionServerProvider options={extensionServerOptions}>
         <I18nContext.Provider value={i18nManager}>
           <AppProvider i18n={enTranslations}>
-            <Routes />
+            <Layout>
+              <Routes />
+            </Layout>
           </AppProvider>
         </I18nContext.Provider>
       </ExtensionServerProvider>
