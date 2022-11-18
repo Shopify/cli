@@ -69,6 +69,8 @@
   border-radius: var(--dc-border-radius);
   display: flex;
   align-items: center;
+  color: var(--dc-text); /* blue colors for links too */
+  text-decoration: none;
 
   &:focus,
   &:hover {

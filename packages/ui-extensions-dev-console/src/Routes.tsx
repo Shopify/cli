@@ -1,13 +1,13 @@
 import React from 'react'
-import {BrowserRouter, Routes as ReactRouterRoutes, Route} from 'react-router-dom'
+import {Routes as ReactRouterRoutes, Route} from 'react-router-dom'
 import {Extensions} from '@/sections/Extensions'
+import {Home} from '@/sections/Home'
 
 export default function Routes() {
   return (
-    <BrowserRouter>
-      <ReactRouterRoutes>
-        <Route path="*" element={<Extensions />} />
-      </ReactRouterRoutes>
-    </BrowserRouter>
+    <ReactRouterRoutes>
+      <Route path="/" element={<Home />} />
+      <Route path="/extensions" element={<Extensions />} />
+    </ReactRouterRoutes>
   )
 }

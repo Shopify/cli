@@ -2,8 +2,9 @@ import * as styles from './Layout.module.scss'
 import en from './translations/en.json'
 import React from 'react'
 import '@shopify/polaris/dist/styles.css'
-import {ToolsMajor} from '@shopify/polaris-icons'
+import {ChevronRightMinor, ToolsMajor} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
+import {Link} from 'react-router-dom'
 import {ToastProvider} from '@/hooks/useToast'
 
 interface Props {
@@ -27,16 +28,24 @@ function Layout({children}: Props) {
             </section>
           </header>
           <main>
-            {/* <aside className={styles.SideBar}>
+            <aside className={styles.SideBar}>
               <nav>
                 <ul>
-                  <li className={styles.MenuItem}>
-                    {i18n.translate('nav.extensions')}
-                    <ChevronRightMinor />
+                  <li>
+                    <Link className={styles.MenuItem} to="/">
+                      {i18n.translate('nav.home')}
+                      <ChevronRightMinor />
+                    </Link>
+                  </li>
+                  <li>
+                    <Link className={styles.MenuItem} to="/extensions">
+                      {i18n.translate('nav.extensions')}
+                      <ChevronRightMinor />
+                    </Link>
                   </li>
                 </ul>
               </nav>
-            </aside> */}
+            </aside>
             {children}
           </main>
         </div>
