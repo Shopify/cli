@@ -1,0 +1,6 @@
+.InfoCard {
+  /* stylelint-disable  selector-no-qualifying-type */
+  div[class^='Polaris-Card'] {
+    background-color: red;
+  }
+}
