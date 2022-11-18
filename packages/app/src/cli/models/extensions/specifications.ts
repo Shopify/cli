@@ -1,30 +1,29 @@
 import {ExtensionSpec} from './extensions.js'
 import {FunctionSpec} from './functions.js'
-import {path} from '@shopify/cli-kit'
+import {os, path} from '@shopify/cli-kit'
+import {memoize} from 'lodash-es'
 import {fileURLToPath} from 'url'
 
-let loadedExtensionSpecs: ExtensionSpec[]
-let loadedFunctionSpecs: FunctionSpec[]
-
 export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
-  if (loadedExtensionSpecs) return loadedExtensionSpecs
-  const registrations = await loadSpecs('extensions-specifications')
-  // eslint-disable-next-line require-atomic-updates
-  loadedExtensionSpecs = registrations
-  return registrations
+  return memLoadSpecs('extension-specifications')
 }
 
 export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
-  if (loadedFunctionSpecs) return loadedFunctionSpecs
-  const registrations = await loadSpecs('function-specifications')
-  // eslint-disable-next-line require-atomic-updates
-  loadedFunctionSpecs = registrations
-  return registrations
+  return memLoadSpecs('function-specifications')
 }
 
+const memLoadSpecs = memoize(loadSpecs)
+
 async function loadSpecs(directoryName: string) {
-  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.js'))
-  const files = await path.glob(url)
+  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
+  let files = await path.glob(url, {ignore: ['**.d.ts']})
+
+  // From Node 18, all windows paths must start with file://
+  const {platform} = os.platformAndArch()
+  if (platform === 'windows') {
+    files = files.map((file) => `file://${file}`)
+  }
+
   const promises = files.map((file) => import(file))
   const modules = await Promise.all(promises)
   const specs = modules.map((module) => module.default)

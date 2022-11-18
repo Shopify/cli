@@ -1,31 +1,30 @@
 import {getLocalization, Localization} from './localization.js'
+import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {file, path, output} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
-  return getLocalization(
-    {
-      configuration: {
-        name: 'mock-name',
-        type: 'checkout_ui_extension',
-        metafields: [],
-        capabilities: {
-          block_progress: false,
-          network_access: false,
-        },
-      },
-      idEnvironmentVariableName: 'mockId',
-      localIdentifier: 'localIdentifier',
-      configurationPath: `${tmpDir}/shopify.ui.extension.toml`,
-      directory: tmpDir,
+  const extension = await testUIExtension({
+    configuration: {
+      name: 'mock-name',
       type: 'checkout_ui_extension',
-      graphQLType: 'graphQLType',
-      devUUID: 'dev-uuid',
-      outputBundlePath: `${tmpDir}/dist/main.js`,
-      entrySourceFilePath: `${tmpDir}/dist/main.js`,
+      metafields: [],
+      capabilities: {
+        block_progress: false,
+        network_access: false,
+      },
     },
-    currentLocalization,
-  )
+    idEnvironmentVariableName: 'mockId',
+    localIdentifier: 'localIdentifier',
+    configurationPath: `${tmpDir}/shopify.ui.extension.toml`,
+    directory: tmpDir,
+    type: 'checkout_ui_extension',
+    graphQLType: 'graphQLType',
+    devUUID: 'dev-uuid',
+    outputBundlePath: `${tmpDir}/dist/main.js`,
+    entrySourceFilePath: `${tmpDir}/dist/main.js`,
+  })
+  return getLocalization(extension, currentLocalization)
 }
 
 describe('when there are no locale files', () => {

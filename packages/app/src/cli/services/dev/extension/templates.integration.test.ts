@@ -1,5 +1,4 @@
 import {getHTML, getTemplatesDirectory, Template, TemplateNotFoundError} from './templates.js'
-import {UIExtensionSurface} from '../../../utilities/extensions/configuration.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getTemplatesDirectory', () => {
@@ -18,7 +17,7 @@ describe('getHTML', () => {
     async (extensionSurface, template) => {
       // Given/When
       const got = await getHTML({
-        extensionSurface: extensionSurface as UIExtensionSurface,
+        extensionSurface,
         template: template as Template,
         data: {},
       })
@@ -30,7 +29,7 @@ describe('getHTML', () => {
     async (extensionSurface, template) => {
       // Given
       const options = {
-        extensionSurface: extensionSurface as UIExtensionSurface,
+        extensionSurface,
         template: template as Template,
         data: {},
       }

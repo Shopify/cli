@@ -11,6 +11,7 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
+import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {http, file, path} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -307,17 +308,14 @@ describe('getExtensionPayloadMiddleware()', () => {
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
 
       const extensionId = '123abc'
+      const extension = await testUIExtension({
+        configuration: {type: 'checkout_post_purchase', name: 'name', metafields: []},
+        devUUID: extensionId,
+      })
       const options = {
         devOptions: {
           url: 'http://mock.url',
-          extensions: [
-            {
-              devUUID: extensionId,
-              configuration: {
-                type: 'checkout_post_purchase',
-              },
-            },
-          ],
+          extensions: [extension],
         },
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions

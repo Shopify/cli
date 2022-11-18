@@ -1,5 +1,7 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {ExtensionInstance, specForType} from '../extensions/extensions.js'
+import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -27,68 +29,73 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   return newApp
 }
 
-export function testUIExtension(uiExtension: Partial<UIExtension> = {}): UIExtension {
+export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): Promise<UIExtension> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
-  return {
-    localIdentifier: uiExtension?.localIdentifier ?? 'test-ui-extension',
-    outputBundlePath: uiExtension?.outputBundlePath ?? `${directory}/dist/main.js`,
-    configuration: uiExtension?.configuration ?? {
-      name: uiExtension?.configuration?.name ?? 'test-ui-extension',
-      type: uiExtension?.configuration?.type ?? 'product_subscription',
-      metafields: [],
-      capabilities: {
-        block_progress: false,
-        network_access: false,
-      },
+  const configuration = uiExtension?.configuration ?? {
+    name: uiExtension?.configuration?.name ?? 'test-ui-extension',
+    type: uiExtension?.configuration?.type ?? 'product_subscription',
+    metafields: [],
+    capabilities: {
+      block_progress: false,
+      network_access: false,
     },
-    type: 'checkout_post_purchase',
-    graphQLType: 'CHECKOUT_POST_PURCHASE',
-    configurationPath: uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`,
+  }
+  const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
+  const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
+
+  const specification = await specForType(configuration.type)
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath,
+    entryPath: entrySourceFilePath,
     directory,
-    entrySourceFilePath: uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`,
-    idEnvironmentVariableName: uiExtension?.idEnvironmentVariableName ?? 'SHOPIFY_TET_UI_EXTENSION_ID',
-    devUUID: 'devUUID',
-  }
+    specification: specification!,
+    remoteSpecification: undefined,
+    extensionPointSpecs: undefined,
+  })
+  extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+  return extension
 }
 
-export function testThemeExtensions(): ThemeExtension {
-  return {
-    configuration: {
-      name: 'theme extension name',
-      type: 'theme',
-    },
-    idEnvironmentVariableName: '',
-    localIdentifier: 'extension title',
-    configurationPath: '',
-    directory: './my-extension',
+export async function testThemeExtensions(): Promise<ThemeExtension> {
+  const configuration = {
+    name: 'theme extension name',
     type: 'theme',
-    graphQLType: 'THEME_APP_EXTENSION',
+    metafields: [],
   }
+
+  const specification = await specForType(configuration.type)
+  return new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    entryPath: '',
+    directory: './my-extension',
+    specification: specification!,
+    remoteSpecification: undefined,
+    extensionPointSpecs: undefined,
+  })
 }
 
-export function testFunctionExtension(): FunctionExtension {
-  return {
-    configuration: {
-      name: 'test function extension',
-      description: 'description',
-      type: 'product_discounts',
-      build: {
-        command: 'echo "hello world"',
-      },
-      apiVersion: '2022-07',
-      configurationUi: true,
-    },
-    buildWasmPath: () => '',
-    inputQueryPath: () => '',
-    metadata: {
-      schemaVersions: {},
-    },
-    idEnvironmentVariableName: '',
-    localIdentifier: 'extension title',
-    configurationPath: '',
-    directory: './my-extension',
+export async function testFunctionExtension(): Promise<FunctionExtension> {
+  const configuration = {
+    name: 'test function extension',
+    description: 'description',
     type: 'product_discounts',
-    graphQLType: 'PRODUCT_DISCOUNTS',
+    build: {
+      command: 'echo "hello world"',
+    },
+    apiVersion: '2022-07',
+    configurationUi: true,
   }
+
+  const specification = await functionSpecForType(configuration.type)
+  return new FunctionInstance({
+    configuration,
+    configurationPath: '',
+    metadata: {schemaVersions: {}},
+    specification: specification!,
+    directory: './my-extension',
+  })
 }

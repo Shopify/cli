@@ -1,15 +1,4 @@
-import {mapExtensionTypeToExternalExtensionType} from './name-mapper.js'
 import {api, error, session} from '@shopify/cli-kit'
-
-const NoProductsError = (storeFqdn: string) => {
-  return new error.Abort(
-    'Could not find a product variant',
-    `Your store needs to have at least one product to test a ${mapExtensionTypeToExternalExtensionType(
-      'checkout_ui_extension',
-    )}\n
-You can add a new product here: https://${storeFqdn}/admin/products/new`,
-  )
-}
 
 /**
  * Retrieve the first variant of the first product of the given store
@@ -21,7 +10,12 @@ export async function fetchProductVariant(store: string) {
   const query = api.graphql.FindProductVariantQuery
   const result: api.graphql.FindProductVariantSchema = await api.admin.request(query, adminSession)
   const products = result.products.edges
-  if (products.length === 0) throw NoProductsError(store)
+  if (products.length === 0)
+    throw new error.Abort(
+      'Could not find a product variant',
+      `Your store needs to have at least one product to test a 'checktout_ui' extension\n
+You can add a new product here: https://${store}/admin/products/new`,
+    )
   const variantURL = result.products.edges[0]!.node.variants.edges[0]!.node.id
   const variantId = variantURL.split('/').pop()
   return variantId
