@@ -1,4 +1,4 @@
-import {renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {Abort, Bug} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {run} from '../../testing/ui.js'
@@ -143,30 +143,6 @@ describe('renderWarning', async () => {
       │      dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non  │
       │       proident, sunt in culpa qui officia deserunt mollit anim id est        │
       │      laborum.                                                                │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
-    `)
-  })
-})
-
-describe('renderError', async () => {
-  test('renders an error inside a banner', async () => {
-    // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
-
-    // When
-    renderError({
-      headline: 'Something went wrong.',
-      tryMessage: 'Check your internet connection.',
-    })
-
-    // Then
-    expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  Something went wrong.                                                       │
-      │                                                                              │
-      │  Check your internet connection.                                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)

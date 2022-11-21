@@ -3,9 +3,8 @@ import {OutputProcess} from '../../output.js'
 import {render} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
-import {fatalError, error} from '../../private/node/ui/error.js'
+import {fatalError} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
-import {ErrorProps} from '../../private/node/ui/components/Error.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 
@@ -167,21 +166,4 @@ export function renderWarning(options: RenderAlertOptions) {
  */
 export function renderFatalError(error: Fatal) {
   fatalError(error)
-}
-
-/**
- * Renders a generic error to the console inside a banner.
- *
- * ```
- * ╭─ error ──────────────────────────────────────────────────╮
- * │                                                          │
- * │  Something went wrong.                                   │
- * │                                                          │
- * │  Check your internet connection.                         │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
- */
-export function renderError(options: ErrorProps) {
-  error(options)
 }

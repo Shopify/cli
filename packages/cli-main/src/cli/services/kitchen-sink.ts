@@ -1,12 +1,5 @@
 import {error} from '@shopify/cli-kit'
-import {
-  renderConcurrent,
-  renderError,
-  renderFatalError,
-  renderInfo,
-  renderSuccess,
-  renderWarning,
-} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
 import {Writable} from 'node:stream'
 
@@ -90,11 +83,6 @@ export async function kitchenSink() {
     ],
   })
 
-  renderError({
-    headline: "Couldn't connect to the Shopify Partner Dashboard.",
-    tryMessage: 'Check your internet connection and try again.',
-  })
-
   // Stack trace
   const somethingWentWrong = new error.Bug('Something went wrong.')
 
@@ -109,7 +97,6 @@ export async function kitchenSink() {
   renderFatalError(somethingWentWrong)
 
   // Next Steps
-
   const nextSteps = [
     [
       'Have you',
