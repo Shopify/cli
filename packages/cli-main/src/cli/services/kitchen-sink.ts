@@ -95,6 +95,7 @@ export async function kitchenSink() {
     tryMessage: 'Check your internet connection and try again.',
   })
 
+  // Stack trace
   const somethingWentWrong = new error.Bug('Something went wrong.')
 
   somethingWentWrong.stack = `
@@ -106,6 +107,32 @@ export async function kitchenSink() {
 `
 
   renderFatalError(somethingWentWrong)
+
+  // Next Steps
+
+  const nextSteps = [
+    [
+      'Have you',
+      {
+        link: {
+          label: 'created a Shopify Partners organization',
+          url: 'https://partners.shopify.com/signup',
+        },
+      },
+      {
+        char: '?',
+      },
+    ],
+    'Have you confirmed your accounts from the emails you received?',
+    [
+      'Need to connect to a different App or organization? Run the command again with',
+      {
+        command: '--reset',
+      },
+    ],
+  ]
+
+  renderFatalError(new error.Abort('No Organization found', undefined, nextSteps))
 
   // renderConcurrent at the end
   let backendPromiseResolve: () => void
