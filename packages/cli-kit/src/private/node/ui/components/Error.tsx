@@ -1,11 +1,11 @@
 import {Banner} from './Banner.js'
-import {TextTokenItem, TokenizedText} from './TokenizedText.js'
+import {TokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
 export interface ErrorProps {
   headline: string
-  tryMessage?: TextTokenItem
+  tryMessage?: TokenItem
 }
 
 const Error: React.FC<ErrorProps> = ({headline, tryMessage}) => {

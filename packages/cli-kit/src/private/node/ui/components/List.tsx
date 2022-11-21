@@ -1,10 +1,10 @@
-import {TextTokenItem, TokenizedText} from './TokenizedText.js'
+import {TokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
 interface Props {
   title: string
-  items: TextTokenItem[]
+  items: TokenItem[]
   ordered?: boolean
 }
 

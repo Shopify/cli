@@ -239,7 +239,9 @@ describe('renderFatalError', async () => {
             url: 'https://partners.shopify.com/signup',
           },
         },
-        '?',
+        {
+          char: '?',
+        },
       ],
       'Have you confirmed your accounts from the emails you received?',
       [
@@ -262,7 +264,7 @@ describe('renderFatalError', async () => {
       │                                                                              │
       │  Next steps                                                                  │
       │    • Have you created a Shopify Partners organization:                       │
-      │      https://partners.shopify.com/signup ?                                   │
+      │      https://partners.shopify.com/signup?                                    │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │

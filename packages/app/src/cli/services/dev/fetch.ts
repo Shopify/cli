@@ -11,7 +11,9 @@ export const NoOrgError = (organizationId?: string) => {
           url: 'https://partners.shopify.com/signup',
         },
       },
-      '?',
+      {
+        char: '?',
+      },
     ],
     'Have you confirmed your accounts from the emails you received?',
     [
