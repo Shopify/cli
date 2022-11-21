@@ -22,7 +22,7 @@ const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference
   return (
     <Banner type={type} marginY={1}>
       <Box>
-        <Text>{headline}</Text>
+        <Text bold>{headline}</Text>
       </Box>
 
       {body && (

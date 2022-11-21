@@ -50,7 +50,7 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
       borderColor={typeToColor(type)}
     >
       <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-        <Text dimColor bold>{` ${type.replace(/_/g, ' ')} `}</Text>
+        <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
       </Box>
       {children}
     </Box>
@@ -66,7 +66,7 @@ const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
       <Box marginBottom={1}>
         <Text>
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>
-          <Text dimColor bold>{` ${type.replace(/_/g, ' ')} `}</Text>
+          <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
           {/* 2 initial dashes + 2 spaces surrounding the type */}
           <Text color={typeToColor(type)}>{'─'.repeat(width - 2 - type.length - 2)}</Text>
         </Text>

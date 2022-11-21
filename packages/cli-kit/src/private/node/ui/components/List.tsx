@@ -3,7 +3,7 @@ import {Box, Text} from 'ink'
 import React from 'react'
 
 interface Props {
-  title: string
+  title?: string
   items: TokenItem[]
   ordered?: boolean
 }
@@ -17,11 +17,11 @@ const DOT = '•'
 const List: React.FC<Props> = ({title, items, ordered = false}: React.PropsWithChildren<Props>): JSX.Element => {
   return (
     <Box flexDirection="column">
-      <Text dimColor>{title}</Text>
+      {title && <Text bold>{title}</Text>}
       {items.map((item, index) => (
         <Box key={index}>
           <Box>
-            <Text dimColor>{`  ${ordered ? `${index + 1}.` : DOT}`}</Text>
+            <Text>{`  ${ordered ? `${index + 1}.` : DOT}`}</Text>
           </Box>
 
           <Box flexGrow={1} marginLeft={1}>

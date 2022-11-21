@@ -13,9 +13,8 @@ interface Props {
 const Link: React.FC<Props> = ({url, label}: React.PropsWithChildren<Props>): JSX.Element => {
   return (
     <Text>
-      {label && <Text dimColor>{`${label}: `}</Text>}
-      <Transform transform={(children) => terminalLink(children, url, {fallback: false})}>
-        <Text underline>{url}</Text>
+      <Transform transform={(children) => terminalLink(children, url)}>
+        <Text>{label ?? url}</Text>
       </Transform>
     </Text>
   )
